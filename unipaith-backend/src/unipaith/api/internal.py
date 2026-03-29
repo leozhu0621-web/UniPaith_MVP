@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,6 +10,7 @@ from unipaith.models.application import Application
 from unipaith.models.institution import Institution, Program
 from unipaith.models.student import StudentProfile
 from unipaith.models.user import User, UserRole
+from unipaith.services.matching_service import MatchingService
 
 router = APIRouter(prefix="/internal", tags=["internal"])
 
@@ -127,3 +130,40 @@ async def verify_institution(
     inst.is_verified = True
     await db.flush()
     return {"message": f"Institution {inst.name} verified"}
+
+
+# --- AI Admin ---
+
+
+@router.post("/ai/bootstrap-programs")
+async def bootstrap_program_features(
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Extract features + generate embeddings for all published programs."""
+    svc = MatchingService(db)
+    return await svc.bootstrap_all_programs()
+
+
+@router.post("/ai/refresh-student/{student_id}")
+async def refresh_student_features(
+    student_id: UUID,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Manually trigger feature re-extraction for a student."""
+    svc = MatchingService(db)
+    features = await svc.refresh_student_features(student_id)
+    return {"student_id": str(student_id), "features": features}
+
+
+@router.post("/ai/refresh-program/{program_id}")
+async def refresh_program_features(
+    program_id: UUID,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Manually trigger feature re-extraction for a program."""
+    svc = MatchingService(db)
+    features = await svc.refresh_program_features(program_id)
+    return {"program_id": str(program_id), "features": features}

@@ -1,11 +1,20 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from unipaith.core.exceptions import NotFoundException
 from unipaith.database import get_db
 from unipaith.dependencies import require_student
+from unipaith.models.engagement import StudentEngagementSignal
+from unipaith.models.matching import MatchResult
 from unipaith.models.user import User
+from unipaith.schemas.matching import (
+    EngagementSignalRequest,
+    EngagementSignalResponse,
+    MatchResultResponse,
+)
 from unipaith.schemas.student import (
     AcademicRecordResponse,
     ActivityResponse,
@@ -23,6 +32,7 @@ from unipaith.schemas.student import (
     UpdateTestScoreRequest,
     UpsertPreferencesRequest,
 )
+from unipaith.services.matching_service import MatchingService
 from unipaith.services.student_service import StudentService
 
 router = APIRouter(prefix="/students", tags=["students"])
@@ -252,3 +262,64 @@ async def upsert_preferences(
     svc = _svc(db)
     profile = await svc._get_student_profile(user.id)
     return await svc.upsert_preferences(profile.id, body)
+
+
+# --- AI Matches ---
+
+
+@router.get("/me/matches", response_model=list[MatchResultResponse])
+async def get_my_matches(
+    force_refresh: bool = Query(False, description="Force recomputation of matches"),
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get AI-powered program matches. Requires 80% profile completion."""
+    profile = await _svc(db)._get_student_profile(user.id)
+    svc = MatchingService(db)
+    return await svc.get_matches(profile.id, force_refresh=force_refresh)
+
+
+@router.get("/me/matches/{program_id}", response_model=MatchResultResponse)
+async def get_match_detail(
+    program_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get detailed match info for a specific program."""
+    profile = await _svc(db)._get_student_profile(user.id)
+    result = await db.execute(
+        select(MatchResult).where(
+            MatchResult.student_id == profile.id,
+            MatchResult.program_id == program_id,
+        )
+    )
+    match = result.scalar_one_or_none()
+    if not match:
+        raise NotFoundException("No match found for this program. Try refreshing matches.")
+    return match
+
+
+# --- Engagement ---
+
+
+@router.post(
+    "/me/engagement",
+    response_model=EngagementSignalResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def log_engagement(
+    body: EngagementSignalRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Log a student engagement signal (view, save, dismiss, time spent, etc.)."""
+    profile = await _svc(db)._get_student_profile(user.id)
+    signal = StudentEngagementSignal(
+        student_id=profile.id,
+        program_id=body.program_id,
+        signal_type=body.signal_type,
+        signal_value=body.signal_value,
+    )
+    db.add(signal)
+    await db.flush()
+    return signal

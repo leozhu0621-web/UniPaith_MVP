@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "frontend",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/frontend && npm run dev"],
+      "port": 5173
+    },
+    {
+      "name": "backend",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend && .venv/bin/uvicorn unipaith.main:app --reload --port 8000"],
+      "port": 8000
+    }
+  ]
+}
