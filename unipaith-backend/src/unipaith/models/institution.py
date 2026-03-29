@@ -1,0 +1,253 @@
+import uuid
+from datetime import date, datetime
+from decimal import Decimal
+
+from sqlalchemy import (
+    Boolean,
+    Date,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from unipaith.models.base import Base
+
+
+class Institution(Base):
+    __tablename__ = "institutions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    admin_user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    type: Mapped[str] = mapped_column(String(50), nullable=False)
+    country: Mapped[str] = mapped_column(String(100), nullable=False)
+    region: Mapped[str | None] = mapped_column(String(100))
+    city: Mapped[str | None] = mapped_column(String(100))
+    ranking_data: Mapped[dict | None] = mapped_column(JSONB)
+    description_text: Mapped[str | None] = mapped_column(Text)
+    logo_url: Mapped[str | None] = mapped_column(String(1000))
+    website_url: Mapped[str | None] = mapped_column(String(1000))
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    admin_user: Mapped["User"] = relationship("User", back_populates="institution")  # type: ignore[name-defined]  # noqa: F821
+    programs: Mapped[list["Program"]] = relationship(
+        back_populates="institution", cascade="all, delete-orphan"
+    )
+    segments: Mapped[list["TargetSegment"]] = relationship(
+        back_populates="institution", cascade="all, delete-orphan"
+    )
+    campaigns: Mapped[list["Campaign"]] = relationship(
+        back_populates="institution", cascade="all, delete-orphan"
+    )
+    events: Mapped[list["Event"]] = relationship(
+        back_populates="institution", cascade="all, delete-orphan"
+    )
+    reviewers: Mapped[list["Reviewer"]] = relationship(
+        back_populates="institution", cascade="all, delete-orphan"
+    )
+
+
+class Program(Base):
+    __tablename__ = "programs"
+    __table_args__ = (
+        Index("ix_programs_institution_published", "institution_id", "is_published"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    institution_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("institutions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    program_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    degree_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    department: Mapped[str | None] = mapped_column(String(255))
+    duration_months: Mapped[int | None] = mapped_column(Integer)
+    tuition: Mapped[int | None] = mapped_column(Integer)
+    acceptance_rate: Mapped[Decimal | None] = mapped_column(Numeric(5, 4))
+    requirements: Mapped[dict | None] = mapped_column(JSONB)
+    description_text: Mapped[str | None] = mapped_column(Text)
+    current_preferences_text: Mapped[str | None] = mapped_column(Text)
+    is_published: Mapped[bool] = mapped_column(Boolean, default=False)
+    application_deadline: Mapped[date | None] = mapped_column(Date)
+    program_start_date: Mapped[date | None] = mapped_column(Date)
+    page_header_image_url: Mapped[str | None] = mapped_column(String(1000))
+    highlights: Mapped[dict | None] = mapped_column(JSONB)
+    faculty_contacts: Mapped[dict | None] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    institution: Mapped["Institution"] = relationship(back_populates="programs")
+
+
+class TargetSegment(Base):
+    __tablename__ = "target_segments"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    institution_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False
+    )
+    program_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("programs.id", ondelete="SET NULL")
+    )
+    segment_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    criteria: Mapped[dict | None] = mapped_column(JSONB)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    institution: Mapped["Institution"] = relationship(back_populates="segments")
+
+
+class Campaign(Base):
+    __tablename__ = "campaigns"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    institution_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False
+    )
+    program_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("programs.id", ondelete="SET NULL")
+    )
+    segment_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("target_segments.id", ondelete="SET NULL")
+    )
+    campaign_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    campaign_type: Mapped[str | None] = mapped_column(String(30))
+    message_subject: Mapped[str | None] = mapped_column(String(500))
+    message_body: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str | None] = mapped_column(String(20))
+    scheduled_send_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    institution: Mapped["Institution"] = relationship(back_populates="campaigns")
+    recipients: Mapped[list["CampaignRecipient"]] = relationship(
+        back_populates="campaign", cascade="all, delete-orphan"
+    )
+
+
+class CampaignRecipient(Base):
+    __tablename__ = "campaign_recipients"
+    __table_args__ = (UniqueConstraint("campaign_id", "student_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    campaign_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("campaigns.id", ondelete="CASCADE"), nullable=False
+    )
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("student_profiles.id", ondelete="CASCADE"), nullable=False
+    )
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    opened_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    clicked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    responded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    campaign: Mapped["Campaign"] = relationship(back_populates="recipients")
+
+
+class Event(Base):
+    __tablename__ = "events"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    institution_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False
+    )
+    program_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("programs.id", ondelete="SET NULL")
+    )
+    event_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    event_type: Mapped[str | None] = mapped_column(String(30))
+    description: Mapped[str | None] = mapped_column(Text)
+    location: Mapped[str | None] = mapped_column(String(500))
+    start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    end_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    capacity: Mapped[int | None] = mapped_column(Integer)
+    rsvp_count: Mapped[int] = mapped_column(Integer, default=0)
+    status: Mapped[str | None] = mapped_column(String(20))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    institution: Mapped["Institution"] = relationship(back_populates="events")
+    rsvps: Mapped[list["EventRSVP"]] = relationship(
+        back_populates="event", cascade="all, delete-orphan"
+    )
+
+
+class EventRSVP(Base):
+    __tablename__ = "event_rsvps"
+    __table_args__ = (UniqueConstraint("event_id", "student_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    event_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("events.id", ondelete="CASCADE"), nullable=False
+    )
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("student_profiles.id", ondelete="CASCADE"), nullable=False
+    )
+    rsvp_status: Mapped[str | None] = mapped_column(String(20))
+    registered_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    attended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    event: Mapped["Event"] = relationship(back_populates="rsvps")
+
+
+class Reviewer(Base):
+    __tablename__ = "reviewers"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    institution_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    department: Mapped[str | None] = mapped_column(String(255))
+    specializations: Mapped[dict | None] = mapped_column(JSONB)
+    current_workload: Mapped[int] = mapped_column(Integer, default=0)
+    max_workload: Mapped[int] = mapped_column(Integer, default=50)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    institution: Mapped["Institution"] = relationship(back_populates="reviewers")

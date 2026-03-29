@@ -1,0 +1,200 @@
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from unipaith.database import get_db
+from unipaith.dependencies import require_institution_admin
+from unipaith.models.user import User
+from unipaith.schemas.institution import (
+    CreateInstitutionRequest,
+    CreateProgramRequest,
+    CreateSegmentRequest,
+    InstitutionResponse,
+    ProgramResponse,
+    SegmentResponse,
+    UpdateInstitutionRequest,
+    UpdateProgramRequest,
+    UpdateSegmentRequest,
+)
+from unipaith.services.institution_service import InstitutionService
+
+router = APIRouter(prefix="/institutions", tags=["institutions"])
+
+
+def _svc(db: AsyncSession) -> InstitutionService:
+    return InstitutionService(db)
+
+
+# --- Institution Profile ---
+
+@router.get("/me", response_model=InstitutionResponse)
+async def get_institution(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    count = await svc.get_program_count(inst.id)
+    resp = InstitutionResponse.model_validate(inst)
+    resp.program_count = count
+    return resp
+
+
+@router.post("/me", response_model=InstitutionResponse, status_code=status.HTTP_201_CREATED)
+async def create_institution(
+    body: CreateInstitutionRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.create_institution(user.id, body)
+    return InstitutionResponse.model_validate(inst)
+
+
+@router.put("/me", response_model=InstitutionResponse)
+async def update_institution(
+    body: UpdateInstitutionRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.update_institution(user.id, body)
+    return InstitutionResponse.model_validate(inst)
+
+
+# --- Programs (institution admin) ---
+
+@router.get("/me/programs", response_model=list[ProgramResponse])
+async def list_programs(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.list_programs(inst.id)
+
+
+@router.post(
+    "/me/programs",
+    response_model=ProgramResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_program(
+    body: CreateProgramRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.create_program(inst.id, body)
+
+
+@router.get("/me/programs/{program_id}", response_model=ProgramResponse)
+async def get_program(
+    program_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.get_program(inst.id, program_id)
+
+
+@router.put("/me/programs/{program_id}", response_model=ProgramResponse)
+async def update_program(
+    program_id: UUID,
+    body: UpdateProgramRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.update_program(inst.id, program_id, body)
+
+
+@router.post("/me/programs/{program_id}/publish", response_model=ProgramResponse)
+async def publish_program(
+    program_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.publish_program(inst.id, program_id)
+
+
+@router.post("/me/programs/{program_id}/unpublish", response_model=ProgramResponse)
+async def unpublish_program(
+    program_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.unpublish_program(inst.id, program_id)
+
+
+@router.delete(
+    "/me/programs/{program_id}", status_code=status.HTTP_204_NO_CONTENT
+)
+async def delete_program(
+    program_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    await svc.delete_program(inst.id, program_id)
+
+
+# --- Target Segments ---
+
+@router.get("/me/segments", response_model=list[SegmentResponse])
+async def list_segments(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.list_segments(inst.id)
+
+
+@router.post(
+    "/me/segments",
+    response_model=SegmentResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_segment(
+    body: CreateSegmentRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.create_segment(inst.id, body)
+
+
+@router.put("/me/segments/{segment_id}", response_model=SegmentResponse)
+async def update_segment(
+    segment_id: UUID,
+    body: UpdateSegmentRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.update_segment(inst.id, segment_id, body)
+
+
+@router.delete(
+    "/me/segments/{segment_id}", status_code=status.HTTP_204_NO_CONTENT
+)
+async def delete_segment(
+    segment_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    await svc.delete_segment(inst.id, segment_id)

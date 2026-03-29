@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/api.ts","./src/main.tsx","./src/vite-env.d.ts","./src/panels/explainpanel.tsx","./src/panels/matchingpanel.tsx","./src/panels/schoolspanel.tsx","./src/panels/studentspanel.tsx"],"version":"5.7.3"}
