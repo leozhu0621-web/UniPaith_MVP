@@ -1,78 +1,9 @@
-import uuid
-from collections.abc import AsyncGenerator
-
 import pytest
-from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from unipaith.database import get_db
-from unipaith.dependencies import get_current_user
-from unipaith.main import app
-from unipaith.models.user import User, UserRole
-
-
-def _make_user(role: str = "student") -> User:
-    user = User.__new__(User)
-    user.id = uuid.uuid4()
-    user.email = f"test-{role}@example.com"
-    user.cognito_sub = f"dev-sub-{user.id}"
-    user.role = UserRole(role)
-    user.is_active = True
-    return user
-
-
-@pytest.fixture
-def mock_student_user() -> User:
-    return _make_user("student")
-
-
-@pytest.fixture
-def mock_institution_user() -> User:
-    return _make_user("institution_admin")
-
-
-@pytest.fixture
-async def student_client(
-    db_session: AsyncSession, mock_student_user: User,
-) -> AsyncGenerator[AsyncClient, None]:
-    async def _override_db() -> AsyncGenerator[AsyncSession, None]:
-        yield db_session
-
-    async def _override_user() -> User:
-        return mock_student_user
-
-    app.dependency_overrides[get_db] = _override_db
-    app.dependency_overrides[get_current_user] = _override_user
-
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
-
-    app.dependency_overrides.clear()
-
-
-@pytest.fixture
-async def institution_client(
-    db_session: AsyncSession, mock_institution_user: User,
-) -> AsyncGenerator[AsyncClient, None]:
-    async def _override_db() -> AsyncGenerator[AsyncSession, None]:
-        yield db_session
-
-    async def _override_user() -> User:
-        return mock_institution_user
-
-    app.dependency_overrides[get_db] = _override_db
-    app.dependency_overrides[get_current_user] = _override_user
-
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
-
-    app.dependency_overrides.clear()
+from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_signup_student(client: AsyncClient, db_session: AsyncSession):
+async def test_signup_student(client: AsyncClient):
     resp = await client.post("/api/v1/auth/signup", json={
         "email": "student@example.com",
         "password": "StrongP@ss1",
