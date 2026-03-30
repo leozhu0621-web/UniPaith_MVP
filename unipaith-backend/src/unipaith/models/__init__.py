@@ -31,6 +31,10 @@ from unipaith.models.ml_loop import (
     OutcomeRecord, EvaluationRun, TrainingRun,
     ABTestAssignment, DriftSnapshot, FairnessReport,
 )
+from unipaith.models.crawler import (
+    CrawlJob, ExtractedProgram, CrawlSchedule,
+    SourceURLPattern, EnrichmentRecord,
+)
 
 __all__ = [
     "Base", "User", "UserRole",
@@ -51,4 +55,6 @@ __all__ = [
     "Notification", "NotificationPreference", "Touchpoint",
     "OutcomeRecord", "EvaluationRun", "TrainingRun",
     "ABTestAssignment", "DriftSnapshot", "FairnessReport",
+    "CrawlJob", "ExtractedProgram", "CrawlSchedule",
+    "SourceURLPattern", "EnrichmentRecord",
 ]

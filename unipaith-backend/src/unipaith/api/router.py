@@ -8,6 +8,7 @@ from unipaith.api.institutions import router as institutions_router
 from unipaith.api.internal import router as internal_router
 from unipaith.api.interviews import router as interviews_router
 from unipaith.api.messaging import router as messaging_router
+from unipaith.api.crawler_admin import router as crawler_admin_router
 from unipaith.api.ml_admin import router as ml_admin_router
 from unipaith.api.notifications import router as notifications_router
 from unipaith.api.programs import router as programs_router
@@ -33,6 +34,7 @@ api_router.include_router(reviews_router)
 api_router.include_router(interviews_router)
 api_router.include_router(notifications_router)
 api_router.include_router(ml_admin_router)
+api_router.include_router(crawler_admin_router)
 
 
 @api_router.get("/health", tags=["health"])

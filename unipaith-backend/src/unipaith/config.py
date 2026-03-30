@@ -100,6 +100,39 @@ class Settings(BaseSettings):
     fairness_max_disparity: float = 0.15
     fairness_check_on_promotion: bool = True
 
+    # --- Data Crawler (Phase 5) ---
+    crawler_concurrent_requests: int = 4
+    crawler_download_delay: float = 2.0
+    crawler_max_pages_per_source: int = 500
+    crawler_request_timeout: int = 30
+    crawler_respect_robots_txt: bool = True
+    crawler_user_agent: str = "UniPaith-Bot/1.0 (+https://unipaith.com/bot)"
+    crawler_splash_url: str = "http://localhost:8050"
+
+    # LLM extraction
+    crawler_extraction_model: str = "mistral"
+    crawler_extraction_max_tokens: int = 4096
+    crawler_extraction_temperature: float = 0.1
+    crawler_max_html_chars: int = 50000
+
+    # Validation & deduplication
+    crawler_fuzzy_match_threshold: int = 85
+    crawler_confidence_auto_ingest: float = 0.80
+    crawler_confidence_review_queue: float = 0.50
+
+    # Enrichment
+    crawler_merge_strategy: str = "highest_confidence"
+    crawler_ranking_sources: list[str] = ["us_news", "qs", "times_higher_education"]
+
+    # Scheduling
+    crawler_default_frequency_hours: int = 168
+    crawler_stale_threshold_days: int = 30
+    crawler_max_retries: int = 3
+    crawler_retry_delay_hours: int = 6
+
+    # Historical outcomes
+    crawler_seed_historical_years: int = 3
+
     # Notifications — Amazon SES
     ses_region: str = "us-east-1"
     ses_sender_email: str = "noreply@unipaith.com"

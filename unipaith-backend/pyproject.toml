@@ -27,6 +27,11 @@ dependencies = [
     "shap>=0.45.0",
     "scipy>=1.13.0",
     "imbalanced-learn>=0.12.0",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=5.2.0",
+    "thefuzz>=0.22.0",
+    "python-Levenshtein>=0.25.0",
+    "aiohttp>=3.9.0",
 ]
 
 [project.optional-dependencies]
