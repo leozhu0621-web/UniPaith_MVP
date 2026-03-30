@@ -9,8 +9,8 @@
     },
     {
       "name": "backend",
-      "runtimeExecutable": "/Users/leozhu/opt/anaconda3/envs/py312/bin/uvicorn",
-      "runtimeArgs": ["unipaith.main:app", "--reload", "--port", "8000", "--app-dir", "/tmp/unipaith-mvp/unipaith-backend/src"],
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /tmp/unipaith-mvp/unipaith-backend && /Users/leozhu/opt/anaconda3/envs/py312/bin/uvicorn unipaith.main:app --reload --port 8000 --app-dir src"],
       "port": 8000
     }
   ]

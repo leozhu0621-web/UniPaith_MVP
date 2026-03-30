@@ -49,12 +49,13 @@ async def _reset(db: AsyncSession) -> None:
 
 async def seed(db: AsyncSession) -> None:
     # ---- Student Users ----
+    # cognito_sub must be a valid UUID so dev tokens (dev:<sub>:<role>) work
     student_users = [
-        User(email="maria.santos@example.com", cognito_sub="dev-sub-maria-santos", role=UserRole.student),
-        User(email="wei.chen@example.com", cognito_sub="dev-sub-wei-chen", role=UserRole.student),
-        User(email="priya.sharma@example.com", cognito_sub="dev-sub-priya-sharma", role=UserRole.student),
-        User(email="james.wilson@example.com", cognito_sub="dev-sub-james-wilson", role=UserRole.student),
-        User(email="fatima.alrashid@example.com", cognito_sub="dev-sub-fatima-alrashid", role=UserRole.student),
+        User(email="maria.santos@example.com", cognito_sub="aaaa0001-0000-0000-0000-000000000001", role=UserRole.student),
+        User(email="wei.chen@example.com", cognito_sub="aaaa0002-0000-0000-0000-000000000002", role=UserRole.student),
+        User(email="priya.sharma@example.com", cognito_sub="aaaa0003-0000-0000-0000-000000000003", role=UserRole.student),
+        User(email="james.wilson@example.com", cognito_sub="aaaa0004-0000-0000-0000-000000000004", role=UserRole.student),
+        User(email="fatima.alrashid@example.com", cognito_sub="aaaa0005-0000-0000-0000-000000000005", role=UserRole.student),
     ]
     db.add_all(student_users)
     await db.flush()
@@ -62,17 +63,17 @@ async def seed(db: AsyncSession) -> None:
 
     # ---- Institution Admin Users ----
     admin_users = [
-        User(email="admin@mit-demo.edu", cognito_sub="dev-sub-admin-mit", role=UserRole.institution_admin),
-        User(email="admin@uiuc-demo.edu", cognito_sub="dev-sub-admin-uiuc", role=UserRole.institution_admin),
-        User(email="admin@northeastern-demo.edu", cognito_sub="dev-sub-admin-northeastern", role=UserRole.institution_admin),
+        User(email="admin@mit-demo.edu", cognito_sub="bbbb0001-0000-0000-0000-000000000001", role=UserRole.institution_admin),
+        User(email="admin@uiuc-demo.edu", cognito_sub="bbbb0002-0000-0000-0000-000000000002", role=UserRole.institution_admin),
+        User(email="admin@northeastern-demo.edu", cognito_sub="bbbb0003-0000-0000-0000-000000000003", role=UserRole.institution_admin),
     ]
     db.add_all(admin_users)
     await db.flush()
 
     # ---- Reviewer Users ----
     reviewer_users = [
-        User(email="reviewer1@mit-demo.edu", cognito_sub="dev-sub-reviewer-mit", role=UserRole.institution_admin),
-        User(email="reviewer2@uiuc-demo.edu", cognito_sub="dev-sub-reviewer-uiuc", role=UserRole.institution_admin),
+        User(email="reviewer1@mit-demo.edu", cognito_sub="cccc0001-0000-0000-0000-000000000001", role=UserRole.institution_admin),
+        User(email="reviewer2@uiuc-demo.edu", cognito_sub="cccc0002-0000-0000-0000-000000000002", role=UserRole.institution_admin),
     ]
     db.add_all(reviewer_users)
     await db.flush()

@@ -37,3 +37,10 @@ node_modules/
 # IDE
 .vscode/
 .idea/
+
+# Terraform
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.backup
+infra/tfplan
+infra/.terraform.lock.hcl

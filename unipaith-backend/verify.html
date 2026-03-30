@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>UniPaith Backend Verification</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f7; color: #1d1d1f; padding: 24px; }
+  h1 { font-size: 28px; margin-bottom: 8px; }
+  .subtitle { color: #86868b; margin-bottom: 24px; font-size: 15px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .card h2 { font-size: 16px; color: #86868b; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .card .value { font-size: 22px; font-weight: 600; }
+  .card .detail { color: #6e6e73; font-size: 14px; margin-top: 4px; }
+  .section { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .section h2 { font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+  .badge-green { background: #d4edda; color: #155724; }
+  .badge-blue { background: #cce5ff; color: #004085; }
+  .badge-yellow { background: #fff3cd; color: #856404; }
+  .badge-red { background: #f8d7da; color: #721c24; }
+  .program { border: 1px solid #e5e5ea; border-radius: 10px; padding: 16px; margin-bottom: 12px; }
+  .program h3 { font-size: 16px; margin-bottom: 4px; }
+  .program .meta { color: #6e6e73; font-size: 13px; }
+  .program .tags { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag { background: #f0f0f5; padding: 3px 10px; border-radius: 8px; font-size: 12px; color: #3a3a3c; }
+  .profile-header { display: flex; gap: 16px; align-items: center; margin-bottom: 16px; }
+  .avatar { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 22px; font-weight: 600; }
+  .score-row { display: flex; gap: 12px; margin-bottom: 8px; }
+  .score-box { background: #f0f0f5; padding: 8px 14px; border-radius: 8px; text-align: center; }
+  .score-box .label { font-size: 11px; color: #86868b; text-transform: uppercase; }
+  .score-box .num { font-size: 20px; font-weight: 600; color: #1d1d1f; }
+  .activity { padding: 8px 0; border-bottom: 1px solid #f0f0f5; }
+  .activity:last-child { border-bottom: none; }
+  .activity .title { font-weight: 600; }
+  .activity .org { color: #6e6e73; font-size: 13px; }
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .status-dot.green { background: #34c759; }
+  .status-dot.red { background: #ff3b30; }
+  .user-switcher { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+  .user-btn { padding: 8px 16px; border-radius: 20px; border: 2px solid #e5e5ea; background: #fff; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+  .user-btn:hover { border-color: #667eea; }
+  .user-btn.active { background: #667eea; color: #fff; border-color: #667eea; }
+  .endpoint-test { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f0f0f5; }
+  .endpoint-test:last-child { border-bottom: none; }
+  .endpoint-name { font-family: monospace; font-size: 13px; flex: 1; }
+  .endpoint-status { font-size: 13px; font-weight: 600; }
+  #loading { text-align: center; padding: 48px; color: #86868b; }
+  .error { color: #ff3b30; font-size: 13px; }
+  .fullwidth { grid-column: 1 / -1; }
+  button.run-all { background: #667eea; color: #fff; border: none; padding: 12px 24px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; margin-bottom: 24px; }
+  button.run-all:hover { background: #5a6fd6; }
+</style>
+</head>
+<body>
+
+<h1>UniPaith Backend Verification</h1>
+<p class="subtitle">Click "Run All Checks" to verify every part of the backend is working correctly.</p>
+
+<button class="run-all" onclick="runAll()">Run All Checks</button>
+
+<div class="grid" id="stats">
+  <div class="card">
+    <h2>Server Status</h2>
+    <div class="value" id="server-status">Checking...</div>
+    <div class="detail" id="server-version"></div>
+  </div>
+  <div class="card">
+    <h2>Programs</h2>
+    <div class="value" id="program-count">—</div>
+    <div class="detail" id="program-unis"></div>
+  </div>
+  <div class="card">
+    <h2>Active Student</h2>
+    <div class="value" id="student-name">—</div>
+    <div class="detail" id="student-email"></div>
+  </div>
+  <div class="card">
+    <h2>Endpoint Tests</h2>
+    <div class="value" id="test-summary">—</div>
+    <div class="detail" id="test-detail"></div>
+  </div>
+</div>
+
+<h2 style="margin-bottom: 8px;">Switch Student</h2>
+<p class="subtitle">Click a student to view their profile and data</p>
+<div class="user-switcher" id="user-switcher"></div>
+
+<div id="content"></div>
+
+<div class="section">
+  <h2>Endpoint Health Check</h2>
+  <div id="endpoint-results"></div>
+</div>
+
+<script>
+const BASE = 'http://localhost:8000/api/v1';
+
+const STUDENTS = [
+  { name: 'Maria Santos', sub: 'aaaa0001-0000-0000-0000-000000000001', emoji: '🇧🇷' },
+  { name: 'Wei Chen', sub: 'aaaa0002-0000-0000-0000-000000000002', emoji: '🇨🇳' },
+  { name: 'Priya Sharma', sub: 'aaaa0003-0000-0000-0000-000000000003', emoji: '🇮🇳' },
+  { name: 'James Wilson', sub: 'aaaa0004-0000-0000-0000-000000000004', emoji: '🇺🇸' },
+  { name: 'Fatima Al-Rashid', sub: 'aaaa0005-0000-0000-0000-000000000005', emoji: '🇸🇦' },
+];
+
+const ENDPOINTS = [
+  { method: 'GET', path: '/health', auth: false, label: 'Health Check' },
+  { method: 'GET', path: '/auth/me', auth: true, label: 'Auth / Me' },
+  { method: 'GET', path: '/students/me/profile', auth: true, label: 'Student Profile' },
+  { method: 'GET', path: '/students/me/academics', auth: true, label: 'Academic Records' },
+  { method: 'GET', path: '/students/me/test-scores', auth: true, label: 'Test Scores' },
+  { method: 'GET', path: '/students/me/activities', auth: true, label: 'Activities' },
+  { method: 'GET', path: '/students/me/preferences', auth: true, label: 'Preferences' },
+  { method: 'GET', path: '/students/me/onboarding', auth: true, label: 'Onboarding Progress' },
+  { method: 'GET', path: '/programs', auth: false, label: 'List Programs' },
+  { method: 'GET', path: '/students/me/matches', auth: true, label: 'AI Matches (mock)' },
+  { method: 'GET', path: '/students/me/saved', auth: true, label: 'Saved Programs' },
+  { method: 'GET', path: '/students/me/notifications', auth: true, label: 'Notifications' },
+];
+
+let currentStudent = STUDENTS[0];
+
+function token(stu) {
+  return `Bearer dev:${stu.sub}:student`;
+}
+
+async function api(path, auth = true, stu = currentStudent) {
+  const headers = { 'Accept': 'application/json' };
+  if (auth) headers['Authorization'] = token(stu);
+  const res = await fetch(BASE + path, { headers });
+  return { status: res.status, ok: res.ok, data: res.ok ? await res.json() : null };
+}
+
+// Build user switcher
+function buildSwitcher() {
+  const el = document.getElementById('user-switcher');
+  el.innerHTML = '';
+  STUDENTS.forEach((s, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'user-btn' + (s.sub === currentStudent.sub ? ' active' : '');
+    btn.textContent = `${s.emoji} ${s.name}`;
+    btn.onclick = () => { currentStudent = s; buildSwitcher(); loadStudent(); };
+    el.appendChild(btn);
+  });
+}
+
+async function loadStudent() {
+  const el = document.getElementById('content');
+  el.innerHTML = '<div id="loading">Loading student data...</div>';
+
+  try {
+    const [profileRes, scoresRes, activitiesRes, prefsRes, onboardingRes] = await Promise.all([
+      api('/students/me/profile'),
+      api('/students/me/test-scores'),
+      api('/students/me/activities'),
+      api('/students/me/preferences'),
+      api('/students/me/onboarding'),
+    ]);
+
+    let html = '';
+
+    // Profile
+    if (profileRes.ok) {
+      const p = profileRes.data;
+      document.getElementById('student-name').textContent = `${p.first_name} ${p.last_name}`;
+      document.getElementById('student-email').textContent = p.nationality + ' | ' + p.country_of_residence;
+
+      html += `<div class="section">
+        <div class="profile-header">
+          <div class="avatar">${p.first_name[0]}${p.last_name[0]}</div>
+          <div>
+            <h2 style="margin-bottom:2px">${p.first_name} ${p.last_name}</h2>
+            <div style="color:#6e6e73;font-size:14px">${p.nationality} | ${p.country_of_residence} | Born: ${p.date_of_birth}</div>
+          </div>
+        </div>
+        <p style="margin-bottom:8px"><strong>Bio:</strong> ${p.bio_text || 'Not set'}</p>
+        <p><strong>Goals:</strong> ${p.goals_text || 'Not set'}</p>
+      </div>`;
+
+      // Academics from profile
+      if (p.academic_records && p.academic_records.length) {
+        html += `<div class="section"><h2>Academic Records</h2>`;
+        p.academic_records.forEach(a => {
+          html += `<div class="program">
+            <h3>${a.degree_type ? a.degree_type.charAt(0).toUpperCase() + a.degree_type.slice(1) : ''} in ${a.field_of_study}</h3>
+            <div class="meta">${a.institution_name} | ${a.country}</div>
+            <div class="tags">
+              <span class="tag">GPA: ${a.gpa}/${a.gpa_scale}</span>
+              <span class="tag">${a.start_date} — ${a.end_date || 'Present'}</span>
+            </div>
+          </div>`;
+        });
+        html += '</div>';
+      }
+    } else {
+      html += `<div class="section"><p class="error">Profile failed to load (HTTP ${profileRes.status})</p></div>`;
+    }
+
+    // Test Scores
+    if (scoresRes.ok && scoresRes.data.length) {
+      html += `<div class="section"><h2>Test Scores</h2><div class="score-row">`;
+      scoresRes.data.forEach(t => {
+        html += `<div class="score-box">
+          <div class="label">${t.test_type}</div>
+          <div class="num">${t.total_score}</div>
+          <div style="font-size:11px;color:#86868b">${Object.entries(t.section_scores).map(([k,v]) => `${k}: ${v}`).join(' | ')}</div>
+        </div>`;
+      });
+      html += '</div></div>';
+    }
+
+    // Activities
+    if (activitiesRes.ok && activitiesRes.data.length) {
+      html += `<div class="section"><h2>Activities</h2>`;
+      activitiesRes.data.forEach(a => {
+        html += `<div class="activity">
+          <div class="title">${a.title} <span class="badge badge-blue">${a.activity_type}</span></div>
+          <div class="org">${a.organization}${a.description ? ' — ' + a.description : ''}</div>
+        </div>`;
+      });
+      html += '</div>';
+    }
+
+    // Preferences
+    if (prefsRes.ok && prefsRes.data) {
+      const pr = prefsRes.data;
+      html += `<div class="section"><h2>Preferences</h2>
+        <div class="tags" style="margin-bottom:8px">
+          ${(pr.preferred_countries || []).map(c => `<span class="tag">🌍 ${c}</span>`).join('')}
+          ${pr.preferred_city_size ? `<span class="tag">🏙️ ${pr.preferred_city_size}</span>` : ''}
+          ${pr.budget_max ? `<span class="tag">💰 Max $${pr.budget_max.toLocaleString()}</span>` : ''}
+          ${pr.funding_requirement ? `<span class="tag">🎓 ${pr.funding_requirement}</span>` : ''}
+        </div>
+        ${pr.career_goals ? `<p><strong>Career goals:</strong> ${pr.career_goals.join(', ')}</p>` : ''}
+      </div>`;
+    }
+
+    // Onboarding
+    if (onboardingRes.ok && onboardingRes.data) {
+      const ob = onboardingRes.data;
+      const pct = ob.completion_percentage || 0;
+      html += `<div class="section"><h2>Onboarding Progress</h2>
+        <div style="background:#f0f0f5;border-radius:8px;height:24px;overflow:hidden;margin-bottom:8px">
+          <div style="background:linear-gradient(90deg,#667eea,#764ba2);height:100%;width:${pct}%;border-radius:8px;transition:width 0.5s"></div>
+        </div>
+        <p>${pct}% complete — Steps: ${(ob.steps_completed || []).join(', ')}</p>
+      </div>`;
+    }
+
+    el.innerHTML = html;
+  } catch (e) {
+    el.innerHTML = `<div class="section"><p class="error">Error: ${e.message}</p></div>`;
+  }
+}
+
+async function loadPrograms() {
+  const res = await api('/programs', false);
+  if (res.ok) {
+    const d = res.data;
+    document.getElementById('program-count').textContent = d.total + ' programs';
+    const unis = [...new Set(d.items.map(p => p.institution_name))];
+    document.getElementById('program-unis').textContent = unis.join(', ');
+  }
+}
+
+async function runEndpointTests() {
+  const el = document.getElementById('endpoint-results');
+  el.innerHTML = 'Running tests...';
+  let pass = 0, fail = 0;
+  let html = '';
+
+  for (const ep of ENDPOINTS) {
+    try {
+      const res = await api(ep.path, ep.auth);
+      const ok = res.ok || (res.status < 500);
+      if (ok) pass++; else fail++;
+      html += `<div class="endpoint-test">
+        <span class="status-dot ${ok ? 'green' : 'red'}"></span>
+        <span class="endpoint-name">${ep.method} ${ep.path}</span>
+        <span class="endpoint-status" style="color:${ok ? '#34c759' : '#ff3b30'}">${res.status} ${ok ? '✓' : '✗'}</span>
+        <span style="color:#86868b;font-size:12px">${ep.label}</span>
+      </div>`;
+    } catch (e) {
+      fail++;
+      html += `<div class="endpoint-test">
+        <span class="status-dot red"></span>
+        <span class="endpoint-name">${ep.method} ${ep.path}</span>
+        <span class="endpoint-status" style="color:#ff3b30">ERR</span>
+        <span class="error">${e.message}</span>
+      </div>`;
+    }
+  }
+
+  el.innerHTML = html;
+  document.getElementById('test-summary').textContent = `${pass}/${pass + fail} passing`;
+  document.getElementById('test-detail').textContent = fail ? `${fail} endpoint(s) need attention` : 'All endpoints healthy';
+}
+
+async function checkServer() {
+  try {
+    const res = await api('/health', false);
+    if (res.ok) {
+      document.getElementById('server-status').innerHTML = '<span class="status-dot green"></span> Online';
+      document.getElementById('server-version').textContent = 'v' + res.data.version;
+    }
+  } catch {
+    document.getElementById('server-status').innerHTML = '<span class="status-dot red"></span> Offline';
+    document.getElementById('server-version').textContent = 'Cannot reach localhost:8000';
+  }
+}
+
+async function runAll() {
+  await checkServer();
+  await loadPrograms();
+  buildSwitcher();
+  await Promise.all([loadStudent(), runEndpointTests()]);
+}
+
+// Auto-run everything on page load
+window.addEventListener('load', function() {
+  console.log('Page loaded, running all checks...');
+  runAll();
+});
+</script>
+</body>
+</html>

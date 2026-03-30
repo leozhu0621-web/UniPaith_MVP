@@ -180,9 +180,9 @@ class StudentPreferenceResponse(BaseModel):
     budget_max: int | None
     funding_requirement: str | None
     program_size_preference: str | None
-    career_goals: dict | None
+    career_goals: list[str] | None
     values_priorities: dict | None
-    dealbreakers: dict | None
+    dealbreakers: list[str] | None
     goals_text: str | None
     created_at: datetime
     updated_at: datetime
