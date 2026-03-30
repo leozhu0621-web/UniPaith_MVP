@@ -68,6 +68,38 @@ class Settings(BaseSettings):
     # AI dev mode
     ai_mock_mode: bool = False
 
+    # --- Self-Improving Loop (Phase 4) ---
+    # Outcome collection
+    outcome_min_decisions_for_training: int = 50
+    outcome_collection_lookback_days: int = 365
+
+    # Evaluation (Person B)
+    eval_schedule_hours: int = 24
+    eval_accuracy_threshold: float = 0.65
+    eval_drift_pvalue_threshold: float = 0.01
+    eval_min_predictions_for_eval: int = 30
+
+    # Training (Person C)
+    training_schedule_hours: int = 168
+    training_test_split: float = 0.2
+    training_cv_folds: int = 5
+    training_optuna_trials: int = 50
+    training_max_duration_minutes: int = 60
+
+    # Model management
+    model_promotion_min_improvement: float = 0.02
+    model_ab_test_traffic_pct: float = 0.10
+    model_ab_test_min_samples: int = 100
+    model_rollback_degradation_threshold: float = 0.05
+
+    # Fairness
+    fairness_dial: float = 0.5
+    fairness_protected_attributes: list[str] = [
+        "nationality", "gender", "ethnicity", "first_generation"
+    ]
+    fairness_max_disparity: float = 0.15
+    fairness_check_on_promotion: bool = True
+
     # Notifications — Amazon SES
     ses_region: str = "us-east-1"
     ses_sender_email: str = "noreply@unipaith.com"

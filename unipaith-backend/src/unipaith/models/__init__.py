@@ -27,6 +27,10 @@ from unipaith.models.matching import (
 from unipaith.models.workflow import (
     Notification, NotificationPreference, Touchpoint,
 )
+from unipaith.models.ml_loop import (
+    OutcomeRecord, EvaluationRun, TrainingRun,
+    ABTestAssignment, DriftSnapshot, FairnessReport,
+)
 
 __all__ = [
     "Base", "User", "UserRole",
@@ -45,4 +49,6 @@ __all__ = [
     "Embedding", "PredictionLog", "ModelRegistry",
     "DataSource", "RawIngestedData", "OfferComparison",
     "Notification", "NotificationPreference", "Touchpoint",
+    "OutcomeRecord", "EvaluationRun", "TrainingRun",
+    "ABTestAssignment", "DriftSnapshot", "FairnessReport",
 ]
