@@ -1,6 +1,7 @@
 """
 Matching service — orchestrates AI pipelines for the API layer.
 """
+from __future__ import annotations
 
 from uuid import UUID
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
@@ -52,17 +54,19 @@ async def semantic_program_search(
     client = get_embedding_client()
     query_embedding = await client.embed_text(q)
 
-    query = text("""
-        SELECT e.entity_id, 1 - (e.embedding <=> :query_vec) as similarity
-        FROM embeddings e
-        JOIN programs p ON e.entity_id = p.id
-        WHERE e.entity_type = 'program'
-          AND p.is_published = true
-        ORDER BY e.embedding <=> :query_vec
-        LIMIT :limit
-    """)
+    vec_str = "[" + ",".join(str(float(v)) for v in query_embedding) + "]"
+
+    query = text(
+        "SELECT e.entity_id, 1 - (e.embedding <=> cast(:query_vec as vector)) as similarity "
+        "FROM embeddings e "
+        "JOIN programs p ON e.entity_id = p.id "
+        "WHERE e.entity_type = 'program' "
+        "AND p.is_published = true "
+        "ORDER BY e.embedding <=> cast(:query_vec as vector) "
+        "LIMIT :limit"
+    )
     result = await db.execute(
-        query, {"query_vec": str(query_embedding), "limit": limit}
+        query, {"query_vec": vec_str, "limit": limit}
     )
     rows = result.fetchall()
 

@@ -3,6 +3,7 @@ Background AI jobs.
 Triggered by events (profile update, program change) or scheduled.
 In MVP, they run inline. In production, use Celery/SQS/EventBridge.
 """
+from __future__ import annotations
 
 import logging
 from uuid import UUID

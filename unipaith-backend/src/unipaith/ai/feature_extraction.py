@@ -4,6 +4,7 @@ Hybrid feature extraction pipeline.
 - LLM features: extracted from free-text via LLM (rich, semantic)
 Combined into a single feature_data JSON stored in student_features / institution_features tables.
 """
+from __future__ import annotations
 
 import json
 from datetime import date, datetime, timezone

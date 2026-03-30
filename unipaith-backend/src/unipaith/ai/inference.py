@@ -1,18 +1,8 @@
 """
 Inference Pipeline (Person A).
 Given a student, produces ranked program matches with scores and tiers.
-
-Steps:
-1. Ensure student features + embedding are fresh
-2. pgvector similarity search -> top N candidates
-3. Apply dealbreaker filters
-4. Enrich with 3 influential factors (historical, institution prefs, student prefs)
-5. Compute final weighted score
-6. Rank, tier, keep top 30
-7. Generate NL reasoning for each match
-8. Cache results in match_results table
-9. Log to prediction_logs
 """
+from __future__ import annotations
 
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -138,19 +128,27 @@ class InferencePipeline:
         if not student_emb:
             return []
 
-        query = text("""
-            SELECT e.entity_id, 1 - (e.embedding <=> :student_vec) as similarity
-            FROM embeddings e
-            JOIN programs p ON e.entity_id = p.id
-            WHERE e.entity_type = 'program'
-              AND p.is_published = true
-            ORDER BY e.embedding <=> :student_vec
-            LIMIT :limit
-        """)
+        # Format the vector as pgvector expects: [0.1,0.2,...]
+        vec = student_emb.embedding
+        if hasattr(vec, 'tolist'):
+            vec = vec.tolist()
+        vec_str = "[" + ",".join(str(float(v)) for v in vec) + "]"
+
+        # Use $N placeholder style to avoid conflict with SQLAlchemy's :param
+        # and pgvector's ::vector cast
+        query = text(
+            "SELECT e.entity_id, 1 - (e.embedding <=> cast(:student_vec as vector)) as similarity "
+            "FROM embeddings e "
+            "JOIN programs p ON e.entity_id = p.id "
+            "WHERE e.entity_type = 'program' "
+            "AND p.is_published = true "
+            "ORDER BY e.embedding <=> cast(:student_vec as vector) "
+            "LIMIT :limit"
+        )
 
         result = await self.db.execute(
             query,
-            {"student_vec": str(student_emb.embedding), "limit": limit},
+            {"student_vec": vec_str, "limit": limit},
         )
         rows = result.fetchall()
         return [(row[0], float(row[1])) for row in rows]

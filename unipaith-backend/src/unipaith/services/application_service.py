@@ -1,9 +1,14 @@
+from __future__ import annotations
+
+import random
+import string
 import uuid
 from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from unipaith.core.exceptions import (
     BadRequestException,
@@ -16,7 +21,9 @@ from unipaith.models.application import (
     ApplicationSubmission,
     OfferLetter,
 )
+from unipaith.models.engagement import StudentEssay, StudentResume
 from unipaith.models.institution import Program
+from unipaith.models.student import StudentProfile
 
 
 class ApplicationService:
@@ -220,6 +227,190 @@ class ApplicationService:
 
         await self.db.flush()
         return offer
+
+    # --- Submission with guardrails ---
+
+    async def submit_application_with_guardrails(
+        self, student_id: UUID, application_id: UUID
+    ) -> Application:
+        """Submit an application with full readiness validation and snapshot.
+
+        1. Verifies the application exists, belongs to the student, and is in
+           ``draft`` status.
+        2. Runs a readiness check via :class:`ChecklistService`.
+        3. If not ready, raises :class:`BadRequestException` with the list of
+           missing items.
+        4. Creates an :class:`ApplicationSubmission` with a frozen snapshot of
+           all student materials.
+        5. Generates a unique confirmation number (``UP-{year}-{6 chars}``).
+        6. Transitions the application to ``submitted``.
+
+        Returns:
+            The updated :class:`Application` instance.
+        """
+        from unipaith.services.checklist_service import ChecklistService
+
+        app = await self._get_application_for_student(student_id, application_id)
+
+        if app.status != "draft":
+            raise BadRequestException("Only draft applications can be submitted")
+
+        # Run readiness check
+        checklist_svc = ChecklistService(self.db)
+        readiness = await checklist_svc.readiness_check(student_id, application_id)
+
+        if not readiness["is_ready"]:
+            missing = ", ".join(readiness["missing_items"])
+            raise BadRequestException(
+                f"Application is not ready for submission. Missing: {missing}"
+            )
+
+        # Build frozen snapshot
+        snapshot = await self._build_submission_snapshot(
+            student_id, application_id, app.program_id
+        )
+
+        # Generate unique confirmation number: UP-{year}-{6 random alphanumeric}
+        year = datetime.now(timezone.utc).year
+        random_part = "".join(
+            random.choices(string.ascii_uppercase + string.digits, k=6)
+        )
+        confirmation = f"UP-{year}-{random_part}"
+
+        now = datetime.now(timezone.utc)
+        app.status = "submitted"
+        app.submitted_at = now
+        app.completeness_status = "complete"
+
+        submission = ApplicationSubmission(
+            application_id=app.id,
+            submitted_documents=snapshot,
+            submitted_at=now,
+            confirmation_number=confirmation,
+        )
+        self.db.add(submission)
+        await self.db.flush()
+        return app
+
+    async def _build_submission_snapshot(
+        self, student_id: UUID, application_id: UUID, program_id: UUID
+    ) -> dict:
+        """Build a frozen JSONB snapshot of all student materials at submission time.
+
+        Captures profile, academic records, test scores, activities,
+        documents, essays (for this program), and the latest resume.
+
+        Returns:
+            A dictionary suitable for storing in
+            ``ApplicationSubmission.submitted_documents``.
+        """
+        # Load profile with eager-loaded relationships
+        result = await self.db.execute(
+            select(StudentProfile)
+            .where(StudentProfile.id == student_id)
+            .options(
+                selectinload(StudentProfile.academic_records),
+                selectinload(StudentProfile.test_scores),
+                selectinload(StudentProfile.activities),
+                selectinload(StudentProfile.documents),
+            )
+        )
+        profile = result.scalar_one_or_none()
+        if not profile:
+            raise NotFoundException("Student profile not found")
+
+        # Load essays for this program
+        essay_result = await self.db.execute(
+            select(StudentEssay).where(
+                StudentEssay.student_id == student_id,
+                StudentEssay.program_id == program_id,
+            )
+        )
+        essays = list(essay_result.scalars().all())
+
+        # Load latest resume
+        resume_result = await self.db.execute(
+            select(StudentResume)
+            .where(StudentResume.student_id == student_id)
+            .order_by(StudentResume.resume_version.desc())
+            .limit(1)
+        )
+        resume = resume_result.scalar_one_or_none()
+
+        snapshot: dict = {
+            "snapshot_at": datetime.now(timezone.utc).isoformat(),
+            "profile": {
+                "first_name": profile.first_name,
+                "last_name": profile.last_name,
+                "nationality": profile.nationality,
+                "country_of_residence": profile.country_of_residence,
+                "bio_text": profile.bio_text,
+                "goals_text": profile.goals_text,
+            },
+            "academic_records": [
+                {
+                    "institution_name": r.institution_name,
+                    "degree_type": r.degree_type,
+                    "field_of_study": r.field_of_study,
+                    "gpa": str(r.gpa) if r.gpa else None,
+                    "gpa_scale": r.gpa_scale,
+                    "start_date": r.start_date.isoformat() if r.start_date else None,
+                    "end_date": r.end_date.isoformat() if r.end_date else None,
+                    "is_current": r.is_current,
+                    "honors": r.honors,
+                    "thesis_title": r.thesis_title,
+                    "country": r.country,
+                }
+                for r in profile.academic_records
+            ],
+            "test_scores": [
+                {
+                    "test_type": s.test_type,
+                    "total_score": str(s.total_score) if s.total_score else None,
+                    "sub_scores": s.sub_scores,
+                    "test_date": s.test_date.isoformat() if s.test_date else None,
+                }
+                for s in profile.test_scores
+            ],
+            "activities": [
+                {
+                    "activity_type": a.activity_type,
+                    "title": a.title,
+                    "organization": a.organization,
+                    "description": a.description,
+                    "start_date": a.start_date.isoformat() if a.start_date else None,
+                    "end_date": a.end_date.isoformat() if a.end_date else None,
+                }
+                for a in profile.activities
+            ],
+            "documents": [
+                {
+                    "document_type": d.document_type,
+                    "file_name": d.file_name,
+                    "file_url": d.file_url,
+                }
+                for d in profile.documents
+            ],
+            "essays": [
+                {
+                    "prompt_text": e.prompt_text,
+                    "content": e.content,
+                    "word_count": e.word_count,
+                    "status": e.status,
+                }
+                for e in essays
+            ],
+            "resume": (
+                {
+                    "content": resume.content,
+                    "rendered_pdf_url": resume.rendered_pdf_url,
+                    "version": resume.resume_version,
+                }
+                if resume
+                else None
+            ),
+        }
+        return snapshot
 
     # --- Helpers ---
 

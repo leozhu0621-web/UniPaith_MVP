@@ -68,5 +68,37 @@ class Settings(BaseSettings):
     # AI dev mode
     ai_mock_mode: bool = False
 
+    # Notifications — Amazon SES
+    ses_region: str = "us-east-1"
+    ses_sender_email: str = "noreply@unipaith.com"
+    ses_sender_name: str = "UniPaith"
+    notifications_enabled: bool = False
+
+    # Essay Workshop
+    essay_max_drafts: int = 20
+    essay_feedback_max_tokens: int = 1500
+    essay_feedback_temperature: float = 0.6
+
+    # Resume Workshop
+    resume_max_versions: int = 10
+    resume_feedback_max_tokens: int = 1200
+    resume_score_max_tokens: int = 800
+
+    # Review Pipeline
+    review_auto_assign: bool = True
+    review_default_due_days: int = 14
+    review_min_reviewers: int = 1
+    review_max_reviewers: int = 3
+
+    # Messaging
+    message_max_length: int = 5000
+    message_rate_limit_per_hour: int = 30
+
+    # Events
+    event_rsvp_reminder_hours: int = 24
+
+    # Notifications
+    notification_retention_days: int = 90
+
 
 settings = Settings()

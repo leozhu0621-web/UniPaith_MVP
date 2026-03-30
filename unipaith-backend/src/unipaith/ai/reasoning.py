@@ -2,6 +2,7 @@
 NL Reasoning Generator.
 Produces human-readable match explanations using the reasoning LLM.
 """
+from __future__ import annotations
 
 from uuid import UUID
 

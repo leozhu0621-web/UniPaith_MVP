@@ -4,13 +4,13 @@
     {
       "name": "frontend",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "cd /Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/frontend && npm run dev"],
+      "runtimeArgs": ["-c", "cd /tmp/unipaith-mvp/frontend && npm run dev"],
       "port": 5173
     },
     {
       "name": "backend",
-      "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "cd /Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend && .venv/bin/uvicorn unipaith.main:app --reload --port 8000"],
+      "runtimeExecutable": "/Users/leozhu/opt/anaconda3/envs/py312/bin/uvicorn",
+      "runtimeArgs": ["unipaith.main:app", "--reload", "--port", "8000", "--app-dir", "/tmp/unipaith-mvp/unipaith-backend/src"],
       "port": 8000
     }
   ]

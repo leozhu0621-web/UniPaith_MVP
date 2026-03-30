@@ -4,6 +4,7 @@ Supports two modes:
 1. API mode: calls vLLM /v1/embeddings endpoint (production)
 2. Mock mode: returns deterministic random vectors (dev/testing)
 """
+from __future__ import annotations
 
 import numpy as np
 from openai import AsyncOpenAI

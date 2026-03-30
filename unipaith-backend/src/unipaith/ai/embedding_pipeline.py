@@ -3,6 +3,7 @@ Embedding generation pipeline.
 Takes feature_data from student_features/institution_features and generates
 768-dim embeddings stored in the embeddings table (pgvector).
 """
+from __future__ import annotations
 
 from datetime import datetime, timezone
 from uuid import UUID

@@ -24,6 +24,9 @@ from unipaith.models.matching import (
     Embedding, PredictionLog, ModelRegistry,
     DataSource, RawIngestedData, OfferComparison,
 )
+from unipaith.models.workflow import (
+    Notification, NotificationPreference, Touchpoint,
+)
 
 __all__ = [
     "Base", "User", "UserRole",
@@ -41,4 +44,5 @@ __all__ = [
     "MatchResult", "StudentFeature", "InstitutionFeature",
     "Embedding", "PredictionLog", "ModelRegistry",
     "DataSource", "RawIngestedData", "OfferComparison",
+    "Notification", "NotificationPreference", "Touchpoint",
 ]

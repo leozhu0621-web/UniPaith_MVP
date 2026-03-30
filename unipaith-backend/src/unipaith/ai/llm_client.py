@@ -2,6 +2,7 @@
 Unified LLM client for all AI operations.
 Uses OpenAI-compatible API (works with vLLM, OpenAI, Anthropic via proxy, etc.)
 """
+from __future__ import annotations
 
 from openai import AsyncOpenAI
 
