@@ -77,8 +77,12 @@ resource "aws_cloudfront_distribution" "main" {
   }
 
   # --- Backend origin (ALB) ---
+  # Use the api.<domain> hostname (not the raw ELB DNS name). CloudFront connects with
+  # HTTPS and SNI must match the ACM certificate on the ALB listener; the cert is issued
+  # for api.<domain> and <domain>, not for *.elb.amazonaws.com. Using the ELB hostname
+  # causes TLS mismatch and CloudFront returns 502 for /api/* requests.
   origin {
-    domain_name = aws_lb.main.dns_name
+    domain_name = "api.${var.domain_name}"
     origin_id   = "alb-backend"
 
     custom_origin_config {
@@ -157,4 +161,6 @@ resource "aws_cloudfront_distribution" "main" {
   }
 
   tags = { Name = "${var.project}-cdn" }
+
+  depends_on = [aws_route53_record.api]
 }

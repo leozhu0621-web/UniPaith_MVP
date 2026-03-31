@@ -93,6 +93,14 @@ apiClient.interceptors.response.use(
       }
     }
 
+    const status = error.response?.status
+    if (status === 502 || status === 503 || status === 504) {
+      return Promise.reject(
+        new Error(
+          'The API is temporarily unreachable (bad gateway). This is usually a deployment or connection issue — try again in a minute. If it persists, confirm the backend service is healthy.',
+        ),
+      )
+    }
     const message = (error.response?.data as any)?.detail || error.message
     return Promise.reject(new Error(message))
   }
