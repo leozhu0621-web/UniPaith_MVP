@@ -38,6 +38,7 @@ install: install-backend install-frontend  ## Install all dependencies
 
 test-backend:  ## Run backend tests
 	cd unipaith-backend && \
+		PYTHONPATH=src \
 		DATABASE_URL="postgresql+asyncpg://unipaith:unipaith@localhost:5432/unipaith" \
 		COGNITO_BYPASS=true \
 		AI_MOCK_MODE=true \
@@ -67,19 +68,21 @@ format-check:  ## Check formatting without changing files
 
 reset-db:  ## Drop and recreate all tables + seed data
 	cd unipaith-backend && \
+		PYTHONPATH=src \
 		DATABASE_URL="postgresql+asyncpg://unipaith:unipaith@localhost:5432/unipaith" \
 		.venv/bin/python -m scripts.reset_dev
 
 seed:  ## Seed development data
 	cd unipaith-backend && \
+		PYTHONPATH=src \
 		DATABASE_URL="postgresql+asyncpg://unipaith:unipaith@localhost:5432/unipaith" \
 		.venv/bin/python -m scripts.seed_dev_data
 
 migrate:  ## Run pending migrations
-	cd unipaith-backend && .venv/bin/alembic upgrade head
+	cd unipaith-backend && PYTHONPATH=src .venv/bin/alembic upgrade head
 
 migration:  ## Generate a new migration (usage: make migration MSG="add foo table")
-	cd unipaith-backend && .venv/bin/alembic revision --autogenerate -m "$(MSG)"
+	cd unipaith-backend && PYTHONPATH=src .venv/bin/alembic revision --autogenerate -m "$(MSG)"
 
 # ── Help ───────────────────────────────────────────────────────────
 

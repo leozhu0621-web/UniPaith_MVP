@@ -78,15 +78,7 @@ class CostTracker:
         return [s for s in self._sessions if s.started_at >= month_start_mono]
 
     def get_70b_hours_today(self) -> float:
-        """Total 70B hours used today."""
-        (
-            time.monotonic()
-            - (
-                datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
-                - datetime.now(UTC)
-            ).total_seconds()
-        )
-        # Simpler: just count last 24 hours
+        """Total 70B hours used in the rolling last 24 hours."""
         cutoff = time.monotonic() - 86400
         return sum(
             s.duration_hours
