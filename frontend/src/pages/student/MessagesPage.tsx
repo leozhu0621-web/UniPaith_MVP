@@ -34,7 +34,7 @@ export default function MessagesPage() {
 
   useEffect(() => {
     if (convId && convId !== selectedConv) setSelectedConv(convId)
-  }, [convId, selectedConv])
+  }, [convId])
 
   const sendMut = useMutation({
     mutationFn: (content: string) => sendMessage(selectedConv!, content),
