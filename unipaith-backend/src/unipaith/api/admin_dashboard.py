@@ -7,8 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from unipaith.database import get_db
 from unipaith.models.user import User, UserRole
 from unipaith.models.student import StudentProfile
-from unipaith.models.institution import Institution
-from unipaith.models.program import Program
+from unipaith.models.institution import Institution, Program
 from unipaith.models.application import Application
 from unipaith.models.matching import MatchResult
 from unipaith.models.engagement import EngagementSignal
