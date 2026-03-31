@@ -32,16 +32,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   login: async (email, password) => {
     const { data } = await apiClient.post('/auth/login', { email, password })
-    set({ accessToken: data.access_token, refreshToken: data.refresh_token })
-    localStorage.setItem('unipaith_refresh_token', data.refresh_token)
-
-    const { data: user } = await apiClient.get('/auth/me', {
-      headers: { Authorization: `Bearer ${data.access_token}` },
-    })
+    const u = data.user
     set({
-      user: { id: user.user_id, email: user.email, role: user.role, created_at: user.created_at },
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token ?? null,
+      user: {
+        id: String(u.user_id),
+        email: u.email,
+        role: u.role,
+        created_at: u.created_at,
+      },
       isAuthenticated: true,
     })
+    if (data.refresh_token) {
+      localStorage.setItem('unipaith_refresh_token', data.refresh_token)
+    } else {
+      localStorage.removeItem('unipaith_refresh_token')
+    }
   },
 
   signup: async (email, password, role) => {

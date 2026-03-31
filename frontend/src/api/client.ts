@@ -3,18 +3,33 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1',
   headers: { 'Content-Type': 'application/json' },
+  timeout: 30_000,
 })
 
 let isRefreshing = false
-let refreshSubscribers: ((token: string) => void)[] = []
 
-function subscribeTokenRefresh(cb: (token: string) => void) {
-  refreshSubscribers.push(cb)
+type RefreshWaiter = { resolve: (token: string) => void; reject: (err: unknown) => void }
+
+const refreshWaiters: RefreshWaiter[] = []
+
+function subscribeTokenRefresh(waiter: RefreshWaiter) {
+  refreshWaiters.push(waiter)
 }
 
 function onTokenRefreshed(token: string) {
-  refreshSubscribers.forEach(cb => cb(token))
-  refreshSubscribers = []
+  refreshWaiters.forEach(w => {
+    try {
+      w.resolve(token)
+    } catch {
+      /* ignore */
+    }
+  })
+  refreshWaiters.length = 0
+}
+
+function onRefreshFailed(err: unknown) {
+  refreshWaiters.forEach(w => w.reject(err))
+  refreshWaiters.length = 0
 }
 
 // Lazy-loaded to break circular dep (auth-store imports client, client needs auth-store)
@@ -46,12 +61,15 @@ apiClient.interceptors.response.use(
       const store = await loadAuthStore()
 
       if (isRefreshing) {
-        return new Promise(resolve => {
-          subscribeTokenRefresh((token: string) => {
-            if (originalRequest.headers) {
-              originalRequest.headers.Authorization = `Bearer ${token}`
-            }
-            resolve(apiClient(originalRequest))
+        return new Promise((resolve, reject) => {
+          subscribeTokenRefresh({
+            resolve: (token: string) => {
+              if (originalRequest.headers) {
+                originalRequest.headers.Authorization = `Bearer ${token}`
+              }
+              resolve(apiClient(originalRequest))
+            },
+            reject,
           })
         })
       }
@@ -66,8 +84,9 @@ apiClient.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${newToken}`
         }
         return apiClient(originalRequest)
-      } catch {
+      } catch (refreshErr) {
         isRefreshing = false
+        onRefreshFailed(refreshErr)
         store.getState().logout()
         window.location.href = '/login'
         return Promise.reject(error)

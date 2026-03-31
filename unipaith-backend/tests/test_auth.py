@@ -77,6 +77,8 @@ async def test_login_valid(client: AsyncClient):
     data = resp.json()
     assert "access_token" in data
     assert data["token_type"] == "Bearer"
+    assert data["user"]["email"] == "login@example.com"
+    assert data["user"]["role"] == "student"
 
 
 @pytest.mark.asyncio

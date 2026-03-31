@@ -30,7 +30,7 @@ async def _get_jwks() -> dict[str, Any]:
         f"https://cognito-idp.{settings.aws_region}.amazonaws.com"
         f"/{settings.cognito_user_pool_id}/.well-known/jwks.json"
     )
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=10.0) as client:
         resp = await client.get(url)
         resp.raise_for_status()
         _jwks_cache = resp.json()

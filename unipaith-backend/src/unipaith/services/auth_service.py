@@ -78,6 +78,12 @@ class AuthService:
                 "refresh_token": f"dev-refresh:{user.id}",
                 "expires_in": 3600,
                 "token_type": "Bearer",
+                "user": {
+                    "user_id": user.id,
+                    "email": user.email,
+                    "role": user.role.value,
+                    "created_at": user.created_at,
+                },
             }
 
         client = _get_cognito_client()
@@ -88,12 +94,26 @@ class AuthService:
                 AuthParameters={"USERNAME": email, "PASSWORD": password},
             )
             auth_result = resp["AuthenticationResult"]
+            user_result = await self.db.execute(select(User).where(User.email == email))
+            user = user_result.scalar_one_or_none()
+            if not user:
+                raise BadRequestException(
+                    "No application account for this email. Please sign up first."
+                )
             return {
                 "access_token": auth_result["AccessToken"],
                 "refresh_token": auth_result.get("RefreshToken"),
                 "expires_in": auth_result["ExpiresIn"],
                 "token_type": "Bearer",
+                "user": {
+                    "user_id": user.id,
+                    "email": user.email,
+                    "role": user.role.value,
+                    "created_at": user.created_at,
+                },
             }
+        except BadRequestException:
+            raise
         except Exception as e:
             raise BadRequestException(f"Login failed: {e}") from e
 

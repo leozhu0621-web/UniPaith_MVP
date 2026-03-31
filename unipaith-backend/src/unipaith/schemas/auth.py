@@ -40,3 +40,9 @@ class UserResponse(BaseModel):
     email: str
     role: str
     created_at: datetime
+
+
+class LoginResponse(TokenResponse):
+    """Login returns tokens plus the current user so the client can skip GET /auth/me."""
+
+    user: UserResponse

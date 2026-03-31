@@ -6,6 +6,7 @@ from unipaith.dependencies import get_current_user
 from unipaith.models.user import User
 from unipaith.schemas.auth import (
     LoginRequest,
+    LoginResponse,
     RefreshRequest,
     SignupRequest,
     SignupResponse,
@@ -24,7 +25,7 @@ async def signup(body: SignupRequest, db: AsyncSession = Depends(get_db)):
     return result
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=LoginResponse)
 async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
     svc = AuthService(db)
     result = await svc.login(body.email, body.password)
