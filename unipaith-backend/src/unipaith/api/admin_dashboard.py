@@ -10,7 +10,7 @@ from unipaith.models.student import StudentProfile
 from unipaith.models.institution import Institution, Program
 from unipaith.models.application import Application
 from unipaith.models.matching import MatchResult
-from unipaith.models.engagement import StudentStudentEngagementSignal
+from unipaith.models.engagement import StudentEngagementSignal
 
 router = APIRouter(prefix="/admin/dashboard", tags=["admin-dashboard"])
 
