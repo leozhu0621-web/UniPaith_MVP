@@ -59,6 +59,7 @@ class AuthService:
         user = User(email=email, cognito_sub=cognito_sub, role=UserRole(role))
         self.db.add(user)
         await self.db.flush()
+        await self.db.refresh(user)
 
         if role == "student":
             profile = StudentProfile(user_id=user.id)

@@ -10,7 +10,7 @@ from pydantic import BaseModel, EmailStr, Field
 class SignupRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
-    role: Literal["student", "institution_admin"]
+    role: Literal["student", "institution_admin", "admin"]
 
 
 class SignupResponse(BaseModel):
