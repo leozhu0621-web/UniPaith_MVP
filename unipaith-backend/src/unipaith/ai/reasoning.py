@@ -16,7 +16,8 @@ from unipaith.models.institution import Program
 from unipaith.models.matching import InstitutionFeature, StudentFeature
 from unipaith.models.student import StudentProfile
 
-REASONING_SYSTEM_PROMPT = """You are an admissions advisor generating a personalized match explanation for a student.
+REASONING_SYSTEM_PROMPT = """You are an admissions advisor generating a personalized match
+explanation for a student.
 
 Write 3-5 sentences explaining why this program is a good (or reasonable) match for this student.
 

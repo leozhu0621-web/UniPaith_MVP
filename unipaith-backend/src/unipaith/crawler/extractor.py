@@ -46,7 +46,9 @@ element is an object with these fields (use null for missing data):
   "faculty_contacts": [{"name": "string", "email": "string", "role": "string"}, ...],
   "rankings": {"qs": number, "us_news": number, ...},
   "financial_aid_info": {"scholarships_available": boolean, "avg_award": number, ...},
-  "admission_stats": {"avg_gpa": number, "avg_gre": number, "applicants": number, "enrolled": number}
+  "admission_stats": {
+    "avg_gpa": number, "avg_gre": number, "applicants": number, "enrolled": number
+  }
 }
 
 Return ONLY the JSON array. If no programs are found, return an empty array [].

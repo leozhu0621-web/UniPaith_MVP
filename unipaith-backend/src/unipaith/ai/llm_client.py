@@ -177,12 +177,14 @@ class MockLLMClient:
     async def generate_reasoning(self, system_prompt: str, user_content: str) -> str:
         return (
             "This program is a strong match based on your academic background in computer science "
-            "and your research experience in NLP. The program's emphasis on applied machine learning "
-            "aligns well with your goal of working at the intersection of AI and healthcare. "
+            "and your research experience in NLP. The program's emphasis on applied machine "
+            "learning aligns well with your goal of working at the intersection of AI and "
+            "healthcare. "
             "Your GPA and test scores are competitive for this program. "
             "The program offers co-op opportunities that match your interest "
             "in gaining industry experience. Financial fit is moderate — tuition is within your "
-            "stated budget, and partial scholarships are available for qualified international students."
+            "stated budget, and partial scholarships are available for qualified international "
+            "students."
         )
 
 
