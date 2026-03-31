@@ -187,13 +187,13 @@ class MockLLMClient:
 def get_llm_client() -> LLMClient | AWSLLMClient | MockLLMClient:
     """Factory: returns the appropriate LLM client based on gpu_mode.
 
-    - "mock": synthetic responses ($0, no GPU)
-    - "local": localhost vLLM endpoints
+    - "mock": synthetic responses (tests only)
+    - "local" / "openai": uses configured base_url + api_key (OpenAI API or local vLLM)
     - "aws": AWS GPU instances with auto-start/stop
     """
     if settings.gpu_mode == "mock" or settings.ai_mock_mode:
         return MockLLMClient()
     if settings.gpu_mode == "aws":
         return AWSLLMClient()
-    # "local" or any other value
+    # "local", "openai", or any other value — uses config base_url + api_key
     return LLMClient()

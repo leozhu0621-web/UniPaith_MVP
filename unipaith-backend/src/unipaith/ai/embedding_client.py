@@ -23,7 +23,7 @@ class EmbeddingClient:
     def __init__(self):
         self.client = AsyncOpenAI(
             base_url=settings.embedding_base_url,
-            api_key="not-needed",
+            api_key=settings.openai_api_key or "not-needed",
         )
         self.model = settings.embedding_model
         self.dimension = settings.embedding_dimension
@@ -115,4 +115,5 @@ def get_embedding_client() -> EmbeddingClient | AWSEmbeddingClient | MockEmbeddi
         return MockEmbeddingClient()
     if settings.gpu_mode == "aws":
         return AWSEmbeddingClient()
+    # "local", "openai" — uses config base_url + api_key
     return EmbeddingClient()

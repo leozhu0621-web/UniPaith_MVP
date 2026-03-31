@@ -234,7 +234,8 @@ async def test_generate_student_embedding(db_session: AsyncSession, mock_student
     from unipaith.ai.embedding_pipeline import EmbeddingPipeline
     embedding = await EmbeddingPipeline(db_session).generate_student_embedding(profile.id)
 
-    assert len(embedding) == 768
+    from unipaith.config import settings
+    assert len(embedding) == settings.embedding_dimension
 
     from sqlalchemy import select
     result = await db_session.execute(

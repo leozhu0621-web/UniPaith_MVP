@@ -1,8 +1,19 @@
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
+    @model_validator(mode="after")
+    def _propagate_api_key(self) -> "Settings":
+        """If individual LLM API keys are empty, use the shared openai_api_key."""
+        if self.openai_api_key:
+            if not self.llm_feature_api_key:
+                self.llm_feature_api_key = self.openai_api_key
+            if not self.llm_reasoning_api_key:
+                self.llm_reasoning_api_key = self.openai_api_key
+        return self
 
     # App
     app_name: str = "UniPaith API"
@@ -42,24 +53,27 @@ class Settings(BaseSettings):
     # Logging
     log_level: str = "INFO"
 
-    # LLM - Feature Extraction (Mistral 7B)
-    llm_feature_base_url: str = "http://localhost:8001/v1"
-    llm_feature_model: str = "meta-llama/Llama-3.1-8B-Instruct"
-    llm_feature_api_key: str = "not-needed"
+    # OpenAI API key (used when gpu_mode is "openai" or "local" with OpenAI)
+    openai_api_key: str = ""
+
+    # LLM - Feature Extraction
+    llm_feature_base_url: str = "https://api.openai.com/v1"
+    llm_feature_model: str = "gpt-4o"
+    llm_feature_api_key: str = ""  # auto-filled from openai_api_key
     llm_feature_max_tokens: int = 2048
     llm_feature_temperature: float = 0.1
 
-    # LLM - Reasoning (Llama 70B)
-    llm_reasoning_base_url: str = "http://localhost:8002/v1"
-    llm_reasoning_model: str = "meta-llama/Llama-3.1-70B-Instruct"
-    llm_reasoning_api_key: str = "not-needed"
+    # LLM - Reasoning
+    llm_reasoning_base_url: str = "https://api.openai.com/v1"
+    llm_reasoning_model: str = "gpt-4o"
+    llm_reasoning_api_key: str = ""  # auto-filled from openai_api_key
     llm_reasoning_max_tokens: int = 1024
     llm_reasoning_temperature: float = 0.7
 
-    # Embedding
-    embedding_base_url: str = "http://localhost:8001/v1"
-    embedding_model: str = "nomic-ai/nomic-embed-text-v1.5"
-    embedding_dimension: int = 768
+    # Embedding (OpenAI's embedding model)
+    embedding_base_url: str = "https://api.openai.com/v1"
+    embedding_model: str = "text-embedding-3-small"
+    embedding_dimension: int = 1536  # OpenAI text-embedding-3-small outputs 1536
 
     # Matching
     matching_candidate_count: int = 100

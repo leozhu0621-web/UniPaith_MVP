@@ -6,6 +6,8 @@ from __future__ import annotations
 
 import pytest
 
+from unipaith.config import settings
+
 pytestmark = pytest.mark.gpu
 
 
@@ -20,7 +22,7 @@ def aws_embedding_client():
 async def test_embed_single_text(aws_embedding_client):
     """Should return a 768-dim vector."""
     vec = await aws_embedding_client.embed_text("Computer science student interested in AI")
-    assert len(vec) == 768
+    assert len(vec) == settings.embedding_dimension
     assert all(isinstance(v, float) for v in vec)
 
 
@@ -33,7 +35,7 @@ async def test_embed_batch(aws_embedding_client):
     ]
     vecs = await aws_embedding_client.embed_batch(texts)
     assert len(vecs) == 3
-    assert all(len(v) == 768 for v in vecs)
+    assert all(len(v) == settings.embedding_dimension for v in vecs)
 
 
 async def test_similar_texts_closer(aws_embedding_client):
