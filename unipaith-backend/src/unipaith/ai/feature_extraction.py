@@ -22,7 +22,8 @@ from unipaith.models.student import (
     StudentProfile,
 )
 
-STUDENT_FEATURE_PROMPT = """You are a feature extraction engine for a university admissions matching system.
+STUDENT_FEATURE_PROMPT = """You are a feature extraction engine for a university admissions
+matching system.
 Analyze the student's profile text and extract the following features as a JSON object.
 Return ONLY valid JSON, no other text.
 
@@ -39,13 +40,15 @@ Required fields:
     "notable_strengths": [<list of 2-4 standout qualities>],
     "potential_gaps": [<list of 0-3 areas that could be improved>],
     "extracted_interests": [<list of 3-8 specific academic/career interests>],
-    "motivation_type": <"career_advancement" | "intellectual_curiosity" | "social_impact" | "mixed">,
+    "motivation_type": <"career_advancement" | "intellectual_curiosity" |
+        "social_impact" | "mixed">,
     "readiness_level": <"strong" | "moderate" | "developing">
 }
 
 Be calibrated: 0.5 means average, 0.8+ means exceptional, below 0.3 means very weak."""
 
-PROGRAM_FEATURE_PROMPT = """You are a feature extraction engine for a university admissions matching system.
+PROGRAM_FEATURE_PROMPT = """You are a feature extraction engine for a university admissions
+matching system.
 Analyze the program description and extract the following features as a JSON object.
 Return ONLY valid JSON, no other text.
 
