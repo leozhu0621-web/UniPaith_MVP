@@ -10,7 +10,7 @@ from unipaith.models.student import StudentProfile
 from unipaith.models.institution import Institution, Program
 from unipaith.models.application import Application
 from unipaith.models.matching import MatchResult
-from unipaith.models.engagement import EngagementSignal
+from unipaith.models.engagement import StudentStudentEngagementSignal
 
 router = APIRouter(prefix="/admin/dashboard", tags=["admin-dashboard"])
 
@@ -62,7 +62,7 @@ async def get_system_stats(db: AsyncSession = Depends(get_db)):
     avg_match_score = await db.scalar(select(func.avg(MatchResult.match_score)))
 
     # Engagement
-    total_engagements = await db.scalar(select(func.count(EngagementSignal.id)))
+    total_engagements = await db.scalar(select(func.count(StudentEngagementSignal.id)))
 
     # Recent users (last 10)
     recent_users_result = await db.execute(
