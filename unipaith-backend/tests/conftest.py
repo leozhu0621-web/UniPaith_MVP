@@ -76,10 +76,20 @@ def mock_admin_user() -> User:
     return _make_user("admin")
 
 
+async def _persist_user(db_session: AsyncSession, user: User) -> User:
+    """Persist a mock user to the DB so FK constraints and server defaults work."""
+    db_session.add(user)
+    await db_session.flush()
+    await db_session.refresh(user)
+    return user
+
+
 @pytest.fixture
 async def student_client(
     db_session: AsyncSession, mock_student_user: User,
 ) -> AsyncGenerator[AsyncClient, None]:
+    await _persist_user(db_session, mock_student_user)
+
     async def _override_db() -> AsyncGenerator[AsyncSession, None]:
         yield db_session
 
@@ -100,6 +110,8 @@ async def student_client(
 async def institution_client(
     db_session: AsyncSession, mock_institution_user: User,
 ) -> AsyncGenerator[AsyncClient, None]:
+    await _persist_user(db_session, mock_institution_user)
+
     async def _override_db() -> AsyncGenerator[AsyncSession, None]:
         yield db_session
 
@@ -120,6 +132,8 @@ async def institution_client(
 async def admin_client(
     db_session: AsyncSession, mock_admin_user: User,
 ) -> AsyncGenerator[AsyncClient, None]:
+    await _persist_user(db_session, mock_admin_user)
+
     async def _override_db() -> AsyncGenerator[AsyncSession, None]:
         yield db_session
 

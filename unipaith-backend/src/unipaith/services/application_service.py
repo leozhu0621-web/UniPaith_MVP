@@ -94,6 +94,7 @@ class ApplicationService:
         )
         self.db.add(submission)
         await self.db.flush()
+        await self.db.refresh(app)
         return app
 
     async def withdraw_application(
@@ -290,6 +291,7 @@ class ApplicationService:
         )
         self.db.add(submission)
         await self.db.flush()
+        await self.db.refresh(app)
         return app
 
     async def _build_submission_snapshot(

@@ -118,7 +118,8 @@ class ProgramResponse(BaseModel):
     is_published: bool
     application_deadline: date | None
     program_start_date: date | None
-    highlights: list | None
+    highlights: dict | None
+    faculty_contacts: dict | None = None
     created_at: datetime
     updated_at: datetime
 

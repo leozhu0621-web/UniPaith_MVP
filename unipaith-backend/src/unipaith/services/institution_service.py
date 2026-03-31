@@ -46,6 +46,7 @@ class InstitutionService:
         institution = Institution(admin_user_id=user_id, **data.model_dump())
         self.db.add(institution)
         await self.db.flush()
+        await self.db.refresh(institution)
         return institution
 
     async def update_institution(
@@ -56,6 +57,7 @@ class InstitutionService:
         for key, value in update_data.items():
             setattr(institution, key, value)
         await self.db.flush()
+        await self.db.refresh(institution)
         return institution
 
     # --- Programs ---
@@ -81,6 +83,7 @@ class InstitutionService:
         )
         self.db.add(program)
         await self.db.flush()
+        await self.db.refresh(program)
         return program
 
     async def update_program(
@@ -91,6 +94,7 @@ class InstitutionService:
         for key, value in update_data.items():
             setattr(program, key, value)
         await self.db.flush()
+        await self.db.refresh(program)
         return program
 
     async def publish_program(
@@ -110,6 +114,7 @@ class InstitutionService:
             raise BadRequestException(f"Cannot publish: {'; '.join(errors)}")
         program.is_published = True
         await self.db.flush()
+        await self.db.refresh(program)
         return program
 
     async def unpublish_program(
@@ -118,6 +123,7 @@ class InstitutionService:
         program = await self._verify_program_ownership(institution_id, program_id)
         program.is_published = False
         await self.db.flush()
+        await self.db.refresh(program)
         return program
 
     async def delete_program(
@@ -152,6 +158,7 @@ class InstitutionService:
         segment = TargetSegment(institution_id=institution_id, **data.model_dump())
         self.db.add(segment)
         await self.db.flush()
+        await self.db.refresh(segment)
         return segment
 
     async def update_segment(
@@ -170,6 +177,7 @@ class InstitutionService:
         for key, value in update_data.items():
             setattr(segment, key, value)
         await self.db.flush()
+        await self.db.refresh(segment)
         return segment
 
     async def delete_segment(
@@ -206,13 +214,19 @@ class InstitutionService:
         )
 
         if query:
-            # TODO: upgrade to PostgreSQL full-text search (to_tsvector/to_tsquery)
-            like_q = f"%{query}%"
-            stmt = stmt.where(
-                Program.program_name.ilike(like_q)
-                | Program.description_text.ilike(like_q)
-                | Program.department.ilike(like_q)
+            from sqlalchemy import literal_column
+
+            regconfig = literal_column("'english'::regconfig")
+            search_text = (
+                func.coalesce(Program.program_name, "")
+                + " "
+                + func.coalesce(Program.description_text, "")
+                + " "
+                + func.coalesce(Program.department, "")
             )
+            ts_vector = func.to_tsvector(regconfig, search_text)
+            ts_query = func.plainto_tsquery(regconfig, query)
+            stmt = stmt.where(ts_vector.op("@@")(ts_query))
         if country:
             stmt = stmt.where(Institution.country.ilike(f"%{country}%"))
         if degree_type:

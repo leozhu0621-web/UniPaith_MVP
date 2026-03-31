@@ -6,16 +6,19 @@ from fastapi import FastAPI
 from unipaith.api.router import api_router
 from unipaith.config import settings
 from unipaith.core.middleware import setup_middleware
+from unipaith.core.scheduler import setup_scheduler, shutdown_scheduler
 
 logging.basicConfig(
-    level=logging.DEBUG if settings.debug else logging.INFO,
+    level=getattr(logging, settings.log_level.upper(), logging.INFO),
     format="%(asctime)s %(name)s %(levelname)s %(message)s",
 )
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):  # noqa: ARG001
+    setup_scheduler()
     yield
+    shutdown_scheduler()
 
 
 app = FastAPI(

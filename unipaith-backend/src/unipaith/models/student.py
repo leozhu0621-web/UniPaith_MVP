@@ -96,6 +96,7 @@ class AcademicRecord(Base):
 
 
 class TestScore(Base):
+    __test__ = False  # Prevent pytest from collecting this as a test class
     __tablename__ = "test_scores"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

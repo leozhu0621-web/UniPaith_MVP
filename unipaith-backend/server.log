@@ -1,0 +1,232 @@
+INFO:     Started server process [76414]
+INFO:     Waiting for application startup.
+2026-03-30 19:42:52,150 unipaith.scheduler INFO Scheduler disabled (SCHEDULER_ENABLED=false)
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8003 (Press CTRL+C to quit)
+2026-03-30 19:42:52,569 unipaith INFO GET /api/v1/health -> 200 (2.6ms)
+2026-03-30 19:42:52,607 unipaith INFO HEAD /api/v1/health -> 405 (1.2ms)
+2026-03-30 19:42:52,712 sqlalchemy.engine.Engine INFO select pg_catalog.version()
+2026-03-30 19:42:52,712 sqlalchemy.engine.Engine INFO [raw sql] ()
+2026-03-30 19:42:52,731 sqlalchemy.engine.Engine INFO select current_schema()
+2026-03-30 19:42:52,731 sqlalchemy.engine.Engine INFO [raw sql] ()
+2026-03-30 19:42:52,734 sqlalchemy.engine.Engine INFO show standard_conforming_strings
+2026-03-30 19:42:52,734 sqlalchemy.engine.Engine INFO [raw sql] ()
+2026-03-30 19:42:52,736 sqlalchemy.engine.Engine INFO BEGIN (implicit)
+2026-03-30 19:42:52,802 sqlalchemy.engine.Engine INFO SELECT count(*) AS count_1 
+FROM (SELECT programs.id AS id, programs.institution_id AS institution_id, programs.program_name AS program_name, programs.degree_type AS degree_type, programs.department AS department, programs.duration_months AS duration_months, programs.tuition AS tuition, programs.acceptance_rate AS acceptance_rate, programs.requirements AS requirements, programs.description_text AS description_text, programs.current_preferences_text AS current_preferences_text, programs.is_published AS is_published, programs.application_deadline AS application_deadline, programs.program_start_date AS program_start_date, programs.page_header_image_url AS page_header_image_url, programs.highlights AS highlights, programs.faculty_contacts AS faculty_contacts, programs.created_at AS created_at, programs.updated_at AS updated_at, institutions.id AS id_1, institutions.admin_user_id AS admin_user_id, institutions.name AS name, institutions.type AS type, institutions.country AS country, institutions.region AS region, institutions.city AS city, institutions.ranking_data AS ranking_data, institutions.description_text AS description_text_1, institutions.logo_url AS logo_url, institutions.website_url AS website_url, institutions.is_verified AS is_verified, institutions.created_at AS created_at_1, institutions.updated_at AS updated_at_1 
+FROM programs JOIN institutions ON programs.institution_id = institutions.id 
+WHERE programs.is_published IS true AND (to_tsvector($1::REGCONFIG, coalesce(programs.program_name, $2::VARCHAR) || $3::VARCHAR || coalesce(programs.description_text, $4::VARCHAR) || $5::VARCHAR || coalesce(programs.department, $6::VARCHAR)) @@ plainto_tsquery($7::REGCONFIG, $8::VARCHAR))) AS anon_1
+2026-03-30 19:42:52,802 sqlalchemy.engine.Engine INFO [generated in 0.00026s] ('english', '', ' ', '', ' ', '', 'english', 'data')
+2026-03-30 19:42:52,816 sqlalchemy.engine.Engine INFO ROLLBACK
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 526, in _prepare_and_execute
+    prepared_stmt, attributes = await adapt_connection._prepare(
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 773, in _prepare
+    prepared_stmt = await self._connection.prepare(
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/asyncpg/connection.py", line 638, in prepare
+    return await self._prepare(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/asyncpg/connection.py", line 657, in _prepare
+    stmt = await self._get_statement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/asyncpg/connection.py", line 443, in _get_statement
+    statement = await self._protocol.prepare(
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg/protocol/protocol.pyx", line 165, in prepare
+asyncpg.exceptions.UndefinedTableError: relation "programs" does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 585, in execute
+    self._adapt_connection.await_(
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 563, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 513, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 797, in _handle_exception
+    raise translated_error from error
+sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.ProgrammingError: <class 'asyncpg.exceptions.UndefinedTableError'>: relation "programs" does not exist
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 416, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/fastapi/applications.py", line 1159, in __call__
+    await super().__call__(scope, receive, send)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/applications.py", line 90, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/opt/anaconda3/envs/py312/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+    raise exc
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/src/unipaith/core/middleware.py", line 28, in logging_middleware
+    response: Response = await call_next(request)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/opt/anaconda3/envs/py312/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+    raise exc
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/src/unipaith/core/middleware.py", line 21, in request_id_middleware
+    response: Response = await call_next(request)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 191, in __call__
+    with recv_stream, send_stream, collapse_excgroups():
+                                   ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/opt/anaconda3/envs/py312/lib/python3.12/contextlib.py", line 158, in __exit__
+    self.gen.throw(value)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+    raise exc
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+    response = await self.dispatch_func(request, call_next)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/src/unipaith/core/middleware.py", line 41, in security_headers_middleware
+    response: Response = await call_next(request)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+    raise app_exc from app_exc.__cause__ or app_exc.__context__
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 88, in __call__
+    await self.app(scope, receive, send)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/middleware/gzip.py", line 29, in __call__
+    await responder(scope, receive, send)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/middleware/gzip.py", line 46, in __call__
+    await self.app(scope, receive, self.send_with_compression)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 660, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 680, in app
+    await route.handle(scope, receive, send)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/routing.py", line 276, in handle
+    await self.app(scope, receive, send)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 134, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 120, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 674, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/fastapi/routing.py", line 328, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/src/unipaith/api/programs.py", line 34, in search_programs
+    return await svc.search_programs(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/src/unipaith/services/institution_service.py", line 237, in search_programs
+    total = (await self.db.execute(count_stmt)).scalar_one()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py", line 449, in execute
+    result = await greenlet_spawn(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2249, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
+    return meth(
+           ^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 527, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2363, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 585, in execute
+    self._adapt_connection.await_(
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 563, in _prepare_and_execute
+    self._handle_exception(error)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 513, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py", line 797, in _handle_exception
+    raise translated_error from error
+sqlalchemy.exc.ProgrammingError: (sqlalchemy.dialects.postgresql.asyncpg.ProgrammingError) <class 'asyncpg.exceptions.UndefinedTableError'>: relation "programs" does not exist
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT programs.id AS id, programs.institution_id AS institution_id, programs.program_name AS program_name, programs.degree_type AS degree_type, programs.department AS department, programs.duration_months AS duration_months, programs.tuition AS tuition, programs.acceptance_rate AS acceptance_rate, programs.requirements AS requirements, programs.description_text AS description_text, programs.current_preferences_text AS current_preferences_text, programs.is_published AS is_published, programs.application_deadline AS application_deadline, programs.program_start_date AS program_start_date, programs.page_header_image_url AS page_header_image_url, programs.highlights AS highlights, programs.faculty_contacts AS faculty_contacts, programs.created_at AS created_at, programs.updated_at AS updated_at, institutions.id AS id_1, institutions.admin_user_id AS admin_user_id, institutions.name AS name, institutions.type AS type, institutions.country AS country, institutions.region AS region, institutions.city AS city, institutions.ranking_data AS ranking_data, institutions.description_text AS description_text_1, institutions.logo_url AS logo_url, institutions.website_url AS website_url, institutions.is_verified AS is_verified, institutions.created_at AS created_at_1, institutions.updated_at AS updated_at_1 
+FROM programs JOIN institutions ON programs.institution_id = institutions.id 
+WHERE programs.is_published IS true AND (to_tsvector($1::REGCONFIG, coalesce(programs.program_name, $2::VARCHAR) || $3::VARCHAR || coalesce(programs.description_text, $4::VARCHAR) || $5::VARCHAR || coalesce(programs.department, $6::VARCHAR)) @@ plainto_tsquery($7::REGCONFIG, $8::VARCHAR))) AS anon_1]
+[parameters: ('english', '', ' ', '', ' ', '', 'english', 'data')]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [76414]

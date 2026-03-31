@@ -58,12 +58,12 @@ class AuthService:
 
         user = User(email=email, cognito_sub=cognito_sub, role=UserRole(role))
         self.db.add(user)
+        await self.db.flush()
 
         if role == "student":
             profile = StudentProfile(user_id=user.id)
             self.db.add(profile)
-
-        await self.db.flush()
+            await self.db.flush()
         return {"user_id": user.id, "email": user.email, "role": user.role.value}
 
     async def login(self, email: str, password: str) -> dict[str, Any]:
@@ -129,8 +129,9 @@ class AuthService:
 
         user = User(email=claims.email, cognito_sub=claims.sub, role=UserRole(claims.role))
         self.db.add(user)
+        await self.db.flush()
         if claims.role == "student":
             profile = StudentProfile(user_id=user.id)
             self.db.add(profile)
-        await self.db.flush()
+            await self.db.flush()
         return user

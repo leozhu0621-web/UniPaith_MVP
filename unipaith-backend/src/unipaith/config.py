@@ -34,6 +34,13 @@ class Settings(BaseSettings):
 
     # Rate limiting
     rate_limit_per_minute: int = 60
+    rate_limit_enabled: bool = True
+
+    # Scheduler
+    scheduler_enabled: bool = False
+
+    # Logging
+    log_level: str = "INFO"
 
     # LLM - Feature Extraction (Mistral 7B)
     llm_feature_base_url: str = "http://localhost:8001/v1"

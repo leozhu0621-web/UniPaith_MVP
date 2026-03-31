@@ -7,7 +7,6 @@ from unipaith.models.user import User
 
 
 async def _ensure_institution(db: AsyncSession, user: User) -> Institution:
-    db.add(user)
     inst = Institution(
         admin_user_id=user.id,
         name="Test University",
