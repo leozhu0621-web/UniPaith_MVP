@@ -27,10 +27,10 @@ export default function MessagingPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const convsQ = useQuery({ queryKey: ['conversations'], queryFn: getConversations })
-  const conversations: Conversation[] = convsQ.data ?? []
+  const conversations: Conversation[] = Array.isArray(convsQ.data) ? convsQ.data : []
 
   const programsQ = useQuery({ queryKey: ['institution-programs'], queryFn: getInstitutionPrograms })
-  const programs: Program[] = programsQ.data ?? []
+  const programs: Program[] = Array.isArray(programsQ.data) ? programsQ.data : []
 
   const messagesQ = useQuery({
     queryKey: ['messages', selectedConv],
@@ -38,7 +38,7 @@ export default function MessagingPage() {
     enabled: !!selectedConv,
     refetchInterval: 10000,
   })
-  const messages: Message[] = messagesQ.data ?? []
+  const messages: Message[] = Array.isArray(messagesQ.data) ? messagesQ.data : []
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })

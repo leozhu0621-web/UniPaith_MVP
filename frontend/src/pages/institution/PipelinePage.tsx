@@ -102,14 +102,14 @@ export default function PipelinePage() {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
   const programsQ = useQuery({ queryKey: ['institution-programs'], queryFn: getInstitutionPrograms })
-  const programs: Program[] = programsQ.data ?? []
+  const programs: Program[] = Array.isArray(programsQ.data) ? programsQ.data : []
 
   const applicationsQ = useQuery({
     queryKey: ['pipeline-applications', selectedProgram],
     queryFn: () => getApplicationsByProgram(selectedProgram),
     enabled: !!selectedProgram,
   })
-  const applications: Application[] = applicationsQ.data ?? []
+  const applications: Application[] = Array.isArray(applicationsQ.data) ? applicationsQ.data : []
 
   const grouped = useMemo(() => {
     const filtered = applications.filter(a =>

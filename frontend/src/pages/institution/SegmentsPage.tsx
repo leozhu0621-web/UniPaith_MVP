@@ -25,10 +25,10 @@ export default function SegmentsPage() {
   const [isActive, setIsActive] = useState(true)
 
   const segmentsQ = useQuery({ queryKey: ['segments'], queryFn: getSegments })
-  const segments: Segment[] = segmentsQ.data ?? []
+  const segments: Segment[] = Array.isArray(segmentsQ.data) ? segmentsQ.data : []
 
   const programsQ = useQuery({ queryKey: ['institution-programs'], queryFn: getInstitutionPrograms })
-  const programs: Program[] = programsQ.data ?? []
+  const programs: Program[] = Array.isArray(programsQ.data) ? programsQ.data : []
   const programOptions = [{ value: '', label: 'None' }, ...programs.map(p => ({ value: p.id, label: p.program_name }))]
 
   const resetForm = () => {

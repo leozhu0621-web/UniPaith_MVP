@@ -21,7 +21,7 @@ export default function ProgramsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Program | null>(null)
 
   const programsQ = useQuery({ queryKey: ['institution-programs'], queryFn: getInstitutionPrograms })
-  const programs: Program[] = programsQ.data ?? []
+  const programs: Program[] = Array.isArray(programsQ.data) ? programsQ.data : []
 
   const publishMut = useMutation({
     mutationFn: publishProgram,

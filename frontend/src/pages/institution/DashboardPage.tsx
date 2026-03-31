@@ -26,9 +26,9 @@ export default function DashboardPage() {
   })
 
   const institution = institutionQ.data
-  const programs: Program[] = programsQ.data ?? []
-  const conversations: Conversation[] = conversationsQ.data ?? []
-  const notifications: Notification[] = notificationsQ.data ?? []
+  const programs: Program[] = Array.isArray(programsQ.data) ? programsQ.data : []
+  const conversations: Conversation[] = Array.isArray(conversationsQ.data) ? conversationsQ.data : []
+  const notifications: Notification[] = Array.isArray(notificationsQ.data) ? notificationsQ.data : []
   const unreadMessages = conversations.reduce((sum, c) => sum + (c.unread_count ?? 0), 0)
 
   const isLoading = institutionQ.isLoading || programsQ.isLoading
