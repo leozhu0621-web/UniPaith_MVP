@@ -7,6 +7,9 @@ build/
 .eggs/
 *.egg
 .env
+.env.*
+!.env.example
+.envcd
 *.db
 *.sqlite3
 .venv/
