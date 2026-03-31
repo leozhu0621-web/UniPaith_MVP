@@ -4,7 +4,7 @@
 variable "github_repo" {
   description = "GitHub repo in owner/name format (e.g. acme/unipaith)"
   type        = string
-  default     = "leozhu/unipaith"
+  default     = "leozhu0621-web/UniPaith_MVP"
 }
 
 resource "aws_iam_openid_connect_provider" "github" {
