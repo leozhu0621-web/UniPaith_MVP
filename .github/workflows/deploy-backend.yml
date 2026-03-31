@@ -44,6 +44,9 @@ jobs:
         working-directory: unipaith-backend
         run: |
           pip install -e ".[dev]"
+      - name: Enable pgvector extension
+        run: |
+          PGPASSWORD=unipaith psql -h localhost -U unipaith -d unipaith -c "CREATE EXTENSION IF NOT EXISTS vector;"
       - name: Run tests
         working-directory: unipaith-backend
         env:
