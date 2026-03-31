@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+import os
+
+# Tests run without GPU — override before importing settings
+os.environ.setdefault("GPU_MODE", "mock")
+os.environ.setdefault("AI_MOCK_MODE", "true")
+
 import uuid
 from collections.abc import AsyncGenerator
 from datetime import datetime, timezone

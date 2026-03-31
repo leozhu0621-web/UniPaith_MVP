@@ -48,6 +48,31 @@ def setup_scheduler() -> None:
         replace_existing=True,
     )
 
+    # GPU idle shutdown check — every 5 minutes (only in aws mode)
+    if settings.gpu_mode == "aws":
+        scheduler.add_job(
+            _check_gpu_idle,
+            "interval",
+            minutes=5,
+            id="gpu_idle_check",
+            name="GPU Idle Shutdown Check",
+            replace_existing=True,
+        )
+        logger.info(
+            "GPU idle shutdown enabled (threshold=%dm)",
+            settings.gpu_70b_idle_shutdown_minutes,
+        )
+
+    # Weekly crawler run (if crawler sources exist)
+    scheduler.add_job(
+        _run_crawler,
+        "interval",
+        hours=settings.crawler_default_frequency_hours,
+        id="crawler_weekly",
+        name="Weekly University Crawler",
+        replace_existing=True,
+    )
+
     scheduler.start()
     logger.info(
         "Scheduler started with %d jobs: %s",
@@ -105,3 +130,33 @@ async def _run_feature_refresh() -> None:
         logger.info("Feature refresh completed")
     except Exception:
         logger.exception("Feature refresh failed")
+
+
+async def _check_gpu_idle() -> None:
+    """Check if 70B GPU instance should be shut down due to idleness."""
+    from unipaith.ai.cost_tracker import get_cost_tracker
+    from unipaith.ai.gpu_manager import get_70b_manager
+
+    try:
+        manager = get_70b_manager()
+        stopped = await manager.check_idle_shutdown()
+        if stopped:
+            tracker = get_cost_tracker()
+            tracker.record_stop("70b")
+    except Exception:
+        logger.exception("GPU idle check failed")
+
+
+async def _run_crawler() -> None:
+    """Run the university data crawler for all active sources."""
+    from unipaith.database import async_session
+
+    logger.info("Starting scheduled university crawl")
+    try:
+        async with async_session() as db:
+            from unipaith.crawler.orchestrator import CrawlerOrchestrator
+            orch = CrawlerOrchestrator(db)
+            await orch.run_scheduled_crawls()
+        logger.info("University crawl completed")
+    except Exception:
+        logger.exception("University crawl failed")

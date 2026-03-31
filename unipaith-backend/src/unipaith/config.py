@@ -44,7 +44,7 @@ class Settings(BaseSettings):
 
     # LLM - Feature Extraction (Mistral 7B)
     llm_feature_base_url: str = "http://localhost:8001/v1"
-    llm_feature_model: str = "mistralai/Mistral-7B-Instruct-v0.3"
+    llm_feature_model: str = "meta-llama/Llama-3.1-8B-Instruct"
     llm_feature_api_key: str = "not-needed"
     llm_feature_max_tokens: int = 2048
     llm_feature_temperature: float = 0.1
@@ -74,6 +74,22 @@ class Settings(BaseSettings):
 
     # AI dev mode
     ai_mock_mode: bool = False
+
+    # GPU infrastructure (cloud-first)
+    gpu_mode: str = "aws"  # "aws" | "local" | "mock" (mock only for tests)
+    gpu_8b_instance_id: str = ""
+    gpu_70b_instance_id: str = ""
+    gpu_8b_endpoint: str = "http://localhost:8001"
+    gpu_70b_endpoint: str = "http://localhost:8002"
+    gpu_70b_cold_start_timeout: int = 300
+    gpu_health_check_interval: int = 5
+    gpu_70b_idle_shutdown_minutes: int = 15
+    gpu_70b_max_daily_hours: float = 4.0
+
+    # Cost tracking
+    gpu_monthly_budget_cap: float = 2000.0
+    gpu_8b_hourly_cost: float = 1.01
+    gpu_70b_hourly_cost: float = 5.67
 
     # --- Self-Improving Loop (Phase 4) ---
     # Outcome collection

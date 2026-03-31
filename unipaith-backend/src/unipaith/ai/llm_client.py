@@ -1,12 +1,21 @@
 """
 Unified LLM client for all AI operations.
 Uses OpenAI-compatible API (works with vLLM, OpenAI, Anthropic via proxy, etc.)
+
+Three modes controlled by settings.gpu_mode:
+- "mock": returns synthetic responses (dev/testing, $0)
+- "local": calls localhost vLLM endpoints (local GPU)
+- "aws": calls AWS GPU instances with auto-start/stop for 70B
 """
 from __future__ import annotations
+
+import logging
 
 from openai import AsyncOpenAI
 
 from unipaith.config import settings
+
+logger = logging.getLogger("unipaith.llm_client")
 
 
 class LLMClient:
@@ -49,6 +58,100 @@ class LLMClient:
         return response.choices[0].message.content
 
 
+class AWSLLMClient:
+    """AWS GPU-backed LLM client with on-demand 70B management.
+
+    - extract_features(): uses always-on g5.xlarge (8B model)
+    - generate_reasoning(): auto-starts g5.12xlarge (70B), falls back to template if unavailable
+    """
+
+    def __init__(self):
+        from unipaith.ai.gpu_manager import get_8b_manager, get_70b_manager
+
+        self._8b_manager = get_8b_manager()
+        self._70b_manager = get_70b_manager()
+
+        # 8B client (always-on instance)
+        self.feature_client = AsyncOpenAI(
+            base_url=f"{settings.gpu_8b_endpoint}/v1",
+            api_key="not-needed",
+        )
+        # 70B client (on-demand instance)
+        self.reasoning_client = AsyncOpenAI(
+            base_url=f"{settings.gpu_70b_endpoint}/v1",
+            api_key="not-needed",
+        )
+
+    async def extract_features(self, system_prompt: str, user_content: str) -> str:
+        """Call 8B model on always-on g5.xlarge."""
+        response = await self.feature_client.chat.completions.create(
+            model=settings.llm_feature_model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_content},
+            ],
+            max_tokens=settings.llm_feature_max_tokens,
+            temperature=settings.llm_feature_temperature,
+        )
+        return response.choices[0].message.content
+
+    async def generate_reasoning(self, system_prompt: str, user_content: str) -> str:
+        """Call 70B model on on-demand g5.12xlarge, with auto-start and fallback."""
+        # Check budget before starting expensive instance
+        if await self._is_budget_exceeded():
+            logger.warning("70B budget exceeded, falling back to template reasoning")
+            return self._template_reasoning(user_content)
+
+        # Auto-start 70B if not running
+        if not await self._70b_manager.is_running():
+            logger.info("Starting 70B instance for reasoning generation")
+            ready = await self._70b_manager.ensure_running()
+            if not ready:
+                logger.warning("70B instance failed to start, falling back to template")
+                return self._template_reasoning(user_content)
+
+        self._70b_manager.record_request()
+
+        try:
+            response = await self.reasoning_client.chat.completions.create(
+                model=settings.llm_reasoning_model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_content},
+                ],
+                max_tokens=settings.llm_reasoning_max_tokens,
+                temperature=settings.llm_reasoning_temperature,
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            logger.error("70B reasoning call failed: %s, falling back to template", e)
+            return self._template_reasoning(user_content)
+
+    async def _is_budget_exceeded(self) -> bool:
+        """Check if monthly GPU budget is exceeded."""
+        try:
+            from unipaith.ai.cost_tracker import get_cost_tracker
+            tracker = get_cost_tracker()
+            return tracker.is_budget_exceeded()
+        except Exception:
+            return False  # Don't block on cost tracker errors
+
+    @staticmethod
+    def _template_reasoning(user_content: str) -> str:
+        """Generate basic reasoning from a template when 70B is unavailable.
+
+        Lower quality than the 70B model but costs $0.
+        """
+        return (
+            "Based on the analysis of your profile and this program's requirements, "
+            "this match was determined by evaluating your academic background, "
+            "research experience, and stated preferences against the program's "
+            "admission criteria, faculty research areas, and student outcomes. "
+            "The match score reflects the overall alignment across these dimensions. "
+            "For a more detailed personalized explanation, please try again later."
+        )
+
+
 class MockLLMClient:
     """Mock client for development/testing without GPU access."""
 
@@ -81,8 +184,16 @@ class MockLLMClient:
         )
 
 
-def get_llm_client() -> LLMClient | MockLLMClient:
-    """Factory: returns mock client if ai_mock_mode is enabled."""
-    if settings.ai_mock_mode:
+def get_llm_client() -> LLMClient | AWSLLMClient | MockLLMClient:
+    """Factory: returns the appropriate LLM client based on gpu_mode.
+
+    - "mock": synthetic responses ($0, no GPU)
+    - "local": localhost vLLM endpoints
+    - "aws": AWS GPU instances with auto-start/stop
+    """
+    if settings.gpu_mode == "mock" or settings.ai_mock_mode:
         return MockLLMClient()
+    if settings.gpu_mode == "aws":
+        return AWSLLMClient()
+    # "local" or any other value
     return LLMClient()

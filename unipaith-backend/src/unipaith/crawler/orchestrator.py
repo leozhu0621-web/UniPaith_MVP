@@ -137,23 +137,24 @@ class CrawlerOrchestrator:
             len(program_ids), crawl_job_id,
         )
 
-        # Import Phase 2 pipeline components
-        try:
-            from unipaith.ai.embedding_pipeline import EmbeddingPipeline
+        # Run feature extraction then embedding generation for each program
+        from unipaith.ai.embedding_pipeline import EmbeddingPipeline
+        from unipaith.ai.feature_extraction import FeatureExtractor
 
-            pipeline = EmbeddingPipeline(self.db)
-            for program_id in program_ids:
-                try:
-                    await pipeline.on_program_updated(program_id)
-                except Exception as exc:
-                    logger.warning(
-                        "AI pipeline failed for program %s: %s",
-                        program_id, exc,
-                    )
-        except ImportError:
-            logger.warning(
-                "Phase 2 embedding pipeline not available, skipping AI trigger"
-            )
+        extractor = FeatureExtractor(self.db)
+        pipeline = EmbeddingPipeline(self.db)
+
+        for program_id in program_ids:
+            try:
+                # Step 1: Extract features (structured + LLM-derived)
+                await extractor.extract_program_features(program_id)
+                # Step 2: Generate embedding from features
+                await pipeline.generate_program_embedding(program_id)
+                logger.info("AI pipeline complete for program %s", program_id)
+            except Exception as exc:
+                logger.warning(
+                    "AI pipeline failed for program %s: %s", program_id, exc,
+                )
 
     async def crawl_single_url(
         self,

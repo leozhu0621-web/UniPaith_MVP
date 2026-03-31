@@ -169,3 +169,126 @@ async def refresh_program_features(
     svc = MatchingService(db)
     features = await svc.refresh_program_features(program_id)
     return {"program_id": str(program_id), "features": features}
+
+
+# --- GPU / AI Cost Monitoring ---
+
+
+@router.post("/ai/bootstrap")
+async def trigger_bootstrap(
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Trigger the full AI bootstrap pipeline: crawl → extract → embed."""
+    from unipaith.config import settings as s
+
+    if s.gpu_mode == "mock" or s.ai_mock_mode:
+        from unipaith.core.exceptions import BadRequestException
+        raise BadRequestException(
+            "Cannot bootstrap in mock mode. Set GPU_MODE=aws or GPU_MODE=local."
+        )
+
+    # Run crawls
+    from unipaith.crawler.orchestrator import CrawlerOrchestrator
+    orch = CrawlerOrchestrator(db)
+    crawl_results = await orch.run_scheduled_crawls()
+
+    # Run AI pipeline for all programs
+    from unipaith.ai.embedding_pipeline import EmbeddingPipeline
+    from unipaith.ai.feature_extraction import FeatureExtractor
+    from unipaith.models.institution import Program
+
+    result = await db.execute(select(Program.id))
+    program_ids = [row[0] for row in result.all()]
+
+    extractor = FeatureExtractor(db)
+    pipeline = EmbeddingPipeline(db)
+    features_ok = 0
+    embeddings_ok = 0
+
+    for pid in program_ids:
+        try:
+            await extractor.extract_program_features(pid)
+            features_ok += 1
+            await pipeline.generate_program_embedding(pid)
+            embeddings_ok += 1
+        except Exception:
+            pass
+
+    await db.commit()
+
+    return {
+        "crawl": crawl_results,
+        "programs_found": len(program_ids),
+        "features_extracted": features_ok,
+        "embeddings_generated": embeddings_ok,
+    }
+
+
+@router.get("/ai/bootstrap-status")
+async def bootstrap_status(
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Current state of the AI engine's knowledge."""
+    from unipaith.models.crawler import CrawlJob, ExtractedProgram
+    from unipaith.models.matching import DataSource, Embedding, InstitutionFeature
+
+    sources = (await db.execute(
+        select(func.count()).select_from(DataSource).where(DataSource.is_active.is_(True))
+    )).scalar_one()
+    crawl_jobs = (await db.execute(
+        select(func.count()).select_from(CrawlJob)
+    )).scalar_one()
+    extracted = (await db.execute(
+        select(func.count()).select_from(ExtractedProgram)
+    )).scalar_one()
+    programs = (await db.execute(
+        select(func.count()).select_from(Program)
+    )).scalar_one()
+    features = (await db.execute(
+        select(func.count()).select_from(InstitutionFeature)
+    )).scalar_one()
+    embeddings = (await db.execute(
+        select(func.count()).select_from(Embedding)
+    )).scalar_one()
+
+    return {
+        "active_sources": sources,
+        "crawl_jobs_run": crawl_jobs,
+        "programs_extracted": extracted,
+        "programs_in_db": programs,
+        "features_generated": features,
+        "embeddings_generated": embeddings,
+        "engine_ready": embeddings > 0,
+    }
+
+
+@router.get("/ai-costs")
+async def ai_costs(user: User = Depends(require_admin)):
+    """GPU usage and cost tracking for the AI engine."""
+    from unipaith.ai.cost_tracker import get_cost_tracker
+    return get_cost_tracker().get_usage_summary()
+
+
+@router.get("/ai-status")
+async def ai_status(user: User = Depends(require_admin)):
+    """Current status of all AI engine components."""
+    from unipaith.config import settings as s
+
+    status = {
+        "gpu_mode": s.gpu_mode,
+        "8b_instance": {"configured": bool(s.gpu_8b_instance_id)},
+        "70b_instance": {"configured": bool(s.gpu_70b_instance_id)},
+    }
+
+    if s.gpu_mode == "aws":
+        from unipaith.ai.gpu_manager import get_8b_manager, get_70b_manager
+        m8b = get_8b_manager()
+        m70b = get_70b_manager()
+        status["8b_instance"]["state"] = m8b.get_instance_state()
+        status["70b_instance"]["state"] = m70b.get_instance_state()
+        idle = m70b.idle_seconds
+        status["70b_instance"]["idle_seconds"] = round(idle, 1) if idle else None
+
+    return status

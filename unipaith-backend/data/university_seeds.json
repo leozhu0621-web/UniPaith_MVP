@@ -1,0 +1,502 @@
+[
+  {
+    "name": "Massachusetts Institute of Technology",
+    "short_name": "MIT",
+    "base_url": "https://www.mit.edu",
+    "program_urls": [
+      "https://gradadmissions.mit.edu/programs"
+    ],
+    "country": "US",
+    "tier": "top_20"
+  },
+  {
+    "name": "Stanford University",
+    "short_name": "Stanford",
+    "base_url": "https://www.stanford.edu",
+    "program_urls": [
+      "https://gradadmissions.stanford.edu/programs"
+    ],
+    "country": "US",
+    "tier": "top_20"
+  },
+  {
+    "name": "Harvard University",
+    "short_name": "Harvard",
+    "base_url": "https://www.harvard.edu",
+    "program_urls": [
+      "https://gsas.harvard.edu/programs"
+    ],
+    "country": "US",
+    "tier": "top_20"
+  },
+  {
+    "name": "California Institute of Technology",
+    "short_name": "Caltech",
+    "base_url": "https://www.caltech.edu",
+    "program_urls": [
+      "https://www.caltech.edu/academics/graduate-studies"
+    ],
+    "country": "US",
+    "tier": "top_20"
+  },
+  {
+    "name": "University of California, Berkeley",
+    "short_name": "UC Berkeley",
+    "base_url": "https://www.berkeley.edu",
+    "program_urls": [
+      "https://grad.berkeley.edu/programs/"
+    ],
+    "country": "US",
+    "tier": "top_20"
+  },
+  {
+    "name": "Carnegie Mellon University",
+    "short_name": "CMU",
+    "base_url": "https://www.cmu.edu",
+    "program_urls": [
+      "https://www.cmu.edu/graduate/academics/guide-to-graduate-programs.html"
+    ],
+    "country": "US",
+    "tier": "top_20"
+  },
+  {
+    "name": "Columbia University",
+    "short_name": "Columbia",
+    "base_url": "https://www.columbia.edu",
+    "program_urls": [
+      "https://gsas.columbia.edu/degree-programs"
+    ],
+    "country": "US",
+    "tier": "top_20"
+  },
+  {
+    "name": "University of Chicago",
+    "short_name": "UChicago",
+    "base_url": "https://www.uchicago.edu",
+    "program_urls": [
+      "https://grad.uchicago.edu/academics/degree-programs/"
+    ],
+    "country": "US",
+    "tier": "top_20"
+  },
+  {
+    "name": "Princeton University",
+    "short_name": "Princeton",
+    "base_url": "https://www.princeton.edu",
+    "program_urls": [
+      "https://gradschool.princeton.edu/academics/degrees-requirements"
+    ],
+    "country": "US",
+    "tier": "top_20"
+  },
+  {
+    "name": "Yale University",
+    "short_name": "Yale",
+    "base_url": "https://www.yale.edu",
+    "program_urls": [
+      "https://gsas.yale.edu/academics/departments-programs"
+    ],
+    "country": "US",
+    "tier": "top_20"
+  },
+  {
+    "name": "University of Pennsylvania",
+    "short_name": "UPenn",
+    "base_url": "https://www.upenn.edu",
+    "program_urls": [
+      "https://www.upenn.edu/academics/graduate-professional"
+    ],
+    "country": "US",
+    "tier": "top_20"
+  },
+  {
+    "name": "Johns Hopkins University",
+    "short_name": "JHU",
+    "base_url": "https://www.jhu.edu",
+    "program_urls": [
+      "https://www.jhu.edu/academics/graduate-programs/"
+    ],
+    "country": "US",
+    "tier": "top_20"
+  },
+  {
+    "name": "Duke University",
+    "short_name": "Duke",
+    "base_url": "https://www.duke.edu",
+    "program_urls": [
+      "https://gradschool.duke.edu/academics/programs/"
+    ],
+    "country": "US",
+    "tier": "top_20"
+  },
+  {
+    "name": "Northwestern University",
+    "short_name": "Northwestern",
+    "base_url": "https://www.northwestern.edu",
+    "program_urls": [
+      "https://www.tgs.northwestern.edu/academics/programs/"
+    ],
+    "country": "US",
+    "tier": "top_20"
+  },
+  {
+    "name": "University of Michigan",
+    "short_name": "UMich",
+    "base_url": "https://umich.edu",
+    "program_urls": [
+      "https://rackham.umich.edu/programs-of-study/"
+    ],
+    "country": "US",
+    "tier": "top_50"
+  },
+  {
+    "name": "Georgia Institute of Technology",
+    "short_name": "Georgia Tech",
+    "base_url": "https://www.gatech.edu",
+    "program_urls": [
+      "https://grad.gatech.edu/degree-programs"
+    ],
+    "country": "US",
+    "tier": "top_50"
+  },
+  {
+    "name": "University of California, Los Angeles",
+    "short_name": "UCLA",
+    "base_url": "https://www.ucla.edu",
+    "program_urls": [
+      "https://grad.ucla.edu/programs/"
+    ],
+    "country": "US",
+    "tier": "top_20"
+  },
+  {
+    "name": "University of Toronto",
+    "short_name": "UofT",
+    "base_url": "https://www.utoronto.ca",
+    "program_urls": [
+      "https://sgs.calendar.utoronto.ca/graduate-programs"
+    ],
+    "country": "CA",
+    "tier": "top_50"
+  },
+  {
+    "name": "University of British Columbia",
+    "short_name": "UBC",
+    "base_url": "https://www.ubc.ca",
+    "program_urls": [
+      "https://www.grad.ubc.ca/prospective-students/graduate-degree-programs"
+    ],
+    "country": "CA",
+    "tier": "top_50"
+  },
+  {
+    "name": "McGill University",
+    "short_name": "McGill",
+    "base_url": "https://www.mcgill.ca",
+    "program_urls": [
+      "https://www.mcgill.ca/gradapplicants/programs"
+    ],
+    "country": "CA",
+    "tier": "top_50"
+  },
+  {
+    "name": "University of Oxford",
+    "short_name": "Oxford",
+    "base_url": "https://www.ox.ac.uk",
+    "program_urls": [
+      "https://www.ox.ac.uk/admissions/graduate/courses/courses-a-z-listing/"
+    ],
+    "country": "UK",
+    "tier": "top_20"
+  },
+  {
+    "name": "University of Cambridge",
+    "short_name": "Cambridge",
+    "base_url": "https://www.cam.ac.uk",
+    "program_urls": [
+      "https://www.postgraduate.study.cam.ac.uk/courses"
+    ],
+    "country": "UK",
+    "tier": "top_20"
+  },
+  {
+    "name": "Imperial College London",
+    "short_name": "Imperial",
+    "base_url": "https://www.imperial.ac.uk",
+    "program_urls": [
+      "https://www.imperial.ac.uk/study/courses/postgraduate-taught/"
+    ],
+    "country": "UK",
+    "tier": "top_20"
+  },
+  {
+    "name": "University College London",
+    "short_name": "UCL",
+    "base_url": "https://www.ucl.ac.uk",
+    "program_urls": [
+      "https://www.ucl.ac.uk/prospective-students/graduate/taught-degrees"
+    ],
+    "country": "UK",
+    "tier": "top_20"
+  },
+  {
+    "name": "ETH Zurich",
+    "short_name": "ETH",
+    "base_url": "https://ethz.ch",
+    "program_urls": [
+      "https://ethz.ch/en/studies/master.html"
+    ],
+    "country": "CH",
+    "tier": "top_20"
+  },
+  {
+    "name": "National University of Singapore",
+    "short_name": "NUS",
+    "base_url": "https://www.nus.edu.sg",
+    "program_urls": [
+      "https://nusgs.nus.edu.sg/programmes/"
+    ],
+    "country": "SG",
+    "tier": "top_20"
+  },
+  {
+    "name": "University of Melbourne",
+    "short_name": "Melbourne",
+    "base_url": "https://www.unimelb.edu.au",
+    "program_urls": [
+      "https://study.unimelb.edu.au/find/courses/graduate/"
+    ],
+    "country": "AU",
+    "tier": "top_50"
+  },
+  {
+    "name": "University of Sydney",
+    "short_name": "USYD",
+    "base_url": "https://www.sydney.edu.au",
+    "program_urls": [
+      "https://www.sydney.edu.au/courses/search.html?search-type=course&level=postgraduate"
+    ],
+    "country": "AU",
+    "tier": "top_50"
+  },
+  {
+    "name": "Tsinghua University",
+    "short_name": "Tsinghua",
+    "base_url": "https://www.tsinghua.edu.cn",
+    "program_urls": [
+      "https://yz.tsinghua.edu.cn/en/"
+    ],
+    "country": "CN",
+    "tier": "top_20"
+  },
+  {
+    "name": "Peking University",
+    "short_name": "PKU",
+    "base_url": "https://english.pku.edu.cn",
+    "program_urls": [
+      "https://www.isd.pku.edu.cn/GRADUATE/index.htm"
+    ],
+    "country": "CN",
+    "tier": "top_20"
+  },
+  {
+    "name": "University of Tokyo",
+    "short_name": "UTokyo",
+    "base_url": "https://www.u-tokyo.ac.jp/en/",
+    "program_urls": [
+      "https://www.u-tokyo.ac.jp/en/academics/grad_schools.html"
+    ],
+    "country": "JP",
+    "tier": "top_20"
+  },
+  {
+    "name": "KAIST",
+    "short_name": "KAIST",
+    "base_url": "https://www.kaist.ac.kr",
+    "program_urls": [
+      "https://admission.kaist.ac.kr/graduate/"
+    ],
+    "country": "KR",
+    "tier": "top_50"
+  },
+  {
+    "name": "University of Waterloo",
+    "short_name": "Waterloo",
+    "base_url": "https://uwaterloo.ca",
+    "program_urls": [
+      "https://uwaterloo.ca/graduate-studies-postdoctoral-affairs/future-students/programs"
+    ],
+    "country": "CA",
+    "tier": "top_50"
+  },
+  {
+    "name": "University of Illinois Urbana-Champaign",
+    "short_name": "UIUC",
+    "base_url": "https://illinois.edu",
+    "program_urls": [
+      "https://grad.illinois.edu/admissions/programs"
+    ],
+    "country": "US",
+    "tier": "top_50"
+  },
+  {
+    "name": "University of Washington",
+    "short_name": "UW",
+    "base_url": "https://www.washington.edu",
+    "program_urls": [
+      "https://grad.uw.edu/admissions/find-a-program/"
+    ],
+    "country": "US",
+    "tier": "top_50"
+  },
+  {
+    "name": "Cornell University",
+    "short_name": "Cornell",
+    "base_url": "https://www.cornell.edu",
+    "program_urls": [
+      "https://gradschool.cornell.edu/academics/fields-of-study/"
+    ],
+    "country": "US",
+    "tier": "top_20"
+  },
+  {
+    "name": "University of California, San Diego",
+    "short_name": "UCSD",
+    "base_url": "https://ucsd.edu",
+    "program_urls": [
+      "https://grad.ucsd.edu/admissions/programs/index.html"
+    ],
+    "country": "US",
+    "tier": "top_50"
+  },
+  {
+    "name": "New York University",
+    "short_name": "NYU",
+    "base_url": "https://www.nyu.edu",
+    "program_urls": [
+      "https://gsas.nyu.edu/admissions/gsas-application-resource-center/programs-and-டadmissions-information.html"
+    ],
+    "country": "US",
+    "tier": "top_50"
+  },
+  {
+    "name": "University of Texas at Austin",
+    "short_name": "UT Austin",
+    "base_url": "https://www.utexas.edu",
+    "program_urls": [
+      "https://gradschool.utexas.edu/academics/programs"
+    ],
+    "country": "US",
+    "tier": "top_50"
+  },
+  {
+    "name": "University of Wisconsin-Madison",
+    "short_name": "UW-Madison",
+    "base_url": "https://www.wisc.edu",
+    "program_urls": [
+      "https://grad.wisc.edu/academics/programs/"
+    ],
+    "country": "US",
+    "tier": "top_50"
+  },
+  {
+    "name": "Boston University",
+    "short_name": "BU",
+    "base_url": "https://www.bu.edu",
+    "program_urls": [
+      "https://www.bu.edu/academics/programs/?type=graduate"
+    ],
+    "country": "US",
+    "tier": "top_50"
+  },
+  {
+    "name": "University of Southern California",
+    "short_name": "USC",
+    "base_url": "https://www.usc.edu",
+    "program_urls": [
+      "https://graduateadmission.usc.edu/programs/"
+    ],
+    "country": "US",
+    "tier": "top_50"
+  },
+  {
+    "name": "Rice University",
+    "short_name": "Rice",
+    "base_url": "https://www.rice.edu",
+    "program_urls": [
+      "https://graduate.rice.edu/programs"
+    ],
+    "country": "US",
+    "tier": "top_50"
+  },
+  {
+    "name": "Purdue University",
+    "short_name": "Purdue",
+    "base_url": "https://www.purdue.edu",
+    "program_urls": [
+      "https://www.purdue.edu/gradschool/prospective/gradareas.html"
+    ],
+    "country": "US",
+    "tier": "top_50"
+  },
+  {
+    "name": "University of Edinburgh",
+    "short_name": "Edinburgh",
+    "base_url": "https://www.ed.ac.uk",
+    "program_urls": [
+      "https://www.ed.ac.uk/studying/postgraduate/degrees"
+    ],
+    "country": "UK",
+    "tier": "top_50"
+  },
+  {
+    "name": "London School of Economics",
+    "short_name": "LSE",
+    "base_url": "https://www.lse.ac.uk",
+    "program_urls": [
+      "https://www.lse.ac.uk/study-at-lse/Graduate"
+    ],
+    "country": "UK",
+    "tier": "top_50"
+  },
+  {
+    "name": "Technical University of Munich",
+    "short_name": "TUM",
+    "base_url": "https://www.tum.de",
+    "program_urls": [
+      "https://www.tum.de/en/studies/degree-programs"
+    ],
+    "country": "DE",
+    "tier": "top_50"
+  },
+  {
+    "name": "Hong Kong University of Science and Technology",
+    "short_name": "HKUST",
+    "base_url": "https://hkust.edu.hk",
+    "program_urls": [
+      "https://fytgs.hkust.edu.hk/admissions/Admission-to-Hong-Kong/submitting-an-application/program-list"
+    ],
+    "country": "HK",
+    "tier": "top_50"
+  },
+  {
+    "name": "Nanyang Technological University",
+    "short_name": "NTU",
+    "base_url": "https://www.ntu.edu.sg",
+    "program_urls": [
+      "https://www.ntu.edu.sg/admissions/graduate-programmes"
+    ],
+    "country": "SG",
+    "tier": "top_50"
+  },
+  {
+    "name": "University of Hong Kong",
+    "short_name": "HKU",
+    "base_url": "https://www.hku.hk",
+    "program_urls": [
+      "https://www.gradsch.hku.hk/gradsch/prospective-students/programmes-on-offer"
+    ],
+    "country": "HK",
+    "tier": "top_50"
+  }
+]

@@ -58,6 +58,9 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = [
+    "gpu: tests requiring GPU infrastructure (deselected by default, run with pytest -m gpu)",
+]
 
 [tool.ruff]
 line-length = 100
