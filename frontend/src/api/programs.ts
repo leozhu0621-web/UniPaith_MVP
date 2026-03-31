@@ -1,0 +1,12 @@
+import apiClient from './client'
+
+export const searchPrograms = (params: {
+  q?: string; country?: string; degree_type?: string;
+  min_tuition?: number; max_tuition?: number; page?: number; page_size?: number
+}) => apiClient.get('/programs', { params }).then(r => r.data)
+
+export const getProgram = (id: string) =>
+  apiClient.get(`/programs/${id}`).then(r => r.data)
+
+export const semanticSearch = (q: string, limit = 10) =>
+  apiClient.get('/programs/search/semantic', { params: { q, limit } }).then(r => r.data)
