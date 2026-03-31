@@ -10,7 +10,10 @@ import type { Program, Application } from '../../types'
 
 export default function AnalyticsPage() {
   const programsQ = useQuery({ queryKey: ['institution-programs'], queryFn: getInstitutionPrograms })
-  const programs: Program[] = Array.isArray(programsQ.data) ? programsQ.data : []
+  const programs: Program[] = useMemo(
+    () => (Array.isArray(programsQ.data) ? programsQ.data : []),
+    [programsQ.data],
+  )
 
   const appQueries = useQueries({
     queries: programs.map(p => ({

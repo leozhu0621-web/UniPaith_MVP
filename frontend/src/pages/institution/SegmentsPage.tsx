@@ -86,7 +86,7 @@ export default function SegmentsPage() {
 
   const handleSubmit = () => {
     if (!name.trim()) { showToast('Name is required', 'warning'); return }
-    let criteria: Record<string, any>
+    let criteria: Record<string, unknown>
     try { criteria = JSON.parse(criteriaText) } catch { showToast('Invalid JSON for criteria', 'error'); return }
 
     const payload = {
