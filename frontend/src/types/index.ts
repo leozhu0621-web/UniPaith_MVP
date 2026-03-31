@@ -360,6 +360,24 @@ export interface NotificationPreference {
   preferences: Record<string, boolean>
 }
 
+// ============ RECOMMENDATIONS ============
+export interface RecommendationRequest {
+  id: string
+  student_id: string
+  recommender_name: string
+  recommender_email: string | null
+  recommender_title: string | null
+  recommender_institution: string | null
+  relationship: string | null
+  status: 'draft' | 'requested' | 'submitted' | 'received'
+  requested_at: string | null
+  due_date: string | null
+  notes: string | null
+  target_program_id: string | null
+  created_at: string
+  updated_at: string
+}
+
 // ============ INSTITUTION ============
 export interface Institution {
   id: string
