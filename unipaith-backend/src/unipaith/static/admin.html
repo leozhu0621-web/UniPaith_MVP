@@ -270,21 +270,34 @@ async function triggerBootstrap() {
   const btn = document.getElementById('btnBootstrap');
   const log = document.getElementById('bootstrapResult');
   btn.disabled = true;
-  btn.textContent = 'Running...';
+  btn.textContent = 'Crawling...';
   log.style.display = 'block';
-  log.textContent = 'Starting crawl and extraction pipeline...\n';
+  log.textContent = 'Crawl started! Watching progress below...\n';
 
   try {
     const data = await api('/internal/ai/bootstrap', { method: 'POST' });
-    log.textContent += JSON.stringify(data, null, 2);
-    toast('Bootstrap complete!');
-    refreshStatus();
-    loadCrawlJobs();
-    loadExtracted();
+    log.textContent += data.message + '\n';
+    toast('Crawl started!');
+    // Poll for progress every 10 seconds
+    const poller = setInterval(async () => {
+      try {
+        await refreshStatus();
+        await loadCrawlJobs();
+        await loadExtracted();
+        const status = await api('/internal/ai/bootstrap-status');
+        log.textContent = `Crawling... Sources: ${status.active_sources} | Programs extracted: ${status.programs_extracted} | Embeddings: ${status.embeddings_generated}\n`;
+        if (status.crawl_jobs_run > 0 && status.crawl_jobs_run >= status.active_sources) {
+          clearInterval(poller);
+          log.textContent += 'All sources processed!';
+          btn.disabled = false;
+          btn.textContent = 'Start Crawl & Learn';
+          toast('Crawl complete!');
+        }
+      } catch (e) {}
+    }, 10000);
   } catch (e) {
     log.textContent += 'Error: ' + e.message;
-    toast('Bootstrap failed', '#da3633');
-  } finally {
+    toast('Failed to start', '#da3633');
     btn.disabled = false;
     btn.textContent = 'Start Crawl & Learn';
   }

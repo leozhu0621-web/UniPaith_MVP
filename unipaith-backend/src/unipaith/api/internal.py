@@ -177,9 +177,13 @@ async def refresh_program_features(
 @router.post("/ai/bootstrap")
 async def trigger_bootstrap(
     user: User = Depends(require_admin),
-    db: AsyncSession = Depends(get_db),
 ):
-    """Trigger the full AI bootstrap pipeline: crawl → extract → embed."""
+    """Trigger the full AI bootstrap pipeline in the background.
+
+    Returns immediately. Monitor progress via GET /ai/bootstrap-status.
+    """
+    import asyncio
+
     from unipaith.config import settings as s
 
     if s.gpu_mode == "mock" or s.ai_mock_mode:
@@ -188,41 +192,57 @@ async def trigger_bootstrap(
             "Cannot bootstrap in mock mode. Set GPU_MODE=aws or GPU_MODE=local."
         )
 
-    # Run crawls
-    from unipaith.crawler.orchestrator import CrawlerOrchestrator
-    orch = CrawlerOrchestrator(db)
-    crawl_results = await orch.run_scheduled_crawls()
+    # Run in background — don't block the HTTP response
+    asyncio.create_task(_run_bootstrap_background())
 
-    # Run AI pipeline for all programs
-    from unipaith.ai.embedding_pipeline import EmbeddingPipeline
-    from unipaith.ai.feature_extraction import FeatureExtractor
-    from unipaith.models.institution import Program
+    return {"status": "started", "message": "Crawl started. Watch progress on this page — it refreshes automatically."}
 
-    result = await db.execute(select(Program.id))
-    program_ids = [row[0] for row in result.all()]
 
-    extractor = FeatureExtractor(db)
-    pipeline = EmbeddingPipeline(db)
-    features_ok = 0
-    embeddings_ok = 0
+async def _run_bootstrap_background():
+    """Background task: crawl all sources, extract features, generate embeddings."""
+    import logging
+    logger = logging.getLogger("unipaith.bootstrap")
 
-    for pid in program_ids:
-        try:
-            await extractor.extract_program_features(pid)
-            features_ok += 1
-            await pipeline.generate_program_embedding(pid)
-            embeddings_ok += 1
-        except Exception:
-            pass
+    from unipaith.database import async_session
 
-    await db.commit()
+    try:
+        async with async_session() as db:
+            from unipaith.crawler.orchestrator import CrawlerOrchestrator
+            orch = CrawlerOrchestrator(db)
+            logger.info("Bootstrap: starting scheduled crawls")
+            results = await orch.run_scheduled_crawls()
+            await db.commit()
 
-    return {
-        "crawl": crawl_results,
-        "programs_found": len(program_ids),
-        "features_extracted": features_ok,
-        "embeddings_generated": embeddings_ok,
-    }
+            total_pages = sum(r.get("pages_crawled", 0) for r in results.get("results", []))
+            total_extracted = sum(r.get("items_extracted", 0) for r in results.get("results", []))
+            logger.info(
+                "Bootstrap crawl done: %d sources, %d pages, %d extracted",
+                results.get("sources_processed", 0), total_pages, total_extracted,
+            )
+
+        # Phase 2: features + embeddings for all programs
+        async with async_session() as db:
+            from unipaith.ai.embedding_pipeline import EmbeddingPipeline
+            from unipaith.ai.feature_extraction import FeatureExtractor
+            from unipaith.models.institution import Program
+
+            result = await db.execute(select(Program.id))
+            program_ids = [row[0] for row in result.all()]
+
+            if program_ids:
+                extractor = FeatureExtractor(db)
+                pipeline = EmbeddingPipeline(db)
+                for pid in program_ids:
+                    try:
+                        await extractor.extract_program_features(pid)
+                        await pipeline.generate_program_embedding(pid)
+                    except Exception as exc:
+                        logger.warning("AI pipeline failed for %s: %s", pid, exc)
+                await db.commit()
+
+            logger.info("Bootstrap complete: %d programs processed", len(program_ids))
+    except Exception:
+        logger.exception("Bootstrap failed")
 
 
 @router.get("/ai/bootstrap-status")
