@@ -17,17 +17,19 @@ function onTokenRefreshed(token: string) {
   refreshSubscribers = []
 }
 
-// Lazy import to break circular dep with auth-store
-let _getAuthStore: (() => any) | null = null
-function getAuthStore() {
-  if (!_getAuthStore) {
-    _getAuthStore = () => require('../stores/auth-store').useAuthStore.getState()
+// Lazy-loaded to break circular dep (auth-store imports client, client needs auth-store)
+let _useAuthStore: any = null
+async function loadAuthStore() {
+  if (!_useAuthStore) {
+    const mod = await import('../stores/auth-store')
+    _useAuthStore = mod.useAuthStore
   }
-  return _getAuthStore()
+  return _useAuthStore
 }
 
-apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = getAuthStore().accessToken
+apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
+  const store = await loadAuthStore()
+  const token = store.getState().accessToken
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`
   }
@@ -41,6 +43,7 @@ apiClient.interceptors.response.use(
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
+      const store = await loadAuthStore()
 
       if (isRefreshing) {
         return new Promise(resolve => {
@@ -56,7 +59,7 @@ apiClient.interceptors.response.use(
       isRefreshing = true
 
       try {
-        const newToken = await getAuthStore().refreshAccessToken()
+        const newToken = await store.getState().refreshAccessToken()
         isRefreshing = false
         onTokenRefreshed(newToken)
         if (originalRequest.headers) {
@@ -65,7 +68,7 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest)
       } catch {
         isRefreshing = false
-        getAuthStore().logout()
+        store.getState().logout()
         window.location.href = '/login'
         return Promise.reject(error)
       }
