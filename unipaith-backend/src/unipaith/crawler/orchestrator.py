@@ -34,10 +34,12 @@ class CrawlerOrchestrator:
         for source in due_sources:
             try:
                 result = await self.run_full_pipeline(source.id)
+                # Commit after each successful pipeline so data is persisted
+                await self.db.commit()
                 results.append(result)
             except Exception as exc:
                 logger.error("Pipeline failed for source %s: %s", source.id, exc)
-                # Rollback to clear any corrupted session state
+                # Rollback only the failed source's changes
                 await self.db.rollback()
                 results.append({
                     "source_id": str(source.id),

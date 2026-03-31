@@ -172,7 +172,7 @@ class Settings(BaseSettings):
 
     # Notifications — Amazon SES
     ses_region: str = "us-east-1"
-    ses_sender_email: str = "noreply@unipaith.com"
+    ses_sender_email: str = "noreply@unipaith.co"
     ses_sender_name: str = "UniPaith"
     notifications_enabled: bool = False
 

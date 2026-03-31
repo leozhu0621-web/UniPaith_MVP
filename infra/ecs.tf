@@ -163,7 +163,7 @@ resource "aws_ecs_task_definition" "backend" {
       { name = "COGNITO_APP_CLIENT_ID", value = var.cognito_app_client_id },
       { name = "COGNITO_DOMAIN", value = var.cognito_domain },
       { name = "COGNITO_BYPASS", value = "false" },
-      { name = "AI_MOCK_MODE", value = "true" },
+      { name = "AI_MOCK_MODE", value = "false" },
       { name = "CORS_ORIGINS", value = "[\"https://${var.domain_name}\",\"https://www.${var.domain_name}\"]" },
       { name = "SES_SENDER_EMAIL", value = "noreply@${var.domain_name}" },
       { name = "NOTIFICATIONS_ENABLED", value = "true" },

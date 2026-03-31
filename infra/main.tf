@@ -8,14 +8,13 @@ terraform {
     }
   }
 
-  # After first apply, uncomment this to store state in S3:
-  # backend "s3" {
-  #   bucket         = "unipaith-terraform-state"
-  #   key            = "production/terraform.tfstate"
-  #   region         = "us-east-1"
-  #   encrypt        = true
-  #   dynamodb_table = "unipaith-terraform-locks"
-  # }
+  backend "s3" {
+    bucket         = "unipaith-terraform-state"
+    key            = "production/terraform.tfstate"
+    region         = "us-east-1"
+    encrypt        = true
+    dynamodb_table = "unipaith-terraform-locks"
+  }
 }
 
 provider "aws" {
