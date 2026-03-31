@@ -44,3 +44,4 @@ infra/*.tfstate
 infra/*.tfstate.backup
 infra/tfplan
 infra/.terraform.lock.hcl
+.claude/worktrees/
