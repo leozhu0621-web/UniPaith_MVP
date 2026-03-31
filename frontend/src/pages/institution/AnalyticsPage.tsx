@@ -10,7 +10,7 @@ import type { Program, Application } from '../../types'
 
 export default function AnalyticsPage() {
   const programsQ = useQuery({ queryKey: ['institution-programs'], queryFn: getInstitutionPrograms })
-  const programs: Program[] = programsQ.data ?? []
+  const programs: Program[] = Array.isArray(programsQ.data) ? programsQ.data : []
 
   // Fetch applications for each program
   const appQueries = programs.map(p =>
@@ -23,7 +23,7 @@ export default function AnalyticsPage() {
   )
 
   const allApps: Application[] = useMemo(() => {
-    return appQueries.flatMap(q => q.data ?? [])
+    return appQueries.flatMap(q => Array.isArray(q.data) ? q.data : [])
   }, [appQueries.map(q => q.data)])
 
   const isLoading = programsQ.isLoading || appQueries.some(q => q.isLoading)

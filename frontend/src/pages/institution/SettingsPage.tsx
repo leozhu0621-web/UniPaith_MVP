@@ -90,7 +90,7 @@ export default function SettingsPage() {
 
   // --- Rubrics ---
   const rubricsQ = useQuery({ queryKey: ['rubrics'], queryFn: () => getRubrics() })
-  const rubrics: Rubric[] = rubricsQ.data ?? []
+  const rubrics: Rubric[] = Array.isArray(rubricsQ.data) ? rubricsQ.data : []
 
   const createRubricMut = useMutation({
     mutationFn: createRubric,

@@ -20,14 +20,14 @@ export default function ReviewQueuePage() {
   const [search, setSearch] = useState('')
 
   const programsQ = useQuery({ queryKey: ['institution-programs'], queryFn: getInstitutionPrograms })
-  const programs: Program[] = programsQ.data ?? []
+  const programs: Program[] = Array.isArray(programsQ.data) ? programsQ.data : []
 
   const appsQ = useQuery({
     queryKey: ['review-queue-apps', selectedProgram],
     queryFn: () => getApplicationsByProgram(selectedProgram),
     enabled: !!selectedProgram,
   })
-  const applications: Application[] = appsQ.data ?? []
+  const applications: Application[] = Array.isArray(appsQ.data) ? appsQ.data : []
 
   const reviewableApps = applications.filter(
     a => a.status === 'submitted' || a.status === 'under_review'
