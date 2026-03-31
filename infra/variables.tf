@@ -91,21 +91,9 @@ variable "backend_max_count" {
   default     = 4
 }
 
-# --- Cognito ---
-variable "cognito_user_pool_id" {
-  description = "Cognito User Pool ID (create manually first)"
+# --- OpenAI ---
+variable "openai_api_key" {
+  description = "OpenAI API key for AI features"
   type        = string
-  default     = ""
-}
-
-variable "cognito_app_client_id" {
-  description = "Cognito App Client ID"
-  type        = string
-  default     = ""
-}
-
-variable "cognito_domain" {
-  description = "Cognito hosted UI domain"
-  type        = string
-  default     = ""
+  sensitive   = true
 }

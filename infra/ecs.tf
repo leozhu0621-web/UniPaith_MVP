@@ -47,6 +47,7 @@ resource "aws_iam_role_policy" "ecs_execution_secrets" {
       Resource = [
         aws_secretsmanager_secret.db_password.arn,
         aws_secretsmanager_secret.app_secret.arn,
+        aws_secretsmanager_secret.openai_api_key.arn,
       ]
     }]
   })
@@ -159,9 +160,9 @@ resource "aws_ecs_task_definition" "backend" {
       { name = "AWS_REGION", value = var.aws_region },
       { name = "S3_BUCKET_NAME", value = "${var.project}-documents" },
       { name = "S3_LOCAL_MODE", value = "false" },
-      { name = "COGNITO_USER_POOL_ID", value = var.cognito_user_pool_id },
-      { name = "COGNITO_APP_CLIENT_ID", value = var.cognito_app_client_id },
-      { name = "COGNITO_DOMAIN", value = var.cognito_domain },
+      { name = "COGNITO_USER_POOL_ID", value = aws_cognito_user_pool.main.id },
+      { name = "COGNITO_APP_CLIENT_ID", value = aws_cognito_user_pool_client.web.id },
+      { name = "COGNITO_DOMAIN", value = "${var.project}.auth.${var.aws_region}.amazoncognito.com" },
       { name = "COGNITO_BYPASS", value = "false" },
       { name = "AI_MOCK_MODE", value = "false" },
       { name = "CORS_ORIGINS", value = "[\"https://${var.domain_name}\",\"https://www.${var.domain_name}\"]" },
@@ -173,6 +174,10 @@ resource "aws_ecs_task_definition" "backend" {
       {
         name      = "DB_PASSWORD"
         valueFrom = aws_secretsmanager_secret.db_password.arn
+      },
+      {
+        name      = "OPENAI_API_KEY"
+        valueFrom = aws_secretsmanager_secret.openai_api_key.arn
       },
     ]
 
