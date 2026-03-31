@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import logging
+from datetime import date
 from decimal import Decimal
 from uuid import UUID
 
@@ -130,14 +131,14 @@ class LLMExtractor:
                 program_name=prog_data.get("program_name"),
                 degree_type=self._normalize_degree_type(prog_data.get("degree_type")),
                 department=prog_data.get("department"),
-                duration_months=prog_data.get("duration_months"),
-                tuition=prog_data.get("tuition"),
+                duration_months=self._safe_int(prog_data.get("duration_months")),
+                tuition=self._safe_int(prog_data.get("tuition")),
                 tuition_currency=prog_data.get("tuition_currency", "USD"),
-                acceptance_rate=prog_data.get("acceptance_rate"),
+                acceptance_rate=self._safe_decimal(prog_data.get("acceptance_rate")),
                 requirements=prog_data.get("requirements"),
                 description_text=prog_data.get("description_text"),
-                application_deadline=prog_data.get("application_deadline"),
-                program_start_date=prog_data.get("program_start_date"),
+                application_deadline=self._parse_date(prog_data.get("application_deadline")),
+                program_start_date=self._parse_date(prog_data.get("program_start_date")),
                 highlights=prog_data.get("highlights"),
                 faculty_contacts=prog_data.get("faculty_contacts"),
                 rankings=prog_data.get("rankings"),
@@ -191,8 +192,12 @@ class LLMExtractor:
 
         total = 0
         for raw in raw_rows:
-            extracted = await self.extract_from_raw(raw.id, crawl_job_id)
-            total += len(extracted)
+            try:
+                extracted = await self.extract_from_raw(raw.id, crawl_job_id)
+                total += len(extracted)
+            except Exception as exc:
+                logger.error("Extraction failed for raw %s: %s", raw.id, exc)
+                await self.db.rollback()
 
         logger.info("Processed %d raw records, extracted %d programs", len(raw_rows), total)
         return total
@@ -289,6 +294,37 @@ class LLMExtractor:
 
         overall = Decimal(str(round(earned / total_weight, 2)))
         return overall, field_confs
+
+    @staticmethod
+    def _parse_date(value: str | None) -> date | None:
+        """Parse a date string (YYYY-MM-DD) into a Python date object."""
+        if not value or not isinstance(value, str):
+            return None
+        try:
+            return date.fromisoformat(value.strip())
+        except (ValueError, TypeError):
+            logger.debug("Could not parse date: %s", value)
+            return None
+
+    @staticmethod
+    def _safe_int(value) -> int | None:
+        """Safely convert a value to int, returning None on failure."""
+        if value is None:
+            return None
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            return None
+
+    @staticmethod
+    def _safe_decimal(value) -> Decimal | None:
+        """Safely convert a value to Decimal, returning None on failure."""
+        if value is None:
+            return None
+        try:
+            return Decimal(str(value))
+        except Exception:
+            return None
 
     @staticmethod
     def _normalize_degree_type(degree: str | None) -> str | None:

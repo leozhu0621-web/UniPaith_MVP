@@ -37,6 +37,8 @@ class CrawlerOrchestrator:
                 results.append(result)
             except Exception as exc:
                 logger.error("Pipeline failed for source %s: %s", source.id, exc)
+                # Rollback to clear any corrupted session state
+                await self.db.rollback()
                 results.append({
                     "source_id": str(source.id),
                     "source_name": source.source_name,
