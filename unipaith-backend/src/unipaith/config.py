@@ -148,7 +148,7 @@ class Settings(BaseSettings):
 
     # LLM extraction
     crawler_extraction_model: str = "mistral"
-    crawler_extraction_max_tokens: int = 4096
+    crawler_extraction_max_tokens: int = 16000
     crawler_extraction_temperature: float = 0.1
     crawler_max_html_chars: int = 50000
 

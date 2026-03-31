@@ -1,4 +1,8 @@
-"""Crawler engine — HTTP fetcher and page downloader."""
+"""Crawler engine — HTTP fetcher and page downloader.
+
+Uses Playwright (headless Chromium) for JavaScript-rendered university pages.
+Falls back to aiohttp for simple HTML pages.
+"""
 from __future__ import annotations
 
 import asyncio
@@ -19,6 +23,33 @@ from unipaith.models.crawler import CrawlJob, SourceURLPattern
 from unipaith.models.matching import DataSource, RawIngestedData
 
 logger = logging.getLogger(__name__)
+
+# Shared browser instance (created once, reused)
+_browser = None
+_playwright = None
+
+
+async def _get_browser():
+    """Get or create a shared headless browser instance."""
+    global _browser, _playwright
+    if _browser is None or not _browser.is_connected():
+        from playwright.async_api import async_playwright
+        _playwright = await async_playwright().start()
+        _browser = await _playwright.chromium.launch(headless=True)
+        logger.info("Headless browser started")
+    return _browser
+
+
+async def _fetch_with_browser(url: str, timeout: int = 30000) -> str:
+    """Fetch a page using headless Chromium (handles JS-rendered sites)."""
+    browser = await _get_browser()
+    page = await browser.new_page()
+    try:
+        await page.goto(url, wait_until="networkidle", timeout=timeout)
+        html = await page.content()
+        return html
+    finally:
+        await page.close()
 
 
 class CrawlerEngine:
@@ -104,71 +135,77 @@ class CrawlerEngine:
         source: DataSource,
         pattern: SourceURLPattern,
     ) -> None:
-        """Fetch pages matching a URL pattern, optionally following links."""
+        """Fetch pages matching a URL pattern using headless browser.
+
+        Uses Playwright to render JavaScript-heavy university sites.
+        Falls back to aiohttp for simple pages.
+        """
         base_url = source.source_url or ""
-        start_url = urljoin(base_url, pattern.url_pattern)
+        # If pattern is a full URL, use it directly; otherwise join with base
+        start_url = pattern.url_pattern if pattern.url_pattern.startswith("http") else urljoin(base_url, pattern.url_pattern)
 
         visited: set[str] = set()
         queue: list[str] = [start_url]
         max_pages = settings.crawler_max_pages_per_source
 
-        timeout = aiohttp.ClientTimeout(total=settings.crawler_request_timeout)
-        headers = {"User-Agent": settings.crawler_user_agent}
+        while queue and job.pages_crawled < max_pages:
+            url = queue.pop(0)
+            if url in visited:
+                continue
+            visited.add(url)
 
-        async with aiohttp.ClientSession(timeout=timeout, headers=headers) as session:
-            while queue and job.pages_crawled < max_pages:
-                url = queue.pop(0)
-                if url in visited:
-                    continue
-                visited.add(url)
-
-                try:
-                    async with self._semaphore:
-                        await asyncio.sleep(settings.crawler_download_delay)
-                        async with session.get(url) as resp:
-                            if resp.status != 200:
-                                logger.warning("HTTP %d for %s", resp.status, url)
-                                job.pages_failed += 1
-                                continue
-                            html = await resp.text()
-                except Exception as exc:
-                    logger.warning("Failed to fetch %s: %s", url, exc)
-                    job.pages_failed += 1
-                    continue
-
-                # Deduplicate by content hash
-                content_hash = hashlib.sha256(html.encode("utf-8")).hexdigest()
-                existing = await self.db.execute(
-                    select(RawIngestedData).where(
-                        RawIngestedData.content_hash == content_hash,
-                        RawIngestedData.source_id == source.id,
+            try:
+                async with self._semaphore:
+                    await asyncio.sleep(settings.crawler_download_delay)
+                    html = await _fetch_with_browser(
+                        url, timeout=settings.crawler_request_timeout * 1000
                     )
+            except Exception as exc:
+                logger.warning("Failed to fetch %s: %s", url, exc)
+                job.pages_failed += 1
+                continue
+
+            # Skip pages that are just loading screens
+            cleaned_preview = self.clean_html(html)
+            if len(cleaned_preview) < 100:
+                logger.debug("Page too short after cleaning (%d chars), skipping: %s", len(cleaned_preview), url)
+                job.pages_failed += 1
+                continue
+
+            # Deduplicate by content hash
+            content_hash = hashlib.sha256(html.encode("utf-8")).hexdigest()
+            existing = await self.db.execute(
+                select(RawIngestedData).where(
+                    RawIngestedData.content_hash == content_hash,
+                    RawIngestedData.source_id == source.id,
                 )
-                if existing.scalar_one_or_none():
-                    logger.debug("Duplicate content for %s, skipping", url)
-                    job.items_duplicate += 1
-                    continue
+            )
+            if existing.scalar_one_or_none():
+                logger.debug("Duplicate content for %s, skipping", url)
+                job.items_duplicate += 1
+                continue
 
-                # Store raw content
-                raw = RawIngestedData(
-                    source_id=source.id,
-                    raw_content=html,
-                    content_hash=content_hash,
-                    processed=False,
-                )
-                self.db.add(raw)
-                job.pages_crawled += 1
+            # Store raw content
+            raw = RawIngestedData(
+                source_id=source.id,
+                raw_content=html,
+                content_hash=content_hash,
+                processed=False,
+            )
+            self.db.add(raw)
+            job.pages_crawled += 1
+            logger.info("Crawled: %s (%d chars)", url, len(cleaned_preview))
 
-                # Follow links if enabled
-                if pattern.follow_links and job.pages_crawled < max_pages:
-                    links = self._extract_links(html, url, pattern.link_selector)
-                    for link in links:
-                        if link not in visited:
-                            queue.append(link)
+            # Follow links if enabled
+            if pattern.follow_links and job.pages_crawled < max_pages:
+                links = self._extract_links(html, url, pattern.link_selector)
+                for link in links:
+                    if link not in visited:
+                        queue.append(link)
 
-                # Flush periodically to avoid large transaction buffers
-                if job.pages_crawled % 10 == 0:
-                    await self.db.flush()
+            # Flush periodically
+            if job.pages_crawled % 10 == 0:
+                await self.db.flush()
 
         await self.db.flush()
 

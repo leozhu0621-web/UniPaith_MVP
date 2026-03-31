@@ -81,10 +81,24 @@ class LLMExtractor:
             await self.db.flush()
             return []
 
-        # Call LLM
+        # Call LLM with crawler-specific max_tokens (larger than default)
         prompt = prompt_override or EXTRACTION_PROMPT
         try:
-            response_text = await self.llm.extract_features(prompt, cleaned)
+            from openai import AsyncOpenAI
+            client = AsyncOpenAI(
+                base_url=settings.llm_feature_base_url,
+                api_key=settings.llm_feature_api_key,
+            )
+            response = await client.chat.completions.create(
+                model=settings.llm_feature_model,
+                messages=[
+                    {"role": "system", "content": prompt},
+                    {"role": "user", "content": cleaned},
+                ],
+                max_tokens=settings.crawler_extraction_max_tokens,
+                temperature=settings.crawler_extraction_temperature,
+            )
+            response_text = response.choices[0].message.content
         except Exception as exc:
             logger.error("LLM extraction failed for raw %s: %s", raw_data_id, exc)
             raw.processed = True
@@ -189,17 +203,23 @@ class LLMExtractor:
 
     @staticmethod
     def _parse_response(text: str) -> list[dict]:
-        """Attempt to parse LLM JSON response. Robust to markdown fences."""
+        """Parse LLM JSON response. Handles markdown fences and truncated output."""
         if not text:
             return []
 
-        # Strip markdown code fences
         cleaned = text.strip()
-        if cleaned.startswith("```"):
-            lines = cleaned.split("\n")
-            lines = [l for l in lines if not l.strip().startswith("```")]
-            cleaned = "\n".join(lines)
 
+        # Strip markdown code fences (```json ... ``` or ``` ... ```)
+        if "```" in cleaned:
+            import re
+            match = re.search(r"```(?:json)?\s*\n?(.*?)```", cleaned, re.DOTALL)
+            if match:
+                cleaned = match.group(1).strip()
+            else:
+                # Opening fence but no closing — response was truncated
+                cleaned = re.sub(r"^```(?:json)?\s*\n?", "", cleaned)
+
+        # Try parsing as-is
         try:
             data = json.loads(cleaned)
             if isinstance(data, list):
@@ -207,7 +227,24 @@ class LLMExtractor:
             if isinstance(data, dict):
                 return [data]
         except json.JSONDecodeError:
-            logger.warning("Failed to parse LLM JSON response: %.100s...", cleaned)
+            pass
+
+        # Response may be truncated (max_tokens hit). Try to recover partial JSON array.
+        # Find the last complete object in a truncated array
+        if cleaned.startswith("["):
+            # Find last complete }, then close the array
+            last_brace = cleaned.rfind("}")
+            if last_brace > 0:
+                attempt = cleaned[:last_brace + 1] + "]"
+                try:
+                    data = json.loads(attempt)
+                    if isinstance(data, list):
+                        logger.info("Recovered %d items from truncated JSON", len(data))
+                        return data
+                except json.JSONDecodeError:
+                    pass
+
+        logger.warning("Failed to parse LLM JSON response (%d chars): %.200s...", len(cleaned), cleaned)
         return []
 
     @staticmethod

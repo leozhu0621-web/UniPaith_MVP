@@ -51,11 +51,7 @@ async def main():
                 source_url=seed["base_url"],
                 source_type="university_website",
                 data_category="program_data",
-                config={
-                    "short_name": seed.get("short_name", ""),
-                    "country": seed.get("country", ""),
-                    "tier": seed.get("tier", ""),
-                },
+                crawl_frequency="168",
                 is_active=True,
             )
             db.add(source)
