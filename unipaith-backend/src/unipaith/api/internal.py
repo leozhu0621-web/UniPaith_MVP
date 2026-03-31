@@ -264,6 +264,92 @@ async def bootstrap_status(
     }
 
 
+@router.get("/crawl-jobs")
+async def list_crawl_jobs(
+    limit: int = Query(20, ge=1, le=100),
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Recent crawl jobs with source names."""
+    from unipaith.models.crawler import CrawlJob
+    from unipaith.models.matching import DataSource
+
+    stmt = (
+        select(
+            CrawlJob.id,
+            CrawlJob.status,
+            CrawlJob.pages_crawled,
+            CrawlJob.pages_failed,
+            CrawlJob.items_extracted,
+            CrawlJob.items_ingested,
+            CrawlJob.items_duplicate,
+            CrawlJob.created_at,
+            CrawlJob.completed_at,
+            DataSource.source_name,
+        )
+        .join(DataSource, DataSource.id == CrawlJob.source_id)
+        .order_by(CrawlJob.created_at.desc())
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    rows = result.all()
+
+    return {
+        "items": [
+            {
+                "id": str(r[0]),
+                "status": r[1],
+                "pages_crawled": r[2],
+                "pages_failed": r[3],
+                "items_extracted": r[4],
+                "items_ingested": r[5],
+                "items_duplicate": r[6],
+                "created_at": r[7].isoformat() if r[7] else None,
+                "completed_at": r[8].isoformat() if r[8] else None,
+                "source_name": r[9],
+            }
+            for r in rows
+        ],
+        "total": len(rows),
+    }
+
+
+@router.get("/extracted-programs")
+async def list_extracted_programs(
+    limit: int = Query(50, ge=1, le=200),
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Recently extracted programs."""
+    from unipaith.models.crawler import ExtractedProgram
+
+    stmt = (
+        select(ExtractedProgram)
+        .order_by(ExtractedProgram.created_at.desc())
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    programs = result.scalars().all()
+
+    return {
+        "items": [
+            {
+                "id": str(p.id),
+                "institution_name": p.institution_name,
+                "program_name": p.program_name,
+                "degree_type": p.degree_type,
+                "department": p.department,
+                "confidence": float(p.extraction_confidence) if p.extraction_confidence else None,
+                "review_status": p.review_status,
+                "match_type": p.match_type,
+                "created_at": p.created_at.isoformat() if p.created_at else None,
+            }
+            for p in programs
+        ],
+        "total": len(programs),
+    }
+
+
 @router.get("/ai-costs")
 async def ai_costs(user: User = Depends(require_admin)):
     """GPU usage and cost tracking for the AI engine."""

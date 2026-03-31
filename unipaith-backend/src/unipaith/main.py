@@ -1,7 +1,10 @@
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from unipaith.api.router import api_router
 from unipaith.config import settings
@@ -32,3 +35,11 @@ app = FastAPI(
 setup_middleware(app)
 
 app.include_router(api_router, prefix="/api/v1")
+
+# Admin dashboard
+STATIC_DIR = Path(__file__).parent / "static"
+
+
+@app.get("/admin")
+async def admin_dashboard():
+    return FileResponse(STATIC_DIR / "admin.html")

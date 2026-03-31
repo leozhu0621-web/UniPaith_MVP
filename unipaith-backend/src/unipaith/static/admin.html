@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UniPaith AI Engine — Admin</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: #0f1117; color: #e1e4e8; }
+.header { background: #161b22; border-bottom: 1px solid #30363d; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+.header h1 { font-size: 20px; font-weight: 600; }
+.header h1 span { color: #58a6ff; }
+.status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+.status-dot.green { background: #3fb950; }
+.status-dot.yellow { background: #d29922; }
+.status-dot.red { background: #f85149; }
+.container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; }
+.card h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: #8b949e; margin-bottom: 12px; }
+.card .value { font-size: 36px; font-weight: 700; color: #f0f6fc; }
+.card .sub { font-size: 13px; color: #8b949e; margin-top: 4px; }
+.section { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin-bottom: 24px; }
+.section h2 { font-size: 16px; margin-bottom: 16px; color: #f0f6fc; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 8px 12px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #8b949e; border-bottom: 1px solid #30363d; }
+td { padding: 10px 12px; font-size: 14px; border-bottom: 1px solid #21262d; }
+tr:hover td { background: #1c2128; }
+.badge { padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+.badge.green { background: #238636; color: #fff; }
+.badge.yellow { background: #9e6a03; color: #fff; }
+.badge.red { background: #da3633; color: #fff; }
+.badge.blue { background: #1f6feb; color: #fff; }
+.btn { padding: 8px 16px; border-radius: 6px; border: 1px solid #30363d; background: #21262d; color: #c9d1d9; cursor: pointer; font-size: 14px; }
+.btn:hover { background: #30363d; }
+.btn.primary { background: #238636; border-color: #238636; color: #fff; }
+.btn.primary:hover { background: #2ea043; }
+.btn.danger { background: #da3633; border-color: #da3633; color: #fff; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.controls { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.setting-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #21262d; }
+.setting-row label { font-size: 14px; color: #c9d1d9; }
+.setting-row .desc { font-size: 12px; color: #8b949e; }
+.setting-row input, .setting-row select { background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; padding: 6px 10px; border-radius: 4px; }
+.log-area { background: #0d1117; border: 1px solid #30363d; border-radius: 4px; padding: 12px; font-family: 'SF Mono', Menlo, monospace; font-size: 13px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; color: #8b949e; }
+.refresh-btn { font-size: 12px; color: #58a6ff; cursor: pointer; background: none; border: none; }
+#toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; background: #238636; color: #fff; border-radius: 8px; display: none; z-index: 100; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span>UniPaith</span> AI Engine</h1>
+  <div>
+    <span class="status-dot" id="engineStatus"></span>
+    <span id="engineStatusText">Loading...</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- KPI Cards -->
+  <div class="grid" id="kpiCards">
+    <div class="card">
+      <h3>University Sources</h3>
+      <div class="value" id="kpiSources">—</div>
+      <div class="sub">active crawl targets</div>
+    </div>
+    <div class="card">
+      <h3>Programs Extracted</h3>
+      <div class="value" id="kpiExtracted">—</div>
+      <div class="sub">from crawled pages</div>
+    </div>
+    <div class="card">
+      <h3>Programs in DB</h3>
+      <div class="value" id="kpiPrograms">—</div>
+      <div class="sub">ingested and ready</div>
+    </div>
+    <div class="card">
+      <h3>Embeddings</h3>
+      <div class="value" id="kpiEmbeddings">—</div>
+      <div class="sub">vector representations</div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="section">
+    <h2>Engine Controls</h2>
+    <div class="controls">
+      <button class="btn primary" onclick="triggerBootstrap()" id="btnBootstrap">Start Crawl &amp; Learn</button>
+      <button class="btn" onclick="refreshStatus()">Refresh Status</button>
+    </div>
+    <div id="bootstrapResult" class="log-area" style="display:none;"></div>
+  </div>
+
+  <!-- Cost Tracking -->
+  <div class="section">
+    <h2>AI Costs <button class="refresh-btn" onclick="loadCosts()">[refresh]</button></h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Today (70B)</h3>
+        <div class="value" id="costToday">$0</div>
+        <div class="sub" id="costTodayHours">0 hours</div>
+      </div>
+      <div class="card">
+        <h3>This Month</h3>
+        <div class="value" id="costMonth">$0</div>
+        <div class="sub" id="costMonthDetail">—</div>
+      </div>
+      <div class="card">
+        <h3>Budget</h3>
+        <div class="value" id="costBudget">$0</div>
+        <div class="sub" id="costBudgetRemaining">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Status -->
+  <div class="section">
+    <h2>Engine Status <button class="refresh-btn" onclick="loadAIStatus()">[refresh]</button></h2>
+    <div id="aiStatusContent">Loading...</div>
+  </div>
+
+  <!-- Recent Crawl Jobs -->
+  <div class="section">
+    <h2>Recent Crawl Jobs <button class="refresh-btn" onclick="loadCrawlJobs()">[refresh]</button></h2>
+    <table>
+      <thead><tr><th>Source</th><th>Status</th><th>Pages</th><th>Programs</th><th>Time</th></tr></thead>
+      <tbody id="crawlJobsBody"><tr><td colspan="5">Loading...</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- Extracted Programs -->
+  <div class="section">
+    <h2>Recently Extracted Programs <button class="refresh-btn" onclick="loadExtracted()">[refresh]</button></h2>
+    <table>
+      <thead><tr><th>Institution</th><th>Program</th><th>Degree</th><th>Confidence</th><th>Status</th></tr></thead>
+      <tbody id="extractedBody"><tr><td colspan="5">Loading...</td></tr></tbody>
+    </table>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+const API = '/api/v1';
+const TOKEN = localStorage.getItem('admin_token') || 'dev:00000000-0000-0000-0000-000000000000:admin';
+
+async function api(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (TOKEN) headers['Authorization'] = `Bearer ${TOKEN}`;
+  const resp = await fetch(API + path, { ...opts, headers });
+  if (!resp.ok) {
+    const err = await resp.text();
+    throw new Error(`${resp.status}: ${err}`);
+  }
+  return resp.json();
+}
+
+function toast(msg, color = '#238636') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = color;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3000);
+}
+
+function badge(text, color) {
+  return `<span class="badge ${color}">${text}</span>`;
+}
+
+// --- Load data ---
+
+async function refreshStatus() {
+  try {
+    const data = await api('/internal/ai/bootstrap-status');
+    document.getElementById('kpiSources').textContent = data.active_sources;
+    document.getElementById('kpiExtracted').textContent = data.programs_extracted;
+    document.getElementById('kpiPrograms').textContent = data.programs_in_db;
+    document.getElementById('kpiEmbeddings').textContent = data.embeddings_generated;
+
+    const dot = document.getElementById('engineStatus');
+    const text = document.getElementById('engineStatusText');
+    if (data.engine_ready) {
+      dot.className = 'status-dot green';
+      text.textContent = 'Engine Ready';
+    } else if (data.programs_extracted > 0) {
+      dot.className = 'status-dot yellow';
+      text.textContent = 'Learning...';
+    } else {
+      dot.className = 'status-dot red';
+      text.textContent = 'Not Started';
+    }
+  } catch (e) {
+    document.getElementById('engineStatusText').textContent = 'API Error';
+    document.getElementById('engineStatus').className = 'status-dot red';
+  }
+}
+
+async function loadCosts() {
+  try {
+    const data = await api('/internal/ai-costs');
+    document.getElementById('costToday').textContent = '$' + (data.today?.['70b_cost'] || 0);
+    document.getElementById('costTodayHours').textContent = (data.today?.['70b_hours'] || 0) + ' hours';
+    document.getElementById('costMonth').textContent = '$' + (data.month?.total_estimated || 0);
+    document.getElementById('costMonthDetail').textContent =
+      `8B: $${data.month?.['8b_cost_fixed'] || 0} | 70B: $${data.month?.['70b_cost'] || 0}`;
+    document.getElementById('costBudget').textContent = '$' + (data.budget?.cap || 0);
+    document.getElementById('costBudgetRemaining').textContent =
+      `$${data.budget?.remaining || 0} remaining` + (data.budget?.exceeded ? ' (EXCEEDED)' : '');
+  } catch (e) {}
+}
+
+async function loadAIStatus() {
+  try {
+    const data = await api('/internal/ai-status');
+    let html = `<table>
+      <tr><td>GPU Mode</td><td><strong>${data.gpu_mode}</strong></td></tr>
+      <tr><td>8B Instance</td><td>${data['8b_instance']?.configured ? badge(data['8b_instance']?.state || 'configured', 'green') : badge('not configured', 'yellow')}</td></tr>
+      <tr><td>70B Instance</td><td>${data['70b_instance']?.configured ? badge(data['70b_instance']?.state || 'configured', 'blue') : badge('not configured', 'yellow')}</td></tr>
+    </table>`;
+    document.getElementById('aiStatusContent').innerHTML = html;
+  } catch (e) {
+    document.getElementById('aiStatusContent').textContent = 'Could not load status';
+  }
+}
+
+async function loadCrawlJobs() {
+  try {
+    const data = await api('/internal/crawl-jobs');
+    const body = document.getElementById('crawlJobsBody');
+    if (!data.items || data.items.length === 0) {
+      body.innerHTML = '<tr><td colspan="5">No crawl jobs yet</td></tr>';
+      return;
+    }
+    body.innerHTML = data.items.map(j => `<tr>
+      <td>${j.source_name || '—'}</td>
+      <td>${j.status === 'completed' ? badge('done', 'green') : j.status === 'failed' ? badge('failed', 'red') : badge(j.status, 'yellow')}</td>
+      <td>${j.pages_crawled}</td>
+      <td>${j.items_extracted}</td>
+      <td>${j.created_at ? new Date(j.created_at).toLocaleString() : '—'}</td>
+    </tr>`).join('');
+  } catch (e) {
+    document.getElementById('crawlJobsBody').innerHTML = '<tr><td colspan="5">Could not load</td></tr>';
+  }
+}
+
+async function loadExtracted() {
+  try {
+    const data = await api('/internal/extracted-programs');
+    const body = document.getElementById('extractedBody');
+    if (!data.items || data.items.length === 0) {
+      body.innerHTML = '<tr><td colspan="5">No programs extracted yet</td></tr>';
+      return;
+    }
+    body.innerHTML = data.items.map(p => `<tr>
+      <td>${p.institution_name || '—'}</td>
+      <td>${p.program_name || '—'}</td>
+      <td>${p.degree_type || '—'}</td>
+      <td>${p.confidence ? (p.confidence * 100).toFixed(0) + '%' : '—'}</td>
+      <td>${p.review_status === 'auto_ingested' ? badge('ingested', 'green') : badge(p.review_status, 'yellow')}</td>
+    </tr>`).join('');
+  } catch (e) {
+    document.getElementById('extractedBody').innerHTML = '<tr><td colspan="5">Could not load</td></tr>';
+  }
+}
+
+async function triggerBootstrap() {
+  const btn = document.getElementById('btnBootstrap');
+  const log = document.getElementById('bootstrapResult');
+  btn.disabled = true;
+  btn.textContent = 'Running...';
+  log.style.display = 'block';
+  log.textContent = 'Starting crawl and extraction pipeline...\n';
+
+  try {
+    const data = await api('/internal/ai/bootstrap', { method: 'POST' });
+    log.textContent += JSON.stringify(data, null, 2);
+    toast('Bootstrap complete!');
+    refreshStatus();
+    loadCrawlJobs();
+    loadExtracted();
+  } catch (e) {
+    log.textContent += 'Error: ' + e.message;
+    toast('Bootstrap failed', '#da3633');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Start Crawl & Learn';
+  }
+}
+
+// Initial load
+refreshStatus();
+loadCosts();
+loadAIStatus();
+loadCrawlJobs();
+loadExtracted();
+
+// Auto-refresh every 30s
+setInterval(() => { refreshStatus(); loadCosts(); }, 30000);
+</script>
+
+</body>
+</html>
