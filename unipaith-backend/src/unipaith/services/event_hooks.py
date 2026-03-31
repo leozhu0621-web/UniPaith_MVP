@@ -75,7 +75,10 @@ async def on_reviewer_assigned(
             user_id=reviewer_user_id,
             notification_type="reviewer_assigned",
             title="New Review Assignment",
-            body=f"You have been assigned to review application. Due by {due_date.strftime('%B %d, %Y')}.",
+            body=(
+                "You have been assigned to review application. Due by "
+                f"{due_date.strftime('%B %d, %Y')}."
+            ),
             action_url=f"/reviews/applications/{application_id}",
             metadata={
                 "application_id": str(application_id),
@@ -126,7 +129,10 @@ async def on_interview_confirmed(
             user_id=interviewer_user_id,
             notification_type="interview_confirmed",
             title="Interview Time Confirmed",
-            body=f"The interview has been confirmed for {confirmed_time.strftime('%B %d, %Y at %I:%M %p')}.",
+            body=(
+                "The interview has been confirmed for "
+                f"{confirmed_time.strftime('%B %d, %Y at %I:%M %p')}."
+            ),
             action_url=f"/interviews/{interview_id}",
             metadata={
                 "interview_id": str(interview_id),
@@ -221,7 +227,10 @@ async def on_offer_sent(
             user_id=student_user_id,
             notification_type="offer_sent",
             title="Offer Letter Available",
-            body="Your offer letter is ready. Please review and respond at your earliest convenience.",
+            body=(
+                "Your offer letter is ready. Please review and respond at your earliest "
+                "convenience."
+            ),
             action_url=f"/applications/{application_id}/offers/{offer_id}",
             metadata={
                 "application_id": str(application_id),
