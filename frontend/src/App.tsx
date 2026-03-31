@@ -46,6 +46,9 @@ import EventsPage from './pages/institution/EventsPage'
 import AnalyticsPage from './pages/institution/AnalyticsPage'
 import InstitutionSettingsPage from './pages/institution/SettingsPage'
 
+// Admin pages
+import AdminDashboardPage from './pages/admin/AdminDashboardPage'
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { staleTime: 5 * 60 * 1000, retry: 1, refetchOnWindowFocus: false },
@@ -102,6 +105,9 @@ const router = createBrowserRouter([
       { path: 'settings', element: <InstitutionSettingsPage /> },
     ],
   },
+
+  // Admin route (no auth required for now — you're the only one who knows the URL)
+  { path: '/admin', element: <AdminDashboardPage /> },
 
   // Catch-all
   { path: '*', element: <Navigate to="/" replace /> },
