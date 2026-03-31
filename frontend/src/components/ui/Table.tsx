@@ -1,13 +1,13 @@
 import clsx from 'clsx'
 import Skeleton from './Skeleton'
 
-export interface Column<T extends Record<string, unknown> = Record<string, unknown>> {
+export interface Column<T extends object = Record<string, unknown>> {
   key: string
   label: string
   render?: (row: T) => React.ReactNode
 }
 
-interface TableProps<T extends Record<string, unknown>> {
+interface TableProps<T extends object> {
   columns: Column<T>[]
   data: T[]
   onRowClick?: (row: T) => void
@@ -15,7 +15,7 @@ interface TableProps<T extends Record<string, unknown>> {
   emptyMessage?: string
 }
 
-export default function Table<T extends Record<string, unknown>>({
+export default function Table<T extends object>({
   columns,
   data,
   onRowClick,
@@ -63,7 +63,9 @@ export default function Table<T extends Record<string, unknown>>({
             >
               {columns.map(col => (
                 <td key={col.key} className="px-4 py-3 text-gray-700">
-                  {col.render ? col.render(row) : String(row[col.key] ?? '')}
+                  {col.render
+                    ? col.render(row)
+                    : String((row as Record<string, unknown>)[col.key] ?? '')}
                 </td>
               ))}
             </tr>

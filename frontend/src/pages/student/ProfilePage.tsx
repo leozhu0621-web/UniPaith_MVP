@@ -239,7 +239,7 @@ export default function ProfilePage() {
       {/* Basic Info Modal */}
       <Modal isOpen={editModal === 'basic'} onClose={() => setEditModal(null)} title="Edit Basic Info">
         <BasicInfoForm
-          defaultValues={editItem}
+          defaultValues={editModal === 'basic' ? (editItem as Partial<StudentProfile> | null) : null}
           onSubmit={data => profileMut.mutate(data)}
           loading={profileMut.isPending}
         />
@@ -248,7 +248,7 @@ export default function ProfilePage() {
       {/* Academic Modal */}
       <Modal isOpen={editModal === 'academic'} onClose={() => setEditModal(null)} title={editItem ? 'Edit Academic Record' : 'Add Academic Record'}>
         <AcademicForm
-          defaultValues={editItem}
+          defaultValues={editModal === 'academic' ? (editItem as Partial<AcademicRecord> | null) : null}
           onSubmit={data => editItem ? acadUpdateMut.mutate({ id: editItem.id, data }) : acadCreateMut.mutate(data)}
           loading={acadCreateMut.isPending || acadUpdateMut.isPending}
         />
@@ -257,7 +257,7 @@ export default function ProfilePage() {
       {/* Test Score Modal */}
       <Modal isOpen={editModal === 'test'} onClose={() => setEditModal(null)} title={editItem ? 'Edit Test Score' : 'Add Test Score'}>
         <TestScoreForm
-          defaultValues={editItem}
+          defaultValues={editModal === 'test' ? (editItem as Partial<TestScore> | null) : null}
           onSubmit={data => editItem ? testUpdateMut.mutate({ id: editItem.id, data }) : testCreateMut.mutate(data)}
           loading={testCreateMut.isPending || testUpdateMut.isPending}
         />
@@ -266,7 +266,7 @@ export default function ProfilePage() {
       {/* Activity Modal */}
       <Modal isOpen={editModal === 'activity'} onClose={() => setEditModal(null)} title={editItem ? 'Edit Activity' : 'Add Activity'}>
         <ActivityForm
-          defaultValues={editItem}
+          defaultValues={editModal === 'activity' ? (editItem as Partial<Activity> | null) : null}
           onSubmit={data => editItem ? actUpdateMut.mutate({ id: editItem.id, data }) : actCreateMut.mutate(data)}
           loading={actCreateMut.isPending || actUpdateMut.isPending}
         />
@@ -275,7 +275,7 @@ export default function ProfilePage() {
       {/* Preferences Modal */}
       <Modal isOpen={editModal === 'preferences'} onClose={() => setEditModal(null)} title="Edit Preferences" size="lg">
         <PreferencesForm
-          defaultValues={editItem}
+          defaultValues={editModal === 'preferences' ? (editItem as Partial<StudentPreference> | null) : null}
           onSubmit={data => prefsMut.mutate(data)}
           loading={prefsMut.isPending}
         />

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useForm, useFieldArray } from 'react-hook-form'
+import { useForm, useFieldArray, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -50,7 +50,7 @@ export default function ProgramEditorPage() {
   })
 
   const form = useForm<FormData>({
-    resolver: zodResolver(schema) as any,
+    resolver: zodResolver(schema) as Resolver<FormData>,
     defaultValues: {
       highlights: [{ value: '' }],
       requirements: [{ key: '', value: '' }],
@@ -77,7 +77,7 @@ export default function ProgramEditorPage() {
         description_text: p.description_text ?? '',
         highlights: p.highlights?.length ? p.highlights.map(h => ({ value: h })) : [{ value: '' }],
         requirements: p.requirements ? Object.entries(p.requirements).map(([key, value]) => ({ key, value: String(value) })) : [{ key: '', value: '' }],
-        faculty_contacts: (p.faculty_contacts as any[]) ?? [],
+        faculty_contacts: (p.faculty_contacts as FormData['faculty_contacts']) ?? [],
       })
     }
   }, [programQ.data, form])
@@ -96,7 +96,7 @@ export default function ProgramEditorPage() {
     requirements: data.requirements?.reduce((acc, r) => {
       if (r.key) acc[r.key] = r.value
       return acc
-    }, {} as Record<string, any>) || undefined,
+    }, {} as Record<string, string>) || undefined,
     faculty_contacts: data.faculty_contacts?.filter(f => f.name) || undefined,
   })
 
@@ -111,7 +111,7 @@ export default function ProgramEditorPage() {
   })
 
   const updateMut = useMutation({
-    mutationFn: (payload: any) => updateProgram(id!, payload),
+    mutationFn: (payload: Parameters<typeof updateProgram>[1]) => updateProgram(id!, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['institution-programs'] })
       queryClient.invalidateQueries({ queryKey: ['institution-program', id] })

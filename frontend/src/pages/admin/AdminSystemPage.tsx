@@ -8,6 +8,7 @@ import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import { useToastStore } from '../../stores/toast-store'
+import { errorMessage } from '../../utils/errors'
 import {
   Cpu, RefreshCw, Building2, GraduationCap, User, CheckCircle,
 } from 'lucide-react'
@@ -21,22 +22,22 @@ export default function AdminSystemPage() {
   const bootstrapMut = useMutation({
     mutationFn: bootstrapPrograms,
     onSuccess: (data) => addToast(`Bootstrap complete: ${JSON.stringify(data)}`, 'success'),
-    onError: (e: any) => addToast(e.message, 'error'),
+    onError: (e: unknown) => addToast(errorMessage(e), 'error'),
   })
   const refreshStudentMut = useMutation({
     mutationFn: refreshStudent,
     onSuccess: () => { addToast('Student features refreshed', 'success'); setStudentId('') },
-    onError: (e: any) => addToast(e.message, 'error'),
+    onError: (e: unknown) => addToast(errorMessage(e), 'error'),
   })
   const refreshProgramMut = useMutation({
     mutationFn: refreshProgram,
     onSuccess: () => { addToast('Program features refreshed', 'success'); setProgramId('') },
-    onError: (e: any) => addToast(e.message, 'error'),
+    onError: (e: unknown) => addToast(errorMessage(e), 'error'),
   })
   const verifyMut = useMutation({
     mutationFn: verifyInstitution,
     onSuccess: () => { addToast('Institution verified', 'success'); setInstitutionId('') },
-    onError: (e: any) => addToast(e.message, 'error'),
+    onError: (e: unknown) => addToast(errorMessage(e), 'error'),
   })
 
   return (

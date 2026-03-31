@@ -5,12 +5,37 @@ import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Skeleton from '../../components/ui/Skeleton'
 import {
-  Users, GraduationCap, FileText, Building2, Activity,
-  Target, RefreshCw,
+  Users,
+  GraduationCap,
+  FileText,
+  Building2,
+  Activity,
+  Target,
+  RefreshCw,
+  type LucideIcon,
 } from 'lucide-react'
 
+interface RecentUserSnapshot {
+  id: string
+  email: string
+  created_at: string
+  role: string
+}
+
+interface RecentApplicationSnapshot {
+  id: string
+  student_id: string
+  created_at: string
+  status: string
+  decision?: string | null
+}
+
 function KPICard({ icon: Icon, label, value, sub, color }: {
-  icon: any; label: string; value: string | number; sub?: string; color: string
+  icon: LucideIcon
+  label: string
+  value: string | number
+  sub?: string
+  color: string
 }) {
   return (
     <Card className="p-5">
@@ -184,7 +209,7 @@ export default function AdminDashboardPage() {
             <p className="text-sm text-gray-400 text-center py-8">No users yet</p>
           ) : (
             <div className="space-y-2">
-              {stats.recent_users.map((u: any) => (
+              {(stats.recent_users as RecentUserSnapshot[]).map(u => (
                 <div key={u.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
                   <div>
                     <p className="text-sm font-medium text-gray-800">{u.email}</p>
@@ -205,7 +230,7 @@ export default function AdminDashboardPage() {
             <p className="text-sm text-gray-400 text-center py-8">No applications yet</p>
           ) : (
             <div className="space-y-2">
-              {stats.recent_applications.map((a: any) => (
+              {(stats.recent_applications as RecentApplicationSnapshot[]).map(a => (
                 <div key={a.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
                   <div>
                     <p className="text-sm font-medium text-gray-800">Student: {a.student_id.slice(0, 8)}...</p>

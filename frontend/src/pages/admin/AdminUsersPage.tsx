@@ -7,7 +7,16 @@ import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import Skeleton from '../../components/ui/Skeleton'
 import { useToastStore } from '../../stores/toast-store'
+import { errorMessage } from '../../utils/errors'
 import { Users, UserCheck, UserX, Filter } from 'lucide-react'
+
+interface AdminUserRow {
+  id: string
+  email: string
+  role: string
+  is_active?: boolean
+  created_at: string
+}
 
 export default function AdminUsersPage() {
   const qc = useQueryClient()
@@ -27,7 +36,7 @@ export default function AdminUsersPage() {
       qc.invalidateQueries({ queryKey: ['admin', 'users'] })
       addToast('User deactivated', 'success')
     },
-    onError: (e: any) => addToast(e.message, 'error'),
+    onError: (e: unknown) => addToast(errorMessage(e), 'error'),
   })
 
   const activateMut = useMutation({
@@ -36,10 +45,10 @@ export default function AdminUsersPage() {
       qc.invalidateQueries({ queryKey: ['admin', 'users'] })
       addToast('User activated', 'success')
     },
-    onError: (e: any) => addToast(e.message, 'error'),
+    onError: (e: unknown) => addToast(errorMessage(e), 'error'),
   })
 
-  const users: any[] = Array.isArray(data) ? data : data?.users ?? data?.items ?? []
+  const users: AdminUserRow[] = (Array.isArray(data) ? data : data?.users ?? data?.items ?? []) as AdminUserRow[]
 
   if (isLoading) {
     return (
@@ -105,7 +114,7 @@ export default function AdminUsersPage() {
                 </td>
               </tr>
             ) : (
-              users.map((u: any) => (
+              users.map(u => (
                 <tr key={u.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4">
                     <p className="text-sm font-medium text-gray-900">{u.email}</p>

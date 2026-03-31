@@ -13,10 +13,47 @@ import Button from '../../components/ui/Button'
 import Skeleton from '../../components/ui/Skeleton'
 import Tabs from '../../components/ui/Tabs'
 import { useToastStore } from '../../stores/toast-store'
+import { errorMessage } from '../../utils/errors'
 import {
   Play, RotateCcw, AlertTriangle,
   Zap, BarChart3, Target, ArrowUpCircle,
 } from 'lucide-react'
+
+interface MLModelRow {
+  id?: string
+  version?: string
+  model_version?: string
+  is_active?: boolean
+  metrics?: { ndcg?: number; precision?: number }
+  created_at?: string
+}
+
+interface MLEvalRow {
+  id?: string
+  model_version?: string
+  status?: string
+  metrics?: Record<string, unknown>
+  created_at?: string
+}
+
+interface MLTrainRow {
+  id?: string
+  status?: string
+  trigger?: string
+  triggered_by?: string
+  output_version?: string
+  model_version?: string
+  created_at?: string
+}
+
+interface MLDriftRow {
+  id?: string
+  drift_detected?: boolean
+  drift_score?: number
+  score?: number
+  created_at?: string
+  checked_at?: string
+}
 
 export default function AdminMLPage() {
   const qc = useQueryClient()
@@ -32,43 +69,45 @@ export default function AdminMLPage() {
   const runCycleMut = useMutation({
     mutationFn: runMLCycle,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'ml'] }); addToast('ML cycle started', 'success') },
-    onError: (e: any) => addToast(e.message, 'error'),
+    onError: (e: unknown) => addToast(errorMessage(e), 'error'),
   })
   const evaluateMut = useMutation({
     mutationFn: runMLEvaluate,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'ml'] }); addToast('Evaluation started', 'success') },
-    onError: (e: any) => addToast(e.message, 'error'),
+    onError: (e: unknown) => addToast(errorMessage(e), 'error'),
   })
   const driftCheckMut = useMutation({
     mutationFn: runDriftCheck,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'ml'] }); addToast('Drift check complete', 'success') },
-    onError: (e: any) => addToast(e.message, 'error'),
+    onError: (e: unknown) => addToast(errorMessage(e), 'error'),
   })
   const backfillMut = useMutation({
     mutationFn: backfillOutcomes,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'ml'] }); addToast('Backfill complete', 'success') },
-    onError: (e: any) => addToast(e.message, 'error'),
+    onError: (e: unknown) => addToast(errorMessage(e), 'error'),
   })
   const trainMut = useMutation({
     mutationFn: triggerTraining,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'ml'] }); addToast('Training triggered', 'success') },
-    onError: (e: any) => addToast(e.message, 'error'),
+    onError: (e: unknown) => addToast(errorMessage(e), 'error'),
   })
   const promoteMut = useMutation({
     mutationFn: promoteModel,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'ml'] }); addToast('Model promoted', 'success') },
-    onError: (e: any) => addToast(e.message, 'error'),
+    onError: (e: unknown) => addToast(errorMessage(e), 'error'),
   })
   const rollbackMut = useMutation({
     mutationFn: rollbackModel,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'ml'] }); addToast('Model rolled back', 'success') },
-    onError: (e: any) => addToast(e.message, 'error'),
+    onError: (e: unknown) => addToast(errorMessage(e), 'error'),
   })
 
-  const models: any[] = Array.isArray(modelsQ.data) ? modelsQ.data : modelsQ.data?.models ?? modelsQ.data?.versions ?? []
-  const evals: any[] = Array.isArray(evalsQ.data) ? evalsQ.data : evalsQ.data?.evaluations ?? []
-  const trainRuns: any[] = Array.isArray(trainingQ.data) ? trainingQ.data : trainingQ.data?.runs ?? []
-  const drifts: any[] = Array.isArray(driftQ.data) ? driftQ.data : driftQ.data?.snapshots ?? []
+  const models: MLModelRow[] = Array.isArray(modelsQ.data)
+    ? modelsQ.data
+    : modelsQ.data?.models ?? modelsQ.data?.versions ?? []
+  const evals: MLEvalRow[] = Array.isArray(evalsQ.data) ? evalsQ.data : evalsQ.data?.evaluations ?? []
+  const trainRuns: MLTrainRow[] = Array.isArray(trainingQ.data) ? trainingQ.data : trainingQ.data?.runs ?? []
+  const drifts: MLDriftRow[] = Array.isArray(driftQ.data) ? driftQ.data : driftQ.data?.snapshots ?? []
   const outcomes = outcomesQ.data
 
   const tabs = [
@@ -127,7 +166,7 @@ export default function AdminMLPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {models.map((m: any) => (
+                {models.map(m => (
                   <tr key={m.version ?? m.id} className="hover:bg-gray-50">
                     <td className="px-6 py-3 text-sm font-mono">{m.version ?? m.model_version ?? m.id?.slice(0, 12)}</td>
                     <td className="px-6 py-3">
@@ -144,7 +183,11 @@ export default function AdminMLPage() {
                     <td className="px-6 py-3 text-right">
                       {!m.is_active && (
                         <Button size="sm" variant="secondary"
-                          onClick={() => promoteMut.mutate({ model_version: m.version ?? m.model_version })}
+                          onClick={() =>
+                            promoteMut.mutate({
+                              model_version: String(m.version ?? m.model_version ?? ''),
+                            })
+                          }
                           disabled={promoteMut.isPending}>
                           <ArrowUpCircle size={14} className="mr-1" /> Promote
                         </Button>
@@ -175,7 +218,7 @@ export default function AdminMLPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {evals.map((e: any) => (
+              {evals.map(e => (
                 <tr key={e.id} className="hover:bg-gray-50">
                   <td className="px-6 py-3"><code className="text-xs text-gray-500">{e.id?.slice(0, 8)}...</code></td>
                   <td className="px-6 py-3 text-sm">{e.model_version ?? '—'}</td>
@@ -212,7 +255,7 @@ export default function AdminMLPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {trainRuns.map((r: any) => (
+              {trainRuns.map(r => (
                 <tr key={r.id} className="hover:bg-gray-50">
                   <td className="px-6 py-3"><code className="text-xs text-gray-500">{r.id?.slice(0, 8)}...</code></td>
                   <td className="px-6 py-3">
@@ -250,7 +293,7 @@ export default function AdminMLPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {drifts.map((d: any) => (
+                {drifts.map(d => (
                   <tr key={d.id} className="hover:bg-gray-50">
                     <td className="px-6 py-3"><code className="text-xs text-gray-500">{d.id?.slice(0, 8)}...</code></td>
                     <td className="px-6 py-3">

@@ -7,6 +7,7 @@ import { useAuthStore } from '../../stores/auth-store'
 import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
 import clsx from 'clsx'
+import { errorMessage } from '../../utils/errors'
 import { GraduationCap, Building2 } from 'lucide-react'
 
 const schema = z.object({
@@ -42,8 +43,8 @@ export default function SignupPage() {
         : user?.role === 'student' ? '/s/chat'
         : '/i/dashboard'
       navigate(dest)
-    } catch (err: any) {
-      setError(err.message || 'Signup failed')
+    } catch (err: unknown) {
+      setError(errorMessage(err) || 'Signup failed')
     } finally {
       setLoading(false)
     }

@@ -16,10 +16,42 @@ import Tabs from '../../components/ui/Tabs'
 import Modal from '../../components/ui/Modal'
 import Input from '../../components/ui/Input'
 import { useToastStore } from '../../stores/toast-store'
+import { errorMessage } from '../../utils/errors'
 import {
   Globe, Play, Plus, Trash2, CheckCircle, XCircle,
   Zap, ExternalLink,
 } from 'lucide-react'
+
+interface CrawlerSourceRow {
+  id: string
+  name: string
+  base_url?: string
+  source_type?: string
+  is_active?: boolean
+  schedule_cron?: string | null
+}
+
+interface CrawlerJobRow {
+  id: string
+  status?: string
+  source_name?: string
+  source_id?: string
+  created_at?: string
+  pages_crawled?: number
+  programs_extracted?: number
+  started_at?: string
+}
+
+interface ReviewQueueRow {
+  id: string
+  title?: string
+  status?: string
+  created_at?: string
+  program_name?: string
+  institution_name?: string
+  source_url?: string
+  extracted_data?: Record<string, unknown>
+}
 
 export default function AdminCrawlerPage() {
   const qc = useQueryClient()
@@ -41,53 +73,55 @@ export default function AdminCrawlerPage() {
   const crawlMut = useMutation({
     mutationFn: triggerCrawl,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'crawler'] }); addToast('Crawl triggered', 'success') },
-    onError: (e: any) => addToast(e.message, 'error'),
+    onError: (e: unknown) => addToast(errorMessage(e), 'error'),
   })
   const crawlAllMut = useMutation({
     mutationFn: triggerCrawlAll,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'crawler'] }); addToast('Crawl-all triggered', 'success') },
-    onError: (e: any) => addToast(e.message, 'error'),
+    onError: (e: unknown) => addToast(errorMessage(e), 'error'),
   })
   const seedMut = useMutation({
     mutationFn: seedDefaultSources,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'crawler'] }); addToast('Default sources seeded', 'success') },
-    onError: (e: any) => addToast(e.message, 'error'),
+    onError: (e: unknown) => addToast(errorMessage(e), 'error'),
   })
   const addSourceMut = useMutation({
     mutationFn: createCrawlerSource,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'crawler'] }); setShowAddSource(false); addToast('Source added', 'success') },
-    onError: (e: any) => addToast(e.message, 'error'),
+    onError: (e: unknown) => addToast(errorMessage(e), 'error'),
   })
   const delSourceMut = useMutation({
     mutationFn: deleteCrawlerSource,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'crawler'] }); addToast('Source deleted', 'success') },
-    onError: (e: any) => addToast(e.message, 'error'),
+    onError: (e: unknown) => addToast(errorMessage(e), 'error'),
   })
   const approveMut = useMutation({
     mutationFn: (id: string) => approveReviewItem(id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'crawler'] }); addToast('Approved', 'success') },
-    onError: (e: any) => addToast(e.message, 'error'),
+    onError: (e: unknown) => addToast(errorMessage(e), 'error'),
   })
   const rejectMut = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) => rejectReviewItem(id, { reason }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'crawler'] }); setRejectId(null); addToast('Rejected', 'success') },
-    onError: (e: any) => addToast(e.message, 'error'),
+    onError: (e: unknown) => addToast(errorMessage(e), 'error'),
   })
   const enrichMut = useMutation({
     mutationFn: applyAllEnrichments,
     onSuccess: () => { addToast('Enrichments applied', 'success') },
-    onError: (e: any) => addToast(e.message, 'error'),
+    onError: (e: unknown) => addToast(errorMessage(e), 'error'),
   })
   const crawlUrlMut = useMutation({
     mutationFn: (url: string) => crawlUrl({ url }),
     onSuccess: () => { setShowCrawlUrl(false); addToast('URL crawled', 'success') },
-    onError: (e: any) => addToast(e.message, 'error'),
+    onError: (e: unknown) => addToast(errorMessage(e), 'error'),
   })
 
   const dashboard = dashboardQ.data
-  const sources: any[] = Array.isArray(sourcesQ.data) ? sourcesQ.data : sourcesQ.data?.sources ?? []
-  const jobs: any[] = Array.isArray(jobsQ.data) ? jobsQ.data : jobsQ.data?.jobs ?? []
-  const reviewItems: any[] = Array.isArray(reviewQ.data) ? reviewQ.data : reviewQ.data?.items ?? []
+  const sources: CrawlerSourceRow[] = Array.isArray(sourcesQ.data)
+    ? sourcesQ.data
+    : sourcesQ.data?.sources ?? []
+  const jobs: CrawlerJobRow[] = Array.isArray(jobsQ.data) ? jobsQ.data : jobsQ.data?.jobs ?? []
+  const reviewItems: ReviewQueueRow[] = Array.isArray(reviewQ.data) ? reviewQ.data : reviewQ.data?.items ?? []
   const rStats = reviewStatsQ.data
 
   const tabs = [
@@ -168,7 +202,7 @@ export default function AdminCrawlerPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {sources.map((s: any) => (
+                {sources.map(s => (
                   <tr key={s.id} className="hover:bg-gray-50">
                     <td className="px-6 py-3 text-sm font-medium">{s.name}</td>
                     <td className="px-6 py-3 text-sm text-gray-500 truncate max-w-xs">{s.base_url}</td>
@@ -209,7 +243,7 @@ export default function AdminCrawlerPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {jobs.map((j: any) => (
+              {jobs.map(j => (
                 <tr key={j.id} className="hover:bg-gray-50">
                   <td className="px-6 py-3"><code className="text-xs text-gray-500">{j.id?.slice(0, 8)}...</code></td>
                   <td className="px-6 py-3 text-sm">{j.source_name ?? j.source_id?.slice(0, 8)}</td>
@@ -239,15 +273,23 @@ export default function AdminCrawlerPage() {
           {reviewItems.length === 0 ? (
             <Card className="p-12 text-center text-gray-400">No items pending review</Card>
           ) : (
-            reviewItems.map((item: any) => (
+            reviewItems.map(item => (
               <Card key={item.id} className="p-5">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">{item.program_name ?? item.extracted_data?.program_name ?? 'Unnamed Program'}</h3>
-                    <p className="text-sm text-gray-500 mt-1">{item.institution_name ?? item.extracted_data?.institution_name ?? ''}</p>
+                    <h3 className="font-medium text-gray-900">
+                      {String(item.program_name ?? item.extracted_data?.program_name ?? 'Unnamed Program')}
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {String(item.institution_name ?? item.extracted_data?.institution_name ?? '')}
+                    </p>
                     <div className="flex gap-4 mt-2 text-xs text-gray-400">
-                      {item.extracted_data?.degree_type && <span>Degree: {item.extracted_data.degree_type}</span>}
-                      {item.extracted_data?.tuition && <span>Tuition: ${item.extracted_data.tuition}</span>}
+                      {item.extracted_data?.degree_type != null && (
+                        <span>Degree: {String(item.extracted_data.degree_type)}</span>
+                      )}
+                      {item.extracted_data?.tuition != null && (
+                        <span>Tuition: ${String(item.extracted_data.tuition)}</span>
+                      )}
                       {item.source_url && (
                         <a href={item.source_url} target="_blank" rel="noreferrer" className="text-indigo-500 hover:underline flex items-center gap-1">
                           Source <ExternalLink size={10} />

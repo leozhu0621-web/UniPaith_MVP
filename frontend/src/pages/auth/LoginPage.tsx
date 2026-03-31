@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { useAuthStore } from '../../stores/auth-store'
 import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
+import { errorMessage } from '../../utils/errors'
 
 const schema = z.object({
   email: z.string().email('Invalid email'),
@@ -34,8 +35,8 @@ export default function LoginPage() {
         : user?.role === 'student' ? '/s/chat'
         : '/i/dashboard'
       navigate(dest)
-    } catch (err: any) {
-      setError(err.message || 'Login failed')
+    } catch (err: unknown) {
+      setError(errorMessage(err) || 'Login failed')
     } finally {
       setLoading(false)
     }

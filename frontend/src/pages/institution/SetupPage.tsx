@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -71,7 +71,9 @@ export default function SetupPage() {
   ])
 
   const instForm = useForm<InstitutionForm>({ resolver: zodResolver(institutionSchema) })
-  const progForm = useForm<ProgramForm>({ resolver: zodResolver(programSchema) as any })
+  const progForm = useForm<ProgramForm>({
+    resolver: zodResolver(programSchema) as Resolver<ProgramForm>,
+  })
 
   const createInstMut = useMutation({
     mutationFn: createInstitution,
