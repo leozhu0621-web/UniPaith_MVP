@@ -47,7 +47,12 @@ import AnalyticsPage from './pages/institution/AnalyticsPage'
 import InstitutionSettingsPage from './pages/institution/SettingsPage'
 
 // Admin pages
+import AdminLayout from './components/layout/AdminLayout'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
+import AdminUsersPage from './pages/admin/AdminUsersPage'
+import AdminCrawlerPage from './pages/admin/AdminCrawlerPage'
+import AdminMLPage from './pages/admin/AdminMLPage'
+import AdminSystemPage from './pages/admin/AdminSystemPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -106,8 +111,18 @@ const router = createBrowserRouter([
     ],
   },
 
-  // Admin route (no auth required for now — you're the only one who knows the URL)
-  { path: '/admin', element: <AdminDashboardPage /> },
+  // Admin routes
+  {
+    path: '/admin',
+    element: <RequireAuth role="admin"><AdminLayout /></RequireAuth>,
+    children: [
+      { index: true, element: <AdminDashboardPage /> },
+      { path: 'users', element: <AdminUsersPage /> },
+      { path: 'crawler', element: <AdminCrawlerPage /> },
+      { path: 'ml', element: <AdminMLPage /> },
+      { path: 'system', element: <AdminSystemPage /> },
+    ],
+  },
 
   // Catch-all
   { path: '*', element: <Navigate to="/" replace /> },
