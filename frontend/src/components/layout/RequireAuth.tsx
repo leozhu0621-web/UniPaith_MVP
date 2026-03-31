@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom'
 import { useAuthStore } from '../../stores/auth-store'
 
 interface Props {
-  role: 'student' | 'institution_admin'
+  role: 'student' | 'institution_admin' | 'admin'
   children: React.ReactNode
 }
 
