@@ -38,10 +38,10 @@ export default function EventsPage() {
     queryKey: ['institution-events', statusFilter],
     queryFn: () => getInstitutionEvents(statusFilter || undefined),
   })
-  const events: EventItem[] = eventsQ.data ?? []
+  const events: EventItem[] = Array.isArray(eventsQ.data) ? eventsQ.data : []
 
   const programsQ = useQuery({ queryKey: ['institution-programs'], queryFn: getInstitutionPrograms })
-  const programs: Program[] = programsQ.data ?? []
+  const programs: Program[] = Array.isArray(programsQ.data) ? programsQ.data : []
   const programOptions = [{ value: '', label: 'None' }, ...programs.map(p => ({ value: p.id, label: p.program_name }))]
 
   const attendeesQ = useQuery({
@@ -49,7 +49,7 @@ export default function EventsPage() {
     queryFn: () => getEventAttendees(selectedEventId!),
     enabled: !!selectedEventId && showAttendeesModal,
   })
-  const attendees: RSVP[] = attendeesQ.data ?? []
+  const attendees: RSVP[] = Array.isArray(attendeesQ.data) ? attendeesQ.data : []
 
   const createMut = useMutation({
     mutationFn: createEvent,

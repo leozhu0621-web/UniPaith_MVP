@@ -60,9 +60,9 @@ export default function StudentDetailPage() {
   })
 
   const app = applicationQ.data
-  const scores: ApplicationScore[] = scoresQ.data ?? []
+  const scores: ApplicationScore[] = Array.isArray(scoresQ.data) ? scoresQ.data : []
   const aiSummary: AIReviewSummary | undefined = aiQ.data
-  const rubrics: Rubric[] = rubricsQ.data ?? []
+  const rubrics: Rubric[] = Array.isArray(rubricsQ.data) ? rubricsQ.data : []
 
   const assignMut = useMutation({
     mutationFn: () => assignReviewer(studentId!),
