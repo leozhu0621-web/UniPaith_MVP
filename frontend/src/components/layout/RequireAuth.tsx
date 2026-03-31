@@ -21,6 +21,11 @@ export default function RequireAuth({ role, children }: Props) {
     return <Navigate to="/login" replace />
   }
 
+  // Admin can access everything
+  if (user?.role === 'admin') {
+    return <>{children}</>
+  }
+
   if (user?.role !== role) {
     const target = user?.role === 'student' ? '/s/chat' : '/i/dashboard'
     return <Navigate to={target} replace />
