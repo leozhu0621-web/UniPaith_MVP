@@ -15,7 +15,7 @@ import Select from '../../components/ui/Select'
 import Skeleton from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatDate, formatScore } from '../../utils/format'
-import { STATUS_COLORS, DECISION_OPTIONS } from '../../utils/constants'
+import { DECISION_OPTIONS, toBadgeVariant } from '../../utils/constants'
 import type { ApplicationScore, AIReviewSummary, Rubric } from '../../types'
 
 export default function StudentDetailPage() {
@@ -71,7 +71,11 @@ export default function StudentDetailPage() {
   })
 
   const decisionMut = useMutation({
-    mutationFn: () => makeDecision(studentId!, { decision: decision as any, decision_notes: decisionNotes || null }),
+    mutationFn: () =>
+      makeDecision(studentId!, {
+        decision: decision as 'admitted' | 'rejected' | 'waitlisted' | 'deferred',
+        decision_notes: decisionNotes || null,
+      }),
     onSuccess: () => {
       showToast('Decision recorded', 'success')
       setShowDecisionModal(false)
@@ -82,7 +86,7 @@ export default function StudentDetailPage() {
 
   const offerMut = useMutation({
     mutationFn: () => createOffer(studentId!, {
-      offer_type: offerType as any,
+      offer_type: offerType as 'full_admission' | 'conditional' | 'waitlist_offer',
       tuition_amount: tuitionAmount ? Number(tuitionAmount) : null,
       scholarship_amount: scholarshipAmount ? Number(scholarshipAmount) : 0,
       response_deadline: responseDeadline || null,
@@ -155,12 +159,12 @@ export default function StudentDetailPage() {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-500">Status</span>
-                <Badge variant={(STATUS_COLORS[app.status] as any) ?? 'neutral'}>{app.status.replace('_', ' ')}</Badge>
+                <Badge variant={toBadgeVariant(app.status)}>{app.status.replace('_', ' ')}</Badge>
               </div>
               {app.decision && (
                 <div className="flex justify-between">
                   <span className="text-gray-500">Decision</span>
-                  <Badge variant={(STATUS_COLORS[app.decision] as any) ?? 'neutral'}>{app.decision}</Badge>
+                  <Badge variant={toBadgeVariant(app.decision)}>{app.decision}</Badge>
                 </div>
               )}
               <div className="flex justify-between">

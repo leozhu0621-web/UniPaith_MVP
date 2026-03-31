@@ -1,4 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
+import type { UseBoundStore } from 'zustand'
+import type { StoreApi } from 'zustand'
+import type { AuthState } from '../stores/auth-store'
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1',
@@ -11,6 +14,16 @@ let isRefreshing = false
 type RefreshWaiter = { resolve: (token: string) => void; reject: (err: unknown) => void }
 
 const refreshWaiters: RefreshWaiter[] = []
+
+function axiosDetailMessage(error: AxiosError): string | undefined {
+  const data = error.response?.data
+  if (data && typeof data === 'object' && 'detail' in data) {
+    const d = (data as { detail?: unknown }).detail
+    if (typeof d === 'string') return d
+    if (Array.isArray(d)) return JSON.stringify(d)
+  }
+  return undefined
+}
 
 function subscribeTokenRefresh(waiter: RefreshWaiter) {
   refreshWaiters.push(waiter)
@@ -33,7 +46,7 @@ function onRefreshFailed(err: unknown) {
 }
 
 // Lazy-loaded to break circular dep (auth-store imports client, client needs auth-store)
-let _useAuthStore: any = null
+let _useAuthStore: UseBoundStore<StoreApi<AuthState>> | null = null
 async function loadAuthStore() {
   if (!_useAuthStore) {
     const mod = await import('../stores/auth-store')
@@ -101,7 +114,7 @@ apiClient.interceptors.response.use(
         ),
       )
     }
-    const message = (error.response?.data as any)?.detail || error.message
+    const message = axiosDetailMessage(error) || error.message
     return Promise.reject(new Error(message))
   }
 )

@@ -114,7 +114,7 @@ export interface Program {
   duration_months: number | null
   tuition: number | null
   acceptance_rate: number | null
-  requirements: Record<string, any> | null
+  requirements: Record<string, unknown> | null
   description_text: string | null
   current_preferences_text: string | null
   is_published: boolean
@@ -122,7 +122,7 @@ export interface Program {
   program_start_date: string | null
   highlights: string[] | null
   page_header_image_url: string | null
-  faculty_contacts: Record<string, any>[] | null
+  faculty_contacts: Record<string, unknown>[] | null
   created_at: string
   updated_at: string
 }
@@ -212,7 +212,7 @@ export interface OfferLetter {
   tuition_amount: number | null
   scholarship_amount: number
   financial_package_total: number | null
-  conditions: Record<string, any> | null
+  conditions: Record<string, unknown> | null
   response_deadline: string | null
   status: string
   student_response: string | null
@@ -246,7 +246,7 @@ export interface Essay {
   essay_version: number
   content: string
   word_count: number | null
-  ai_feedback: Record<string, any> | null
+  ai_feedback: Record<string, unknown> | null
   status: 'draft' | 'reviewed' | 'revised' | 'finalized'
   created_at: string
   updated_at: string
@@ -256,9 +256,9 @@ export interface Resume {
   id: string
   student_id: string
   resume_version: number
-  content: Record<string, any> | null
+  content: Record<string, unknown> | null
   rendered_pdf_url: string | null
-  ai_suggestions: Record<string, any> | null
+  ai_suggestions: Record<string, unknown> | null
   target_program_id: string | null
   status: 'draft' | 'reviewed' | 'finalized'
   created_at: string
@@ -277,7 +277,7 @@ export interface SavedProgram {
 
 export interface ComparisonResponse {
   programs: ProgramSummary[]
-  comparison: Record<string, any>
+  comparison: Record<string, unknown>
 }
 
 // ============ MESSAGING ============
@@ -429,7 +429,7 @@ export interface AIReviewSummary {
 export interface PipelineData {
   total: number
   program_id: string | null
-  [column: string]: any
+  [column: string]: string | number | null | undefined
 }
 
 // ============ SEGMENTS ============
@@ -438,7 +438,7 @@ export interface Segment {
   institution_id: string
   program_id: string | null
   segment_name: string
-  criteria: Record<string, any> | null
+  criteria: Record<string, unknown> | null
   is_active: boolean
   created_at: string
   updated_at: string

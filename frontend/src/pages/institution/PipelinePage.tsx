@@ -21,7 +21,7 @@ import Input from '../../components/ui/Input'
 import Skeleton from '../../components/ui/Skeleton'
 import EmptyState from '../../components/ui/EmptyState'
 import { formatRelative, formatScore } from '../../utils/format'
-import { STATUS_COLORS } from '../../utils/constants'
+import { toBadgeVariant } from '../../utils/constants'
 import type { Application, Program } from '../../types'
 
 const PIPELINE_COLUMNS = [
@@ -60,7 +60,7 @@ function DraggableCard({ app, onClick }: { app: Application; onClick: () => void
         <span className="text-xs text-gray-400">{formatRelative(app.updated_at)}</span>
       </div>
       {app.decision && (
-        <Badge variant={(STATUS_COLORS[app.decision] as any) ?? 'neutral'} className="mt-1.5">
+        <Badge variant={toBadgeVariant(app.decision)} className="mt-1.5">
           {app.decision}
         </Badge>
       )}
@@ -109,9 +109,9 @@ export default function PipelinePage() {
     queryFn: () => getApplicationsByProgram(selectedProgram),
     enabled: !!selectedProgram,
   })
-  const applications: Application[] = Array.isArray(applicationsQ.data) ? applicationsQ.data : []
 
   const grouped = useMemo(() => {
+    const applications: Application[] = Array.isArray(applicationsQ.data) ? applicationsQ.data : []
     const filtered = applications.filter(a =>
       !search || a.student_id.toLowerCase().includes(search.toLowerCase())
     )
@@ -127,12 +127,13 @@ export default function PipelinePage() {
       else map.submitted.push(app)
     })
     return map
-  }, [applications, search])
+  }, [applicationsQ.data, search])
 
   const programOptions = programs.map(p => ({ value: p.id, label: p.program_name }))
 
   const handleDragStart = (event: DragStartEvent) => {
-    const app = applications.find(a => a.id === event.active.id)
+    const list: Application[] = Array.isArray(applicationsQ.data) ? applicationsQ.data : []
+    const app = list.find(a => a.id === event.active.id)
     setActiveApp(app ?? null)
   }
 

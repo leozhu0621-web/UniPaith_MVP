@@ -22,7 +22,10 @@ export const ACTIVITY_TYPES = [
   { value: 'publications', label: 'Publications' },
 ]
 
-export const STATUS_COLORS: Record<string, string> = {
+/** Maps semantic status keys to Badge `variant` values */
+export type BadgeVariant = 'success' | 'warning' | 'danger' | 'info' | 'neutral'
+
+export const STATUS_COLORS: Record<string, BadgeVariant> = {
   draft: 'neutral',
   submitted: 'info',
   under_review: 'warning',
@@ -45,7 +48,12 @@ export const STATUS_COLORS: Record<string, string> = {
   closed: 'neutral',
 }
 
-export const TIER_LABELS: Record<number, { label: string; color: string }> = {
+export function toBadgeVariant(status: string | undefined | null): BadgeVariant {
+  if (status == null || status === '') return 'neutral'
+  return STATUS_COLORS[status] ?? 'neutral'
+}
+
+export const TIER_LABELS: Record<number, { label: string; color: BadgeVariant }> = {
   1: { label: 'Reach', color: 'danger' },
   2: { label: 'Match', color: 'warning' },
   3: { label: 'Safety', color: 'success' },

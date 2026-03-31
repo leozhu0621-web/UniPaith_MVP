@@ -30,11 +30,11 @@ export default function MessagesPage() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [messages, selectedConv])
 
   useEffect(() => {
     if (convId && convId !== selectedConv) setSelectedConv(convId)
-  }, [convId])
+  }, [convId, selectedConv])
 
   const sendMut = useMutation({
     mutationFn: (content: string) => sendMessage(selectedConv!, content),

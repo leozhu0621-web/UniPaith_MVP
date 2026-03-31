@@ -67,7 +67,7 @@ export default function DiscoverPage() {
               return (
                 <div key={tier} className="mb-6">
                   <div className="flex items-center gap-2 mb-2">
-                    <Badge variant={tierInfo.color as any}>{tierInfo.label}</Badge>
+                    <Badge variant={tierInfo.color}>{tierInfo.label}</Badge>
                     <span className="text-sm text-gray-500">({items.length} programs)</span>
                   </div>
                   <div className="flex gap-3 overflow-x-auto pb-2">
@@ -77,7 +77,7 @@ export default function DiscoverPage() {
                         <p className="text-xs text-gray-500 mt-1 truncate">{m.program?.department || ''}</p>
                         <div className="flex items-center justify-between mt-3">
                           <span className="text-lg font-bold">{formatScore(m.match_score)}</span>
-                          <Badge variant={tierInfo.color as any} size="sm">{tierInfo.label}</Badge>
+                          <Badge variant={tierInfo.color} size="sm">{tierInfo.label}</Badge>
                         </div>
                         {m.program?.tuition != null && (
                           <p className="text-xs text-gray-400 mt-1">{formatCurrency(m.program.tuition)}</p>

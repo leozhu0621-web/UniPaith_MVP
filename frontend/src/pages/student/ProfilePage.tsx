@@ -17,12 +17,27 @@ import { showToast } from '../../stores/toast-store'
 import { formatDate, formatCurrency, formatFileSize } from '../../utils/format'
 import { DEGREE_LABELS, TEST_TYPES, ACTIVITY_TYPES, GPA_SCALES, CITY_SIZE_OPTIONS, FUNDING_OPTIONS } from '../../utils/constants'
 import { Pencil, Trash2, Plus, Upload } from 'lucide-react'
-import type { StudentProfile } from '../../types'
+import type {
+  AcademicRecord,
+  Activity,
+  StudentPreference,
+  StudentProfile,
+  StudentDocument,
+  TestScore,
+} from '../../types'
+
+type ProfileEditTarget =
+  | StudentProfile
+  | AcademicRecord
+  | TestScore
+  | Activity
+  | StudentPreference
+  | null
 
 export default function ProfilePage() {
   const queryClient = useQueryClient()
   const [editModal, setEditModal] = useState<string | null>(null)
-  const [editItem, setEditItem] = useState<any>(null)
+  const [editItem, setEditItem] = useState<ProfileEditTarget>(null)
 
   const { data: profile, isLoading } = useQuery({ queryKey: ['profile'], queryFn: getProfile })
   const { data: onboarding } = useQuery({ queryKey: ['onboarding'], queryFn: getOnboarding })
@@ -33,15 +48,46 @@ export default function ProfilePage() {
     queryClient.invalidateQueries({ queryKey: ['onboarding'] })
   }
 
-  const profileMut = useMutation({ mutationFn: (data: any) => updateProfile(data), onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Profile updated', 'success') } })
+  const profileMut = useMutation({
+    mutationFn: (data: Parameters<typeof updateProfile>[0]) => updateProfile(data),
+    onSuccess: () => {
+      invalidateAll()
+      setEditModal(null)
+      showToast('Profile updated', 'success')
+    },
+  })
   const acadCreateMut = useMutation({ mutationFn: createAcademic, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Record added', 'success') } })
-  const acadUpdateMut = useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => updateAcademic(id, data), onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Record updated', 'success') } })
+  const acadUpdateMut = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof updateAcademic>[1] }) =>
+      updateAcademic(id, data),
+    onSuccess: () => {
+      invalidateAll()
+      setEditModal(null)
+      showToast('Record updated', 'success')
+    },
+  })
   const acadDeleteMut = useMutation({ mutationFn: deleteAcademic, onSuccess: () => { invalidateAll(); showToast('Record deleted', 'success') } })
   const testCreateMut = useMutation({ mutationFn: createTestScore, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Score added', 'success') } })
-  const testUpdateMut = useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => updateTestScore(id, data), onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Score updated', 'success') } })
+  const testUpdateMut = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof updateTestScore>[1] }) =>
+      updateTestScore(id, data),
+    onSuccess: () => {
+      invalidateAll()
+      setEditModal(null)
+      showToast('Score updated', 'success')
+    },
+  })
   const testDeleteMut = useMutation({ mutationFn: deleteTestScore, onSuccess: () => { invalidateAll(); showToast('Score deleted', 'success') } })
   const actCreateMut = useMutation({ mutationFn: createActivity, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Activity added', 'success') } })
-  const actUpdateMut = useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => updateActivity(id, data), onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Activity updated', 'success') } })
+  const actUpdateMut = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof updateActivity>[1] }) =>
+      updateActivity(id, data),
+    onSuccess: () => {
+      invalidateAll()
+      setEditModal(null)
+      showToast('Activity updated', 'success')
+    },
+  })
   const actDeleteMut = useMutation({ mutationFn: deleteActivity, onSuccess: () => { invalidateAll(); showToast('Activity deleted', 'success') } })
   const prefsMut = useMutation({ mutationFn: upsertPreferences, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Preferences updated', 'success') } })
 
@@ -154,7 +200,7 @@ export default function ProfilePage() {
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
           <h2 className="font-semibold text-gray-900">Preferences</h2>
-          <Button size="sm" variant="ghost" onClick={() => { setEditItem(p?.preferences); setEditModal('preferences') }}><Pencil size={14} /></Button>
+          <Button size="sm" variant="ghost" onClick={() => { setEditItem(p?.preferences ?? null); setEditModal('preferences') }}><Pencil size={14} /></Button>
         </div>
         {p?.preferences ? (
           <dl className="grid grid-cols-2 gap-2 text-sm">
@@ -178,7 +224,7 @@ export default function ProfilePage() {
           <p className="text-sm text-gray-500">No documents uploaded</p>
         ) : (
           <div className="space-y-2">
-            {(documents ?? []).map((doc: any) => (
+            {((documents ?? []) as StudentDocument[]).map(doc => (
               <div key={doc.id} className="flex justify-between items-center text-sm">
                 <span>📄 {doc.file_name} ({formatFileSize(doc.file_size_bytes)})</span>
                 <Badge variant="neutral">{doc.document_type}</Badge>
@@ -240,7 +286,15 @@ export default function ProfilePage() {
 
 // --- Sub-forms ---
 
-function BasicInfoForm({ defaultValues, onSubmit, loading }: { defaultValues: any; onSubmit: (d: any) => void; loading: boolean }) {
+function BasicInfoForm({
+  defaultValues,
+  onSubmit,
+  loading,
+}: {
+  defaultValues: Partial<StudentProfile> | null
+  onSubmit: (d: Parameters<typeof updateProfile>[0]) => void
+  loading: boolean
+}) {
   const { register, handleSubmit } = useForm({ defaultValues: { first_name: defaultValues?.first_name || '', last_name: defaultValues?.last_name || '', date_of_birth: defaultValues?.date_of_birth?.slice(0, 10) || '', nationality: defaultValues?.nationality || '', country_of_residence: defaultValues?.country_of_residence || '', bio_text: defaultValues?.bio_text || '', goals_text: defaultValues?.goals_text || '' } })
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
@@ -258,7 +312,15 @@ function BasicInfoForm({ defaultValues, onSubmit, loading }: { defaultValues: an
   )
 }
 
-function AcademicForm({ defaultValues, onSubmit, loading }: { defaultValues: any; onSubmit: (d: any) => void; loading: boolean }) {
+function AcademicForm({
+  defaultValues,
+  onSubmit,
+  loading,
+}: {
+  defaultValues: Partial<AcademicRecord> | null
+  onSubmit: (d: Parameters<typeof createAcademic>[0]) => void
+  loading: boolean
+}) {
   const { register, handleSubmit } = useForm({ defaultValues: { institution_name: defaultValues?.institution_name || '', degree_type: defaultValues?.degree_type || 'bachelors', field_of_study: defaultValues?.field_of_study || '', gpa: defaultValues?.gpa || '', gpa_scale: defaultValues?.gpa_scale || '4.0', start_date: defaultValues?.start_date?.slice(0, 10) || '', end_date: defaultValues?.end_date?.slice(0, 10) || '', is_current: defaultValues?.is_current || false, country: defaultValues?.country || '' } })
   return (
     <form onSubmit={handleSubmit(d => onSubmit({ ...d, gpa: d.gpa ? Number(d.gpa) : null }))} className="space-y-3">
@@ -279,7 +341,15 @@ function AcademicForm({ defaultValues, onSubmit, loading }: { defaultValues: any
   )
 }
 
-function TestScoreForm({ defaultValues, onSubmit, loading }: { defaultValues: any; onSubmit: (d: any) => void; loading: boolean }) {
+function TestScoreForm({
+  defaultValues,
+  onSubmit,
+  loading,
+}: {
+  defaultValues: Partial<TestScore> | null
+  onSubmit: (d: Parameters<typeof createTestScore>[0]) => void
+  loading: boolean
+}) {
   const { register, handleSubmit } = useForm({ defaultValues: { test_type: defaultValues?.test_type || 'SAT', total_score: defaultValues?.total_score || '', test_date: defaultValues?.test_date?.slice(0, 10) || '', is_official: defaultValues?.is_official || false } })
   return (
     <form onSubmit={handleSubmit(d => onSubmit({ ...d, total_score: d.total_score ? Number(d.total_score) : null }))} className="space-y-3">
@@ -292,7 +362,15 @@ function TestScoreForm({ defaultValues, onSubmit, loading }: { defaultValues: an
   )
 }
 
-function ActivityForm({ defaultValues, onSubmit, loading }: { defaultValues: any; onSubmit: (d: any) => void; loading: boolean }) {
+function ActivityForm({
+  defaultValues,
+  onSubmit,
+  loading,
+}: {
+  defaultValues: Partial<Activity> | null
+  onSubmit: (d: Parameters<typeof createActivity>[0]) => void
+  loading: boolean
+}) {
   const { register, handleSubmit } = useForm({ defaultValues: { activity_type: defaultValues?.activity_type || 'extracurricular', title: defaultValues?.title || '', organization: defaultValues?.organization || '', description: defaultValues?.description || '', start_date: defaultValues?.start_date?.slice(0, 10) || '', end_date: defaultValues?.end_date?.slice(0, 10) || '', is_current: defaultValues?.is_current || false, hours_per_week: defaultValues?.hours_per_week || '', impact_description: defaultValues?.impact_description || '' } })
   return (
     <form onSubmit={handleSubmit(d => onSubmit({ ...d, hours_per_week: d.hours_per_week ? Number(d.hours_per_week) : null }))} className="space-y-3">
@@ -311,7 +389,15 @@ function ActivityForm({ defaultValues, onSubmit, loading }: { defaultValues: any
   )
 }
 
-function PreferencesForm({ defaultValues, onSubmit, loading }: { defaultValues: any; onSubmit: (d: any) => void; loading: boolean }) {
+function PreferencesForm({
+  defaultValues,
+  onSubmit,
+  loading,
+}: {
+  defaultValues: Partial<StudentPreference> | null
+  onSubmit: (d: Parameters<typeof upsertPreferences>[0]) => void
+  loading: boolean
+}) {
   const { register, handleSubmit } = useForm({ defaultValues: { preferred_countries: defaultValues?.preferred_countries?.join(', ') || '', preferred_city_size: defaultValues?.preferred_city_size || '', budget_min: defaultValues?.budget_min || '', budget_max: defaultValues?.budget_max || '', funding_requirement: defaultValues?.funding_requirement || '', goals_text: defaultValues?.goals_text || '' } })
   return (
     <form onSubmit={handleSubmit(d => onSubmit({ ...d, preferred_countries: d.preferred_countries ? d.preferred_countries.split(',').map((s: string) => s.trim()).filter(Boolean) : [], budget_min: d.budget_min ? Number(d.budget_min) : null, budget_max: d.budget_max ? Number(d.budget_max) : null }))} className="space-y-3">

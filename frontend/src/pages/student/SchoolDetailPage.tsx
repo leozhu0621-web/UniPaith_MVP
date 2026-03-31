@@ -16,7 +16,7 @@ import { showToast } from '../../stores/toast-store'
 import { formatCurrency, formatDate, formatPercent, formatScore } from '../../utils/format'
 import { DEGREE_LABELS, TIER_LABELS } from '../../utils/constants'
 import { ArrowLeft, Heart, HeartOff } from 'lucide-react'
-import type { Program, MatchResult, EventItem } from '../../types'
+import type { Application, Program, MatchResult, EventItem, SavedProgram } from '../../types'
 
 export default function SchoolDetailPage() {
   const { programId } = useParams<{ programId: string }>()
@@ -40,11 +40,19 @@ export default function SchoolDetailPage() {
     queryFn: () => listEvents({ program_id: programId, limit: 5 }),
   })
 
-  const { data: saved } = useQuery({ queryKey: ['saved'], queryFn: listSaved })
-  const isSaved = (saved ?? []).some((s: any) => s.program_id === programId)
+  const { data: saved } = useQuery({
+    queryKey: ['saved'],
+    queryFn: listSaved,
+    select: (data): SavedProgram[] => (Array.isArray(data) ? data : []),
+  })
+  const isSaved = (saved ?? []).some((s: SavedProgram) => s.program_id === programId)
 
-  const { data: applications } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
-  const existingApp = (applications ?? []).find((a: any) => a.program_id === programId)
+  const { data: applications } = useQuery({
+    queryKey: ['my-applications'],
+    queryFn: listMyApplications,
+    select: (data): Application[] => (Array.isArray(data) ? data : []),
+  })
+  const existingApp = (applications ?? []).find(a => a.program_id === programId)
 
   useEffect(() => {
     if (programId) logEngagement(programId, 'viewed_program', 1).catch(() => {})
@@ -88,7 +96,7 @@ export default function SchoolDetailPage() {
           <p className="text-gray-500">{p.department || ''}</p>
           {match && tierInfo && (
             <div className="flex items-center gap-2 mt-2">
-              <Badge variant={tierInfo.color as any}>{tierInfo.label}</Badge>
+              <Badge variant={tierInfo.color}>{tierInfo.label}</Badge>
               <span className="text-lg font-bold">{formatScore(match.match_score)} fit</span>
             </div>
           )}

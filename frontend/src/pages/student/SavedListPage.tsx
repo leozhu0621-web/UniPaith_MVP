@@ -10,7 +10,15 @@ import { SkeletonCard } from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatCurrency, formatDate } from '../../utils/format'
 import { Heart, Trash2, Pencil, BarChart3 } from 'lucide-react'
-import type { SavedProgram, ComparisonResponse } from '../../types'
+import type { ComparisonResponse, ProgramSummary, SavedProgram } from '../../types'
+
+const COMPARE_KEYS = [
+  'degree_type',
+  'institution_name',
+  'institution_country',
+  'tuition',
+  'application_deadline',
+] as const satisfies readonly (keyof ProgramSummary)[]
 
 export default function SavedListPage() {
   const navigate = useNavigate()
@@ -117,11 +125,11 @@ export default function SavedListPage() {
                 </tr>
               </thead>
               <tbody>
-                {['degree_type', 'institution_name', 'institution_country', 'tuition', 'application_deadline'].map(key => (
+                {COMPARE_KEYS.map(key => (
                   <tr key={key} className="border-b">
                     <td className="py-2 px-2 text-gray-500 capitalize">{key.replace(/_/g, ' ')}</td>
                     {comparison.programs.map(p => (
-                      <td key={p.id} className="py-2 px-2">{String((p as any)[key] ?? '—')}</td>
+                      <td key={p.id} className="py-2 px-2">{String(p[key] ?? '—')}</td>
                     ))}
                   </tr>
                 ))}

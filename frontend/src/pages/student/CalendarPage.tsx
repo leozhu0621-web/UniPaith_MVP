@@ -10,6 +10,12 @@ import {
   isSameDay, isToday, parseISO,
 } from 'date-fns'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import type { Application, Interview, RSVP } from '../../types'
+
+/** RSVP list rows may include nested event from GET /events/me/rsvps */
+type RsvpWithEvent = RSVP & {
+  event?: { start_time?: string; event_name?: string | null }
+}
 
 interface CalendarEvent {
   date: Date
@@ -27,16 +33,16 @@ export default function CalendarPage() {
   const events = useMemo(() => {
     const items: CalendarEvent[] = []
     // RSVPs → events
-    ;(rsvps ?? []).forEach((r: any) => {
+    ;((rsvps ?? []) as RsvpWithEvent[]).forEach(r => {
       if (r.event?.start_time) items.push({ date: parseISO(r.event.start_time), title: r.event.event_name || 'Event', type: 'event' })
     })
     // Interviews
-    ;(interviews ?? []).forEach((i: any) => {
+    ;((interviews ?? []) as Interview[]).forEach(i => {
       const time = i.confirmed_time || i.proposed_times?.[0]
       if (time) items.push({ date: parseISO(time), title: `Interview`, type: 'interview' })
     })
     // Application deadlines
-    ;(applications ?? []).forEach((a: any) => {
+    ;((applications ?? []) as Application[]).forEach(a => {
       if (a.program?.application_deadline) {
         items.push({ date: parseISO(a.program.application_deadline), title: `${a.program.program_name} deadline`, type: 'deadline' })
       }

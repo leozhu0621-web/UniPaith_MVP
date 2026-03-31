@@ -8,7 +8,7 @@ import Tabs from '../../components/ui/Tabs'
 import EmptyState from '../../components/ui/EmptyState'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { formatDate, formatScore } from '../../utils/format'
-import { STATUS_COLORS } from '../../utils/constants'
+import { toBadgeVariant } from '../../utils/constants'
 import { FileText } from 'lucide-react'
 import type { Application } from '../../types'
 
@@ -60,7 +60,7 @@ export default function ApplicationsPage() {
                 <div>
                   <p className="font-semibold text-sm">{app.program?.program_name || 'Program'}</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <Badge variant={(STATUS_COLORS[app.status] || 'neutral') as any}>
+                    <Badge variant={toBadgeVariant(app.status)}>
                       {app.status.replace(/_/g, ' ')}
                     </Badge>
                     {app.match_score != null && (
@@ -71,7 +71,7 @@ export default function ApplicationsPage() {
                     <p className="text-xs text-gray-400 mt-1">Submitted: {formatDate(app.submitted_at)}</p>
                   )}
                   {app.decision && (
-                    <Badge variant={(STATUS_COLORS[app.decision] || 'neutral') as any} className="mt-1">
+                    <Badge variant={toBadgeVariant(app.decision)} className="mt-1">
                       {app.decision}
                     </Badge>
                   )}

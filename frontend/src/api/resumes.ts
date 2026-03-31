@@ -6,7 +6,7 @@ export const generateResume = (data: { format_type: string; target_program_id?: 
 export const listResumes = (targetProgramId?: string) =>
   apiClient.get('/students/me/resume', { params: { target_program_id: targetProgramId } }).then(r => r.data)
 
-export const updateResume = (resumeId: string, content: any) =>
+export const updateResume = (resumeId: string, content: Record<string, unknown>) =>
   apiClient.put(`/students/me/resume/${resumeId}`, { content }).then(r => r.data)
 
 export const finalizeResume = (resumeId: string) =>

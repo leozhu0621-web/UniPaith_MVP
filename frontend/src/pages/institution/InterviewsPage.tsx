@@ -15,7 +15,7 @@ import Textarea from '../../components/ui/Textarea'
 import EmptyState from '../../components/ui/EmptyState'
 import { showToast } from '../../stores/toast-store'
 import { formatDateTime } from '../../utils/format'
-import { STATUS_COLORS, INTERVIEW_TYPES } from '../../utils/constants'
+import { INTERVIEW_TYPES, toBadgeVariant } from '../../utils/constants'
 import type { Interview } from '../../types'
 
 export default function InterviewsPage() {
@@ -34,7 +34,7 @@ export default function InterviewsPage() {
   // Score form state
   const [scoreNotes, setScoreNotes] = useState('')
   const [scoreRec, setScoreRec] = useState('')
-  const [scoreCriteria, _setScoreCriteria] = useState<Record<string, number>>({})
+  const [scoreCriteria] = useState<Record<string, number>>({})
 
   const programsQ = useQuery({ queryKey: ['institution-programs'], queryFn: getInstitutionPrograms })
   void programsQ // will be used when interview fetching is wired up
@@ -72,7 +72,13 @@ export default function InterviewsPage() {
   })
 
   const scoreMut = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: any }) => scoreInterview(id, payload),
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string
+      payload: Parameters<typeof scoreInterview>[1]
+    }) => scoreInterview(id, payload),
     onSuccess: () => {
       showToast('Interview scored', 'success')
       setShowScoreModal(false)
@@ -84,7 +90,7 @@ export default function InterviewsPage() {
     { key: 'application_id', label: 'Student', render: (row: Interview) => row.application_id.slice(0, 10) + '...' },
     { key: 'interview_type', label: 'Type', render: (row: Interview) => <Badge variant="info">{row.interview_type}</Badge> },
     { key: 'confirmed_time', label: 'Date', render: (row: Interview) => formatDateTime(row.confirmed_time ?? row.proposed_times[0]) },
-    { key: 'status', label: 'Status', render: (row: Interview) => <Badge variant={(STATUS_COLORS[row.status] as any) ?? 'neutral'}>{row.status}</Badge> },
+    { key: 'status', label: 'Status', render: (row: Interview) => <Badge variant={toBadgeVariant(row.status)}>{row.status}</Badge> },
     { key: 'duration_minutes', label: 'Duration', render: (row: Interview) => `${row.duration_minutes} min` },
     {
       key: 'actions',

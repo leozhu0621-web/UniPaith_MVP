@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueries } from '@tanstack/react-query'
 import { BarChart3, TrendingUp, Target, Users, Award } from 'lucide-react'
 import { getInstitutionPrograms } from '../../api/institutions'
 import { getApplicationsByProgram } from '../../api/applications-admin'
@@ -12,19 +12,15 @@ export default function AnalyticsPage() {
   const programsQ = useQuery({ queryKey: ['institution-programs'], queryFn: getInstitutionPrograms })
   const programs: Program[] = Array.isArray(programsQ.data) ? programsQ.data : []
 
-  // Fetch applications for each program
-  const appQueries = programs.map(p =>
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useQuery({
+  const appQueries = useQueries({
+    queries: programs.map(p => ({
       queryKey: ['analytics-apps', p.id],
       queryFn: () => getApplicationsByProgram(p.id),
       enabled: programs.length > 0,
-    })
-  )
+    })),
+  })
 
-  const allApps: Application[] = useMemo(() => {
-    return appQueries.flatMap(q => Array.isArray(q.data) ? q.data : [])
-  }, [appQueries.map(q => q.data)])
+  const allApps: Application[] = appQueries.flatMap(q => (Array.isArray(q.data) ? q.data : []))
 
   const isLoading = programsQ.isLoading || appQueries.some(q => q.isLoading)
 

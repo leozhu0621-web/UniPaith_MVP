@@ -35,7 +35,7 @@ export async function getInstitutionProgram(programId: string): Promise<Program>
 export async function createProgram(payload: {
   program_name: string; degree_type: string; department?: string;
   duration_months?: number; tuition?: number; acceptance_rate?: number;
-  requirements?: Record<string, any>; description_text?: string;
+  requirements?: Record<string, unknown>; description_text?: string;
   current_preferences_text?: string; application_deadline?: string;
   program_start_date?: string; page_header_image_url?: string;
   highlights?: string[]; faculty_contacts?: { name: string; email?: string; role?: string }[]
@@ -47,7 +47,7 @@ export async function createProgram(payload: {
 export async function updateProgram(programId: string, payload: Partial<{
   program_name: string; degree_type: string; department: string;
   duration_months: number; tuition: number; acceptance_rate: number;
-  requirements: Record<string, any>; description_text: string;
+  requirements: Record<string, unknown>; description_text: string;
   current_preferences_text: string; application_deadline: string;
   program_start_date: string; page_header_image_url: string;
   highlights: string[]; faculty_contacts: { name: string; email?: string; role?: string }[]
@@ -77,7 +77,7 @@ export async function getSegments(): Promise<Segment[]> {
 
 export async function createSegment(payload: {
   segment_name: string; program_id?: string | null;
-  criteria: Record<string, any>; is_active?: boolean
+  criteria: Record<string, unknown>; is_active?: boolean
 }): Promise<Segment> {
   const { data } = await apiClient.post('/institutions/me/segments', payload)
   return data
@@ -85,7 +85,7 @@ export async function createSegment(payload: {
 
 export async function updateSegment(segmentId: string, payload: Partial<{
   segment_name: string; program_id: string | null;
-  criteria: Record<string, any>; is_active: boolean
+  criteria: Record<string, unknown>; is_active: boolean
 }>): Promise<Segment> {
   const { data } = await apiClient.put(`/institutions/me/segments/${segmentId}`, payload)
   return data

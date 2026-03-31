@@ -14,9 +14,9 @@ import Select from '../../components/ui/Select'
 import ProgressBar from '../../components/ui/ProgressBar'
 import Skeleton from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
-import { STATUS_COLORS } from '../../utils/constants'
+import { toBadgeVariant } from '../../utils/constants'
 import { ArrowLeft, Check, Circle } from 'lucide-react'
-import type { Application, Essay, Resume } from '../../types'
+import type { Application, ApplicationChecklist, Essay, Resume } from '../../types'
 
 const STATUS_STEPS = ['draft', 'submitted', 'under_review', 'interview', 'decision_made']
 
@@ -38,7 +38,14 @@ export default function ApplicationDetailPage() {
   const { data: resumes } = useQuery({ queryKey: ['resumes', app?.program_id], queryFn: () => listResumes(app?.program_id), enabled: !!app?.program_id && tab === 'resume' })
 
   const submitMut = useMutation({ mutationFn: () => submitApplication(appId!), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['application', appId] }); showToast('Application submitted!', 'success') } })
-  const essayMut = useMutation({ mutationFn: (data: any) => createEssay(data), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['essays'] }); setShowEssayModal(false); showToast('Essay created', 'success') } })
+  const essayMut = useMutation({
+    mutationFn: (data: Parameters<typeof createEssay>[0]) => createEssay(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['essays'] })
+      setShowEssayModal(false)
+      showToast('Essay created', 'success')
+    },
+  })
   const resumeGenMut = useMutation({ mutationFn: () => generateResume({ format_type: 'standard', target_program_id: app?.program_id }), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['resumes'] }); showToast('Resume generated', 'success') } })
   const offerMut = useMutation({ mutationFn: () => respondToOffer(appId!, offerResponse, declineReason || undefined), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['application', appId] }); showToast('Response submitted', 'success') } })
 
@@ -46,7 +53,7 @@ export default function ApplicationDetailPage() {
 
   const application: Application = app
   const currentStepIdx = STATUS_STEPS.indexOf(application.status)
-  const checklistItems = checklist?.items ?? []
+  const checklistItems: ApplicationChecklist['items'] = checklist?.items ?? []
   const completionPct = checklist?.completion_percentage ?? 0
 
   const tabs = [
@@ -82,7 +89,7 @@ export default function ApplicationDetailPage() {
           <Card className="p-4">
             <h3 className="font-medium text-sm mb-3">Checklist</h3>
             <div className="space-y-2 mb-3">
-              {checklistItems.map((item: any, i: number) => (
+              {checklistItems.map((item, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm">
                   <div className={`w-4 h-4 rounded border flex items-center justify-center ${item.status === 'completed' ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'}`}>
                     {item.status === 'completed' && <Check size={10} />}
@@ -125,7 +132,7 @@ export default function ApplicationDetailPage() {
                       <div className="flex justify-between items-start">
                         <div>
                           <p className="font-medium text-sm">{e.prompt_text || 'Essay'}</p>
-                          <p className="text-xs text-gray-500 mt-1">{e.word_count ?? 0} words | <Badge variant={(STATUS_COLORS[e.status] || 'neutral') as any} size="sm">{e.status}</Badge></p>
+                          <p className="text-xs text-gray-500 mt-1">{e.word_count ?? 0} words | <Badge variant={toBadgeVariant(e.status)} size="sm">{e.status}</Badge></p>
                         </div>
                       </div>
                       <p className="text-sm text-gray-600 mt-2 line-clamp-3">{e.content}</p>
@@ -146,7 +153,7 @@ export default function ApplicationDetailPage() {
                   (resumes ?? []).map((r: Resume) => (
                     <Card key={r.id} className="p-4">
                       <p className="font-medium text-sm">Resume v{r.resume_version}</p>
-                      <Badge variant={(STATUS_COLORS[r.status] || 'neutral') as any} size="sm">{r.status}</Badge>
+                      <Badge variant={toBadgeVariant(r.status)} size="sm">{r.status}</Badge>
                     </Card>
                   ))
                 )}

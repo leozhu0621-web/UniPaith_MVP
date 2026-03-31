@@ -60,7 +60,13 @@ export default function SegmentsPage() {
   })
 
   const updateMut = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: any }) => updateSegment(id, payload),
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string
+      payload: Parameters<typeof updateSegment>[1]
+    }) => updateSegment(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['segments'] })
       showToast('Segment updated', 'success')

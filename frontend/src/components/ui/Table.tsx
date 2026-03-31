@@ -1,21 +1,27 @@
 import clsx from 'clsx'
 import Skeleton from './Skeleton'
 
-interface Column {
+export interface Column<T extends Record<string, unknown> = Record<string, unknown>> {
   key: string
   label: string
-  render?: (row: any) => React.ReactNode
+  render?: (row: T) => React.ReactNode
 }
 
-interface TableProps {
-  columns: Column[]
-  data: any[]
-  onRowClick?: (row: any) => void
+interface TableProps<T extends Record<string, unknown>> {
+  columns: Column<T>[]
+  data: T[]
+  onRowClick?: (row: T) => void
   isLoading?: boolean
   emptyMessage?: string
 }
 
-export default function Table({ columns, data, onRowClick, isLoading, emptyMessage = 'No data' }: TableProps) {
+export default function Table<T extends Record<string, unknown>>({
+  columns,
+  data,
+  onRowClick,
+  isLoading,
+  emptyMessage = 'No data',
+}: TableProps<T>) {
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -47,7 +53,7 @@ export default function Table({ columns, data, onRowClick, isLoading, emptyMessa
         <tbody>
           {data.map((row, i) => (
             <tr
-              key={row.id || i}
+              key={String((row as Record<string, unknown>).id ?? i)}
               onClick={() => onRowClick?.(row)}
               className={clsx(
                 'border-b border-gray-100',
@@ -57,7 +63,7 @@ export default function Table({ columns, data, onRowClick, isLoading, emptyMessa
             >
               {columns.map(col => (
                 <td key={col.key} className="px-4 py-3 text-gray-700">
-                  {col.render ? col.render(row) : row[col.key]}
+                  {col.render ? col.render(row) : String(row[col.key] ?? '')}
                 </td>
               ))}
             </tr>

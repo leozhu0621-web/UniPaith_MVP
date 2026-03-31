@@ -12,7 +12,7 @@ import EmptyState from '../../components/ui/EmptyState'
 import Skeleton from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatRelative } from '../../utils/format'
-import { STATUS_COLORS } from '../../utils/constants'
+import { toBadgeVariant } from '../../utils/constants'
 import type { Conversation, Message, Program } from '../../types'
 
 export default function MessagingPage() {
@@ -61,7 +61,7 @@ export default function MessagingPage() {
       subject: newSubject || undefined,
       program_id: newProgramId || undefined,
     }),
-    onSuccess: (data: any) => {
+    onSuccess: (data: Conversation) => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] })
       setSelectedConv(data.id)
       setShowNewModal(false)
@@ -128,7 +128,7 @@ export default function MessagingPage() {
                   )}
                 </div>
                 <div className="flex items-center justify-between mt-1">
-                  <Badge variant={(STATUS_COLORS[conv.status] as any) ?? 'neutral'} size="sm">{conv.status}</Badge>
+                  <Badge variant={toBadgeVariant(conv.status)} size="sm">{conv.status}</Badge>
                   <span className="text-xs text-gray-400">{formatRelative(conv.last_message_at)}</span>
                 </div>
               </div>

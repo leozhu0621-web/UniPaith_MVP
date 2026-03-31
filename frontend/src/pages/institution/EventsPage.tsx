@@ -14,7 +14,7 @@ import EmptyState from '../../components/ui/EmptyState'
 import Skeleton from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatDateTime } from '../../utils/format'
-import { STATUS_COLORS, EVENT_TYPES } from '../../utils/constants'
+import { EVENT_TYPES, toBadgeVariant } from '../../utils/constants'
 import type { EventItem, RSVP, Program } from '../../types'
 
 export default function EventsPage() {
@@ -124,7 +124,7 @@ export default function EventsPage() {
               <Card key={ev.id} className="p-4">
                 <div className="flex items-start justify-between mb-2">
                   <h3 className="font-semibold text-gray-900">{ev.event_name}</h3>
-                  <Badge variant={(STATUS_COLORS[ev.status] as any) ?? 'neutral'}>{ev.status}</Badge>
+                  <Badge variant={toBadgeVariant(ev.status)}>{ev.status}</Badge>
                 </div>
                 <Badge variant="info" className="mb-3">{ev.event_type}</Badge>
                 <div className="space-y-1.5 text-sm text-gray-600">

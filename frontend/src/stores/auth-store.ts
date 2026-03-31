@@ -1,15 +1,8 @@
 import { create } from 'zustand'
 import apiClient from '../api/client'
+import type { User } from '../types'
 
-interface User {
-  id: string
-  email: string
-  role: 'student' | 'institution_admin' | 'admin'
-
-  created_at: string
-}
-
-interface AuthState {
+export interface AuthState {
   user: User | null
   accessToken: string | null
   refreshToken: string | null

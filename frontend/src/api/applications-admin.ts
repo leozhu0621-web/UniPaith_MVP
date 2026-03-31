@@ -22,9 +22,9 @@ export async function makeDecision(applicationId: string, payload: {
 export async function createOffer(applicationId: string, payload: {
   offer_type: 'full_admission' | 'conditional' | 'waitlist_offer'
   tuition_amount?: number | null; scholarship_amount?: number;
-  assistantship_details?: Record<string, any> | null;
+  assistantship_details?: Record<string, unknown> | null;
   financial_package_total?: number | null;
-  conditions?: Record<string, any> | null;
+  conditions?: Record<string, unknown> | null;
   response_deadline?: string | null
 }): Promise<OfferLetter> {
   const { data } = await apiClient.post(`/applications/review/${applicationId}/offer`, payload)

@@ -11,7 +11,7 @@ import Input from '../../components/ui/Input'
 import Skeleton from '../../components/ui/Skeleton'
 import EmptyState from '../../components/ui/EmptyState'
 import { formatDate, formatScore } from '../../utils/format'
-import { STATUS_COLORS } from '../../utils/constants'
+import { toBadgeVariant } from '../../utils/constants'
 import type { Program, Application } from '../../types'
 
 export default function ReviewQueuePage() {
@@ -56,7 +56,7 @@ export default function ReviewQueuePage() {
       <div className="text-sm text-gray-600">
         {app.match_score != null ? formatScore(app.match_score / 100) : '\u2014'}
       </div>
-      <Badge variant={(STATUS_COLORS[app.status] as any) ?? 'neutral'}>
+      <Badge variant={toBadgeVariant(app.status)}>
         {app.status.replace('_', ' ')}
       </Badge>
       <div className="text-xs text-gray-400 w-24 text-right">{formatDate(app.submitted_at)}</div>
