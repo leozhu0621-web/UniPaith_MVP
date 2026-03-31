@@ -126,7 +126,6 @@ class EnrichmentPipeline:
         for etype, rec in best_by_type.items():
             data = rec.data or {}
             if etype == "ranking" and data:
-                program.ranking_data if hasattr(program, "ranking_data") else None
                 # Merge into institution ranking_data via institution
                 inst = await self.db.get(Institution, program.institution_id)
                 if inst:
