@@ -5,18 +5,22 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.database import get_db
-from unipaith.models.user import User, UserRole
-from unipaith.models.student import StudentProfile
-from unipaith.models.institution import Institution, Program
+from unipaith.dependencies import require_admin
 from unipaith.models.application import Application
-from unipaith.models.matching import MatchResult
 from unipaith.models.engagement import StudentEngagementSignal
+from unipaith.models.institution import Institution, Program
+from unipaith.models.matching import MatchResult
+from unipaith.models.student import StudentProfile
+from unipaith.models.user import User, UserRole
 
 router = APIRouter(prefix="/admin/dashboard", tags=["admin-dashboard"])
 
 
 @router.get("/stats")
-async def get_system_stats(db: AsyncSession = Depends(get_db)):
+async def get_system_stats(
+    _admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
     """Get system-wide statistics for the admin dashboard."""
 
     # User counts by role
@@ -82,8 +86,14 @@ async def get_system_stats(db: AsyncSession = Depends(get_db)):
 
     # Recent applications (last 10)
     recent_apps_result = await db.execute(
-        select(Application.id, Application.student_id, Application.program_id,
-               Application.status, Application.decision, Application.created_at)
+        select(
+            Application.id,
+            Application.student_id,
+            Application.program_id,
+            Application.status,
+            Application.decision,
+            Application.created_at,
+        )
         .order_by(Application.created_at.desc())
         .limit(10)
     )
