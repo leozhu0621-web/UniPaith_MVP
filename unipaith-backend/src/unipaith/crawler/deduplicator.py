@@ -1,4 +1,5 @@
 """Deduplicator — match extracted programs to existing institutions/programs."""
+
 from __future__ import annotations
 
 import logging
@@ -46,7 +47,10 @@ class Deduplicator:
         await self.db.flush()
         logger.debug(
             "Classified EP %s: match_type=%s, inst=%s, prog=%s",
-            ep.id, ep.match_type, ep.matched_institution_id, ep.matched_program_id,
+            ep.id,
+            ep.match_type,
+            ep.matched_institution_id,
+            ep.matched_program_id,
         )
         return ep
 
@@ -139,8 +143,10 @@ class Deduplicator:
             (ep.duration_months, existing.duration_months),
             (ep.tuition, existing.tuition),
             (ep.description_text, existing.description_text),
-            (str(ep.application_deadline) if ep.application_deadline else None,
-             str(existing.application_deadline) if existing.application_deadline else None),
+            (
+                str(ep.application_deadline) if ep.application_deadline else None,
+                str(existing.application_deadline) if existing.application_deadline else None,
+            ),
             (ep.acceptance_rate, existing.acceptance_rate),
         ]
 

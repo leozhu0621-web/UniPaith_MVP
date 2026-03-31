@@ -1,8 +1,9 @@
 """Source registry — CRUD and health tracking for DataSource entities."""
+
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from uuid import UUID
 
@@ -38,9 +39,7 @@ class SourceRegistry:
     ) -> DataSource:
         """Register a new data source with optional URL patterns and schedule."""
         # Check duplicate name
-        existing = await self.db.execute(
-            select(DataSource).where(DataSource.source_name == name)
-        )
+        existing = await self.db.execute(select(DataSource).where(DataSource.source_name == name))
         if existing.scalar_one_or_none():
             raise ConflictException(f"Data source with name '{name}' already exists")
 
@@ -60,7 +59,7 @@ class SourceRegistry:
         schedule = CrawlSchedule(
             source_id=source.id,
             frequency_hours=frequency_hours,
-            next_run_at=datetime.now(timezone.utc),
+            next_run_at=datetime.now(UTC),
         )
         self.db.add(schedule)
 
@@ -117,7 +116,7 @@ class SourceRegistry:
 
         Filters: next_run_at <= now, is_enabled, consecutive_failures < max_retries.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         stmt = (
             select(DataSource)
             .join(CrawlSchedule, CrawlSchedule.source_id == DataSource.id)
@@ -150,7 +149,7 @@ class SourceRegistry:
         signal = Decimal("1.0") if success else Decimal("0.0")
         current = source.reliability_score or Decimal("0.50")
         source.reliability_score = current * Decimal("0.8") + signal * Decimal("0.2")
-        source.last_crawled_at = datetime.now(timezone.utc)
+        source.last_crawled_at = datetime.now(UTC)
 
         # Update schedule
         sched_result = await self.db.execute(
@@ -158,24 +157,22 @@ class SourceRegistry:
         )
         schedule = sched_result.scalar_one_or_none()
         if schedule:
-            schedule.last_run_at = datetime.now(timezone.utc)
+            schedule.last_run_at = datetime.now(UTC)
             if success:
                 schedule.consecutive_failures = 0
-                schedule.next_run_at = datetime.now(timezone.utc) + timedelta(
-                    hours=schedule.frequency_hours
-                )
+                schedule.next_run_at = datetime.now(UTC) + timedelta(hours=schedule.frequency_hours)
             else:
                 schedule.consecutive_failures += 1
                 # Exponential back-off: retry_delay_hours * 2^failures
-                backoff = settings.crawler_retry_delay_hours * (
-                    2 ** schedule.consecutive_failures
-                )
-                schedule.next_run_at = datetime.now(timezone.utc) + timedelta(hours=backoff)
+                backoff = settings.crawler_retry_delay_hours * (2**schedule.consecutive_failures)
+                schedule.next_run_at = datetime.now(UTC) + timedelta(hours=backoff)
 
         await self.db.flush()
         logger.info(
             "Source %s health updated: success=%s, reliability=%.2f",
-            source_id, success, source.reliability_score,
+            source_id,
+            success,
+            source.reliability_score,
         )
 
     # ------------------------------------------------------------------
@@ -192,7 +189,10 @@ class SourceRegistry:
                 "category": "ranking",
                 "frequency_hours": 720,
                 "url_patterns": [
-                    {"url_pattern": "/university-rankings/world-university-rankings/*", "page_type": "ranking"},
+                    {
+                        "url_pattern": "/university-rankings/world-university-rankings/*",
+                        "page_type": "ranking",
+                    },
                 ],
             },
             {
@@ -222,7 +222,11 @@ class SourceRegistry:
                 "category": "program_data",
                 "frequency_hours": 168,
                 "url_patterns": [
-                    {"url_pattern": "/programs/*", "page_type": "program_list", "follow_links": True},
+                    {
+                        "url_pattern": "/programs/*",
+                        "page_type": "program_list",
+                        "follow_links": True,
+                    },
                     {"url_pattern": "/programs/*/", "page_type": "program_detail"},
                 ],
             },
@@ -233,7 +237,11 @@ class SourceRegistry:
                 "category": "program_data",
                 "frequency_hours": 168,
                 "url_patterns": [
-                    {"url_pattern": "/programs/*", "page_type": "program_list", "follow_links": True},
+                    {
+                        "url_pattern": "/programs/*",
+                        "page_type": "program_list",
+                        "follow_links": True,
+                    },
                 ],
             },
         ]

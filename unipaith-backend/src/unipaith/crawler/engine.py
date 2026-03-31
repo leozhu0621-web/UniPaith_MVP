@@ -3,6 +3,7 @@
 Uses Playwright (headless Chromium) for JavaScript-rendered university pages.
 Falls back to aiohttp for simple HTML pages.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -10,10 +11,9 @@ import hashlib
 import logging
 import re
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import urljoin, urlparse
 
-import aiohttp
 from bs4 import BeautifulSoup
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -34,6 +34,7 @@ async def _get_browser():
     global _browser, _playwright
     if _browser is None or not _browser.is_connected():
         from playwright.async_api import async_playwright
+
         _playwright = await async_playwright().start()
         _browser = await _playwright.chromium.launch(headless=True)
         logger.info("Headless browser started")
@@ -63,17 +64,18 @@ class CrawlerEngine:
     # Public API
     # ------------------------------------------------------------------
 
-    async def start_crawl(self, source_id: "uuid.UUID") -> CrawlJob:
+    async def start_crawl(self, source_id: uuid.UUID) -> CrawlJob:
         """Create a CrawlJob and crawl all URL patterns for a source."""
         source = await self.db.get(DataSource, source_id)
         if not source:
             from unipaith.core.exceptions import NotFoundException
+
             raise NotFoundException(f"Data source {source_id} not found")
 
         job = CrawlJob(
             source_id=source_id,
             status="running",
-            started_at=datetime.now(timezone.utc),
+            started_at=datetime.now(UTC),
         )
         self.db.add(job)
         await self.db.flush()
@@ -102,10 +104,12 @@ class CrawlerEngine:
                     await self._crawl_pattern(job, source, pattern)
                 except Exception as exc:
                     logger.error("Pattern %s failed: %s", pattern.url_pattern, exc)
-                    errors.append({
-                        "pattern": pattern.url_pattern,
-                        "error": str(exc),
-                    })
+                    errors.append(
+                        {
+                            "pattern": pattern.url_pattern,
+                            "error": str(exc),
+                        }
+                    )
                     job.pages_failed += 1
 
             job.status = "completed"
@@ -114,14 +118,17 @@ class CrawlerEngine:
             errors.append({"error": str(exc)})
             logger.exception("Crawl job %s failed", job.id)
 
-        job.completed_at = datetime.now(timezone.utc)
+        job.completed_at = datetime.now(UTC)
         if errors:
             job.error_log = errors
         await self.db.flush()
 
         logger.info(
             "Crawl job %s finished: status=%s, pages=%d, failed=%d",
-            job.id, job.status, job.pages_crawled, job.pages_failed,
+            job.id,
+            job.status,
+            job.pages_crawled,
+            job.pages_failed,
         )
         return job
 
@@ -142,7 +149,11 @@ class CrawlerEngine:
         """
         base_url = source.source_url or ""
         # If pattern is a full URL, use it directly; otherwise join with base
-        start_url = pattern.url_pattern if pattern.url_pattern.startswith("http") else urljoin(base_url, pattern.url_pattern)
+        start_url = (
+            pattern.url_pattern
+            if pattern.url_pattern.startswith("http")
+            else urljoin(base_url, pattern.url_pattern)
+        )
 
         visited: set[str] = set()
         queue: list[str] = [start_url]
@@ -168,7 +179,11 @@ class CrawlerEngine:
             # Skip pages that are just loading screens
             cleaned_preview = self.clean_html(html)
             if len(cleaned_preview) < 100:
-                logger.debug("Page too short after cleaning (%d chars), skipping: %s", len(cleaned_preview), url)
+                logger.debug(
+                    "Page too short after cleaning (%d chars), skipping: %s",
+                    len(cleaned_preview),
+                    url,
+                )
                 job.pages_failed += 1
                 continue
 
@@ -243,7 +258,9 @@ class CrawlerEngine:
         soup = BeautifulSoup(html, "html.parser")
 
         # Remove scripts, styles, nav, footer, header, aside
-        for tag in soup.find_all(["script", "style", "nav", "footer", "header", "aside", "noscript"]):
+        for tag in soup.find_all(
+            ["script", "style", "nav", "footer", "header", "aside", "noscript"]
+        ):
             tag.decompose()
 
         text = soup.get_text(separator="\n", strip=True)

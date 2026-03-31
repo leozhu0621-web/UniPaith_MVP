@@ -46,6 +46,7 @@ def _svc(db: AsyncSession) -> StudentService:
 
 # --- Profile ---
 
+
 @router.get("/me/profile", response_model=StudentProfileResponse)
 async def get_profile(
     user: User = Depends(require_student),
@@ -72,6 +73,7 @@ async def update_profile(
 
 # --- Onboarding ---
 
+
 @router.get("/me/onboarding", response_model=OnboardingStatusResponse)
 async def get_onboarding(
     user: User = Depends(require_student),
@@ -94,6 +96,7 @@ async def get_next_onboarding_step(
 
 
 # --- Academic Records ---
+
 
 @router.get("/me/academics", response_model=list[AcademicRecordResponse])
 async def list_academics(
@@ -145,6 +148,7 @@ async def delete_academic(
 
 # --- Test Scores ---
 
+
 @router.get("/me/test-scores", response_model=list[TestScoreResponse])
 async def list_test_scores(
     user: User = Depends(require_student),
@@ -195,6 +199,7 @@ async def delete_test_score(
 
 # --- Activities ---
 
+
 @router.get("/me/activities", response_model=list[ActivityResponse])
 async def list_activities(
     user: User = Depends(require_student),
@@ -244,6 +249,7 @@ async def delete_activity(
 
 
 # --- Preferences ---
+
 
 @router.get("/me/preferences", response_model=StudentPreferenceResponse | None)
 async def get_preferences(

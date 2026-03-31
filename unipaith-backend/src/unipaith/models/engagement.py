@@ -57,7 +57,7 @@ class SavedList(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    items: Mapped[list["SavedListItem"]] = relationship(
+    items: Mapped[list[SavedListItem]] = relationship(
         back_populates="saved_list", cascade="all, delete-orphan"
     )
 
@@ -78,7 +78,7 @@ class SavedListItem(Base):
     )
     notes: Mapped[str | None] = mapped_column(Text)
 
-    saved_list: Mapped["SavedList"] = relationship(back_populates="items")
+    saved_list: Mapped[SavedList] = relationship(back_populates="items")
 
 
 class StudentCalendar(Base):
@@ -147,7 +147,7 @@ class Conversation(Base):
     )
     last_message_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    messages: Mapped[list["Message"]] = relationship(
+    messages: Mapped[list[Message]] = relationship(
         back_populates="conversation", cascade="all, delete-orphan"
     )
 
@@ -172,7 +172,7 @@ class Message(Base):
     )
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    conversation: Mapped["Conversation"] = relationship(back_populates="messages")
+    conversation: Mapped[Conversation] = relationship(back_populates="messages")
 
 
 class StudentResume(Base):

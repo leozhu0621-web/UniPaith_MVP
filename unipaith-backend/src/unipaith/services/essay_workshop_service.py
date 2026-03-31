@@ -1,6 +1,7 @@
 """
 Essay workshop service — create, iterate, and get AI feedback on essays.
 """
+
 from __future__ import annotations
 
 import json
@@ -122,9 +123,7 @@ class EssayWorkshopService:
         self, student_id: UUID, program_id: UUID | None = None
     ) -> list[StudentEssay]:
         """List essays for a student, optionally filtered by program."""
-        stmt = select(StudentEssay).where(
-            StudentEssay.student_id == student_id
-        )
+        stmt = select(StudentEssay).where(StudentEssay.student_id == student_id)
         if program_id is not None:
             stmt = stmt.where(StudentEssay.program_id == program_id)
         stmt = stmt.order_by(StudentEssay.updated_at.desc())

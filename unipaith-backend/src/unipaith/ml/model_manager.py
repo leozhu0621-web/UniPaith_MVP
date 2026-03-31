@@ -5,10 +5,11 @@ Handles the lifecycle of trained models: listing, promoting candidates
 that pass fairness checks and improvement thresholds, rolling back to a
 previous version, and auto-promoting after a successful training run.
 """
+
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -75,9 +76,7 @@ class ModelManager:
         """
         # Load candidate
         result = await self.db.execute(
-            select(ModelRegistry).where(
-                ModelRegistry.model_version == model_version
-            )
+            select(ModelRegistry).where(ModelRegistry.model_version == model_version)
         )
         candidate = result.scalar_one_or_none()
         if candidate is None:
@@ -87,20 +86,14 @@ class ModelManager:
         if not force and settings.fairness_check_on_promotion:
             fairness_ok = await self._check_fairness_passed(model_version)
             if not fairness_ok:
-                logger.info(
-                    "Promotion blocked for %s — fairness check failed", model_version
-                )
+                logger.info("Promotion blocked for %s — fairness check failed", model_version)
                 return {"success": False, "reason": "fairness_check_failed"}
 
         # Improvement gate
         active_model = await self.get_active_model()
         if not force and active_model is not None:
-            active_accuracy = (active_model.performance_metrics or {}).get(
-                "accuracy", 0.0
-            )
-            candidate_accuracy = (candidate.performance_metrics or {}).get(
-                "accuracy", 0.0
-            )
+            active_accuracy = (active_model.performance_metrics or {}).get("accuracy", 0.0)
+            candidate_accuracy = (candidate.performance_metrics or {}).get("accuracy", 0.0)
 
             improvement = candidate_accuracy - active_accuracy
             if improvement < settings.model_promotion_min_improvement:
@@ -126,7 +119,7 @@ class ModelManager:
             previous_version = active_model.model_version
 
         # Activate candidate
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         candidate.is_active = True
         candidate.promoted_at = now
 
@@ -138,9 +131,7 @@ class ModelManager:
 
         await self.db.flush()
 
-        logger.info(
-            "Model %s promoted (previous: %s)", model_version, previous_version
-        )
+        logger.info("Model %s promoted (previous: %s)", model_version, previous_version)
 
         return {
             "success": True,
@@ -175,11 +166,9 @@ class ModelManager:
         previous_model = result.scalar_one_or_none()
 
         if previous_model is None:
-            raise NotFoundException(
-                "No previous model available for rollback"
-            )
+            raise NotFoundException("No previous model available for rollback")
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Retire current
         active_model.is_active = False
@@ -211,14 +200,10 @@ class ModelManager:
         Load a completed TrainingRun and attempt non-force promotion of
         its resulting model.
         """
-        result = await self.db.execute(
-            select(TrainingRun).where(TrainingRun.id == training_run_id)
-        )
+        result = await self.db.execute(select(TrainingRun).where(TrainingRun.id == training_run_id))
         run = result.scalar_one_or_none()
         if run is None:
-            raise NotFoundException(
-                f"Training run '{training_run_id}' not found"
-            )
+            raise NotFoundException(f"Training run '{training_run_id}' not found")
 
         if not run.resulting_model_version:
             return {
@@ -238,9 +223,7 @@ class ModelManager:
         have passed=True. If no reports exist, return True (optimistic).
         """
         result = await self.db.execute(
-            select(FairnessReport).where(
-                FairnessReport.model_version == model_version
-            )
+            select(FairnessReport).where(FairnessReport.model_version == model_version)
         )
         reports = result.scalars().all()
 

@@ -1,13 +1,10 @@
 """Tests for Phase 5 – LLMExtractor helpers."""
+
 from __future__ import annotations
 
 from decimal import Decimal
 
-import pytest
-
 from unipaith.crawler.extractor import LLMExtractor
-
-
 
 
 async def test_confidence_computation_high():

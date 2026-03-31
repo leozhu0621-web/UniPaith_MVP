@@ -1,4 +1,5 @@
 """Tests for notifications — list, mark read, mark all read."""
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -67,9 +68,7 @@ async def test_mark_read(
     await _seed_user(db_session, mock_student_user)
     notification = await _create_notification(db_session, mock_student_user.id)
 
-    resp = await student_client.post(
-        f"/api/v1/notifications/{notification.id}/read"
-    )
+    resp = await student_client.post(f"/api/v1/notifications/{notification.id}/read")
     assert resp.status_code == 200
     data = resp.json()
     assert data["is_read"] is True
@@ -92,8 +91,6 @@ async def test_mark_all_read(
     assert resp.status_code == 200
 
     # Verify all are read
-    list_resp = await student_client.get(
-        "/api/v1/notifications", params={"unread_only": True}
-    )
+    list_resp = await student_client.get("/api/v1/notifications", params={"unread_only": True})
     assert list_resp.status_code == 200
     assert len(list_resp.json()) == 0

@@ -1,8 +1,8 @@
 """Auto-ingestor — route extracted programs into the main database."""
+
 from __future__ import annotations
 
 import logging
-from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import select
@@ -37,7 +37,6 @@ class AutoIngestor:
 
         confidence = float(ep.extraction_confidence or 0)
         auto_threshold = settings.crawler_confidence_auto_ingest
-        review_threshold = settings.crawler_confidence_review_queue
         match_type = ep.match_type or "new"
 
         # Duplicates are always skipped
@@ -191,7 +190,8 @@ class AutoIngestor:
         await self.db.flush()
         logger.info(
             "Updated program %s: fields=%s",
-            ep.matched_program_id, updated_fields,
+            ep.matched_program_id,
+            updated_fields,
         )
 
         return {

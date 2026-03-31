@@ -17,7 +17,6 @@ from unipaith.schemas.review import (
     RubricResponse,
     ScoreApplicationRequest,
 )
-from unipaith.core.exceptions import NotFoundException
 from unipaith.services.institution_service import InstitutionService
 from unipaith.services.review_pipeline_service import ReviewPipelineService
 
@@ -93,7 +92,7 @@ async def get_scores(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    inst = await InstitutionService(db).get_institution(user.id)
+    await InstitutionService(db).get_institution(user.id)
     svc = ReviewPipelineService(db)
     return await svc.get_application_scores(application_id)
 

@@ -1,8 +1,9 @@
 """Tests for FairnessChecker — Phase 4 ML loop."""
+
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 
 import pytest
@@ -96,7 +97,7 @@ async def _seed_fairness_outcomes(
                 actual_outcome=outcome_val,
                 outcome_source="application_decision",
                 outcome_confidence=Decimal("0.70"),
-                outcome_recorded_at=datetime.now(timezone.utc),
+                outcome_recorded_at=datetime.now(UTC),
             )
             db.add(rec)
 
@@ -145,8 +146,8 @@ async def test_fairness_large_disparity(db_session: AsyncSession):
     outcomes = await _seed_fairness_outcomes(
         db_session,
         nationalities={
-            "US": (9, 1),   # 90% positive rate
-            "IN": (1, 9),   # 10% positive rate
+            "US": (9, 1),  # 90% positive rate
+            "IN": (1, 9),  # 10% positive rate
         },
     )
 

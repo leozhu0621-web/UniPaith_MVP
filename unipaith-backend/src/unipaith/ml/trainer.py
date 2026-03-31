@@ -6,10 +6,11 @@ imbalance, performs Bayesian hyperparameter search via Optuna with
 StratifiedKFold cross-validation, and persists the best model to the
 ModelRegistry.
 """
+
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from typing import Any
 
 import numpy as np
@@ -17,7 +18,6 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.config import settings
-from unipaith.core.exceptions import BadRequestException
 from unipaith.models.matching import ModelRegistry
 from unipaith.models.ml_loop import OutcomeRecord, TrainingRun
 
@@ -25,7 +25,6 @@ logger = logging.getLogger(__name__)
 
 # ---- Graceful imports for heavy ML dependencies ----
 try:
-    from sklearn.model_selection import StratifiedKFold, train_test_split
     from sklearn.metrics import (
         accuracy_score,
         f1_score,
@@ -33,18 +32,17 @@ try:
         recall_score,
         roc_auc_score,
     )
+    from sklearn.model_selection import StratifiedKFold, train_test_split
 except ImportError as exc:
     raise ImportError(
-        "scikit-learn is required for ModelTrainer. "
-        "Install it with: pip install scikit-learn"
+        "scikit-learn is required for ModelTrainer. Install it with: pip install scikit-learn"
     ) from exc
 
 try:
     from xgboost import XGBClassifier
 except ImportError as exc:
     raise ImportError(
-        "xgboost is required for ModelTrainer. "
-        "Install it with: pip install xgboost"
+        "xgboost is required for ModelTrainer. Install it with: pip install xgboost"
     ) from exc
 
 try:
@@ -53,8 +51,7 @@ try:
     optuna.logging.set_verbosity(optuna.logging.WARNING)
 except ImportError as exc:
     raise ImportError(
-        "optuna is required for ModelTrainer. "
-        "Install it with: pip install optuna"
+        "optuna is required for ModelTrainer. Install it with: pip install optuna"
     ) from exc
 
 try:
@@ -110,7 +107,7 @@ class ModelTrainer:
         5. Final model training + test-set evaluation
         6. Persist to ModelRegistry
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         training_run = TrainingRun(
             triggered_by=triggered_by,
@@ -131,7 +128,7 @@ class ModelTrainer:
         except Exception:
             training_run.status = "failed"
             training_run.failure_reason = "unexpected_error"
-            training_run.completed_at = datetime.now(timezone.utc)
+            training_run.completed_at = datetime.now(UTC)
             await self.db.flush()
             logger.exception("Training run %s failed unexpectedly", training_run.id)
             raise
@@ -150,11 +147,9 @@ class ModelTrainer:
                 f"Insufficient training data: {len(data)} samples "
                 f"(minimum {settings.outcome_min_decisions_for_training})"
             )
-            training_run.completed_at = datetime.now(timezone.utc)
+            training_run.completed_at = datetime.now(UTC)
             await self.db.flush()
-            logger.warning(
-                "Training aborted — only %d labelled samples available", len(data)
-            )
+            logger.warning("Training aborted — only %d labelled samples available", len(data))
             return training_run
 
         # Step 2 — build feature matrix
@@ -187,9 +182,7 @@ class ModelTrainer:
             params = {
                 "n_estimators": trial.suggest_int("n_estimators", 50, 300),
                 "max_depth": trial.suggest_int("max_depth", 3, 10),
-                "learning_rate": trial.suggest_float(
-                    "learning_rate", 0.01, 0.3, log=True
-                ),
+                "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.3, log=True),
                 "subsample": trial.suggest_float("subsample", 0.6, 1.0),
                 "colsample_bytree": trial.suggest_float("colsample_bytree", 0.6, 1.0),
                 "min_child_weight": trial.suggest_int("min_child_weight", 1, 10),
@@ -251,9 +244,7 @@ class ModelTrainer:
             "recall": float(recall_score(y_test, y_pred, zero_division=0)),
             "f1": float(f1_score(y_test, y_pred, zero_division=0)),
             "roc_auc": float(
-                roc_auc_score(y_test, y_proba[:, 1])
-                if y_proba.shape[1] == 2
-                else 0.0
+                roc_auc_score(y_test, y_proba[:, 1]) if y_proba.shape[1] == 2 else 0.0
             ),
         }
 
@@ -269,7 +260,7 @@ class ModelTrainer:
             hyperparameters=best_params,
             performance_metrics=test_metrics,
             is_active=False,
-            trained_at=datetime.now(timezone.utc),
+            trained_at=datetime.now(UTC),
         )
         self.db.add(registry_entry)
 
@@ -281,7 +272,7 @@ class ModelTrainer:
         training_run.optuna_study_name = study_name
         training_run.resulting_model_version = model_version
         training_run.model_artifact_path = artifact_path
-        training_run.completed_at = datetime.now(timezone.utc)
+        training_run.completed_at = datetime.now(UTC)
 
         await self.db.flush()
 
@@ -306,9 +297,7 @@ class ModelTrainer:
         """
         result = await self.db.execute(
             select(OutcomeRecord).where(
-                OutcomeRecord.actual_outcome.in_(
-                    list(_POSITIVE_OUTCOMES | _NEGATIVE_OUTCOMES)
-                )
+                OutcomeRecord.actual_outcome.in_(list(_POSITIVE_OUTCOMES | _NEGATIVE_OUTCOMES))
             )
         )
         records = result.scalars().all()
@@ -369,9 +358,7 @@ class ModelTrainer:
 
     async def _generate_version_string(self) -> str:
         """Generate a sequential model version string like 'v3.0-trained-2026-03-29'."""
-        result = await self.db.execute(
-            select(func.count()).select_from(ModelRegistry)
-        )
+        result = await self.db.execute(select(func.count()).select_from(ModelRegistry))
         count = result.scalar() or 0
         today = date.today().isoformat()
         return f"v{count + 1}.0-trained-{today}"

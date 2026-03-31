@@ -132,7 +132,10 @@ class Settings(BaseSettings):
     # Fairness
     fairness_dial: float = 0.5
     fairness_protected_attributes: list[str] = [
-        "nationality", "gender", "ethnicity", "first_generation"
+        "nationality",
+        "gender",
+        "ethnicity",
+        "first_generation",
     ]
     fairness_max_disparity: float = 0.15
     fairness_check_on_promotion: bool = True

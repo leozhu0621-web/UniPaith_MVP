@@ -3,18 +3,17 @@ Model Evaluator — compares predictions against actual outcomes to produce
 accuracy, precision, recall, F1, AUC-ROC, confusion matrices, per-tier
 metrics, and determines whether retraining should be triggered.
 """
+
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
-from decimal import Decimal
-from uuid import UUID
+from datetime import UTC, datetime
 
-from sqlalchemy import and_, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.config import settings
-from unipaith.core.exceptions import BadRequestException, NotFoundException
+from unipaith.core.exceptions import BadRequestException
 from unipaith.models.matching import ModelRegistry, PredictionLog
 from unipaith.models.ml_loop import EvaluationRun, OutcomeRecord
 
@@ -54,7 +53,7 @@ class ModelEvaluator:
             BadRequestException: if insufficient labeled outcomes exist.
             NotFoundException: if the specified model version does not exist.
         """
-        started_at = datetime.now(timezone.utc)
+        started_at = datetime.now(UTC)
 
         if model_version is None:
             model_version = await self._get_active_model_version()
@@ -82,7 +81,7 @@ class ModelEvaluator:
             drift_detected=False,
             retraining_triggered=should_retrain,
             started_at=started_at,
-            completed_at=datetime.now(timezone.utc),
+            completed_at=datetime.now(UTC),
         )
         self.db.add(evaluation)
         await self.db.flush()
@@ -100,9 +99,7 @@ class ModelEvaluator:
     # Data collection
     # ------------------------------------------------------------------
 
-    async def _collect_labeled_outcomes(
-        self, model_version: str
-    ) -> list[dict]:
+    async def _collect_labeled_outcomes(self, model_version: str) -> list[dict]:
         """Collect outcomes joined with predictions for a model version.
 
         Returns list of dicts with: predicted_score, predicted_tier,
@@ -188,9 +185,7 @@ class ModelEvaluator:
             }
 
         accuracy = float(accuracy_score(y_true, y_pred))
-        precision = float(
-            precision_score(y_true, y_pred, zero_division=0)
-        )
+        precision = float(precision_score(y_true, y_pred, zero_division=0))
         recall = float(recall_score(y_true, y_pred, zero_division=0))
         f1 = float(f1_score(y_true, y_pred, zero_division=0))
 
@@ -228,9 +223,7 @@ class ModelEvaluator:
             matrix[tier][actual] = matrix[tier].get(actual, 0) + 1
 
         # Convert keys to strings for JSON serialization
-        return {
-            str(tier): counts for tier, counts in sorted(matrix.items())
-        }
+        return {str(tier): counts for tier, counts in sorted(matrix.items())}
 
     @staticmethod
     def _compute_per_tier_metrics(outcomes: list[dict]) -> dict:
@@ -253,12 +246,8 @@ class ModelEvaluator:
         for tier in sorted(tier_groups.keys()):
             group = tier_groups[tier]
             total = len(group)
-            positive_count = sum(
-                1 for o in group if o["actual_outcome"] in _POSITIVE_OUTCOMES
-            )
-            negative_count = sum(
-                1 for o in group if o["actual_outcome"] in _NEGATIVE_OUTCOMES
-            )
+            positive_count = sum(1 for o in group if o["actual_outcome"] in _POSITIVE_OUTCOMES)
+            negative_count = sum(1 for o in group if o["actual_outcome"] in _NEGATIVE_OUTCOMES)
 
             if tier == 1:
                 correct = positive_count
@@ -294,14 +283,10 @@ class ModelEvaluator:
 
         Returns 'v1.0-mvp' as fallback if no active model is registered.
         """
-        stmt = select(ModelRegistry.model_version).where(
-            ModelRegistry.is_active.is_(True)
-        )
+        stmt = select(ModelRegistry.model_version).where(ModelRegistry.is_active.is_(True))
         result = await self.db.execute(stmt)
         version = result.scalar_one_or_none()
         if version is None:
-            logger.warning(
-                "No active model found in registry, using default 'v1.0-mvp'"
-            )
+            logger.warning("No active model found in registry, using default 'v1.0-mvp'")
             return "v1.0-mvp"
         return version

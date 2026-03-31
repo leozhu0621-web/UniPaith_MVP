@@ -1,4 +1,5 @@
 """Tests for resume workshop — auto-generate, finalize, feedback."""
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -75,9 +76,7 @@ async def test_finalize_resume(
     )
     resume_id = create_resp.json()["id"]
 
-    resp = await student_client.post(
-        f"/api/v1/students/me/resume/{resume_id}/finalize"
-    )
+    resp = await student_client.post(f"/api/v1/students/me/resume/{resume_id}/finalize")
     assert resp.status_code == 200
     assert resp.json()["status"] == "final"
 

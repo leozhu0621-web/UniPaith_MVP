@@ -8,7 +8,6 @@ os.environ.setdefault("AI_MOCK_MODE", "true")
 
 import uuid
 from collections.abc import AsyncGenerator
-from datetime import datetime, timezone
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -92,7 +91,8 @@ async def _persist_user(db_session: AsyncSession, user: User) -> User:
 
 @pytest.fixture
 async def student_client(
-    db_session: AsyncSession, mock_student_user: User,
+    db_session: AsyncSession,
+    mock_student_user: User,
 ) -> AsyncGenerator[AsyncClient, None]:
     await _persist_user(db_session, mock_student_user)
 
@@ -114,7 +114,8 @@ async def student_client(
 
 @pytest.fixture
 async def institution_client(
-    db_session: AsyncSession, mock_institution_user: User,
+    db_session: AsyncSession,
+    mock_institution_user: User,
 ) -> AsyncGenerator[AsyncClient, None]:
     await _persist_user(db_session, mock_institution_user)
 
@@ -136,7 +137,8 @@ async def institution_client(
 
 @pytest.fixture
 async def admin_client(
-    db_session: AsyncSession, mock_admin_user: User,
+    db_session: AsyncSession,
+    mock_admin_user: User,
 ) -> AsyncGenerator[AsyncClient, None]:
     await _persist_user(db_session, mock_admin_user)
 

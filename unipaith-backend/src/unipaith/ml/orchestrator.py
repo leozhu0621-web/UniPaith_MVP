@@ -5,15 +5,15 @@ Runs evaluation, drift detection, retraining, fairness checking, and
 model promotion in sequence.  Designed to be called by the admin API
 or a scheduled job.  Never raises — always returns partial results.
 """
+
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from unipaith.ml.ab_testing import ABTestManager
 from unipaith.ml.drift_detector import DriftDetector
 from unipaith.ml.evaluator import ModelEvaluator
 from unipaith.ml.fairness import FairnessChecker
@@ -39,9 +39,7 @@ class MLOrchestrator:
     # Full cycle
     # ------------------------------------------------------------------
 
-    async def run_full_cycle(
-        self, triggered_by: str = "scheduled"
-    ) -> dict[str, Any]:
+    async def run_full_cycle(self, triggered_by: str = "scheduled") -> dict[str, Any]:
         """Run the complete ML improvement cycle.
 
         Steps:
@@ -53,7 +51,7 @@ class MLOrchestrator:
 
         Never raises — partial results are returned on failure.
         """
-        started_at = datetime.now(timezone.utc)
+        started_at = datetime.now(UTC)
         result: dict[str, Any] = {
             "started_at": started_at.isoformat(),
             "completed_at": None,
@@ -79,7 +77,7 @@ class MLOrchestrator:
             }
         except Exception:
             logger.exception("Full cycle: evaluation step failed")
-            result["completed_at"] = datetime.now(timezone.utc).isoformat()
+            result["completed_at"] = datetime.now(UTC).isoformat()
             return result
 
         # --- Step 2: Drift detection ---
@@ -102,14 +100,14 @@ class MLOrchestrator:
             }
         except Exception:
             logger.exception("Full cycle: drift detection step failed")
-            result["completed_at"] = datetime.now(timezone.utc).isoformat()
+            result["completed_at"] = datetime.now(UTC).isoformat()
             return result
 
         # --- Step 3: Determine if retraining is needed ---
         training_needed = eval_run.retraining_triggered or any_drift
         if not training_needed:
             result["training"] = {"skipped": True, "reason": "no trigger"}
-            result["completed_at"] = datetime.now(timezone.utc).isoformat()
+            result["completed_at"] = datetime.now(UTC).isoformat()
             return result
 
         # --- Step 4: Run training ---
@@ -127,11 +125,11 @@ class MLOrchestrator:
         except Exception:
             logger.exception("Full cycle: training step failed")
             result["training"] = {"skipped": False, "error": "training failed"}
-            result["completed_at"] = datetime.now(timezone.utc).isoformat()
+            result["completed_at"] = datetime.now(UTC).isoformat()
             return result
 
         if training_run.status != "completed" or not training_run.resulting_model_version:
-            result["completed_at"] = datetime.now(timezone.utc).isoformat()
+            result["completed_at"] = datetime.now(UTC).isoformat()
             return result
 
         # --- Step 5: Fairness check on new model ---
@@ -166,7 +164,7 @@ class MLOrchestrator:
             logger.exception("Full cycle: promotion step failed")
             result["promotion"] = {"error": "promotion failed"}
 
-        result["completed_at"] = datetime.now(timezone.utc).isoformat()
+        result["completed_at"] = datetime.now(UTC).isoformat()
         return result
 
     # ------------------------------------------------------------------
@@ -187,7 +185,9 @@ class MLOrchestrator:
                 "retraining_triggered": eval_run.retraining_triggered,
                 "drift_detected": eval_run.drift_detected,
                 "started_at": eval_run.started_at.isoformat() if eval_run.started_at else None,
-                "completed_at": eval_run.completed_at.isoformat() if eval_run.completed_at else None,
+                "completed_at": eval_run.completed_at.isoformat()
+                if eval_run.completed_at
+                else None,
             }
         except Exception:
             logger.exception("run_evaluation_only failed")

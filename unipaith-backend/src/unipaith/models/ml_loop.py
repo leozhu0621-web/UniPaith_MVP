@@ -2,6 +2,7 @@
 Phase 4: Self-Improving Loop models.
 Tracks outcomes, evaluations, training runs, A/B tests, drift, and fairness.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -86,8 +87,8 @@ class EvaluationRun(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    training_runs: Mapped[list["TrainingRun"]] = relationship(back_populates="evaluation_run")
-    fairness_reports: Mapped[list["FairnessReport"]] = relationship(
+    training_runs: Mapped[list[TrainingRun]] = relationship(back_populates="evaluation_run")
+    fairness_reports: Mapped[list[FairnessReport]] = relationship(
         back_populates="evaluation_run",
         foreign_keys="[FairnessReport.evaluation_run_id]",
     )
@@ -127,8 +128,8 @@ class TrainingRun(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    evaluation_run: Mapped["EvaluationRun | None"] = relationship(back_populates="training_runs")
-    fairness_reports: Mapped[list["FairnessReport"]] = relationship(
+    evaluation_run: Mapped[EvaluationRun | None] = relationship(back_populates="training_runs")
+    fairness_reports: Mapped[list[FairnessReport]] = relationship(
         back_populates="training_run",
         foreign_keys="[FairnessReport.training_run_id]",
     )
@@ -167,7 +168,9 @@ class DriftSnapshot(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     snapshot_type: Mapped[str] = mapped_column(String(30), nullable=False)
-    reference_period_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    reference_period_start: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     reference_period_end: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     current_period_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     current_period_end: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
@@ -211,11 +214,11 @@ class FairnessReport(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    evaluation_run: Mapped["EvaluationRun | None"] = relationship(
+    evaluation_run: Mapped[EvaluationRun | None] = relationship(
         back_populates="fairness_reports",
         foreign_keys=[evaluation_run_id],
     )
-    training_run: Mapped["TrainingRun | None"] = relationship(
+    training_run: Mapped[TrainingRun | None] = relationship(
         back_populates="fairness_reports",
         foreign_keys=[training_run_id],
     )

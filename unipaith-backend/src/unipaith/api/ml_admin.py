@@ -8,6 +8,7 @@ Provides 17 endpoints covering:
 - Drift and fairness reports
 - Outcome statistics
 """
+
 from __future__ import annotations
 
 import logging
@@ -44,8 +45,8 @@ from unipaith.schemas.ml_loop import (
     ModelVersionResponse,
     OutcomeStatsResponse,
     PromoteModelRequest,
-    TriggerTrainingRequest,
     TrainingRunResponse,
+    TriggerTrainingRequest,
 )
 
 logger = logging.getLogger(__name__)
@@ -109,11 +110,7 @@ async def list_evaluations(
     _admin: User = Depends(require_admin),
 ):
     """List recent evaluation runs."""
-    stmt = (
-        select(EvaluationRun)
-        .order_by(EvaluationRun.started_at.desc())
-        .limit(limit)
-    )
+    stmt = select(EvaluationRun).order_by(EvaluationRun.started_at.desc()).limit(limit)
     result = await db.execute(stmt)
     return result.scalars().all()
 
@@ -145,11 +142,7 @@ async def list_training_runs(
     _admin: User = Depends(require_admin),
 ):
     """List recent training runs."""
-    stmt = (
-        select(TrainingRun)
-        .order_by(TrainingRun.started_at.desc())
-        .limit(limit)
-    )
+    stmt = select(TrainingRun).order_by(TrainingRun.started_at.desc()).limit(limit)
     result = await db.execute(stmt)
     return result.scalars().all()
 
@@ -179,10 +172,7 @@ async def list_models(
     manager = ModelManager(db)
     models_raw = await manager.list_models()
     active = await manager.get_active_model()
-    models = [
-        ModelVersionResponse.model_validate(m, from_attributes=True)
-        for m in models_raw
-    ]
+    models = [ModelVersionResponse.model_validate(m, from_attributes=True) for m in models_raw]
     return ModelListResponse(
         models=models,
         active_version=active.model_version if active else None,
@@ -256,11 +246,7 @@ async def list_drift(
     _admin: User = Depends(require_admin),
 ):
     """List recent drift snapshots."""
-    stmt = (
-        select(DriftSnapshot)
-        .order_by(DriftSnapshot.created_at.desc())
-        .limit(limit)
-    )
+    stmt = select(DriftSnapshot).order_by(DriftSnapshot.created_at.desc()).limit(limit)
     result = await db.execute(stmt)
     return result.scalars().all()
 
@@ -277,9 +263,7 @@ async def get_fairness(
     _admin: User = Depends(require_admin),
 ):
     """Get fairness reports for a specific model version."""
-    stmt = select(FairnessReport).where(
-        FairnessReport.model_version == model_version
-    )
+    stmt = select(FairnessReport).where(FairnessReport.model_version == model_version)
     result = await db.execute(stmt)
     return result.scalars().all()
 

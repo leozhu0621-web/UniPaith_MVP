@@ -1,14 +1,15 @@
 """Tests for ABTestManager — Phase 4 ML loop."""
+
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.ml.ab_testing import ABTestManager
-from unipaith.models.institution import Institution, Program
+from unipaith.models.institution import Institution
 from unipaith.models.matching import ModelRegistry
 from unipaith.models.student import StudentProfile
 from unipaith.models.user import User, UserRole
@@ -24,7 +25,7 @@ async def _setup_models_and_student(
         architecture="XGBClassifier",
         performance_metrics={"accuracy": 0.80},
         is_active=True,
-        trained_at=datetime.now(timezone.utc),
+        trained_at=datetime.now(UTC),
     )
     db.add(active)
 
@@ -34,7 +35,7 @@ async def _setup_models_and_student(
         architecture="XGBClassifier",
         performance_metrics={"accuracy": 0.85},
         is_active=False,
-        trained_at=datetime.now(timezone.utc),
+        trained_at=datetime.now(UTC),
     )
     db.add(challenger)
 

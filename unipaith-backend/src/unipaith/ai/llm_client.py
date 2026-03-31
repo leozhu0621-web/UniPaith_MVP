@@ -7,6 +7,7 @@ Three modes controlled by settings.gpu_mode:
 - "local": calls localhost vLLM endpoints (local GPU)
 - "aws": calls AWS GPU instances with auto-start/stop for 70B
 """
+
 from __future__ import annotations
 
 import logging
@@ -131,6 +132,7 @@ class AWSLLMClient:
         """Check if monthly GPU budget is exceeded."""
         try:
             from unipaith.ai.cost_tracker import get_cost_tracker
+
             tracker = get_cost_tracker()
             return tracker.is_budget_exceeded()
         except Exception:
@@ -156,7 +158,7 @@ class MockLLMClient:
     """Mock client for development/testing without GPU access."""
 
     async def extract_features(self, system_prompt: str, user_content: str) -> str:
-        return '''{
+        return """{
             "academic_strength": 0.82,
             "research_experience": 0.75,
             "leadership_signal": 0.60,
@@ -170,7 +172,7 @@ class MockLLMClient:
             "extracted_interests": ["NLP", "computer vision", "AI ethics"],
             "motivation_type": "mixed",
             "readiness_level": "strong"
-        }'''
+        }"""
 
     async def generate_reasoning(self, system_prompt: str, user_content: str) -> str:
         return (

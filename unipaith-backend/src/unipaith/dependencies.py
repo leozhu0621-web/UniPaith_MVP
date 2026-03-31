@@ -9,7 +9,6 @@ from unipaith.core.exceptions import ForbiddenException
 from unipaith.core.security import CognitoClaims, verify_token
 from unipaith.database import get_db
 from unipaith.models.user import User, UserRole
-from unipaith.models.student import StudentProfile
 
 
 async def get_current_user(

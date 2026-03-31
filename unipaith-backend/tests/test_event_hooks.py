@@ -1,5 +1,4 @@
 """Tests for event hooks — on_application_submitted, on_decision_made."""
-import uuid
 
 import pytest
 from sqlalchemy import select

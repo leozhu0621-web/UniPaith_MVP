@@ -68,14 +68,10 @@ class InstitutionService:
         )
         return list(result.scalars().all())
 
-    async def get_program(
-        self, institution_id: UUID, program_id: UUID
-    ) -> Program:
+    async def get_program(self, institution_id: UUID, program_id: UUID) -> Program:
         return await self._verify_program_ownership(institution_id, program_id)
 
-    async def create_program(
-        self, institution_id: UUID, data: CreateProgramRequest
-    ) -> Program:
+    async def create_program(self, institution_id: UUID, data: CreateProgramRequest) -> Program:
         program = Program(
             institution_id=institution_id,
             is_published=False,
@@ -97,9 +93,7 @@ class InstitutionService:
         await self.db.refresh(program)
         return program
 
-    async def publish_program(
-        self, institution_id: UUID, program_id: UUID
-    ) -> Program:
+    async def publish_program(self, institution_id: UUID, program_id: UUID) -> Program:
         program = await self._verify_program_ownership(institution_id, program_id)
         errors = []
         if not program.program_name:
@@ -117,28 +111,22 @@ class InstitutionService:
         await self.db.refresh(program)
         return program
 
-    async def unpublish_program(
-        self, institution_id: UUID, program_id: UUID
-    ) -> Program:
+    async def unpublish_program(self, institution_id: UUID, program_id: UUID) -> Program:
         program = await self._verify_program_ownership(institution_id, program_id)
         program.is_published = False
         await self.db.flush()
         await self.db.refresh(program)
         return program
 
-    async def delete_program(
-        self, institution_id: UUID, program_id: UUID
-    ) -> None:
+    async def delete_program(self, institution_id: UUID, program_id: UUID) -> None:
         program = await self._verify_program_ownership(institution_id, program_id)
         app_count = await self.db.execute(
-            select(func.count()).select_from(Application).where(
-                Application.program_id == program_id
-            )
+            select(func.count())
+            .select_from(Application)
+            .where(Application.program_id == program_id)
         )
         if app_count.scalar_one() > 0:
-            raise ConflictException(
-                "Cannot delete program with existing applications"
-            )
+            raise ConflictException("Cannot delete program with existing applications")
         await self.db.delete(program)
         await self.db.flush()
 
@@ -146,9 +134,7 @@ class InstitutionService:
 
     async def list_segments(self, institution_id: UUID) -> list[TargetSegment]:
         result = await self.db.execute(
-            select(TargetSegment).where(
-                TargetSegment.institution_id == institution_id
-            )
+            select(TargetSegment).where(TargetSegment.institution_id == institution_id)
         )
         return list(result.scalars().all())
 
@@ -180,9 +166,7 @@ class InstitutionService:
         await self.db.refresh(segment)
         return segment
 
-    async def delete_segment(
-        self, institution_id: UUID, segment_id: UUID
-    ) -> None:
+    async def delete_segment(self, institution_id: UUID, segment_id: UUID) -> None:
         result = await self.db.execute(
             select(TargetSegment).where(
                 TargetSegment.id == segment_id,
@@ -240,9 +224,7 @@ class InstitutionService:
         total = (await self.db.execute(count_stmt)).scalar_one()
 
         offset = (page - 1) * page_size
-        results = await self.db.execute(
-            stmt.offset(offset).limit(page_size)
-        )
+        results = await self.db.execute(stmt.offset(offset).limit(page_size))
         rows = results.all()
 
         items = [
@@ -269,9 +251,7 @@ class InstitutionService:
 
     async def get_public_program(self, program_id: UUID) -> Program:
         result = await self.db.execute(
-            select(Program).where(
-                Program.id == program_id, Program.is_published.is_(True)
-            )
+            select(Program).where(Program.id == program_id, Program.is_published.is_(True))
         )
         program = result.scalar_one_or_none()
         if not program:
@@ -289,9 +269,7 @@ class InstitutionService:
             raise NotFoundException("Institution not found")
         return institution
 
-    async def _verify_program_ownership(
-        self, institution_id: UUID, program_id: UUID
-    ) -> Program:
+    async def _verify_program_ownership(self, institution_id: UUID, program_id: UUID) -> Program:
         result = await self.db.execute(
             select(Program).where(
                 Program.id == program_id,
@@ -305,7 +283,9 @@ class InstitutionService:
 
     async def get_program_count(self, institution_id: UUID) -> int:
         result = await self.db.execute(
-            select(func.count()).select_from(Program).where(
+            select(func.count())
+            .select_from(Program)
+            .where(
                 Program.institution_id == institution_id,
                 Program.is_published.is_(True),
             )

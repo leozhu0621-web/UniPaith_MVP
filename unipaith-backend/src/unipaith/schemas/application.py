@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 
 class CreateApplicationRequest(BaseModel):
@@ -13,12 +13,10 @@ class CreateApplicationRequest(BaseModel):
 
 
 class UpdateApplicationRequest(BaseModel):
-    status: Literal[
-        "draft", "submitted", "under_review", "interview", "decision_made"
-    ] | None = None
-    completeness_status: Literal[
-        "complete", "incomplete", "pending_verification"
-    ] | None = None
+    status: Literal["draft", "submitted", "under_review", "interview", "decision_made"] | None = (
+        None
+    )
+    completeness_status: Literal["complete", "incomplete", "pending_verification"] | None = None
     missing_items: list[str] | None = None
 
 

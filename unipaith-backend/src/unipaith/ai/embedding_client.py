@@ -5,6 +5,7 @@ Three modes:
 2. Local mode: calls localhost vLLM /v1/embeddings endpoint
 3. AWS mode: calls AWS GPU instance with retry logic
 """
+
 from __future__ import annotations
 
 import logging
@@ -80,10 +81,13 @@ class AWSEmbeddingClient:
             except Exception as e:
                 last_error = e
                 if attempt < self.MAX_RETRIES:
-                    wait = 2 ** attempt
+                    wait = 2**attempt
                     logger.warning(
                         "Embedding request failed (attempt %d/%d): %s. Retrying in %ds",
-                        attempt, self.MAX_RETRIES, e, wait,
+                        attempt,
+                        self.MAX_RETRIES,
+                        e,
+                        wait,
                     )
                     await asyncio.sleep(wait)
 

@@ -1,4 +1,5 @@
 """Enrichment pipeline — supplementary data enrichment for institutions and programs."""
+
 from __future__ import annotations
 
 import logging
@@ -51,7 +52,9 @@ class EnrichmentPipeline:
 
         logger.info(
             "Created %s enrichment for institution %s (confidence=%.2f)",
-            enrichment_type, institution_id, confidence,
+            enrichment_type,
+            institution_id,
+            confidence,
         )
         return record
 
@@ -84,7 +87,9 @@ class EnrichmentPipeline:
 
         logger.info(
             "Created %s enrichment for program %s (confidence=%.2f)",
-            enrichment_type, program_id, confidence,
+            enrichment_type,
+            program_id,
+            confidence,
         )
         return record
 
@@ -121,7 +126,7 @@ class EnrichmentPipeline:
         for etype, rec in best_by_type.items():
             data = rec.data or {}
             if etype == "ranking" and data:
-                current = program.ranking_data if hasattr(program, "ranking_data") else None
+                program.ranking_data if hasattr(program, "ranking_data") else None
                 # Merge into institution ranking_data via institution
                 inst = await self.db.get(Institution, program.institution_id)
                 if inst:
@@ -150,6 +155,7 @@ class EnrichmentPipeline:
             elif etype == "deadline" and data:
                 if "application_deadline" in data:
                     from datetime import date as date_type
+
                     try:
                         program.application_deadline = date_type.fromisoformat(
                             data["application_deadline"]
@@ -162,7 +168,9 @@ class EnrichmentPipeline:
         await self.db.flush()
         logger.info(
             "Applied %d enrichments to program %s: %s",
-            applied_count, program_id, applied_types,
+            applied_count,
+            program_id,
+            applied_types,
         )
         return {
             "program_id": str(program_id),
@@ -187,7 +195,8 @@ class EnrichmentPipeline:
 
         logger.info(
             "Applied enrichments to %d programs, %d total enrichments",
-            len(program_ids), total_applied,
+            len(program_ids),
+            total_applied,
         )
         return {
             "programs_processed": len(program_ids),

@@ -10,7 +10,6 @@ from unipaith.database import get_db
 from unipaith.dependencies import require_admin
 from unipaith.models.application import Application
 from unipaith.models.institution import Institution, Program
-from unipaith.models.student import StudentProfile
 from unipaith.models.user import User, UserRole
 from unipaith.services.matching_service import MatchingService
 
@@ -22,18 +21,18 @@ async def platform_stats(
     user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    students = (await db.execute(
-        select(func.count()).select_from(User).where(User.role == UserRole.student)
-    )).scalar_one()
-    institutions = (await db.execute(
-        select(func.count()).select_from(Institution)
-    )).scalar_one()
-    programs = (await db.execute(
-        select(func.count()).select_from(Program).where(Program.is_published.is_(True))
-    )).scalar_one()
-    applications = (await db.execute(
-        select(func.count()).select_from(Application)
-    )).scalar_one()
+    students = (
+        await db.execute(
+            select(func.count()).select_from(User).where(User.role == UserRole.student)
+        )
+    ).scalar_one()
+    institutions = (await db.execute(select(func.count()).select_from(Institution))).scalar_one()
+    programs = (
+        await db.execute(
+            select(func.count()).select_from(Program).where(Program.is_published.is_(True))
+        )
+    ).scalar_one()
+    applications = (await db.execute(select(func.count()).select_from(Application))).scalar_one()
 
     return {
         "total_students": students,
@@ -55,13 +54,9 @@ async def list_users(
     if role:
         stmt = stmt.where(User.role == UserRole(role))
 
-    total = (await db.execute(
-        select(func.count()).select_from(stmt.subquery())
-    )).scalar_one()
+    total = (await db.execute(select(func.count()).select_from(stmt.subquery()))).scalar_one()
 
-    results = await db.execute(
-        stmt.offset((page - 1) * page_size).limit(page_size)
-    )
+    results = await db.execute(stmt.offset((page - 1) * page_size).limit(page_size))
     users = results.scalars().all()
 
     return {
@@ -88,10 +83,12 @@ async def deactivate_user(
     db: AsyncSession = Depends(get_db),
 ):
     import uuid as _uuid
+
     result = await db.execute(select(User).where(User.id == _uuid.UUID(user_id)))
     target = result.scalar_one_or_none()
     if not target:
         from unipaith.core.exceptions import NotFoundException
+
         raise NotFoundException("User not found")
     target.is_active = False
     await db.flush()
@@ -105,10 +102,12 @@ async def activate_user(
     db: AsyncSession = Depends(get_db),
 ):
     import uuid as _uuid
+
     result = await db.execute(select(User).where(User.id == _uuid.UUID(user_id)))
     target = result.scalar_one_or_none()
     if not target:
         from unipaith.core.exceptions import NotFoundException
+
         raise NotFoundException("User not found")
     target.is_active = True
     await db.flush()
@@ -122,12 +121,14 @@ async def verify_institution(
     db: AsyncSession = Depends(get_db),
 ):
     import uuid as _uuid
+
     result = await db.execute(
         select(Institution).where(Institution.id == _uuid.UUID(institution_id))
     )
     inst = result.scalar_one_or_none()
     if not inst:
         from unipaith.core.exceptions import NotFoundException
+
         raise NotFoundException("Institution not found")
     inst.is_verified = True
     await db.flush()
@@ -188,6 +189,7 @@ async def trigger_bootstrap(
 
     if s.gpu_mode == "mock" or s.ai_mock_mode:
         from unipaith.core.exceptions import BadRequestException
+
         raise BadRequestException(
             "Cannot bootstrap in mock mode. Set GPU_MODE=aws or GPU_MODE=local."
         )
@@ -195,12 +197,16 @@ async def trigger_bootstrap(
     # Run in background — don't block the HTTP response
     asyncio.create_task(_run_bootstrap_background())
 
-    return {"status": "started", "message": "Crawl started. Watch progress on this page — it refreshes automatically."}
+    return {
+        "status": "started",
+        "message": "Crawl started. Watch progress on this page — it refreshes automatically.",
+    }
 
 
 async def _run_bootstrap_background():
     """Background task: crawl all sources, extract features, generate embeddings."""
     import logging
+
     logger = logging.getLogger("unipaith.bootstrap")
 
     from unipaith.database import async_session
@@ -208,6 +214,7 @@ async def _run_bootstrap_background():
     try:
         async with async_session() as db:
             from unipaith.crawler.orchestrator import CrawlerOrchestrator
+
             orch = CrawlerOrchestrator(db)
             logger.info("Bootstrap: starting scheduled crawls")
             results = await orch.run_scheduled_crawls()
@@ -217,7 +224,9 @@ async def _run_bootstrap_background():
             total_extracted = sum(r.get("items_extracted", 0) for r in results.get("results", []))
             logger.info(
                 "Bootstrap crawl done: %d sources, %d pages, %d extracted",
-                results.get("sources_processed", 0), total_pages, total_extracted,
+                results.get("sources_processed", 0),
+                total_pages,
+                total_extracted,
             )
 
         # Phase 2: features + embeddings for all programs
@@ -254,24 +263,16 @@ async def bootstrap_status(
     from unipaith.models.crawler import CrawlJob, ExtractedProgram
     from unipaith.models.matching import DataSource, Embedding, InstitutionFeature
 
-    sources = (await db.execute(
-        select(func.count()).select_from(DataSource).where(DataSource.is_active.is_(True))
-    )).scalar_one()
-    crawl_jobs = (await db.execute(
-        select(func.count()).select_from(CrawlJob)
-    )).scalar_one()
-    extracted = (await db.execute(
-        select(func.count()).select_from(ExtractedProgram)
-    )).scalar_one()
-    programs = (await db.execute(
-        select(func.count()).select_from(Program)
-    )).scalar_one()
-    features = (await db.execute(
-        select(func.count()).select_from(InstitutionFeature)
-    )).scalar_one()
-    embeddings = (await db.execute(
-        select(func.count()).select_from(Embedding)
-    )).scalar_one()
+    sources = (
+        await db.execute(
+            select(func.count()).select_from(DataSource).where(DataSource.is_active.is_(True))
+        )
+    ).scalar_one()
+    crawl_jobs = (await db.execute(select(func.count()).select_from(CrawlJob))).scalar_one()
+    extracted = (await db.execute(select(func.count()).select_from(ExtractedProgram))).scalar_one()
+    programs = (await db.execute(select(func.count()).select_from(Program))).scalar_one()
+    features = (await db.execute(select(func.count()).select_from(InstitutionFeature))).scalar_one()
+    embeddings = (await db.execute(select(func.count()).select_from(Embedding))).scalar_one()
 
     return {
         "active_sources": sources,
@@ -343,11 +344,7 @@ async def list_extracted_programs(
     """Recently extracted programs."""
     from unipaith.models.crawler import ExtractedProgram
 
-    stmt = (
-        select(ExtractedProgram)
-        .order_by(ExtractedProgram.created_at.desc())
-        .limit(limit)
-    )
+    stmt = select(ExtractedProgram).order_by(ExtractedProgram.created_at.desc()).limit(limit)
     result = await db.execute(stmt)
     programs = result.scalars().all()
 
@@ -374,6 +371,7 @@ async def list_extracted_programs(
 async def ai_costs(user: User = Depends(require_admin)):
     """GPU usage and cost tracking for the AI engine."""
     from unipaith.ai.cost_tracker import get_cost_tracker
+
     return get_cost_tracker().get_usage_summary()
 
 
@@ -390,6 +388,7 @@ async def ai_status(user: User = Depends(require_admin)):
 
     if s.gpu_mode == "aws":
         from unipaith.ai.gpu_manager import get_8b_manager, get_70b_manager
+
         m8b = get_8b_manager()
         m70b = get_70b_manager()
         status["8b_instance"]["state"] = m8b.get_instance_state()

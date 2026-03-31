@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Generic, Literal, TypeVar
+from typing import Literal, TypeVar
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 T = TypeVar("T")
 
 
-class PaginatedResponse(BaseModel, Generic[T]):
+class PaginatedResponse[T](BaseModel):
     items: list[T]
     total: int
     page: int
@@ -19,6 +19,7 @@ class PaginatedResponse(BaseModel, Generic[T]):
 
 
 # --- Institution ---
+
 
 class CreateInstitutionRequest(BaseModel):
     name: str = Field(min_length=1, max_length=255)
@@ -34,9 +35,7 @@ class CreateInstitutionRequest(BaseModel):
 
 class UpdateInstitutionRequest(BaseModel):
     name: str | None = Field(None, min_length=1, max_length=255)
-    type: Literal[
-        "university", "college", "technical_institute", "community_college"
-    ] | None = None
+    type: Literal["university", "college", "technical_institute", "community_college"] | None = None
     country: str | None = Field(None, min_length=1, max_length=100)
     region: str | None = None
     city: str | None = None
@@ -66,6 +65,7 @@ class InstitutionResponse(BaseModel):
 
 # --- Program ---
 
+
 class CreateProgramRequest(BaseModel):
     program_name: str = Field(min_length=1, max_length=255)
     degree_type: Literal["bachelors", "masters", "phd", "certificate", "diploma"]
@@ -85,9 +85,7 @@ class CreateProgramRequest(BaseModel):
 
 class UpdateProgramRequest(BaseModel):
     program_name: str | None = Field(None, min_length=1, max_length=255)
-    degree_type: Literal[
-        "bachelors", "masters", "phd", "certificate", "diploma"
-    ] | None = None
+    degree_type: Literal["bachelors", "masters", "phd", "certificate", "diploma"] | None = None
     department: str | None = None
     duration_months: int | None = Field(None, ge=1, le=120)
     tuition: int | None = Field(None, ge=0)
@@ -136,6 +134,7 @@ class ProgramSummaryResponse(BaseModel):
 
 
 # --- Target Segments ---
+
 
 class CreateSegmentRequest(BaseModel):
     segment_name: str = Field(min_length=1, max_length=255)

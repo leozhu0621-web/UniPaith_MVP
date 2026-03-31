@@ -1,8 +1,9 @@
 """Tests for ModelTrainer — Phase 4 ML loop."""
+
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 
 import pytest
@@ -13,7 +14,7 @@ from unipaith.config import settings
 from unipaith.ml.trainer import ModelTrainer
 from unipaith.models.institution import Institution, Program
 from unipaith.models.matching import ModelRegistry, PredictionLog
-from unipaith.models.ml_loop import OutcomeRecord, TrainingRun
+from unipaith.models.ml_loop import OutcomeRecord
 from unipaith.models.student import StudentProfile
 from unipaith.models.user import User, UserRole
 
@@ -113,7 +114,7 @@ async def _seed_training_outcomes(
             outcome_source="application_decision",
             outcome_confidence=Decimal("0.70"),
             features_snapshot=features,
-            outcome_recorded_at=datetime.now(timezone.utc),
+            outcome_recorded_at=datetime.now(UTC),
         )
         db.add(rec)
 
@@ -158,9 +159,7 @@ async def test_training_runs(db_session: AsyncSession):
 
         # Verify ModelRegistry entry created
         result = await db_session.execute(
-            select(ModelRegistry).where(
-                ModelRegistry.model_version == run.resulting_model_version
-            )
+            select(ModelRegistry).where(ModelRegistry.model_version == run.resulting_model_version)
         )
         registry_entry = result.scalar_one_or_none()
         assert registry_entry is not None

@@ -65,9 +65,7 @@ async def semantic_program_search(
         "ORDER BY e.embedding <=> cast(:query_vec as vector) "
         "LIMIT :limit"
     )
-    result = await db.execute(
-        query, {"query_vec": vec_str, "limit": limit}
-    )
+    result = await db.execute(query, {"query_vec": vec_str, "limit": limit})
     rows = result.fetchall()
 
     program_ids = [row[0] for row in rows]
@@ -85,16 +83,18 @@ async def semantic_program_search(
     for pid, _sim in rows:
         p = programs.get(pid)
         if p:
-            results.append(ProgramSummaryResponse(
-                id=p.id,
-                program_name=p.program_name,
-                degree_type=p.degree_type,
-                department=p.department,
-                tuition=p.tuition,
-                application_deadline=p.application_deadline,
-                institution_name=p.institution.name if p.institution else "",
-                institution_country=p.institution.country if p.institution else "",
-            ))
+            results.append(
+                ProgramSummaryResponse(
+                    id=p.id,
+                    program_name=p.program_name,
+                    degree_type=p.degree_type,
+                    department=p.department,
+                    tuition=p.tuition,
+                    application_deadline=p.application_deadline,
+                    institution_name=p.institution.name if p.institution else "",
+                    institution_country=p.institution.country if p.institution else "",
+                )
+            )
     return results
 
 

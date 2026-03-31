@@ -7,6 +7,7 @@ Every function follows the same pattern:
 2. Create CRMService(db) and call log_touchpoint()
 3. Catch all exceptions and log them (never fail the parent operation)
 """
+
 from __future__ import annotations
 
 import logging
@@ -58,9 +59,7 @@ async def on_application_submitted(
             description=f"Application submitted (#{confirmation_number})",
         )
     except Exception:
-        logger.exception(
-            "Hook on_application_submitted failed for application %s", application_id
-        )
+        logger.exception("Hook on_application_submitted failed for application %s", application_id)
 
 
 async def on_reviewer_assigned(
@@ -84,9 +83,7 @@ async def on_reviewer_assigned(
             },
         )
     except Exception:
-        logger.exception(
-            "Hook on_reviewer_assigned failed for application %s", application_id
-        )
+        logger.exception("Hook on_reviewer_assigned failed for application %s", application_id)
 
 
 async def on_interview_scheduled(
@@ -113,9 +110,7 @@ async def on_interview_scheduled(
             },
         )
     except Exception:
-        logger.exception(
-            "Hook on_interview_scheduled failed for interview %s", interview_id
-        )
+        logger.exception("Hook on_interview_scheduled failed for interview %s", interview_id)
 
 
 async def on_interview_confirmed(
@@ -139,9 +134,7 @@ async def on_interview_confirmed(
             },
         )
     except Exception:
-        logger.exception(
-            "Hook on_interview_confirmed failed for interview %s", interview_id
-        )
+        logger.exception("Hook on_interview_confirmed failed for interview %s", interview_id)
 
 
 async def on_decision_made(
@@ -168,7 +161,9 @@ async def on_decision_made(
             user_id=student_user_id,
             notification_type="decision_made",
             title=title_map.get(decision, "Application Decision Update"),
-            body=body_map.get(decision, f"A decision ({decision}) has been made on your application."),
+            body=body_map.get(
+                decision, f"A decision ({decision}) has been made on your application."
+            ),
             action_url=f"/applications/{application_id}",
             metadata={
                 "application_id": str(application_id),
@@ -185,9 +180,7 @@ async def on_decision_made(
                 application_id,
             )
     except Exception:
-        logger.exception(
-            "Hook on_decision_made failed for application %s", application_id
-        )
+        logger.exception("Hook on_decision_made failed for application %s", application_id)
 
 
 async def on_offer_responded(
@@ -200,9 +193,7 @@ async def on_offer_responded(
         collector = OutcomeCollector(db)
         await collector.record_offer_response(offer_id)
     except Exception:
-        logger.exception(
-            "Hook on_offer_responded failed for offer %s", offer_id
-        )
+        logger.exception("Hook on_offer_responded failed for offer %s", offer_id)
 
 
 async def on_enrollment_confirmed(
@@ -214,9 +205,7 @@ async def on_enrollment_confirmed(
         collector = OutcomeCollector(db)
         await collector.record_enrollment(enrollment_id)
     except Exception:
-        logger.exception(
-            "Hook on_enrollment_confirmed failed for enrollment %s", enrollment_id
-        )
+        logger.exception("Hook on_enrollment_confirmed failed for enrollment %s", enrollment_id)
 
 
 async def on_offer_sent(
@@ -240,9 +229,7 @@ async def on_offer_sent(
             },
         )
     except Exception:
-        logger.exception(
-            "Hook on_offer_sent failed for offer %s", offer_id
-        )
+        logger.exception("Hook on_offer_sent failed for offer %s", offer_id)
 
 
 async def on_message_received(
@@ -266,9 +253,7 @@ async def on_message_received(
             },
         )
     except Exception:
-        logger.exception(
-            "Hook on_message_received failed for conversation %s", conversation_id
-        )
+        logger.exception("Hook on_message_received failed for conversation %s", conversation_id)
 
 
 async def on_event_rsvp(
@@ -291,6 +276,4 @@ async def on_event_rsvp(
             },
         )
     except Exception:
-        logger.exception(
-            "Hook on_event_rsvp failed for event %s, student %s", event_id, student_id
-        )
+        logger.exception("Hook on_event_rsvp failed for event %s, student %s", event_id, student_id)

@@ -2,6 +2,7 @@
 Resume workshop service — auto-generate, iterate, and get AI feedback
 on student resumes.
 """
+
 from __future__ import annotations
 
 import json
@@ -179,9 +180,7 @@ class ResumeWorkshopService:
         """Replace resume content and bump version."""
         resume = await self._get_resume(student_id, resume_id)
         if resume.status == "final":
-            raise BadRequestException(
-                "Cannot update a finalised resume. Create a new one instead."
-            )
+            raise BadRequestException("Cannot update a finalised resume. Create a new one instead.")
         resume.content = content
         resume.resume_version += 1
         await self.db.flush()
@@ -196,20 +195,14 @@ class ResumeWorkshopService:
         self, student_id: UUID, target_program_id: UUID | None = None
     ) -> list[StudentResume]:
         """List resumes, optionally filtered by target program."""
-        stmt = select(StudentResume).where(
-            StudentResume.student_id == student_id
-        )
+        stmt = select(StudentResume).where(StudentResume.student_id == student_id)
         if target_program_id is not None:
-            stmt = stmt.where(
-                StudentResume.target_program_id == target_program_id
-            )
+            stmt = stmt.where(StudentResume.target_program_id == target_program_id)
         stmt = stmt.order_by(StudentResume.updated_at.desc())
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
 
-    async def finalize_resume(
-        self, student_id: UUID, resume_id: UUID
-    ) -> StudentResume:
+    async def finalize_resume(self, student_id: UUID, resume_id: UUID) -> StudentResume:
         """Mark a resume as final."""
         resume = await self._get_resume(student_id, resume_id)
         if not resume.content:

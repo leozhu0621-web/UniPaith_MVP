@@ -3,10 +3,11 @@ Outcome Collector — records ground-truth outcomes from application decisions,
 offer responses, and enrollments, linking them back to prediction logs for
 model evaluation.
 """
+
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -54,9 +55,7 @@ class OutcomeCollector:
     # Public methods
     # ------------------------------------------------------------------
 
-    async def record_application_decision(
-        self, application_id: UUID
-    ) -> OutcomeRecord | None:
+    async def record_application_decision(self, application_id: UUID) -> OutcomeRecord | None:
         """Record an outcome from an application decision.
 
         Returns the created OutcomeRecord, or None if no matching prediction
@@ -80,9 +79,7 @@ class OutcomeCollector:
             )
             return None
 
-        prediction = await self._find_prediction(
-            application.student_id, application.program_id
-        )
+        prediction = await self._find_prediction(application.student_id, application.program_id)
         if prediction is None:
             logger.debug(
                 "No prediction found for student=%s program=%s",
@@ -91,9 +88,7 @@ class OutcomeCollector:
             )
             return None
 
-        existing = await self._find_existing_outcome(
-            prediction.id, "application_decision"
-        )
+        existing = await self._find_existing_outcome(prediction.id, "application_decision")
         if existing is not None:
             logger.debug(
                 "Outcome already recorded for prediction %s source=application_decision",
@@ -111,13 +106,13 @@ class OutcomeCollector:
             outcome_source="application_decision",
             outcome_confidence=self.OUTCOME_CONFIDENCE["application_decision"],
             features_snapshot=prediction.features_used,
-            outcome_recorded_at=datetime.now(timezone.utc),
+            outcome_recorded_at=datetime.now(UTC),
         )
         self.db.add(record)
 
         # Update the prediction log with the actual outcome
         prediction.actual_outcome = outcome_value
-        prediction.outcome_recorded_at = datetime.now(timezone.utc)
+        prediction.outcome_recorded_at = datetime.now(UTC)
 
         await self.db.flush()
         logger.info(
@@ -127,9 +122,7 @@ class OutcomeCollector:
         )
         return record
 
-    async def record_offer_response(
-        self, offer_id: UUID
-    ) -> OutcomeRecord | None:
+    async def record_offer_response(self, offer_id: UUID) -> OutcomeRecord | None:
         """Record an outcome from an offer letter response.
 
         Returns the created OutcomeRecord, or None if no matching prediction
@@ -155,9 +148,7 @@ class OutcomeCollector:
         # Load the parent application to get student_id and program_id
         application = await self._load_or_raise(Application, offer.application_id)
 
-        prediction = await self._find_prediction(
-            application.student_id, application.program_id
-        )
+        prediction = await self._find_prediction(application.student_id, application.program_id)
         if prediction is None:
             return None
 
@@ -175,12 +166,12 @@ class OutcomeCollector:
             outcome_source="offer_response",
             outcome_confidence=self.OUTCOME_CONFIDENCE["offer_response"],
             features_snapshot=prediction.features_used,
-            outcome_recorded_at=datetime.now(timezone.utc),
+            outcome_recorded_at=datetime.now(UTC),
         )
         self.db.add(record)
 
         prediction.actual_outcome = outcome_value
-        prediction.outcome_recorded_at = datetime.now(timezone.utc)
+        prediction.outcome_recorded_at = datetime.now(UTC)
 
         await self.db.flush()
         logger.info(
@@ -190,9 +181,7 @@ class OutcomeCollector:
         )
         return record
 
-    async def record_enrollment(
-        self, enrollment_id: UUID
-    ) -> OutcomeRecord | None:
+    async def record_enrollment(self, enrollment_id: UUID) -> OutcomeRecord | None:
         """Record an outcome from an enrollment record.
 
         Returns the created OutcomeRecord, or None if no matching prediction
@@ -203,14 +192,10 @@ class OutcomeCollector:
         """
         enrollment = await self._load_or_raise(EnrollmentRecord, enrollment_id)
         if enrollment.enrollment_status is None:
-            logger.debug(
-                "Enrollment %s has no status yet, skipping", enrollment_id
-            )
+            logger.debug("Enrollment %s has no status yet, skipping", enrollment_id)
             return None
 
-        outcome_value = self.ENROLLMENT_STATUS_TO_OUTCOME.get(
-            enrollment.enrollment_status
-        )
+        outcome_value = self.ENROLLMENT_STATUS_TO_OUTCOME.get(enrollment.enrollment_status)
         if outcome_value is None:
             logger.warning(
                 "Unknown enrollment_status '%s' for enrollment %s",
@@ -219,9 +204,7 @@ class OutcomeCollector:
             )
             return None
 
-        prediction = await self._find_prediction(
-            enrollment.student_id, enrollment.program_id
-        )
+        prediction = await self._find_prediction(enrollment.student_id, enrollment.program_id)
         if prediction is None:
             return None
 
@@ -239,12 +222,12 @@ class OutcomeCollector:
             outcome_source="enrollment",
             outcome_confidence=self.OUTCOME_CONFIDENCE["enrollment"],
             features_snapshot=prediction.features_used,
-            outcome_recorded_at=datetime.now(timezone.utc),
+            outcome_recorded_at=datetime.now(UTC),
         )
         self.db.add(record)
 
         prediction.actual_outcome = outcome_value
-        prediction.outcome_recorded_at = datetime.now(timezone.utc)
+        prediction.outcome_recorded_at = datetime.now(UTC)
 
         await self.db.flush()
         logger.info(
@@ -267,7 +250,7 @@ class OutcomeCollector:
         enrollments_processed = 0
 
         # 1) Application decisions without outcome records
-        stmt = (
+        (
             select(Application)
             .where(Application.decision.isnot(None))
             .where(
@@ -290,9 +273,7 @@ class OutcomeCollector:
                 decisions_processed += 1
 
         # 2) Offer responses
-        offers_stmt = select(OfferLetter).where(
-            OfferLetter.student_response.isnot(None)
-        )
+        offers_stmt = select(OfferLetter).where(OfferLetter.student_response.isnot(None))
         result = await self.db.execute(offers_stmt)
         offers = result.scalars().all()
 
@@ -329,9 +310,7 @@ class OutcomeCollector:
     # Private helpers
     # ------------------------------------------------------------------
 
-    async def _find_prediction(
-        self, student_id: UUID, program_id: UUID
-    ) -> PredictionLog | None:
+    async def _find_prediction(self, student_id: UUID, program_id: UUID) -> PredictionLog | None:
         """Find the most recent PredictionLog for a student+program pair."""
         stmt = (
             select(PredictionLog)
@@ -364,7 +343,5 @@ class OutcomeCollector:
         """Load an entity by primary key or raise NotFoundException."""
         entity = await self.db.get(model_class, entity_id)
         if entity is None:
-            raise NotFoundException(
-                f"{model_class.__name__} {entity_id} not found"
-            )
+            raise NotFoundException(f"{model_class.__name__} {entity_id} not found")
         return entity

@@ -1,18 +1,16 @@
 """Tests for Phase 5 – ReviewQueue."""
+
 from __future__ import annotations
 
 import uuid
 from decimal import Decimal
 
-import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.crawler.review_queue import ReviewQueue
 from unipaith.models.crawler import CrawlJob, ExtractedProgram
 from unipaith.models.matching import DataSource, RawIngestedData
 from unipaith.models.user import User
-
-
 
 
 async def _seed_source(db: AsyncSession) -> DataSource:
@@ -78,7 +76,7 @@ async def test_approve(db_session: AsyncSession, mock_admin_user: User):
     await db_session.commit()
 
     queue = ReviewQueue(db_session)
-    result = await queue.approve(
+    await queue.approve(
         extracted_id=ep.id,
         reviewer_id=mock_admin_user.id,
         notes="Looks good",
@@ -95,7 +93,7 @@ async def test_reject(db_session: AsyncSession, mock_admin_user: User):
     await db_session.commit()
 
     queue = ReviewQueue(db_session)
-    result = await queue.reject(
+    await queue.reject(
         extracted_id=ep.id,
         reviewer_id=mock_admin_user.id,
         reason="Bad data",

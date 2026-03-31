@@ -2,9 +2,10 @@
 Inference Pipeline (Person A).
 Given a student, produces ranked program matches with scores and tiers.
 """
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -20,7 +21,6 @@ from unipaith.models.application import HistoricalOutcome
 from unipaith.models.institution import Program, TargetSegment
 from unipaith.models.matching import (
     Embedding,
-    InstitutionFeature,
     MatchResult,
     PredictionLog,
 )
@@ -114,9 +114,7 @@ class InferencePipeline:
     # SIMILARITY SEARCH
     # ========================================================================
 
-    async def _similarity_search(
-        self, student_id: UUID, limit: int
-    ) -> list[tuple[UUID, float]]:
+    async def _similarity_search(self, student_id: UUID, limit: int) -> list[tuple[UUID, float]]:
         """Use pgvector to find the most similar program embeddings."""
         result = await self.db.execute(
             select(Embedding).where(
@@ -130,7 +128,7 @@ class InferencePipeline:
 
         # Format the vector as pgvector expects: [0.1,0.2,...]
         vec = student_emb.embedding
-        if hasattr(vec, 'tolist'):
+        if hasattr(vec, "tolist"):
             vec = vec.tolist()
         vec_str = "[" + ",".join(str(float(v)) for v in vec) + "]"
 
@@ -217,9 +215,7 @@ class InferencePipeline:
             profile = outcome.applicant_profile_summary or {}
             admitted_gpa = profile.get("gpa_normalized", 0)
             gpa_diff = (
-                1.0 - abs(student_gpa - admitted_gpa)
-                if student_gpa and admitted_gpa
-                else 0.5
+                1.0 - abs(student_gpa - admitted_gpa) if student_gpa and admitted_gpa else 0.5
             )
             scores.append(gpa_diff)
 
@@ -254,8 +250,14 @@ class InferencePipeline:
         checks = []
         if "gpa_min" in criteria:
             gpa = student_structured.get("normalized_gpa", 0)
-            criteria_gpa = criteria["gpa_min"] / 4.0 if criteria["gpa_min"] > 1 else criteria["gpa_min"]
-            checks.append(1.0 if gpa and gpa >= criteria_gpa else (gpa / criteria_gpa if gpa and criteria_gpa else 0.3))
+            criteria_gpa = (
+                criteria["gpa_min"] / 4.0 if criteria["gpa_min"] > 1 else criteria["gpa_min"]
+            )
+            checks.append(
+                1.0
+                if gpa and gpa >= criteria_gpa
+                else (gpa / criteria_gpa if gpa and criteria_gpa else 0.3)
+            )
 
         if "region" in criteria:
             nationality = (student_structured.get("nationality") or "").lower()
@@ -332,7 +334,10 @@ class InferencePipeline:
                 continue
 
             if student_prefs.preferred_countries:
-                if program.institution and program.institution.country not in student_prefs.preferred_countries:
+                if (
+                    program.institution
+                    and program.institution.country not in student_prefs.preferred_countries
+                ):
                     continue
 
             if student_prefs.budget_max and program.tuition:
@@ -370,7 +375,7 @@ class InferencePipeline:
             return None
 
         newest = max(m.computed_at for m in matches)
-        hours_old = (datetime.now(timezone.utc) - newest).total_seconds() / 3600
+        hours_old = (datetime.now(UTC) - newest).total_seconds() / 3600
         if hours_old > settings.matching_stale_hours:
             return None
         return matches
@@ -398,7 +403,7 @@ class InferencePipeline:
             existing.score_breakdown = breakdown
             existing.reasoning_text = reasoning
             existing.model_version = "v1.0-mvp"
-            existing.computed_at = datetime.now(timezone.utc)
+            existing.computed_at = datetime.now(UTC)
             existing.is_stale = False
             return existing
 
@@ -410,7 +415,7 @@ class InferencePipeline:
             score_breakdown=breakdown,
             reasoning_text=reasoning,
             model_version="v1.0-mvp",
-            computed_at=datetime.now(timezone.utc),
+            computed_at=datetime.now(UTC),
             is_stale=False,
         )
         self.db.add(match)
@@ -434,15 +439,17 @@ class InferencePipeline:
     async def _log_prediction(
         self, student_id: UUID, program_id: UUID, score: float, tier: int, features_used: dict
     ) -> None:
-        self.db.add(PredictionLog(
-            student_id=student_id,
-            program_id=program_id,
-            predicted_score=Decimal(str(round(score, 4))),
-            predicted_tier=tier,
-            model_version="v1.0-mvp",
-            features_used=features_used,
-            predicted_at=datetime.now(timezone.utc),
-        ))
+        self.db.add(
+            PredictionLog(
+                student_id=student_id,
+                program_id=program_id,
+                predicted_score=Decimal(str(round(score, 4))),
+                predicted_tier=tier,
+                model_version="v1.0-mvp",
+                features_used=features_used,
+                predicted_at=datetime.now(UTC),
+            )
+        )
         await self.db.flush()
 
     async def _load_student_preferences(self, student_id: UUID) -> StudentPreference | None:

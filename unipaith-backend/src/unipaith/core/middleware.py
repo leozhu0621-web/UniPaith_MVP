@@ -44,9 +44,7 @@ async def security_headers_middleware(request: Request, call_next):  # noqa: ANN
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     if settings.environment == "production":
-        response.headers["Strict-Transport-Security"] = (
-            "max-age=31536000; includeSubDomains"
-        )
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return response
 
 
@@ -61,7 +59,8 @@ async def exception_handler(request: Request, exc: UniPaithException) -> JSONRes
 
 
 async def general_exception_handler(
-    request: Request, exc: Exception  # noqa: ARG001
+    request: Request,
+    exc: Exception,  # noqa: ARG001
 ) -> JSONResponse:
     logger.exception("Unhandled exception: %s", exc)
     return JSONResponse(

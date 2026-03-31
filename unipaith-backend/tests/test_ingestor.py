@@ -1,18 +1,16 @@
 """Tests for Phase 5 – AutoIngestor."""
+
 from __future__ import annotations
 
 from decimal import Decimal
 
-import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.crawler.ingestor import AutoIngestor
 from unipaith.models.crawler import CrawlJob, ExtractedProgram
-from unipaith.models.institution import Institution, Program
+from unipaith.models.institution import Institution
 from unipaith.models.matching import DataSource, RawIngestedData
 from unipaith.models.user import User
-
-
 
 
 async def _seed_source(db: AsyncSession) -> DataSource:
@@ -79,14 +77,15 @@ async def _seed_ep(
     return ep
 
 
-async def test_high_confidence_auto_ingest(
-    db_session: AsyncSession, mock_institution_user: User
-):
+async def test_high_confidence_auto_ingest(db_session: AsyncSession, mock_institution_user: User):
     """High confidence + new + matched institution -> auto_ingested."""
     source = await _seed_source(db_session)
     institution = await _seed_institution(db_session, mock_institution_user)
     ep = await _seed_ep(
-        db_session, source, Decimal("0.90"), "new",
+        db_session,
+        source,
+        Decimal("0.90"),
+        "new",
         matched_institution_id=institution.id,
     )
 

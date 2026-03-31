@@ -1,11 +1,10 @@
 """Tests for ModelManager — Phase 4 ML loop."""
+
 from __future__ import annotations
 
-import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.ml.model_manager import ModelManager
@@ -25,7 +24,7 @@ async def _create_model(
         hyperparameters={"n_estimators": 100},
         performance_metrics={"accuracy": accuracy},
         is_active=is_active,
-        trained_at=datetime.now(timezone.utc),
+        trained_at=datetime.now(UTC),
         promoted_at=promoted_at,
     )
     db.add(entry)
@@ -56,12 +55,18 @@ async def test_rollback(db_session: AsyncSession):
     """Promote, then rollback, verify previous model reactivated."""
     # Create two models; promote both in sequence
     prev = await _create_model(
-        db_session, "v1.0-prev", is_active=False, accuracy=0.75,
-        promoted_at=datetime.now(timezone.utc),
+        db_session,
+        "v1.0-prev",
+        is_active=False,
+        accuracy=0.75,
+        promoted_at=datetime.now(UTC),
     )
     current = await _create_model(
-        db_session, "v2.0-current", is_active=True, accuracy=0.85,
-        promoted_at=datetime.now(timezone.utc),
+        db_session,
+        "v2.0-current",
+        is_active=True,
+        accuracy=0.85,
+        promoted_at=datetime.now(UTC),
     )
     await db_session.commit()
 

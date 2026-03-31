@@ -1,4 +1,5 @@
 """Background job scheduling using APScheduler."""
+
 from __future__ import annotations
 
 import logging
@@ -155,6 +156,7 @@ async def _run_crawler() -> None:
     try:
         async with async_session() as db:
             from unipaith.crawler.orchestrator import CrawlerOrchestrator
+
             orch = CrawlerOrchestrator(db)
             await orch.run_scheduled_crawls()
         logger.info("University crawl completed")

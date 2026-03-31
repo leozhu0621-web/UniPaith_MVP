@@ -2,10 +2,11 @@
 Interview service — scheduling, confirmation, completion, and scoring
 for admissions interviews.
 """
+
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -86,18 +87,14 @@ class InterviewService:
     # Querying
     # ------------------------------------------------------------------
 
-    async def list_application_interviews(
-        self, application_id: UUID
-    ) -> list[Interview]:
+    async def list_application_interviews(self, application_id: UUID) -> list[Interview]:
         """List all interviews associated with an application."""
         result = await self.db.execute(
             select(Interview).where(Interview.application_id == application_id)
         )
         return list(result.scalars().all())
 
-    async def get_student_interviews(
-        self, student_id: UUID
-    ) -> list[Interview]:
+    async def get_student_interviews(self, student_id: UUID) -> list[Interview]:
         """Get all interviews across all of a student's applications.
 
         Joins through :class:`Application` to find every interview linked to
@@ -141,15 +138,11 @@ class InterviewService:
         interview = await self._get_student_interview(student_id, interview_id)
 
         if interview.status != "proposed":
-            raise BadRequestException(
-                "Only proposed interviews can be confirmed"
-            )
+            raise BadRequestException("Only proposed interviews can be confirmed")
 
         proposed: list[str] = interview.proposed_times or []
         if confirmed_time not in proposed:
-            raise BadRequestException(
-                "Selected time is not among the proposed options"
-            )
+            raise BadRequestException("Selected time is not among the proposed options")
 
         interview.status = "confirmed"
         interview.confirmed_time = datetime.fromisoformat(confirmed_time)
@@ -180,9 +173,7 @@ class InterviewService:
         interview = await self._get_interview(interview_id)
 
         if interview.status != "confirmed":
-            raise BadRequestException(
-                "Only confirmed interviews can be marked as completed"
-            )
+            raise BadRequestException("Only confirmed interviews can be marked as completed")
 
         interview.status = "completed"
         await self.db.flush()
@@ -220,9 +211,7 @@ class InterviewService:
         interview = await self._get_interview(interview_id)
 
         if interview.status != "completed":
-            raise BadRequestException(
-                "Interview must be completed before scoring"
-            )
+            raise BadRequestException("Interview must be completed before scoring")
 
         score = InterviewScore(
             interview_id=interview_id,
@@ -243,17 +232,13 @@ class InterviewService:
 
     async def _get_interview(self, interview_id: UUID) -> Interview:
         """Load an interview by ID or raise 404."""
-        result = await self.db.execute(
-            select(Interview).where(Interview.id == interview_id)
-        )
+        result = await self.db.execute(select(Interview).where(Interview.id == interview_id))
         interview = result.scalar_one_or_none()
         if not interview:
             raise NotFoundException("Interview not found")
         return interview
 
-    async def _get_student_interview(
-        self, student_id: UUID, interview_id: UUID
-    ) -> Interview:
+    async def _get_student_interview(self, student_id: UUID, interview_id: UUID) -> Interview:
         """Load an interview that belongs to one of the student's applications."""
         result = await self.db.execute(
             select(Interview)

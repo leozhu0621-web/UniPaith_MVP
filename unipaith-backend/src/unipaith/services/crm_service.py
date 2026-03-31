@@ -3,9 +3,9 @@ CRM touchpoint service — automatic logging of every meaningful interaction.
 Touchpoints are logged by event hooks, never manually by users.
 Provides timeline views for institutions to see student engagement history.
 """
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy import select
@@ -83,9 +83,7 @@ class CRMService:
         Get touchpoints for an institution, with optional filters.
         Used by institution dashboards for engagement analytics.
         """
-        query = select(Touchpoint).where(
-            Touchpoint.institution_id == institution_id
-        )
+        query = select(Touchpoint).where(Touchpoint.institution_id == institution_id)
         if touchpoint_type:
             query = query.where(Touchpoint.touchpoint_type == touchpoint_type)
         if program_id:

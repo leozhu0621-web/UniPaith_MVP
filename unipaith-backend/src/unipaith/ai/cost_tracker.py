@@ -4,12 +4,13 @@ GPU cost tracking and budget enforcement.
 Tracks 70B instance uptime, calculates estimated costs,
 and enforces monthly budget caps to prevent runaway spending.
 """
+
 from __future__ import annotations
 
 import logging
 import time
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from dataclasses import dataclass
+from datetime import UTC, datetime
 
 from unipaith.config import settings
 
@@ -19,6 +20,7 @@ logger = logging.getLogger("unipaith.cost_tracker")
 @dataclass
 class UsageSession:
     """A single start→stop session for a GPU instance."""
+
     instance_type: str  # "8b" or "70b"
     started_at: float  # monotonic time
     stopped_at: float | None = None
@@ -32,7 +34,7 @@ class UsageSession:
     def started_at_utc(self) -> datetime:
         # Convert monotonic to wall clock (approximate)
         offset = time.time() - time.monotonic()
-        return datetime.fromtimestamp(self.started_at + offset, tz=timezone.utc)
+        return datetime.fromtimestamp(self.started_at + offset, tz=UTC)
 
 
 class CostTracker:
@@ -50,7 +52,7 @@ class CostTracker:
 
     @staticmethod
     def _current_month_start() -> datetime:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     def record_start(self, instance_type: str = "70b") -> None:
@@ -70,17 +72,20 @@ class CostTracker:
 
     def _get_month_sessions(self) -> list[UsageSession]:
         """Get sessions from current billing month."""
-        month_start_mono = time.monotonic() - (
-            datetime.now(timezone.utc) - self._month_start
-        ).total_seconds()
+        month_start_mono = (
+            time.monotonic() - (datetime.now(UTC) - self._month_start).total_seconds()
+        )
         return [s for s in self._sessions if s.started_at >= month_start_mono]
 
     def get_70b_hours_today(self) -> float:
         """Total 70B hours used today."""
-        day_start_mono = time.monotonic() - (
-            datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
-            - datetime.now(timezone.utc)
-        ).total_seconds()
+        (
+            time.monotonic()
+            - (
+                datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+                - datetime.now(UTC)
+            ).total_seconds()
+        )
         # Simpler: just count last 24 hours
         cutoff = time.monotonic() - 86400
         return sum(
@@ -90,11 +95,7 @@ class CostTracker:
         )
 
     def get_70b_hours_month(self) -> float:
-        return sum(
-            s.duration_hours
-            for s in self._get_month_sessions()
-            if s.instance_type == "70b"
-        )
+        return sum(s.duration_hours for s in self._get_month_sessions() if s.instance_type == "70b")
 
     def get_estimated_monthly_cost(self) -> float:
         """Estimated total cost: fixed 8B + variable 70B."""

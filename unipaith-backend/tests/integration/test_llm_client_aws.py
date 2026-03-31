@@ -2,6 +2,7 @@
 Integration tests for AWS LLM client.
 Requires: GPU_TEST=true, GPU_MODE=aws, running GPU instances.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -12,8 +13,10 @@ pytestmark = pytest.mark.gpu
 @pytest.fixture
 def aws_llm_client():
     import os
+
     os.environ["GPU_MODE"] = "aws"
     from unipaith.ai.llm_client import AWSLLMClient
+
     return AWSLLMClient()
 
 
@@ -41,7 +44,6 @@ async def test_generate_reasoning(aws_llm_client):
 
 async def test_reasoning_fallback_on_budget(aws_llm_client):
     """When budget is exceeded, should fall back to template reasoning."""
-    from unipaith.ai.cost_tracker import get_cost_tracker
     from unipaith.config import settings
 
     # Force budget exceeded

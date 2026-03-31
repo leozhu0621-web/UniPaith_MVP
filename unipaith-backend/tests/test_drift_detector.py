@@ -1,8 +1,9 @@
 """Tests for DriftDetector — Phase 4 ML loop."""
+
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import pytest
@@ -81,7 +82,7 @@ async def _seed_match_results(
 async def test_no_drift_stable_data(db_session: AsyncSession):
     """Seed match results in both reference and current periods with similar
     distributions, run check, verify no drift detected."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     # Reference period: 30-90 days ago
     ref_time = now - timedelta(days=60)

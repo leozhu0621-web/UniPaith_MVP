@@ -4,10 +4,11 @@ Hybrid feature extraction pipeline.
 - LLM features: extracted from free-text via LLM (rich, semantic)
 Combined into a single feature_data JSON stored in student_features / institution_features tables.
 """
+
 from __future__ import annotations
 
 import json
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -15,11 +16,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from unipaith.ai.llm_client import get_llm_client
-from unipaith.models.institution import Institution, Program
+from unipaith.models.institution import Program
 from unipaith.models.matching import InstitutionFeature, StudentFeature
 from unipaith.models.student import (
-    Activity,
-    StudentPreference,
     StudentProfile,
 )
 
@@ -101,12 +100,14 @@ class FeatureExtractor:
         prefs = student.preferences
 
         degree_rank = {
-            "high_school": 1, "associate": 2, "diploma": 2,
-            "bachelors": 3, "masters": 4, "phd": 5,
+            "high_school": 1,
+            "associate": 2,
+            "diploma": 2,
+            "bachelors": 3,
+            "masters": 4,
+            "phd": 5,
         }
-        highest_degree = max(
-            (degree_rank.get(a.degree_type, 0) for a in academics), default=0
-        )
+        highest_degree = max((degree_rank.get(a.degree_type, 0) for a in academics), default=0)
 
         normalized_gpas = []
         for a in academics:
@@ -170,7 +171,7 @@ class FeatureExtractor:
             text_parts.append(f"## Student Bio\n{student.bio_text}")
         if student.goals_text:
             text_parts.append(f"## Goals\n{student.goals_text}")
-        for activity in (student.activities or []):
+        for activity in student.activities or []:
             if activity.description:
                 text_parts.append(
                     f"## Activity: {activity.title} ({activity.activity_type})\n"
@@ -231,7 +232,9 @@ class FeatureExtractor:
             "institution_city": institution.city if institution else None,
             "institution_type": institution.type if institution else None,
             "ranking_qs": (institution.ranking_data or {}).get("qs") if institution else None,
-            "ranking_us_news": (institution.ranking_data or {}).get("us_news") if institution else None,
+            "ranking_us_news": (institution.ranking_data or {}).get("us_news")
+            if institution
+            else None,
             "is_funded": program.tuition == 0 or program.degree_type == "phd",
             "department": program.department,
             "highlights": program.highlights or [],
@@ -242,9 +245,13 @@ class FeatureExtractor:
         if program.description_text:
             text_parts.append(f"## Program Description\n{program.description_text}")
         if program.current_preferences_text:
-            text_parts.append(f"## Current Admission Preferences\n{program.current_preferences_text}")
+            text_parts.append(
+                f"## Current Admission Preferences\n{program.current_preferences_text}"
+            )
         if program.highlights:
-            text_parts.append("## Program Highlights\n" + "\n".join(f"- {h}" for h in program.highlights))
+            text_parts.append(
+                "## Program Highlights\n" + "\n".join(f"- {h}" for h in program.highlights)
+            )
         institution = program.institution
         if institution and institution.description_text:
             text_parts.append(f"## Institution Description\n{institution.description_text}")
@@ -263,8 +270,13 @@ class FeatureExtractor:
     def _normalize_gpa(self, gpa: float, scale: str) -> float | None:
         scale = scale.lower().strip()
         scales = {
-            "4.0": 4.0, "percentage": 100.0, "100": 100.0, "10.0": 10.0,
-            "5.0": 5.0, "ib": 45.0, "7.0": 7.0,
+            "4.0": 4.0,
+            "percentage": 100.0,
+            "100": 100.0,
+            "10.0": 10.0,
+            "5.0": 5.0,
+            "ib": 45.0,
+            "7.0": 7.0,
         }
         max_val = scales.get(scale)
         return min(gpa / max_val, 1.0) if max_val else None
@@ -273,9 +285,17 @@ class FeatureExtractor:
         if score is None:
             return None
         max_scores = {
-            "SAT": 1600, "GRE": 340, "GMAT": 800, "TOEFL": 120,
-            "IELTS": 9, "ACT": 36, "LSAT": 180, "MCAT": 528,
-            "DUOLINGO": 160, "AP": 5, "IB": 45,
+            "SAT": 1600,
+            "GRE": 340,
+            "GMAT": 800,
+            "TOEFL": 120,
+            "IELTS": 9,
+            "ACT": 36,
+            "LSAT": 180,
+            "MCAT": 528,
+            "DUOLINGO": 160,
+            "AP": 5,
+            "IB": 45,
         }
         max_score = max_scores.get(test_type.upper())
         return min(score / max_score, 1.0) if max_score else None
@@ -322,13 +342,15 @@ class FeatureExtractor:
         existing = result.scalar_one_or_none()
         if existing:
             existing.feature_data = feature_data
-            existing.updated_at = datetime.now(timezone.utc)
+            existing.updated_at = datetime.now(UTC)
         else:
-            self.db.add(StudentFeature(
-                student_id=student_id,
-                feature_data=feature_data,
-                updated_at=datetime.now(timezone.utc),
-            ))
+            self.db.add(
+                StudentFeature(
+                    student_id=student_id,
+                    feature_data=feature_data,
+                    updated_at=datetime.now(UTC),
+                )
+            )
         await self.db.flush()
 
     async def _save_program_features(self, program_id: UUID, feature_data: dict) -> None:
@@ -338,11 +360,13 @@ class FeatureExtractor:
         existing = result.scalar_one_or_none()
         if existing:
             existing.feature_data = feature_data
-            existing.updated_at = datetime.now(timezone.utc)
+            existing.updated_at = datetime.now(UTC)
         else:
-            self.db.add(InstitutionFeature(
-                program_id=program_id,
-                feature_data=feature_data,
-                updated_at=datetime.now(timezone.utc),
-            ))
+            self.db.add(
+                InstitutionFeature(
+                    program_id=program_id,
+                    feature_data=feature_data,
+                    updated_at=datetime.now(UTC),
+                )
+            )
         await self.db.flush()

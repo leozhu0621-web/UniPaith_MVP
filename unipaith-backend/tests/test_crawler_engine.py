@@ -1,11 +1,8 @@
 """Tests for Phase 5 – CrawlerEngine static helpers."""
+
 from __future__ import annotations
 
-import pytest
-
 from unipaith.crawler.engine import CrawlerEngine
-
-
 
 
 async def test_clean_html():

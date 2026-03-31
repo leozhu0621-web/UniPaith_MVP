@@ -1,9 +1,10 @@
 """Tests for messaging — conversations and messages."""
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from unipaith.models.institution import Institution, Program
+from unipaith.models.institution import Institution
 from unipaith.models.student import StudentProfile
 from unipaith.models.user import User
 
