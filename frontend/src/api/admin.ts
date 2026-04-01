@@ -32,6 +32,9 @@ export const refreshProgram = (programId: string) =>
 export const getPlatformStats = () =>
   apiClient.get('/internal/stats').then(r => r.data)
 
+export const getEngineHealth = () =>
+  apiClient.get('/internal/health').then(r => r.data)
+
 // ─── Internal: AI Control Plane ───
 export const getAIControlStatus = () =>
   apiClient.get('/internal/ai/control/status').then(r => r.data)
