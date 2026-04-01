@@ -18,6 +18,7 @@ from unipaith.models.application import (
     Interview,
     InterviewScore,
 )
+from unipaith.models.institution import Program
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +94,22 @@ class InterviewService:
         result = await self.db.execute(
             select(Interview).where(Interview.application_id == application_id)
         )
+        return list(result.scalars().all())
+
+    async def list_institution_interviews(
+        self, institution_id: UUID, status_filter: str | None = None
+    ) -> list[Interview]:
+        """List all interviews across all programs of an institution."""
+        stmt = (
+            select(Interview)
+            .join(Application, Interview.application_id == Application.id)
+            .join(Program, Application.program_id == Program.id)
+            .where(Program.institution_id == institution_id)
+        )
+        if status_filter:
+            stmt = stmt.where(Interview.status == status_filter)
+        stmt = stmt.order_by(Interview.created_at.desc())
+        result = await self.db.execute(stmt)
         return list(result.scalars().all())
 
     async def get_student_interviews(

@@ -14,10 +14,11 @@ from unipaith.schemas.application import (
     DecisionRequest,
     OfferLetterResponse,
     OfferRespondRequest,
+    UpdateApplicationRequest,
 )
 from unipaith.services.application_service import ApplicationService
-from unipaith.services.student_service import StudentService
 from unipaith.services.institution_service import InstitutionService
+from unipaith.services.student_service import StudentService
 
 router = APIRouter(prefix="/applications", tags=["applications"])
 
@@ -108,6 +109,21 @@ async def list_program_applications(
     inst = await InstitutionService(db).get_institution(user.id)
     svc = ApplicationService(db)
     return await svc.list_program_applications(inst.id, program_id)
+
+
+@router.patch(
+    "/review/{application_id}/status",
+    response_model=ApplicationDetailResponse,
+)
+async def update_application_status(
+    application_id: UUID,
+    body: UpdateApplicationRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await InstitutionService(db).get_institution(user.id)
+    svc = ApplicationService(db)
+    return await svc.update_status(inst.id, application_id, body.status)
 
 
 @router.get(

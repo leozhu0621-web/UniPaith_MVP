@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { CalendarDays, Plus, Users, MapPin, Clock } from 'lucide-react'
-import { getInstitutionEvents, createEvent, getEventAttendees } from '../../api/events-admin'
+import { CalendarDays, Plus, Users, MapPin, Clock, Edit2, XCircle } from 'lucide-react'
+import { getInstitutionEvents, createEvent, updateEvent, cancelEvent, getEventAttendees } from '../../api/events-admin'
 import { getInstitutionPrograms } from '../../api/institutions'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -23,6 +23,7 @@ export default function EventsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showAttendeesModal, setShowAttendeesModal] = useState(false)
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
+  const [editTarget, setEditTarget] = useState<EventItem | null>(null)
 
   // Create form state
   const [eventName, setEventName] = useState('')
@@ -62,7 +63,41 @@ export default function EventsPage() {
     onError: () => showToast('Failed to create event', 'error'),
   })
 
+  const updateMut = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: any }) => updateEvent(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['institution-events'] })
+      showToast('Event updated', 'success')
+      setShowCreateModal(false)
+      resetForm()
+    },
+    onError: () => showToast('Failed to update event', 'error'),
+  })
+
+  const cancelMut = useMutation({
+    mutationFn: cancelEvent,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['institution-events'] })
+      showToast('Event cancelled', 'success')
+    },
+    onError: () => showToast('Failed to cancel event', 'error'),
+  })
+
+  const openEdit = (ev: EventItem) => {
+    setEditTarget(ev)
+    setEventName(ev.event_name)
+    setEventType(ev.event_type)
+    setStartTime(ev.start_time.slice(0, 16))
+    setEndTime(ev.end_time.slice(0, 16))
+    setDescription(ev.description ?? '')
+    setLocation(ev.location ?? '')
+    setCapacity(ev.capacity?.toString() ?? '')
+    setProgramId(ev.program_id ?? '')
+    setShowCreateModal(true)
+  }
+
   const resetForm = () => {
+    setEditTarget(null)
     setEventName('')
     setEventType('webinar')
     setStartTime('')
@@ -75,7 +110,7 @@ export default function EventsPage() {
 
   const handleCreate = () => {
     if (!eventName || !startTime || !endTime) { showToast('Name, start, and end times are required', 'warning'); return }
-    createMut.mutate({
+    const payload = {
       event_name: eventName,
       event_type: eventType,
       start_time: new Date(startTime).toISOString(),
@@ -84,7 +119,12 @@ export default function EventsPage() {
       location: location || undefined,
       capacity: capacity ? Number(capacity) : undefined,
       program_id: programId || null,
-    })
+    }
+    if (editTarget) {
+      updateMut.mutate({ id: editTarget.id, payload })
+    } else {
+      createMut.mutate(payload)
+    }
   }
 
   const statusOptions = [
@@ -98,7 +138,7 @@ export default function EventsPage() {
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Events</h1>
-        <Button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2">
+        <Button onClick={() => { resetForm(); setShowCreateModal(true) }} className="flex items-center gap-2">
           <Plus size={16} /> New Event
         </Button>
       </div>
@@ -136,10 +176,21 @@ export default function EventsPage() {
                   </div>
                   {prog && <p className="text-xs text-gray-400">Program: {prog.program_name}</p>}
                 </div>
-                <div className="mt-3">
+                <div className="flex gap-2 mt-3">
                   <Button variant="ghost" size="sm" onClick={() => { setSelectedEventId(ev.id); setShowAttendeesModal(true) }}>
                     View Attendees
                   </Button>
+                  {ev.status !== 'cancelled' && (
+                    <>
+                      <Button variant="ghost" size="sm" onClick={() => openEdit(ev)} className="flex items-center gap-1">
+                        <Edit2 size={14} /> Edit
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => cancelMut.mutate(ev.id)}
+                        disabled={cancelMut.isPending} className="flex items-center gap-1 text-red-600">
+                        <XCircle size={14} /> Cancel
+                      </Button>
+                    </>
+                  )}
                 </div>
               </Card>
             )
@@ -148,7 +199,7 @@ export default function EventsPage() {
       )}
 
       {/* Create Event Modal */}
-      <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="New Event">
+      <Modal isOpen={showCreateModal} onClose={() => { setShowCreateModal(false); resetForm() }} title={editTarget ? 'Edit Event' : 'New Event'}>
         <div className="space-y-4">
           <Input label="Event Name *" value={eventName} onChange={e => setEventName(e.target.value)} />
           <Select label="Event Type" options={EVENT_TYPES} value={eventType} onChange={e => setEventType(e.target.value)} />
@@ -161,9 +212,9 @@ export default function EventsPage() {
           <Input label="Capacity" type="number" value={capacity} onChange={e => setCapacity(e.target.value)} />
           <Select label="Program" options={programOptions} value={programId} onChange={e => setProgramId(e.target.value)} />
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setShowCreateModal(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={createMut.isPending}>
-              {createMut.isPending ? 'Creating...' : 'Create Event'}
+            <Button variant="ghost" onClick={() => { setShowCreateModal(false); resetForm() }}>Cancel</Button>
+            <Button onClick={handleCreate} disabled={createMut.isPending || updateMut.isPending}>
+              {(createMut.isPending || updateMut.isPending) ? 'Saving...' : editTarget ? 'Update Event' : 'Create Event'}
             </Button>
           </div>
         </div>

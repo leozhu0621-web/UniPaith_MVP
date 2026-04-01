@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Plus, GitBranch, ClipboardCheck, Bell, BookOpen, MessageSquare, Calendar } from 'lucide-react'
-import { getInstitution, getInstitutionPrograms } from '../../api/institutions'
-import { getConversations } from '../../api/messaging'
+import { LayoutDashboard, Plus, GitBranch, ClipboardCheck, Bell, BookOpen, MessageSquare, Calendar, Users } from 'lucide-react'
+import { getInstitution, getInstitutionPrograms, getDashboardSummary } from '../../api/institutions'
 import { getNotifications } from '../../api/notifications'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -12,14 +11,18 @@ import EmptyState from '../../components/ui/EmptyState'
 import Table from '../../components/ui/Table'
 import { formatDate, formatRelative, formatCurrency } from '../../utils/format'
 import { DEGREE_LABELS } from '../../utils/constants'
-import type { Notification, Conversation, Program } from '../../types'
+import type { Notification, Program, DashboardSummary } from '../../types'
 
 export default function DashboardPage() {
   const navigate = useNavigate()
 
   const institutionQ = useQuery({ queryKey: ['institution'], queryFn: getInstitution, retry: false })
   const programsQ = useQuery({ queryKey: ['institution-programs'], queryFn: getInstitutionPrograms })
-  const conversationsQ = useQuery({ queryKey: ['conversations'], queryFn: getConversations })
+  const summaryQ = useQuery({
+    queryKey: ['dashboard-summary'],
+    queryFn: getDashboardSummary,
+    enabled: !!institutionQ.data,
+  })
   const notificationsQ = useQuery({
     queryKey: ['notifications', { limit: 10 }],
     queryFn: () => getNotifications({ limit: 10 }),
@@ -27,9 +30,8 @@ export default function DashboardPage() {
 
   const institution = institutionQ.data
   const programs: Program[] = Array.isArray(programsQ.data) ? programsQ.data : []
-  const conversations: Conversation[] = Array.isArray(conversationsQ.data) ? conversationsQ.data : []
+  const summary: DashboardSummary | undefined = summaryQ.data
   const notifications: Notification[] = Array.isArray(notificationsQ.data) ? notificationsQ.data : []
-  const unreadMessages = conversations.reduce((sum, c) => sum + (c.unread_count ?? 0), 0)
 
   const isLoading = institutionQ.isLoading || programsQ.isLoading
 
@@ -45,7 +47,7 @@ export default function DashboardPage() {
     )
   }
 
-  if (!institution) {
+  if (institutionQ.isError) {
     return (
       <div className="p-6">
         <Card className="p-8 text-center border-dashed border-2 border-indigo-300 bg-indigo-50/30">
@@ -60,11 +62,15 @@ export default function DashboardPage() {
     )
   }
 
+  if (!institution) {
+    return null
+  }
+
   const kpis = [
-    { label: 'Programs', value: programs.length, icon: BookOpen, color: 'text-indigo-600 bg-indigo-100' },
-    { label: 'Applications', value: '\u2014', icon: ClipboardCheck, color: 'text-emerald-600 bg-emerald-100' },
-    { label: 'Unread Messages', value: unreadMessages, icon: MessageSquare, color: 'text-amber-600 bg-amber-100' },
-    { label: 'Events', value: '\u2014', icon: Calendar, color: 'text-purple-600 bg-purple-100' },
+    { label: 'Programs', value: summary?.program_count ?? programs.length, icon: BookOpen, color: 'text-indigo-600 bg-indigo-100' },
+    { label: 'Applications', value: summary?.total_applications ?? 0, icon: ClipboardCheck, color: 'text-emerald-600 bg-emerald-100' },
+    { label: 'Pending Review', value: summary?.pending_review_count ?? 0, icon: Users, color: 'text-amber-600 bg-amber-100' },
+    { label: 'Active Events', value: summary?.active_events_count ?? 0, icon: Calendar, color: 'text-purple-600 bg-purple-100' },
   ]
 
   const programColumns = [

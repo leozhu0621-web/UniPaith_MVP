@@ -1,69 +1,33 @@
-import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { BarChart3, TrendingUp, Target, Users, Award } from 'lucide-react'
-import { getInstitutionPrograms } from '../../api/institutions'
-import { getApplicationsByProgram } from '../../api/applications-admin'
+import { getAnalytics } from '../../api/institutions'
 import Card from '../../components/ui/Card'
 import Skeleton from '../../components/ui/Skeleton'
 import { formatPercent } from '../../utils/format'
-import type { Program, Application } from '../../types'
+import type { AnalyticsData } from '../../types'
 
 export default function AnalyticsPage() {
-  const programsQ = useQuery({ queryKey: ['institution-programs'], queryFn: getInstitutionPrograms })
-  const programs: Program[] = Array.isArray(programsQ.data) ? programsQ.data : []
+  const analyticsQ = useQuery({ queryKey: ['institution-analytics'], queryFn: getAnalytics })
+  const analytics: AnalyticsData | undefined = analyticsQ.data
 
-  // Fetch applications for each program
-  const appQueries = programs.map(p =>
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useQuery({
-      queryKey: ['analytics-apps', p.id],
-      queryFn: () => getApplicationsByProgram(p.id),
-      enabled: programs.length > 0,
-    })
-  )
-
-  const allApps: Application[] = useMemo(() => {
-    return appQueries.flatMap(q => Array.isArray(q.data) ? q.data : [])
-  }, [appQueries.map(q => q.data)])
-
-  const isLoading = programsQ.isLoading || appQueries.some(q => q.isLoading)
-
-  // Computed KPIs
-  const totalApps = allApps.length
-  const admittedCount = allApps.filter(a => a.decision === 'admitted').length
-  const decidedCount = allApps.filter(a => a.decision != null).length
-  const acceptanceRate = decidedCount > 0 ? admittedCount / decidedCount : null
-  const avgScore = allApps.filter(a => a.match_score != null).length > 0
-    ? allApps.filter(a => a.match_score != null).reduce((s, a) => s + (a.match_score ?? 0), 0) / allApps.filter(a => a.match_score != null).length
-    : null
-  // yieldRate: Needs enrollment data (Phase 2)
-
-  // Status distribution
-  const statusCounts = useMemo(() => {
-    const counts: Record<string, number> = {}
-    allApps.forEach(a => { counts[a.status] = (counts[a.status] ?? 0) + 1 })
-    return counts
-  }, [allApps])
-
-  // By program
-  const appsByProgram = useMemo(() => {
-    const map: Record<string, number> = {}
-    allApps.forEach(a => {
-      const progName = programs.find(p => p.id === a.program_id)?.program_name ?? a.program_id.slice(0, 8)
-      map[progName] = (map[progName] ?? 0) + 1
-    })
-    return map
-  }, [allApps, programs])
+  const isLoading = analyticsQ.isLoading
 
   const kpis = [
-    { label: 'Total Applications', value: totalApps, icon: Users, color: 'text-indigo-600 bg-indigo-100' },
-    { label: 'Acceptance Rate', value: acceptanceRate != null ? formatPercent(acceptanceRate) : '\u2014', icon: Target, color: 'text-green-600 bg-green-100' },
-    { label: 'Avg Match Score', value: avgScore != null ? `${Math.round(avgScore)}` : '\u2014', icon: Award, color: 'text-amber-600 bg-amber-100' },
-    { label: 'Yield Rate', value: '\u2014', icon: TrendingUp, color: 'text-purple-600 bg-purple-100' },
+    { label: 'Total Applications', value: analytics?.total_applications ?? 0, icon: Users, color: 'text-indigo-600 bg-indigo-100' },
+    { label: 'Acceptance Rate', value: analytics?.acceptance_rate != null ? formatPercent(analytics.acceptance_rate) : '\u2014', icon: Target, color: 'text-green-600 bg-green-100' },
+    { label: 'Avg Match Score', value: analytics?.avg_match_score != null ? `${Math.round(analytics.avg_match_score * 100)}` : '\u2014', icon: Award, color: 'text-amber-600 bg-amber-100' },
+    { label: 'Yield Rate', value: analytics?.yield_rate != null ? formatPercent(analytics.yield_rate) : '\u2014', icon: TrendingUp, color: 'text-purple-600 bg-purple-100' },
   ]
 
+  const statusCounts = analytics?.apps_by_status ?? {}
+  const appsByProgram = analytics?.apps_by_program ?? []
+  const appsByMonth = analytics?.apps_by_month ?? []
+  const decisionsBreakdown = analytics?.decisions_breakdown ?? {}
+
   const maxStatusCount = Math.max(...Object.values(statusCounts), 1)
-  const maxProgramCount = Math.max(...Object.values(appsByProgram), 1)
+  const maxProgramCount = Math.max(...appsByProgram.map(p => p.count), 1)
+  const maxMonthCount = Math.max(...appsByMonth.map(m => m.count), 1)
+  const maxDecisionCount = Math.max(...Object.values(decisionsBreakdown), 1)
 
   if (isLoading) {
     return (
@@ -71,6 +35,17 @@ export default function AnalyticsPage() {
         <Skeleton className="h-10 w-48" />
         <div className="grid grid-cols-4 gap-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28" />)}</div>
         <Skeleton className="h-64" />
+      </div>
+    )
+  }
+
+  if (analyticsQ.isError) {
+    return (
+      <div className="p-6">
+        <Card className="p-8 text-center">
+          <p className="text-red-600 mb-2">Failed to load analytics</p>
+          <button onClick={() => analyticsQ.refetch()} className="text-indigo-600 hover:underline text-sm">Retry</button>
+        </Card>
       </div>
     )
   }
@@ -128,14 +103,14 @@ export default function AnalyticsPage() {
         {/* Applications by Program */}
         <Card className="p-5">
           <h3 className="text-sm font-semibold text-gray-900 mb-4">Applications by Program</h3>
-          {Object.keys(appsByProgram).length === 0 ? (
+          {appsByProgram.length === 0 ? (
             <p className="text-sm text-gray-500 text-center py-8">No data</p>
           ) : (
             <div className="space-y-3">
-              {Object.entries(appsByProgram).sort((a, b) => b[1] - a[1]).map(([prog, count]) => (
-                <div key={prog}>
+              {appsByProgram.map(({ program_name, count }) => (
+                <div key={program_name}>
                   <div className="flex items-center justify-between text-sm mb-1">
-                    <span className="text-gray-700 truncate max-w-[200px]">{prog}</span>
+                    <span className="text-gray-700 truncate max-w-[200px]">{program_name}</span>
                     <span className="font-medium text-gray-900">{count}</span>
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-2">
@@ -146,6 +121,62 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+        </Card>
+
+        {/* Applications Over Time */}
+        <Card className="p-5">
+          <h3 className="text-sm font-semibold text-gray-900 mb-4">Applications Over Time</h3>
+          {appsByMonth.length === 0 ? (
+            <p className="text-sm text-gray-500 text-center py-8">No data</p>
+          ) : (
+            <div className="flex items-end gap-1 h-40">
+              {appsByMonth.map(({ month, count }) => (
+                <div key={month} className="flex-1 flex flex-col items-center gap-1">
+                  <span className="text-xs font-medium text-gray-900">{count}</span>
+                  <div
+                    className="w-full bg-indigo-500 rounded-t transition-all min-h-[4px]"
+                    style={{ height: `${(count / maxMonthCount) * 100}%` }}
+                  />
+                  <span className="text-[10px] text-gray-500 rotate-[-45deg] origin-top-left whitespace-nowrap">
+                    {month.slice(5)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        {/* Decisions Breakdown */}
+        <Card className="p-5">
+          <h3 className="text-sm font-semibold text-gray-900 mb-4">Decisions Breakdown</h3>
+          {Object.keys(decisionsBreakdown).length === 0 ? (
+            <p className="text-sm text-gray-500 text-center py-8">No decisions yet</p>
+          ) : (
+            <div className="space-y-3">
+              {Object.entries(decisionsBreakdown).sort((a, b) => b[1] - a[1]).map(([decision, count]) => {
+                const colors: Record<string, string> = {
+                  admitted: 'bg-green-500',
+                  rejected: 'bg-red-500',
+                  waitlisted: 'bg-amber-500',
+                  deferred: 'bg-blue-500',
+                }
+                return (
+                  <div key={decision}>
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span className="text-gray-700 capitalize">{decision}</span>
+                      <span className="font-medium text-gray-900">{count}</span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-2">
+                      <div
+                        className={`${colors[decision] ?? 'bg-gray-500'} rounded-full h-2 transition-all`}
+                        style={{ width: `${(count / maxDecisionCount) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
         </Card>

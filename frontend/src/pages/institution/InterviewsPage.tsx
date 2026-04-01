@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Calendar, Plus, Trash2 } from 'lucide-react'
 import { getInstitutionPrograms } from '../../api/institutions'
-import { proposeInterview, completeInterview, scoreInterview } from '../../api/interviews-admin'
+import { getInstitutionInterviews, proposeInterview, completeInterview, scoreInterview } from '../../api/interviews-admin'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -13,6 +13,7 @@ import Input from '../../components/ui/Input'
 import Select from '../../components/ui/Select'
 import Textarea from '../../components/ui/Textarea'
 import EmptyState from '../../components/ui/EmptyState'
+import Skeleton from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatDateTime } from '../../utils/format'
 import { STATUS_COLORS, INTERVIEW_TYPES } from '../../utils/constants'
@@ -36,11 +37,16 @@ export default function InterviewsPage() {
   const [scoreRec, setScoreRec] = useState('')
   const [scoreCriteria, _setScoreCriteria] = useState<Record<string, number>>({})
 
-  const programsQ = useQuery({ queryKey: ['institution-programs'], queryFn: getInstitutionPrograms })
-  void programsQ // will be used when interview fetching is wired up
+  const qc = useQueryClient()
 
-  // Placeholder: interviews would be fetched per application; for now we show an empty state pattern
-  const interviews: Interview[] = []
+  const interviewsQ = useQuery({
+    queryKey: ['institution-interviews'],
+    queryFn: () => getInstitutionInterviews(),
+  })
+  const interviews: Interview[] = Array.isArray(interviewsQ.data) ? interviewsQ.data : []
+
+  const programsQ = useQuery({ queryKey: ['institution-programs'], queryFn: getInstitutionPrograms })
+  void programsQ
 
   const tabs = [
     { id: 'upcoming', label: 'Upcoming' },
@@ -57,6 +63,7 @@ export default function InterviewsPage() {
   const proposeMut = useMutation({
     mutationFn: proposeInterview,
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['institution-interviews'] })
       showToast('Interview proposed', 'success')
       setShowScheduleModal(false)
     },
@@ -66,6 +73,7 @@ export default function InterviewsPage() {
   const completeMut = useMutation({
     mutationFn: completeInterview,
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['institution-interviews'] })
       showToast('Interview completed', 'success')
     },
     onError: () => showToast('Failed to complete', 'error'),
@@ -74,6 +82,7 @@ export default function InterviewsPage() {
   const scoreMut = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: any }) => scoreInterview(id, payload),
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['institution-interviews'] })
       showToast('Interview scored', 'success')
       setShowScoreModal(false)
     },
@@ -132,7 +141,9 @@ export default function InterviewsPage() {
       <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
       <Card>
-        {filteredInterviews.length === 0 ? (
+        {interviewsQ.isLoading ? (
+          <div className="p-4 space-y-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12" />)}</div>
+        ) : filteredInterviews.length === 0 ? (
           <EmptyState
             icon={<Calendar size={40} />}
             title="No interviews"

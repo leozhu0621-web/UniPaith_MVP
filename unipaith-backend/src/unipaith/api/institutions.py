@@ -1,18 +1,24 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.database import get_db
 from unipaith.dependencies import require_institution_admin
 from unipaith.models.user import User
 from unipaith.schemas.institution import (
+    AnalyticsResponse,
+    CampaignMetricsResponse,
+    CampaignResponse,
+    CreateCampaignRequest,
     CreateInstitutionRequest,
     CreateProgramRequest,
     CreateSegmentRequest,
+    DashboardSummaryResponse,
     InstitutionResponse,
     ProgramResponse,
     SegmentResponse,
+    UpdateCampaignRequest,
     UpdateInstitutionRequest,
     UpdateProgramRequest,
     UpdateSegmentRequest,
@@ -198,3 +204,105 @@ async def delete_segment(
     svc = _svc(db)
     inst = await svc.get_institution(user.id)
     await svc.delete_segment(inst.id, segment_id)
+
+
+# --- Dashboard & Analytics ---
+
+@router.get("/me/dashboard", response_model=DashboardSummaryResponse)
+async def get_dashboard_summary(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.get_dashboard_summary(inst.id)
+
+
+@router.get("/me/analytics", response_model=AnalyticsResponse)
+async def get_analytics(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.get_analytics(inst.id)
+
+
+# --- Campaigns ---
+
+@router.get("/me/campaigns", response_model=list[CampaignResponse])
+async def list_campaigns(
+    campaign_status: str | None = Query(None, alias="status"),
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.list_campaigns(inst.id, status_filter=campaign_status)
+
+
+@router.post(
+    "/me/campaigns",
+    response_model=CampaignResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_campaign(
+    body: CreateCampaignRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.create_campaign(inst.id, body)
+
+
+@router.put("/me/campaigns/{campaign_id}", response_model=CampaignResponse)
+async def update_campaign(
+    campaign_id: UUID,
+    body: UpdateCampaignRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.update_campaign(inst.id, campaign_id, body)
+
+
+@router.delete(
+    "/me/campaigns/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT
+)
+async def delete_campaign(
+    campaign_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    await svc.delete_campaign(inst.id, campaign_id)
+
+
+@router.post(
+    "/me/campaigns/{campaign_id}/send", response_model=CampaignResponse
+)
+async def send_campaign(
+    campaign_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.send_campaign(inst.id, campaign_id)
+
+
+@router.get(
+    "/me/campaigns/{campaign_id}/metrics",
+    response_model=CampaignMetricsResponse,
+)
+async def get_campaign_metrics(
+    campaign_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.get_campaign_metrics(inst.id, campaign_id)

@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { Institution, Program, Segment } from '../types'
+import type { AnalyticsData, Campaign, CampaignMetrics, DashboardSummary, Institution, Program, Segment } from '../types'
 
 export async function getInstitution(): Promise<Institution> {
   const { data } = await apiClient.get('/institutions/me')
@@ -93,4 +93,56 @@ export async function updateSegment(segmentId: string, payload: Partial<{
 
 export async function deleteSegment(segmentId: string): Promise<void> {
   await apiClient.delete(`/institutions/me/segments/${segmentId}`)
+}
+
+// --- Dashboard & Analytics ---
+
+export async function getDashboardSummary(): Promise<DashboardSummary> {
+  const { data } = await apiClient.get('/institutions/me/dashboard')
+  return data
+}
+
+export async function getAnalytics(): Promise<AnalyticsData> {
+  const { data } = await apiClient.get('/institutions/me/analytics')
+  return data
+}
+
+// --- Campaigns ---
+
+export async function getCampaigns(status?: string): Promise<Campaign[]> {
+  const params = status ? { status } : undefined
+  const { data } = await apiClient.get('/institutions/me/campaigns', { params })
+  return data
+}
+
+export async function createCampaign(payload: {
+  campaign_name: string; campaign_type?: string; program_id?: string | null;
+  segment_id?: string | null; message_subject?: string; message_body?: string;
+  scheduled_send_at?: string | null
+}): Promise<Campaign> {
+  const { data } = await apiClient.post('/institutions/me/campaigns', payload)
+  return data
+}
+
+export async function updateCampaign(campaignId: string, payload: Partial<{
+  campaign_name: string; campaign_type: string; program_id: string | null;
+  segment_id: string | null; message_subject: string; message_body: string;
+  status: string; scheduled_send_at: string | null
+}>): Promise<Campaign> {
+  const { data } = await apiClient.put(`/institutions/me/campaigns/${campaignId}`, payload)
+  return data
+}
+
+export async function deleteCampaign(campaignId: string): Promise<void> {
+  await apiClient.delete(`/institutions/me/campaigns/${campaignId}`)
+}
+
+export async function sendCampaign(campaignId: string): Promise<Campaign> {
+  const { data } = await apiClient.post(`/institutions/me/campaigns/${campaignId}/send`)
+  return data
+}
+
+export async function getCampaignMetrics(campaignId: string): Promise<CampaignMetrics> {
+  const { data } = await apiClient.get(`/institutions/me/campaigns/${campaignId}/metrics`)
+  return data
 }

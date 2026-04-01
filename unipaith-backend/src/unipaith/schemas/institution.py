@@ -161,3 +161,86 @@ class SegmentResponse(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+
+# --- Dashboard Summary ---
+
+class DashboardSummaryResponse(BaseModel):
+    program_count: int
+    published_program_count: int
+    total_applications: int
+    pending_review_count: int
+    active_events_count: int
+    unread_messages_count: int
+
+
+# --- Analytics ---
+
+class ProgramApplicationCount(BaseModel):
+    program_name: str
+    count: int
+
+
+class MonthlyApplicationCount(BaseModel):
+    month: str
+    count: int
+
+
+class AnalyticsResponse(BaseModel):
+    total_applications: int
+    acceptance_rate: float | None
+    avg_match_score: float | None
+    yield_rate: float | None
+    apps_by_status: dict[str, int]
+    apps_by_program: list[ProgramApplicationCount]
+    apps_by_month: list[MonthlyApplicationCount]
+    decisions_breakdown: dict[str, int]
+
+
+# --- Campaigns ---
+
+class CreateCampaignRequest(BaseModel):
+    campaign_name: str = Field(min_length=1, max_length=255)
+    campaign_type: str | None = None
+    program_id: UUID | None = None
+    segment_id: UUID | None = None
+    message_subject: str | None = None
+    message_body: str | None = None
+    scheduled_send_at: datetime | None = None
+
+
+class UpdateCampaignRequest(BaseModel):
+    campaign_name: str | None = Field(None, min_length=1, max_length=255)
+    campaign_type: str | None = None
+    program_id: UUID | None = None
+    segment_id: UUID | None = None
+    message_subject: str | None = None
+    message_body: str | None = None
+    status: str | None = None
+    scheduled_send_at: datetime | None = None
+
+
+class CampaignResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    institution_id: UUID
+    program_id: UUID | None
+    segment_id: UUID | None
+    campaign_name: str
+    campaign_type: str | None
+    message_subject: str | None
+    message_body: str | None
+    status: str | None
+    scheduled_send_at: datetime | None
+    sent_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class CampaignMetricsResponse(BaseModel):
+    campaign_id: UUID
+    total_recipients: int
+    delivered: int
+    opened: int
+    clicked: int
+    responded: int

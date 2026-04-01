@@ -1,6 +1,12 @@
 import apiClient from './client'
 import type { Interview, InterviewScore } from '../types'
 
+export async function getInstitutionInterviews(status?: string): Promise<Interview[]> {
+  const params = status ? { status } : undefined
+  const { data } = await apiClient.get('/interviews/institution', { params })
+  return data
+}
+
 export async function proposeInterview(payload: {
   application_id: string; interviewer_id: string; interview_type: string;
   proposed_times: string[]; duration_minutes?: number; location_or_link?: string | null
