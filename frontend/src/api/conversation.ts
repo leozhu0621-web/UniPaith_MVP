@@ -23,7 +23,7 @@ export async function getConversationSession(): Promise<ConversationSession> {
 }
 
 export async function getConversationResumeCheckpoint(): Promise<ResumeCheckpoint> {
-  const { data } = await apiClient.get<ResumeCheckpoint>('/students/me/conversation/session')
+  const { data } = await apiClient.get<ResumeCheckpoint>('/students/me/conversation/session/resume')
   return data
 }
 

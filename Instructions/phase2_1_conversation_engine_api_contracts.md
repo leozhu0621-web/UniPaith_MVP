@@ -36,6 +36,7 @@ All endpoints are proposed under student scope:
 
 - `POST /students/me/conversation/turn`
 - `GET /students/me/conversation/session`
+- `GET /students/me/conversation/session/resume`
 - `GET /students/me/conversation/requirements`
 - `PATCH /students/me/conversation/requirements/{requirement_id}`
 - `GET /students/me/conversation/confidence`

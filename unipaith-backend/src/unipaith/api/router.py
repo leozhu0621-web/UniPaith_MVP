@@ -4,6 +4,7 @@ from unipaith.api.applications import router as applications_router
 from unipaith.api.auth import router as auth_router
 from unipaith.api.documents import router as documents_router
 from unipaith.api.events import router as events_router
+from unipaith.api.conversation import router as conversation_router
 from unipaith.api.institutions import router as institutions_router
 from unipaith.api.internal import router as internal_router
 from unipaith.api.interviews import router as interviews_router
@@ -23,6 +24,7 @@ api_router = APIRouter()
 
 api_router.include_router(auth_router)
 api_router.include_router(students_router)
+api_router.include_router(conversation_router)
 api_router.include_router(institutions_router)
 api_router.include_router(programs_router)
 api_router.include_router(applications_router)
