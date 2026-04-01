@@ -222,7 +222,7 @@ class RecommendationRequest(Base):
     recommender_email: Mapped[str | None] = mapped_column(String(255))
     recommender_title: Mapped[str | None] = mapped_column(String(255))
     recommender_institution: Mapped[str | None] = mapped_column(String(255))
-    relationship: Mapped[str | None] = mapped_column(String(100))
+    recommender_relationship: Mapped[str | None] = mapped_column("relationship", String(100))
     status: Mapped[str] = mapped_column(String(30), default="draft", nullable=False)
     requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     due_date: Mapped[date | None] = mapped_column(Date)

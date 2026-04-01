@@ -10,8 +10,8 @@ import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import ProgressBar from '../../components/ui/ProgressBar'
 import Skeleton from '../../components/ui/Skeleton'
-import { formatDate, formatScore, formatCurrency } from '../../utils/format'
-import { TIER_LABELS, STATUS_COLORS } from '../../utils/constants'
+import { formatDate, formatScore } from '../../utils/format'
+import { TIER_LABELS } from '../../utils/constants'
 import {
   MessageSquare, Search, FileText, User, Clock,
   ArrowRight, Sparkles, CalendarDays, TrendingUp,

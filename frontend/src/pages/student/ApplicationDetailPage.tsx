@@ -15,7 +15,7 @@ import Select from '../../components/ui/Select'
 import ProgressBar from '../../components/ui/ProgressBar'
 import Skeleton from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
-import { STATUS_COLORS, DOCUMENT_TYPES } from '../../utils/constants'
+import { STATUS_COLORS } from '../../utils/constants'
 import { ArrowLeft, Check, Circle, Upload, Sparkles, AlertCircle, FileCheck } from 'lucide-react'
 import type { Application, Essay, Resume } from '../../types'
 
