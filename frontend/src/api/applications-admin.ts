@@ -19,6 +19,11 @@ export async function makeDecision(applicationId: string, payload: {
   return data
 }
 
+export async function updateApplicationStatus(applicationId: string, status: string): Promise<Application> {
+  const { data } = await apiClient.patch(`/applications/review/${applicationId}/status`, { status })
+  return data
+}
+
 export async function createOffer(applicationId: string, payload: {
   offer_type: 'full_admission' | 'conditional' | 'waitlist_offer'
   tuition_amount?: number | null; scholarship_amount?: number;

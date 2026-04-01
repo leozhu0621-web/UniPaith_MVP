@@ -450,6 +450,63 @@ export interface PipelineData {
   [column: string]: any
 }
 
+// ============ DASHBOARD & ANALYTICS ============
+export interface DashboardSummary {
+  program_count: number
+  published_program_count: number
+  total_applications: number
+  pending_review_count: number
+  active_events_count: number
+  unread_messages_count: number
+}
+
+export interface ProgramApplicationCount {
+  program_name: string
+  count: number
+}
+
+export interface MonthlyApplicationCount {
+  month: string
+  count: number
+}
+
+export interface AnalyticsData {
+  total_applications: number
+  acceptance_rate: number | null
+  avg_match_score: number | null
+  yield_rate: number | null
+  apps_by_status: Record<string, number>
+  apps_by_program: ProgramApplicationCount[]
+  apps_by_month: MonthlyApplicationCount[]
+  decisions_breakdown: Record<string, number>
+}
+
+// ============ CAMPAIGNS ============
+export interface Campaign {
+  id: string
+  institution_id: string
+  program_id: string | null
+  segment_id: string | null
+  campaign_name: string
+  campaign_type: string | null
+  message_subject: string | null
+  message_body: string | null
+  status: string | null
+  scheduled_send_at: string | null
+  sent_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface CampaignMetrics {
+  campaign_id: string
+  total_recipients: number
+  delivered: number
+  opened: number
+  clicked: number
+  responded: number
+}
+
 // ============ SEGMENTS ============
 export interface Segment {
   id: string

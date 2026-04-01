@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -11,14 +12,29 @@ from unipaith.core.exceptions import (
     ConflictException,
     NotFoundException,
 )
-from unipaith.models.application import Application
-from unipaith.models.institution import Institution, Program, TargetSegment
+from unipaith.models.application import Application, OfferLetter
+from unipaith.models.engagement import Conversation, Message
+from unipaith.models.institution import (
+    Campaign,
+    CampaignRecipient,
+    Event,
+    Institution,
+    Program,
+    TargetSegment,
+)
 from unipaith.schemas.institution import (
+    AnalyticsResponse,
+    CampaignMetricsResponse,
+    CreateCampaignRequest,
     CreateInstitutionRequest,
     CreateProgramRequest,
     CreateSegmentRequest,
+    DashboardSummaryResponse,
+    MonthlyApplicationCount,
     PaginatedResponse,
+    ProgramApplicationCount,
     ProgramSummaryResponse,
+    UpdateCampaignRequest,
     UpdateInstitutionRequest,
     UpdateProgramRequest,
     UpdateSegmentRequest,
@@ -194,6 +210,299 @@ class InstitutionService:
             raise NotFoundException("Segment not found")
         await self.db.delete(segment)
         await self.db.flush()
+
+    # --- Dashboard Summary ---
+
+    async def get_dashboard_summary(
+        self, institution_id: UUID
+    ) -> DashboardSummaryResponse:
+        # Program counts
+        prog_result = await self.db.execute(
+            select(
+                func.count().label("total"),
+                func.count().filter(Program.is_published.is_(True)).label("published"),
+            ).where(Program.institution_id == institution_id)
+        )
+        prog_row = prog_result.one()
+
+        # Total applications (non-draft) across all programs
+        app_count_result = await self.db.execute(
+            select(func.count())
+            .select_from(Application)
+            .join(Program, Application.program_id == Program.id)
+            .where(
+                Program.institution_id == institution_id,
+                Application.status != "draft",
+            )
+        )
+        total_apps = app_count_result.scalar_one()
+
+        # Pending review count
+        pending_result = await self.db.execute(
+            select(func.count())
+            .select_from(Application)
+            .join(Program, Application.program_id == Program.id)
+            .where(
+                Program.institution_id == institution_id,
+                Application.status.in_(["submitted", "under_review"]),
+                Application.decision.is_(None),
+            )
+        )
+        pending_review = pending_result.scalar_one()
+
+        # Active events count
+        now = datetime.now(timezone.utc)
+        events_result = await self.db.execute(
+            select(func.count())
+            .select_from(Event)
+            .where(
+                Event.institution_id == institution_id,
+                Event.end_time > now,
+            )
+        )
+        active_events = events_result.scalar_one()
+
+        # Unread messages count
+        unread_result = await self.db.execute(
+            select(func.count())
+            .select_from(Message)
+            .join(Conversation, Message.conversation_id == Conversation.id)
+            .where(
+                Conversation.institution_id == institution_id,
+                Message.sender_type == "student",
+                Message.read_at.is_(None),
+            )
+        )
+        unread_messages = unread_result.scalar_one()
+
+        return DashboardSummaryResponse(
+            program_count=prog_row.total,
+            published_program_count=prog_row.published,
+            total_applications=total_apps,
+            pending_review_count=pending_review,
+            active_events_count=active_events,
+            unread_messages_count=unread_messages,
+        )
+
+    # --- Analytics ---
+
+    async def get_analytics(self, institution_id: UUID) -> AnalyticsResponse:
+        # Base query for institution's applications (non-draft)
+        base_filter = [
+            Program.institution_id == institution_id,
+            Application.status != "draft",
+        ]
+
+        # Total applications
+        total_result = await self.db.execute(
+            select(func.count())
+            .select_from(Application)
+            .join(Program, Application.program_id == Program.id)
+            .where(*base_filter)
+        )
+        total_apps = total_result.scalar_one()
+
+        # Apps by status
+        status_result = await self.db.execute(
+            select(Application.status, func.count())
+            .join(Program, Application.program_id == Program.id)
+            .where(*base_filter)
+            .group_by(Application.status)
+        )
+        apps_by_status = {row[0]: row[1] for row in status_result.all()}
+
+        # Decisions breakdown
+        decisions_result = await self.db.execute(
+            select(Application.decision, func.count())
+            .join(Program, Application.program_id == Program.id)
+            .where(*base_filter, Application.decision.isnot(None))
+            .group_by(Application.decision)
+        )
+        decisions_breakdown = {row[0]: row[1] for row in decisions_result.all()}
+
+        # Acceptance rate
+        decided_count = sum(decisions_breakdown.values())
+        admitted_count = decisions_breakdown.get("admitted", 0)
+        acceptance_rate = (
+            admitted_count / decided_count if decided_count > 0 else None
+        )
+
+        # Average match score
+        avg_score_result = await self.db.execute(
+            select(func.avg(Application.match_score))
+            .join(Program, Application.program_id == Program.id)
+            .where(*base_filter, Application.match_score.isnot(None))
+        )
+        avg_match_score_raw = avg_score_result.scalar_one()
+        avg_match_score = float(avg_match_score_raw) if avg_match_score_raw else None
+
+        # Yield rate: accepted offers / total offers sent
+        yield_result = await self.db.execute(
+            select(
+                func.count().label("total_offers"),
+                func.count().filter(
+                    OfferLetter.student_response == "accepted"
+                ).label("accepted"),
+            )
+            .select_from(OfferLetter)
+            .join(Application, OfferLetter.application_id == Application.id)
+            .join(Program, Application.program_id == Program.id)
+            .where(Program.institution_id == institution_id)
+        )
+        yield_row = yield_result.one()
+        yield_rate = (
+            yield_row.accepted / yield_row.total_offers
+            if yield_row.total_offers > 0
+            else None
+        )
+
+        # Apps by program
+        prog_result = await self.db.execute(
+            select(Program.program_name, func.count())
+            .select_from(Application)
+            .join(Program, Application.program_id == Program.id)
+            .where(*base_filter)
+            .group_by(Program.program_name)
+            .order_by(func.count().desc())
+        )
+        apps_by_program = [
+            ProgramApplicationCount(program_name=row[0], count=row[1])
+            for row in prog_result.all()
+        ]
+
+        # Apps by month (last 12 months)
+        month_result = await self.db.execute(
+            select(
+                func.to_char(Application.submitted_at, "YYYY-MM").label("month"),
+                func.count(),
+            )
+            .join(Program, Application.program_id == Program.id)
+            .where(
+                *base_filter,
+                Application.submitted_at.isnot(None),
+            )
+            .group_by("month")
+            .order_by("month")
+        )
+        apps_by_month = [
+            MonthlyApplicationCount(month=row[0], count=row[1])
+            for row in month_result.all()
+        ]
+
+        return AnalyticsResponse(
+            total_applications=total_apps,
+            acceptance_rate=acceptance_rate,
+            avg_match_score=avg_match_score,
+            yield_rate=yield_rate,
+            apps_by_status=apps_by_status,
+            apps_by_program=apps_by_program,
+            apps_by_month=apps_by_month,
+            decisions_breakdown=decisions_breakdown,
+        )
+
+    # --- Campaigns ---
+
+    async def list_campaigns(
+        self, institution_id: UUID, status_filter: str | None = None
+    ) -> list[Campaign]:
+        stmt = select(Campaign).where(Campaign.institution_id == institution_id)
+        if status_filter:
+            stmt = stmt.where(Campaign.status == status_filter)
+        stmt = stmt.order_by(Campaign.created_at.desc())
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
+    async def create_campaign(
+        self, institution_id: UUID, data: CreateCampaignRequest
+    ) -> Campaign:
+        campaign = Campaign(
+            institution_id=institution_id,
+            status="draft",
+            **data.model_dump(),
+        )
+        self.db.add(campaign)
+        await self.db.flush()
+        await self.db.refresh(campaign)
+        return campaign
+
+    async def update_campaign(
+        self, institution_id: UUID, campaign_id: UUID, data: UpdateCampaignRequest
+    ) -> Campaign:
+        campaign = await self._verify_campaign_ownership(institution_id, campaign_id)
+        update_data = data.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(campaign, key, value)
+        await self.db.flush()
+        await self.db.refresh(campaign)
+        return campaign
+
+    async def delete_campaign(
+        self, institution_id: UUID, campaign_id: UUID
+    ) -> None:
+        campaign = await self._verify_campaign_ownership(institution_id, campaign_id)
+        if campaign.status == "sent":
+            raise BadRequestException("Cannot delete a sent campaign")
+        await self.db.delete(campaign)
+        await self.db.flush()
+
+    async def send_campaign(
+        self, institution_id: UUID, campaign_id: UUID
+    ) -> Campaign:
+        campaign = await self._verify_campaign_ownership(institution_id, campaign_id)
+        if campaign.status == "sent":
+            raise BadRequestException("Campaign already sent")
+        if not campaign.message_subject and not campaign.message_body:
+            raise BadRequestException("Campaign must have subject or body")
+        campaign.status = "sent"
+        campaign.sent_at = datetime.now(timezone.utc)
+        await self.db.flush()
+        await self.db.refresh(campaign)
+        return campaign
+
+    async def get_campaign_metrics(
+        self, institution_id: UUID, campaign_id: UUID
+    ) -> CampaignMetricsResponse:
+        await self._verify_campaign_ownership(institution_id, campaign_id)
+        result = await self.db.execute(
+            select(
+                func.count().label("total"),
+                func.count().filter(
+                    CampaignRecipient.delivered_at.isnot(None)
+                ).label("delivered"),
+                func.count().filter(
+                    CampaignRecipient.opened_at.isnot(None)
+                ).label("opened"),
+                func.count().filter(
+                    CampaignRecipient.clicked_at.isnot(None)
+                ).label("clicked"),
+                func.count().filter(
+                    CampaignRecipient.responded_at.isnot(None)
+                ).label("responded"),
+            ).where(CampaignRecipient.campaign_id == campaign_id)
+        )
+        row = result.one()
+        return CampaignMetricsResponse(
+            campaign_id=campaign_id,
+            total_recipients=row.total,
+            delivered=row.delivered,
+            opened=row.opened,
+            clicked=row.clicked,
+            responded=row.responded,
+        )
+
+    async def _verify_campaign_ownership(
+        self, institution_id: UUID, campaign_id: UUID
+    ) -> Campaign:
+        result = await self.db.execute(
+            select(Campaign).where(
+                Campaign.id == campaign_id,
+                Campaign.institution_id == institution_id,
+            )
+        )
+        campaign = result.scalar_one_or_none()
+        if not campaign:
+            raise NotFoundException("Campaign not found")
+        return campaign
 
     # --- Public Program Browsing ---
 

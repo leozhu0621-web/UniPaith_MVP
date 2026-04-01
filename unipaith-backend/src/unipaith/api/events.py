@@ -13,6 +13,7 @@ from unipaith.schemas.event import (
     CreateEventRequest,
     EventResponse,
     RSVPResponse,
+    UpdateEventRequest,
 )
 from unipaith.services.event_service import EventService
 from unipaith.services.institution_service import InstitutionService
@@ -115,7 +116,34 @@ async def list_my_events(
 ):
     inst = await InstitutionService(db).get_institution(user.id)
     svc = EventService(db)
-    return await svc.list_institution_events(inst.id, status=event_status)
+    return await svc.list_institution_events(inst.id, status_filter=event_status)
+
+
+@router.put("/manage/{event_id}", response_model=EventResponse)
+async def update_event(
+    event_id: UUID,
+    body: UpdateEventRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await InstitutionService(db).get_institution(user.id)
+    svc = EventService(db)
+    return await svc.update_event(
+        institution_id=inst.id,
+        event_id=event_id,
+        **body.model_dump(exclude_unset=True),
+    )
+
+
+@router.post("/manage/{event_id}/cancel", response_model=EventResponse)
+async def cancel_event(
+    event_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await InstitutionService(db).get_institution(user.id)
+    svc = EventService(db)
+    return await svc.cancel_event(inst.id, event_id)
 
 
 @router.get("/manage/{event_id}/attendees", response_model=list[RSVPResponse])

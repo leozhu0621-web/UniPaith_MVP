@@ -66,6 +66,37 @@ class EventService:
         await self.db.flush()
         return event
 
+    async def update_event(
+        self,
+        institution_id: UUID,
+        event_id: UUID,
+        **kwargs: object,
+    ) -> Event:
+        """Update an event's mutable fields."""
+        event = await self._get_event(event_id)
+        if event.institution_id != institution_id:
+            raise ForbiddenException("Event does not belong to this institution")
+        for key, value in kwargs.items():
+            if value is not None:
+                setattr(event, key, value)
+        await self.db.flush()
+        await self.db.refresh(event)
+        return event
+
+    async def cancel_event(
+        self, institution_id: UUID, event_id: UUID
+    ) -> Event:
+        """Cancel an event."""
+        event = await self._get_event(event_id)
+        if event.institution_id != institution_id:
+            raise ForbiddenException("Event does not belong to this institution")
+        if event.status == "cancelled":
+            raise BadRequestException("Event is already cancelled")
+        event.status = "cancelled"
+        await self.db.flush()
+        await self.db.refresh(event)
+        return event
+
     async def list_upcoming_events(
         self,
         program_id: UUID | None = None,

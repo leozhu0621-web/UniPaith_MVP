@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.database import get_db
@@ -42,6 +42,17 @@ async def propose_interview(
         duration_minutes=body.duration_minutes,
         location_or_link=body.location_or_link,
     )
+
+
+@router.get("/institution", response_model=list[InterviewResponse])
+async def list_institution_interviews(
+    interview_status: str | None = Query(None, alias="status"),
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await InstitutionService(db).get_institution(user.id)
+    svc = InterviewService(db)
+    return await svc.list_institution_interviews(inst.id, status_filter=interview_status)
 
 
 @router.get("/application/{application_id}", response_model=list[InterviewResponse])

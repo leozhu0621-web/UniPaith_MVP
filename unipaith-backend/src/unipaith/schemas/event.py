@@ -17,6 +17,16 @@ class CreateEventRequest(BaseModel):
     program_id: UUID | None = None
 
 
+class UpdateEventRequest(BaseModel):
+    event_name: str | None = None
+    event_type: str | None = None
+    start_time: datetime | None = None
+    end_time: datetime | None = None
+    description: str | None = None
+    location: str | None = None
+    capacity: int | None = None
+
+
 class EventResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

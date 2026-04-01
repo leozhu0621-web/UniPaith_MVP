@@ -229,6 +229,33 @@ class ApplicationService:
         await self.db.flush()
         return offer
 
+    async def update_status(
+        self,
+        institution_id: UUID,
+        application_id: UUID,
+        new_status: str,
+    ) -> Application:
+        allowed_transitions: dict[str, list[str]] = {
+            "submitted": ["under_review"],
+            "under_review": ["interview", "decision_made"],
+            "interview": ["decision_made", "under_review"],
+        }
+
+        app = await self._get_application_for_institution(
+            institution_id, application_id
+        )
+        current = app.status
+        allowed = allowed_transitions.get(current, [])
+        if new_status not in allowed:
+            raise BadRequestException(
+                f"Cannot transition from '{current}' to '{new_status}'. "
+                f"Allowed: {allowed}"
+            )
+        app.status = new_status
+        await self.db.flush()
+        await self.db.refresh(app)
+        return app
+
     # --- Submission with guardrails ---
 
     async def submit_application_with_guardrails(

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   DndContext,
   DragOverlay,
@@ -14,7 +14,8 @@ import {
 } from '@dnd-kit/core'
 import { Search, GripVertical } from 'lucide-react'
 import { getInstitutionPrograms } from '../../api/institutions'
-import { getApplicationsByProgram } from '../../api/applications-admin'
+import { getApplicationsByProgram, updateApplicationStatus } from '../../api/applications-admin'
+import { showToast } from '../../stores/toast-store'
 import Badge from '../../components/ui/Badge'
 import Select from '../../components/ui/Select'
 import Input from '../../components/ui/Input'
@@ -95,6 +96,7 @@ function PipelineCardOverlay({ app }: { app: Application }) {
 
 export default function PipelinePage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [selectedProgram, setSelectedProgram] = useState<string>('')
   const [search, setSearch] = useState('')
   const [activeApp, setActiveApp] = useState<Application | null>(null)
@@ -131,15 +133,34 @@ export default function PipelinePage() {
 
   const programOptions = programs.map(p => ({ value: p.id, label: p.program_name }))
 
+  const statusMut = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) => updateApplicationStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pipeline-applications', selectedProgram] })
+      showToast('Status updated', 'success')
+    },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: ['pipeline-applications', selectedProgram] })
+      showToast('Failed to update status', 'error')
+    },
+  })
+
   const handleDragStart = (event: DragStartEvent) => {
     const app = applications.find(a => a.id === event.active.id)
     setActiveApp(app ?? null)
   }
 
-  const handleDragEnd = (_event: DragEndEvent) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     setActiveApp(null)
-    // Drag-and-drop status transitions would call the appropriate API here.
-    // For now, just a visual transition.
+    const { active, over } = event
+    if (!over) return
+
+    const appId = active.id as string
+    const newStatus = over.id as string
+    const app = applications.find(a => a.id === appId)
+    if (!app || app.status === newStatus) return
+
+    statusMut.mutate({ id: appId, status: newStatus })
   }
 
   return (
