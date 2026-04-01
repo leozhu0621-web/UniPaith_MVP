@@ -31,7 +31,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: true,
 
   login: async (email, password) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7640/ingest/56780e01-d332-4ae8-8f9d-c88718bcdca2',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'65023e'},body:JSON.stringify({sessionId:'65023e',runId:'initial',hypothesisId:'H2',location:'frontend/src/stores/auth-store.ts:login:start',message:'Auth store login started',data:{hasEmail:Boolean(email),passwordLength:password?.length??0},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     const { data } = await apiClient.post('/auth/login', { email, password })
+    // #region agent log
+    fetch('http://127.0.0.1:7640/ingest/56780e01-d332-4ae8-8f9d-c88718bcdca2',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'65023e'},body:JSON.stringify({sessionId:'65023e',runId:'initial',hypothesisId:'H2',location:'frontend/src/stores/auth-store.ts:login:response',message:'Auth store received login response',data:{hasAccessToken:Boolean(data?.access_token),hasRefreshToken:Boolean(data?.refresh_token),hasUser:Boolean(data?.user),userKeys:data?.user?Object.keys(data.user):[]},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     const loginUser = data?.user
     const normalizedUser = loginUser
       ? {
@@ -68,6 +74,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       user: resolvedUser,
       isAuthenticated: true,
     })
+    // #region agent log
+    fetch('http://127.0.0.1:7640/ingest/56780e01-d332-4ae8-8f9d-c88718bcdca2',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'65023e'},body:JSON.stringify({sessionId:'65023e',runId:'initial',hypothesisId:'H4',location:'frontend/src/stores/auth-store.ts:login:set',message:'Auth store state updated after login',data:{resolvedUserId:resolvedUser?.id??null,resolvedRole:resolvedUser?.role??null,isAuthenticated:true},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     if (data.refresh_token) {
       localStorage.setItem('unipaith_refresh_token', data.refresh_token)
     } else {

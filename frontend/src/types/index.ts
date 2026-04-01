@@ -612,3 +612,160 @@ export interface DatabaseActionAuditItem {
   payload_json: Record<string, any> | null
   created_at: string | null
 }
+
+// ============ CONVERSATION ENGINE ============
+export type ConversationStage =
+  | 'understand_context'
+  | 'identify_issues'
+  | 'define_demand'
+  | 'translate_requirements'
+  | 'ready_for_shortlist'
+
+export type ConversationDomain =
+  | 'academic_readiness'
+  | 'budget_finance'
+  | 'country_location'
+  | 'timeline_intake'
+  | 'career_outcome'
+  | 'eligibility_compliance'
+  | 'learning_preferences'
+
+export type RequirementPriority = 'must_have' | 'should_have' | 'optional'
+export type RequirementSource = 'student_explicit' | 'inferred' | 'imported'
+export type RequirementStatus = 'draft' | 'confirmed' | 'rejected'
+export type ConfidenceLevel =
+  | 'insufficient'
+  | 'provisional'
+  | 'recommendation_ready'
+  | 'high_confidence'
+
+export interface ConversationSession {
+  session_id: string
+  student_id: string
+  current_stage: ConversationStage
+  active_domain: ConversationDomain
+  turn_count: number
+  last_updated_at: string
+}
+
+export interface ConversationTurnRequest {
+  session_id?: string | null
+  message: string
+  entrypoint?: 'chat' | 'discover_shortcut' | 'resume'
+  context_program_id?: string | null
+  client_event_id?: string | null
+}
+
+export interface AssistantConversationMessage {
+  message_id: string
+  reply_text: string
+  why_asked: string | null
+  suggested_next_actions: string[]
+}
+
+export interface ConversationStateDelta {
+  updated_domains: ConversationDomain[]
+  new_requirements_count: number
+  new_conflicts_count: number
+}
+
+export interface ConfidenceSummary {
+  global_confidence: number
+  global_level: ConfidenceLevel
+}
+
+export interface ConversationTurnResponse {
+  session: ConversationSession
+  assistant_message: AssistantConversationMessage
+  state_delta: ConversationStateDelta
+  confidence_summary: ConfidenceSummary
+}
+
+export interface ConversationRequirement {
+  requirement_id: string
+  domain: ConversationDomain
+  field: string
+  value: unknown
+  priority: RequirementPriority
+  source: RequirementSource
+  confidence: number
+  status: RequirementStatus
+  evidence_turn_ids: string[]
+  updated_at: string
+}
+
+export interface UpdateConversationRequirementRequest {
+  status?: RequirementStatus
+  value?: unknown
+  priority?: RequirementPriority
+}
+
+export interface DomainConfidence {
+  domain: ConversationDomain
+  status: 'unknown' | 'partial' | 'sufficient' | 'conflicting'
+  confidence: number
+  missing_fields: string[]
+  conflicts: string[]
+}
+
+export interface ConfidenceReport {
+  global_confidence: number
+  global_level: ConfidenceLevel
+  domain_scores: DomainConfidence[]
+  blocking_issues: string[]
+  computed_at: string
+}
+
+export interface ShortlistUnlockThresholds {
+  global_min: number
+  domain_min: number
+}
+
+export interface ShortlistUnlockReport {
+  eligible: boolean
+  reasons: string[]
+  thresholds: ShortlistUnlockThresholds
+  blocking_conflicts: string[]
+  missing_required_fields: string[]
+  recommended_next_actions: string[]
+}
+
+export interface ConversationConflict {
+  conflict_id: string
+  fields_in_conflict: string[]
+  reason: string
+  resolution_options: string[]
+  selected_resolution: string | null
+}
+
+export interface ResumeCheckpoint {
+  session: ConversationSession
+  checkpoint_summary: string
+  open_tasks: string[]
+  last_assistant_prompt: string | null
+}
+
+export interface ResolveConversationConflictRequest {
+  selected_resolution: string
+}
+
+export interface ResolveConversationConflictResponse {
+  conflict_id: string
+  resolved: boolean
+  selected_resolution: string
+  updated_confidence: ConfidenceSummary
+}
+
+export interface ConversationApiError {
+  error: {
+    code:
+      | 'validation_error'
+      | 'not_found'
+      | 'forbidden'
+      | 'conflict_unresolved'
+      | 'insufficient_confidence'
+      | 'rate_limited'
+    message: string
+    details?: Record<string, unknown>
+  }
+}
