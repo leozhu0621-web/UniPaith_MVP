@@ -147,7 +147,7 @@ export const getReviewStats = () =>
 export const getReviewItem = (extractedId: string) =>
   apiClient.get(`/admin/crawler/review/${extractedId}`).then(r => r.data)
 
-export const approveReviewItem = (extractedId: string, data?: { edits?: Record<string, any>; notes?: string }) =>
+export const approveReviewItem = (extractedId: string, data?: { edits?: Record<string, unknown>; notes?: string }) =>
   apiClient.post(`/admin/crawler/review/${extractedId}/approve`, data ?? {}).then(r => r.data)
 
 export const rejectReviewItem = (extractedId: string, data: { reason: string }) =>
