@@ -12,10 +12,25 @@ logger = logging.getLogger("unipaith.scheduler")
 scheduler = AsyncIOScheduler()
 
 
+def _job_defaults() -> dict:
+    return {
+        "replace_existing": True,
+        "max_instances": 1,
+        "coalesce": True,
+        "misfire_grace_time": settings.scheduler_misfire_grace_seconds,
+    }
+
+
 def setup_scheduler() -> None:
     """Register all scheduled jobs. Called during app startup."""
+    if scheduler.running:
+        logger.info("Scheduler already running; skipping re-initialization")
+        return
     if not settings.scheduler_enabled:
         logger.info("Scheduler disabled (SCHEDULER_ENABLED=false)")
+        return
+    if settings.scheduler_require_leader and not settings.scheduler_is_leader:
+        logger.info("Scheduler disabled on this instance (leader-only mode)")
         return
 
     # Evaluation (Person B) — every eval_schedule_hours
@@ -25,7 +40,7 @@ def setup_scheduler() -> None:
         hours=settings.eval_schedule_hours,
         id="ml_evaluation",
         name="ML Model Evaluation",
-        replace_existing=True,
+        **_job_defaults(),
     )
 
     # Training (Person C) — every training_schedule_hours
@@ -35,7 +50,7 @@ def setup_scheduler() -> None:
         hours=settings.training_schedule_hours,
         id="ml_training",
         name="ML Model Training",
-        replace_existing=True,
+        **_job_defaults(),
     )
 
     # Daily feature refresh
@@ -45,7 +60,7 @@ def setup_scheduler() -> None:
         hours=24,
         id="feature_refresh",
         name="Daily Feature Refresh",
-        replace_existing=True,
+        **_job_defaults(),
     )
 
     # GPU idle shutdown check — every 5 minutes (only in aws mode)
@@ -56,7 +71,7 @@ def setup_scheduler() -> None:
             minutes=5,
             id="gpu_idle_check",
             name="GPU Idle Shutdown Check",
-            replace_existing=True,
+            **_job_defaults(),
         )
         logger.info(
             "GPU idle shutdown enabled (threshold=%dm)",
@@ -70,7 +85,7 @@ def setup_scheduler() -> None:
         hours=settings.crawler_default_frequency_hours,
         id="crawler_weekly",
         name="Weekly University Crawler",
-        replace_existing=True,
+        **_job_defaults(),
     )
 
     scheduler.start()

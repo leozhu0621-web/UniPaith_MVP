@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.models.institution import Institution, Program
 from unipaith.models.student import StudentProfile
-from unipaith.models.user import User
+from unipaith.models.user import User, UserRole
 
 
 async def _seed_student_and_institution(
@@ -152,3 +152,40 @@ async def test_list_conversations(
     assert resp.status_code == 200
     data = resp.json()
     assert len(data) == 2
+
+
+@pytest.mark.asyncio
+async def test_student_cannot_spoof_conversation_participant(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    profile, institution = await _seed_student_and_institution(
+        db_session, mock_student_user, mock_institution_user
+    )
+
+    other_user = User(
+        email="other-student@example.com",
+        role=UserRole.student,
+        is_active=True,
+    )
+    db_session.add(other_user)
+    await db_session.flush()
+    other_profile = StudentProfile(
+        user_id=other_user.id,
+        first_name="Other",
+        last_name="Student",
+    )
+    db_session.add(other_profile)
+    await db_session.commit()
+
+    resp = await student_client.post(
+        "/api/v1/messages/conversations",
+        json={
+            "institution_id": str(institution.id),
+            "student_id": str(other_profile.id),
+            "subject": "Spoof attempt",
+        },
+    )
+    assert resp.status_code == 403

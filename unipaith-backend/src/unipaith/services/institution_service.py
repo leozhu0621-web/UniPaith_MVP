@@ -4,8 +4,9 @@ import math
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from unipaith.core.exceptions import (
     BadRequestException,
@@ -586,6 +587,61 @@ class InstitutionService:
         if not program:
             raise NotFoundException("Program not found")
         return program
+
+    async def semantic_search_programs(
+        self,
+        query: str,
+        limit: int = 20,
+    ) -> list[ProgramSummaryResponse]:
+        from unipaith.ai.embedding_client import get_embedding_client
+
+        client = get_embedding_client()
+        query_embedding = await client.embed_text(query)
+        vec_str = "[" + ",".join(str(float(v)) for v in query_embedding) + "]"
+
+        vector_query = text(
+            "SELECT e.entity_id, 1 - (e.embedding <=> cast(:query_vec as vector)) as similarity "
+            "FROM embeddings e "
+            "JOIN programs p ON e.entity_id = p.id "
+            "WHERE e.entity_type = 'program' "
+            "AND p.is_published = true "
+            "ORDER BY e.embedding <=> cast(:query_vec as vector) "
+            "LIMIT :limit"
+        )
+        result = await self.db.execute(
+            vector_query, {"query_vec": vec_str, "limit": limit}
+        )
+        rows = result.fetchall()
+
+        program_ids = [row[0] for row in rows]
+        if not program_ids:
+            return []
+
+        programs_result = await self.db.execute(
+            select(Program)
+            .where(Program.id.in_(program_ids))
+            .options(selectinload(Program.institution))
+        )
+        programs = {program.id: program for program in programs_result.scalars().all()}
+
+        ordered: list[ProgramSummaryResponse] = []
+        for program_id, _similarity in rows:
+            program = programs.get(program_id)
+            if not program:
+                continue
+            ordered.append(
+                ProgramSummaryResponse(
+                    id=program.id,
+                    program_name=program.program_name,
+                    degree_type=program.degree_type,
+                    department=program.department,
+                    tuition=program.tuition,
+                    application_deadline=program.application_deadline,
+                    institution_name=program.institution.name if program.institution else "",
+                    institution_country=program.institution.country if program.institution else "",
+                )
+            )
+        return ordered
 
     # --- Helpers ---
 

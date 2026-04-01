@@ -49,6 +49,9 @@ class Settings(BaseSettings):
 
     # Scheduler
     scheduler_enabled: bool = False
+    scheduler_require_leader: bool = False
+    scheduler_is_leader: bool = True
+    scheduler_misfire_grace_seconds: int = 300
 
     # Logging
     log_level: str = "INFO"

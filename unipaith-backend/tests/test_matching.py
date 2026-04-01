@@ -346,6 +346,10 @@ async def test_force_refresh(db_session: AsyncSession, mock_student_user: User):
     # Force refresh should not error
     matches2 = await svc.get_matches(profile.id, force_refresh=True)
     assert len(matches2) > 0
+    refreshed_ids = {m.id for m in matches2}
+    if matches1:
+        stale_candidates = [m for m in matches1 if m.id not in refreshed_ids]
+        assert all(m.is_stale for m in stale_candidates)
 
 
 async def test_prediction_logging(db_session: AsyncSession, mock_student_user: User):

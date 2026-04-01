@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import select, text
+from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -56,15 +56,28 @@ class InferencePipeline:
 
         # Apply dealbreaker filters before scoring
         candidates = await self._apply_dealbreaker_filters(candidates, student_prefs)
+        if not candidates:
+            return []
+
+        candidate_program_ids = [program_id for program_id, _ in candidates]
+        historical_fit_map = await self._prefetch_historical_fit(
+            student_features=student_features,
+            program_ids=candidate_program_ids,
+        )
+        institution_pref_fit_map = await self._prefetch_institution_pref_fit(
+            student_features=student_features,
+            program_ids=candidate_program_ids,
+        )
 
         scored_candidates = []
         for program_id, cosine_sim in candidates:
-            final_score, score_breakdown = await self._compute_final_score(
-                student_id=student_id,
+            final_score, score_breakdown = self._compute_final_score(
                 program_id=program_id,
                 cosine_similarity=cosine_sim,
                 student_features=student_features,
                 student_prefs=student_prefs,
+                historical_fit=historical_fit_map.get(program_id, 0.5),
+                institution_pref_fit=institution_pref_fit_map.get(program_id, 0.5),
             )
             scored_candidates.append((program_id, final_score, score_breakdown, cosine_sim))
 
@@ -81,7 +94,10 @@ class InferencePipeline:
                 tier = 3
             tiered.append((program_id, score, tier, breakdown))
 
-        match_results = []
+        top_program_ids = [program_id for program_id, _score, _tier, _breakdown in tiered]
+        existing_match_map = await self._prefetch_existing_matches(student_id, top_program_ids)
+        match_results: list[MatchResult] = []
+        prediction_logs: list[PredictionLog] = []
         for program_id, score, tier, breakdown in tiered:
             reasoning = await self.reasoning_generator.generate_match_reasoning(
                 student_id=student_id,
@@ -97,15 +113,24 @@ class InferencePipeline:
                 tier=tier,
                 breakdown=breakdown,
                 reasoning=reasoning,
+                existing=existing_match_map.get(program_id),
             )
             match_results.append(match_result)
-            await self._log_prediction(
-                student_id=student_id,
-                program_id=program_id,
-                score=score,
-                tier=tier,
-                features_used=breakdown,
+            prediction_logs.append(
+                PredictionLog(
+                    student_id=student_id,
+                    program_id=program_id,
+                    predicted_score=Decimal(str(round(score, 4))),
+                    predicted_tier=tier,
+                    model_version="v1.0-mvp",
+                    features_used=breakdown,
+                    predicted_at=datetime.now(timezone.utc),
+                )
             )
+
+        if prediction_logs:
+            self.db.add_all(prediction_logs)
+            await self.db.flush()
 
         await self._mark_old_matches_stale(student_id, [m.id for m in match_results])
         return match_results
@@ -157,20 +182,19 @@ class InferencePipeline:
     # INFLUENTIAL FACTORS & SCORING
     # ========================================================================
 
-    async def _compute_final_score(
+    def _compute_final_score(
         self,
-        student_id: UUID,
         program_id: UUID,
         cosine_similarity: float,
         student_features: dict,
         student_prefs: StudentPreference | None,
+        historical_fit: float,
+        institution_pref_fit: float,
     ) -> tuple[float, dict]:
         """Compute the final match score using 4 weighted components."""
         similarity_score = max(0.0, min(1.0, cosine_similarity))
-        historical_score = await self._compute_historical_fit(student_features, program_id)
-        institution_pref_score = await self._compute_institution_pref_fit(
-            student_features, program_id
-        )
+        historical_score = historical_fit
+        institution_pref_score = institution_pref_fit
         student_pref_score = self._compute_student_pref_fit(
             student_prefs, program_id, student_features
         )
@@ -197,18 +221,8 @@ class InferencePipeline:
         }
         return final_score, breakdown
 
-    async def _compute_historical_fit(self, student_features: dict, program_id: UUID) -> float:
+    def _score_historical_fit(self, student_features: dict, admitted: list[HistoricalOutcome]) -> float:
         """How well does this student match historically admitted students?"""
-        result = await self.db.execute(
-            select(HistoricalOutcome).where(
-                HistoricalOutcome.program_id == program_id,
-                HistoricalOutcome.outcome == "admitted",
-            )
-        )
-        admitted = result.scalars().all()
-        if not admitted:
-            return 0.5
-
         structured = student_features.get("structured", {})
         student_gpa = structured.get("normalized_gpa", 0)
 
@@ -225,20 +239,10 @@ class InferencePipeline:
 
         return sum(scores) / len(scores) if scores else 0.5
 
-    async def _compute_institution_pref_fit(
-        self, student_features: dict, program_id: UUID
+    def _score_institution_pref_fit(
+        self, student_features: dict, segments: list[TargetSegment]
     ) -> float:
         """How well does this student match what the institution currently wants?"""
-        result = await self.db.execute(
-            select(TargetSegment).where(
-                TargetSegment.program_id == program_id,
-                TargetSegment.is_active.is_(True),
-            )
-        )
-        segments = result.scalars().all()
-        if not segments:
-            return 0.5
-
         structured = student_features.get("structured", {})
         best_segment_score = 0.0
         for segment in segments:
@@ -246,6 +250,76 @@ class InferencePipeline:
             score = self._score_against_segment(structured, criteria)
             best_segment_score = max(best_segment_score, score)
         return best_segment_score
+
+    async def _prefetch_historical_fit(
+        self,
+        student_features: dict,
+        program_ids: list[UUID],
+    ) -> dict[UUID, float]:
+        if not program_ids:
+            return {}
+
+        result = await self.db.execute(
+            select(HistoricalOutcome).where(
+                HistoricalOutcome.program_id.in_(program_ids),
+                HistoricalOutcome.outcome == "admitted",
+            )
+        )
+        outcomes = result.scalars().all()
+
+        grouped: dict[UUID, list[HistoricalOutcome]] = {program_id: [] for program_id in program_ids}
+        for outcome in outcomes:
+            grouped.setdefault(outcome.program_id, []).append(outcome)
+
+        return {
+            program_id: self._score_historical_fit(student_features, admitted)
+            if admitted
+            else 0.5
+            for program_id, admitted in grouped.items()
+        }
+
+    async def _prefetch_institution_pref_fit(
+        self,
+        student_features: dict,
+        program_ids: list[UUID],
+    ) -> dict[UUID, float]:
+        if not program_ids:
+            return {}
+
+        result = await self.db.execute(
+            select(TargetSegment).where(
+                TargetSegment.program_id.in_(program_ids),
+                TargetSegment.is_active.is_(True),
+            )
+        )
+        segments = result.scalars().all()
+
+        grouped: dict[UUID, list[TargetSegment]] = {program_id: [] for program_id in program_ids}
+        for segment in segments:
+            grouped.setdefault(segment.program_id, []).append(segment)
+
+        return {
+            program_id: self._score_institution_pref_fit(student_features, program_segments)
+            if program_segments
+            else 0.5
+            for program_id, program_segments in grouped.items()
+        }
+
+    async def _prefetch_existing_matches(
+        self,
+        student_id: UUID,
+        program_ids: list[UUID],
+    ) -> dict[UUID, MatchResult]:
+        if not program_ids:
+            return {}
+
+        result = await self.db.execute(
+            select(MatchResult).where(
+                MatchResult.student_id == student_id,
+                MatchResult.program_id.in_(program_ids),
+            )
+        )
+        return {match.program_id: match for match in result.scalars().all()}
 
     def _score_against_segment(self, student_structured: dict, criteria: dict) -> float:
         if not criteria:
@@ -383,15 +457,8 @@ class InferencePipeline:
         tier: int,
         breakdown: dict,
         reasoning: str,
+        existing: MatchResult | None,
     ) -> MatchResult:
-        result = await self.db.execute(
-            select(MatchResult).where(
-                MatchResult.student_id == student_id,
-                MatchResult.program_id == program_id,
-            )
-        )
-        existing = result.scalar_one_or_none()
-
         if existing:
             existing.match_score = Decimal(str(round(score, 4)))
             existing.match_tier = tier
@@ -422,14 +489,14 @@ class InferencePipeline:
     ) -> None:
         if not current_match_ids:
             return
-        result = await self.db.execute(
-            select(MatchResult).where(
+        await self.db.execute(
+            update(MatchResult)
+            .where(
                 MatchResult.student_id == student_id,
                 MatchResult.id.notin_(current_match_ids),
             )
+            .values(is_stale=True)
         )
-        for old_match in result.scalars().all():
-            old_match.is_stale = True
 
     async def _log_prediction(
         self, student_id: UUID, program_id: UUID, score: float, tier: int, features_used: dict

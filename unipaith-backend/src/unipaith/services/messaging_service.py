@@ -5,24 +5,22 @@ Supports real-time messaging with rate limiting, read tracking, and pagination.
 from __future__ import annotations
 
 import logging
+from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from unipaith.config import settings
 from unipaith.core.exceptions import (
     BadRequestException,
-    ConflictException,
     ForbiddenException,
     NotFoundException,
 )
 from unipaith.models.engagement import Conversation, Message
 from unipaith.models.institution import Institution
 from unipaith.models.student import StudentProfile
-from unipaith.models.user import User
 
 logger = logging.getLogger(__name__)
 
@@ -37,12 +35,25 @@ class MessagingService:
 
     async def create_conversation(
         self,
+        actor_user_id: UUID,
         student_id: UUID,
         institution_id: UUID,
         subject: str | None = None,
         program_id: UUID | None = None,
     ) -> Conversation:
         """Create a new conversation between a student and an institution."""
+        actor_student_id, actor_institution_id = await self._resolve_user_context(actor_user_id)
+        if actor_student_id:
+            if actor_student_id != student_id:
+                raise ForbiddenException("Students can only create conversations for themselves")
+        elif actor_institution_id:
+            if actor_institution_id != institution_id:
+                raise ForbiddenException(
+                    "Institution admins can only create conversations for their institution"
+                )
+        else:
+            raise ForbiddenException("Only students or institution admins can create conversations")
+
         now = datetime.now(timezone.utc)
         conversation = Conversation(
             student_id=student_id,
@@ -74,13 +85,11 @@ class MessagingService:
             query = (
                 select(Conversation)
                 .where(Conversation.student_id == student_profile_id)
-                .options(selectinload(Conversation.messages))
             )
         elif institution_id:
             query = (
                 select(Conversation)
                 .where(Conversation.institution_id == institution_id)
-                .options(selectinload(Conversation.messages))
             )
         else:
             return []
@@ -89,9 +98,25 @@ class MessagingService:
         result = await self.db.execute(query)
         conversations = list(result.scalars().all())
 
-        # Compute unread count per conversation and attach to objects
+        if not conversations:
+            return conversations
+
+        conversation_ids = [conv.id for conv in conversations]
+        unread_counts_result = await self.db.execute(
+            select(Message.conversation_id, func.count())
+            .where(
+                Message.conversation_id.in_(conversation_ids),
+                Message.sender_id != user_id,
+                Message.read_at.is_(None),
+            )
+            .group_by(Message.conversation_id)
+        )
+        unread_counts = defaultdict(int)
+        for conversation_id, count in unread_counts_result.all():
+            unread_counts[conversation_id] = int(count or 0)
+
         for conv in conversations:
-            conv.unread_count = await self._unread_count(conv.id, user_id)  # type: ignore[attr-defined]
+            conv.unread_count = unread_counts[conv.id]  # type: ignore[attr-defined]
         return conversations
 
     # ------------------------------------------------------------------
@@ -137,6 +162,9 @@ class MessagingService:
 
         # Verify conversation exists
         conv = await self._get_conversation(conversation_id)
+        await self._verify_participant(conv, sender_id)
+        if sender_type == "student":
+            sender_type = await self._resolve_sender_type(sender_id)
 
         now = datetime.now(timezone.utc)
         message = Message(
@@ -296,3 +324,11 @@ class MessagingService:
             )
         )
         return result.scalar() or 0
+
+    async def _resolve_sender_type(self, user_id: UUID) -> str:
+        student_profile_id, institution_id = await self._resolve_user_context(user_id)
+        if student_profile_id:
+            return "student"
+        if institution_id:
+            return "institution"
+        return "unknown"

@@ -10,8 +10,10 @@ from pythonjsonlogger.json import JsonFormatter
 
 from unipaith.api.router import api_router
 from unipaith.config import settings
+from unipaith.core.data_safety import assert_core_role_coverage
 from unipaith.core.middleware import setup_middleware
 from unipaith.core.scheduler import setup_scheduler, shutdown_scheduler
+from unipaith.database import async_session
 
 
 def _setup_logging() -> None:
@@ -36,6 +38,14 @@ _setup_logging()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):  # noqa: ARG001
+    if settings.environment.lower() in {"production", "staging"}:
+        try:
+            async with async_session() as db:
+                await assert_core_role_coverage(db)
+        except Exception:
+            logging.getLogger("unipaith.startup").exception(
+                "Core account coverage check failed on startup"
+            )
     setup_scheduler()
     yield
     shutdown_scheduler()

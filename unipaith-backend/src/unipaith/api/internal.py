@@ -12,6 +12,7 @@ from unipaith.models.application import Application
 from unipaith.models.institution import Institution, Program
 from unipaith.models.student import StudentProfile
 from unipaith.models.user import User, UserRole
+from unipaith.services.internal_admin_service import InternalAdminService
 from unipaith.services.matching_service import MatchingService
 
 router = APIRouter(prefix="/internal", tags=["internal"])
@@ -22,25 +23,7 @@ async def platform_stats(
     user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    students = (await db.execute(
-        select(func.count()).select_from(User).where(User.role == UserRole.student)
-    )).scalar_one()
-    institutions = (await db.execute(
-        select(func.count()).select_from(Institution)
-    )).scalar_one()
-    programs = (await db.execute(
-        select(func.count()).select_from(Program).where(Program.is_published.is_(True))
-    )).scalar_one()
-    applications = (await db.execute(
-        select(func.count()).select_from(Application)
-    )).scalar_one()
-
-    return {
-        "total_students": students,
-        "total_institutions": institutions,
-        "published_programs": programs,
-        "total_applications": applications,
-    }
+    return await InternalAdminService(db).get_platform_stats()
 
 
 @router.get("/users")
@@ -51,86 +34,46 @@ async def list_users(
     user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    stmt = select(User)
-    if role:
-        stmt = stmt.where(User.role == UserRole(role))
-
-    total = (await db.execute(
-        select(func.count()).select_from(stmt.subquery())
-    )).scalar_one()
-
-    results = await db.execute(
-        stmt.offset((page - 1) * page_size).limit(page_size)
+    result = await InternalAdminService(db).list_users(
+        role=role,
+        page=page,
+        page_size=page_size,
     )
-    users = results.scalars().all()
-
     return {
-        "items": [
-            {
-                "id": str(u.id),
-                "email": u.email,
-                "role": u.role.value,
-                "is_active": u.is_active,
-                "created_at": u.created_at.isoformat() if u.created_at else None,
-            }
-            for u in users
-        ],
-        "total": total,
-        "page": page,
-        "page_size": page_size,
+        "items": result.items,
+        "total": result.total,
+        "page": result.page,
+        "page_size": result.page_size,
     }
 
 
 @router.patch("/users/{user_id}/deactivate")
 async def deactivate_user(
-    user_id: str,
+    user_id: UUID,
     admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    import uuid as _uuid
-    result = await db.execute(select(User).where(User.id == _uuid.UUID(user_id)))
-    target = result.scalar_one_or_none()
-    if not target:
-        from unipaith.core.exceptions import NotFoundException
-        raise NotFoundException("User not found")
-    target.is_active = False
-    await db.flush()
-    return {"message": f"User {user_id} deactivated"}
+    target = await InternalAdminService(db).set_user_active(user_id, active=False)
+    return {"message": f"User {target.id} deactivated"}
 
 
 @router.patch("/users/{user_id}/activate")
 async def activate_user(
-    user_id: str,
+    user_id: UUID,
     admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    import uuid as _uuid
-    result = await db.execute(select(User).where(User.id == _uuid.UUID(user_id)))
-    target = result.scalar_one_or_none()
-    if not target:
-        from unipaith.core.exceptions import NotFoundException
-        raise NotFoundException("User not found")
-    target.is_active = True
-    await db.flush()
-    return {"message": f"User {user_id} activated"}
+    target = await InternalAdminService(db).set_user_active(user_id, active=True)
+    return {"message": f"User {target.id} activated"}
 
 
 @router.patch("/institutions/{institution_id}/verify")
 async def verify_institution(
-    institution_id: str,
+    institution_id: UUID,
     admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    import uuid as _uuid
-    result = await db.execute(
-        select(Institution).where(Institution.id == _uuid.UUID(institution_id))
-    )
-    inst = result.scalar_one_or_none()
-    if not inst:
-        from unipaith.core.exceptions import NotFoundException
-        raise NotFoundException("Institution not found")
-    inst.is_verified = True
-    await db.flush()
+    inst = await InternalAdminService(db).verify_institution(institution_id)
     return {"message": f"Institution {inst.name} verified"}
 
 

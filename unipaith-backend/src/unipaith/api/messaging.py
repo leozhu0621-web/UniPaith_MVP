@@ -32,6 +32,7 @@ async def create_conversation(
 ):
     svc = MessagingService(db)
     return await svc.create_conversation(
+        actor_user_id=user.id,
         student_id=body.student_id,
         institution_id=body.institution_id,
         subject=body.subject,
