@@ -49,6 +49,7 @@ class Settings(BaseSettings):
 
     # Scheduler
     scheduler_enabled: bool = False
+    scheduler_auto_enable_non_test: bool = True
     scheduler_require_leader: bool = False
     scheduler_is_leader: bool = True
     scheduler_misfire_grace_seconds: int = 300
@@ -93,6 +94,7 @@ class Settings(BaseSettings):
 
     # AI dev mode
     ai_mock_mode: bool = False
+    ai_refresh_cooldown_seconds: int = 300
 
     # GPU infrastructure (cloud-first)
     gpu_mode: str = "aws"  # "aws" | "local" | "mock" (mock only for tests)
@@ -120,6 +122,8 @@ class Settings(BaseSettings):
     eval_accuracy_threshold: float = 0.65
     eval_drift_pvalue_threshold: float = 0.01
     eval_min_predictions_for_eval: int = 30
+    eval_retrain_min_new_outcomes: int = 20
+    eval_retrain_max_hours_without_training: int = 72
 
     # Training (Person C)
     training_schedule_hours: int = 168
@@ -127,6 +131,12 @@ class Settings(BaseSettings):
     training_cv_folds: int = 5
     training_optuna_trials: int = 50
     training_max_duration_minutes: int = 60
+    training_fast_cv_folds: int = 3
+    training_fast_optuna_trials: int = 12
+    training_fast_max_duration_minutes: int = 15
+    training_default_cycle_mode: str = "fast"
+    training_default_manual_mode: str = "full"
+    training_recent_outcome_window_days: int = 365
 
     # Model management
     model_promotion_min_improvement: float = 0.02

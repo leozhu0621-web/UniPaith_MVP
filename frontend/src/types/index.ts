@@ -546,3 +546,69 @@ export interface PipelineCard {
   last_activity: string | null
   scores: ApplicationScore[]
 }
+
+// ============ ADMIN DATABASE CONTROL ============
+export interface DatabaseHealthSnapshot {
+  api_reachable: boolean
+  database: { status: 'healthy' | 'degraded'; latency_ms: number }
+  jobs: { recent_failed_24h: number; last_job_at: string | null }
+  footprint: {
+    tracked_entities: number
+    users: number
+    institutions: number
+    programs: number
+    applications: number
+    matches: number
+    embeddings: number
+  }
+  last_admin_action_at: string | null
+  generated_at: string
+}
+
+export interface DatabaseQualityItem {
+  entity: string
+  missing_count: number
+  duplicate_count: number
+  invalid_count: number
+  risk_score: number
+  severity: 'low' | 'medium' | 'high'
+  recommended_action: 'monitor' | 'run_dedupe' | 'run_repair'
+}
+
+export interface DatabaseQualitySnapshot {
+  items: DatabaseQualityItem[]
+  generated_at: string
+}
+
+export interface DatabaseRecommendation {
+  entity: string
+  action: 'run_dedupe' | 'run_repair'
+  priority_score: number
+  reason: string
+  auto_generated: boolean
+}
+
+export interface DatabaseRecommendationsSnapshot {
+  items: DatabaseRecommendation[]
+  generated_at: string
+}
+
+export interface DatabaseJobItem {
+  id: string
+  status: string
+  pages_crawled: number
+  items_extracted: number
+  items_ingested: number
+  error_log: Record<string, any> | null
+  created_at: string | null
+  completed_at: string | null
+}
+
+export interface DatabaseActionAuditItem {
+  id: string
+  action: string
+  entity_type: string
+  entity_id: string
+  payload_json: Record<string, any> | null
+  created_at: string | null
+}

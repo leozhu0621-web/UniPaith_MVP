@@ -51,6 +51,9 @@ class AIControlPlaneService:
         self.db = db
 
     async def get_status(self) -> dict[str, Any]:
+        scheduler_effective_enabled = settings.scheduler_enabled or (
+            settings.scheduler_auto_enable_non_test and settings.environment != "test"
+        )
         active_sources = await self.db.scalar(
             select(func.count()).select_from(DataSource).where(DataSource.is_active.is_(True))
         )
@@ -90,7 +93,8 @@ class AIControlPlaneService:
         return {
             "policy": dict(_runtime_policy),
             "scheduler": {
-                "enabled": settings.scheduler_enabled,
+                "enabled": scheduler_effective_enabled,
+                "configured_enabled": settings.scheduler_enabled,
                 "self_driving_enabled": settings.scheduler_self_driving_enabled,
                 "self_driving_interval_minutes": settings.scheduler_self_driving_interval_minutes,
                 "leader_only_mode": settings.scheduler_require_leader,
@@ -109,6 +113,12 @@ class AIControlPlaneService:
                 "features_generated": int(features_generated or 0),
                 "embeddings_generated": int(embeddings_generated or 0),
                 "engine_ready": bool(embeddings_generated and embeddings_generated > 0),
+            },
+            "ml_policy": {
+                "eval_retrain_min_new_outcomes": settings.eval_retrain_min_new_outcomes,
+                "eval_retrain_max_hours_without_training": settings.eval_retrain_max_hours_without_training,
+                "training_default_cycle_mode": settings.training_default_cycle_mode,
+                "training_default_manual_mode": settings.training_default_manual_mode,
             },
             "reliability": {
                 "crawl_failures_total": int(recent_crawl_failures or 0),

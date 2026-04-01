@@ -62,3 +62,20 @@ async def test_outcome_stats(
     assert resp.status_code == 200
     data = resp.json()
     assert "total_outcomes" in data
+
+
+@pytest.mark.asyncio
+async def test_learning_kpis(
+    admin_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_admin_user: User,
+):
+    """admin_client GET /admin/ml/kpis -> 200."""
+    db_session.add(mock_admin_user)
+    await db_session.commit()
+
+    resp = await admin_client.get("/api/v1/admin/ml/kpis")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "generated_at" in data
+    assert "retrain_runs_24h" in data

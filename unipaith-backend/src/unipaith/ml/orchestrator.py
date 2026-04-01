@@ -8,11 +8,14 @@ or a scheduled job.  Never raises — always returns partial results.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from unipaith.config import settings
+from unipaith.core.ai_runtime_metrics import record_ml_evaluation, start_timer
 from unipaith.ml.ab_testing import ABTestManager
 from unipaith.ml.drift_detector import DriftDetector
 from unipaith.ml.evaluator import ModelEvaluator
@@ -20,6 +23,7 @@ from unipaith.ml.fairness import FairnessChecker
 from unipaith.ml.model_manager import ModelManager
 from unipaith.ml.outcome_collector import OutcomeCollector
 from unipaith.ml.trainer import ModelTrainer
+from unipaith.models.ml_loop import OutcomeRecord, TrainingRun
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +61,7 @@ class MLOrchestrator:
         result: dict[str, Any] = {
             "started_at": started_at.isoformat(),
             "completed_at": None,
+            "decision": None,
             "evaluation": None,
             "drift": None,
             "training": None,
@@ -65,10 +70,12 @@ class MLOrchestrator:
         }
 
         # --- Step 1: Evaluation ---
+        eval_timer = start_timer()
         try:
             eval_run = await self.evaluator.run_evaluation(
                 evaluation_type="triggered",
             )
+            record_ml_evaluation(eval_timer, ok=True)
             result["evaluation"] = {
                 "id": str(eval_run.id),
                 "model_version": eval_run.model_version,
@@ -78,6 +85,7 @@ class MLOrchestrator:
                 "drift_detected": eval_run.drift_detected,
             }
         except Exception:
+            record_ml_evaluation(eval_timer, ok=False)
             logger.exception("Full cycle: evaluation step failed")
             result["completed_at"] = datetime.now(timezone.utc).isoformat()
             return result
@@ -106,23 +114,35 @@ class MLOrchestrator:
             return result
 
         # --- Step 3: Determine if retraining is needed ---
-        training_needed = eval_run.retraining_triggered or any_drift
+        decision = await self._build_training_decision(
+            eval_run=eval_run,
+            any_drift=any_drift,
+            triggered_by=triggered_by,
+        )
+        result["decision"] = decision
+        training_needed = decision["training_needed"]
         if not training_needed:
-            result["training"] = {"skipped": True, "reason": "no trigger"}
+            result["training"] = {"skipped": True, "reason": decision["skip_reason"]}
             result["completed_at"] = datetime.now(timezone.utc).isoformat()
             return result
 
         # --- Step 4: Run training ---
         try:
+            training_mode = decision["training_mode"]
             training_run = await self.trainer.run_training(
                 triggered_by=triggered_by,
                 evaluation_run_id=eval_run.id,
+                mode=training_mode,
+                trigger_reason=decision["trigger_reason"],
+                new_outcomes_count=decision["new_outcomes_count"],
             )
             result["training"] = {
                 "id": str(training_run.id),
                 "status": training_run.status,
                 "model_version": training_run.resulting_model_version,
                 "test_metrics": training_run.test_metrics,
+                "mode": training_mode,
+                "trigger_reason": decision["trigger_reason"],
             }
         except Exception:
             logger.exception("Full cycle: training step failed")
@@ -175,10 +195,12 @@ class MLOrchestrator:
 
     async def run_evaluation_only(self) -> dict[str, Any]:
         """Run model evaluation only and return a summary."""
+        timer = start_timer()
         try:
             eval_run = await self.evaluator.run_evaluation(
                 evaluation_type="manual",
             )
+            record_ml_evaluation(timer, ok=True)
             return {
                 "id": str(eval_run.id),
                 "model_version": eval_run.model_version,
@@ -190,6 +212,7 @@ class MLOrchestrator:
                 "completed_at": eval_run.completed_at.isoformat() if eval_run.completed_at else None,
             }
         except Exception:
+            record_ml_evaluation(timer, ok=False)
             logger.exception("run_evaluation_only failed")
             return {"error": "evaluation failed"}
 
@@ -223,3 +246,95 @@ class MLOrchestrator:
         except Exception:
             logger.exception("backfill_outcomes failed")
             return {"error": "backfill failed"}
+
+    async def _build_training_decision(
+        self,
+        eval_run: Any,
+        any_drift: bool,
+        triggered_by: str,
+    ) -> dict[str, Any]:
+        latest_completed_training = await self._latest_completed_training()
+        new_outcomes_count = await self._new_outcomes_since_training(
+            latest_completed_training.started_at if latest_completed_training else None
+        )
+
+        age_hours_since_training: float | None = None
+        if latest_completed_training and latest_completed_training.started_at:
+            age_hours_since_training = (
+                datetime.now(timezone.utc) - latest_completed_training.started_at
+            ).total_seconds() / 3600
+
+        retrain_reasons: list[str] = []
+        if eval_run.retraining_triggered:
+            retrain_reasons.append("evaluation_threshold")
+        if any_drift:
+            retrain_reasons.append("drift_detected")
+        if new_outcomes_count >= settings.eval_retrain_min_new_outcomes:
+            retrain_reasons.append("new_outcomes_threshold")
+        if (
+            age_hours_since_training is not None
+            and age_hours_since_training >= settings.eval_retrain_max_hours_without_training
+        ):
+            retrain_reasons.append("max_training_age_exceeded")
+
+        training_needed = bool(retrain_reasons)
+        configured_cycle_mode = settings.training_default_cycle_mode.lower()
+        if configured_cycle_mode not in {"fast", "full"}:
+            configured_cycle_mode = "fast"
+        training_mode = "fast" if any_drift else configured_cycle_mode
+
+        trigger_reason = "none"
+        if retrain_reasons:
+            # Keep the highest-signal reason first for easy operator scanning.
+            priority = [
+                "drift_detected",
+                "evaluation_threshold",
+                "new_outcomes_threshold",
+                "max_training_age_exceeded",
+            ]
+            for reason in priority:
+                if reason in retrain_reasons:
+                    trigger_reason = reason
+                    break
+
+        return {
+            "training_needed": training_needed,
+            "training_mode": training_mode,
+            "trigger_reason": trigger_reason,
+            "reasons": retrain_reasons,
+            "skip_reason": "policy_gates_not_triggered",
+            "new_outcomes_count": new_outcomes_count,
+            "age_hours_since_last_training": age_hours_since_training,
+            "thresholds": {
+                "min_new_outcomes": settings.eval_retrain_min_new_outcomes,
+                "max_hours_without_training": settings.eval_retrain_max_hours_without_training,
+            },
+        }
+
+    async def _latest_completed_training(self) -> TrainingRun | None:
+        result = await self.db.execute(
+            select(TrainingRun)
+            .where(TrainingRun.status == "completed")
+            .order_by(TrainingRun.started_at.desc())
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
+
+    async def _new_outcomes_since_training(
+        self,
+        since: datetime | None,
+    ) -> int:
+        if since is None:
+            result = await self.db.execute(select(func.count()).select_from(OutcomeRecord))
+            return int(result.scalar() or 0)
+
+        window_floor = max(
+            since,
+            datetime.now(timezone.utc) - timedelta(days=settings.training_recent_outcome_window_days),
+        )
+        result = await self.db.execute(
+            select(func.count())
+            .select_from(OutcomeRecord)
+            .where(OutcomeRecord.outcome_recorded_at >= window_floor)
+        )
+        return int(result.scalar() or 0)

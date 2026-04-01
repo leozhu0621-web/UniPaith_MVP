@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -103,6 +103,7 @@ class PromoteModelRequest(BaseModel):
 
 class TriggerTrainingRequest(BaseModel):
     triggered_by: str = "manual"
+    mode: Literal["fast", "full"] = "full"
 
 
 # ---------------------------------------------------------------------------
@@ -182,8 +183,24 @@ class FairnessDialRequest(BaseModel):
 class CycleResultResponse(BaseModel):
     started_at: datetime | None = None
     completed_at: datetime | None = None
+    decision: dict[str, Any] | None = None
     evaluation: dict[str, Any] | None = None
     drift: dict[str, Any] | None = None
     training: dict[str, Any] | None = None
     fairness: dict[str, Any] | None = None
     promotion: dict[str, Any] | None = None
+
+
+class LearningKPIResponse(BaseModel):
+    generated_at: datetime
+    latest_outcome_at: datetime | None = None
+    latest_evaluation_at: datetime | None = None
+    latest_training_at: datetime | None = None
+    hours_outcome_to_eval_latest: float | None = None
+    hours_eval_to_training_latest: float | None = None
+    retrain_runs_24h: int
+    retrain_runs_7d: int
+    promotions_7d: int
+    rollbacks_7d: int
+    training_failure_rate_7d: float | None = None
+    net_accuracy_uplift_vs_active: float | None = None

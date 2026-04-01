@@ -155,6 +155,8 @@ async def test_training_runs(db_session: AsyncSession):
         assert run.test_metrics is not None
         assert "accuracy" in run.test_metrics
         assert run.resulting_model_version is not None
+        assert run.cv_metrics is not None
+        assert run.cv_metrics.get("mode") == "full"
 
         # Verify ModelRegistry entry created
         result = await db_session.execute(
@@ -168,3 +170,28 @@ async def test_training_runs(db_session: AsyncSession):
     finally:
         settings.training_optuna_trials = original_trials
         settings.training_cv_folds = original_cv_folds
+
+
+@pytest.mark.asyncio
+async def test_training_fast_mode_uses_fast_params(db_session: AsyncSession):
+    """Fast mode should use fast tuning settings and persist mode metadata."""
+    await _seed_training_outcomes(db_session, count=60, admitted_ratio=0.5)
+
+    original_fast_trials = settings.training_fast_optuna_trials
+    original_fast_cv = settings.training_fast_cv_folds
+    settings.training_fast_optuna_trials = 1
+    settings.training_fast_cv_folds = 2
+
+    try:
+        trainer = ModelTrainer(db_session)
+        run = await trainer.run_training(triggered_by="test", mode="fast")
+        await db_session.commit()
+
+        assert run.status == "completed"
+        assert run.cv_metrics is not None
+        assert run.cv_metrics.get("mode") == "fast"
+        assert run.cv_metrics.get("mode_params", {}).get("optuna_trials") == 1
+        assert run.cv_metrics.get("mode_params", {}).get("cv_folds") == 2
+    finally:
+        settings.training_fast_optuna_trials = original_fast_trials
+        settings.training_fast_cv_folds = original_fast_cv

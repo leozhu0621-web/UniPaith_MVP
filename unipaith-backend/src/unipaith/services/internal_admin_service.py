@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import time
+import uuid
+from datetime import UTC, datetime
 from dataclasses import dataclass
 from uuid import UUID
 
@@ -10,9 +13,10 @@ from unipaith.core.data_safety import assert_core_role_coverage, ensure_can_deac
 from unipaith.core.exceptions import BadRequestException, NotFoundException
 from unipaith.models.admin_audit_event import AdminAuditEvent
 from unipaith.models.application import Application
+from unipaith.models.crawler import CrawlJob
 from unipaith.models.engagement import StudentEngagementSignal
 from unipaith.models.institution import Institution, Program
-from unipaith.models.matching import MatchResult
+from unipaith.models.matching import Embedding, MatchResult
 from unipaith.models.student import StudentProfile
 from unipaith.models.user import User, UserRole
 
@@ -293,6 +297,412 @@ class InternalAdminService:
             }
             for event in events
         ]
+
+    async def get_database_health(self) -> dict:
+        db_timer = time.monotonic()
+        await self.db.execute(select(func.count()).select_from(User))
+        db_latency_ms = round((time.monotonic() - db_timer) * 1000, 1)
+
+        total_tables = 6
+        total_users = int(await self.db.scalar(select(func.count()).select_from(User)) or 0)
+        total_institutions = int(
+            await self.db.scalar(select(func.count()).select_from(Institution)) or 0
+        )
+        total_programs = int(await self.db.scalar(select(func.count()).select_from(Program)) or 0)
+        total_applications = int(
+            await self.db.scalar(select(func.count()).select_from(Application)) or 0
+        )
+        total_matches = int(
+            await self.db.scalar(select(func.count()).select_from(MatchResult)) or 0
+        )
+        total_embeddings = int(
+            await self.db.scalar(select(func.count()).select_from(Embedding)) or 0
+        )
+
+        failed_jobs_24h = int(
+            await self.db.scalar(
+                select(func.count())
+                .select_from(CrawlJob)
+                .where(
+                    CrawlJob.status == "failed",
+                    CrawlJob.created_at
+                    >= datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0),
+                )
+            )
+            or 0
+        )
+
+        latest_job_at = await self.db.scalar(
+            select(func.max(CrawlJob.created_at)).select_from(CrawlJob)
+        )
+        latest_admin_action = await self.db.scalar(
+            select(func.max(AdminAuditEvent.created_at)).select_from(AdminAuditEvent)
+        )
+
+        return {
+            "api_reachable": True,
+            "database": {
+                "status": "healthy" if db_latency_ms < 1500 else "degraded",
+                "latency_ms": db_latency_ms,
+            },
+            "jobs": {
+                "recent_failed_24h": failed_jobs_24h,
+                "last_job_at": latest_job_at.isoformat() if latest_job_at else None,
+            },
+            "footprint": {
+                "tracked_entities": total_tables,
+                "users": total_users,
+                "institutions": total_institutions,
+                "programs": total_programs,
+                "applications": total_applications,
+                "matches": total_matches,
+                "embeddings": total_embeddings,
+            },
+            "last_admin_action_at": (
+                latest_admin_action.isoformat() if latest_admin_action else None
+            ),
+            "generated_at": datetime.now(UTC).isoformat(),
+        }
+
+    async def get_database_quality(
+        self,
+        scope: str | None = None,
+        limit: int = 20,
+    ) -> dict:
+        scopes = (
+            [scope]
+            if scope
+            else [
+                "users",
+                "institutions",
+                "programs",
+                "applications",
+                "matches",
+                "embeddings",
+            ]
+        )
+        items: list[dict] = []
+
+        for entity in scopes:
+            if entity == "users":
+                missing_count = int(
+                    await self.db.scalar(
+                        select(func.count())
+                        .select_from(User)
+                        .where((User.email.is_(None)) | (User.email == ""))
+                    )
+                    or 0
+                )
+                duplicate_count = await self._count_duplicate_groups(
+                    select(User.email)
+                    .where(User.email.is_not(None))
+                    .group_by(User.email)
+                    .having(func.count() > 1)
+                )
+                invalid_count = int(
+                    await self.db.scalar(
+                        select(func.count()).select_from(User).where(User.role.is_(None))
+                    )
+                    or 0
+                )
+            elif entity == "institutions":
+                missing_count = int(
+                    await self.db.scalar(
+                        select(func.count())
+                        .select_from(Institution)
+                        .where(
+                            (Institution.name.is_(None))
+                            | (Institution.name == "")
+                            | (Institution.country.is_(None))
+                            | (Institution.country == "")
+                        )
+                    )
+                    or 0
+                )
+                duplicate_count = await self._count_duplicate_groups(
+                    select(Institution.name, Institution.country)
+                    .group_by(Institution.name, Institution.country)
+                    .having(func.count() > 1)
+                )
+                invalid_count = int(
+                    await self.db.scalar(
+                        select(func.count())
+                        .select_from(Institution)
+                        .where(Institution.is_verified.is_(None))
+                    )
+                    or 0
+                )
+            elif entity == "programs":
+                missing_count = int(
+                    await self.db.scalar(
+                        select(func.count())
+                        .select_from(Program)
+                        .where((Program.program_name.is_(None)) | (Program.program_name == ""))
+                    )
+                    or 0
+                )
+                duplicate_count = await self._count_duplicate_groups(
+                    select(Program.institution_id, Program.program_name)
+                    .group_by(Program.institution_id, Program.program_name)
+                    .having(func.count() > 1)
+                )
+                invalid_count = int(
+                    await self.db.scalar(
+                        select(func.count())
+                        .select_from(Program)
+                        .where(Program.degree_type.is_(None))
+                    )
+                    or 0
+                )
+            elif entity == "applications":
+                missing_count = int(
+                    await self.db.scalar(
+                        select(func.count())
+                        .select_from(Application)
+                        .where(
+                            (Application.student_id.is_(None))
+                            | (Application.program_id.is_(None))
+                        )
+                    )
+                    or 0
+                )
+                duplicate_count = await self._count_duplicate_groups(
+                    select(Application.student_id, Application.program_id)
+                    .group_by(Application.student_id, Application.program_id)
+                    .having(func.count() > 1)
+                )
+                invalid_count = int(
+                    await self.db.scalar(
+                        select(func.count())
+                        .select_from(Application)
+                        .where(Application.status.is_(None))
+                    )
+                    or 0
+                )
+            elif entity == "matches":
+                missing_count = int(
+                    await self.db.scalar(
+                        select(func.count())
+                        .select_from(MatchResult)
+                        .where(
+                            (MatchResult.student_id.is_(None))
+                            | (MatchResult.program_id.is_(None))
+                        )
+                    )
+                    or 0
+                )
+                duplicate_count = await self._count_duplicate_groups(
+                    select(MatchResult.student_id, MatchResult.program_id)
+                    .group_by(MatchResult.student_id, MatchResult.program_id)
+                    .having(func.count() > 1)
+                )
+                invalid_count = int(
+                    await self.db.scalar(
+                        select(func.count())
+                        .select_from(MatchResult)
+                        .where(MatchResult.match_score.is_(None))
+                    )
+                    or 0
+                )
+            elif entity == "embeddings":
+                missing_count = int(
+                    await self.db.scalar(
+                        select(func.count())
+                        .select_from(Embedding)
+                        .where(Embedding.embedding.is_(None))
+                    )
+                    or 0
+                )
+                duplicate_count = await self._count_duplicate_groups(
+                    select(Embedding.entity_type, Embedding.entity_id)
+                    .group_by(Embedding.entity_type, Embedding.entity_id)
+                    .having(func.count() > 1)
+                )
+                invalid_count = int(
+                    await self.db.scalar(
+                        select(func.count())
+                        .select_from(Embedding)
+                        .where(
+                            (Embedding.entity_type.is_(None))
+                            | (Embedding.entity_type == "")
+                        )
+                    )
+                    or 0
+                )
+            else:
+                continue
+
+            risk_score = (duplicate_count * 4) + (missing_count * 2) + (invalid_count * 3)
+            severity = (
+                "high" if risk_score >= 25 else "medium" if risk_score >= 8 else "low"
+            )
+            recommendation = (
+                "run_dedupe" if duplicate_count > 0 else "run_repair" if (missing_count + invalid_count) > 0 else "monitor"
+            )
+            items.append(
+                {
+                    "entity": entity,
+                    "missing_count": missing_count,
+                    "duplicate_count": duplicate_count,
+                    "invalid_count": invalid_count,
+                    "risk_score": risk_score,
+                    "severity": severity,
+                    "recommended_action": recommendation,
+                }
+            )
+
+        ranked = sorted(items, key=lambda item: item["risk_score"], reverse=True)[:limit]
+        return {
+            "items": ranked,
+            "generated_at": datetime.now(UTC).isoformat(),
+        }
+
+    async def get_database_recommendations(self, limit: int = 10) -> dict:
+        quality = await self.get_database_quality(limit=50)
+        recommendations: list[dict] = []
+
+        for item in quality["items"]:
+            if item["recommended_action"] == "monitor":
+                continue
+            recommendations.append(
+                {
+                    "entity": item["entity"],
+                    "action": item["recommended_action"],
+                    "priority_score": item["risk_score"],
+                    "reason": (
+                        f"{item['duplicate_count']} duplicate groups, "
+                        f"{item['missing_count']} missing, {item['invalid_count']} invalid"
+                    ),
+                    "auto_generated": True,
+                }
+            )
+        return {
+            "items": recommendations[:limit],
+            "generated_at": datetime.now(UTC).isoformat(),
+        }
+
+    async def get_database_jobs(self, limit: int = 20) -> dict:
+        job_rows = await self.db.execute(
+            select(
+                CrawlJob.id,
+                CrawlJob.status,
+                CrawlJob.pages_crawled,
+                CrawlJob.items_extracted,
+                CrawlJob.items_ingested,
+                CrawlJob.error_log,
+                CrawlJob.created_at,
+                CrawlJob.completed_at,
+            )
+            .order_by(CrawlJob.created_at.desc())
+            .limit(limit)
+        )
+        action_rows = await self.db.execute(
+            select(AdminAuditEvent)
+            .where(AdminAuditEvent.action.like("database_%"))
+            .order_by(AdminAuditEvent.created_at.desc())
+            .limit(limit)
+        )
+        return {
+            "crawl_jobs": [
+                {
+                    "id": str(row[0]),
+                    "status": row[1],
+                    "pages_crawled": row[2],
+                    "items_extracted": row[3],
+                    "items_ingested": row[4],
+                    "error_log": row[5],
+                    "created_at": row[6].isoformat() if row[6] else None,
+                    "completed_at": row[7].isoformat() if row[7] else None,
+                }
+                for row in job_rows.all()
+            ],
+            "actions": [
+                {
+                    "id": str(event.id),
+                    "action": event.action,
+                    "entity_type": event.entity_type,
+                    "entity_id": event.entity_id,
+                    "payload_json": event.payload_json,
+                    "created_at": event.created_at.isoformat() if event.created_at else None,
+                }
+                for event in action_rows.scalars().all()
+            ],
+        }
+
+    async def run_database_dedupe_action(
+        self,
+        scope: str = "all",
+        dry_run: bool = True,
+        reason: str | None = None,
+        actor_user_id: UUID | None = None,
+    ) -> dict:
+        quality = await self.get_database_quality(scope=None if scope == "all" else scope, limit=50)
+        candidate_duplicates = sum(item["duplicate_count"] for item in quality["items"])
+        rollback_ref = f"rollback:{uuid.uuid4()}"
+        result = {
+            "scope": scope,
+            "dry_run": dry_run,
+            "candidate_duplicates": candidate_duplicates,
+            "deduped_records": 0 if dry_run else 0,
+            "rollback": {
+                "reference": rollback_ref,
+                "can_rollback": False,
+                "mode": "metadata_only",
+            },
+            "executed_at": datetime.now(UTC).isoformat(),
+        }
+        await self._append_admin_audit(
+            actor_user_id=actor_user_id,
+            action="database_dedupe_run",
+            entity_type="database",
+            entity_id=scope,
+            payload={
+                **result,
+                "reason": reason,
+            },
+        )
+        return result
+
+    async def run_database_repair_action(
+        self,
+        scope: str = "all",
+        dry_run: bool = True,
+        reason: str | None = None,
+        actor_user_id: UUID | None = None,
+    ) -> dict:
+        quality = await self.get_database_quality(scope=None if scope == "all" else scope, limit=50)
+        candidate_repairs = sum(
+            item["missing_count"] + item["invalid_count"] for item in quality["items"]
+        )
+        rollback_ref = f"rollback:{uuid.uuid4()}"
+        result = {
+            "scope": scope,
+            "dry_run": dry_run,
+            "candidate_repairs": candidate_repairs,
+            "repaired_records": 0 if dry_run else 0,
+            "rollback": {
+                "reference": rollback_ref,
+                "can_rollback": False,
+                "mode": "metadata_only",
+            },
+            "executed_at": datetime.now(UTC).isoformat(),
+        }
+        await self._append_admin_audit(
+            actor_user_id=actor_user_id,
+            action="database_repair_run",
+            entity_type="database",
+            entity_id=scope,
+            payload={
+                **result,
+                "reason": reason,
+            },
+        )
+        return result
+
+    async def _count_duplicate_groups(self, grouped_stmt) -> int:  # type: ignore[no-untyped-def]
+        return int(
+            await self.db.scalar(select(func.count()).select_from(grouped_stmt.subquery())) or 0
+        )
 
     async def _append_admin_audit(
         self,

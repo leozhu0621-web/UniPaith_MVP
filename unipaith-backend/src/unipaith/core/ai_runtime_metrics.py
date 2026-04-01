@@ -39,6 +39,8 @@ class _MetricSeries:
 _llm_metrics = _MetricSeries()
 _embedding_metrics = _MetricSeries()
 _self_driving_metrics = _MetricSeries()
+_ml_evaluation_metrics = _MetricSeries()
+_ml_training_metrics = _MetricSeries()
 
 
 def start_timer() -> float:
@@ -61,9 +63,23 @@ def record_self_driving(started: float, ok: bool, timed_out: bool = False) -> No
     )
 
 
+def record_ml_evaluation(started: float, ok: bool, timed_out: bool = False) -> None:
+    _ml_evaluation_metrics.record(
+        latency_ms=(monotonic() - started) * 1000, ok=ok, timed_out=timed_out
+    )
+
+
+def record_ml_training(started: float, ok: bool, timed_out: bool = False) -> None:
+    _ml_training_metrics.record(
+        latency_ms=(monotonic() - started) * 1000, ok=ok, timed_out=timed_out
+    )
+
+
 def slo_snapshot() -> dict[str, Any]:
     return {
         "llm": _llm_metrics.snapshot(),
         "embedding": _embedding_metrics.snapshot(),
         "self_driving_tick": _self_driving_metrics.snapshot(),
+        "ml_evaluation": _ml_evaluation_metrics.snapshot(),
+        "ml_training": _ml_training_metrics.snapshot(),
     }

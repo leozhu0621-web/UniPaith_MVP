@@ -33,6 +33,25 @@ export const bulkVerifyInstitutions = (data: { institution_ids: string[]; reason
 export const getAdminActionAudit = (params?: { limit?: number; entity_type?: string }) =>
   apiClient.get('/internal/audit/admin-actions', { params }).then(r => r.data)
 
+// ─── Internal: Database Control Center ───
+export const getDatabaseHealth = () =>
+  apiClient.get('/internal/database/health').then(r => r.data)
+
+export const getDatabaseQuality = (params?: { scope?: string; limit?: number }) =>
+  apiClient.get('/internal/database/quality', { params }).then(r => r.data)
+
+export const getDatabaseRecommendations = (params?: { limit?: number }) =>
+  apiClient.get('/internal/database/recommendations', { params }).then(r => r.data)
+
+export const getDatabaseJobs = (params?: { limit?: number }) =>
+  apiClient.get('/internal/database/jobs', { params }).then(r => r.data)
+
+export const runDatabaseDedupe = (data: { scope?: string; dry_run?: boolean; reason?: string }) =>
+  apiClient.post('/internal/database/actions/dedupe', data).then(r => r.data)
+
+export const runDatabaseRepair = (data: { scope?: string; dry_run?: boolean; reason?: string }) =>
+  apiClient.post('/internal/database/actions/repair', data).then(r => r.data)
+
 // ─── Internal: AI Admin ───
 export const bootstrapPrograms = () =>
   apiClient.post('/internal/ai/bootstrap-programs').then(r => r.data)

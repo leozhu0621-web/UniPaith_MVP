@@ -106,6 +106,8 @@ async def test_full_cycle_no_retrain(db_session: AsyncSession):
 
     assert result["started_at"] is not None
     assert result["evaluation"] is not None
+    assert result["decision"] is not None
+    assert "training_needed" in result["decision"]
     # If accuracy is high enough, training should be skipped or not triggered
     # (depends on actual computed accuracy)
     assert result["evaluation"]["dataset_size"] == 35

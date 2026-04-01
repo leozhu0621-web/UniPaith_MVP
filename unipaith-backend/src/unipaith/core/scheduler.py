@@ -26,8 +26,11 @@ def setup_scheduler() -> None:
     if scheduler.running:
         logger.info("Scheduler already running; skipping re-initialization")
         return
-    if not settings.scheduler_enabled:
-        logger.info("Scheduler disabled (SCHEDULER_ENABLED=false)")
+    scheduler_is_enabled = settings.scheduler_enabled or (
+        settings.scheduler_auto_enable_non_test and settings.environment != "test"
+    )
+    if not scheduler_is_enabled:
+        logger.info("Scheduler disabled by configuration")
         return
     if settings.scheduler_require_leader and not settings.scheduler_is_leader:
         logger.info("Scheduler disabled on this instance (leader-only mode)")
@@ -131,13 +134,13 @@ async def _run_evaluation() -> None:
 async def _run_training() -> None:
     """Run the ML training pipeline."""
     from unipaith.database import async_session
-    from unipaith.ml.orchestrator import MLOrchestrator
+    from unipaith.ml.trainer import ModelTrainer
 
     logger.info("Starting scheduled ML training")
     try:
         async with async_session() as db:
-            orch = MLOrchestrator(db)
-            await orch.run_training()
+            trainer = ModelTrainer(db)
+            await trainer.run_training(triggered_by="scheduled", mode="full")
         logger.info("ML training completed")
     except Exception:
         logger.exception("ML training failed")

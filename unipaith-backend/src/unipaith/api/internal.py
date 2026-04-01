@@ -43,6 +43,12 @@ class BulkInstitutionsVerifyRequest(BaseModel):
     reason: str | None = None
 
 
+class DatabaseActionRequest(BaseModel):
+    scope: str = "all"
+    dry_run: bool = True
+    reason: str | None = None
+
+
 @router.get("/stats")
 async def platform_stats(
     user: User = Depends(require_admin),
@@ -162,6 +168,70 @@ async def list_admin_audit_actions(
         entity_type=entity_type,
     )
     return {"items": items}
+
+
+@router.get("/database/health")
+async def database_health(
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await InternalAdminService(db).get_database_health()
+
+
+@router.get("/database/quality")
+async def database_quality(
+    scope: str | None = Query(None),
+    limit: int = Query(20, ge=1, le=100),
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await InternalAdminService(db).get_database_quality(scope=scope, limit=limit)
+
+
+@router.get("/database/recommendations")
+async def database_recommendations(
+    limit: int = Query(10, ge=1, le=50),
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await InternalAdminService(db).get_database_recommendations(limit=limit)
+
+
+@router.get("/database/jobs")
+async def database_jobs(
+    limit: int = Query(20, ge=1, le=100),
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await InternalAdminService(db).get_database_jobs(limit=limit)
+
+
+@router.post("/database/actions/dedupe")
+async def database_action_dedupe(
+    payload: DatabaseActionRequest,
+    admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await InternalAdminService(db).run_database_dedupe_action(
+        scope=payload.scope,
+        dry_run=payload.dry_run,
+        reason=payload.reason,
+        actor_user_id=admin.id,
+    )
+
+
+@router.post("/database/actions/repair")
+async def database_action_repair(
+    payload: DatabaseActionRequest,
+    admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await InternalAdminService(db).run_database_repair_action(
+        scope=payload.scope,
+        dry_run=payload.dry_run,
+        reason=payload.reason,
+        actor_user_id=admin.id,
+    )
 
 
 # --- AI Admin ---

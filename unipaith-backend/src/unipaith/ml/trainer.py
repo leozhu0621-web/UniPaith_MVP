@@ -9,7 +9,7 @@ ModelRegistry.
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 import numpy as np
@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.config import settings
 from unipaith.core.exceptions import BadRequestException
+from unipaith.core.ai_runtime_metrics import record_ml_training, start_timer
 from unipaith.models.matching import ModelRegistry
 from unipaith.models.ml_loop import OutcomeRecord, TrainingRun
 
@@ -100,6 +101,9 @@ class ModelTrainer:
         self,
         triggered_by: str = "scheduled",
         evaluation_run_id: Any | None = None,
+        mode: str = "full",
+        trigger_reason: str | None = None,
+        new_outcomes_count: int | None = None,
     ) -> TrainingRun:
         """
         Execute a full training pipeline:
@@ -111,6 +115,10 @@ class ModelTrainer:
         6. Persist to ModelRegistry
         """
         now = datetime.now(timezone.utc)
+        training_mode = mode.lower()
+        if training_mode not in {"fast", "full"}:
+            raise BadRequestException("training mode must be 'fast' or 'full'")
+        timer = start_timer()
 
         training_run = TrainingRun(
             triggered_by=triggered_by,
@@ -120,6 +128,11 @@ class ModelTrainer:
             feature_columns=FEATURE_COLUMNS,
             algorithm="XGBClassifier",
             hyperparameters={},
+            cv_metrics={
+                "mode": training_mode,
+                "trigger_reason": trigger_reason,
+                "new_outcomes_count": new_outcomes_count,
+            },
             status="running",
             started_at=now,
         )
@@ -127,22 +140,30 @@ class ModelTrainer:
         await self.db.flush()
 
         try:
-            return await self._execute_pipeline(training_run)
+            result = await self._execute_pipeline(training_run, training_mode)
+            record_ml_training(timer, ok=result.status == "completed")
+            return result
         except Exception:
             training_run.status = "failed"
             training_run.failure_reason = "unexpected_error"
             training_run.completed_at = datetime.now(timezone.utc)
             await self.db.flush()
             logger.exception("Training run %s failed unexpectedly", training_run.id)
+            record_ml_training(timer, ok=False)
             raise
 
     # ------------------------------------------------------------------
     # Internal pipeline
     # ------------------------------------------------------------------
 
-    async def _execute_pipeline(self, training_run: TrainingRun) -> TrainingRun:
+    async def _execute_pipeline(
+        self,
+        training_run: TrainingRun,
+        mode: str,
+    ) -> TrainingRun:
         # Step 1 — collect labelled data
-        data = await self._collect_training_data()
+        data, data_metadata = await self._collect_training_data()
+        mode_params = self._mode_settings(mode)
 
         if len(data) < settings.outcome_min_decisions_for_training:
             training_run.status = "failed"
@@ -151,6 +172,11 @@ class ModelTrainer:
                 f"(minimum {settings.outcome_min_decisions_for_training})"
             )
             training_run.completed_at = datetime.now(timezone.utc)
+            training_run.cv_metrics = {
+                **(training_run.cv_metrics or {}),
+                **data_metadata,
+                "mode_params": mode_params,
+            }
             await self.db.flush()
             logger.warning(
                 "Training aborted — only %d labelled samples available", len(data)
@@ -207,7 +233,7 @@ class ModelTrainer:
             )
 
             skf = StratifiedKFold(
-                n_splits=settings.training_cv_folds, shuffle=True, random_state=42
+                n_splits=mode_params["cv_folds"], shuffle=True, random_state=42
             )
 
             fold_scores: list[float] = []
@@ -220,8 +246,8 @@ class ModelTrainer:
 
         study.optimize(
             objective,
-            n_trials=settings.training_optuna_trials,
-            timeout=settings.training_max_duration_minutes * 60,
+            n_trials=mode_params["optuna_trials"],
+            timeout=mode_params["max_duration_minutes"] * 60,
         )
 
         best_params = study.best_params
@@ -229,6 +255,9 @@ class ModelTrainer:
             "best_cv_accuracy": study.best_value,
             "n_trials": len(study.trials),
             "best_trial_number": study.best_trial.number,
+            "mode": mode,
+            "mode_params": mode_params,
+            **data_metadata,
         }
 
         # Step 6 — train final model with best params on full training set
@@ -286,8 +315,9 @@ class ModelTrainer:
         await self.db.flush()
 
         logger.info(
-            "Training run %s completed — model %s | accuracy %.4f | roc_auc %.4f",
+            "Training run %s completed (%s mode) — model %s | accuracy %.4f | roc_auc %.4f",
             training_run.id,
+            mode,
             model_version,
             test_metrics["accuracy"],
             test_metrics["roc_auc"],
@@ -299,7 +329,7 @@ class ModelTrainer:
     # Data collection
     # ------------------------------------------------------------------
 
-    async def _collect_training_data(self) -> list[dict[str, Any]]:
+    async def _collect_training_data(self) -> tuple[list[dict[str, Any]], dict[str, Any]]:
         """
         Join OutcomeRecord rows with their features_snapshot.
         Returns a list of dicts, each containing feature values and a binary label.
@@ -311,7 +341,12 @@ class ModelTrainer:
                 )
             )
         )
-        records = result.scalars().all()
+        records = list(result.scalars().all())
+        total_records = len(records)
+        window_start = datetime.now(timezone.utc) - timedelta(
+            days=settings.training_recent_outcome_window_days
+        )
+        records = [r for r in records if r.outcome_recorded_at >= window_start]
 
         data: list[dict[str, Any]] = []
         for rec in records:
@@ -324,7 +359,12 @@ class ModelTrainer:
             row["label"] = 1 if rec.actual_outcome in _POSITIVE_OUTCOMES else 0
             data.append(row)
 
-        return data
+        metadata = {
+            "records_total": total_records,
+            "records_in_window": len(records),
+            "window_start": window_start.isoformat(),
+        }
+        return data, metadata
 
     # ------------------------------------------------------------------
     # Feature matrix
@@ -375,3 +415,17 @@ class ModelTrainer:
         count = result.scalar() or 0
         today = date.today().isoformat()
         return f"v{count + 1}.0-trained-{today}"
+
+    @staticmethod
+    def _mode_settings(mode: str) -> dict[str, int]:
+        if mode == "fast":
+            return {
+                "cv_folds": settings.training_fast_cv_folds,
+                "optuna_trials": settings.training_fast_optuna_trials,
+                "max_duration_minutes": settings.training_fast_max_duration_minutes,
+            }
+        return {
+            "cv_folds": settings.training_cv_folds,
+            "optuna_trials": settings.training_optuna_trials,
+            "max_duration_minutes": settings.training_max_duration_minutes,
+        }

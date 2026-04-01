@@ -11,6 +11,7 @@ Provides 17 endpoints covering:
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
@@ -31,6 +32,7 @@ from unipaith.models.ml_loop import (
     OutcomeRecord,
     TrainingRun,
 )
+from unipaith.models.matching import ModelRegistry
 from unipaith.models.user import User
 from unipaith.schemas.ml_loop import (
     CreateExperimentRequest,
@@ -40,6 +42,7 @@ from unipaith.schemas.ml_loop import (
     ExperimentResultResponse,
     FairnessDialRequest,
     FairnessReportResponse,
+    LearningKPIResponse,
     ModelListResponse,
     ModelVersionResponse,
     OutcomeStatsResponse,
@@ -156,13 +159,21 @@ async def list_training_runs(
 
 @router.post("/training/trigger", response_model=TrainingRunResponse)
 async def trigger_training(
-    body: TriggerTrainingRequest,
+    body: TriggerTrainingRequest | None = None,
     db: AsyncSession = Depends(get_db),
     _admin: User = Depends(require_admin),
 ):
     """Manually trigger a training run."""
+    payload = body or TriggerTrainingRequest(
+        triggered_by="manual",
+        mode=settings.training_default_manual_mode,
+    )
     trainer = ModelTrainer(db)
-    return await trainer.run_training(triggered_by=body.triggered_by)
+    return await trainer.run_training(
+        triggered_by=payload.triggered_by,
+        mode=payload.mode,
+        trigger_reason=f"manual_trigger:{payload.mode}",
+    )
 
 
 # ======================================================================
@@ -341,4 +352,123 @@ async def outcome_stats(
         by_outcome=by_outcome,
         earliest=earliest,
         latest=latest,
+    )
+
+
+@router.get("/kpis", response_model=LearningKPIResponse)
+async def learning_kpis(
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_admin),
+):
+    """Return backend-only KPI signals for learning speed and cycle quality."""
+    now = datetime.now(timezone.utc)
+    since_24h = now - timedelta(hours=24)
+    since_7d = now - timedelta(days=7)
+
+    latest_outcome = await db.scalar(
+        select(func.max(OutcomeRecord.outcome_recorded_at))
+    )
+    latest_eval = await db.scalar(select(func.max(EvaluationRun.started_at)))
+    latest_training = await db.scalar(select(func.max(TrainingRun.started_at)))
+
+    latest_eval_obj = await db.execute(
+        select(EvaluationRun).order_by(EvaluationRun.started_at.desc()).limit(1)
+    )
+    eval_row = latest_eval_obj.scalar_one_or_none()
+    training_after_eval = None
+    if eval_row and eval_row.started_at:
+        training_after_eval = await db.scalar(
+            select(func.min(TrainingRun.started_at)).where(
+                TrainingRun.started_at >= eval_row.started_at
+            )
+        )
+
+    train_24h = await db.scalar(
+        select(func.count()).select_from(TrainingRun).where(
+            TrainingRun.started_at >= since_24h,
+            TrainingRun.status == "completed",
+        )
+    )
+    train_7d = await db.scalar(
+        select(func.count()).select_from(TrainingRun).where(
+            TrainingRun.started_at >= since_7d,
+            TrainingRun.status == "completed",
+        )
+    )
+    promos_7d = await db.scalar(
+        select(func.count()).select_from(ModelRegistry).where(
+            ModelRegistry.promoted_at >= since_7d
+        )
+    )
+    rollbacks_7d = await db.scalar(
+        select(func.count()).select_from(ModelRegistry).where(
+            ModelRegistry.retired_at >= since_7d
+        )
+    )
+    failed_train_7d = await db.scalar(
+        select(func.count()).select_from(TrainingRun).where(
+            TrainingRun.started_at >= since_7d,
+            TrainingRun.status == "failed",
+        )
+    )
+    total_train_7d = await db.scalar(
+        select(func.count()).select_from(TrainingRun).where(
+            TrainingRun.started_at >= since_7d
+        )
+    )
+
+    active_model = await db.execute(
+        select(ModelRegistry)
+        .where(ModelRegistry.is_active.is_(True))
+        .limit(1)
+    )
+    active_model_row = active_model.scalar_one_or_none()
+
+    latest_completed_train = await db.execute(
+        select(TrainingRun)
+        .where(
+            TrainingRun.status == "completed",
+            TrainingRun.test_metrics.is_not(None),
+        )
+        .order_by(TrainingRun.started_at.desc())
+        .limit(1)
+    )
+    latest_completed_train_row = latest_completed_train.scalar_one_or_none()
+
+    net_uplift = None
+    if active_model_row and latest_completed_train_row:
+        active_acc = (active_model_row.performance_metrics or {}).get("accuracy")
+        latest_acc = (latest_completed_train_row.test_metrics or {}).get("accuracy")
+        if isinstance(active_acc, (int, float)) and isinstance(latest_acc, (int, float)):
+            net_uplift = float(latest_acc) - float(active_acc)
+
+    hours_outcome_to_eval = None
+    if latest_outcome and latest_eval and latest_eval >= latest_outcome:
+        hours_outcome_to_eval = round(
+            (latest_eval - latest_outcome).total_seconds() / 3600, 3
+        )
+
+    hours_eval_to_training = None
+    if eval_row and eval_row.started_at and training_after_eval:
+        hours_eval_to_training = round(
+            (training_after_eval - eval_row.started_at).total_seconds() / 3600, 3
+        )
+
+    fail_rate = None
+    if total_train_7d:
+        fail_rate = round((failed_train_7d or 0) / total_train_7d, 4)
+
+    return LearningKPIResponse(
+        generated_at=now,
+        latest_outcome_at=latest_outcome,
+        latest_evaluation_at=latest_eval,
+        latest_training_at=latest_training,
+        hours_outcome_to_eval_latest=hours_outcome_to_eval,
+        hours_eval_to_training_latest=hours_eval_to_training,
+        retrain_runs_24h=int(train_24h or 0),
+        retrain_runs_7d=int(train_7d or 0),
+        promotions_7d=int(promos_7d or 0),
+        rollbacks_7d=int(rollbacks_7d or 0),
+        training_failure_rate_7d=fail_rate,
+        net_accuracy_uplift_vs_active=net_uplift,
     )

@@ -8,6 +8,7 @@ from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from unipaith.ai.jobs import on_program_updated
 from unipaith.core.exceptions import (
     BadRequestException,
     ConflictException,
@@ -100,6 +101,7 @@ class InstitutionService:
         )
         self.db.add(program)
         await self.db.flush()
+        await on_program_updated(self.db, program.id)
         await self.db.refresh(program)
         return program
 
@@ -111,6 +113,7 @@ class InstitutionService:
         for key, value in update_data.items():
             setattr(program, key, value)
         await self.db.flush()
+        await on_program_updated(self.db, program.id)
         await self.db.refresh(program)
         return program
 
@@ -131,6 +134,7 @@ class InstitutionService:
             raise BadRequestException(f"Cannot publish: {'; '.join(errors)}")
         program.is_published = True
         await self.db.flush()
+        await on_program_updated(self.db, program.id)
         await self.db.refresh(program)
         return program
 
@@ -140,6 +144,7 @@ class InstitutionService:
         program = await self._verify_program_ownership(institution_id, program_id)
         program.is_published = False
         await self.db.flush()
+        await on_program_updated(self.db, program.id)
         await self.db.refresh(program)
         return program
 
