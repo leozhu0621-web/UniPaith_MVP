@@ -1,7 +1,4 @@
 import uuid
-import json
-import time
-from pathlib import Path
 from typing import Any
 
 import boto3
@@ -13,25 +10,6 @@ from unipaith.core.exceptions import BadRequestException, ConflictException
 from unipaith.core.security import CognitoClaims
 from unipaith.models.student import StudentProfile
 from unipaith.models.user import User, UserRole
-
-_DEBUG_LOG_PATH = Path("/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/.cursor/debug-65023e.log")
-
-
-def _debug_log(run_id: str, hypothesis_id: str, location: str, message: str, data: dict[str, Any]) -> None:
-    try:
-        payload = {
-            "sessionId": "65023e",
-            "runId": run_id,
-            "hypothesisId": hypothesis_id,
-            "location": location,
-            "message": message,
-            "data": data,
-            "timestamp": int(time.time() * 1000),
-        }
-        with _DEBUG_LOG_PATH.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(payload, ensure_ascii=True) + "\n")
-    except Exception:
-        pass
 
 
 def _get_cognito_client():  # type: ignore[no-untyped-def]
@@ -90,38 +68,11 @@ class AuthService:
         return {"user_id": user.id, "email": user.email, "role": user.role.value}
 
     async def login(self, email: str, password: str) -> dict[str, Any]:
-        # #region agent log
-        _debug_log(
-            "initial",
-            "H5",
-            "unipaith-backend/src/unipaith/services/auth_service.py:login:start",
-            "Backend login started",
-            {"email_domain": email.split("@")[1] if "@" in email else "invalid", "password_len": len(password or "")},
-        )
-        # #endregion
         if settings.cognito_bypass:
             user_result = await self.db.execute(select(User).where(User.email == email))
             user = user_result.scalar_one_or_none()
             if not user:
-                # #region agent log
-                _debug_log(
-                    "initial",
-                    "H5",
-                    "unipaith-backend/src/unipaith/services/auth_service.py:login:bypass-user-missing",
-                    "Backend login failed in bypass mode: user not found",
-                    {"cognito_bypass": True},
-                )
-                # #endregion
                 raise BadRequestException("Invalid credentials")
-            # #region agent log
-            _debug_log(
-                "initial",
-                "H5",
-                "unipaith-backend/src/unipaith/services/auth_service.py:login:bypass-success",
-                "Backend login succeeded in bypass mode",
-                {"user_id": str(user.id), "role": user.role.value},
-            )
-            # #endregion
             return {
                 "access_token": f"dev:{user.id}:{user.role.value}",
                 "refresh_token": f"dev-refresh:{user.id}",
@@ -164,15 +115,6 @@ class AuthService:
         except BadRequestException:
             raise
         except Exception as e:
-            # #region agent log
-            _debug_log(
-                "initial",
-                "H5",
-                "unipaith-backend/src/unipaith/services/auth_service.py:login:cognito-exception",
-                "Backend login failed in Cognito flow",
-                {"error": str(e)},
-            )
-            # #endregion
             raise BadRequestException(f"Login failed: {e}") from e
 
     async def refresh_token(self, refresh_token: str) -> dict[str, Any]:
