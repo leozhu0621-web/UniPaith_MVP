@@ -86,8 +86,8 @@ export default function AdminMLPage() {
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">ML Pipeline</h1>
-          <p className="text-sm text-gray-500">Model management, training, evaluation, and drift monitoring</p>
+          <h1 className="text-2xl font-bold text-gray-900">AI Learning Pipeline</h1>
+          <p className="text-sm text-gray-500">This is where the engine learns from outcomes, checks quality, and updates models safely.</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="secondary" size="sm" onClick={() => evaluateMut.mutate()} disabled={evaluateMut.isPending}>
@@ -101,6 +101,17 @@ export default function AdminMLPage() {
           </Button>
         </div>
       </div>
+
+      <Card className="p-4 bg-blue-50 border-blue-200">
+        <h3 className="text-sm font-semibold text-blue-900 mb-2">What this page does (simple)</h3>
+        <div className="text-sm text-blue-800 space-y-1">
+          <p><strong>Models</strong>: versions of your AI matching brain.</p>
+          <p><strong>Evaluations</strong>: quality checks ("how accurate are we?").</p>
+          <p><strong>Training</strong>: learning runs using new data/outcomes.</p>
+          <p><strong>Drift</strong>: alerts when data patterns change over time.</p>
+          <p className="pt-1">If sections are empty, it usually means no training/evaluation cycle has run yet.</p>
+        </div>
+      </Card>
 
       <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
@@ -153,7 +164,9 @@ export default function AdminMLPage() {
                   </tr>
                 ))}
                 {models.length === 0 && (
-                  <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-400 text-sm">No models registered yet</td></tr>
+                  <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500 text-sm">
+                    No model versions yet. Click "Trigger Training" to create your first trained model.
+                  </td></tr>
                 )}
               </tbody>
             </table>
@@ -191,7 +204,9 @@ export default function AdminMLPage() {
                 </tr>
               ))}
               {evals.length === 0 && (
-                <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-400 text-sm">No evaluations yet</td></tr>
+                <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500 text-sm">
+                  No evaluations yet. Click "Evaluate" to run a quality check on the current model.
+                </td></tr>
               )}
             </tbody>
           </table>
@@ -226,7 +241,9 @@ export default function AdminMLPage() {
                 </tr>
               ))}
               {trainRuns.length === 0 && (
-                <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-400 text-sm">No training runs yet</td></tr>
+                <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500 text-sm">
+                  No training runs yet. Start one by clicking "Trigger Training".
+                </td></tr>
               )}
             </tbody>
           </table>
@@ -263,7 +280,9 @@ export default function AdminMLPage() {
                   </tr>
                 ))}
                 {drifts.length === 0 && (
-                  <tr><td colSpan={4} className="px-6 py-12 text-center text-gray-400 text-sm">No drift checks yet</td></tr>
+                  <tr><td colSpan={4} className="px-6 py-12 text-center text-gray-500 text-sm">
+                    No drift checks yet. Click "Run Drift Check" to see if your data behavior has changed.
+                  </td></tr>
                 )}
               </tbody>
             </table>
@@ -289,7 +308,9 @@ export default function AdminMLPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-400 text-center py-8">No outcome data available</p>
+              <p className="text-sm text-gray-500 text-center py-8">
+                No outcome data yet. This usually means admissions/interview decisions are not yet recorded in enough volume.
+              </p>
             )}
           </Card>
         </div>

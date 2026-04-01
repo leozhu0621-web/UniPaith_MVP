@@ -105,8 +105,8 @@ export default function AdminCrawlerPage() {
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Crawler Management</h1>
-          <p className="text-sm text-gray-500">Data sources, crawl jobs, and program review queue</p>
+          <h1 className="text-2xl font-bold text-gray-900">Data Collection (Crawler)</h1>
+          <p className="text-sm text-gray-500">This collects school/program data from the web so your AI engine has fresh information.</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="secondary" size="sm" onClick={() => setShowCrawlUrl(true)}>
@@ -121,11 +121,22 @@ export default function AdminCrawlerPage() {
         </div>
       </div>
 
+      <Card className="p-4 bg-blue-50 border-blue-200">
+        <h3 className="text-sm font-semibold text-blue-900 mb-2">What this page does (simple)</h3>
+        <div className="text-sm text-blue-800 space-y-1">
+          <p>1) <strong>Sources</strong>: websites you want UniPaith to read.</p>
+          <p>2) <strong>Jobs</strong>: each crawl attempt (running/completed/failed).</p>
+          <p>3) <strong>Review Queue</strong>: extracted program info waiting for approval.</p>
+          <p className="pt-1">If this page looks empty, it usually means no sources are added yet or no crawl has been run.</p>
+        </div>
+      </Card>
+
       <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
       {/* Overview Tab */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="p-5">
             <p className="text-xs text-gray-500 uppercase">Active Sources</p>
             <p className="text-3xl font-bold mt-1">{dashboard?.active_sources ?? sources.length}</p>
@@ -142,6 +153,16 @@ export default function AdminCrawlerPage() {
             <p className="text-xs text-gray-500 uppercase">Approved</p>
             <p className="text-3xl font-bold mt-1">{rStats?.approved ?? 0}</p>
           </Card>
+        </div>
+          {(sources.length === 0 && jobs.length === 0) && (
+            <Card className="p-5 border-amber-200 bg-amber-50">
+              <h4 className="text-sm font-semibold text-amber-900 mb-1">Why this looks empty</h4>
+              <p className="text-sm text-amber-800">
+                You have not added crawl sources or started a crawl yet. Click <strong>Sources</strong> tab and use
+                <strong> Add Source</strong> or <strong>Seed Defaults</strong>, then run <strong>Crawl All Due</strong>.
+              </p>
+            </Card>
+          )}
         </div>
       )}
 
@@ -186,7 +207,9 @@ export default function AdminCrawlerPage() {
                   </tr>
                 ))}
                 {sources.length === 0 && (
-                  <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-400 text-sm">No sources configured</td></tr>
+                  <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500 text-sm">
+                    No sources configured yet. Add at least one website source, then run a crawl.
+                  </td></tr>
                 )}
               </tbody>
             </table>
@@ -226,7 +249,9 @@ export default function AdminCrawlerPage() {
                 </tr>
               ))}
               {jobs.length === 0 && (
-                <tr><td colSpan={6} className="px-6 py-12 text-center text-gray-400 text-sm">No crawl jobs yet</td></tr>
+                <tr><td colSpan={6} className="px-6 py-12 text-center text-gray-500 text-sm">
+                  No crawl jobs yet. Start with "Crawl All Due" after adding sources.
+                </td></tr>
               )}
             </tbody>
           </table>
@@ -237,7 +262,9 @@ export default function AdminCrawlerPage() {
       {activeTab === 'review' && (
         <div className="space-y-4">
           {reviewItems.length === 0 ? (
-            <Card className="p-12 text-center text-gray-400">No items pending review</Card>
+            <Card className="p-12 text-center text-gray-500">
+              Nothing waiting for review right now. This is good if jobs were already approved, or no data has been crawled yet.
+            </Card>
           ) : (
             reviewItems.map((item: any) => (
               <Card key={item.id} className="p-5">
