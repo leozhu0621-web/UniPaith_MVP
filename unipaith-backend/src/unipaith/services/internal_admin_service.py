@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import time
 import uuid
-from datetime import UTC, datetime
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -536,9 +536,12 @@ class InternalAdminService:
             severity = (
                 "high" if risk_score >= 25 else "medium" if risk_score >= 8 else "low"
             )
-            recommendation = (
-                "run_dedupe" if duplicate_count > 0 else "run_repair" if (missing_count + invalid_count) > 0 else "monitor"
-            )
+            if duplicate_count > 0:
+                recommendation = "run_dedupe"
+            elif (missing_count + invalid_count) > 0:
+                recommendation = "run_repair"
+            else:
+                recommendation = "monitor"
             items.append(
                 {
                     "entity": entity,
