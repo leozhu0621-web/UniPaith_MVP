@@ -36,6 +36,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     // #endregion
     const { data } = await apiClient.post('/auth/login', { email, password })
     // #region agent log
+    fetch('http://127.0.0.1:7640/ingest/56780e01-d332-4ae8-8f9d-c88718bcdca2',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'5ae59b'},body:JSON.stringify({sessionId:'5ae59b',runId:'initial',hypothesisId:'H2',location:'frontend/src/stores/auth-store.ts:login:response:v2',message:'Auth store login response',data:{hasAccessToken:Boolean(data?.access_token),hasRefreshToken:Boolean(data?.refresh_token),hasUser:Boolean(data?.user),userId:data?.user?.user_id??data?.user?.id??null},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    // #region agent log
     fetch('http://127.0.0.1:7640/ingest/56780e01-d332-4ae8-8f9d-c88718bcdca2',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'65023e'},body:JSON.stringify({sessionId:'65023e',runId:'initial',hypothesisId:'H2',location:'frontend/src/stores/auth-store.ts:login:response',message:'Auth store received login response',data:{hasAccessToken:Boolean(data?.access_token),hasRefreshToken:Boolean(data?.refresh_token),hasUser:Boolean(data?.user),userKeys:data?.user?Object.keys(data.user):[]},timestamp:Date.now()})}).catch(()=>{});
     // #endregion
     const loginUser = data?.user
@@ -75,6 +78,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       isAuthenticated: true,
     })
     // #region agent log
+    fetch('http://127.0.0.1:7640/ingest/56780e01-d332-4ae8-8f9d-c88718bcdca2',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'5ae59b'},body:JSON.stringify({sessionId:'5ae59b',runId:'initial',hypothesisId:'H4',location:'frontend/src/stores/auth-store.ts:login:set:v2',message:'Auth store state set from login',data:{resolvedUserId:resolvedUser?.id??null,resolvedRole:resolvedUser?.role??null,isAuthenticated:true},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    // #region agent log
     fetch('http://127.0.0.1:7640/ingest/56780e01-d332-4ae8-8f9d-c88718bcdca2',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'65023e'},body:JSON.stringify({sessionId:'65023e',runId:'initial',hypothesisId:'H4',location:'frontend/src/stores/auth-store.ts:login:set',message:'Auth store state updated after login',data:{resolvedUserId:resolvedUser?.id??null,resolvedRole:resolvedUser?.role??null,isAuthenticated:true},timestamp:Date.now()})}).catch(()=>{});
     // #endregion
     if (data.refresh_token) {
@@ -104,6 +110,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   loadSession: async () => {
     const rt = get().refreshToken
+    // #region agent log
+    fetch('http://127.0.0.1:7640/ingest/56780e01-d332-4ae8-8f9d-c88718bcdca2',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'5ae59b'},body:JSON.stringify({sessionId:'5ae59b',runId:'initial',hypothesisId:'H5',location:'frontend/src/stores/auth-store.ts:loadSession:start:v2',message:'loadSession entered',data:{hasRefreshToken:Boolean(rt)},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     if (!rt) {
       set({ isLoading: false })
       return
@@ -118,7 +127,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: true,
         isLoading: false,
       })
+      // #region agent log
+      fetch('http://127.0.0.1:7640/ingest/56780e01-d332-4ae8-8f9d-c88718bcdca2',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'5ae59b'},body:JSON.stringify({sessionId:'5ae59b',runId:'initial',hypothesisId:'H5',location:'frontend/src/stores/auth-store.ts:loadSession:success:v2',message:'loadSession succeeded',data:{userId:user?.user_id??null,role:user?.role??null},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
     } catch {
+      // #region agent log
+      fetch('http://127.0.0.1:7640/ingest/56780e01-d332-4ae8-8f9d-c88718bcdca2',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'5ae59b'},body:JSON.stringify({sessionId:'5ae59b',runId:'initial',hypothesisId:'H5',location:'frontend/src/stores/auth-store.ts:loadSession:catch:v2',message:'loadSession failed and will logout',data:{hasRefreshToken:Boolean(rt)},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       get().logout()
       set({ isLoading: false })
     }

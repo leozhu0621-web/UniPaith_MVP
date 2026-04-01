@@ -56,6 +56,9 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
     // #region agent log
+    fetch('http://127.0.0.1:7640/ingest/56780e01-d332-4ae8-8f9d-c88718bcdca2',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'5ae59b'},body:JSON.stringify({sessionId:'5ae59b',runId:'initial',hypothesisId:'H3',location:'frontend/src/api/client.ts:response:error:v2',message:'Axios interceptor error branch entered',data:{status:error.response?.status??null,url:originalRequest?.url??null,hasRetry:Boolean(originalRequest?._retry)},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    // #region agent log
     fetch('http://127.0.0.1:7640/ingest/56780e01-d332-4ae8-8f9d-c88718bcdca2',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'65023e'},body:JSON.stringify({sessionId:'65023e',runId:'initial',hypothesisId:'H3',location:'frontend/src/api/client.ts:response:error',message:'Axios response interceptor caught error',data:{status:error.response?.status??null,url:originalRequest?.url??null,method:originalRequest?.method??null,hasRetry:Boolean(originalRequest?._retry)},timestamp:Date.now()})}).catch(()=>{});
     // #endregion
 
