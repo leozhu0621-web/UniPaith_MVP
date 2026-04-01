@@ -132,7 +132,7 @@ export default function AdminDashboardPage() {
             <p className="text-xs text-gray-500 mb-3">
               LLM p95: {aiSlo?.llm?.p95_ms ?? 0} ms | Embedding p95: {aiSlo?.embedding?.p95_ms ?? 0} ms
             </p>
-            <Button size="sm" onClick={() => navigate('/admin/system')}>Open AI Engine Controls</Button>
+            <Button size="sm" onClick={() => navigate('/admin/ops')}>Open AI Ops Center</Button>
           </div>
 
           <div className="border border-gray-200 rounded-lg p-4">

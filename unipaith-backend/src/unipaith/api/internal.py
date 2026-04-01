@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import UTC
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
@@ -11,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from unipaith.core.ai_runtime_metrics import slo_snapshot
 from unipaith.database import get_db
 from unipaith.dependencies import require_admin
-from unipaith.models.institution import Institution, Program
+from unipaith.models.institution import Program
 from unipaith.models.user import User
 from unipaith.services.ai_control_plane_service import AIControlPlaneService
 from unipaith.services.ai_engine_orchestrator import AIEngineOrchestrator
@@ -145,7 +146,13 @@ async def trigger_bootstrap(
     # Run in background — don't block the HTTP response
     asyncio.create_task(_run_bootstrap_background())
 
-    return {"status": "started", "message": "Crawl started. Watch progress on this page — it refreshes automatically."}
+    return {
+        "status": "started",
+        "message": (
+            "Crawl started. Watch progress on this page — "
+            "it refreshes automatically."
+        ),
+    }
 
 
 async def _run_bootstrap_background():
@@ -407,6 +414,15 @@ async def ai_control_slo(
     return slo_snapshot()
 
 
+@router.get("/ai/ops/snapshot")
+async def ai_ops_snapshot(
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Consolidated AI operations payload for the unified admin control center."""
+    return await AIControlPlaneService(db).get_ops_snapshot()
+
+
 @router.post("/ai/engine/run")
 async def ai_engine_run(
     user: User = Depends(require_admin),
@@ -431,7 +447,7 @@ async def engine_health(
 ):
     """Deep health check — used by the watchdog. No auth required for monitoring."""
     import time
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
     from unipaith.models.crawler import CrawlJob, ExtractedProgram
     from unipaith.models.matching import DataSource
@@ -454,7 +470,7 @@ async def engine_health(
 
     # 2. Crawl activity
     try:
-        one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
+        one_hour_ago = datetime.now(UTC) - timedelta(hours=1)
         recent_jobs = (await db.execute(
             select(func.count()).select_from(CrawlJob).where(
                 CrawlJob.created_at >= one_hour_ago
@@ -519,6 +535,6 @@ async def engine_health(
 
     return {
         "status": overall,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "checks": checks,
     }

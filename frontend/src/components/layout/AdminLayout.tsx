@@ -5,9 +5,16 @@ import {
 } from 'lucide-react'
 import clsx from 'clsx'
 
-const navItems = [
-  { to: '/admin', icon: LayoutDashboard, label: 'Overview', end: true },
-  { to: '/admin/system', icon: Cpu, label: 'AI Engine' },
+interface NavItem {
+  to: string
+  icon: any
+  label: string
+  end?: boolean
+}
+
+const navItems: NavItem[] = [
+  { to: '/admin/ops', icon: Cpu, label: 'AI Ops Center' },
+  { to: '/admin/overview', icon: LayoutDashboard, label: 'Overview' },
   { to: '/admin/users', icon: Users, label: 'Users' },
   { to: '/admin/crawler', icon: Bug, label: 'Data Intake' },
   { to: '/admin/ml', icon: Brain, label: 'AI Learning' },

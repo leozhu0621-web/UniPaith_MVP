@@ -55,6 +55,9 @@ export const getAIControlAudit = (params?: { limit?: number }) =>
 export const getAIControlSLO = () =>
   apiClient.get('/internal/ai/control/slo').then(r => r.data)
 
+export const getAIOpsSnapshot = () =>
+  apiClient.get('/internal/ai/ops/snapshot').then(r => r.data)
+
 export const runAIEngineGraph = () =>
   apiClient.post('/internal/ai/engine/run').then(r => r.data)
 

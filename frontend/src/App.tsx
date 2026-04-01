@@ -57,6 +57,7 @@ import AdminUsersPage from './pages/admin/AdminUsersPage'
 import AdminCrawlerPage from './pages/admin/AdminCrawlerPage'
 import AdminMLPage from './pages/admin/AdminMLPage'
 import AdminSystemPage from './pages/admin/AdminSystemPage'
+import AdminOpsCenterPage from './pages/admin/AdminOpsCenterPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -124,7 +125,9 @@ const router = createBrowserRouter([
     path: '/admin',
     element: <RequireAuth role="admin"><AdminLayout /></RequireAuth>,
     children: [
-      { index: true, element: <AdminDashboardPage /> },
+      { index: true, element: <Navigate to="/admin/ops" replace /> },
+      { path: 'ops', element: <AdminOpsCenterPage /> },
+      { path: 'overview', element: <AdminDashboardPage /> },
       { path: 'users', element: <AdminUsersPage /> },
       { path: 'crawler', element: <AdminCrawlerPage /> },
       { path: 'ml', element: <AdminMLPage /> },
