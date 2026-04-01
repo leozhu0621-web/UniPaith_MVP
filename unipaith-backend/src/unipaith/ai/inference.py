@@ -116,6 +116,23 @@ class InferencePipeline:
                         "Match explanation is temporarily unavailable. "
                         "Scoring used similarity, historical outcomes, institution preferences, and your preferences."
                     )
+            return {
+                "program_id": program_id,
+                "score": score,
+                "tier": tier,
+                "breakdown": breakdown,
+                "reasoning": reasoning,
+            }
+
+        built = await asyncio.gather(
+            *(build_match(program_id, score, tier, breakdown) for program_id, score, tier, breakdown in tiered)
+        )
+        for item in built:
+            program_id = item["program_id"]
+            score = item["score"]
+            tier = item["tier"]
+            breakdown = item["breakdown"]
+            reasoning = item["reasoning"]
             match_result = await self._save_match_result(
                 student_id=student_id,
                 program_id=program_id,
@@ -134,12 +151,6 @@ class InferencePipeline:
                 features_used=breakdown,
                 predicted_at=datetime.now(timezone.utc),
             )
-            return match_result, prediction_log
-
-        built = await asyncio.gather(
-            *(build_match(program_id, score, tier, breakdown) for program_id, score, tier, breakdown in tiered)
-        )
-        for match_result, prediction_log in built:
             match_results.append(match_result)
             prediction_logs.append(prediction_log)
 
