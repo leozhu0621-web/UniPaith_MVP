@@ -58,6 +58,11 @@ class TrainingRunResponse(BaseModel):
     test_data_size: int | None = None
     feature_columns: list[str] | None = None
     algorithm: str | None = None
+    mode: str | None = None
+    trigger_reason: str | None = None
+    new_outcomes_count: int | None = None
+    data_window_start: datetime | None = None
+    data_window_end: datetime | None = None
     hyperparameters: dict[str, Any] | None = None
     cv_metrics: dict[str, Any] | None = None
     test_metrics: dict[str, Any] | None = None
@@ -204,3 +209,14 @@ class LearningKPIResponse(BaseModel):
     rollbacks_7d: int
     training_failure_rate_7d: float | None = None
     net_accuracy_uplift_vs_active: float | None = None
+
+
+class CycleHealthResponse(BaseModel):
+    generated_at: datetime
+    scheduler_effective_enabled: bool
+    latest_evaluation: dict[str, Any] | None = None
+    latest_training: dict[str, Any] | None = None
+    latest_drift: dict[str, Any] | None = None
+    latest_cycle_decision: dict[str, Any] | None = None
+    blocking_reasons: list[str]
+    readiness_score: float

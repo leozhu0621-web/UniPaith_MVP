@@ -155,6 +155,7 @@ async def test_training_runs(db_session: AsyncSession):
         assert run.test_metrics is not None
         assert "accuracy" in run.test_metrics
         assert run.resulting_model_version is not None
+        assert run.mode == "full"
         assert run.cv_metrics is not None
         assert run.cv_metrics.get("mode") == "full"
 
@@ -188,6 +189,7 @@ async def test_training_fast_mode_uses_fast_params(db_session: AsyncSession):
         await db_session.commit()
 
         assert run.status == "completed"
+        assert run.mode == "fast"
         assert run.cv_metrics is not None
         assert run.cv_metrics.get("mode") == "fast"
         assert run.cv_metrics.get("mode_params", {}).get("optuna_trials") == 1

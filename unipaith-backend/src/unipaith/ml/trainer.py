@@ -127,6 +127,9 @@ class ModelTrainer:
             test_data_size=0,
             feature_columns=FEATURE_COLUMNS,
             algorithm="XGBClassifier",
+            mode=training_mode,
+            trigger_reason=trigger_reason,
+            new_outcomes_count=new_outcomes_count,
             hyperparameters={},
             cv_metrics={
                 "mode": training_mode,
@@ -163,6 +166,9 @@ class ModelTrainer:
     ) -> TrainingRun:
         # Step 1 — collect labelled data
         data, data_metadata = await self._collect_training_data()
+        if data_metadata.get("window_start"):
+            training_run.data_window_start = datetime.fromisoformat(data_metadata["window_start"])
+        training_run.data_window_end = datetime.now(timezone.utc)
         mode_params = self._mode_settings(mode)
 
         if len(data) < settings.outcome_min_decisions_for_training:
@@ -363,6 +369,7 @@ class ModelTrainer:
             "records_total": total_records,
             "records_in_window": len(records),
             "window_start": window_start.isoformat(),
+            "window_end": datetime.now(timezone.utc).isoformat(),
         }
         return data, metadata
 

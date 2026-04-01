@@ -35,6 +35,7 @@ from unipaith.models.ml_loop import (
 from unipaith.models.matching import ModelRegistry
 from unipaith.models.user import User
 from unipaith.schemas.ml_loop import (
+    CycleHealthResponse,
     CreateExperimentRequest,
     CycleResultResponse,
     DriftSnapshotResponse,
@@ -471,4 +472,118 @@ async def learning_kpis(
         rollbacks_7d=int(rollbacks_7d or 0),
         training_failure_rate_7d=fail_rate,
         net_accuracy_uplift_vs_active=net_uplift,
+    )
+
+
+@router.get("/cycle/health", response_model=CycleHealthResponse)
+async def cycle_health(
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_admin),
+):
+    """Single-shot health for the backend ML learning loop."""
+    now = datetime.now(timezone.utc)
+    scheduler_effective_enabled = settings.scheduler_enabled or (
+        settings.scheduler_auto_enable_non_test and settings.environment != "test"
+    )
+
+    latest_eval_row = await db.execute(
+        select(EvaluationRun).order_by(EvaluationRun.started_at.desc()).limit(1)
+    )
+    latest_eval = latest_eval_row.scalar_one_or_none()
+
+    latest_train_row = await db.execute(
+        select(TrainingRun).order_by(TrainingRun.started_at.desc()).limit(1)
+    )
+    latest_train = latest_train_row.scalar_one_or_none()
+
+    latest_drift_row = await db.execute(
+        select(DriftSnapshot).order_by(DriftSnapshot.created_at.desc()).limit(1)
+    )
+    latest_drift = latest_drift_row.scalar_one_or_none()
+
+    outcomes_total = int(
+        (
+            await db.execute(
+                select(func.count()).select_from(OutcomeRecord)
+            )
+        ).scalar()
+        or 0
+    )
+    failed_train_7d = int(
+        (
+            await db.execute(
+                select(func.count()).select_from(TrainingRun).where(
+                    TrainingRun.started_at >= (now - timedelta(days=7)),
+                    TrainingRun.status == "failed",
+                )
+            )
+        ).scalar()
+        or 0
+    )
+
+    blocking_reasons: list[str] = []
+    if not scheduler_effective_enabled:
+        blocking_reasons.append("scheduler_disabled")
+    if outcomes_total < settings.outcome_min_decisions_for_training:
+        blocking_reasons.append("insufficient_outcomes_for_training")
+    if latest_train and latest_train.status == "failed":
+        blocking_reasons.append("latest_training_failed")
+    if failed_train_7d >= 3:
+        blocking_reasons.append("high_training_failure_rate_7d")
+    if latest_drift and latest_drift.drift_detected:
+        blocking_reasons.append("drift_detected")
+
+    readiness_score = 1.0
+    if blocking_reasons:
+        readiness_score = max(0.0, 1.0 - min(0.9, 0.15 * len(blocking_reasons)))
+
+    latest_cycle_decision = None
+    if latest_train:
+        latest_cycle_decision = {
+            "mode": latest_train.mode,
+            "trigger_reason": latest_train.trigger_reason,
+            "new_outcomes_count": latest_train.new_outcomes_count,
+            "status": latest_train.status,
+            "failure_reason": latest_train.failure_reason,
+            "started_at": latest_train.started_at.isoformat() if latest_train.started_at else None,
+        }
+
+    return CycleHealthResponse(
+        generated_at=now,
+        scheduler_effective_enabled=scheduler_effective_enabled,
+        latest_evaluation=(
+            {
+                "id": str(latest_eval.id),
+                "model_version": latest_eval.model_version,
+                "dataset_size": latest_eval.dataset_size,
+                "retraining_triggered": latest_eval.retraining_triggered,
+                "started_at": latest_eval.started_at.isoformat() if latest_eval.started_at else None,
+            }
+            if latest_eval
+            else None
+        ),
+        latest_training=(
+            {
+                "id": str(latest_train.id),
+                "status": latest_train.status,
+                "mode": latest_train.mode,
+                "resulting_model_version": latest_train.resulting_model_version,
+                "started_at": latest_train.started_at.isoformat() if latest_train.started_at else None,
+            }
+            if latest_train
+            else None
+        ),
+        latest_drift=(
+            {
+                "id": str(latest_drift.id),
+                "drift_detected": latest_drift.drift_detected,
+                "feature_name": latest_drift.feature_name,
+                "created_at": latest_drift.created_at.isoformat() if latest_drift.created_at else None,
+            }
+            if latest_drift
+            else None
+        ),
+        latest_cycle_decision=latest_cycle_decision,
+        blocking_reasons=blocking_reasons,
+        readiness_score=round(readiness_score, 3),
     )

@@ -79,3 +79,21 @@ async def test_learning_kpis(
     data = resp.json()
     assert "generated_at" in data
     assert "retrain_runs_24h" in data
+
+
+@pytest.mark.asyncio
+async def test_cycle_health(
+    admin_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_admin_user: User,
+):
+    """admin_client GET /admin/ml/cycle/health -> 200."""
+    db_session.add(mock_admin_user)
+    await db_session.commit()
+
+    resp = await admin_client.get("/api/v1/admin/ml/cycle/health")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "generated_at" in data
+    assert "blocking_reasons" in data
+    assert "readiness_score" in data
