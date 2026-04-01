@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../stores/auth-store'
 import {
-  LayoutDashboard, Users, Bug, Brain, Settings, LogOut, Shield, Cpu,
+  LayoutDashboard, Users, Settings, LogOut, Shield, Cpu,
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -13,12 +13,10 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { to: '/admin/ops', icon: Cpu, label: 'AI Ops Center' },
   { to: '/admin/overview', icon: LayoutDashboard, label: 'Overview' },
-  { to: '/admin/users', icon: Users, label: 'Users' },
-  { to: '/admin/crawler', icon: Bug, label: 'Data Intake' },
-  { to: '/admin/ml', icon: Brain, label: 'AI Learning' },
-  { to: '/admin/system', icon: Settings, label: 'System Tools' },
+  { to: '/admin/users', icon: Users, label: 'Users & Database' },
+  { to: '/admin/ops', icon: Cpu, label: 'AI Engine Center' },
+  { to: '/admin/system', icon: Settings, label: 'System Settings' },
 ]
 
 export default function AdminLayout() {

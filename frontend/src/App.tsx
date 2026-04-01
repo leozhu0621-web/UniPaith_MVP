@@ -125,7 +125,7 @@ const router = createBrowserRouter([
     path: '/admin',
     element: <RequireAuth role="admin"><AdminLayout /></RequireAuth>,
     children: [
-      { index: true, element: <Navigate to="/admin/ops" replace /> },
+      { index: true, element: <Navigate to="/admin/overview" replace /> },
       { path: 'ops', element: <AdminOpsCenterPage /> },
       { path: 'overview', element: <AdminDashboardPage /> },
       { path: 'users', element: <AdminUsersPage /> },
