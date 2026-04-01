@@ -7,12 +7,14 @@ Three modes:
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 
 import numpy as np
 from openai import AsyncOpenAI
 
 from unipaith.config import settings
+from unipaith.core.ai_runtime_metrics import record_embedding, start_timer
 
 logger = logging.getLogger("unipaith.embedding_client")
 
@@ -30,19 +32,29 @@ class EmbeddingClient:
 
     async def embed_text(self, text: str) -> list[float]:
         """Generate embedding for a single text string."""
-        response = await self.client.embeddings.create(
-            model=self.model,
-            input=text,
-        )
-        return response.data[0].embedding
+        return (await self.embed_batch([text]))[0]
 
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
         """Generate embeddings for multiple texts in one call."""
-        response = await self.client.embeddings.create(
-            model=self.model,
-            input=texts,
-        )
-        return [item.embedding for item in response.data]
+        last_error = None
+        for attempt in range(1, settings.ai_request_max_retries + 1):
+            started = start_timer()
+            try:
+                response = await asyncio.wait_for(
+                    self.client.embeddings.create(model=self.model, input=texts),
+                    timeout=settings.ai_request_timeout_seconds,
+                )
+                record_embedding(started, ok=True)
+                return [item.embedding for item in response.data]
+            except asyncio.TimeoutError as exc:
+                record_embedding(started, ok=False, timed_out=True)
+                last_error = exc
+            except Exception as exc:
+                record_embedding(started, ok=False)
+                last_error = exc
+            if attempt < settings.ai_request_max_retries:
+                await asyncio.sleep(settings.ai_request_backoff_seconds * attempt)
+        raise last_error
 
 
 class AWSEmbeddingClient:
@@ -67,20 +79,26 @@ class AWSEmbeddingClient:
 
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
         """Generate embeddings with retry on transient failures."""
-        import asyncio
-
         last_error = None
         for attempt in range(1, self.MAX_RETRIES + 1):
+            started = start_timer()
             try:
-                response = await self.client.embeddings.create(
-                    model=self.model,
-                    input=texts,
+                response = await asyncio.wait_for(
+                    self.client.embeddings.create(model=self.model, input=texts),
+                    timeout=settings.ai_request_timeout_seconds,
                 )
+                record_embedding(started, ok=True)
                 return [item.embedding for item in response.data]
-            except Exception as e:
+            except asyncio.TimeoutError as e:
+                record_embedding(started, ok=False, timed_out=True)
                 last_error = e
                 if attempt < self.MAX_RETRIES:
-                    wait = 2 ** attempt
+                    await asyncio.sleep(settings.ai_request_backoff_seconds * attempt)
+            except Exception as e:
+                record_embedding(started, ok=False)
+                last_error = e
+                if attempt < self.MAX_RETRIES:
+                    wait = settings.ai_request_backoff_seconds * attempt
                     logger.warning(
                         "Embedding request failed (attempt %d/%d): %s. Retrying in %ds",
                         attempt, self.MAX_RETRIES, e, wait,

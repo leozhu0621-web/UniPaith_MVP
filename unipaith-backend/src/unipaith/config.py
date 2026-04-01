@@ -52,6 +52,8 @@ class Settings(BaseSettings):
     scheduler_require_leader: bool = False
     scheduler_is_leader: bool = True
     scheduler_misfire_grace_seconds: int = 300
+    scheduler_self_driving_enabled: bool = True
+    scheduler_self_driving_interval_minutes: int = 30
 
     # Logging
     log_level: str = "INFO"
@@ -139,6 +141,15 @@ class Settings(BaseSettings):
     ]
     fairness_max_disparity: float = 0.15
     fairness_check_on_promotion: bool = True
+
+    # Autonomous AI control plane runtime policy
+    ai_autonomy_enabled: bool = True
+    ai_autonomy_auto_fix: bool = True
+    ai_autonomy_emergency_stop: bool = False
+    ai_autonomy_max_consecutive_failures: int = 5
+    ai_request_timeout_seconds: int = 45
+    ai_request_max_retries: int = 3
+    ai_request_backoff_seconds: int = 2
 
     # --- Data Crawler (Phase 5) ---
     crawler_concurrent_requests: int = 4

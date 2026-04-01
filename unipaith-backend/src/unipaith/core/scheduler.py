@@ -88,6 +88,16 @@ def setup_scheduler() -> None:
         **_job_defaults(),
     )
 
+    if settings.scheduler_self_driving_enabled:
+        scheduler.add_job(
+            _run_self_driving_loop,
+            "interval",
+            minutes=settings.scheduler_self_driving_interval_minutes,
+            id="ai_self_driving",
+            name="AI Self-Driving Loop",
+            **_job_defaults(),
+        )
+
     scheduler.start()
     logger.info(
         "Scheduler started with %d jobs: %s",
@@ -175,3 +185,18 @@ async def _run_crawler() -> None:
         logger.info("University crawl completed")
     except Exception:
         logger.exception("University crawl failed")
+
+
+async def _run_self_driving_loop() -> None:
+    """Run one autonomous AI control-plane tick."""
+    from unipaith.database import async_session
+    from unipaith.services.ai_control_plane_service import AIControlPlaneService
+
+    logger.info("Starting scheduled self-driving AI loop")
+    try:
+        async with async_session() as db:
+            service = AIControlPlaneService(db)
+            result = await service.run_self_driving_tick(trigger="scheduled")
+            logger.info("Self-driving loop result: %s", result.get("status"))
+    except Exception:
+        logger.exception("Self-driving AI loop failed")

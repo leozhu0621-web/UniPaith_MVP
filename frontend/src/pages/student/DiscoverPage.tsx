@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { getMatches, logEngagement } from '../../api/matching'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { chatStudentAssistant, getMatches, logEngagement } from '../../api/matching'
 import { searchPrograms } from '../../api/programs'
 import { getOnboarding } from '../../api/students'
 import Badge from '../../components/ui/Badge'
@@ -31,6 +31,8 @@ export default function DiscoverPage() {
   const [page, setPage] = useState(1)
   const [showFilters, setShowFilters] = useState(false)
   const [sortBy, setSortBy] = useState('relevance')
+  const [assistantMessage, setAssistantMessage] = useState('')
+  const [assistantReply, setAssistantReply] = useState<string | null>(null)
 
   // Filter state
   const [country, setCountry] = useState('')
@@ -58,6 +60,13 @@ export default function DiscoverPage() {
       min_tuition: minTuition ? Number(minTuition) : undefined,
       max_tuition: maxTuition ? Number(maxTuition) : undefined,
     }),
+  })
+
+  const assistantMut = useMutation({
+    mutationFn: (message: string) => chatStudentAssistant(message),
+    onSuccess: (data: { reply: string }) => {
+      setAssistantReply(data.reply)
+    },
   })
 
   const matchesByTier: Record<number, MatchResult[]> = { 3: [], 2: [], 1: [] }
@@ -100,6 +109,33 @@ export default function DiscoverPage() {
           <button onClick={() => navigate('/s/profile')} className="font-medium underline">Complete profile</button>
         </div>
       )}
+
+      <Card className="p-4 mb-6">
+        <h2 className="text-lg font-medium mb-2">UniPaith AI Assistant (OpenAI)</h2>
+        <p className="text-sm text-gray-500 mb-3">
+          Ask for advice on program fit, profile gaps, and next steps.
+        </p>
+        <div className="flex gap-2">
+          <input
+            value={assistantMessage}
+            onChange={e => setAssistantMessage(e.target.value)}
+            placeholder="Ask: How can I improve my match quality for data science programs?"
+            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
+          />
+          <Button
+            onClick={() => assistantMut.mutate(assistantMessage)}
+            disabled={assistantMut.isPending || !assistantMessage.trim()}
+          >
+            {assistantMut.isPending ? 'Thinking...' : 'Ask AI'}
+          </Button>
+        </div>
+        {assistantReply && (
+          <div className="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3">
+            <p className="text-xs text-gray-500 mb-1">Assistant reply</p>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap">{assistantReply}</p>
+          </div>
+        )}
+      </Card>
 
       {showMatches && (
         <div className="mb-8">

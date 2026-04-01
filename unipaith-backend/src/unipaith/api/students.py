@@ -6,9 +6,11 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from unipaith.config import settings
 from unipaith.core.exceptions import NotFoundException
 from unipaith.database import get_db
 from unipaith.dependencies import require_student
+from unipaith.ai.llm_client import get_llm_client
 from unipaith.models.engagement import StudentEngagementSignal
 from unipaith.models.matching import MatchResult
 from unipaith.models.user import User
@@ -27,6 +29,8 @@ from unipaith.schemas.student import (
     OnboardingStatusResponse,
     StudentPreferenceResponse,
     StudentProfileResponse,
+    StudentAssistantChatRequest,
+    StudentAssistantChatResponse,
     TestScoreResponse,
     UpdateAcademicRecordRequest,
     UpdateActivityRequest,
@@ -325,3 +329,54 @@ async def log_engagement(
     db.add(signal)
     await db.flush()
     return signal
+
+
+@router.post("/me/assistant/chat", response_model=StudentAssistantChatResponse)
+async def student_assistant_chat(
+    body: StudentAssistantChatRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """OpenAI-powered student assistant chat for guidance and match reasoning."""
+    student_service = _svc(db)
+    profile = await student_service._get_student_profile(user.id)
+    preferences = await student_service.get_preferences(profile.id)
+
+    context_bits = [
+        f"Student ID: {profile.id}",
+        f"Profile completion: {(await student_service.get_onboarding_status(profile.id)).completion_percentage}%",
+        f"Bio: {profile.bio_text or 'N/A'}",
+        f"Goals: {profile.goals_text or 'N/A'}",
+        f"Preferred countries: {', '.join(preferences.preferred_countries) if preferences and preferences.preferred_countries else 'N/A'}",
+        f"Budget range: {preferences.budget_min if preferences else 'N/A'} - {preferences.budget_max if preferences else 'N/A'}",
+    ]
+
+    if body.context_program_id:
+        result = await db.execute(
+            select(MatchResult).where(
+                MatchResult.student_id == profile.id,
+                MatchResult.program_id == body.context_program_id,
+            )
+        )
+        match = result.scalar_one_or_none()
+        if match:
+            context_bits.append(f"Context program ID: {body.context_program_id}")
+            context_bits.append(f"Match score: {match.match_score}")
+            context_bits.append(f"Match tier: {match.match_tier}")
+            context_bits.append(f"Existing reasoning: {match.reasoning_text or 'N/A'}")
+
+    system_prompt = (
+        "You are UniPaith's admissions copilot. Give practical, concise advice. "
+        "Use profile context and any provided match context. Avoid fabricated claims. "
+        "If uncertain, say what is missing and suggest next steps."
+    )
+    user_prompt = (
+        "Student context:\n"
+        + "\n".join(context_bits)
+        + "\n\nUser message:\n"
+        + body.message
+    )
+
+    llm = get_llm_client()
+    reply = await llm.generate_reasoning(system_prompt=system_prompt, user_content=user_prompt)
+    return StudentAssistantChatResponse(reply=reply, model=settings.llm_reasoning_model)

@@ -1,8 +1,11 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from unipaith.ai.llm_client import get_llm_client
+from unipaith.config import settings
 from unipaith.database import get_db
 from unipaith.dependencies import require_institution_admin
 from unipaith.models.user import User
@@ -26,6 +29,17 @@ from unipaith.schemas.institution import (
 from unipaith.services.institution_service import InstitutionService
 
 router = APIRouter(prefix="/institutions", tags=["institutions"])
+
+
+class InstitutionAssistantChatRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=4000)
+    context_program_id: UUID | None = None
+
+
+class InstitutionAssistantChatResponse(BaseModel):
+    reply: str
+    model: str
+    provider: str = "openai"
 
 
 def _svc(db: AsyncSession) -> InstitutionService:
@@ -306,3 +320,38 @@ async def get_campaign_metrics(
     svc = _svc(db)
     inst = await svc.get_institution(user.id)
     return await svc.get_campaign_metrics(inst.id, campaign_id)
+
+
+@router.post("/me/assistant/chat", response_model=InstitutionAssistantChatResponse)
+async def institution_assistant_chat(
+    body: InstitutionAssistantChatRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """OpenAI assistant for institution admins."""
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    programs = await svc.list_programs(inst.id)
+    context_program = None
+    if body.context_program_id:
+        for program in programs:
+            if program.id == body.context_program_id:
+                context_program = program
+                break
+
+    system_prompt = (
+        "You are UniPaith's institutional admissions assistant. "
+        "Give practical, concise guidance on applicant triage, pipeline operations, "
+        "and program positioning. Avoid fabricating facts."
+    )
+    user_prompt = (
+        f"Institution: {inst.name}\n"
+        f"Country: {inst.country}\n"
+        f"Program count: {len(programs)}\n"
+        f"Context program: {context_program.program_name if context_program else 'N/A'}\n\n"
+        f"User message:\n{body.message}"
+    )
+
+    llm = get_llm_client()
+    reply = await llm.generate_reasoning(system_prompt=system_prompt, user_content=user_prompt)
+    return InstitutionAssistantChatResponse(reply=reply, model=settings.llm_reasoning_model)

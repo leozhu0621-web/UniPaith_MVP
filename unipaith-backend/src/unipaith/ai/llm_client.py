@@ -9,11 +9,13 @@ Three modes controlled by settings.gpu_mode:
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 
 from openai import AsyncOpenAI
 
 from unipaith.config import settings
+from unipaith.core.ai_runtime_metrics import record_llm, start_timer
 
 logger = logging.getLogger("unipaith.llm_client")
 
@@ -33,7 +35,8 @@ class LLMClient:
 
     async def extract_features(self, system_prompt: str, user_content: str) -> str:
         """Call feature extraction model. Returns raw text response."""
-        response = await self.feature_client.chat.completions.create(
+        response = await self._call_with_resilience(
+            self.feature_client,
             model=settings.llm_feature_model,
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -46,7 +49,8 @@ class LLMClient:
 
     async def generate_reasoning(self, system_prompt: str, user_content: str) -> str:
         """Call reasoning model for natural-language explanations."""
-        response = await self.reasoning_client.chat.completions.create(
+        response = await self._call_with_resilience(
+            self.reasoning_client,
             model=settings.llm_reasoning_model,
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -56,6 +60,31 @@ class LLMClient:
             temperature=settings.llm_reasoning_temperature,
         )
         return response.choices[0].message.content
+
+    async def _call_with_resilience(self, client: AsyncOpenAI, **kwargs):
+        last_error = None
+        for attempt in range(1, settings.ai_request_max_retries + 1):
+            started = start_timer()
+            try:
+                response = await asyncio.wait_for(
+                    client.chat.completions.create(**kwargs),
+                    timeout=settings.ai_request_timeout_seconds,
+                )
+                record_llm(started, ok=True)
+                return response
+            except asyncio.TimeoutError as exc:
+                record_llm(started, ok=False, timed_out=True)
+                last_error = exc
+                logger.warning("LLM timeout attempt %d/%d", attempt, settings.ai_request_max_retries)
+            except Exception as exc:  # pragma: no cover - network/runtime safety
+                record_llm(started, ok=False)
+                last_error = exc
+                logger.warning("LLM request failed attempt %d/%d: %s", attempt, settings.ai_request_max_retries, exc)
+
+            if attempt < settings.ai_request_max_retries:
+                await asyncio.sleep(settings.ai_request_backoff_seconds * attempt)
+
+        raise last_error
 
 
 class AWSLLMClient:
@@ -84,7 +113,8 @@ class AWSLLMClient:
 
     async def extract_features(self, system_prompt: str, user_content: str) -> str:
         """Call 8B model on always-on g5.xlarge."""
-        response = await self.feature_client.chat.completions.create(
+        response = await self._call_with_resilience(
+            self.feature_client,
             model=settings.llm_feature_model,
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -113,7 +143,8 @@ class AWSLLMClient:
         self._70b_manager.record_request()
 
         try:
-            response = await self.reasoning_client.chat.completions.create(
+            response = await self._call_with_resilience(
+                self.reasoning_client,
                 model=settings.llm_reasoning_model,
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -126,6 +157,27 @@ class AWSLLMClient:
         except Exception as e:
             logger.error("70B reasoning call failed: %s, falling back to template", e)
             return self._template_reasoning(user_content)
+
+    async def _call_with_resilience(self, client: AsyncOpenAI, **kwargs):
+        last_error = None
+        for attempt in range(1, settings.ai_request_max_retries + 1):
+            started = start_timer()
+            try:
+                response = await asyncio.wait_for(
+                    client.chat.completions.create(**kwargs),
+                    timeout=settings.ai_request_timeout_seconds,
+                )
+                record_llm(started, ok=True)
+                return response
+            except asyncio.TimeoutError as exc:
+                record_llm(started, ok=False, timed_out=True)
+                last_error = exc
+            except Exception as exc:
+                record_llm(started, ok=False)
+                last_error = exc
+            if attempt < settings.ai_request_max_retries:
+                await asyncio.sleep(settings.ai_request_backoff_seconds * attempt)
+        raise last_error
 
     async def _is_budget_exceeded(self) -> bool:
         """Check if monthly GPU budget is exceeded."""

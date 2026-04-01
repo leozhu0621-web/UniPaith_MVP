@@ -32,6 +32,32 @@ export const refreshProgram = (programId: string) =>
 export const getPlatformStats = () =>
   apiClient.get('/internal/stats').then(r => r.data)
 
+// ─── Internal: AI Control Plane ───
+export const getAIControlStatus = () =>
+  apiClient.get('/internal/ai/control/status').then(r => r.data)
+
+export const patchAIControlPolicy = (data: {
+  autonomy_enabled?: boolean
+  auto_fix_enabled?: boolean
+  emergency_stop?: boolean
+}) =>
+  apiClient.patch('/internal/ai/control/policy', data).then(r => r.data)
+
+export const runAIControlLoop = () =>
+  apiClient.post('/internal/ai/control/run-loop').then(r => r.data)
+
+export const getAIControlAudit = (params?: { limit?: number }) =>
+  apiClient.get('/internal/ai/control/audit', { params }).then(r => r.data)
+
+export const getAIControlSLO = () =>
+  apiClient.get('/internal/ai/control/slo').then(r => r.data)
+
+export const runAIEngineGraph = () =>
+  apiClient.post('/internal/ai/engine/run').then(r => r.data)
+
+export const getAIEngineState = () =>
+  apiClient.get('/internal/ai/engine/state').then(r => r.data)
+
 // ─── Crawler: Dashboard ───
 export const getCrawlerDashboard = () =>
   apiClient.get('/admin/crawler/dashboard').then(r => r.data)

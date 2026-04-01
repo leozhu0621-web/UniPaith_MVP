@@ -93,6 +93,46 @@ tr:hover td { background: #1c2128; }
     <div id="bootstrapResult" class="log-area" style="display:none;"></div>
   </div>
 
+  <div class="section">
+    <h2>AI Control Plane <button class="refresh-btn" onclick="loadControlPlane()">[refresh]</button></h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Autonomy</h3>
+        <div class="sub" id="cpAutonomy">Loading...</div>
+      </div>
+      <div class="card">
+        <h3>OpenAI Visibility</h3>
+        <div class="sub" id="cpLLM">Loading...</div>
+      </div>
+      <div class="card">
+        <h3>Last Loop Tick</h3>
+        <div class="sub" id="cpTick">Loading...</div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn" onclick="togglePolicy('autonomy_enabled')">Toggle Autonomy</button>
+      <button class="btn" onclick="togglePolicy('auto_fix_enabled')">Toggle Auto-Fix</button>
+      <button class="btn danger" onclick="togglePolicy('emergency_stop')">Toggle Emergency Stop</button>
+      <button class="btn primary" onclick="runLoopTick()" id="btnLoopTick">Run Self-Driving Tick</button>
+      <button class="btn" onclick="runEngineGraph()" id="btnEngineGraph">Run Full Engine Graph</button>
+    </div>
+    <div id="controlResult" class="log-area" style="display:none;"></div>
+  </div>
+
+  <div class="section">
+    <h2>Autonomous Incident Log <button class="refresh-btn" onclick="loadAudit()">[refresh]</button></h2>
+    <div id="auditLog" class="log-area">Loading...</div>
+  </div>
+
+  <div class="section">
+    <h2>SLO Monitor <button class="refresh-btn" onclick="loadSLO()">[refresh]</button></h2>
+    <div class="grid">
+      <div class="card"><h3>LLM p95</h3><div class="value" id="sloLLM">—</div></div>
+      <div class="card"><h3>Embedding p95</h3><div class="value" id="sloEmbedding">—</div></div>
+      <div class="card"><h3>Self-Driving p95</h3><div class="value" id="sloLoop">—</div></div>
+    </div>
+  </div>
+
   <!-- Cost Tracking -->
   <div class="section">
     <h2>AI Costs <button class="refresh-btn" onclick="loadCosts()">[refresh]</button></h2>
@@ -369,6 +409,117 @@ async function loadHealth() {
   }
 }
 
+let controlState = null;
+
+async function loadControlPlane() {
+  try {
+    const data = await api('/internal/ai/control/status');
+    controlState = data;
+    const p = data.policy || {};
+    const llm = data.llm || {};
+    const tick = data.autonomy_loop || {};
+    document.getElementById('cpAutonomy').innerHTML =
+      `autonomy: ${p.autonomy_enabled ? badge('on', 'green') : badge('off', 'red')}<br>` +
+      `auto-fix: ${p.auto_fix_enabled ? badge('on', 'green') : badge('off', 'yellow')}<br>` +
+      `emergency-stop: ${p.emergency_stop ? badge('enabled', 'red') : badge('clear', 'green')}`;
+    document.getElementById('cpLLM').innerHTML =
+      `provider: ${llm.provider || 'openai'}<br>` +
+      `reasoning: ${llm.reasoning_model || '—'}<br>` +
+      `embedding: ${llm.embedding_model || '—'}<br>` +
+      `key: ${llm.api_key_configured ? 'configured' : 'missing'}`;
+    document.getElementById('cpTick').innerHTML =
+      `status: ${tick.last_tick_status || 'never_run'}<br>` +
+      `at: ${tick.last_tick_at ? new Date(tick.last_tick_at).toLocaleString() : '—'}<br>` +
+      `failures: ${tick.consecutive_failures || 0}`;
+  } catch (e) {
+    document.getElementById('cpAutonomy').textContent = 'Could not load control plane';
+  }
+}
+
+async function togglePolicy(field) {
+  if (!controlState || !controlState.policy) {
+    await loadControlPlane();
+  }
+  const current = !!(controlState?.policy?.[field]);
+  const patch = { [field]: !current };
+  try {
+    await api('/internal/ai/control/policy', {
+      method: 'PATCH',
+      body: JSON.stringify(patch),
+    });
+    toast('Policy updated');
+    await loadControlPlane();
+  } catch (e) {
+    toast('Policy update failed', '#da3633');
+  }
+}
+
+async function runLoopTick() {
+  const btn = document.getElementById('btnLoopTick');
+  const log = document.getElementById('controlResult');
+  btn.disabled = true;
+  btn.textContent = 'Running...';
+  log.style.display = 'block';
+  try {
+    const data = await api('/internal/ai/control/run-loop', { method: 'POST' });
+    log.textContent = JSON.stringify(data.result, null, 2);
+    toast('Self-driving tick complete');
+    await loadControlPlane();
+  } catch (e) {
+    log.textContent = 'Error: ' + e.message;
+    toast('Self-driving tick failed', '#da3633');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Run Self-Driving Tick';
+  }
+}
+
+async function runEngineGraph() {
+  const btn = document.getElementById('btnEngineGraph');
+  const log = document.getElementById('controlResult');
+  btn.disabled = true;
+  btn.textContent = 'Running...';
+  log.style.display = 'block';
+  try {
+    const data = await api('/internal/ai/engine/run', { method: 'POST' });
+    log.textContent = JSON.stringify(data, null, 2);
+    toast('Engine graph run completed');
+    await loadControlPlane();
+    await loadAudit();
+  } catch (e) {
+    log.textContent = 'Error: ' + e.message;
+    toast('Engine graph run failed', '#da3633');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Run Full Engine Graph';
+  }
+}
+
+async function loadAudit() {
+  try {
+    const data = await api('/internal/ai/control/audit?limit=50');
+    const items = data.items || [];
+    document.getElementById('auditLog').textContent = items.length
+      ? items.map(i => `[${i.timestamp}] ${i.event_type} :: ${i.payload?.status || 'unknown'}`).join('\n')
+      : 'No autonomous incidents yet.';
+  } catch (e) {
+    document.getElementById('auditLog').textContent = 'Failed to load audit log: ' + e.message;
+  }
+}
+
+async function loadSLO() {
+  try {
+    const data = await api('/internal/ai/control/slo');
+    document.getElementById('sloLLM').textContent = `${data.llm?.p95_ms || 0} ms`;
+    document.getElementById('sloEmbedding').textContent = `${data.embedding?.p95_ms || 0} ms`;
+    document.getElementById('sloLoop').textContent = `${data.self_driving_tick?.p95_ms || 0} ms`;
+  } catch (e) {
+    document.getElementById('sloLLM').textContent = 'ERR';
+    document.getElementById('sloEmbedding').textContent = 'ERR';
+    document.getElementById('sloLoop').textContent = 'ERR';
+  }
+}
+
 // Initial load
 refreshStatus();
 loadHealth();
@@ -376,9 +527,12 @@ loadCosts();
 loadAIStatus();
 loadCrawlJobs();
 loadExtracted();
+loadControlPlane();
+loadAudit();
+loadSLO();
 
 // Auto-refresh every 30s
-setInterval(() => { refreshStatus(); loadHealth(); loadCosts(); }, 30000);
+setInterval(() => { refreshStatus(); loadHealth(); loadCosts(); loadControlPlane(); loadAudit(); loadSLO(); }, 30000);
 </script>
 
 </body>

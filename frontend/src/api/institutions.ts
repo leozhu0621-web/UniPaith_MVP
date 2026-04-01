@@ -146,3 +146,11 @@ export async function getCampaignMetrics(campaignId: string): Promise<CampaignMe
   const { data } = await apiClient.get(`/institutions/me/campaigns/${campaignId}/metrics`)
   return data
 }
+
+export async function chatInstitutionAssistant(message: string, contextProgramId?: string): Promise<{ reply: string; model: string; provider: string }> {
+  const { data } = await apiClient.post('/institutions/me/assistant/chat', {
+    message,
+    context_program_id: contextProgramId,
+  })
+  return data
+}

@@ -1,21 +1,30 @@
 from __future__ import annotations
 
+import asyncio
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from unipaith.core.ai_runtime_metrics import slo_snapshot
 from unipaith.database import get_db
 from unipaith.dependencies import require_admin
-from unipaith.models.application import Application
 from unipaith.models.institution import Institution, Program
-from unipaith.models.student import StudentProfile
-from unipaith.models.user import User, UserRole
+from unipaith.models.user import User
+from unipaith.services.ai_control_plane_service import AIControlPlaneService
+from unipaith.services.ai_engine_orchestrator import AIEngineOrchestrator
 from unipaith.services.internal_admin_service import InternalAdminService
 from unipaith.services.matching_service import MatchingService
 
 router = APIRouter(prefix="/internal", tags=["internal"])
+
+
+class AIControlPolicyPatchRequest(BaseModel):
+    autonomy_enabled: bool | None = None
+    auto_fix_enabled: bool | None = None
+    emergency_stop: bool | None = None
 
 
 @router.get("/stats")
@@ -125,8 +134,6 @@ async def trigger_bootstrap(
 
     Returns immediately. Monitor progress via GET /ai/bootstrap-status.
     """
-    import asyncio
-
     from unipaith.config import settings as s
 
     if s.gpu_mode == "mock" or s.ai_mock_mode:
@@ -175,12 +182,17 @@ async def _run_bootstrap_background():
             if program_ids:
                 extractor = FeatureExtractor(db)
                 pipeline = EmbeddingPipeline(db)
-                for pid in program_ids:
-                    try:
-                        await extractor.extract_program_features(pid)
-                        await pipeline.generate_program_embedding(pid)
-                    except Exception as exc:
-                        logger.warning("AI pipeline failed for %s: %s", pid, exc)
+                sem = asyncio.Semaphore(5)
+
+                async def process_program(pid):
+                    async with sem:
+                        try:
+                            await extractor.extract_program_features(pid)
+                            await pipeline.generate_program_embedding(pid)
+                        except Exception as exc:
+                            logger.warning("AI pipeline failed for %s: %s", pid, exc)
+
+                await asyncio.gather(*(process_program(pid) for pid in program_ids))
                 await db.commit()
 
             logger.info("Bootstrap complete: %d programs processed", len(program_ids))
@@ -341,6 +353,76 @@ async def ai_status(user: User = Depends(require_admin)):
         status["70b_instance"]["idle_seconds"] = round(idle, 1) if idle else None
 
     return status
+
+
+@router.get("/ai/control/status")
+async def ai_control_status(
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Unified AI control-plane status for admin UI."""
+    return await AIControlPlaneService(db).get_status()
+
+
+@router.patch("/ai/control/policy")
+async def ai_control_policy(
+    body: AIControlPolicyPatchRequest,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update runtime autonomy policy toggles."""
+    policy = await AIControlPlaneService(db).update_policy(
+        autonomy_enabled=body.autonomy_enabled,
+        auto_fix_enabled=body.auto_fix_enabled,
+        emergency_stop=body.emergency_stop,
+    )
+    return {"policy": policy}
+
+
+@router.post("/ai/control/run-loop")
+async def ai_control_run_loop(
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Run a single autonomous self-driving tick immediately."""
+    result = await AIControlPlaneService(db).run_self_driving_tick(trigger="manual")
+    return {"result": result}
+
+
+@router.get("/ai/control/audit")
+async def ai_control_audit(
+    limit: int = Query(100, ge=1, le=500),
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """List recent autonomous loop audit events."""
+    return {"items": await AIControlPlaneService(db).list_audit_events(limit=limit)}
+
+
+@router.get("/ai/control/slo")
+async def ai_control_slo(
+    user: User = Depends(require_admin),
+):
+    """Current SLO-oriented runtime metrics."""
+    return slo_snapshot()
+
+
+@router.post("/ai/engine/run")
+async def ai_engine_run(
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Run the full ingest->feature/embedding->ML orchestration graph."""
+    return await AIEngineOrchestrator(db).run_full_graph(trigger="manual")
+
+
+@router.get("/ai/engine/state")
+async def ai_engine_state(
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Read runtime state of the unified engine orchestrator."""
+    return AIEngineOrchestrator(db).get_runtime_state()
 
 
 @router.get("/health")

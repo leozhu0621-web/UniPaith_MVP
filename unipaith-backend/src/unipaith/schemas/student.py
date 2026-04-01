@@ -218,3 +218,14 @@ class StudentProfileResponse(BaseModel):
     activities: list[ActivityResponse] = []
     preferences: StudentPreferenceResponse | None = None
     onboarding: OnboardingStatusResponse | None = None
+
+
+class StudentAssistantChatRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=4000)
+    context_program_id: UUID | None = None
+
+
+class StudentAssistantChatResponse(BaseModel):
+    reply: str
+    model: str
+    provider: str = "openai"

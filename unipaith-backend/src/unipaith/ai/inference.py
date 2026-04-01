@@ -4,6 +4,7 @@ Given a student, produces ranked program matches with scores and tiers.
 """
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import UUID
@@ -98,14 +99,23 @@ class InferencePipeline:
         existing_match_map = await self._prefetch_existing_matches(student_id, top_program_ids)
         match_results: list[MatchResult] = []
         prediction_logs: list[PredictionLog] = []
-        for program_id, score, tier, breakdown in tiered:
-            reasoning = await self.reasoning_generator.generate_match_reasoning(
-                student_id=student_id,
-                program_id=program_id,
-                score=score,
-                tier=tier,
-                breakdown=breakdown,
-            )
+        reasoning_sem = asyncio.Semaphore(5)
+
+        async def build_match(program_id, score, tier, breakdown):
+            async with reasoning_sem:
+                try:
+                    reasoning = await self.reasoning_generator.generate_match_reasoning(
+                        student_id=student_id,
+                        program_id=program_id,
+                        score=score,
+                        tier=tier,
+                        breakdown=breakdown,
+                    )
+                except Exception:
+                    reasoning = (
+                        "Match explanation is temporarily unavailable. "
+                        "Scoring used similarity, historical outcomes, institution preferences, and your preferences."
+                    )
             match_result = await self._save_match_result(
                 student_id=student_id,
                 program_id=program_id,
@@ -115,18 +125,23 @@ class InferencePipeline:
                 reasoning=reasoning,
                 existing=existing_match_map.get(program_id),
             )
-            match_results.append(match_result)
-            prediction_logs.append(
-                PredictionLog(
-                    student_id=student_id,
-                    program_id=program_id,
-                    predicted_score=Decimal(str(round(score, 4))),
-                    predicted_tier=tier,
-                    model_version="v1.0-mvp",
-                    features_used=breakdown,
-                    predicted_at=datetime.now(timezone.utc),
-                )
+            prediction_log = PredictionLog(
+                student_id=student_id,
+                program_id=program_id,
+                predicted_score=Decimal(str(round(score, 4))),
+                predicted_tier=tier,
+                model_version="v1.0-mvp",
+                features_used=breakdown,
+                predicted_at=datetime.now(timezone.utc),
             )
+            return match_result, prediction_log
+
+        built = await asyncio.gather(
+            *(build_match(program_id, score, tier, breakdown) for program_id, score, tier, breakdown in tiered)
+        )
+        for match_result, prediction_log in built:
+            match_results.append(match_result)
+            prediction_logs.append(prediction_log)
 
         if prediction_logs:
             self.db.add_all(prediction_logs)

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { User, Star, Brain, ClipboardCheck, Calendar, Award, FileText } from 'lucide-react'
 import { reviewApplication, makeDecision, createOffer } from '../../api/applications-admin'
+import { chatInstitutionAssistant } from '../../api/institutions'
 import { getScores, getAISummary, assignReviewer, scoreApplication, getRubrics } from '../../api/reviews'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -34,6 +35,8 @@ export default function StudentDetailPage() {
   const [selectedRubric, setSelectedRubric] = useState('')
   const [criterionScores, setCriterionScores] = useState<Record<string, number>>({})
   const [reviewerNotes, setReviewerNotes] = useState('')
+  const [assistantPrompt, setAssistantPrompt] = useState('')
+  const [assistantReply, setAssistantReply] = useState<string | null>(null)
 
   const applicationQ = useQuery({
     queryKey: ['application-review', studentId],
@@ -102,6 +105,11 @@ export default function StudentDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['application-scores', studentId] })
     },
     onError: () => showToast('Failed to submit score', 'error'),
+  })
+  const assistantMut = useMutation({
+    mutationFn: () => chatInstitutionAssistant(assistantPrompt, app.program_id),
+    onSuccess: (data) => setAssistantReply(data.reply),
+    onError: () => showToast('Assistant request failed', 'error'),
   })
 
   if (applicationQ.isLoading) {
@@ -295,6 +303,29 @@ export default function StudentDetailPage() {
                     )}
                   </>
                 )}
+
+                <div className="border-t pt-4 mt-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Ask Institution Assistant (OpenAI)</h4>
+                  <div className="flex gap-2">
+                    <Input
+                      value={assistantPrompt}
+                      onChange={e => setAssistantPrompt(e.target.value)}
+                      placeholder="Ask: How should we triage this applicant?"
+                      className="flex-1"
+                    />
+                    <Button
+                      onClick={() => assistantMut.mutate()}
+                      disabled={assistantMut.isPending || !assistantPrompt.trim()}
+                    >
+                      {assistantMut.isPending ? 'Thinking...' : 'Ask AI'}
+                    </Button>
+                  </div>
+                  {assistantReply && (
+                    <div className="mt-3 bg-gray-50 border border-gray-200 rounded p-3">
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{assistantReply}</p>
+                    </div>
+                  )}
+                </div>
               </Card>
             )}
           </div>

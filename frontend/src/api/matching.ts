@@ -8,3 +8,11 @@ export const getMatchDetail = (programId: string) =>
 
 export const logEngagement = (programId: string, signalType: string, signalValue: number) =>
   apiClient.post('/students/me/engagement', { program_id: programId, signal_type: signalType, signal_value: signalValue }).then(r => r.data)
+
+export const chatStudentAssistant = (message: string, contextProgramId?: string) =>
+  apiClient
+    .post('/students/me/assistant/chat', {
+      message,
+      context_program_id: contextProgramId,
+    })
+    .then(r => r.data)

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getProgram } from '../../api/programs'
-import { getMatchDetail, logEngagement } from '../../api/matching'
+import { chatStudentAssistant, getMatchDetail, logEngagement } from '../../api/matching'
 import { listEvents, rsvpEvent } from '../../api/events'
 import { listMyApplications, createApplication } from '../../api/applications'
 import { saveProgram, unsaveProgram, listSaved } from '../../api/saved-lists'
@@ -23,6 +23,8 @@ export default function SchoolDetailPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [tab, setTab] = useState('overview')
+  const [assistantPrompt, setAssistantPrompt] = useState('')
+  const [assistantReply, setAssistantReply] = useState<string | null>(null)
 
   const { data: program, isLoading } = useQuery({
     queryKey: ['program', programId],
@@ -68,6 +70,11 @@ export default function SchoolDetailPage() {
   const rsvpMut = useMutation({
     mutationFn: rsvpEvent,
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['events'] }); showToast('RSVP confirmed', 'success') },
+  })
+  const assistantMut = useMutation({
+    mutationFn: () => chatStudentAssistant(assistantPrompt, programId),
+    onSuccess: (data: { reply: string }) => setAssistantReply(data.reply),
+    onError: () => showToast('Assistant request failed', 'error'),
   })
 
   if (isLoading) return <div className="p-6 space-y-4">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>
@@ -174,6 +181,29 @@ export default function SchoolDetailPage() {
                     <p className="text-sm text-gray-600 whitespace-pre-wrap">{match.reasoning_text}</p>
                   </div>
                 )}
+                <div className="mt-4 border-t pt-4">
+                  <h3 className="font-medium text-sm mb-2">Ask UniPaith Assistant (OpenAI)</h3>
+                  <div className="flex gap-2">
+                    <input
+                      value={assistantPrompt}
+                      onChange={e => setAssistantPrompt(e.target.value)}
+                      placeholder="Ask: What can I improve for this specific program?"
+                      className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => assistantMut.mutate()}
+                      disabled={assistantMut.isPending || !assistantPrompt.trim()}
+                    >
+                      {assistantMut.isPending ? 'Thinking...' : 'Ask'}
+                    </Button>
+                  </div>
+                  {assistantReply && (
+                    <div className="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{assistantReply}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
               <p className="text-sm text-gray-500">No match analysis available. Complete your profile to see how you fit.</p>
