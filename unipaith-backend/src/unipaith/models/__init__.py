@@ -1,40 +1,80 @@
-from unipaith.models.base import Base
-from unipaith.models.user import User, UserRole
-from unipaith.models.student import (
-    StudentProfile, AcademicRecord, TestScore, Activity,
-    StudentDocument, StudentPreference, RecommendationRequest,
-    OnboardingProgress,
-)
-from unipaith.models.institution import (
-    Institution, Program, TargetSegment, Campaign, CampaignRecipient,
-    Event, EventRSVP, Reviewer,
-)
+from unipaith.models.admin_audit_event import AdminAuditEvent
 from unipaith.models.application import (
-    HistoricalOutcome, Application, ApplicationChecklist,
-    ApplicationSubmission, ReviewAssignment, Rubric,
-    ApplicationScore, Interview, InterviewScore,
-    OfferLetter, EnrollmentRecord,
+    Application,
+    ApplicationChecklist,
+    ApplicationScore,
+    ApplicationSubmission,
+    EnrollmentRecord,
+    HistoricalOutcome,
+    Interview,
+    InterviewScore,
+    OfferLetter,
+    ReviewAssignment,
+    Rubric,
+)
+from unipaith.models.base import Base
+from unipaith.models.crawler import (
+    CrawlJob,
+    CrawlSchedule,
+    EnrichmentRecord,
+    ExtractedProgram,
+    SourceURLPattern,
 )
 from unipaith.models.engagement import (
-    StudentEngagementSignal, SavedList, SavedListItem,
-    StudentCalendar, CRMRecord, Conversation, Message,
-    StudentResume, StudentEssay,
+    Conversation,
+    CRMRecord,
+    Message,
+    SavedList,
+    SavedListItem,
+    StudentCalendar,
+    StudentEngagementSignal,
+    StudentEssay,
+    StudentResume,
+)
+from unipaith.models.institution import (
+    Campaign,
+    CampaignRecipient,
+    Event,
+    EventRSVP,
+    Institution,
+    Program,
+    Reviewer,
+    TargetSegment,
 )
 from unipaith.models.matching import (
-    MatchResult, StudentFeature, InstitutionFeature,
-    Embedding, PredictionLog, ModelRegistry,
-    DataSource, RawIngestedData, OfferComparison,
-)
-from unipaith.models.workflow import (
-    Notification, NotificationPreference, Touchpoint,
+    DataSource,
+    Embedding,
+    InstitutionFeature,
+    MatchResult,
+    ModelRegistry,
+    OfferComparison,
+    PredictionLog,
+    RawIngestedData,
+    StudentFeature,
 )
 from unipaith.models.ml_loop import (
-    OutcomeRecord, EvaluationRun, TrainingRun,
-    ABTestAssignment, DriftSnapshot, FairnessReport,
+    ABTestAssignment,
+    DriftSnapshot,
+    EvaluationRun,
+    FairnessReport,
+    OutcomeRecord,
+    TrainingRun,
 )
-from unipaith.models.crawler import (
-    CrawlJob, ExtractedProgram, CrawlSchedule,
-    SourceURLPattern, EnrichmentRecord,
+from unipaith.models.student import (
+    AcademicRecord,
+    Activity,
+    OnboardingProgress,
+    RecommendationRequest,
+    StudentDocument,
+    StudentPreference,
+    StudentProfile,
+    TestScore,
+)
+from unipaith.models.user import User, UserRole
+from unipaith.models.workflow import (
+    Notification,
+    NotificationPreference,
+    Touchpoint,
 )
 
 __all__ = [
@@ -59,4 +99,5 @@ __all__ = [
     "ABTestAssignment", "DriftSnapshot", "FairnessReport",
     "CrawlJob", "ExtractedProgram", "CrawlSchedule",
     "SourceURLPattern", "EnrichmentRecord",
+    "AdminAuditEvent",
 ]

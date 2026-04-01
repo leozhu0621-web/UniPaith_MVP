@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   bootstrapPrograms, refreshStudent, refreshProgram,
-  verifyInstitution,
+  verifyInstitution, getAdminActionAudit,
   getAIControlStatus, patchAIControlPolicy, runAIControlLoop, getAIControlAudit,
   getAIControlSLO, getAIEngineState, runAIEngineGraph,
 } from '../../api/admin'
@@ -42,6 +42,11 @@ export default function AdminSystemPage() {
     queryFn: getAIControlSLO,
     refetchInterval: 10000,
   })
+  const adminAuditQ = useQuery({
+    queryKey: ['admin', 'audit', 'actions', 'system'],
+    queryFn: () => getAdminActionAudit({ limit: 100 }),
+    refetchInterval: 10000,
+  })
 
   const bootstrapMut = useMutation({
     mutationFn: bootstrapPrograms,
@@ -59,7 +64,7 @@ export default function AdminSystemPage() {
     onError: (e: any) => addToast(e.message, 'error'),
   })
   const verifyMut = useMutation({
-    mutationFn: verifyInstitution,
+    mutationFn: (institutionId: string) => verifyInstitution(institutionId),
     onSuccess: () => { addToast('Institution verified', 'success'); setInstitutionId('') },
     onError: (e: any) => addToast(e.message, 'error'),
   })
@@ -231,6 +236,43 @@ export default function AdminSystemPage() {
                 <p className="text-xs text-gray-600 mt-1">
                   Status: {event.payload?.status ?? 'unknown'}
                 </p>
+              </div>
+            ))
+          )}
+        </div>
+      </Card>
+
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="font-semibold text-gray-900">Admin Action History</h3>
+            <p className="text-xs text-gray-500">Full feed of user and institution admin actions</p>
+          </div>
+          <Button
+            variant="secondary"
+            onClick={() => adminAuditQ.refetch()}
+            disabled={adminAuditQ.isFetching}
+          >
+            <RefreshCw size={14} className={`mr-2 ${adminAuditQ.isFetching ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
+        <div className="space-y-2 max-h-96 overflow-auto">
+          {(adminAuditQ.data?.items ?? []).length === 0 ? (
+            <p className="text-sm text-gray-500">No admin actions recorded yet.</p>
+          ) : (
+            (adminAuditQ.data?.items ?? []).map((event: any) => (
+              <div key={event.id} className="border border-gray-200 rounded-lg p-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-gray-900">{event.action}</p>
+                  <p className="text-xs text-gray-500">{event.created_at}</p>
+                </div>
+                <p className="text-xs text-gray-600 mt-1">
+                  {event.entity_type} · {event.entity_id}
+                </p>
+                {event.payload_json?.reason && (
+                  <p className="text-xs text-gray-500 mt-1">Reason: {event.payload_json.reason}</p>
+                )}
               </div>
             ))
           )}

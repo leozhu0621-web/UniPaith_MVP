@@ -5,18 +5,33 @@ export const getSystemStats = () =>
   apiClient.get('/admin/dashboard/stats').then(r => r.data)
 
 // ─── Internal: Users ───
-export const getUsers = (params?: { role?: string; skip?: number; limit?: number }) =>
+export const getUsers = (params?: {
+  role?: string
+  q?: string
+  is_active?: boolean
+  page?: number
+  page_size?: number
+}) =>
   apiClient.get('/internal/users', { params }).then(r => r.data)
 
-export const deactivateUser = (userId: string) =>
-  apiClient.patch(`/internal/users/${userId}/deactivate`).then(r => r.data)
+export const deactivateUser = (userId: string, reason?: string) =>
+  apiClient.patch(`/internal/users/${userId}/deactivate`, { reason }).then(r => r.data)
 
-export const activateUser = (userId: string) =>
-  apiClient.patch(`/internal/users/${userId}/activate`).then(r => r.data)
+export const activateUser = (userId: string, reason?: string) =>
+  apiClient.patch(`/internal/users/${userId}/activate`, { reason }).then(r => r.data)
+
+export const bulkSetUsersActive = (data: { user_ids: string[]; active: boolean; reason?: string }) =>
+  apiClient.post('/internal/users/bulk-active', data).then(r => r.data)
 
 // ─── Internal: Institutions ───
-export const verifyInstitution = (institutionId: string) =>
-  apiClient.patch(`/internal/institutions/${institutionId}/verify`).then(r => r.data)
+export const verifyInstitution = (institutionId: string, reason?: string) =>
+  apiClient.patch(`/internal/institutions/${institutionId}/verify`, { reason }).then(r => r.data)
+
+export const bulkVerifyInstitutions = (data: { institution_ids: string[]; reason?: string }) =>
+  apiClient.post('/internal/institutions/bulk-verify', data).then(r => r.data)
+
+export const getAdminActionAudit = (params?: { limit?: number; entity_type?: string }) =>
+  apiClient.get('/internal/audit/admin-actions', { params }).then(r => r.data)
 
 // ─── Internal: AI Admin ───
 export const bootstrapPrograms = () =>

@@ -28,6 +28,21 @@ class AIControlPolicyPatchRequest(BaseModel):
     emergency_stop: bool | None = None
 
 
+class ActionReasonRequest(BaseModel):
+    reason: str | None = None
+
+
+class BulkUsersActiveRequest(BaseModel):
+    user_ids: list[UUID]
+    active: bool
+    reason: str | None = None
+
+
+class BulkInstitutionsVerifyRequest(BaseModel):
+    institution_ids: list[UUID]
+    reason: str | None = None
+
+
 @router.get("/stats")
 async def platform_stats(
     user: User = Depends(require_admin),
@@ -39,6 +54,8 @@ async def platform_stats(
 @router.get("/users")
 async def list_users(
     role: str | None = Query(None),
+    q: str | None = Query(None),
+    is_active: bool | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     user: User = Depends(require_admin),
@@ -46,6 +63,8 @@ async def list_users(
 ):
     result = await InternalAdminService(db).list_users(
         role=role,
+        q=q,
+        is_active=is_active,
         page=page,
         page_size=page_size,
     )
@@ -60,31 +79,89 @@ async def list_users(
 @router.patch("/users/{user_id}/deactivate")
 async def deactivate_user(
     user_id: UUID,
+    payload: ActionReasonRequest | None = None,
     admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    target = await InternalAdminService(db).set_user_active(user_id, active=False)
+    target = await InternalAdminService(db).set_user_active(
+        user_id=user_id,
+        active=False,
+        actor_user_id=admin.id,
+        reason=payload.reason if payload else None,
+    )
     return {"message": f"User {target.id} deactivated"}
 
 
 @router.patch("/users/{user_id}/activate")
 async def activate_user(
     user_id: UUID,
+    payload: ActionReasonRequest | None = None,
     admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    target = await InternalAdminService(db).set_user_active(user_id, active=True)
+    target = await InternalAdminService(db).set_user_active(
+        user_id=user_id,
+        active=True,
+        actor_user_id=admin.id,
+        reason=payload.reason if payload else None,
+    )
     return {"message": f"User {target.id} activated"}
 
 
 @router.patch("/institutions/{institution_id}/verify")
 async def verify_institution(
     institution_id: UUID,
+    payload: ActionReasonRequest | None = None,
     admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    inst = await InternalAdminService(db).verify_institution(institution_id)
+    inst = await InternalAdminService(db).verify_institution(
+        institution_id=institution_id,
+        actor_user_id=admin.id,
+        reason=payload.reason if payload else None,
+    )
     return {"message": f"Institution {inst.name} verified"}
+
+
+@router.post("/users/bulk-active")
+async def bulk_set_users_active(
+    payload: BulkUsersActiveRequest,
+    admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await InternalAdminService(db).bulk_set_users_active(
+        user_ids=payload.user_ids,
+        active=payload.active,
+        actor_user_id=admin.id,
+        reason=payload.reason,
+    )
+
+
+@router.post("/institutions/bulk-verify")
+async def bulk_verify_institutions(
+    payload: BulkInstitutionsVerifyRequest,
+    admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await InternalAdminService(db).bulk_verify_institutions(
+        institution_ids=payload.institution_ids,
+        actor_user_id=admin.id,
+        reason=payload.reason,
+    )
+
+
+@router.get("/audit/admin-actions")
+async def list_admin_audit_actions(
+    limit: int = Query(50, ge=1, le=500),
+    entity_type: str | None = Query(None),
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    items = await InternalAdminService(db).list_admin_audit_events(
+        limit=limit,
+        entity_type=entity_type,
+    )
+    return {"items": items}
 
 
 # --- AI Admin ---

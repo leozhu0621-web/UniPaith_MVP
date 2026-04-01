@@ -7,7 +7,8 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.core.data_safety import assert_core_role_coverage, ensure_can_deactivate_user
-from unipaith.core.exceptions import NotFoundException
+from unipaith.core.exceptions import BadRequestException, NotFoundException
+from unipaith.models.admin_audit_event import AdminAuditEvent
 from unipaith.models.application import Application
 from unipaith.models.engagement import StudentEngagementSignal
 from unipaith.models.institution import Institution, Program
@@ -56,37 +57,67 @@ class InternalAdminService:
     async def list_users(
         self,
         role: str | None,
+        q: str | None,
+        is_active: bool | None,
         page: int,
         page_size: int,
     ) -> UserListResult:
-        stmt = select(User)
+        stmt = (
+            select(
+                User,
+                Institution.id.label("institution_id"),
+                Institution.is_verified.label("institution_verified"),
+            )
+            .outerjoin(Institution, Institution.admin_user_id == User.id)
+            .order_by(User.created_at.desc())
+        )
         if role:
-            stmt = stmt.where(User.role == UserRole(role))
+            try:
+                role_enum = UserRole(role)
+            except ValueError as exc:
+                raise BadRequestException("Invalid role filter") from exc
+            stmt = stmt.where(User.role == role_enum)
+        if q:
+            stmt = stmt.where(User.email.ilike(f"%{q.strip()}%"))
+        if is_active is not None:
+            stmt = stmt.where(User.is_active.is_(is_active))
 
         total = (
             await self.db.execute(select(func.count()).select_from(stmt.subquery()))
         ).scalar_one()
 
         results = await self.db.execute(stmt.offset((page - 1) * page_size).limit(page_size))
-        users = results.scalars().all()
+        rows = results.all()
 
         return UserListResult(
             items=[
                 {
-                    "id": str(u.id),
-                    "email": u.email,
-                    "role": u.role.value,
-                    "is_active": u.is_active,
-                    "created_at": u.created_at.isoformat() if u.created_at else None,
+                    "id": str(row.User.id),
+                    "email": row.User.email,
+                    "role": row.User.role.value,
+                    "is_active": row.User.is_active,
+                    "created_at": (
+                        row.User.created_at.isoformat() if row.User.created_at else None
+                    ),
+                    "institution_id": (
+                        str(row.institution_id) if row.institution_id else None
+                    ),
+                    "institution_verified": row.institution_verified,
                 }
-                for u in users
+                for row in rows
             ],
             total=total,
             page=page,
             page_size=page_size,
         )
 
-    async def set_user_active(self, user_id: UUID, active: bool) -> User:
+    async def set_user_active(
+        self,
+        user_id: UUID,
+        active: bool,
+        actor_user_id: UUID | None = None,
+        reason: str | None = None,
+    ) -> User:
         result = await self.db.execute(select(User).where(User.id == user_id))
         target = result.scalar_one_or_none()
         if not target:
@@ -98,16 +129,189 @@ class InternalAdminService:
         target.is_active = active
         await self.db.flush()
         await assert_core_role_coverage(self.db)
+        await self._append_admin_audit(
+            actor_user_id=actor_user_id,
+            action="user_activate" if active else "user_deactivate",
+            entity_type="user",
+            entity_id=str(target.id),
+            payload={
+                "email": target.email,
+                "role": target.role.value,
+                "active": target.is_active,
+                "reason": reason,
+            },
+        )
         return target
 
-    async def verify_institution(self, institution_id: UUID) -> Institution:
+    async def verify_institution(
+        self,
+        institution_id: UUID,
+        actor_user_id: UUID | None = None,
+        reason: str | None = None,
+    ) -> Institution:
         result = await self.db.execute(select(Institution).where(Institution.id == institution_id))
         institution = result.scalar_one_or_none()
         if not institution:
             raise NotFoundException("Institution not found")
         institution.is_verified = True
         await self.db.flush()
+        await self._append_admin_audit(
+            actor_user_id=actor_user_id,
+            action="institution_verify",
+            entity_type="institution",
+            entity_id=str(institution.id),
+            payload={
+                "name": institution.name,
+                "verified": institution.is_verified,
+                "reason": reason,
+            },
+        )
         return institution
+
+    async def bulk_set_users_active(
+        self,
+        user_ids: list[UUID],
+        active: bool,
+        actor_user_id: UUID | None = None,
+        reason: str | None = None,
+    ) -> dict:
+        requested_ids = list(dict.fromkeys(user_ids))
+        if not requested_ids:
+            raise BadRequestException("user_ids cannot be empty")
+
+        result = await self.db.execute(select(User).where(User.id.in_(requested_ids)))
+        targets = {u.id: u for u in result.scalars().all()}
+
+        updated_user_ids: list[str] = []
+        for user_id in requested_ids:
+            user = targets.get(user_id)
+            if user is None:
+                continue
+            if active is False:
+                await ensure_can_deactivate_user(self.db, user)
+            user.is_active = active
+            updated_user_ids.append(str(user.id))
+
+        await self.db.flush()
+        await assert_core_role_coverage(self.db)
+        await self._append_admin_audit(
+            actor_user_id=actor_user_id,
+            action="users_bulk_activate" if active else "users_bulk_deactivate",
+            entity_type="user_bulk",
+            entity_id="bulk",
+            payload={
+                "requested_user_ids": [str(user_id) for user_id in requested_ids],
+                "updated_user_ids": updated_user_ids,
+                "not_found_user_ids": [
+                    str(user_id) for user_id in requested_ids if user_id not in targets
+                ],
+                "active": active,
+                "reason": reason,
+            },
+        )
+        return {
+            "requested_count": len(requested_ids),
+            "updated_count": len(updated_user_ids),
+            "updated_user_ids": updated_user_ids,
+            "not_found_user_ids": [
+                str(user_id) for user_id in requested_ids if user_id not in targets
+            ],
+        }
+
+    async def bulk_verify_institutions(
+        self,
+        institution_ids: list[UUID],
+        actor_user_id: UUID | None = None,
+        reason: str | None = None,
+    ) -> dict:
+        requested_ids = list(dict.fromkeys(institution_ids))
+        if not requested_ids:
+            raise BadRequestException("institution_ids cannot be empty")
+
+        result = await self.db.execute(
+            select(Institution).where(Institution.id.in_(requested_ids))
+        )
+        targets = {inst.id: inst for inst in result.scalars().all()}
+
+        verified_ids: list[str] = []
+        for institution_id in requested_ids:
+            inst = targets.get(institution_id)
+            if inst is None:
+                continue
+            inst.is_verified = True
+            verified_ids.append(str(inst.id))
+
+        await self.db.flush()
+        await self._append_admin_audit(
+            actor_user_id=actor_user_id,
+            action="institutions_bulk_verify",
+            entity_type="institution_bulk",
+            entity_id="bulk",
+            payload={
+                "requested_institution_ids": [
+                    str(institution_id) for institution_id in requested_ids
+                ],
+                "verified_institution_ids": verified_ids,
+                "not_found_institution_ids": [
+                    str(institution_id)
+                    for institution_id in requested_ids
+                    if institution_id not in targets
+                ],
+                "reason": reason,
+            },
+        )
+        return {
+            "requested_count": len(requested_ids),
+            "verified_count": len(verified_ids),
+            "verified_institution_ids": verified_ids,
+            "not_found_institution_ids": [
+                str(institution_id)
+                for institution_id in requested_ids
+                if institution_id not in targets
+            ],
+        }
+
+    async def list_admin_audit_events(
+        self,
+        limit: int = 50,
+        entity_type: str | None = None,
+    ) -> list[dict]:
+        stmt = select(AdminAuditEvent).order_by(AdminAuditEvent.created_at.desc()).limit(limit)
+        if entity_type:
+            stmt = stmt.where(AdminAuditEvent.entity_type == entity_type)
+        result = await self.db.execute(stmt)
+        events = result.scalars().all()
+        return [
+            {
+                "id": str(event.id),
+                "actor_user_id": str(event.actor_user_id) if event.actor_user_id else None,
+                "action": event.action,
+                "entity_type": event.entity_type,
+                "entity_id": event.entity_id,
+                "payload_json": event.payload_json,
+                "created_at": event.created_at.isoformat() if event.created_at else None,
+            }
+            for event in events
+        ]
+
+    async def _append_admin_audit(
+        self,
+        actor_user_id: UUID | None,
+        action: str,
+        entity_type: str,
+        entity_id: str,
+        payload: dict | None = None,
+    ) -> None:
+        self.db.add(
+            AdminAuditEvent(
+                actor_user_id=actor_user_id,
+                action=action,
+                entity_type=entity_type,
+                entity_id=entity_id,
+                payload_json=payload or {},
+            )
+        )
+        await self.db.flush()
 
     async def get_dashboard_stats(self) -> dict:
         total_users = await self.db.scalar(select(func.count(User.id)))
