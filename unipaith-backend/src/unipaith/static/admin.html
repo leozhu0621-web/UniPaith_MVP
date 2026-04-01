@@ -115,6 +115,12 @@ tr:hover td { background: #1c2128; }
     </div>
   </div>
 
+  <!-- Health Monitor -->
+  <div class="section" id="healthSection">
+    <h2>Health Monitor <button class="refresh-btn" onclick="loadHealth()">[refresh]</button></h2>
+    <div id="healthContent" style="display: flex; gap: 16px; flex-wrap: wrap;">Loading...</div>
+  </div>
+
   <!-- AI Status -->
   <div class="section">
     <h2>Engine Status <button class="refresh-btn" onclick="loadAIStatus()">[refresh]</button></h2>
@@ -303,15 +309,76 @@ async function triggerBootstrap() {
   }
 }
 
+async function loadHealth() {
+  try {
+    const data = await api('/internal/health');
+    const el = document.getElementById('healthContent');
+    const checks = data.checks || {};
+    let html = '';
+
+    // Overall status banner
+    const colors = { healthy: 'green', degraded: 'yellow', critical: 'red' };
+    html += `<div style="width:100%;padding:12px;border-radius:6px;background:${data.status==='healthy'?'#238636':data.status==='degraded'?'#9e6a03':'#da3633'};color:#fff;font-weight:600;margin-bottom:8px;">
+      Overall: ${data.status.toUpperCase()} &mdash; ${data.timestamp ? new Date(data.timestamp).toLocaleString() : ''}
+    </div>`;
+
+    // Database
+    if (checks.database) {
+      const db = checks.database;
+      html += `<div class="card" style="flex:1;min-width:200px;">
+        <h3>Database</h3>
+        <div class="value" style="font-size:20px;">${badge(db.status, db.status==='ok'?'green':'red')}</div>
+        <div class="sub">${db.latency_ms ? db.latency_ms + 'ms latency' : db.error || ''}</div>
+      </div>`;
+    }
+
+    // Crawl
+    if (checks.crawl) {
+      const c = checks.crawl;
+      html += `<div class="card" style="flex:1;min-width:200px;">
+        <h3>Crawl Pipeline</h3>
+        <div class="value" style="font-size:20px;">${badge(c.status, c.status==='ok'?'green':c.status==='warning'?'yellow':'red')}</div>
+        <div class="sub">${c.total_programs_extracted || 0} programs | ${c.total_jobs || 0} jobs | ${c.recent_errors_1h || 0} errors/hr</div>
+      </div>`;
+    }
+
+    // OpenAI
+    if (checks.openai) {
+      const o = checks.openai;
+      html += `<div class="card" style="flex:1;min-width:200px;">
+        <h3>OpenAI API</h3>
+        <div class="value" style="font-size:20px;">${badge(o.status, o.status==='ok'?'green':'red')}</div>
+        <div class="sub">Model: ${o.model || '—'} | Key: ${o.api_key_configured ? 'configured' : 'MISSING'}</div>
+      </div>`;
+    }
+
+    el.innerHTML = html;
+
+    // Update header status dot based on health
+    const dot = document.getElementById('engineStatus');
+    const text = document.getElementById('engineStatusText');
+    if (data.status === 'healthy') {
+      dot.className = 'status-dot green';
+    } else if (data.status === 'degraded') {
+      dot.className = 'status-dot yellow';
+    } else {
+      dot.className = 'status-dot red';
+    }
+  } catch (e) {
+    document.getElementById('healthContent').innerHTML = `<div style="color:#f85149;">Health check failed: ${e.message}</div>`;
+  }
+}
+
 // Initial load
 refreshStatus();
+loadHealth();
 loadCosts();
 loadAIStatus();
 loadCrawlJobs();
 loadExtracted();
 
 // Auto-refresh every 30s
-setInterval(() => { refreshStatus(); loadCosts(); }, 30000);
+setInterval(() => { refreshStatus(); loadHealth(); loadCosts(); }, 30000);
 </script>
 
 </body>

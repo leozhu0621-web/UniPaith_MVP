@@ -398,3 +398,102 @@ async def ai_status(user: User = Depends(require_admin)):
         status["70b_instance"]["idle_seconds"] = round(idle, 1) if idle else None
 
     return status
+
+
+@router.get("/health")
+async def engine_health(
+    db: AsyncSession = Depends(get_db),
+):
+    """Deep health check — used by the watchdog. No auth required for monitoring."""
+    import time
+    from datetime import datetime, timedelta, timezone
+
+    from unipaith.models.crawler import CrawlJob, ExtractedProgram
+    from unipaith.models.matching import DataSource
+
+    checks: dict = {}
+    overall = "healthy"
+
+    # 1. Database connectivity
+    try:
+        t0 = time.monotonic()
+        await db.execute(select(func.count()).select_from(DataSource))
+        db_ms = round((time.monotonic() - t0) * 1000, 1)
+        checks["database"] = {"status": "ok", "latency_ms": db_ms}
+        if db_ms > 5000:
+            checks["database"]["status"] = "slow"
+            overall = "degraded"
+    except Exception as exc:
+        checks["database"] = {"status": "error", "error": str(exc)}
+        overall = "critical"
+
+    # 2. Crawl activity
+    try:
+        one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
+        recent_jobs = (await db.execute(
+            select(func.count()).select_from(CrawlJob).where(
+                CrawlJob.created_at >= one_hour_ago
+            )
+        )).scalar_one()
+        recent_errors = (await db.execute(
+            select(func.count()).select_from(CrawlJob).where(
+                CrawlJob.status == "failed",
+                CrawlJob.created_at >= one_hour_ago,
+            )
+        )).scalar_one()
+        total_extracted = (await db.execute(
+            select(func.count()).select_from(ExtractedProgram)
+        )).scalar_one()
+        total_jobs = (await db.execute(
+            select(func.count()).select_from(CrawlJob)
+        )).scalar_one()
+        checks["crawl"] = {
+            "status": "ok",
+            "recent_jobs_1h": recent_jobs,
+            "recent_errors_1h": recent_errors,
+            "total_jobs": total_jobs,
+            "total_programs_extracted": total_extracted,
+        }
+        if recent_errors > 5:
+            checks["crawl"]["status"] = "warning"
+            if overall == "healthy":
+                overall = "degraded"
+    except Exception as exc:
+        checks["crawl"] = {"status": "error", "error": str(exc)}
+        overall = "critical"
+
+    # 3. OpenAI API reachability
+    try:
+        from unipaith.config import settings as s
+        has_key = bool(s.openai_api_key and len(s.openai_api_key) > 10)
+        checks["openai"] = {
+            "status": "ok" if has_key else "error",
+            "api_key_configured": has_key,
+            "model": s.llm_feature_model,
+        }
+        if not has_key:
+            overall = "critical"
+    except Exception as exc:
+        checks["openai"] = {"status": "error", "error": str(exc)}
+
+    # 4. Service uptime
+    import os
+    pid = os.getpid()
+    try:
+        import pathlib
+        stat_path = pathlib.Path(f"/proc/{pid}/stat")
+        if stat_path.exists():
+            boot_time = float(stat_path.read_text().split(")")[1].split()[19])
+            clk_tck = os.sysconf("SC_CLK_TCK")
+            with open("/proc/uptime") as f:
+                sys_uptime = float(f.read().split()[0])
+            proc_start = sys_uptime - (boot_time / clk_tck)
+            checks["uptime_seconds"] = round(sys_uptime - proc_start, 0) if proc_start > 0 else None
+    except Exception:
+        pass
+
+    return {
+        "status": overall,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "checks": checks,
+    }
