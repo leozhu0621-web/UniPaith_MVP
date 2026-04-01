@@ -53,6 +53,20 @@ export default function AdminOpsCenterPage() {
   const ml = snapshot?.ml ?? {}
   const latestRuns = snapshot?.processing?.latest_runs ?? {}
   const auditPreview = Array.isArray(snapshot?.audit_preview) ? snapshot.audit_preview : []
+  const schedulerOn = snapshot?.status?.scheduler?.self_driving_enabled
+  const latestTick = snapshot?.processing?.autonomy_loop?.last_tick_at
+  const latestEngineRun = snapshot?.processing?.engine?.last_run_completed_at
+
+  const hasProcessingHistory = Boolean(
+    latestTick
+    || latestEngineRun
+    || (crawler?.active_sources ?? 0) > 0
+    || (crawler?.active_jobs ?? 0) > 0
+    || ml?.active_model?.model_version
+    || latestRuns?.training?.id
+    || latestRuns?.evaluation?.id
+    || latestRuns?.drift?.id
+  )
 
   const anyMutationBusy = useMemo(
     () =>
@@ -126,6 +140,7 @@ export default function AdminOpsCenterPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">AI Operations Center</h1>
           <p className="text-sm text-gray-500">Unified live processing and controls for AI engine, crawler, and ML.</p>
+          <p className="text-xs text-gray-400 mt-1">Last updated: {snapshot?.timestamp ?? '—'}</p>
         </div>
         <Button variant="secondary" onClick={() => { snapshotQ.refetch(); sloQ.refetch() }} disabled={snapshotQ.isFetching}>
           {snapshotQ.isFetching ? 'Refreshing...' : 'Refresh'}
@@ -133,6 +148,23 @@ export default function AdminOpsCenterPage() {
       </div>
 
       <StatusBar snapshot={snapshot} />
+
+      {!hasProcessingHistory && (
+        <Card className="p-5 bg-blue-50 border-blue-200">
+          <h3 className="text-sm font-semibold text-blue-900 mb-2">What to do first</h3>
+          <div className="text-sm text-blue-800 space-y-1">
+            <p>1) Click <strong>Unlock Controls (5 min)</strong>.</p>
+            <p>2) Run <strong>Crawl All</strong> to ingest data.</p>
+            <p>3) Run <strong>ML Full Cycle</strong> to train/evaluate.</p>
+            <p>4) Enable <strong>Autonomy</strong> + <strong>Auto-Fix</strong> when ready.</p>
+            {!schedulerOn && (
+              <p className="pt-1">
+                Scheduler is currently off. You can still run actions manually from this page.
+              </p>
+            )}
+          </div>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2 space-y-6">
@@ -206,6 +238,7 @@ export default function AdminOpsCenterPage() {
                 <p>Crawl failures: {reliability?.crawl_failures_total ?? 0}</p>
                 <p>Training failures: {reliability?.training_failures_total ?? 0}</p>
                 <p>Consecutive autonomy failures: {reliability?.consecutive_autonomy_failures ?? 0}</p>
+                <p>Scheduler: {schedulerOn ? 'enabled' : 'disabled'}</p>
               </div>
             </div>
           </Card>
@@ -231,6 +264,7 @@ export default function AdminOpsCenterPage() {
               <p>Training: <span className="font-medium">{latestRuns?.training?.status ?? 'none'}</span></p>
               <p>Evaluation: <span className="font-medium">{latestRuns?.evaluation?.id ? 'available' : 'none'}</span></p>
               <p>Drift: <span className="font-medium">{latestRuns?.drift?.drift_detected ? 'detected' : 'clear'}</span></p>
+              <p>Last engine run: <span className="font-medium">{latestEngineRun ?? 'none'}</span></p>
             </div>
           </Card>
 
