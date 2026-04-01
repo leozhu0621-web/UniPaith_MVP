@@ -40,6 +40,9 @@ export default function AdminUsersPage() {
   })
 
   const users: any[] = Array.isArray(data) ? data : data?.users ?? data?.items ?? []
+  const activeUsers = users.filter(u => u.is_active !== false).length
+  const studentUsers = users.filter(u => u.role === 'student').length
+  const institutionUsers = users.filter(u => u.role === 'institution_admin').length
 
   if (isLoading) {
     return (
@@ -61,6 +64,25 @@ export default function AdminUsersPage() {
           <Users size={16} className="text-gray-400" />
           <span className="text-sm text-gray-500">{users.length} users shown</span>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wide text-gray-500">Visible Users</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{users.length}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wide text-gray-500">Active</p>
+          <p className="text-2xl font-bold text-emerald-600 mt-1">{activeUsers}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wide text-gray-500">Students</p>
+          <p className="text-2xl font-bold text-blue-600 mt-1">{studentUsers}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wide text-gray-500">Institution Admins</p>
+          <p className="text-2xl font-bold text-purple-600 mt-1">{institutionUsers}</p>
+        </Card>
       </div>
 
       {/* Filters */}
