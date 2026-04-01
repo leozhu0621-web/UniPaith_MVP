@@ -20,7 +20,7 @@ from unipaith.models.matching import (
     ModelRegistry,
     PredictionLog,
 )
-from unipaith.models.ml_loop import DriftSnapshot, EvaluationRun, TrainingRun
+from unipaith.models.ml_loop import DriftSnapshot, EvaluationRun, OutcomeRecord, TrainingRun
 from unipaith.services.ai_engine_orchestrator import AIEngineOrchestrator
 
 logger = logging.getLogger("unipaith.ai_control_plane")
@@ -509,3 +509,323 @@ class AIControlPlaneService:
             "reliability": status.get("reliability"),
             "audit_preview": (await self.list_audit_events(limit=20)),
         }
+
+    async def get_architecture_trace(
+        self,
+        include_runs: bool = True,
+        limit: int = 20,
+    ) -> dict[str, Any]:
+        now = datetime.now(UTC)
+        status = await self.get_status()
+
+        latest_outcome_row = await self.db.execute(
+            select(OutcomeRecord).order_by(OutcomeRecord.outcome_recorded_at.desc()).limit(1)
+        )
+        latest_outcome = latest_outcome_row.scalar_one_or_none()
+        latest_prediction_at = await self.db.scalar(select(func.max(PredictionLog.predicted_at)))
+
+        active_model_row = await self.db.execute(
+            select(ModelRegistry)
+            .where(ModelRegistry.is_active.is_(True))
+            .order_by(ModelRegistry.promoted_at.desc())
+            .limit(1)
+        )
+        active_model = active_model_row.scalar_one_or_none()
+        latest_model_event_row = await self.db.execute(
+            select(ModelRegistry)
+            .where(
+                (ModelRegistry.promoted_at.is_not(None))
+                | (ModelRegistry.retired_at.is_not(None))
+            )
+            .order_by(func.coalesce(ModelRegistry.promoted_at, ModelRegistry.retired_at).desc())
+            .limit(1)
+        )
+        latest_model_event = latest_model_event_row.scalar_one_or_none()
+
+        latest_runs = status.get("latest_runs", {})
+        engine_runtime = status.get("engine_runtime", {})
+        reliability = status.get("reliability", {})
+        ml_policy = status.get("ml_policy", {})
+
+        stage_rows: list[dict[str, Any]] = [
+            {
+                "stage_id": "ingest",
+                "label": "Ingest",
+                "status": self._status_from_value(
+                    latest_runs.get("crawl", {}).get("status")
+                    if latest_runs.get("crawl") else None,
+                    ok_values={"completed", "ok"},
+                    warn_values={"running", "pending"},
+                ),
+                "last_run_at": self._safe_dt(latest_runs.get("crawl", {}).get("created_at")),
+                "duration_ms": self._safe_num(engine_runtime.get("last_stage_durations_ms", {}).get("ingest")),
+                "counts": {
+                    "active_sources": status.get("engine", {}).get("active_sources"),
+                    "active_jobs": status.get("engine", {}).get("active_jobs")
+                    if "active_jobs" in status.get("engine", {})
+                    else None,
+                    "items_extracted": latest_runs.get("crawl", {}).get("items_extracted")
+                    if latest_runs.get("crawl") else None,
+                },
+                "error": None if reliability.get("crawl_failures_total", 0) == 0 else "recent_crawl_failures_detected",
+                "source": "crawler_jobs",
+            },
+            {
+                "stage_id": "understand",
+                "label": "LLM Understand",
+                "status": "ok" if status.get("engine", {}).get("features_generated", 0) and status.get("engine", {}).get("embeddings_generated", 0) else "warning",
+                "last_run_at": self._safe_dt(engine_runtime.get("last_run_completed_at")),
+                "duration_ms": self._safe_num(engine_runtime.get("last_stage_durations_ms", {}).get("feature_embedding")),
+                "counts": {
+                    "features_generated": status.get("engine", {}).get("features_generated"),
+                    "embeddings_generated": status.get("engine", {}).get("embeddings_generated"),
+                },
+                "error": None,
+                "source": "feature_embedding_pipeline",
+            },
+            {
+                "stage_id": "match",
+                "label": "Matching",
+                "status": "ok" if reliability.get("predictions_logged_total", 0) > 0 else "warning",
+                "last_run_at": self._safe_dt(latest_prediction_at),
+                "duration_ms": self._safe_num(engine_runtime.get("last_stage_durations_ms", {}).get("ml")),
+                "counts": {
+                    "predictions_logged_total": reliability.get("predictions_logged_total"),
+                    "stale_matches": reliability.get("stale_matches"),
+                },
+                "error": None,
+                "source": "prediction_logs",
+            },
+            {
+                "stage_id": "outcome",
+                "label": "Outcome Capture",
+                "status": "ok" if latest_outcome else "warning",
+                "last_run_at": latest_outcome.outcome_recorded_at if latest_outcome else None,
+                "duration_ms": None,
+                "counts": {
+                    "latest_outcome_source": latest_outcome.outcome_source if latest_outcome else None,
+                    "latest_outcome_value": latest_outcome.actual_outcome if latest_outcome else None,
+                },
+                "error": None if latest_outcome else "no_outcomes_recorded",
+                "source": "outcome_records",
+            },
+            {
+                "stage_id": "evaluation",
+                "label": "Evaluation/Drift/Fairness",
+                "status": (
+                    "warning"
+                    if latest_runs.get("drift", {}).get("drift_detected")
+                    else "ok" if latest_runs.get("evaluation") else "idle"
+                ),
+                "last_run_at": self._safe_dt(latest_runs.get("evaluation", {}).get("created_at")),
+                "duration_ms": None,
+                "counts": {
+                    "drift_detected": latest_runs.get("drift", {}).get("drift_detected")
+                    if latest_runs.get("drift") else None,
+                },
+                "error": None,
+                "source": "evaluation_runs_and_drift",
+            },
+            {
+                "stage_id": "training",
+                "label": "Training",
+                "status": self._status_from_value(
+                    latest_runs.get("training", {}).get("status")
+                    if latest_runs.get("training") else None,
+                    ok_values={"completed", "ok"},
+                    warn_values={"running", "pending"},
+                ),
+                "last_run_at": self._safe_dt(latest_runs.get("training", {}).get("created_at")),
+                "duration_ms": None,
+                "counts": {
+                    "mode_default_cycle": ml_policy.get("training_default_cycle_mode"),
+                    "mode_default_manual": ml_policy.get("training_default_manual_mode"),
+                },
+                "error": latest_runs.get("training", {}).get("failure_reason")
+                if latest_runs.get("training") else None,
+                "source": "training_runs",
+            },
+            {
+                "stage_id": "promotion",
+                "label": "Promotion/Rollback",
+                "status": "ok" if active_model else "warning",
+                "last_run_at": (
+                    latest_model_event.promoted_at
+                    if latest_model_event and latest_model_event.promoted_at
+                    else latest_model_event.retired_at if latest_model_event else None
+                ),
+                "duration_ms": None,
+                "counts": {
+                    "active_model_version": active_model.model_version if active_model else None,
+                    "latest_promoted_version": latest_model_event.model_version if latest_model_event else None,
+                },
+                "error": None if active_model else "no_active_model",
+                "source": "model_registry",
+            },
+        ]
+
+        runs: list[dict[str, Any]] = []
+        if include_runs:
+            runs.extend(await self._collect_training_run_traces(limit))
+            runs.extend(await self._collect_evaluation_run_traces(limit))
+            runs.extend(await self._collect_crawl_run_traces(limit))
+            runs.extend(self._collect_engine_runtime_trace(engine_runtime))
+            runs.sort(key=lambda r: r.get("started_at") or "", reverse=True)
+            runs = runs[:limit]
+
+        return {
+            "generated_at": now.isoformat(),
+            "stages": stage_rows,
+            "runs": runs,
+        }
+
+    async def _collect_training_run_traces(self, limit: int) -> list[dict[str, Any]]:
+        rows = (
+            await self.db.execute(
+                select(TrainingRun).order_by(TrainingRun.started_at.desc()).limit(limit)
+            )
+        ).scalars().all()
+        traces: list[dict[str, Any]] = []
+        for row in rows:
+            traces.append({
+                "run_id": str(row.id),
+                "run_type": "training",
+                "status": self._status_from_value(row.status, {"completed", "ok"}, {"running", "pending"}),
+                "started_at": row.started_at.isoformat() if row.started_at else None,
+                "completed_at": row.completed_at.isoformat() if row.completed_at else None,
+                "duration_ms": self._duration_ms(row.started_at, row.completed_at),
+                "stage_id": "training",
+                "mode": row.mode,
+                "trigger_reason": row.trigger_reason,
+                "metrics": {
+                    "new_outcomes_count": row.new_outcomes_count,
+                    "resulting_model_version": row.resulting_model_version,
+                    "status": row.status,
+                },
+                "links": {"kpi": "/admin/ml/kpis", "health": "/admin/ml/cycle/health"},
+            })
+        return traces
+
+    async def _collect_evaluation_run_traces(self, limit: int) -> list[dict[str, Any]]:
+        rows = (
+            await self.db.execute(
+                select(EvaluationRun).order_by(EvaluationRun.started_at.desc()).limit(limit)
+            )
+        ).scalars().all()
+        traces: list[dict[str, Any]] = []
+        for row in rows:
+            traces.append({
+                "run_id": str(row.id),
+                "run_type": "evaluation",
+                "status": "warning" if row.drift_detected else "ok",
+                "started_at": row.started_at.isoformat() if row.started_at else None,
+                "completed_at": row.completed_at.isoformat() if row.completed_at else None,
+                "duration_ms": self._duration_ms(row.started_at, row.completed_at),
+                "stage_id": "evaluation",
+                "mode": None,
+                "trigger_reason": "retraining_triggered" if row.retraining_triggered else "no_retraining",
+                "metrics": {
+                    "dataset_size": row.dataset_size,
+                    "model_version": row.model_version,
+                    "drift_detected": row.drift_detected,
+                },
+                "links": {"trend": "/admin/ml/trends", "health": "/admin/ml/cycle/health"},
+            })
+        return traces
+
+    async def _collect_crawl_run_traces(self, limit: int) -> list[dict[str, Any]]:
+        rows = (
+            await self.db.execute(
+                select(CrawlJob).order_by(CrawlJob.created_at.desc()).limit(limit)
+            )
+        ).scalars().all()
+        traces: list[dict[str, Any]] = []
+        for row in rows:
+            traces.append({
+                "run_id": str(row.id),
+                "run_type": "crawler",
+                "status": self._status_from_value(row.status, {"completed", "ok"}, {"running", "pending"}),
+                "started_at": row.created_at.isoformat() if row.created_at else None,
+                "completed_at": row.completed_at.isoformat() if row.completed_at else None,
+                "duration_ms": self._duration_ms(row.created_at, row.completed_at),
+                "stage_id": "ingest",
+                "mode": None,
+                "trigger_reason": row.status,
+                "metrics": {
+                    "pages_crawled": row.pages_crawled,
+                    "items_extracted": row.items_extracted,
+                    "items_ingested": row.items_ingested,
+                },
+                "links": {"smoke": "/admin/ml/scheduler/smoke"},
+            })
+        return traces
+
+    def _collect_engine_runtime_trace(self, engine_runtime: dict[str, Any]) -> list[dict[str, Any]]:
+        if not engine_runtime:
+            return []
+        return [{
+            "run_id": "engine-runtime-latest",
+            "run_type": "engine",
+            "status": self._status_from_value(
+                engine_runtime.get("status"),
+                {"ok", "completed", "idle"},
+                {"running", "pending"},
+            ),
+            "started_at": engine_runtime.get("last_run_started_at"),
+            "completed_at": engine_runtime.get("last_run_completed_at"),
+            "duration_ms": None,
+            "stage_id": "ingest",
+            "mode": None,
+            "trigger_reason": "engine_orchestrator",
+            "metrics": {
+                "current_stage": engine_runtime.get("current_stage"),
+                "last_stage_statuses": engine_runtime.get("last_stage_statuses"),
+                "last_stage_durations_ms": engine_runtime.get("last_stage_durations_ms"),
+            },
+            "links": {"health": "/admin/ml/cycle/health"},
+        }]
+
+    @staticmethod
+    def _duration_ms(started_at: datetime | None, completed_at: datetime | None) -> float | None:
+        if not started_at or not completed_at:
+            return None
+        return round((completed_at - started_at).total_seconds() * 1000, 2)
+
+    @staticmethod
+    def _safe_num(value: Any) -> float | None:
+        if value is None:
+            return None
+        try:
+            return float(value)
+        except Exception:
+            return None
+
+    @staticmethod
+    def _safe_dt(value: Any) -> datetime | None:
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value
+        if isinstance(value, str):
+            try:
+                return datetime.fromisoformat(value)
+            except Exception:
+                return None
+        return None
+
+    @staticmethod
+    def _status_from_value(
+        value: Any,
+        ok_values: set[str] | None = None,
+        warn_values: set[str] | None = None,
+    ) -> str:
+        if value is None:
+            return "idle"
+        normalized = str(value).lower()
+        ok_values = ok_values or {"ok", "healthy", "ready", "completed"}
+        warn_values = warn_values or {"running", "pending", "degraded", "warning"}
+        if normalized in ok_values:
+            return "ok"
+        if normalized in warn_values:
+            return "warning"
+        return "error"

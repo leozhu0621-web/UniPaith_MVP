@@ -9,6 +9,7 @@ import StatusBar from '../../components/admin/ops/StatusBar'
 import ProcessingTimeline from '../../components/admin/ops/ProcessingTimeline'
 import ControlPanel from '../../components/admin/ops/ControlPanel'
 import { useToastStore } from '../../stores/toast-store'
+import type { ArchitectureRunTrace, ArchitectureStageTrace } from '../../types'
 
 const UNLOCK_TTL_MS = 5 * 60 * 1000
 
@@ -20,12 +21,29 @@ function statusVariant(status: string | undefined): 'success' | 'warning' | 'dan
   return 'neutral'
 }
 
+function formatDurationMs(durationMs: number | null | undefined): string {
+  if (durationMs == null) return '—'
+  if (durationMs < 1000) return `${Math.round(durationMs)} ms`
+  return `${(durationMs / 1000).toFixed(2)} s`
+}
+
+const STAGE_ORDER = [
+  'ingest',
+  'understand',
+  'match',
+  'outcome',
+  'evaluation',
+  'training',
+  'promotion',
+]
+
 export default function AdminOpsCenterPage() {
   const navigate = useNavigate()
   const addToast = useToastStore(s => s.addToast)
   const {
     snapshotQ,
     sloQ,
+    architectureTraceQ,
     policyMut,
     runLoopMut,
     runEngineGraphMut,
@@ -56,6 +74,22 @@ export default function AdminOpsCenterPage() {
   const schedulerOn = snapshot?.status?.scheduler?.self_driving_enabled
   const latestTick = snapshot?.processing?.autonomy_loop?.last_tick_at
   const latestEngineRun = snapshot?.processing?.engine?.last_run_completed_at
+  const architectureTrace = architectureTraceQ.data
+  const stageById = useMemo(
+    () => {
+      const stages: ArchitectureStageTrace[] = Array.isArray(architectureTrace?.stages)
+        ? architectureTrace.stages
+        : []
+      return new Map(stages.map((stage) => [stage.stage_id, stage]))
+    },
+    [architectureTrace?.stages]
+  )
+  const orderedStages = STAGE_ORDER
+    .map(id => stageById.get(id))
+    .filter((stage): stage is ArchitectureStageTrace => Boolean(stage))
+  const traceRuns: ArchitectureRunTrace[] = Array.isArray(architectureTrace?.runs)
+    ? architectureTrace.runs
+    : []
 
   const hasProcessingHistory = Boolean(
     latestTick
@@ -195,6 +229,75 @@ export default function AdminOpsCenterPage() {
             onTriggerTraining={() => runAction('Training trigger', () => triggerTrainingMut.mutateAsync())}
             onDriftCheck={() => runAction('Drift check', () => driftCheckMut.mutateAsync())}
           />
+
+          <Card className="p-5">
+            <h3 className="text-sm font-semibold text-gray-800 mb-3">Architecture Stage Health</h3>
+            {architectureTraceQ.isLoading ? (
+              <Skeleton className="h-20" />
+            ) : (
+              <div className="space-y-2">
+                {orderedStages.map((stage) => (
+                  <div key={stage.stage_id} className="border border-gray-200 rounded-lg p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{stage.label}</p>
+                        <p className="text-xs text-gray-500">{stage.source}</p>
+                      </div>
+                      <Badge variant={statusVariant(stage.status)}>{stage.status}</Badge>
+                    </div>
+                    <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-gray-600">
+                      <p>Last run: {stage.last_run_at ?? '—'}</p>
+                      <p>Duration: {formatDurationMs(stage.duration_ms)}</p>
+                    </div>
+                    {stage.error && (
+                      <p className="mt-2 text-xs text-red-600">Error: {stage.error}</p>
+                    )}
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {Object.entries(stage.counts || {})
+                        .filter(([, value]) => value !== null && value !== undefined && value !== '')
+                        .slice(0, 4)
+                        .map(([key, value]) => (
+                          <span key={key} className="text-[11px] text-gray-600 bg-gray-100 rounded px-2 py-1">
+                            {key}: {String(value)}
+                          </span>
+                        ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          <Card className="p-5">
+            <h3 className="text-sm font-semibold text-gray-800 mb-3">Recent Run Traces</h3>
+            {architectureTraceQ.isLoading ? (
+              <Skeleton className="h-20" />
+            ) : traceRuns.length === 0 ? (
+              <p className="text-sm text-gray-500">No recent run traces yet.</p>
+            ) : (
+              <div className="space-y-2 max-h-96 overflow-auto">
+                {traceRuns.map((run) => (
+                  <div key={`${run.run_type}-${run.run_id}`} className="border border-gray-200 rounded-lg p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium text-gray-900">
+                        {run.run_type} · {run.stage_id}
+                      </p>
+                      <Badge variant={statusVariant(run.status)}>{run.status}</Badge>
+                    </div>
+                    <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-gray-600">
+                      <p>Start: {run.started_at ?? '—'}</p>
+                      <p>End: {run.completed_at ?? '—'}</p>
+                      <p>Duration: {formatDurationMs(run.duration_ms)}</p>
+                      <p>Mode: {run.mode ?? '—'}</p>
+                    </div>
+                    {run.trigger_reason && (
+                      <p className="mt-2 text-xs text-gray-600">Trigger: {run.trigger_reason}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
 
           <Card className="p-5">
             <h3 className="text-sm font-semibold text-gray-800 mb-3">Incidents & Audit Feed</h3>

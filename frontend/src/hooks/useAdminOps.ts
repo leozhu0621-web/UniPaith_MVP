@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  getArchitectureTrace,
   getAIOpsSnapshot,
   getAIControlSLO,
   patchAIControlPolicy,
@@ -23,6 +24,12 @@ export function useAdminOps() {
   const sloQ = useQuery({
     queryKey: ['admin', 'ops', 'slo'],
     queryFn: getAIControlSLO,
+    refetchInterval: 8000,
+  })
+
+  const architectureTraceQ = useQuery({
+    queryKey: ['admin', 'ops', 'architecture-trace'],
+    queryFn: () => getArchitectureTrace({ include_runs: true, limit: 20 }),
     refetchInterval: 8000,
   })
 
@@ -71,6 +78,7 @@ export function useAdminOps() {
   return {
     snapshotQ,
     sloQ,
+    architectureTraceQ,
     policyMut,
     runLoopMut,
     runEngineGraphMut,

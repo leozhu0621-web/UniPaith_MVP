@@ -769,3 +769,37 @@ export interface ConversationApiError {
     details?: Record<string, unknown>
   }
 }
+
+// ============ ADMIN ARCHITECTURE TRACE ============
+export type ArchitectureStageStatus = 'ok' | 'warning' | 'error' | 'idle'
+
+export interface ArchitectureStageTrace {
+  stage_id: string
+  label: string
+  status: ArchitectureStageStatus
+  last_run_at: string | null
+  duration_ms: number | null
+  counts: Record<string, string | number | null>
+  error: string | null
+  source: string
+}
+
+export interface ArchitectureRunTrace {
+  run_id: string
+  run_type: 'engine' | 'training' | 'evaluation' | 'crawler' | 'promotion' | 'outcome'
+  status: 'ok' | 'warning' | 'error' | 'idle' | 'degraded'
+  started_at: string | null
+  completed_at: string | null
+  duration_ms: number | null
+  stage_id: string
+  mode: string | null
+  trigger_reason: string | null
+  metrics: Record<string, unknown>
+  links: Record<string, string>
+}
+
+export interface ArchitectureTraceResponse {
+  generated_at: string
+  stages: ArchitectureStageTrace[]
+  runs: ArchitectureRunTrace[]
+}

@@ -132,3 +132,63 @@ async def test_scheduler_smoke(
     data = resp.json()
     assert "scheduler_effective_enabled" in data
     assert "expected_job_ids" in data
+
+
+@pytest.mark.asyncio
+async def test_architecture_trace_shape_and_stage_completeness(
+    admin_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_admin_user: User,
+):
+    """admin_client GET /admin/ml/architecture-trace -> includes all expected stages."""
+    db_session.add(mock_admin_user)
+    await db_session.commit()
+
+    resp = await admin_client.get("/api/v1/admin/ml/architecture-trace")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "generated_at" in data
+    assert isinstance(data.get("stages"), list)
+    assert isinstance(data.get("runs"), list)
+
+    stage_ids = {stage["stage_id"] for stage in data["stages"]}
+    assert stage_ids == {
+        "ingest",
+        "understand",
+        "match",
+        "outcome",
+        "evaluation",
+        "training",
+        "promotion",
+    }
+    for stage in data["stages"]:
+        assert stage["source"]
+        assert stage["status"] in {"ok", "warning", "error", "idle"}
+
+
+@pytest.mark.asyncio
+async def test_architecture_trace_include_runs_toggle(
+    admin_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_admin_user: User,
+):
+    """architecture-trace should support include_runs flag and limit."""
+    db_session.add(mock_admin_user)
+    await db_session.commit()
+
+    resp_no_runs = await admin_client.get(
+        "/api/v1/admin/ml/architecture-trace",
+        params={"include_runs": False},
+    )
+    assert resp_no_runs.status_code == 200
+    data_no_runs = resp_no_runs.json()
+    assert data_no_runs["runs"] == []
+
+    resp_with_runs = await admin_client.get(
+        "/api/v1/admin/ml/architecture-trace",
+        params={"include_runs": True, "limit": 3},
+    )
+    assert resp_with_runs.status_code == 200
+    data_with_runs = resp_with_runs.json()
+    assert isinstance(data_with_runs["runs"], list)
+    assert len(data_with_runs["runs"]) <= 3

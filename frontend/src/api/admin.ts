@@ -215,3 +215,6 @@ export const updateFairnessDial = (data: { setting: string }) =>
 // ─── ML: Outcomes ───
 export const getOutcomeStats = () =>
   apiClient.get('/admin/ml/outcomes/stats').then(r => r.data)
+
+export const getArchitectureTrace = (params?: { include_runs?: boolean; limit?: number }) =>
+  apiClient.get('/admin/ml/architecture-trace', { params }).then(r => r.data)

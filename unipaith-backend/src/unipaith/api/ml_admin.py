@@ -35,6 +35,7 @@ from unipaith.models.ml_loop import (
 from unipaith.models.matching import ModelRegistry
 from unipaith.models.user import User
 from unipaith.schemas.ml_loop import (
+    ArchitectureTraceResponse,
     CycleHealthResponse,
     CreateExperimentRequest,
     CycleResultResponse,
@@ -54,6 +55,7 @@ from unipaith.schemas.ml_loop import (
     TrendPoint,
     SchedulerSmokeResponse,
 )
+from unipaith.services.ai_control_plane_service import AIControlPlaneService
 
 logger = logging.getLogger(__name__)
 
@@ -721,3 +723,18 @@ async def scheduler_smoke(
         missing_job_ids=missing,
         next_run_times=next_run_times,
     )
+
+
+@router.get("/architecture-trace", response_model=ArchitectureTraceResponse)
+async def architecture_trace(
+    include_runs: bool = Query(default=True),
+    limit: int = Query(default=20, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_admin),
+):
+    """Full architecture-stage monitoring payload for Admin Ops Center."""
+    trace = await AIControlPlaneService(db).get_architecture_trace(
+        include_runs=include_runs,
+        limit=limit,
+    )
+    return ArchitectureTraceResponse.model_validate(trace)
