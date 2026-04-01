@@ -9,8 +9,8 @@ const navItems = [
   { to: '/admin', icon: LayoutDashboard, label: 'Overview', end: true },
   { to: '/admin/system', icon: Cpu, label: 'AI Engine' },
   { to: '/admin/users', icon: Users, label: 'Users' },
-  { to: '/admin/crawler', icon: Bug, label: 'Data & Crawl' },
-  { to: '/admin/ml', icon: Brain, label: 'ML Pipeline' },
+  { to: '/admin/crawler', icon: Bug, label: 'Data Intake' },
+  { to: '/admin/ml', icon: Brain, label: 'AI Learning' },
   { to: '/admin/system', icon: Settings, label: 'System Tools' },
 ]
 

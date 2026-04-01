@@ -107,7 +107,7 @@ export default function StudentDetailPage() {
     onError: () => showToast('Failed to submit score', 'error'),
   })
   const assistantMut = useMutation({
-    mutationFn: () => chatInstitutionAssistant(assistantPrompt, app.program_id),
+    mutationFn: () => chatInstitutionAssistant(assistantPrompt, app?.program_id),
     onSuccess: (data) => setAssistantReply(data.reply),
     onError: () => showToast('Assistant request failed', 'error'),
   })
