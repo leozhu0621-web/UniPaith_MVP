@@ -43,6 +43,7 @@ from unipaith.schemas.ml_loop import (
     ExperimentResultResponse,
     FairnessDialRequest,
     FairnessReportResponse,
+    LearningTrendsResponse,
     LearningKPIResponse,
     ModelListResponse,
     ModelVersionResponse,
@@ -50,6 +51,8 @@ from unipaith.schemas.ml_loop import (
     PromoteModelRequest,
     TriggerTrainingRequest,
     TrainingRunResponse,
+    TrendPoint,
+    SchedulerSmokeResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -586,4 +589,135 @@ async def cycle_health(
         latest_cycle_decision=latest_cycle_decision,
         blocking_reasons=blocking_reasons,
         readiness_score=round(readiness_score, 3),
+    )
+
+
+@router.get("/trends", response_model=LearningTrendsResponse)
+async def learning_trends(
+    days: int = Query(default=7, ge=3, le=30),
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_admin),
+):
+    """Time-series signals for ML learning speed and cycle throughput."""
+    now = datetime.now(timezone.utc)
+    since = now - timedelta(days=days)
+
+    eval_rows = (
+        await db.execute(
+            select(EvaluationRun).where(EvaluationRun.started_at >= since)
+        )
+    ).scalars().all()
+    train_rows = (
+        await db.execute(
+            select(TrainingRun).where(TrainingRun.started_at >= since)
+        )
+    ).scalars().all()
+    outcome_rows = (
+        await db.execute(
+            select(OutcomeRecord).where(OutcomeRecord.outcome_recorded_at >= since)
+        )
+    ).scalars().all()
+
+    timeline_days: list[str] = [
+        (now - timedelta(days=offset)).date().isoformat()
+        for offset in reversed(range(days))
+    ]
+    eval_count = {d: 0 for d in timeline_days}
+    train_ok_count = {d: 0 for d in timeline_days}
+    train_fail_count = {d: 0 for d in timeline_days}
+    eval_to_train_hours: dict[str, list[float]] = {d: [] for d in timeline_days}
+    outcome_to_eval_hours: dict[str, list[float]] = {d: [] for d in timeline_days}
+
+    outcomes_by_day: dict[str, list[datetime]] = {d: [] for d in timeline_days}
+    for o in outcome_rows:
+        day = o.outcome_recorded_at.date().isoformat()
+        if day in outcomes_by_day:
+            outcomes_by_day[day].append(o.outcome_recorded_at)
+
+    eval_lookup: list[datetime] = []
+    for e in eval_rows:
+        day = e.started_at.date().isoformat()
+        if day in eval_count:
+            eval_count[day] += 1
+            eval_lookup.append(e.started_at)
+            same_day_outcomes = outcomes_by_day.get(day, [])
+            if same_day_outcomes:
+                latest_outcome = max(same_day_outcomes)
+                if e.started_at >= latest_outcome:
+                    outcome_to_eval_hours[day].append(
+                        (e.started_at - latest_outcome).total_seconds() / 3600
+                    )
+    eval_lookup.sort()
+
+    for t in train_rows:
+        day = t.started_at.date().isoformat()
+        if t.status == "completed" and day in train_ok_count:
+            train_ok_count[day] += 1
+        elif t.status == "failed" and day in train_fail_count:
+            train_fail_count[day] += 1
+        if day in eval_to_train_hours and eval_lookup:
+            prior_eval = None
+            for e_start in reversed(eval_lookup):
+                if e_start <= t.started_at:
+                    prior_eval = e_start
+                    break
+            if prior_eval is not None:
+                eval_to_train_hours[day].append(
+                    (t.started_at - prior_eval).total_seconds() / 3600
+                )
+
+    def _avg(values: list[float]) -> float:
+        if not values:
+            return 0.0
+        return round(sum(values) / len(values), 3)
+
+    return LearningTrendsResponse(
+        generated_at=now,
+        evals_per_day=[TrendPoint(date=d, value=float(eval_count[d])) for d in timeline_days],
+        completed_trains_per_day=[TrendPoint(date=d, value=float(train_ok_count[d])) for d in timeline_days],
+        failed_trains_per_day=[TrendPoint(date=d, value=float(train_fail_count[d])) for d in timeline_days],
+        avg_hours_eval_to_train_per_day=[
+            TrendPoint(date=d, value=_avg(eval_to_train_hours[d])) for d in timeline_days
+        ],
+        avg_hours_outcome_to_eval_per_day=[
+            TrendPoint(date=d, value=_avg(outcome_to_eval_hours[d])) for d in timeline_days
+        ],
+    )
+
+
+@router.get("/scheduler/smoke", response_model=SchedulerSmokeResponse)
+async def scheduler_smoke(
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_admin),
+):
+    """Quick scheduler wiring/health check for production operations."""
+    del db  # endpoint does not require database IO
+    from unipaith.core.scheduler import scheduler
+
+    now = datetime.now(timezone.utc)
+    scheduler_effective_enabled = settings.scheduler_enabled or (
+        settings.scheduler_auto_enable_non_test and settings.environment != "test"
+    )
+    expected_job_ids = ["ml_evaluation", "ml_training", "feature_refresh", "crawler_weekly"]
+    if settings.gpu_mode == "aws":
+        expected_job_ids.append("gpu_idle_check")
+    if settings.scheduler_self_driving_enabled:
+        expected_job_ids.append("ai_self_driving")
+
+    jobs = scheduler.get_jobs() if scheduler.running else []
+    registered = [job.id for job in jobs]
+    missing = [job_id for job_id in expected_job_ids if job_id not in registered]
+    next_run_times = {
+        job.id: (job.next_run_time.isoformat() if job.next_run_time else None)
+        for job in jobs
+    }
+
+    return SchedulerSmokeResponse(
+        generated_at=now,
+        scheduler_effective_enabled=scheduler_effective_enabled,
+        scheduler_running=scheduler.running,
+        expected_job_ids=expected_job_ids,
+        registered_job_ids=registered,
+        missing_job_ids=missing,
+        next_run_times=next_run_times,
     )

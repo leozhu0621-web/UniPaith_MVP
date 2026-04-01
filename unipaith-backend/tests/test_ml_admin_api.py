@@ -97,3 +97,38 @@ async def test_cycle_health(
     assert "generated_at" in data
     assert "blocking_reasons" in data
     assert "readiness_score" in data
+
+
+@pytest.mark.asyncio
+async def test_learning_trends(
+    admin_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_admin_user: User,
+):
+    """admin_client GET /admin/ml/trends -> 200."""
+    db_session.add(mock_admin_user)
+    await db_session.commit()
+
+    resp = await admin_client.get("/api/v1/admin/ml/trends")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "generated_at" in data
+    assert "evals_per_day" in data
+    assert "completed_trains_per_day" in data
+
+
+@pytest.mark.asyncio
+async def test_scheduler_smoke(
+    admin_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_admin_user: User,
+):
+    """admin_client GET /admin/ml/scheduler/smoke -> 200."""
+    db_session.add(mock_admin_user)
+    await db_session.commit()
+
+    resp = await admin_client.get("/api/v1/admin/ml/scheduler/smoke")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "scheduler_effective_enabled" in data
+    assert "expected_job_ids" in data

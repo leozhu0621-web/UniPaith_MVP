@@ -220,3 +220,27 @@ class CycleHealthResponse(BaseModel):
     latest_cycle_decision: dict[str, Any] | None = None
     blocking_reasons: list[str]
     readiness_score: float
+
+
+class TrendPoint(BaseModel):
+    date: str
+    value: float
+
+
+class LearningTrendsResponse(BaseModel):
+    generated_at: datetime
+    evals_per_day: list[TrendPoint]
+    completed_trains_per_day: list[TrendPoint]
+    failed_trains_per_day: list[TrendPoint]
+    avg_hours_eval_to_train_per_day: list[TrendPoint]
+    avg_hours_outcome_to_eval_per_day: list[TrendPoint]
+
+
+class SchedulerSmokeResponse(BaseModel):
+    generated_at: datetime
+    scheduler_effective_enabled: bool
+    scheduler_running: bool
+    expected_job_ids: list[str]
+    registered_job_ids: list[str]
+    missing_job_ids: list[str]
+    next_run_times: dict[str, str | None]

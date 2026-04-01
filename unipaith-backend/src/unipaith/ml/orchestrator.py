@@ -277,11 +277,43 @@ class MLOrchestrator:
         ):
             retrain_reasons.append("max_training_age_exceeded")
 
+        since_7d = datetime.now(timezone.utc) - timedelta(days=7)
+        failed_runs_7d = int(
+            (
+                await self.db.execute(
+                    select(func.count()).select_from(TrainingRun).where(
+                        TrainingRun.started_at >= since_7d,
+                        TrainingRun.status == "failed",
+                    )
+                )
+            ).scalar()
+            or 0
+        )
+        total_runs_7d = int(
+            (
+                await self.db.execute(
+                    select(func.count()).select_from(TrainingRun).where(
+                        TrainingRun.started_at >= since_7d
+                    )
+                )
+            ).scalar()
+            or 0
+        )
+        failure_rate_7d = (
+            failed_runs_7d / total_runs_7d if total_runs_7d >= 1 else 0.0
+        )
+        degraded_mode_active = (
+            total_runs_7d >= settings.training_degraded_mode_min_runs
+            and failure_rate_7d >= settings.training_degraded_mode_failure_rate_threshold
+        )
+        if degraded_mode_active:
+            retrain_reasons.append("degraded_mode_active")
+
         training_needed = bool(retrain_reasons)
         configured_cycle_mode = settings.training_default_cycle_mode.lower()
         if configured_cycle_mode not in {"fast", "full"}:
             configured_cycle_mode = "fast"
-        training_mode = "fast" if any_drift else configured_cycle_mode
+        training_mode = "fast" if any_drift or degraded_mode_active else configured_cycle_mode
 
         trigger_reason = "none"
         if retrain_reasons:
@@ -308,6 +340,14 @@ class MLOrchestrator:
             "thresholds": {
                 "min_new_outcomes": settings.eval_retrain_min_new_outcomes,
                 "max_hours_without_training": settings.eval_retrain_max_hours_without_training,
+                "degraded_mode_failure_rate_threshold": settings.training_degraded_mode_failure_rate_threshold,
+                "degraded_mode_min_runs": settings.training_degraded_mode_min_runs,
+            },
+            "degraded_mode": {
+                "active": degraded_mode_active,
+                "failed_runs_7d": failed_runs_7d,
+                "total_runs_7d": total_runs_7d,
+                "failure_rate_7d": round(failure_rate_7d, 4),
             },
         }
 

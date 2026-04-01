@@ -137,6 +137,8 @@ class Settings(BaseSettings):
     training_default_cycle_mode: str = "fast"
     training_default_manual_mode: str = "full"
     training_recent_outcome_window_days: int = 365
+    training_degraded_mode_failure_rate_threshold: float = 0.5
+    training_degraded_mode_min_runs: int = 4
 
     # Model management
     model_promotion_min_improvement: float = 0.02

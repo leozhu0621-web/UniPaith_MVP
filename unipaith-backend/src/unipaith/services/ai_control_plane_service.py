@@ -119,6 +119,8 @@ class AIControlPlaneService:
                 "eval_retrain_max_hours_without_training": settings.eval_retrain_max_hours_without_training,
                 "training_default_cycle_mode": settings.training_default_cycle_mode,
                 "training_default_manual_mode": settings.training_default_manual_mode,
+                "training_degraded_mode_failure_rate_threshold": settings.training_degraded_mode_failure_rate_threshold,
+                "training_degraded_mode_min_runs": settings.training_degraded_mode_min_runs,
             },
             "reliability": {
                 "crawl_failures_total": int(recent_crawl_failures or 0),
