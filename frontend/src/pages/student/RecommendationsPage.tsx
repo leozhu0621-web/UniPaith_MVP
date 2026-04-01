@@ -32,7 +32,7 @@ export default function RecommendationsPage() {
   const [showModal, setShowModal] = useState(false)
   const [editItem, setEditItem] = useState<RecommendationRequest | null>(null)
 
-  const { data: recommendations, isLoading } = useQuery({
+  const { data: recommendations, isLoading, isError, error } = useQuery({
     queryKey: ['recommendations'],
     queryFn: listRecommendations,
   })
@@ -58,8 +58,26 @@ export default function RecommendationsPage() {
   })
 
   if (isLoading) return <div className="p-6 max-w-3xl mx-auto space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
+  if (isError) {
+    const message = error instanceof Error ? error.message : 'Failed to load recommendation requests.'
+    return (
+      <div className="p-6 max-w-3xl mx-auto">
+        <Card className="p-5">
+          <h1 className="text-xl font-semibold mb-2">Recommendation Letters</h1>
+          <p className="text-sm text-red-600">{message}</p>
+          <Button size="sm" className="mt-4" onClick={() => queryClient.invalidateQueries({ queryKey: ['recommendations'] })}>
+            Retry
+          </Button>
+        </Card>
+      </div>
+    )
+  }
 
-  const recs: RecommendationRequest[] = recommendations ?? []
+  const recs: RecommendationRequest[] = Array.isArray(recommendations)
+    ? recommendations
+    : Array.isArray((recommendations as any)?.items)
+      ? (recommendations as any).items
+      : []
 
   // Group by status
   const byStatus = { draft: [] as RecommendationRequest[], requested: [] as RecommendationRequest[], submitted: [] as RecommendationRequest[], received: [] as RecommendationRequest[] }

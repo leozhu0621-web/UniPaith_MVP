@@ -244,3 +244,34 @@ class SchedulerSmokeResponse(BaseModel):
     registered_job_ids: list[str]
     missing_job_ids: list[str]
     next_run_times: dict[str, str | None]
+
+
+class ArchitectureStageStatus(BaseModel):
+    stage_id: str
+    label: str
+    status: Literal["ok", "warning", "error", "idle"]
+    last_run_at: datetime | None = None
+    duration_ms: float | None = None
+    counts: dict[str, int | float | str | None] = Field(default_factory=dict)
+    error: str | None = None
+    source: str
+
+
+class ArchitectureRunTrace(BaseModel):
+    run_id: str
+    run_type: Literal["engine", "training", "evaluation", "crawler", "promotion", "outcome"]
+    status: Literal["ok", "warning", "error", "idle", "degraded"]
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    duration_ms: float | None = None
+    stage_id: str
+    mode: str | None = None
+    trigger_reason: str | None = None
+    metrics: dict[str, Any] = Field(default_factory=dict)
+    links: dict[str, str] = Field(default_factory=dict)
+
+
+class ArchitectureTraceResponse(BaseModel):
+    generated_at: datetime
+    stages: list[ArchitectureStageStatus]
+    runs: list[ArchitectureRunTrace]

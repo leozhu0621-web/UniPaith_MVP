@@ -45,6 +45,15 @@ type AdminUserRow = {
   institution_verified?: boolean | null
 }
 
+type AdminActionItem = {
+  id: string
+  action: string
+  entity_type: string
+  entity_id: string
+  payload_json?: Record<string, any> | null
+  created_at: string | null
+}
+
 type PendingAction =
   | { type: 'activate'; userIds: string[]; reason: string }
   | { type: 'deactivate'; userIds: string[]; reason: string }
@@ -59,6 +68,24 @@ type DbPendingAction =
       reason: string
     }
   | null
+
+const roleLabel = (role: AdminUserRow['role']) => {
+  if (role === 'institution_admin') return 'Institution team'
+  if (role === 'student') return 'Student'
+  return 'Platform admin'
+}
+
+const actionSentence = (event: AdminActionItem) => {
+  const when = event.created_at ? formatRelative(event.created_at) : 'unknown time'
+  const reason = event.payload_json?.reason ? ` Reason: ${event.payload_json.reason}.` : ''
+  if (event.action === 'user_activate') return `Access restored for a user ${when}.${reason}`
+  if (event.action === 'user_deactivate') return `Access paused for a user ${when}.${reason}`
+  if (event.action === 'institution_verify') return `Institution verified ${when}.${reason}`
+  if (event.action === 'users_bulk_activate') return `Bulk user restore action run ${when}.${reason}`
+  if (event.action === 'users_bulk_deactivate') return `Bulk user pause action run ${when}.${reason}`
+  if (event.action === 'institutions_bulk_verify') return `Bulk institution verification run ${when}.${reason}`
+  return `${event.action.split('_').join(' ')} ${when}.${reason}`
+}
 
 export default function AdminUsersPage() {
   const qc = useQueryClient()
@@ -208,6 +235,7 @@ export default function AdminUsersPage() {
   })
 
   const users: AdminUserRow[] = usersQ.data?.items ?? []
+  const auditItems: AdminActionItem[] = auditQ.data?.items ?? []
   const total = usersQ.data?.total ?? 0
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
   const selectableUserIds = users.filter(u => u.role !== 'admin').map(u => u.id)
@@ -245,6 +273,15 @@ export default function AdminUsersPage() {
       Boolean(u.institution_id) &&
       u.institution_verified !== true,
   ).length
+  const userActionById = useMemo(() => {
+    const map = new Map<string, AdminActionItem>()
+    for (const item of auditItems) {
+      if (item.entity_type === 'user' && item.entity_id && !map.has(item.entity_id)) {
+        map.set(item.entity_id, item)
+      }
+    }
+    return map
+  }, [auditItems])
 
   if (activeTab === 'users' && usersQ.isLoading) {
     return (
@@ -295,6 +332,19 @@ export default function AdminUsersPage() {
               <span className="text-sm text-gray-500">{total} users total</span>
             </div>
           </div>
+
+          <Card className="p-4 bg-blue-50 border-blue-200">
+            <p className="text-sm font-semibold text-blue-900">How this page helps your team</p>
+            <p className="text-sm text-blue-800 mt-1">
+              Find people quickly, review risky accounts, and perform safe account changes with
+              clear action history.
+            </p>
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 text-xs text-blue-900">
+              <p>1) Use search + filters to find the right group</p>
+              <p>2) Use “Needs attention” for priority queues</p>
+              <p>3) Run actions with confirmation and reason</p>
+            </div>
+          </Card>
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
             <Card className="p-4">
@@ -494,8 +544,8 @@ export default function AdminUsersPage() {
                   <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Role</th>
                   <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
                   <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Institution</th>
-                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Created</th>
-                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">ID</th>
+                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Last activity</th>
+                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Next step</th>
                   <th className="text-right px-6 py-3 text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
               </thead>
@@ -538,7 +588,7 @@ export default function AdminUsersPage() {
                                   : 'neutral'
                           }
                         >
-                          {u.role}
+                          {roleLabel(u.role)}
                         </Badge>
                       </td>
                       <td className="px-6 py-4">
@@ -571,13 +621,25 @@ export default function AdminUsersPage() {
                           <span className="text-xs text-gray-400">—</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {formatRelative(u.created_at)}
+                      <td className="px-6 py-4">
+                        {userActionById.get(u.id)?.created_at ? (
+                          <span className="text-sm text-gray-700">
+                            {formatRelative(userActionById.get(u.id)?.created_at ?? '')}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400">
+                            No admin action yet
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4">
-                        <code className="text-xs text-gray-400 font-mono">
-                          {u.id?.slice(0, 8)}...
-                        </code>
+                        {u.is_active === false ? (
+                          <span className="text-xs text-amber-700">Consider restoring access</span>
+                        ) : u.role === 'institution_admin' && u.institution_verified !== true ? (
+                          <span className="text-xs text-amber-700">Verify institution profile</span>
+                        ) : (
+                          <span className="text-xs text-emerald-700">No urgent action</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-right">
                         {u.role !== 'admin' &&
@@ -596,7 +658,7 @@ export default function AdminUsersPage() {
                               className="text-red-600 border-red-200 hover:bg-red-50"
                             >
                               <UserX size={14} className="mr-1" />
-                              Deactivate
+                              Pause access
                             </Button>
                           ) : (
                             <Button
@@ -612,7 +674,7 @@ export default function AdminUsersPage() {
                               disabled={activateMut.isPending}
                             >
                               <UserCheck size={14} className="mr-1" />
-                              Activate
+                              Restore access
                             </Button>
                           ))}
                         {u.institution_id && u.institution_verified !== true && (
@@ -694,24 +756,24 @@ export default function AdminUsersPage() {
 
           <Card className="p-4">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-medium text-gray-700">Recent admin actions</p>
-              <span className="text-xs text-gray-500">Quick feed</span>
+              <p className="text-sm font-medium text-gray-700">Recent team actions</p>
+              <span className="text-xs text-gray-500">Handoff-friendly feed</span>
             </div>
             <div className="space-y-2">
-              {(auditQ.data?.items ?? []).length === 0 ? (
+              {auditItems.length === 0 ? (
                 <p className="text-sm text-gray-500">No recent actions yet.</p>
               ) : (
-                (auditQ.data?.items ?? []).map((event: any) => (
+                auditItems.map((event: AdminActionItem) => (
                   <div key={event.id} className="rounded-lg border border-gray-200 p-3">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-gray-900">{event.action}</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {actionSentence(event)}
+                      </p>
                       <span className="text-xs text-gray-500">
                         {formatRelative(event.created_at)}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-600 mt-1">
-                      {event.entity_type} · {event.entity_id}
-                    </p>
+                    <p className="text-xs text-gray-600 mt-1">{event.entity_type}</p>
                   </div>
                 ))
               )}
