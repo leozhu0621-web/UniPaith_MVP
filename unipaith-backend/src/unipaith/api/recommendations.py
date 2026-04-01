@@ -53,9 +53,12 @@ async def create_recommendation(
     db: AsyncSession = Depends(get_db),
 ):
     student_id = await _get_student_id(user, db)
+    data = body.model_dump()
+    if "relationship" in data:
+        data["recommender_relationship"] = data.pop("relationship")
     rec = RecommendationRequest(
         student_id=student_id,
-        **body.model_dump(),
+        **data,
     )
     db.add(rec)
     await db.flush()
@@ -100,6 +103,8 @@ async def update_recommendation(
         raise NotFoundException("Recommendation request not found")
 
     update_data = body.model_dump(exclude_unset=True)
+    if "relationship" in update_data:
+        update_data["recommender_relationship"] = update_data.pop("relationship")
 
     # If status changes to 'requested', set requested_at
     if update_data.get("status") == "requested" and rec.status != "requested":

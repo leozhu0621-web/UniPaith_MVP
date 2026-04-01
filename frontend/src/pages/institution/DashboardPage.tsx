@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Plus, GitBranch, ClipboardCheck, Bell, BookOpen, MessageSquare, Calendar, Users } from 'lucide-react'
+import { LayoutDashboard, Plus, GitBranch, ClipboardCheck, Bell, BookOpen, Calendar, Users } from 'lucide-react'
 import { getInstitution, getInstitutionPrograms, getDashboardSummary } from '../../api/institutions'
 import { getNotifications } from '../../api/notifications'
 import Card from '../../components/ui/Card'

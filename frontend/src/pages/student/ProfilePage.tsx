@@ -15,7 +15,7 @@ import { SkeletonCard } from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatDate, formatCurrency, formatFileSize } from '../../utils/format'
 import { DEGREE_LABELS, TEST_TYPES, ACTIVITY_TYPES, GPA_SCALES, CITY_SIZE_OPTIONS, FUNDING_OPTIONS } from '../../utils/constants'
-import { Pencil, Trash2, Plus, Upload, Sparkles, ArrowRight, CheckCircle2, Circle } from 'lucide-react'
+import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle } from 'lucide-react'
 import type { StudentProfile } from '../../types'
 
 // --- Profile Strength Ring ---

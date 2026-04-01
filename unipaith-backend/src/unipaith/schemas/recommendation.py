@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CreateRecommendationRequest(BaseModel):
@@ -30,7 +30,7 @@ class UpdateRecommendationRequest(BaseModel):
 
 
 class RecommendationResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     id: UUID
     student_id: UUID
@@ -38,7 +38,7 @@ class RecommendationResponse(BaseModel):
     recommender_email: str | None = None
     recommender_title: str | None = None
     recommender_institution: str | None = None
-    relationship: str | None = None
+    relationship: str | None = Field(None, validation_alias="recommender_relationship")
     status: str
     requested_at: datetime | None = None
     due_date: date | None = None
