@@ -1,1 +1,2 @@
 {"sessionId":"65023e","runId":"initial","hypothesisId":"H3","location":"frontend/src/api/client.ts:response:error","message":"Axios response interceptor caught error","data":{"status":500,"url":"/notifications/unread-count","method":"get","hasRetry":false},"timestamp":1775078337584}
+{"sessionId":"65023e","runId":"initial","hypothesisId":"H3","location":"frontend/src/api/client.ts:response:error","message":"Axios response interceptor caught error","data":{"status":500,"url":"/notifications/unread-count","method":"get","hasRetry":false},"timestamp":1775078350371}
