@@ -37,6 +37,18 @@ const STAGE_ORDER = [
   'promotion',
 ]
 
+interface OpsError {
+  message?: string
+}
+
+interface AuditEvent {
+  event_type: string
+  timestamp: string
+  payload?: {
+    status?: string
+  }
+}
+
 export default function AdminOpsCenterPage() {
   const navigate = useNavigate()
   const addToast = useToastStore(s => s.addToast)
@@ -70,7 +82,9 @@ export default function AdminOpsCenterPage() {
   const crawler = snapshot?.crawler ?? {}
   const ml = snapshot?.ml ?? {}
   const latestRuns = snapshot?.processing?.latest_runs ?? {}
-  const auditPreview = Array.isArray(snapshot?.audit_preview) ? snapshot.audit_preview : []
+  const auditPreview: AuditEvent[] = Array.isArray(snapshot?.audit_preview)
+    ? snapshot.audit_preview
+    : []
   const schedulerOn = snapshot?.status?.scheduler?.self_driving_enabled
   const latestTick = snapshot?.processing?.autonomy_loop?.last_tick_at
   const latestEngineRun = snapshot?.processing?.engine?.last_run_completed_at
@@ -137,14 +151,15 @@ export default function AdminOpsCenterPage() {
     try {
       await policyMut.mutateAsync(patch)
       addToast('Policy updated', 'success')
-    } catch (e: any) {
-      addToast(e?.message ?? 'Failed to update policy', 'error')
+    } catch (e: unknown) {
+      const err = e as OpsError
+      addToast(err?.message ?? 'Failed to update policy', 'error')
     }
   }
 
   const runAction = async (
     name: string,
-    fn: () => Promise<any>,
+    fn: () => Promise<unknown>,
     confirmMessage?: string
   ) => {
     if (!ensureUnlocked()) return
@@ -153,8 +168,9 @@ export default function AdminOpsCenterPage() {
       await fn()
       addToast(`${name} started`, 'success')
       await invalidateOps()
-    } catch (e: any) {
-      addToast(e?.message ?? `${name} failed`, 'error')
+    } catch (e: unknown) {
+      const err = e as OpsError
+      addToast(err?.message ?? `${name} failed`, 'error')
     }
   }
 
@@ -305,7 +321,7 @@ export default function AdminOpsCenterPage() {
               {auditPreview.length === 0 ? (
                 <p className="text-sm text-gray-500">No recent incidents yet.</p>
               ) : (
-                auditPreview.slice().reverse().map((event: any, idx: number) => (
+                auditPreview.slice().reverse().map((event, idx: number) => (
                   <div key={`${event.timestamp}-${idx}`} className="border border-gray-200 rounded-lg p-3">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-medium text-gray-900">{event.event_type}</p>

@@ -12,7 +12,13 @@ from datetime import datetime, timezone
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
+
+try:
+    from sqlalchemy.ext.asyncio import async_sessionmaker
+except ImportError:  # SQLAlchemy < 2.0 compatibility
+    async_sessionmaker = sessionmaker
 
 from unipaith.config import settings
 from unipaith.database import get_db
