@@ -2,7 +2,8 @@ from unipaith.models.base import Base
 from unipaith.models.user import User, UserRole
 from unipaith.models.student import (
     StudentProfile, AcademicRecord, TestScore, Activity,
-    StudentDocument, StudentPreference, OnboardingProgress,
+    StudentDocument, StudentPreference, RecommendationRequest,
+    OnboardingProgress,
 )
 from unipaith.models.institution import (
     Institution, Program, TargetSegment, Campaign, CampaignRecipient,
@@ -39,7 +40,8 @@ from unipaith.models.crawler import (
 __all__ = [
     "Base", "User", "UserRole",
     "StudentProfile", "AcademicRecord", "TestScore", "Activity",
-    "StudentDocument", "StudentPreference", "OnboardingProgress",
+    "StudentDocument", "StudentPreference", "RecommendationRequest",
+    "OnboardingProgress",
     "Institution", "Program", "TargetSegment", "Campaign", "CampaignRecipient",
     "Event", "EventRSVP", "Reviewer",
     "HistoricalOutcome", "Application", "ApplicationChecklist",

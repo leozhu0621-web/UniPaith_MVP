@@ -19,6 +19,7 @@ import SignupPage from './pages/auth/SignupPage'
 import ProgramBrowsePage from './pages/public/ProgramBrowsePage'
 
 // Student pages
+import StudentDashboardPage from './pages/student/DashboardPage'
 import ChatPage from './pages/student/ChatPage'
 import ProfilePage from './pages/student/ProfilePage'
 import DiscoverPage from './pages/student/DiscoverPage'
@@ -28,6 +29,9 @@ import ApplicationDetailPage from './pages/student/ApplicationDetailPage'
 import SavedListPage from './pages/student/SavedListPage'
 import MessagesPage from './pages/student/MessagesPage'
 import CalendarPage from './pages/student/CalendarPage'
+import DeadlinesPage from './pages/student/DeadlinesPage'
+import FinancialAidPage from './pages/student/FinancialAidPage'
+import RecommendationsPage from './pages/student/RecommendationsPage'
 import StudentSettingsPage from './pages/student/SettingsPage'
 
 // Institution pages
@@ -72,7 +76,8 @@ const router = createBrowserRouter([
     path: '/s',
     element: <RequireAuth role="student"><StudentLayout /></RequireAuth>,
     children: [
-      { index: true, element: <Navigate to="/s/chat" replace /> },
+      { index: true, element: <Navigate to="/s/dashboard" replace /> },
+      { path: 'dashboard', element: <StudentDashboardPage /> },
       { path: 'chat', element: <ChatPage /> },
       { path: 'profile', element: <ProfilePage /> },
       { path: 'discover', element: <DiscoverPage /> },
@@ -83,6 +88,9 @@ const router = createBrowserRouter([
       { path: 'messages', element: <MessagesPage /> },
       { path: 'messages/:convId', element: <MessagesPage /> },
       { path: 'calendar', element: <CalendarPage /> },
+      { path: 'deadlines', element: <DeadlinesPage /> },
+      { path: 'financial-aid', element: <FinancialAidPage /> },
+      { path: 'recommendations', element: <RecommendationsPage /> },
       { path: 'settings', element: <StudentSettingsPage /> },
     ],
   },

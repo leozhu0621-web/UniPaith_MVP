@@ -59,6 +59,9 @@ class StudentProfile(Base):
     preferences: Mapped["StudentPreference | None"] = relationship(
         back_populates="student", uselist=False, cascade="all, delete-orphan"
     )
+    recommendation_requests: Mapped[list["RecommendationRequest"]] = relationship(
+        back_populates="student", cascade="all, delete-orphan"
+    )
     onboarding_progress: Mapped["OnboardingProgress | None"] = relationship(
         back_populates="student", uselist=False, cascade="all, delete-orphan"
     )
@@ -203,6 +206,36 @@ class StudentPreference(Base):
     )
 
     student: Mapped["StudentProfile"] = relationship(back_populates="preferences")
+
+
+class RecommendationRequest(Base):
+    __tablename__ = "recommendation_requests"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    recommender_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    recommender_email: Mapped[str | None] = mapped_column(String(255))
+    recommender_title: Mapped[str | None] = mapped_column(String(255))
+    recommender_institution: Mapped[str | None] = mapped_column(String(255))
+    relationship: Mapped[str | None] = mapped_column(String(100))
+    status: Mapped[str] = mapped_column(String(30), default="draft", nullable=False)
+    requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    due_date: Mapped[date | None] = mapped_column(Date)
+    notes: Mapped[str | None] = mapped_column(Text)
+    target_program_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    student: Mapped["StudentProfile"] = relationship(back_populates="recommendation_requests")
 
 
 class OnboardingProgress(Base):

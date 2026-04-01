@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
-import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, upsertPreferences } from '../../api/students'
+import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, upsertPreferences, getNextStep } from '../../api/students'
 import { getOnboarding } from '../../api/students'
 import { listDocuments } from '../../api/documents'
 import Modal from '../../components/ui/Modal'
@@ -10,14 +10,51 @@ import Input from '../../components/ui/Input'
 import Textarea from '../../components/ui/Textarea'
 import Select from '../../components/ui/Select'
 import Card from '../../components/ui/Card'
-import ProgressBar from '../../components/ui/ProgressBar'
 import Badge from '../../components/ui/Badge'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatDate, formatCurrency, formatFileSize } from '../../utils/format'
 import { DEGREE_LABELS, TEST_TYPES, ACTIVITY_TYPES, GPA_SCALES, CITY_SIZE_OPTIONS, FUNDING_OPTIONS } from '../../utils/constants'
-import { Pencil, Trash2, Plus, Upload } from 'lucide-react'
+import { Pencil, Trash2, Plus, Upload, Sparkles, ArrowRight, CheckCircle2, Circle } from 'lucide-react'
 import type { StudentProfile } from '../../types'
+
+// --- Profile Strength Ring ---
+function StrengthRing({ value }: { value: number }) {
+  const radius = 44
+  const stroke = 6
+  const circumference = 2 * Math.PI * radius
+  const offset = circumference - (value / 100) * circumference
+  const color = value >= 80 ? '#22c55e' : value >= 50 ? '#f59e0b' : '#ef4444'
+
+  return (
+    <div className="relative w-28 h-28 flex-shrink-0">
+      <svg className="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r={radius} fill="none" stroke="#e5e7eb" strokeWidth={stroke} />
+        <circle
+          cx="50" cy="50" r={radius} fill="none"
+          stroke={color} strokeWidth={stroke}
+          strokeDasharray={circumference} strokeDashoffset={offset}
+          strokeLinecap="round"
+          className="transition-all duration-700"
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-2xl font-bold">{value}%</span>
+        <span className="text-[10px] text-gray-500">Complete</span>
+      </div>
+    </div>
+  )
+}
+
+// --- Onboarding Section Checklist ---
+const PROFILE_SECTIONS = [
+  { key: 'basic_info', label: 'Basic Info', fields: ['first_name', 'last_name', 'nationality'] },
+  { key: 'academics', label: 'Academic Records', fields: [] },
+  { key: 'test_scores', label: 'Test Scores', fields: [] },
+  { key: 'activities', label: 'Activities', fields: [] },
+  { key: 'preferences', label: 'Preferences', fields: [] },
+  { key: 'documents', label: 'Documents', fields: [] },
+]
 
 export default function ProfilePage() {
   const queryClient = useQueryClient()
@@ -26,11 +63,13 @@ export default function ProfilePage() {
 
   const { data: profile, isLoading } = useQuery({ queryKey: ['profile'], queryFn: getProfile })
   const { data: onboarding } = useQuery({ queryKey: ['onboarding'], queryFn: getOnboarding })
+  const { data: nextStep } = useQuery({ queryKey: ['next-step'], queryFn: getNextStep })
   const { data: documents } = useQuery({ queryKey: ['documents'], queryFn: listDocuments })
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ['profile'] })
     queryClient.invalidateQueries({ queryKey: ['onboarding'] })
+    queryClient.invalidateQueries({ queryKey: ['next-step'] })
   }
 
   const profileMut = useMutation({ mutationFn: (data: any) => updateProfile(data), onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Profile updated', 'success') } })
@@ -48,13 +87,58 @@ export default function ProfilePage() {
   if (isLoading) return <div className="p-6 space-y-4">{Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}</div>
 
   const p: StudentProfile | null = profile
+  const completionPct = onboarding?.completion_percentage ?? 0
+  const stepsCompleted = onboarding?.steps_completed ?? []
+
+  // Derive section completion
+  const sectionDone = (key: string) => {
+    if (stepsCompleted.includes(key)) return true
+    switch (key) {
+      case 'basic_info': return !!(p?.first_name && p?.last_name && p?.nationality)
+      case 'academics': return (p?.academic_records ?? []).length > 0
+      case 'test_scores': return (p?.test_scores ?? []).length > 0
+      case 'activities': return (p?.activities ?? []).length > 0
+      case 'preferences': return !!p?.preferences
+      case 'documents': return (documents ?? []).length > 0
+      default: return false
+    }
+  }
 
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">My Profile</h1>
       </div>
-      <ProgressBar value={onboarding?.completion_percentage ?? 0} label="Profile completion" />
+
+      {/* Profile Strength Card */}
+      <Card className="p-5">
+        <div className="flex items-center gap-6">
+          <StrengthRing value={completionPct} />
+          <div className="flex-1 min-w-0">
+            <h2 className="font-semibold text-gray-900 mb-2">Profile Strength</h2>
+            <div className="grid grid-cols-2 gap-1.5">
+              {PROFILE_SECTIONS.map(s => (
+                <div key={s.key} className="flex items-center gap-2 text-sm">
+                  {sectionDone(s.key) ? (
+                    <CheckCircle2 size={14} className="text-green-500 flex-shrink-0" />
+                  ) : (
+                    <Circle size={14} className="text-gray-300 flex-shrink-0" />
+                  )}
+                  <span className={sectionDone(s.key) ? 'text-gray-500' : 'text-gray-900'}>{s.label}</span>
+                </div>
+              ))}
+            </div>
+            {nextStep && completionPct < 100 && (
+              <div className="mt-3 flex items-start gap-2 bg-blue-50 rounded-lg px-3 py-2">
+                <Sparkles size={14} className="text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-blue-800">
+                  <span className="font-medium">Tip:</span> {nextStep.guidance_text || `Complete your ${nextStep.section} to improve your profile.`}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
 
       {/* Basic Info */}
       <Card className="p-5">
@@ -180,7 +264,7 @@ export default function ProfilePage() {
           <div className="space-y-2">
             {(documents ?? []).map((doc: any) => (
               <div key={doc.id} className="flex justify-between items-center text-sm">
-                <span>📄 {doc.file_name} ({formatFileSize(doc.file_size_bytes)})</span>
+                <span>{doc.file_name} ({formatFileSize(doc.file_size_bytes)})</span>
                 <Badge variant="neutral">{doc.document_type}</Badge>
               </div>
             ))}

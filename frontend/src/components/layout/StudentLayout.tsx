@@ -2,8 +2,8 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../stores/auth-store'
 import {
-  MessageSquare, User, Search, FileText, Heart,
-  Mail, Calendar, Settings, Bell, LogOut,
+  LayoutDashboard, MessageSquare, User, Search, FileText, Heart,
+  Mail, Calendar, Clock, DollarSign, UserCheck, Settings, Bell, LogOut,
 } from 'lucide-react'
 import Avatar from '../ui/Avatar'
 import ProgressBar from '../ui/ProgressBar'
@@ -12,6 +12,7 @@ import { getOnboarding } from '../../api/students'
 import { getUnreadCount } from '../../api/notifications'
 
 const NAV_ITEMS = [
+  { to: '/s/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/s/chat', icon: MessageSquare, label: 'Chat' },
   { to: '/s/profile', icon: User, label: 'Profile' },
   { to: '/s/discover', icon: Search, label: 'Discover' },
@@ -19,6 +20,9 @@ const NAV_ITEMS = [
   { to: '/s/saved', icon: Heart, label: 'Saved' },
   { to: '/s/messages', icon: Mail, label: 'Messages' },
   { to: '/s/calendar', icon: Calendar, label: 'Calendar' },
+  { to: '/s/deadlines', icon: Clock, label: 'Deadlines' },
+  { to: '/s/financial-aid', icon: DollarSign, label: 'Financial Aid' },
+  { to: '/s/recommendations', icon: UserCheck, label: 'Recommendations' },
 ]
 
 export default function StudentLayout() {
