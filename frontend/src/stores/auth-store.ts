@@ -32,16 +32,40 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   login: async (email, password) => {
     const { data } = await apiClient.post('/auth/login', { email, password })
-    const u = data.user
+    const loginUser = data?.user
+    const normalizedUser = loginUser
+      ? {
+          id: String(loginUser.user_id ?? loginUser.id ?? ''),
+          email: String(loginUser.email ?? email),
+          role: loginUser.role as User['role'],
+          created_at: String(loginUser.created_at ?? new Date().toISOString()),
+        }
+      : null
+
+    // Backward-compatible path: some environments may return tokens without user payload.
+    // In that case, fetch /auth/me immediately to populate session identity.
+    const resolvedUser = normalizedUser?.id
+      ? normalizedUser
+      : await (async () => {
+          const meToken = data?.access_token
+          if (!meToken) {
+            throw new Error('Login succeeded but access token is missing')
+          }
+          const { data: me } = await apiClient.get('/auth/me', {
+            headers: { Authorization: `Bearer ${meToken}` },
+          })
+          return {
+            id: String(me.user_id ?? me.id),
+            email: String(me.email ?? email),
+            role: me.role as User['role'],
+            created_at: String(me.created_at ?? new Date().toISOString()),
+          }
+        })()
+
     set({
       accessToken: data.access_token,
       refreshToken: data.refresh_token ?? null,
-      user: {
-        id: String(u.user_id),
-        email: u.email,
-        role: u.role,
-        created_at: u.created_at,
-      },
+      user: resolvedUser,
       isAuthenticated: true,
     })
     if (data.refresh_token) {
