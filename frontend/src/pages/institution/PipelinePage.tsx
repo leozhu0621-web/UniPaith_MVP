@@ -161,6 +161,7 @@ export default function PipelinePage() {
   )
   const interviews = Array.isArray(interviewsQ.data) ? interviewsQ.data : []
   const interviewCandidates = filteredAllApps.filter(a => a.status === 'interview')
+  const selectedProgramName = programs.find(p => p.id === selectedProgram)?.program_name ?? ''
 
   const programOptions = programs.map(p => ({ value: p.id, label: p.program_name }))
   const tabs = [
@@ -255,7 +256,7 @@ export default function PipelinePage() {
       <div className="flex flex-wrap items-center gap-4">
         <Select
           options={programOptions}
-          placeholder="Select Program"
+          placeholder="Select Program to Operate"
           value={selectedProgram}
           onChange={e => setSelectedProgram(e.target.value)}
           className="w-64"
@@ -285,6 +286,25 @@ export default function PipelinePage() {
         </div>
       ) : (
         <>
+          <div className="grid grid-cols-4 gap-3">
+            <Card className="p-3">
+              <p className="text-xs text-gray-500">Program</p>
+              <p className="text-sm font-semibold text-gray-900 truncate">{selectedProgramName}</p>
+            </Card>
+            <Card className="p-3">
+              <p className="text-xs text-gray-500">Total Applications</p>
+              <p className="text-xl font-semibold text-gray-900">{applications.length}</p>
+            </Card>
+            <Card className="p-3">
+              <p className="text-xs text-gray-500">Needs Review</p>
+              <p className="text-xl font-semibold text-amber-700">{reviewableApps.length}</p>
+            </Card>
+            <Card className="p-3">
+              <p className="text-xs text-gray-500">Interview Stage</p>
+              <p className="text-xl font-semibold text-purple-700">{interviewCandidates.length}</p>
+            </Card>
+          </div>
+
           {activeTab === 'board' && (
             <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
               <div className="flex gap-4 overflow-x-auto pb-4">

@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../stores/auth-store'
 import { useUIStore } from '../../stores/ui-store'
 import {
@@ -49,6 +49,7 @@ export default function InstitutionLayout() {
   const { user, logout } = useAuthStore()
   const { sidebarCollapsed, toggleSidebar } = useUIStore()
   const navigate = useNavigate()
+  const location = useLocation()
   const sidebarWidth = sidebarCollapsed ? 'w-16' : 'w-60'
 
   const { data: unreadCount } = useQuery({
@@ -62,6 +63,10 @@ export default function InstitutionLayout() {
     retry: false,
   })
   const navSections = buildNavSections(institutionQ.isError)
+  const currentArea =
+    navSections.flatMap(section => section.items).find(item => location.pathname.startsWith(item.to))?.label ?? 'Overview'
+  const currentSection =
+    navSections.find(section => section.items.some(item => location.pathname.startsWith(item.to)))?.label ?? 'Today'
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -107,15 +112,21 @@ export default function InstitutionLayout() {
 
       {/* Main content area */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="flex items-center justify-between h-14 px-6 border-b border-gray-200 bg-white">
+        <header className="sticky top-0 z-10 flex items-center justify-between h-14 px-6 border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/90">
           <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-2">
+              <span className="px-2 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wide bg-indigo-50 text-indigo-700">
+                {currentSection}
+              </span>
+              <span className="text-sm font-medium text-gray-700">{currentArea}</span>
+            </div>
             <div className="relative">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Global search (coming soon)"
                 disabled
-                className="w-72 pl-9 pr-4 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-72 pl-9 pr-4 py-1.5 text-sm border border-gray-200 rounded-lg text-gray-400 bg-gray-50 cursor-not-allowed"
               />
             </div>
           </div>

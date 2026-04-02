@@ -129,6 +129,26 @@ export default function DashboardPage() {
       color: 'text-slate-600 bg-slate-100',
     },
   ]
+  const priorityItems = [
+    {
+      label: 'Applications waiting for review',
+      value: summary?.pending_review_count ?? 0,
+      actionLabel: 'Open Queue',
+      onClick: () => navigate('/i/pipeline?tab=review'),
+    },
+    {
+      label: 'Unread applicant conversations',
+      value: summary?.unread_messages_count ?? 0,
+      actionLabel: 'Open Inbox',
+      onClick: () => navigate('/i/messages'),
+    },
+    {
+      label: 'Programs still in draft',
+      value: (summary?.program_count ?? programs.length) - (summary?.published_program_count ?? 0),
+      actionLabel: 'Publish Programs',
+      onClick: () => navigate('/i/programs'),
+    },
+  ]
 
   const programColumns = [
     { key: 'program_name', label: 'Program' },
@@ -182,6 +202,26 @@ export default function DashboardPage() {
           <Button onClick={() => navigate('/i/campaigns')} variant="secondary" className="flex items-center gap-2">
             <Bell size={16} /> Launch Outreach
           </Button>
+        </div>
+      </Card>
+
+      <Card className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-gray-900">Today&apos;s Priorities</h3>
+          <Badge variant="info">Operations</Badge>
+        </div>
+        <div className="space-y-2">
+          {priorityItems.map(item => (
+            <div key={item.label} className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2">
+              <div>
+                <p className="text-sm text-gray-700">{item.label}</p>
+                <p className="text-xs text-gray-500">Current count: {item.value}</p>
+              </div>
+              <Button size="sm" variant="secondary" onClick={item.onClick}>
+                {item.actionLabel}
+              </Button>
+            </div>
+          ))}
         </div>
       </Card>
 
