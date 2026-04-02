@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -36,6 +37,7 @@ TestSession = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_com
 @pytest.fixture(autouse=True)
 async def setup_db():
     async with test_engine.begin() as conn:
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with test_engine.begin() as conn:

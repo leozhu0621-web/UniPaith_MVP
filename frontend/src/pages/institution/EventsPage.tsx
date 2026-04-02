@@ -12,6 +12,7 @@ import Select from '../../components/ui/Select'
 import Textarea from '../../components/ui/Textarea'
 import EmptyState from '../../components/ui/EmptyState'
 import Skeleton from '../../components/ui/Skeleton'
+import InstitutionPageHeader from '../../components/institution/InstitutionPageHeader'
 import { showToast } from '../../stores/toast-store'
 import { formatDateTime } from '../../utils/format'
 import { STATUS_COLORS, EVENT_TYPES } from '../../utils/constants'
@@ -136,18 +137,25 @@ export default function EventsPage() {
 
   return (
     <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Recruitment Events</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage event logistics and track RSVP engagement by program.</p>
-        </div>
-        <Button onClick={() => { resetForm(); setShowCreateModal(true) }} className="flex items-center gap-2">
-          <Plus size={16} /> New Event
-        </Button>
-      </div>
+      <InstitutionPageHeader
+        title="Recruitment Events"
+        description="Manage event logistics and track RSVP engagement by program."
+        actions={(
+          <Button onClick={() => { resetForm(); setShowCreateModal(true) }} className="flex items-center gap-2">
+            <Plus size={16} /> New Event
+          </Button>
+        )}
+      />
+
+      <Card className="p-3">
+        <p className="text-xs text-gray-500">Operational cue</p>
+        <p className="text-sm text-gray-700">
+          Compare event fill rates to identify which event types and programs attract stronger applicant intent.
+        </p>
+      </Card>
 
       {events.length > 0 && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Card className="p-3">
             <p className="text-xs text-gray-500">Open Events</p>
             <p className="text-xl font-semibold text-gray-900">{events.filter(e => e.status === 'open').length}</p>
@@ -184,7 +192,7 @@ export default function EventsPage() {
           action={{ label: 'New Event', onClick: () => setShowCreateModal(true) }}
         />
       ) : (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {events.map(ev => {
             const prog = programs.find(p => p.id === ev.program_id)
             return (

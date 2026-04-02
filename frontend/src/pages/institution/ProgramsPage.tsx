@@ -10,6 +10,7 @@ import Table from '../../components/ui/Table'
 import Dropdown from '../../components/ui/Dropdown'
 import EmptyState from '../../components/ui/EmptyState'
 import Modal from '../../components/ui/Modal'
+import InstitutionPageHeader from '../../components/institution/InstitutionPageHeader'
 import { showToast } from '../../stores/toast-store'
 import { formatDate, formatCurrency } from '../../utils/format'
 import { DEGREE_LABELS } from '../../utils/constants'
@@ -105,12 +106,32 @@ export default function ProgramsPage() {
 
   return (
     <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Programs</h1>
-        <Button onClick={() => navigate('/i/programs/new')} className="flex items-center gap-2">
-          <Plus size={16} /> New Program
-        </Button>
-      </div>
+      <InstitutionPageHeader
+        title="Programs"
+        description="Manage catalog readiness, publication status, and admissions deadlines."
+        actions={(
+          <Button onClick={() => navigate('/i/programs/new')} className="flex items-center gap-2">
+            <Plus size={16} /> New Program
+          </Button>
+        )}
+      />
+
+      {programs.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Card className="p-3">
+            <p className="text-xs text-gray-500">Total Programs</p>
+            <p className="text-xl font-semibold text-gray-900">{programs.length}</p>
+          </Card>
+          <Card className="p-3">
+            <p className="text-xs text-gray-500">Published</p>
+            <p className="text-xl font-semibold text-emerald-700">{programs.filter(p => p.is_published).length}</p>
+          </Card>
+          <Card className="p-3">
+            <p className="text-xs text-gray-500">Drafts to Publish</p>
+            <p className="text-xl font-semibold text-amber-700">{programs.filter(p => !p.is_published).length}</p>
+          </Card>
+        </div>
+      )}
 
       <Card>
         {programs.length === 0 && !programsQ.isLoading ? (
@@ -121,7 +142,9 @@ export default function ProgramsPage() {
             action={{ label: 'New Program', onClick: () => navigate('/i/programs/new') }}
           />
         ) : (
-          <Table columns={columns} data={programs} isLoading={programsQ.isLoading} />
+          <div className="overflow-x-auto">
+            <Table columns={columns} data={programs} isLoading={programsQ.isLoading} />
+          </div>
         )}
       </Card>
 

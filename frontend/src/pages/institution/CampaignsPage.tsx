@@ -15,6 +15,7 @@ import Textarea from '../../components/ui/Textarea'
 import Tabs from '../../components/ui/Tabs'
 import EmptyState from '../../components/ui/EmptyState'
 import Skeleton from '../../components/ui/Skeleton'
+import InstitutionPageHeader from '../../components/institution/InstitutionPageHeader'
 import { showToast } from '../../stores/toast-store'
 import { formatDateTime, formatDate } from '../../utils/format'
 import type { Campaign, CampaignMetrics, Segment, Program } from '../../types'
@@ -165,18 +166,25 @@ export default function CampaignsPage() {
 
   return (
     <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Outreach Campaigns</h1>
-          <p className="text-sm text-gray-500 mt-1">Plan and monitor student outreach from draft to delivery.</p>
-        </div>
-        <Button onClick={openCreate} className="flex items-center gap-2">
-          <Plus size={16} /> New Campaign
-        </Button>
-      </div>
+      <InstitutionPageHeader
+        title="Outreach Campaigns"
+        description="Plan and monitor student outreach from draft to delivery."
+        actions={(
+          <Button onClick={openCreate} className="flex items-center gap-2">
+            <Plus size={16} /> New Campaign
+          </Button>
+        )}
+      />
+
+      <Card className="p-3">
+        <p className="text-xs text-gray-500">Operational cue</p>
+        <p className="text-sm text-gray-700">
+          Draft campaigns should be attached to a segment before sending so outcomes can be compared by audience.
+        </p>
+      </Card>
 
       {campaigns.length > 0 && (
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <Card className="p-3">
             <p className="text-xs text-gray-500">Total</p>
             <p className="text-xl font-semibold text-gray-900">{campaigns.length}</p>
@@ -208,7 +216,7 @@ export default function CampaignsPage() {
           action={{ label: 'New Campaign', onClick: openCreate }}
         />
       ) : (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {campaigns.map(c => {
             const prog = programs.find(p => p.id === c.program_id)
             const seg = segments.find(s => s.id === c.segment_id)

@@ -1,13 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import { BarChart3, TrendingUp, Target, Users, Award } from 'lucide-react'
 import { getAnalytics } from '../../api/institutions'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
+import Button from '../../components/ui/Button'
 import Skeleton from '../../components/ui/Skeleton'
+import InstitutionPageHeader from '../../components/institution/InstitutionPageHeader'
 import { formatPercent } from '../../utils/format'
 import type { AnalyticsData } from '../../types'
 
 export default function AnalyticsPage() {
+  const navigate = useNavigate()
   const analyticsQ = useQuery({ queryKey: ['institution-analytics'], queryFn: getAnalytics })
   const analytics: AnalyticsData | undefined = analyticsQ.data
 
@@ -53,10 +57,16 @@ export default function AnalyticsPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center gap-2">
-        <BarChart3 size={24} className="text-indigo-600" />
-        <h1 className="text-2xl font-bold text-gray-900">Insights</h1>
-      </div>
+      <InstitutionPageHeader
+        title="Insights"
+        description="Track trends, diagnose bottlenecks, and monitor admissions outcomes over time."
+        badge={<BarChart3 size={20} className="text-indigo-600" />}
+        actions={(
+          <Button variant="secondary" size="sm" onClick={() => navigate('/i/pipeline?tab=review')}>
+            Open Needs Review
+          </Button>
+        )}
+      />
 
       <Card className="p-4">
         <h3 className="text-sm font-semibold text-gray-900 mb-1">What this page is for</h3>
@@ -68,7 +78,7 @@ export default function AnalyticsPage() {
       {/* Executive KPI Cards */}
       <div>
         <h3 className="text-sm font-semibold text-gray-900 mb-3">Executive Outcomes</h3>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
           {kpis.map(kpi => (
             <Card key={kpi.label} className="p-5">
               <div className="flex items-center gap-3">
@@ -85,7 +95,7 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="p-4 border-dashed border-gray-300">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-gray-900">Market & Demographics</h3>
@@ -108,7 +118,7 @@ export default function AnalyticsPage() {
 
       <h3 className="text-sm font-semibold text-gray-900">Operational Diagnostics</h3>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Applications by Status */}
         <Card className="p-5">
           <h3 className="text-sm font-semibold text-gray-900 mb-4">Applications by Status</h3>

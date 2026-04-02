@@ -61,6 +61,15 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin/ml", tags=["ml-admin"])
 
+
+def _runtime_provider_from_settings() -> str:
+    mode = (settings.gpu_mode or "").lower()
+    if settings.ai_mock_mode or mode == "mock":
+        return "mock"
+    if mode == "aws":
+        return "aws"
+    return "openai"
+
 # ======================================================================
 # Cycle triggers
 # ======================================================================
@@ -422,6 +431,22 @@ async def learning_kpis(
             TrainingRun.started_at >= since_7d
         )
     )
+    eval_rows_7d = (
+        await db.execute(
+            select(EvaluationRun).where(
+                EvaluationRun.started_at >= since_7d,
+                EvaluationRun.completed_at.is_not(None),
+            )
+        )
+    ).scalars().all()
+    train_rows_7d = (
+        await db.execute(
+            select(TrainingRun).where(
+                TrainingRun.started_at >= since_7d,
+                TrainingRun.completed_at.is_not(None),
+            )
+        )
+    ).scalars().all()
 
     active_model = await db.execute(
         select(ModelRegistry)
@@ -463,6 +488,30 @@ async def learning_kpis(
     fail_rate = None
     if total_train_7d:
         fail_rate = round((failed_train_7d or 0) / total_train_7d, 4)
+    promotion_hit_rate = None
+    if train_7d:
+        promotion_hit_rate = round((promos_7d or 0) / train_7d, 4)
+
+    eval_durations = [
+        (row.completed_at - row.started_at).total_seconds() * 1000
+        for row in eval_rows_7d
+        if row.started_at and row.completed_at and row.completed_at >= row.started_at
+    ]
+    train_durations = [
+        (row.completed_at - row.started_at).total_seconds() * 1000
+        for row in train_rows_7d
+        if row.started_at and row.completed_at and row.completed_at >= row.started_at
+    ]
+    avg_eval_duration_ms = (
+        round(sum(eval_durations) / len(eval_durations), 2)
+        if eval_durations
+        else None
+    )
+    avg_train_duration_ms = (
+        round(sum(train_durations) / len(train_durations), 2)
+        if train_durations
+        else None
+    )
 
     return LearningKPIResponse(
         generated_at=now,
@@ -475,8 +524,13 @@ async def learning_kpis(
         retrain_runs_7d=int(train_7d or 0),
         promotions_7d=int(promos_7d or 0),
         rollbacks_7d=int(rollbacks_7d or 0),
+        promotion_hit_rate_7d=promotion_hit_rate,
         training_failure_rate_7d=fail_rate,
         net_accuracy_uplift_vs_active=net_uplift,
+        avg_evaluation_duration_ms_7d=avg_eval_duration_ms,
+        avg_training_duration_ms_7d=avg_train_duration_ms,
+        runtime_provider=_runtime_provider_from_settings(),
+        runtime_mode=settings.gpu_mode,
     )
 
 
@@ -700,7 +754,7 @@ async def scheduler_smoke(
     scheduler_effective_enabled = settings.scheduler_enabled or (
         settings.scheduler_auto_enable_non_test and settings.environment != "test"
     )
-    expected_job_ids = ["ml_evaluation", "ml_training", "feature_refresh", "crawler_weekly"]
+    expected_job_ids = ["ml_cycle", "feature_refresh", "crawler_weekly"]
     if settings.gpu_mode == "aws":
         expected_job_ids.append("gpu_idle_check")
     if settings.scheduler_self_driving_enabled:

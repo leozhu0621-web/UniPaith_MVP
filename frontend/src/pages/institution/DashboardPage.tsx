@@ -189,7 +189,7 @@ export default function DashboardPage() {
 
       <Card className="p-4">
         <h3 className="text-sm font-semibold text-gray-900 mb-3">Today&apos;s Action Panel</h3>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2">
           <Button onClick={() => navigate('/i/programs/new')} className="flex items-center gap-2">
             <Plus size={16} /> Add Program
           </Button>
@@ -212,12 +212,12 @@ export default function DashboardPage() {
         </div>
         <div className="space-y-2">
           {priorityItems.map(item => (
-            <div key={item.label} className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2">
+            <div key={item.label} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg border border-gray-200 px-3 py-2">
               <div>
                 <p className="text-sm text-gray-700">{item.label}</p>
                 <p className="text-xs text-gray-500">Current count: {item.value}</p>
               </div>
-              <Button size="sm" variant="secondary" onClick={item.onClick}>
+              <Button size="sm" variant="secondary" onClick={item.onClick} className="self-start sm:self-auto">
                 {item.actionLabel}
               </Button>
             </div>
@@ -227,7 +227,7 @@ export default function DashboardPage() {
 
       <div>
         <h3 className="text-sm font-semibold text-gray-900 mb-3">Executive KPIs</h3>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
           {executiveKpis.map(kpi => (
             <Card key={kpi.label} className="p-5">
               <div className="flex items-center gap-3">
@@ -246,7 +246,7 @@ export default function DashboardPage() {
 
       <div>
         <h3 className="text-sm font-semibold text-gray-900 mb-3">Operational KPIs</h3>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {operationalKpis.map(kpi => (
             <Card key={kpi.label} className="p-5">
               <div className="flex items-center gap-3">
@@ -263,8 +263,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
-        <Card className="col-span-1 p-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <Card className="p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-gray-900">Activity Feed</h3>
             <Bell size={16} className="text-gray-400" />
@@ -286,7 +286,7 @@ export default function DashboardPage() {
           )}
         </Card>
 
-        <Card className="col-span-2 p-4">
+        <Card className="p-4 lg:col-span-2">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-gray-900">Program Readiness</h3>
             <Button variant="ghost" size="sm" onClick={() => navigate('/i/programs')}>View All</Button>

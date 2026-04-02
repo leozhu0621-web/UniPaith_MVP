@@ -3,6 +3,7 @@ import {
   getArchitectureTrace,
   getAIOpsSnapshot,
   getAIControlSLO,
+  getMLLearningKPIs,
   patchAIControlPolicy,
   runAIControlLoop,
   runAIEngineGraph,
@@ -30,6 +31,12 @@ export function useAdminOps() {
   const architectureTraceQ = useQuery({
     queryKey: ['admin', 'ops', 'architecture-trace'],
     queryFn: () => getArchitectureTrace({ include_runs: true, limit: 20 }),
+    refetchInterval: 8000,
+  })
+
+  const mlKpisQ = useQuery({
+    queryKey: ['admin', 'ops', 'ml-kpis'],
+    queryFn: getMLLearningKPIs,
     refetchInterval: 8000,
   })
 
@@ -79,6 +86,7 @@ export function useAdminOps() {
     snapshotQ,
     sloQ,
     architectureTraceQ,
+    mlKpisQ,
     policyMut,
     runLoopMut,
     runEngineGraphMut,

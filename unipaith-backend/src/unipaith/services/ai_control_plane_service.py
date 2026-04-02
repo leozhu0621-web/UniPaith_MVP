@@ -100,12 +100,17 @@ class AIControlPlaneService:
                 "leader_only_mode": settings.scheduler_require_leader,
             },
             "llm": {
-                "provider": "openai",
+                "provider": self._runtime_provider(),
+                "runtime_mode": settings.gpu_mode,
                 "base_url": settings.llm_reasoning_base_url,
                 "feature_model": settings.llm_feature_model,
                 "reasoning_model": settings.llm_reasoning_model,
                 "embedding_model": settings.embedding_model,
                 "api_key_configured": bool(settings.openai_api_key),
+                "runtime_split": {
+                    "llm": self._runtime_provider(),
+                    "embedding": self._runtime_provider(),
+                },
             },
             "engine": {
                 "active_sources": int(active_sources or 0),
@@ -581,6 +586,7 @@ class AIControlPlaneService:
                 "counts": {
                     "features_generated": status.get("engine", {}).get("features_generated"),
                     "embeddings_generated": status.get("engine", {}).get("embeddings_generated"),
+                    "runtime_provider": status.get("llm", {}).get("provider"),
                 },
                 "error": None,
                 "source": "feature_embedding_pipeline",
@@ -827,3 +833,14 @@ class AIControlPlaneService:
         if normalized in warn_values:
             return "warning"
         return "error"
+
+    @staticmethod
+    def _runtime_provider() -> str:
+        mode = (settings.gpu_mode or "").lower()
+        if mode in {"mock"} or settings.ai_mock_mode:
+            return "mock"
+        if mode == "aws":
+            return "aws"
+        if mode in {"openai", "local"}:
+            return "openai"
+        return "openai"

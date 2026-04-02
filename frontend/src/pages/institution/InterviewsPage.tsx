@@ -14,6 +14,7 @@ import Select from '../../components/ui/Select'
 import Textarea from '../../components/ui/Textarea'
 import EmptyState from '../../components/ui/EmptyState'
 import Skeleton from '../../components/ui/Skeleton'
+import InstitutionPageHeader from '../../components/institution/InstitutionPageHeader'
 import { showToast } from '../../stores/toast-store'
 import { formatDateTime } from '../../utils/format'
 import { STATUS_COLORS, INTERVIEW_TYPES } from '../../utils/constants'
@@ -59,6 +60,9 @@ export default function InterviewsPage() {
     if (activeTab === 'completed') return i.status === 'completed'
     return true
   })
+  const confirmedCount = interviews.filter(i => i.status === 'confirmed').length
+  const completedCount = interviews.filter(i => i.status === 'completed').length
+  const schedulingCount = interviews.filter(i => i.status === 'scheduling').length
 
   const proposeMut = useMutation({
     mutationFn: proposeInterview,
@@ -131,12 +135,32 @@ export default function InterviewsPage() {
 
   return (
     <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Interviews</h1>
-        <Button onClick={() => setShowScheduleModal(true)} className="flex items-center gap-2">
-          <Plus size={16} /> Schedule Interview
-        </Button>
-      </div>
+      <InstitutionPageHeader
+        title="Interviews"
+        description="Coordinate scheduling, interview completion, and interviewer recommendations."
+        actions={(
+          <Button onClick={() => setShowScheduleModal(true)} className="flex items-center gap-2">
+            <Plus size={16} /> Schedule Interview
+          </Button>
+        )}
+      />
+
+      {interviews.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Card className="p-3">
+            <p className="text-xs text-gray-500">Confirmed</p>
+            <p className="text-xl font-semibold text-indigo-700">{confirmedCount}</p>
+          </Card>
+          <Card className="p-3">
+            <p className="text-xs text-gray-500">In Scheduling</p>
+            <p className="text-xl font-semibold text-amber-700">{schedulingCount}</p>
+          </Card>
+          <Card className="p-3">
+            <p className="text-xs text-gray-500">Completed</p>
+            <p className="text-xl font-semibold text-emerald-700">{completedCount}</p>
+          </Card>
+        </div>
+      )}
 
       <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
@@ -150,7 +174,9 @@ export default function InterviewsPage() {
             description="Schedule interviews from the pipeline or by clicking the button above."
           />
         ) : (
-          <Table columns={columns} data={filteredInterviews} />
+          <div className="overflow-x-auto">
+            <Table columns={columns} data={filteredInterviews} />
+          </div>
         )}
       </Card>
 

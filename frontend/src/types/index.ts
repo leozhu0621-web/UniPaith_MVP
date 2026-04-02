@@ -803,3 +803,23 @@ export interface ArchitectureTraceResponse {
   stages: ArchitectureStageTrace[]
   runs: ArchitectureRunTrace[]
 }
+
+export interface MLLearningKPIResponse {
+  generated_at: string
+  latest_outcome_at: string | null
+  latest_evaluation_at: string | null
+  latest_training_at: string | null
+  hours_outcome_to_eval_latest: number | null
+  hours_eval_to_training_latest: number | null
+  retrain_runs_24h: number
+  retrain_runs_7d: number
+  promotions_7d: number
+  rollbacks_7d: number
+  promotion_hit_rate_7d: number | null
+  training_failure_rate_7d: number | null
+  net_accuracy_uplift_vs_active: number | null
+  avg_evaluation_duration_ms_7d: number | null
+  avg_training_duration_ms_7d: number | null
+  runtime_provider: string | null
+  runtime_mode: string | null
+}

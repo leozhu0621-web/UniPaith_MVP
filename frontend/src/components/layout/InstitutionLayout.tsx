@@ -1,14 +1,17 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../stores/auth-store'
 import { useUIStore } from '../../stores/ui-store'
 import {
   LayoutDashboard, GraduationCap, Kanban, FileCheck, Video,
   MessageSquare, Users, Megaphone, CalendarDays, BarChart3,
-  Settings, ChevronLeft, ChevronRight, Bell, Search, LogOut, Rocket,
+  Settings, ChevronLeft, ChevronRight, Bell, Search, LogOut, Rocket, Command,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { getUnreadCount } from '../../api/notifications'
 import { getInstitution } from '../../api/institutions'
+import Modal from '../ui/Modal'
+import Input from '../ui/Input'
 
 const buildNavSections = (showSetup: boolean) => [
   {
@@ -51,6 +54,9 @@ export default function InstitutionLayout() {
   const navigate = useNavigate()
   const location = useLocation()
   const sidebarWidth = sidebarCollapsed ? 'w-16' : 'w-60'
+  const [showCommandPalette, setShowCommandPalette] = useState(false)
+  const [commandQuery, setCommandQuery] = useState('')
+  const shortcutPrefixAtRef = useRef<number | null>(null)
 
   const { data: unreadCount } = useQuery({
     queryKey: ['unread-count'],
@@ -67,6 +73,66 @@ export default function InstitutionLayout() {
     navSections.flatMap(section => section.items).find(item => location.pathname.startsWith(item.to))?.label ?? 'Overview'
   const currentSection =
     navSections.find(section => section.items.some(item => location.pathname.startsWith(item.to)))?.label ?? 'Today'
+  const commandActions = useMemo(() => [
+    { id: 'go-overview', label: 'Go to Overview', hint: 'g o', onSelect: () => navigate('/i/dashboard') },
+    { id: 'go-programs', label: 'Go to Programs', hint: 'g p', onSelect: () => navigate('/i/programs') },
+    { id: 'go-apps-review', label: 'Open Needs Review', hint: 'g r', onSelect: () => navigate('/i/pipeline?tab=review') },
+    { id: 'go-apps-board', label: 'Open Applications Board', hint: 'g a', onSelect: () => navigate('/i/pipeline?tab=board') },
+    { id: 'go-interviews', label: 'Go to Interviews', hint: 'g i', onSelect: () => navigate('/i/interviews') },
+    { id: 'go-campaigns', label: 'Go to Campaigns', hint: 'g c', onSelect: () => navigate('/i/campaigns') },
+    { id: 'go-events', label: 'Go to Events', hint: 'g e', onSelect: () => navigate('/i/events') },
+    { id: 'go-insights', label: 'Go to Insights', hint: 'g s', onSelect: () => navigate('/i/analytics') },
+  ], [navigate])
+  const filteredActions = useMemo(() => {
+    const q = commandQuery.trim().toLowerCase()
+    if (!q) return commandActions
+    return commandActions.filter(action =>
+      action.label.toLowerCase().includes(q) || action.hint.toLowerCase().includes(q)
+    )
+  }, [commandActions, commandQuery])
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setShowCommandPalette(true)
+        return
+      }
+      if (event.key === 'Escape') {
+        setShowCommandPalette(false)
+        return
+      }
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return
+      if (event.key.toLowerCase() === 'g') {
+        shortcutPrefixAtRef.current = Date.now()
+        return
+      }
+      const prefix = shortcutPrefixAtRef.current
+      if (!prefix) return
+      if (Date.now() - prefix > 1400) {
+        shortcutPrefixAtRef.current = null
+        return
+      }
+      const key = event.key.toLowerCase()
+      const shortcutMap: Record<string, () => void> = {
+        o: () => navigate('/i/dashboard'),
+        p: () => navigate('/i/programs'),
+        r: () => navigate('/i/pipeline?tab=review'),
+        a: () => navigate('/i/pipeline?tab=board'),
+        i: () => navigate('/i/interviews'),
+        c: () => navigate('/i/campaigns'),
+        e: () => navigate('/i/events'),
+        s: () => navigate('/i/analytics'),
+      }
+      if (shortcutMap[key]) {
+        event.preventDefault()
+        shortcutMap[key]()
+      }
+      shortcutPrefixAtRef.current = null
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [navigate])
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -129,6 +195,14 @@ export default function InstitutionLayout() {
                 className="w-72 pl-9 pr-4 py-1.5 text-sm border border-gray-200 rounded-lg text-gray-400 bg-gray-50 cursor-not-allowed"
               />
             </div>
+            <button
+              onClick={() => setShowCommandPalette(true)}
+              className="hidden lg:flex items-center gap-2 px-2.5 py-1.5 text-xs border border-gray-200 rounded-md text-gray-600 hover:bg-gray-50"
+            >
+              <Command size={14} />
+              Quick Actions
+              <span className="text-[10px] text-gray-400">Ctrl/Cmd+K</span>
+            </button>
           </div>
 
           <div className="flex items-center gap-4">
@@ -172,6 +246,42 @@ export default function InstitutionLayout() {
           <Outlet />
         </main>
       </div>
+      <Modal
+        isOpen={showCommandPalette}
+        onClose={() => {
+          setShowCommandPalette(false)
+          setCommandQuery('')
+        }}
+        title="Quick Actions"
+      >
+        <div className="space-y-3">
+          <Input
+            value={commandQuery}
+            onChange={e => setCommandQuery(e.target.value)}
+            placeholder="Search action or shortcut (example: review, g r)"
+          />
+          <div className="max-h-72 overflow-y-auto space-y-1">
+            {filteredActions.length === 0 ? (
+              <p className="text-sm text-gray-500 py-3 text-center">No actions found.</p>
+            ) : (
+              filteredActions.map(action => (
+                <button
+                  key={action.id}
+                  onClick={() => {
+                    action.onSelect()
+                    setShowCommandPalette(false)
+                    setCommandQuery('')
+                  }}
+                  className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-md hover:bg-gray-50 text-left"
+                >
+                  <span className="text-gray-700">{action.label}</span>
+                  <span className="text-[11px] text-gray-400">{action.hint}</span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

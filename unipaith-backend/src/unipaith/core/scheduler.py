@@ -10,6 +10,7 @@ from unipaith.config import settings
 logger = logging.getLogger("unipaith.scheduler")
 
 scheduler = AsyncIOScheduler()
+_ml_cycle_tick_count = 0
 
 
 def _job_defaults() -> dict:
@@ -36,23 +37,13 @@ def setup_scheduler() -> None:
         logger.info("Scheduler disabled on this instance (leader-only mode)")
         return
 
-    # Evaluation (Person B) — every eval_schedule_hours
+    # Unified ML cycle: evaluate -> drift -> decision -> train -> fairness -> promote
     scheduler.add_job(
-        _run_evaluation,
+        _run_ml_cycle,
         "interval",
-        hours=settings.eval_schedule_hours,
-        id="ml_evaluation",
-        name="ML Model Evaluation",
-        **_job_defaults(),
-    )
-
-    # Training (Person C) — every training_schedule_hours
-    scheduler.add_job(
-        _run_training,
-        "interval",
-        hours=settings.training_schedule_hours,
-        id="ml_training",
-        name="ML Model Training",
+        minutes=settings.ml_cycle_schedule_minutes,
+        id="ml_cycle",
+        name="ML Full Cycle",
         **_job_defaults(),
     )
 
@@ -116,34 +107,28 @@ def shutdown_scheduler() -> None:
         logger.info("Scheduler stopped")
 
 
-async def _run_evaluation() -> None:
-    """Run the ML evaluation pipeline."""
+async def _run_ml_cycle() -> None:
+    """Run the unified ML full-cycle pipeline with cadence mode."""
     from unipaith.database import async_session
     from unipaith.ml.orchestrator import MLOrchestrator
 
-    logger.info("Starting scheduled ML evaluation")
+    global _ml_cycle_tick_count
+    _ml_cycle_tick_count += 1
+    force_full_every = max(1, settings.ml_cycle_force_full_every_n_cycles)
+    preferred_mode = "full" if (_ml_cycle_tick_count % force_full_every == 0) else "fast"
+    trigger = f"scheduled_{preferred_mode}"
+
+    logger.info("Starting scheduled ML full cycle (mode=%s)", preferred_mode)
     try:
         async with async_session() as db:
             orch = MLOrchestrator(db)
-            await orch.run_evaluation()
-        logger.info("ML evaluation completed")
+            await orch.run_full_cycle(
+                triggered_by=trigger,
+                preferred_mode=preferred_mode,
+            )
+        logger.info("ML full cycle completed (mode=%s)", preferred_mode)
     except Exception:
-        logger.exception("ML evaluation failed")
-
-
-async def _run_training() -> None:
-    """Run the ML training pipeline."""
-    from unipaith.database import async_session
-    from unipaith.ml.trainer import ModelTrainer
-
-    logger.info("Starting scheduled ML training")
-    try:
-        async with async_session() as db:
-            trainer = ModelTrainer(db)
-            await trainer.run_training(triggered_by="scheduled", mode="full")
-        logger.info("ML training completed")
-    except Exception:
-        logger.exception("ML training failed")
+        logger.exception("ML full cycle failed")
 
 
 async def _run_feature_refresh() -> None:

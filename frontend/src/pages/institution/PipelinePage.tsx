@@ -251,24 +251,27 @@ export default function PipelinePage() {
         <h1 className="text-2xl font-bold text-gray-900">Applications Workspace</h1>
       </div>
 
-      <Tabs tabs={tabs} activeTab={activeTab} onChange={handleTabChange} />
-
-      <div className="flex flex-wrap items-center gap-4">
-        <Select
-          options={programOptions}
-          placeholder="Select Program to Operate"
-          value={selectedProgram}
-          onChange={e => setSelectedProgram(e.target.value)}
-          className="w-64"
-        />
-        <div className="relative flex-1 max-w-xs">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <Input
-            placeholder="Search by applicant ID..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-9"
-          />
+      <div className="sticky top-14 z-[5] -mx-6 px-6 py-3 bg-gray-50/95 backdrop-blur supports-[backdrop-filter]:bg-gray-50/90 border-y border-gray-100">
+        <div className="space-y-3">
+          <Tabs tabs={tabs} activeTab={activeTab} onChange={handleTabChange} />
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <Select
+              options={programOptions}
+              placeholder="Select Program to Operate"
+              value={selectedProgram}
+              onChange={e => setSelectedProgram(e.target.value)}
+              className="w-full sm:w-72"
+            />
+            <div className="relative w-full sm:flex-1 sm:max-w-xs">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Input
+                placeholder="Search by applicant ID..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -286,7 +289,7 @@ export default function PipelinePage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
             <Card className="p-3">
               <p className="text-xs text-gray-500">Program</p>
               <p className="text-sm font-semibold text-gray-900 truncate">{selectedProgramName}</p>

@@ -44,7 +44,9 @@ class MLOrchestrator:
     # ------------------------------------------------------------------
 
     async def run_full_cycle(
-        self, triggered_by: str = "scheduled"
+        self,
+        triggered_by: str = "scheduled",
+        preferred_mode: str | None = None,
     ) -> dict[str, Any]:
         """Run the complete ML improvement cycle.
 
@@ -118,6 +120,7 @@ class MLOrchestrator:
             eval_run=eval_run,
             any_drift=any_drift,
             triggered_by=triggered_by,
+            preferred_mode=preferred_mode,
         )
         result["decision"] = decision
         training_needed = decision["training_needed"]
@@ -252,6 +255,7 @@ class MLOrchestrator:
         eval_run: Any,
         any_drift: bool,
         triggered_by: str,
+        preferred_mode: str | None = None,
     ) -> dict[str, Any]:
         latest_completed_training = await self._latest_completed_training()
         new_outcomes_count = await self._new_outcomes_since_training(
@@ -310,7 +314,7 @@ class MLOrchestrator:
             retrain_reasons.append("degraded_mode_active")
 
         training_needed = bool(retrain_reasons)
-        configured_cycle_mode = settings.training_default_cycle_mode.lower()
+        configured_cycle_mode = (preferred_mode or settings.training_default_cycle_mode).lower()
         if configured_cycle_mode not in {"fast", "full"}:
             configured_cycle_mode = "fast"
         training_mode = "fast" if any_drift or degraded_mode_active else configured_cycle_mode

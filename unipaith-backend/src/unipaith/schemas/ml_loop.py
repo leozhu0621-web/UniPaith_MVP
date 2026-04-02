@@ -207,8 +207,13 @@ class LearningKPIResponse(BaseModel):
     retrain_runs_7d: int
     promotions_7d: int
     rollbacks_7d: int
+    promotion_hit_rate_7d: float | None = None
     training_failure_rate_7d: float | None = None
     net_accuracy_uplift_vs_active: float | None = None
+    avg_evaluation_duration_ms_7d: float | None = None
+    avg_training_duration_ms_7d: float | None = None
+    runtime_provider: str | None = None
+    runtime_mode: str | None = None
 
 
 class CycleHealthResponse(BaseModel):

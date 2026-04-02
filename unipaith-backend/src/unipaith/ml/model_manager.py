@@ -92,31 +92,58 @@ class ModelManager:
                 )
                 return {"success": False, "reason": "fairness_check_failed"}
 
-        # Improvement gate
+        # Balanced improvement gate
         active_model = await self.get_active_model()
         if not force and active_model is not None:
-            active_accuracy = (active_model.performance_metrics or {}).get(
-                "accuracy", 0.0
-            )
-            candidate_accuracy = (candidate.performance_metrics or {}).get(
-                "accuracy", 0.0
+            active_metrics = active_model.performance_metrics or {}
+            candidate_metrics = candidate.performance_metrics or {}
+            active_accuracy = float(active_metrics.get("accuracy", 0.0) or 0.0)
+            candidate_accuracy = float(candidate_metrics.get("accuracy", 0.0) or 0.0)
+            accuracy_improvement = candidate_accuracy - active_accuracy
+            composite_improvement = (
+                self._composite_metric(candidate_metrics)
+                - self._composite_metric(active_metrics)
             )
 
-            improvement = candidate_accuracy - active_accuracy
-            if improvement < settings.model_promotion_min_improvement:
+            # Safety: never allow a large accuracy degradation.
+            if accuracy_improvement < -abs(settings.model_rollback_degradation_threshold):
                 logger.info(
-                    "Promotion blocked for %s — improvement %.4f < threshold %.4f",
+                    "Promotion blocked for %s — candidate degrades accuracy too much (%.4f)",
                     model_version,
-                    improvement,
-                    settings.model_promotion_min_improvement,
+                    accuracy_improvement,
                 )
                 return {
                     "success": False,
-                    "reason": "insufficient_improvement",
+                    "reason": "safety_accuracy_degradation",
                     "active_accuracy": active_accuracy,
                     "candidate_accuracy": candidate_accuracy,
-                    "improvement": improvement,
-                    "required": settings.model_promotion_min_improvement,
+                    "accuracy_improvement": accuracy_improvement,
+                    "max_degradation": -abs(settings.model_rollback_degradation_threshold),
+                }
+
+            passes_accuracy_gate = (
+                accuracy_improvement >= settings.model_promotion_min_improvement
+            )
+            passes_composite_gate = (
+                composite_improvement
+                >= settings.model_promotion_min_composite_improvement
+            )
+            if not (passes_accuracy_gate or passes_composite_gate):
+                logger.info(
+                    "Promotion blocked for %s — balanced gates not met (acc=%.4f, composite=%.4f)",
+                    model_version,
+                    accuracy_improvement,
+                    composite_improvement,
+                )
+                return {
+                    "success": False,
+                    "reason": "insufficient_balanced_improvement",
+                    "active_accuracy": active_accuracy,
+                    "candidate_accuracy": candidate_accuracy,
+                    "accuracy_improvement": accuracy_improvement,
+                    "composite_improvement": composite_improvement,
+                    "required_accuracy": settings.model_promotion_min_improvement,
+                    "required_composite": settings.model_promotion_min_composite_improvement,
                 }
 
         # Deactivate current active model
@@ -248,3 +275,11 @@ class ModelManager:
             return True
 
         return all(report.passed for report in reports)
+
+    @staticmethod
+    def _composite_metric(metrics: dict) -> float:
+        """Weighted quality score used for balanced promotions."""
+        accuracy = float(metrics.get("accuracy", 0.0) or 0.0)
+        f1_score = float(metrics.get("f1", 0.0) or 0.0)
+        roc_auc = float(metrics.get("roc_auc", metrics.get("auc", 0.0)) or 0.0)
+        return (0.5 * accuracy) + (0.3 * f1_score) + (0.2 * roc_auc)

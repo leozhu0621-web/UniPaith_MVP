@@ -101,7 +101,18 @@ class InferencePipeline:
         prediction_logs: list[PredictionLog] = []
         reasoning_sem = asyncio.Semaphore(5)
 
-        async def build_match(program_id, score, tier, breakdown):
+        async def build_match(program_id, score, tier, breakdown, rank_index: int):
+            if rank_index >= max(1, settings.matching_reasoning_top_k):
+                return {
+                    "program_id": program_id,
+                    "score": score,
+                    "tier": tier,
+                    "breakdown": breakdown,
+                    "reasoning": (
+                        "This recommendation is ranked using semantic similarity and"
+                        " historical and preference-fit signals."
+                    ),
+                }
             async with reasoning_sem:
                 try:
                     reasoning = await self.reasoning_generator.generate_match_reasoning(
@@ -125,7 +136,10 @@ class InferencePipeline:
             }
 
         built = await asyncio.gather(
-            *(build_match(program_id, score, tier, breakdown) for program_id, score, tier, breakdown in tiered)
+            *(
+                build_match(program_id, score, tier, breakdown, idx)
+                for idx, (program_id, score, tier, breakdown) in enumerate(tiered)
+            )
         )
         for item in built:
             program_id = item["program_id"]

@@ -91,13 +91,14 @@ class Settings(BaseSettings):
     matching_weight_historical: float = 0.25
     matching_weight_institution_pref: float = 0.20
     matching_weight_student_pref: float = 0.15
+    matching_reasoning_top_k: int = 10
 
     # AI dev mode
     ai_mock_mode: bool = False
     ai_refresh_cooldown_seconds: int = 300
 
     # GPU infrastructure (cloud-first)
-    gpu_mode: str = "aws"  # "aws" | "local" | "mock" (mock only for tests)
+    gpu_mode: str = "openai"  # "openai" | "aws" | "local" | "mock"
     gpu_8b_instance_id: str = ""
     gpu_70b_instance_id: str = ""
     gpu_8b_endpoint: str = "http://localhost:8001"
@@ -127,6 +128,8 @@ class Settings(BaseSettings):
 
     # Training (Person C)
     training_schedule_hours: int = 168
+    ml_cycle_schedule_minutes: int = 60
+    ml_cycle_force_full_every_n_cycles: int = 24
     training_test_split: float = 0.2
     training_cv_folds: int = 5
     training_optuna_trials: int = 50
@@ -142,6 +145,7 @@ class Settings(BaseSettings):
 
     # Model management
     model_promotion_min_improvement: float = 0.02
+    model_promotion_min_composite_improvement: float = 0.01
     model_ab_test_traffic_pct: float = 0.10
     model_ab_test_min_samples: int = 100
     model_rollback_degradation_threshold: float = 0.05

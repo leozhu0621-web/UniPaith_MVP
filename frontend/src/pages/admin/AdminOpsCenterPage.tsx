@@ -56,6 +56,7 @@ export default function AdminOpsCenterPage() {
     snapshotQ,
     sloQ,
     architectureTraceQ,
+    mlKpisQ,
     policyMut,
     runLoopMut,
     runEngineGraphMut,
@@ -89,6 +90,7 @@ export default function AdminOpsCenterPage() {
   const latestTick = snapshot?.processing?.autonomy_loop?.last_tick_at
   const latestEngineRun = snapshot?.processing?.engine?.last_run_completed_at
   const architectureTrace = architectureTraceQ.data
+  const mlKpis = mlKpisQ.data
   const stageById = useMemo(
     () => {
       const stages: ArchitectureStageTrace[] = Array.isArray(architectureTrace?.stages)
@@ -358,6 +360,10 @@ export default function AdminOpsCenterPage() {
                 <p>Training failures: {reliability?.training_failures_total ?? 0}</p>
                 <p>Consecutive autonomy failures: {reliability?.consecutive_autonomy_failures ?? 0}</p>
                 <p>Scheduler: {schedulerOn ? 'enabled' : 'disabled'}</p>
+                <p>Runtime provider: {mlKpis?.runtime_provider ?? '—'} ({mlKpis?.runtime_mode ?? '—'})</p>
+                <p>Promotion hit-rate (7d): {mlKpis?.promotion_hit_rate_7d ?? 0}</p>
+                <p>Outcome → Eval lag (hrs): {mlKpis?.hours_outcome_to_eval_latest ?? '—'}</p>
+                <p>Eval → Train lag (hrs): {mlKpis?.hours_eval_to_training_latest ?? '—'}</p>
               </div>
             </div>
           </Card>
