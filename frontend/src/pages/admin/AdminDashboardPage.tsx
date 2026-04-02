@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
-  getSystemStats, getPlatformStats, getAIControlStatus, getAIControlSLO, getEngineHealth,
+  getSystemStats, getPlatformStats,
 } from '../../api/admin'
 import { formatRelative } from '../../utils/format'
 import Card from '../../components/ui/Card'
@@ -10,7 +10,7 @@ import Skeleton from '../../components/ui/Skeleton'
 import Button from '../../components/ui/Button'
 import {
   Users, GraduationCap, FileText, Building2, Activity,
-  Target, RefreshCw, Database, Cpu, Bug, Brain,
+  Target, RefreshCw, Cpu,
 } from 'lucide-react'
 
 function KPICard({ icon: Icon, label, value, sub, color }: {
@@ -59,21 +59,6 @@ export default function AdminDashboardPage() {
     queryKey: ['admin', 'platform-stats'],
     queryFn: getPlatformStats,
   })
-  const { data: aiControl } = useQuery({
-    queryKey: ['admin', 'ai-control', 'status'],
-    queryFn: getAIControlStatus,
-    refetchInterval: 10000,
-  })
-  const { data: aiSlo } = useQuery({
-    queryKey: ['admin', 'ai-control', 'slo'],
-    queryFn: getAIControlSLO,
-    refetchInterval: 10000,
-  })
-  const { data: health } = useQuery({
-    queryKey: ['admin', 'engine-health'],
-    queryFn: getEngineHealth,
-    refetchInterval: 10000,
-  })
 
   if (isLoading) {
     return (
@@ -89,13 +74,6 @@ export default function AdminDashboardPage() {
   const appTotal = stats?.applications?.total ?? 0
   const byStatus = stats?.applications?.by_status ?? {}
   const byDecision = stats?.applications?.by_decision ?? {}
-  const dbStatus = health?.checks?.database?.status ?? 'unknown'
-  const crawlStatus = health?.checks?.crawl?.status ?? 'unknown'
-  const openaiStatus = health?.checks?.openai?.status ?? 'unknown'
-  const engineReady = aiControl?.engine?.engine_ready
-  const autonomy = aiControl?.policy?.autonomy_enabled
-  const autoFix = aiControl?.policy?.auto_fix_enabled
-  const emergencyStop = aiControl?.policy?.emergency_stop
 
   return (
     <div className="p-8 space-y-6">
@@ -115,57 +93,15 @@ export default function AdminDashboardPage() {
         </button>
       </div>
 
-      <Card className="p-6">
-        <h3 className="text-sm font-semibold text-gray-700 mb-4">Quick Control Center</h3>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Cpu size={16} className="text-indigo-600" />
-              <p className="text-sm font-medium text-gray-800">AI Engine</p>
-            </div>
-            <div className="flex flex-wrap gap-2 mb-3">
-              <Badge variant={engineReady ? 'success' : 'warning'}>{engineReady ? 'Ready' : 'Not Ready'}</Badge>
-              <Badge variant={autonomy ? 'success' : 'neutral'}>{autonomy ? 'Autonomy On' : 'Autonomy Off'}</Badge>
-              <Badge variant={autoFix ? 'success' : 'neutral'}>{autoFix ? 'Auto-Fix On' : 'Auto-Fix Off'}</Badge>
-              {emergencyStop && <Badge variant="danger">Emergency Stop</Badge>}
-            </div>
-            <p className="text-xs text-gray-500 mb-3">
-              LLM p95: {aiSlo?.llm?.p95_ms ?? 0} ms | Embedding p95: {aiSlo?.embedding?.p95_ms ?? 0} ms
-            </p>
-            <Button size="sm" onClick={() => navigate('/admin/ops')}>Open AI Ops Center</Button>
-          </div>
-
-          <div className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Users size={16} className="text-blue-600" />
-              <p className="text-sm font-medium text-gray-800">Users</p>
-            </div>
-            <p className="text-xs text-gray-500 mb-1">Total: {stats?.users?.total ?? 0}</p>
-            <p className="text-xs text-gray-500 mb-1">Students: {stats?.users?.students ?? 0}</p>
-            <p className="text-xs text-gray-500 mb-3">Institution admins: {stats?.users?.institutions ?? 0}</p>
-            <Button size="sm" variant="secondary" onClick={() => navigate('/admin/users')}>Open User Management</Button>
-          </div>
-
-          <div className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Database size={16} className="text-emerald-600" />
-              <p className="text-sm font-medium text-gray-800">Database & Data Pipeline</p>
-            </div>
-            <div className="flex flex-wrap gap-2 mb-3">
-              <Badge variant={dbStatus === 'ok' ? 'success' : dbStatus === 'slow' ? 'warning' : 'danger'}>DB {dbStatus}</Badge>
-              <Badge variant={crawlStatus === 'ok' ? 'success' : crawlStatus === 'warning' ? 'warning' : 'danger'}>Crawl {crawlStatus}</Badge>
-              <Badge variant={openaiStatus === 'ok' ? 'success' : 'danger'}>OpenAI {openaiStatus}</Badge>
-            </div>
-            <div className="flex gap-2">
-              <Button size="sm" variant="secondary" onClick={() => navigate('/admin/crawler')}>
-                <Bug size={14} className="mr-1" /> Crawl
-              </Button>
-              <Button size="sm" variant="secondary" onClick={() => navigate('/admin/ml')}>
-                <Brain size={14} className="mr-1" /> ML
-              </Button>
-            </div>
+      <Card className="p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-indigo-100 text-indigo-600"><Cpu size={18} /></div>
+          <div>
+            <p className="text-sm font-medium text-gray-800">AI Engine</p>
+            <p className="text-xs text-gray-500">Monitor, control, and maintain the AI pipeline from one place.</p>
           </div>
         </div>
+        <Button size="sm" onClick={() => navigate('/admin/ai')}>Open AI Center</Button>
       </Card>
 
       {/* KPI Grid */}

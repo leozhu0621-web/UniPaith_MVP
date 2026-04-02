@@ -55,11 +55,8 @@ import InstitutionSettingsPage from './pages/institution/SettingsPage'
 import AdminLayout from './components/layout/AdminLayout'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
 import AdminUsersPage from './pages/admin/AdminUsersPage'
-import AdminCrawlerPage from './pages/admin/AdminCrawlerPage'
-import AdminMLPage from './pages/admin/AdminMLPage'
 import AdminSystemPage from './pages/admin/AdminSystemPage'
-import AdminOpsCenterPage from './pages/admin/AdminOpsCenterPage'
-import AdminKnowledgePage from './pages/admin/AdminKnowledgePage'
+import AdminAICenterPage from './pages/admin/AdminAICenterPage'
 import RouteErrorPage from './pages/system/RouteErrorPage'
 
 const queryClient = new QueryClient({
@@ -135,13 +132,15 @@ const router = createBrowserRouter([
     errorElement: <RouteErrorPage />,
     children: [
       { index: true, element: <Navigate to="/admin/overview" replace /> },
-      { path: 'ops', element: <AdminOpsCenterPage /> },
       { path: 'overview', element: <AdminDashboardPage /> },
       { path: 'users', element: <AdminUsersPage /> },
-      { path: 'crawler', element: <AdminCrawlerPage /> },
-      { path: 'ml', element: <AdminMLPage /> },
+      { path: 'ai', element: <AdminAICenterPage /> },
       { path: 'system', element: <AdminSystemPage /> },
-      { path: 'knowledge', element: <AdminKnowledgePage /> },
+      // Legacy redirects — keep bookmarks working
+      { path: 'ops', element: <Navigate to="/admin/ai?tab=monitor" replace /> },
+      { path: 'crawler', element: <Navigate to="/admin/ai?tab=pipeline" replace /> },
+      { path: 'ml', element: <Navigate to="/admin/ai?tab=learning" replace /> },
+      { path: 'knowledge', element: <Navigate to="/admin/ai?tab=knowledge" replace /> },
     ],
   },
 
