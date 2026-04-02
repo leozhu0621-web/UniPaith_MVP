@@ -36,6 +36,7 @@ install: install-backend install-frontend  ## Install all dependencies
 
 test-backend:  ## Run backend tests
 	cd unipaith-backend && \
+		PYTHONPATH=src \
 		DATABASE_URL="postgresql+asyncpg://unipaith:unipaith@localhost:5432/unipaith" \
 		COGNITO_BYPASS=true \
 		AI_MOCK_MODE=true \

@@ -543,6 +543,10 @@ class AIControlPlaneService:
         latest_model_event = latest_model_event_row.scalar_one_or_none()
 
         latest_runs = status.get("latest_runs", {})
+        crawl_latest = latest_runs.get("crawl") or {}
+        drift_latest = latest_runs.get("drift") or {}
+        eval_latest = latest_runs.get("evaluation") or {}
+        training_latest = latest_runs.get("training") or {}
         engine_runtime = status.get("engine_runtime", {})
         reliability = status.get("reliability", {})
         ml_policy = status.get("ml_policy", {})
@@ -552,20 +556,18 @@ class AIControlPlaneService:
                 "stage_id": "ingest",
                 "label": "Ingest",
                 "status": self._status_from_value(
-                    latest_runs.get("crawl", {}).get("status")
-                    if latest_runs.get("crawl") else None,
+                    crawl_latest.get("status"),
                     ok_values={"completed", "ok"},
                     warn_values={"running", "pending"},
                 ),
-                "last_run_at": self._safe_dt(latest_runs.get("crawl", {}).get("created_at")),
+                "last_run_at": self._safe_dt(crawl_latest.get("created_at")),
                 "duration_ms": self._safe_num(engine_runtime.get("last_stage_durations_ms", {}).get("ingest")),
                 "counts": {
                     "active_sources": status.get("engine", {}).get("active_sources"),
                     "active_jobs": status.get("engine", {}).get("active_jobs")
                     if "active_jobs" in status.get("engine", {})
                     else None,
-                    "items_extracted": latest_runs.get("crawl", {}).get("items_extracted")
-                    if latest_runs.get("crawl") else None,
+                    "items_extracted": crawl_latest.get("items_extracted"),
                 },
                 "error": None if reliability.get("crawl_failures_total", 0) == 0 else "recent_crawl_failures_detected",
                 "source": "crawler_jobs",
@@ -613,15 +615,13 @@ class AIControlPlaneService:
                 "stage_id": "evaluation",
                 "label": "Evaluation/Drift/Fairness",
                 "status": (
-                    "warning"
-                    if latest_runs.get("drift", {}).get("drift_detected")
-                    else "ok" if latest_runs.get("evaluation") else "idle"
+                    "warning" if drift_latest.get("drift_detected")
+                    else "ok" if eval_latest else "idle"
                 ),
-                "last_run_at": self._safe_dt(latest_runs.get("evaluation", {}).get("created_at")),
+                "last_run_at": self._safe_dt(eval_latest.get("created_at")),
                 "duration_ms": None,
                 "counts": {
-                    "drift_detected": latest_runs.get("drift", {}).get("drift_detected")
-                    if latest_runs.get("drift") else None,
+                    "drift_detected": drift_latest.get("drift_detected"),
                 },
                 "error": None,
                 "source": "evaluation_runs_and_drift",
@@ -630,19 +630,17 @@ class AIControlPlaneService:
                 "stage_id": "training",
                 "label": "Training",
                 "status": self._status_from_value(
-                    latest_runs.get("training", {}).get("status")
-                    if latest_runs.get("training") else None,
+                    training_latest.get("status"),
                     ok_values={"completed", "ok"},
                     warn_values={"running", "pending"},
                 ),
-                "last_run_at": self._safe_dt(latest_runs.get("training", {}).get("created_at")),
+                "last_run_at": self._safe_dt(training_latest.get("created_at")),
                 "duration_ms": None,
                 "counts": {
                     "mode_default_cycle": ml_policy.get("training_default_cycle_mode"),
                     "mode_default_manual": ml_policy.get("training_default_manual_mode"),
                 },
-                "error": latest_runs.get("training", {}).get("failure_reason")
-                if latest_runs.get("training") else None,
+                "error": training_latest.get("failure_reason"),
                 "source": "training_runs",
             },
             {
