@@ -55,8 +55,12 @@ export default function InstitutionLayout() {
   const location = useLocation()
   const sidebarWidth = sidebarCollapsed ? 'w-16' : 'w-60'
   const [showCommandPalette, setShowCommandPalette] = useState(false)
+  const [showNotificationsMenu, setShowNotificationsMenu] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
   const [commandQuery, setCommandQuery] = useState('')
   const shortcutPrefixAtRef = useRef<number | null>(null)
+  const notificationsMenuRef = useRef<HTMLDivElement | null>(null)
+  const userMenuRef = useRef<HTMLDivElement | null>(null)
 
   const { data: unreadCount } = useQuery({
     queryKey: ['unread-count'],
@@ -134,6 +138,20 @@ export default function InstitutionLayout() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [navigate])
 
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as Node
+      if (notificationsMenuRef.current && !notificationsMenuRef.current.contains(target)) {
+        setShowNotificationsMenu(false)
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(target)) {
+        setShowUserMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [])
+
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
@@ -206,17 +224,60 @@ export default function InstitutionLayout() {
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="relative p-2 rounded-lg hover:bg-gray-100">
-              <Bell size={18} className="text-gray-600" />
-              {(unreadCount?.count ?? 0) > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">
-                  {unreadCount.count > 9 ? '9+' : unreadCount.count}
-                </span>
+            <div className="relative" ref={notificationsMenuRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowNotificationsMenu(v => !v)
+                  setShowUserMenu(false)
+                }}
+                className="relative p-2 rounded-lg hover:bg-gray-100"
+              >
+                <Bell size={18} className="text-gray-600" />
+                {(unreadCount?.count ?? 0) > 0 && (
+                  <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">
+                    {unreadCount.count > 9 ? '9+' : unreadCount.count}
+                  </span>
+                )}
+              </button>
+              {showNotificationsMenu && (
+                <div className="absolute right-0 top-full mt-1 w-60 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50">
+                  <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-100">
+                    {unreadCount?.count ?? 0} unread notifications
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigate('/i/messages')
+                      setShowNotificationsMenu(false)
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    Open inbox
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigate('/i/settings?tab=notifications')
+                      setShowNotificationsMenu(false)
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    Notification settings
+                  </button>
+                </div>
               )}
-            </button>
+            </div>
 
-            <div className="relative group">
-              <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100">
+            <div className="relative" ref={userMenuRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowUserMenu(v => !v)
+                  setShowNotificationsMenu(false)
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100"
+              >
                 <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-medium text-indigo-700">
                   {user?.email?.charAt(0).toUpperCase()}
                 </div>
@@ -224,20 +285,27 @@ export default function InstitutionLayout() {
                   <span className="text-sm text-gray-700">{user?.email}</span>
                 )}
               </button>
-              <div className="hidden group-hover:block absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50">
-                <button
-                  onClick={() => navigate('/i/settings')}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  Settings
-                </button>
-                <button
-                  onClick={logout}
-                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                >
-                  <LogOut size={14} /> Sign out
-                </button>
-              </div>
+              {showUserMenu && (
+                <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigate('/i/settings')
+                      setShowUserMenu(false)
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    Settings
+                  </button>
+                  <button
+                    type="button"
+                    onClick={logout}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                  >
+                    <LogOut size={14} /> Sign out
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </header>

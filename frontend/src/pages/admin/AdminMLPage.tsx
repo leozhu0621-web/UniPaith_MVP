@@ -71,6 +71,21 @@ export default function AdminMLPage() {
   const drifts: any[] = Array.isArray(driftQ.data) ? driftQ.data : driftQ.data?.snapshots ?? []
   const outcomes = outcomesQ.data
 
+  const formatOutcomeValue = (value: unknown): string => {
+    if (value == null) return '—'
+    if (typeof value === 'number') return value.toLocaleString()
+    if (typeof value === 'string' || typeof value === 'boolean') return String(value)
+    if (Array.isArray(value)) return value.length ? value.join(', ') : '—'
+    if (typeof value === 'object') {
+      const entries = Object.entries(value as Record<string, unknown>)
+      if (!entries.length) return '—'
+      return entries
+        .map(([k, v]) => `${k}: ${typeof v === 'number' ? v.toLocaleString() : String(v)}`)
+        .join(' · ')
+    }
+    return String(value)
+  }
+
   const tabs = [
     { id: 'models', label: `Models (${models.length})` },
     { id: 'evaluations', label: `Evaluations (${evals.length})` },
@@ -303,7 +318,7 @@ export default function AdminMLPage() {
                 {Object.entries(outcomes).map(([key, val]) => (
                   <div key={key} className="bg-gray-50 rounded-lg p-4">
                     <p className="text-xs text-gray-500 uppercase">{key.replace(/_/g, ' ')}</p>
-                    <p className="text-2xl font-bold mt-1">{typeof val === 'number' ? val.toLocaleString() : String(val)}</p>
+                    <p className="text-sm font-semibold mt-1 text-gray-900 break-words">{formatOutcomeValue(val)}</p>
                   </div>
                 ))}
               </div>
