@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -50,7 +49,6 @@ interface AuditEvent {
 }
 
 export default function AdminOpsCenterPage() {
-  const navigate = useNavigate()
   const addToast = useToastStore(s => s.addToast)
   const {
     snapshotQ,
@@ -170,10 +168,20 @@ export default function AdminOpsCenterPage() {
       await fn()
       addToast(`${name} started`, 'success')
       await invalidateOps()
+      await Promise.all([
+        snapshotQ.refetch(),
+        sloQ.refetch(),
+        architectureTraceQ.refetch(),
+        mlKpisQ.refetch(),
+      ])
     } catch (e: unknown) {
       const err = e as OpsError
       addToast(err?.message ?? `${name} failed`, 'error')
     }
+  }
+
+  const hardNavigate = (path: string) => {
+    window.location.assign(path)
   }
 
   if (snapshotQ.isLoading) {
@@ -396,10 +404,10 @@ export default function AdminOpsCenterPage() {
           <Card className="p-5">
             <h3 className="text-sm font-semibold text-gray-800 mb-3">Quick Drilldowns</h3>
             <div className="grid grid-cols-2 gap-2">
-              <Button variant="secondary" size="sm" onClick={() => navigate('/admin/crawler')}>Crawler</Button>
-              <Button variant="secondary" size="sm" onClick={() => navigate('/admin/ml')}>ML</Button>
-              <Button variant="secondary" size="sm" onClick={() => navigate('/admin/users')}>Users</Button>
-              <Button variant="secondary" size="sm" onClick={() => navigate('/admin/system')}>System</Button>
+              <Button variant="secondary" size="sm" onClick={() => hardNavigate('/admin/crawler')}>Crawler</Button>
+              <Button variant="secondary" size="sm" onClick={() => hardNavigate('/admin/ml')}>ML</Button>
+              <Button variant="secondary" size="sm" onClick={() => hardNavigate('/admin/users')}>Users</Button>
+              <Button variant="secondary" size="sm" onClick={() => hardNavigate('/admin/system')}>System</Button>
             </div>
           </Card>
         </div>

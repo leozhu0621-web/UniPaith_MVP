@@ -1,6 +1,32 @@
 import { create } from 'zustand'
 import apiClient from '../api/client'
 
+const REFRESH_TOKEN_KEY = 'unipaith_refresh_token'
+
+function readRefreshToken(): string | null {
+  const tabToken = sessionStorage.getItem(REFRESH_TOKEN_KEY)
+  if (tabToken) return tabToken
+
+  // One-time migration path from legacy localStorage token.
+  const legacyToken = localStorage.getItem(REFRESH_TOKEN_KEY)
+  if (legacyToken) {
+    sessionStorage.setItem(REFRESH_TOKEN_KEY, legacyToken)
+    localStorage.removeItem(REFRESH_TOKEN_KEY)
+    return legacyToken
+  }
+  return null
+}
+
+function persistRefreshToken(token: string | null) {
+  if (token) {
+    sessionStorage.setItem(REFRESH_TOKEN_KEY, token)
+  } else {
+    sessionStorage.removeItem(REFRESH_TOKEN_KEY)
+  }
+  // Keep legacy key cleared to avoid cross-tab role/session bleed.
+  localStorage.removeItem(REFRESH_TOKEN_KEY)
+}
+
 interface User {
   id: string
   email: string
@@ -26,7 +52,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   accessToken: null,
-  refreshToken: localStorage.getItem('unipaith_refresh_token'),
+  refreshToken: readRefreshToken(),
   isAuthenticated: false,
   isLoading: true,
 
@@ -68,11 +94,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       user: resolvedUser,
       isAuthenticated: true,
     })
-    if (data.refresh_token) {
-      localStorage.setItem('unipaith_refresh_token', data.refresh_token)
-    } else {
-      localStorage.removeItem('unipaith_refresh_token')
-    }
+    persistRefreshToken(data.refresh_token ?? null)
   },
 
   signup: async (email, password, role) => {
@@ -81,7 +103,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: () => {
-    localStorage.removeItem('unipaith_refresh_token')
+    persistRefreshToken(null)
     set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false, isLoading: false })
   },
 

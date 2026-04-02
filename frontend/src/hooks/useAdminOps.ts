@@ -73,7 +73,7 @@ export function useAdminOps() {
   })
 
   const triggerTrainingMut = useMutation({
-    mutationFn: triggerTraining,
+    mutationFn: () => triggerTraining(),
     onSuccess: invalidateOps,
   })
 

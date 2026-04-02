@@ -104,30 +104,40 @@ export default function SetupPage() {
     onError: () => showToast('Failed to create rubric', 'error'),
   })
 
-  const onSubmitInstitution = instForm.handleSubmit((data) => {
-    createInstMut.mutate({
-      name: data.name,
-      type: data.type,
-      country: data.country,
-      region: data.region || undefined,
-      city: data.city || undefined,
-      website_url: data.website_url || undefined,
-      description_text: data.description_text || undefined,
-    })
-  })
+  const onSubmitInstitution = instForm.handleSubmit(
+    (data) => {
+      createInstMut.mutate({
+        name: data.name,
+        type: data.type,
+        country: data.country,
+        region: data.region || undefined,
+        city: data.city || undefined,
+        website_url: data.website_url || undefined,
+        description_text: data.description_text || undefined,
+      })
+    },
+    () => {
+      showToast('Please complete required institution fields', 'warning')
+    },
+  )
 
-  const onSubmitProgram = progForm.handleSubmit((data) => {
-    createProgMut.mutate({
-      program_name: data.program_name,
-      degree_type: data.degree_type,
-      department: data.department || undefined,
-      duration_months: data.duration_months || undefined,
-      tuition: data.tuition || undefined,
-      application_deadline: data.application_deadline || undefined,
-      program_start_date: data.program_start_date || undefined,
-      description_text: data.description_text || undefined,
-    })
-  })
+  const onSubmitProgram = progForm.handleSubmit(
+    (data) => {
+      createProgMut.mutate({
+        program_name: data.program_name,
+        degree_type: data.degree_type,
+        department: data.department || undefined,
+        duration_months: data.duration_months || undefined,
+        tuition: data.tuition || undefined,
+        application_deadline: data.application_deadline || undefined,
+        program_start_date: data.program_start_date || undefined,
+        description_text: data.description_text || undefined,
+      })
+    },
+    () => {
+      showToast('Please complete required program fields', 'warning')
+    },
+  )
 
   const onSubmitRubric = () => {
     const total = criteria.reduce((s, c) => s + c.weight, 0)
@@ -217,7 +227,7 @@ export default function SetupPage() {
             </div>
             <Textarea label="Description" {...progForm.register('description_text')} rows={3} />
             <div className="flex justify-between">
-              <Button variant="ghost" onClick={() => setCurrentStep(0)}>Back</Button>
+              <Button type="button" variant="ghost" onClick={() => setCurrentStep(0)}>Back</Button>
               <Button type="submit" disabled={createProgMut.isPending}>
                 {createProgMut.isPending ? 'Creating...' : 'Next'}
               </Button>
@@ -254,21 +264,21 @@ export default function SetupPage() {
                       value={c.weight}
                       onChange={e => updateCriterion(i, 'weight', Number(e.target.value))}
                     />
-                    <button onClick={() => removeCriterion(i)} className="p-1 text-gray-400 hover:text-red-500">
+                    <button type="button" onClick={() => removeCriterion(i)} className="p-1 text-gray-400 hover:text-red-500">
                       <Trash2 size={16} />
                     </button>
                   </div>
                 ))}
               </div>
-              <Button variant="ghost" size="sm" onClick={addCriterion} className="mt-2 flex items-center gap-1">
+              <Button type="button" variant="ghost" size="sm" onClick={addCriterion} className="mt-2 flex items-center gap-1">
                 <Plus size={14} /> Add Criterion
               </Button>
             </div>
             <div className="flex justify-between">
-              <Button variant="ghost" onClick={() => setCurrentStep(1)}>Back</Button>
+              <Button type="button" variant="ghost" onClick={() => setCurrentStep(1)}>Back</Button>
               <div className="flex gap-2">
-                <Button variant="secondary" onClick={() => setCurrentStep(3)}>Skip</Button>
-                <Button onClick={onSubmitRubric} disabled={createRubricMut.isPending}>
+                <Button type="button" variant="secondary" onClick={() => setCurrentStep(3)}>Skip</Button>
+                <Button type="button" onClick={onSubmitRubric} disabled={createRubricMut.isPending}>
                   {createRubricMut.isPending ? 'Creating...' : 'Create Rubric'}
                 </Button>
               </div>

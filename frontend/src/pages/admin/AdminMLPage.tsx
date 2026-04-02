@@ -50,7 +50,7 @@ export default function AdminMLPage() {
     onError: (e: any) => addToast(e.message, 'error'),
   })
   const trainMut = useMutation({
-    mutationFn: triggerTraining,
+    mutationFn: () => triggerTraining(),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'ml'] }); addToast('Training triggered', 'success') },
     onError: (e: any) => addToast(e.message, 'error'),
   })

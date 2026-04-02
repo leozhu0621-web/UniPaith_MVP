@@ -181,8 +181,8 @@ export const getMLEvaluation = (evalId: string) =>
 export const getMLTrainingRuns = (params?: { limit?: number }) =>
   apiClient.get('/admin/ml/training', { params }).then(r => r.data)
 
-export const triggerTraining = () =>
-  apiClient.post('/admin/ml/training/trigger').then(r => r.data)
+export const triggerTraining = (data?: { triggered_by?: string; mode?: 'fast' | 'full' }) =>
+  apiClient.post('/admin/ml/training/trigger', data ?? { triggered_by: 'manual', mode: 'full' }).then(r => r.data)
 
 // ─── ML: Model Registry ───
 export const getMLModels = () =>

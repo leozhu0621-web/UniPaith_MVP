@@ -14,7 +14,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -174,7 +174,7 @@ async def list_training_runs(
 
 @router.post("/training/trigger", response_model=TrainingRunResponse)
 async def trigger_training(
-    body: TriggerTrainingRequest | None = None,
+    body: TriggerTrainingRequest | None = Body(default=None),
     db: AsyncSession = Depends(get_db),
     _admin: User = Depends(require_admin),
 ):

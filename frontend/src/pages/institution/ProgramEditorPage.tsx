@@ -130,22 +130,32 @@ export default function ProgramEditorPage() {
     onError: () => showToast('Failed to publish', 'error'),
   })
 
-  const onSaveDraft = form.handleSubmit((data: FormData) => {
-    const payload = buildPayload(data)
-    if (isEdit) updateMut.mutate(payload)
-    else createMut.mutate(payload)
-  })
+  const onSaveDraft = form.handleSubmit(
+    (data: FormData) => {
+      const payload = buildPayload(data)
+      if (isEdit) updateMut.mutate(payload)
+      else createMut.mutate(payload)
+    },
+    () => {
+      showToast('Please complete required fields before saving', 'warning')
+    },
+  )
 
-  const onSaveAndPublish = form.handleSubmit(async (data: FormData) => {
-    const payload = buildPayload(data)
-    if (isEdit) {
-      await updateMut.mutateAsync(payload)
-      publishMut.mutate(id!)
-    } else {
-      const created = await createMut.mutateAsync(payload)
-      publishMut.mutate(created.id)
-    }
-  })
+  const onSaveAndPublish = form.handleSubmit(
+    async (data: FormData) => {
+      const payload = buildPayload(data)
+      if (isEdit) {
+        await updateMut.mutateAsync(payload)
+        publishMut.mutate(id!)
+      } else {
+        const created = await createMut.mutateAsync(payload)
+        publishMut.mutate(created.id)
+      }
+    },
+    () => {
+      showToast('Please complete required fields before publishing', 'warning')
+    },
+  )
 
   const saving = createMut.isPending || updateMut.isPending || publishMut.isPending
 
@@ -204,7 +214,7 @@ export default function ProgramEditorPage() {
         {highlightsField.fields.map((field, i) => (
           <div key={field.id} className="flex items-center gap-2">
             <Input className="flex-1" {...form.register(`highlights.${i}.value`)} placeholder="e.g. Top 10 program nationally" />
-            <button onClick={() => highlightsField.remove(i)} className="p-1 text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
+            <button type="button" onClick={() => highlightsField.remove(i)} className="p-1 text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
           </div>
         ))}
       </Card>
@@ -221,7 +231,7 @@ export default function ProgramEditorPage() {
           <div key={field.id} className="flex items-center gap-2">
             <Input className="w-40" {...form.register(`requirements.${i}.key`)} placeholder="Key" />
             <Input className="flex-1" {...form.register(`requirements.${i}.value`)} placeholder="Value" />
-            <button onClick={() => requirementsField.remove(i)} className="p-1 text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
+            <button type="button" onClick={() => requirementsField.remove(i)} className="p-1 text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
           </div>
         ))}
       </Card>
@@ -239,7 +249,7 @@ export default function ProgramEditorPage() {
             <Input className="flex-1" {...form.register(`faculty_contacts.${i}.name`)} placeholder="Name" />
             <Input className="flex-1" {...form.register(`faculty_contacts.${i}.email`)} placeholder="Email" />
             <Input className="w-32" {...form.register(`faculty_contacts.${i}.role`)} placeholder="Role" />
-            <button onClick={() => facultyField.remove(i)} className="p-1 text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
+            <button type="button" onClick={() => facultyField.remove(i)} className="p-1 text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
           </div>
         ))}
       </Card>

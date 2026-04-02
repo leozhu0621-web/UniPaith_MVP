@@ -70,19 +70,21 @@ export default function AdminSystemPage() {
   })
   const runLoopMut = useMutation({
     mutationFn: runAIControlLoop,
-    onSuccess: () => {
+    onSuccess: async () => {
       addToast('Self-driving loop tick triggered', 'success')
-      qc.invalidateQueries({ queryKey: ['admin', 'ai-control'] })
-      qc.invalidateQueries({ queryKey: ['admin', 'ml'] })
+      await qc.invalidateQueries({ queryKey: ['admin', 'ai-control'] })
+      await qc.invalidateQueries({ queryKey: ['admin', 'ml'] })
+      await qc.refetchQueries({ queryKey: ['admin', 'ai-control'], type: 'active' })
     },
     onError: (e: any) => addToast(e.message, 'error'),
   })
   const runEngineGraphMut = useMutation({
     mutationFn: runAIEngineGraph,
-    onSuccess: () => {
+    onSuccess: async () => {
       addToast('Full AI engine graph run started/completed', 'success')
-      qc.invalidateQueries({ queryKey: ['admin', 'ai-control'] })
-      qc.invalidateQueries({ queryKey: ['admin', 'ml'] })
+      await qc.invalidateQueries({ queryKey: ['admin', 'ai-control'] })
+      await qc.invalidateQueries({ queryKey: ['admin', 'ml'] })
+      await qc.refetchQueries({ queryKey: ['admin', 'ai-control'], type: 'active' })
     },
     onError: (e: any) => addToast(e.message, 'error'),
   })
