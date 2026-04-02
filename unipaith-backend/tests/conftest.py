@@ -14,6 +14,7 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 
 try:
     from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -29,7 +30,9 @@ from unipaith.models.user import User, UserRole
 
 TEST_DATABASE_URL = settings.database_url
 
-test_engine = create_async_engine(TEST_DATABASE_URL, echo=False)
+# NullPool avoids asyncpg "another operation is in progress" when pooled connections
+# are reused across overlapping setup/teardown under pytest-asyncio.
+test_engine = create_async_engine(TEST_DATABASE_URL, echo=False, poolclass=NullPool)
 TestSession = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
 
 

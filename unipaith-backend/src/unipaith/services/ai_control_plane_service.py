@@ -398,18 +398,33 @@ class AIControlPlaneService:
         return {"status": status, "actions": actions}
 
     async def _verify(self, remediation: dict[str, Any]) -> dict[str, Any]:
+        """Post-remediation health check; tolerant of failed training when stack can still serve."""
         embedding_count = await self.db.scalar(select(func.count()).select_from(Embedding))
+        embeddings_ok = bool((embedding_count or 0) > 0)
+
         latest_train = await self.db.execute(
             select(TrainingRun).order_by(TrainingRun.created_at.desc()).limit(1)
         )
         latest_train_obj = latest_train.scalar_one_or_none()
+        latest_failed = bool(
+            latest_train_obj is not None and latest_train_obj.status == "failed"
+        )
+
+        active_row = await self.db.execute(
+            select(ModelRegistry).where(ModelRegistry.is_active.is_(True)).limit(1)
+        )
+        has_active_model = active_row.scalar_one_or_none() is not None
+
+        training_gate_ok = not latest_failed or has_active_model or embeddings_ok
+
         checks = {
-            "embeddings_present": bool((embedding_count or 0) > 0),
-            "latest_training_not_failed": bool(
-                latest_train_obj is None or latest_train_obj.status != "failed"
-            ),
+            "embeddings_present": embeddings_ok,
+            "latest_training_not_failed": not latest_failed,
+            "training_gate_ok": training_gate_ok,
+            "has_active_model": has_active_model,
         }
-        status = "ok" if all(checks.values()) and remediation.get("status") != "error" else "error"
+        base_ok = embeddings_ok and training_gate_ok and remediation.get("status") != "error"
+        status = "ok" if base_ok else "error"
         return {"status": status, "checks": checks}
 
     async def _rollback(self, remediation: dict[str, Any]) -> dict[str, Any]:
