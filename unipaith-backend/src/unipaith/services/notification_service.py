@@ -96,7 +96,7 @@ class NotificationService:
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
-    async def unread_count(self, user_id: UUID) -> int:
+    async def unread_count(self, user_id: UUID) -> dict:
         """Get count of unread notifications."""
         result = await self.db.execute(
             select(func.count())
@@ -106,7 +106,7 @@ class NotificationService:
                 Notification.is_read.is_(False),
             )
         )
-        return result.scalar() or 0
+        return {"count": result.scalar() or 0}
 
     async def mark_read(self, user_id: UUID, notification_id: UUID) -> Notification:
         """Mark a single notification as read."""
