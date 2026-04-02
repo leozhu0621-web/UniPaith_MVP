@@ -72,6 +72,17 @@ export default function InstitutionLayout() {
     queryFn: getInstitution,
     retry: false,
   })
+  const institutionMissing =
+    institutionQ.isError &&
+    institutionQ.error instanceof Error &&
+    /not found|no institution|404/i.test(institutionQ.error.message)
+
+  useEffect(() => {
+    if (!institutionMissing) return
+    if (location.pathname === '/i/setup') return
+    navigate('/i/setup', { replace: true })
+  }, [institutionMissing, location.pathname, navigate])
+
   const navSections = buildNavSections(institutionQ.isError)
   const currentArea =
     navSections.flatMap(section => section.items).find(item => location.pathname.startsWith(item.to))?.label ?? 'Overview'

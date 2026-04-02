@@ -35,7 +35,7 @@ jobs:
       - name: Build
         working-directory: frontend
         env:
-          VITE_API_URL: https://unipaith.co/api/v1
+          VITE_API_URL: https://api.unipaith.co/api/v1
         run: npm run build
 
       - name: Configure AWS credentials

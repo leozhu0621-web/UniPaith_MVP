@@ -52,7 +52,16 @@ apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) =>
 })
 
 apiClient.interceptors.response.use(
-  response => response,
+  response => {
+    const contentType = String(response.headers?.['content-type'] ?? '').toLowerCase()
+    const requestUrl = String(response.config?.url ?? '')
+    if (contentType.includes('text/html') && requestUrl.startsWith('/')) {
+      throw new Error(
+        'API request returned HTML instead of JSON. This usually means production API base URL is misconfigured or routing is sending /api/* to the frontend app.',
+      )
+    }
+    return response
+  },
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
 

@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../stores/auth-store'
@@ -49,6 +50,8 @@ const NAV_SECTIONS = [
 export default function StudentLayout() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
+  const [showNotificationsMenu, setShowNotificationsMenu] = useState(false)
+  const notificationsMenuRef = useRef<HTMLDivElement | null>(null)
 
   const { data: onboarding } = useQuery({
     queryKey: ['onboarding'],
@@ -66,6 +69,17 @@ export default function StudentLayout() {
   })
 
   const completionPct = onboarding?.completion_percentage ?? 0
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as Node
+      if (notificationsMenuRef.current && !notificationsMenuRef.current.contains(target)) {
+        setShowNotificationsMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [])
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -110,17 +124,47 @@ export default function StudentLayout() {
           </NavLink>
           <div className="flex items-center gap-3">
             {/* Notification bell */}
-            <button
-              onClick={() => navigate('/s/settings')}
-              className="relative p-2 rounded-lg hover:bg-gray-100"
-            >
-              <Bell size={18} className="text-gray-600" />
-              {(unreadCount?.count ?? 0) > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">
-                  {unreadCount.count > 9 ? '9+' : unreadCount.count}
-                </span>
+            <div className="relative" ref={notificationsMenuRef}>
+              <button
+                type="button"
+                onClick={() => setShowNotificationsMenu(v => !v)}
+                className="relative p-2 rounded-lg hover:bg-gray-100"
+              >
+                <Bell size={18} className="text-gray-600" />
+                {(unreadCount?.count ?? 0) > 0 && (
+                  <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">
+                    {unreadCount.count > 9 ? '9+' : unreadCount.count}
+                  </span>
+                )}
+              </button>
+              {showNotificationsMenu && (
+                <div className="absolute right-0 top-full mt-1 w-60 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50">
+                  <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-100">
+                    {unreadCount?.count ?? 0} unread notifications
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigate('/s/messages')
+                      setShowNotificationsMenu(false)
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    Open inbox
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigate('/s/settings')
+                      setShowNotificationsMenu(false)
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    Notification settings
+                  </button>
+                </div>
               )}
-            </button>
+            </div>
 
             {/* User dropdown */}
             <Dropdown

@@ -73,7 +73,7 @@ deploy_frontend() {
     log "Building and deploying frontend..."
     cd frontend
     npm ci
-    VITE_API_URL=https://unipaith.co/api/v1 npm run build
+    VITE_API_URL=https://api.unipaith.co/api/v1 npm run build
     log "Uploading to S3..."
     aws s3 sync dist/ s3://${S3_FRONTEND}/ --delete \
         --cache-control "max-age=31536000,public,immutable" \
@@ -110,7 +110,7 @@ case "${1:-all}" in
         deploy_frontend
         log "=== Full deployment complete! ==="
         log "Site: https://unipaith.co"
-        log "API:  https://unipaith.co/api/v1/health"
+        log "API:  https://api.unipaith.co/api/v1/health"
         ;;
     *)
         echo "Usage: $0 [backend|frontend|infra|all]"
