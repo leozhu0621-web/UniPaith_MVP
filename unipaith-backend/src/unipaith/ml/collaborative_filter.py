@@ -7,6 +7,7 @@ OutcomeRecord, trains ALS via the implicit library, and produces
 per-student-program affinity scores. Falls back to embedding similarity
 for cold-start users/programs.
 """
+
 from __future__ import annotations
 
 import logging
@@ -80,7 +81,8 @@ class CollaborativeFilter:
                 data.append(max(0.01, float(weight)))
 
             matrix = csr_matrix(
-                (data, (rows, cols)), shape=(n_students, n_programs),
+                (data, (rows, cols)),
+                shape=(n_students, n_programs),
             )
 
             model = AlternatingLeastSquares(
@@ -94,7 +96,9 @@ class CollaborativeFilter:
 
             logger.info(
                 "CF trained: %d students x %d programs, %d interactions",
-                n_students, n_programs, len(data),
+                n_students,
+                n_programs,
+                len(data),
             )
             return {
                 "status": "trained",
@@ -126,13 +130,17 @@ class CollaborativeFilter:
             return 0.5
 
     def predict_batch(
-        self, student_id: UUID, program_ids: list[UUID],
+        self,
+        student_id: UUID,
+        program_ids: list[UUID],
     ) -> dict[UUID, float]:
         """Get CF scores for multiple programs for one student."""
         return {pid: self.predict(student_id, pid) for pid in program_ids}
 
     def recommend_for_student(
-        self, student_id: UUID, n: int = 20,
+        self,
+        student_id: UUID,
+        n: int = 20,
     ) -> list[tuple[UUID, float]]:
         """Get top-N program recommendations for a student."""
         if self._model is None:
@@ -144,10 +152,14 @@ class CollaborativeFilter:
 
         try:
             from scipy.sparse import csr_matrix
+
             n_programs = len(self._program_map)
             empty_row = csr_matrix((1, n_programs))
             ids, scores = self._model.recommend(
-                si, empty_row, N=n, filter_already_liked_items=False,
+                si,
+                empty_row,
+                N=n,
+                filter_already_liked_items=False,
             )
             return [
                 (self._reverse_program_map[int(idx)], float(score))

@@ -32,7 +32,7 @@ async def propose_interview(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    inst = await InstitutionService(db).get_institution(user.id)
+    await InstitutionService(db).get_institution(user.id)
     svc = InterviewService(db)
     return await svc.propose_interview(
         application_id=body.application_id,
@@ -61,7 +61,7 @@ async def list_interviews(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    inst = await InstitutionService(db).get_institution(user.id)
+    await InstitutionService(db).get_institution(user.id)
     svc = InterviewService(db)
     return await svc.list_application_interviews(application_id)
 
@@ -72,7 +72,7 @@ async def complete_interview(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    inst = await InstitutionService(db).get_institution(user.id)
+    await InstitutionService(db).get_institution(user.id)
     svc = InterviewService(db)
     return await svc.complete_interview(interview_id)
 

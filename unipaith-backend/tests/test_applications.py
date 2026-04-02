@@ -8,7 +8,9 @@ from unipaith.models.user import User
 
 
 async def _setup_student_and_program(
-    db: AsyncSession, student_user: User, inst_user: User,
+    db: AsyncSession,
+    student_user: User,
+    inst_user: User,
 ) -> tuple[StudentProfile, Program]:
     db.add(student_user)
     db.add(inst_user)
@@ -46,12 +48,13 @@ async def test_create_application(
     mock_student_user: User,
     mock_institution_user: User,
 ):
-    _, prog = await _setup_student_and_program(
-        db_session, mock_student_user, mock_institution_user
+    _, prog = await _setup_student_and_program(db_session, mock_student_user, mock_institution_user)
+    resp = await student_client.post(
+        "/api/v1/applications",
+        json={
+            "program_id": str(prog.id),
+        },
     )
-    resp = await student_client.post("/api/v1/applications", json={
-        "program_id": str(prog.id),
-    })
     assert resp.status_code == 201
     assert resp.json()["status"] == "draft"
 
@@ -63,15 +66,19 @@ async def test_duplicate_application(
     mock_student_user: User,
     mock_institution_user: User,
 ):
-    _, prog = await _setup_student_and_program(
-        db_session, mock_student_user, mock_institution_user
+    _, prog = await _setup_student_and_program(db_session, mock_student_user, mock_institution_user)
+    await student_client.post(
+        "/api/v1/applications",
+        json={
+            "program_id": str(prog.id),
+        },
     )
-    await student_client.post("/api/v1/applications", json={
-        "program_id": str(prog.id),
-    })
-    resp = await student_client.post("/api/v1/applications", json={
-        "program_id": str(prog.id),
-    })
+    resp = await student_client.post(
+        "/api/v1/applications",
+        json={
+            "program_id": str(prog.id),
+        },
+    )
     assert resp.status_code == 409
 
 
@@ -82,12 +89,13 @@ async def test_list_my_applications(
     mock_student_user: User,
     mock_institution_user: User,
 ):
-    _, prog = await _setup_student_and_program(
-        db_session, mock_student_user, mock_institution_user
+    _, prog = await _setup_student_and_program(db_session, mock_student_user, mock_institution_user)
+    await student_client.post(
+        "/api/v1/applications",
+        json={
+            "program_id": str(prog.id),
+        },
     )
-    await student_client.post("/api/v1/applications", json={
-        "program_id": str(prog.id),
-    })
     resp = await student_client.get("/api/v1/applications/me")
     assert resp.status_code == 200
     assert len(resp.json()) == 1
@@ -100,12 +108,13 @@ async def test_submit_application(
     mock_student_user: User,
     mock_institution_user: User,
 ):
-    _, prog = await _setup_student_and_program(
-        db_session, mock_student_user, mock_institution_user
+    _, prog = await _setup_student_and_program(db_session, mock_student_user, mock_institution_user)
+    create_resp = await student_client.post(
+        "/api/v1/applications",
+        json={
+            "program_id": str(prog.id),
+        },
     )
-    create_resp = await student_client.post("/api/v1/applications", json={
-        "program_id": str(prog.id),
-    })
     app_id = create_resp.json()["id"]
     resp = await student_client.post(f"/api/v1/applications/me/{app_id}/submit")
     assert resp.status_code == 200
@@ -120,12 +129,13 @@ async def test_withdraw_draft(
     mock_student_user: User,
     mock_institution_user: User,
 ):
-    _, prog = await _setup_student_and_program(
-        db_session, mock_student_user, mock_institution_user
+    _, prog = await _setup_student_and_program(db_session, mock_student_user, mock_institution_user)
+    create_resp = await student_client.post(
+        "/api/v1/applications",
+        json={
+            "program_id": str(prog.id),
+        },
     )
-    create_resp = await student_client.post("/api/v1/applications", json={
-        "program_id": str(prog.id),
-    })
     app_id = create_resp.json()["id"]
     resp = await student_client.delete(f"/api/v1/applications/me/{app_id}")
     assert resp.status_code == 204

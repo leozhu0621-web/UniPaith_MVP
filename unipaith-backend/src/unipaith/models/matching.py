@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     Boolean,
     DateTime,
@@ -18,8 +19,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
-
-from pgvector.sqlalchemy import Vector
 
 from unipaith.models.base import Base
 

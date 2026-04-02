@@ -2,6 +2,7 @@
 NL Reasoning Generator.
 Produces human-readable match explanations using the reasoning LLM.
 """
+
 from __future__ import annotations
 
 from uuid import UUID
@@ -15,7 +16,8 @@ from unipaith.models.institution import Program
 from unipaith.models.matching import InstitutionFeature, StudentFeature
 from unipaith.models.student import StudentProfile
 
-REASONING_SYSTEM_PROMPT = """You are an admissions advisor generating a personalized match explanation for a student.
+REASONING_SYSTEM_PROMPT = """You are an admissions advisor \
+generating a personalized match explanation for a student.
 
 Write 3-5 sentences explaining why this program is a good (or reasonable) match for this student.
 
@@ -50,28 +52,28 @@ class ReasoningGenerator:
 
         user_content = f"""
 ## Match Context
-- Match Score: {score:.2f}/1.00 ({tier_label.get(tier, 'Match')})
+- Match Score: {score:.2f}/1.00 ({tier_label.get(tier, "Match")})
 - Score Breakdown: {breakdown}
 
 ## Student Profile Summary
-- Name: {student.get('name', 'Student')}
-- Nationality: {student.get('nationality', 'Unknown')}
-- Highest Degree: {student.get('highest_degree', 'Unknown')}
-- GPA: {student.get('gpa', 'N/A')}
-- Work Experience: {student.get('work_years', 0)} years
-- Key Interests: {student.get('interests', [])}
-- Goals: {student.get('goals', 'Not specified')}
-- Budget Max: ${student.get('budget_max', 'N/A')}
-- Funding Need: {student.get('funding', 'N/A')}
+- Name: {student.get("name", "Student")}
+- Nationality: {student.get("nationality", "Unknown")}
+- Highest Degree: {student.get("highest_degree", "Unknown")}
+- GPA: {student.get("gpa", "N/A")}
+- Work Experience: {student.get("work_years", 0)} years
+- Key Interests: {student.get("interests", [])}
+- Goals: {student.get("goals", "Not specified")}
+- Budget Max: ${student.get("budget_max", "N/A")}
+- Funding Need: {student.get("funding", "N/A")}
 
 ## Program Summary
-- Program: {program.get('name', 'Unknown')}
-- Institution: {program.get('institution', 'Unknown')}
-- Degree: {program.get('degree_type', 'Unknown')}
-- Location: {program.get('location', 'Unknown')}
-- Tuition: ${program.get('tuition', 'N/A')}/year
-- Acceptance Rate: {program.get('acceptance_rate', 'N/A')}
-- Focus Areas: {program.get('focus_areas', [])}
+- Program: {program.get("name", "Unknown")}
+- Institution: {program.get("institution", "Unknown")}
+- Degree: {program.get("degree_type", "Unknown")}
+- Location: {program.get("location", "Unknown")}
+- Tuition: ${program.get("tuition", "N/A")}/year
+- Acceptance Rate: {program.get("acceptance_rate", "N/A")}
+- Focus Areas: {program.get("focus_areas", [])}
 """
         reasoning = await self.llm.generate_reasoning(REASONING_SYSTEM_PROMPT, user_content)
         return reasoning.strip()
@@ -98,7 +100,7 @@ class ReasoningGenerator:
 
         highest_degree = "Unknown"
         best_gpa = None
-        for a in (student.academic_records or []):
+        for a in student.academic_records or []:
             highest_degree = a.degree_type
             if a.gpa:
                 best_gpa = f"{a.gpa} ({a.gpa_scale})"
@@ -110,7 +112,8 @@ class ReasoningGenerator:
             "gpa": best_gpa,
             "work_years": (
                 (features.feature_data or {}).get("structured", {}).get("work_experience_years", 0)
-                if features else 0
+                if features
+                else 0
             ),
             "interests": llm_data.get("key_themes", []),
             "goals": student.goals_text[:200] if student.goals_text else "Not specified",
@@ -142,8 +145,7 @@ class ReasoningGenerator:
             "location": f"{inst.city}, {inst.country}" if inst else "Unknown",
             "tuition": program.tuition,
             "acceptance_rate": (
-                f"{float(program.acceptance_rate) * 100:.0f}%"
-                if program.acceptance_rate else "N/A"
+                f"{float(program.acceptance_rate) * 100:.0f}%" if program.acceptance_rate else "N/A"
             ),
             "focus_areas": llm_data.get("program_focus_areas", []),
         }

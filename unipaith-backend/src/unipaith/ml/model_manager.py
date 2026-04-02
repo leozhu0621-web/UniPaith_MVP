@@ -5,10 +5,11 @@ Handles the lifecycle of trained models: listing, promoting candidates
 that pass fairness checks and improvement thresholds, rolling back to a
 previous version, and auto-promoting after a successful training run.
 """
+
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -75,9 +76,7 @@ class ModelManager:
         """
         # Load candidate
         result = await self.db.execute(
-            select(ModelRegistry).where(
-                ModelRegistry.model_version == model_version
-            )
+            select(ModelRegistry).where(ModelRegistry.model_version == model_version)
         )
         candidate = result.scalar_one_or_none()
         if candidate is None:
@@ -87,9 +86,7 @@ class ModelManager:
         if not force and settings.fairness_check_on_promotion:
             fairness_ok = await self._check_fairness_passed(model_version)
             if not fairness_ok:
-                logger.info(
-                    "Promotion blocked for %s — fairness check failed", model_version
-                )
+                logger.info("Promotion blocked for %s — fairness check failed", model_version)
                 return {"success": False, "reason": "fairness_check_failed"}
 
         # Balanced improvement gate
@@ -100,10 +97,9 @@ class ModelManager:
             active_accuracy = float(active_metrics.get("accuracy", 0.0) or 0.0)
             candidate_accuracy = float(candidate_metrics.get("accuracy", 0.0) or 0.0)
             accuracy_improvement = candidate_accuracy - active_accuracy
-            composite_improvement = (
-                self._composite_metric(candidate_metrics)
-                - self._composite_metric(active_metrics)
-            )
+            composite_improvement = self._composite_metric(
+                candidate_metrics
+            ) - self._composite_metric(active_metrics)
 
             # Safety: never allow a large accuracy degradation.
             if accuracy_improvement < -abs(settings.model_rollback_degradation_threshold):
@@ -121,12 +117,9 @@ class ModelManager:
                     "max_degradation": -abs(settings.model_rollback_degradation_threshold),
                 }
 
-            passes_accuracy_gate = (
-                accuracy_improvement >= settings.model_promotion_min_improvement
-            )
+            passes_accuracy_gate = accuracy_improvement >= settings.model_promotion_min_improvement
             passes_composite_gate = (
-                composite_improvement
-                >= settings.model_promotion_min_composite_improvement
+                composite_improvement >= settings.model_promotion_min_composite_improvement
             )
             if not (passes_accuracy_gate or passes_composite_gate):
                 logger.info(
@@ -153,7 +146,7 @@ class ModelManager:
             previous_version = active_model.model_version
 
         # Activate candidate
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         candidate.is_active = True
         candidate.promoted_at = now
 
@@ -165,9 +158,7 @@ class ModelManager:
 
         await self.db.flush()
 
-        logger.info(
-            "Model %s promoted (previous: %s)", model_version, previous_version
-        )
+        logger.info("Model %s promoted (previous: %s)", model_version, previous_version)
 
         return {
             "success": True,
@@ -202,11 +193,9 @@ class ModelManager:
         previous_model = result.scalar_one_or_none()
 
         if previous_model is None:
-            raise NotFoundException(
-                "No previous model available for rollback"
-            )
+            raise NotFoundException("No previous model available for rollback")
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Retire current
         active_model.is_active = False
@@ -238,14 +227,10 @@ class ModelManager:
         Load a completed TrainingRun and attempt non-force promotion of
         its resulting model.
         """
-        result = await self.db.execute(
-            select(TrainingRun).where(TrainingRun.id == training_run_id)
-        )
+        result = await self.db.execute(select(TrainingRun).where(TrainingRun.id == training_run_id))
         run = result.scalar_one_or_none()
         if run is None:
-            raise NotFoundException(
-                f"Training run '{training_run_id}' not found"
-            )
+            raise NotFoundException(f"Training run '{training_run_id}' not found")
 
         if not run.resulting_model_version:
             return {
@@ -265,9 +250,7 @@ class ModelManager:
         have passed=True. If no reports exist, return True (optimistic).
         """
         result = await self.db.execute(
-            select(FairnessReport).where(
-                FairnessReport.model_version == model_version
-            )
+            select(FairnessReport).where(FairnessReport.model_version == model_version)
         )
         reports = result.scalars().all()
 

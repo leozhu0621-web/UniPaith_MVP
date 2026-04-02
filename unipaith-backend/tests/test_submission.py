@@ -1,4 +1,5 @@
 """Tests for application submission flow."""
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -73,9 +74,7 @@ async def test_submit_application(
     )
 
     # Submit the application: POST /api/v1/applications/me/{application_id}/submit
-    resp = await student_client.post(
-        f"/api/v1/applications/me/{app.id}/submit"
-    )
+    resp = await student_client.post(f"/api/v1/applications/me/{app.id}/submit")
     assert resp.status_code == 200
     data = resp.json()
     assert data["status"] == "submitted"
@@ -101,9 +100,7 @@ async def test_submit_blocks_incomplete(
     db_session.add(app)
     await db_session.commit()
 
-    resp = await student_client.post(
-        f"/api/v1/applications/me/{app.id}/submit"
-    )
+    resp = await student_client.post(f"/api/v1/applications/me/{app.id}/submit")
     # Simple submit succeeds for any draft application
     assert resp.status_code == 200
     assert resp.json()["status"] == "submitted"

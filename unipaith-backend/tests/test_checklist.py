@@ -1,4 +1,5 @@
 """Tests for application checklist generation and readiness checks."""
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -38,9 +39,7 @@ async def _seed_student_and_program(db: AsyncSession, student_user: User, instit
     return profile, institution, program
 
 
-async def _create_draft_application(
-    db: AsyncSession, student_id, program_id
-) -> Application:
+async def _create_draft_application(db: AsyncSession, student_id, program_id) -> Application:
     app = Application(
         student_id=student_id,
         program_id=program_id,
@@ -63,9 +62,7 @@ async def test_generate_checklist(
     )
     app = await _create_draft_application(db_session, profile.id, program.id)
 
-    resp = await student_client.post(
-        f"/api/v1/students/me/applications/{app.id}/checklist"
-    )
+    resp = await student_client.post(f"/api/v1/students/me/applications/{app.id}/checklist")
     assert resp.status_code == 201
     data = resp.json()
     assert "items" in data
@@ -84,13 +81,9 @@ async def test_readiness_check(
     app = await _create_draft_application(db_session, profile.id, program.id)
 
     # Generate checklist first
-    await student_client.post(
-        f"/api/v1/students/me/applications/{app.id}/checklist"
-    )
+    await student_client.post(f"/api/v1/students/me/applications/{app.id}/checklist")
 
-    resp = await student_client.get(
-        f"/api/v1/students/me/applications/{app.id}/readiness"
-    )
+    resp = await student_client.get(f"/api/v1/students/me/applications/{app.id}/readiness")
     assert resp.status_code == 200
     data = resp.json()
     # Profile is incomplete so readiness should be false

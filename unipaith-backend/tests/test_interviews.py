@@ -1,4 +1,7 @@
 """Tests for interviews — propose, confirm, complete, score."""
+
+from datetime import UTC
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,9 +12,7 @@ from unipaith.models.student import StudentProfile
 from unipaith.models.user import User
 
 
-async def _seed_interview_context(
-    db: AsyncSession, student_user: User, institution_user: User
-):
+async def _seed_interview_context(db: AsyncSession, student_user: User, institution_user: User):
     """Create all entities needed for interview tests."""
     db.add(student_user)
     db.add(institution_user)
@@ -129,22 +130,21 @@ async def test_complete_interview(
     )
 
     # Seed a confirmed interview directly
-    from datetime import datetime, timezone
+    from datetime import datetime
+
     interview = Interview(
         application_id=application.id,
         interviewer_id=reviewer.id,
         interview_type="video",
         proposed_times=["2026-04-10T10:00:00Z"],
-        confirmed_time=datetime(2026, 4, 10, 10, 0, 0, tzinfo=timezone.utc),
+        confirmed_time=datetime(2026, 4, 10, 10, 0, 0, tzinfo=UTC),
         duration_minutes=30,
         status="confirmed",
     )
     db_session.add(interview)
     await db_session.commit()
 
-    resp = await institution_client.post(
-        f"/api/v1/interviews/{interview.id}/complete"
-    )
+    resp = await institution_client.post(f"/api/v1/interviews/{interview.id}/complete")
     assert resp.status_code == 200
     assert resp.json()["status"] == "completed"
 
@@ -161,13 +161,14 @@ async def test_score_interview(
     )
 
     # Seed a completed interview directly
-    from datetime import datetime, timezone
+    from datetime import datetime
+
     interview = Interview(
         application_id=application.id,
         interviewer_id=reviewer.id,
         interview_type="video",
         proposed_times=["2026-04-10T10:00:00Z"],
-        confirmed_time=datetime(2026, 4, 10, 10, 0, 0, tzinfo=timezone.utc),
+        confirmed_time=datetime(2026, 4, 10, 10, 0, 0, tzinfo=UTC),
         duration_minutes=30,
         status="completed",
     )

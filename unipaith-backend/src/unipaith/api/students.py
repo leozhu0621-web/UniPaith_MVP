@@ -6,11 +6,11 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from unipaith.ai.llm_client import get_llm_client
 from unipaith.config import settings
 from unipaith.core.exceptions import NotFoundException
 from unipaith.database import get_db
 from unipaith.dependencies import require_student
-from unipaith.ai.llm_client import get_llm_client
 from unipaith.models.engagement import StudentEngagementSignal
 from unipaith.models.matching import MatchResult
 from unipaith.models.user import User
@@ -27,10 +27,10 @@ from unipaith.schemas.student import (
     CreateTestScoreRequest,
     NextStepResponse,
     OnboardingStatusResponse,
-    StudentPreferenceResponse,
-    StudentProfileResponse,
     StudentAssistantChatRequest,
     StudentAssistantChatResponse,
+    StudentPreferenceResponse,
+    StudentProfileResponse,
     TestScoreResponse,
     UpdateAcademicRecordRequest,
     UpdateActivityRequest,
@@ -49,6 +49,7 @@ def _svc(db: AsyncSession) -> StudentService:
 
 
 # --- Profile ---
+
 
 @router.get("/me/profile", response_model=StudentProfileResponse)
 async def get_profile(
@@ -76,6 +77,7 @@ async def update_profile(
 
 # --- Onboarding ---
 
+
 @router.get("/me/onboarding", response_model=OnboardingStatusResponse)
 async def get_onboarding(
     user: User = Depends(require_student),
@@ -98,6 +100,7 @@ async def get_next_onboarding_step(
 
 
 # --- Academic Records ---
+
 
 @router.get("/me/academics", response_model=list[AcademicRecordResponse])
 async def list_academics(
@@ -149,6 +152,7 @@ async def delete_academic(
 
 # --- Test Scores ---
 
+
 @router.get("/me/test-scores", response_model=list[TestScoreResponse])
 async def list_test_scores(
     user: User = Depends(require_student),
@@ -199,6 +203,7 @@ async def delete_test_score(
 
 # --- Activities ---
 
+
 @router.get("/me/activities", response_model=list[ActivityResponse])
 async def list_activities(
     user: User = Depends(require_student),
@@ -248,6 +253,7 @@ async def delete_activity(
 
 
 # --- Preferences ---
+
 
 @router.get("/me/preferences", response_model=StudentPreferenceResponse | None)
 async def get_preferences(
@@ -344,11 +350,21 @@ async def student_assistant_chat(
 
     context_bits = [
         f"Student ID: {profile.id}",
-        f"Profile completion: {(await student_service.get_onboarding_status(profile.id)).completion_percentage}%",
+        (
+            "Profile completion: "
+            f"{(await student_service.get_onboarding_status(profile.id)).completion_percentage}%"
+        ),
         f"Bio: {profile.bio_text or 'N/A'}",
         f"Goals: {profile.goals_text or 'N/A'}",
-        f"Preferred countries: {', '.join(preferences.preferred_countries) if preferences and preferences.preferred_countries else 'N/A'}",
-        f"Budget range: {preferences.budget_min if preferences else 'N/A'} - {preferences.budget_max if preferences else 'N/A'}",
+        "Preferred countries: {}".format(
+            ", ".join(preferences.preferred_countries)
+            if preferences and preferences.preferred_countries
+            else "N/A"
+        ),
+        (
+            f"Budget range: {preferences.budget_min if preferences else 'N/A'}"
+            f" - {preferences.budget_max if preferences else 'N/A'}"
+        ),
     ]
 
     if body.context_program_id:
@@ -373,10 +389,7 @@ async def student_assistant_chat(
         "Never fabricate facts; if uncertain, say what is missing and give a calm plan."
     )
     user_prompt = (
-        "Student context:\n"
-        + "\n".join(context_bits)
-        + "\n\nUser message:\n"
-        + body.message
+        "Student context:\n" + "\n".join(context_bits) + "\n\nUser message:\n" + body.message
     )
 
     llm = get_llm_client()

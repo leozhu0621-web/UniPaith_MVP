@@ -3,6 +3,7 @@
 Five new tables supporting the crawl-extract-deduplicate-ingest pipeline:
 CrawlJob, ExtractedProgram, CrawlSchedule, SourceURLPattern, EnrichmentRecord.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -19,7 +20,6 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
-    UniqueConstraint,
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -172,7 +172,9 @@ class SourceURLPattern(Base):
         index=True,
     )
     url_pattern: Mapped[str] = mapped_column(String(1000), nullable=False)
-    page_type: Mapped[str | None] = mapped_column(String(30))  # program_list/program_detail/department/ranking
+    page_type: Mapped[str | None] = mapped_column(
+        String(30)
+    )  # program_list/program_detail/department/ranking
     follow_links: Mapped[bool] = mapped_column(Boolean, default=True)
     link_selector: Mapped[str | None] = mapped_column(String(500))
     requires_javascript: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -196,7 +198,9 @@ class EnrichmentRecord(Base):
         UUID(as_uuid=True),
         ForeignKey("institutions.id", ondelete="SET NULL"),
     )
-    enrichment_type: Mapped[str] = mapped_column(String(30), nullable=False)  # ranking/stats/financial_aid/deadline
+    enrichment_type: Mapped[str] = mapped_column(
+        String(30), nullable=False
+    )  # ranking/stats/financial_aid/deadline
     source_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("data_sources.id", ondelete="CASCADE"),

@@ -3,9 +3,10 @@ Embedding generation pipeline.
 Takes feature_data from student_features/institution_features and generates
 768-dim embeddings stored in the embeddings table (pgvector).
 """
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -74,7 +75,9 @@ class EmbeddingPipeline:
         gpa = structured.get("normalized_gpa")
         if gpa:
             strength = "strong" if gpa > 0.85 else "solid" if gpa > 0.7 else "developing"
-            parts.append(f"Student with {strength} academic background (GPA ~{gpa:.2f} normalized).")
+            parts.append(
+                f"Student with {strength} academic background (GPA ~{gpa:.2f} normalized)."
+            )
 
         degree = structured.get("highest_degree_level", 0)
         degree_names = {1: "high school", 2: "associate", 3: "bachelor's", 4: "master's", 5: "PhD"}
@@ -134,9 +137,12 @@ class EmbeddingPipeline:
         rate = structured.get("acceptance_rate")
         if rate:
             selectivity = (
-                "highly selective" if rate < 0.1
-                else "selective" if rate < 0.25
-                else "moderately selective" if rate < 0.5
+                "highly selective"
+                if rate < 0.1
+                else "selective"
+                if rate < 0.25
+                else "moderately selective"
+                if rate < 0.5
                 else "accessible"
             )
             parts.append(f"Admission is {selectivity} ({rate * 100:.0f}% acceptance rate).")
@@ -179,12 +185,14 @@ class EmbeddingPipeline:
         existing = result.scalar_one_or_none()
         if existing:
             existing.embedding = embedding
-            existing.updated_at = datetime.now(timezone.utc)
+            existing.updated_at = datetime.now(UTC)
         else:
-            self.db.add(Embedding(
-                entity_type=entity_type,
-                entity_id=entity_id,
-                embedding=embedding,
-                updated_at=datetime.now(timezone.utc),
-            ))
+            self.db.add(
+                Embedding(
+                    entity_type=entity_type,
+                    entity_id=entity_id,
+                    embedding=embedding,
+                    updated_at=datetime.now(UTC),
+                )
+            )
         await self.db.flush()

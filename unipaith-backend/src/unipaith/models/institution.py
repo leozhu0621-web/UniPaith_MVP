@@ -47,29 +47,27 @@ class Institution(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    admin_user: Mapped["User"] = relationship("User", back_populates="institution")  # type: ignore[name-defined]  # noqa: F821
-    programs: Mapped[list["Program"]] = relationship(
+    admin_user: Mapped[User] = relationship("User", back_populates="institution")  # type: ignore[name-defined]  # noqa: F821
+    programs: Mapped[list[Program]] = relationship(
         back_populates="institution", cascade="all, delete-orphan"
     )
-    segments: Mapped[list["TargetSegment"]] = relationship(
+    segments: Mapped[list[TargetSegment]] = relationship(
         back_populates="institution", cascade="all, delete-orphan"
     )
-    campaigns: Mapped[list["Campaign"]] = relationship(
+    campaigns: Mapped[list[Campaign]] = relationship(
         back_populates="institution", cascade="all, delete-orphan"
     )
-    events: Mapped[list["Event"]] = relationship(
+    events: Mapped[list[Event]] = relationship(
         back_populates="institution", cascade="all, delete-orphan"
     )
-    reviewers: Mapped[list["Reviewer"]] = relationship(
+    reviewers: Mapped[list[Reviewer]] = relationship(
         back_populates="institution", cascade="all, delete-orphan"
     )
 
 
 class Program(Base):
     __tablename__ = "programs"
-    __table_args__ = (
-        Index("ix_programs_institution_published", "institution_id", "is_published"),
-    )
+    __table_args__ = (Index("ix_programs_institution_published", "institution_id", "is_published"),)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     institution_id: Mapped[uuid.UUID] = mapped_column(
@@ -100,7 +98,7 @@ class Program(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    institution: Mapped["Institution"] = relationship(back_populates="programs")
+    institution: Mapped[Institution] = relationship(back_populates="programs")
 
 
 class TargetSegment(Base):
@@ -123,7 +121,7 @@ class TargetSegment(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    institution: Mapped["Institution"] = relationship(back_populates="segments")
+    institution: Mapped[Institution] = relationship(back_populates="segments")
 
 
 class Campaign(Base):
@@ -153,8 +151,8 @@ class Campaign(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    institution: Mapped["Institution"] = relationship(back_populates="campaigns")
-    recipients: Mapped[list["CampaignRecipient"]] = relationship(
+    institution: Mapped[Institution] = relationship(back_populates="campaigns")
+    recipients: Mapped[list[CampaignRecipient]] = relationship(
         back_populates="campaign", cascade="all, delete-orphan"
     )
 
@@ -175,7 +173,7 @@ class CampaignRecipient(Base):
     clicked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     responded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    campaign: Mapped["Campaign"] = relationship(back_populates="recipients")
+    campaign: Mapped[Campaign] = relationship(back_populates="recipients")
 
 
 class Event(Base):
@@ -204,8 +202,8 @@ class Event(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    institution: Mapped["Institution"] = relationship(back_populates="events")
-    rsvps: Mapped[list["EventRSVP"]] = relationship(
+    institution: Mapped[Institution] = relationship(back_populates="events")
+    rsvps: Mapped[list[EventRSVP]] = relationship(
         back_populates="event", cascade="all, delete-orphan"
     )
 
@@ -227,7 +225,7 @@ class EventRSVP(Base):
     )
     attended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    event: Mapped["Event"] = relationship(back_populates="rsvps")
+    event: Mapped[Event] = relationship(back_populates="rsvps")
 
 
 class Reviewer(Base):
@@ -252,4 +250,4 @@ class Reviewer(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    institution: Mapped["Institution"] = relationship(back_populates="reviewers")
+    institution: Mapped[Institution] = relationship(back_populates="reviewers")

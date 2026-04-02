@@ -1,4 +1,5 @@
 """Rate limiting using slowapi."""
+
 from __future__ import annotations
 
 from slowapi import Limiter
@@ -17,7 +18,8 @@ limiter = Limiter(
 
 
 async def rate_limit_exceeded_handler(
-    request: Request, exc: RateLimitExceeded  # noqa: ARG001
+    request: Request,
+    exc: RateLimitExceeded,  # noqa: ARG001
 ) -> JSONResponse:
     return JSONResponse(
         status_code=429,

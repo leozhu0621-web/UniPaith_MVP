@@ -6,10 +6,11 @@ imbalance, performs Bayesian hyperparameter search via Optuna with
 StratifiedKFold cross-validation, and persists the best model to the
 ModelRegistry.
 """
+
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 import numpy as np
@@ -17,8 +18,8 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.config import settings
-from unipaith.core.exceptions import BadRequestException
 from unipaith.core.ai_runtime_metrics import record_ml_training, start_timer
+from unipaith.core.exceptions import BadRequestException
 from unipaith.models.matching import ModelRegistry
 from unipaith.models.ml_loop import OutcomeRecord, TrainingRun
 
@@ -26,7 +27,6 @@ logger = logging.getLogger(__name__)
 
 # ---- Graceful imports for heavy ML dependencies ----
 try:
-    from sklearn.model_selection import StratifiedKFold, train_test_split
     from sklearn.metrics import (
         accuracy_score,
         f1_score,
@@ -34,18 +34,17 @@ try:
         recall_score,
         roc_auc_score,
     )
+    from sklearn.model_selection import StratifiedKFold, train_test_split
 except ImportError as exc:
     raise ImportError(
-        "scikit-learn is required for ModelTrainer. "
-        "Install it with: pip install scikit-learn"
+        "scikit-learn is required for ModelTrainer. Install it with: pip install scikit-learn"
     ) from exc
 
 try:
     from xgboost import XGBClassifier
 except ImportError as exc:
     raise ImportError(
-        "xgboost is required for ModelTrainer. "
-        "Install it with: pip install xgboost"
+        "xgboost is required for ModelTrainer. Install it with: pip install xgboost"
     ) from exc
 
 try:
@@ -54,8 +53,7 @@ try:
     optuna.logging.set_verbosity(optuna.logging.WARNING)
 except ImportError as exc:
     raise ImportError(
-        "optuna is required for ModelTrainer. "
-        "Install it with: pip install optuna"
+        "optuna is required for ModelTrainer. Install it with: pip install optuna"
     ) from exc
 
 try:
@@ -114,7 +112,7 @@ class ModelTrainer:
         5. Final model training + test-set evaluation
         6. Persist to ModelRegistry
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         training_mode = mode.lower()
         if training_mode not in {"fast", "full"}:
             raise BadRequestException("training mode must be 'fast' or 'full'")
@@ -149,7 +147,7 @@ class ModelTrainer:
         except Exception:
             training_run.status = "failed"
             training_run.failure_reason = "unexpected_error"
-            training_run.completed_at = datetime.now(timezone.utc)
+            training_run.completed_at = datetime.now(UTC)
             await self.db.flush()
             logger.exception("Training run %s failed unexpectedly", training_run.id)
             record_ml_training(timer, ok=False)
@@ -168,7 +166,7 @@ class ModelTrainer:
         data, data_metadata = await self._collect_training_data()
         if data_metadata.get("window_start"):
             training_run.data_window_start = datetime.fromisoformat(data_metadata["window_start"])
-        training_run.data_window_end = datetime.now(timezone.utc)
+        training_run.data_window_end = datetime.now(UTC)
         mode_params = self._mode_settings(mode)
 
         if len(data) < settings.outcome_min_decisions_for_training:
@@ -177,23 +175,21 @@ class ModelTrainer:
                 f"Insufficient training data: {len(data)} samples "
                 f"(minimum {settings.outcome_min_decisions_for_training})"
             )
-            training_run.completed_at = datetime.now(timezone.utc)
+            training_run.completed_at = datetime.now(UTC)
             training_run.cv_metrics = {
                 **(training_run.cv_metrics or {}),
                 **data_metadata,
                 "mode_params": mode_params,
             }
             await self.db.flush()
-            logger.warning(
-                "Training aborted — only %d labelled samples available", len(data)
-            )
+            logger.warning("Training aborted — only %d labelled samples available", len(data))
             return training_run
 
         # Step 2 — build feature matrix
-        X, y = self._build_feature_matrix(data)
+        X, y = self._build_feature_matrix(data)  # noqa: N806
 
         # Step 3 — train/test split (stratified)
-        X_train, X_test, y_train, y_test = train_test_split(
+        X_train, X_test, y_train, y_test = train_test_split(  # noqa: N806
             X,
             y,
             test_size=settings.training_test_split,
@@ -206,7 +202,7 @@ class ModelTrainer:
 
         # Step 4 — SMOTE on training set only
         smote = SMOTE(random_state=42)
-        X_train_res, y_train_res = smote.fit_resample(X_train, y_train)
+        X_train_res, y_train_res = smote.fit_resample(X_train, y_train)  # noqa: N806
 
         # Step 5 — Optuna hyperparameter search
         study_name = f"training-{training_run.id}"
@@ -219,9 +215,7 @@ class ModelTrainer:
             params = {
                 "n_estimators": trial.suggest_int("n_estimators", 50, 300),
                 "max_depth": trial.suggest_int("max_depth", 3, 10),
-                "learning_rate": trial.suggest_float(
-                    "learning_rate", 0.01, 0.3, log=True
-                ),
+                "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.3, log=True),
                 "subsample": trial.suggest_float("subsample", 0.6, 1.0),
                 "colsample_bytree": trial.suggest_float("colsample_bytree", 0.6, 1.0),
                 "min_child_weight": trial.suggest_int("min_child_weight", 1, 10),
@@ -238,9 +232,7 @@ class ModelTrainer:
                 verbosity=0,
             )
 
-            skf = StratifiedKFold(
-                n_splits=mode_params["cv_folds"], shuffle=True, random_state=42
-            )
+            skf = StratifiedKFold(n_splits=mode_params["cv_folds"], shuffle=True, random_state=42)
 
             fold_scores: list[float] = []
             for train_idx, val_idx in skf.split(X_train_res, y_train_res):
@@ -286,9 +278,7 @@ class ModelTrainer:
             "recall": float(recall_score(y_test, y_pred, zero_division=0)),
             "f1": float(f1_score(y_test, y_pred, zero_division=0)),
             "roc_auc": float(
-                roc_auc_score(y_test, y_proba[:, 1])
-                if y_proba.shape[1] == 2
-                else 0.0
+                roc_auc_score(y_test, y_proba[:, 1]) if y_proba.shape[1] == 2 else 0.0
             ),
         }
 
@@ -304,7 +294,7 @@ class ModelTrainer:
             hyperparameters=best_params,
             performance_metrics=test_metrics,
             is_active=False,
-            trained_at=datetime.now(timezone.utc),
+            trained_at=datetime.now(UTC),
         )
         self.db.add(registry_entry)
 
@@ -316,7 +306,7 @@ class ModelTrainer:
         training_run.optuna_study_name = study_name
         training_run.resulting_model_version = model_version
         training_run.model_artifact_path = artifact_path
-        training_run.completed_at = datetime.now(timezone.utc)
+        training_run.completed_at = datetime.now(UTC)
 
         await self.db.flush()
 
@@ -342,14 +332,12 @@ class ModelTrainer:
         """
         result = await self.db.execute(
             select(OutcomeRecord).where(
-                OutcomeRecord.actual_outcome.in_(
-                    list(_POSITIVE_OUTCOMES | _NEGATIVE_OUTCOMES)
-                )
+                OutcomeRecord.actual_outcome.in_(list(_POSITIVE_OUTCOMES | _NEGATIVE_OUTCOMES))
             )
         )
         records = list(result.scalars().all())
         total_records = len(records)
-        window_start = datetime.now(timezone.utc) - timedelta(
+        window_start = datetime.now(UTC) - timedelta(
             days=settings.training_recent_outcome_window_days
         )
         records = [r for r in records if r.outcome_recorded_at >= window_start]
@@ -369,7 +357,7 @@ class ModelTrainer:
             "records_total": total_records,
             "records_in_window": len(records),
             "window_start": window_start.isoformat(),
-            "window_end": datetime.now(timezone.utc).isoformat(),
+            "window_end": datetime.now(UTC).isoformat(),
         }
         return data, metadata
 
@@ -388,7 +376,7 @@ class ModelTrainer:
         n = len(data)
         m = len(FEATURE_COLUMNS)
 
-        X = np.full((n, m), np.nan, dtype=np.float64)
+        X = np.full((n, m), np.nan, dtype=np.float64)  # noqa: N806
         y = np.zeros(n, dtype=np.int32)
 
         for i, row in enumerate(data):
@@ -416,9 +404,7 @@ class ModelTrainer:
 
     async def _generate_version_string(self) -> str:
         """Generate a sequential model version string like 'v3.0-trained-2026-03-29'."""
-        result = await self.db.execute(
-            select(func.count()).select_from(ModelRegistry)
-        )
+        result = await self.db.execute(select(func.count()).select_from(ModelRegistry))
         count = result.scalar() or 0
         today = date.today().isoformat()
         return f"v{count + 1}.0-trained-{today}"

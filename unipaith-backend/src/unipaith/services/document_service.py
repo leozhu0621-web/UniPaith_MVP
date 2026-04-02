@@ -9,7 +9,6 @@ from unipaith.core.s3 import s3_client
 from unipaith.models.student import StudentDocument
 from unipaith.schemas.document import DocumentResponse, UploadResponse
 
-
 ALLOWED_TYPES: dict[str, list[str]] = {
     "transcript": ["application/pdf", "image/png", "image/jpeg"],
     "essay": [
@@ -71,9 +70,7 @@ class DocumentService:
             expires_in=settings.s3_presigned_url_expiry,
         )
 
-    async def confirm_upload(
-        self, student_id: UUID, document_id: UUID
-    ) -> StudentDocument:
+    async def confirm_upload(self, student_id: UUID, document_id: UUID) -> StudentDocument:
         doc = await self._get_document(student_id, document_id)
         if not s3_client.head_object(doc.file_url or ""):
             raise BadRequestException("File not found in storage")
@@ -86,26 +83,20 @@ class DocumentService:
         docs = result.scalars().all()
         return [DocumentResponse.model_validate(d) for d in docs]
 
-    async def get_document(
-        self, student_id: UUID, document_id: UUID
-    ) -> DocumentResponse:
+    async def get_document(self, student_id: UUID, document_id: UUID) -> DocumentResponse:
         doc = await self._get_document(student_id, document_id)
         resp = DocumentResponse.model_validate(doc)
         resp.download_url = s3_client.generate_download_url(doc.file_url or "")
         return resp
 
-    async def delete_document(
-        self, student_id: UUID, document_id: UUID
-    ) -> None:
+    async def delete_document(self, student_id: UUID, document_id: UUID) -> None:
         doc = await self._get_document(student_id, document_id)
         if doc.file_url:
             s3_client.delete_object(doc.file_url)
         await self.db.delete(doc)
         await self.db.flush()
 
-    async def _get_document(
-        self, student_id: UUID, document_id: UUID
-    ) -> StudentDocument:
+    async def _get_document(self, student_id: UUID, document_id: UUID) -> StudentDocument:
         result = await self.db.execute(
             select(StudentDocument).where(
                 StudentDocument.id == document_id,

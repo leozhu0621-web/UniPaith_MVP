@@ -6,6 +6,7 @@ Computes and exposes metrics with mathematical definitions:
 - Coverage: completeness vs IPEDS/QS reference datasets
 - Understanding depth (placeholder for Wave 3 PersonInsight metrics)
 """
+
 from __future__ import annotations
 
 import logging
@@ -55,19 +56,16 @@ class EngineMetrics:
     async def _prediction_quality(self) -> dict[str, Any]:
         """F1, AUC-ROC, ECE, Brier Score, NDCG@10 from recent outcomes."""
         result = await self.db.execute(
-            select(OutcomeRecord)
-            .order_by(OutcomeRecord.created_at.desc())
-            .limit(1000)
+            select(OutcomeRecord).order_by(OutcomeRecord.created_at.desc()).limit(1000)
         )
         outcomes = list(result.scalars().all())
         if len(outcomes) < 10:
             return {"status": "insufficient_data", "count": len(outcomes)}
 
         y_pred = np.array([float(o.predicted_score) for o in outcomes])
-        y_true = np.array([
-            1.0 if o.actual_outcome in ("admitted", "enrolled") else 0.0
-            for o in outcomes
-        ])
+        y_true = np.array(
+            [1.0 if o.actual_outcome in ("admitted", "enrolled") else 0.0 for o in outcomes]
+        )
         y_pred_binary = (y_pred >= 0.5).astype(float)
 
         from sklearn.metrics import (
@@ -92,14 +90,16 @@ class EngineMetrics:
 
         try:
             metrics["precision"] = round(
-                float(precision_score(y_true, y_pred_binary, zero_division=0)), 4,
+                float(precision_score(y_true, y_pred_binary, zero_division=0)),
+                4,
             )
         except Exception:
             metrics["precision"] = None
 
         try:
             metrics["recall"] = round(
-                float(recall_score(y_true, y_pred_binary, zero_division=0)), 4,
+                float(recall_score(y_true, y_pred_binary, zero_division=0)),
+                4,
             )
         except Exception:
             metrics["recall"] = None
@@ -157,23 +157,29 @@ class EngineMetrics:
 
     async def _coverage(self) -> dict[str, Any]:
         """Measure knowledge coverage vs reference datasets."""
-        institutions_count = await self.db.scalar(
-            select(func.count()).select_from(Institution)
-        ) or 0
-        programs_count = await self.db.scalar(
-            select(func.count()).select_from(Program)
-        ) or 0
-        knowledge_docs = await self.db.scalar(
-            select(func.count()).select_from(KnowledgeDocument).where(
-                KnowledgeDocument.processing_status == "completed",
+        institutions_count = (
+            await self.db.scalar(select(func.count()).select_from(Institution)) or 0
+        )
+        programs_count = await self.db.scalar(select(func.count()).select_from(Program)) or 0
+        knowledge_docs = (
+            await self.db.scalar(
+                select(func.count())
+                .select_from(KnowledgeDocument)
+                .where(
+                    KnowledgeDocument.processing_status == "completed",
+                )
             )
-        ) or 0
-        embeddings_count = await self.db.scalar(
-            select(func.count()).select_from(Embedding)
-        ) or 0
-        unique_entities = await self.db.scalar(
-            select(func.count(func.distinct(KnowledgeLink.entity_name))).select_from(KnowledgeLink)
-        ) or 0
+            or 0
+        )
+        embeddings_count = await self.db.scalar(select(func.count()).select_from(Embedding)) or 0
+        unique_entities = (
+            await self.db.scalar(
+                select(func.count(func.distinct(KnowledgeLink.entity_name))).select_from(
+                    KnowledgeLink
+                )
+            )
+            or 0
+        )
 
         return {
             "institutions": {
@@ -193,11 +199,16 @@ class EngineMetrics:
     async def _feature_completeness(self) -> dict[str, Any]:
         """Check what percentage of programs have complete feature data."""
         total = await self.db.scalar(select(func.count()).select_from(Program)) or 0
-        with_features = await self.db.scalar(
-            select(func.count()).select_from(Embedding).where(
-                Embedding.entity_type == "program",
+        with_features = (
+            await self.db.scalar(
+                select(func.count())
+                .select_from(Embedding)
+                .where(
+                    Embedding.entity_type == "program",
+                )
             )
-        ) or 0
+            or 0
+        )
         return {
             "total_programs": total,
             "with_embeddings": with_features,
@@ -209,33 +220,58 @@ class EngineMetrics:
         now = datetime.now(UTC)
         week_ago = now - timedelta(days=7)
 
-        training_runs_7d = await self.db.scalar(
-            select(func.count()).select_from(TrainingRun).where(
-                TrainingRun.created_at >= week_ago,
+        training_runs_7d = (
+            await self.db.scalar(
+                select(func.count())
+                .select_from(TrainingRun)
+                .where(
+                    TrainingRun.created_at >= week_ago,
+                )
             )
-        ) or 0
-        completed_7d = await self.db.scalar(
-            select(func.count()).select_from(TrainingRun).where(
-                TrainingRun.status == "completed",
-                TrainingRun.created_at >= week_ago,
+            or 0
+        )
+        completed_7d = (
+            await self.db.scalar(
+                select(func.count())
+                .select_from(TrainingRun)
+                .where(
+                    TrainingRun.status == "completed",
+                    TrainingRun.created_at >= week_ago,
+                )
             )
-        ) or 0
-        failed_7d = await self.db.scalar(
-            select(func.count()).select_from(TrainingRun).where(
-                TrainingRun.status == "failed",
-                TrainingRun.created_at >= week_ago,
+            or 0
+        )
+        failed_7d = (
+            await self.db.scalar(
+                select(func.count())
+                .select_from(TrainingRun)
+                .where(
+                    TrainingRun.status == "failed",
+                    TrainingRun.created_at >= week_ago,
+                )
             )
-        ) or 0
-        predictions_7d = await self.db.scalar(
-            select(func.count()).select_from(PredictionLog).where(
-                PredictionLog.predicted_at >= week_ago,
+            or 0
+        )
+        predictions_7d = (
+            await self.db.scalar(
+                select(func.count())
+                .select_from(PredictionLog)
+                .where(
+                    PredictionLog.predicted_at >= week_ago,
+                )
             )
-        ) or 0
-        outcomes_7d = await self.db.scalar(
-            select(func.count()).select_from(OutcomeRecord).where(
-                OutcomeRecord.created_at >= week_ago,
+            or 0
+        )
+        outcomes_7d = (
+            await self.db.scalar(
+                select(func.count())
+                .select_from(OutcomeRecord)
+                .where(
+                    OutcomeRecord.created_at >= week_ago,
+                )
             )
-        ) or 0
+            or 0
+        )
 
         latest_model = await self.db.execute(
             select(TrainingRun)
@@ -265,10 +301,7 @@ class EngineMetrics:
 
         sorted_outcomes = sorted(outcomes, key=lambda o: float(o.predicted_score), reverse=True)
         top_k = sorted_outcomes[:k]
-        relevance = [
-            1.0 if o.actual_outcome in ("admitted", "enrolled") else 0.0
-            for o in top_k
-        ]
+        relevance = [1.0 if o.actual_outcome in ("admitted", "enrolled") else 0.0 for o in top_k]
 
         dcg = sum(rel / np.log2(i + 2) for i, rel in enumerate(relevance))
 

@@ -13,6 +13,7 @@ Pluggable adapter system that handles any public data format:
 Each adapter normalizes content into (raw_text, metadata) tuples that
 feed into KnowledgeExtractor.
 """
+
 from __future__ import annotations
 
 import logging
@@ -47,8 +48,7 @@ class IngestedContent:
 
 class BaseAdapter(ABC):
     @abstractmethod
-    async def ingest(self, url: str, **kwargs: Any) -> list[IngestedContent]:
-        ...
+    async def ingest(self, url: str, **kwargs: Any) -> list[IngestedContent]: ...
 
     @staticmethod
     def _clean_html(html: str) -> str:
@@ -81,12 +81,14 @@ class WebAdapter(BaseAdapter):
         if meta_tag and meta_tag.get("content"):
             meta_desc = meta_tag["content"]
 
-        return [IngestedContent(
-            raw_text=text,
-            source_url=url,
-            content_format="webpage",
-            metadata={"title": title, "meta_description": meta_desc},
-        )]
+        return [
+            IngestedContent(
+                raw_text=text,
+                source_url=url,
+                content_format="webpage",
+                metadata={"title": title, "meta_description": meta_desc},
+            )
+        ]
 
 
 class APIAdapter(BaseAdapter):
@@ -96,20 +98,25 @@ class APIAdapter(BaseAdapter):
         headers = kwargs.get("headers", {})
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                url, headers=headers, timeout=aiohttp.ClientTimeout(total=30),
+                url,
+                headers=headers,
+                timeout=aiohttp.ClientTimeout(total=30),
             ) as resp:
                 if resp.status != 200:
                     return []
                 data = await resp.json()
 
         import json
+
         text = json.dumps(data, indent=2, ensure_ascii=False, default=str)
-        return [IngestedContent(
-            raw_text=text,
-            source_url=url,
-            content_format="api_response",
-            metadata={"response_type": type(data).__name__},
-        )]
+        return [
+            IngestedContent(
+                raw_text=text,
+                source_url=url,
+                content_format="api_response",
+                metadata={"response_type": type(data).__name__},
+            )
+        ]
 
 
 class TranscriptAdapter(BaseAdapter):
@@ -123,6 +130,7 @@ class TranscriptAdapter(BaseAdapter):
 
         try:
             from youtube_transcript_api import YouTubeTranscriptApi
+
             transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
             text = " ".join(entry["text"] for entry in transcript_list)
         except Exception:
@@ -132,12 +140,14 @@ class TranscriptAdapter(BaseAdapter):
         if len(text) < 50:
             return []
 
-        return [IngestedContent(
-            raw_text=text,
-            source_url=url,
-            content_format="video_transcript",
-            metadata={"video_id": video_id, "platform": "youtube"},
-        )]
+        return [
+            IngestedContent(
+                raw_text=text,
+                source_url=url,
+                content_format="video_transcript",
+                metadata={"video_id": video_id, "platform": "youtube"},
+            )
+        ]
 
 
 class RSSAdapter(BaseAdapter):
@@ -168,16 +178,18 @@ class RSSAdapter(BaseAdapter):
             if len(text) < 30:
                 continue
 
-            results.append(IngestedContent(
-                raw_text=text,
-                source_url=entry.get("link", url),
-                content_format="rss_entry",
-                metadata={
-                    "feed_url": url,
-                    "feed_title": feed.feed.get("title", ""),
-                    "published": entry.get("published", ""),
-                },
-            ))
+            results.append(
+                IngestedContent(
+                    raw_text=text,
+                    source_url=entry.get("link", url),
+                    content_format="rss_entry",
+                    metadata={
+                        "feed_url": url,
+                        "feed_title": feed.feed.get("title", ""),
+                        "published": entry.get("published", ""),
+                    },
+                )
+            )
         return results
 
 
@@ -195,6 +207,7 @@ class DocumentAdapter(BaseAdapter):
             import io
 
             from pypdf import PdfReader
+
             reader = PdfReader(io.BytesIO(content))
             text = "\n\n".join(page.extract_text() or "" for page in reader.pages)
         except Exception:
@@ -204,12 +217,14 @@ class DocumentAdapter(BaseAdapter):
         if len(text) < 50:
             return []
 
-        return [IngestedContent(
-            raw_text=text,
-            source_url=url,
-            content_format="document",
-            metadata={"format": "pdf", "pages": len(reader.pages)},
-        )]
+        return [
+            IngestedContent(
+                raw_text=text,
+                source_url=url,
+                content_format="document",
+                metadata={"format": "pdf", "pages": len(reader.pages)},
+            )
+        ]
 
 
 class StructuredDataAdapter(BaseAdapter):
@@ -226,19 +241,23 @@ class StructuredDataAdapter(BaseAdapter):
             lines = text.strip().split("\n")
             header = lines[0] if lines else ""
             sample = "\n".join(lines[:100])
-            return [IngestedContent(
-                raw_text=sample,
+            return [
+                IngestedContent(
+                    raw_text=sample,
+                    source_url=url,
+                    content_format="government_dataset",
+                    metadata={"format": "csv", "header": header, "total_rows": len(lines) - 1},
+                )
+            ]
+
+        return [
+            IngestedContent(
+                raw_text=text[:200_000],
                 source_url=url,
                 content_format="government_dataset",
-                metadata={"format": "csv", "header": header, "total_rows": len(lines) - 1},
-            )]
-
-        return [IngestedContent(
-            raw_text=text[:200_000],
-            source_url=url,
-            content_format="government_dataset",
-            metadata={"format": "text"},
-        )]
+                metadata={"format": "text"},
+            )
+        ]
 
 
 class SocialAdapter(BaseAdapter):
@@ -255,7 +274,9 @@ class SocialAdapter(BaseAdapter):
         headers = {"User-Agent": "UniPaith-KnowledgeEngine/1.0"}
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                json_url, headers=headers, timeout=aiohttp.ClientTimeout(total=30),
+                json_url,
+                headers=headers,
+                timeout=aiohttp.ClientTimeout(total=30),
             ) as resp:
                 if resp.status != 200:
                     return []
@@ -269,32 +290,36 @@ class SocialAdapter(BaseAdapter):
                 title = post.get("title", "")
                 selftext = post.get("selftext", "")
                 text = f"{title}\n\n{selftext}"
-                results.append(IngestedContent(
-                    raw_text=text,
-                    source_url=url,
-                    content_format="social_post",
-                    metadata={
-                        "platform": "reddit",
-                        "subreddit": post.get("subreddit", ""),
-                        "score": post.get("score", 0),
-                    },
-                ))
+                results.append(
+                    IngestedContent(
+                        raw_text=text,
+                        source_url=url,
+                        content_format="social_post",
+                        metadata={
+                            "platform": "reddit",
+                            "subreddit": post.get("subreddit", ""),
+                            "score": post.get("score", 0),
+                        },
+                    )
+                )
 
             if len(data) > 1:
                 comments = data[1].get("data", {}).get("children", [])
                 for comment in comments[:30]:
                     body = comment.get("data", {}).get("body", "")
                     if len(body) > 30:
-                        results.append(IngestedContent(
-                            raw_text=body,
-                            source_url=url,
-                            content_format="social_post",
-                            metadata={
-                                "platform": "reddit",
-                                "type": "comment",
-                                "score": comment.get("data", {}).get("score", 0),
-                            },
-                        ))
+                        results.append(
+                            IngestedContent(
+                                raw_text=body,
+                                source_url=url,
+                                content_format="social_post",
+                                metadata={
+                                    "platform": "reddit",
+                                    "type": "comment",
+                                    "score": comment.get("data", {}).get("score", 0),
+                                },
+                            )
+                        )
 
         return results
 
@@ -315,7 +340,9 @@ class SearchAdapter(BaseAdapter):
         headers = {"User-Agent": "UniPaith-KnowledgeEngine/1.0"}
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                search_url, headers=headers, timeout=aiohttp.ClientTimeout(total=15),
+                search_url,
+                headers=headers,
+                timeout=aiohttp.ClientTimeout(total=15),
             ) as resp:
                 if resp.status != 200:
                     return []
@@ -328,12 +355,14 @@ class SearchAdapter(BaseAdapter):
             if href.startswith("http"):
                 links.append(href)
 
-        return [IngestedContent(
-            raw_text="\n".join(links[:20]),
-            source_url=search_url,
-            content_format="api_response",
-            metadata={"type": "search_results", "query": query, "result_count": len(links)},
-        )]
+        return [
+            IngestedContent(
+                raw_text="\n".join(links[:20]),
+                source_url=search_url,
+                content_format="api_response",
+                metadata={"type": "search_results", "query": query, "result_count": len(links)},
+            )
+        ]
 
 
 ADAPTER_REGISTRY: dict[str, type[BaseAdapter]] = {

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import func, select, text
@@ -86,14 +86,10 @@ class InstitutionService:
         )
         return list(result.scalars().all())
 
-    async def get_program(
-        self, institution_id: UUID, program_id: UUID
-    ) -> Program:
+    async def get_program(self, institution_id: UUID, program_id: UUID) -> Program:
         return await self._verify_program_ownership(institution_id, program_id)
 
-    async def create_program(
-        self, institution_id: UUID, data: CreateProgramRequest
-    ) -> Program:
+    async def create_program(self, institution_id: UUID, data: CreateProgramRequest) -> Program:
         program = Program(
             institution_id=institution_id,
             is_published=False,
@@ -117,9 +113,7 @@ class InstitutionService:
         await self.db.refresh(program)
         return program
 
-    async def publish_program(
-        self, institution_id: UUID, program_id: UUID
-    ) -> Program:
+    async def publish_program(self, institution_id: UUID, program_id: UUID) -> Program:
         program = await self._verify_program_ownership(institution_id, program_id)
         errors = []
         if not program.program_name:
@@ -138,9 +132,7 @@ class InstitutionService:
         await self.db.refresh(program)
         return program
 
-    async def unpublish_program(
-        self, institution_id: UUID, program_id: UUID
-    ) -> Program:
+    async def unpublish_program(self, institution_id: UUID, program_id: UUID) -> Program:
         program = await self._verify_program_ownership(institution_id, program_id)
         program.is_published = False
         await self.db.flush()
@@ -148,19 +140,15 @@ class InstitutionService:
         await self.db.refresh(program)
         return program
 
-    async def delete_program(
-        self, institution_id: UUID, program_id: UUID
-    ) -> None:
+    async def delete_program(self, institution_id: UUID, program_id: UUID) -> None:
         program = await self._verify_program_ownership(institution_id, program_id)
         app_count = await self.db.execute(
-            select(func.count()).select_from(Application).where(
-                Application.program_id == program_id
-            )
+            select(func.count())
+            .select_from(Application)
+            .where(Application.program_id == program_id)
         )
         if app_count.scalar_one() > 0:
-            raise ConflictException(
-                "Cannot delete program with existing applications"
-            )
+            raise ConflictException("Cannot delete program with existing applications")
         await self.db.delete(program)
         await self.db.flush()
 
@@ -168,9 +156,7 @@ class InstitutionService:
 
     async def list_segments(self, institution_id: UUID) -> list[TargetSegment]:
         result = await self.db.execute(
-            select(TargetSegment).where(
-                TargetSegment.institution_id == institution_id
-            )
+            select(TargetSegment).where(TargetSegment.institution_id == institution_id)
         )
         return list(result.scalars().all())
 
@@ -202,9 +188,7 @@ class InstitutionService:
         await self.db.refresh(segment)
         return segment
 
-    async def delete_segment(
-        self, institution_id: UUID, segment_id: UUID
-    ) -> None:
+    async def delete_segment(self, institution_id: UUID, segment_id: UUID) -> None:
         result = await self.db.execute(
             select(TargetSegment).where(
                 TargetSegment.id == segment_id,
@@ -219,9 +203,7 @@ class InstitutionService:
 
     # --- Dashboard Summary ---
 
-    async def get_dashboard_summary(
-        self, institution_id: UUID
-    ) -> DashboardSummaryResponse:
+    async def get_dashboard_summary(self, institution_id: UUID) -> DashboardSummaryResponse:
         # Program counts
         prog_result = await self.db.execute(
             select(
@@ -257,7 +239,7 @@ class InstitutionService:
         pending_review = pending_result.scalar_one()
 
         # Active events count
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         events_result = await self.db.execute(
             select(func.count())
             .select_from(Event)
@@ -329,9 +311,7 @@ class InstitutionService:
         # Acceptance rate
         decided_count = sum(decisions_breakdown.values())
         admitted_count = decisions_breakdown.get("admitted", 0)
-        acceptance_rate = (
-            admitted_count / decided_count if decided_count > 0 else None
-        )
+        acceptance_rate = admitted_count / decided_count if decided_count > 0 else None
 
         # Average match score
         avg_score_result = await self.db.execute(
@@ -346,9 +326,7 @@ class InstitutionService:
         yield_result = await self.db.execute(
             select(
                 func.count().label("total_offers"),
-                func.count().filter(
-                    OfferLetter.student_response == "accepted"
-                ).label("accepted"),
+                func.count().filter(OfferLetter.student_response == "accepted").label("accepted"),
             )
             .select_from(OfferLetter)
             .join(Application, OfferLetter.application_id == Application.id)
@@ -357,9 +335,7 @@ class InstitutionService:
         )
         yield_row = yield_result.one()
         yield_rate = (
-            yield_row.accepted / yield_row.total_offers
-            if yield_row.total_offers > 0
-            else None
+            yield_row.accepted / yield_row.total_offers if yield_row.total_offers > 0 else None
         )
 
         # Apps by program
@@ -372,8 +348,7 @@ class InstitutionService:
             .order_by(func.count().desc())
         )
         apps_by_program = [
-            ProgramApplicationCount(program_name=row[0], count=row[1])
-            for row in prog_result.all()
+            ProgramApplicationCount(program_name=row[0], count=row[1]) for row in prog_result.all()
         ]
 
         # Apps by month (last 12 months)
@@ -391,8 +366,7 @@ class InstitutionService:
             .order_by("month")
         )
         apps_by_month = [
-            MonthlyApplicationCount(month=row[0], count=row[1])
-            for row in month_result.all()
+            MonthlyApplicationCount(month=row[0], count=row[1]) for row in month_result.all()
         ]
 
         return AnalyticsResponse(
@@ -418,9 +392,7 @@ class InstitutionService:
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
 
-    async def create_campaign(
-        self, institution_id: UUID, data: CreateCampaignRequest
-    ) -> Campaign:
+    async def create_campaign(self, institution_id: UUID, data: CreateCampaignRequest) -> Campaign:
         campaign = Campaign(
             institution_id=institution_id,
             status="draft",
@@ -442,25 +414,21 @@ class InstitutionService:
         await self.db.refresh(campaign)
         return campaign
 
-    async def delete_campaign(
-        self, institution_id: UUID, campaign_id: UUID
-    ) -> None:
+    async def delete_campaign(self, institution_id: UUID, campaign_id: UUID) -> None:
         campaign = await self._verify_campaign_ownership(institution_id, campaign_id)
         if campaign.status == "sent":
             raise BadRequestException("Cannot delete a sent campaign")
         await self.db.delete(campaign)
         await self.db.flush()
 
-    async def send_campaign(
-        self, institution_id: UUID, campaign_id: UUID
-    ) -> Campaign:
+    async def send_campaign(self, institution_id: UUID, campaign_id: UUID) -> Campaign:
         campaign = await self._verify_campaign_ownership(institution_id, campaign_id)
         if campaign.status == "sent":
             raise BadRequestException("Campaign already sent")
         if not campaign.message_subject and not campaign.message_body:
             raise BadRequestException("Campaign must have subject or body")
         campaign.status = "sent"
-        campaign.sent_at = datetime.now(timezone.utc)
+        campaign.sent_at = datetime.now(UTC)
         await self.db.flush()
         await self.db.refresh(campaign)
         return campaign
@@ -472,18 +440,10 @@ class InstitutionService:
         result = await self.db.execute(
             select(
                 func.count().label("total"),
-                func.count().filter(
-                    CampaignRecipient.delivered_at.isnot(None)
-                ).label("delivered"),
-                func.count().filter(
-                    CampaignRecipient.opened_at.isnot(None)
-                ).label("opened"),
-                func.count().filter(
-                    CampaignRecipient.clicked_at.isnot(None)
-                ).label("clicked"),
-                func.count().filter(
-                    CampaignRecipient.responded_at.isnot(None)
-                ).label("responded"),
+                func.count().filter(CampaignRecipient.delivered_at.isnot(None)).label("delivered"),
+                func.count().filter(CampaignRecipient.opened_at.isnot(None)).label("opened"),
+                func.count().filter(CampaignRecipient.clicked_at.isnot(None)).label("clicked"),
+                func.count().filter(CampaignRecipient.responded_at.isnot(None)).label("responded"),
             ).where(CampaignRecipient.campaign_id == campaign_id)
         )
         row = result.one()
@@ -496,9 +456,7 @@ class InstitutionService:
             responded=row.responded,
         )
 
-    async def _verify_campaign_ownership(
-        self, institution_id: UUID, campaign_id: UUID
-    ) -> Campaign:
+    async def _verify_campaign_ownership(self, institution_id: UUID, campaign_id: UUID) -> Campaign:
         result = await self.db.execute(
             select(Campaign).where(
                 Campaign.id == campaign_id,
@@ -555,9 +513,7 @@ class InstitutionService:
         total = (await self.db.execute(count_stmt)).scalar_one()
 
         offset = (page - 1) * page_size
-        results = await self.db.execute(
-            stmt.offset(offset).limit(page_size)
-        )
+        results = await self.db.execute(stmt.offset(offset).limit(page_size))
         rows = results.all()
 
         items = [
@@ -584,9 +540,7 @@ class InstitutionService:
 
     async def get_public_program(self, program_id: UUID) -> Program:
         result = await self.db.execute(
-            select(Program).where(
-                Program.id == program_id, Program.is_published.is_(True)
-            )
+            select(Program).where(Program.id == program_id, Program.is_published.is_(True))
         )
         program = result.scalar_one_or_none()
         if not program:
@@ -613,9 +567,7 @@ class InstitutionService:
             "ORDER BY e.embedding <=> cast(:query_vec as vector) "
             "LIMIT :limit"
         )
-        result = await self.db.execute(
-            vector_query, {"query_vec": vec_str, "limit": limit}
-        )
+        result = await self.db.execute(vector_query, {"query_vec": vec_str, "limit": limit})
         rows = result.fetchall()
 
         program_ids = [row[0] for row in rows]
@@ -659,9 +611,7 @@ class InstitutionService:
             raise NotFoundException("Institution not found")
         return institution
 
-    async def _verify_program_ownership(
-        self, institution_id: UUID, program_id: UUID
-    ) -> Program:
+    async def _verify_program_ownership(self, institution_id: UUID, program_id: UUID) -> Program:
         result = await self.db.execute(
             select(Program).where(
                 Program.id == program_id,
@@ -675,7 +625,9 @@ class InstitutionService:
 
     async def get_program_count(self, institution_id: UUID) -> int:
         result = await self.db.execute(
-            select(func.count()).select_from(Program).where(
+            select(func.count())
+            .select_from(Program)
+            .where(
                 Program.institution_id == institution_id,
                 Program.is_published.is_(True),
             )

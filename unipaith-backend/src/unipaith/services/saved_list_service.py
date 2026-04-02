@@ -2,6 +2,7 @@
 Saved-list service — manage a student's saved/bookmarked programs and
 provide AI-powered program comparison.
 """
+
 from __future__ import annotations
 
 import json
@@ -45,9 +46,7 @@ class SavedListService:
             await self.db.flush()
         return saved_list
 
-    async def _get_item(
-        self, saved_list: SavedList, program_id: UUID
-    ) -> SavedListItem:
+    async def _get_item(self, saved_list: SavedList, program_id: UUID) -> SavedListItem:
         """Fetch a single item from the list or raise 404."""
         result = await self.db.execute(
             select(SavedListItem).where(
@@ -86,9 +85,7 @@ class SavedListService:
     ) -> SavedListItem:
         """Add a program to the student's saved list."""
         # Ensure the program exists.
-        prog = await self.db.execute(
-            select(Program).where(Program.id == program_id)
-        )
+        prog = await self.db.execute(select(Program).where(Program.id == program_id))
         if prog.scalar_one_or_none() is None:
             raise NotFoundException("Program not found")
 
@@ -120,9 +117,7 @@ class SavedListService:
         await self.db.delete(item)
         await self.db.flush()
 
-    async def update_notes(
-        self, student_id: UUID, program_id: UUID, notes: str
-    ) -> SavedListItem:
+    async def update_notes(self, student_id: UUID, program_id: UUID, notes: str) -> SavedListItem:
         """Update the notes attached to a saved program."""
         saved_list = await self._get_or_create_default_list(student_id)
         item = await self._get_item(saved_list, program_id)
@@ -130,9 +125,7 @@ class SavedListService:
         await self.db.flush()
         return item
 
-    async def compare_programs(
-        self, student_id: UUID, program_ids: list[UUID]
-    ) -> dict:
+    async def compare_programs(self, student_id: UUID, program_ids: list[UUID]) -> dict:
         """
         Build a comparison matrix for 2-5 saved programs and generate an
         AI narrative analysis.
@@ -159,30 +152,36 @@ class SavedListService:
                 MatchResult.program_id.in_(program_ids),
             )
         )
-        match_map: dict[UUID, MatchResult] = {
-            m.program_id: m for m in match_result.scalars().all()
-        }
+        match_map: dict[UUID, MatchResult] = {m.program_id: m for m in match_result.scalars().all()}
 
         # Build structured comparison data.
         comparison_data: list[dict] = []
         for prog in programs:
             inst: Institution = prog.institution
             match = match_map.get(prog.id)
-            comparison_data.append({
-                "program_id": str(prog.id),
-                "program_name": prog.program_name,
-                "institution_name": inst.name if inst else None,
-                "country": inst.country if inst else None,
-                "degree_type": prog.degree_type,
-                "duration_months": prog.duration_months,
-                "tuition": prog.tuition,
-                "acceptance_rate": float(prog.acceptance_rate) if prog.acceptance_rate else None,
-                "application_deadline": str(prog.application_deadline) if prog.application_deadline else None,
-                "requirements": prog.requirements,
-                "match_score": float(match.match_score) if match and match.match_score else None,
-                "match_tier": match.match_tier if match else None,
-                "match_reasoning": match.reasoning_text if match else None,
-            })
+            comparison_data.append(
+                {
+                    "program_id": str(prog.id),
+                    "program_name": prog.program_name,
+                    "institution_name": inst.name if inst else None,
+                    "country": inst.country if inst else None,
+                    "degree_type": prog.degree_type,
+                    "duration_months": prog.duration_months,
+                    "tuition": prog.tuition,
+                    "acceptance_rate": float(prog.acceptance_rate)
+                    if prog.acceptance_rate
+                    else None,
+                    "application_deadline": str(prog.application_deadline)
+                    if prog.application_deadline
+                    else None,
+                    "requirements": prog.requirements,
+                    "match_score": float(match.match_score)
+                    if match and match.match_score
+                    else None,
+                    "match_tier": match.match_tier if match else None,
+                    "match_reasoning": match.reasoning_text if match else None,
+                }
+            )
 
         # Generate AI analysis.
         llm = get_llm_client()

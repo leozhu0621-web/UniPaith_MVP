@@ -3,10 +3,11 @@ Notification service — in-app + optional SES email delivery.
 Used by event hooks to notify users of application status changes,
 messages, interviews, decisions, and other platform events.
 """
+
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import func, select, update
@@ -88,11 +89,7 @@ class NotificationService:
         query = select(Notification).where(Notification.user_id == user_id)
         if unread_only:
             query = query.where(Notification.is_read.is_(False))
-        query = (
-            query.order_by(Notification.created_at.desc())
-            .limit(limit)
-            .offset(offset)
-        )
+        query = query.order_by(Notification.created_at.desc()).limit(limit).offset(offset)
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
@@ -121,7 +118,7 @@ class NotificationService:
             raise NotFoundException("Notification not found")
 
         notification.is_read = True
-        notification.read_at = datetime.now(timezone.utc)
+        notification.read_at = datetime.now(UTC)
         await self.db.flush()
         return notification
 
@@ -133,7 +130,7 @@ class NotificationService:
                 Notification.user_id == user_id,
                 Notification.is_read.is_(False),
             )
-            .values(is_read=True, read_at=datetime.now(timezone.utc))
+            .values(is_read=True, read_at=datetime.now(UTC))
         )
         await self.db.flush()
         return result.rowcount  # type: ignore[return-value]
@@ -145,9 +142,7 @@ class NotificationService:
     async def get_preferences(self, user_id: UUID) -> NotificationPreference:
         """Get or create default notification preferences."""
         result = await self.db.execute(
-            select(NotificationPreference).where(
-                NotificationPreference.user_id == user_id
-            )
+            select(NotificationPreference).where(NotificationPreference.user_id == user_id)
         )
         prefs = result.scalar_one_or_none()
         if not prefs:
@@ -187,9 +182,7 @@ class NotificationService:
         """
         try:
             # Load user email
-            result = await self.db.execute(
-                select(User).where(User.id == user_id)
-            )
+            result = await self.db.execute(select(User).where(User.id == user_id))
             user = result.scalar_one_or_none()
             if not user or not user.email:
                 return False

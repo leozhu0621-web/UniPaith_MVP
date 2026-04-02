@@ -2,10 +2,11 @@
 Drift Detector — monitors for distribution shifts in predictions, features,
 and data quality using the Kolmogorov-Smirnov test and volume-based checks.
 """
+
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 from sqlalchemy import and_, func, select
@@ -49,7 +50,7 @@ class DriftDetector:
         Returns:
             List of persisted DriftSnapshot records, one per check.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         ref_start = now - timedelta(days=reference_days)
         ref_end = now - timedelta(days=current_days)
         cur_start = now - timedelta(days=current_days)
@@ -58,9 +59,7 @@ class DriftDetector:
         snapshots: list[DriftSnapshot] = []
 
         # 1) Prediction score distribution drift
-        pred_snapshot = await self._check_prediction_drift(
-            ref_start, ref_end, cur_start, cur_end
-        )
+        pred_snapshot = await self._check_prediction_drift(ref_start, ref_end, cur_start, cur_end)
         if pred_snapshot is not None:
             snapshots.append(pred_snapshot)
 
@@ -146,18 +145,13 @@ class DriftDetector:
             )
         return snapshot
 
-    async def _load_match_scores(
-        self, start: datetime, end: datetime
-    ) -> list[float]:
+    async def _load_match_scores(self, start: datetime, end: datetime) -> list[float]:
         """Load match scores from MatchResult within a time window."""
-        stmt = (
-            select(MatchResult.match_score)
-            .where(
-                and_(
-                    MatchResult.computed_at >= start,
-                    MatchResult.computed_at < end,
-                    MatchResult.match_score.isnot(None),
-                )
+        stmt = select(MatchResult.match_score).where(
+            and_(
+                MatchResult.computed_at >= start,
+                MatchResult.computed_at < end,
+                MatchResult.match_score.isnot(None),
             )
         )
         result = await self.db.execute(stmt)
@@ -180,12 +174,8 @@ class DriftDetector:
         Extracts the feature value from StudentFeature.feature_data
         ['structured'][feature_name].
         """
-        ref_values = await self._load_feature_values(
-            feature_name, ref_start, ref_end
-        )
-        cur_values = await self._load_feature_values(
-            feature_name, cur_start, cur_end
-        )
+        ref_values = await self._load_feature_values(feature_name, ref_start, ref_end)
+        cur_values = await self._load_feature_values(feature_name, cur_start, cur_end)
 
         if len(ref_values) < 5 or len(cur_values) < 5:
             logger.debug(
@@ -236,14 +226,11 @@ class DriftDetector:
 
         The feature is expected at feature_data['structured'][feature_name].
         """
-        stmt = (
-            select(StudentFeature.feature_data)
-            .where(
-                and_(
-                    StudentFeature.updated_at >= start,
-                    StudentFeature.updated_at < end,
-                    StudentFeature.feature_data.isnot(None),
-                )
+        stmt = select(StudentFeature.feature_data).where(
+            and_(
+                StudentFeature.updated_at >= start,
+                StudentFeature.updated_at < end,
+                StudentFeature.feature_data.isnot(None),
             )
         )
         result = await self.db.execute(stmt)
@@ -324,17 +311,14 @@ class DriftDetector:
 
         if drift_detected:
             logger.warning(
-                "Data quality drift detected: volume ratio=%.2f "
-                "(ref_daily=%.1f, cur_daily=%.1f)",
+                "Data quality drift detected: volume ratio=%.2f (ref_daily=%.1f, cur_daily=%.1f)",
                 volume_ratio,
                 ref_daily_rate,
                 cur_daily_rate,
             )
         return snapshot
 
-    async def _count_predictions(
-        self, start: datetime, end: datetime
-    ) -> int:
+    async def _count_predictions(self, start: datetime, end: datetime) -> int:
         """Count PredictionLog entries within a time window."""
         stmt = (
             select(func.count())

@@ -9,6 +9,7 @@ Tables for the perpetual knowledge engine:
 - PersonInsight: AI's evolving understanding of each person
 - AdvisorPersona: tunable advisor personality configuration
 """
+
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -38,7 +39,8 @@ class KnowledgeDocument(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     source_url: Mapped[str | None] = mapped_column(Text)
     source_domain: Mapped[str | None] = mapped_column(String(500))
     content_format: Mapped[str] = mapped_column(
-        String(50), default="webpage",
+        String(50),
+        default="webpage",
     )
     content_type: Mapped[str | None] = mapped_column(String(100))
 

@@ -28,7 +28,10 @@ async def list_notifications(
 ):
     svc = NotificationService(db)
     return await svc.list_notifications(
-        user.id, unread_only=unread_only, limit=limit, offset=offset,
+        user.id,
+        unread_only=unread_only,
+        limit=limit,
+        offset=offset,
     )
 
 

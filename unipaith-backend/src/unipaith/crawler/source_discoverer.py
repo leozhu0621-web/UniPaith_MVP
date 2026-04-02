@@ -7,6 +7,7 @@ Strategies:
 - Domain expansion (finds related domains from known good sources)
 - Frontier queue management with priority and dedup
 """
+
 from __future__ import annotations
 
 import logging
@@ -29,16 +30,35 @@ from unipaith.models.knowledge import (
 logger = logging.getLogger("unipaith.source_discoverer")
 
 EXCLUDED_DOMAINS = {
-    "google.com", "facebook.com", "twitter.com", "instagram.com",
-    "tiktok.com", "amazon.com", "ebay.com", "wikipedia.org",
+    "google.com",
+    "facebook.com",
+    "twitter.com",
+    "instagram.com",
+    "tiktok.com",
+    "amazon.com",
+    "ebay.com",
+    "wikipedia.org",
 }
 
 EDUCATION_DOMAIN_SIGNALS = [
-    ".edu", "admissions", "graduate", "university", "college",
-    "scholarship", "ranking", "niche.com", "gradcafe", "unigo",
-    "usnews.com", "topuniversities.com", "timeshighereducation.com",
-    "insidehighered.com", "chronicle.com", "collegeboard.org",
-    "commonapp.org", "petersons.com",
+    ".edu",
+    "admissions",
+    "graduate",
+    "university",
+    "college",
+    "scholarship",
+    "ranking",
+    "niche.com",
+    "gradcafe",
+    "unigo",
+    "usnews.com",
+    "topuniversities.com",
+    "timeshighereducation.com",
+    "insidehighered.com",
+    "chronicle.com",
+    "collegeboard.org",
+    "commonapp.org",
+    "petersons.com",
 ]
 
 GAP_SEARCH_TEMPLATES = [
@@ -66,17 +86,21 @@ class SourceDiscoverer:
         exclusions = _extract_exclusions(directives)
 
         new_from_links = await self._discover_from_links(
-            max_urls=max_new_urls // 2, exclusions=exclusions,
+            max_urls=max_new_urls // 2,
+            exclusions=exclusions,
         )
         results["link_extraction"] = new_from_links
 
         new_from_gaps = await self._discover_from_gaps(
-            max_urls=max_new_urls // 3, exclusions=exclusions, directives=directives,
+            max_urls=max_new_urls // 3,
+            exclusions=exclusions,
+            directives=directives,
         )
         results["gap_search"] = new_from_gaps
 
         new_from_domains = await self._discover_from_domains(
-            max_urls=max_new_urls // 4, exclusions=exclusions,
+            max_urls=max_new_urls // 4,
+            exclusions=exclusions,
         )
         results["domain_expansion"] = new_from_domains
 
@@ -147,11 +171,12 @@ class SourceDiscoverer:
         return selected
 
     async def mark_crawled(
-        self, frontier_id: UUID, success: bool, error: str | None = None,
+        self,
+        frontier_id: UUID,
+        success: bool,
+        error: str | None = None,
     ) -> None:
-        result = await self.db.execute(
-            select(CrawlFrontier).where(CrawlFrontier.id == frontier_id)
-        )
+        result = await self.db.execute(select(CrawlFrontier).where(CrawlFrontier.id == frontier_id))
         item = result.scalar_one_or_none()
         if not item:
             return
@@ -174,7 +199,9 @@ class SourceDiscoverer:
                 item.next_crawl_after = now + timedelta(hours=backoff)
 
     async def _discover_from_links(
-        self, max_urls: int, exclusions: set[str],
+        self,
+        max_urls: int,
+        exclusions: set[str],
     ) -> int:
         """Extract URLs from recently processed documents."""
         recent_docs = await self.db.execute(
@@ -212,7 +239,10 @@ class SourceDiscoverer:
         return added
 
     async def _discover_from_gaps(
-        self, max_urls: int, exclusions: set[str], directives: list[EngineDirective],
+        self,
+        max_urls: int,
+        exclusions: set[str],
+        directives: list[EngineDirective],
     ) -> int:
         """Find coverage gaps and search for content to fill them."""
         entity_counts = await self.db.execute(
@@ -274,7 +304,9 @@ class SourceDiscoverer:
         return added
 
     async def _discover_from_domains(
-        self, max_urls: int, exclusions: set[str],
+        self,
+        max_urls: int,
+        exclusions: set[str],
     ) -> int:
         """Find new pages on known good domains."""
         good_domains = await self.db.execute(
@@ -305,9 +337,11 @@ class SourceDiscoverer:
             for sitemap_url in sitemap_urls:
                 try:
                     import aiohttp
+
                     async with aiohttp.ClientSession() as session:
                         async with session.get(
-                            sitemap_url, timeout=aiohttp.ClientTimeout(total=10),
+                            sitemap_url,
+                            timeout=aiohttp.ClientTimeout(total=10),
                         ) as resp:
                             if resp.status != 200:
                                 continue

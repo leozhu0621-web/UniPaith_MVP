@@ -4,6 +4,7 @@ Integration test configuration.
 These tests require real GPU infrastructure (AWS or local).
 Skipped by default — run with: pytest -m gpu
 """
+
 from __future__ import annotations
 
 import os

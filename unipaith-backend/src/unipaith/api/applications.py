@@ -25,6 +25,7 @@ router = APIRouter(prefix="/applications", tags=["applications"])
 
 # --- Student-facing ---
 
+
 @router.post("", response_model=ApplicationResponse, status_code=status.HTTP_201_CREATED)
 async def create_application(
     body: CreateApplicationRequest,
@@ -79,9 +80,7 @@ async def withdraw_application(
     await svc.withdraw_application(profile.id, application_id)
 
 
-@router.post(
-    "/me/{application_id}/offer/respond", response_model=OfferLetterResponse
-)
+@router.post("/me/{application_id}/offer/respond", response_model=OfferLetterResponse)
 async def respond_to_offer(
     application_id: UUID,
     body: OfferRespondRequest,
@@ -96,6 +95,7 @@ async def respond_to_offer(
 
 
 # --- Institution-facing ---
+
 
 @router.get(
     "/programs/{program_id}",
@@ -126,9 +126,7 @@ async def update_application_status(
     return await svc.update_status(inst.id, application_id, body.status)
 
 
-@router.get(
-    "/review/{application_id}", response_model=ApplicationDetailResponse
-)
+@router.get("/review/{application_id}", response_model=ApplicationDetailResponse)
 async def get_application_for_review(
     application_id: UUID,
     user: User = Depends(require_institution_admin),
@@ -151,9 +149,7 @@ async def make_decision(
 ):
     inst = await InstitutionService(db).get_institution(user.id)
     svc = ApplicationService(db)
-    return await svc.make_decision(
-        inst.id, application_id, body.decision, body.decision_notes
-    )
+    return await svc.make_decision(inst.id, application_id, body.decision, body.decision_notes)
 
 
 @router.post(

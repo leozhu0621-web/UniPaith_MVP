@@ -5,11 +5,12 @@ Provides sticky, hash-based variant assignment so each student always sees
 the same model version within an experiment.  Evaluation computes conversion
 rates and lift to decide whether a challenger model should be promoted.
 """
+
 from __future__ import annotations
 
 import hashlib
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import select
@@ -114,15 +115,11 @@ class ABTestManager:
         """
         # Verify challenger exists
         result = await self.db.execute(
-            select(ModelRegistry).where(
-                ModelRegistry.model_version == challenger_version
-            )
+            select(ModelRegistry).where(ModelRegistry.model_version == challenger_version)
         )
         challenger = result.scalar_one_or_none()
         if challenger is None:
-            raise NotFoundException(
-                f"Challenger model version '{challenger_version}' not found"
-            )
+            raise NotFoundException(f"Challenger model version '{challenger_version}' not found")
 
         active_version = await self._get_active_version()
         pct = traffic_pct if traffic_pct is not None else settings.model_ab_test_traffic_pct
@@ -153,16 +150,12 @@ class ABTestManager:
         """
         # Load all assignments for this experiment
         result = await self.db.execute(
-            select(ABTestAssignment).where(
-                ABTestAssignment.experiment_name == experiment_name
-            )
+            select(ABTestAssignment).where(ABTestAssignment.experiment_name == experiment_name)
         )
         assignments = result.scalars().all()
 
         if not assignments:
-            raise NotFoundException(
-                f"No assignments found for experiment '{experiment_name}'"
-            )
+            raise NotFoundException(f"No assignments found for experiment '{experiment_name}'")
 
         # Group student IDs by variant
         control_student_ids: list[UUID] = []
@@ -180,10 +173,7 @@ class ABTestManager:
 
         # Check minimum sample size
         min_samples = settings.model_ab_test_min_samples
-        if (
-            control_stats["total"] < min_samples
-            or challenger_stats["total"] < min_samples
-        ):
+        if control_stats["total"] < min_samples or challenger_stats["total"] < min_samples:
             return {
                 "status": "insufficient_data",
                 "control": control_stats,
@@ -250,7 +240,7 @@ class ABTestManager:
         Return the name of any experiment with assignments in the last 7 days,
         or None if no active experiment exists.
         """
-        cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+        cutoff = datetime.now(UTC) - timedelta(days=7)
         result = await self.db.execute(
             select(ABTestAssignment.experiment_name)
             .where(ABTestAssignment.assigned_at >= cutoff)
@@ -300,9 +290,7 @@ class ABTestManager:
         if model is not None:
             return model.model_version
 
-        raise BadRequestException(
-            f"No challenger model found for experiment '{experiment_name}'"
-        )
+        raise BadRequestException(f"No challenger model found for experiment '{experiment_name}'")
 
     async def _compute_group_stats(self, student_ids: list[UUID]) -> dict:
         """Compute conversion rate for a set of student IDs based on OutcomeRecord."""
@@ -317,19 +305,13 @@ class ABTestManager:
         result = await self.db.execute(
             select(OutcomeRecord).where(
                 OutcomeRecord.student_id.in_(student_ids),
-                OutcomeRecord.actual_outcome.in_(
-                    list(_POSITIVE_OUTCOMES | _NEGATIVE_OUTCOMES)
-                ),
+                OutcomeRecord.actual_outcome.in_(list(_POSITIVE_OUTCOMES | _NEGATIVE_OUTCOMES)),
             )
         )
         records = result.scalars().all()
 
-        positive = sum(
-            1 for r in records if r.actual_outcome in _POSITIVE_OUTCOMES
-        )
-        negative = sum(
-            1 for r in records if r.actual_outcome in _NEGATIVE_OUTCOMES
-        )
+        positive = sum(1 for r in records if r.actual_outcome in _POSITIVE_OUTCOMES)
+        negative = sum(1 for r in records if r.actual_outcome in _NEGATIVE_OUTCOMES)
         total = positive + negative
 
         return {

@@ -2,10 +2,11 @@
 Event service — event management, RSVP handling, and calendar integration.
 Supports creating events, managing RSVPs with capacity control, and ICS export.
 """
+
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import delete, select
@@ -83,9 +84,7 @@ class EventService:
         await self.db.refresh(event)
         return event
 
-    async def cancel_event(
-        self, institution_id: UUID, event_id: UUID
-    ) -> Event:
+    async def cancel_event(self, institution_id: UUID, event_id: UUID) -> Event:
         """Cancel an event."""
         event = await self._get_event(event_id)
         if event.institution_id != institution_id:
@@ -105,7 +104,7 @@ class EventService:
         limit: int = 20,
     ) -> list[Event]:
         """List published upcoming events with optional filters."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         query = select(Event).where(
             Event.start_time > now,
             Event.status == "upcoming",
@@ -139,9 +138,7 @@ class EventService:
     # RSVP
     # ------------------------------------------------------------------
 
-    async def rsvp(
-        self, student_id: UUID, event_id: UUID, user_id: UUID
-    ) -> EventRSVP:
+    async def rsvp(self, student_id: UUID, event_id: UUID, user_id: UUID) -> EventRSVP:
         """
         RSVP a student to an event.
 
@@ -164,7 +161,7 @@ class EventService:
         if existing.scalar_one_or_none():
             raise ConflictException("Already RSVP'd to this event")
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         rsvp = EventRSVP(
             event_id=event_id,
             student_id=student_id,
@@ -237,9 +234,7 @@ class EventService:
         )
         return list(result.scalars().all())
 
-    async def get_event_attendees(
-        self, institution_id: UUID, event_id: UUID
-    ) -> list[EventRSVP]:
+    async def get_event_attendees(self, institution_id: UUID, event_id: UUID) -> list[EventRSVP]:
         """
         List attendees for an event (institution admin view).
         Verifies the event belongs to the given institution.
@@ -266,7 +261,8 @@ class EventService:
         Uses the ``icalendar`` library to produce a standards-compliant
         VCALENDAR containing a single VEVENT.
         """
-        from icalendar import Calendar, Event as ICSEvent
+        from icalendar import Calendar
+        from icalendar import Event as ICSEvent
 
         event = await self._get_event(event_id)
 
@@ -287,7 +283,7 @@ class EventService:
         if event.description:
             ics_event.add("description", event.description)
 
-        ics_event.add("dtstamp", datetime.now(timezone.utc))
+        ics_event.add("dtstamp", datetime.now(UTC))
 
         cal.add_component(ics_event)
         return cal.to_ical().decode("utf-8")
@@ -297,9 +293,7 @@ class EventService:
     # ------------------------------------------------------------------
 
     async def _get_event(self, event_id: UUID) -> Event:
-        result = await self.db.execute(
-            select(Event).where(Event.id == event_id)
-        )
+        result = await self.db.execute(select(Event).where(Event.id == event_id))
         event = result.scalar_one_or_none()
         if not event:
             raise NotFoundException("Event not found")

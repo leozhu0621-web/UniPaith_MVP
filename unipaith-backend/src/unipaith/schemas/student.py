@@ -20,9 +20,7 @@ class UpdateProfileRequest(BaseModel):
 
 class CreateAcademicRecordRequest(BaseModel):
     institution_name: str = Field(min_length=1, max_length=255)
-    degree_type: Literal[
-        "high_school", "bachelors", "masters", "phd", "associate", "diploma"
-    ]
+    degree_type: Literal["high_school", "bachelors", "masters", "phd", "associate", "diploma"]
     field_of_study: str | None = None
     gpa: Decimal | None = Field(None, ge=0, le=100)
     gpa_scale: str | None = None
@@ -36,9 +34,9 @@ class CreateAcademicRecordRequest(BaseModel):
 
 class UpdateAcademicRecordRequest(BaseModel):
     institution_name: str | None = Field(None, min_length=1, max_length=255)
-    degree_type: Literal[
-        "high_school", "bachelors", "masters", "phd", "associate", "diploma"
-    ] | None = None
+    degree_type: (
+        Literal["high_school", "bachelors", "masters", "phd", "associate", "diploma"] | None
+    ) = None
     field_of_study: str | None = None
     gpa: Decimal | None = Field(None, ge=0, le=100)
     gpa_scale: str | None = None
@@ -80,9 +78,12 @@ class CreateTestScoreRequest(BaseModel):
 
 
 class UpdateTestScoreRequest(BaseModel):
-    test_type: Literal[
-        "SAT", "GRE", "GMAT", "TOEFL", "IELTS", "AP", "IB", "ACT", "LSAT", "MCAT", "DUOLINGO"
-    ] | None = None
+    test_type: (
+        Literal[
+            "SAT", "GRE", "GMAT", "TOEFL", "IELTS", "AP", "IB", "ACT", "LSAT", "MCAT", "DUOLINGO"
+        ]
+        | None
+    ) = None
     total_score: int | None = None
     section_scores: dict | None = None
     test_date: date | None = None
@@ -104,8 +105,13 @@ class TestScoreResponse(BaseModel):
 
 class CreateActivityRequest(BaseModel):
     activity_type: Literal[
-        "work_experience", "research", "volunteering",
-        "extracurricular", "leadership", "awards", "publications",
+        "work_experience",
+        "research",
+        "volunteering",
+        "extracurricular",
+        "leadership",
+        "awards",
+        "publications",
     ]
     title: str = Field(min_length=1, max_length=255)
     organization: str | None = None
@@ -118,10 +124,18 @@ class CreateActivityRequest(BaseModel):
 
 
 class UpdateActivityRequest(BaseModel):
-    activity_type: Literal[
-        "work_experience", "research", "volunteering",
-        "extracurricular", "leadership", "awards", "publications",
-    ] | None = None
+    activity_type: (
+        Literal[
+            "work_experience",
+            "research",
+            "volunteering",
+            "extracurricular",
+            "leadership",
+            "awards",
+            "publications",
+        ]
+        | None
+    ) = None
     title: str | None = Field(None, min_length=1, max_length=255)
     organization: str | None = None
     description: str | None = None
@@ -152,15 +166,15 @@ class ActivityResponse(BaseModel):
 class UpsertPreferencesRequest(BaseModel):
     preferred_countries: list[str] | None = None
     preferred_regions: list[str] | None = None
-    preferred_city_size: Literal[
-        "big_city", "college_town", "suburban", "rural", "no_preference"
-    ] | None = None
+    preferred_city_size: (
+        Literal["big_city", "college_town", "suburban", "rural", "no_preference"] | None
+    ) = None
     preferred_climate: str | None = None
     budget_min: int | None = None
     budget_max: int | None = None
-    funding_requirement: Literal[
-        "full_scholarship", "partial", "self_funded", "flexible"
-    ] | None = None
+    funding_requirement: (
+        Literal["full_scholarship", "partial", "self_funded", "flexible"] | None
+    ) = None
     program_size_preference: Literal["small", "large", "no_preference"] | None = None
     career_goals: list[str] | None = None
     values_priorities: dict | None = None

@@ -9,6 +9,7 @@ Retrieves relevant knowledge documents for any query using:
 Feeds knowledge into all serving systems: advisor, recommendations,
 institution intelligence.
 """
+
 from __future__ import annotations
 
 import logging
@@ -27,8 +28,17 @@ logger = logging.getLogger("unipaith.knowledge_retriever")
 class RetrievedKnowledge:
     """A piece of retrieved knowledge with relevance scoring."""
 
-    __slots__ = ("document_id", "title", "summary", "text", "source_url",
-                 "content_type", "score", "retrieval_method", "facts")
+    __slots__ = (
+        "document_id",
+        "title",
+        "summary",
+        "text",
+        "source_url",
+        "content_type",
+        "score",
+        "retrieval_method",
+        "facts",
+    )
 
     def __init__(
         self,
@@ -74,7 +84,10 @@ class KnowledgeRetriever:
         results: dict[UUID, RetrievedKnowledge] = {}
 
         semantic_results = await self._semantic_search(
-            query, limit=limit * 2, min_quality=min_quality, recency_days=recency_days,
+            query,
+            limit=limit * 2,
+            min_quality=min_quality,
+            recency_days=recency_days,
         )
         for item in semantic_results:
             results[item.document_id] = item
@@ -90,7 +103,8 @@ class KnowledgeRetriever:
             for item in entity_results:
                 if item.document_id in results:
                     results[item.document_id].score = max(
-                        results[item.document_id].score, item.score * 1.2,
+                        results[item.document_id].score,
+                        item.score * 1.2,
                     )
                     results[item.document_id].retrieval_method = "hybrid"
                 else:
@@ -100,7 +114,10 @@ class KnowledgeRetriever:
         return ranked[:limit]
 
     async def retrieve_for_program(
-        self, program_name: str, institution_name: str | None = None, limit: int = 8,
+        self,
+        program_name: str,
+        institution_name: str | None = None,
+        limit: int = 8,
     ) -> list[RetrievedKnowledge]:
         """Retrieve knowledge specifically about a program/institution."""
         query_parts = [program_name]
@@ -116,7 +133,10 @@ class KnowledgeRetriever:
         )
 
     async def retrieve_for_student_context(
-        self, interests: list[str], goals: str | None = None, limit: int = 6,
+        self,
+        interests: list[str],
+        goals: str | None = None,
+        limit: int = 6,
     ) -> list[RetrievedKnowledge]:
         """Retrieve knowledge relevant to a student's interests and goals."""
         query_parts = interests[:5]
@@ -127,7 +147,10 @@ class KnowledgeRetriever:
         return await self.retrieve(query=query, limit=limit)
 
     async def retrieve_for_conversation(
-        self, message: str, user_context: str | None = None, limit: int = 5,
+        self,
+        message: str,
+        user_context: str | None = None,
+        limit: int = 5,
     ) -> list[RetrievedKnowledge]:
         """Retrieve knowledge to support a conversation response."""
         query = message[:500]
@@ -159,9 +182,7 @@ class KnowledgeRetriever:
         params: dict = {"query_vec": vec_str, "limit": limit}
 
         if min_quality > 0:
-            where_clauses.append(
-                "(kd.quality_score IS NULL OR kd.quality_score >= :min_quality)"
-            )
+            where_clauses.append("(kd.quality_score IS NULL OR kd.quality_score >= :min_quality)")
             params["min_quality"] = min_quality
 
         if recency_days:
@@ -231,9 +252,7 @@ class KnowledgeRetriever:
         if entity_id:
             query = query.where(KnowledgeLink.entity_id == entity_id)
         if entity_name:
-            query = query.where(
-                KnowledgeLink.entity_name.ilike(f"%{entity_name}%")
-            )
+            query = query.where(KnowledgeLink.entity_name.ilike(f"%{entity_name}%"))
         if min_quality > 0:
             query = query.where(
                 (KnowledgeDocument.quality_score.is_(None))
@@ -260,7 +279,8 @@ class KnowledgeRetriever:
 
 
 def format_knowledge_for_prompt(
-    knowledge: list[RetrievedKnowledge], max_chars: int = 4000,
+    knowledge: list[RetrievedKnowledge],
+    max_chars: int = 4000,
 ) -> str:
     """Format retrieved knowledge into a prompt-friendly string."""
     if not knowledge:

@@ -1,7 +1,9 @@
 """Orchestrator — top-level pipeline coordinator for the data crawler."""
+
 from __future__ import annotations
 
 import logging
+from datetime import UTC
 from uuid import UUID
 
 from sqlalchemy import select
@@ -41,15 +43,18 @@ class CrawlerOrchestrator:
                 logger.error("Pipeline failed for source %s: %s", source.id, exc)
                 # Rollback only the failed source's changes
                 await self.db.rollback()
-                results.append({
-                    "source_id": str(source.id),
-                    "source_name": source.source_name,
-                    "status": "failed",
-                    "error": str(exc),
-                })
+                results.append(
+                    {
+                        "source_id": str(source.id),
+                        "source_name": source.source_name,
+                        "status": "failed",
+                        "error": str(exc),
+                    }
+                )
 
         logger.info(
-            "Scheduled crawls complete: %d sources processed", len(results),
+            "Scheduled crawls complete: %d sources processed",
+            len(results),
         )
         return {
             "sources_processed": len(results),
@@ -138,7 +143,8 @@ class CrawlerOrchestrator:
         program_ids = [ep.matched_program_id for ep in eps if ep.matched_program_id]
         logger.info(
             "Triggering AI pipeline for %d programs from job %s",
-            len(program_ids), crawl_job_id,
+            len(program_ids),
+            crawl_job_id,
         )
 
         # Run feature extraction then embedding generation for each program
@@ -157,7 +163,9 @@ class CrawlerOrchestrator:
                 logger.info("AI pipeline complete for program %s", program_id)
             except Exception as exc:
                 logger.warning(
-                    "AI pipeline failed for program %s: %s", program_id, exc,
+                    "AI pipeline failed for program %s: %s",
+                    program_id,
+                    exc,
                 )
 
     async def crawl_single_url(
@@ -170,7 +178,7 @@ class CrawlerOrchestrator:
         If source_id is not provided, uses or creates a generic test source.
         """
         import hashlib
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         import aiohttp
 
@@ -202,7 +210,7 @@ class CrawlerOrchestrator:
         job = CrawlJob(
             source_id=source.id,
             status="running",
-            started_at=datetime.now(timezone.utc),
+            started_at=datetime.now(UTC),
         )
         self.db.add(job)
         await self.db.flush()
@@ -216,7 +224,7 @@ class CrawlerOrchestrator:
                     if resp.status != 200:
                         job.status = "failed"
                         job.error_log = [{"url": url, "status": resp.status}]
-                        job.completed_at = datetime.now(timezone.utc)
+                        job.completed_at = datetime.now(UTC)
                         await self.db.flush()
                         return {
                             "job_id": str(job.id),
@@ -227,7 +235,7 @@ class CrawlerOrchestrator:
         except Exception as exc:
             job.status = "failed"
             job.error_log = [{"url": url, "error": str(exc)}]
-            job.completed_at = datetime.now(timezone.utc)
+            job.completed_at = datetime.now(UTC)
             await self.db.flush()
             return {
                 "job_id": str(job.id),
@@ -257,7 +265,7 @@ class CrawlerOrchestrator:
             await deduplicator.match_and_classify(ep.id)
 
         job.status = "completed"
-        job.completed_at = datetime.now(timezone.utc)
+        job.completed_at = datetime.now(UTC)
         await self.db.flush()
 
         return {

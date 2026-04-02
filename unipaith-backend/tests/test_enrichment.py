@@ -1,17 +1,13 @@
 """Tests for Phase 5 – EnrichmentPipeline."""
+
 from __future__ import annotations
 
-from decimal import Decimal
-
-import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.crawler.enrichment import EnrichmentPipeline
 from unipaith.models.institution import Institution, Program
 from unipaith.models.matching import DataSource
 from unipaith.models.user import User
-
-
 
 
 async def _seed_source(db: AsyncSession) -> DataSource:
@@ -51,13 +47,9 @@ async def _seed_institution_and_program(
     return institution, program
 
 
-async def test_create_enrichment(
-    db_session: AsyncSession, mock_institution_user: User
-):
+async def test_create_enrichment(db_session: AsyncSession, mock_institution_user: User):
     source = await _seed_source(db_session)
-    institution, program = await _seed_institution_and_program(
-        db_session, mock_institution_user
-    )
+    institution, program = await _seed_institution_and_program(db_session, mock_institution_user)
 
     pipeline = EnrichmentPipeline(db_session)
     record = await pipeline.enrich_program(
@@ -74,13 +66,9 @@ async def test_create_enrichment(
     assert record.program_id == program.id
 
 
-async def test_apply_enrichments(
-    db_session: AsyncSession, mock_institution_user: User
-):
+async def test_apply_enrichments(db_session: AsyncSession, mock_institution_user: User):
     source = await _seed_source(db_session)
-    institution, program = await _seed_institution_and_program(
-        db_session, mock_institution_user
-    )
+    institution, program = await _seed_institution_and_program(db_session, mock_institution_user)
 
     pipeline = EnrichmentPipeline(db_session)
     await pipeline.enrich_program(

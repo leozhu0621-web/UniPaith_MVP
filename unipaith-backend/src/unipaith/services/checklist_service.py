@@ -1,10 +1,11 @@
 """
 Checklist service — auto-generate and manage application checklists.
 """
+
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -43,9 +44,7 @@ class ChecklistService:
         return app
 
     async def _load_program(self, program_id: UUID) -> Program:
-        result = await self.db.execute(
-            select(Program).where(Program.id == program_id)
-        )
+        result = await self.db.execute(select(Program).where(Program.id == program_id))
         prog = result.scalar_one_or_none()
         if prog is None:
             raise NotFoundException("Program not found")
@@ -71,9 +70,7 @@ class ChecklistService:
     # Item builders
     # ------------------------------------------------------------------
 
-    def _build_items(
-        self, program: Program, profile: StudentProfile
-    ) -> list[dict]:
+    def _build_items(self, program: Program, profile: StudentProfile) -> list[dict]:
         """
         Derive checklist items from program requirements and student data.
 
@@ -89,23 +86,27 @@ class ChecklistService:
             and profile.nationality
             and profile.country_of_residence
         )
-        items.append({
-            "name": "Personal Information",
-            "category": "personal_info",
-            "required": True,
-            "completed": has_personal,
-            "description": "Full name, nationality, and country of residence.",
-        })
+        items.append(
+            {
+                "name": "Personal Information",
+                "category": "personal_info",
+                "required": True,
+                "completed": has_personal,
+                "description": "Full name, nationality, and country of residence.",
+            }
+        )
 
         # 2. Academic records
         has_academics = len(profile.academic_records) > 0
-        items.append({
-            "name": "Academic Records",
-            "category": "academic_records",
-            "required": True,
-            "completed": has_academics,
-            "description": "At least one academic record with GPA.",
-        })
+        items.append(
+            {
+                "name": "Academic Records",
+                "category": "academic_records",
+                "required": True,
+                "completed": has_academics,
+                "description": "At least one academic record with GPA.",
+            }
+        )
 
         # 3. Test scores — conditionally required
         gre_required = reqs.get("gre_required", False)
@@ -113,18 +114,18 @@ class ChecklistService:
         ielts_min = reqs.get("ielts_min")
 
         has_gre = any(s.test_type == "gre" for s in profile.test_scores)
-        has_english = any(
-            s.test_type in ("toefl", "ielts") for s in profile.test_scores
-        )
+        has_english = any(s.test_type in ("toefl", "ielts") for s in profile.test_scores)
 
         if gre_required:
-            items.append({
-                "name": "GRE Score",
-                "category": "test_scores",
-                "required": True,
-                "completed": has_gre,
-                "description": "GRE scores are required for this program.",
-            })
+            items.append(
+                {
+                    "name": "GRE Score",
+                    "category": "test_scores",
+                    "required": True,
+                    "completed": has_gre,
+                    "description": "GRE scores are required for this program.",
+                }
+            )
 
         if toefl_min or ielts_min:
             desc_parts: list[str] = []
@@ -132,63 +133,75 @@ class ChecklistService:
                 desc_parts.append(f"TOEFL minimum: {toefl_min}")
             if ielts_min:
                 desc_parts.append(f"IELTS minimum: {ielts_min}")
-            items.append({
-                "name": "English Proficiency",
-                "category": "test_scores",
-                "required": True,
-                "completed": has_english,
-                "description": ". ".join(desc_parts) + ".",
-            })
+            items.append(
+                {
+                    "name": "English Proficiency",
+                    "category": "test_scores",
+                    "required": True,
+                    "completed": has_english,
+                    "description": ". ".join(desc_parts) + ".",
+                }
+            )
 
         # 4. Essays
         essay_prompts: list[dict] = reqs.get("essays", [])
         if essay_prompts:
-            items.append({
-                "name": "Essays",
-                "category": "essays",
-                "required": True,
-                "completed": False,  # Will be refined per-essay later if needed.
-                "description": f"{len(essay_prompts)} essay(s) required.",
-            })
+            items.append(
+                {
+                    "name": "Essays",
+                    "category": "essays",
+                    "required": True,
+                    "completed": False,  # Will be refined per-essay later if needed.
+                    "description": f"{len(essay_prompts)} essay(s) required.",
+                }
+            )
         else:
-            items.append({
-                "name": "Statement of Purpose",
-                "category": "essays",
-                "required": True,
-                "completed": False,
-                "description": "A statement of purpose or personal statement.",
-            })
+            items.append(
+                {
+                    "name": "Statement of Purpose",
+                    "category": "essays",
+                    "required": True,
+                    "completed": False,
+                    "description": "A statement of purpose or personal statement.",
+                }
+            )
 
         # 5. Resume / CV
-        items.append({
-            "name": "Resume / CV",
-            "category": "resume",
-            "required": True,
-            "completed": False,  # Checked separately by the resume workshop.
-            "description": "An up-to-date academic resume or CV.",
-        })
+        items.append(
+            {
+                "name": "Resume / CV",
+                "category": "resume",
+                "required": True,
+                "completed": False,  # Checked separately by the resume workshop.
+                "description": "An up-to-date academic resume or CV.",
+            }
+        )
 
         # 6. Recommendation letters
         rec_count = reqs.get("recommendation_letters", 2)
-        items.append({
-            "name": "Recommendation Letters",
-            "category": "recommendation_letters",
-            "required": True,
-            "completed": False,
-            "description": f"{rec_count} recommendation letter(s) required.",
-        })
+        items.append(
+            {
+                "name": "Recommendation Letters",
+                "category": "recommendation_letters",
+                "required": True,
+                "completed": False,
+                "description": f"{rec_count} recommendation letter(s) required.",
+            }
+        )
 
         # 7. Supporting documents
         required_docs: list[str] = reqs.get("required_documents", [])
         has_doc_types = {d.document_type for d in profile.documents}
         for doc_name in required_docs:
-            items.append({
-                "name": doc_name,
-                "category": "documents",
-                "required": True,
-                "completed": doc_name.lower().replace(" ", "_") in has_doc_types,
-                "description": f"Upload: {doc_name}.",
-            })
+            items.append(
+                {
+                    "name": doc_name,
+                    "category": "documents",
+                    "required": True,
+                    "completed": doc_name.lower().replace(" ", "_") in has_doc_types,
+                    "description": f"Upload: {doc_name}.",
+                }
+            )
 
         return items
 
@@ -234,20 +247,18 @@ class ChecklistService:
                 program_id=app.program_id,
                 items=items,
                 completion_percentage=completion,
-                auto_generated_at=datetime.now(timezone.utc),
+                auto_generated_at=datetime.now(UTC),
             )
             self.db.add(checklist)
         else:
             checklist.items = items
             checklist.completion_percentage = completion
-            checklist.auto_generated_at = datetime.now(timezone.utc)
+            checklist.auto_generated_at = datetime.now(UTC)
 
         await self.db.flush()
         return checklist
 
-    async def get_checklist(
-        self, student_id: UUID, application_id: UUID
-    ) -> ApplicationChecklist:
+    async def get_checklist(self, student_id: UUID, application_id: UUID) -> ApplicationChecklist:
         """Return an existing checklist for the application."""
         app = await self._load_application(student_id, application_id)
         result = await self.db.execute(
@@ -261,9 +272,7 @@ class ChecklistService:
             raise NotFoundException("Checklist not found — generate one first")
         return checklist
 
-    async def readiness_check(
-        self, student_id: UUID, application_id: UUID
-    ) -> dict:
+    async def readiness_check(self, student_id: UUID, application_id: UUID) -> dict:
         """
         Evaluate readiness for submission.
 
@@ -283,9 +292,7 @@ class ChecklistService:
         items = self._build_items(program, profile)
         completion = self._compute_completion(items)
 
-        missing = [
-            i["name"] for i in items if i["required"] and not i["completed"]
-        ]
+        missing = [i["name"] for i in items if i["required"] and not i["completed"]]
 
         warnings: list[str] = []
         # Deadline proximity warning.
@@ -294,13 +301,9 @@ class ChecklistService:
             if days_left < 0:
                 warnings.append("The application deadline has passed.")
             elif days_left <= 7:
-                warnings.append(
-                    f"Deadline is in {days_left} day(s) — submit soon!"
-                )
+                warnings.append(f"Deadline is in {days_left} day(s) — submit soon!")
             elif days_left <= 30:
-                warnings.append(
-                    f"Deadline is in {days_left} days — start finalising."
-                )
+                warnings.append(f"Deadline is in {days_left} days — start finalising.")
 
         return {
             "is_ready": len(missing) == 0,

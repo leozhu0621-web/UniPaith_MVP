@@ -159,4 +159,3 @@ class ConversationError(BaseModel):
 class ConversationErrorResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
     error: ConversationError
-

@@ -3,6 +3,7 @@ Phase 3 workflow models.
 Only tables that don't already exist in Phase 1.
 Notification, NotificationPreference, Touchpoint.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -32,9 +33,7 @@ class Notification(Base):
         Index("ix_notifications_created", "created_at"),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
@@ -53,7 +52,7 @@ class Notification(Base):
     )
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    user: Mapped["User"] = relationship("User", backref="notifications")  # type: ignore[name-defined]  # noqa: F821
+    user: Mapped[User] = relationship("User", backref="notifications")  # type: ignore[name-defined]  # noqa: F821
 
 
 class NotificationPreference(Base):
@@ -61,9 +60,7 @@ class NotificationPreference(Base):
 
     __tablename__ = "notification_preferences"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
@@ -79,7 +76,7 @@ class NotificationPreference(Base):
         nullable=False,
     )
 
-    user: Mapped["User"] = relationship("User", backref="notification_preferences")  # type: ignore[name-defined]  # noqa: F821
+    user: Mapped[User] = relationship("User", backref="notification_preferences")  # type: ignore[name-defined]  # noqa: F821
 
 
 class Touchpoint(Base):
@@ -97,9 +94,7 @@ class Touchpoint(Base):
         Index("ix_touchpoints_created", "created_at"),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     student_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("student_profiles.id", ondelete="CASCADE"),

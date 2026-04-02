@@ -3,6 +3,7 @@ Fairness Checker — evaluates model fairness across protected demographic
 attributes using demographic parity, equal opportunity, and equalized odds
 metrics with a configurable fairness dial.
 """
+
 from __future__ import annotations
 
 import logging
@@ -131,8 +132,7 @@ class FairnessChecker:
 
         if len(groups) < 2:
             logger.debug(
-                "Fewer than 2 groups with >=%d samples for attribute '%s', "
-                "skipping fairness check",
+                "Fewer than 2 groups with >=%d samples for attribute '%s', skipping fairness check",
                 _MIN_GROUP_SIZE,
                 attribute,
             )
@@ -146,34 +146,22 @@ class FairnessChecker:
 
         for group_name, group_outcomes in groups.items():
             total = len(group_outcomes)
-            positives = [
-                o for o in group_outcomes
-                if o["actual_outcome"] in _POSITIVE_OUTCOMES
-            ]
-            negatives = [
-                o for o in group_outcomes
-                if o["actual_outcome"] in _NEGATIVE_OUTCOMES
-            ]
+            positives = [o for o in group_outcomes if o["actual_outcome"] in _POSITIVE_OUTCOMES]
+            negatives = [o for o in group_outcomes if o["actual_outcome"] in _NEGATIVE_OUTCOMES]
 
             positive_count = len(positives)
             negative_count = len(negatives)
             classified_count = positive_count + negative_count
 
             # Positive rate (demographic parity)
-            pos_rate = (
-                positive_count / classified_count
-                if classified_count > 0
-                else 0.0
-            )
+            pos_rate = positive_count / classified_count if classified_count > 0 else 0.0
             positive_rates.append(pos_rate)
 
             # True Positive Rate (equal opportunity)
             # Among actually-positive cases, what fraction did the model
             # predict as positive (tier 1)?
             if positive_count > 0:
-                true_positives = sum(
-                    1 for o in positives if o["predicted_tier"] <= 1
-                )
+                true_positives = sum(1 for o in positives if o["predicted_tier"] <= 1)
                 tpr = true_positives / positive_count
             else:
                 tpr = 0.0
@@ -183,18 +171,14 @@ class FairnessChecker:
             # Among actually-negative cases, what fraction did the model
             # predict as positive (tier 1)?
             if negative_count > 0:
-                false_positives = sum(
-                    1 for o in negatives if o["predicted_tier"] <= 1
-                )
+                false_positives = sum(1 for o in negatives if o["predicted_tier"] <= 1)
                 fpr = false_positives / negative_count
             else:
                 fpr = 0.0
             fpr_values.append(fpr)
 
             avg_score = (
-                sum(o["predicted_score"] for o in group_outcomes) / total
-                if total > 0
-                else 0.0
+                sum(o["predicted_score"] for o in group_outcomes) / total if total > 0 else 0.0
             )
 
             group_metrics[group_name] = {
@@ -230,9 +214,7 @@ class FairnessChecker:
                 "demographic_parity_diff": round(demographic_parity_diff, 4),
                 "max_allowed": round(max_allowed, 4),
                 "dial_setting": dial,
-                "group_positive_rates": {
-                    k: v["positive_rate"] for k, v in group_metrics.items()
-                },
+                "group_positive_rates": {k: v["positive_rate"] for k, v in group_metrics.items()},
             }
 
         report = FairnessReport(
@@ -241,15 +223,9 @@ class FairnessChecker:
             training_run_id=training_run_id,
             protected_attribute=attribute,
             group_metrics=group_metrics,
-            demographic_parity_diff=Decimal(
-                str(round(demographic_parity_diff, 4))
-            ),
-            equal_opportunity_diff=Decimal(
-                str(round(equal_opportunity_diff, 4))
-            ),
-            equalized_odds_diff=Decimal(
-                str(round(equalized_odds_diff, 4))
-            ),
+            demographic_parity_diff=Decimal(str(round(demographic_parity_diff, 4))),
+            equal_opportunity_diff=Decimal(str(round(equal_opportunity_diff, 4))),
+            equalized_odds_diff=Decimal(str(round(equalized_odds_diff, 4))),
             fairness_dial_setting=Decimal(str(dial)),
             passed=passed,
             violation_details=violation_details,
@@ -270,9 +246,7 @@ class FairnessChecker:
     # Demographics loading
     # ------------------------------------------------------------------
 
-    async def _load_demographics(
-        self, student_ids: list[UUID]
-    ) -> dict[str, dict]:
+    async def _load_demographics(self, student_ids: list[UUID]) -> dict[str, dict]:
         """Load demographic data for a set of students.
 
         Returns a dict mapping str(student_id) to a dict with keys:

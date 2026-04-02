@@ -5,6 +5,7 @@ maps profile patterns to program success. Uses HDBSCAN for density-based
 clustering on student feature vectors, and mlxtend for association rule
 mining on successful student-program pairings.
 """
+
 from __future__ import annotations
 
 import logging
@@ -22,9 +23,14 @@ logger = logging.getLogger("unipaith.ml.pattern_recognizer")
 
 POSITIVE_OUTCOMES = {"admitted", "enrolled"}
 FEATURE_KEYS = [
-    "normalized_gpa", "work_experience_years", "research_count",
-    "leadership_count", "publication_count", "total_activities",
-    "test_score_avg", "highest_degree_level",
+    "normalized_gpa",
+    "work_experience_years",
+    "research_count",
+    "leadership_count",
+    "publication_count",
+    "total_activities",
+    "test_score_avg",
+    "highest_degree_level",
 ]
 
 
@@ -65,7 +71,9 @@ class PatternRecognizer:
         return affinities.get(program_id, 0.5)
 
     def get_pattern_scores_batch(
-        self, student_id: UUID, program_ids: list[UUID],
+        self,
+        student_id: UUID,
+        program_ids: list[UUID],
     ) -> dict[UUID, float]:
         """Get pattern scores for multiple programs."""
         return {pid: self.get_pattern_score(student_id, pid) for pid in program_ids}
@@ -81,7 +89,8 @@ class PatternRecognizer:
             "center": center.tolist() if center is not None else None,
             "top_programs": sorted(
                 self._cluster_program_affinities.get(cluster, {}).items(),
-                key=lambda x: x[1], reverse=True,
+                key=lambda x: x[1],
+                reverse=True,
             )[:10],
         }
 
@@ -115,7 +124,9 @@ class PatternRecognizer:
             noise = int(np.sum(labels == -1))
             logger.info(
                 "HDBSCAN: %d clusters, %d noise points from %d students",
-                len(unique_labels), noise, len(student_ids),
+                len(unique_labels),
+                noise,
+                len(student_ids),
             )
             return {"n_clusters": len(unique_labels), "noise": noise}
         except Exception:

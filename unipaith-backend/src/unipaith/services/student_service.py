@@ -51,9 +51,7 @@ class StudentService:
             raise NotFoundException("Student profile not found")
         return profile
 
-    async def update_profile(
-        self, user_id: UUID, data: UpdateProfileRequest
-    ) -> StudentProfile:
+    async def update_profile(self, user_id: UUID, data: UpdateProfileRequest) -> StudentProfile:
         profile = await self._get_student_profile(user_id)
         update_data = data.model_dump(exclude_unset=True)
         for key, value in update_data.items():
@@ -105,14 +103,10 @@ class StudentService:
     # --- Test Scores ---
 
     async def list_test_scores(self, student_id: UUID) -> list[TestScore]:
-        result = await self.db.execute(
-            select(TestScore).where(TestScore.student_id == student_id)
-        )
+        result = await self.db.execute(select(TestScore).where(TestScore.student_id == student_id))
         return list(result.scalars().all())
 
-    async def create_test_score(
-        self, student_id: UUID, data: CreateTestScoreRequest
-    ) -> TestScore:
+    async def create_test_score(self, student_id: UUID, data: CreateTestScoreRequest) -> TestScore:
         score = TestScore(student_id=student_id, **data.model_dump())
         self.db.add(score)
         await self.db.flush()
@@ -141,14 +135,10 @@ class StudentService:
     # --- Activities ---
 
     async def list_activities(self, student_id: UUID) -> list[Activity]:
-        result = await self.db.execute(
-            select(Activity).where(Activity.student_id == student_id)
-        )
+        result = await self.db.execute(select(Activity).where(Activity.student_id == student_id))
         return list(result.scalars().all())
 
-    async def create_activity(
-        self, student_id: UUID, data: CreateActivityRequest
-    ) -> Activity:
+    async def create_activity(self, student_id: UUID, data: CreateActivityRequest) -> Activity:
         activity = Activity(student_id=student_id, **data.model_dump())
         if activity.is_current:
             activity.end_date = None
@@ -294,9 +284,7 @@ class StudentService:
                 guidance_text="Add any standardized test scores you have.",
             )
         if "activities" not in steps:
-            has_phd = any(
-                r.degree_type == "phd" for r in profile.academic_records
-            )
+            has_phd = any(r.degree_type == "phd" for r in profile.academic_records)
             if has_phd:
                 return NextStepResponse(
                     section="activities",
@@ -346,18 +334,14 @@ class StudentService:
             raise NotFoundException(f"{model.__name__} not found")
         return record
 
-    async def _verify_ownership(
-        self, student_id: UUID, record_owner_id: UUID
-    ) -> None:
+    async def _verify_ownership(self, student_id: UUID, record_owner_id: UUID) -> None:
         if student_id != record_owner_id:
             raise ForbiddenException("You do not own this resource")
 
     async def _update_onboarding(self, student_id: UUID) -> None:
         status = await self.get_onboarding_status(student_id)
         result = await self.db.execute(
-            select(OnboardingProgress).where(
-                OnboardingProgress.student_id == student_id
-            )
+            select(OnboardingProgress).where(OnboardingProgress.student_id == student_id)
         )
         progress = result.scalar_one_or_none()
         if progress is None:

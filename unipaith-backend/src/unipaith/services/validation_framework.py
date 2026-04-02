@@ -9,6 +9,7 @@ Ensures the engine doesn't go wrong:
 6. Auto-rollback when metrics degrade
 7. Advisor quality sampling (placeholder for Wave 3)
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -36,7 +37,8 @@ class ValidationFramework:
         self.db = db
 
     async def split_holdout(
-        self, outcomes: list[OutcomeRecord],
+        self,
+        outcomes: list[OutcomeRecord],
     ) -> tuple[list[OutcomeRecord], list[OutcomeRecord]]:
         """Split outcomes into training and held-out sets deterministically."""
         train_set = []
@@ -86,13 +88,15 @@ class ValidationFramework:
             bin_count = int(np.sum(mask))
             bin_error = abs(bin_pred - bin_actual)
             ece += bin_error * bin_count / len(predictions)
-            bin_details.append({
-                "range": [round(lo, 2), round(hi, 2)],
-                "avg_predicted": round(bin_pred, 4),
-                "avg_actual": round(bin_actual, 4),
-                "count": bin_count,
-                "error": round(bin_error, 4),
-            })
+            bin_details.append(
+                {
+                    "range": [round(lo, 2), round(hi, 2)],
+                    "avg_predicted": round(bin_pred, 4),
+                    "avg_actual": round(bin_actual, 4),
+                    "count": bin_count,
+                    "error": round(bin_error, 4),
+                }
+            )
 
         return {
             "status": "computed",
@@ -109,17 +113,21 @@ class ValidationFramework:
         historical_cutoff = now - timedelta(days=window_days * 4)
 
         recent_result = await self.db.execute(
-            select(PredictionLog.predicted_score).where(
+            select(PredictionLog.predicted_score)
+            .where(
                 PredictionLog.predicted_at >= recent_cutoff,
-            ).limit(1000)
+            )
+            .limit(1000)
         )
         recent_scores = [float(r[0]) for r in recent_result.fetchall()]
 
         historical_result = await self.db.execute(
-            select(PredictionLog.predicted_score).where(
+            select(PredictionLog.predicted_score)
+            .where(
                 PredictionLog.predicted_at >= historical_cutoff,
                 PredictionLog.predicted_at < recent_cutoff,
-            ).limit(1000)
+            )
+            .limit(1000)
         )
         historical_scores = [float(r[0]) for r in historical_result.fetchall()]
 
@@ -131,6 +139,7 @@ class ValidationFramework:
             }
 
         from scipy.stats import ks_2samp
+
         stat, p_value = ks_2samp(recent_scores, historical_scores)
 
         drift_detected = p_value < settings.eval_drift_pvalue_threshold
@@ -152,9 +161,12 @@ class ValidationFramework:
         was opposite.
         """
         result = await self.db.execute(
-            select(OutcomeRecord).where(
+            select(OutcomeRecord)
+            .where(
                 OutcomeRecord.outcome_confidence >= 0.8,
-            ).order_by(OutcomeRecord.created_at.desc()).limit(500)
+            )
+            .order_by(OutcomeRecord.created_at.desc())
+            .limit(500)
         )
         outcomes = list(result.scalars().all())
         if not outcomes:
@@ -165,13 +177,15 @@ class ValidationFramework:
             predicted_positive = float(o.predicted_score) >= 0.6
             actual_positive = o.actual_outcome in ("admitted", "enrolled")
             if predicted_positive != actual_positive:
-                contradictions.append({
-                    "student_id": str(o.student_id),
-                    "program_id": str(o.program_id),
-                    "predicted_score": float(o.predicted_score),
-                    "actual_outcome": o.actual_outcome,
-                    "outcome_confidence": float(o.outcome_confidence),
-                })
+                contradictions.append(
+                    {
+                        "student_id": str(o.student_id),
+                        "program_id": str(o.program_id),
+                        "predicted_score": float(o.predicted_score),
+                        "actual_outcome": o.actual_outcome,
+                        "outcome_confidence": float(o.outcome_confidence),
+                    }
+                )
 
         rate = len(contradictions) / max(len(outcomes), 1)
         return {
@@ -198,7 +212,9 @@ class ValidationFramework:
             reasons.append(f"high_contradiction_rate: {contradiction.get('contradiction_rate')}")
 
         recent_failures = await self.db.scalar(
-            select(func.count()).select_from(TrainingRun).where(
+            select(func.count())
+            .select_from(TrainingRun)
+            .where(
                 TrainingRun.status == "failed",
                 TrainingRun.created_at >= datetime.now(UTC) - timedelta(days=3),
             )

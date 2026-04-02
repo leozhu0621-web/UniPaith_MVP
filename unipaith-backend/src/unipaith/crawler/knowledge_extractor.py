@@ -4,6 +4,7 @@ Takes raw content from any source/format, classifies it, extracts structured
 knowledge using LLM, links to entities, and generates embeddings for the
 knowledge_documents table.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -25,9 +26,15 @@ from unipaith.models.knowledge import (
 logger = logging.getLogger("unipaith.knowledge_extractor")
 
 CONTENT_FORMATS = {
-    "webpage", "video_transcript", "social_post", "academic_paper",
-    "government_dataset", "podcast_transcript", "document",
-    "api_response", "rss_entry",
+    "webpage",
+    "video_transcript",
+    "social_post",
+    "academic_paper",
+    "government_dataset",
+    "podcast_transcript",
+    "document",
+    "api_response",
+    "rss_entry",
 }
 
 CLASSIFY_PROMPT = """Analyze this content and return a JSON object with:
@@ -95,11 +102,17 @@ class KnowledgeExtractor:
         domain = urlparse(source_url).netloc if source_url else None
         hashlib.sha256(raw_text[:2000].encode()).hexdigest()
 
-        existing = await self.db.execute(
-            select(KnowledgeDocument).where(
-                KnowledgeDocument.source_url == source_url,
-            ).limit(1)
-        ) if source_url else None
+        existing = (
+            await self.db.execute(
+                select(KnowledgeDocument)
+                .where(
+                    KnowledgeDocument.source_url == source_url,
+                )
+                .limit(1)
+            )
+            if source_url
+            else None
+        )
         if existing and existing.scalar_one_or_none():
             logger.debug("Duplicate source_url, skipping: %s", source_url)
             return None
@@ -135,7 +148,8 @@ class KnowledgeExtractor:
         truncated = raw_text[:4000]
         prompt = f"{CLASSIFY_PROMPT}\n\n---\nContent ({doc.content_format}):\n{truncated}"
         response = await self.llm.extract_features(
-            "You are a content classification engine.", prompt,
+            "You are a content classification engine.",
+            prompt,
         )
         parsed = _safe_parse_json(response)
         if not parsed:
@@ -152,7 +166,8 @@ class KnowledgeExtractor:
         truncated = raw_text[:6000]
         prompt = f"{EXTRACT_PROMPT}\n\n---\nContent:\n{truncated}"
         response = await self.llm.extract_features(
-            "You are a knowledge extraction engine.", prompt,
+            "You are a knowledge extraction engine.",
+            prompt,
         )
         parsed = _safe_parse_json(response)
         if not parsed:
@@ -240,6 +255,7 @@ def _build_embedding_text(doc: KnowledgeDocument) -> str:
 
 def _safe_parse_json(text: str) -> dict | None:
     import json
+
     if not text:
         return None
     text = text.strip()

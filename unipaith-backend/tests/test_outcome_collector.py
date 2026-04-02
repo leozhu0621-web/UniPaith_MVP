@@ -1,8 +1,9 @@
 """Tests for OutcomeCollector — Phase 4 ML loop."""
+
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 
 import pytest
@@ -67,7 +68,7 @@ async def _seed_prediction_with_outcome(
         program_id=program.id,
         status="submitted",
         decision=outcome,
-        decision_at=datetime.now(timezone.utc),
+        decision_at=datetime.now(UTC),
     )
     db.add(app)
     await db.commit()

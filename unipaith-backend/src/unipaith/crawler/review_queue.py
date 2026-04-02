@@ -1,8 +1,9 @@
 """Review queue — human review workflow for extracted program records."""
+
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -10,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.core.exceptions import BadRequestException, NotFoundException
 from unipaith.crawler.ingestor import AutoIngestor
-from unipaith.models.crawler import CrawlJob, ExtractedProgram
+from unipaith.models.crawler import ExtractedProgram
 
 logger = logging.getLogger(__name__)
 
@@ -72,20 +73,30 @@ class ReviewQueue:
         if not ep:
             raise NotFoundException(f"Extracted program {extracted_id} not found")
         if ep.review_status != "pending":
-            raise BadRequestException(
-                f"Record is not pending review (status={ep.review_status})"
-            )
+            raise BadRequestException(f"Record is not pending review (status={ep.review_status})")
 
         # Apply edits
         if edits:
             editable_fields = {
-                "institution_name", "institution_country", "institution_city",
-                "institution_type", "institution_website",
-                "program_name", "degree_type", "department",
-                "duration_months", "tuition", "tuition_currency",
-                "acceptance_rate", "requirements", "description_text",
-                "application_deadline", "program_start_date",
-                "highlights", "faculty_contacts", "rankings",
+                "institution_name",
+                "institution_country",
+                "institution_city",
+                "institution_type",
+                "institution_website",
+                "program_name",
+                "degree_type",
+                "department",
+                "duration_months",
+                "tuition",
+                "tuition_currency",
+                "acceptance_rate",
+                "requirements",
+                "description_text",
+                "application_deadline",
+                "program_start_date",
+                "highlights",
+                "faculty_contacts",
+                "rankings",
                 "financial_aid_info",
             }
             for field, value in edits.items():
@@ -94,7 +105,7 @@ class ReviewQueue:
 
         ep.review_status = "approved"
         ep.reviewed_by = reviewer_id
-        ep.reviewed_at = datetime.now(timezone.utc)
+        ep.reviewed_at = datetime.now(UTC)
         ep.review_notes = notes
         await self.db.flush()
 
@@ -103,6 +114,7 @@ class ReviewQueue:
         # Force ingestion by temporarily raising confidence
         original_confidence = ep.extraction_confidence
         from decimal import Decimal
+
         ep.extraction_confidence = Decimal("0.99")
         result = await ingestor.process_extracted(extracted_id)
         ep.extraction_confidence = original_confidence
@@ -122,13 +134,11 @@ class ReviewQueue:
         if not ep:
             raise NotFoundException(f"Extracted program {extracted_id} not found")
         if ep.review_status != "pending":
-            raise BadRequestException(
-                f"Record is not pending review (status={ep.review_status})"
-            )
+            raise BadRequestException(f"Record is not pending review (status={ep.review_status})")
 
         ep.review_status = "rejected"
         ep.reviewed_by = reviewer_id
-        ep.reviewed_at = datetime.now(timezone.utc)
+        ep.reviewed_at = datetime.now(UTC)
         ep.review_notes = reason
         await self.db.flush()
 

@@ -7,6 +7,7 @@ Three modes controlled by settings.gpu_mode:
 - "local": calls localhost vLLM endpoints (local GPU)
 - "aws": calls AWS GPU instances with auto-start/stop for 70B
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -72,14 +73,21 @@ class LLMClient:
                 )
                 record_llm(started, ok=True)
                 return response
-            except asyncio.TimeoutError as exc:
+            except TimeoutError as exc:
                 record_llm(started, ok=False, timed_out=True)
                 last_error = exc
-                logger.warning("LLM timeout attempt %d/%d", attempt, settings.ai_request_max_retries)
+                logger.warning(
+                    "LLM timeout attempt %d/%d", attempt, settings.ai_request_max_retries
+                )
             except Exception as exc:  # pragma: no cover - network/runtime safety
                 record_llm(started, ok=False)
                 last_error = exc
-                logger.warning("LLM request failed attempt %d/%d: %s", attempt, settings.ai_request_max_retries, exc)
+                logger.warning(
+                    "LLM request failed attempt %d/%d: %s",
+                    attempt,
+                    settings.ai_request_max_retries,
+                    exc,
+                )
 
             if attempt < settings.ai_request_max_retries:
                 await asyncio.sleep(settings.ai_request_backoff_seconds * attempt)
@@ -169,7 +177,7 @@ class AWSLLMClient:
                 )
                 record_llm(started, ok=True)
                 return response
-            except asyncio.TimeoutError as exc:
+            except TimeoutError as exc:
                 record_llm(started, ok=False, timed_out=True)
                 last_error = exc
             except Exception as exc:
@@ -183,6 +191,7 @@ class AWSLLMClient:
         """Check if monthly GPU budget is exceeded."""
         try:
             from unipaith.ai.cost_tracker import get_cost_tracker
+
             tracker = get_cost_tracker()
             return tracker.is_budget_exceeded()
         except Exception:
@@ -208,7 +217,7 @@ class MockLLMClient:
     """Mock client for development/testing without GPU access."""
 
     async def extract_features(self, system_prompt: str, user_content: str) -> str:
-        return '''{
+        return """{
             "academic_strength": 0.82,
             "research_experience": 0.75,
             "leadership_signal": 0.60,
@@ -222,17 +231,19 @@ class MockLLMClient:
             "extracted_interests": ["NLP", "computer vision", "AI ethics"],
             "motivation_type": "mixed",
             "readiness_level": "strong"
-        }'''
+        }"""
 
     async def generate_reasoning(self, system_prompt: str, user_content: str) -> str:
         return (
             "This program is a strong match based on your academic background in computer science "
-            "and your research experience in NLP. The program's emphasis on applied machine learning "
+            "and your research experience in NLP. The program's "
+            "emphasis on applied machine learning "
             "aligns well with your goal of working at the intersection of AI and healthcare. "
             "Your GPA and test scores are competitive for this program. "
             "The program offers co-op opportunities that match your interest "
             "in gaining industry experience. Financial fit is moderate — tuition is within your "
-            "stated budget, and partial scholarships are available for qualified international students."
+            "stated budget, and partial scholarships are available "
+            "for qualified international students."
         )
 
 

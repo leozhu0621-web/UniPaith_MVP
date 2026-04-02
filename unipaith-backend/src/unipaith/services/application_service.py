@@ -3,17 +3,16 @@ from __future__ import annotations
 import random
 import string
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from unipaith.core.exceptions import (
     BadRequestException,
     ConflictException,
-    ForbiddenException,
     NotFoundException,
 )
 from unipaith.models.application import (
@@ -32,13 +31,9 @@ class ApplicationService:
 
     # --- Student-facing ---
 
-    async def create_application(
-        self, student_id: UUID, program_id: UUID
-    ) -> Application:
+    async def create_application(self, student_id: UUID, program_id: UUID) -> Application:
         result = await self.db.execute(
-            select(Program).where(
-                Program.id == program_id, Program.is_published.is_(True)
-            )
+            select(Program).where(Program.id == program_id, Program.is_published.is_(True))
         )
         if not result.scalar_one_or_none():
             raise NotFoundException("Program not found or not published")
@@ -62,29 +57,23 @@ class ApplicationService:
         await self.db.flush()
         return app
 
-    async def list_student_applications(
-        self, student_id: UUID
-    ) -> list[Application]:
+    async def list_student_applications(self, student_id: UUID) -> list[Application]:
         result = await self.db.execute(
             select(Application).where(Application.student_id == student_id)
         )
         return list(result.scalars().all())
 
-    async def get_student_application(
-        self, student_id: UUID, application_id: UUID
-    ) -> Application:
+    async def get_student_application(self, student_id: UUID, application_id: UUID) -> Application:
         return await self._get_application_for_student(student_id, application_id)
 
-    async def submit_application(
-        self, student_id: UUID, application_id: UUID
-    ) -> Application:
+    async def submit_application(self, student_id: UUID, application_id: UUID) -> Application:
         app = await self._get_application_for_student(student_id, application_id)
 
         if app.status != "draft":
             raise BadRequestException("Only draft applications can be submitted")
 
         app.status = "submitted"
-        app.submitted_at = datetime.now(timezone.utc)
+        app.submitted_at = datetime.now(UTC)
 
         confirmation = f"UNI-{uuid.uuid4().hex[:8].upper()}"
         submission = ApplicationSubmission(
@@ -97,9 +86,7 @@ class ApplicationService:
         await self.db.refresh(app)
         return app
 
-    async def withdraw_application(
-        self, student_id: UUID, application_id: UUID
-    ) -> None:
+    async def withdraw_application(self, student_id: UUID, application_id: UUID) -> None:
         app = await self._get_application_for_student(student_id, application_id)
         if app.status not in ("draft", "submitted"):
             raise BadRequestException("Cannot withdraw application in current state")
@@ -131,9 +118,7 @@ class ApplicationService:
     async def get_application_detail(
         self, institution_id: UUID, application_id: UUID
     ) -> Application:
-        return await self._get_application_for_institution(
-            institution_id, application_id
-        )
+        return await self._get_application_for_institution(institution_id, application_id)
 
     async def make_decision(
         self,
@@ -143,9 +128,7 @@ class ApplicationService:
         decision_notes: str | None = None,
         reviewer_id: UUID | None = None,
     ) -> Application:
-        app = await self._get_application_for_institution(
-            institution_id, application_id
-        )
+        app = await self._get_application_for_institution(institution_id, application_id)
         if app.status not in ("submitted", "under_review", "interview"):
             raise BadRequestException(
                 "Application must be submitted/under review to make a decision"
@@ -153,7 +136,7 @@ class ApplicationService:
 
         app.status = "decision_made"
         app.decision = decision
-        app.decision_at = datetime.now(timezone.utc)
+        app.decision_at = datetime.now(UTC)
         app.decision_notes = decision_notes
         app.decision_by = reviewer_id
         await self.db.flush()
@@ -171,9 +154,7 @@ class ApplicationService:
         conditions: dict | None = None,
         response_deadline=None,
     ) -> OfferLetter:
-        app = await self._get_application_for_institution(
-            institution_id, application_id
-        )
+        app = await self._get_application_for_institution(institution_id, application_id)
         if app.decision != "admitted":
             raise BadRequestException("Can only create offers for admitted applications")
 
@@ -218,7 +199,7 @@ class ApplicationService:
             raise BadRequestException("Offer is not available for response")
 
         offer.student_response = response
-        offer.response_at = datetime.now(timezone.utc)
+        offer.response_at = datetime.now(UTC)
         offer.decline_reason = decline_reason if response == "declined" else None
 
         if response == "accepted":
@@ -241,15 +222,12 @@ class ApplicationService:
             "interview": ["decision_made", "under_review"],
         }
 
-        app = await self._get_application_for_institution(
-            institution_id, application_id
-        )
+        app = await self._get_application_for_institution(institution_id, application_id)
         current = app.status
         allowed = allowed_transitions.get(current, [])
         if new_status not in allowed:
             raise BadRequestException(
-                f"Cannot transition from '{current}' to '{new_status}'. "
-                f"Allowed: {allowed}"
+                f"Cannot transition from '{current}' to '{new_status}'. Allowed: {allowed}"
             )
         app.status = new_status
         await self.db.flush()
@@ -294,18 +272,14 @@ class ApplicationService:
             )
 
         # Build frozen snapshot
-        snapshot = await self._build_submission_snapshot(
-            student_id, application_id, app.program_id
-        )
+        snapshot = await self._build_submission_snapshot(student_id, application_id, app.program_id)
 
         # Generate unique confirmation number: UP-{year}-{6 random alphanumeric}
-        year = datetime.now(timezone.utc).year
-        random_part = "".join(
-            random.choices(string.ascii_uppercase + string.digits, k=6)
-        )
+        year = datetime.now(UTC).year
+        random_part = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
         confirmation = f"UP-{year}-{random_part}"
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         app.status = "submitted"
         app.submitted_at = now
         app.completeness_status = "complete"
@@ -367,7 +341,7 @@ class ApplicationService:
         resume = resume_result.scalar_one_or_none()
 
         snapshot: dict = {
-            "snapshot_at": datetime.now(timezone.utc).isoformat(),
+            "snapshot_at": datetime.now(UTC).isoformat(),
             "profile": {
                 "first_name": profile.first_name,
                 "last_name": profile.last_name,

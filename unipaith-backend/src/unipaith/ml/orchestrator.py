@@ -5,10 +5,11 @@ Runs evaluation, drift detection, retraining, fairness checking, and
 model promotion in sequence.  Designed to be called by the admin API
 or a scheduled job.  Never raises — always returns partial results.
 """
+
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import func, select
@@ -16,7 +17,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.config import settings
 from unipaith.core.ai_runtime_metrics import record_ml_evaluation, start_timer
-from unipaith.ml.ab_testing import ABTestManager
 from unipaith.ml.drift_detector import DriftDetector
 from unipaith.ml.evaluator import ModelEvaluator
 from unipaith.ml.fairness import FairnessChecker
@@ -59,7 +59,7 @@ class MLOrchestrator:
 
         Never raises — partial results are returned on failure.
         """
-        started_at = datetime.now(timezone.utc)
+        started_at = datetime.now(UTC)
         result: dict[str, Any] = {
             "started_at": started_at.isoformat(),
             "completed_at": None,
@@ -89,7 +89,7 @@ class MLOrchestrator:
         except Exception:
             record_ml_evaluation(eval_timer, ok=False)
             logger.exception("Full cycle: evaluation step failed")
-            result["completed_at"] = datetime.now(timezone.utc).isoformat()
+            result["completed_at"] = datetime.now(UTC).isoformat()
             return result
 
         # --- Step 2: Drift detection ---
@@ -112,7 +112,7 @@ class MLOrchestrator:
             }
         except Exception:
             logger.exception("Full cycle: drift detection step failed")
-            result["completed_at"] = datetime.now(timezone.utc).isoformat()
+            result["completed_at"] = datetime.now(UTC).isoformat()
             return result
 
         # --- Step 3: Determine if retraining is needed ---
@@ -126,7 +126,7 @@ class MLOrchestrator:
         training_needed = decision["training_needed"]
         if not training_needed:
             result["training"] = {"skipped": True, "reason": decision["skip_reason"]}
-            result["completed_at"] = datetime.now(timezone.utc).isoformat()
+            result["completed_at"] = datetime.now(UTC).isoformat()
             return result
 
         # --- Step 4: Run training ---
@@ -150,11 +150,11 @@ class MLOrchestrator:
         except Exception:
             logger.exception("Full cycle: training step failed")
             result["training"] = {"skipped": False, "error": "training failed"}
-            result["completed_at"] = datetime.now(timezone.utc).isoformat()
+            result["completed_at"] = datetime.now(UTC).isoformat()
             return result
 
         if training_run.status != "completed" or not training_run.resulting_model_version:
-            result["completed_at"] = datetime.now(timezone.utc).isoformat()
+            result["completed_at"] = datetime.now(UTC).isoformat()
             return result
 
         # --- Step 5: Fairness check on new model ---
@@ -189,7 +189,7 @@ class MLOrchestrator:
             logger.exception("Full cycle: promotion step failed")
             result["promotion"] = {"error": "promotion failed"}
 
-        result["completed_at"] = datetime.now(timezone.utc).isoformat()
+        result["completed_at"] = datetime.now(UTC).isoformat()
         return result
 
     # ------------------------------------------------------------------
@@ -212,7 +212,9 @@ class MLOrchestrator:
                 "retraining_triggered": eval_run.retraining_triggered,
                 "drift_detected": eval_run.drift_detected,
                 "started_at": eval_run.started_at.isoformat() if eval_run.started_at else None,
-                "completed_at": eval_run.completed_at.isoformat() if eval_run.completed_at else None,
+                "completed_at": eval_run.completed_at.isoformat()
+                if eval_run.completed_at
+                else None,
             }
         except Exception:
             record_ml_evaluation(timer, ok=False)
@@ -265,7 +267,7 @@ class MLOrchestrator:
         age_hours_since_training: float | None = None
         if latest_completed_training and latest_completed_training.started_at:
             age_hours_since_training = (
-                datetime.now(timezone.utc) - latest_completed_training.started_at
+                datetime.now(UTC) - latest_completed_training.started_at
             ).total_seconds() / 3600
 
         retrain_reasons: list[str] = []
@@ -281,11 +283,13 @@ class MLOrchestrator:
         ):
             retrain_reasons.append("max_training_age_exceeded")
 
-        since_7d = datetime.now(timezone.utc) - timedelta(days=7)
+        since_7d = datetime.now(UTC) - timedelta(days=7)
         failed_runs_7d = int(
             (
                 await self.db.execute(
-                    select(func.count()).select_from(TrainingRun).where(
+                    select(func.count())
+                    .select_from(TrainingRun)
+                    .where(
                         TrainingRun.started_at >= since_7d,
                         TrainingRun.status == "failed",
                     )
@@ -296,16 +300,14 @@ class MLOrchestrator:
         total_runs_7d = int(
             (
                 await self.db.execute(
-                    select(func.count()).select_from(TrainingRun).where(
-                        TrainingRun.started_at >= since_7d
-                    )
+                    select(func.count())
+                    .select_from(TrainingRun)
+                    .where(TrainingRun.started_at >= since_7d)
                 )
             ).scalar()
             or 0
         )
-        failure_rate_7d = (
-            failed_runs_7d / total_runs_7d if total_runs_7d >= 1 else 0.0
-        )
+        failure_rate_7d = failed_runs_7d / total_runs_7d if total_runs_7d >= 1 else 0.0
         degraded_mode_active = (
             total_runs_7d >= settings.training_degraded_mode_min_runs
             and failure_rate_7d >= settings.training_degraded_mode_failure_rate_threshold
@@ -344,7 +346,9 @@ class MLOrchestrator:
             "thresholds": {
                 "min_new_outcomes": settings.eval_retrain_min_new_outcomes,
                 "max_hours_without_training": settings.eval_retrain_max_hours_without_training,
-                "degraded_mode_failure_rate_threshold": settings.training_degraded_mode_failure_rate_threshold,
+                "degraded_mode_failure_rate_threshold": (
+                    settings.training_degraded_mode_failure_rate_threshold
+                ),
                 "degraded_mode_min_runs": settings.training_degraded_mode_min_runs,
             },
             "degraded_mode": {
@@ -374,7 +378,7 @@ class MLOrchestrator:
 
         window_floor = max(
             since,
-            datetime.now(timezone.utc) - timedelta(days=settings.training_recent_outcome_window_days),
+            datetime.now(UTC) - timedelta(days=settings.training_recent_outcome_window_days),
         )
         result = await self.db.execute(
             select(func.count())

@@ -1,14 +1,10 @@
 """Tests for Phase 5 – SourceRegistry."""
+
 from __future__ import annotations
 
-import pytest
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.crawler.source_registry import SourceRegistry
-from unipaith.models.matching import DataSource
-
-
 
 
 async def test_create_source(db_session: AsyncSession):

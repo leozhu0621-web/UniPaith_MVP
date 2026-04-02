@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
@@ -108,7 +108,7 @@ async def update_recommendation(
 
     # If status changes to 'requested', set requested_at
     if update_data.get("status") == "requested" and rec.status != "requested":
-        update_data["requested_at"] = datetime.now(timezone.utc)
+        update_data["requested_at"] = datetime.now(UTC)
 
     for key, value in update_data.items():
         setattr(rec, key, value)
@@ -155,6 +155,6 @@ async def send_recommendation_request(
         raise NotFoundException("Recommendation request not found")
 
     rec.status = "requested"
-    rec.requested_at = datetime.now(timezone.utc)
+    rec.requested_at = datetime.now(UTC)
     await db.flush()
     return rec

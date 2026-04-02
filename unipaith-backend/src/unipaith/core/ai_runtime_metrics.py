@@ -52,9 +52,7 @@ def record_llm(started: float, ok: bool, timed_out: bool = False) -> None:
 
 
 def record_embedding(started: float, ok: bool, timed_out: bool = False) -> None:
-    _embedding_metrics.record(
-        latency_ms=(monotonic() - started) * 1000, ok=ok, timed_out=timed_out
-    )
+    _embedding_metrics.record(latency_ms=(monotonic() - started) * 1000, ok=ok, timed_out=timed_out)
 
 
 def record_self_driving(started: float, ok: bool, timed_out: bool = False) -> None:

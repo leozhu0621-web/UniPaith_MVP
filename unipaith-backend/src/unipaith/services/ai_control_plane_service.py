@@ -121,10 +121,14 @@ class AIControlPlaneService:
             },
             "ml_policy": {
                 "eval_retrain_min_new_outcomes": settings.eval_retrain_min_new_outcomes,
-                "eval_retrain_max_hours_without_training": settings.eval_retrain_max_hours_without_training,
+                "eval_retrain_max_hours_without_training": (
+                    settings.eval_retrain_max_hours_without_training
+                ),
                 "training_default_cycle_mode": settings.training_default_cycle_mode,
                 "training_default_manual_mode": settings.training_default_manual_mode,
-                "training_degraded_mode_failure_rate_threshold": settings.training_degraded_mode_failure_rate_threshold,
+                "training_degraded_mode_failure_rate_threshold": (
+                    settings.training_degraded_mode_failure_rate_threshold
+                ),
                 "training_degraded_mode_min_runs": settings.training_degraded_mode_min_runs,
             },
             "reliability": {
@@ -251,9 +255,9 @@ class AIControlPlaneService:
             if summary["status"] == "ok":
                 _runtime_loop_state["consecutive_failures"] = 0
             else:
-                _runtime_loop_state["consecutive_failures"] = int(
-                    _runtime_loop_state.get("consecutive_failures", 0)
-                ) + 1
+                _runtime_loop_state["consecutive_failures"] = (
+                    int(_runtime_loop_state.get("consecutive_failures", 0)) + 1
+                )
             self._record_tick(summary)
             self._append_audit("self_driving_tick", summary)
             record_self_driving(timer, ok=summary["status"] == "ok")
@@ -263,9 +267,9 @@ class AIControlPlaneService:
             current_phase = _runtime_loop_state.get("current_phase")
             if current_phase and current_phase in phase_summary:
                 self._complete_phase(current_phase, phase_summary, "error")
-            _runtime_loop_state["consecutive_failures"] = int(
-                _runtime_loop_state.get("consecutive_failures", 0)
-            ) + 1
+            _runtime_loop_state["consecutive_failures"] = (
+                int(_runtime_loop_state.get("consecutive_failures", 0)) + 1
+            )
             if _runtime_loop_state["consecutive_failures"] >= int(
                 _runtime_policy["max_consecutive_failures"]
             ):
@@ -331,9 +335,7 @@ class AIControlPlaneService:
 
     async def _detect_anomalies(self) -> dict[str, Any]:
         recent_failed_crawls = await self.db.scalar(
-            select(func.count())
-            .select_from(CrawlJob)
-            .where(CrawlJob.status == "failed")
+            select(func.count()).select_from(CrawlJob).where(CrawlJob.status == "failed")
         )
         latest_drift_row = await self.db.execute(
             select(DriftSnapshot).order_by(DriftSnapshot.created_at.desc()).limit(1)
@@ -412,8 +414,7 @@ class AIControlPlaneService:
 
     async def _rollback(self, remediation: dict[str, Any]) -> dict[str, Any]:
         ml_attempted = any(
-            a.get("action") == "run_ml_phase"
-            for a in remediation.get("actions", [])
+            a.get("action") == "run_ml_phase" for a in remediation.get("actions", [])
         )
         if not ml_attempted:
             return {"status": "skipped", "reason": "no_ml_change_to_rollback"}
@@ -480,7 +481,10 @@ class AIControlPlaneService:
             .where(ExtractedProgram.review_status == "pending")
         )
         active_model = await self.db.execute(
-            select(ModelRegistry).where(ModelRegistry.is_active.is_(True)).order_by(ModelRegistry.promoted_at.desc()).limit(1)
+            select(ModelRegistry)
+            .where(ModelRegistry.is_active.is_(True))
+            .order_by(ModelRegistry.promoted_at.desc())
+            .limit(1)
         )
         active_model_row = active_model.scalar_one_or_none()
 
@@ -539,8 +543,7 @@ class AIControlPlaneService:
         latest_model_event_row = await self.db.execute(
             select(ModelRegistry)
             .where(
-                (ModelRegistry.promoted_at.is_not(None))
-                | (ModelRegistry.retired_at.is_not(None))
+                (ModelRegistry.promoted_at.is_not(None)) | (ModelRegistry.retired_at.is_not(None))
             )
             .order_by(func.coalesce(ModelRegistry.promoted_at, ModelRegistry.retired_at).desc())
             .limit(1)
@@ -566,7 +569,9 @@ class AIControlPlaneService:
                     warn_values={"running", "pending"},
                 ),
                 "last_run_at": self._safe_dt(crawl_latest.get("created_at")),
-                "duration_ms": self._safe_num(engine_runtime.get("last_stage_durations_ms", {}).get("ingest")),
+                "duration_ms": self._safe_num(
+                    engine_runtime.get("last_stage_durations_ms", {}).get("ingest")
+                ),
                 "counts": {
                     "active_sources": status.get("engine", {}).get("active_sources"),
                     "active_jobs": status.get("engine", {}).get("active_jobs")
@@ -574,15 +579,22 @@ class AIControlPlaneService:
                     else None,
                     "items_extracted": crawl_latest.get("items_extracted"),
                 },
-                "error": None if reliability.get("crawl_failures_total", 0) == 0 else "recent_crawl_failures_detected",
+                "error": None
+                if reliability.get("crawl_failures_total", 0) == 0
+                else "recent_crawl_failures_detected",
                 "source": "crawler_jobs",
             },
             {
                 "stage_id": "understand",
                 "label": "LLM Understand",
-                "status": "ok" if status.get("engine", {}).get("features_generated", 0) and status.get("engine", {}).get("embeddings_generated", 0) else "warning",
+                "status": "ok"
+                if status.get("engine", {}).get("features_generated", 0)
+                and status.get("engine", {}).get("embeddings_generated", 0)
+                else "warning",
                 "last_run_at": self._safe_dt(engine_runtime.get("last_run_completed_at")),
-                "duration_ms": self._safe_num(engine_runtime.get("last_stage_durations_ms", {}).get("feature_embedding")),
+                "duration_ms": self._safe_num(
+                    engine_runtime.get("last_stage_durations_ms", {}).get("feature_embedding")
+                ),
                 "counts": {
                     "features_generated": status.get("engine", {}).get("features_generated"),
                     "embeddings_generated": status.get("engine", {}).get("embeddings_generated"),
@@ -596,7 +608,9 @@ class AIControlPlaneService:
                 "label": "Matching",
                 "status": "ok" if reliability.get("predictions_logged_total", 0) > 0 else "warning",
                 "last_run_at": self._safe_dt(latest_prediction_at),
-                "duration_ms": self._safe_num(engine_runtime.get("last_stage_durations_ms", {}).get("ml")),
+                "duration_ms": self._safe_num(
+                    engine_runtime.get("last_stage_durations_ms", {}).get("ml")
+                ),
                 "counts": {
                     "predictions_logged_total": reliability.get("predictions_logged_total"),
                     "stale_matches": reliability.get("stale_matches"),
@@ -611,8 +625,12 @@ class AIControlPlaneService:
                 "last_run_at": latest_outcome.outcome_recorded_at if latest_outcome else None,
                 "duration_ms": None,
                 "counts": {
-                    "latest_outcome_source": latest_outcome.outcome_source if latest_outcome else None,
-                    "latest_outcome_value": latest_outcome.actual_outcome if latest_outcome else None,
+                    "latest_outcome_source": latest_outcome.outcome_source
+                    if latest_outcome
+                    else None,
+                    "latest_outcome_value": latest_outcome.actual_outcome
+                    if latest_outcome
+                    else None,
                 },
                 "error": None if latest_outcome else "no_outcomes_recorded",
                 "source": "outcome_records",
@@ -621,8 +639,11 @@ class AIControlPlaneService:
                 "stage_id": "evaluation",
                 "label": "Evaluation/Drift/Fairness",
                 "status": (
-                    "warning" if drift_latest.get("drift_detected")
-                    else "ok" if eval_latest else "idle"
+                    "warning"
+                    if drift_latest.get("drift_detected")
+                    else "ok"
+                    if eval_latest
+                    else "idle"
                 ),
                 "last_run_at": self._safe_dt(eval_latest.get("created_at")),
                 "duration_ms": None,
@@ -656,12 +677,16 @@ class AIControlPlaneService:
                 "last_run_at": (
                     latest_model_event.promoted_at
                     if latest_model_event and latest_model_event.promoted_at
-                    else latest_model_event.retired_at if latest_model_event else None
+                    else latest_model_event.retired_at
+                    if latest_model_event
+                    else None
                 ),
                 "duration_ms": None,
                 "counts": {
                     "active_model_version": active_model.model_version if active_model else None,
-                    "latest_promoted_version": latest_model_event.model_version if latest_model_event else None,
+                    "latest_promoted_version": latest_model_event.model_version
+                    if latest_model_event
+                    else None,
                 },
                 "error": None if active_model else "no_active_model",
                 "source": "model_registry",
@@ -685,109 +710,135 @@ class AIControlPlaneService:
 
     async def _collect_training_run_traces(self, limit: int) -> list[dict[str, Any]]:
         rows = (
-            await self.db.execute(
-                select(TrainingRun).order_by(TrainingRun.started_at.desc()).limit(limit)
+            (
+                await self.db.execute(
+                    select(TrainingRun).order_by(TrainingRun.started_at.desc()).limit(limit)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         traces: list[dict[str, Any]] = []
         for row in rows:
-            traces.append({
-                "run_id": str(row.id),
-                "run_type": "training",
-                "status": self._status_from_value(row.status, {"completed", "ok"}, {"running", "pending"}),
-                "started_at": row.started_at.isoformat() if row.started_at else None,
-                "completed_at": row.completed_at.isoformat() if row.completed_at else None,
-                "duration_ms": self._duration_ms(row.started_at, row.completed_at),
-                "stage_id": "training",
-                "mode": row.mode,
-                "trigger_reason": row.trigger_reason,
-                "metrics": {
-                    "new_outcomes_count": row.new_outcomes_count,
-                    "resulting_model_version": row.resulting_model_version,
-                    "status": row.status,
-                },
-                "links": {"kpi": "/admin/ml/kpis", "health": "/admin/ml/cycle/health"},
-            })
+            traces.append(
+                {
+                    "run_id": str(row.id),
+                    "run_type": "training",
+                    "status": self._status_from_value(
+                        row.status, {"completed", "ok"}, {"running", "pending"}
+                    ),
+                    "started_at": row.started_at.isoformat() if row.started_at else None,
+                    "completed_at": row.completed_at.isoformat() if row.completed_at else None,
+                    "duration_ms": self._duration_ms(row.started_at, row.completed_at),
+                    "stage_id": "training",
+                    "mode": row.mode,
+                    "trigger_reason": row.trigger_reason,
+                    "metrics": {
+                        "new_outcomes_count": row.new_outcomes_count,
+                        "resulting_model_version": row.resulting_model_version,
+                        "status": row.status,
+                    },
+                    "links": {"kpi": "/admin/ml/kpis", "health": "/admin/ml/cycle/health"},
+                }
+            )
         return traces
 
     async def _collect_evaluation_run_traces(self, limit: int) -> list[dict[str, Any]]:
         rows = (
-            await self.db.execute(
-                select(EvaluationRun).order_by(EvaluationRun.started_at.desc()).limit(limit)
+            (
+                await self.db.execute(
+                    select(EvaluationRun).order_by(EvaluationRun.started_at.desc()).limit(limit)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         traces: list[dict[str, Any]] = []
         for row in rows:
-            traces.append({
-                "run_id": str(row.id),
-                "run_type": "evaluation",
-                "status": "warning" if row.drift_detected else "ok",
-                "started_at": row.started_at.isoformat() if row.started_at else None,
-                "completed_at": row.completed_at.isoformat() if row.completed_at else None,
-                "duration_ms": self._duration_ms(row.started_at, row.completed_at),
-                "stage_id": "evaluation",
-                "mode": None,
-                "trigger_reason": "retraining_triggered" if row.retraining_triggered else "no_retraining",
-                "metrics": {
-                    "dataset_size": row.dataset_size,
-                    "model_version": row.model_version,
-                    "drift_detected": row.drift_detected,
-                },
-                "links": {"trend": "/admin/ml/trends", "health": "/admin/ml/cycle/health"},
-            })
+            traces.append(
+                {
+                    "run_id": str(row.id),
+                    "run_type": "evaluation",
+                    "status": "warning" if row.drift_detected else "ok",
+                    "started_at": row.started_at.isoformat() if row.started_at else None,
+                    "completed_at": row.completed_at.isoformat() if row.completed_at else None,
+                    "duration_ms": self._duration_ms(row.started_at, row.completed_at),
+                    "stage_id": "evaluation",
+                    "mode": None,
+                    "trigger_reason": "retraining_triggered"
+                    if row.retraining_triggered
+                    else "no_retraining",
+                    "metrics": {
+                        "dataset_size": row.dataset_size,
+                        "model_version": row.model_version,
+                        "drift_detected": row.drift_detected,
+                    },
+                    "links": {"trend": "/admin/ml/trends", "health": "/admin/ml/cycle/health"},
+                }
+            )
         return traces
 
     async def _collect_crawl_run_traces(self, limit: int) -> list[dict[str, Any]]:
         rows = (
-            await self.db.execute(
-                select(CrawlJob).order_by(CrawlJob.created_at.desc()).limit(limit)
+            (
+                await self.db.execute(
+                    select(CrawlJob).order_by(CrawlJob.created_at.desc()).limit(limit)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         traces: list[dict[str, Any]] = []
         for row in rows:
-            traces.append({
-                "run_id": str(row.id),
-                "run_type": "crawler",
-                "status": self._status_from_value(row.status, {"completed", "ok"}, {"running", "pending"}),
-                "started_at": row.created_at.isoformat() if row.created_at else None,
-                "completed_at": row.completed_at.isoformat() if row.completed_at else None,
-                "duration_ms": self._duration_ms(row.created_at, row.completed_at),
-                "stage_id": "ingest",
-                "mode": None,
-                "trigger_reason": row.status,
-                "metrics": {
-                    "pages_crawled": row.pages_crawled,
-                    "items_extracted": row.items_extracted,
-                    "items_ingested": row.items_ingested,
-                },
-                "links": {"smoke": "/admin/ml/scheduler/smoke"},
-            })
+            traces.append(
+                {
+                    "run_id": str(row.id),
+                    "run_type": "crawler",
+                    "status": self._status_from_value(
+                        row.status, {"completed", "ok"}, {"running", "pending"}
+                    ),
+                    "started_at": row.created_at.isoformat() if row.created_at else None,
+                    "completed_at": row.completed_at.isoformat() if row.completed_at else None,
+                    "duration_ms": self._duration_ms(row.created_at, row.completed_at),
+                    "stage_id": "ingest",
+                    "mode": None,
+                    "trigger_reason": row.status,
+                    "metrics": {
+                        "pages_crawled": row.pages_crawled,
+                        "items_extracted": row.items_extracted,
+                        "items_ingested": row.items_ingested,
+                    },
+                    "links": {"smoke": "/admin/ml/scheduler/smoke"},
+                }
+            )
         return traces
 
     def _collect_engine_runtime_trace(self, engine_runtime: dict[str, Any]) -> list[dict[str, Any]]:
         if not engine_runtime:
             return []
-        return [{
-            "run_id": "engine-runtime-latest",
-            "run_type": "engine",
-            "status": self._status_from_value(
-                engine_runtime.get("status"),
-                {"ok", "completed", "idle"},
-                {"running", "pending"},
-            ),
-            "started_at": engine_runtime.get("last_run_started_at"),
-            "completed_at": engine_runtime.get("last_run_completed_at"),
-            "duration_ms": None,
-            "stage_id": "ingest",
-            "mode": None,
-            "trigger_reason": "engine_orchestrator",
-            "metrics": {
-                "current_stage": engine_runtime.get("current_stage"),
-                "last_stage_statuses": engine_runtime.get("last_stage_statuses"),
-                "last_stage_durations_ms": engine_runtime.get("last_stage_durations_ms"),
-            },
-            "links": {"health": "/admin/ml/cycle/health"},
-        }]
+        return [
+            {
+                "run_id": "engine-runtime-latest",
+                "run_type": "engine",
+                "status": self._status_from_value(
+                    engine_runtime.get("status"),
+                    {"ok", "completed", "idle"},
+                    {"running", "pending"},
+                ),
+                "started_at": engine_runtime.get("last_run_started_at"),
+                "completed_at": engine_runtime.get("last_run_completed_at"),
+                "duration_ms": None,
+                "stage_id": "ingest",
+                "mode": None,
+                "trigger_reason": "engine_orchestrator",
+                "metrics": {
+                    "current_stage": engine_runtime.get("current_stage"),
+                    "last_stage_statuses": engine_runtime.get("last_stage_statuses"),
+                    "last_stage_durations_ms": engine_runtime.get("last_stage_durations_ms"),
+                },
+                "links": {"health": "/admin/ml/cycle/health"},
+            }
+        ]
 
     @staticmethod
     def _duration_ms(started_at: datetime | None, completed_at: datetime | None) -> float | None:

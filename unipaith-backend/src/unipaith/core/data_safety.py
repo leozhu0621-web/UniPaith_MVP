@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from unipaith.core.exceptions import ConflictException
 from unipaith.models.user import User, UserRole
 
-
 CORE_ROLES: tuple[UserRole, ...] = (
     UserRole.student,
     UserRole.institution_admin,
@@ -59,18 +58,14 @@ async def ensure_can_deactivate_user(db: AsyncSession, target: User) -> None:
     )
     remaining_active = int(result.scalar_one() or 0)
     if remaining_active == 0:
-        raise ConflictException(
-            f"Cannot deactivate the last active '{target.role.value}' account"
-        )
+        raise ConflictException(f"Cannot deactivate the last active '{target.role.value}' account")
 
 
 async def ensure_can_delete_user(db: AsyncSession, user_id: UUID, role: UserRole) -> None:
     """
     Generic guard for destructive account operations.
     """
-    result = await db.execute(
-        select(User).where(User.id == user_id)
-    )
+    result = await db.execute(select(User).where(User.id == user_id))
     target = result.scalar_one_or_none()
     if target is None:
         return

@@ -2,11 +2,12 @@
 Messaging service — conversations and messages between students and institutions.
 Supports real-time messaging with rate limiting, read tracking, and pagination.
 """
+
 from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import func, select, update
@@ -54,7 +55,7 @@ class MessagingService:
         else:
             raise ForbiddenException("Only students or institution admins can create conversations")
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         conversation = Conversation(
             student_id=student_id,
             institution_id=institution_id,
@@ -68,9 +69,7 @@ class MessagingService:
         await self.db.flush()
         return conversation
 
-    async def list_conversations(
-        self, user_id: UUID
-    ) -> list[dict]:
+    async def list_conversations(self, user_id: UUID) -> list[dict]:
         """
         List conversations for a user with unread counts.
 
@@ -82,15 +81,9 @@ class MessagingService:
 
         # Build the base query
         if student_profile_id:
-            query = (
-                select(Conversation)
-                .where(Conversation.student_id == student_profile_id)
-            )
+            query = select(Conversation).where(Conversation.student_id == student_profile_id)
         elif institution_id:
-            query = (
-                select(Conversation)
-                .where(Conversation.institution_id == institution_id)
-            )
+            query = select(Conversation).where(Conversation.institution_id == institution_id)
         else:
             return []
 
@@ -144,7 +137,7 @@ class MessagingService:
             raise BadRequestException("Message cannot be empty")
 
         # Rate limit check
-        one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
+        one_hour_ago = datetime.now(UTC) - timedelta(hours=1)
         rate_result = await self.db.execute(
             select(func.count())
             .select_from(Message)
@@ -166,7 +159,7 @@ class MessagingService:
         if sender_type == "student":
             sender_type = await self._resolve_sender_type(sender_id)
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         message = Message(
             conversation_id=conversation_id,
             sender_type=sender_type,
@@ -213,14 +206,12 @@ class MessagingService:
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
-    async def mark_messages_read(
-        self, conversation_id: UUID, user_id: UUID
-    ) -> int:
+    async def mark_messages_read(self, conversation_id: UUID, user_id: UUID) -> int:
         """
         Mark all messages in a conversation as read where sender_id != user_id.
         Returns the number of messages marked as read.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         result = await self.db.execute(
             update(Message)
             .where(
@@ -237,9 +228,7 @@ class MessagingService:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    async def _resolve_user_context(
-        self, user_id: UUID
-    ) -> tuple[UUID | None, UUID | None]:
+    async def _resolve_user_context(self, user_id: UUID) -> tuple[UUID | None, UUID | None]:
         """Return (student_profile_id, institution_id) based on user role."""
         # Check student profile
         result = await self.db.execute(
@@ -268,9 +257,7 @@ class MessagingService:
             raise NotFoundException("Conversation not found")
         return conv
 
-    async def _verify_participant(
-        self, conv: Conversation, user_id: UUID
-    ) -> None:
+    async def _verify_participant(self, conv: Conversation, user_id: UUID) -> None:
         """Verify that user_id is a participant in the conversation."""
         # Check if user is the student
         result = await self.db.execute(
@@ -294,11 +281,9 @@ class MessagingService:
 
         raise ForbiddenException("You are not a participant in this conversation")
 
-    async def _mark_other_party_read(
-        self, conversation_id: UUID, user_id: UUID
-    ) -> None:
+    async def _mark_other_party_read(self, conversation_id: UUID, user_id: UUID) -> None:
         """Mark unread messages from others as read."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         await self.db.execute(
             update(Message)
             .where(
@@ -310,9 +295,7 @@ class MessagingService:
         )
         await self.db.flush()
 
-    async def _unread_count(
-        self, conversation_id: UUID, user_id: UUID
-    ) -> int:
+    async def _unread_count(self, conversation_id: UUID, user_id: UUID) -> int:
         """Count unread messages in a conversation for a specific user."""
         result = await self.db.execute(
             select(func.count())

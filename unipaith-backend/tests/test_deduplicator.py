@@ -1,19 +1,16 @@
 """Tests for Phase 5 – Deduplicator."""
+
 from __future__ import annotations
 
-import uuid
 from decimal import Decimal
 
-import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.crawler.deduplicator import Deduplicator
 from unipaith.models.crawler import CrawlJob, ExtractedProgram
 from unipaith.models.institution import Institution, Program
 from unipaith.models.matching import DataSource, RawIngestedData
-from unipaith.models.user import User, UserRole
-
-
+from unipaith.models.user import User
 
 
 async def _seed_source(db: AsyncSession) -> DataSource:
@@ -92,14 +89,10 @@ async def test_no_match_new(db_session: AsyncSession):
     assert result.matched_institution_id is None
 
 
-async def test_exact_match(
-    db_session: AsyncSession, mock_institution_user: User
-):
+async def test_exact_match(db_session: AsyncSession, mock_institution_user: User):
     """ExtractedProgram matching existing institution+program should be 'duplicate' or 'update'."""
     source = await _seed_source(db_session)
-    institution, program = await _seed_institution_and_program(
-        db_session, mock_institution_user
-    )
+    institution, program = await _seed_institution_and_program(db_session, mock_institution_user)
     job = await _seed_crawl_job(db_session, source)
     raw = await _seed_raw_data(db_session, source)
 

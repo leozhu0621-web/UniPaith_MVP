@@ -1,16 +1,15 @@
 """Historical seeder — create HistoricalOutcome records from extracted data."""
+
 from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.ai.llm_client import get_llm_client
-from unipaith.config import settings
 from unipaith.core.exceptions import NotFoundException
 from unipaith.crawler.engine import CrawlerEngine
 from unipaith.models.application import HistoricalOutcome
@@ -131,9 +130,7 @@ class HistoricalSeeder:
 
         llm = get_llm_client()
         try:
-            response_text = await llm.extract_features(
-                HISTORICAL_EXTRACTION_PROMPT, cleaned
-            )
+            response_text = await llm.extract_features(HISTORICAL_EXTRACTION_PROMPT, cleaned)
         except Exception as exc:
             logger.error("LLM historical extraction failed: %s", exc)
             return 0
@@ -154,7 +151,7 @@ class HistoricalSeeder:
         cleaned = text.strip()
         if cleaned.startswith("```"):
             lines = cleaned.split("\n")
-            lines = [l for l in lines if not l.strip().startswith("```")]
+            lines = [line for line in lines if not line.strip().startswith("```")]
             cleaned = "\n".join(lines)
 
         try:

@@ -2,15 +2,16 @@
 Review pipeline service — rubric management, reviewer assignment,
 scoring, AI-assisted review summaries, and pipeline analytics.
 """
+
 from __future__ import annotations
 
 import json
 import logging
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, timedelta
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -81,9 +82,7 @@ class ReviewPipelineService:
         """
         total_weight = sum(c.get("weight", 0) for c in criteria)
         if abs(total_weight - 1.0) > 0.01:
-            raise BadRequestException(
-                f"Criteria weights must sum to 1.0 (got {total_weight:.3f})"
-            )
+            raise BadRequestException(f"Criteria weights must sum to 1.0 (got {total_weight:.3f})")
 
         rubric = Rubric(
             institution_id=institution_id,
@@ -109,9 +108,7 @@ class ReviewPipelineService:
             Rubric.is_active.is_(True),
         )
         if program_id is not None:
-            stmt = stmt.where(
-                (Rubric.program_id == program_id) | (Rubric.program_id.is_(None))
-            )
+            stmt = stmt.where((Rubric.program_id == program_id) | (Rubric.program_id.is_(None)))
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
 
@@ -171,9 +168,7 @@ class ReviewPipelineService:
         reviewers = list(reviewer_result.scalars().all())
 
         if not reviewers:
-            raise BadRequestException(
-                "No reviewers available with remaining capacity"
-            )
+            raise BadRequestException("No reviewers available with remaining capacity")
 
         due_date = date.today() + timedelta(days=settings.review_default_due_days)
         assignments: list[ReviewAssignment] = []
@@ -230,9 +225,7 @@ class ReviewPipelineService:
             raise NotFoundException("Rubric not found or inactive")
 
         # Build weight lookup from rubric criteria
-        weight_map: dict[str, float] = {
-            c["name"]: c["weight"] for c in (rubric.criteria or [])
-        }
+        weight_map: dict[str, float] = {c["name"]: c["weight"] for c in (rubric.criteria or [])}
 
         total_weighted: Decimal = Decimal("0")
         for criterion_name, score_value in criterion_scores.items():
@@ -252,14 +245,10 @@ class ReviewPipelineService:
         await self.db.flush()
         return app_score
 
-    async def get_application_scores(
-        self, application_id: UUID
-    ) -> list[ApplicationScore]:
+    async def get_application_scores(self, application_id: UUID) -> list[ApplicationScore]:
         """Return all scores recorded for an application."""
         result = await self.db.execute(
-            select(ApplicationScore).where(
-                ApplicationScore.application_id == application_id
-            )
+            select(ApplicationScore).where(ApplicationScore.application_id == application_id)
         )
         return list(result.scalars().all())
 
@@ -267,9 +256,7 @@ class ReviewPipelineService:
     # AI-assisted review
     # ------------------------------------------------------------------
 
-    async def generate_ai_review_summary(
-        self, application_id: UUID
-    ) -> dict:
+    async def generate_ai_review_summary(self, application_id: UUID) -> dict:
         """Generate an AI-powered review summary for an application.
 
         Loads the student profile, their academic records, test scores,
@@ -293,9 +280,7 @@ class ReviewPipelineService:
         if not app:
             raise NotFoundException("Application not found")
 
-        program_result = await self.db.execute(
-            select(Program).where(Program.id == app.program_id)
-        )
+        program_result = await self.db.execute(select(Program).where(Program.id == app.program_id))
         program = program_result.scalar_one_or_none()
         if not program:
             raise NotFoundException("Program not found")
@@ -394,9 +379,7 @@ class ReviewPipelineService:
     # Pipeline analytics
     # ------------------------------------------------------------------
 
-    async def get_program_pipeline(
-        self, institution_id: UUID, program_id: UUID
-    ) -> dict:
+    async def get_program_pipeline(self, institution_id: UUID, program_id: UUID) -> dict:
         """Return pipeline analytics for a program.
 
         Counts applications grouped by status and includes a list of
@@ -418,9 +401,7 @@ class ReviewPipelineService:
             raise NotFoundException("Program not found for this institution")
 
         result = await self.db.execute(
-            select(Application.id, Application.status).where(
-                Application.program_id == program_id
-            )
+            select(Application.id, Application.status).where(Application.program_id == program_id)
         )
         rows = result.all()
 

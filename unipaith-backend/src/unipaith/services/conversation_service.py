@@ -84,7 +84,9 @@ class ConversationService:
         self.db = db
         self.student_service = StudentService(db)
 
-    async def send_turn(self, student_user_id: UUID, body: ConversationTurnRequest) -> ConversationTurnResponse:
+    async def send_turn(
+        self, student_user_id: UUID, body: ConversationTurnRequest
+    ) -> ConversationTurnResponse:
         profile = await self.student_service._get_student_profile(student_user_id)
         session = _SESSIONS_BY_STUDENT.get(profile.id)
         if session is None:
@@ -104,7 +106,10 @@ class ConversationService:
             conflict_id = uuid4()
             session.conflicts[conflict_id] = _ConflictState(
                 conflict_id=conflict_id,
-                reason="Potential tradeoff between low budget ceiling and scholarship-only requirement.",
+                reason=(
+                    "Potential tradeoff between low budget ceiling"
+                    " and scholarship-only requirement."
+                ),
                 resolution_options=[
                     "Increase budget range",
                     "Expand country set",
@@ -131,7 +136,10 @@ class ConversationService:
             assistant_message=AssistantMessageResponse(
                 message_id=uuid4(),
                 reply_text=assistant_text,
-                why_asked=f"I am focusing on {selected_domain} because this directly affects shortlist quality.",
+                why_asked=(
+                    f"I am focusing on {selected_domain}"
+                    " because this directly affects shortlist quality."
+                ),
                 suggested_next_actions=self._next_actions(session),
             ),
             state_delta=ConversationStateDeltaResponse(
@@ -167,13 +175,17 @@ class ConversationService:
             last_assistant_prompt=session.last_assistant_prompt,
         )
 
-    async def list_requirements(self, student_user_id: UUID) -> ListConversationRequirementsResponse:
+    async def list_requirements(
+        self, student_user_id: UUID
+    ) -> ListConversationRequirementsResponse:
         profile = await self.student_service._get_student_profile(student_user_id)
         session = _SESSIONS_BY_STUDENT.get(profile.id)
         if session is None:
             return ListConversationRequirementsResponse(requirements=[])
         return ListConversationRequirementsResponse(
-            requirements=[self._to_requirement_response(req) for req in session.requirements.values()]
+            requirements=[
+                self._to_requirement_response(req) for req in session.requirements.values()
+            ]
         )
 
     async def update_requirement(
@@ -207,12 +219,24 @@ class ConversationService:
         global_summary = self._compute_confidence(session)
         domain_scores: list[DomainConfidenceResponse] = []
         for domain, required_fields in _REQUIRED_FIELDS_BY_DOMAIN.items():
-            domain_requirements = [r for r in session.requirements.values() if r.domain == domain and r.status != "rejected"]
+            domain_requirements = [
+                r
+                for r in session.requirements.values()
+                if r.domain == domain and r.status != "rejected"
+            ]
             field_set = {r.field for r in domain_requirements}
             missing = [field for field in required_fields if field not in field_set]
-            coverage = 100 if not required_fields else round(((len(required_fields) - len(missing)) / len(required_fields)) * 100)
+            coverage = (
+                100
+                if not required_fields
+                else round(((len(required_fields) - len(missing)) / len(required_fields)) * 100)
+            )
             has_conflict = bool(session.conflicts)
-            status: str = "sufficient" if coverage >= 65 and not has_conflict else ("conflicting" if has_conflict else "partial")
+            status: str = (
+                "sufficient"
+                if coverage >= 65 and not has_conflict
+                else ("conflicting" if has_conflict else "partial")
+            )
             domain_scores.append(
                 DomainConfidenceResponse(
                     domain=domain,
@@ -290,7 +314,9 @@ class ConversationService:
             updated_confidence=confidence,
         )
 
-    async def _bootstrap_requirements(self, session: _ConversationSessionState, student_user_id: UUID) -> None:
+    async def _bootstrap_requirements(
+        self, session: _ConversationSessionState, student_user_id: UUID
+    ) -> None:
         profile = await self.student_service._get_student_profile(student_user_id)
         preferences = await self.student_service.get_preferences(profile.id)
         if preferences and preferences.budget_max is not None:
@@ -330,7 +356,10 @@ class ConversationService:
         source: str,
         evidence_turn_id: UUID,
     ) -> None:
-        existing = next((r for r in session.requirements.values() if r.domain == domain and r.field == field), None)
+        existing = next(
+            (r for r in session.requirements.values() if r.domain == domain and r.field == field),
+            None,
+        )
         if existing:
             existing.value = value if value is not None else existing.value
             existing.source = source
@@ -382,7 +411,9 @@ class ConversationService:
     def _build_assistant_reply(self, domain: ConversationDomain, message: str) -> str:
         return (
             f"Thanks for sharing that — I have updated your {domain} context. "
-            "You are making solid progress. Next, we can fill one missing requirement to increase recommendation confidence and keep your plan calm and clear."
+            "You are making solid progress. Next, we can fill one "
+            "missing requirement to increase recommendation confidence "
+            "and keep your plan calm and clear."
         )
 
     def _extract_budget_hint(self, message: str) -> int | None:
@@ -412,7 +443,9 @@ class ConversationService:
             level = "high_confidence"
         return ConfidenceSummaryResponse(global_confidence=score, global_level=level)
 
-    def _to_session_response(self, session: _ConversationSessionState) -> ConversationSessionResponse:
+    def _to_session_response(
+        self, session: _ConversationSessionState
+    ) -> ConversationSessionResponse:
         return ConversationSessionResponse(
             session_id=session.session_id,
             student_id=session.student_id,
@@ -422,7 +455,9 @@ class ConversationService:
             last_updated_at=session.last_updated_at,
         )
 
-    def _to_requirement_response(self, requirement: _RequirementState) -> ConversationRequirementResponse:
+    def _to_requirement_response(
+        self, requirement: _RequirementState
+    ) -> ConversationRequirementResponse:
         return ConversationRequirementResponse(
             requirement_id=requirement.requirement_id,
             domain=requirement.domain,
@@ -449,11 +484,15 @@ class ConversationService:
 
     def _open_tasks(self, session: _ConversationSessionState) -> list[str]:
         open_tasks: list[str] = []
-        existing = {(req.domain, req.field) for req in session.requirements.values() if req.status != "rejected"}
+        existing = {
+            (req.domain, req.field)
+            for req in session.requirements.values()
+            if req.status != "rejected"
+        }
         for domain, fields in _REQUIRED_FIELDS_BY_DOMAIN.items():
-            for field in fields:
-                if (domain, field) not in existing:
-                    open_tasks.append(f"{domain}.{field}")
+            for field_name in fields:
+                if (domain, field_name) not in existing:
+                    open_tasks.append(f"{domain}.{field_name}")
         return open_tasks
 
     def _blocking_issues(self, session: _ConversationSessionState) -> list[str]:

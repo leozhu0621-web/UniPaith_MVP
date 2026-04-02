@@ -9,6 +9,7 @@ The heartbeat of the knowledge engine. Continuously:
 
 Controlled by admin via EngineDirective rows and API.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -134,7 +135,9 @@ class EngineLoop:
                     self.state.total_errors += 1
                     self.state.last_error = str(e)[:500]
                     await self.discoverer.mark_crawled(
-                        frontier_item.id, success=False, error=str(e)[:500],
+                        frontier_item.id,
+                        success=False,
+                        error=str(e)[:500],
                     )
 
                 self.state.requests_this_minute += 1
@@ -157,7 +160,8 @@ class EngineLoop:
         return result
 
     async def _process_frontier_item(
-        self, item: CrawlFrontier,
+        self,
+        item: CrawlFrontier,
     ) -> list[KnowledgeDocument]:
         """Ingest a single frontier URL and extract knowledge."""
         adapter_type = item.content_format_hint or detect_adapter(item.url)
@@ -213,22 +217,26 @@ class EngineLoop:
 
     async def get_stats(self) -> dict[str, Any]:
         """Get engine loop statistics for admin dashboard."""
-        total_docs = await self.db.scalar(
-            select(func.count()).select_from(KnowledgeDocument)
-        )
+        total_docs = await self.db.scalar(select(func.count()).select_from(KnowledgeDocument))
         active_docs = await self.db.scalar(
-            select(func.count()).select_from(KnowledgeDocument).where(
+            select(func.count())
+            .select_from(KnowledgeDocument)
+            .where(
                 KnowledgeDocument.is_active.is_(True),
                 KnowledgeDocument.processing_status == "completed",
             )
         )
         pending_frontier = await self.db.scalar(
-            select(func.count()).select_from(CrawlFrontier).where(
+            select(func.count())
+            .select_from(CrawlFrontier)
+            .where(
                 CrawlFrontier.status == "pending",
             )
         )
         failed_frontier = await self.db.scalar(
-            select(func.count()).select_from(CrawlFrontier).where(
+            select(func.count())
+            .select_from(CrawlFrontier)
+            .where(
                 CrawlFrontier.status == "failed",
             )
         )

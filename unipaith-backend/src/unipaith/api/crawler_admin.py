@@ -8,6 +8,7 @@ Provides 17 endpoints covering:
 - Review queue (list, stats, detail, approve, reject)
 - Enrichment application
 """
+
 from __future__ import annotations
 
 import logging
@@ -18,10 +19,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.core.exceptions import NotFoundException
-from unipaith.crawler.deduplicator import Deduplicator
 from unipaith.crawler.enrichment import EnrichmentPipeline
-from unipaith.crawler.extractor import LLMExtractor
-from unipaith.crawler.ingestor import AutoIngestor
 from unipaith.crawler.orchestrator import CrawlerOrchestrator
 from unipaith.crawler.review_queue import ReviewQueue
 from unipaith.crawler.source_registry import SourceRegistry
@@ -37,7 +35,6 @@ from unipaith.schemas.crawler import (
     CrawlSingleURLRequest,
     CreateSourceRequest,
     ExtractedProgramDetailResponse,
-    ExtractedProgramResponse,
     PipelineResultResponse,
     ReviewApproveRequest,
     ReviewListResponse,
@@ -74,12 +71,9 @@ async def dashboard(
     total_jobs = job_count_q.scalar() or 0
 
     # Recent jobs
-    recent_q = await db.execute(
-        select(CrawlJob).order_by(CrawlJob.created_at.desc()).limit(10)
-    )
+    recent_q = await db.execute(select(CrawlJob).order_by(CrawlJob.created_at.desc()).limit(10))
     recent_jobs = [
-        CrawlJobResponse.model_validate(j, from_attributes=True)
-        for j in recent_q.scalars().all()
+        CrawlJobResponse.model_validate(j, from_attributes=True) for j in recent_q.scalars().all()
     ]
 
     # Review stats
@@ -91,10 +85,7 @@ async def dashboard(
     # Sources
     registry = SourceRegistry(db)
     sources_raw = await registry.list_sources(active_only=True, limit=50)
-    sources = [
-        SourceResponse.model_validate(s, from_attributes=True)
-        for s in sources_raw
-    ]
+    sources = [SourceResponse.model_validate(s, from_attributes=True) for s in sources_raw]
 
     return CrawlerDashboardResponse(
         active_sources=active_sources,

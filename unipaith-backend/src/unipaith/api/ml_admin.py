@@ -8,6 +8,7 @@ Provides 17 endpoints covering:
 - Drift and fairness reports
 - Outcome statistics
 """
+
 from __future__ import annotations
 
 import logging
@@ -70,6 +71,7 @@ def _runtime_provider_from_settings() -> str:
         return "aws"
     return "openai"
 
+
 # ======================================================================
 # Cycle triggers
 # ======================================================================
@@ -127,11 +129,7 @@ async def list_evaluations(
     _admin: User = Depends(require_admin),
 ):
     """List recent evaluation runs."""
-    stmt = (
-        select(EvaluationRun)
-        .order_by(EvaluationRun.started_at.desc())
-        .limit(limit)
-    )
+    stmt = select(EvaluationRun).order_by(EvaluationRun.started_at.desc()).limit(limit)
     result = await db.execute(stmt)
     return result.scalars().all()
 
@@ -163,11 +161,7 @@ async def list_training_runs(
     _admin: User = Depends(require_admin),
 ):
     """List recent training runs."""
-    stmt = (
-        select(TrainingRun)
-        .order_by(TrainingRun.started_at.desc())
-        .limit(limit)
-    )
+    stmt = select(TrainingRun).order_by(TrainingRun.started_at.desc()).limit(limit)
     result = await db.execute(stmt)
     return result.scalars().all()
 
@@ -205,10 +199,7 @@ async def list_models(
     manager = ModelManager(db)
     models_raw = await manager.list_models()
     active = await manager.get_active_model()
-    models = [
-        ModelVersionResponse.model_validate(m, from_attributes=True)
-        for m in models_raw
-    ]
+    models = [ModelVersionResponse.model_validate(m, from_attributes=True) for m in models_raw]
     return ModelListResponse(
         models=models,
         active_version=active.model_version if active else None,
@@ -282,11 +273,7 @@ async def list_drift(
     _admin: User = Depends(require_admin),
 ):
     """List recent drift snapshots."""
-    stmt = (
-        select(DriftSnapshot)
-        .order_by(DriftSnapshot.created_at.desc())
-        .limit(limit)
-    )
+    stmt = select(DriftSnapshot).order_by(DriftSnapshot.created_at.desc()).limit(limit)
     result = await db.execute(stmt)
     return result.scalars().all()
 
@@ -303,9 +290,7 @@ async def get_fairness(
     _admin: User = Depends(require_admin),
 ):
     """Get fairness reports for a specific model version."""
-    stmt = select(FairnessReport).where(
-        FairnessReport.model_version == model_version
-    )
+    stmt = select(FairnessReport).where(FairnessReport.model_version == model_version)
     result = await db.execute(stmt)
     return result.scalars().all()
 
@@ -380,9 +365,7 @@ async def learning_kpis(
     since_24h = now - timedelta(hours=24)
     since_7d = now - timedelta(days=7)
 
-    latest_outcome = await db.scalar(
-        select(func.max(OutcomeRecord.outcome_recorded_at))
-    )
+    latest_outcome = await db.scalar(select(func.max(OutcomeRecord.outcome_recorded_at)))
     latest_eval = await db.scalar(select(func.max(EvaluationRun.started_at)))
     latest_training = await db.scalar(select(func.max(TrainingRun.started_at)))
 
@@ -399,59 +382,65 @@ async def learning_kpis(
         )
 
     train_24h = await db.scalar(
-        select(func.count()).select_from(TrainingRun).where(
+        select(func.count())
+        .select_from(TrainingRun)
+        .where(
             TrainingRun.started_at >= since_24h,
             TrainingRun.status == "completed",
         )
     )
     train_7d = await db.scalar(
-        select(func.count()).select_from(TrainingRun).where(
+        select(func.count())
+        .select_from(TrainingRun)
+        .where(
             TrainingRun.started_at >= since_7d,
             TrainingRun.status == "completed",
         )
     )
     promos_7d = await db.scalar(
-        select(func.count()).select_from(ModelRegistry).where(
-            ModelRegistry.promoted_at >= since_7d
-        )
+        select(func.count()).select_from(ModelRegistry).where(ModelRegistry.promoted_at >= since_7d)
     )
     rollbacks_7d = await db.scalar(
-        select(func.count()).select_from(ModelRegistry).where(
-            ModelRegistry.retired_at >= since_7d
-        )
+        select(func.count()).select_from(ModelRegistry).where(ModelRegistry.retired_at >= since_7d)
     )
     failed_train_7d = await db.scalar(
-        select(func.count()).select_from(TrainingRun).where(
+        select(func.count())
+        .select_from(TrainingRun)
+        .where(
             TrainingRun.started_at >= since_7d,
             TrainingRun.status == "failed",
         )
     )
     total_train_7d = await db.scalar(
-        select(func.count()).select_from(TrainingRun).where(
-            TrainingRun.started_at >= since_7d
-        )
+        select(func.count()).select_from(TrainingRun).where(TrainingRun.started_at >= since_7d)
     )
     eval_rows_7d = (
-        await db.execute(
-            select(EvaluationRun).where(
-                EvaluationRun.started_at >= since_7d,
-                EvaluationRun.completed_at.is_not(None),
+        (
+            await db.execute(
+                select(EvaluationRun).where(
+                    EvaluationRun.started_at >= since_7d,
+                    EvaluationRun.completed_at.is_not(None),
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     train_rows_7d = (
-        await db.execute(
-            select(TrainingRun).where(
-                TrainingRun.started_at >= since_7d,
-                TrainingRun.completed_at.is_not(None),
+        (
+            await db.execute(
+                select(TrainingRun).where(
+                    TrainingRun.started_at >= since_7d,
+                    TrainingRun.completed_at.is_not(None),
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     active_model = await db.execute(
-        select(ModelRegistry)
-        .where(ModelRegistry.is_active.is_(True))
-        .limit(1)
+        select(ModelRegistry).where(ModelRegistry.is_active.is_(True)).limit(1)
     )
     active_model_row = active_model.scalar_one_or_none()
 
@@ -475,9 +464,7 @@ async def learning_kpis(
 
     hours_outcome_to_eval = None
     if latest_outcome and latest_eval and latest_eval >= latest_outcome:
-        hours_outcome_to_eval = round(
-            (latest_eval - latest_outcome).total_seconds() / 3600, 3
-        )
+        hours_outcome_to_eval = round((latest_eval - latest_outcome).total_seconds() / 3600, 3)
 
     hours_eval_to_training = None
     if eval_row and eval_row.started_at and training_after_eval:
@@ -503,14 +490,10 @@ async def learning_kpis(
         if row.started_at and row.completed_at and row.completed_at >= row.started_at
     ]
     avg_eval_duration_ms = (
-        round(sum(eval_durations) / len(eval_durations), 2)
-        if eval_durations
-        else None
+        round(sum(eval_durations) / len(eval_durations), 2) if eval_durations else None
     )
     avg_train_duration_ms = (
-        round(sum(train_durations) / len(train_durations), 2)
-        if train_durations
-        else None
+        round(sum(train_durations) / len(train_durations), 2) if train_durations else None
     )
 
     return LearningKPIResponse(
@@ -561,17 +544,14 @@ async def cycle_health(
     latest_drift = latest_drift_row.scalar_one_or_none()
 
     outcomes_total = int(
-        (
-            await db.execute(
-                select(func.count()).select_from(OutcomeRecord)
-            )
-        ).scalar()
-        or 0
+        (await db.execute(select(func.count()).select_from(OutcomeRecord))).scalar() or 0
     )
     failed_train_7d = int(
         (
             await db.execute(
-                select(func.count()).select_from(TrainingRun).where(
+                select(func.count())
+                .select_from(TrainingRun)
+                .where(
                     TrainingRun.started_at >= (now - timedelta(days=7)),
                     TrainingRun.status == "failed",
                 )
@@ -616,7 +596,9 @@ async def cycle_health(
                 "model_version": latest_eval.model_version,
                 "dataset_size": latest_eval.dataset_size,
                 "retraining_triggered": latest_eval.retraining_triggered,
-                "started_at": latest_eval.started_at.isoformat() if latest_eval.started_at else None,
+                "started_at": latest_eval.started_at.isoformat()
+                if latest_eval.started_at
+                else None,
             }
             if latest_eval
             else None
@@ -627,7 +609,9 @@ async def cycle_health(
                 "status": latest_train.status,
                 "mode": latest_train.mode,
                 "resulting_model_version": latest_train.resulting_model_version,
-                "started_at": latest_train.started_at.isoformat() if latest_train.started_at else None,
+                "started_at": latest_train.started_at.isoformat()
+                if latest_train.started_at
+                else None,
             }
             if latest_train
             else None
@@ -637,7 +621,9 @@ async def cycle_health(
                 "id": str(latest_drift.id),
                 "drift_detected": latest_drift.drift_detected,
                 "feature_name": latest_drift.feature_name,
-                "created_at": latest_drift.created_at.isoformat() if latest_drift.created_at else None,
+                "created_at": latest_drift.created_at.isoformat()
+                if latest_drift.created_at
+                else None,
             }
             if latest_drift
             else None
@@ -659,24 +645,23 @@ async def learning_trends(
     since = now - timedelta(days=days)
 
     eval_rows = (
-        await db.execute(
-            select(EvaluationRun).where(EvaluationRun.started_at >= since)
-        )
-    ).scalars().all()
+        (await db.execute(select(EvaluationRun).where(EvaluationRun.started_at >= since)))
+        .scalars()
+        .all()
+    )
     train_rows = (
-        await db.execute(
-            select(TrainingRun).where(TrainingRun.started_at >= since)
-        )
-    ).scalars().all()
+        (await db.execute(select(TrainingRun).where(TrainingRun.started_at >= since)))
+        .scalars()
+        .all()
+    )
     outcome_rows = (
-        await db.execute(
-            select(OutcomeRecord).where(OutcomeRecord.outcome_recorded_at >= since)
-        )
-    ).scalars().all()
+        (await db.execute(select(OutcomeRecord).where(OutcomeRecord.outcome_recorded_at >= since)))
+        .scalars()
+        .all()
+    )
 
     timeline_days: list[str] = [
-        (now - timedelta(days=offset)).date().isoformat()
-        for offset in reversed(range(days))
+        (now - timedelta(days=offset)).date().isoformat() for offset in reversed(range(days))
     ]
     eval_count = {d: 0 for d in timeline_days}
     train_ok_count = {d: 0 for d in timeline_days}
@@ -718,9 +703,7 @@ async def learning_trends(
                     prior_eval = e_start
                     break
             if prior_eval is not None:
-                eval_to_train_hours[day].append(
-                    (t.started_at - prior_eval).total_seconds() / 3600
-                )
+                eval_to_train_hours[day].append((t.started_at - prior_eval).total_seconds() / 3600)
 
     def _avg(values: list[float]) -> float:
         if not values:
@@ -730,8 +713,12 @@ async def learning_trends(
     return LearningTrendsResponse(
         generated_at=now,
         evals_per_day=[TrendPoint(date=d, value=float(eval_count[d])) for d in timeline_days],
-        completed_trains_per_day=[TrendPoint(date=d, value=float(train_ok_count[d])) for d in timeline_days],
-        failed_trains_per_day=[TrendPoint(date=d, value=float(train_fail_count[d])) for d in timeline_days],
+        completed_trains_per_day=[
+            TrendPoint(date=d, value=float(train_ok_count[d])) for d in timeline_days
+        ],
+        failed_trains_per_day=[
+            TrendPoint(date=d, value=float(train_fail_count[d])) for d in timeline_days
+        ],
         avg_hours_eval_to_train_per_day=[
             TrendPoint(date=d, value=_avg(eval_to_train_hours[d])) for d in timeline_days
         ],
@@ -764,8 +751,7 @@ async def scheduler_smoke(
     registered = [job.id for job in jobs]
     missing = [job_id for job_id in expected_job_ids if job_id not in registered]
     next_run_times = {
-        job.id: (job.next_run_time.isoformat() if job.next_run_time else None)
-        for job in jobs
+        job.id: (job.next_run_time.isoformat() if job.next_run_time else None) for job in jobs
     }
 
     return SchedulerSmokeResponse(

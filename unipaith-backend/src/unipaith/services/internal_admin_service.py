@@ -103,9 +103,7 @@ class InternalAdminService:
                     "created_at": (
                         row.User.created_at.isoformat() if row.User.created_at else None
                     ),
-                    "institution_id": (
-                        str(row.institution_id) if row.institution_id else None
-                    ),
+                    "institution_id": (str(row.institution_id) if row.institution_id else None),
                     "institution_verified": row.institution_verified,
                 }
                 for row in rows
@@ -232,9 +230,7 @@ class InternalAdminService:
         if not requested_ids:
             raise BadRequestException("institution_ids cannot be empty")
 
-        result = await self.db.execute(
-            select(Institution).where(Institution.id.in_(requested_ids))
-        )
+        result = await self.db.execute(select(Institution).where(Institution.id.in_(requested_ids)))
         targets = {inst.id: inst for inst in result.scalars().all()}
 
         verified_ids: list[str] = []
@@ -460,8 +456,7 @@ class InternalAdminService:
                         select(func.count())
                         .select_from(Application)
                         .where(
-                            (Application.student_id.is_(None))
-                            | (Application.program_id.is_(None))
+                            (Application.student_id.is_(None)) | (Application.program_id.is_(None))
                         )
                     )
                     or 0
@@ -485,8 +480,7 @@ class InternalAdminService:
                         select(func.count())
                         .select_from(MatchResult)
                         .where(
-                            (MatchResult.student_id.is_(None))
-                            | (MatchResult.program_id.is_(None))
+                            (MatchResult.student_id.is_(None)) | (MatchResult.program_id.is_(None))
                         )
                     )
                     or 0
@@ -522,10 +516,7 @@ class InternalAdminService:
                     await self.db.scalar(
                         select(func.count())
                         .select_from(Embedding)
-                        .where(
-                            (Embedding.entity_type.is_(None))
-                            | (Embedding.entity_type == "")
-                        )
+                        .where((Embedding.entity_type.is_(None)) | (Embedding.entity_type == ""))
                     )
                     or 0
                 )
@@ -533,9 +524,7 @@ class InternalAdminService:
                 continue
 
             risk_score = (duplicate_count * 4) + (missing_count * 2) + (invalid_count * 3)
-            severity = (
-                "high" if risk_score >= 25 else "medium" if risk_score >= 8 else "low"
-            )
+            severity = "high" if risk_score >= 25 else "medium" if risk_score >= 8 else "low"
             if duplicate_count > 0:
                 recommendation = "run_dedupe"
             elif (missing_count + invalid_count) > 0:

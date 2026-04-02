@@ -92,7 +92,7 @@ export default function DiscoverPage() {
 
   // Sort programs client-side
   const browseItems: ProgramSummary[] = Array.isArray(browseData?.items) ? browseData.items : []
-  let programs = [...browseItems]
+  const programs = [...browseItems]
   if (sortBy === 'tuition_asc') programs.sort((a, b) => (a.tuition ?? Infinity) - (b.tuition ?? Infinity))
   else if (sortBy === 'tuition_desc') programs.sort((a, b) => (b.tuition ?? 0) - (a.tuition ?? 0))
   else if (sortBy === 'deadline') programs.sort((a, b) => {

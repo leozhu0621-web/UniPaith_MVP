@@ -5,12 +5,12 @@ Handles start/stop/health-check of EC2 GPU instances running vLLM.
 - g5.xlarge (always-on): Llama 3.1 8B + nomic-embed-text
 - g5.12xlarge (on-demand): Llama 3.1 70B
 """
+
 from __future__ import annotations
 
 import asyncio
 import logging
 import time
-from datetime import datetime, timezone
 
 import httpx
 
@@ -33,6 +33,7 @@ class GPUInstanceManager:
     def ec2(self):
         if self._ec2_client is None:
             import boto3
+
             self._ec2_client = boto3.client("ec2", region_name=settings.aws_region)
         return self._ec2_client
 
@@ -67,9 +68,7 @@ class GPUInstanceManager:
 
         logger.info("[%s] Starting instance %s", self.label, self.instance_id)
         try:
-            await asyncio.to_thread(
-                self.ec2.start_instances, InstanceIds=[self.instance_id]
-            )
+            await asyncio.to_thread(self.ec2.start_instances, InstanceIds=[self.instance_id])
             return True
         except Exception as e:
             logger.error("[%s] Failed to start instance: %s", self.label, e)
@@ -87,9 +86,7 @@ class GPUInstanceManager:
 
         logger.info("[%s] Stopping instance %s", self.label, self.instance_id)
         try:
-            await asyncio.to_thread(
-                self.ec2.stop_instances, InstanceIds=[self.instance_id]
-            )
+            await asyncio.to_thread(self.ec2.stop_instances, InstanceIds=[self.instance_id])
             return True
         except Exception as e:
             logger.error("[%s] Failed to stop instance: %s", self.label, e)
@@ -101,9 +98,7 @@ class GPUInstanceManager:
         interval = settings.gpu_health_check_interval
         health_url = f"{self.endpoint}/health"
 
-        logger.info(
-            "[%s] Waiting for vLLM at %s (timeout=%ds)", self.label, health_url, timeout
-        )
+        logger.info("[%s] Waiting for vLLM at %s (timeout=%ds)", self.label, health_url, timeout)
         start = time.monotonic()
         async with httpx.AsyncClient(timeout=10) as client:
             while time.monotonic() - start < timeout:
@@ -155,7 +150,9 @@ class GPUInstanceManager:
             if state == "running":
                 logger.info(
                     "[%s] Idle for %.0fs (threshold=%dm), shutting down",
-                    self.label, idle, threshold,
+                    self.label,
+                    idle,
+                    threshold,
                 )
                 await self.stop_instance()
                 return True

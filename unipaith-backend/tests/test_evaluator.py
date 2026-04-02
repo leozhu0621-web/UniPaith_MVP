@@ -1,8 +1,9 @@
 """Tests for ModelEvaluator — Phase 4 ML loop."""
+
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 
 import pytest
@@ -90,7 +91,7 @@ async def _seed_outcomes(
             outcome_source="application_decision",
             outcome_confidence=Decimal("0.70"),
             features_snapshot={"normalized_gpa": 0.8},
-            outcome_recorded_at=datetime.now(timezone.utc),
+            outcome_recorded_at=datetime.now(UTC),
         )
         db.add(rec)
 

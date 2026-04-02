@@ -1,4 +1,5 @@
 """Shared utility functions used across services."""
+
 from __future__ import annotations
 
 import math

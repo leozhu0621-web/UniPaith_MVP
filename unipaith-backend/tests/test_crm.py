@@ -1,4 +1,5 @@
 """Tests for CRM service — touchpoint logging and timeline."""
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -84,9 +85,7 @@ async def test_get_timeline(
     )
     await db_session.commit()
 
-    timeline = await crm.get_student_timeline(
-        student_id=profile.id, institution_id=institution.id
-    )
+    timeline = await crm.get_student_timeline(student_id=profile.id, institution_id=institution.id)
     assert len(timeline) == 3
     # All three touchpoint types should be present
     types = {t.touchpoint_type for t in timeline}

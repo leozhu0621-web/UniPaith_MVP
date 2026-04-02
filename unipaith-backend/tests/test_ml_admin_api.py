@@ -1,8 +1,8 @@
 """Tests for ML Admin API endpoints — Phase 4 ML loop."""
+
 from __future__ import annotations
 
-import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from httpx import AsyncClient
@@ -37,7 +37,7 @@ async def test_list_models(
         architecture="XGBClassifier",
         performance_metrics={"accuracy": 0.80},
         is_active=True,
-        trained_at=datetime.now(timezone.utc),
+        trained_at=datetime.now(UTC),
     )
     db_session.add(entry)
     await db_session.commit()

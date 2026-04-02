@@ -1,11 +1,11 @@
 """Pydantic schemas for the ML self-improving loop admin API."""
+
 from __future__ import annotations
 
 from datetime import datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
-
 
 # ---------------------------------------------------------------------------
 # Outcomes

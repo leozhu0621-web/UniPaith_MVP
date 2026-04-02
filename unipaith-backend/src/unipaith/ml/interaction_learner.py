@@ -8,6 +8,7 @@ Signal rewards:
   view=+0.1, click=+0.2, save=+0.5, compare=+0.3,
   apply=+1.0, admit=+2.0, dismiss=-0.3
 """
+
 from __future__ import annotations
 
 import logging
@@ -66,10 +67,16 @@ class InteractionLearner:
                 self._beta[key] += abs(reward)
             n_signals += 1
 
-            profile = self._student_profile.setdefault(signal.user_id, {
-                "total_views": 0, "total_saves": 0, "total_applies": 0,
-                "total_dismisses": 0, "explore_tendency": 0.5,
-            })
+            profile = self._student_profile.setdefault(
+                signal.user_id,
+                {
+                    "total_views": 0,
+                    "total_saves": 0,
+                    "total_applies": 0,
+                    "total_dismisses": 0,
+                    "explore_tendency": 0.5,
+                },
+            )
             if signal.signal_type == "view":
                 profile["total_views"] += 1
             elif signal.signal_type == "save":
@@ -116,13 +123,18 @@ class InteractionLearner:
         return float(max(0.0, min(1.0, sample)))
 
     def predict_batch(
-        self, student_id: UUID, program_ids: list[UUID],
+        self,
+        student_id: UUID,
+        program_ids: list[UUID],
     ) -> dict[UUID, float]:
         """Get bandit scores for multiple programs."""
         return {pid: self.predict(student_id, pid) for pid in program_ids}
 
     def update(
-        self, student_id: UUID, program_id: UUID, signal_type: str,
+        self,
+        student_id: UUID,
+        program_id: UUID,
+        signal_type: str,
     ) -> None:
         """Online update from a new interaction signal."""
         reward = REWARD_MAP.get(signal_type, 0.0)
@@ -140,7 +152,13 @@ class InteractionLearner:
 
     def get_student_behavior_profile(self, student_id: UUID) -> dict:
         """Get the learned behavior profile for a student."""
-        return self._student_profile.get(student_id, {
-            "total_views": 0, "total_saves": 0, "total_applies": 0,
-            "total_dismisses": 0, "explore_tendency": 0.5,
-        })
+        return self._student_profile.get(
+            student_id,
+            {
+                "total_views": 0,
+                "total_saves": 0,
+                "total_applies": 0,
+                "total_dismisses": 0,
+                "explore_tendency": 0.5,
+            },
+        )

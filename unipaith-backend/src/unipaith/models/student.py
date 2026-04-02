@@ -43,26 +43,26 @@ class StudentProfile(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    user: Mapped["User"] = relationship("User", back_populates="student_profile")  # type: ignore[name-defined]  # noqa: F821
-    academic_records: Mapped[list["AcademicRecord"]] = relationship(
+    user: Mapped[User] = relationship("User", back_populates="student_profile")  # type: ignore[name-defined]  # noqa: F821
+    academic_records: Mapped[list[AcademicRecord]] = relationship(
         back_populates="student", cascade="all, delete-orphan"
     )
-    test_scores: Mapped[list["TestScore"]] = relationship(
+    test_scores: Mapped[list[TestScore]] = relationship(
         back_populates="student", cascade="all, delete-orphan"
     )
-    activities: Mapped[list["Activity"]] = relationship(
+    activities: Mapped[list[Activity]] = relationship(
         back_populates="student", cascade="all, delete-orphan"
     )
-    documents: Mapped[list["StudentDocument"]] = relationship(
+    documents: Mapped[list[StudentDocument]] = relationship(
         back_populates="student", cascade="all, delete-orphan"
     )
-    preferences: Mapped["StudentPreference | None"] = relationship(
+    preferences: Mapped[StudentPreference | None] = relationship(
         back_populates="student", uselist=False, cascade="all, delete-orphan"
     )
-    recommendation_requests: Mapped[list["RecommendationRequest"]] = relationship(
+    recommendation_requests: Mapped[list[RecommendationRequest]] = relationship(
         back_populates="student", cascade="all, delete-orphan"
     )
-    onboarding_progress: Mapped["OnboardingProgress | None"] = relationship(
+    onboarding_progress: Mapped[OnboardingProgress | None] = relationship(
         back_populates="student", uselist=False, cascade="all, delete-orphan"
     )
 
@@ -95,7 +95,7 @@ class AcademicRecord(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    student: Mapped["StudentProfile"] = relationship(back_populates="academic_records")
+    student: Mapped[StudentProfile] = relationship(back_populates="academic_records")
 
 
 class TestScore(Base):
@@ -121,7 +121,7 @@ class TestScore(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    student: Mapped["StudentProfile"] = relationship(back_populates="test_scores")
+    student: Mapped[StudentProfile] = relationship(back_populates="test_scores")
 
 
 class Activity(Base):
@@ -150,7 +150,7 @@ class Activity(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    student: Mapped["StudentProfile"] = relationship(back_populates="activities")
+    student: Mapped[StudentProfile] = relationship(back_populates="activities")
 
 
 class StudentDocument(Base):
@@ -173,7 +173,7 @@ class StudentDocument(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    student: Mapped["StudentProfile"] = relationship(back_populates="documents")
+    student: Mapped[StudentProfile] = relationship(back_populates="documents")
 
 
 class StudentPreference(Base):
@@ -205,7 +205,7 @@ class StudentPreference(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    student: Mapped["StudentProfile"] = relationship(back_populates="preferences")
+    student: Mapped[StudentProfile] = relationship(back_populates="preferences")
 
 
 class RecommendationRequest(Base):
@@ -235,7 +235,7 @@ class RecommendationRequest(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    student: Mapped["StudentProfile"] = relationship(back_populates="recommendation_requests")
+    student: Mapped[StudentProfile] = relationship(back_populates="recommendation_requests")
 
 
 class OnboardingProgress(Base):
@@ -253,4 +253,4 @@ class OnboardingProgress(Base):
     last_step_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     nudge_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    student: Mapped["StudentProfile"] = relationship(back_populates="onboarding_progress")
+    student: Mapped[StudentProfile] = relationship(back_populates="onboarding_progress")

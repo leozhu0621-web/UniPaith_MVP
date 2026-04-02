@@ -1,4 +1,5 @@
 """LLM-based structured data extractor for crawled HTML."""
+
 from __future__ import annotations
 
 import json
@@ -45,7 +46,8 @@ element is an object with these fields (use null for missing data):
   "faculty_contacts": [{"name": "string", "email": "string", "role": "string"}, ...],
   "rankings": {"qs": number, "us_news": number, ...},
   "financial_aid_info": {"scholarships_available": boolean, "avg_award": number, ...},
-  "admission_stats": {"avg_gpa": number, "avg_gre": number, "applicants": number, "enrolled": number}
+  "admission_stats": {"avg_gpa": number, "avg_gre": number, \
+"applicants": number, "enrolled": number}
 }
 
 Return ONLY the JSON array. If no programs are found, return an empty array [].
@@ -86,6 +88,7 @@ class LLMExtractor:
         prompt = prompt_override or EXTRACTION_PROMPT
         try:
             from openai import AsyncOpenAI
+
             client = AsyncOpenAI(
                 base_url=settings.llm_feature_base_url,
                 api_key=settings.llm_feature_api_key,
@@ -165,7 +168,9 @@ class LLMExtractor:
 
         logger.info(
             "Extracted %d programs from raw %s (job %s)",
-            len(extracted), raw_data_id, crawl_job_id,
+            len(extracted),
+            raw_data_id,
+            crawl_job_id,
         )
         return extracted
 
@@ -217,6 +222,7 @@ class LLMExtractor:
         # Strip markdown code fences (```json ... ``` or ``` ... ```)
         if "```" in cleaned:
             import re
+
             match = re.search(r"```(?:json)?\s*\n?(.*?)```", cleaned, re.DOTALL)
             if match:
                 cleaned = match.group(1).strip()
@@ -240,7 +246,7 @@ class LLMExtractor:
             # Find last complete }, then close the array
             last_brace = cleaned.rfind("}")
             if last_brace > 0:
-                attempt = cleaned[:last_brace + 1] + "]"
+                attempt = cleaned[: last_brace + 1] + "]"
                 try:
                     data = json.loads(attempt)
                     if isinstance(data, list):
@@ -249,7 +255,9 @@ class LLMExtractor:
                 except json.JSONDecodeError:
                     pass
 
-        logger.warning("Failed to parse LLM JSON response (%d chars): %.200s...", len(cleaned), cleaned)
+        logger.warning(
+            "Failed to parse LLM JSON response (%d chars): %.200s...", len(cleaned), cleaned
+        )
         return []
 
     @staticmethod

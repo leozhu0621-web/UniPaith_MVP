@@ -8,6 +8,7 @@ Endpoints for controlling and monitoring the perpetual knowledge engine:
 - Manual triggers
 - Live activity feed
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -80,13 +81,15 @@ async def set_throttle(
         directive.directive_value = {"rpm": rpm}
         directive.is_active = True
     else:
-        db.add(EngineDirective(
-            directive_type="throttle",
-            directive_key="rpm",
-            directive_value={"rpm": rpm},
-            description=f"RPM set to {rpm} by admin",
-            created_by=admin.id,
-        ))
+        db.add(
+            EngineDirective(
+                directive_type="throttle",
+                directive_key="rpm",
+                directive_value={"rpm": rpm},
+                description=f"RPM set to {rpm} by admin",
+                created_by=admin.id,
+            )
+        )
     await db.flush()
     return {"rpm": rpm, "status": "applied"}
 
@@ -128,6 +131,7 @@ async def trigger_discovery(
     db: AsyncSession = Depends(get_db),
 ):
     from unipaith.crawler.source_discoverer import SourceDiscoverer
+
     discoverer = SourceDiscoverer(db)
     result = await discoverer.run_discovery_cycle(max_new_urls=50)
     await db.commit()
@@ -141,7 +145,8 @@ async def list_directives(
 ):
     result = await db.execute(
         select(EngineDirective).order_by(
-            EngineDirective.is_active.desc(), EngineDirective.priority.desc(),
+            EngineDirective.is_active.desc(),
+            EngineDirective.priority.desc(),
         )
     )
     directives = result.scalars().all()
@@ -187,12 +192,11 @@ async def update_directive(
     _admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(
-        select(EngineDirective).where(EngineDirective.id == directive_id)
-    )
+    result = await db.execute(select(EngineDirective).where(EngineDirective.id == directive_id))
     directive = result.scalar_one_or_none()
     if not directive:
         from unipaith.core.exceptions import NotFoundException
+
         raise NotFoundException("Directive not found")
 
     if body.directive_value is not None:
@@ -215,9 +219,7 @@ async def recent_documents(
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
-        select(KnowledgeDocument)
-        .order_by(KnowledgeDocument.created_at.desc())
-        .limit(limit)
+        select(KnowledgeDocument).order_by(KnowledgeDocument.created_at.desc()).limit(limit)
     )
     docs = result.scalars().all()
     return [
@@ -244,9 +246,14 @@ async def frontier_status(
     _admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    query = select(CrawlFrontier).order_by(
-        CrawlFrontier.priority.desc(), CrawlFrontier.created_at.desc(),
-    ).limit(limit)
+    query = (
+        select(CrawlFrontier)
+        .order_by(
+            CrawlFrontier.priority.desc(),
+            CrawlFrontier.created_at.desc(),
+        )
+        .limit(limit)
+    )
     if status:
         query = query.where(CrawlFrontier.status == status)
 
@@ -276,9 +283,12 @@ async def add_to_frontier(
     db: AsyncSession = Depends(get_db),
 ):
     from unipaith.crawler.source_discoverer import SourceDiscoverer
+
     discoverer = SourceDiscoverer(db)
     item = await discoverer.add_to_frontier(
-        url=url, priority=priority, discovery_method="admin_manual",
+        url=url,
+        priority=priority,
+        discovery_method="admin_manual",
     )
     if not item:
         return {"status": "skipped", "reason": "duplicate or excluded"}

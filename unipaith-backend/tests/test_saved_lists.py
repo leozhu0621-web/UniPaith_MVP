@@ -1,4 +1,5 @@
 """Tests for saved lists (save/unsave/list programs)."""
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -100,12 +101,8 @@ async def test_list_saved(
     await db_session.commit()
 
     # Save both programs
-    await student_client.post(
-        "/api/v1/students/me/saved", json={"program_id": str(program1.id)}
-    )
-    await student_client.post(
-        "/api/v1/students/me/saved", json={"program_id": str(program2.id)}
-    )
+    await student_client.post("/api/v1/students/me/saved", json={"program_id": str(program1.id)})
+    await student_client.post("/api/v1/students/me/saved", json={"program_id": str(program2.id)})
 
     resp = await student_client.get("/api/v1/students/me/saved")
     assert resp.status_code == 200

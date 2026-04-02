@@ -2,6 +2,7 @@
 Inference Pipeline (Person A).
 Given a student, produces ranked program matches with scores and tiers.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -153,7 +154,8 @@ class InferencePipeline:
                 except Exception:
                     reasoning = (
                         "Match explanation is temporarily unavailable. "
-                        "Scoring used similarity, historical outcomes, institution preferences, and your preferences."
+                        "Scoring used similarity, historical outcomes, "
+                        "institution preferences, and your preferences."
                     )
             return {
                 "program_id": program_id,
@@ -207,9 +209,7 @@ class InferencePipeline:
     # SIMILARITY SEARCH
     # ========================================================================
 
-    async def _similarity_search(
-        self, student_id: UUID, limit: int
-    ) -> list[tuple[UUID, float]]:
+    async def _similarity_search(self, student_id: UUID, limit: int) -> list[tuple[UUID, float]]:
         """Use pgvector to find the most similar program embeddings."""
         result = await self.db.execute(
             select(Embedding).where(
@@ -223,7 +223,7 @@ class InferencePipeline:
 
         # Format the vector as pgvector expects: [0.1,0.2,...]
         vec = student_emb.embedding
-        if hasattr(vec, 'tolist'):
+        if hasattr(vec, "tolist"):
             vec = vec.tolist()
         vec_str = "[" + ",".join(str(float(v)) for v in vec) + "]"
 
@@ -289,7 +289,9 @@ class InferencePipeline:
         }
         return final_score, breakdown
 
-    def _score_historical_fit(self, student_features: dict, admitted: list[HistoricalOutcome]) -> float:
+    def _score_historical_fit(
+        self, student_features: dict, admitted: list[HistoricalOutcome]
+    ) -> float:
         """How well does this student match historically admitted students?"""
         structured = student_features.get("structured", {})
         student_gpa = structured.get("normalized_gpa", 0)
@@ -299,9 +301,7 @@ class InferencePipeline:
             profile = outcome.applicant_profile_summary or {}
             admitted_gpa = profile.get("gpa_normalized", 0)
             gpa_diff = (
-                1.0 - abs(student_gpa - admitted_gpa)
-                if student_gpa and admitted_gpa
-                else 0.5
+                1.0 - abs(student_gpa - admitted_gpa) if student_gpa and admitted_gpa else 0.5
             )
             scores.append(gpa_diff)
 
@@ -335,14 +335,14 @@ class InferencePipeline:
         )
         outcomes = result.scalars().all()
 
-        grouped: dict[UUID, list[HistoricalOutcome]] = {program_id: [] for program_id in program_ids}
+        grouped: dict[UUID, list[HistoricalOutcome]] = {
+            program_id: [] for program_id in program_ids
+        }
         for outcome in outcomes:
             grouped.setdefault(outcome.program_id, []).append(outcome)
 
         return {
-            program_id: self._score_historical_fit(student_features, admitted)
-            if admitted
-            else 0.5
+            program_id: self._score_historical_fit(student_features, admitted) if admitted else 0.5
             for program_id, admitted in grouped.items()
         }
 
@@ -396,8 +396,14 @@ class InferencePipeline:
         checks = []
         if "gpa_min" in criteria:
             gpa = student_structured.get("normalized_gpa", 0)
-            criteria_gpa = criteria["gpa_min"] / 4.0 if criteria["gpa_min"] > 1 else criteria["gpa_min"]
-            checks.append(1.0 if gpa and gpa >= criteria_gpa else (gpa / criteria_gpa if gpa and criteria_gpa else 0.3))
+            criteria_gpa = (
+                criteria["gpa_min"] / 4.0 if criteria["gpa_min"] > 1 else criteria["gpa_min"]
+            )
+            checks.append(
+                1.0
+                if gpa and gpa >= criteria_gpa
+                else (gpa / criteria_gpa if gpa and criteria_gpa else 0.3)
+            )
 
         if "region" in criteria:
             nationality = (student_structured.get("nationality") or "").lower()
@@ -474,7 +480,10 @@ class InferencePipeline:
                 continue
 
             if student_prefs.preferred_countries:
-                if program.institution and program.institution.country not in student_prefs.preferred_countries:
+                if (
+                    program.institution
+                    and program.institution.country not in student_prefs.preferred_countries
+                ):
                     continue
 
             if student_prefs.budget_max and program.tuition:
@@ -532,7 +541,9 @@ class InferencePipeline:
             existing.match_tier = tier
             existing.score_breakdown = breakdown
             existing.reasoning_text = reasoning
-            existing.model_version = breakdown.get("model_version", self.prediction_model.model_version)
+            existing.model_version = breakdown.get(
+                "model_version", self.prediction_model.model_version
+            )
             existing.computed_at = datetime.now(UTC)
             existing.is_stale = False
             return existing
@@ -569,15 +580,17 @@ class InferencePipeline:
     async def _log_prediction(
         self, student_id: UUID, program_id: UUID, score: float, tier: int, features_used: dict
     ) -> None:
-        self.db.add(PredictionLog(
-            student_id=student_id,
-            program_id=program_id,
-            predicted_score=Decimal(str(round(score, 4))),
-            predicted_tier=tier,
-            model_version=self.prediction_model.model_version,
-            features_used=features_used,
-            predicted_at=datetime.now(UTC),
-        ))
+        self.db.add(
+            PredictionLog(
+                student_id=student_id,
+                program_id=program_id,
+                predicted_score=Decimal(str(round(score, 4))),
+                predicted_tier=tier,
+                model_version=self.prediction_model.model_version,
+                features_used=features_used,
+                predicted_at=datetime.now(UTC),
+            )
+        )
         await self.db.flush()
 
     async def _load_student_preferences(self, student_id: UUID) -> StudentPreference | None:

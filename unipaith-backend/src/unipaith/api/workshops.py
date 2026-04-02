@@ -156,9 +156,7 @@ async def request_essay_feedback(
 # --- Resumes ---
 
 
-@router.post(
-    "/resume/generate", response_model=ResumeResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("/resume/generate", response_model=ResumeResponse, status_code=status.HTTP_201_CREATED)
 async def auto_generate_resume(
     body: AutoGenerateResumeRequest,
     user: User = Depends(require_student),

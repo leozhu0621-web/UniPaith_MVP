@@ -1,4 +1,5 @@
 """Tests for review pipeline — rubrics, assign, score, pipeline view."""
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,9 +10,7 @@ from unipaith.models.student import StudentProfile
 from unipaith.models.user import User
 
 
-async def _seed_full_review_context(
-    db: AsyncSession, student_user: User, institution_user: User
-):
+async def _seed_full_review_context(db: AsyncSession, student_user: User, institution_user: User):
     """Create student, institution, program, application, and reviewer."""
     db.add(student_user)
     db.add(institution_user)
@@ -93,9 +92,7 @@ async def test_assign_reviewers(
     _, _, _, application, reviewer = await _seed_full_review_context(
         db_session, mock_student_user, mock_institution_user
     )
-    resp = await institution_client.post(
-        f"/api/v1/reviews/applications/{application.id}/assign"
-    )
+    resp = await institution_client.post(f"/api/v1/reviews/applications/{application.id}/assign")
     # Should succeed or return reviewer assignment info
     assert resp.status_code in (200, 201)
 

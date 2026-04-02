@@ -1,5 +1,6 @@
 """Tests for events — create, RSVP, cancel, list."""
-from datetime import datetime, timedelta, timezone
+
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from httpx import AsyncClient
@@ -29,7 +30,7 @@ async def _seed_student_institution_event(
     db.add(institution)
     await db.flush()
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     event = Event(
         institution_id=institution.id,
         event_name="Campus Tour",
@@ -48,7 +49,7 @@ async def _seed_student_institution_event(
 
 
 def _event_payload() -> dict:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return {
         "event_name": "Campus Tour",
         "event_type": "campus_visit",

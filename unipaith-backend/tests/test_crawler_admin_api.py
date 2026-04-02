@@ -1,10 +1,8 @@
 """Tests for Phase 5 – Crawler Admin API endpoints."""
+
 from __future__ import annotations
 
-import pytest
 from httpx import AsyncClient
-
-
 
 
 async def test_admin_required(client: AsyncClient):

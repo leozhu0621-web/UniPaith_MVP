@@ -48,6 +48,7 @@ def _svc(db: AsyncSession) -> InstitutionService:
 
 # --- Institution Profile ---
 
+
 @router.get("/me", response_model=InstitutionResponse)
 async def get_institution(
     user: User = Depends(require_institution_admin),
@@ -84,6 +85,7 @@ async def update_institution(
 
 
 # --- Programs (institution admin) ---
+
 
 @router.get("/me/programs", response_model=list[ProgramResponse])
 async def list_programs(
@@ -155,9 +157,7 @@ async def unpublish_program(
     return await svc.unpublish_program(inst.id, program_id)
 
 
-@router.delete(
-    "/me/programs/{program_id}", status_code=status.HTTP_204_NO_CONTENT
-)
+@router.delete("/me/programs/{program_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_program(
     program_id: UUID,
     user: User = Depends(require_institution_admin),
@@ -169,6 +169,7 @@ async def delete_program(
 
 
 # --- Target Segments ---
+
 
 @router.get("/me/segments", response_model=list[SegmentResponse])
 async def list_segments(
@@ -207,9 +208,7 @@ async def update_segment(
     return await svc.update_segment(inst.id, segment_id, body)
 
 
-@router.delete(
-    "/me/segments/{segment_id}", status_code=status.HTTP_204_NO_CONTENT
-)
+@router.delete("/me/segments/{segment_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_segment(
     segment_id: UUID,
     user: User = Depends(require_institution_admin),
@@ -221,6 +220,7 @@ async def delete_segment(
 
 
 # --- Dashboard & Analytics ---
+
 
 @router.get("/me/dashboard", response_model=DashboardSummaryResponse)
 async def get_dashboard_summary(
@@ -243,6 +243,7 @@ async def get_analytics(
 
 
 # --- Campaigns ---
+
 
 @router.get("/me/campaigns", response_model=list[CampaignResponse])
 async def list_campaigns(
@@ -282,9 +283,7 @@ async def update_campaign(
     return await svc.update_campaign(inst.id, campaign_id, body)
 
 
-@router.delete(
-    "/me/campaigns/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT
-)
+@router.delete("/me/campaigns/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_campaign(
     campaign_id: UUID,
     user: User = Depends(require_institution_admin),
@@ -295,9 +294,7 @@ async def delete_campaign(
     await svc.delete_campaign(inst.id, campaign_id)
 
 
-@router.post(
-    "/me/campaigns/{campaign_id}/send", response_model=CampaignResponse
-)
+@router.post("/me/campaigns/{campaign_id}/send", response_model=CampaignResponse)
 async def send_campaign(
     campaign_id: UUID,
     user: User = Depends(require_institution_admin),

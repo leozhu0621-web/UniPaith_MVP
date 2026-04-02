@@ -1,6 +1,7 @@
 """
 Matching service — orchestrates AI pipelines for the API layer.
 """
+
 from __future__ import annotations
 
 from uuid import UUID
@@ -21,9 +22,7 @@ class MatchingService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_matches(
-        self, student_id: UUID, force_refresh: bool = False
-    ) -> list[MatchResult]:
+    async def get_matches(self, student_id: UUID, force_refresh: bool = False) -> list[MatchResult]:
         """
         Get AI matches for a student.
         Enforces 80% onboarding completion gate.
@@ -54,9 +53,7 @@ class MatchingService:
 
     async def bootstrap_all_programs(self) -> dict:
         """Extract features + generate embeddings for ALL published programs."""
-        result = await self.db.execute(
-            select(Program).where(Program.is_published.is_(True))
-        )
+        result = await self.db.execute(select(Program).where(Program.is_published.is_(True)))
         programs = result.scalars().all()
 
         extractor = FeatureExtractor(self.db)

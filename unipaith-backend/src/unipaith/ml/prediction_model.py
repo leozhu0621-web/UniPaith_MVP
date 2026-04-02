@@ -13,6 +13,7 @@ with Platt scaling for probability calibration.
 
 Outputs: P(admitted), P(success), confidence interval, tier.
 """
+
 from __future__ import annotations
 
 import logging
@@ -93,9 +94,7 @@ class PredictionModel:
         Returns:
             dict with p_admitted, p_success, confidence, tier, breakdown
         """
-        signal_vec = np.array([
-            signals.get(name, 0.5) for name in SIGNAL_NAMES
-        ])
+        signal_vec = np.array([signals.get(name, 0.5) for name in SIGNAL_NAMES])
 
         if self._weights is not None:
             raw_score = float(np.dot(self._weights, signal_vec) + self._bias)
@@ -146,8 +145,7 @@ class PredictionModel:
         }
 
         score = sum(
-            default_weights.get(name, 0.1) * signals.get(name, 0.5)
-            for name in SIGNAL_NAMES
+            default_weights.get(name, 0.1) * signals.get(name, 0.5) for name in SIGNAL_NAMES
         )
         score = max(0.0, min(1.0, score))
 
@@ -185,7 +183,9 @@ class PredictionModel:
         return max(0.0, min(1.0, base + cf_boost + pattern_boost))
 
     def _confidence_interval_half(
-        self, signal_vec: np.ndarray, p: float,
+        self,
+        signal_vec: np.ndarray,
+        p: float,
     ) -> float:
         """Estimate half-width of confidence interval based on signal agreement."""
         if len(signal_vec) < 2:
@@ -220,7 +220,8 @@ class PredictionModel:
 
         probs = cross_val_predict(
             LogisticRegression(max_iter=1000, C=1.0),
-            signal_matrix, labels,
+            signal_matrix,
+            labels,
             cv=min(5, max(2, len(labels) // 10)),
             method="predict_proba",
         )[:, 1]

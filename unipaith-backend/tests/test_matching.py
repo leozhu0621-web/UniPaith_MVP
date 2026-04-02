@@ -4,8 +4,7 @@ All tests use AI_MOCK_MODE=true — no GPU or LLM required.
 """
 
 import os
-import uuid
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 os.environ["AI_MOCK_MODE"] = "true"
@@ -14,13 +13,9 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from unipaith.models.application import HistoricalOutcome
-from unipaith.models.engagement import StudentEngagementSignal
-from unipaith.models.institution import Institution, Program, TargetSegment
+from unipaith.models.institution import Institution, Program
 from unipaith.models.matching import (
     Embedding,
-    InstitutionFeature,
-    MatchResult,
     PredictionLog,
     StudentFeature,
 )
@@ -52,61 +47,84 @@ async def _seed_student_with_profile(db: AsyncSession, user: User) -> StudentPro
     db.add(profile)
     await db.flush()
 
-    db.add(AcademicRecord(
-        student_id=profile.id,
-        institution_name="USP",
-        degree_type="bachelors",
-        field_of_study="Computer Science",
-        gpa=Decimal("3.7"),
-        gpa_scale="4.0",
-        start_date=date(2021, 2, 1),
-        end_date=date(2024, 12, 15),
-        country="Brazil",
-    ))
-    db.add(TestScore(
-        student_id=profile.id,
-        test_type="GRE",
-        total_score=325,
-        section_scores={"verbal": 158, "quantitative": 167},
-        test_date=date(2024, 6, 1),
-    ))
-    db.add(TestScore(
-        student_id=profile.id,
-        test_type="TOEFL",
-        total_score=105,
-        test_date=date(2024, 5, 1),
-    ))
-    db.add(Activity(
-        student_id=profile.id,
-        activity_type="research",
-        title="Research Assistant",
-        organization="USP AI Lab",
-        description="NLP research on healthcare text mining.",
-        start_date=date(2023, 1, 1),
-        end_date=date(2024, 6, 1),
-    ))
-    db.add(Activity(
-        student_id=profile.id,
-        activity_type="work_experience",
-        title="Data Science Intern",
-        organization="Nubank",
-        start_date=date(2024, 6, 1),
-        end_date=date(2024, 9, 1),
-    ))
-    db.add(StudentPreference(
-        student_id=profile.id,
-        preferred_countries=["United States"],
-        budget_max=60000,
-        funding_requirement="partial",
-        career_goals=["data scientist", "ml engineer"],
-        values_priorities={"ranking": 4, "cost": 5},
-    ))
-    db.add(OnboardingProgress(
-        student_id=profile.id,
-        steps_completed=["account", "basic_profile", "academics", "test_scores", "activities", "bio", "goals", "preferences"],
-        completion_percentage=100,
-        last_step_at=datetime.now(timezone.utc),
-    ))
+    db.add(
+        AcademicRecord(
+            student_id=profile.id,
+            institution_name="USP",
+            degree_type="bachelors",
+            field_of_study="Computer Science",
+            gpa=Decimal("3.7"),
+            gpa_scale="4.0",
+            start_date=date(2021, 2, 1),
+            end_date=date(2024, 12, 15),
+            country="Brazil",
+        )
+    )
+    db.add(
+        TestScore(
+            student_id=profile.id,
+            test_type="GRE",
+            total_score=325,
+            section_scores={"verbal": 158, "quantitative": 167},
+            test_date=date(2024, 6, 1),
+        )
+    )
+    db.add(
+        TestScore(
+            student_id=profile.id,
+            test_type="TOEFL",
+            total_score=105,
+            test_date=date(2024, 5, 1),
+        )
+    )
+    db.add(
+        Activity(
+            student_id=profile.id,
+            activity_type="research",
+            title="Research Assistant",
+            organization="USP AI Lab",
+            description="NLP research on healthcare text mining.",
+            start_date=date(2023, 1, 1),
+            end_date=date(2024, 6, 1),
+        )
+    )
+    db.add(
+        Activity(
+            student_id=profile.id,
+            activity_type="work_experience",
+            title="Data Science Intern",
+            organization="Nubank",
+            start_date=date(2024, 6, 1),
+            end_date=date(2024, 9, 1),
+        )
+    )
+    db.add(
+        StudentPreference(
+            student_id=profile.id,
+            preferred_countries=["United States"],
+            budget_max=60000,
+            funding_requirement="partial",
+            career_goals=["data scientist", "ml engineer"],
+            values_priorities={"ranking": 4, "cost": 5},
+        )
+    )
+    db.add(
+        OnboardingProgress(
+            student_id=profile.id,
+            steps_completed=[
+                "account",
+                "basic_profile",
+                "academics",
+                "test_scores",
+                "activities",
+                "bio",
+                "goals",
+                "preferences",
+            ],
+            completion_percentage=100,
+            last_step_at=datetime.now(UTC),
+        )
+    )
     await db.flush()
     return profile
 
@@ -170,6 +188,7 @@ async def test_extract_student_features_mock(db_session: AsyncSession, mock_stud
     profile = await _seed_student_with_profile(db_session, mock_student_user)
 
     from unipaith.ai.feature_extraction import FeatureExtractor
+
     extractor = FeatureExtractor(db_session)
     features = await extractor.extract_student_features(profile.id)
 
@@ -195,6 +214,7 @@ async def test_extract_program_features_mock(db_session: AsyncSession):
     programs = await _seed_institution_and_programs(db_session)
 
     from unipaith.ai.feature_extraction import FeatureExtractor
+
     extractor = FeatureExtractor(db_session)
     features = await extractor.extract_program_features(programs[0].id)
 
@@ -208,15 +228,20 @@ async def test_feature_upsert(db_session: AsyncSession, mock_student_user: User)
     profile = await _seed_student_with_profile(db_session, mock_student_user)
 
     from unipaith.ai.feature_extraction import FeatureExtractor
+
     extractor = FeatureExtractor(db_session)
     await extractor.extract_student_features(profile.id)
     await extractor.extract_student_features(profile.id)
 
     from sqlalchemy import func, select
-    count = (await db_session.execute(
-        select(func.count()).select_from(StudentFeature)
-        .where(StudentFeature.student_id == profile.id)
-    )).scalar_one()
+
+    count = (
+        await db_session.execute(
+            select(func.count())
+            .select_from(StudentFeature)
+            .where(StudentFeature.student_id == profile.id)
+        )
+    ).scalar_one()
     assert count == 1  # Upserted, not duplicated
 
 
@@ -229,15 +254,19 @@ async def test_generate_student_embedding(db_session: AsyncSession, mock_student
     profile = await _seed_student_with_profile(db_session, mock_student_user)
 
     from unipaith.ai.feature_extraction import FeatureExtractor
+
     await FeatureExtractor(db_session).extract_student_features(profile.id)
 
     from unipaith.ai.embedding_pipeline import EmbeddingPipeline
+
     embedding = await EmbeddingPipeline(db_session).generate_student_embedding(profile.id)
 
     from unipaith.config import settings
+
     assert len(embedding) == settings.embedding_dimension
 
     from sqlalchemy import select
+
     result = await db_session.execute(
         select(Embedding).where(
             Embedding.entity_type == "student",
@@ -250,6 +279,7 @@ async def test_generate_student_embedding(db_session: AsyncSession, mock_student
 
 async def test_mock_embedding_deterministic():
     from unipaith.ai.embedding_client import MockEmbeddingClient
+
     client = MockEmbeddingClient()
     e1 = await client.embed_text("hello world")
     e2 = await client.embed_text("hello world")
@@ -273,11 +303,13 @@ async def test_onboarding_gate_blocks_below_80(db_session: AsyncSession, mock_st
     db_session.add(profile)
     await db_session.flush()
 
-    db_session.add(OnboardingProgress(
-        student_id=profile.id,
-        steps_completed=["account", "basic_profile"],
-        completion_percentage=50,
-    ))
+    db_session.add(
+        OnboardingProgress(
+            student_id=profile.id,
+            steps_completed=["account", "basic_profile"],
+            completion_percentage=50,
+        )
+    )
     await db_session.flush()
 
     from unipaith.core.exceptions import BadRequestException
@@ -291,10 +323,11 @@ async def test_onboarding_gate_blocks_below_80(db_session: AsyncSession, mock_st
 async def test_full_match_pipeline_mock(db_session: AsyncSession, mock_student_user: User):
     """Full end-to-end matching pipeline with mock AI."""
     profile = await _seed_student_with_profile(db_session, mock_student_user)
-    programs = await _seed_institution_and_programs(db_session)
+    await _seed_institution_and_programs(db_session)
 
     # Bootstrap program features + embeddings
     from unipaith.services.matching_service import MatchingService
+
     svc = MatchingService(db_session)
     bootstrap_result = await svc.bootstrap_all_programs()
     assert bootstrap_result["features_extracted"] == 3
@@ -323,6 +356,7 @@ async def test_match_caching(db_session: AsyncSession, mock_student_user: User):
     await _seed_institution_and_programs(db_session)
 
     from unipaith.services.matching_service import MatchingService
+
     svc = MatchingService(db_session)
     await svc.bootstrap_all_programs()
 
@@ -339,6 +373,7 @@ async def test_force_refresh(db_session: AsyncSession, mock_student_user: User):
     await _seed_institution_and_programs(db_session)
 
     from unipaith.services.matching_service import MatchingService
+
     svc = MatchingService(db_session)
     await svc.bootstrap_all_programs()
 
@@ -358,15 +393,20 @@ async def test_prediction_logging(db_session: AsyncSession, mock_student_user: U
     await _seed_institution_and_programs(db_session)
 
     from unipaith.services.matching_service import MatchingService
+
     svc = MatchingService(db_session)
     await svc.bootstrap_all_programs()
     await svc.get_matches(profile.id)
 
     from sqlalchemy import func, select
-    count = (await db_session.execute(
-        select(func.count()).select_from(PredictionLog)
-        .where(PredictionLog.student_id == profile.id)
-    )).scalar_one()
+
+    count = (
+        await db_session.execute(
+            select(func.count())
+            .select_from(PredictionLog)
+            .where(PredictionLog.student_id == profile.id)
+        )
+    ).scalar_one()
     assert count > 0
 
 
@@ -380,10 +420,11 @@ async def test_get_matches_endpoint(
     student_client: AsyncClient,
     mock_student_user: User,
 ):
-    profile = await _seed_student_with_profile(db_session, mock_student_user)
+    await _seed_student_with_profile(db_session, mock_student_user)
     await _seed_institution_and_programs(db_session)
 
     from unipaith.services.matching_service import MatchingService
+
     svc = MatchingService(db_session)
     await svc.bootstrap_all_programs()
 
@@ -406,7 +447,7 @@ async def test_log_engagement_signal(
     student_client: AsyncClient,
     mock_student_user: User,
 ):
-    profile = await _seed_student_with_profile(db_session, mock_student_user)
+    await _seed_student_with_profile(db_session, mock_student_user)
     programs = await _seed_institution_and_programs(db_session)
 
     resp = await student_client.post(
