@@ -1,5 +1,9 @@
 FROM python:3.12-slim AS builder
 
+# implicit (ALS) builds C extensions; slim image has no compiler by default
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 COPY pyproject.toml .
 COPY src/ src/
