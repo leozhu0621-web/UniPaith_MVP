@@ -22,6 +22,9 @@ class Settings(BaseSettings):
 
     # Database
     database_url: str = "postgresql+asyncpg://unipaith:unipaith@localhost:5432/unipaith"
+    db_pool_size: int = 30
+    db_pool_overflow: int = 20
+    db_pool_recycle: int = 1800
 
     # AWS
     aws_region: str = "us-east-1"
@@ -55,6 +58,11 @@ class Settings(BaseSettings):
     scheduler_misfire_grace_seconds: int = 300
     scheduler_self_driving_enabled: bool = True
     scheduler_self_driving_interval_minutes: int = 30
+
+    # Knowledge engine loop
+    engine_loop_enabled: bool = True
+    engine_loop_interval_minutes: int = 5
+    engine_loop_default_rpm: int = 10
 
     # Logging
     log_level: str = "INFO"

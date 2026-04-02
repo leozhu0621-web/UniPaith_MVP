@@ -1,4 +1,13 @@
 from unipaith.models.admin_audit_event import AdminAuditEvent
+from unipaith.models.knowledge import (
+    AdvisorPersona,
+    CrawlFrontier,
+    EngineDirective,
+    InteractionSignal,
+    KnowledgeDocument,
+    KnowledgeLink,
+    PersonInsight,
+)
 from unipaith.models.application import (
     Application,
     ApplicationChecklist,
@@ -100,4 +109,7 @@ __all__ = [
     "CrawlJob", "ExtractedProgram", "CrawlSchedule",
     "SourceURLPattern", "EnrichmentRecord",
     "AdminAuditEvent",
+    "KnowledgeDocument", "KnowledgeLink", "CrawlFrontier",
+    "EngineDirective", "InteractionSignal", "PersonInsight",
+    "AdvisorPersona",
 ]

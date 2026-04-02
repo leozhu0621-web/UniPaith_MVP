@@ -92,6 +92,16 @@ def setup_scheduler() -> None:
             **_job_defaults(),
         )
 
+    if settings.engine_loop_enabled:
+        scheduler.add_job(
+            _run_knowledge_engine_tick,
+            "interval",
+            minutes=settings.engine_loop_interval_minutes,
+            id="knowledge_engine",
+            name="Knowledge Engine Loop",
+            **_job_defaults(),
+        )
+
     scheduler.start()
     logger.info(
         "Scheduler started with %d jobs: %s",
@@ -173,6 +183,27 @@ async def _run_crawler() -> None:
         logger.info("University crawl completed")
     except Exception:
         logger.exception("University crawl failed")
+
+
+async def _run_knowledge_engine_tick() -> None:
+    """Run one tick of the perpetual knowledge engine loop."""
+    from unipaith.database import async_session
+    from unipaith.services.engine_loop import EngineLoop
+
+    logger.info("Starting knowledge engine tick")
+    try:
+        async with async_session() as db:
+            loop = EngineLoop(db)
+            result = await loop.run_tick()
+            await db.commit()
+            logger.info(
+                "Knowledge engine tick: processed=%d, errors=%d, discovered=%d",
+                result.get("processed", 0),
+                result.get("errors", 0),
+                result.get("discovered", 0),
+            )
+    except Exception:
+        logger.exception("Knowledge engine tick failed")
 
 
 async def _run_self_driving_loop() -> None:
