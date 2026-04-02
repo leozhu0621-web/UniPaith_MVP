@@ -36,6 +36,33 @@ async def get_current_user(
         result = await db.execute(select(User).where(User.cognito_sub == claims.sub))
         user = result.scalar_one_or_none()
 
+    if user is None and settings.cognito_bypass:
+        # Dev-mode resilience: when local DB is reset but a valid dev token remains,
+        # auto-provision a matching user (and student profile) to avoid auth dead-ends.
+        try:
+            dev_user_id = uuid.UUID(claims.sub)
+        except ValueError:
+            dev_user_id = None
+
+        if dev_user_id is not None:
+            try:
+                role = UserRole(claims.role)
+            except ValueError:
+                role = UserRole.student
+
+            user = User(
+                id=dev_user_id,
+                email=claims.email or f"dev-{claims.sub[:8]}@dev.local",
+                cognito_sub=claims.sub,
+                role=role,
+            )
+            db.add(user)
+            await db.flush()
+
+            if role == UserRole.student:
+                db.add(StudentProfile(user_id=user.id))
+                await db.flush()
+
     if user is None:
         raise ForbiddenException("User not found")
 
