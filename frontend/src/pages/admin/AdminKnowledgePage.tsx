@@ -22,6 +22,7 @@ import Skeleton from '../../components/ui/Skeleton'
 import { useToastStore } from '../../stores/toast-store'
 import {
   addToKnowledgeFrontier,
+  getAdvisorPersona,
   getKnowledgeDirectives,
   getKnowledgeFrontier,
   getKnowledgeStatus,
@@ -31,6 +32,7 @@ import {
   setKnowledgeThrottle,
   triggerKnowledgeDiscovery,
   triggerKnowledgeTick,
+  updateAdvisorPersona,
   updateKnowledgeDirective,
 } from '../../api/admin'
 import type {
@@ -115,6 +117,18 @@ export default function AdminKnowledgePage() {
       invalidate()
     },
     onError: () => addToast('Failed to add URL', 'error'),
+  })
+
+  const personaQ = useQuery<Record<string, unknown>>({
+    queryKey: ['advisor-persona'],
+    queryFn: getAdvisorPersona,
+    refetchInterval: 30000,
+  })
+
+  const personaMut = useMutation({
+    mutationFn: (data: Record<string, unknown>) => updateAdvisorPersona(data as Parameters<typeof updateAdvisorPersona>[0]),
+    onSuccess: () => { addToast('Persona updated', 'success'); qc.invalidateQueries({ queryKey: ['advisor-persona'] }) },
+    onError: () => addToast('Persona update failed', 'error'),
   })
 
   const toggleDirectiveMut = useMutation({
@@ -341,6 +355,60 @@ export default function AdminKnowledgePage() {
       </Card>
 
       {/* === Recent Documents === */}
+      {/* === Advisor Persona === */}
+      <Card className="p-4">
+        <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <Brain size={16} /> Advisor Persona
+        </h2>
+        {personaQ.isLoading ? (
+          <Skeleton className="h-32" />
+        ) : personaQ.data && !('status' in personaQ.data && personaQ.data.status === 'no_active_persona') ? (
+          <div className="space-y-3">
+            {[
+              { key: 'warmth', label: 'Warmth', desc: 'warm vs professional' },
+              { key: 'directness', label: 'Directness', desc: 'direct vs gentle' },
+              { key: 'formality', label: 'Formality', desc: 'casual vs formal' },
+              { key: 'challenge_level', label: 'Challenge', desc: 'supportive vs challenging' },
+              { key: 'data_reference_frequency', label: 'Data Usage', desc: 'human vs data-driven' },
+              { key: 'humor', label: 'Humor', desc: 'serious vs playful' },
+              { key: 'proactivity', label: 'Proactivity', desc: 'reactive vs proactive' },
+              { key: 'empathy_depth', label: 'Empathy', desc: 'surface vs deep' },
+            ].map(({ key, label, desc }) => (
+              <div key={key} className="flex items-center gap-3">
+                <label className="w-28 text-sm text-gray-600">{label}</label>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={Number(personaQ.data?.[key] ?? 50)}
+                  onChange={e => personaMut.mutate({ [key]: parseInt(e.target.value, 10) })}
+                  className="flex-1 h-2 rounded-lg appearance-none bg-gray-200 cursor-pointer"
+                />
+                <span className="w-8 text-xs text-gray-500 text-right">
+                  {String(personaQ.data?.[key] ?? 50)}
+                </span>
+                <span className="text-xs text-gray-400 w-32 truncate">{desc}</span>
+              </div>
+            ))}
+            <div className="mt-4">
+              <label className="text-sm text-gray-600 block mb-1">Custom Instructions</label>
+              <textarea
+                className="w-full border rounded-lg p-2 text-sm h-20 resize-none"
+                defaultValue={String(personaQ.data?.custom_instructions ?? '')}
+                onBlur={e => {
+                  if (e.target.value !== personaQ.data?.custom_instructions) {
+                    personaMut.mutate({ custom_instructions: e.target.value })
+                  }
+                }}
+                placeholder="e.g., Always mention scholarships for international students..."
+              />
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-400">No active persona configured</p>
+        )}
+      </Card>
+
       <Card className="p-4">
         <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
           <FileText size={16} /> Recent Knowledge Documents

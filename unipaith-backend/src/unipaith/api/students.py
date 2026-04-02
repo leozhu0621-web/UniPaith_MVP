@@ -343,55 +343,32 @@ async def student_assistant_chat(
     user: User = Depends(require_student),
     db: AsyncSession = Depends(get_db),
 ):
-    """OpenAI-powered student assistant chat for guidance and match reasoning."""
-    student_service = _svc(db)
-    profile = await student_service._get_student_profile(user.id)
-    preferences = await student_service.get_preferences(profile.id)
+    """AI advisor chat with persistent memory, EQ detection, and persona tuning."""
+    from unipaith.services.student_advisor import StudentAdvisor
 
-    context_bits = [
-        f"Student ID: {profile.id}",
-        (
-            "Profile completion: "
-            f"{(await student_service.get_onboarding_status(profile.id)).completion_percentage}%"
-        ),
-        f"Bio: {profile.bio_text or 'N/A'}",
-        f"Goals: {profile.goals_text or 'N/A'}",
-        "Preferred countries: {}".format(
-            ", ".join(preferences.preferred_countries)
-            if preferences and preferences.preferred_countries
-            else "N/A"
-        ),
-        (
-            f"Budget range: {preferences.budget_min if preferences else 'N/A'}"
-            f" - {preferences.budget_max if preferences else 'N/A'}"
-        ),
-    ]
-
-    if body.context_program_id:
-        result = await db.execute(
-            select(MatchResult).where(
-                MatchResult.student_id == profile.id,
-                MatchResult.program_id == body.context_program_id,
-            )
-        )
-        match = result.scalar_one_or_none()
-        if match:
-            context_bits.append(f"Context program ID: {body.context_program_id}")
-            context_bits.append(f"Match score: {match.match_score}")
-            context_bits.append(f"Match tier: {match.match_tier}")
-            context_bits.append(f"Existing reasoning: {match.reasoning_text or 'N/A'}")
-
-    system_prompt = (
-        "You are UniPaith's experienced admissions counselor. "
-        "Your tone is warm, reassuring, and practical while staying concise. "
-        "Use student profile and match context to provide clear next actions. "
-        "Always explain uncertainty and what information would increase confidence. "
-        "Never fabricate facts; if uncertain, say what is missing and give a calm plan."
+    advisor = StudentAdvisor(db)
+    result = await advisor.chat(
+        student_user_id=user.id,
+        message=body.message,
+        context_program_id=body.context_program_id,
     )
-    user_prompt = (
-        "Student context:\n" + "\n".join(context_bits) + "\n\nUser message:\n" + body.message
+    return StudentAssistantChatResponse(
+        reply=result["reply"],
+        model=settings.llm_reasoning_model,
     )
 
-    llm = get_llm_client()
-    reply = await llm.generate_reasoning(system_prompt=system_prompt, user_content=user_prompt)
-    return StudentAssistantChatResponse(reply=reply, model=settings.llm_reasoning_model)
+
+@router.post("/me/recommendations")
+async def get_student_recommendations(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get personalized program recommendations with warm reasoning."""
+    from unipaith.services.recommendation_engine import RecommendationEngine
+
+    engine = RecommendationEngine(db)
+    recommendations = await engine.generate_recommendations(
+        student_user_id=user.id,
+        count=5,
+    )
+    return {"recommendations": recommendations}

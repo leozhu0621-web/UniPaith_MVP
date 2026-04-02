@@ -294,3 +294,107 @@ async def add_to_frontier(
         return {"status": "skipped", "reason": "duplicate or excluded"}
     await db.flush()
     return {"id": str(item.id), "status": "added"}
+
+
+# ─── Advisor Persona ───
+
+
+class PersonaUpdateRequest(BaseModel):
+    warmth: int | None = None
+    directness: int | None = None
+    formality: int | None = None
+    challenge_level: int | None = None
+    data_reference_frequency: int | None = None
+    humor: int | None = None
+    proactivity: int | None = None
+    empathy_depth: int | None = None
+    custom_instructions: str | None = None
+    base_persona_prompt: str | None = None
+
+
+@router.get("/persona")
+async def get_persona(
+    _admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from unipaith.models.knowledge import AdvisorPersona
+
+    result = await db.execute(
+        select(AdvisorPersona).where(AdvisorPersona.is_active.is_(True)).limit(1)
+    )
+    persona = result.scalar_one_or_none()
+    if not persona:
+        return {"status": "no_active_persona"}
+    return {
+        "id": str(persona.id),
+        "name": persona.name,
+        "warmth": persona.warmth,
+        "directness": persona.directness,
+        "formality": persona.formality,
+        "challenge_level": persona.challenge_level,
+        "data_reference_frequency": persona.data_reference_frequency,
+        "humor": persona.humor,
+        "proactivity": persona.proactivity,
+        "empathy_depth": persona.empathy_depth,
+        "custom_instructions": persona.custom_instructions,
+        "base_persona_prompt": persona.base_persona_prompt,
+    }
+
+
+@router.put("/persona")
+async def update_persona(
+    body: PersonaUpdateRequest,
+    _admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from unipaith.models.knowledge import AdvisorPersona
+
+    result = await db.execute(
+        select(AdvisorPersona).where(AdvisorPersona.is_active.is_(True)).limit(1)
+    )
+    persona = result.scalar_one_or_none()
+    if not persona:
+        from unipaith.core.exceptions import NotFoundException
+        raise NotFoundException("No active persona found")
+
+    for field_name in [
+        "warmth", "directness", "formality", "challenge_level",
+        "data_reference_frequency", "humor", "proactivity", "empathy_depth",
+        "custom_instructions", "base_persona_prompt",
+    ]:
+        val = getattr(body, field_name, None)
+        if val is not None:
+            if isinstance(val, int):
+                val = max(0, min(100, val))
+            setattr(persona, field_name, val)
+
+    await db.flush()
+    return {"status": "updated", "id": str(persona.id)}
+
+
+@router.get("/insights/{user_id}")
+async def get_person_insights(
+    user_id: UUID,
+    _admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from unipaith.models.knowledge import PersonInsight
+
+    result = await db.execute(
+        select(PersonInsight)
+        .where(PersonInsight.user_id == user_id, PersonInsight.is_active.is_(True))
+        .order_by(PersonInsight.confidence.desc())
+        .limit(30)
+    )
+    insights = result.scalars().all()
+    return [
+        {
+            "id": str(i.id),
+            "insight_type": i.insight_type,
+            "insight_text": i.insight_text,
+            "confidence": i.confidence,
+            "source": i.source,
+            "created_at": i.created_at.isoformat() if i.created_at else None,
+        }
+        for i in insights
+    ]

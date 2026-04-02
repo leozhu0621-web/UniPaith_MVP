@@ -352,3 +352,59 @@ async def institution_assistant_chat(
     llm = get_llm_client()
     reply = await llm.generate_reasoning(system_prompt=system_prompt, user_content=user_prompt)
     return InstitutionAssistantChatResponse(reply=reply, model=settings.llm_reasoning_model)
+
+
+# --- Institution Intelligence ---
+
+
+@router.get("/me/intelligence/digest")
+async def institution_narrative_digest(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Generate a narrative digest of the institution's applicant landscape."""
+    from unipaith.services.institution_intelligence import InstitutionIntelligence
+
+    inst = await _svc(db).get_institution(user.id)
+    intelligence = InstitutionIntelligence(db)
+    return await intelligence.generate_narrative_digest(inst.id)
+
+
+@router.get("/me/intelligence/applicant/{student_id}")
+async def institution_applicant_context(
+    student_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Generate deep applicant context card for admissions review."""
+    from unipaith.services.institution_intelligence import InstitutionIntelligence
+
+    inst = await _svc(db).get_institution(user.id)
+    intelligence = InstitutionIntelligence(db)
+    return await intelligence.generate_applicant_context(inst.id, student_id)
+
+
+@router.get("/me/intelligence/demand")
+async def institution_demand_forecast(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Forecast application demand based on interest signals."""
+    from unipaith.services.institution_intelligence import InstitutionIntelligence
+
+    inst = await _svc(db).get_institution(user.id)
+    intelligence = InstitutionIntelligence(db)
+    return await intelligence.generate_demand_forecast(inst.id)
+
+
+@router.get("/me/intelligence/yield-risks")
+async def institution_yield_risks(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Identify admitted students showing signals of choosing elsewhere."""
+    from unipaith.services.institution_intelligence import InstitutionIntelligence
+
+    inst = await _svc(db).get_institution(user.id)
+    intelligence = InstitutionIntelligence(db)
+    return await intelligence.generate_yield_risk_alerts(inst.id)

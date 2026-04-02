@@ -266,3 +266,23 @@ export const getKnowledgeFrontier = (params?: { status?: string; limit?: number 
 
 export const addToKnowledgeFrontier = (url: string, priority = 50) =>
   apiClient.post('/admin/knowledge/frontier/add', null, { params: { url, priority } }).then(r => r.data)
+
+// ─── Advisor Persona ───
+export const getAdvisorPersona = () =>
+  apiClient.get('/admin/knowledge/persona').then(r => r.data)
+
+export const updateAdvisorPersona = (data: {
+  warmth?: number
+  directness?: number
+  formality?: number
+  challenge_level?: number
+  data_reference_frequency?: number
+  humor?: number
+  proactivity?: number
+  empathy_depth?: number
+  custom_instructions?: string
+  base_persona_prompt?: string
+}) => apiClient.put('/admin/knowledge/persona', data).then(r => r.data)
+
+export const getPersonInsights = (userId: string) =>
+  apiClient.get(`/admin/knowledge/insights/${userId}`).then(r => r.data)
