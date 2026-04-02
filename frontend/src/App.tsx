@@ -59,6 +59,7 @@ import AdminCrawlerPage from './pages/admin/AdminCrawlerPage'
 import AdminMLPage from './pages/admin/AdminMLPage'
 import AdminSystemPage from './pages/admin/AdminSystemPage'
 import AdminOpsCenterPage from './pages/admin/AdminOpsCenterPage'
+import AdminKnowledgePage from './pages/admin/AdminKnowledgePage'
 import RouteErrorPage from './pages/system/RouteErrorPage'
 
 const queryClient = new QueryClient({
@@ -140,6 +141,7 @@ const router = createBrowserRouter([
       { path: 'crawler', element: <AdminCrawlerPage /> },
       { path: 'ml', element: <AdminMLPage /> },
       { path: 'system', element: <AdminSystemPage /> },
+      { path: 'knowledge', element: <AdminKnowledgePage /> },
     ],
   },
 

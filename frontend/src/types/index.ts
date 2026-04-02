@@ -823,3 +823,74 @@ export interface MLLearningKPIResponse {
   runtime_provider: string | null
   runtime_mode: string | null
 }
+
+// ============ KNOWLEDGE ENGINE ============
+
+export interface KnowledgeEngineState {
+  status: string
+  rpm: number
+  requests_this_minute: number
+  total_processed: number
+  total_errors: number
+  total_discovered: number
+  last_tick_at: string | null
+  last_error: string | null
+  paused: boolean
+  current_url: string | null
+  session_started_at: string | null
+}
+
+export interface KnowledgeStats {
+  total_documents: number
+  active_documents: number
+  by_format: Record<string, number>
+  by_type: Record<string, number>
+}
+
+export interface FrontierStats {
+  pending: number
+  failed: number
+}
+
+export interface KnowledgeStatusResponse {
+  engine: KnowledgeEngineState
+  knowledge: KnowledgeStats
+  frontier: FrontierStats
+}
+
+export interface KnowledgeDirective {
+  id: string
+  directive_type: string
+  directive_key: string
+  directive_value: Record<string, unknown>
+  description: string | null
+  priority: number
+  is_active: boolean
+  expires_at: string | null
+  created_at: string | null
+}
+
+export interface KnowledgeDocument {
+  id: string
+  title: string | null
+  source_url: string | null
+  source_domain: string | null
+  content_format: string
+  content_type: string | null
+  quality_score: number | null
+  processing_status: string
+  word_count: number | null
+  created_at: string | null
+}
+
+export interface FrontierItem {
+  id: string
+  url: string
+  domain: string
+  priority: number
+  status: string
+  crawl_count: number
+  discovery_method: string | null
+  last_crawled_at: string | null
+  consecutive_failures: number
+}

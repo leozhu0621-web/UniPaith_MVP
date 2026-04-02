@@ -221,3 +221,48 @@ export const getMLLearningKPIs = () =>
 
 export const getArchitectureTrace = (params?: { include_runs?: boolean; limit?: number }) =>
   apiClient.get('/admin/ml/architecture-trace', { params }).then(r => r.data)
+
+// ─── Knowledge Engine ───
+export const getKnowledgeStatus = () =>
+  apiClient.get('/admin/knowledge/status').then(r => r.data)
+
+export const setKnowledgeThrottle = (rpm: number) =>
+  apiClient.post('/admin/knowledge/throttle', { rpm }).then(r => r.data)
+
+export const pauseKnowledgeEngine = () =>
+  apiClient.post('/admin/knowledge/pause').then(r => r.data)
+
+export const resumeKnowledgeEngine = () =>
+  apiClient.post('/admin/knowledge/resume').then(r => r.data)
+
+export const triggerKnowledgeTick = () =>
+  apiClient.post('/admin/knowledge/trigger-tick').then(r => r.data)
+
+export const triggerKnowledgeDiscovery = () =>
+  apiClient.post('/admin/knowledge/trigger-discovery').then(r => r.data)
+
+export const getKnowledgeDirectives = () =>
+  apiClient.get('/admin/knowledge/directives').then(r => r.data)
+
+export const createKnowledgeDirective = (data: {
+  directive_type: string
+  directive_key: string
+  directive_value: Record<string, unknown>
+  description?: string
+  priority?: number
+}) =>
+  apiClient.post('/admin/knowledge/directives', data).then(r => r.data)
+
+export const updateKnowledgeDirective = (
+  id: string,
+  data: { directive_value?: Record<string, unknown>; is_active?: boolean; priority?: number },
+) => apiClient.patch(`/admin/knowledge/directives/${id}`, data).then(r => r.data)
+
+export const getRecentKnowledgeDocuments = (limit = 20) =>
+  apiClient.get('/admin/knowledge/documents/recent', { params: { limit } }).then(r => r.data)
+
+export const getKnowledgeFrontier = (params?: { status?: string; limit?: number }) =>
+  apiClient.get('/admin/knowledge/frontier', { params }).then(r => r.data)
+
+export const addToKnowledgeFrontier = (url: string, priority = 50) =>
+  apiClient.post('/admin/knowledge/frontier/add', null, { params: { url, priority } }).then(r => r.data)
