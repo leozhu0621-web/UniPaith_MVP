@@ -11,7 +11,7 @@ Provides 17 endpoints covering:
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends, Query
@@ -25,6 +25,7 @@ from unipaith.ml.ab_testing import ABTestManager
 from unipaith.ml.model_manager import ModelManager
 from unipaith.ml.orchestrator import MLOrchestrator
 from unipaith.ml.trainer import ModelTrainer
+from unipaith.models.matching import ModelRegistry
 from unipaith.models.ml_loop import (
     DriftSnapshot,
     EvaluationRun,
@@ -32,28 +33,27 @@ from unipaith.models.ml_loop import (
     OutcomeRecord,
     TrainingRun,
 )
-from unipaith.models.matching import ModelRegistry
 from unipaith.models.user import User
 from unipaith.schemas.ml_loop import (
     ArchitectureTraceResponse,
-    CycleHealthResponse,
     CreateExperimentRequest,
+    CycleHealthResponse,
     CycleResultResponse,
     DriftSnapshotResponse,
     EvaluationRunResponse,
     ExperimentResultResponse,
     FairnessDialRequest,
     FairnessReportResponse,
-    LearningTrendsResponse,
     LearningKPIResponse,
+    LearningTrendsResponse,
     ModelListResponse,
     ModelVersionResponse,
     OutcomeStatsResponse,
     PromoteModelRequest,
-    TriggerTrainingRequest,
+    SchedulerSmokeResponse,
     TrainingRunResponse,
     TrendPoint,
-    SchedulerSmokeResponse,
+    TriggerTrainingRequest,
 )
 from unipaith.services.ai_control_plane_service import AIControlPlaneService
 
@@ -376,7 +376,7 @@ async def learning_kpis(
     _admin: User = Depends(require_admin),
 ):
     """Return backend-only KPI signals for learning speed and cycle quality."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     since_24h = now - timedelta(hours=24)
     since_7d = now - timedelta(days=7)
 
@@ -540,7 +540,7 @@ async def cycle_health(
     _admin: User = Depends(require_admin),
 ):
     """Single-shot health for the backend ML learning loop."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     scheduler_effective_enabled = settings.scheduler_enabled or (
         settings.scheduler_auto_enable_non_test and settings.environment != "test"
     )
@@ -655,7 +655,7 @@ async def learning_trends(
     _admin: User = Depends(require_admin),
 ):
     """Time-series signals for ML learning speed and cycle throughput."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     since = now - timedelta(days=days)
 
     eval_rows = (
@@ -750,7 +750,7 @@ async def scheduler_smoke(
     del db  # endpoint does not require database IO
     from unipaith.core.scheduler import scheduler
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     scheduler_effective_enabled = settings.scheduler_enabled or (
         settings.scheduler_auto_enable_non_test and settings.environment != "test"
     )
@@ -792,3 +792,27 @@ async def architecture_trace(
         limit=limit,
     )
     return ArchitectureTraceResponse.model_validate(trace)
+
+
+@router.get("/scientific-metrics")
+async def scientific_metrics(
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_admin),
+):
+    """Full scientific metrics for prediction quality, information gain, coverage."""
+    from unipaith.services.engine_metrics import EngineMetrics
+
+    metrics = EngineMetrics(db)
+    return await metrics.compute_all()
+
+
+@router.get("/validation-status")
+async def validation_status(
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_admin),
+):
+    """Validation framework status: calibration, drift, contradictions, rollback."""
+    from unipaith.services.validation_framework import ValidationFramework
+
+    framework = ValidationFramework(db)
+    return await framework.get_validation_summary()

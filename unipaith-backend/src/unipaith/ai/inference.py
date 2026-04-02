@@ -5,7 +5,7 @@ Given a student, produces ranked program matches with scores and tiers.
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -17,11 +17,14 @@ from unipaith.ai.embedding_pipeline import EmbeddingPipeline
 from unipaith.ai.feature_extraction import FeatureExtractor
 from unipaith.ai.reasoning import ReasoningGenerator
 from unipaith.config import settings
+from unipaith.ml.collaborative_filter import CollaborativeFilter
+from unipaith.ml.interaction_learner import InteractionLearner
+from unipaith.ml.pattern_recognizer import PatternRecognizer
+from unipaith.ml.prediction_model import PredictionModel
 from unipaith.models.application import HistoricalOutcome
 from unipaith.models.institution import Program, TargetSegment
 from unipaith.models.matching import (
     Embedding,
-    InstitutionFeature,
     MatchResult,
     PredictionLog,
 )
@@ -34,6 +37,10 @@ class InferencePipeline:
         self.feature_extractor = FeatureExtractor(db)
         self.embedding_pipeline = EmbeddingPipeline(db)
         self.reasoning_generator = ReasoningGenerator(db)
+        self.prediction_model = PredictionModel(db)
+        self.cf = CollaborativeFilter(db)
+        self.pattern = PatternRecognizer(db)
+        self.bandit = InteractionLearner(db)
 
     async def compute_matches(
         self,
@@ -70,16 +77,35 @@ class InferencePipeline:
             program_ids=candidate_program_ids,
         )
 
+        model_loaded = await self.prediction_model.load_active_model()
+        cf_scores = self.cf.predict_batch(student_id, candidate_program_ids)
+        pattern_scores = self.pattern.get_pattern_scores_batch(student_id, candidate_program_ids)
+        bandit_scores = self.bandit.predict_batch(student_id, candidate_program_ids)
+
         scored_candidates = []
         for program_id, cosine_sim in candidates:
-            final_score, score_breakdown = self._compute_final_score(
-                program_id=program_id,
-                cosine_similarity=cosine_sim,
-                student_features=student_features,
-                student_prefs=student_prefs,
-                historical_fit=historical_fit_map.get(program_id, 0.5),
-                institution_pref_fit=institution_pref_fit_map.get(program_id, 0.5),
-            )
+            signals = {
+                "embedding_similarity": max(0.0, min(1.0, cosine_sim)),
+                "collaborative_filtering": cf_scores.get(program_id, 0.5),
+                "pattern_affinity": pattern_scores.get(program_id, 0.5),
+                "interaction_score": bandit_scores.get(program_id, 0.5),
+                "xgboost_score": historical_fit_map.get(program_id, 0.5),
+                "knowledge_relevance": institution_pref_fit_map.get(program_id, 0.5),
+            }
+
+            if model_loaded:
+                prediction = self.prediction_model.predict(signals)
+            else:
+                prediction = self.prediction_model.predict_heuristic(signals)
+
+            final_score = prediction["p_admitted"]
+            score_breakdown = {
+                **prediction["signal_contributions"],
+                "p_admitted": prediction["p_admitted"],
+                "p_success": prediction["p_success"],
+                "confidence_interval": prediction["confidence_interval"],
+                "model_version": prediction["model_version"],
+            }
             scored_candidates.append((program_id, final_score, score_breakdown, cosine_sim))
 
         scored_candidates.sort(key=lambda x: x[1], reverse=True)
@@ -87,12 +113,14 @@ class InferencePipeline:
 
         tiered = []
         for program_id, score, breakdown, cosine_sim in top_matches:
-            if score >= settings.matching_tier1_threshold:
-                tier = 1
-            elif score >= settings.matching_tier2_threshold:
-                tier = 2
-            else:
-                tier = 3
+            tier = breakdown.get("tier", 3)
+            if tier is None:
+                if score >= settings.matching_tier1_threshold:
+                    tier = 1
+                elif score >= settings.matching_tier2_threshold:
+                    tier = 2
+                else:
+                    tier = 3
             tiered.append((program_id, score, tier, breakdown))
 
         top_program_ids = [program_id for program_id, _score, _tier, _breakdown in tiered]
@@ -161,9 +189,9 @@ class InferencePipeline:
                 program_id=program_id,
                 predicted_score=Decimal(str(round(score, 4))),
                 predicted_tier=tier,
-                model_version="v1.0-mvp",
+                model_version=breakdown.get("model_version", self.prediction_model.model_version),
                 features_used=breakdown,
-                predicted_at=datetime.now(timezone.utc),
+                predicted_at=datetime.now(UTC),
             )
             match_results.append(match_result)
             prediction_logs.append(prediction_log)
@@ -484,7 +512,7 @@ class InferencePipeline:
             return None
 
         newest = max(m.computed_at for m in matches)
-        hours_old = (datetime.now(timezone.utc) - newest).total_seconds() / 3600
+        hours_old = (datetime.now(UTC) - newest).total_seconds() / 3600
         if hours_old > settings.matching_stale_hours:
             return None
         return matches
@@ -504,8 +532,8 @@ class InferencePipeline:
             existing.match_tier = tier
             existing.score_breakdown = breakdown
             existing.reasoning_text = reasoning
-            existing.model_version = "v1.0-mvp"
-            existing.computed_at = datetime.now(timezone.utc)
+            existing.model_version = breakdown.get("model_version", self.prediction_model.model_version)
+            existing.computed_at = datetime.now(UTC)
             existing.is_stale = False
             return existing
 
@@ -516,8 +544,8 @@ class InferencePipeline:
             match_tier=tier,
             score_breakdown=breakdown,
             reasoning_text=reasoning,
-            model_version="v1.0-mvp",
-            computed_at=datetime.now(timezone.utc),
+            model_version=breakdown.get("model_version", self.prediction_model.model_version),
+            computed_at=datetime.now(UTC),
             is_stale=False,
         )
         self.db.add(match)
@@ -546,9 +574,9 @@ class InferencePipeline:
             program_id=program_id,
             predicted_score=Decimal(str(round(score, 4))),
             predicted_tier=tier,
-            model_version="v1.0-mvp",
+            model_version=self.prediction_model.model_version,
             features_used=features_used,
-            predicted_at=datetime.now(timezone.utc),
+            predicted_at=datetime.now(UTC),
         ))
         await self.db.flush()
 
