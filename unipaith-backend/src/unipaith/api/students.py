@@ -6,7 +6,6 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from unipaith.ai.llm_client import get_llm_client
 from unipaith.config import settings
 from unipaith.core.exceptions import NotFoundException
 from unipaith.database import get_db

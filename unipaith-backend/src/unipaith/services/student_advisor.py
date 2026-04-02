@@ -47,10 +47,12 @@ Return ONLY a valid JSON array. Return [] if no new insights."""
 
 EQ_DETECTION_PROMPT = """Classify the emotional tone of this student message. Return JSON:
 {
-  "primary_emotion": "<excited|anxious|confused|confident|overwhelmed|frustrated|hopeful|defeated|neutral>",
+  "primary_emotion": "<excited|anxious|confused|confident|overwhelmed|
+    frustrated|hopeful|defeated|neutral>",
   "intensity": <0.0-1.0>,
   "undertone": "<what they might be feeling but not saying directly>",
-  "needs": "<what kind of response would help: reassurance|information|challenge|validation|comfort|direction>"
+  "needs": "<what kind of response would help:
+    reassurance|information|challenge|validation|comfort|direction>"
 }
 Return ONLY valid JSON."""
 
@@ -195,7 +197,10 @@ class StudentAdvisor:
         if insights:
             insight_lines = []
             for ins in insights[:15]:
-                insight_lines.append(f"- [{ins.insight_type}] {ins.insight_text} (confidence: {ins.confidence})")
+                insight_lines.append(
+                    f"- [{ins.insight_type}] {ins.insight_text}"
+                    f" (confidence: {ins.confidence})"
+                )
             insight_text = "\n## What You Know About This Student\n" + "\n".join(insight_lines)
 
         student_context = f"""
@@ -206,8 +211,12 @@ class StudentAdvisor:
 - Nationality: {profile.nationality or 'Unknown'}"""
 
         if preferences:
+            countries = (
+                ', '.join(preferences.preferred_countries)
+                if preferences.preferred_countries else 'Open'
+            )
             student_context += f"""
-- Preferred countries: {', '.join(preferences.preferred_countries) if preferences.preferred_countries else 'Open'}
+- Preferred countries: {countries}
 - Budget: {preferences.budget_min or '?'} - {preferences.budget_max or '?'}
 - Funding need: {preferences.funding_requirement or 'Not specified'}"""
 
@@ -274,7 +283,10 @@ CRITICAL RULES:
             parts.append("Acknowledge emotional undertones deeply and explicitly.")
 
         if persona.proactivity >= 60:
-            parts.append("Proactively bring up topics the student hasn't asked about but should consider.")
+            parts.append(
+                "Proactively bring up topics the student"
+                " hasn't asked about but should consider."
+            )
 
         if persona.data_reference_frequency <= 30:
             parts.append("Rarely cite specific numbers -- keep it human and conversational.")
@@ -291,9 +303,15 @@ CRITICAL RULES:
                 f"Student message: {message[:500]}",
             )
             parsed = _safe_json(result)
-            return parsed if parsed else {"primary_emotion": "neutral", "intensity": 0.3, "undertone": "", "needs": ""}
+            return parsed if parsed else {
+                "primary_emotion": "neutral", "intensity": 0.3,
+                "undertone": "", "needs": "",
+            }
         except Exception:
-            return {"primary_emotion": "neutral", "intensity": 0.3, "undertone": "", "needs": ""}
+            return {
+                "primary_emotion": "neutral", "intensity": 0.3,
+                "undertone": "", "needs": "",
+            }
 
     async def _extract_insights_background(
         self,
@@ -413,7 +431,11 @@ CRITICAL RULES:
         )
         messages = list(reversed(msg_result.scalars().all()))
         return [
-            {"role": m.sender_type, "text": m.content, "at": m.sent_at.isoformat() if m.sent_at else ""}
+            {
+                "role": m.sender_type,
+                "text": m.content,
+                "at": m.sent_at.isoformat() if m.sent_at else "",
+            }
             for m in messages
         ]
 

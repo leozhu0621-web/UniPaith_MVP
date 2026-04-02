@@ -170,7 +170,10 @@ class RecommendationEngine:
                 "program_id": str(p.id),
                 "program_name": p.program_name,
                 "institution_name": p.institution.name if p.institution else "Unknown",
-                "reasoning": match.reasoning_text or "This program aligns well with your profile and interests.",
+                "reasoning": (
+                    match.reasoning_text
+                    or "This program aligns well with your profile and interests."
+                ),
                 "category": categories[i % len(categories)],
                 "fit_summary": "Strong match based on your background and goals.",
                 "degree_type": p.degree_type,

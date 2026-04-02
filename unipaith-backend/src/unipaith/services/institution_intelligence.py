@@ -176,7 +176,11 @@ class InstitutionIntelligence:
                 "degree_type": program.degree_type,
                 "active_matches": match_count,
                 "recent_predictions": prediction_count,
-                "demand_signal": "high" if prediction_count > 10 else "moderate" if prediction_count > 3 else "low",
+                "demand_signal": (
+                    "high" if prediction_count > 10
+                    else "moderate" if prediction_count > 3
+                    else "low"
+                ),
             })
 
         program_demand.sort(key=lambda x: x["recent_predictions"], reverse=True)
@@ -213,7 +217,8 @@ class InstitutionIntelligence:
                 select(func.count()).select_from(MatchResult).where(
                     MatchResult.student_id == app.student_id,
                     MatchResult.program_id.notin_(program_ids),
-                    MatchResult.match_score > app.match_score if hasattr(app, "match_score") else True,
+                    (MatchResult.match_score > app.match_score)
+                    if hasattr(app, "match_score") else True,
                 )
             )
             competing_count = other_matches.scalar() or 0
@@ -263,7 +268,10 @@ class InstitutionIntelligence:
         if matches:
             parts.append("\n## Match Data")
             for m in matches:
-                parts.append(f"- Program {m.program_id}: score={m.match_score}, tier={m.match_tier}")
+                parts.append(
+                    f"- Program {m.program_id}: "
+                    f"score={m.match_score}, tier={m.match_tier}"
+                )
         if knowledge_items:
             parts.append(format_knowledge_for_prompt(knowledge_items, max_chars=1500))
         return "\n".join(parts)
