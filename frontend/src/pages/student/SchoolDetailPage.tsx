@@ -43,10 +43,13 @@ export default function SchoolDetailPage() {
   })
 
   const { data: saved } = useQuery({ queryKey: ['saved'], queryFn: listSaved })
-  const isSaved = (saved ?? []).some((s: any) => s.program_id === programId)
+  const savedList: any[] = Array.isArray(saved) ? saved : []
+  const isSaved = savedList.some((s: any) => s.program_id === programId)
 
   const { data: applications } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
-  const existingApp = (applications ?? []).find((a: any) => a.program_id === programId)
+  const applicationsList: any[] = Array.isArray(applications) ? applications : []
+  const existingApp = applicationsList.find((a: any) => a.program_id === programId)
+  const eventsList: EventItem[] = Array.isArray(events) ? events : []
 
   useEffect(() => {
     if (programId) logEngagement(programId, 'viewed_program', 1).catch(() => {})
@@ -78,6 +81,16 @@ export default function SchoolDetailPage() {
   })
 
   if (isLoading) return <div className="p-6 space-y-4">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>
+  if (!program) {
+    return (
+      <div className="p-6 max-w-3xl mx-auto">
+        <p className="text-sm text-gray-600 mb-3">Program details are unavailable right now.</p>
+        <Button size="sm" variant="secondary" onClick={() => navigate('/s/discover')}>
+          Back to Discover
+        </Button>
+      </div>
+    )
+  }
 
   const p: Program = program
   const match: MatchResult | null = matchResult ?? null
@@ -213,11 +226,11 @@ export default function SchoolDetailPage() {
       </div>
 
       {/* Events */}
-      {(events ?? []).length > 0 && (
+      {eventsList.length > 0 && (
         <div className="mt-8">
           <h3 className="font-medium text-sm mb-3">Upcoming Events</h3>
           <div className="space-y-2">
-            {(events ?? []).map((e: EventItem) => (
+            {eventsList.map((e: EventItem) => (
               <Card key={e.id} className="p-3 flex justify-between items-center">
                 <div>
                   <p className="text-sm font-medium">{e.event_name}</p>

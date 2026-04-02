@@ -14,7 +14,7 @@ import { formatDate, formatScore } from '../../utils/format'
 import { TIER_LABELS } from '../../utils/constants'
 import {
   MessageSquare, Search, FileText, User, Clock,
-  ArrowRight, Sparkles, CalendarDays, TrendingUp, ShieldCheck,
+  ArrowRight, Sparkles, CalendarDays, TrendingUp, ShieldCheck, AlertTriangle,
 } from 'lucide-react'
 import { parseISO, differenceInDays } from 'date-fns'
 import type { MatchResult, Application } from '../../types'
@@ -42,32 +42,37 @@ export default function DashboardPage() {
   const completionPct = onboarding?.completion_percentage ?? 0
   const showMatches = completionPct >= 80
 
-  const { data: matches, isLoading: matchesLoading } = useQuery({
+  const { data: matches, isLoading: matchesLoading, isError: matchesError } = useQuery({
     queryKey: ['matches'],
     queryFn: () => getMatches(),
     enabled: showMatches,
   })
 
-  const { data: applications, isLoading: appsLoading } = useQuery({
+  const { data: applications, isLoading: appsLoading, isError: appsError } = useQuery({
     queryKey: ['my-applications'],
     queryFn: listMyApplications,
   })
 
-  const { data: rsvps } = useQuery({
+  const { data: rsvps, isError: rsvpsError } = useQuery({
     queryKey: ['my-rsvps'],
     queryFn: getMyRsvps,
   })
 
-  const { data: interviews } = useQuery({
+  const { data: interviews, isError: interviewsError } = useQuery({
     queryKey: ['my-interviews'],
     queryFn: getMyInterviews,
   })
+
+  const applicationsList: Application[] = Array.isArray(applications) ? applications : []
+  const rsvpsList: any[] = Array.isArray(rsvps) ? rsvps : []
+  const interviewsList: any[] = Array.isArray(interviews) ? interviews : []
+  const matchesList: MatchResult[] = Array.isArray(matches) ? matches : []
 
   // Aggregate deadlines
   const now = new Date()
   const deadlines: Deadline[] = []
 
-  ;(applications ?? []).forEach((a: Application) => {
+  applicationsList.forEach((a: Application) => {
     if (a.program?.application_deadline) {
       const d = parseISO(a.program.application_deadline)
       if (d >= now) {
@@ -81,7 +86,7 @@ export default function DashboardPage() {
     }
   })
 
-  ;(rsvps ?? []).forEach((r: any) => {
+  rsvpsList.forEach((r: any) => {
     if (r.event?.start_time) {
       const d = parseISO(r.event.start_time)
       if (d >= now) {
@@ -95,7 +100,7 @@ export default function DashboardPage() {
     }
   })
 
-  ;(interviews ?? []).forEach((i: any) => {
+  interviewsList.forEach((i: any) => {
     const time = i.confirmed_time || i.proposed_times?.[0]
     if (time) {
       const d = parseISO(time)
@@ -114,12 +119,12 @@ export default function DashboardPage() {
 
   // Application status counts
   const statusCounts: Record<string, number> = {}
-  ;(applications ?? []).forEach((a: Application) => {
+  applicationsList.forEach((a: Application) => {
     statusCounts[a.status] = (statusCounts[a.status] || 0) + 1
   })
 
   // Top matches
-  const topMatches = (matches ?? [])
+  const topMatches = matchesList
     .sort((a: MatchResult, b: MatchResult) => b.match_score - a.match_score)
     .slice(0, 3)
 
@@ -147,6 +152,17 @@ export default function DashboardPage() {
           <p className="text-sm text-gray-500 mt-1">A calm brief of what matters now, what is next, and what can wait.</p>
         </div>
       </div>
+
+      {(matchesError || appsError || rsvpsError || interviewsError) && (
+        <Card className="p-4 border-amber-200 bg-amber-50">
+          <div className="flex items-start gap-2 text-amber-800">
+            <AlertTriangle size={16} className="mt-0.5" />
+            <p className="text-sm">
+              Some dashboard data could not load. The page is still usable and you can continue.
+            </p>
+          </div>
+        </Card>
+      )}
 
       {/* Counselor brief */}
       <Card className="p-5">
@@ -256,7 +272,7 @@ export default function DashboardPage() {
           </div>
           {appsLoading ? (
             <Skeleton className="h-20" />
-          ) : (applications ?? []).length === 0 ? (
+          ) : applicationsList.length === 0 ? (
             <div className="text-center py-4">
               <p className="text-sm text-gray-500 mb-3">No applications yet</p>
               <Button size="sm" onClick={() => navigate('/s/discover')}>Discover Programs</Button>
@@ -358,10 +374,10 @@ export default function DashboardPage() {
               </div>
               <span className="text-sm font-medium">Talk with your counselor</span>
             </button>
-            {(applications ?? []).some((a: Application) => a.status === 'draft') && (
+            {applicationsList.some((a: Application) => a.status === 'draft') && (
               <button
                 onClick={() => {
-                  const draft = (applications ?? []).find((a: Application) => a.status === 'draft')
+                  const draft = applicationsList.find((a: Application) => a.status === 'draft')
                   if (draft) navigate(`/s/applications/${draft.id}`)
                 }}
                 className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 text-left"

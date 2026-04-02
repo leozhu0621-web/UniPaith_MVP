@@ -56,7 +56,7 @@ export default function ProgramsPage() {
       key: 'program_name',
       label: 'Name',
       render: (row: Program) => (
-        <button onClick={() => navigate(`/i/programs/${row.id}`)} className="text-indigo-600 hover:underline font-medium">
+        <button onClick={() => navigate(`/i/programs/${row.id}/edit`)} className="text-indigo-600 hover:underline font-medium">
           {row.program_name}
         </button>
       ),
@@ -92,7 +92,7 @@ export default function ProgramsPage() {
         <Dropdown
           trigger={<button className="p-1 rounded hover:bg-gray-100"><MoreVertical size={16} className="text-gray-500" /></button>}
           items={[
-            { label: 'Edit', icon: <Edit2 size={14} />, onClick: () => navigate(`/i/programs/${row.id}`) },
+            { label: 'Edit', icon: <Edit2 size={14} />, onClick: () => navigate(`/i/programs/${row.id}/edit`) },
             row.is_published
               ? { label: 'Unpublish', icon: <EyeOff size={14} />, onClick: () => unpublishMut.mutate(row.id) }
               : { label: 'Publish', icon: <Eye size={14} />, onClick: () => publishMut.mutate(row.id) },

@@ -23,26 +23,29 @@ export default function CalendarPage() {
   const { data: rsvps } = useQuery({ queryKey: ['my-rsvps'], queryFn: getMyRsvps })
   const { data: interviews } = useQuery({ queryKey: ['my-interviews'], queryFn: getMyInterviews })
   const { data: applications } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
+  const rsvpsList: any[] = Array.isArray(rsvps) ? rsvps : []
+  const interviewsList: any[] = Array.isArray(interviews) ? interviews : []
+  const applicationsList: any[] = Array.isArray(applications) ? applications : []
 
   const events = useMemo(() => {
     const items: CalendarEvent[] = []
     // RSVPs → events
-    ;(rsvps ?? []).forEach((r: any) => {
+    rsvpsList.forEach((r: any) => {
       if (r.event?.start_time) items.push({ date: parseISO(r.event.start_time), title: r.event.event_name || 'Event', type: 'event' })
     })
     // Interviews
-    ;(interviews ?? []).forEach((i: any) => {
+    interviewsList.forEach((i: any) => {
       const time = i.confirmed_time || i.proposed_times?.[0]
       if (time) items.push({ date: parseISO(time), title: `Interview`, type: 'interview' })
     })
     // Application deadlines
-    ;(applications ?? []).forEach((a: any) => {
+    applicationsList.forEach((a: any) => {
       if (a.program?.application_deadline) {
         items.push({ date: parseISO(a.program.application_deadline), title: `${a.program.program_name} deadline`, type: 'deadline' })
       }
     })
     return items
-  }, [rsvps, interviews, applications])
+  }, [rsvpsList, interviewsList, applicationsList])
 
   const monthStart = startOfMonth(currentMonth)
   const monthEnd = endOfMonth(currentMonth)

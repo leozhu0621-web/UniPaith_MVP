@@ -6,7 +6,7 @@ import { getMatches } from '../../api/matching'
 import { listMyApplications } from '../../api/applications'
 import { chatStudentAssistant } from '../../api/matching'
 import { useAuthStore } from '../../stores/auth-store'
-import { ArrowUp, Sparkles, ShieldCheck } from 'lucide-react'
+import { ArrowUp, Sparkles, ShieldCheck, AlertTriangle } from 'lucide-react'
 import Avatar from '../../components/ui/Avatar'
 import { formatRelative } from '../../utils/format'
 import Skeleton from '../../components/ui/Skeleton'
@@ -27,14 +27,20 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Context data for dynamic quick actions
-  const { data: onboarding } = useQuery({ queryKey: ['onboarding'], queryFn: getOnboarding })
-  const { data: matches } = useQuery({ queryKey: ['matches'], queryFn: () => getMatches(), enabled: (onboarding?.completion_percentage ?? 0) >= 80 })
-  const { data: applications } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
+  const { data: onboarding, isError: onboardingError } = useQuery({ queryKey: ['onboarding'], queryFn: getOnboarding })
+  const { data: matches, isError: matchesError } = useQuery({
+    queryKey: ['matches'],
+    queryFn: () => getMatches(),
+    enabled: (onboarding?.completion_percentage ?? 0) >= 80,
+  })
+  const { data: applications, isError: applicationsError } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
 
-  const completionPct = onboarding?.completion_percentage ?? 0
-  const matchCount = (matches ?? []).length
-  const appCount = (applications ?? []).length
-  const draftApps = (applications ?? []).filter((a: any) => a.status === 'draft').length
+  const completionPct = typeof onboarding?.completion_percentage === 'number' ? onboarding.completion_percentage : 0
+  const matchesList: any[] = Array.isArray(matches) ? matches : []
+  const applicationsList: any[] = Array.isArray(applications) ? applications : []
+  const matchCount = matchesList.length
+  const appCount = applicationsList.length
+  const draftApps = applicationsList.filter((a: any) => a.status === 'draft').length
 
   // Dynamic quick actions based on profile state
   const quickActions = useMemo(() => {
@@ -143,6 +149,12 @@ export default function ChatPage() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+        {(onboardingError || matchesError || applicationsError) && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 flex items-start gap-2">
+            <AlertTriangle size={14} className="mt-0.5" />
+            Some advisor context is temporarily unavailable, but chat is fully usable.
+          </div>
+        )}
         {messagesLoading ? (
           <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 w-3/4" />)}

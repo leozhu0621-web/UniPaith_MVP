@@ -28,10 +28,11 @@ export default function ApplicationsPage() {
     queryKey: ['my-applications'],
     queryFn: listMyApplications,
   })
+  const applicationsList: Application[] = Array.isArray(applications) ? applications : []
 
   const filtered = filter === 'all'
-    ? (applications ?? [])
-    : (applications ?? []).filter((a: Application) => a.status === filter)
+    ? applicationsList
+    : applicationsList.filter((a: Application) => a.status === filter)
 
   if (isLoading) return <div className="p-6 space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
 

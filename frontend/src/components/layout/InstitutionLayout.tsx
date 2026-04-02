@@ -4,25 +4,32 @@ import { useUIStore } from '../../stores/ui-store'
 import {
   LayoutDashboard, GraduationCap, Kanban, FileCheck, Video,
   MessageSquare, Users, Megaphone, CalendarDays, BarChart3,
-  Settings, ChevronLeft, ChevronRight, Bell, Search, LogOut,
+  Settings, ChevronLeft, ChevronRight, Bell, Search, LogOut, Rocket,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { getUnreadCount } from '../../api/notifications'
+import { getInstitution } from '../../api/institutions'
 
-const NAV_SECTIONS = [
+const buildNavSections = (showSetup: boolean) => [
   {
-    label: 'Core',
+    label: 'Today',
     items: [
-      { to: '/i/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-      { to: '/i/programs', icon: GraduationCap, label: 'Programs' },
-      { to: '/i/pipeline', icon: Kanban, label: 'Pipeline' },
-      { to: '/i/reviews', icon: FileCheck, label: 'Reviews' },
-      { to: '/i/interviews', icon: Video, label: 'Interviews' },
-      { to: '/i/messages', icon: MessageSquare, label: 'Messages' },
+      { to: '/i/dashboard', icon: LayoutDashboard, label: 'Overview' },
+      ...(showSetup ? [{ to: '/i/setup', icon: Rocket, label: 'Get Started' }] : []),
     ],
   },
   {
-    label: 'Outreach',
+    label: 'Admissions',
+    items: [
+      { to: '/i/programs', icon: GraduationCap, label: 'Programs' },
+      { to: '/i/pipeline', icon: Kanban, label: 'Applications' },
+      { to: '/i/reviews', icon: FileCheck, label: 'Needs Review' },
+      { to: '/i/interviews', icon: Video, label: 'Interviews' },
+      { to: '/i/messages', icon: MessageSquare, label: 'Inbox' },
+    ],
+  },
+  {
+    label: 'Recruitment',
     items: [
       { to: '/i/segments', icon: Users, label: 'Segments' },
       { to: '/i/campaigns', icon: Megaphone, label: 'Campaigns' },
@@ -30,9 +37,9 @@ const NAV_SECTIONS = [
     ],
   },
   {
-    label: 'Admin',
+    label: 'Insights & Settings',
     items: [
-      { to: '/i/analytics', icon: BarChart3, label: 'Analytics' },
+      { to: '/i/analytics', icon: BarChart3, label: 'Insights' },
       { to: '/i/settings', icon: Settings, label: 'Settings' },
     ],
   },
@@ -49,6 +56,12 @@ export default function InstitutionLayout() {
     queryFn: getUnreadCount,
     refetchInterval: 30000,
   })
+  const institutionQ = useQuery({
+    queryKey: ['institution'],
+    queryFn: getInstitution,
+    retry: false,
+  })
+  const navSections = buildNavSections(institutionQ.isError)
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -64,7 +77,7 @@ export default function InstitutionLayout() {
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4">
-          {NAV_SECTIONS.map(section => (
+          {navSections.map(section => (
             <div key={section.label} className="mb-4">
               {!sidebarCollapsed && (
                 <div className="px-4 mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
@@ -100,7 +113,8 @@ export default function InstitutionLayout() {
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search students, programs..."
+                placeholder="Global search (coming soon)"
+                disabled
                 className="w-72 pl-9 pr-4 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>

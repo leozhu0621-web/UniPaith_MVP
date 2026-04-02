@@ -89,6 +89,7 @@ export default function ProfilePage() {
   const p: StudentProfile | null = profile
   const completionPct = onboarding?.completion_percentage ?? 0
   const stepsCompleted = onboarding?.steps_completed ?? []
+  const documentsList: any[] = Array.isArray(documents) ? documents : []
 
   // Derive section completion
   const sectionDone = (key: string) => {
@@ -99,7 +100,7 @@ export default function ProfilePage() {
       case 'test_scores': return (p?.test_scores ?? []).length > 0
       case 'activities': return (p?.activities ?? []).length > 0
       case 'preferences': return !!p?.preferences
-      case 'documents': return (documents ?? []).length > 0
+      case 'documents': return documentsList.length > 0
       default: return false
     }
   }
@@ -258,11 +259,11 @@ export default function ProfilePage() {
           <h2 className="font-semibold text-gray-900">Documents</h2>
           <Button size="sm" variant="ghost" onClick={() => setEditModal('upload')}><Upload size={14} /></Button>
         </div>
-        {(documents ?? []).length === 0 ? (
+        {documentsList.length === 0 ? (
           <p className="text-sm text-gray-500">No documents uploaded</p>
         ) : (
           <div className="space-y-2">
-            {(documents ?? []).map((doc: any) => (
+            {documentsList.map((doc: any) => (
               <div key={doc.id} className="flex justify-between items-center text-sm">
                 <span>{doc.file_name} ({formatFileSize(doc.file_size_bytes)})</span>
                 <Badge variant="neutral">{doc.document_type}</Badge>

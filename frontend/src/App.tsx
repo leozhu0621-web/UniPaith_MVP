@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useAuthStore } from './stores/auth-store'
 import ToastContainer from './components/ui/Toast'
+import AppErrorBoundary from './components/system/AppErrorBoundary'
 
 // Layouts
 import AuthLayout from './components/layout/AuthLayout'
@@ -58,6 +59,7 @@ import AdminCrawlerPage from './pages/admin/AdminCrawlerPage'
 import AdminMLPage from './pages/admin/AdminMLPage'
 import AdminSystemPage from './pages/admin/AdminSystemPage'
 import AdminOpsCenterPage from './pages/admin/AdminOpsCenterPage'
+import RouteErrorPage from './pages/system/RouteErrorPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -67,15 +69,16 @@ const queryClient = new QueryClient({
 
 const router = createBrowserRouter([
   // Public routes
-  { path: '/', element: <LandingPage /> },
-  { path: '/browse', element: <ProgramBrowsePage /> },
-  { path: '/login', element: <AuthLayout><LoginPage /></AuthLayout> },
-  { path: '/signup', element: <AuthLayout><SignupPage /></AuthLayout> },
+  { path: '/', element: <LandingPage />, errorElement: <RouteErrorPage /> },
+  { path: '/browse', element: <ProgramBrowsePage />, errorElement: <RouteErrorPage /> },
+  { path: '/login', element: <AuthLayout><LoginPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/signup', element: <AuthLayout><SignupPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
 
   // Student routes
   {
     path: '/s',
     element: <RequireAuth role="student"><StudentLayout /></RequireAuth>,
+    errorElement: <RouteErrorPage />,
     children: [
       { index: true, element: <Navigate to="/s/dashboard" replace /> },
       { path: 'dashboard', element: <StudentDashboardPage /> },
@@ -100,14 +103,18 @@ const router = createBrowserRouter([
   {
     path: '/i',
     element: <RequireAuth role="institution_admin"><InstitutionLayout /></RequireAuth>,
+    errorElement: <RouteErrorPage />,
     children: [
       { index: true, element: <Navigate to="/i/dashboard" replace /> },
       { path: 'dashboard', element: <DashboardPage /> },
       { path: 'setup', element: <SetupPage /> },
       { path: 'programs', element: <ProgramsPage /> },
       { path: 'programs/new', element: <ProgramEditorPage /> },
+      { path: 'programs/:id', element: <ProgramEditorPage /> },
       { path: 'programs/:id/edit', element: <ProgramEditorPage /> },
       { path: 'pipeline', element: <PipelinePage /> },
+      { path: 'applications', element: <Navigate to="/i/pipeline" replace /> },
+      { path: 'pipeline/:appId', element: <StudentDetailPage /> },
       { path: 'pipeline/:studentId', element: <StudentDetailPage /> },
       { path: 'reviews', element: <ReviewQueuePage /> },
       { path: 'interviews', element: <InterviewsPage /> },
@@ -124,6 +131,7 @@ const router = createBrowserRouter([
   {
     path: '/admin',
     element: <RequireAuth role="admin"><AdminLayout /></RequireAuth>,
+    errorElement: <RouteErrorPage />,
     children: [
       { index: true, element: <Navigate to="/admin/overview" replace /> },
       { path: 'ops', element: <AdminOpsCenterPage /> },
@@ -136,7 +144,7 @@ const router = createBrowserRouter([
   },
 
   // Catch-all
-  { path: '*', element: <Navigate to="/" replace /> },
+  { path: '*', element: <Navigate to="/" replace />, errorElement: <RouteErrorPage /> },
 ])
 
 export default function App() {
@@ -148,8 +156,10 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-      <ToastContainer />
+      <AppErrorBoundary>
+        <RouterProvider router={router} />
+        <ToastContainer />
+      </AppErrorBoundary>
     </QueryClientProvider>
   )
 }

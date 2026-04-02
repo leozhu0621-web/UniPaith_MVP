@@ -31,7 +31,8 @@ export default function SavedListPage() {
 
   // Build match score lookup
   const matchLookup: Record<string, MatchResult> = {}
-  ;(matches ?? []).forEach((m: MatchResult) => { matchLookup[m.program_id] = m })
+  const matchesList: MatchResult[] = Array.isArray(matches) ? matches : []
+  matchesList.forEach((m: MatchResult) => { matchLookup[m.program_id] = m })
 
   const toggle = (id: string) => {
     const next = new Set(selected)
@@ -41,7 +42,7 @@ export default function SavedListPage() {
 
   if (isLoading) return <div className="p-6 space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
 
-  const programs: SavedProgram[] = saved ?? []
+  const programs: SavedProgram[] = Array.isArray(saved) ? saved : []
 
   // Comparison helper: find best/worst in a numeric column
   const bestValue = (values: (number | null | undefined)[], higher = true) => {

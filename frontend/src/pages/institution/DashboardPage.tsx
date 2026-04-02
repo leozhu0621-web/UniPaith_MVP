@@ -184,7 +184,7 @@ export default function DashboardPage() {
             <Table
               columns={programColumns}
               data={programs.slice(0, 5)}
-              onRowClick={(row) => navigate(`/i/programs/${row.id}`)}
+              onRowClick={(row) => navigate(`/i/programs/${row.id}/edit`)}
             />
           )}
         </Card>

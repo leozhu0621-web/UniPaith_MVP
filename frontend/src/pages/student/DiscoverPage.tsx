@@ -70,7 +70,8 @@ export default function DiscoverPage() {
   })
 
   const matchesByTier: Record<number, MatchResult[]> = { 3: [], 2: [], 1: [] }
-  ;(matches ?? []).forEach((m: MatchResult) => {
+  const matchesList: MatchResult[] = Array.isArray(matches) ? matches : []
+  matchesList.forEach((m: MatchResult) => {
     if (matchesByTier[m.match_tier]) matchesByTier[m.match_tier].push(m)
   })
 
@@ -90,7 +91,8 @@ export default function DiscoverPage() {
   const activeFilterCount = [country, degreeType, minTuition, maxTuition].filter(Boolean).length
 
   // Sort programs client-side
-  let programs = [...(browseData?.items ?? [])]
+  const browseItems: ProgramSummary[] = Array.isArray(browseData?.items) ? browseData.items : []
+  let programs = [...browseItems]
   if (sortBy === 'tuition_asc') programs.sort((a, b) => (a.tuition ?? Infinity) - (b.tuition ?? Infinity))
   else if (sortBy === 'tuition_desc') programs.sort((a, b) => (b.tuition ?? 0) - (a.tuition ?? 0))
   else if (sortBy === 'deadline') programs.sort((a, b) => {
@@ -142,7 +144,7 @@ export default function DiscoverPage() {
           <h2 className="text-lg font-medium mb-4">Your AI Matches</h2>
           {matchesLoading ? (
             <div className="flex gap-4">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-32 w-64" />)}</div>
-          ) : (matches ?? []).length === 0 ? (
+          ) : matchesList.length === 0 ? (
             <p className="text-sm text-gray-500">No matches yet — check back after your profile is processed.</p>
           ) : (
             [3, 2, 1].map(tier => {

@@ -27,32 +27,14 @@ export default function LoginPage() {
   const onSubmit = async (data: FormData) => {
     setError('')
     setLoading(true)
-    // #region agent log
-    fetch('http://127.0.0.1:7640/ingest/56780e01-d332-4ae8-8f9d-c88718bcdca2',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'5ae59b'},body:JSON.stringify({sessionId:'5ae59b',runId:'initial',hypothesisId:'H1',location:'frontend/src/pages/auth/LoginPage.tsx:onSubmit:start:v2',message:'Login submit entered',data:{hasEmail:Boolean(data.email),passwordLength:data.password?.length??0},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
-    // #region agent log
-    fetch('http://127.0.0.1:7640/ingest/56780e01-d332-4ae8-8f9d-c88718bcdca2',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'65023e'},body:JSON.stringify({sessionId:'65023e',runId:'initial',hypothesisId:'H1',location:'frontend/src/pages/auth/LoginPage.tsx:onSubmit:start',message:'Login form submitted',data:{emailDomain:data.email.includes('@')?data.email.split('@')[1]:'invalid'},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     try {
       await login(data.email, data.password)
       const user = useAuthStore.getState().user
       const dest = user?.role === 'admin' ? '/admin'
-        : user?.role === 'student' ? '/s/chat'
+        : user?.role === 'student' ? '/s/dashboard'
         : '/i/dashboard'
-      // #region agent log
-      fetch('http://127.0.0.1:7640/ingest/56780e01-d332-4ae8-8f9d-c88718bcdca2',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'5ae59b'},body:JSON.stringify({sessionId:'5ae59b',runId:'initial',hypothesisId:'H4',location:'frontend/src/pages/auth/LoginPage.tsx:onSubmit:success:v2',message:'Login submit success branch',data:{hasUser:Boolean(user),role:user?.role??null,destination:dest},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
-      // #region agent log
-      fetch('http://127.0.0.1:7640/ingest/56780e01-d332-4ae8-8f9d-c88718bcdca2',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'65023e'},body:JSON.stringify({sessionId:'65023e',runId:'initial',hypothesisId:'H4',location:'frontend/src/pages/auth/LoginPage.tsx:onSubmit:success',message:'Login completed and navigation chosen',data:{isUserPresent:Boolean(user),role:user?.role??null,destination:dest},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       navigate(dest)
     } catch (err: any) {
-      // #region agent log
-      fetch('http://127.0.0.1:7640/ingest/56780e01-d332-4ae8-8f9d-c88718bcdca2',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'5ae59b'},body:JSON.stringify({sessionId:'5ae59b',runId:'initial',hypothesisId:'H2',location:'frontend/src/pages/auth/LoginPage.tsx:onSubmit:catch:v2',message:'Login submit catch branch',data:{errorMessage:err?.message??'unknown'},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
-      // #region agent log
-      fetch('http://127.0.0.1:7640/ingest/56780e01-d332-4ae8-8f9d-c88718bcdca2',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'65023e'},body:JSON.stringify({sessionId:'65023e',runId:'initial',hypothesisId:'H1',location:'frontend/src/pages/auth/LoginPage.tsx:onSubmit:catch',message:'Login handler caught error',data:{errorMessage:err?.message??'unknown'},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       setError(err.message || 'Login failed')
     } finally {
       setLoading(false)

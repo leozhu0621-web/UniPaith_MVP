@@ -144,6 +144,9 @@ export default function ApplicationDetailPage() {
   const currentStepIdx = STATUS_STEPS.indexOf(application.status)
   const checklistItems = checklist?.items ?? []
   const completionPct = checklist?.completion_percentage ?? 0
+  const documentsList: any[] = Array.isArray(documents) ? documents : []
+  const essaysList: Essay[] = Array.isArray(essays) ? essays : []
+  const resumesList: Resume[] = Array.isArray(resumes) ? resumes : []
 
   const tabs = [
     { id: 'documents', label: 'Documents' },
@@ -271,10 +274,10 @@ export default function ApplicationDetailPage() {
                 )}
 
                 {/* Existing documents */}
-                {(documents ?? []).length > 0 && (
+                {documentsList.length > 0 && (
                   <div className="space-y-2">
                     <h3 className="text-sm font-medium text-gray-700">Uploaded Documents</h3>
-                    {(documents ?? []).map((doc: any) => (
+                    {documentsList.map((doc: any) => (
                       <div key={doc.id} className="flex justify-between items-center p-3 rounded-lg border border-gray-100 text-sm">
                         <div className="flex items-center gap-2">
                           <FileCheck size={16} className="text-green-500" />
@@ -286,7 +289,7 @@ export default function ApplicationDetailPage() {
                   </div>
                 )}
 
-                {(documents ?? []).length === 0 && !uploading && (
+                {documentsList.length === 0 && !uploading && (
                   <p className="text-sm text-gray-500">No documents uploaded yet. Upload transcripts, recommendations, and other required documents above.</p>
                 )}
               </div>
@@ -295,10 +298,10 @@ export default function ApplicationDetailPage() {
             {tab === 'essays' && (
               <div className="space-y-4">
                 <Button size="sm" onClick={() => setShowEssayModal(true)}>+ New Essay</Button>
-                {(essays ?? []).length === 0 ? (
+                {essaysList.length === 0 ? (
                   <p className="text-sm text-gray-500 mt-2">No essays yet for this application.</p>
                 ) : (
-                  (essays ?? []).map((e: Essay) => (
+                  essaysList.map((e: Essay) => (
                     <Card key={e.id} className="p-4">
                       <div className="flex justify-between items-start mb-2">
                         <div>
@@ -364,13 +367,13 @@ export default function ApplicationDetailPage() {
 
             {tab === 'resume' && (
               <div className="space-y-3">
-                {(resumes ?? []).length === 0 ? (
+                {resumesList.length === 0 ? (
                   <div>
                     <p className="text-sm text-gray-500 mb-3">No resume targeting this program yet.</p>
                     <Button size="sm" onClick={() => resumeGenMut.mutate()} loading={resumeGenMut.isPending}>Generate Resume</Button>
                   </div>
                 ) : (
-                  (resumes ?? []).map((r: Resume) => (
+                  resumesList.map((r: Resume) => (
                     <Card key={r.id} className="p-4">
                       <p className="font-medium text-sm">Resume v{r.resume_version}</p>
                       <Badge variant={(STATUS_COLORS[r.status] || 'neutral') as any} size="sm">{r.status}</Badge>

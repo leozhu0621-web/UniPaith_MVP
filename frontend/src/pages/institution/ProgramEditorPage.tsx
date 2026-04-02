@@ -105,7 +105,7 @@ export default function ProgramEditorPage() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['institution-programs'] })
       showToast('Program created', 'success')
-      navigate(`/i/programs/${data.id}`)
+      navigate(`/i/programs/${data.id}/edit`)
     },
     onError: () => showToast('Failed to create program', 'error'),
   })

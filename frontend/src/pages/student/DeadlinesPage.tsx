@@ -39,12 +39,15 @@ export default function DeadlinesPage() {
   })
 
   const isLoading = appsLoading || rsvpsLoading || intLoading
+  const applicationsList: any[] = Array.isArray(applications) ? applications : []
+  const rsvpsList: any[] = Array.isArray(rsvps) ? rsvps : []
+  const interviewsList: any[] = Array.isArray(interviews) ? interviews : []
 
   const deadlines = useMemo(() => {
     const now = new Date()
     const items: DeadlineItem[] = []
 
-    ;(applications ?? []).forEach((a: any) => {
+    applicationsList.forEach((a: any) => {
       if (a.program?.application_deadline) {
         const d = parseISO(a.program.application_deadline)
         if (d >= now) {
@@ -59,7 +62,7 @@ export default function DeadlinesPage() {
       }
     })
 
-    ;(rsvps ?? []).forEach((r: any) => {
+    rsvpsList.forEach((r: any) => {
       if (r.event?.start_time) {
         const d = parseISO(r.event.start_time)
         if (d >= now) {
@@ -74,7 +77,7 @@ export default function DeadlinesPage() {
       }
     })
 
-    ;(interviews ?? []).forEach((i: any) => {
+    interviewsList.forEach((i: any) => {
       const time = i.confirmed_time || i.proposed_times?.[0]
       if (time) {
         const d = parseISO(time)
@@ -92,7 +95,7 @@ export default function DeadlinesPage() {
 
     items.sort((a, b) => a.date.getTime() - b.date.getTime())
     return items
-  }, [applications, rsvps, interviews])
+  }, [applicationsList, rsvpsList, interviewsList])
 
   // Group by month
   const grouped = useMemo(() => {
