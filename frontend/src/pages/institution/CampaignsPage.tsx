@@ -166,11 +166,35 @@ export default function CampaignsPage() {
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Campaigns</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Outreach Campaigns</h1>
+          <p className="text-sm text-gray-500 mt-1">Plan and monitor student outreach from draft to delivery.</p>
+        </div>
         <Button onClick={openCreate} className="flex items-center gap-2">
           <Plus size={16} /> New Campaign
         </Button>
       </div>
+
+      {campaigns.length > 0 && (
+        <div className="grid grid-cols-4 gap-3">
+          <Card className="p-3">
+            <p className="text-xs text-gray-500">Total</p>
+            <p className="text-xl font-semibold text-gray-900">{campaigns.length}</p>
+          </Card>
+          <Card className="p-3">
+            <p className="text-xs text-gray-500">Draft</p>
+            <p className="text-xl font-semibold text-gray-900">{campaigns.filter(c => (c.status ?? 'draft') === 'draft').length}</p>
+          </Card>
+          <Card className="p-3">
+            <p className="text-xs text-gray-500">Scheduled</p>
+            <p className="text-xl font-semibold text-gray-900">{campaigns.filter(c => c.status === 'scheduled').length}</p>
+          </Card>
+          <Card className="p-3">
+            <p className="text-xs text-gray-500">Sent</p>
+            <p className="text-xl font-semibold text-gray-900">{campaigns.filter(c => c.status === 'sent').length}</p>
+          </Card>
+        </div>
+      )}
 
       <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 

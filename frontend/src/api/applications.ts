@@ -1,10 +1,11 @@
 import apiClient from './client'
+import { toArrayData } from './normalize'
 
 export const createApplication = (programId: string) =>
   apiClient.post('/applications', { program_id: programId }).then(r => r.data)
 
 export const listMyApplications = () =>
-  apiClient.get('/applications/me').then(r => r.data)
+  apiClient.get('/applications/me').then(r => toArrayData<any>(r.data))
 
 export const getMyApplication = (appId: string) =>
   apiClient.get(`/applications/me/${appId}`).then(r => r.data)

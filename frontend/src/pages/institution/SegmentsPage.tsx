@@ -15,6 +15,29 @@ import { showToast } from '../../stores/toast-store'
 import { formatDate } from '../../utils/format'
 import type { Segment, Program } from '../../types'
 
+const SEGMENT_TEMPLATES = [
+  {
+    value: '',
+    label: 'Custom segment',
+    criteria: {},
+  },
+  {
+    value: 'high_match',
+    label: 'High match score (80+)',
+    criteria: { min_match_score: 80 },
+  },
+  {
+    value: 'under_review',
+    label: 'Applications under review',
+    criteria: { statuses: ['submitted', 'under_review'] },
+  },
+  {
+    value: 'interview_ready',
+    label: 'Interview stage candidates',
+    criteria: { statuses: ['interview'] },
+  },
+]
+
 export default function SegmentsPage() {
   const queryClient = useQueryClient()
   const [showModal, setShowModal] = useState(false)
@@ -22,6 +45,7 @@ export default function SegmentsPage() {
   const [name, setName] = useState('')
   const [programId, setProgramId] = useState('')
   const [criteriaText, setCriteriaText] = useState('{}')
+  const [templateKey, setTemplateKey] = useState('')
   const [isActive, setIsActive] = useState(true)
 
   const segmentsQ = useQuery({ queryKey: ['segments'], queryFn: getSegments })
@@ -36,6 +60,7 @@ export default function SegmentsPage() {
     setName('')
     setProgramId('')
     setCriteriaText('{}')
+    setTemplateKey('')
     setIsActive(true)
   }
 
@@ -45,6 +70,7 @@ export default function SegmentsPage() {
     setName(seg.segment_name)
     setProgramId(seg.program_id ?? '')
     setCriteriaText(JSON.stringify(seg.criteria ?? {}, null, 2))
+    setTemplateKey('')
     setIsActive(seg.is_active)
     setShowModal(true)
   }
@@ -100,7 +126,10 @@ export default function SegmentsPage() {
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Segments</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Recruitment Segments</h1>
+          <p className="text-sm text-gray-500 mt-1">Group applicants by shared traits to run targeted outreach.</p>
+        </div>
         <Button onClick={openCreate} className="flex items-center gap-2">
           <Plus size={16} /> New Segment
         </Button>
@@ -154,7 +183,24 @@ export default function SegmentsPage() {
         <div className="space-y-4">
           <Input label="Segment Name *" value={name} onChange={e => setName(e.target.value)} />
           <Select label="Program" options={programOptions} value={programId} onChange={e => setProgramId(e.target.value)} />
-          <Textarea label="Criteria (JSON)" value={criteriaText} onChange={e => setCriteriaText(e.target.value)} rows={5} />
+          <Select
+            label="Template"
+            options={SEGMENT_TEMPLATES.map(t => ({ value: t.value, label: t.label }))}
+            value={templateKey}
+            onChange={e => {
+              const next = e.target.value
+              setTemplateKey(next)
+              const template = SEGMENT_TEMPLATES.find(t => t.value === next)
+              if (template) setCriteriaText(JSON.stringify(template.criteria, null, 2))
+            }}
+          />
+          <Textarea
+            label="Criteria (JSON)"
+            value={criteriaText}
+            onChange={e => setCriteriaText(e.target.value)}
+            rows={5}
+            helperText="Tip: start with a template, then adjust values. Keep this plain JSON object."
+          />
           <div className="flex items-center gap-2">
             <button onClick={() => setIsActive(!isActive)} className="text-gray-600">
               {isActive ? <ToggleRight size={24} className="text-green-500" /> : <ToggleLeft size={24} className="text-gray-400" />}

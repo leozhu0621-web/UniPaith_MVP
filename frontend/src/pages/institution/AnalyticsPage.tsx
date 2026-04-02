@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { BarChart3, TrendingUp, Target, Users, Award } from 'lucide-react'
 import { getAnalytics } from '../../api/institutions'
 import Card from '../../components/ui/Card'
+import Badge from '../../components/ui/Badge'
 import Skeleton from '../../components/ui/Skeleton'
 import { formatPercent } from '../../utils/format'
 import type { AnalyticsData } from '../../types'
@@ -54,25 +55,58 @@ export default function AnalyticsPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center gap-2">
         <BarChart3 size={24} className="text-indigo-600" />
-        <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Insights</h1>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-4 gap-4">
-        {kpis.map(kpi => (
-          <Card key={kpi.label} className="p-5">
-            <div className="flex items-center gap-3">
-              <div className={`p-2.5 rounded-lg ${kpi.color}`}>
-                <kpi.icon size={20} />
+      <Card className="p-4">
+        <h3 className="text-sm font-semibold text-gray-900 mb-1">What this page is for</h3>
+        <p className="text-sm text-gray-600">
+          Use Insights for trend analysis and outcome reporting. For daily operations and queue work, use Overview and Applications.
+        </p>
+      </Card>
+
+      {/* Executive KPI Cards */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">Executive Outcomes</h3>
+        <div className="grid grid-cols-4 gap-4">
+          {kpis.map(kpi => (
+            <Card key={kpi.label} className="p-5">
+              <div className="flex items-center gap-3">
+                <div className={`p-2.5 rounded-lg ${kpi.color}`}>
+                  <kpi.icon size={20} />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">{kpi.label}</p>
+                  <p className="text-2xl font-semibold text-gray-900">{kpi.value}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-gray-500">{kpi.label}</p>
-                <p className="text-2xl font-semibold text-gray-900">{kpi.value}</p>
-              </div>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          ))}
+        </div>
       </div>
+
+      <div className="grid grid-cols-2 gap-6">
+        <Card className="p-4 border-dashed border-gray-300">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-900">Market & Demographics</h3>
+            <Badge variant="neutral">Planned</Badge>
+          </div>
+          <p className="text-sm text-gray-600 mt-2">
+            Next analytics phase will add applicant geography, demographic mix, channel attribution, and stage-duration insights.
+          </p>
+        </Card>
+        <Card className="p-4 border-dashed border-gray-300">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-900">Operational Benchmarks</h3>
+            <Badge variant="neutral">Planned</Badge>
+          </div>
+          <p className="text-sm text-gray-600 mt-2">
+            Reviewer workload and conversion by cohort will be added once backend rollups are available.
+          </p>
+        </Card>
+      </div>
+
+      <h3 className="text-sm font-semibold text-gray-900">Operational Diagnostics</h3>
 
       <div className="grid grid-cols-2 gap-6">
         {/* Applications by Status */}

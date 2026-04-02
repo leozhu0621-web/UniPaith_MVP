@@ -1,7 +1,8 @@
 import apiClient from './client'
+import { toArrayData } from './normalize'
 
 export const listSaved = () =>
-  apiClient.get('/students/me/saved').then(r => r.data)
+  apiClient.get('/students/me/saved').then(r => toArrayData<any>(r.data))
 
 export const saveProgram = (programId: string, notes?: string) =>
   apiClient.post('/students/me/saved', { program_id: programId, notes }).then(r => r.data)

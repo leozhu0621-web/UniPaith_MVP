@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useMemo, useEffect, type ReactNode } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   DndContext,
@@ -12,13 +12,18 @@ import {
   type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core'
-import { Search, GripVertical } from 'lucide-react'
+import { Search, GripVertical, ClipboardCheck, List, Video } from 'lucide-react'
 import { getInstitutionPrograms } from '../../api/institutions'
 import { getApplicationsByProgram, updateApplicationStatus } from '../../api/applications-admin'
+import { getInstitutionInterviews } from '../../api/interviews-admin'
 import { showToast } from '../../stores/toast-store'
 import Badge from '../../components/ui/Badge'
 import Select from '../../components/ui/Select'
 import Input from '../../components/ui/Input'
+import Button from '../../components/ui/Button'
+import Card from '../../components/ui/Card'
+import Table from '../../components/ui/Table'
+import Tabs from '../../components/ui/Tabs'
 import Skeleton from '../../components/ui/Skeleton'
 import EmptyState from '../../components/ui/EmptyState'
 import { formatRelative, formatScore } from '../../utils/format'
@@ -33,6 +38,7 @@ const PIPELINE_COLUMNS = [
 ] as const
 
 type ColumnId = typeof PIPELINE_COLUMNS[number]['id']
+type PipelineTab = 'board' | 'review' | 'list' | 'interviews'
 
 function DraggableCard({ app, onClick }: { app: Application; onClick: () => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: app.id })
@@ -47,7 +53,7 @@ function DraggableCard({ app, onClick }: { app: Application; onClick: () => void
     >
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-gray-900 truncate">{app.student_id.slice(0, 8)}...</p>
+          <p className="text-sm font-medium text-gray-900 truncate">Applicant {app.student_id.slice(0, 8)}</p>
           <p className="text-xs text-gray-500 mt-0.5">{app.program?.program_name ?? 'Program'}</p>
         </div>
         <div {...listeners} {...attributes} className="p-1 cursor-grab text-gray-400">
@@ -69,7 +75,7 @@ function DraggableCard({ app, onClick }: { app: Application; onClick: () => void
   )
 }
 
-function DroppableColumn({ id, label, color, children }: { id: string; label: string; color: string; children: React.ReactNode }) {
+function DroppableColumn({ id, label, color, children }: { id: string; label: string; color: string; children: ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id })
   return (
     <div
@@ -88,7 +94,7 @@ function DroppableColumn({ id, label, color, children }: { id: string; label: st
 function PipelineCardOverlay({ app }: { app: Application }) {
   return (
     <div className="bg-white border rounded-lg p-3 shadow-lg w-[240px]">
-      <p className="text-sm font-medium text-gray-900">{app.student_id.slice(0, 8)}...</p>
+      <p className="text-sm font-medium text-gray-900">Applicant {app.student_id.slice(0, 8)}</p>
       <p className="text-xs text-gray-500 mt-0.5">{app.program?.program_name ?? 'Program'}</p>
     </div>
   )
@@ -96,10 +102,13 @@ function PipelineCardOverlay({ app }: { app: Application }) {
 
 export default function PipelinePage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
   const [selectedProgram, setSelectedProgram] = useState<string>('')
   const [search, setSearch] = useState('')
   const [activeApp, setActiveApp] = useState<Application | null>(null)
+  const initialTab = (searchParams.get('tab') as PipelineTab) || 'board'
+  const [activeTab, setActiveTab] = useState<PipelineTab>(initialTab)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
@@ -112,6 +121,16 @@ export default function PipelinePage() {
     enabled: !!selectedProgram,
   })
   const applications: Application[] = Array.isArray(applicationsQ.data) ? applicationsQ.data : []
+  const interviewsQ = useQuery({
+    queryKey: ['institution-interviews', selectedProgram],
+    queryFn: () => getInstitutionInterviews(),
+    enabled: activeTab === 'interviews',
+  })
+
+  useEffect(() => {
+    const tabParam = (searchParams.get('tab') as PipelineTab) || 'board'
+    if (tabParam !== activeTab) setActiveTab(tabParam)
+  }, [activeTab, searchParams])
 
   const grouped = useMemo(() => {
     const filtered = applications.filter(a =>
@@ -131,7 +150,25 @@ export default function PipelinePage() {
     return map
   }, [applications, search])
 
+  const reviewableApps = applications.filter(a =>
+    (a.status === 'submitted' || a.status === 'under_review') && !a.decision
+  )
+  const filteredReviewableApps = reviewableApps.filter(a =>
+    !search || a.student_id.toLowerCase().includes(search.toLowerCase())
+  )
+  const filteredAllApps = applications.filter(a =>
+    !search || a.student_id.toLowerCase().includes(search.toLowerCase())
+  )
+  const interviews = Array.isArray(interviewsQ.data) ? interviewsQ.data : []
+  const interviewCandidates = filteredAllApps.filter(a => a.status === 'interview')
+
   const programOptions = programs.map(p => ({ value: p.id, label: p.program_name }))
+  const tabs = [
+    { id: 'board', label: 'Board' },
+    { id: 'review', label: 'Needs Review' },
+    { id: 'list', label: 'All Applications' },
+    { id: 'interviews', label: 'Interviews' },
+  ]
 
   const statusMut = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) => updateApplicationStatus(id, status),
@@ -163,13 +200,59 @@ export default function PipelinePage() {
     statusMut.mutate({ id: appId, status: newStatus })
   }
 
+  const handleTabChange = (tab: string) => {
+    const nextTab = tab as PipelineTab
+    setActiveTab(nextTab)
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.set('tab', nextTab)
+      return next
+    })
+  }
+
+  const reviewColumns = [
+    {
+      key: 'student_id',
+      label: 'Applicant',
+      render: (row: Application) => (
+        <button
+          onClick={() => navigate(`/i/pipeline/${row.id}`)}
+          className="text-indigo-600 hover:underline font-medium"
+        >
+          Applicant {row.student_id.slice(0, 8)}
+        </button>
+      ),
+    },
+    {
+      key: 'status',
+      label: 'Current Stage',
+      render: (row: Application) => (
+        <Badge variant={(STATUS_COLORS[row.status] as any) ?? 'neutral'}>
+          {row.status.replace('_', ' ')}
+        </Badge>
+      ),
+    },
+    {
+      key: 'match_score',
+      label: 'Match Score',
+      render: (row: Application) => row.match_score != null ? formatScore(row.match_score / 100) : '-',
+    },
+    {
+      key: 'updated_at',
+      label: 'Updated',
+      render: (row: Application) => formatRelative(row.updated_at),
+    },
+  ]
+
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Pipeline</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Applications Workspace</h1>
       </div>
 
-      <div className="flex items-center gap-4">
+      <Tabs tabs={tabs} activeTab={activeTab} onChange={handleTabChange} />
+
+      <div className="flex flex-wrap items-center gap-4">
         <Select
           options={programOptions}
           placeholder="Select Program"
@@ -180,7 +263,7 @@ export default function PipelinePage() {
         <div className="relative flex-1 max-w-xs">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <Input
-            placeholder="Search students..."
+            placeholder="Search by applicant ID..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="pl-9"
@@ -189,7 +272,7 @@ export default function PipelinePage() {
       </div>
 
       {!selectedProgram ? (
-        <EmptyState title="Select a program" description="Choose a program above to view its application pipeline." />
+        <EmptyState title="Select a program" description="Choose a program above to manage its full admissions workflow." />
       ) : applicationsQ.isLoading ? (
         <div className="flex gap-4">
           {PIPELINE_COLUMNS.map(col => (
@@ -201,29 +284,92 @@ export default function PipelinePage() {
           ))}
         </div>
       ) : (
-        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-          <div className="flex gap-4 overflow-x-auto pb-4">
-            {PIPELINE_COLUMNS.map(col => (
-              <DroppableColumn key={col.id} id={col.id} label={col.label} color={col.color}>
-                {grouped[col.id].length === 0 ? (
-                  <p className="text-xs text-gray-400 text-center py-4">No applications</p>
-                ) : (
-                  grouped[col.id].map(app => (
-                    <DraggableCard
-                      key={app.id}
-                      app={app}
-                      onClick={() => navigate(`/i/pipeline/${app.id}`)}
-                    />
-                  ))
-                )}
-              </DroppableColumn>
-            ))}
-          </div>
+        <>
+          {activeTab === 'board' && (
+            <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+              <div className="flex gap-4 overflow-x-auto pb-4">
+                {PIPELINE_COLUMNS.map(col => (
+                  <DroppableColumn key={col.id} id={col.id} label={`${col.label} (${grouped[col.id].length})`} color={col.color}>
+                    {grouped[col.id].length === 0 ? (
+                      <p className="text-xs text-gray-400 text-center py-4">No applications</p>
+                    ) : (
+                      grouped[col.id].map(app => (
+                        <DraggableCard
+                          key={app.id}
+                          app={app}
+                          onClick={() => navigate(`/i/pipeline/${app.id}`)}
+                        />
+                      ))
+                    )}
+                  </DroppableColumn>
+                ))}
+              </div>
 
-          <DragOverlay>
-            {activeApp ? <PipelineCardOverlay app={activeApp} /> : null}
-          </DragOverlay>
-        </DndContext>
+              <DragOverlay>
+                {activeApp ? <PipelineCardOverlay app={activeApp} /> : null}
+              </DragOverlay>
+            </DndContext>
+          )}
+
+          {activeTab === 'review' && (
+            <Card className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-gray-900">Needs Review ({filteredReviewableApps.length})</h3>
+                <Badge variant="warning" className="flex items-center gap-1">
+                  <ClipboardCheck size={12} />
+                  Priority Queue
+                </Badge>
+              </div>
+              {filteredReviewableApps.length === 0 ? (
+                <EmptyState title="No pending reviews" description="All applications in this program are currently reviewed." />
+              ) : (
+                <Table columns={reviewColumns} data={filteredReviewableApps} onRowClick={(row) => navigate(`/i/pipeline/${row.id}`)} />
+              )}
+            </Card>
+          )}
+
+          {activeTab === 'list' && (
+            <Card className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-gray-900">All Applications ({filteredAllApps.length})</h3>
+                <Badge variant="info" className="flex items-center gap-1">
+                  <List size={12} />
+                  Unified View
+                </Badge>
+              </div>
+              {filteredAllApps.length === 0 ? (
+                <EmptyState title="No applications found" description="Try clearing search or checking another program." />
+              ) : (
+                <Table columns={reviewColumns} data={filteredAllApps} onRowClick={(row) => navigate(`/i/pipeline/${row.id}`)} />
+              )}
+            </Card>
+          )}
+
+          {activeTab === 'interviews' && (
+            <Card className="p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-gray-900">Interview Pipeline ({interviewCandidates.length})</h3>
+                <Button variant="secondary" size="sm" onClick={() => navigate('/i/interviews')} className="flex items-center gap-2">
+                  <Video size={14} />
+                  Open Interview Scheduler
+                </Button>
+              </div>
+              <p className="text-sm text-gray-600">
+                Candidates in the interview stage are listed here for quick triage. Use Interview Scheduler for availability and scoring.
+              </p>
+              {interviewCandidates.length === 0 ? (
+                <EmptyState title="No interview-stage candidates" description="Move candidates to Interview from Board to schedule next steps." />
+              ) : (
+                <Table columns={reviewColumns} data={interviewCandidates} onRowClick={(row) => navigate(`/i/pipeline/${row.id}`)} />
+              )}
+              {interviewsQ.isLoading ? (
+                <p className="text-xs text-gray-500">Loading interview schedule data...</p>
+              ) : (
+                <p className="text-xs text-gray-500">Total interview records in system: {interviews.length}</p>
+              )}
+            </Card>
+          )}
+        </>
       )}
     </div>
   )

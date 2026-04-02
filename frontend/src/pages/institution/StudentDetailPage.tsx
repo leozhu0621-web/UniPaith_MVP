@@ -20,7 +20,8 @@ import { STATUS_COLORS, DECISION_OPTIONS } from '../../utils/constants'
 import type { ApplicationScore, AIReviewSummary, Rubric } from '../../types'
 
 export default function StudentDetailPage() {
-  const { studentId } = useParams<{ studentId: string }>()
+  const { appId, studentId } = useParams<{ appId?: string; studentId?: string }>()
+  const applicationId = appId ?? studentId
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState('overview')
   const [showDecisionModal, setShowDecisionModal] = useState(false)
@@ -39,21 +40,21 @@ export default function StudentDetailPage() {
   const [assistantReply, setAssistantReply] = useState<string | null>(null)
 
   const applicationQ = useQuery({
-    queryKey: ['application-review', studentId],
-    queryFn: () => reviewApplication(studentId!),
-    enabled: !!studentId,
+    queryKey: ['application-review', applicationId],
+    queryFn: () => reviewApplication(applicationId!),
+    enabled: !!applicationId,
   })
 
   const scoresQ = useQuery({
-    queryKey: ['application-scores', studentId],
-    queryFn: () => getScores(studentId!),
-    enabled: !!studentId && activeTab === 'scores',
+    queryKey: ['application-scores', applicationId],
+    queryFn: () => getScores(applicationId!),
+    enabled: !!applicationId && activeTab === 'scores',
   })
 
   const aiQ = useQuery({
-    queryKey: ['ai-summary', studentId],
-    queryFn: () => getAISummary(studentId!),
-    enabled: !!studentId && activeTab === 'ai',
+    queryKey: ['ai-summary', applicationId],
+    queryFn: () => getAISummary(applicationId!),
+    enabled: !!applicationId && activeTab === 'ai',
   })
 
   const rubricsQ = useQuery({
@@ -68,23 +69,23 @@ export default function StudentDetailPage() {
   const rubrics: Rubric[] = Array.isArray(rubricsQ.data) ? rubricsQ.data : []
 
   const assignMut = useMutation({
-    mutationFn: () => assignReviewer(studentId!),
-    onSuccess: () => { showToast('Reviewer assigned', 'success'); queryClient.invalidateQueries({ queryKey: ['application-review', studentId] }) },
+    mutationFn: () => assignReviewer(applicationId!),
+    onSuccess: () => { showToast('Reviewer assigned', 'success'); queryClient.invalidateQueries({ queryKey: ['application-review', applicationId] }) },
     onError: () => showToast('Failed to assign reviewer', 'error'),
   })
 
   const decisionMut = useMutation({
-    mutationFn: () => makeDecision(studentId!, { decision: decision as any, decision_notes: decisionNotes || null }),
+    mutationFn: () => makeDecision(applicationId!, { decision: decision as any, decision_notes: decisionNotes || null }),
     onSuccess: () => {
       showToast('Decision recorded', 'success')
       setShowDecisionModal(false)
-      queryClient.invalidateQueries({ queryKey: ['application-review', studentId] })
+      queryClient.invalidateQueries({ queryKey: ['application-review', applicationId] })
     },
     onError: () => showToast('Failed to record decision', 'error'),
   })
 
   const offerMut = useMutation({
-    mutationFn: () => createOffer(studentId!, {
+    mutationFn: () => createOffer(applicationId!, {
       offer_type: offerType as any,
       tuition_amount: tuitionAmount ? Number(tuitionAmount) : null,
       scholarship_amount: scholarshipAmount ? Number(scholarshipAmount) : 0,
@@ -98,11 +99,11 @@ export default function StudentDetailPage() {
   })
 
   const scoreMut = useMutation({
-    mutationFn: () => scoreApplication(studentId!, { rubric_id: selectedRubric, criterion_scores: criterionScores, reviewer_notes: reviewerNotes || null }),
+    mutationFn: () => scoreApplication(applicationId!, { rubric_id: selectedRubric, criterion_scores: criterionScores, reviewer_notes: reviewerNotes || null }),
     onSuccess: () => {
       showToast('Score submitted', 'success')
       setShowScoringModal(false)
-      queryClient.invalidateQueries({ queryKey: ['application-scores', studentId] })
+      queryClient.invalidateQueries({ queryKey: ['application-scores', applicationId] })
     },
     onError: () => showToast('Failed to submit score', 'error'),
   })

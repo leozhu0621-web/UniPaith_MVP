@@ -1,7 +1,8 @@
 import apiClient from './client'
+import { toArrayData } from './normalize'
 
 export const getMatches = (forceRefresh = false) =>
-  apiClient.get('/students/me/matches', { params: { force_refresh: forceRefresh } }).then(r => r.data)
+  apiClient.get('/students/me/matches', { params: { force_refresh: forceRefresh } }).then(r => toArrayData<any>(r.data))
 
 export const getMatchDetail = (programId: string) =>
   apiClient.get(`/students/me/matches/${programId}`).then(r => r.data)

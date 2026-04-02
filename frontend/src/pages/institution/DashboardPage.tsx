@@ -1,7 +1,19 @@
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Plus, GitBranch, ClipboardCheck, Bell, BookOpen, Calendar, Users } from 'lucide-react'
-import { getInstitution, getInstitutionPrograms, getDashboardSummary } from '../../api/institutions'
+import {
+  LayoutDashboard,
+  Plus,
+  GitBranch,
+  ClipboardCheck,
+  Bell,
+  BookOpen,
+  Calendar,
+  Users,
+  TrendingUp,
+  Target,
+  Mail,
+} from 'lucide-react'
+import { getInstitution, getInstitutionPrograms, getDashboardSummary, getAnalytics } from '../../api/institutions'
 import { getNotifications } from '../../api/notifications'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -9,9 +21,9 @@ import Button from '../../components/ui/Button'
 import Skeleton from '../../components/ui/Skeleton'
 import EmptyState from '../../components/ui/EmptyState'
 import Table from '../../components/ui/Table'
-import { formatDate, formatRelative, formatCurrency } from '../../utils/format'
+import { formatDate, formatRelative, formatCurrency, formatPercent } from '../../utils/format'
 import { DEGREE_LABELS } from '../../utils/constants'
-import type { Notification, Program, DashboardSummary } from '../../types'
+import type { Notification, Program, DashboardSummary, AnalyticsData } from '../../types'
 
 export default function DashboardPage() {
   const navigate = useNavigate()
@@ -23,6 +35,11 @@ export default function DashboardPage() {
     queryFn: getDashboardSummary,
     enabled: !!institutionQ.data,
   })
+  const analyticsQ = useQuery({
+    queryKey: ['institution-analytics'],
+    queryFn: getAnalytics,
+    enabled: !!institutionQ.data,
+  })
   const notificationsQ = useQuery({
     queryKey: ['notifications', { limit: 10 }],
     queryFn: () => getNotifications({ limit: 10 }),
@@ -31,6 +48,7 @@ export default function DashboardPage() {
   const institution = institutionQ.data
   const programs: Program[] = Array.isArray(programsQ.data) ? programsQ.data : []
   const summary: DashboardSummary | undefined = summaryQ.data
+  const analytics: AnalyticsData | undefined = analyticsQ.data
   const notifications: Notification[] = Array.isArray(notificationsQ.data) ? notificationsQ.data : []
 
   const isLoading = institutionQ.isLoading || programsQ.isLoading
@@ -62,19 +80,58 @@ export default function DashboardPage() {
     )
   }
 
-  if (!institution) {
-    return null
-  }
+  if (!institution) return null
 
-  const kpis = [
-    { label: 'Programs', value: summary?.program_count ?? programs.length, icon: BookOpen, color: 'text-indigo-600 bg-indigo-100' },
-    { label: 'Applications', value: summary?.total_applications ?? 0, icon: ClipboardCheck, color: 'text-emerald-600 bg-emerald-100' },
-    { label: 'Pending Review', value: summary?.pending_review_count ?? 0, icon: Users, color: 'text-amber-600 bg-amber-100' },
-    { label: 'Active Events', value: summary?.active_events_count ?? 0, icon: Calendar, color: 'text-purple-600 bg-purple-100' },
+  const executiveKpis = [
+    {
+      label: 'Applications',
+      value: summary?.total_applications ?? 0,
+      icon: Users,
+      color: 'text-indigo-600 bg-indigo-100',
+    },
+    {
+      label: 'Acceptance Rate',
+      value: analytics?.acceptance_rate != null ? formatPercent(analytics.acceptance_rate) : '-',
+      icon: Target,
+      color: 'text-emerald-600 bg-emerald-100',
+    },
+    {
+      label: 'Yield Rate',
+      value: analytics?.yield_rate != null ? formatPercent(analytics.yield_rate) : '-',
+      icon: TrendingUp,
+      color: 'text-purple-600 bg-purple-100',
+    },
+    {
+      label: 'Needs Review',
+      value: summary?.pending_review_count ?? 0,
+      icon: ClipboardCheck,
+      color: 'text-amber-600 bg-amber-100',
+    },
+  ]
+
+  const operationalKpis = [
+    {
+      label: 'Programs Published',
+      value: `${summary?.published_program_count ?? 0}/${summary?.program_count ?? programs.length}`,
+      icon: BookOpen,
+      color: 'text-blue-600 bg-blue-100',
+    },
+    {
+      label: 'Active Events',
+      value: summary?.active_events_count ?? 0,
+      icon: Calendar,
+      color: 'text-pink-600 bg-pink-100',
+    },
+    {
+      label: 'Unread Inbox',
+      value: summary?.unread_messages_count ?? 0,
+      icon: Mail,
+      color: 'text-slate-600 bg-slate-100',
+    },
   ]
 
   const programColumns = [
-    { key: 'program_name', label: 'Name' },
+    { key: 'program_name', label: 'Program' },
     {
       key: 'degree_type',
       label: 'Degree',
@@ -103,51 +160,73 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Welcome */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Welcome back, {institution.name}</h1>
-        <p className="text-sm text-gray-500 mt-1">Manage your programs, applications, and recruitment pipeline.</p>
+        <p className="text-sm text-gray-500 mt-1">
+          Run today&apos;s admissions workload, track outcomes, and take next actions from one place.
+        </p>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-4 gap-4">
-        {kpis.map(kpi => (
-          <Card key={kpi.label} className="p-5">
-            <div className="flex items-center gap-3">
-              <div className={`p-2.5 rounded-lg ${kpi.color}`}>
-                <kpi.icon size={20} />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">{kpi.label}</p>
-                <p className="text-2xl font-semibold text-gray-900">{kpi.value}</p>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      {/* Quick Actions */}
       <Card className="p-4">
-        <h3 className="text-sm font-medium text-gray-500 mb-3">Quick Actions</h3>
-        <div className="flex gap-3">
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">Today&apos;s Action Panel</h3>
+        <div className="flex flex-wrap gap-3">
           <Button onClick={() => navigate('/i/programs/new')} className="flex items-center gap-2">
-            <Plus size={16} /> New Program
+            <Plus size={16} /> Add Program
           </Button>
-          <Button onClick={() => navigate('/i/pipeline')} variant="secondary" className="flex items-center gap-2">
-            <GitBranch size={16} /> View Pipeline
+          <Button onClick={() => navigate('/i/pipeline?tab=review')} variant="secondary" className="flex items-center gap-2">
+            <ClipboardCheck size={16} /> Triage Review Queue
           </Button>
-          <Button onClick={() => navigate('/i/reviews')} variant="secondary" className="flex items-center gap-2">
-            <ClipboardCheck size={16} /> Review Queue
+          <Button onClick={() => navigate('/i/pipeline?tab=board')} variant="secondary" className="flex items-center gap-2">
+            <GitBranch size={16} /> Open Applications Board
+          </Button>
+          <Button onClick={() => navigate('/i/campaigns')} variant="secondary" className="flex items-center gap-2">
+            <Bell size={16} /> Launch Outreach
           </Button>
         </div>
       </Card>
 
-      {/* Two column layout */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">Executive KPIs</h3>
+        <div className="grid grid-cols-4 gap-4">
+          {executiveKpis.map(kpi => (
+            <Card key={kpi.label} className="p-5">
+              <div className="flex items-center gap-3">
+                <div className={`p-2.5 rounded-lg ${kpi.color}`}>
+                  <kpi.icon size={20} />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">{kpi.label}</p>
+                  <p className="text-2xl font-semibold text-gray-900">{kpi.value}</p>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">Operational KPIs</h3>
+        <div className="grid grid-cols-3 gap-4">
+          {operationalKpis.map(kpi => (
+            <Card key={kpi.label} className="p-5">
+              <div className="flex items-center gap-3">
+                <div className={`p-2.5 rounded-lg ${kpi.color}`}>
+                  <kpi.icon size={20} />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">{kpi.label}</p>
+                  <p className="text-2xl font-semibold text-gray-900">{kpi.value}</p>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
+
       <div className="grid grid-cols-3 gap-6">
-        {/* Recent Activity */}
         <Card className="col-span-1 p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-gray-900">Recent Activity</h3>
+            <h3 className="text-sm font-semibold text-gray-900">Activity Feed</h3>
             <Bell size={16} className="text-gray-400" />
           </div>
           {notifications.length === 0 ? (
@@ -167,10 +246,9 @@ export default function DashboardPage() {
           )}
         </Card>
 
-        {/* Programs Overview */}
         <Card className="col-span-2 p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-gray-900">Programs Overview</h3>
+            <h3 className="text-sm font-semibold text-gray-900">Program Readiness</h3>
             <Button variant="ghost" size="sm" onClick={() => navigate('/i/programs')}>View All</Button>
           </div>
           {programs.length === 0 ? (
@@ -178,7 +256,7 @@ export default function DashboardPage() {
               icon={<BookOpen size={40} />}
               title="No programs yet"
               description="Create your first program to start accepting applications."
-              action={{ label: 'New Program', onClick: () => navigate('/i/programs/new') }}
+              action={{ label: 'Add Program', onClick: () => navigate('/i/programs/new') }}
             />
           ) : (
             <Table

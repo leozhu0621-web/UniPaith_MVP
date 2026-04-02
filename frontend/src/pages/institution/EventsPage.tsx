@@ -137,11 +137,38 @@ export default function EventsPage() {
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Events</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Recruitment Events</h1>
+          <p className="text-sm text-gray-500 mt-1">Manage event logistics and track RSVP engagement by program.</p>
+        </div>
         <Button onClick={() => { resetForm(); setShowCreateModal(true) }} className="flex items-center gap-2">
           <Plus size={16} /> New Event
         </Button>
       </div>
+
+      {events.length > 0 && (
+        <div className="grid grid-cols-3 gap-3">
+          <Card className="p-3">
+            <p className="text-xs text-gray-500">Open Events</p>
+            <p className="text-xl font-semibold text-gray-900">{events.filter(e => e.status === 'open').length}</p>
+          </Card>
+          <Card className="p-3">
+            <p className="text-xs text-gray-500">Total RSVPs</p>
+            <p className="text-xl font-semibold text-gray-900">{events.reduce((sum, e) => sum + e.rsvp_count, 0)}</p>
+          </Card>
+          <Card className="p-3">
+            <p className="text-xs text-gray-500">Average Fill</p>
+            <p className="text-xl font-semibold text-gray-900">
+              {(() => {
+                const withCapacity = events.filter(e => (e.capacity ?? 0) > 0)
+                if (withCapacity.length === 0) return '-'
+                const ratio = withCapacity.reduce((sum, e) => sum + (e.rsvp_count / (e.capacity ?? 1)), 0) / withCapacity.length
+                return `${Math.round(ratio * 100)}%`
+              })()}
+            </p>
+          </Card>
+        </div>
+      )}
 
       <div className="flex items-center gap-4">
         <Select options={statusOptions} value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="w-48" />

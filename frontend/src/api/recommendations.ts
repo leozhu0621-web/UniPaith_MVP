@@ -1,7 +1,8 @@
 import apiClient from './client'
+import { toArrayData } from './normalize'
 
 export const listRecommendations = () =>
-  apiClient.get('/students/me/recommendations').then(r => r.data)
+  apiClient.get('/students/me/recommendations').then(r => toArrayData<any>(r.data))
 
 export const createRecommendation = (data: {
   recommender_name: string
