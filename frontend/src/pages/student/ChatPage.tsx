@@ -1,23 +1,29 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getConversations, getMessages, sendMessage, createConversation } from '../../api/messaging'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import { getOnboarding } from '../../api/students'
 import { getMatches } from '../../api/matching'
 import { listMyApplications } from '../../api/applications'
+import { chatStudentAssistant } from '../../api/matching'
 import { useAuthStore } from '../../stores/auth-store'
-import { Paperclip, ArrowUp, Sparkles } from 'lucide-react'
+import { ArrowUp, Sparkles, ShieldCheck } from 'lucide-react'
 import Avatar from '../../components/ui/Avatar'
 import { formatRelative } from '../../utils/format'
 import Skeleton from '../../components/ui/Skeleton'
-import type { Message } from '../../types'
+
+type ChatMessage = {
+  id: string
+  sender_type: 'student' | 'assistant'
+  message_body: string
+  sent_at: string
+}
 
 export default function ChatPage() {
   const navigate = useNavigate()
   const user = useAuthStore(s => s.user)
-  const queryClient = useQueryClient()
   const [input, setInput] = useState('')
-  const [activeConvId, setActiveConvId] = useState<string | null>(null)
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
+  const [sendError, setSendError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Context data for dynamic quick actions
@@ -38,10 +44,10 @@ export default function ChatPage() {
       actions.push({ label: 'Complete my profile', action: () => navigate('/s/profile') })
     }
     if (completionPct < 50) {
-      actions.push({ label: 'What should I fill in next?', action: 'What should I add to my profile next to improve my matches?' })
+      actions.push({ label: 'Calm next step', action: 'What is the calmest next step I should take to improve my profile?' })
     }
     if (matchCount > 0) {
-      actions.push({ label: 'Explain my top match', action: 'Can you explain why my top match is a good fit for me?' })
+      actions.push({ label: 'Explain my top match', action: 'Can you explain my top match in a reassuring way and what I can improve?' })
     }
     if (matchCount === 0 && completionPct >= 80) {
       actions.push({ label: 'Why no matches yet?', action: 'I completed my profile but have no matches yet. What should I do?' })
@@ -54,55 +60,53 @@ export default function ChatPage() {
     }
 
     // Always available
+    actions.push({ label: 'Reduce stress now', action: 'I feel stressed about admissions. Give me a practical plan for this week.' })
     actions.push({ label: 'Help with essay', action: 'Can you help me brainstorm ideas for my personal statement?' })
-    actions.push({ label: 'Find programs', action: 'Help me find programs that match my interests and qualifications.' })
 
     return actions.slice(0, 5)
   }, [completionPct, matchCount, appCount, draftApps, navigate])
 
-  const { data: conversations } = useQuery({
-    queryKey: ['conversations'],
-    queryFn: getConversations,
-  })
-
-  // Auto-select first conversation (AI advisor)
-  useEffect(() => {
-    if (conversations?.length && !activeConvId) {
-      setActiveConvId(conversations[0].id)
-    }
-  }, [conversations, activeConvId])
-
-  const { data: messages, isLoading: messagesLoading } = useQuery({
-    queryKey: ['messages', activeConvId],
-    queryFn: () => getMessages(activeConvId!, { limit: 50 }),
-    enabled: !!activeConvId,
-    refetchInterval: 5000,
-  })
+  const messagesLoading = false
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [chatMessages])
 
   const sendMut = useMutation({
-    mutationFn: (content: string) => {
-      if (activeConvId) return sendMessage(activeConvId, content)
-      return createConversation({ institution_id: '', subject: 'AI Advisor' }).then(conv => {
-        setActiveConvId(conv.id)
-        return sendMessage(conv.id, content)
-      })
-    },
+    mutationFn: (content: string) => chatStudentAssistant(content),
     onSuccess: () => {
       setInput('')
-      queryClient.invalidateQueries({ queryKey: ['messages', activeConvId] })
-      queryClient.invalidateQueries({ queryKey: ['conversations'] })
+      setSendError(null)
+    },
+    onError: (err) => {
+      setSendError(err instanceof Error ? err.message : 'Message failed to send. Please try again.')
     },
   })
 
   const handleSend = () => {
     const trimmed = input.trim()
     if (!trimmed || sendMut.isPending) return
+    const studentMessage: ChatMessage = {
+      id: `student-${Date.now()}`,
+      sender_type: 'student',
+      message_body: trimmed,
+      sent_at: new Date().toISOString(),
+    }
+    setChatMessages(prev => [...prev, studentMessage])
     sendMut.mutate(trimmed)
   }
+
+  useEffect(() => {
+    if (sendMut.data?.reply) {
+      const assistantMessage: ChatMessage = {
+        id: `assistant-${Date.now()}`,
+        sender_type: 'assistant',
+        message_body: sendMut.data.reply,
+        sent_at: new Date().toISOString(),
+      }
+      setChatMessages(prev => [...prev, assistantMessage])
+    }
+  }, [sendMut.data])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -119,14 +123,14 @@ export default function ChatPage() {
     }
   }
 
-  const messageList: Message[] = messages ?? []
+  const messageList: ChatMessage[] = chatMessages
 
   return (
     <div className="flex flex-col h-full">
       {/* Header with context indicator */}
       <div className="px-6 py-3 border-b border-gray-200 bg-white flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h1 className="text-lg font-semibold">AI Advisor</h1>
+          <h1 className="text-lg font-semibold">Your Admission Counselor</h1>
           <Sparkles size={16} className="text-amber-500" />
         </div>
         <div className="flex items-center gap-3 text-xs text-gray-500">
@@ -148,12 +152,15 @@ export default function ChatPage() {
             <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
               <Sparkles size={28} className="text-amber-500" />
             </div>
-            <h2 className="text-lg font-medium text-gray-700">Welcome to UniPaith!</h2>
+            <h2 className="text-lg font-medium text-gray-700">You are not doing this alone.</h2>
             <p className="text-sm text-gray-500 mt-1 max-w-md">
-              I'm your AI admissions advisor. I can see your profile ({completionPct}% complete),
-              {matchCount > 0 ? ` ${matchCount} matches,` : ''} and {appCount} applications.
-              How can I help?
+              I am your counselor-style AI guide. I will help you prioritize calmly,
+              explain options clearly, and turn uncertainty into next steps.
             </p>
+            <div className="mt-3 flex items-center gap-2 text-xs text-gray-500 bg-gray-100 rounded-full px-3 py-1">
+              <ShieldCheck size={13} className="text-gray-600" />
+              Recommendations include explanation and confidence context.
+            </div>
           </div>
         ) : (
           messageList.map(msg => {
@@ -162,7 +169,7 @@ export default function ChatPage() {
               <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                 <div className={`flex gap-2 max-w-[80%] ${isOwn ? 'flex-row-reverse' : ''}`}>
                   <Avatar
-                    name={isOwn ? (user?.email || '?') : 'AI'}
+                    name={isOwn ? (user?.email || '?') : 'Counselor'}
                     size="sm"
                   />
                   <div>
@@ -187,9 +194,6 @@ export default function ChatPage() {
 
       <div className="px-6 py-3 border-t border-gray-200 bg-white">
         <div className="flex items-end gap-2">
-          <button className="p-2 text-gray-400 hover:text-gray-600">
-            <Paperclip size={18} />
-          </button>
           <textarea
             value={input}
             onChange={e => setInput(e.target.value)}
@@ -206,6 +210,11 @@ export default function ChatPage() {
             <ArrowUp size={18} />
           </button>
         </div>
+        {sendError && (
+          <p className="text-xs text-red-600 mt-2">
+            {sendError} You can retry now without losing your message.
+          </p>
+        )}
         <div className="flex gap-2 mt-2 overflow-x-auto">
           {quickActions.map((qa, i) => (
             <button

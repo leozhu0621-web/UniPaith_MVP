@@ -14,7 +14,7 @@ import { formatDate, formatScore } from '../../utils/format'
 import { TIER_LABELS } from '../../utils/constants'
 import {
   MessageSquare, Search, FileText, User, Clock,
-  ArrowRight, Sparkles, CalendarDays, TrendingUp,
+  ArrowRight, Sparkles, CalendarDays, TrendingUp, ShieldCheck,
 } from 'lucide-react'
 import { parseISO, differenceInDays } from 'date-fns'
 import type { MatchResult, Application } from '../../types'
@@ -125,28 +125,48 @@ export default function DashboardPage() {
 
   const urgencyColor = (date: Date) => {
     const days = differenceInDays(date, now)
-    if (days <= 7) return 'text-red-600 bg-red-50'
-    if (days <= 30) return 'text-amber-600 bg-amber-50'
-    return 'text-green-600 bg-green-50'
+    if (days <= 7) return 'text-amber-700 bg-amber-50'
+    if (days <= 30) return 'text-blue-700 bg-blue-50'
+    return 'text-gray-700 bg-gray-100'
   }
 
   const urgencyLabel = (date: Date) => {
     const days = differenceInDays(date, now)
-    if (days === 0) return 'Today'
-    if (days === 1) return 'Tomorrow'
-    if (days <= 7) return `${days} days`
-    if (days <= 30) return `${Math.ceil(days / 7)} weeks`
-    return `${Math.ceil(days / 30)} months`
+    if (days === 0) return 'Focus now'
+    if (days === 1) return 'Focus tomorrow'
+    if (days <= 7) return `Focus this week`
+    if (days <= 30) return `Plan this month`
+    return `Upcoming`
   }
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-1">Welcome back! Here's your admissions overview.</p>
+          <h1 className="text-2xl font-semibold">Today with your admissions counselor</h1>
+          <p className="text-sm text-gray-500 mt-1">A calm brief of what matters now, what is next, and what can wait.</p>
         </div>
       </div>
+
+      {/* Counselor brief */}
+      <Card className="p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <ShieldCheck size={17} className="text-gray-700" />
+              <h2 className="font-semibold text-gray-900">Counselor Brief</h2>
+            </div>
+            <p className="text-sm text-gray-700">
+              {nextStep?.guidance_text
+                ? `You are on track. The best step right now is: ${nextStep.guidance_text}`
+                : 'You are in a stable place. Continue your current plan and we will refine it together.'}
+            </p>
+          </div>
+          <Button size="sm" variant="secondary" onClick={() => navigate('/s/chat')}>
+            Talk to counselor <ArrowRight size={14} className="ml-1" />
+          </Button>
+        </div>
+      </Card>
 
       {/* Profile Completion + Next Step */}
       {completionPct < 100 && (
@@ -167,7 +187,7 @@ export default function DashboardPage() {
               <ProgressBar value={completionPct} label={`${completionPct}% complete`} />
               {completionPct < 80 && (
                 <p className="text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2 mt-3">
-                  Complete your profile to 80% to unlock AI-powered program matches.
+                  A bit more profile detail will improve recommendation confidence and reduce uncertainty.
                 </p>
               )}
               {nextStep && (
@@ -272,7 +292,7 @@ export default function DashboardPage() {
               <Clock size={18} className="text-gray-600" />
               <h2 className="font-semibold text-gray-900">Upcoming Deadlines</h2>
             </div>
-            <button onClick={() => navigate('/s/calendar')} className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+            <button onClick={() => navigate('/s/deadlines')} className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
               Calendar <ArrowRight size={14} />
             </button>
           </div>
@@ -317,7 +337,7 @@ export default function DashboardPage() {
                 <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
                   <User size={16} className="text-blue-600" />
                 </div>
-                <span className="text-sm font-medium">Complete Profile</span>
+                <span className="text-sm font-medium">Reduce profile uncertainty</span>
               </button>
             )}
             <button
@@ -327,7 +347,7 @@ export default function DashboardPage() {
               <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
                 <Search size={16} className="text-purple-600" />
               </div>
-              <span className="text-sm font-medium">Discover Programs</span>
+              <span className="text-sm font-medium">Explore fitting programs</span>
             </button>
             <button
               onClick={() => navigate('/s/chat')}
@@ -336,7 +356,7 @@ export default function DashboardPage() {
               <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
                 <MessageSquare size={16} className="text-green-600" />
               </div>
-              <span className="text-sm font-medium">Chat with Advisor</span>
+              <span className="text-sm font-medium">Talk with your counselor</span>
             </button>
             {(applications ?? []).some((a: Application) => a.status === 'draft') && (
               <button
@@ -349,7 +369,7 @@ export default function DashboardPage() {
                 <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
                   <FileText size={16} className="text-amber-600" />
                 </div>
-                <span className="text-sm font-medium">Continue Application</span>
+                <span className="text-sm font-medium">Continue with calm checklist</span>
               </button>
             )}
           </div>

@@ -381,8 +381,8 @@ class ConversationService:
 
     def _build_assistant_reply(self, domain: ConversationDomain, message: str) -> str:
         return (
-            f"I've captured your latest input and updated the {domain} section. "
-            "Next, I can refine any missing requirements so your shortlist is more accurate."
+            f"Thanks for sharing that — I have updated your {domain} context. "
+            "You are making solid progress. Next, we can fill one missing requirement to increase recommendation confidence and keep your plan calm and clear."
         )
 
     def _extract_budget_hint(self, message: str) -> int | None:

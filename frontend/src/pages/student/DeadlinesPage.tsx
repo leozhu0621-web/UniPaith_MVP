@@ -39,9 +39,9 @@ export default function DeadlinesPage() {
   })
 
   const isLoading = appsLoading || rsvpsLoading || intLoading
-  const now = new Date()
 
   const deadlines = useMemo(() => {
+    const now = new Date()
     const items: DeadlineItem[] = []
 
     ;(applications ?? []).forEach((a: any) => {
@@ -112,11 +112,11 @@ export default function DeadlinesPage() {
   }
 
   const urgencyBadge = (date: Date) => {
+    const now = new Date()
     const days = differenceInDays(date, now)
-    if (days <= 3) return <Badge variant="danger">In {days === 0 ? 'Today' : days === 1 ? '1 day' : `${days} days`}</Badge>
-    if (days <= 7) return <Badge variant="warning">In {days} days</Badge>
-    if (days <= 30) return <Badge variant="info">In {Math.ceil(days / 7)} weeks</Badge>
-    return <Badge variant="neutral">In {Math.ceil(days / 30)} months</Badge>
+    if (days <= 7) return <Badge variant="warning">{days === 0 ? 'Focus now' : 'Focus this week'}</Badge>
+    if (days <= 30) return <Badge variant="info">Plan this month</Badge>
+    return <Badge variant="neutral">Upcoming</Badge>
   }
 
   if (isLoading) return <div className="p-6 max-w-3xl mx-auto space-y-4">{Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}</div>
@@ -126,17 +126,23 @@ export default function DeadlinesPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold">Deadline Tracker</h1>
-          <p className="text-sm text-gray-500 mt-1">{deadlines.length} upcoming deadline{deadlines.length !== 1 ? 's' : ''}</p>
+          <p className="text-sm text-gray-500 mt-1">{deadlines.length} timeline item{deadlines.length !== 1 ? 's' : ''} to guide your next steps</p>
         </div>
       </div>
 
-      {/* Urgent alert */}
-      {deadlines.length > 0 && differenceInDays(deadlines[0].date, now) <= 7 && (
-        <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-6">
-          <AlertTriangle size={18} className="text-red-600 mt-0.5 flex-shrink-0" />
+      {/* Focus this week */}
+      {deadlines.length > 0 && differenceInDays(deadlines[0].date, new Date()) <= 7 && (
+        <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-6">
+          <AlertTriangle size={18} className="text-amber-600 mt-0.5 flex-shrink-0" />
           <div>
-            <p className="text-sm font-medium text-red-800">Urgent deadline approaching</p>
-            <p className="text-sm text-red-700">{deadlines[0].label} — {formatDate(deadlines[0].date.toISOString())}</p>
+            <p className="text-sm font-medium text-amber-800">Focus this week</p>
+            <p className="text-sm text-amber-700">{deadlines[0].label} — {formatDate(deadlines[0].date.toISOString())}</p>
+            <button
+              onClick={() => navigate(deadlines[0].link)}
+              className="text-xs font-medium text-amber-800 underline mt-1"
+            >
+              Open next action
+            </button>
           </div>
         </div>
       )}

@@ -20,6 +20,13 @@ import { ArrowLeft, Check, Circle, Upload, Sparkles, AlertCircle, FileCheck } fr
 import type { Application, Essay, Resume } from '../../types'
 
 const STATUS_STEPS = ['draft', 'submitted', 'under_review', 'interview', 'decision_made']
+const STATUS_STEP_LABELS: Record<string, string> = {
+  draft: 'Drafting',
+  submitted: 'Submitted',
+  under_review: 'Under review',
+  interview: 'Interview stage',
+  decision_made: 'Decision',
+}
 
 export default function ApplicationDetailPage() {
   const { appId } = useParams<{ appId: string }>()
@@ -152,17 +159,32 @@ export default function ApplicationDetailPage() {
       </button>
 
       <h1 className="text-xl font-bold mb-1">{application.program?.program_name || 'Application'}</h1>
+      <p className="text-sm text-gray-500">Take one section at a time. You can check readiness anytime before submitting.</p>
 
       {/* Status timeline */}
-      <div className="flex items-center gap-1 my-4">
-        {STATUS_STEPS.map((step, i) => (
-          <div key={step} className="flex items-center">
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${i <= currentStepIdx ? 'bg-gray-900 text-white' : 'bg-gray-200 text-gray-400'}`}>
-              {i < currentStepIdx ? <Check size={12} /> : <Circle size={12} />}
+      <div className="my-4">
+        <div className="flex items-center gap-1">
+          {STATUS_STEPS.map((step, i) => (
+            <div key={step} className="flex items-center">
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${i <= currentStepIdx ? 'bg-gray-900 text-white' : 'bg-gray-200 text-gray-400'}`}>
+                {i < currentStepIdx ? <Check size={12} /> : <Circle size={12} />}
+              </div>
+              {i < STATUS_STEPS.length - 1 && <div className={`w-12 h-0.5 ${i < currentStepIdx ? 'bg-gray-900' : 'bg-gray-200'}`} />}
             </div>
-            {i < STATUS_STEPS.length - 1 && <div className={`w-12 h-0.5 ${i < currentStepIdx ? 'bg-gray-900' : 'bg-gray-200'}`} />}
-          </div>
-        ))}
+          ))}
+        </div>
+        <div className="flex items-center gap-2 mt-2">
+          {STATUS_STEPS.map(step => (
+            <span
+              key={step}
+              className={`text-[11px] px-2 py-0.5 rounded-full ${
+                step === application.status ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500'
+              }`}
+            >
+              {STATUS_STEP_LABELS[step]}
+            </span>
+          ))}
+        </div>
       </div>
 
       <div className="flex gap-6">
@@ -201,6 +223,11 @@ export default function ApplicationDetailPage() {
             >
               Submit Application
             </Button>
+            {application.status === 'draft' && (
+              <p className="text-xs text-gray-500 mt-2">
+                You can submit when you feel ready. The readiness check will show any missing items clearly.
+              </p>
+            )}
           </Card>
         </div>
 
@@ -427,7 +454,7 @@ export default function ApplicationDetailPage() {
                 </div>
               )}
               <div>
-                <p className="font-medium">{readiness.ready ? 'Ready to submit!' : 'Not quite ready'}</p>
+                <p className="font-medium">{readiness.ready ? 'Ready to submit!' : 'You are close to ready'}</p>
                 <p className="text-sm text-gray-500">{readiness.completion_percentage}% complete</p>
               </div>
             </div>

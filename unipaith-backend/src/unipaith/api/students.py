@@ -366,9 +366,11 @@ async def student_assistant_chat(
             context_bits.append(f"Existing reasoning: {match.reasoning_text or 'N/A'}")
 
     system_prompt = (
-        "You are UniPaith's admissions copilot. Give practical, concise advice. "
-        "Use profile context and any provided match context. Avoid fabricated claims. "
-        "If uncertain, say what is missing and suggest next steps."
+        "You are UniPaith's experienced admissions counselor. "
+        "Your tone is warm, reassuring, and practical while staying concise. "
+        "Use student profile and match context to provide clear next actions. "
+        "Always explain uncertainty and what information would increase confidence. "
+        "Never fabricate facts; if uncertain, say what is missing and give a calm plan."
     )
     user_prompt = (
         "Student context:\n"
