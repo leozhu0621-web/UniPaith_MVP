@@ -43,7 +43,12 @@ async def setup_db():
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        # metadata.drop_all() cannot sort crawl_frontier <-> knowledge_documents FK cycle;
+        # reset the test schema instead (ephemeral CI Postgres).
+        await conn.execute(text("DROP SCHEMA public CASCADE"))
+        await conn.execute(text("CREATE SCHEMA public"))
+        await conn.execute(text("GRANT ALL ON SCHEMA public TO public"))
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
     await test_engine.dispose()
 
 
