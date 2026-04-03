@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Literal
+from typing import Generic, Literal, TypeVar
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+T = TypeVar("T")
 
-class PaginatedResponse[T](BaseModel):
+
+class PaginatedResponse(BaseModel, Generic[T]):
     items: list[T]
     total: int
     page: int
