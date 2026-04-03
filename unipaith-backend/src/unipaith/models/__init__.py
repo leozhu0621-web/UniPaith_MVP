@@ -62,10 +62,6 @@ from unipaith.models.matching import (
     RawIngestedData,
     StudentFeature,
 )
-from unipaith.models.pipeline import (
-    PipelineConfig,
-    PipelineStageSnapshot,
-)
 from unipaith.models.ml_loop import (
     ABTestAssignment,
     DriftSnapshot,
@@ -73,6 +69,10 @@ from unipaith.models.ml_loop import (
     FairnessReport,
     OutcomeRecord,
     TrainingRun,
+)
+from unipaith.models.pipeline import (
+    PipelineConfig,
+    PipelineStageSnapshot,
 )
 from unipaith.models.student import (
     AcademicRecord,

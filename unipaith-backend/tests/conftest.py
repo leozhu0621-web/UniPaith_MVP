@@ -5,6 +5,8 @@ import os
 # Tests run without GPU — override before importing settings
 os.environ.setdefault("GPU_MODE", "mock")
 os.environ.setdefault("AI_MOCK_MODE", "true")
+os.environ.setdefault("COGNITO_BYPASS", "true")
+os.environ.setdefault("S3_LOCAL_MODE", "true")
 
 import uuid
 from collections.abc import AsyncGenerator

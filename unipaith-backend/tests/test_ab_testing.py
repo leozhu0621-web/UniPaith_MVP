@@ -19,9 +19,10 @@ async def _setup_models_and_student(
     db: AsyncSession,
 ) -> tuple[StudentProfile, ModelRegistry, ModelRegistry]:
     """Create active + challenger model and a student profile."""
+    suffix = uuid.uuid4().hex[:6]
     # Active model
     active = ModelRegistry(
-        model_version="v1.0-active",
+        model_version=f"v1.0-active-{suffix}",
         architecture="XGBClassifier",
         performance_metrics={"accuracy": 0.80},
         is_active=True,
@@ -31,7 +32,7 @@ async def _setup_models_and_student(
 
     # Challenger model
     challenger = ModelRegistry(
-        model_version="v2.0-challenger",
+        model_version=f"v2.0-challenger-{suffix}",
         architecture="XGBClassifier",
         performance_metrics={"accuracy": 0.85},
         is_active=False,
@@ -103,12 +104,12 @@ async def test_create_experiment(db_session: AsyncSession):
     manager = ABTestManager(db_session)
     config = await manager.create_experiment(
         experiment_name="exp-test-create",
-        challenger_version="v2.0-challenger",
+        challenger_version=challenger.model_version,
         traffic_pct=0.20,
     )
     await db_session.commit()
 
     assert config["experiment_name"] == "exp-test-create"
-    assert config["challenger"] == "v2.0-challenger"
-    assert config["control"] == "v1.0-active"
+    assert config["challenger"] == challenger.model_version
+    assert config["control"] == active.model_version
     assert config["traffic_pct"] == 0.20
