@@ -357,6 +357,7 @@ class SourceDiscoverer:
 
         added = 0
         search = SearchAdapter()
+        search_failures = 0
         for query in search_queries[:10]:
             if added >= max_urls:
                 break
@@ -379,9 +380,77 @@ class SourceDiscoverer:
                         )
                         if item:
                             added += 1
-            except Exception:
-                logger.debug("Gap search failed for query: %s", query)
+            except Exception as exc:
+                search_failures += 1
+                logger.warning("Gap search failed for '%s': %s", query, exc)
 
+        if search_failures > 0 and added == 0:
+            logger.info(
+                "Gap search: all %d queries failed; using fallback seed URLs",
+                search_failures,
+            )
+            added += await self._fallback_seed_urls(max_urls, exclusions)
+
+        return added
+
+    async def _fallback_seed_urls(
+        self, max_urls: int, exclusions: set[str]
+    ) -> int:
+        """When search-based discovery fails, seed from a curated list."""
+        fallback = [
+            "https://www.harvard.edu/programs/",
+            "https://www.stanford.edu/list/academic/",
+            "https://catalog.mit.edu/",
+            "https://www.yale.edu/academics/departments-programs",
+            "https://bulletin.columbia.edu/",
+            "https://www.caltech.edu/academics/departments",
+            "https://registrar.princeton.edu/course-offerings",
+            "https://www.brown.edu/academics/programs",
+            "https://catalog.upenn.edu/",
+            "https://www.cornell.edu/academics/fields.cfm",
+            "https://www.cmu.edu/academics/index.html",
+            "https://www.northwestern.edu/academics/",
+            "https://gradschool.duke.edu/academics/programs",
+            "https://graduate.rice.edu/programs",
+            "https://gsas.nyu.edu/admissions.html",
+            "https://www.gradadmissions.gatech.edu/programs",
+            "https://www.grad.uiuc.edu/programs",
+            "https://rackham.umich.edu/programs-of-study/",
+            "https://www.grad.ucla.edu/programs/",
+            "https://grad.berkeley.edu/programs/list/",
+            "https://www.gradschool.washington.edu/programs",
+            "https://grad.wisc.edu/programs/",
+            "https://gradschool.unc.edu/academics/degreeprograms/",
+            "https://www.grad.ubc.ca/prospective-students/graduate-degree-programs",
+            "https://www.ox.ac.uk/admissions/graduate/courses/courses-a-z-listing/",
+            "https://www.graduate-admissions.cam.ac.uk/courses",
+            "https://www.imperial.ac.uk/study/courses/",
+            "https://www.ucl.ac.uk/prospective-students/graduate/",
+            "https://www.ethz.ch/en/studies/master.html",
+            "https://www.topuniversities.com/university-rankings/university-subject-rankings",
+            "https://www.niche.com/graduate-schools/search/best-graduate-schools/",
+            "https://www.usnews.com/best-graduate-schools",
+            "https://www.prepscholar.com/gre/blog/best-graduate-schools/",
+            "https://www.princetonreview.com/grad-school-rankings",
+            "https://www.insidehighered.com/news",
+            "https://www.chronicle.com/section/Facts-Figures",
+        ]
+        added = 0
+        for url in fallback:
+            if added >= max_urls:
+                break
+            domain = urlparse(url).netloc.lower()
+            if domain in exclusions:
+                continue
+            item = await self.add_to_frontier(
+                url,
+                priority=55,
+                discovery_method="fallback_seed",
+            )
+            if item:
+                added += 1
+        if added:
+            logger.info("Fallback seeds: added %d URLs", added)
         return added
 
     async def _discover_from_domains(
@@ -393,13 +462,13 @@ class SourceDiscoverer:
         good_domains = await self.db.execute(
             select(KnowledgeDocument.source_domain, func.avg(KnowledgeDocument.quality_score))
             .where(
-                KnowledgeDocument.quality_score > 0.6,
+                KnowledgeDocument.quality_score > 0.3,
                 KnowledgeDocument.source_domain.isnot(None),
             )
             .group_by(KnowledgeDocument.source_domain)
-            .having(func.count() >= 2)
+            .having(func.count() >= 1)
             .order_by(func.avg(KnowledgeDocument.quality_score).desc())
-            .limit(10)
+            .limit(20)
         )
 
         added = 0
@@ -459,6 +528,34 @@ def _extract_urls(text: str) -> list[str]:
 def _is_education_relevant(url: str) -> bool:
     url_lower = url.lower()
     return any(signal in url_lower for signal in EDUCATION_DOMAIN_SIGNALS)
+
+
+def _is_plausible_content_url(url: str) -> bool:
+    """Broader filter for cold-start: accept any URL that looks like real content."""
+    url_lower = url.lower()
+    parsed = urlparse(url_lower)
+
+    if not parsed.scheme.startswith("http"):
+        return False
+    if len(parsed.path) < 2:
+        return False
+
+    skip_extensions = {".css", ".js", ".png", ".jpg", ".gif", ".svg", ".ico", ".woff", ".pdf"}
+    if any(parsed.path.endswith(ext) for ext in skip_extensions):
+        return False
+
+    skip_patterns = {"login", "logout", "cart", "checkout", "privacy", "terms", "cookie"}
+    if any(p in url_lower for p in skip_patterns):
+        return False
+
+    if _is_education_relevant(url):
+        return True
+
+    domain = parsed.netloc
+    if domain.endswith(".edu") or domain.endswith(".ac.uk"):
+        return True
+
+    return False
 
 
 def _extract_exclusions(directives: list[EngineDirective]) -> set[str]:
