@@ -28,6 +28,7 @@ model_checkpoints/
 # Node (for frontend later)
 node_modules/
 .next/
+*.tsbuildinfo
 
 # OS
 .DS_Store
