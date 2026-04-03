@@ -159,9 +159,22 @@ class LocalExtractWorker:
                         snap = PipelineStageSnapshot(stage="extract")
                         db.add(snap)
 
-                    snap.worker_heartbeat_at = datetime.now(UTC)
+                    now = datetime.now(UTC)
+                    snap.worker_heartbeat_at = now
                     snap.worker_hostname = self.hostname
                     snap.status = "local_online"
+                    if self._processed > 0:
+                        snap.last_activity_at = now
+                    snap.items_processed_total = self._processed
+                    snap.items_processed_hour = self._processed
+                    from sqlalchemy import func, select as sa_select
+                    from unipaith.models.knowledge import KnowledgeDocument
+                    raw_count = await db.scalar(
+                        sa_select(func.count()).select_from(KnowledgeDocument)
+                        .where(KnowledgeDocument.processing_status == "raw")
+                    ) or 0
+                    snap.queue_depth = raw_count
+
                     snap.extra_json = {
                         **(snap.extra_json or {}),
                         "worker_model": self.model,
