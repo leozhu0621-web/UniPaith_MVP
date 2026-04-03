@@ -59,6 +59,30 @@ EDUCATION_DOMAIN_SIGNALS = [
     "collegeboard.org",
     "commonapp.org",
     "petersons.com",
+    "program",
+    "school",
+    "faculty",
+    "research",
+    "student",
+    "academic",
+    "degree",
+    "phd",
+    "master",
+    "mba",
+    "engineering",
+    "science",
+    "department",
+    "apply",
+    "tuition",
+    "campus",
+    "prepscholar.com",
+    "cappex.com",
+    "collegedata.com",
+    "bigfuture",
+    "princetonreview.com",
+    "collegeraptor.com",
+    "collegesimply.com",
+    "bestcolleges.com",
 ]
 
 GAP_SEARCH_TEMPLATES = [
@@ -242,6 +266,12 @@ class SourceDiscoverer:
         exclusions: set[str],
     ) -> int:
         """Extract URLs from recently processed documents."""
+        total_docs = await self.db.scalar(
+            select(func.count()).select_from(KnowledgeDocument)
+            .where(KnowledgeDocument.processing_status == "completed")
+        ) or 0
+        cold_start = total_docs < 100
+
         recent_docs = await self.db.execute(
             select(KnowledgeDocument)
             .where(
@@ -249,7 +279,7 @@ class SourceDiscoverer:
                 KnowledgeDocument.raw_text.isnot(None),
             )
             .order_by(KnowledgeDocument.created_at.desc())
-            .limit(50)
+            .limit(100 if cold_start else 50)
         )
 
         added = 0
@@ -263,8 +293,12 @@ class SourceDiscoverer:
                 domain = urlparse(url).netloc.lower()
                 if domain in exclusions:
                     continue
-                if not _is_education_relevant(url):
-                    continue
+                if cold_start:
+                    if not _is_plausible_content_url(url):
+                        continue
+                else:
+                    if not _is_education_relevant(url):
+                        continue
                 item = await self.add_to_frontier(
                     url,
                     priority=40,
@@ -274,6 +308,8 @@ class SourceDiscoverer:
                 if item:
                     added += 1
 
+        if added > 0:
+            logger.info("Link extraction: found %d new URLs from %d docs", added, total_docs)
         return added
 
     async def _discover_from_gaps(

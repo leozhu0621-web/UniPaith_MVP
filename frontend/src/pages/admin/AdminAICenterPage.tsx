@@ -7,6 +7,7 @@ import { useAdminOps } from '../../hooks/useAdminOps'
 import ControlPanel from '../../components/admin/ops/ControlPanel'
 import MonitorSection from '../../components/admin/ai-center/MonitorSection'
 import MaintenanceSection from '../../components/admin/ai-center/MaintenanceSection'
+import PipelineDashboard from '../../components/admin/pipeline/PipelineDashboard'
 import AdminCrawlerPage from './AdminCrawlerPage'
 import AdminMLPage from './AdminMLPage'
 import AdminKnowledgePage from './AdminKnowledgePage'
@@ -205,8 +206,8 @@ export default function AdminAICenterPage() {
         />
       )}
 
-      {/* === Pipeline (Crawler) Tab === */}
-      {activeTab === 'pipeline' && <AdminCrawlerPage />}
+      {/* === Pipeline Tab — Continuous Crawl → Extract → Train === */}
+      {activeTab === 'pipeline' && <PipelineDashboard />}
 
       {/* === Learning (ML) Tab === */}
       {activeTab === 'learning' && <AdminMLPage />}
