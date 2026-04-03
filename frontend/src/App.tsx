@@ -57,6 +57,7 @@ import AdminDashboardPage from './pages/admin/AdminDashboardPage'
 import AdminUsersPage from './pages/admin/AdminUsersPage'
 import AdminSystemPage from './pages/admin/AdminSystemPage'
 import AdminAICenterPage from './pages/admin/AdminAICenterPage'
+import AdminCrawlerDashboardPage from './pages/admin/AdminCrawlerDashboardPage'
 import RouteErrorPage from './pages/system/RouteErrorPage'
 
 const queryClient = new QueryClient({
@@ -138,7 +139,7 @@ const router = createBrowserRouter([
       { path: 'system', element: <AdminSystemPage /> },
       // Legacy redirects — keep bookmarks working
       { path: 'ops', element: <Navigate to="/admin/ai?tab=monitor" replace /> },
-      { path: 'crawler', element: <Navigate to="/admin/ai?tab=pipeline" replace /> },
+      { path: 'crawler', element: <AdminCrawlerDashboardPage /> },
       { path: 'ml', element: <Navigate to="/admin/ai?tab=learning" replace /> },
       { path: 'knowledge', element: <Navigate to="/admin/ai?tab=knowledge" replace /> },
     ],

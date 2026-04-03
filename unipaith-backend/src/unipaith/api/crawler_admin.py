@@ -1,23 +1,28 @@
 """Admin-only endpoints for the Phase 5 Data Crawler.
 
-Provides 17 endpoints covering:
-- Dashboard overview
+Provides endpoints covering:
+- Dashboard overview (v1 legacy + v2 aggregated)
 - Data source CRUD + seed defaults
 - Crawl triggers (per-source, all-scheduled, single-URL)
 - Crawl job listing and detail
 - Review queue (list, stats, detail, approve, reject)
 - Enrichment application
+- Frontier management (retry, add-urls, delete)
 """
 
 from __future__ import annotations
 
 import logging
+from datetime import UTC, datetime, timedelta
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, select
+from pydantic import BaseModel
+from sqlalchemy import Float, case, cast, delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from unipaith.config import settings
 from unipaith.core.exceptions import NotFoundException
 from unipaith.crawler.enrichment import EnrichmentPipeline
 from unipaith.crawler.orchestrator import CrawlerOrchestrator
@@ -26,7 +31,9 @@ from unipaith.crawler.source_registry import SourceRegistry
 from unipaith.database import get_db
 from unipaith.dependencies import require_admin
 from unipaith.models.crawler import CrawlJob, ExtractedProgram
+from unipaith.models.knowledge import CrawlFrontier, KnowledgeDocument
 from unipaith.models.matching import DataSource
+from unipaith.models.pipeline import PipelineStageSnapshot
 from unipaith.models.user import User
 from unipaith.schemas.crawler import (
     CrawlerDashboardResponse,
@@ -50,7 +57,269 @@ router = APIRouter(prefix="/admin/crawler", tags=["crawler-admin"])
 
 
 # ======================================================================
-# Dashboard
+# Dashboard v2 (aggregated)
+# ======================================================================
+
+
+class RetryRequest(BaseModel):
+    frontier_ids: list[str]
+
+
+class AddUrlsRequest(BaseModel):
+    urls: list[str]
+
+
+@router.get("/dashboard-v2")
+async def dashboard_v2(
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_admin),
+) -> dict[str, Any]:
+    """Aggregated crawler dashboard data for the v2 UI."""
+
+    snap = await db.get(PipelineStageSnapshot, "crawl")
+    status = snap.status if snap else "off"
+    last_activity_at = (
+        snap.last_activity_at.isoformat() if snap and snap.last_activity_at else None
+    )
+
+    queue_rows = (
+        await db.execute(
+            select(CrawlFrontier.status, func.count())
+            .group_by(CrawlFrontier.status)
+        )
+    ).all()
+    queue: dict[str, int] = {"pending": 0, "completed": 0, "failed": 0}
+    total = 0
+    for row_status, cnt in queue_rows:
+        queue[row_status] = cnt
+        total += cnt
+
+    recent_result = await db.execute(
+        select(
+            CrawlFrontier.url,
+            CrawlFrontier.domain,
+            CrawlFrontier.status,
+            CrawlFrontier.updated_at,
+            CrawlFrontier.last_error,
+        )
+        .order_by(CrawlFrontier.updated_at.desc())
+        .limit(30)
+    )
+    recent_activity = [
+        {
+            "url": r.url,
+            "domain": r.domain,
+            "status": r.status,
+            "updated_at": r.updated_at.isoformat() if r.updated_at else None,
+            "error": r.last_error,
+        }
+        for r in recent_result.all()
+    ]
+
+    now = datetime.now(UTC)
+    since_24h = now - timedelta(hours=24)
+    tp_result = await db.execute(
+        select(
+            func.date_trunc("hour", KnowledgeDocument.ingested_at).label("hour"),
+            func.count().label("docs_crawled"),
+            func.sum(
+                case(
+                    (KnowledgeDocument.processing_status == "failed", 1),
+                    else_=0,
+                )
+            ).label("docs_failed"),
+        )
+        .where(KnowledgeDocument.ingested_at >= since_24h)
+        .group_by("hour")
+        .order_by("hour")
+    )
+    throughput_24h = [
+        {
+            "hour": r.hour.isoformat() if r.hour else None,
+            "docs_crawled": r.docs_crawled,
+            "docs_failed": int(r.docs_failed or 0),
+        }
+        for r in tp_result.all()
+    ]
+
+    domain_result = await db.execute(
+        select(
+            KnowledgeDocument.source_domain.label("domain"),
+            func.count().label("doc_count"),
+            func.sum(
+                case(
+                    (KnowledgeDocument.processing_status == "raw", 1),
+                    else_=0,
+                )
+            ).label("pending"),
+            func.sum(
+                case(
+                    (KnowledgeDocument.processing_status == "failed", 1),
+                    else_=0,
+                )
+            ).label("failed"),
+            func.avg(
+                cast(KnowledgeDocument.quality_score, Float)
+            ).label("avg_quality"),
+        )
+        .where(KnowledgeDocument.source_domain.isnot(None))
+        .group_by(KnowledgeDocument.source_domain)
+        .order_by(func.count().desc())
+        .limit(20)
+    )
+    domains = [
+        {
+            "domain": r.domain,
+            "doc_count": r.doc_count,
+            "pending": int(r.pending or 0),
+            "failed": int(r.failed or 0),
+            "avg_quality": round(float(r.avg_quality or 0), 2),
+        }
+        for r in domain_result.all()
+    ]
+
+    error_result = await db.execute(
+        select(
+            CrawlFrontier.id,
+            CrawlFrontier.url,
+            CrawlFrontier.domain,
+            CrawlFrontier.last_error,
+            CrawlFrontier.consecutive_failures,
+            CrawlFrontier.last_crawled_at,
+        )
+        .where(CrawlFrontier.consecutive_failures > 0)
+        .order_by(CrawlFrontier.consecutive_failures.desc())
+        .limit(50)
+    )
+    errors = [
+        {
+            "id": str(r.id),
+            "url": r.url,
+            "domain": r.domain,
+            "last_error": r.last_error,
+            "consecutive_failures": r.consecutive_failures,
+            "last_crawled_at": (
+                r.last_crawled_at.isoformat() if r.last_crawled_at else None
+            ),
+        }
+        for r in error_result.all()
+    ]
+
+    disc_result = (
+        await db.execute(
+            select(CrawlFrontier.discovery_method, func.count())
+            .where(CrawlFrontier.discovery_method.isnot(None))
+            .group_by(CrawlFrontier.discovery_method)
+        )
+    ).all()
+    discovery: dict[str, int] = {}
+    for method, cnt in disc_result:
+        discovery[method] = cnt
+
+    seed_count = await db.scalar(
+        select(func.count()).select_from(CrawlFrontier).where(
+            CrawlFrontier.discovery_method.in_(
+                ["bootstrap_seed", "fallback_seed", "manual"]
+            )
+        )
+    ) or 0
+
+    total_domains = await db.scalar(
+        select(func.count(func.distinct(CrawlFrontier.domain)))
+    ) or 0
+
+    return {
+        "status": status,
+        "rpm": settings.pipeline_crawl_rpm,
+        "last_activity_at": last_activity_at,
+        "queue": {**queue, "total": total},
+        "recent_activity": recent_activity,
+        "throughput_24h": throughput_24h,
+        "domains": domains,
+        "errors": errors,
+        "discovery": discovery,
+        "seed_urls_count": seed_count,
+        "total_domains": total_domains,
+    }
+
+
+@router.post("/retry")
+async def retry_frontier(
+    body: RetryRequest,
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_admin),
+) -> dict:
+    """Reset failed frontier entries back to pending."""
+    ids = [UUID(fid) for fid in body.frontier_ids]
+    result = await db.execute(
+        update(CrawlFrontier)
+        .where(CrawlFrontier.id.in_(ids))
+        .values(
+            status="pending",
+            consecutive_failures=0,
+            last_error=None,
+            next_crawl_after=None,
+        )
+    )
+    await db.commit()
+    return {"reset_count": result.rowcount}
+
+
+@router.post("/add-urls")
+async def add_urls(
+    body: AddUrlsRequest,
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_admin),
+) -> dict:
+    """Add URLs to the crawl frontier manually."""
+    from urllib.parse import urlparse
+
+    added = 0
+    for raw_url in body.urls:
+        url = raw_url.strip()
+        if not url:
+            continue
+        parsed = urlparse(url)
+        domain = parsed.netloc or url
+        existing = await db.scalar(
+            select(func.count())
+            .select_from(CrawlFrontier)
+            .where(CrawlFrontier.url == url)
+        )
+        if existing and existing > 0:
+            continue
+        db.add(
+            CrawlFrontier(
+                url=url,
+                domain=domain,
+                priority=60,
+                discovery_method="manual",
+            )
+        )
+        added += 1
+    if added:
+        await db.commit()
+    return {"added": added, "skipped": len(body.urls) - added}
+
+
+@router.delete("/frontier/{frontier_id}")
+async def delete_frontier(
+    frontier_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_admin),
+) -> dict:
+    """Remove a frontier entry."""
+    result = await db.execute(
+        delete(CrawlFrontier).where(CrawlFrontier.id == frontier_id)
+    )
+    await db.commit()
+    if result.rowcount == 0:
+        raise NotFoundException("Frontier entry not found")
+    return {"deleted": str(frontier_id)}
+
+
+# ======================================================================
+# Dashboard (legacy v1)
 # ======================================================================
 
 

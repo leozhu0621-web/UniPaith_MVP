@@ -257,7 +257,10 @@ class ContinuousPipeline:
                     await asyncio.sleep(settings.pipeline_ml_check_seconds)
                     continue
 
-                await self._update_stage("ml", "training")
+                await self._update_stage("ml", "training", extra={
+                    "current_outcomes": count,
+                    "required_outcomes": threshold,
+                })
                 async with async_session() as db:
                     from unipaith.ml.orchestrator import MLOrchestrator
                     orch = MLOrchestrator(db)
@@ -268,6 +271,8 @@ class ContinuousPipeline:
                         )
                         await db.commit()
                         await self._update_stage("ml", "completed", items=1, extra={
+                            "current_outcomes": count,
+                            "required_outcomes": threshold,
                             "cycle_result": {
                                 k: v for k, v in result.items()
                                 if k in ("evaluation", "training", "promotion", "decision")
@@ -320,8 +325,25 @@ class ContinuousPipeline:
                     db.add(snap)
 
                 snap.status = status
-                if items > 0 or status == "running" or status.startswith("fallback"):
+                # Count as "activity" for last_activity_at: throughput, crawl/extract
+                # runners, ML checks/training (waiting/training are not "running").
+                counts_for_activity = (
+                    items > 0
+                    or status == "running"
+                    or status.startswith("fallback")
+                    or status
+                    in (
+                        "training",
+                        "waiting",
+                        "completed",
+                        "local_online",
+                        "error",
+                    )
+                )
+                if counts_for_activity:
                     snap.last_activity_at = datetime.now(UTC)
+
+                if items > 0 or status == "running" or status.startswith("fallback"):
                     snap.items_processed_total = (snap.items_processed_total or 0) + items
 
                     now = datetime.now(UTC)

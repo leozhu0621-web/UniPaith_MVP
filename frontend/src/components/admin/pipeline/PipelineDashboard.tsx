@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import apiClient from '../../../api/client'
 import Card from '../../ui/Card'
 import Button from '../../ui/Button'
@@ -139,6 +139,7 @@ function StageBox({ title, subtitle, stage, rows, action, progress }: StageBoxPr
 
 export default function PipelineDashboard() {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
 
   const { data, isLoading } = useQuery<PipelineStatus>({
     queryKey: ['pipeline-status'],
@@ -152,24 +153,11 @@ export default function PipelineDashboard() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['pipeline-status'] }),
   })
 
-  const throttleMut = useMutation({
-    mutationFn: (budget: number) =>
-      apiClient.post('/admin/pipeline/throttle', { budget_per_hour: budget }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['pipeline-status'] }),
-  })
-
   const forceMut = useMutation({
     mutationFn: (action: string) =>
       apiClient.post('/admin/pipeline/force', { action }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['pipeline-status'] }),
   })
-
-  const [budgetInput, setBudgetInput] = useState(5)
-  const [showConfig, setShowConfig] = useState(false)
-
-  useEffect(() => {
-    if (data?.budget?.per_hour) setBudgetInput(data.budget.per_hour)
-  }, [data?.budget?.per_hour])
 
   if (isLoading || !data) {
     return (
@@ -182,72 +170,48 @@ export default function PipelineDashboard() {
     )
   }
 
-  const { stages, totals, budget, enabled } = data
+  const { stages, totals, enabled } = data
   const crawl = stages.crawl || { status: 'not_started' } as PipelineStageStatus
   const extract = stages.extract || { status: 'not_started' } as PipelineStageStatus
   const ml = stages.ml || { status: 'not_started' } as PipelineStageStatus
 
   const mlExtra = (ml as PipelineStageStatus).extra || {}
-  const outcomeCount = (mlExtra as any).current_outcomes ?? totals.outcome_count
+  const outcomeCount = totals.outcome_count
   const outcomeRequired = (mlExtra as any).required_outcomes ?? 30
   const extractExtra = (extract as PipelineStageStatus).extra || {}
 
-  const spentPct = budget.per_hour > 0
-    ? Math.min(100, (budget.spent_this_hour / budget.per_hour) * 100)
-    : 0
+  const cycleResult = (mlExtra as any).cycle_result || {}
+  const evalResult = cycleResult.evaluation || null
+  const trainResult = cycleResult.training || null
+  const promoResult = cycleResult.promotion || null
+  const bestAccuracy: number | null =
+    promoResult?.success && trainResult?.test_metrics?.accuracy != null
+      ? trainResult.test_metrics.accuracy
+      : trainResult?.status === 'completed' && trainResult?.test_metrics?.accuracy != null
+        ? trainResult.test_metrics.accuracy
+        : evalResult?.metrics?.accuracy ?? null
 
   return (
     <div className="space-y-4">
       {/* Controls bar */}
       <Card className="p-4">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => toggleMut.mutate(!enabled)}
-              disabled={toggleMut.isPending}
-              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 ${
-                enabled ? 'bg-green-500 focus:ring-green-400' : 'bg-gray-300 focus:ring-gray-400'
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => toggleMut.mutate(!enabled)}
+            disabled={toggleMut.isPending}
+            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 ${
+              enabled ? 'bg-green-500 focus:ring-green-400' : 'bg-gray-300 focus:ring-gray-400'
+            }`}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                enabled ? 'translate-x-6' : 'translate-x-1'
               }`}
-            >
-              <span
-                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-                  enabled ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-            <span className={`text-sm font-semibold ${enabled ? 'text-green-700' : 'text-gray-500'}`}>
-              {enabled ? 'Pipeline ON' : 'Pipeline OFF'}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-500">Budget</span>
-            <input
-              type="range"
-              min={0.5}
-              max={50}
-              step={0.5}
-              value={budgetInput}
-              onChange={e => setBudgetInput(Number(e.target.value))}
-              onMouseUp={() => throttleMut.mutate(budgetInput)}
-              onTouchEnd={() => throttleMut.mutate(budgetInput)}
-              className="w-28 accent-blue-500"
             />
-            <span className="text-xs font-mono font-semibold w-16">${budgetInput.toFixed(2)}/hr</span>
-          </div>
-
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-gray-500">Spent:</span>
-            <div className="w-20 bg-gray-100 rounded-full h-2">
-              <div
-                className={`h-2 rounded-full transition-all ${spentPct > 80 ? 'bg-red-500' : 'bg-blue-500'}`}
-                style={{ width: `${spentPct}%` }}
-              />
-            </div>
-            <span className="font-mono text-gray-700">
-              ${budget.spent_this_hour.toFixed(2)} / ${budget.per_hour.toFixed(2)}
-            </span>
-          </div>
+          </button>
+          <span className={`text-sm font-semibold ${enabled ? 'text-green-700' : 'text-gray-500'}`}>
+            {enabled ? 'Pipeline ON' : 'Pipeline OFF'}
+          </span>
         </div>
       </Card>
 
@@ -265,9 +229,8 @@ export default function PipelineDashboard() {
               { label: 'Frontier', value: `${totals.frontier_pending} pending` },
             ]}
             action={{
-              label: 'Force Discovery',
-              onClick: () => forceMut.mutate('discover'),
-              disabled: forceMut.isPending,
+              label: 'Details',
+              onClick: () => navigate('/admin/crawler'),
             }}
           />
 
@@ -296,91 +259,159 @@ export default function PipelineDashboard() {
 
           <Arrow count={totals.docs_completed} label="completed" />
 
-          <StageBox
-            title="ML Train"
-            subtitle="AWS Fargate 24/7"
-            stage={ml}
-            rows={[
-              { label: 'Last activity', value: timeAgo((ml as PipelineStageStatus).last_activity_at ?? null) },
-              { label: 'Outcomes', value: `${outcomeCount} / ${outcomeRequired}` },
-              { label: 'Knowledge base', value: `${totals.docs_completed} docs` },
-            ]}
-            progress={{ current: outcomeCount, max: outcomeRequired }}
-            action={{
-              label: 'Force Train',
-              onClick: () => forceMut.mutate('train'),
-              disabled: forceMut.isPending,
-            }}
+          <MLStageCard
+            stage={ml as PipelineStageStatus}
+            outcomeCount={outcomeCount}
+            outcomeRequired={outcomeRequired}
+            bestAccuracy={bestAccuracy}
+            activeModel={promoResult?.promoted || trainResult?.model_version || evalResult?.model_version || null}
+            promoResult={promoResult}
+            onForceTrain={() => forceMut.mutate('train')}
+            forceDisabled={forceMut.isPending}
           />
         </div>
       </Card>
 
-      {/* Advanced config */}
-      <Card className="p-4">
-        <button
-          onClick={() => setShowConfig(!showConfig)}
-          className="text-sm text-gray-500 hover:text-gray-700 font-medium flex items-center gap-1"
-        >
-          <span className="text-xs">{showConfig ? '▼' : '▶'}</span>
-          Advanced Config
-        </button>
-        {showConfig && (
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-            <div>
-              <h4 className="font-semibold text-gray-700 mb-2 text-xs uppercase tracking-wide">Crawl</h4>
-              <ConfigField label="RPM" configKey="crawl_rpm" defaultVal={10} />
-              <ConfigField label="Concurrency" configKey="crawl_concurrent" defaultVal={10} />
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-700 mb-2 text-xs uppercase tracking-wide">Extract</h4>
-              <ConfigField label="Ollama Model" configKey="extract_model" defaultVal="qwen2.5:7b" type="text" />
-              <ConfigField label="Idle sleep (s)" configKey="extract_idle_seconds" defaultVal={5} />
-              <ConfigField label="Heartbeat (s)" configKey="heartbeat_timeout" defaultVal={300} />
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-700 mb-2 text-xs uppercase tracking-wide">ML Train</h4>
-              <ConfigField label="Threshold" configKey="ml_threshold" defaultVal={30} />
-              <ConfigField label="Cooldown (s)" configKey="ml_cooldown" defaultVal={300} />
-            </div>
-          </div>
-        )}
-      </Card>
     </div>
   )
 }
 
-function ConfigField({
-  label,
-  configKey,
-  defaultVal,
-  type = 'number',
-}: {
-  label: string
-  configKey: string
-  defaultVal: number | string
-  type?: 'number' | 'text'
-}) {
-  const [value, setValue] = useState(String(defaultVal))
-  const queryClient = useQueryClient()
+function AccuracyRing({ value, size = 48 }: { value: number; size?: number }) {
+  const pct = Math.round(value * 100)
+  const r = (size - 6) / 2
+  const circ = 2 * Math.PI * r
+  const offset = circ * (1 - value)
+  const color = value >= 0.7 ? 'text-green-500' : value >= 0.5 ? 'text-yellow-500' : 'text-red-500'
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#f3f4f6" strokeWidth={5} />
+        <circle
+          cx={size / 2} cy={size / 2} r={r} fill="none"
+          strokeWidth={5} strokeLinecap="round"
+          className={`${color} transition-all duration-700`}
+          stroke="currentColor"
+          strokeDasharray={circ}
+          strokeDashoffset={offset}
+        />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-gray-800">
+        {pct}%
+      </span>
+    </div>
+  )
+}
 
-  const saveMut = useMutation({
-    mutationFn: () =>
-      apiClient.patch('/admin/pipeline/config', {
-        updates: { [configKey]: type === 'number' ? Number(value) : value },
-      }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['pipeline-status'] }),
-  })
+
+function MLStageCard({
+  stage,
+  outcomeCount,
+  outcomeRequired,
+  bestAccuracy,
+  activeModel,
+  promoResult,
+  onForceTrain,
+  forceDisabled,
+}: {
+  stage: PipelineStageStatus
+  outcomeCount: number
+  outcomeRequired: number
+  bestAccuracy: number | null
+  activeModel: string | null
+  promoResult: any
+  onForceTrain: () => void
+  forceDisabled: boolean
+}) {
+  const status = stage.status || 'not_started'
+  const isReady = outcomeCount >= outcomeRequired
+  const promoted = promoResult?.success === true
 
   return (
-    <div className="flex items-center gap-2 mb-1.5">
-      <label className="text-gray-500 w-24 text-xs">{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={e => setValue(e.target.value)}
-        onBlur={() => saveMut.mutate()}
-        className="border border-gray-200 rounded px-2 py-1 text-xs w-24 font-mono focus:outline-none focus:ring-1 focus:ring-blue-400"
-      />
+    <div className="flex-1 border border-gray-200 rounded-lg p-4 bg-white min-w-[220px]">
+      <div className="flex items-center gap-2 mb-1">
+        <StatusDot status={status} />
+        <h3 className="text-sm font-semibold text-gray-900">ML Train</h3>
+      </div>
+
+      {/* Subtitle: active model or waiting reason */}
+      <p className="text-[11px] text-gray-400 mb-3">
+        {activeModel ? activeModel : isReady ? 'Ready to train' : `Need ${outcomeRequired - outcomeCount} more outcomes`}
+      </p>
+
+      <div className="flex items-center gap-1.5 mb-3">
+        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+          ['training'].includes(status)
+            ? 'bg-green-50 text-green-700'
+            : status === 'completed'
+              ? 'bg-green-50 text-green-700'
+              : status === 'error'
+                ? 'bg-red-50 text-red-700'
+                : status === 'waiting'
+                  ? (isReady ? 'bg-blue-50 text-blue-700' : 'bg-yellow-50 text-yellow-700')
+                  : 'bg-gray-100 text-gray-500'
+        }`}>
+          {status === 'waiting' && !isReady
+            ? 'Collecting data'
+            : status === 'waiting' && isReady
+              ? 'Ready'
+              : STATUS_LABELS[status] || status}
+        </span>
+        {promoResult && (
+          <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+            promoted ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'
+          }`}>
+            {promoted ? 'promoted' : 'kept prev'}
+          </span>
+        )}
+      </div>
+
+      {/* Accuracy ring or waiting indicator */}
+      {bestAccuracy != null ? (
+        <div className="flex items-center gap-3 mb-3">
+          <AccuracyRing value={bestAccuracy} />
+          <div className="text-[11px] space-y-0.5">
+            <p className="text-gray-500">Model accuracy</p>
+            <p className="font-mono text-gray-800 font-semibold">
+              {(bestAccuracy * 100).toFixed(1)}%
+            </p>
+            <p className="text-gray-400">
+              {stage.items_processed_total ?? 0} cycle{(stage.items_processed_total ?? 0) !== 1 ? 's' : ''} run
+            </p>
+          </div>
+        </div>
+      ) : !isReady ? (
+        <div className="mb-3">
+          <div className="w-full bg-gray-100 rounded-full h-1.5">
+            <div
+              className="bg-blue-500 h-1.5 rounded-full transition-all duration-500"
+              style={{ width: `${Math.min(100, (outcomeCount / Math.max(outcomeRequired, 1)) * 100)}%` }}
+            />
+          </div>
+          <p className="text-[10px] text-gray-400 mt-1">
+            {outcomeCount} / {outcomeRequired} outcomes
+          </p>
+        </div>
+      ) : (
+        <p className="text-xs text-gray-400 mb-3">No training results yet</p>
+      )}
+
+      <dl className="space-y-1.5">
+        <div className="flex justify-between text-xs">
+          <dt className="text-gray-500">Last check</dt>
+          <dd className="font-mono text-gray-800">{timeAgo(stage.last_activity_at ?? null)}</dd>
+        </div>
+        <div className="flex justify-between text-xs">
+          <dt className="text-gray-500">Training data</dt>
+          <dd className="font-mono text-gray-800">{outcomeCount} outcomes</dd>
+        </div>
+      </dl>
+
+      <div className="mt-3 pt-2 border-t border-gray-100">
+        <Button size="sm" variant="secondary" onClick={onForceTrain} disabled={forceDisabled}>
+          Force Train
+        </Button>
+      </div>
     </div>
   )
 }
+

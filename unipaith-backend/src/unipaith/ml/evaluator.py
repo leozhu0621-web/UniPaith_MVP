@@ -102,26 +102,37 @@ class ModelEvaluator:
     async def _collect_labeled_outcomes(self, model_version: str) -> list[dict]:
         """Collect outcomes joined with predictions for a model version.
 
+        Falls back to all outcomes (any model version) when the specified
+        version has none — ground-truth labels are valid regardless of which
+        model made the original prediction.
+
         Returns list of dicts with: predicted_score, predicted_tier,
         actual_outcome, outcome_confidence, student_id, program_id.
         """
-        stmt = (
-            select(
-                OutcomeRecord.predicted_score,
-                OutcomeRecord.predicted_tier,
-                OutcomeRecord.actual_outcome,
-                OutcomeRecord.outcome_confidence,
-                OutcomeRecord.student_id,
-                OutcomeRecord.program_id,
-            )
-            .join(
-                PredictionLog,
-                OutcomeRecord.prediction_log_id == PredictionLog.id,
-            )
-            .where(PredictionLog.model_version == model_version)
+        base = select(
+            OutcomeRecord.predicted_score,
+            OutcomeRecord.predicted_tier,
+            OutcomeRecord.actual_outcome,
+            OutcomeRecord.outcome_confidence,
+            OutcomeRecord.student_id,
+            OutcomeRecord.program_id,
+        ).join(
+            PredictionLog,
+            OutcomeRecord.prediction_log_id == PredictionLog.id,
         )
-        result = await self.db.execute(stmt)
+
+        result = await self.db.execute(
+            base.where(PredictionLog.model_version == model_version)
+        )
         rows = result.all()
+
+        if not rows:
+            logger.info(
+                "No outcomes for model %s — falling back to all outcomes",
+                model_version,
+            )
+            result = await self.db.execute(base)
+            rows = result.all()
 
         return [
             {
