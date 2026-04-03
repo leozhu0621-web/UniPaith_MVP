@@ -413,8 +413,7 @@ export default function AdminCrawlerDashboardPage() {
       </div>
 
       {/* Add URLs modal */}
-      {addUrlsOpen && (
-        <Modal onClose={() => setAddUrlsOpen(false)} title="Add URLs to Frontier">
+      <Modal isOpen={addUrlsOpen} onClose={() => setAddUrlsOpen(false)} title="Add URLs to Frontier">
           <div className="space-y-3">
             <textarea
               className="w-full border border-gray-300 rounded-lg p-3 text-sm font-mono h-40 focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -436,7 +435,6 @@ export default function AdminCrawlerDashboardPage() {
             </div>
           </div>
         </Modal>
-      )}
     </div>
   )
 }
