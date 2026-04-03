@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import time
 from datetime import UTC, datetime
 from typing import Any
@@ -21,11 +22,16 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from unipaith.config import settings
+from unipaith.config import get_engine_bootstrap_urls, settings
 from unipaith.crawler.knowledge_extractor import KnowledgeExtractor
 from unipaith.crawler.source_discoverer import SourceDiscoverer
 from unipaith.crawler.universal_ingestor import IngestedContent, detect_adapter, get_adapter
-from unipaith.models.knowledge import CrawlFrontier, EngineDirective, KnowledgeDocument
+from unipaith.models.knowledge import (
+    CrawlFrontier,
+    EngineDirective,
+    EngineLoopSnapshot,
+    KnowledgeDocument,
+)
 
 logger = logging.getLogger("unipaith.engine_loop")
 
@@ -70,6 +76,9 @@ def get_engine_state() -> EngineLoopState:
     return _engine_state
 
 
+_SNAPSHOT_SINGLETON_ID = 1
+
+
 class EngineLoop:
     """The perpetual knowledge consumption loop."""
 
@@ -79,6 +88,55 @@ class EngineLoop:
         self.discoverer = SourceDiscoverer(db)
         self.state = _engine_state
 
+    async def _count_pending_frontier(self) -> int:
+        now = datetime.now(UTC)
+        ready = (CrawlFrontier.next_crawl_after.is_(None)) | (
+            CrawlFrontier.next_crawl_after <= now
+        )
+        result = await self.db.execute(
+            select(func.count())
+            .select_from(CrawlFrontier)
+            .where(
+                CrawlFrontier.status == "pending",
+                ready,
+            )
+        )
+        return int(result.scalar() or 0)
+
+    async def _persist_tick_snapshot(
+        self,
+        *,
+        result: dict[str, Any],
+        pending_before: int,
+        pending_after: int,
+        bootstrap_added: int,
+        batch_was_empty: bool,
+        tick_status: str,
+    ) -> None:
+        row = await self.db.get(EngineLoopSnapshot, _SNAPSHOT_SINGLETON_ID)
+        if row is None:
+            row = EngineLoopSnapshot(id=_SNAPSHOT_SINGLETON_ID)
+            self.db.add(row)
+
+        now = datetime.now(UTC)
+        row.last_tick_at = now
+        row.last_processed = int(result.get("processed", 0))
+        row.last_errors = int(result.get("errors", 0))
+        row.last_discovered = int(result.get("discovered", 0))
+        row.last_skipped = int(result.get("skipped", 0))
+        row.last_bootstrap_added = bootstrap_added
+        row.frontier_pending_before = pending_before
+        row.frontier_pending_after = pending_after
+        row.batch_was_empty = batch_was_empty
+        row.tick_status = tick_status
+        row.last_error_message = (self.state.last_error or "")[:2000] or None
+        row.cumulative_processed = self.state.total_processed
+        row.cumulative_errors = self.state.total_errors
+        row.ai_mock_mode = bool(settings.ai_mock_mode or settings.gpu_mode == "mock")
+        row.gpu_mode = settings.gpu_mode
+
+        await self.db.flush()
+
     async def run_tick(self) -> dict[str, Any]:
         """Run one tick of the engine loop.
 
@@ -86,6 +144,14 @@ class EngineLoop:
         Called by the scheduler at regular intervals.
         """
         if self.state.paused:
+            await self._persist_tick_snapshot(
+                result={"processed": 0, "errors": 0, "discovered": 0, "skipped": 0},
+                pending_before=0,
+                pending_after=0,
+                bootstrap_added=0,
+                batch_was_empty=True,
+                tick_status="paused",
+            )
             return {"status": "paused"}
 
         self.state.status = "running"
@@ -99,10 +165,19 @@ class EngineLoop:
             "discovered": 0,
             "skipped": 0,
         }
+        bootstrap_added = 0
+        pending_before = await self._count_pending_frontier()
+        batch_was_empty = True
+        tick_status = "ok"
 
         try:
             directives = await self._load_directives()
             self._apply_directives(directives)
+
+            if settings.engine_bootstrap_enabled and pending_before == 0:
+                bootstrap_added = await self.discoverer.ensure_bootstrap_frontier(
+                    get_engine_bootstrap_urls(),
+                )
 
             batch = await self.discoverer.get_next_batch(
                 batch_size=min(self.state.rpm, 10),
@@ -112,8 +187,31 @@ class EngineLoop:
                 discovery_result = await self.discoverer.run_discovery_cycle(max_new_urls=20)
                 result["discovered"] = sum(discovery_result.values())
                 self.state.total_discovered += result["discovered"]
+                pending_after = await self._count_pending_frontier()
+                logger.info(
+                    "Knowledge engine tick: no batch; discovery=%s "
+                    "pending_before=%s pending_after=%s bootstrap_added=%s "
+                    "ai_mock=%s gpu_mode=%s pid=%s",
+                    discovery_result,
+                    pending_before,
+                    pending_after,
+                    bootstrap_added,
+                    settings.ai_mock_mode,
+                    settings.gpu_mode,
+                    os.getpid(),
+                )
+                await self._persist_tick_snapshot(
+                    result=result,
+                    pending_before=pending_before,
+                    pending_after=pending_after,
+                    bootstrap_added=bootstrap_added,
+                    batch_was_empty=True,
+                    tick_status="idle_no_batch",
+                )
                 self.state.status = "idle"
                 return result
+
+            batch_was_empty = False
 
             for frontier_item in batch:
                 if self.state.paused:
@@ -148,10 +246,43 @@ class EngineLoop:
                 result["discovered"] = sum(discovery_result.values())
                 self.state.total_discovered += result["discovered"]
 
+            pending_after = await self._count_pending_frontier()
+            logger.info(
+                "Knowledge engine tick: processed=%s errors=%s discovered=%s skipped=%s "
+                "pending_after=%s bootstrap_added=%s ai_mock=%s gpu_mode=%s pid=%s",
+                result.get("processed"),
+                result.get("errors"),
+                result.get("discovered"),
+                result.get("skipped"),
+                pending_after,
+                bootstrap_added,
+                settings.ai_mock_mode,
+                settings.gpu_mode,
+                os.getpid(),
+            )
+            await self._persist_tick_snapshot(
+                result=result,
+                pending_before=pending_before,
+                pending_after=pending_after,
+                bootstrap_added=bootstrap_added,
+                batch_was_empty=False,
+                tick_status="ok",
+            )
+
         except Exception as e:
             logger.exception("Engine loop tick failed")
             self.state.last_error = str(e)[:500]
             result["errors"] += 1
+            tick_status = "error"
+            pending_after = await self._count_pending_frontier()
+            await self._persist_tick_snapshot(
+                result=result,
+                pending_before=pending_before,
+                pending_after=pending_after,
+                bootstrap_added=bootstrap_added,
+                batch_was_empty=batch_was_empty,
+                tick_status=tick_status,
+            )
         finally:
             self.state.current_url = None
             self.state.status = "idle"
@@ -261,8 +392,42 @@ class EngineLoop:
         )
         type_counts = {row[0]: row[1] for row in type_counts_result.all()}
 
+        snap_row = await self.db.get(EngineLoopSnapshot, _SNAPSHOT_SINGLETON_ID)
+        persisted: dict[str, Any] | None = None
+        if snap_row is not None:
+            persisted = {
+                "last_tick_at": snap_row.last_tick_at.isoformat()
+                if snap_row.last_tick_at
+                else None,
+                "last_processed": snap_row.last_processed,
+                "last_errors": snap_row.last_errors,
+                "last_discovered": snap_row.last_discovered,
+                "last_skipped": snap_row.last_skipped,
+                "last_bootstrap_added": snap_row.last_bootstrap_added,
+                "frontier_pending_before": snap_row.frontier_pending_before,
+                "frontier_pending_after": snap_row.frontier_pending_after,
+                "batch_was_empty": snap_row.batch_was_empty,
+                "tick_status": snap_row.tick_status,
+                "last_error_message": snap_row.last_error_message,
+                "cumulative_processed": snap_row.cumulative_processed,
+                "cumulative_errors": snap_row.cumulative_errors,
+                "ai_mock_mode": snap_row.ai_mock_mode,
+                "gpu_mode": snap_row.gpu_mode,
+            }
+
+        runtime_engine = self.state.to_dict()
+        if persisted and persisted.get("last_tick_at"):
+            runtime_engine["last_tick_at"] = persisted["last_tick_at"]
+
         return {
-            "engine": self.state.to_dict(),
+            "engine": runtime_engine,
+            "engine_persisted": persisted,
+            "engine_runtime_flags": {
+                "openai_key_configured": bool(settings.openai_api_key),
+                "ai_mock_mode": settings.ai_mock_mode,
+                "gpu_mode": settings.gpu_mode,
+                "engine_bootstrap_enabled": settings.engine_bootstrap_enabled,
+            },
             "knowledge": {
                 "total_documents": total_docs or 0,
                 "active_documents": active_docs or 0,

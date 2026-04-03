@@ -470,6 +470,8 @@ class AIControlPlaneService:
                 "status": row.status,
                 "items_extracted": row.items_extracted,
                 "created_at": row.created_at.isoformat() if row.created_at else None,
+                "started_at": row.started_at.isoformat() if row.started_at else None,
+                "completed_at": row.completed_at.isoformat() if row.completed_at else None,
             }
         if row_type == "extracted_program":
             return {
@@ -583,7 +585,9 @@ class AIControlPlaneService:
                     ok_values={"completed", "ok"},
                     warn_values={"running", "pending"},
                 ),
-                "last_run_at": self._safe_dt(crawl_latest.get("created_at")),
+                "last_run_at": self._safe_dt(
+                    crawl_latest.get("completed_at") or crawl_latest.get("created_at"),
+                ),
                 "duration_ms": self._safe_num(
                     engine_runtime.get("last_stage_durations_ms", {}).get("ingest")
                 ),
@@ -593,6 +597,7 @@ class AIControlPlaneService:
                     if "active_jobs" in status.get("engine", {})
                     else None,
                     "items_extracted": crawl_latest.get("items_extracted"),
+                    "job_created_at": crawl_latest.get("created_at"),
                 },
                 "error": None
                 if reliability.get("crawl_failures_total", 0) == 0

@@ -11,6 +11,7 @@ from unipaith.api.institutions import router as institutions_router
 from unipaith.api.internal import router as internal_router
 from unipaith.api.interviews import router as interviews_router
 from unipaith.api.knowledge_admin import router as knowledge_admin_router
+from unipaith.api.pipeline import router as pipeline_router
 from unipaith.api.messaging import router as messaging_router
 from unipaith.api.ml_admin import router as ml_admin_router
 from unipaith.api.notifications import router as notifications_router
@@ -43,6 +44,7 @@ api_router.include_router(ml_admin_router)
 api_router.include_router(crawler_admin_router)
 api_router.include_router(admin_dashboard_router)
 api_router.include_router(knowledge_admin_router)
+api_router.include_router(pipeline_router)
 
 
 @api_router.get("/health", tags=["health"])

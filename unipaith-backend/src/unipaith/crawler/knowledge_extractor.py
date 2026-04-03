@@ -79,10 +79,77 @@ Return a JSON array. Return ONLY valid JSON."""
 class KnowledgeExtractor:
     """Processes raw content into structured knowledge documents."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession, llm=None, embedding_client=None):
         self.db = db
-        self.llm = get_llm_client()
-        self.embedding_client = get_embedding_client()
+        self.llm = llm or get_llm_client()
+        self.embedding_client = embedding_client or get_embedding_client()
+
+    async def store_raw(
+        self,
+        raw_text: str,
+        source_url: str | None = None,
+        content_format: str = "webpage",
+        frontier_id: UUID | None = None,
+        metadata: dict | None = None,
+    ) -> KnowledgeDocument | None:
+        """Stage 1: store raw content without LLM processing (status='raw')."""
+        if not raw_text or len(raw_text.strip()) < 50:
+            return None
+
+        if content_format not in CONTENT_FORMATS:
+            content_format = "webpage"
+
+        domain = urlparse(source_url).netloc if source_url else None
+
+        if source_url:
+            existing = await self.db.execute(
+                select(KnowledgeDocument)
+                .where(KnowledgeDocument.source_url == source_url)
+                .limit(1)
+            )
+            if existing.scalar_one_or_none():
+                logger.debug("Duplicate source_url, skipping: %s", source_url)
+                return None
+
+        doc = KnowledgeDocument(
+            source_url=source_url,
+            source_domain=domain,
+            content_format=content_format,
+            raw_text=raw_text[:500_000],
+            crawl_frontier_id=frontier_id,
+            metadata_json=metadata or {},
+            processing_status="raw",
+        )
+        self.db.add(doc)
+        await self.db.flush()
+        return doc
+
+    async def extract_knowledge(self, doc: KnowledgeDocument) -> KnowledgeDocument:
+        """Stage 2: run LLM extraction on a raw doc. Updates status in place."""
+        raw_text = doc.raw_text or ""
+        if not raw_text or len(raw_text.strip()) < 50:
+            doc.processing_status = "failed"
+            doc.processing_error = "content_too_short"
+            await self.db.flush()
+            return doc
+
+        doc.processing_status = "processing"
+        await self.db.flush()
+
+        try:
+            await self._classify(doc, raw_text)
+            await self._extract(doc, raw_text)
+            await self._link_entities(doc)
+            await self._generate_embedding(doc)
+            doc.processing_status = "completed"
+            doc.word_count = len(raw_text.split())
+        except Exception:
+            logger.exception("Knowledge extraction failed for %s", doc.source_url or doc.id)
+            doc.processing_status = "failed"
+            doc.processing_error = "extraction_failed"
+
+        await self.db.flush()
+        return doc
 
     async def process_raw_content(
         self,

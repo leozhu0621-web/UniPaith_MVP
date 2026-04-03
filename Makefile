@@ -11,6 +11,7 @@ dev-db:  ## Start PostgreSQL (Docker)
 dev-backend: dev-db  ## Start backend (installs deps, runs migrations, starts uvicorn)
 	cd unipaith-backend && \
 		.venv/bin/alembic upgrade head && \
+		export PYTHONPATH=src && \
 		.venv/bin/uvicorn unipaith.main:app --reload --host 0.0.0.0 --port 8000
 
 dev-frontend:  ## Start frontend dev server

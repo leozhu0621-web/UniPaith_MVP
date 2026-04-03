@@ -38,15 +38,17 @@ def setup_scheduler() -> None:
         logger.info("Scheduler disabled on this instance (leader-only mode)")
         return
 
-    # Unified ML cycle: evaluate -> drift -> decision -> train -> fairness -> promote
-    scheduler.add_job(
-        _run_ml_cycle,
-        "interval",
-        minutes=settings.ml_cycle_schedule_minutes,
-        id="ml_cycle",
-        name="ML Full Cycle",
-        **_job_defaults(),
-    )
+    # ML cycle: now handled by ContinuousPipeline Stage 3.
+    # Legacy scheduled job kept only when pipeline is disabled.
+    if not settings.pipeline_enabled:
+        scheduler.add_job(
+            _run_ml_cycle,
+            "interval",
+            minutes=settings.ml_cycle_schedule_minutes,
+            id="ml_cycle",
+            name="ML Full Cycle (legacy)",
+            **_job_defaults(),
+        )
 
     # Daily feature refresh
     scheduler.add_job(
@@ -73,15 +75,16 @@ def setup_scheduler() -> None:
             settings.gpu_70b_idle_shutdown_minutes,
         )
 
-    # Weekly crawler run (if crawler sources exist)
-    scheduler.add_job(
-        _run_crawler,
-        "interval",
-        hours=settings.crawler_default_frequency_hours,
-        id="crawler_weekly",
-        name="Weekly University Crawler",
-        **_job_defaults(),
-    )
+    # Crawler: now handled by ContinuousPipeline Stage 1.
+    if not settings.pipeline_enabled:
+        scheduler.add_job(
+            _run_crawler,
+            "interval",
+            hours=settings.crawler_default_frequency_hours,
+            id="crawler_weekly",
+            name="University Crawler (legacy)",
+            **_job_defaults(),
+        )
 
     if settings.scheduler_self_driving_enabled:
         scheduler.add_job(
@@ -93,13 +96,14 @@ def setup_scheduler() -> None:
             **_job_defaults(),
         )
 
-    if settings.engine_loop_enabled:
+    # Knowledge engine tick: now handled by ContinuousPipeline Stages 1+2.
+    if not settings.pipeline_enabled and settings.engine_loop_enabled:
         scheduler.add_job(
             _run_knowledge_engine_tick,
             "interval",
             minutes=settings.engine_loop_interval_minutes,
             id="knowledge_engine",
-            name="Knowledge Engine Loop",
+            name="Knowledge Engine Loop (legacy)",
             **_job_defaults(),
         )
 

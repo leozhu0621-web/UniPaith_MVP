@@ -59,10 +59,26 @@ class Settings(BaseSettings):
     scheduler_self_driving_enabled: bool = True
     scheduler_self_driving_interval_minutes: int = 30
 
-    # Knowledge engine loop
+    # Knowledge engine loop (legacy — replaced by pipeline, kept for backward compat)
     engine_loop_enabled: bool = True
     engine_loop_interval_minutes: int = 5
     engine_loop_default_rpm: int = 10
+    engine_bootstrap_enabled: bool = True
+    engine_bootstrap_urls: str = ""
+
+    # Continuous pipeline
+    pipeline_enabled: bool = True
+    pipeline_crawl_rpm: int = 10
+    pipeline_crawl_concurrent: int = 10
+    pipeline_extract_ollama_url: str = "http://localhost:11434/v1"
+    pipeline_extract_ollama_model: str = "qwen2.5:7b"
+    pipeline_extract_heartbeat_timeout_seconds: int = 300
+    pipeline_extract_budget_per_hour: float = 5.0
+    pipeline_extract_cost_per_doc: float = 0.015
+    pipeline_extract_idle_seconds: int = 5
+    pipeline_ml_check_seconds: int = 60
+    pipeline_ml_threshold: int = 30
+    pipeline_ml_cooldown_seconds: int = 300
 
     # Logging
     log_level: str = "INFO"
@@ -245,3 +261,19 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Default URLs when ENGINE_BOOTSTRAP_URLS is unset — stable, crawlable education content.
+_DEFAULT_ENGINE_BOOTSTRAP_URLS: tuple[str, ...] = (
+    "https://www.ed.gov/news/press-releases",
+    "https://www.commonapp.org/why-apply-now",
+    "https://www.timeshighereducation.com/world-university-rankings",
+    "https://www.topuniversities.com/university-rankings/world-university-rankings/2024",
+    "https://www.niche.com/colleges/search/best-colleges/",
+)
+
+
+def get_engine_bootstrap_urls() -> list[str]:
+    raw = (settings.engine_bootstrap_urls or "").strip()
+    if raw:
+        return [u.strip() for u in raw.split(",") if u.strip().startswith("http")]
+    return list(_DEFAULT_ENGINE_BOOTSTRAP_URLS)

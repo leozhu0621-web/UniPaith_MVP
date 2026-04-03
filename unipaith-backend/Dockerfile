@@ -30,4 +30,5 @@ EXPOSE 8000
 ENV PYTHONPATH=/app/src
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
-CMD ["uvicorn", "unipaith.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+# Single worker: one APScheduler + consistent in-memory engine state; multi-worker duplicated ticks.
+CMD ["uvicorn", "unipaith.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

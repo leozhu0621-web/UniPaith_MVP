@@ -86,9 +86,24 @@ class MLOrchestrator:
                 "retraining_triggered": eval_run.retraining_triggered,
                 "drift_detected": eval_run.drift_detected,
             }
-        except Exception:
+        except Exception as exc:
             record_ml_evaluation(eval_timer, ok=False)
             logger.exception("Full cycle: evaluation step failed")
+
+            outcome_count = 0
+            try:
+                outcome_count = await self.db.scalar(
+                    select(func.count()).select_from(OutcomeRecord)
+                ) or 0
+            except Exception:
+                pass
+
+            result["evaluation"] = {
+                "status": "skipped",
+                "reason": str(exc),
+                "current_count": outcome_count,
+                "required_count": settings.eval_min_predictions_for_eval,
+            }
             result["completed_at"] = datetime.now(UTC).isoformat()
             return result
 

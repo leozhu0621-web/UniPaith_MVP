@@ -140,6 +140,8 @@ export default function AdminKnowledgePage() {
   const engine = statusQ.data?.engine
   const knowledge = statusQ.data?.knowledge
   const frontier = statusQ.data?.frontier
+  const persisted = statusQ.data?.engine_persisted
+  const runtimeFlags = statusQ.data?.engine_runtime_flags
 
   return (
     <div className="space-y-6">
@@ -201,6 +203,85 @@ export default function AdminKnowledgePage() {
           </div>
         </Card>
       ) : null}
+
+      {/* === DB-backed last tick (works across restarts / single source of truth) === */}
+      {statusQ.isLoading ? null : (
+        <Card className="p-4 border-slate-200">
+          <h2 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+            <Clock size={16} className="text-slate-600" />
+            Last tick snapshot (database)
+          </h2>
+          {runtimeFlags && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              <Badge variant={runtimeFlags.openai_key_configured ? 'success' : 'danger'}>
+                OpenAI key {runtimeFlags.openai_key_configured ? 'configured' : 'missing'}
+              </Badge>
+              <Badge variant={runtimeFlags.ai_mock_mode ? 'warning' : 'success'}>
+                AI {runtimeFlags.ai_mock_mode ? 'mock' : 'live'}
+              </Badge>
+              <Badge variant="neutral">GPU: {runtimeFlags.gpu_mode}</Badge>
+              <Badge variant={runtimeFlags.engine_bootstrap_enabled ? 'success' : 'neutral'}>
+                Bootstrap {runtimeFlags.engine_bootstrap_enabled ? 'on' : 'off'}
+              </Badge>
+            </div>
+          )}
+          {persisted ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2 text-sm">
+              <div className="flex justify-between gap-2 border-b border-gray-100 pb-1">
+                <span className="text-gray-500">Tick status</span>
+                <span className="font-medium">{statusBadge(persisted.tick_status)}</span>
+              </div>
+              <div className="flex justify-between gap-2 border-b border-gray-100 pb-1">
+                <span className="text-gray-500">Last tick (UTC)</span>
+                <span className="font-mono text-xs">
+                  {persisted.last_tick_at
+                    ? new Date(persisted.last_tick_at).toLocaleString(undefined, { timeZone: 'UTC' }) + ' UTC'
+                    : '—'}
+                </span>
+              </div>
+              <div className="flex justify-between gap-2 border-b border-gray-100 pb-1">
+                <span className="text-gray-500">Batch empty</span>
+                <span className="font-medium">{persisted.batch_was_empty ? 'yes' : 'no'}</span>
+              </div>
+              <div className="flex justify-between gap-2 border-b border-gray-100 pb-1">
+                <span className="text-gray-500">Processed / errors / disc.</span>
+                <span className="font-medium">{persisted.last_processed} / {persisted.last_errors} / {persisted.last_discovered}</span>
+              </div>
+              <div className="flex justify-between gap-2 border-b border-gray-100 pb-1">
+                <span className="text-gray-500">Skipped</span>
+                <span className="font-medium">{persisted.last_skipped}</span>
+              </div>
+              <div className="flex justify-between gap-2 border-b border-gray-100 pb-1">
+                <span className="text-gray-500">Bootstrap URLs added</span>
+                <span className="font-medium text-indigo-600">{persisted.last_bootstrap_added}</span>
+              </div>
+              <div className="flex justify-between gap-2 border-b border-gray-100 pb-1">
+                <span className="text-gray-500">Frontier pending (before → after)</span>
+                <span className="font-medium">{persisted.frontier_pending_before} → {persisted.frontier_pending_after}</span>
+              </div>
+              <div className="flex justify-between gap-2 border-b border-gray-100 pb-1">
+                <span className="text-gray-500">Cumulative (proc / err)</span>
+                <span className="font-medium">{persisted.cumulative_processed} / {persisted.cumulative_errors}</span>
+              </div>
+              <div className="flex justify-between gap-2 border-b border-gray-100 pb-1 sm:col-span-2">
+                <span className="text-gray-500">Snapshot AI mode</span>
+                <span className="font-mono text-xs">
+                  mock={persisted.ai_mock_mode ? 'yes' : 'no'} · gpu={persisted.gpu_mode}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-400">
+              No snapshot row yet. Run a tick or wait for the scheduler (after backend migration).
+            </p>
+          )}
+          {persisted?.last_error_message && (
+            <p className="mt-3 text-xs text-red-600 font-mono break-all border-t pt-2">
+              {persisted.last_error_message}
+            </p>
+          )}
+        </Card>
+      )}
 
       {/* === Controls === */}
       <Card className="p-4">

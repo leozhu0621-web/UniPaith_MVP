@@ -45,6 +45,7 @@ from unipaith.models.knowledge import (
     AdvisorPersona,
     CrawlFrontier,
     EngineDirective,
+    EngineLoopSnapshot,
     InteractionSignal,
     KnowledgeDocument,
     KnowledgeLink,
@@ -60,6 +61,10 @@ from unipaith.models.matching import (
     PredictionLog,
     RawIngestedData,
     StudentFeature,
+)
+from unipaith.models.pipeline import (
+    PipelineConfig,
+    PipelineStageSnapshot,
 )
 from unipaith.models.ml_loop import (
     ABTestAssignment,
@@ -153,8 +158,11 @@ __all__ = [
     "KnowledgeDocument",
     "KnowledgeLink",
     "CrawlFrontier",
+    "EngineLoopSnapshot",
     "EngineDirective",
     "InteractionSignal",
     "PersonInsight",
     "AdvisorPersona",
+    "PipelineStageSnapshot",
+    "PipelineConfig",
 ]

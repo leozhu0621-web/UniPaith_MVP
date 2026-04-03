@@ -770,6 +770,23 @@ export interface ConversationApiError {
   }
 }
 
+/** Latest row from `crawl_jobs` (university data crawler), not the knowledge frontier. */
+export interface LatestCrawlRun {
+  id?: string
+  status?: string
+  items_extracted?: number
+  created_at?: string | null
+  started_at?: string | null
+  completed_at?: string | null
+}
+
+export interface AdminCrawlerSnapshot {
+  active_sources: number
+  active_jobs: number
+  pending_review_items: number
+  latest_crawl?: LatestCrawlRun | null
+}
+
 // ============ ADMIN ARCHITECTURE TRACE ============
 export type ArchitectureStageStatus = 'ok' | 'warning' | 'error' | 'idle'
 
@@ -852,10 +869,38 @@ export interface FrontierStats {
   failed: number
 }
 
+/** Single-row snapshot from Postgres after each scheduler/API tick (cross-request truth). */
+export interface KnowledgeEnginePersisted {
+  last_tick_at: string | null
+  last_processed: number
+  last_errors: number
+  last_discovered: number
+  last_skipped: number
+  last_bootstrap_added: number
+  frontier_pending_before: number
+  frontier_pending_after: number
+  batch_was_empty: boolean
+  tick_status: string
+  last_error_message: string | null
+  cumulative_processed: number
+  cumulative_errors: number
+  ai_mock_mode: boolean
+  gpu_mode: string
+}
+
+export interface KnowledgeEngineRuntimeFlags {
+  openai_key_configured: boolean
+  ai_mock_mode: boolean
+  gpu_mode: string
+  engine_bootstrap_enabled: boolean
+}
+
 export interface KnowledgeStatusResponse {
   engine: KnowledgeEngineState
   knowledge: KnowledgeStats
   frontier: FrontierStats
+  engine_persisted?: KnowledgeEnginePersisted | null
+  engine_runtime_flags?: KnowledgeEngineRuntimeFlags | null
 }
 
 export interface KnowledgeDirective {
@@ -893,4 +938,33 @@ export interface FrontierItem {
   discovery_method: string | null
   last_crawled_at: string | null
   consecutive_failures: number
+}
+
+export interface PipelineStageStatus {
+  status: string
+  last_activity_at: string | null
+  items_processed_total: number
+  items_processed_hour: number
+  queue_depth: number
+  last_error: string | null
+  extra: Record<string, unknown> | null
+  worker_heartbeat_at: string | null
+  worker_hostname: string | null
+  budget_spent_this_hour: number
+  budget_per_hour: number
+}
+
+export interface PipelineStatus {
+  enabled: boolean
+  stages: Record<string, PipelineStageStatus>
+  totals: {
+    raw_docs_queued: number
+    docs_completed: number
+    frontier_pending: number
+    outcome_count: number
+  }
+  budget: {
+    per_hour: number
+    spent_this_hour: number
+  }
 }

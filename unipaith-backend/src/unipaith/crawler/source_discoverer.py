@@ -71,6 +71,14 @@ GAP_SEARCH_TEMPLATES = [
     "graduate admissions trends {year}",
 ]
 
+# No KnowledgeLink rows yet: entity queries are empty; add generic gap searches.
+COLD_START_GAP_QUERIES: tuple[str, ...] = (
+    "graduate school admissions requirements computer science",
+    "international student financial aid US university graduate",
+    "PhD application deadlines engineering programs",
+    "GRE requirements top graduate programs",
+)
+
 
 class SourceDiscoverer:
     """Autonomously discovers new knowledge sources."""
@@ -141,6 +149,36 @@ class SourceDiscoverer:
         )
         self.db.add(frontier_item)
         return frontier_item
+
+    async def ensure_bootstrap_frontier(self, urls: list[str]) -> int:
+        """If there are no pending URLs, insert high-priority seeds so the engine can ingest."""
+        now = datetime.now(UTC)
+        result = await self.db.execute(
+            select(func.count())
+            .select_from(CrawlFrontier)
+            .where(
+                CrawlFrontier.status == "pending",
+                (CrawlFrontier.next_crawl_after.is_(None))
+                | (CrawlFrontier.next_crawl_after <= now),
+            )
+        )
+        pending_ready = int(result.scalar() or 0)
+        if pending_ready > 0:
+            return 0
+
+        added = 0
+        for url in urls:
+            item = await self.add_to_frontier(
+                url,
+                priority=100,
+                discovery_method="bootstrap_seed",
+            )
+            if item:
+                added += 1
+        await self.db.flush()
+        if added:
+            logger.info("Bootstrap frontier: added %d seed URLs (pending was 0)", added)
+        return added
 
     async def get_next_batch(self, batch_size: int = 10) -> list[CrawlFrontier]:
         """Get the next batch of URLs to crawl, respecting domain rate limits."""
@@ -273,6 +311,13 @@ class SourceDiscoverer:
 
         for topic in steering[:5]:
             search_queries.append(f"{topic} graduate admissions latest")
+
+        if len(search_queries) < 4:
+            for q in COLD_START_GAP_QUERIES:
+                if q not in search_queries:
+                    search_queries.append(q)
+                if len(search_queries) >= 10:
+                    break
 
         added = 0
         search = SearchAdapter()

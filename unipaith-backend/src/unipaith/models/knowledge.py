@@ -134,6 +134,29 @@ class CrawlFrontier(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
 
 
+class EngineLoopSnapshot(Base, TimestampMixin):
+    """Singleton row (id=1) persisted each knowledge-engine tick for cross-worker admin truth."""
+
+    __tablename__ = "engine_loop_snapshot"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    last_tick_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_processed: Mapped[int] = mapped_column(Integer, default=0)
+    last_errors: Mapped[int] = mapped_column(Integer, default=0)
+    last_discovered: Mapped[int] = mapped_column(Integer, default=0)
+    last_skipped: Mapped[int] = mapped_column(Integer, default=0)
+    last_bootstrap_added: Mapped[int] = mapped_column(Integer, default=0)
+    frontier_pending_before: Mapped[int] = mapped_column(Integer, default=0)
+    frontier_pending_after: Mapped[int] = mapped_column(Integer, default=0)
+    batch_was_empty: Mapped[bool] = mapped_column(Boolean, default=True)
+    tick_status: Mapped[str] = mapped_column(String(30), default="pending")
+    last_error_message: Mapped[str | None] = mapped_column(Text)
+    cumulative_processed: Mapped[int] = mapped_column(Integer, default=0)
+    cumulative_errors: Mapped[int] = mapped_column(Integer, default=0)
+    ai_mock_mode: Mapped[bool] = mapped_column(Boolean, default=False)
+    gpu_mode: Mapped[str] = mapped_column(String(20), default="openai")
+
+
 class EngineDirective(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "engine_directives"
 

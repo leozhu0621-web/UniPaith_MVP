@@ -37,6 +37,8 @@ _setup_logging()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):  # noqa: ARG001
+    from unipaith.services.pipeline import get_pipeline
+
     if settings.environment.lower() in {"production", "staging"}:
         try:
             async with async_session() as db:
@@ -45,8 +47,14 @@ async def lifespan(app: FastAPI):  # noqa: ARG001
             logging.getLogger("unipaith.startup").exception(
                 "Core account coverage check failed on startup"
             )
+
+    pipeline = get_pipeline()
+    if settings.pipeline_enabled:
+        await pipeline.start()
+
     setup_scheduler()
     yield
+    await pipeline.stop()
     shutdown_scheduler()
 
 

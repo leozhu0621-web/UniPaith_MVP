@@ -4,7 +4,7 @@ import Badge from '../../ui/Badge'
 import Skeleton from '../../ui/Skeleton'
 import StatusBar from '../ops/StatusBar'
 import ProcessingTimeline from '../ops/ProcessingTimeline'
-import type { ArchitectureRunTrace, ArchitectureStageTrace } from '../../../types'
+import type { ArchitectureRunTrace, ArchitectureStageTrace, LatestCrawlRun } from '../../../types'
 
 const STAGE_ORDER = [
   'ingest', 'understand', 'match', 'outcome', 'evaluation', 'training', 'promotion',
@@ -40,7 +40,12 @@ interface MonitorSectionProps {
 
 export default function MonitorSection({ snapshot, sloData, architectureTrace, mlKpis, isLoading }: MonitorSectionProps) {
   const reliability = snapshot?.reliability ?? {}
-  const crawler = snapshot?.crawler ?? {}
+  const crawler = (snapshot?.crawler ?? {}) as {
+    active_sources?: number
+    active_jobs?: number
+    pending_review_items?: number
+    latest_crawl?: LatestCrawlRun | null
+  }
   const ml = snapshot?.ml ?? {}
   const latestRuns = snapshot?.processing?.latest_runs ?? {}
   const schedulerOn = snapshot?.status?.scheduler?.self_driving_enabled
@@ -177,16 +182,46 @@ export default function MonitorSection({ snapshot, sloData, architectureTrace, m
           </Card>
 
           <Card className="p-5">
-            <h3 className="text-sm font-semibold text-gray-800 mb-3">Crawler Processing</h3>
+            <h3 className="text-sm font-semibold text-gray-800 mb-3">University crawler (crawl_jobs)</h3>
+            <p className="text-xs text-gray-500 mb-3">
+              Scheduled about weekly (see <code className="bg-gray-100 px-1 rounded">CRAWLER_DEFAULT_FREQUENCY_HOURS</code>).
+              Separate from the Knowledge tab&apos;s perpetual engine (<code className="bg-gray-100 px-1 rounded">crawl_frontier</code>).
+            </p>
             <div className="space-y-2 text-sm">
               <p>Active sources: <span className="font-medium">{crawler?.active_sources ?? 0}</span></p>
               <p>Active jobs: <span className="font-medium">{crawler?.active_jobs ?? 0}</span></p>
               <p>Pending review: <span className="font-medium">{crawler?.pending_review_items ?? 0}</span></p>
-              <div className="pt-1">
+              <div className="pt-1 flex flex-wrap gap-2">
                 <Badge variant={statusVariant(crawler?.latest_crawl?.status)}>
-                  Last crawl {crawler?.latest_crawl?.status ?? 'none'}
+                  Last job {crawler?.latest_crawl?.status ?? 'none'}
                 </Badge>
               </div>
+              {crawler?.latest_crawl && (
+                <div className="mt-2 space-y-1 text-xs text-gray-600 border-t border-gray-100 pt-2">
+                  <p>
+                    Job created:{' '}
+                    <span className="font-mono text-gray-800">
+                      {crawler.latest_crawl.created_at ?? '—'}
+                    </span>
+                  </p>
+                  <p>
+                    Started:{' '}
+                    <span className="font-mono text-gray-800">
+                      {crawler.latest_crawl.started_at ?? '—'}
+                    </span>
+                  </p>
+                  <p>
+                    Completed:{' '}
+                    <span className="font-mono text-gray-800">
+                      {crawler.latest_crawl.completed_at ?? '—'}
+                    </span>
+                  </p>
+                  <p>
+                    Items extracted:{' '}
+                    <span className="font-medium">{crawler.latest_crawl.items_extracted ?? 0}</span>
+                  </p>
+                </div>
+              )}
             </div>
           </Card>
 
