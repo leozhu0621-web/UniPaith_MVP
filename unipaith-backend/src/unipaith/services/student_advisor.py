@@ -212,8 +212,8 @@ class StudentAdvisor:
 
         if preferences:
             countries = (
-                ', '.join(preferences.preferred_countries)
-                if preferences.preferred_countries else 'Open'
+                ", ".join(preferences.preferred_countries)
+                if preferences.preferred_countries else "Open"
             )
             student_context += f"""
 - Preferred countries: {countries}
