@@ -133,7 +133,8 @@ export default function PipelinePage() {
   }, [activeTab, searchParams])
 
   const grouped = useMemo(() => {
-    const filtered = applications.filter(a =>
+    const apps: Application[] = Array.isArray(applicationsQ.data) ? applicationsQ.data : []
+    const filtered = apps.filter(a =>
       !search || a.student_id.toLowerCase().includes(search.toLowerCase())
     )
     const map: Record<ColumnId, Application[]> = {
@@ -148,7 +149,7 @@ export default function PipelinePage() {
       else map.submitted.push(app)
     })
     return map
-  }, [applications, search])
+  }, [applicationsQ.data, search])
 
   const reviewableApps = applications.filter(a =>
     (a.status === 'submitted' || a.status === 'under_review') && !a.decision

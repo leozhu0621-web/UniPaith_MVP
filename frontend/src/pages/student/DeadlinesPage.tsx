@@ -39,11 +39,11 @@ export default function DeadlinesPage() {
   })
 
   const isLoading = appsLoading || rsvpsLoading || intLoading
-  const applicationsList: any[] = Array.isArray(applications) ? applications : []
-  const rsvpsList: any[] = Array.isArray(rsvps) ? rsvps : []
-  const interviewsList: any[] = Array.isArray(interviews) ? interviews : []
 
   const deadlines = useMemo(() => {
+    const applicationsList: any[] = Array.isArray(applications) ? applications : []
+    const rsvpsList: any[] = Array.isArray(rsvps) ? rsvps : []
+    const interviewsList: any[] = Array.isArray(interviews) ? interviews : []
     const now = new Date()
     const items: DeadlineItem[] = []
 
@@ -95,7 +95,7 @@ export default function DeadlinesPage() {
 
     items.sort((a, b) => a.date.getTime() - b.date.getTime())
     return items
-  }, [applicationsList, rsvpsList, interviewsList])
+  }, [applications, rsvps, interviews])
 
   // Group by month
   const grouped = useMemo(() => {

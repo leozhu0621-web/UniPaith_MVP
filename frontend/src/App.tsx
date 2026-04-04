@@ -113,7 +113,6 @@ const router = createBrowserRouter([
       { path: 'programs/:id/edit', element: <ProgramEditorPage /> },
       { path: 'pipeline', element: <PipelinePage /> },
       { path: 'applications', element: <Navigate to="/i/pipeline" replace /> },
-      { path: 'pipeline/:appId', element: <StudentDetailPage /> },
       { path: 'pipeline/:studentId', element: <StudentDetailPage /> },
       { path: 'reviews', element: <ReviewQueuePage /> },
       { path: 'interviews', element: <InterviewsPage /> },

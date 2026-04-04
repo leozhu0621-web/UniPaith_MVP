@@ -22,7 +22,7 @@ async def _seed_source(db: AsyncSession) -> DataSource:
         is_active=True,
     )
     db.add(source)
-    await db.commit()
+    await db.flush()
     return source
 
 

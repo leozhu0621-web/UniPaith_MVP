@@ -44,11 +44,11 @@ export default function FinancialAidPage() {
   const { data: applications, isLoading: appsLoading } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
 
   const isLoading = savedLoading || appsLoading
-  const savedList: any[] = Array.isArray(saved) ? saved : []
-  const applicationsList: any[] = Array.isArray(applications) ? applications : []
 
   // Combine saved + applied programs (deduplicate by program_id)
   const allPrograms = useMemo(() => {
+    const savedList: any[] = Array.isArray(saved) ? saved : []
+    const applicationsList: any[] = Array.isArray(applications) ? applications : []
     const seen = new Set<string>()
     const result: { id: string; name: string; institution: string; country: string; tuition: number | null }[] = []
 
@@ -79,7 +79,7 @@ export default function FinancialAidPage() {
     })
 
     return result
-  }, [savedList, applicationsList])
+  }, [saved, applications])
 
   // Compute costs
   const programCosts: ProgramCost[] = useMemo(() => {

@@ -36,7 +36,7 @@ export default function InterviewsPage() {
   // Score form state
   const [scoreNotes, setScoreNotes] = useState('')
   const [scoreRec, setScoreRec] = useState('')
-  const [scoreCriteria, _setScoreCriteria] = useState<Record<string, number>>({})
+  const scoreCriteria: Record<string, number> = {}
 
   const qc = useQueryClient()
 

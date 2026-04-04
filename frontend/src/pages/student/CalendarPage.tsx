@@ -23,11 +23,10 @@ export default function CalendarPage() {
   const { data: rsvps } = useQuery({ queryKey: ['my-rsvps'], queryFn: getMyRsvps })
   const { data: interviews } = useQuery({ queryKey: ['my-interviews'], queryFn: getMyInterviews })
   const { data: applications } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
-  const rsvpsList: any[] = Array.isArray(rsvps) ? rsvps : []
-  const interviewsList: any[] = Array.isArray(interviews) ? interviews : []
-  const applicationsList: any[] = Array.isArray(applications) ? applications : []
-
   const events = useMemo(() => {
+    const rsvpsList: any[] = Array.isArray(rsvps) ? rsvps : []
+    const interviewsList: any[] = Array.isArray(interviews) ? interviews : []
+    const applicationsList: any[] = Array.isArray(applications) ? applications : []
     const items: CalendarEvent[] = []
     // RSVPs → events
     rsvpsList.forEach((r: any) => {
@@ -45,7 +44,7 @@ export default function CalendarPage() {
       }
     })
     return items
-  }, [rsvpsList, interviewsList, applicationsList])
+  }, [rsvps, interviews, applications])
 
   const monthStart = startOfMonth(currentMonth)
   const monthEnd = endOfMonth(currentMonth)

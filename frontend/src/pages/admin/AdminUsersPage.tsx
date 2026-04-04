@@ -259,13 +259,15 @@ export default function AdminUsersPage() {
   const studentUsers = users.filter(u => u.role === 'student').length
   const institutionUsers = users.filter(u => u.role === 'institution_admin').length
   const inactiveRecentCohort = useMemo(
-    () =>
-      users.filter(u => {
+    () => {
+      const list: AdminUserRow[] = usersQ.data?.items ?? []
+      return list.filter(u => {
         if (u.is_active !== false || !u.created_at) return false
         const createdAt = new Date(u.created_at).getTime()
         return Date.now() - createdAt <= 30 * 24 * 60 * 60 * 1000
-      }).length,
-    [users],
+      }).length
+    },
+    [usersQ.data],
   )
   const unverifiedInstitutions = users.filter(
     u =>
@@ -274,14 +276,15 @@ export default function AdminUsersPage() {
       u.institution_verified !== true,
   ).length
   const userActionById = useMemo(() => {
+    const items: AdminActionItem[] = auditQ.data?.items ?? []
     const map = new Map<string, AdminActionItem>()
-    for (const item of auditItems) {
+    for (const item of items) {
       if (item.entity_type === 'user' && item.entity_id && !map.has(item.entity_id)) {
         map.set(item.entity_id, item)
       }
     }
     return map
-  }, [auditItems])
+  }, [auditQ.data])
 
   if (activeTab === 'users' && usersQ.isLoading) {
     return (
