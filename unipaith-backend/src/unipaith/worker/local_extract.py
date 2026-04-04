@@ -167,7 +167,9 @@ class LocalExtractWorker:
                         snap.last_activity_at = now
                     snap.items_processed_total = self._processed
                     snap.items_processed_hour = self._processed
-                    from sqlalchemy import func, select as sa_select
+                    from sqlalchemy import func
+                    from sqlalchemy import select as sa_select
+
                     from unipaith.models.knowledge import KnowledgeDocument
                     raw_count = await db.scalar(
                         sa_select(func.count()).select_from(KnowledgeDocument)

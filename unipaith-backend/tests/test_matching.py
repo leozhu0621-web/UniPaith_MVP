@@ -346,7 +346,7 @@ async def test_full_match_pipeline_mock(db_session: AsyncSession, mock_student_u
     assert "embedding_similarity" in m.score_breakdown
     assert m.reasoning_text is not None
     assert len(m.reasoning_text) > 0
-    assert m.model_version in ("v1.0-mvp", "heuristic", "heuristic-default")
+    assert m.model_version == "heuristic"
     assert m.is_stale is False
 
 
