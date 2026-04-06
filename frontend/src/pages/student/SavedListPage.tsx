@@ -92,7 +92,7 @@ export default function SavedListPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
                       <div>
-                        <p className="font-semibold text-sm cursor-pointer hover:underline" onClick={() => navigate(`/s/schools/${sp.program_id}`)}>
+                        <p className="font-semibold text-sm cursor-pointer hover:underline" onClick={() => navigate(`/s/programs/${sp.program_id}`)}>
                           {sp.program?.program_name || 'Program'}
                         </p>
                         <p className="text-xs text-gray-500">{sp.program?.institution_name}</p>

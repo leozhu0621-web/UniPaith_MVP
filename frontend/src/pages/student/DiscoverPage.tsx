@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { chatStudentAssistant, getMatches, logEngagement } from '../../api/matching'
+import { useQuery } from '@tanstack/react-query'
+import { getMatches, logEngagement } from '../../api/matching'
 import { searchPrograms } from '../../api/programs'
 import { getOnboarding } from '../../api/students'
 import Badge from '../../components/ui/Badge'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Skeleton from '../../components/ui/Skeleton'
-import { Search, SlidersHorizontal, X, ChevronDown } from 'lucide-react'
+import { Search, SlidersHorizontal, X, ChevronDown, MessageSquare } from 'lucide-react'
 import { formatCurrency, formatScore } from '../../utils/format'
 import { DEGREE_LABELS, TIER_LABELS } from '../../utils/constants'
 import type { MatchResult, ProgramSummary } from '../../types'
@@ -31,8 +31,6 @@ export default function DiscoverPage() {
   const [page, setPage] = useState(1)
   const [showFilters, setShowFilters] = useState(false)
   const [sortBy, setSortBy] = useState('relevance')
-  const [assistantMessage, setAssistantMessage] = useState('')
-  const [assistantReply, setAssistantReply] = useState<string | null>(null)
 
   // Filter state
   const [country, setCountry] = useState('')
@@ -50,7 +48,7 @@ export default function DiscoverPage() {
   })
 
   const { data: browseData, isLoading: browseLoading } = useQuery({
-    queryKey: ['programs', { q, page, country, degreeType, minTuition, maxTuition }],
+    queryKey: ['programs', { q, page, sortBy, country, degreeType, minTuition, maxTuition }],
     queryFn: () => searchPrograms({
       q: q || undefined,
       page,
@@ -59,14 +57,8 @@ export default function DiscoverPage() {
       degree_type: degreeType || undefined,
       min_tuition: minTuition ? Number(minTuition) : undefined,
       max_tuition: maxTuition ? Number(maxTuition) : undefined,
+      sort_by: sortBy !== 'relevance' ? sortBy : undefined,
     }),
-  })
-
-  const assistantMut = useMutation({
-    mutationFn: (message: string) => chatStudentAssistant(message),
-    onSuccess: (data: { reply: string }) => {
-      setAssistantReply(data.reply)
-    },
   })
 
   const matchesByTier: Record<number, MatchResult[]> = { 3: [], 2: [], 1: [] }
@@ -77,7 +69,7 @@ export default function DiscoverPage() {
 
   const handleCardClick = (programId: string) => {
     logEngagement(programId, 'viewed_program', 1).catch(() => {})
-    navigate(`/s/schools/${programId}`)
+    navigate(`/s/programs/${programId}`)
   }
 
   const resetFilters = () => {
@@ -90,16 +82,7 @@ export default function DiscoverPage() {
 
   const activeFilterCount = [country, degreeType, minTuition, maxTuition].filter(Boolean).length
 
-  // Sort programs client-side
-  const browseItems: ProgramSummary[] = Array.isArray(browseData?.items) ? browseData.items : []
-  const programs = [...browseItems]
-  if (sortBy === 'tuition_asc') programs.sort((a, b) => (a.tuition ?? Infinity) - (b.tuition ?? Infinity))
-  else if (sortBy === 'tuition_desc') programs.sort((a, b) => (b.tuition ?? 0) - (a.tuition ?? 0))
-  else if (sortBy === 'deadline') programs.sort((a, b) => {
-    const da = a.application_deadline ? new Date(a.application_deadline).getTime() : Infinity
-    const db = b.application_deadline ? new Date(b.application_deadline).getTime() : Infinity
-    return da - db
-  })
+  const programs: ProgramSummary[] = Array.isArray(browseData?.items) ? browseData.items : []
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -112,32 +95,12 @@ export default function DiscoverPage() {
         </div>
       )}
 
-      <Card className="p-4 mb-6">
-        <h2 className="text-lg font-medium mb-2">UniPaith AI Assistant (OpenAI)</h2>
-        <p className="text-sm text-gray-500 mb-3">
-          Ask for advice on program fit, profile gaps, and next steps.
-        </p>
-        <div className="flex gap-2">
-          <input
-            value={assistantMessage}
-            onChange={e => setAssistantMessage(e.target.value)}
-            placeholder="Ask: How can I improve my match quality for data science programs?"
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
-          />
-          <Button
-            onClick={() => assistantMut.mutate(assistantMessage)}
-            disabled={assistantMut.isPending || !assistantMessage.trim()}
-          >
-            {assistantMut.isPending ? 'Thinking...' : 'Ask AI'}
-          </Button>
-        </div>
-        {assistantReply && (
-          <div className="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3">
-            <p className="text-xs text-gray-500 mb-1">Assistant reply</p>
-            <p className="text-sm text-gray-700 whitespace-pre-wrap">{assistantReply}</p>
-          </div>
-        )}
-      </Card>
+      <div className="flex items-center justify-between mb-6">
+        <p className="text-sm text-gray-500">Need help choosing? Your counselor can guide you.</p>
+        <Button size="sm" variant="secondary" onClick={() => navigate('/s/chat')}>
+          <MessageSquare size={14} className="mr-1" /> Ask Counselor
+        </Button>
+      </div>
 
       {showMatches && (
         <div className="mb-8">

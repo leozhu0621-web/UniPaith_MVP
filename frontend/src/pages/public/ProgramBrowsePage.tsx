@@ -83,7 +83,7 @@ export default function ProgramBrowsePage() {
             {programs.map(p => (
               <Link
                 key={p.id}
-                to={`/s/schools/${p.id}`}
+                to={`/s/programs/${p.id}`}
                 className="bg-white rounded-lg border p-4 hover:shadow-md transition-shadow"
               >
                 <h3 className="font-semibold text-gray-900 truncate">{p.program_name}</h3>

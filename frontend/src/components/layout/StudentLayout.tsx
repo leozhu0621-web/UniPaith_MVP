@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../stores/auth-store'
 import {
   LayoutDashboard, MessageSquare, User, Search, FileText, Heart,
-  Mail, Calendar, Clock, DollarSign, UserCheck, Settings, Bell, LogOut,
+  Mail, Calendar, DollarSign, UserCheck, Settings, Bell, LogOut,
 } from 'lucide-react'
 import Avatar from '../ui/Avatar'
 import ProgressBar from '../ui/ProgressBar'
@@ -14,34 +14,33 @@ import { getUnreadCount } from '../../api/notifications'
 
 const NAV_SECTIONS = [
   {
-    label: 'Plan',
+    label: 'Build',
     items: [
       { to: '/s/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-      { to: '/s/chat', icon: MessageSquare, label: 'Counselor Chat' },
       { to: '/s/profile', icon: User, label: 'Profile' },
+      { to: '/s/chat', icon: MessageSquare, label: 'Counselor' },
     ],
   },
   {
-    label: 'Discover',
+    label: 'Find',
     items: [
       { to: '/s/discover', icon: Search, label: 'Discover' },
       { to: '/s/saved', icon: Heart, label: 'Saved' },
-      { to: '/s/recommendations', icon: UserCheck, label: 'Recommendations' },
     ],
   },
   {
     label: 'Apply',
     items: [
       { to: '/s/applications', icon: FileText, label: 'Applications' },
-      { to: '/s/calendar', icon: Calendar, label: 'Calendar' },
-      { to: '/s/deadlines', icon: Clock, label: 'Deadlines' },
+      { to: '/s/recommendations', icon: UserCheck, label: 'Recommenders' },
+      { to: '/s/financial-aid', icon: DollarSign, label: 'Financial Aid' },
     ],
   },
   {
-    label: 'Utility',
+    label: 'Track',
     items: [
+      { to: '/s/calendar', icon: Calendar, label: 'Calendar' },
       { to: '/s/messages', icon: Mail, label: 'Messages' },
-      { to: '/s/financial-aid', icon: DollarSign, label: 'Financial Aid' },
       { to: '/s/settings', icon: Settings, label: 'Settings' },
     ],
   },

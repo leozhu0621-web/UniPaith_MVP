@@ -23,6 +23,9 @@ async def search_programs(
     degree_type: str | None = Query(None),
     min_tuition: int | None = Query(None),
     max_tuition: int | None = Query(None),
+    sort_by: str | None = Query(
+        None, description="Sort: relevance, tuition_asc, tuition_desc, deadline"
+    ),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
@@ -34,6 +37,7 @@ async def search_programs(
         degree_type=degree_type,
         min_tuition=min_tuition,
         max_tuition=max_tuition,
+        sort_by=sort_by,
         page=page,
         page_size=page_size,
     )

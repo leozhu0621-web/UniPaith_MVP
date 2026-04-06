@@ -176,7 +176,7 @@ export default function FinancialAidPage() {
               <Card key={pc.id} className="p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <p className="font-semibold text-sm cursor-pointer hover:underline" onClick={() => navigate(`/s/schools/${pc.id}`)}>
+                    <p className="font-semibold text-sm cursor-pointer hover:underline" onClick={() => navigate(`/s/programs/${pc.id}`)}>
                       {pc.name}
                     </p>
                     <p className="text-xs text-gray-500">{pc.institution} — {pc.country}</p>
