@@ -24,6 +24,9 @@ from unipaith.models.institution import (
     Program,
     TargetSegment,
 )
+from unipaith.models.matching import MatchResult
+from unipaith.models.student import StudentProfile
+from unipaith.models.workflow import Notification
 from unipaith.schemas.institution import (
     AnalyticsResponse,
     CampaignMetricsResponse,
@@ -201,6 +204,66 @@ class InstitutionService:
         await self.db.delete(segment)
         await self.db.flush()
 
+    async def resolve_segment_members(
+        self, institution_id: UUID, segment_id: UUID,
+    ) -> list[UUID]:
+        """Execute segment criteria and return matching student IDs."""
+        result = await self.db.execute(
+            select(TargetSegment).where(
+                TargetSegment.id == segment_id,
+                TargetSegment.institution_id == institution_id,
+            )
+        )
+        segment = result.scalar_one_or_none()
+        if not segment:
+            raise NotFoundException("Segment not found")
+
+        criteria = segment.criteria or {}
+        programs = await self.list_programs(institution_id)
+        program_ids = [p.id for p in programs]
+        if segment.program_id:
+            program_ids = [segment.program_id]
+        if not program_ids:
+            return []
+
+        stmt = (
+            select(StudentProfile.id)
+            .distinct()
+        )
+
+        # Filter by application status
+        statuses = criteria.get("statuses")
+        if statuses:
+            stmt = stmt.join(
+                Application, Application.student_id == StudentProfile.user_id
+            ).where(
+                Application.program_id.in_(program_ids),
+                Application.status.in_(statuses),
+            )
+
+        # Filter by minimum match score
+        min_match_score = criteria.get("min_match_score")
+        if min_match_score is not None:
+            stmt = stmt.join(
+                MatchResult, MatchResult.student_id == StudentProfile.id
+            ).where(
+                MatchResult.program_id.in_(program_ids),
+                MatchResult.match_score >= min_match_score,
+                MatchResult.is_stale.is_(False),
+            )
+
+        # If no specific criteria, return all students who have applied
+        if not statuses and min_match_score is None:
+            stmt = stmt.join(
+                Application, Application.student_id == StudentProfile.user_id
+            ).where(
+                Application.program_id.in_(program_ids),
+                Application.status != "draft",
+            )
+
+        result = await self.db.execute(stmt)
+        return [row[0] for row in result.all()]
+
     # --- Dashboard Summary ---
 
     async def get_dashboard_summary(self, institution_id: UUID) -> DashboardSummaryResponse:
@@ -263,6 +326,37 @@ class InstitutionService:
         )
         unread_messages = unread_result.scalar_one()
 
+        # Acceptance rate
+        decisions_result = await self.db.execute(
+            select(Application.decision, func.count())
+            .join(Program, Application.program_id == Program.id)
+            .where(
+                Program.institution_id == institution_id,
+                Application.decision.isnot(None),
+            )
+            .group_by(Application.decision)
+        )
+        decisions = {row[0]: row[1] for row in decisions_result.all()}
+        decided_count = sum(decisions.values())
+        admitted_count = decisions.get("admitted", 0)
+        acceptance_rate = admitted_count / decided_count if decided_count > 0 else None
+
+        # Yield rate
+        yield_result = await self.db.execute(
+            select(
+                func.count().label("total_offers"),
+                func.count().filter(OfferLetter.student_response == "accepted").label("accepted"),
+            )
+            .select_from(OfferLetter)
+            .join(Application, OfferLetter.application_id == Application.id)
+            .join(Program, Application.program_id == Program.id)
+            .where(Program.institution_id == institution_id)
+        )
+        yield_row = yield_result.one()
+        yield_rate = (
+            yield_row.accepted / yield_row.total_offers if yield_row.total_offers > 0 else None
+        )
+
         return DashboardSummaryResponse(
             program_count=prog_row.total,
             published_program_count=prog_row.published,
@@ -270,6 +364,8 @@ class InstitutionService:
             pending_review_count=pending_review,
             active_events_count=active_events,
             unread_messages_count=unread_messages,
+            acceptance_rate=acceptance_rate,
+            yield_rate=yield_rate,
         )
 
     # --- Analytics ---
@@ -427,8 +523,64 @@ class InstitutionService:
             raise BadRequestException("Campaign already sent")
         if not campaign.message_subject and not campaign.message_body:
             raise BadRequestException("Campaign must have subject or body")
+
+        # Resolve recipients from segment
+        student_ids: list[UUID] = []
+        if campaign.segment_id:
+            student_ids = await self.resolve_segment_members(
+                institution_id, campaign.segment_id,
+            )
+        else:
+            # No segment — target all non-draft applicants for the campaign's program(s)
+            programs = await self.list_programs(institution_id)
+            program_ids = [campaign.program_id] if campaign.program_id else [p.id for p in programs]
+            if program_ids:
+                result = await self.db.execute(
+                    select(Application.student_id)
+                    .distinct()
+                    .where(
+                        Application.program_id.in_(program_ids),
+                        Application.status != "draft",
+                    )
+                )
+                student_ids = [row[0] for row in result.all()]
+
+        # Create CampaignRecipient rows and in-app notifications
+        now = datetime.now(UTC)
+        for sid in student_ids:
+            # Deduplicate
+            existing = await self.db.execute(
+                select(CampaignRecipient).where(
+                    CampaignRecipient.campaign_id == campaign_id,
+                    CampaignRecipient.student_id == sid,
+                )
+            )
+            if existing.scalar_one_or_none():
+                continue
+            recipient = CampaignRecipient(
+                campaign_id=campaign_id,
+                student_id=sid,
+                delivered_at=now,
+            )
+            self.db.add(recipient)
+
+            # Create in-app notification (map student_profile.id → user_id)
+            profile_result = await self.db.execute(
+                select(StudentProfile.user_id).where(StudentProfile.id == sid)
+            )
+            user_id = profile_result.scalar_one_or_none()
+            if user_id:
+                notification = Notification(
+                    user_id=user_id,
+                    title=campaign.message_subject or campaign.campaign_name,
+                    body=campaign.message_body or "",
+                    notification_type="campaign",
+                    action_url="/s/messages",
+                )
+                self.db.add(notification)
+
         campaign.status = "sent"
-        campaign.sent_at = datetime.now(UTC)
+        campaign.sent_at = now
         await self.db.flush()
         await self.db.refresh(campaign)
         return campaign
@@ -477,6 +629,7 @@ class InstitutionService:
         degree_type: str | None = None,
         min_tuition: int | None = None,
         max_tuition: int | None = None,
+        sort_by: str | None = None,
         page: int = 1,
         page_size: int = 20,
     ) -> PaginatedResponse[ProgramSummaryResponse]:
@@ -511,6 +664,15 @@ class InstitutionService:
 
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total = (await self.db.execute(count_stmt)).scalar_one()
+
+        if sort_by == "tuition_asc":
+            stmt = stmt.order_by(Program.tuition.asc().nulls_last())
+        elif sort_by == "tuition_desc":
+            stmt = stmt.order_by(Program.tuition.desc().nulls_last())
+        elif sort_by == "deadline":
+            stmt = stmt.order_by(Program.application_deadline.asc().nulls_last())
+        else:
+            stmt = stmt.order_by(Program.program_name.asc())
 
         offset = (page - 1) * page_size
         results = await self.db.execute(stmt.offset(offset).limit(page_size))

@@ -247,9 +247,9 @@ class FeatureExtractor:
         text_parts = []
         if program.description_text:
             text_parts.append(f"## Program Description\n{program.description_text}")
-        if program.current_preferences_text:
+        if program.who_its_for:
             text_parts.append(
-                f"## Current Admission Preferences\n{program.current_preferences_text}"
+                f"## Who It's For\n{program.who_its_for}"
             )
         if program.highlights:
             text_parts.append(

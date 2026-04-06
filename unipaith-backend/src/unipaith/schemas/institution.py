@@ -27,10 +27,15 @@ class CreateInstitutionRequest(BaseModel):
     country: str = Field(min_length=1, max_length=100)
     region: str | None = None
     city: str | None = None
-    ranking_data: dict | None = None
     description_text: str | None = None
+    campus_description: str | None = None
+    campus_setting: Literal["urban", "suburban", "rural"] | None = None
+    student_body_size: int | None = None
+    contact_email: str | None = None
     logo_url: str | None = None
     website_url: str | None = None
+    media_gallery: list[str] | None = None
+    social_links: dict | None = None
 
 
 class UpdateInstitutionRequest(BaseModel):
@@ -39,10 +44,15 @@ class UpdateInstitutionRequest(BaseModel):
     country: str | None = Field(None, min_length=1, max_length=100)
     region: str | None = None
     city: str | None = None
-    ranking_data: dict | None = None
     description_text: str | None = None
+    campus_description: str | None = None
+    campus_setting: Literal["urban", "suburban", "rural"] | None = None
+    student_body_size: int | None = None
+    contact_email: str | None = None
     logo_url: str | None = None
     website_url: str | None = None
+    media_gallery: list[str] | None = None
+    social_links: dict | None = None
 
 
 class InstitutionResponse(BaseModel):
@@ -53,10 +63,16 @@ class InstitutionResponse(BaseModel):
     country: str
     region: str | None
     city: str | None
-    ranking_data: dict | None
+    ranking_data: dict | None = None
     description_text: str | None
+    campus_description: str | None = None
+    campus_setting: str | None = None
+    student_body_size: int | None = None
+    contact_email: str | None = None
     logo_url: str | None
     website_url: str | None
+    media_gallery: list | dict | None = None
+    social_links: dict | None = None
     is_verified: bool
     created_at: datetime
     updated_at: datetime
@@ -73,12 +89,18 @@ class CreateProgramRequest(BaseModel):
     duration_months: int | None = Field(None, ge=1, le=120)
     tuition: int | None = Field(None, ge=0)
     acceptance_rate: Decimal | None = Field(None, ge=0, le=1)
+    delivery_format: Literal["in_person", "online", "hybrid"] | None = None
+    campus_setting: Literal["urban", "suburban", "rural"] | None = None
     requirements: dict | None = None
+    application_requirements: list[dict] | None = None
     description_text: str | None = None
-    current_preferences_text: str | None = None
+    who_its_for: str | None = None
     application_deadline: date | None = None
     program_start_date: date | None = None
-    page_header_image_url: str | None = None
+    tracks: list[str] | None = None
+    outcomes_data: dict | None = None
+    intake_rounds: list[dict] | None = None
+    media_urls: list[str] | None = None
     highlights: list[str] | None = None
     faculty_contacts: list[dict] | None = None
 
@@ -90,12 +112,18 @@ class UpdateProgramRequest(BaseModel):
     duration_months: int | None = Field(None, ge=1, le=120)
     tuition: int | None = Field(None, ge=0)
     acceptance_rate: Decimal | None = Field(None, ge=0, le=1)
+    delivery_format: Literal["in_person", "online", "hybrid"] | None = None
+    campus_setting: Literal["urban", "suburban", "rural"] | None = None
     requirements: dict | None = None
+    application_requirements: list[dict] | None = None
     description_text: str | None = None
-    current_preferences_text: str | None = None
+    who_its_for: str | None = None
     application_deadline: date | None = None
     program_start_date: date | None = None
-    page_header_image_url: str | None = None
+    tracks: list[str] | None = None
+    outcomes_data: dict | None = None
+    intake_rounds: list[dict] | None = None
+    media_urls: list[str] | None = None
     highlights: list[str] | None = None
     faculty_contacts: list[dict] | None = None
 
@@ -110,12 +138,19 @@ class ProgramResponse(BaseModel):
     duration_months: int | None
     tuition: int | None
     acceptance_rate: Decimal | None
+    delivery_format: str | None = None
+    campus_setting: str | None = None
     requirements: dict | None
+    application_requirements: list | dict | None = None
     description_text: str | None
-    current_preferences_text: str | None
+    who_its_for: str | None = None
     is_published: bool
     application_deadline: date | None
     program_start_date: date | None
+    tracks: list | dict | None = None
+    outcomes_data: dict | None = None
+    intake_rounds: list | dict | None = None
+    media_urls: list | dict | None = None
     highlights: list | dict | None
     faculty_contacts: list | dict | None = None
     created_at: datetime
@@ -172,6 +207,8 @@ class DashboardSummaryResponse(BaseModel):
     pending_review_count: int
     active_events_count: int
     unread_messages_count: int
+    acceptance_rate: float | None = None
+    yield_rate: float | None = None
 
 
 # --- Analytics ---

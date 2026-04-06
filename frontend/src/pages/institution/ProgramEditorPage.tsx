@@ -21,6 +21,20 @@ const DEGREE_OPTIONS = [
   { value: 'diploma', label: 'Diploma' },
 ]
 
+const DELIVERY_FORMAT_OPTIONS = [
+  { value: '', label: 'Not specified' },
+  { value: 'in_person', label: 'In Person' },
+  { value: 'online', label: 'Online' },
+  { value: 'hybrid', label: 'Hybrid' },
+]
+
+const CAMPUS_SETTING_OPTIONS = [
+  { value: '', label: 'Not specified' },
+  { value: 'urban', label: 'Urban' },
+  { value: 'suburban', label: 'Suburban' },
+  { value: 'rural', label: 'Rural' },
+]
+
 const schema = z.object({
   program_name: z.string().min(1, 'Required'),
   degree_type: z.string().min(1, 'Required'),
@@ -28,9 +42,13 @@ const schema = z.object({
   duration_months: z.coerce.number().optional(),
   tuition: z.coerce.number().optional(),
   acceptance_rate: z.coerce.number().min(0).max(1).optional(),
+  delivery_format: z.string().optional(),
+  campus_setting: z.string().optional(),
   application_deadline: z.string().optional(),
   program_start_date: z.string().optional(),
   description_text: z.string().optional(),
+  who_its_for: z.string().optional(),
+  tracks: z.array(z.object({ value: z.string() })).optional(),
   highlights: z.array(z.object({ value: z.string() })).optional(),
   requirements: z.array(z.object({ key: z.string(), value: z.string() })).optional(),
   faculty_contacts: z.array(z.object({ name: z.string(), email: z.string().optional(), role: z.string().optional() })).optional(),
@@ -52,12 +70,14 @@ export default function ProgramEditorPage() {
   const form = useForm<FormData>({
     resolver: zodResolver(schema) as any,
     defaultValues: {
+      tracks: [{ value: '' }],
       highlights: [{ value: '' }],
       requirements: [{ key: '', value: '' }],
       faculty_contacts: [],
     },
   })
 
+  const tracksField = useFieldArray({ control: form.control, name: 'tracks' })
   const highlightsField = useFieldArray({ control: form.control, name: 'highlights' })
   const requirementsField = useFieldArray({ control: form.control, name: 'requirements' })
   const facultyField = useFieldArray({ control: form.control, name: 'faculty_contacts' })
@@ -72,9 +92,13 @@ export default function ProgramEditorPage() {
         duration_months: p.duration_months ?? undefined,
         tuition: p.tuition ?? undefined,
         acceptance_rate: p.acceptance_rate ?? undefined,
+        delivery_format: p.delivery_format ?? '',
+        campus_setting: p.campus_setting ?? '',
         application_deadline: p.application_deadline?.split('T')[0] ?? '',
         program_start_date: p.program_start_date?.split('T')[0] ?? '',
         description_text: p.description_text ?? '',
+        who_its_for: p.who_its_for ?? '',
+        tracks: p.tracks?.length ? (p.tracks as string[]).map(t => ({ value: t })) : [{ value: '' }],
         highlights: p.highlights?.length ? p.highlights.map(h => ({ value: h })) : [{ value: '' }],
         requirements: p.requirements ? Object.entries(p.requirements).map(([key, value]) => ({ key, value: String(value) })) : [{ key: '', value: '' }],
         faculty_contacts: (p.faculty_contacts as any[]) ?? [],
@@ -89,9 +113,13 @@ export default function ProgramEditorPage() {
     duration_months: data.duration_months || undefined,
     tuition: data.tuition || undefined,
     acceptance_rate: data.acceptance_rate || undefined,
+    delivery_format: data.delivery_format || undefined,
+    campus_setting: data.campus_setting || undefined,
     application_deadline: data.application_deadline || undefined,
     program_start_date: data.program_start_date || undefined,
     description_text: data.description_text || undefined,
+    who_its_for: data.who_its_for || undefined,
+    tracks: data.tracks?.map(t => t.value).filter(Boolean) || undefined,
     highlights: data.highlights?.map(h => h.value).filter(Boolean) || undefined,
     requirements: data.requirements?.reduce((acc, r) => {
       if (r.key) acc[r.key] = r.value
@@ -186,6 +214,10 @@ export default function ProgramEditorPage() {
           <Input label="Tuition (USD)" type="number" {...form.register('tuition')} />
           <Input label="Acceptance Rate (0-1)" type="number" step="0.01" {...form.register('acceptance_rate')} />
         </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Select label="Delivery Format" options={DELIVERY_FORMAT_OPTIONS} {...form.register('delivery_format')} />
+          <Select label="Campus Setting" options={CAMPUS_SETTING_OPTIONS} {...form.register('campus_setting')} />
+        </div>
       </Card>
 
       {/* Dates */}
@@ -201,6 +233,23 @@ export default function ProgramEditorPage() {
       <Card className="p-6 space-y-4">
         <h2 className="text-lg font-semibold text-gray-900">Description</h2>
         <Textarea {...form.register('description_text')} rows={5} placeholder="Describe your program..." />
+        <Textarea label="Who it's for" {...form.register('who_its_for')} rows={3} placeholder="Describe the ideal student for this program..." />
+      </Card>
+
+      {/* Tracks / Concentrations */}
+      <Card className="p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">Tracks / Concentrations</h2>
+          <Button variant="ghost" size="sm" onClick={() => tracksField.append({ value: '' })} className="flex items-center gap-1">
+            <Plus size={14} /> Add
+          </Button>
+        </div>
+        {tracksField.fields.map((field, i) => (
+          <div key={field.id} className="flex items-center gap-2">
+            <Input className="flex-1" {...form.register(`tracks.${i}.value`)} placeholder="e.g. Artificial Intelligence" />
+            <button type="button" onClick={() => tracksField.remove(i)} className="p-1 text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
+          </div>
+        ))}
       </Card>
 
       {/* Highlights */}

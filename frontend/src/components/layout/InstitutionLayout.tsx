@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../stores/auth-store'
 import { useUIStore } from '../../stores/ui-store'
 import {
-  LayoutDashboard, GraduationCap, Kanban, FileCheck, Video,
+  LayoutDashboard, GraduationCap, Kanban, Video,
   MessageSquare, Users, Megaphone, CalendarDays, BarChart3,
   Settings, ChevronLeft, ChevronRight, Bell, Search, LogOut, Rocket, Command,
 } from 'lucide-react'
@@ -22,27 +22,36 @@ const buildNavSections = (showSetup: boolean) => [
     ],
   },
   {
-    label: 'Admissions',
+    label: 'Programs',
     items: [
       { to: '/i/programs', icon: GraduationCap, label: 'Programs' },
+    ],
+  },
+  {
+    label: 'Pipeline',
+    items: [
       { to: '/i/pipeline', icon: Kanban, label: 'Applications' },
-      { to: '/i/reviews', icon: FileCheck, label: 'Needs Review' },
       { to: '/i/interviews', icon: Video, label: 'Interviews' },
       { to: '/i/messages', icon: MessageSquare, label: 'Inbox' },
     ],
   },
   {
-    label: 'Recruitment',
+    label: 'Outreach',
     items: [
-      { to: '/i/segments', icon: Users, label: 'Segments' },
       { to: '/i/campaigns', icon: Megaphone, label: 'Campaigns' },
+      { to: '/i/segments', icon: Users, label: 'Segments' },
       { to: '/i/events', icon: CalendarDays, label: 'Events' },
     ],
   },
   {
-    label: 'Insights & Settings',
+    label: 'Insights',
     items: [
-      { to: '/i/analytics', icon: BarChart3, label: 'Insights' },
+      { to: '/i/analytics', icon: BarChart3, label: 'Analytics' },
+    ],
+  },
+  {
+    label: 'Settings',
+    items: [
       { to: '/i/settings', icon: Settings, label: 'Settings' },
     ],
   },
@@ -91,7 +100,7 @@ export default function InstitutionLayout() {
   const commandActions = useMemo(() => [
     { id: 'go-overview', label: 'Go to Overview', hint: 'g o', onSelect: () => navigate('/i/dashboard') },
     { id: 'go-programs', label: 'Go to Programs', hint: 'g p', onSelect: () => navigate('/i/programs') },
-    { id: 'go-apps-review', label: 'Open Needs Review', hint: 'g r', onSelect: () => navigate('/i/pipeline?tab=review') },
+    { id: 'go-apps-review', label: 'Open Review Queue', hint: 'g r', onSelect: () => navigate('/i/pipeline?tab=review') },
     { id: 'go-apps-board', label: 'Open Applications Board', hint: 'g a', onSelect: () => navigate('/i/pipeline?tab=board') },
     { id: 'go-interviews', label: 'Go to Interviews', hint: 'g i', onSelect: () => navigate('/i/interviews') },
     { id: 'go-campaigns', label: 'Go to Campaigns', hint: 'g c', onSelect: () => navigate('/i/campaigns') },

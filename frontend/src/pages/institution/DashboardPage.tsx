@@ -13,7 +13,7 @@ import {
   Target,
   Mail,
 } from 'lucide-react'
-import { getInstitution, getInstitutionPrograms, getDashboardSummary, getAnalytics } from '../../api/institutions'
+import { getInstitution, getInstitutionPrograms, getDashboardSummary } from '../../api/institutions'
 import { getNotifications } from '../../api/notifications'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -23,7 +23,7 @@ import EmptyState from '../../components/ui/EmptyState'
 import Table from '../../components/ui/Table'
 import { formatDate, formatRelative, formatCurrency, formatPercent } from '../../utils/format'
 import { DEGREE_LABELS } from '../../utils/constants'
-import type { Notification, Program, DashboardSummary, AnalyticsData } from '../../types'
+import type { Notification, Program, DashboardSummary } from '../../types'
 
 export default function DashboardPage() {
   const navigate = useNavigate()
@@ -35,11 +35,6 @@ export default function DashboardPage() {
     queryFn: getDashboardSummary,
     enabled: !!institutionQ.data,
   })
-  const analyticsQ = useQuery({
-    queryKey: ['institution-analytics'],
-    queryFn: getAnalytics,
-    enabled: !!institutionQ.data,
-  })
   const notificationsQ = useQuery({
     queryKey: ['notifications', { limit: 10 }],
     queryFn: () => getNotifications({ limit: 10 }),
@@ -48,7 +43,6 @@ export default function DashboardPage() {
   const institution = institutionQ.data
   const programs: Program[] = Array.isArray(programsQ.data) ? programsQ.data : []
   const summary: DashboardSummary | undefined = summaryQ.data
-  const analytics: AnalyticsData | undefined = analyticsQ.data
   const notifications: Notification[] = Array.isArray(notificationsQ.data) ? notificationsQ.data : []
 
   const isLoading = institutionQ.isLoading || programsQ.isLoading
@@ -91,13 +85,13 @@ export default function DashboardPage() {
     },
     {
       label: 'Acceptance Rate',
-      value: analytics?.acceptance_rate != null ? formatPercent(analytics.acceptance_rate) : '-',
+      value: summary?.acceptance_rate != null ? formatPercent(summary.acceptance_rate) : '-',
       icon: Target,
       color: 'text-emerald-600 bg-emerald-100',
     },
     {
       label: 'Yield Rate',
-      value: analytics?.yield_rate != null ? formatPercent(analytics.yield_rate) : '-',
+      value: summary?.yield_rate != null ? formatPercent(summary.yield_rate) : '-',
       icon: TrendingUp,
       color: 'text-purple-600 bg-purple-100',
     },

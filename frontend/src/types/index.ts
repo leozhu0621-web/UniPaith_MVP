@@ -114,14 +114,20 @@ export interface Program {
   duration_months: number | null
   tuition: number | null
   acceptance_rate: number | null
+  delivery_format: 'in_person' | 'online' | 'hybrid' | null
+  campus_setting: 'urban' | 'suburban' | 'rural' | null
   requirements: Record<string, any> | null
+  application_requirements: Record<string, any>[] | null
   description_text: string | null
-  current_preferences_text: string | null
+  who_its_for: string | null
   is_published: boolean
   application_deadline: string | null
   program_start_date: string | null
+  tracks: string[] | null
+  outcomes_data: Record<string, any> | null
+  intake_rounds: Record<string, any>[] | null
+  media_urls: string[] | null
   highlights: string[] | null
-  page_header_image_url: string | null
   faculty_contacts: Record<string, any>[] | null
   created_at: string
   updated_at: string
@@ -389,8 +395,14 @@ export interface Institution {
   city: string | null
   ranking_data: Record<string, number> | null
   description_text: string | null
+  campus_description: string | null
+  campus_setting: 'urban' | 'suburban' | 'rural' | null
+  student_body_size: number | null
+  contact_email: string | null
   logo_url: string | null
   website_url: string | null
+  media_gallery: string[] | null
+  social_links: Record<string, string> | null
   is_verified: boolean
   created_at: string
   updated_at: string
@@ -458,6 +470,8 @@ export interface DashboardSummary {
   pending_review_count: number
   active_events_count: number
   unread_messages_count: number
+  acceptance_rate: number | null
+  yield_rate: number | null
 }
 
 export interface ProgramApplicationCount {

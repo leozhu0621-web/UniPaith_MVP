@@ -30,7 +30,7 @@ import ApplicationDetailPage from './pages/student/ApplicationDetailPage'
 import SavedListPage from './pages/student/SavedListPage'
 import MessagesPage from './pages/student/MessagesPage'
 import CalendarPage from './pages/student/CalendarPage'
-import DeadlinesPage from './pages/student/DeadlinesPage'
+// DeadlinesPage merged into CalendarPage as timeline view
 import FinancialAidPage from './pages/student/FinancialAidPage'
 import RecommendationsPage from './pages/student/RecommendationsPage'
 import StudentSettingsPage from './pages/student/SettingsPage'
@@ -42,7 +42,6 @@ import ProgramsPage from './pages/institution/ProgramsPage'
 import ProgramEditorPage from './pages/institution/ProgramEditorPage'
 import PipelinePage from './pages/institution/PipelinePage'
 import StudentDetailPage from './pages/institution/StudentDetailPage'
-import ReviewQueuePage from './pages/institution/ReviewQueuePage'
 import InterviewsPage from './pages/institution/InterviewsPage'
 import InstitutionMessagingPage from './pages/institution/MessagingPage'
 import SegmentsPage from './pages/institution/SegmentsPage'
@@ -84,6 +83,7 @@ const router = createBrowserRouter([
       { path: 'chat', element: <ChatPage /> },
       { path: 'profile', element: <ProfilePage /> },
       { path: 'discover', element: <DiscoverPage /> },
+      { path: 'programs/:programId', element: <SchoolDetailPage /> },
       { path: 'schools/:programId', element: <SchoolDetailPage /> },
       { path: 'applications', element: <ApplicationsPage /> },
       { path: 'applications/:appId', element: <ApplicationDetailPage /> },
@@ -91,7 +91,7 @@ const router = createBrowserRouter([
       { path: 'messages', element: <MessagesPage /> },
       { path: 'messages/:convId', element: <MessagesPage /> },
       { path: 'calendar', element: <CalendarPage /> },
-      { path: 'deadlines', element: <DeadlinesPage /> },
+      { path: 'deadlines', element: <Navigate to="/s/calendar?view=agenda" replace /> },
       { path: 'financial-aid', element: <FinancialAidPage /> },
       { path: 'recommendations', element: <RecommendationsPage /> },
       { path: 'settings', element: <StudentSettingsPage /> },
@@ -109,12 +109,9 @@ const router = createBrowserRouter([
       { path: 'setup', element: <SetupPage /> },
       { path: 'programs', element: <ProgramsPage /> },
       { path: 'programs/new', element: <ProgramEditorPage /> },
-      { path: 'programs/:id', element: <ProgramEditorPage /> },
       { path: 'programs/:id/edit', element: <ProgramEditorPage /> },
       { path: 'pipeline', element: <PipelinePage /> },
-      { path: 'applications', element: <Navigate to="/i/pipeline" replace /> },
       { path: 'pipeline/:studentId', element: <StudentDetailPage /> },
-      { path: 'reviews', element: <ReviewQueuePage /> },
       { path: 'interviews', element: <InterviewsPage /> },
       { path: 'messages', element: <InstitutionMessagingPage /> },
       { path: 'segments', element: <SegmentsPage /> },

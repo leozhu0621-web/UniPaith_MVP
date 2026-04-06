@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { BarChart3, TrendingUp, Target, Users, Award } from 'lucide-react'
 import { getAnalytics } from '../../api/institutions'
 import Card from '../../components/ui/Card'
-import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import Skeleton from '../../components/ui/Skeleton'
 import InstitutionPageHeader from '../../components/institution/InstitutionPageHeader'
@@ -93,27 +92,6 @@ export default function AnalyticsPage() {
             </Card>
           ))}
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="p-4 border-dashed border-gray-300">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-900">Market & Demographics</h3>
-            <Badge variant="neutral">Planned</Badge>
-          </div>
-          <p className="text-sm text-gray-600 mt-2">
-            Next analytics phase will add applicant geography, demographic mix, channel attribution, and stage-duration insights.
-          </p>
-        </Card>
-        <Card className="p-4 border-dashed border-gray-300">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-900">Operational Benchmarks</h3>
-            <Badge variant="neutral">Planned</Badge>
-          </div>
-          <p className="text-sm text-gray-600 mt-2">
-            Reviewer workload and conversion by cohort will be added once backend rollups are available.
-          </p>
-        </Card>
       </div>
 
       <h3 className="text-sm font-semibold text-gray-900">Operational Diagnostics</h3>

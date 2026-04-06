@@ -35,9 +35,12 @@ export async function getInstitutionProgram(programId: string): Promise<Program>
 export async function createProgram(payload: {
   program_name: string; degree_type: string; department?: string;
   duration_months?: number; tuition?: number; acceptance_rate?: number;
-  requirements?: Record<string, any>; description_text?: string;
-  current_preferences_text?: string; application_deadline?: string;
-  program_start_date?: string; page_header_image_url?: string;
+  delivery_format?: string; campus_setting?: string;
+  requirements?: Record<string, any>; application_requirements?: Record<string, any>[];
+  description_text?: string; who_its_for?: string;
+  application_deadline?: string; program_start_date?: string;
+  tracks?: string[]; outcomes_data?: Record<string, any>;
+  intake_rounds?: Record<string, any>[]; media_urls?: string[];
   highlights?: string[]; faculty_contacts?: { name: string; email?: string; role?: string }[]
 }): Promise<Program> {
   const { data } = await apiClient.post('/institutions/me/programs', payload)
@@ -47,9 +50,12 @@ export async function createProgram(payload: {
 export async function updateProgram(programId: string, payload: Partial<{
   program_name: string; degree_type: string; department: string;
   duration_months: number; tuition: number; acceptance_rate: number;
-  requirements: Record<string, any>; description_text: string;
-  current_preferences_text: string; application_deadline: string;
-  program_start_date: string; page_header_image_url: string;
+  delivery_format: string; campus_setting: string;
+  requirements: Record<string, any>; application_requirements: Record<string, any>[];
+  description_text: string; who_its_for: string;
+  application_deadline: string; program_start_date: string;
+  tracks: string[]; outcomes_data: Record<string, any>;
+  intake_rounds: Record<string, any>[]; media_urls: string[];
   highlights: string[]; faculty_contacts: { name: string; email?: string; role?: string }[]
 }>): Promise<Program> {
   const { data } = await apiClient.put(`/institutions/me/programs/${programId}`, payload)
