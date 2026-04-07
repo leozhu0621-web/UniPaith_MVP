@@ -45,7 +45,7 @@ export default function DeadlinesPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold">Deadline Tracker</h1>
-          <p className="text-sm text-gray-500 mt-1">{deadlines.length} timeline item{deadlines.length !== 1 ? 's' : ''} to guide your next steps</p>
+          <p className="text-sm text-stone-500 mt-1">{deadlines.length} timeline item{deadlines.length !== 1 ? 's' : ''} to guide your next steps</p>
         </div>
       </div>
 
@@ -77,10 +77,10 @@ export default function DeadlinesPage() {
         <div className="space-y-8">
           {Object.entries(grouped).map(([month, items]) => (
             <div key={month}>
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">{month}</h2>
+              <h2 className="text-sm font-semibold text-stone-500 uppercase tracking-wide mb-3">{month}</h2>
               <div className="relative">
                 {/* Timeline line */}
-                <div className="absolute left-5 top-0 bottom-0 w-px bg-gray-200" />
+                <div className="absolute left-5 top-0 bottom-0 w-px bg-stone-200" />
 
                 <div className="space-y-4">
                   {items.map((item, i) => {
@@ -97,12 +97,12 @@ export default function DeadlinesPage() {
                           <Icon size={18} className={config.color} />
                         </div>
 
-                        <Card className="flex-1 p-4 group-hover:bg-gray-50">
+                        <Card className="flex-1 p-4 group-hover:bg-stone-50">
                           <div className="flex items-start justify-between">
                             <div className="min-w-0">
                               <p className="text-sm font-medium">{item.label}</p>
-                              {item.sublabel && <p className="text-xs text-gray-500 mt-0.5">{item.sublabel}</p>}
-                              <p className="text-xs text-gray-400 mt-1">{formatDateTime(item.date.toISOString())}</p>
+                              {item.sublabel && <p className="text-xs text-stone-500 mt-0.5">{item.sublabel}</p>}
+                              <p className="text-xs text-stone-400 mt-1">{formatDateTime(item.date.toISOString())}</p>
                             </div>
                             <div className="flex-shrink-0 ml-3">
                               {urgencyBadge(item.date)}

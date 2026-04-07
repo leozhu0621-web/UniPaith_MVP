@@ -69,18 +69,18 @@ export default function CalendarPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold">Calendar</h1>
-          <p className="text-sm text-gray-500 mt-1">{deadlines.length} upcoming item{deadlines.length !== 1 ? 's' : ''}</p>
+          <p className="text-sm text-stone-500 mt-1">{deadlines.length} upcoming item{deadlines.length !== 1 ? 's' : ''}</p>
         </div>
-        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+        <div className="flex items-center gap-1 bg-stone-100 rounded-lg p-0.5">
           <button
             onClick={() => switchView('month')}
-            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${view === 'month' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${view === 'month' ? 'bg-white text-stone-800 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
           >
             Month
           </button>
           <button
             onClick={() => switchView('agenda')}
-            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${view === 'agenda' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${view === 'agenda' ? 'bg-white text-stone-800 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}
           >
             Timeline
           </button>
@@ -105,15 +105,15 @@ export default function CalendarPage() {
         <>
           {/* Month navigation */}
           <div className="flex items-center justify-end gap-3 mb-4">
-            <button onClick={() => setCurrentMonth(m => subMonths(m, 1))} className="p-1 hover:bg-gray-100 rounded"><ChevronLeft size={18} /></button>
+            <button onClick={() => setCurrentMonth(m => subMonths(m, 1))} className="p-1 hover:bg-stone-100 rounded"><ChevronLeft size={18} /></button>
             <span className="text-sm font-medium w-32 text-center">{format(currentMonth, 'MMMM yyyy')}</span>
-            <button onClick={() => setCurrentMonth(m => addMonths(m, 1))} className="p-1 hover:bg-gray-100 rounded"><ChevronRight size={18} /></button>
+            <button onClick={() => setCurrentMonth(m => addMonths(m, 1))} className="p-1 hover:bg-stone-100 rounded"><ChevronRight size={18} /></button>
           </div>
 
           {/* Calendar grid */}
-          <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden mb-8">
+          <div className="grid grid-cols-7 gap-px bg-stone-200 rounded-lg overflow-hidden mb-8">
             {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => (
-              <div key={d} className="bg-gray-50 py-2 text-center text-xs font-medium text-gray-500">{d}</div>
+              <div key={d} className="bg-stone-50 py-2 text-center text-xs font-medium text-stone-500">{d}</div>
             ))}
             {Array.from({ length: padDays }).map((_, i) => (
               <div key={`pad-${i}`} className="bg-white min-h-[80px]" />
@@ -121,15 +121,15 @@ export default function CalendarPage() {
             {days.map(day => {
               const dayEvents = deadlines.filter(e => isSameDay(e.date, day))
               return (
-                <div key={day.toISOString()} className={`bg-white min-h-[80px] p-1 ${isToday(day) ? 'ring-2 ring-inset ring-gray-900' : ''}`}>
-                  <span className={`text-xs ${isToday(day) ? 'font-bold' : 'text-gray-600'}`}>{format(day, 'd')}</span>
+                <div key={day.toISOString()} className={`bg-white min-h-[80px] p-1 ${isToday(day) ? 'ring-2 ring-inset ring-stone-800' : ''}`}>
+                  <span className={`text-xs ${isToday(day) ? 'font-bold' : 'text-stone-600'}`}>{format(day, 'd')}</span>
                   <div className="mt-1 space-y-0.5">
                     {dayEvents.slice(0, 2).map((e, i) => (
                       <div key={i} className={`text-[10px] px-1 py-0.5 rounded truncate text-white ${typeColor[e.type]}`}>
                         {e.label}
                       </div>
                     ))}
-                    {dayEvents.length > 2 && <div className="text-[10px] text-gray-400">+{dayEvents.length - 2} more</div>}
+                    {dayEvents.length > 2 && <div className="text-[10px] text-stone-400">+{dayEvents.length - 2} more</div>}
                   </div>
                 </div>
               )
@@ -139,15 +139,15 @@ export default function CalendarPage() {
           {/* Upcoming list */}
           <h2 className="text-lg font-medium mb-3">Upcoming</h2>
           {deadlines.length === 0 ? (
-            <p className="text-sm text-gray-500">No upcoming events</p>
+            <p className="text-sm text-stone-500">Your schedule is clear</p>
           ) : (
             <div className="space-y-2">
               {deadlines.slice(0, 10).map((e, i) => (
-                <Card key={i} onClick={() => navigate(e.link)} className="p-3 flex items-center gap-3 cursor-pointer hover:bg-gray-50">
+                <Card key={i} onClick={() => navigate(e.link)} className="p-3 flex items-center gap-3 cursor-pointer hover:bg-stone-50">
                   <span className="text-lg">{typeIcon[e.type]}</span>
                   <div>
                     <p className="text-sm font-medium">{e.label}</p>
-                    <p className="text-xs text-gray-500">{formatDateTime(e.date.toISOString())}</p>
+                    <p className="text-xs text-stone-500">{formatDateTime(e.date.toISOString())}</p>
                   </div>
                 </Card>
               ))}
@@ -161,17 +161,17 @@ export default function CalendarPage() {
           {deadlines.length === 0 ? (
             <EmptyState
               icon={<Clock size={48} />}
-              title="No upcoming deadlines"
-              description="Apply to programs or RSVP to events to see deadlines here."
+              title="Nothing urgent — a calm moment to prepare"
+              description="Deadlines and events will appear here as you apply."
               action={{ label: 'Discover Programs', onClick: () => navigate('/s/discover') }}
             />
           ) : (
             <div className="space-y-8">
               {Object.entries(grouped).map(([month, items]) => (
                 <div key={month}>
-                  <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">{month}</h2>
+                  <h2 className="text-sm font-semibold text-stone-500 uppercase tracking-wide mb-3">{month}</h2>
                   <div className="relative">
-                    <div className="absolute left-5 top-0 bottom-0 w-px bg-gray-200" />
+                    <div className="absolute left-5 top-0 bottom-0 w-px bg-stone-200" />
                     <div className="space-y-4">
                       {items.map((item, i) => {
                         const config = typeConfig[item.type]
@@ -181,12 +181,12 @@ export default function CalendarPage() {
                             <div className={`w-10 h-10 rounded-full ${config.bg} flex items-center justify-center flex-shrink-0 z-10`}>
                               <Icon size={18} className={config.color} />
                             </div>
-                            <Card className="flex-1 p-4 group-hover:bg-gray-50">
+                            <Card className="flex-1 p-4 group-hover:bg-stone-50">
                               <div className="flex items-start justify-between">
                                 <div className="min-w-0">
                                   <p className="text-sm font-medium">{item.label}</p>
-                                  {item.sublabel && <p className="text-xs text-gray-500 mt-0.5">{item.sublabel}</p>}
-                                  <p className="text-xs text-gray-400 mt-1">{formatDateTime(item.date.toISOString())}</p>
+                                  {item.sublabel && <p className="text-xs text-stone-500 mt-0.5">{item.sublabel}</p>}
+                                  <p className="text-xs text-stone-400 mt-1">{formatDateTime(item.date.toISOString())}</p>
                                 </div>
                                 <div className="flex-shrink-0 ml-3">{urgencyBadge(item.date)}</div>
                               </div>

@@ -44,9 +44,9 @@ export default function SettingsPage() {
       <Card className="p-5">
         <h2 className="font-semibold mb-3">Account</h2>
         <dl className="text-sm space-y-2">
-          <div className="flex justify-between"><dt className="text-gray-500">Email</dt><dd>{user?.email}</dd></div>
-          <div className="flex justify-between"><dt className="text-gray-500">Role</dt><dd className="capitalize">{user?.role?.replace(/_/g, ' ')}</dd></div>
-          <div className="flex justify-between"><dt className="text-gray-500">Member since</dt><dd>{formatDate(user?.created_at)}</dd></div>
+          <div className="flex justify-between"><dt className="text-stone-500">Email</dt><dd>{user?.email}</dd></div>
+          <div className="flex justify-between"><dt className="text-stone-500">Role</dt><dd className="capitalize">{user?.role?.replace(/_/g, ' ')}</dd></div>
+          <div className="flex justify-between"><dt className="text-stone-500">Member since</dt><dd>{formatDate(user?.created_at)}</dd></div>
         </dl>
       </Card>
 

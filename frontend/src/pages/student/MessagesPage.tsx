@@ -57,24 +57,24 @@ export default function MessagesPage() {
   return (
     <div className="flex h-full">
       {/* Left: conversation list */}
-      <div className="w-72 border-r border-gray-200 bg-white flex flex-col">
-        <div className="p-3 border-b border-gray-100">
+      <div className="w-72 border-r border-stone-200 bg-white flex flex-col">
+        <div className="p-3 border-b border-stone-100">
           <h2 className="font-semibold text-sm">Messages</h2>
         </div>
         <div className="flex-1 overflow-y-auto">
           {convsLoading ? (
             <div className="p-3 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-14" />)}</div>
           ) : convList.length === 0 ? (
-            <p className="p-4 text-sm text-gray-500">No conversations yet</p>
+            <p className="p-4 text-sm text-stone-500">No conversations yet</p>
           ) : (
             convList.map(c => (
               <button
                 key={c.id}
                 onClick={() => { setSelectedConv(c.id); navigate(`/s/messages/${c.id}`) }}
-                className={`w-full text-left px-3 py-3 border-b border-gray-50 hover:bg-gray-50 ${selectedConv === c.id ? 'bg-gray-100' : ''}`}
+                className={`w-full text-left px-3 py-3 border-b border-stone-50 hover:bg-stone-50 ${selectedConv === c.id ? 'bg-stone-100' : ''}`}
               >
                 <p className="text-sm font-medium truncate">{c.subject || 'Conversation'}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{formatRelative(c.last_message_at)}</p>
+                <p className="text-xs text-stone-400 mt-0.5">{formatRelative(c.last_message_at)}</p>
               </button>
             ))
           )}
@@ -84,7 +84,7 @@ export default function MessagesPage() {
       {/* Right: messages */}
       <div className="flex-1 flex flex-col">
         {!selectedConv ? (
-          <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
+          <div className="flex-1 flex items-center justify-center text-stone-400 text-sm">
             Select a conversation
           </div>
         ) : (
@@ -94,7 +94,7 @@ export default function MessagesPage() {
                 const isOwn = msg.sender_type === 'student'
                 return (
                   <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[70%] px-4 py-2 rounded-2xl text-sm ${isOwn ? 'bg-gray-900 text-white rounded-br-md' : 'bg-gray-100 text-gray-800 rounded-bl-md'}`}>
+                    <div className={`max-w-[70%] px-4 py-2 rounded-2xl text-sm ${isOwn ? 'bg-stone-800 text-white rounded-br-md' : 'bg-stone-100 text-stone-800 rounded-bl-md'}`}>
                       {msg.message_body}
                     </div>
                   </div>
@@ -102,15 +102,15 @@ export default function MessagesPage() {
               })}
               <div ref={messagesEndRef} />
             </div>
-            <div className="px-4 py-3 border-t border-gray-200 bg-white flex gap-2">
+            <div className="px-4 py-3 border-t border-stone-200 bg-white flex gap-2">
               <input
                 value={newMessage}
                 onChange={e => setNewMessage(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
                 placeholder="Type a message..."
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                className="flex-1 border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-stone-800"
               />
-              <button onClick={handleSend} disabled={!newMessage.trim()} className="p-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50">
+              <button onClick={handleSend} disabled={!newMessage.trim()} className="p-2 bg-stone-800 text-white rounded-lg hover:bg-stone-700 disabled:opacity-50">
                 <Send size={16} />
               </button>
             </div>

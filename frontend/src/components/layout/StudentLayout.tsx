@@ -1,65 +1,30 @@
-import { useEffect, useRef, useState } from 'react'
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../stores/auth-store'
 import {
-  LayoutDashboard, MessageSquare, User, Search, FileText, Heart,
-  Mail, Calendar, DollarSign, UserCheck, Settings, Bell, LogOut,
+  LayoutDashboard, MessageSquare, User, Search, FileText,
+  Calendar, Bell, LogOut, ChevronRight,
 } from 'lucide-react'
 import Avatar from '../ui/Avatar'
-import ProgressBar from '../ui/ProgressBar'
 import Dropdown from '../ui/Dropdown'
-import { getOnboarding, getNextStep } from '../../api/students'
 import { getUnreadCount } from '../../api/notifications'
 
-const NAV_SECTIONS = [
-  {
-    label: 'Build',
-    items: [
-      { to: '/s/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-      { to: '/s/profile', icon: User, label: 'Profile' },
-      { to: '/s/chat', icon: MessageSquare, label: 'Counselor' },
-    ],
-  },
-  {
-    label: 'Find',
-    items: [
-      { to: '/s/discover', icon: Search, label: 'Discover' },
-      { to: '/s/saved', icon: Heart, label: 'Saved' },
-    ],
-  },
-  {
-    label: 'Apply',
-    items: [
-      { to: '/s/applications', icon: FileText, label: 'Applications' },
-      { to: '/s/recommendations', icon: UserCheck, label: 'Recommenders' },
-      { to: '/s/financial-aid', icon: DollarSign, label: 'Financial Aid' },
-    ],
-  },
-  {
-    label: 'Track',
-    items: [
-      { to: '/s/calendar', icon: Calendar, label: 'Calendar' },
-      { to: '/s/messages', icon: Mail, label: 'Messages' },
-      { to: '/s/settings', icon: Settings, label: 'Settings' },
-    ],
-  },
+const NAV_ITEMS = [
+  { to: '/s/dashboard', icon: LayoutDashboard, label: 'Home' },
+  { to: '/s/profile', icon: User, label: 'Profile' },
+  { to: '/s/discover', icon: Search, label: 'Discover' },
+  { to: '/s/applications', icon: FileText, label: 'Applications' },
+  { to: '/s/calendar', icon: Calendar, label: 'Calendar' },
+  { to: '/s/chat', icon: MessageSquare, label: 'Counselor' },
 ]
 
 export default function StudentLayout() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
-  const [showNotificationsMenu, setShowNotificationsMenu] = useState(false)
-  const notificationsMenuRef = useRef<HTMLDivElement | null>(null)
-
-  const { data: onboarding } = useQuery({
-    queryKey: ['onboarding'],
-    queryFn: getOnboarding,
-  })
-  const { data: nextStep } = useQuery({
-    queryKey: ['next-step'],
-    queryFn: getNextStep,
-  })
+  const location = useLocation()
+  const [expanded, setExpanded] = useState(false)
+  const sidebarRef = useRef<HTMLElement>(null)
 
   const { data: unreadCount } = useQuery({
     queryKey: ['unread-count'],
@@ -67,148 +32,115 @@ export default function StudentLayout() {
     refetchInterval: 30000,
   })
 
-  const completionPct = onboarding?.completion_percentage ?? 0
+  const hasUnread = (unreadCount?.count ?? 0) > 0
 
+  // Collapse sidebar on route change
   useEffect(() => {
-    const handleOutsideClick = (event: MouseEvent) => {
-      const target = event.target as Node
-      if (notificationsMenuRef.current && !notificationsMenuRef.current.contains(target)) {
-        setShowNotificationsMenu(false)
+    setExpanded(false)
+  }, [location.pathname])
+
+  // Collapse sidebar on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(e.target as Node)) {
+        setExpanded(false)
       }
     }
-    document.addEventListener('mousedown', handleOutsideClick)
-    return () => document.removeEventListener('mousedown', handleOutsideClick)
-  }, [])
+    if (expanded) {
+      document.addEventListener('mousedown', handleClick)
+      return () => document.removeEventListener('mousedown', handleClick)
+    }
+  }, [expanded])
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Nav rail */}
-      <aside className="w-56 flex flex-col border-r border-gray-200 bg-white py-4">
-        <div className="px-4 pb-2 border-b border-gray-100">
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Student Journey</p>
+    <div className="flex h-screen bg-stone-50">
+      {/* Sidebar */}
+      <aside
+        ref={sidebarRef}
+        className={`fixed top-0 left-0 h-full z-40 flex flex-col bg-stone-50 transition-all duration-200 ease-in-out ${
+          expanded ? 'w-52 shadow-xl bg-white' : 'w-14'
+        }`}
+      >
+        {/* Logo / expand toggle */}
+        <div className="h-14 flex items-center justify-center flex-shrink-0">
+          <button
+            onClick={() => setExpanded(e => !e)}
+            className="p-2 rounded-xl hover:bg-stone-100 transition-colors"
+          >
+            <ChevronRight
+              size={18}
+              className={`text-stone-400 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+            />
+          </button>
         </div>
-        <div className="flex flex-col gap-4 flex-1 px-2 pt-3">
-          {NAV_SECTIONS.map(section => (
-            <div key={section.label}>
-              <p className="px-2 mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
-                {section.label}
-              </p>
-              {section.items.map(item => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 w-full px-2 py-2 rounded-lg transition-colors ${
-                      isActive
-                        ? 'bg-gray-100 text-gray-900'
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                    }`
-                  }
-                >
-                  <item.icon size={18} />
-                  <span className="text-sm">{item.label}</span>
-                </NavLink>
-              ))}
-            </div>
+
+        {/* Nav items */}
+        <nav className="flex-1 flex flex-col gap-1 px-2 pt-2">
+          {NAV_ITEMS.map(item => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-xl transition-colors ${
+                  expanded ? 'px-3 py-2.5' : 'justify-center py-2.5'
+                } ${
+                  isActive
+                    ? 'bg-stone-200/70 text-stone-900'
+                    : 'text-stone-500 hover:text-stone-700 hover:bg-stone-100'
+                }`
+              }
+              title={!expanded ? item.label : undefined}
+            >
+              <item.icon size={20} className="flex-shrink-0" />
+              {expanded && <span className="text-sm font-medium">{item.label}</span>}
+            </NavLink>
           ))}
+        </nav>
+
+        {/* Bottom: notification + avatar */}
+        <div className={`flex flex-col gap-1 px-2 pb-4 ${expanded ? '' : 'items-center'}`}>
+          {/* Notification bell */}
+          <button
+            onClick={() => navigate('/s/messages')}
+            className={`relative flex items-center gap-3 rounded-xl transition-colors text-stone-500 hover:text-stone-700 hover:bg-stone-100 ${
+              expanded ? 'px-3 py-2.5' : 'justify-center py-2.5'
+            }`}
+            title={!expanded ? 'Messages' : undefined}
+          >
+            <Bell size={20} className="flex-shrink-0" />
+            {hasUnread && (
+              <span className="absolute top-1.5 left-6 w-2 h-2 rounded-full bg-amber-500" />
+            )}
+            {expanded && <span className="text-sm font-medium">Messages</span>}
+          </button>
+
+          {/* Avatar / user menu */}
+          <Dropdown
+            trigger={
+              <button
+                className={`flex items-center gap-3 rounded-xl transition-colors hover:bg-stone-100 ${
+                  expanded ? 'px-3 py-2.5 w-full' : 'justify-center py-2.5'
+                }`}
+              >
+                <Avatar name={user?.email || '?'} size="sm" />
+                {expanded && (
+                  <span className="text-sm text-stone-600 truncate">{user?.email?.split('@')[0]}</span>
+                )}
+              </button>
+            }
+            items={[
+              { label: 'Settings', onClick: () => navigate('/s/settings') },
+              { label: 'Sign out', onClick: logout, icon: <LogOut size={14} />, variant: 'danger' },
+            ]}
+          />
         </div>
       </aside>
 
       {/* Main content area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar */}
-        <header className="flex items-center justify-between h-14 px-6 border-b border-gray-200 bg-white">
-          <NavLink to="/s/dashboard" className="text-lg font-semibold text-gray-900">
-            UniPaith
-          </NavLink>
-          <div className="flex items-center gap-3">
-            {/* Notification bell */}
-            <div className="relative" ref={notificationsMenuRef}>
-              <button
-                type="button"
-                onClick={() => setShowNotificationsMenu(v => !v)}
-                className="relative p-2 rounded-lg hover:bg-gray-100"
-              >
-                <Bell size={18} className="text-gray-600" />
-                {(unreadCount?.count ?? 0) > 0 && (
-                  <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">
-                    {unreadCount.count > 9 ? '9+' : unreadCount.count}
-                  </span>
-                )}
-              </button>
-              {showNotificationsMenu && (
-                <div className="absolute right-0 top-full mt-1 w-60 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50">
-                  <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-100">
-                    {unreadCount?.count ?? 0} unread notifications
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigate('/s/messages')
-                      setShowNotificationsMenu(false)
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    Open inbox
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigate('/s/settings')
-                      setShowNotificationsMenu(false)
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    Notification settings
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* User dropdown */}
-            <Dropdown
-              trigger={
-                <button className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-100">
-                  <Avatar name={user?.email || '?'} size="sm" />
-                </button>
-              }
-              items={[
-                { label: 'Profile', onClick: () => navigate('/s/profile') },
-                { label: 'Settings', onClick: () => navigate('/s/settings') },
-                { label: 'Sign out', onClick: logout, icon: <LogOut size={14} />, variant: 'danger' },
-              ]}
-            />
-          </div>
-        </header>
-
-        {/* Calm action rail */}
-        <div className="px-6 py-2 border-b border-gray-100 bg-white">
-          <p className="text-xs text-gray-600">
-            <span className="font-medium text-gray-800">Next best action:</span>{' '}
-            {nextStep?.guidance_text || 'Continue with your current application plan.'}
-          </p>
-        </div>
-
-        {/* Page content */}
+      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-200 ${expanded ? 'ml-52' : 'ml-14'}`}>
         <main className="flex-1 overflow-y-auto">
           <Outlet />
         </main>
-
-        {/* Onboarding bar */}
-        {completionPct < 100 && (
-          <div className="flex items-center gap-4 px-6 py-3 border-t border-gray-200 bg-white">
-            <ProgressBar value={completionPct} className="flex-1" />
-            <span className="text-xs text-gray-600 whitespace-nowrap">
-              Profile support progress: {completionPct}%
-            </span>
-            <button
-              onClick={() => navigate('/s/profile')}
-              className="text-xs font-medium text-gray-900 hover:underline whitespace-nowrap"
-            >
-              Complete
-            </button>
-          </div>
-        )}
       </div>
     </div>
   )

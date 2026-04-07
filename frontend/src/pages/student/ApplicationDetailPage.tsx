@@ -157,22 +157,22 @@ export default function ApplicationDetailPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <button onClick={() => navigate('/s/applications')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-4">
+      <button onClick={() => navigate('/s/applications')} className="flex items-center gap-1 text-sm text-stone-500 hover:text-stone-700 mb-4">
         <ArrowLeft size={16} /> My Applications
       </button>
 
       <h1 className="text-xl font-bold mb-1">{application.program?.program_name || 'Application'}</h1>
-      <p className="text-sm text-gray-500">Take one section at a time. You can check readiness anytime before submitting.</p>
+      <p className="text-sm text-stone-500">Take one section at a time. You can check readiness anytime before submitting.</p>
 
       {/* Status timeline */}
       <div className="my-4">
         <div className="flex items-center gap-1">
           {STATUS_STEPS.map((step, i) => (
             <div key={step} className="flex items-center">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${i <= currentStepIdx ? 'bg-gray-900 text-white' : 'bg-gray-200 text-gray-400'}`}>
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${i <= currentStepIdx ? 'bg-stone-800 text-white' : 'bg-stone-200 text-stone-400'}`}>
                 {i < currentStepIdx ? <Check size={12} /> : <Circle size={12} />}
               </div>
-              {i < STATUS_STEPS.length - 1 && <div className={`w-12 h-0.5 ${i < currentStepIdx ? 'bg-gray-900' : 'bg-gray-200'}`} />}
+              {i < STATUS_STEPS.length - 1 && <div className={`w-12 h-0.5 ${i < currentStepIdx ? 'bg-stone-800' : 'bg-stone-200'}`} />}
             </div>
           ))}
         </div>
@@ -181,7 +181,7 @@ export default function ApplicationDetailPage() {
             <span
               key={step}
               className={`text-[11px] px-2 py-0.5 rounded-full ${
-                step === application.status ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500'
+                step === application.status ? 'bg-stone-800 text-white' : 'bg-stone-100 text-stone-500'
               }`}
             >
               {STATUS_STEP_LABELS[step]}
@@ -198,10 +198,10 @@ export default function ApplicationDetailPage() {
             <div className="space-y-2 mb-3">
               {checklistItems.map((item: any, i: number) => (
                 <div key={i} className="flex items-center gap-2 text-sm">
-                  <div className={`w-4 h-4 rounded border flex items-center justify-center ${item.status === 'completed' ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'}`}>
+                  <div className={`w-4 h-4 rounded border flex items-center justify-center ${item.status === 'completed' ? 'bg-green-500 border-green-500 text-white' : 'border-stone-300'}`}>
                     {item.status === 'completed' && <Check size={10} />}
                   </div>
-                  <span className={item.status === 'completed' ? 'text-gray-500 line-through' : ''}>{item.name}</span>
+                  <span className={item.status === 'completed' ? 'text-stone-500 line-through' : ''}>{item.name}</span>
                 </div>
               ))}
             </div>
@@ -227,7 +227,7 @@ export default function ApplicationDetailPage() {
               Submit Application
             </Button>
             {application.status === 'draft' && (
-              <p className="text-xs text-gray-500 mt-2">
+              <p className="text-xs text-stone-500 mt-2">
                 You can submit when you feel ready. The readiness check will show any missing items clearly.
               </p>
             )}
@@ -246,11 +246,11 @@ export default function ApplicationDetailPage() {
                   onDragLeave={() => setDragOver(false)}
                   onDrop={handleDrop}
                   className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                    dragOver ? 'border-gray-900 bg-gray-50' : 'border-gray-300 hover:border-gray-400'
+                    dragOver ? 'border-stone-800 bg-stone-50' : 'border-stone-300 hover:border-stone-400'
                   }`}
                 >
-                  <Upload size={24} className="mx-auto text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-600 mb-1">Drag & drop files here, or</p>
+                  <Upload size={24} className="mx-auto text-stone-400 mb-2" />
+                  <p className="text-sm text-stone-600 mb-1">Drag & drop files here, or</p>
                   <label className="inline-block">
                     <input
                       type="file"
@@ -258,14 +258,14 @@ export default function ApplicationDetailPage() {
                       className="hidden"
                       onChange={e => e.target.files && handleFileUpload(e.target.files)}
                     />
-                    <span className="text-sm font-medium text-gray-900 underline cursor-pointer">browse files</span>
+                    <span className="text-sm font-medium text-stone-800 underline cursor-pointer">browse files</span>
                   </label>
-                  <p className="text-xs text-gray-400 mt-1">PDF, DOC, DOCX up to 10MB</p>
+                  <p className="text-xs text-stone-400 mt-1">PDF, DOC, DOCX up to 10MB</p>
                 </div>
 
                 {uploading && (
                   <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-gray-500">
+                    <div className="flex justify-between text-xs text-stone-500">
                       <span>Uploading...</span>
                       <span>{uploadProgress}%</span>
                     </div>
@@ -276,9 +276,9 @@ export default function ApplicationDetailPage() {
                 {/* Existing documents */}
                 {documentsList.length > 0 && (
                   <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-gray-700">Uploaded Documents</h3>
+                    <h3 className="text-sm font-medium text-stone-700">Uploaded Documents</h3>
                     {documentsList.map((doc: any) => (
-                      <div key={doc.id} className="flex justify-between items-center p-3 rounded-lg border border-gray-100 text-sm">
+                      <div key={doc.id} className="flex justify-between items-center p-3 rounded-lg border border-stone-100 text-sm">
                         <div className="flex items-center gap-2">
                           <FileCheck size={16} className="text-green-500" />
                           <span>{doc.file_name}</span>
@@ -290,7 +290,7 @@ export default function ApplicationDetailPage() {
                 )}
 
                 {documentsList.length === 0 && !uploading && (
-                  <p className="text-sm text-gray-500">No documents uploaded yet. Upload transcripts, recommendations, and other required documents above.</p>
+                  <p className="text-sm text-stone-500">No documents uploaded yet. Upload transcripts, recommendations, and other required documents above.</p>
                 )}
               </div>
             )}
@@ -299,7 +299,7 @@ export default function ApplicationDetailPage() {
               <div className="space-y-4">
                 <Button size="sm" onClick={() => setShowEssayModal(true)}>+ New Essay</Button>
                 {essaysList.length === 0 ? (
-                  <p className="text-sm text-gray-500 mt-2">No essays yet for this application.</p>
+                  <p className="text-sm text-stone-500 mt-2">No essays yet for this application.</p>
                 ) : (
                   essaysList.map((e: Essay) => (
                     <Card key={e.id} className="p-4">
@@ -307,7 +307,7 @@ export default function ApplicationDetailPage() {
                         <div>
                           <p className="font-medium text-sm">{e.prompt_text || 'Essay'}</p>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-gray-500">{e.word_count ?? wordCount(e.content)} words</span>
+                            <span className="text-xs text-stone-500">{e.word_count ?? wordCount(e.content)} words</span>
                             <Badge variant={(STATUS_COLORS[e.status] || 'neutral') as any} size="sm">{e.status}</Badge>
                           </div>
                         </div>
@@ -333,7 +333,7 @@ export default function ApplicationDetailPage() {
                           </Button>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-600 line-clamp-3">{e.content}</p>
+                      <p className="text-sm text-stone-600 line-clamp-3">{e.content}</p>
 
                       {/* AI Feedback Display */}
                       {feedbackResults[e.id] && (
@@ -369,7 +369,7 @@ export default function ApplicationDetailPage() {
               <div className="space-y-3">
                 {resumesList.length === 0 ? (
                   <div>
-                    <p className="text-sm text-gray-500 mb-3">No resume targeting this program yet.</p>
+                    <p className="text-sm text-stone-500 mb-3">No resume targeting this program yet.</p>
                     <Button size="sm" onClick={() => resumeGenMut.mutate()} loading={resumeGenMut.isPending}>Generate Resume</Button>
                   </div>
                 ) : (
@@ -386,8 +386,8 @@ export default function ApplicationDetailPage() {
             {tab === 'offer' && (
               <Card className="p-4">
                 <h3 className="font-medium mb-3">Offer Details</h3>
-                <p className="text-sm text-gray-600">Decision: <Badge variant="success">{application.decision}</Badge></p>
-                {application.decision_notes && <p className="text-sm text-gray-600 mt-2">{application.decision_notes}</p>}
+                <p className="text-sm text-stone-600">Decision: <Badge variant="success">{application.decision}</Badge></p>
+                {application.decision_notes && <p className="text-sm text-stone-600 mt-2">{application.decision_notes}</p>}
                 <div className="flex gap-3 mt-4">
                   <Button onClick={() => { setOfferResponse('accepted'); offerMut.mutate() }} loading={offerMut.isPending}>Accept</Button>
                   <Button variant="danger" onClick={() => setOfferResponse('declined')}>Decline</Button>
@@ -416,7 +416,7 @@ export default function ApplicationDetailPage() {
           <Textarea label="Prompt" value={essayPrompt} onChange={e => setEssayPrompt(e.target.value)} placeholder="The essay question..." />
           <div>
             <Textarea label="Content" value={essayContent} onChange={e => setEssayContent(e.target.value)} placeholder="Write your essay..." />
-            <p className="text-xs text-gray-400 mt-1 text-right">{wordCount(essayContent)} words</p>
+            <p className="text-xs text-stone-400 mt-1 text-right">{wordCount(essayContent)} words</p>
           </div>
           <Button onClick={() => essayMut.mutate({ program_id: application.program_id, essay_type: essayType, content: essayContent, prompt_text: essayPrompt })} loading={essayMut.isPending} className="w-full">Save Essay</Button>
         </div>
@@ -429,7 +429,7 @@ export default function ApplicationDetailPage() {
             <Textarea label="Prompt" value={essayPrompt} onChange={e => setEssayPrompt(e.target.value)} />
             <div>
               <Textarea label="Content" value={essayContent} onChange={e => setEssayContent(e.target.value)} />
-              <p className="text-xs text-gray-400 mt-1 text-right">{wordCount(essayContent)} words</p>
+              <p className="text-xs text-stone-400 mt-1 text-right">{wordCount(essayContent)} words</p>
             </div>
             <Button
               onClick={() => essayUpdateMut.mutate({ id: editingEssay.id, data: { content: essayContent, prompt_text: essayPrompt } })}
@@ -458,7 +458,7 @@ export default function ApplicationDetailPage() {
               )}
               <div>
                 <p className="font-medium">{readiness.ready ? 'Ready to submit!' : 'You are close to ready'}</p>
-                <p className="text-sm text-gray-500">{readiness.completion_percentage}% complete</p>
+                <p className="text-sm text-stone-500">{readiness.completion_percentage}% complete</p>
               </div>
             </div>
 
@@ -469,7 +469,7 @@ export default function ApplicationDetailPage() {
                 <h4 className="text-sm font-medium mb-2">Missing items:</h4>
                 <ul className="space-y-1">
                   {readiness.missing_items.map((item: string, i: number) => (
-                    <li key={i} className="flex items-center gap-2 text-sm text-gray-600">
+                    <li key={i} className="flex items-center gap-2 text-sm text-stone-600">
                       <Circle size={8} className="text-red-400 flex-shrink-0" />
                       {item}
                     </li>

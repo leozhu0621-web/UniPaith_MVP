@@ -46,8 +46,8 @@ export default function ApplicationsPage() {
         {filtered.length === 0 ? (
           <EmptyState
             icon={<FileText size={48} />}
-            title="No applications yet"
-            description="Discover programs to get started."
+            title="Your applications will appear here"
+            description="When you're ready, discover programs to apply to."
             action={{ label: 'Discover', onClick: () => navigate('/s/discover') }}
           />
         ) : (
@@ -65,11 +65,11 @@ export default function ApplicationsPage() {
                       {app.status.replace(/_/g, ' ')}
                     </Badge>
                     {app.match_score != null && (
-                      <span className="text-xs text-gray-500">Match: {formatScore(app.match_score)}</span>
+                      <span className="text-xs text-stone-500">Match: {formatScore(app.match_score)}</span>
                     )}
                   </div>
                   {app.submitted_at && (
-                    <p className="text-xs text-gray-400 mt-1">Submitted: {formatDate(app.submitted_at)}</p>
+                    <p className="text-xs text-stone-400 mt-1">Submitted: {formatDate(app.submitted_at)}</p>
                   )}
                   {app.decision && (
                     <Badge variant={(STATUS_COLORS[app.decision] || 'neutral') as any} className="mt-1">
@@ -77,7 +77,7 @@ export default function ApplicationsPage() {
                     </Badge>
                   )}
                 </div>
-                <span className="text-xs text-gray-400">{app.status === 'draft' ? 'Continue' : 'View'} →</span>
+                <span className="text-xs text-stone-400">{app.status === 'draft' ? 'Continue' : 'View'} →</span>
               </div>
             </Card>
           ))

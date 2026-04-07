@@ -76,7 +76,7 @@ export default function SchoolDetailPage() {
   if (!program) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <p className="text-sm text-gray-600 mb-3">Program details are unavailable right now.</p>
+        <p className="text-sm text-stone-600 mb-3">Program details are unavailable right now.</p>
         <Button size="sm" variant="secondary" onClick={() => navigate('/s/discover')}>
           Back to Discover
         </Button>
@@ -90,14 +90,14 @@ export default function SchoolDetailPage() {
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
-      <button onClick={() => navigate('/s/discover')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-4">
+      <button onClick={() => navigate('/s/discover')} className="flex items-center gap-1 text-sm text-stone-500 hover:text-stone-700 mb-4">
         <ArrowLeft size={16} /> Back to Discover
       </button>
 
       <div className="flex justify-between items-start mb-6">
         <div>
           <h1 className="text-2xl font-bold">{p.program_name}</h1>
-          <p className="text-gray-500">{p.department || ''}</p>
+          <p className="text-stone-500">{p.department || ''}</p>
           {match && tierInfo && (
             <div className="flex items-center gap-2 mt-2">
               <Badge variant={tierInfo.color as any}>{tierInfo.label}</Badge>
@@ -130,19 +130,19 @@ export default function SchoolDetailPage() {
       <div className="mt-6">
         {tab === 'overview' && (
           <div className="space-y-4">
-            {p.description_text && <p className="text-sm text-gray-700">{p.description_text}</p>}
+            {p.description_text && <p className="text-sm text-stone-700">{p.description_text}</p>}
             <div className="grid grid-cols-2 gap-4 text-sm">
-              <div><span className="text-gray-500">Degree:</span> {DEGREE_LABELS[p.degree_type] || p.degree_type}</div>
-              <div><span className="text-gray-500">Duration:</span> {p.duration_months ? `${p.duration_months} months` : '—'}</div>
-              <div><span className="text-gray-500">Tuition:</span> {formatCurrency(p.tuition)}</div>
-              <div><span className="text-gray-500">Acceptance Rate:</span> {formatPercent(p.acceptance_rate, 1)}</div>
-              <div><span className="text-gray-500">Deadline:</span> {formatDate(p.application_deadline)}</div>
-              <div><span className="text-gray-500">Start:</span> {formatDate(p.program_start_date)}</div>
+              <div><span className="text-stone-500">Degree:</span> {DEGREE_LABELS[p.degree_type] || p.degree_type}</div>
+              <div><span className="text-stone-500">Duration:</span> {p.duration_months ? `${p.duration_months} months` : '—'}</div>
+              <div><span className="text-stone-500">Tuition:</span> {formatCurrency(p.tuition)}</div>
+              <div><span className="text-stone-500">Acceptance Rate:</span> {formatPercent(p.acceptance_rate, 1)}</div>
+              <div><span className="text-stone-500">Deadline:</span> {formatDate(p.application_deadline)}</div>
+              <div><span className="text-stone-500">Start:</span> {formatDate(p.program_start_date)}</div>
             </div>
             {p.highlights?.length ? (
               <div>
                 <h3 className="font-medium text-sm mb-2">Highlights</h3>
-                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                <ul className="list-disc list-inside text-sm text-stone-600 space-y-1">
                   {p.highlights.map((h, i) => <li key={i}>{h}</li>)}
                 </ul>
               </div>
@@ -155,14 +155,14 @@ export default function SchoolDetailPage() {
             {p.requirements && Object.keys(p.requirements).length > 0 ? (
               <dl className="space-y-2 text-sm">
                 {Object.entries(p.requirements).map(([k, v]) => (
-                  <div key={k} className="flex justify-between border-b border-gray-100 pb-2">
-                    <dt className="text-gray-500 capitalize">{k.replace(/_/g, ' ')}</dt>
+                  <div key={k} className="flex justify-between border-b border-stone-100 pb-2">
+                    <dt className="text-stone-500 capitalize">{k.replace(/_/g, ' ')}</dt>
                     <dd className="font-medium">{String(v)}</dd>
                   </div>
                 ))}
               </dl>
             ) : (
-              <p className="text-sm text-gray-500">No specific requirements listed.</p>
+              <p className="text-sm text-stone-500">No specific requirements listed.</p>
             )}
           </div>
         )}
@@ -183,12 +183,12 @@ export default function SchoolDetailPage() {
                 {match.reasoning_text && (
                   <div className="mt-4">
                     <h3 className="font-medium text-sm mb-2">AI Explanation</h3>
-                    <p className="text-sm text-gray-600 whitespace-pre-wrap">{match.reasoning_text}</p>
+                    <p className="text-sm text-stone-600 whitespace-pre-wrap">{match.reasoning_text}</p>
                   </div>
                 )}
                 <div className="mt-4 border-t pt-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm text-gray-500">Want to understand this match better?</p>
+                    <p className="text-sm text-stone-500">Want to understand this match better?</p>
                     <Button size="sm" variant="secondary" onClick={() => navigate('/s/chat')}>
                       <MessageSquare size={14} className="mr-1" /> Ask Counselor
                     </Button>
@@ -196,7 +196,7 @@ export default function SchoolDetailPage() {
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-gray-500">No match analysis available. Complete your profile to see how you fit.</p>
+              <p className="text-sm text-stone-500">No match analysis available. Complete your profile to see how you fit.</p>
             )}
           </div>
         )}
@@ -211,7 +211,7 @@ export default function SchoolDetailPage() {
               <Card key={e.id} className="p-3 flex justify-between items-center">
                 <div>
                   <p className="text-sm font-medium">{e.event_name}</p>
-                  <p className="text-xs text-gray-500">{formatDate(e.start_time)}</p>
+                  <p className="text-xs text-stone-500">{formatDate(e.start_time)}</p>
                 </div>
                 <Button size="sm" variant="secondary" onClick={() => rsvpMut.mutate(e.id)}>RSVP</Button>
               </Card>

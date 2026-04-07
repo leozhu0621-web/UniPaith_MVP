@@ -16,10 +16,10 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={clsx(
           'inline-flex items-center justify-center rounded font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
           {
-            'bg-gray-900 text-white hover:bg-gray-800': variant === 'primary',
-            'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50': variant === 'secondary',
-            'text-gray-700 hover:bg-gray-100': variant === 'ghost',
-            'bg-red-600 text-white hover:bg-red-700': variant === 'danger',
+            'bg-stone-800 text-white hover:bg-stone-700': variant === 'primary',
+            'border border-stone-200 bg-white text-stone-700 hover:bg-stone-50': variant === 'secondary',
+            'text-stone-700 hover:bg-stone-100': variant === 'ghost',
+            'bg-rose-600 text-white hover:bg-rose-700': variant === 'danger',
             'px-2.5 py-1 text-xs': size === 'sm',
             'px-3.5 py-2 text-sm': size === 'md',
             'px-5 py-2.5 text-base': size === 'lg',
