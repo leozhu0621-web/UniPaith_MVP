@@ -47,12 +47,12 @@ export default function FinancialAidPage() {
 
   // Combine saved + applied programs (deduplicate by program_id)
   const allPrograms = useMemo(() => {
-    const savedList: any[] = Array.isArray(saved) ? saved : []
-    const applicationsList: any[] = Array.isArray(applications) ? applications : []
+    const sl: any[] = Array.isArray(saved) ? saved : []
+    const al: any[] = Array.isArray(applications) ? applications : []
     const seen = new Set<string>()
     const result: { id: string; name: string; institution: string; country: string; tuition: number | null }[] = []
 
-    savedList.forEach((s: any) => {
+    sl.forEach((s: any) => {
       if (s.program && !seen.has(s.program_id)) {
         seen.add(s.program_id)
         result.push({
@@ -65,7 +65,7 @@ export default function FinancialAidPage() {
       }
     })
 
-    applicationsList.forEach((a: any) => {
+    al.forEach((a: any) => {
       if (a.program && !seen.has(a.program_id)) {
         seen.add(a.program_id)
         result.push({

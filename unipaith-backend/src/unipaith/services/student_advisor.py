@@ -45,15 +45,14 @@ Each insight should have:
 Only return insights that are NEW or significantly different from existing ones.
 Return ONLY a valid JSON array. Return [] if no new insights."""
 
-EQ_DETECTION_PROMPT = """Classify the emotional tone of this student message. Return JSON:
-{
-  "primary_emotion": "<excited|anxious|confused|confident|overwhelmed|
-    frustrated|hopeful|defeated|neutral>",
-  "intensity": <0.0-1.0>,
-  "undertone": "<what they might be feeling but not saying directly>",
-  "needs": "<what kind of response would help:
-    reassurance|information|challenge|validation|comfort|direction>"
-}
+_EMOTIONS = "excited|anxious|confused|confident|overwhelmed|frustrated|hopeful|defeated|neutral"
+EQ_DETECTION_PROMPT = f"""Classify the emotional tone of this student message. Return JSON:
+{{
+  "primary_emotion": "<{_EMOTIONS}>",
+  "intensity": "<0.0-1.0>",
+  "undertone": "<what they might be feeling but not saying>",
+  "needs": "<reassurance|information|challenge|validation|comfort|direction>"
+}}
 Return ONLY valid JSON."""
 
 
@@ -303,14 +302,19 @@ CRITICAL RULES:
                 f"Student message: {message[:500]}",
             )
             parsed = _safe_json(result)
-            return parsed if parsed else {
-                "primary_emotion": "neutral", "intensity": 0.3,
-                "undertone": "", "needs": "",
+            default = {
+                "primary_emotion": "neutral",
+                "intensity": 0.3,
+                "undertone": "",
+                "needs": "",
             }
+            return parsed if parsed else default
         except Exception:
             return {
-                "primary_emotion": "neutral", "intensity": 0.3,
-                "undertone": "", "needs": "",
+                "primary_emotion": "neutral",
+                "intensity": 0.3,
+                "undertone": "",
+                "needs": "",
             }
 
     async def _extract_insights_background(
