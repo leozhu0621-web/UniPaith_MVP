@@ -55,6 +55,21 @@ export const COMPENSATION_TYPES = [
   { value: 'stipend', label: 'Stipend' },
 ]
 
+export const COURSE_LEVELS = [
+  { value: 'regular', label: 'Regular' },
+  { value: 'honors', label: 'Honors' },
+  { value: 'AP', label: 'AP' },
+  { value: 'IB', label: 'IB' },
+  { value: 'college', label: 'College Level' },
+]
+
+export const CREDENTIAL_EVAL_STATUS = [
+  { value: 'none', label: 'None' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'provided', label: 'Provided' },
+  { value: 'verified', label: 'Verified' },
+]
+
 export const DEGREE_LABELS: Record<string, string> = {
   bachelors: 'B.S.',
   masters: 'M.S.',

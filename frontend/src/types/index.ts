@@ -175,6 +175,20 @@ export interface Competition {
   updated_at: string
 }
 
+export interface Course {
+  id: string
+  academic_record_id: string
+  course_name: string
+  course_code: string | null
+  subject_area: string | null
+  course_level: string
+  grade: string | null
+  credits: number | null
+  term: string | null
+  created_at: string
+  updated_at: string
+}
+
 export interface AcademicRecord {
   id: string
   student_id: string
@@ -189,6 +203,11 @@ export interface AcademicRecord {
   honors: string | null
   thesis_title: string | null
   country: string | null
+  transcript_language: string | null
+  credential_evaluation_status: string | null
+  credential_evaluation_report_url: string | null
+  rigor_indicator_count: number | null
+  courses: Course[]
   created_at: string
   updated_at: string
 }

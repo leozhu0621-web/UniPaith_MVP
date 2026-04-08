@@ -115,6 +115,10 @@ class AcademicRecord(Base):
     honors: Mapped[str | None] = mapped_column(String(255))
     thesis_title: Mapped[str | None] = mapped_column(String(500))
     country: Mapped[str | None] = mapped_column(String(100))
+    transcript_language: Mapped[str | None] = mapped_column(String(50))
+    credential_evaluation_status: Mapped[str | None] = mapped_column(String(30))
+    credential_evaluation_report_url: Mapped[str | None] = mapped_column(String(1000))
+    rigor_indicator_count: Mapped[int | None] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -123,6 +127,36 @@ class AcademicRecord(Base):
     )
 
     student: Mapped[StudentProfile] = relationship(back_populates="academic_records")
+    courses: Mapped[list[StudentCourse]] = relationship(
+        back_populates="academic_record", cascade="all, delete-orphan"
+    )
+
+
+class StudentCourse(Base):
+    __tablename__ = "student_courses"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    academic_record_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("academic_records.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    course_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    course_code: Mapped[str | None] = mapped_column(String(50))
+    subject_area: Mapped[str | None] = mapped_column(String(100))
+    course_level: Mapped[str] = mapped_column(String(30), nullable=False)
+    grade: Mapped[str | None] = mapped_column(String(20))
+    credits: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
+    term: Mapped[str | None] = mapped_column(String(50))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    academic_record: Mapped[AcademicRecord] = relationship(back_populates="courses")
 
 
 class TestScore(Base):
