@@ -46,3 +46,9 @@ class LoginResponse(TokenResponse):
     """Login returns tokens plus the current user so the client can skip GET /auth/me."""
 
     user: UserResponse
+
+
+class GoogleCallbackRequest(BaseModel):
+    code: str
+    redirect_uri: str
+    role: Literal["student", "institution_admin"] = "student"

@@ -15,6 +15,7 @@ import RequireAuth from './components/layout/RequireAuth'
 import LandingPage from './pages/auth/LandingPage'
 import LoginPage from './pages/auth/LoginPage'
 import SignupPage from './pages/auth/SignupPage'
+import AuthCallbackPage from './pages/auth/AuthCallbackPage'
 
 // Public pages
 import ProgramBrowsePage from './pages/public/ProgramBrowsePage'
@@ -73,6 +74,7 @@ const router = createBrowserRouter([
   { path: '/school/:institutionId', element: <InstitutionPage />, errorElement: <RouteErrorPage /> },
   { path: '/login', element: <AuthLayout><LoginPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
   { path: '/signup', element: <AuthLayout><SignupPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/auth/callback', element: <AuthCallbackPage />, errorElement: <RouteErrorPage /> },
 
   // Student routes
   {

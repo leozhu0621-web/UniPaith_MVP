@@ -5,6 +5,7 @@ from unipaith.database import get_db
 from unipaith.dependencies import get_current_user
 from unipaith.models.user import User
 from unipaith.schemas.auth import (
+    GoogleCallbackRequest,
     LoginRequest,
     LoginResponse,
     RefreshRequest,
@@ -36,6 +37,13 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
 async def refresh(body: RefreshRequest, db: AsyncSession = Depends(get_db)):
     svc = AuthService(db)
     result = await svc.refresh_token(body.refresh_token)
+    return result
+
+
+@router.post("/google-callback", response_model=LoginResponse)
+async def google_callback(body: GoogleCallbackRequest, db: AsyncSession = Depends(get_db)):
+    svc = AuthService(db)
+    result = await svc.google_callback(body.code, body.redirect_uri, body.role)
     return result
 
 

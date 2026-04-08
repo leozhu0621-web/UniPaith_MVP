@@ -1,7 +1,10 @@
+import logging
 import uuid
 from typing import Any
 
 import boto3
+import httpx
+from jose import jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,6 +13,8 @@ from unipaith.core.exceptions import BadRequestException, ConflictException
 from unipaith.core.security import CognitoClaims
 from unipaith.models.student import StudentProfile
 from unipaith.models.user import User, UserRole
+
+logger = logging.getLogger("unipaith.auth")
 
 
 def _get_cognito_client():  # type: ignore[no-untyped-def]
@@ -148,6 +153,84 @@ class AuthService:
             }
         except Exception as e:
             raise BadRequestException(f"Token refresh failed: {e}") from e
+
+    async def google_callback(
+        self, code: str, redirect_uri: str, role: str = "student"
+    ) -> dict[str, Any]:
+        """Exchange a Cognito authorization code for tokens, find/create user."""
+        token_endpoint = f"https://{settings.cognito_domain}/oauth2/token"
+
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                resp = await client.post(
+                    token_endpoint,
+                    data={
+                        "grant_type": "authorization_code",
+                        "client_id": settings.cognito_app_client_id,
+                        "code": code,
+                        "redirect_uri": redirect_uri,
+                    },
+                    headers={"Content-Type": "application/x-www-form-urlencoded"},
+                )
+                if resp.status_code != 200:
+                    logger.error("Cognito token exchange failed: %s", resp.status_code)
+                    raise BadRequestException(f"Token exchange failed: {resp.text}")
+                tokens = resp.json()
+        except httpx.HTTPError as e:
+            raise BadRequestException(f"Token exchange request failed: {e}") from e
+
+        # Decode the ID token (without verification — Cognito already validated it)
+        id_token = tokens.get("id_token", "")
+        try:
+            claims = jwt.get_unverified_claims(id_token)
+        except Exception as e:
+            raise BadRequestException(f"Failed to decode ID token: {e}") from e
+
+        cognito_sub = claims.get("sub", "")
+        email = claims.get("email", "")
+        if not email:
+            raise BadRequestException("Google account has no email")
+
+        # Find existing user by cognito_sub or email
+        result = await self.db.execute(
+            select(User).where((User.cognito_sub == cognito_sub) | (User.email == email))
+        )
+        user = result.scalar_one_or_none()
+
+        if user is None:
+            # First-time Google sign-in — create account
+            user = User(
+                email=email,
+                cognito_sub=cognito_sub,
+                role=UserRole(role),
+            )
+            self.db.add(user)
+            await self.db.flush()
+            await self.db.refresh(user)
+
+            if role == "student":
+                self.db.add(StudentProfile(user_id=user.id))
+                await self.db.flush()
+
+            logger.info("Created new user via Google: %s (%s)", email, role)
+        else:
+            # Update cognito_sub if user was created via email/password before
+            if user.cognito_sub != cognito_sub:
+                user.cognito_sub = cognito_sub
+                await self.db.flush()
+
+        return {
+            "access_token": tokens["access_token"],
+            "refresh_token": tokens.get("refresh_token"),
+            "expires_in": tokens.get("expires_in", 3600),
+            "token_type": "Bearer",
+            "user": {
+                "user_id": user.id,
+                "email": user.email,
+                "role": user.role.value,
+                "created_at": user.created_at,
+            },
+        }
 
     async def get_or_create_user(self, claims: CognitoClaims) -> User:
         result = await self.db.execute(select(User).where(User.cognito_sub == claims.sub))

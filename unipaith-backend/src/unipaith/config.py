@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     cognito_app_client_id: str = ""
     cognito_domain: str = ""
     cognito_bypass: bool = False
+    cognito_redirect_uri: str = ""
 
     # S3
     s3_bucket_name: str = "unipaith-documents"

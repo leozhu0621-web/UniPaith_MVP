@@ -44,6 +44,7 @@ interface AuthState {
 
   login: (email: string, password: string) => Promise<void>
   signup: (email: string, password: string, role: string) => Promise<void>
+  googleCallback: (code: string, redirectUri: string, role: string) => Promise<void>
   logout: () => void
   refreshAccessToken: () => Promise<string>
   loadSession: () => Promise<void>
@@ -100,6 +101,31 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signup: async (email, password, role) => {
     await apiClient.post('/auth/signup', { email, password, role })
     await get().login(email, password)
+  },
+
+  googleCallback: async (code, redirectUri, role) => {
+    const { data } = await apiClient.post('/auth/google-callback', {
+      code,
+      redirect_uri: redirectUri,
+      role,
+    })
+    const loginUser = data?.user
+    const normalizedUser = loginUser
+      ? {
+          id: String(loginUser.user_id ?? loginUser.id ?? ''),
+          email: String(loginUser.email ?? ''),
+          role: loginUser.role as User['role'],
+          created_at: String(loginUser.created_at ?? new Date().toISOString()),
+        }
+      : null
+
+    set({
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token ?? null,
+      user: normalizedUser,
+      isAuthenticated: true,
+    })
+    persistRefreshToken(data.refresh_token ?? null)
   },
 
   logout: () => {
