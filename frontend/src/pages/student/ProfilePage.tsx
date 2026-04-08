@@ -49,6 +49,7 @@ const PROFILE_SECTIONS = [
   { key: 'academics', label: 'Academic Records', fields: [] },
   { key: 'test_scores', label: 'Test Scores', fields: [] },
   { key: 'activities', label: 'Activities', fields: [] },
+  { key: 'online_presence', label: 'Online Presence', fields: [] },
   { key: 'preferences', label: 'Preferences', fields: [] },
   { key: 'documents', label: 'Documents', fields: [] },
 ]
@@ -79,6 +80,9 @@ export default function ProfilePage() {
   const actCreateMut = useMutation({ mutationFn: createActivity, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Activity added', 'success') } })
   const actUpdateMut = useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => updateActivity(id, data), onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Activity updated', 'success') } })
   const actDeleteMut = useMutation({ mutationFn: deleteActivity, onSuccess: () => { invalidateAll(); showToast('Activity deleted', 'success') } })
+  const opCreateMut = useMutation({ mutationFn: createOnlinePresence, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Link added', 'success') } })
+  const opUpdateMut = useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => updateOnlinePresence(id, data), onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Link updated', 'success') } })
+  const opDeleteMut = useMutation({ mutationFn: deleteOnlinePresence, onSuccess: () => { invalidateAll(); showToast('Link removed', 'success') } })
   const prefsMut = useMutation({ mutationFn: upsertPreferences, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Preferences updated', 'success') } })
 
   if (isLoading) return <div className="p-6 space-y-4">{Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}</div>
@@ -96,6 +100,7 @@ export default function ProfilePage() {
       case 'academics': return (p?.academic_records ?? []).length > 0
       case 'test_scores': return (p?.test_scores ?? []).length > 0
       case 'activities': return (p?.activities ?? []).length > 0
+      case 'online_presence': return (p?.online_presence ?? []).length > 0
       case 'preferences': return !!p?.preferences
       case 'documents': return documentsList.length > 0
       default: return false
@@ -232,6 +237,35 @@ export default function ProfilePage() {
         )}
       </Card>
 
+      {/* Online Presence */}
+      <Card className="p-5">
+        <div className="flex justify-between items-start mb-3">
+          <h2 className="font-semibold text-stone-800">Online Presence</h2>
+          <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('online_presence') }}><Plus size={14} /></Button>
+        </div>
+        {(p?.online_presence ?? []).length === 0 ? (
+          <p className="text-sm text-stone-500">Add your LinkedIn, GitHub, or portfolio links</p>
+        ) : (
+          <div className="space-y-3">
+            {p!.online_presence.map(op => (
+              <div key={op.id} className="flex justify-between items-start border-b border-stone-100 pb-3 last:border-0">
+                <div className="flex items-center gap-2">
+                  <ExternalLink size={14} className="text-stone-400 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-sm">{PLATFORM_TYPES.find(t => t.value === op.platform_type)?.label || op.platform_type}</p>
+                    <a href={op.url} target="_blank" rel="noopener noreferrer" className="text-xs text-sky-600 hover:underline truncate block max-w-xs">{op.display_name || op.url}</a>
+                  </div>
+                </div>
+                <div className="flex gap-1">
+                  <Button size="sm" variant="ghost" onClick={() => { setEditItem(op); setEditModal('online_presence') }}><Pencil size={12} /></Button>
+                  <Button size="sm" variant="ghost" onClick={() => opDeleteMut.mutate(op.id)}><Trash2 size={12} /></Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
       {/* Preferences */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
@@ -305,6 +339,15 @@ export default function ProfilePage() {
           defaultValues={editItem}
           onSubmit={data => editItem ? actUpdateMut.mutate({ id: editItem.id, data }) : actCreateMut.mutate(data)}
           loading={actCreateMut.isPending || actUpdateMut.isPending}
+        />
+      </Modal>
+
+      {/* Online Presence Modal */}
+      <Modal isOpen={editModal === 'online_presence'} onClose={() => setEditModal(null)} title={editItem ? 'Edit Link' : 'Add Link'}>
+        <OnlinePresenceForm
+          defaultValues={editItem}
+          onSubmit={data => editItem ? opUpdateMut.mutate({ id: editItem.id, data }) : opCreateMut.mutate(data)}
+          loading={opCreateMut.isPending || opUpdateMut.isPending}
         />
       </Modal>
 
