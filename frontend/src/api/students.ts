@@ -65,6 +65,17 @@ export const upsertVisaInfo = (data: any) => apiClient.put('/students/me/visa-in
 export const getScheduling = () => apiClient.get('/students/me/scheduling').then(r => r.data)
 export const upsertScheduling = (data: any) => apiClient.put('/students/me/scheduling', data).then(r => r.data)
 
+export const exportProfileJson = async () => {
+  const res = await apiClient.get('/students/me/export')
+  const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'unipaith-profile.json'
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 export const getPeerComparison = () => apiClient.get('/students/me/peer-comparison').then(r => r.data)
 
 export const getAnalytics = () => apiClient.get('/students/me/analytics').then(r => r.data)

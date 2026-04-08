@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, createOnlinePresence, updateOnlinePresence, deleteOnlinePresence, createPortfolioItem, updatePortfolioItem, deletePortfolioItem, createResearch, updateResearch, deleteResearch, createLanguage, updateLanguage, deleteLanguage, createWorkExperience, updateWorkExperience, deleteWorkExperience, createCompetition, updateCompetition, deleteCompetition, upsertAccommodations, upsertScheduling, upsertVisaInfo, upsertPreferences, getNextStep } from '../../api/students'
-import { getOnboarding, getTimeline, getAnalytics, getPeerComparison } from '../../api/students'
+import { getOnboarding, getTimeline, getAnalytics, getPeerComparison, exportProfileJson } from '../../api/students'
 import { listDocuments } from '../../api/documents'
 import Modal from '../../components/ui/Modal'
 import Button from '../../components/ui/Button'
@@ -11,7 +11,7 @@ import { SkeletonCard } from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatDate, formatCurrency, formatFileSize } from '../../utils/format'
 import { DEGREE_LABELS, ACTIVITY_TYPES, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS, WORK_EXPERIENCE_TYPES, COMPETITION_LEVELS } from '../../utils/constants'
-import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical, Languages, Briefcase, Trophy, Accessibility, CalendarClock, Plane, Clock, BarChart3, Users } from 'lucide-react'
+import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical, Languages, Briefcase, Trophy, Accessibility, CalendarClock, Plane, Clock, BarChart3, Users, Download } from 'lucide-react'
 import { BasicInfoForm, AcademicForm, CourseForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm, ResearchForm, LanguageForm, WorkExperienceForm, CompetitionForm, AccommodationForm, SchedulingForm, VisaInfoForm } from './components/ProfileForms'
 import { createCourse, updateCourse, deleteCourse } from '../../api/students'
 import type { StudentProfile } from '../../types'
@@ -671,6 +671,22 @@ export default function ProfilePage() {
         ) : (
           <p className="text-sm text-gray-500">Add more profile data to see how you compare with peers.</p>
         )}
+      </Card>
+
+      {/* Export */}
+      <Card className="p-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Download size={18} className="text-gray-500" />
+            <div>
+              <h2 className="font-semibold text-brand-slate-700">Export Profile</h2>
+              <p className="text-xs text-gray-500">Download your full profile as a portable JSON file.</p>
+            </div>
+          </div>
+          <Button size="sm" variant="secondary" onClick={() => exportProfileJson()}>
+            <Download size={14} className="mr-1" /> Download JSON
+          </Button>
+        </div>
       </Card>
 
       {/* === MODALS === */}
