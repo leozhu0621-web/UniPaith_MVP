@@ -246,7 +246,10 @@ export default function CampaignsPage() {
                   <h3 className="font-semibold text-gray-900">{c.campaign_name}</h3>
                   <Badge variant={STATUS_BADGE[c.status ?? 'draft'] ?? 'neutral'}>{c.status ?? 'draft'}</Badge>
                 </div>
-                <Badge variant="info" className="mb-3">{c.campaign_type ?? 'email'}</Badge>
+                <div className="flex items-center gap-2 mb-3">
+                  <Badge variant="info">{c.campaign_type ?? 'email'}</Badge>
+                  {seg && <Badge variant="neutral">{seg.segment_name}</Badge>}
+                </div>
                 <div className="space-y-1 text-sm text-gray-600">
                   {c.message_subject && <p className="truncate">Subject: {c.message_subject}</p>}
                   {prog && <p className="text-xs text-gray-400">Program: {prog.program_name}</p>}
@@ -299,6 +302,15 @@ export default function CampaignsPage() {
           <Select label="Type" options={CAMPAIGN_TYPES} value={campaignType} onChange={e => setCampaignType(e.target.value)} />
           <Input label="Subject" value={subject} onChange={e => setSubject(e.target.value)} placeholder="Message subject" />
           <Textarea label="Message Body" value={body} onChange={e => setBody(e.target.value)} rows={4} placeholder="Write your outreach message..." />
+          {campaignType === 'email' && (
+            <div className="bg-blue-50 border border-blue-100 rounded px-3 py-2">
+              <p className="text-xs font-medium text-blue-700 mb-1">Personalization Variables</p>
+              <p className="text-xs text-blue-600">
+                Use in subject or body: {'{{first_name}}'}, {'{{last_name}}'}, {'{{institution_name}}'}, {'{{program_name}}'}, {'{{email}}'}
+              </p>
+              <p className="text-xs text-blue-500 mt-1">Unsubscribe link is added automatically to all emails.</p>
+            </div>
+          )}
           <Select label="Program" options={programOptions} value={programId} onChange={e => setProgramId(e.target.value)} />
           <Select label="Segment" options={segmentOptions} value={segmentId} onChange={e => setSegmentId(e.target.value)} />
           <Input label="Schedule Send" type="datetime-local" value={scheduledAt} onChange={e => setScheduledAt(e.target.value)} />
