@@ -315,3 +315,35 @@ class StudentPortfolioItem(Base):
     )
 
     student: Mapped[StudentProfile] = relationship(back_populates="portfolio_items")
+
+
+class StudentResearch(Base):
+    __tablename__ = "student_research"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    institution_lab: Mapped[str | None] = mapped_column(String(255))
+    field_discipline: Mapped[str | None] = mapped_column(String(255))
+    role: Mapped[str] = mapped_column(String(50), nullable=False)
+    advisor_name: Mapped[str | None] = mapped_column(String(255))
+    methods_tools: Mapped[str | None] = mapped_column(Text)
+    outcomes: Mapped[str | None] = mapped_column(Text)
+    outputs: Mapped[str | None] = mapped_column(String(50))
+    publication_link: Mapped[str | None] = mapped_column(String(1000))
+    start_date: Mapped[date | None] = mapped_column(Date)
+    end_date: Mapped[date | None] = mapped_column(Date)
+    is_current: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    student: Mapped[StudentProfile] = relationship(back_populates="research_entries")

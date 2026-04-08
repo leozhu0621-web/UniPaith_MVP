@@ -21,6 +21,11 @@ export const createActivity = (data: any) => apiClient.post('/students/me/activi
 export const updateActivity = (id: string, data: any) => apiClient.put(`/students/me/activities/${id}`, data).then(r => r.data)
 export const deleteActivity = (id: string) => apiClient.delete(`/students/me/activities/${id}`)
 
+export const listResearch = () => apiClient.get('/students/me/research').then(r => r.data)
+export const createResearch = (data: any) => apiClient.post('/students/me/research', data).then(r => r.data)
+export const updateResearch = (id: string, data: any) => apiClient.put(`/students/me/research/${id}`, data).then(r => r.data)
+export const deleteResearch = (id: string) => apiClient.delete(`/students/me/research/${id}`)
+
 export const listPortfolio = () => apiClient.get('/students/me/portfolio').then(r => r.data)
 export const createPortfolioItem = (data: any) => apiClient.post('/students/me/portfolio', data).then(r => r.data)
 export const updatePortfolioItem = (id: string, data: any) => apiClient.put(`/students/me/portfolio/${id}`, data).then(r => r.data)

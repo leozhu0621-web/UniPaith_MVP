@@ -3,7 +3,7 @@ import Button from '../../../components/ui/Button'
 import Input from '../../../components/ui/Input'
 import Textarea from '../../../components/ui/Textarea'
 import Select from '../../../components/ui/Select'
-import { DEGREE_LABELS, TEST_TYPES, ACTIVITY_TYPES, GPA_SCALES, CITY_SIZE_OPTIONS, FUNDING_OPTIONS, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES } from '../../../utils/constants'
+import { DEGREE_LABELS, TEST_TYPES, ACTIVITY_TYPES, GPA_SCALES, CITY_SIZE_OPTIONS, FUNDING_OPTIONS, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS } from '../../../utils/constants'
 
 interface FormProps {
   defaultValues: any
@@ -119,6 +119,33 @@ export function PortfolioItemForm({ defaultValues, onSubmit, loading }: FormProp
       <Select label="Type" options={PORTFOLIO_ITEM_TYPES} {...register('item_type')} />
       <Input label="URL (optional)" type="url" placeholder="https://..." {...register('url')} />
       <Textarea label="Description (optional)" placeholder="Brief description of this work..." {...register('description')} />
+      <Button type="submit" loading={loading} className="w-full">Save</Button>
+    </form>
+  )
+}
+
+export function ResearchForm({ defaultValues, onSubmit, loading }: FormProps) {
+  const { register, handleSubmit } = useForm({ defaultValues: { title: defaultValues?.title || '', institution_lab: defaultValues?.institution_lab || '', field_discipline: defaultValues?.field_discipline || '', role: defaultValues?.role || 'assistant', advisor_name: defaultValues?.advisor_name || '', methods_tools: defaultValues?.methods_tools || '', outcomes: defaultValues?.outcomes || '', outputs: defaultValues?.outputs || 'none', publication_link: defaultValues?.publication_link || '', start_date: defaultValues?.start_date?.slice(0, 10) || '', end_date: defaultValues?.end_date?.slice(0, 10) || '', is_current: defaultValues?.is_current || false } })
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+      <Input label="Research Title" placeholder="NLP for educational matching" {...register('title')} />
+      <Input label="Lab / Institution" placeholder="MIT CSAIL" {...register('institution_lab')} />
+      <div className="grid grid-cols-2 gap-3">
+        <Select label="Role" options={RESEARCH_ROLES} {...register('role')} />
+        <Input label="Field" placeholder="Computer Science" {...register('field_discipline')} />
+      </div>
+      <Input label="Advisor" placeholder="Prof. Smith" {...register('advisor_name')} />
+      <Textarea label="Methods / Tools" placeholder="Python, PyTorch, transformers..." {...register('methods_tools')} />
+      <Textarea label="Outcomes" placeholder="Findings and contributions..." {...register('outcomes')} />
+      <div className="grid grid-cols-2 gap-3">
+        <Select label="Output" options={RESEARCH_OUTPUTS} {...register('outputs')} />
+        <Input label="Publication Link" type="url" placeholder="https://..." {...register('publication_link')} />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Input label="Start Date" type="date" {...register('start_date')} />
+        <Input label="End Date" type="date" {...register('end_date')} />
+      </div>
+      <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('is_current')} /> Currently active</label>
       <Button type="submit" loading={loading} className="w-full">Save</Button>
     </form>
   )

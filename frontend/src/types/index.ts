@@ -31,6 +31,7 @@ export interface StudentProfile {
   activities: Activity[]
   online_presence: OnlinePresence[]
   portfolio_items: PortfolioItem[]
+  research_entries: ResearchEntry[]
   preferences: StudentPreference | null
   onboarding: OnboardingStatus | null
 }
@@ -54,6 +55,25 @@ export interface PortfolioItem {
   url: string | null
   document_id: string | null
   display_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface ResearchEntry {
+  id: string
+  student_id: string
+  title: string
+  institution_lab: string | null
+  field_discipline: string | null
+  role: string
+  advisor_name: string | null
+  methods_tools: string | null
+  outcomes: string | null
+  outputs: string | null
+  publication_link: string | null
+  start_date: string | null
+  end_date: string | null
+  is_current: boolean
   created_at: string
   updated_at: string
 }

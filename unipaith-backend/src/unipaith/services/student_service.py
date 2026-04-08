@@ -16,6 +16,7 @@ from unipaith.models.student import (
     StudentPortfolioItem,
     StudentPreference,
     StudentProfile,
+    StudentResearch,
     TestScore,
 )
 from unipaith.schemas.student import (
@@ -23,6 +24,7 @@ from unipaith.schemas.student import (
     CreateActivityRequest,
     CreateOnlinePresenceRequest,
     CreatePortfolioItemRequest,
+    CreateResearchRequest,
     CreateTestScoreRequest,
     NextStepResponse,
     OnboardingStatusResponse,
@@ -31,6 +33,7 @@ from unipaith.schemas.student import (
     UpdateOnlinePresenceRequest,
     UpdatePortfolioItemRequest,
     UpdateProfileRequest,
+    UpdateResearchRequest,
     UpdateTestScoreRequest,
     UpsertPreferencesRequest,
 )
@@ -50,6 +53,7 @@ class StudentService:
                 selectinload(StudentProfile.activities),
                 selectinload(StudentProfile.online_presence),
                 selectinload(StudentProfile.portfolio_items),
+                selectinload(StudentProfile.research_entries),
                 selectinload(StudentProfile.preferences),
                 selectinload(StudentProfile.onboarding_progress),
             )
@@ -258,6 +262,48 @@ class StudentService:
         await self.db.flush()
         await self._update_onboarding(student_id)
 
+    # --- Research ---
+
+    async def list_research(self, student_id: UUID) -> list[StudentResearch]:
+        result = await self.db.execute(
+            select(StudentResearch).where(StudentResearch.student_id == student_id)
+        )
+        return list(result.scalars().all())
+
+    async def create_research(
+        self, student_id: UUID, data: CreateResearchRequest,
+    ) -> StudentResearch:
+        record = StudentResearch(student_id=student_id, **data.model_dump())
+        if record.is_current:
+            record.end_date = None
+        self.db.add(record)
+        await self.db.flush()
+        await self._update_onboarding(student_id)
+        return record
+
+    async def update_research(
+        self, student_id: UUID, record_id: UUID, data: UpdateResearchRequest,
+    ) -> StudentResearch:
+        record = await self._get_record(StudentResearch, record_id)
+        await self._verify_ownership(student_id, record.student_id)
+        update_data = data.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(record, key, value)
+        if record.is_current:
+            record.end_date = None
+        await self.db.flush()
+        await self._update_onboarding(student_id)
+        return record
+
+    async def delete_research(
+        self, student_id: UUID, record_id: UUID,
+    ) -> None:
+        record = await self._get_record(StudentResearch, record_id)
+        await self._verify_ownership(student_id, record.student_id)
+        await self.db.delete(record)
+        await self.db.flush()
+        await self._update_onboarding(student_id)
+
     # --- Preferences ---
 
     async def get_preferences(self, student_id: UUID) -> StudentPreference | None:
@@ -298,6 +344,7 @@ class StudentService:
                 selectinload(StudentProfile.activities),
                 selectinload(StudentProfile.online_presence),
                 selectinload(StudentProfile.portfolio_items),
+                selectinload(StudentProfile.research_entries),
                 selectinload(StudentProfile.preferences),
             )
         )
@@ -317,10 +364,10 @@ class StudentService:
             steps.append("basic_profile")
             pct += 15
 
-        # at least 1 academic record: 20%
+        # at least 1 academic record: 15%
         if p.academic_records:
             steps.append("academics")
-            pct += 20
+            pct += 15
 
         # at least 1 test score: 10%
         if p.test_scores:
@@ -340,6 +387,11 @@ class StudentService:
         # at least 1 portfolio item: 5%
         if p.portfolio_items:
             steps.append("portfolio")
+            pct += 5
+
+        # at least 1 research entry: 5%
+        if p.research_entries:
+            steps.append("research")
             pct += 5
 
         # bio_text: 5%
@@ -415,6 +467,12 @@ class StudentService:
                 section="portfolio",
                 fields=["title", "item_type", "url"],
                 guidance_text="Showcase a project or work sample.",
+            )
+        if "research" not in steps:
+            return NextStepResponse(
+                section="research",
+                fields=["title", "role", "institution_lab"],
+                guidance_text="Add any research experience you have.",
             )
         if "goals" not in steps:
             return NextStepResponse(

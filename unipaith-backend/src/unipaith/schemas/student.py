@@ -275,6 +275,58 @@ class PortfolioItemResponse(BaseModel):
     updated_at: datetime
 
 
+class CreateResearchRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    institution_lab: str | None = None
+    field_discipline: str | None = None
+    role: Literal["assistant", "independent", "lead"]
+    advisor_name: str | None = None
+    methods_tools: str | None = None
+    outcomes: str | None = None
+    outputs: Literal["paper", "poster", "code", "none"] | None = None
+    publication_link: str | None = Field(None, max_length=1000)
+    start_date: date | None = None
+    end_date: date | None = None
+    is_current: bool = False
+
+
+class UpdateResearchRequest(BaseModel):
+    title: str | None = Field(None, min_length=1, max_length=255)
+    institution_lab: str | None = None
+    field_discipline: str | None = None
+    role: Literal["assistant", "independent", "lead"] | None = None
+    advisor_name: str | None = None
+    methods_tools: str | None = None
+    outcomes: str | None = None
+    outputs: (
+        Literal["paper", "poster", "code", "none"] | None
+    ) = None
+    publication_link: str | None = Field(None, max_length=1000)
+    start_date: date | None = None
+    end_date: date | None = None
+    is_current: bool | None = None
+
+
+class ResearchResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    student_id: UUID
+    title: str
+    institution_lab: str | None
+    field_discipline: str | None
+    role: str
+    advisor_name: str | None
+    methods_tools: str | None
+    outcomes: str | None
+    outputs: str | None
+    publication_link: str | None
+    start_date: date | None
+    end_date: date | None
+    is_current: bool
+    created_at: datetime
+    updated_at: datetime
+
+
 class NextStepResponse(BaseModel):
     section: str
     fields: list[str]
@@ -305,6 +357,7 @@ class StudentProfileResponse(BaseModel):
     activities: list[ActivityResponse] = []
     online_presence: list[OnlinePresenceResponse] = []
     portfolio_items: list[PortfolioItemResponse] = []
+    research_entries: list[ResearchResponse] = []
     preferences: StudentPreferenceResponse | None = None
     onboarding: OnboardingStatusResponse | None = None
 

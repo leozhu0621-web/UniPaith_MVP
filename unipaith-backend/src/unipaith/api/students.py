@@ -25,11 +25,13 @@ from unipaith.schemas.student import (
     CreateActivityRequest,
     CreateOnlinePresenceRequest,
     CreatePortfolioItemRequest,
+    CreateResearchRequest,
     CreateTestScoreRequest,
     NextStepResponse,
     OnboardingStatusResponse,
     OnlinePresenceResponse,
     PortfolioItemResponse,
+    ResearchResponse,
     StudentAssistantChatRequest,
     StudentAssistantChatResponse,
     StudentPreferenceResponse,
@@ -40,6 +42,7 @@ from unipaith.schemas.student import (
     UpdateOnlinePresenceRequest,
     UpdatePortfolioItemRequest,
     UpdateProfileRequest,
+    UpdateResearchRequest,
     UpdateTestScoreRequest,
     UpsertPreferencesRequest,
 )
@@ -366,6 +369,60 @@ async def delete_portfolio_item(
     svc = _svc(db)
     profile = await svc._get_student_profile(user.id)
     await svc.delete_portfolio_item(profile.id, record_id)
+
+
+# --- Research ---
+
+
+@router.get("/me/research", response_model=list[ResearchResponse])
+async def list_research(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.list_research(profile.id)
+
+
+@router.post(
+    "/me/research",
+    response_model=ResearchResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_research(
+    body: CreateResearchRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.create_research(profile.id, body)
+
+
+@router.put("/me/research/{record_id}", response_model=ResearchResponse)
+async def update_research(
+    record_id: UUID,
+    body: UpdateResearchRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.update_research(profile.id, record_id, body)
+
+
+@router.delete(
+    "/me/research/{record_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_research(
+    record_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    await svc.delete_research(profile.id, record_id)
 
 
 # --- Preferences ---

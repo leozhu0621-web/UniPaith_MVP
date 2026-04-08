@@ -111,6 +111,19 @@ export const PLATFORM_TYPES = [
   { value: 'other', label: 'Other' },
 ]
 
+export const RESEARCH_ROLES = [
+  { value: 'assistant', label: 'Research Assistant' },
+  { value: 'independent', label: 'Independent Researcher' },
+  { value: 'lead', label: 'Lead Researcher' },
+]
+
+export const RESEARCH_OUTPUTS = [
+  { value: 'paper', label: 'Paper' },
+  { value: 'poster', label: 'Poster' },
+  { value: 'code', label: 'Code' },
+  { value: 'none', label: 'None yet' },
+]
+
 export const PORTFOLIO_ITEM_TYPES = [
   { value: 'project', label: 'Project' },
   { value: 'writing_sample', label: 'Writing Sample' },
