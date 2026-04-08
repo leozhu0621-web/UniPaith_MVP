@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   Building2, MapPin, Users, Globe, Mail, ExternalLink,
-  BookOpen, CalendarDays, Image,
+  BookOpen, CalendarDays,
 } from 'lucide-react'
 import { getPublicInstitution } from '../../api/institutions'
 import { searchPrograms } from '../../api/programs'
