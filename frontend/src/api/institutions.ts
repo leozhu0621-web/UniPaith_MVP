@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AnalyticsData, Campaign, CampaignMetrics, DashboardSummary, Institution, Program, Segment } from '../types'
+import type { AnalyticsData, Campaign, CampaignMetrics, DashboardSummary, DatasetPreview, Institution, InstitutionDataset, Program, Segment } from '../types'
 
 export async function getInstitution(): Promise<Institution> {
   const { data } = await apiClient.get('/institutions/me')
@@ -174,4 +174,47 @@ export async function chatInstitutionAssistant(message: string, contextProgramId
     context_program_id: contextProgramId,
   })
   return data
+}
+
+// --- Datasets ---
+
+export async function requestDatasetUpload(payload: {
+  dataset_name: string; dataset_type: string; file_name: string;
+  content_type?: string; file_size_bytes?: number;
+  description?: string; usage_scope?: string;
+}): Promise<{ dataset_id: string; upload_url: string }> {
+  const { data } = await apiClient.post('/institutions/me/datasets/upload', payload)
+  return data
+}
+
+export async function confirmDatasetUpload(datasetId: string): Promise<InstitutionDataset> {
+  const { data } = await apiClient.post(`/institutions/me/datasets/${datasetId}/confirm`)
+  return data
+}
+
+export async function getDatasets(): Promise<InstitutionDataset[]> {
+  const { data } = await apiClient.get('/institutions/me/datasets')
+  return data
+}
+
+export async function getDataset(datasetId: string): Promise<InstitutionDataset> {
+  const { data } = await apiClient.get(`/institutions/me/datasets/${datasetId}`)
+  return data
+}
+
+export async function getDatasetPreview(datasetId: string): Promise<DatasetPreview> {
+  const { data } = await apiClient.get(`/institutions/me/datasets/${datasetId}/preview`)
+  return data
+}
+
+export async function updateDataset(datasetId: string, payload: Partial<{
+  dataset_name: string; description: string; column_mapping: Record<string, string>;
+  usage_scope: string; status: string;
+}>): Promise<InstitutionDataset> {
+  const { data } = await apiClient.put(`/institutions/me/datasets/${datasetId}`, payload)
+  return data
+}
+
+export async function deleteDataset(datasetId: string): Promise<void> {
+  await apiClient.delete(`/institutions/me/datasets/${datasetId}`)
 }

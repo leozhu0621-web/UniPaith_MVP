@@ -733,6 +733,32 @@ export interface InterviewScore {
   recommendation: 'strong_admit' | 'admit' | 'borderline' | 'reject' | null
 }
 
+// ============ INSTITUTION DATASETS ============
+export interface InstitutionDataset {
+  id: string
+  institution_id: string
+  dataset_name: string
+  dataset_type: 'admissions_history' | 'prospect_list' | 'outcomes_summary'
+  description: string | null
+  file_name: string
+  file_size_bytes: number | null
+  row_count: number | null
+  column_mapping: Record<string, string> | null
+  validation_errors: Record<string, any>[] | null
+  status: 'pending' | 'validated' | 'active' | 'archived'
+  usage_scope: string | null
+  version: number
+  created_at: string
+  updated_at: string
+  download_url?: string
+}
+
+export interface DatasetPreview {
+  columns: string[]
+  rows: Record<string, string>[]
+  total_rows: number
+}
+
 // ============ PIPELINE KANBAN ============
 export type PipelineColumn =
   | 'discovered'

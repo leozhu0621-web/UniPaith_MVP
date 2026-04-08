@@ -5,7 +5,7 @@ import { useUIStore } from '../../stores/ui-store'
 import {
   LayoutDashboard, GraduationCap, Kanban, Video,
   MessageSquare, Users, Megaphone, CalendarDays, BarChart3,
-  Settings, ChevronLeft, ChevronRight, Bell, Search, LogOut, Rocket, Command,
+  Settings, ChevronLeft, ChevronRight, Bell, Search, LogOut, Rocket, Command, Upload,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { getUnreadCount } from '../../api/notifications'
@@ -52,6 +52,7 @@ const buildNavSections = (showSetup: boolean) => [
   {
     label: 'Settings',
     items: [
+      { to: '/i/data', icon: Upload, label: 'Data' },
       { to: '/i/settings', icon: Settings, label: 'Settings' },
     ],
   },
