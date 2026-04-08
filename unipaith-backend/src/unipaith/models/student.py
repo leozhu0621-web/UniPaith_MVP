@@ -65,6 +65,9 @@ class StudentProfile(Base):
     portfolio_items: Mapped[list[StudentPortfolioItem]] = relationship(
         back_populates="student", cascade="all, delete-orphan"
     )
+    research_entries: Mapped[list[StudentResearch]] = relationship(
+        back_populates="student", cascade="all, delete-orphan"
+    )
     recommendation_requests: Mapped[list[RecommendationRequest]] = relationship(
         back_populates="student", cascade="all, delete-orphan"
     )
