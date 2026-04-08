@@ -9,6 +9,8 @@ from sqlalchemy.orm import selectinload
 from unipaith.ai.jobs import on_student_profile_updated
 from unipaith.core.exceptions import ForbiddenException, NotFoundException
 from unipaith.models.application import Application
+from unipaith.models.engagement import StudentEngagementSignal
+from unipaith.models.matching import MatchResult
 from unipaith.models.student import (
     AcademicRecord,
     Activity,
@@ -863,6 +865,101 @@ class StudentService:
 
         milestones.sort(key=lambda m: m["date"])
         return milestones
+
+    # --- Analytics ---
+
+    async def get_analytics(self, student_id: UUID) -> dict:
+        """Compute profile-level activity metrics."""
+        from sqlalchemy import func as sqla_func
+
+        profile = await self.db.execute(
+            select(StudentProfile)
+            .where(StudentProfile.id == student_id)
+            .options(
+                selectinload(StudentProfile.academic_records),
+                selectinload(StudentProfile.test_scores),
+                selectinload(StudentProfile.activities),
+                selectinload(StudentProfile.online_presence),
+                selectinload(StudentProfile.portfolio_items),
+                selectinload(StudentProfile.research_entries),
+                selectinload(StudentProfile.languages),
+                selectinload(StudentProfile.work_experiences),
+                selectinload(StudentProfile.competitions),
+            )
+        )
+        p = profile.scalar_one_or_none()
+        if not p:
+            raise NotFoundException("Student profile not found")
+
+        # Profile section counts
+        sections = {
+            "academics": len(p.academic_records),
+            "test_scores": len(p.test_scores),
+            "activities": len(p.activities),
+            "online_presence": len(p.online_presence),
+            "portfolio": len(p.portfolio_items),
+            "research": len(p.research_entries),
+            "languages": len(p.languages),
+            "work_experiences": len(p.work_experiences),
+            "competitions": len(p.competitions),
+        }
+        sections_completed = sum(1 for v in sections.values() if v > 0)
+        total_items = sum(sections.values())
+
+        # Match summary
+        matches_result = await self.db.execute(
+            select(MatchResult).where(MatchResult.student_id == student_id)
+        )
+        matches = list(matches_result.scalars().all())
+        match_count = len(matches)
+        avg_score = (
+            round(sum(m.match_score for m in matches) / match_count, 1)
+            if match_count > 0
+            else None
+        )
+        top_tier = min((m.match_tier for m in matches), default=None)
+
+        # Application stats
+        apps_result = await self.db.execute(
+            select(Application).where(Application.student_id == student_id)
+        )
+        apps = list(apps_result.scalars().all())
+        app_by_status: dict[str, int] = {}
+        decisions: dict[str, int] = {}
+        for a in apps:
+            app_by_status[a.status] = app_by_status.get(a.status, 0) + 1
+            if a.decision:
+                decisions[a.decision] = decisions.get(a.decision, 0) + 1
+
+        # Engagement count
+        eng_result = await self.db.execute(
+            select(sqla_func.count()).select_from(
+                StudentEngagementSignal
+            ).where(StudentEngagementSignal.student_id == student_id)
+        )
+        engagement_count = eng_result.scalar_one()
+
+        return {
+            "profile": {
+                "sections_completed": sections_completed,
+                "total_sections": len(sections),
+                "total_items": total_items,
+                "section_counts": sections,
+            },
+            "matches": {
+                "count": match_count,
+                "average_score": avg_score,
+                "top_tier": top_tier,
+            },
+            "applications": {
+                "total": len(apps),
+                "by_status": app_by_status,
+                "decisions": decisions,
+            },
+            "engagement": {
+                "total_signals": engagement_count,
+            },
+        }
 
     # --- Helpers ---
 

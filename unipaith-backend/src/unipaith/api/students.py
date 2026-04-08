@@ -767,6 +767,20 @@ async def get_timeline(
     return await svc.get_timeline(profile.id)
 
 
+# --- Analytics ---
+
+
+@router.get("/me/analytics")
+async def get_analytics(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get profile-level activity metrics and stats."""
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.get_analytics(profile.id)
+
+
 # --- Preferences ---
 
 
