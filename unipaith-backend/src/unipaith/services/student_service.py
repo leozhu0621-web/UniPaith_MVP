@@ -21,6 +21,7 @@ from unipaith.models.student import (
     StudentProfile,
     StudentResearch,
     StudentScheduling,
+    StudentVisaInfo,
     StudentWorkExperience,
     TestScore,
 )
@@ -49,6 +50,7 @@ from unipaith.schemas.student import (
     UpsertAccommodationRequest,
     UpsertPreferencesRequest,
     UpsertSchedulingRequest,
+    UpsertVisaInfoRequest,
 )
 
 
@@ -72,6 +74,7 @@ class StudentService:
                 selectinload(StudentProfile.competitions),
                 selectinload(StudentProfile.accommodations),
                 selectinload(StudentProfile.scheduling),
+                selectinload(StudentProfile.visa_info),
                 selectinload(StudentProfile.preferences),
                 selectinload(StudentProfile.onboarding_progress),
             )
@@ -486,6 +489,31 @@ class StudentService:
         update_data = data.model_dump(exclude_unset=True)
         if record is None:
             record = StudentScheduling(student_id=student_id, **update_data)
+            self.db.add(record)
+        else:
+            for key, value in update_data.items():
+                setattr(record, key, value)
+        await self.db.flush()
+        return record
+
+    # --- Visa Info ---
+
+    async def get_visa_info(self, student_id: UUID) -> StudentVisaInfo | None:
+        result = await self.db.execute(
+            select(StudentVisaInfo).where(StudentVisaInfo.student_id == student_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def upsert_visa_info(
+        self, student_id: UUID, data: UpsertVisaInfoRequest,
+    ) -> StudentVisaInfo:
+        result = await self.db.execute(
+            select(StudentVisaInfo).where(StudentVisaInfo.student_id == student_id)
+        )
+        record = result.scalar_one_or_none()
+        update_data = data.model_dump(exclude_unset=True)
+        if record is None:
+            record = StudentVisaInfo(student_id=student_id, **update_data)
             self.db.add(record)
         else:
             for key, value in update_data.items():

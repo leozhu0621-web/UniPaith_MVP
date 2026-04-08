@@ -3,7 +3,7 @@ import Button from '../../../components/ui/Button'
 import Input from '../../../components/ui/Input'
 import Textarea from '../../../components/ui/Textarea'
 import Select from '../../../components/ui/Select'
-import { DEGREE_LABELS, TEST_TYPES, ACTIVITY_TYPES, GPA_SCALES, CITY_SIZE_OPTIONS, FUNDING_OPTIONS, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS, WORK_EXPERIENCE_TYPES, COMPENSATION_TYPES, COMPETITION_LEVELS, ACCOMMODATION_CATEGORIES, DOC_STATUS_OPTIONS, FONT_SIZE_OPTIONS, INTERVIEW_FORMAT_OPTIONS } from '../../../utils/constants'
+import { DEGREE_LABELS, TEST_TYPES, ACTIVITY_TYPES, GPA_SCALES, CITY_SIZE_OPTIONS, FUNDING_OPTIONS, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS, WORK_EXPERIENCE_TYPES, COMPENSATION_TYPES, COMPETITION_LEVELS, ACCOMMODATION_CATEGORIES, DOC_STATUS_OPTIONS, FONT_SIZE_OPTIONS, INTERVIEW_FORMAT_OPTIONS, SPONSORSHIP_SOURCES } from '../../../utils/constants'
 
 interface FormProps {
   defaultValues: any
@@ -245,6 +245,26 @@ export function SchedulingForm({ defaultValues, onSubmit, loading }: FormProps) 
       <Select label="Preferred Interview Format" options={INTERVIEW_FORMAT_OPTIONS} {...register('preferred_interview_format')} />
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('campus_visit_interest')} /> Interested in campus visits</label>
       <Textarea label="Notes (optional)" placeholder="Availability notes, scheduling preferences..." {...register('notes')} />
+      <Button type="submit" loading={loading} className="w-full">Save</Button>
+    </form>
+  )
+}
+
+export function VisaInfoForm({ defaultValues, onSubmit, loading }: FormProps) {
+  const { register, handleSubmit } = useForm({ defaultValues: { current_immigration_status: defaultValues?.current_immigration_status || '', visa_required: defaultValues?.visa_required || false, target_study_country: defaultValues?.target_study_country || '', passport_expiration_date: defaultValues?.passport_expiration_date?.slice(0, 10) || '', sponsorship_source: defaultValues?.sponsorship_source || '', financial_proof_available: defaultValues?.financial_proof_available || false, financial_proof_amount_band: defaultValues?.financial_proof_amount_band || '', post_study_work_interest: defaultValues?.post_study_work_interest || false, prior_visa_refusals: defaultValues?.prior_visa_refusals || false, travel_constraints: defaultValues?.travel_constraints || '', work_authorization_needed: defaultValues?.work_authorization_needed || false } })
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+      <Input label="Current Immigration Status" placeholder="F-1, H-1B, citizen..." {...register('current_immigration_status')} />
+      <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('visa_required')} /> Visa required for target country</label>
+      <Input label="Target Study Country" placeholder="United States, Canada..." {...register('target_study_country')} />
+      <Input label="Passport Expiration" type="date" {...register('passport_expiration_date')} />
+      <Select label="Sponsorship Source" options={[{ value: '', label: 'Select...' }, ...SPONSORSHIP_SOURCES]} {...register('sponsorship_source')} />
+      <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('financial_proof_available')} /> Financial proof available</label>
+      <Input label="Financial Proof Amount Band" placeholder="$20k-$50k..." {...register('financial_proof_amount_band')} />
+      <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('post_study_work_interest')} /> Interested in post-study work (OPT/PGWP)</label>
+      <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('prior_visa_refusals')} /> Prior visa refusals</label>
+      <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('work_authorization_needed')} /> Need work authorization during study</label>
+      <Textarea label="Travel Constraints (optional)" placeholder="Any travel restrictions..." {...register('travel_constraints')} />
       <Button type="submit" loading={loading} className="w-full">Save</Button>
     </form>
   )

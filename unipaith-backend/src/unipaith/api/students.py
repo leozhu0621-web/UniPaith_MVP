@@ -40,6 +40,7 @@ from unipaith.schemas.student import (
     ResearchResponse,
     SchedulingResponse,
     StudentAssistantChatRequest,
+    VisaInfoResponse,
     StudentAssistantChatResponse,
     StudentPreferenceResponse,
     StudentProfileResponse,
@@ -57,6 +58,7 @@ from unipaith.schemas.student import (
     UpsertAccommodationRequest,
     UpsertPreferencesRequest,
     UpsertSchedulingRequest,
+    UpsertVisaInfoRequest,
     WorkExperienceResponse,
 )
 from unipaith.services.matching_service import MatchingService
@@ -658,6 +660,30 @@ async def upsert_scheduling(
     svc = _svc(db)
     profile = await svc._get_student_profile(user.id)
     return await svc.upsert_scheduling(profile.id, body)
+
+
+# --- Visa Info ---
+
+
+@router.get("/me/visa-info", response_model=VisaInfoResponse | None)
+async def get_visa_info(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.get_visa_info(profile.id)
+
+
+@router.put("/me/visa-info", response_model=VisaInfoResponse)
+async def upsert_visa_info(
+    body: UpsertVisaInfoRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.upsert_visa_info(profile.id, body)
 
 
 # --- Preferences ---

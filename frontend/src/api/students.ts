@@ -54,6 +54,9 @@ export const createOnlinePresence = (data: any) => apiClient.post('/students/me/
 export const updateOnlinePresence = (id: string, data: any) => apiClient.put(`/students/me/online-presence/${id}`, data).then(r => r.data)
 export const deleteOnlinePresence = (id: string) => apiClient.delete(`/students/me/online-presence/${id}`)
 
+export const getVisaInfo = () => apiClient.get('/students/me/visa-info').then(r => r.data)
+export const upsertVisaInfo = (data: any) => apiClient.put('/students/me/visa-info', data).then(r => r.data)
+
 export const getScheduling = () => apiClient.get('/students/me/scheduling').then(r => r.data)
 export const upsertScheduling = (data: any) => apiClient.put('/students/me/scheduling', data).then(r => r.data)
 
