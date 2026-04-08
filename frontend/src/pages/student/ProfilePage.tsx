@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, createOnlinePresence, updateOnlinePresence, deleteOnlinePresence, createPortfolioItem, updatePortfolioItem, deletePortfolioItem, createResearch, updateResearch, deleteResearch, createLanguage, updateLanguage, deleteLanguage, createWorkExperience, updateWorkExperience, deleteWorkExperience, createCompetition, updateCompetition, deleteCompetition, upsertAccommodations, upsertScheduling, upsertVisaInfo, upsertPreferences, getNextStep } from '../../api/students'
-import { getOnboarding } from '../../api/students'
+import { getOnboarding, getTimeline } from '../../api/students'
 import { listDocuments } from '../../api/documents'
 import Modal from '../../components/ui/Modal'
 import Button from '../../components/ui/Button'
@@ -11,7 +11,7 @@ import { SkeletonCard } from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatDate, formatCurrency, formatFileSize } from '../../utils/format'
 import { DEGREE_LABELS, ACTIVITY_TYPES, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS, WORK_EXPERIENCE_TYPES, COMPETITION_LEVELS } from '../../utils/constants'
-import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical, Languages, Briefcase, Trophy, Accessibility, CalendarClock, Plane } from 'lucide-react'
+import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical, Languages, Briefcase, Trophy, Accessibility, CalendarClock, Plane, Clock } from 'lucide-react'
 import { BasicInfoForm, AcademicForm, CourseForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm, ResearchForm, LanguageForm, WorkExperienceForm, CompetitionForm, AccommodationForm, SchedulingForm, VisaInfoForm } from './components/ProfileForms'
 import { createCourse, updateCourse, deleteCourse } from '../../api/students'
 import type { StudentProfile } from '../../types'
@@ -70,6 +70,7 @@ export default function ProfilePage() {
   const { data: onboarding } = useQuery({ queryKey: ['onboarding'], queryFn: getOnboarding })
   const { data: nextStep } = useQuery({ queryKey: ['next-step'], queryFn: getNextStep })
   const { data: documents } = useQuery({ queryKey: ['documents'], queryFn: listDocuments })
+  const { data: timeline } = useQuery({ queryKey: ['timeline'], queryFn: getTimeline })
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ['profile'] })
@@ -576,6 +577,35 @@ export default function ProfilePage() {
                 <Badge variant="neutral">{doc.document_type}</Badge>
               </div>
             ))}
+          </div>
+        )}
+      </Card>
+
+      {/* Timeline */}
+      <Card className="p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Clock size={18} className="text-gray-500" />
+          <h2 className="font-semibold text-brand-slate-700">Your Journey</h2>
+        </div>
+        {!timeline || (Array.isArray(timeline) && timeline.length === 0) ? (
+          <p className="text-sm text-gray-500">Your milestones will appear here as you build your profile.</p>
+        ) : (
+          <div className="relative">
+            <div className="absolute left-3 top-0 bottom-0 w-px bg-gray-200" />
+            <div className="space-y-4">
+              {(Array.isArray(timeline) ? timeline : []).map((m: any, i: number) => (
+                <div key={i} className="flex items-start gap-4 relative">
+                  <div className="w-6 h-6 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center flex-shrink-0 z-10">
+                    <div className="w-2 h-2 rounded-full bg-gray-400" />
+                  </div>
+                  <div className="min-w-0 pb-1">
+                    <p className="text-sm font-medium text-gray-700">{m.label}</p>
+                    {m.detail && <p className="text-xs text-gray-500">{m.detail}</p>}
+                    <p className="text-xs text-gray-400">{formatDate(m.date)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </Card>

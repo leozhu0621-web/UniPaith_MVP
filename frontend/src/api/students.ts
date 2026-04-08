@@ -65,5 +65,7 @@ export const upsertVisaInfo = (data: any) => apiClient.put('/students/me/visa-in
 export const getScheduling = () => apiClient.get('/students/me/scheduling').then(r => r.data)
 export const upsertScheduling = (data: any) => apiClient.put('/students/me/scheduling', data).then(r => r.data)
 
+export const getTimeline = () => apiClient.get('/students/me/timeline').then(r => r.data)
+
 export const getPreferences = () => apiClient.get('/students/me/preferences').then(r => r.data)
 export const upsertPreferences = (data: any) => apiClient.put('/students/me/preferences', data).then(r => r.data)

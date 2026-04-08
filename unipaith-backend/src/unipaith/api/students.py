@@ -753,6 +753,20 @@ async def upsert_visa_info(
     return await svc.upsert_visa_info(profile.id, body)
 
 
+# --- Timeline ---
+
+
+@router.get("/me/timeline")
+async def get_timeline(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get chronological profile milestones and application events."""
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.get_timeline(profile.id)
+
+
 # --- Preferences ---
 
 

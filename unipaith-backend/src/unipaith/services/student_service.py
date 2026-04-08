@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload
 
 from unipaith.ai.jobs import on_student_profile_updated
 from unipaith.core.exceptions import ForbiddenException, NotFoundException
+from unipaith.models.application import Application
 from unipaith.models.student import (
     AcademicRecord,
     Activity,
@@ -778,6 +779,90 @@ class StudentService:
                 guidance_text="Set your program preferences to improve match quality.",
             )
         return None
+
+    # --- Timeline ---
+
+    async def get_timeline(self, student_id: UUID) -> list[dict]:
+        """Compute a chronological list of profile milestones."""
+        profile = await self.db.execute(
+            select(StudentProfile)
+            .where(StudentProfile.id == student_id)
+            .options(
+                selectinload(StudentProfile.academic_records),
+                selectinload(StudentProfile.test_scores),
+                selectinload(StudentProfile.activities),
+                selectinload(StudentProfile.online_presence),
+                selectinload(StudentProfile.portfolio_items),
+                selectinload(StudentProfile.research_entries),
+                selectinload(StudentProfile.languages),
+                selectinload(StudentProfile.work_experiences),
+                selectinload(StudentProfile.competitions),
+            )
+        )
+        p = profile.scalar_one_or_none()
+        if not p:
+            raise NotFoundException("Student profile not found")
+
+        milestones: list[dict] = []
+
+        # Profile created
+        milestones.append({
+            "date": p.created_at.isoformat(),
+            "event_type": "profile_created",
+            "label": "Profile created",
+            "detail": "You started your UniPaith journey.",
+        })
+
+        # Section completions (use created_at of first item)
+        section_map = [
+            (p.academic_records, "academics", "Added first academic record"),
+            (p.test_scores, "test_score", "Added first test score"),
+            (p.activities, "activity", "Added first activity"),
+            (p.online_presence, "online_presence", "Added first link"),
+            (p.portfolio_items, "portfolio", "Added first portfolio item"),
+            (p.research_entries, "research", "Added first research entry"),
+            (p.languages, "language", "Added first language"),
+            (p.work_experiences, "work_experience", "Added first work experience"),
+            (p.competitions, "competition", "Added first competition"),
+        ]
+        for items, evt_type, label in section_map:
+            if items:
+                earliest = min(items, key=lambda x: x.created_at)
+                milestones.append({
+                    "date": earliest.created_at.isoformat(),
+                    "event_type": evt_type,
+                    "label": label,
+                    "detail": None,
+                })
+
+        # Application events
+        apps_result = await self.db.execute(
+            select(Application).where(Application.student_id == student_id)
+        )
+        for app in apps_result.scalars().all():
+            milestones.append({
+                "date": app.created_at.isoformat(),
+                "event_type": "application_created",
+                "label": f"Started application",
+                "detail": None,
+            })
+            if app.submitted_at:
+                milestones.append({
+                    "date": app.submitted_at.isoformat(),
+                    "event_type": "application_submitted",
+                    "label": f"Submitted application",
+                    "detail": None,
+                })
+            if app.decision_at:
+                milestones.append({
+                    "date": app.decision_at.isoformat(),
+                    "event_type": "decision_received",
+                    "label": f"Decision: {app.decision or 'pending'}",
+                    "detail": None,
+                })
+
+        milestones.sort(key=lambda m: m["date"])
+        return milestones
 
     # --- Helpers ---
 
