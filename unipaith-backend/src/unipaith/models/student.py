@@ -71,6 +71,9 @@ class StudentProfile(Base):
     languages: Mapped[list[StudentLanguage]] = relationship(
         back_populates="student", cascade="all, delete-orphan"
     )
+    work_experiences: Mapped[list[StudentWorkExperience]] = relationship(
+        back_populates="student", cascade="all, delete-orphan"
+    )
     recommendation_requests: Mapped[list[RecommendationRequest]] = relationship(
         back_populates="student", cascade="all, delete-orphan"
     )
@@ -375,3 +378,36 @@ class StudentLanguage(Base):
     )
 
     student: Mapped[StudentProfile] = relationship(back_populates="languages")
+
+
+class StudentWorkExperience(Base):
+    __tablename__ = "student_work_experiences"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    experience_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    organization: Mapped[str] = mapped_column(String(255), nullable=False)
+    role_title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    start_date: Mapped[date | None] = mapped_column(Date)
+    end_date: Mapped[date | None] = mapped_column(Date)
+    is_current: Mapped[bool] = mapped_column(Boolean, default=False)
+    hours_per_week: Mapped[int | None] = mapped_column(Integer)
+    compensation_type: Mapped[str | None] = mapped_column(String(30))
+    key_achievements: Mapped[str | None] = mapped_column(Text)
+    supervisor_name: Mapped[str | None] = mapped_column(String(255))
+    organization_country: Mapped[str | None] = mapped_column(String(100))
+    organization_city: Mapped[str | None] = mapped_column(String(100))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    student: Mapped[StudentProfile] = relationship(back_populates="work_experiences")

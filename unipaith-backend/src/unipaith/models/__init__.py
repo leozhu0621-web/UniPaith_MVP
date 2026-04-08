@@ -86,6 +86,7 @@ from unipaith.models.student import (
     StudentPreference,
     StudentProfile,
     StudentResearch,
+    StudentWorkExperience,
     TestScore,
 )
 from unipaith.models.user import User, UserRole
@@ -110,6 +111,7 @@ __all__ = [
     "StudentOnlinePresence",
     "StudentPortfolioItem",
     "StudentResearch",
+    "StudentWorkExperience",
     "OnboardingProgress",
     "Institution",
     "Program",

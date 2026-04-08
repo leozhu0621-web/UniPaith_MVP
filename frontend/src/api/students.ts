@@ -21,6 +21,11 @@ export const createActivity = (data: any) => apiClient.post('/students/me/activi
 export const updateActivity = (id: string, data: any) => apiClient.put(`/students/me/activities/${id}`, data).then(r => r.data)
 export const deleteActivity = (id: string) => apiClient.delete(`/students/me/activities/${id}`)
 
+export const listWorkExperiences = () => apiClient.get('/students/me/work-experiences').then(r => r.data)
+export const createWorkExperience = (data: any) => apiClient.post('/students/me/work-experiences', data).then(r => r.data)
+export const updateWorkExperience = (id: string, data: any) => apiClient.put(`/students/me/work-experiences/${id}`, data).then(r => r.data)
+export const deleteWorkExperience = (id: string) => apiClient.delete(`/students/me/work-experiences/${id}`)
+
 export const listLanguages = () => apiClient.get('/students/me/languages').then(r => r.data)
 export const createLanguage = (data: any) => apiClient.post('/students/me/languages', data).then(r => r.data)
 export const updateLanguage = (id: string, data: any) => apiClient.put(`/students/me/languages/${id}`, data).then(r => r.data)

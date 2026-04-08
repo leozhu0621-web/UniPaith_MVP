@@ -361,6 +361,68 @@ class LanguageResponse(BaseModel):
     updated_at: datetime
 
 
+class CreateWorkExperienceRequest(BaseModel):
+    experience_type: Literal[
+        "employment", "internship", "volunteering", "service",
+    ]
+    organization: str = Field(min_length=1, max_length=255)
+    role_title: str = Field(min_length=1, max_length=255)
+    description: str | None = None
+    start_date: date | None = None
+    end_date: date | None = None
+    is_current: bool = False
+    hours_per_week: int | None = None
+    compensation_type: Literal[
+        "paid", "unpaid", "stipend",
+    ] | None = None
+    key_achievements: str | None = None
+    supervisor_name: str | None = None
+    organization_country: str | None = None
+    organization_city: str | None = None
+
+
+class UpdateWorkExperienceRequest(BaseModel):
+    experience_type: (
+        Literal["employment", "internship", "volunteering", "service"]
+        | None
+    ) = None
+    organization: str | None = Field(None, min_length=1, max_length=255)
+    role_title: str | None = Field(None, min_length=1, max_length=255)
+    description: str | None = None
+    start_date: date | None = None
+    end_date: date | None = None
+    is_current: bool | None = None
+    hours_per_week: int | None = None
+    compensation_type: (
+        Literal["paid", "unpaid", "stipend"] | None
+    ) = None
+    key_achievements: str | None = None
+    supervisor_name: str | None = None
+    organization_country: str | None = None
+    organization_city: str | None = None
+
+
+class WorkExperienceResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    student_id: UUID
+    experience_type: str
+    organization: str
+    role_title: str
+    description: str | None
+    start_date: date | None
+    end_date: date | None
+    is_current: bool
+    hours_per_week: int | None
+    compensation_type: str | None
+    key_achievements: str | None
+    supervisor_name: str | None
+    organization_country: str | None
+    organization_city: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
 class NextStepResponse(BaseModel):
     section: str
     fields: list[str]
@@ -393,6 +455,7 @@ class StudentProfileResponse(BaseModel):
     portfolio_items: list[PortfolioItemResponse] = []
     research_entries: list[ResearchResponse] = []
     languages: list[LanguageResponse] = []
+    work_experiences: list[WorkExperienceResponse] = []
     preferences: StudentPreferenceResponse | None = None
     onboarding: OnboardingStatusResponse | None = None
 

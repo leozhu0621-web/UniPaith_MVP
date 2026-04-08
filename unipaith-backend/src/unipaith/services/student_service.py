@@ -18,6 +18,7 @@ from unipaith.models.student import (
     StudentPreference,
     StudentProfile,
     StudentResearch,
+    StudentWorkExperience,
     TestScore,
 )
 from unipaith.schemas.student import (
@@ -28,6 +29,7 @@ from unipaith.schemas.student import (
     CreatePortfolioItemRequest,
     CreateResearchRequest,
     CreateTestScoreRequest,
+    CreateWorkExperienceRequest,
     NextStepResponse,
     OnboardingStatusResponse,
     UpdateAcademicRecordRequest,
@@ -38,6 +40,7 @@ from unipaith.schemas.student import (
     UpdateProfileRequest,
     UpdateResearchRequest,
     UpdateTestScoreRequest,
+    UpdateWorkExperienceRequest,
     UpsertPreferencesRequest,
 )
 
@@ -58,6 +61,7 @@ class StudentService:
                 selectinload(StudentProfile.portfolio_items),
                 selectinload(StudentProfile.research_entries),
                 selectinload(StudentProfile.languages),
+                selectinload(StudentProfile.work_experiences),
                 selectinload(StudentProfile.preferences),
                 selectinload(StudentProfile.onboarding_progress),
             )
@@ -345,6 +349,47 @@ class StudentService:
         await self.db.flush()
         await self._update_onboarding(student_id)
 
+    # --- Work Experiences ---
+
+    async def list_work_experiences(self, student_id: UUID) -> list[StudentWorkExperience]:
+        result = await self.db.execute(
+            select(StudentWorkExperience).where(StudentWorkExperience.student_id == student_id)
+        )
+        return list(result.scalars().all())
+
+    async def create_work_experience(
+        self, student_id: UUID, data: CreateWorkExperienceRequest,
+    ) -> StudentWorkExperience:
+        record = StudentWorkExperience(student_id=student_id, **data.model_dump())
+        if record.is_current:
+            record.end_date = None
+        self.db.add(record)
+        await self.db.flush()
+        await self._update_onboarding(student_id)
+        return record
+
+    async def update_work_experience(
+        self, student_id: UUID, record_id: UUID, data: UpdateWorkExperienceRequest,
+    ) -> StudentWorkExperience:
+        record = await self._get_record(StudentWorkExperience, record_id)
+        await self._verify_ownership(student_id, record.student_id)
+        for key, value in data.model_dump(exclude_unset=True).items():
+            setattr(record, key, value)
+        if record.is_current:
+            record.end_date = None
+        await self.db.flush()
+        await self._update_onboarding(student_id)
+        return record
+
+    async def delete_work_experience(
+        self, student_id: UUID, record_id: UUID,
+    ) -> None:
+        record = await self._get_record(StudentWorkExperience, record_id)
+        await self._verify_ownership(student_id, record.student_id)
+        await self.db.delete(record)
+        await self.db.flush()
+        await self._update_onboarding(student_id)
+
     # --- Preferences ---
 
     async def get_preferences(self, student_id: UUID) -> StudentPreference | None:
@@ -387,6 +432,7 @@ class StudentService:
                 selectinload(StudentProfile.portfolio_items),
                 selectinload(StudentProfile.research_entries),
                 selectinload(StudentProfile.languages),
+                selectinload(StudentProfile.work_experiences),
                 selectinload(StudentProfile.preferences),
             )
         )
@@ -416,10 +462,10 @@ class StudentService:
             steps.append("test_scores")
             pct += 10
 
-        # at least 1 activity: 10%
+        # at least 1 activity: 5%
         if p.activities:
             steps.append("activities")
-            pct += 10
+            pct += 5
 
         # at least 1 online presence link: 5%
         if p.online_presence:
@@ -439,6 +485,11 @@ class StudentService:
         # at least 1 language: 5%
         if p.languages:
             steps.append("languages")
+            pct += 5
+
+        # at least 1 work experience: 5%
+        if p.work_experiences:
+            steps.append("work_experience")
             pct += 5
 
         # bio_text: 5%
@@ -526,6 +577,12 @@ class StudentService:
                 section="languages",
                 fields=["language", "proficiency_level"],
                 guidance_text="Add the languages you speak.",
+            )
+        if "work_experience" not in steps:
+            return NextStepResponse(
+                section="work_experience",
+                fields=["experience_type", "organization", "role_title"],
+                guidance_text="Add work, internship, or volunteer experience.",
             )
         if "goals" not in steps:
             return NextStepResponse(

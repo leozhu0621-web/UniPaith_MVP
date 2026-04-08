@@ -33,6 +33,7 @@ export interface StudentProfile {
   portfolio_items: PortfolioItem[]
   research_entries: ResearchEntry[]
   languages: StudentLanguage[]
+  work_experiences: WorkExperience[]
   preferences: StudentPreference | null
   onboarding: OnboardingStatus | null
 }
@@ -87,6 +88,26 @@ export interface StudentLanguage {
   certification_type: string | null
   certification_score: string | null
   test_date: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface WorkExperience {
+  id: string
+  student_id: string
+  experience_type: string
+  organization: string
+  role_title: string
+  description: string | null
+  start_date: string | null
+  end_date: string | null
+  is_current: boolean
+  hours_per_week: number | null
+  compensation_type: string | null
+  key_achievements: string | null
+  supervisor_name: string | null
+  organization_country: string | null
+  organization_city: string | null
   created_at: string
   updated_at: string
 }

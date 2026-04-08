@@ -28,6 +28,7 @@ from unipaith.schemas.student import (
     CreatePortfolioItemRequest,
     CreateResearchRequest,
     CreateTestScoreRequest,
+    CreateWorkExperienceRequest,
     LanguageResponse,
     NextStepResponse,
     OnboardingStatusResponse,
@@ -47,7 +48,9 @@ from unipaith.schemas.student import (
     UpdateProfileRequest,
     UpdateResearchRequest,
     UpdateTestScoreRequest,
+    UpdateWorkExperienceRequest,
     UpsertPreferencesRequest,
+    WorkExperienceResponse,
 )
 from unipaith.services.matching_service import MatchingService
 from unipaith.services.student_service import StudentService
@@ -480,6 +483,66 @@ async def delete_language(
     svc = _svc(db)
     profile = await svc._get_student_profile(user.id)
     await svc.delete_language(profile.id, record_id)
+
+
+# --- Work Experiences ---
+
+
+@router.get(
+    "/me/work-experiences",
+    response_model=list[WorkExperienceResponse],
+)
+async def list_work_experiences(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.list_work_experiences(profile.id)
+
+
+@router.post(
+    "/me/work-experiences",
+    response_model=WorkExperienceResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_work_experience(
+    body: CreateWorkExperienceRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.create_work_experience(profile.id, body)
+
+
+@router.put(
+    "/me/work-experiences/{record_id}",
+    response_model=WorkExperienceResponse,
+)
+async def update_work_experience(
+    record_id: UUID,
+    body: UpdateWorkExperienceRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.update_work_experience(profile.id, record_id, body)
+
+
+@router.delete(
+    "/me/work-experiences/{record_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_work_experience(
+    record_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    await svc.delete_work_experience(profile.id, record_id)
 
 
 # --- Preferences ---

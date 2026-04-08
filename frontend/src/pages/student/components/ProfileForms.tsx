@@ -3,7 +3,7 @@ import Button from '../../../components/ui/Button'
 import Input from '../../../components/ui/Input'
 import Textarea from '../../../components/ui/Textarea'
 import Select from '../../../components/ui/Select'
-import { DEGREE_LABELS, TEST_TYPES, ACTIVITY_TYPES, GPA_SCALES, CITY_SIZE_OPTIONS, FUNDING_OPTIONS, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS } from '../../../utils/constants'
+import { DEGREE_LABELS, TEST_TYPES, ACTIVITY_TYPES, GPA_SCALES, CITY_SIZE_OPTIONS, FUNDING_OPTIONS, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS, WORK_EXPERIENCE_TYPES, COMPENSATION_TYPES } from '../../../utils/constants'
 
 interface FormProps {
   defaultValues: any
@@ -162,6 +162,34 @@ export function LanguageForm({ defaultValues, onSubmit, loading }: FormProps) {
         <Input label="Score (optional)" placeholder="110, 7.5..." {...register('certification_score')} />
       </div>
       <Input label="Test Date (optional)" type="date" {...register('test_date')} />
+      <Button type="submit" loading={loading} className="w-full">Save</Button>
+    </form>
+  )
+}
+
+export function WorkExperienceForm({ defaultValues, onSubmit, loading }: FormProps) {
+  const { register, handleSubmit } = useForm({ defaultValues: { experience_type: defaultValues?.experience_type || 'employment', organization: defaultValues?.organization || '', role_title: defaultValues?.role_title || '', description: defaultValues?.description || '', start_date: defaultValues?.start_date?.slice(0, 10) || '', end_date: defaultValues?.end_date?.slice(0, 10) || '', is_current: defaultValues?.is_current || false, hours_per_week: defaultValues?.hours_per_week || '', compensation_type: defaultValues?.compensation_type || '', key_achievements: defaultValues?.key_achievements || '', supervisor_name: defaultValues?.supervisor_name || '', organization_country: defaultValues?.organization_country || '', organization_city: defaultValues?.organization_city || '' } })
+  return (
+    <form onSubmit={handleSubmit(d => onSubmit({ ...d, hours_per_week: d.hours_per_week ? Number(d.hours_per_week) : null }))} className="space-y-3">
+      <Select label="Type" options={WORK_EXPERIENCE_TYPES} {...register('experience_type')} />
+      <Input label="Organization" placeholder="Google, Red Cross..." {...register('organization')} />
+      <Input label="Role / Title" placeholder="Software Engineer Intern" {...register('role_title')} />
+      <Textarea label="Description" placeholder="Responsibilities and tasks..." {...register('description')} />
+      <div className="grid grid-cols-2 gap-3">
+        <Input label="Start Date" type="date" {...register('start_date')} />
+        <Input label="End Date" type="date" {...register('end_date')} />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Input label="Hours/Week" type="number" {...register('hours_per_week')} />
+        <Select label="Compensation" options={[{ value: '', label: 'Select...' }, ...COMPENSATION_TYPES]} {...register('compensation_type')} />
+      </div>
+      <Textarea label="Key Achievements" placeholder="Impact and results..." {...register('key_achievements')} />
+      <Input label="Supervisor (optional)" {...register('supervisor_name')} />
+      <div className="grid grid-cols-2 gap-3">
+        <Input label="City" {...register('organization_city')} />
+        <Input label="Country" {...register('organization_country')} />
+      </div>
+      <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('is_current')} /> Currently active</label>
       <Button type="submit" loading={loading} className="w-full">Save</Button>
     </form>
   )
