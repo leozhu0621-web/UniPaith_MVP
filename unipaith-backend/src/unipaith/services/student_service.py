@@ -85,7 +85,7 @@ class StudentService:
             setattr(profile, key, value)
         await self.db.flush()
         await self._update_onboarding(profile.id)
-        return profile
+        return await self.get_profile(user_id)
 
     # --- Academic Records ---
 
