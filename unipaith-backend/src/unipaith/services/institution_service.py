@@ -15,7 +15,7 @@ from unipaith.core.exceptions import (
     NotFoundException,
 )
 from unipaith.models.application import Application, OfferLetter
-from unipaith.models.engagement import Conversation, Message
+from unipaith.models.engagement import Conversation, Message, StudentEngagementSignal
 from unipaith.models.institution import (
     Campaign,
     CampaignRecipient,
@@ -207,7 +207,20 @@ class InstitutionService:
     async def resolve_segment_members(
         self, institution_id: UUID, segment_id: UUID,
     ) -> list[UUID]:
-        """Execute segment criteria and return matching student IDs."""
+        """Execute segment criteria and return matching student IDs.
+
+        Supported criteria keys (all AND-combined):
+            statuses        - string[]  : Application.status IN values
+            decisions       - string[]  : Application.decision IN values
+            min_match_score - number    : MatchResult.match_score >= value/100
+            max_match_score - number    : MatchResult.match_score <= value/100
+            match_tiers     - number[]  : MatchResult.match_tier IN values
+            min_engagement_signals - number : COUNT(StudentEngagementSignal) >= value
+            engagement_types - string[] : StudentEngagementSignal.signal_type IN values
+            nationalities   - string[]  : StudentProfile.nationality IN values
+            has_applied     - boolean   : EXISTS / NOT EXISTS Application
+            applied_after   - string    : Application.submitted_at >= ISO date
+        """
         result = await self.db.execute(
             select(TargetSegment).where(
                 TargetSegment.id == segment_id,
@@ -226,34 +239,109 @@ class InstitutionService:
         if not program_ids:
             return []
 
-        stmt = (
-            select(StudentProfile.id)
-            .distinct()
-        )
+        # Track whether any criteria key was actually specified
+        has_criteria = False
 
-        # Filter by application status
+        stmt = select(StudentProfile.id).distinct()
+
+        # --- Application-based criteria (statuses, decisions, applied_after) ---
         statuses = criteria.get("statuses")
-        if statuses:
+        decisions = criteria.get("decisions")
+        applied_after = criteria.get("applied_after")
+        has_applied = criteria.get("has_applied")
+
+        need_app_join = bool(statuses or decisions or applied_after or (has_applied is True))
+
+        if need_app_join:
+            has_criteria = True
+            app_conditions = [
+                Application.program_id.in_(program_ids),
+            ]
+            if statuses:
+                app_conditions.append(Application.status.in_(statuses))
+            if decisions:
+                app_conditions.append(Application.decision.in_(decisions))
+            if applied_after:
+                app_conditions.append(
+                    Application.submitted_at >= datetime.fromisoformat(applied_after)
+                )
             stmt = stmt.join(
                 Application, Application.student_id == StudentProfile.user_id
-            ).where(
-                Application.program_id.in_(program_ids),
-                Application.status.in_(statuses),
+            ).where(*app_conditions)
+        elif has_applied is False:
+            # Exclude students who have any application for these programs
+            has_criteria = True
+            app_exists = (
+                select(Application.id)
+                .where(
+                    Application.student_id == StudentProfile.user_id,
+                    Application.program_id.in_(program_ids),
+                )
+                .correlate(StudentProfile)
+                .exists()
             )
+            stmt = stmt.where(~app_exists)
 
-        # Filter by minimum match score
+        # --- Match-based criteria (min/max score, tiers) ---
         min_match_score = criteria.get("min_match_score")
-        if min_match_score is not None:
-            stmt = stmt.join(
-                MatchResult, MatchResult.student_id == StudentProfile.id
-            ).where(
+        max_match_score = criteria.get("max_match_score")
+        match_tiers = criteria.get("match_tiers")
+
+        if min_match_score is not None or max_match_score is not None or match_tiers:
+            has_criteria = True
+            match_conditions = [
                 MatchResult.program_id.in_(program_ids),
-                MatchResult.match_score >= min_match_score,
                 MatchResult.is_stale.is_(False),
+            ]
+            if min_match_score is not None:
+                match_conditions.append(
+                    MatchResult.match_score >= min_match_score / 100
+                )
+            if max_match_score is not None:
+                match_conditions.append(
+                    MatchResult.match_score <= max_match_score / 100
+                )
+            if match_tiers:
+                match_conditions.append(MatchResult.match_tier.in_(match_tiers))
+
+            stmt = stmt.outerjoin(
+                MatchResult, MatchResult.student_id == StudentProfile.id
+            ).where(*match_conditions)
+
+        # --- Engagement criteria (min count, signal types) ---
+        min_engagement = criteria.get("min_engagement_signals")
+        engagement_types = criteria.get("engagement_types")
+
+        if min_engagement is not None or engagement_types:
+            has_criteria = True
+            eng_conditions = [
+                StudentEngagementSignal.student_id == StudentProfile.id,
+                StudentEngagementSignal.program_id.in_(program_ids),
+            ]
+            if engagement_types:
+                eng_conditions.append(
+                    StudentEngagementSignal.signal_type.in_(engagement_types)
+                )
+            eng_subq = (
+                select(StudentEngagementSignal.student_id)
+                .where(*eng_conditions)
+                .correlate(StudentProfile)
+                .group_by(StudentEngagementSignal.student_id)
+            )
+            if min_engagement is not None:
+                eng_subq = eng_subq.having(func.count() >= min_engagement)
+            stmt = stmt.where(
+                StudentProfile.id.in_(eng_subq)
             )
 
-        # If no specific criteria, return all students who have applied
-        if not statuses and min_match_score is None:
+        # --- Nationality filter ---
+        nationalities = criteria.get("nationalities")
+        if nationalities:
+            has_criteria = True
+            stmt = stmt.where(StudentProfile.nationality.in_(nationalities))
+
+        # --- Fallback: if NO criteria at all, return all non-draft applicants ---
+        if not has_criteria:
             stmt = stmt.join(
                 Application, Application.student_id == StudentProfile.user_id
             ).where(
