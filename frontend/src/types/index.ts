@@ -34,6 +34,7 @@ export interface StudentProfile {
   research_entries: ResearchEntry[]
   languages: StudentLanguage[]
   work_experiences: WorkExperience[]
+  competitions: Competition[]
   preferences: StudentPreference | null
   onboarding: OnboardingStatus | null
 }
@@ -108,6 +109,22 @@ export interface WorkExperience {
   supervisor_name: string | null
   organization_country: string | null
   organization_city: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface Competition {
+  id: string
+  student_id: string
+  competition_name: string
+  domain: string | null
+  level: string
+  role: string | null
+  result_placement: string | null
+  year: number | null
+  team_size: number | null
+  description: string | null
+  link_proof: string | null
   created_at: string
   updated_at: string
 }

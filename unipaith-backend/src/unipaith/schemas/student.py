@@ -423,6 +423,52 @@ class WorkExperienceResponse(BaseModel):
     updated_at: datetime
 
 
+class CreateCompetitionRequest(BaseModel):
+    competition_name: str = Field(min_length=1, max_length=255)
+    domain: str | None = Field(None, max_length=100)
+    level: Literal[
+        "school", "state", "national", "international",
+    ]
+    role: str | None = Field(None, max_length=50)
+    result_placement: str | None = Field(None, max_length=100)
+    year: int | None = None
+    team_size: int | None = None
+    description: str | None = None
+    link_proof: str | None = Field(None, max_length=1000)
+
+
+class UpdateCompetitionRequest(BaseModel):
+    competition_name: str | None = Field(None, min_length=1, max_length=255)
+    domain: str | None = Field(None, max_length=100)
+    level: (
+        Literal["school", "state", "national", "international"]
+        | None
+    ) = None
+    role: str | None = Field(None, max_length=50)
+    result_placement: str | None = Field(None, max_length=100)
+    year: int | None = None
+    team_size: int | None = None
+    description: str | None = None
+    link_proof: str | None = Field(None, max_length=1000)
+
+
+class CompetitionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    student_id: UUID
+    competition_name: str
+    domain: str | None
+    level: str
+    role: str | None
+    result_placement: str | None
+    year: int | None
+    team_size: int | None
+    description: str | None
+    link_proof: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
 class NextStepResponse(BaseModel):
     section: str
     fields: list[str]
@@ -456,6 +502,7 @@ class StudentProfileResponse(BaseModel):
     research_entries: list[ResearchResponse] = []
     languages: list[LanguageResponse] = []
     work_experiences: list[WorkExperienceResponse] = []
+    competitions: list[CompetitionResponse] = []
     preferences: StudentPreferenceResponse | None = None
     onboarding: OnboardingStatusResponse | None = None
 

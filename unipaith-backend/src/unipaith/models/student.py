@@ -74,6 +74,9 @@ class StudentProfile(Base):
     work_experiences: Mapped[list[StudentWorkExperience]] = relationship(
         back_populates="student", cascade="all, delete-orphan"
     )
+    competitions: Mapped[list[StudentCompetition]] = relationship(
+        back_populates="student", cascade="all, delete-orphan"
+    )
     recommendation_requests: Mapped[list[RecommendationRequest]] = relationship(
         back_populates="student", cascade="all, delete-orphan"
     )
@@ -411,3 +414,32 @@ class StudentWorkExperience(Base):
     )
 
     student: Mapped[StudentProfile] = relationship(back_populates="work_experiences")
+
+
+class StudentCompetition(Base):
+    __tablename__ = "student_competitions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    competition_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    domain: Mapped[str | None] = mapped_column(String(100))
+    level: Mapped[str] = mapped_column(String(30), nullable=False)
+    role: Mapped[str | None] = mapped_column(String(50))
+    result_placement: Mapped[str | None] = mapped_column(String(100))
+    year: Mapped[int | None] = mapped_column(Integer)
+    team_size: Mapped[int | None] = mapped_column(Integer)
+    description: Mapped[str | None] = mapped_column(Text)
+    link_proof: Mapped[str | None] = mapped_column(String(1000))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    student: Mapped[StudentProfile] = relationship(back_populates="competitions")

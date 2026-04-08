@@ -21,8 +21,10 @@ from unipaith.schemas.matching import (
 from unipaith.schemas.student import (
     AcademicRecordResponse,
     ActivityResponse,
+    CompetitionResponse,
     CreateAcademicRecordRequest,
     CreateActivityRequest,
+    CreateCompetitionRequest,
     CreateLanguageRequest,
     CreateOnlinePresenceRequest,
     CreatePortfolioItemRequest,
@@ -42,6 +44,7 @@ from unipaith.schemas.student import (
     TestScoreResponse,
     UpdateAcademicRecordRequest,
     UpdateActivityRequest,
+    UpdateCompetitionRequest,
     UpdateLanguageRequest,
     UpdateOnlinePresenceRequest,
     UpdatePortfolioItemRequest,
@@ -543,6 +546,63 @@ async def delete_work_experience(
     svc = _svc(db)
     profile = await svc._get_student_profile(user.id)
     await svc.delete_work_experience(profile.id, record_id)
+
+
+# --- Competitions ---
+
+
+@router.get("/me/competitions", response_model=list[CompetitionResponse])
+async def list_competitions(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.list_competitions(profile.id)
+
+
+@router.post(
+    "/me/competitions",
+    response_model=CompetitionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_competition(
+    body: CreateCompetitionRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.create_competition(profile.id, body)
+
+
+@router.put(
+    "/me/competitions/{record_id}",
+    response_model=CompetitionResponse,
+)
+async def update_competition(
+    record_id: UUID,
+    body: UpdateCompetitionRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.update_competition(profile.id, record_id, body)
+
+
+@router.delete(
+    "/me/competitions/{record_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_competition(
+    record_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    await svc.delete_competition(profile.id, record_id)
 
 
 # --- Preferences ---

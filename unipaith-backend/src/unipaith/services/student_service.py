@@ -12,6 +12,7 @@ from unipaith.models.student import (
     AcademicRecord,
     Activity,
     OnboardingProgress,
+    StudentCompetition,
     StudentLanguage,
     StudentOnlinePresence,
     StudentPortfolioItem,
@@ -24,6 +25,7 @@ from unipaith.models.student import (
 from unipaith.schemas.student import (
     CreateAcademicRecordRequest,
     CreateActivityRequest,
+    CreateCompetitionRequest,
     CreateLanguageRequest,
     CreateOnlinePresenceRequest,
     CreatePortfolioItemRequest,
@@ -34,6 +36,7 @@ from unipaith.schemas.student import (
     OnboardingStatusResponse,
     UpdateAcademicRecordRequest,
     UpdateActivityRequest,
+    UpdateCompetitionRequest,
     UpdateLanguageRequest,
     UpdateOnlinePresenceRequest,
     UpdatePortfolioItemRequest,
@@ -62,6 +65,7 @@ class StudentService:
                 selectinload(StudentProfile.research_entries),
                 selectinload(StudentProfile.languages),
                 selectinload(StudentProfile.work_experiences),
+                selectinload(StudentProfile.competitions),
                 selectinload(StudentProfile.preferences),
                 selectinload(StudentProfile.onboarding_progress),
             )
@@ -390,6 +394,43 @@ class StudentService:
         await self.db.flush()
         await self._update_onboarding(student_id)
 
+    # --- Competitions ---
+
+    async def list_competitions(self, student_id: UUID) -> list[StudentCompetition]:
+        result = await self.db.execute(
+            select(StudentCompetition).where(StudentCompetition.student_id == student_id)
+        )
+        return list(result.scalars().all())
+
+    async def create_competition(
+        self, student_id: UUID, data: CreateCompetitionRequest,
+    ) -> StudentCompetition:
+        record = StudentCompetition(student_id=student_id, **data.model_dump())
+        self.db.add(record)
+        await self.db.flush()
+        await self._update_onboarding(student_id)
+        return record
+
+    async def update_competition(
+        self, student_id: UUID, record_id: UUID, data: UpdateCompetitionRequest,
+    ) -> StudentCompetition:
+        record = await self._get_record(StudentCompetition, record_id)
+        await self._verify_ownership(student_id, record.student_id)
+        for key, value in data.model_dump(exclude_unset=True).items():
+            setattr(record, key, value)
+        await self.db.flush()
+        await self._update_onboarding(student_id)
+        return record
+
+    async def delete_competition(
+        self, student_id: UUID, record_id: UUID,
+    ) -> None:
+        record = await self._get_record(StudentCompetition, record_id)
+        await self._verify_ownership(student_id, record.student_id)
+        await self.db.delete(record)
+        await self.db.flush()
+        await self._update_onboarding(student_id)
+
     # --- Preferences ---
 
     async def get_preferences(self, student_id: UUID) -> StudentPreference | None:
@@ -433,6 +474,7 @@ class StudentService:
                 selectinload(StudentProfile.research_entries),
                 selectinload(StudentProfile.languages),
                 selectinload(StudentProfile.work_experiences),
+                selectinload(StudentProfile.competitions),
                 selectinload(StudentProfile.preferences),
             )
         )
@@ -492,9 +534,9 @@ class StudentService:
             steps.append("work_experience")
             pct += 5
 
-        # bio_text: 5%
-        if p.bio_text:
-            steps.append("bio")
+        # at least 1 competition: 5%
+        if p.competitions:
+            steps.append("competitions")
             pct += 5
 
         # goals_text: 5%
@@ -548,12 +590,6 @@ class StudentService:
                 fields=["activity_type", "title", "description"],
                 guidance_text="Tell us about your activities and experiences.",
             )
-        if "bio" not in steps:
-            return NextStepResponse(
-                section="bio",
-                fields=["bio_text"],
-                guidance_text="Write a short bio about yourself.",
-            )
         if "online_presence" not in steps:
             return NextStepResponse(
                 section="online_presence",
@@ -583,6 +619,12 @@ class StudentService:
                 section="work_experience",
                 fields=["experience_type", "organization", "role_title"],
                 guidance_text="Add work, internship, or volunteer experience.",
+            )
+        if "competitions" not in steps:
+            return NextStepResponse(
+                section="competitions",
+                fields=["competition_name", "level", "result_placement"],
+                guidance_text="Add any competitions or hackathons you've done.",
             )
         if "goals" not in steps:
             return NextStepResponse(

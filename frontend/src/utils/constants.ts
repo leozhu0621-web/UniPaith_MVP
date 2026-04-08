@@ -1,3 +1,10 @@
+export const COMPETITION_LEVELS = [
+  { value: 'school', label: 'School' },
+  { value: 'state', label: 'State / Regional' },
+  { value: 'national', label: 'National' },
+  { value: 'international', label: 'International' },
+]
+
 export const WORK_EXPERIENCE_TYPES = [
   { value: 'employment', label: 'Employment' },
   { value: 'internship', label: 'Internship' },

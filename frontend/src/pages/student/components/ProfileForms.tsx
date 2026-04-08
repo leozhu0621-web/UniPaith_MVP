@@ -3,7 +3,7 @@ import Button from '../../../components/ui/Button'
 import Input from '../../../components/ui/Input'
 import Textarea from '../../../components/ui/Textarea'
 import Select from '../../../components/ui/Select'
-import { DEGREE_LABELS, TEST_TYPES, ACTIVITY_TYPES, GPA_SCALES, CITY_SIZE_OPTIONS, FUNDING_OPTIONS, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS, WORK_EXPERIENCE_TYPES, COMPENSATION_TYPES } from '../../../utils/constants'
+import { DEGREE_LABELS, TEST_TYPES, ACTIVITY_TYPES, GPA_SCALES, CITY_SIZE_OPTIONS, FUNDING_OPTIONS, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS, WORK_EXPERIENCE_TYPES, COMPENSATION_TYPES, COMPETITION_LEVELS } from '../../../utils/constants'
 
 interface FormProps {
   defaultValues: any
@@ -190,6 +190,30 @@ export function WorkExperienceForm({ defaultValues, onSubmit, loading }: FormPro
         <Input label="Country" {...register('organization_country')} />
       </div>
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('is_current')} /> Currently active</label>
+      <Button type="submit" loading={loading} className="w-full">Save</Button>
+    </form>
+  )
+}
+
+export function CompetitionForm({ defaultValues, onSubmit, loading }: FormProps) {
+  const { register, handleSubmit } = useForm({ defaultValues: { competition_name: defaultValues?.competition_name || '', domain: defaultValues?.domain || '', level: defaultValues?.level || 'national', role: defaultValues?.role || '', result_placement: defaultValues?.result_placement || '', year: defaultValues?.year || '', team_size: defaultValues?.team_size || '', description: defaultValues?.description || '', link_proof: defaultValues?.link_proof || '' } })
+  return (
+    <form onSubmit={handleSubmit(d => onSubmit({ ...d, year: d.year ? Number(d.year) : null, team_size: d.team_size ? Number(d.team_size) : null }))} className="space-y-3">
+      <Input label="Competition Name" placeholder="MIT Hacking Medicine, IMO..." {...register('competition_name')} />
+      <div className="grid grid-cols-2 gap-3">
+        <Input label="Domain" placeholder="CS, Math, Business..." {...register('domain')} />
+        <Select label="Level" options={COMPETITION_LEVELS} {...register('level')} />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Input label="Role" placeholder="Participant, Team Lead..." {...register('role')} />
+        <Input label="Result / Placement" placeholder="1st place, Finalist..." {...register('result_placement')} />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Input label="Year" type="number" placeholder="2025" {...register('year')} />
+        <Input label="Team Size" type="number" {...register('team_size')} />
+      </div>
+      <Textarea label="Description (optional)" placeholder="What you built or achieved..." {...register('description')} />
+      <Input label="Proof Link (optional)" type="url" placeholder="https://..." {...register('link_proof')} />
       <Button type="submit" loading={loading} className="w-full">Save</Button>
     </form>
   )

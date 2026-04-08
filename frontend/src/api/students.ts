@@ -21,6 +21,11 @@ export const createActivity = (data: any) => apiClient.post('/students/me/activi
 export const updateActivity = (id: string, data: any) => apiClient.put(`/students/me/activities/${id}`, data).then(r => r.data)
 export const deleteActivity = (id: string) => apiClient.delete(`/students/me/activities/${id}`)
 
+export const listCompetitions = () => apiClient.get('/students/me/competitions').then(r => r.data)
+export const createCompetition = (data: any) => apiClient.post('/students/me/competitions', data).then(r => r.data)
+export const updateCompetition = (id: string, data: any) => apiClient.put(`/students/me/competitions/${id}`, data).then(r => r.data)
+export const deleteCompetition = (id: string) => apiClient.delete(`/students/me/competitions/${id}`)
+
 export const listWorkExperiences = () => apiClient.get('/students/me/work-experiences').then(r => r.data)
 export const createWorkExperience = (data: any) => apiClient.post('/students/me/work-experiences', data).then(r => r.data)
 export const updateWorkExperience = (id: string, data: any) => apiClient.put(`/students/me/work-experiences/${id}`, data).then(r => r.data)
