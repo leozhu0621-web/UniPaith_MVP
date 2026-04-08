@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, createOnlinePresence, updateOnlinePresence, deleteOnlinePresence, createPortfolioItem, updatePortfolioItem, deletePortfolioItem, createResearch, updateResearch, deleteResearch, createLanguage, updateLanguage, deleteLanguage, createWorkExperience, updateWorkExperience, deleteWorkExperience, createCompetition, updateCompetition, deleteCompetition, upsertAccommodations, upsertScheduling, upsertVisaInfo, upsertPreferences, getNextStep } from '../../api/students'
-import { getOnboarding, getTimeline, getAnalytics } from '../../api/students'
+import { getOnboarding, getTimeline, getAnalytics, getPeerComparison } from '../../api/students'
 import { listDocuments } from '../../api/documents'
 import Modal from '../../components/ui/Modal'
 import Button from '../../components/ui/Button'
@@ -11,7 +11,7 @@ import { SkeletonCard } from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatDate, formatCurrency, formatFileSize } from '../../utils/format'
 import { DEGREE_LABELS, ACTIVITY_TYPES, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS, WORK_EXPERIENCE_TYPES, COMPETITION_LEVELS } from '../../utils/constants'
-import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical, Languages, Briefcase, Trophy, Accessibility, CalendarClock, Plane, Clock, BarChart3 } from 'lucide-react'
+import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical, Languages, Briefcase, Trophy, Accessibility, CalendarClock, Plane, Clock, BarChart3, Users } from 'lucide-react'
 import { BasicInfoForm, AcademicForm, CourseForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm, ResearchForm, LanguageForm, WorkExperienceForm, CompetitionForm, AccommodationForm, SchedulingForm, VisaInfoForm } from './components/ProfileForms'
 import { createCourse, updateCourse, deleteCourse } from '../../api/students'
 import type { StudentProfile } from '../../types'
@@ -72,6 +72,7 @@ export default function ProfilePage() {
   const { data: documents } = useQuery({ queryKey: ['documents'], queryFn: listDocuments })
   const { data: timeline } = useQuery({ queryKey: ['timeline'], queryFn: getTimeline })
   const { data: analytics } = useQuery({ queryKey: ['analytics'], queryFn: getAnalytics })
+  const { data: peerComparison } = useQuery({ queryKey: ['peer-comparison'], queryFn: getPeerComparison })
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ['profile'] })
@@ -638,6 +639,37 @@ export default function ProfilePage() {
           </div>
         ) : (
           <p className="text-sm text-gray-500">Analytics will appear as you build your profile.</p>
+        )}
+      </Card>
+
+      {/* Peer Comparison */}
+      <Card className="p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Users size={18} className="text-gray-500" />
+          <h2 className="font-semibold text-brand-slate-700">Peer Comparison</h2>
+        </div>
+        {peerComparison?.metrics?.length > 0 ? (
+          <div className="space-y-3">
+            {peerComparison.metrics.map((m: any, i: number) => (
+              <div key={i}>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-700">{m.metric}</span>
+                  <span className="text-xs text-gray-500">{m.label} ({m.percentile}th percentile)</span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-2">
+                  <div
+                    className="h-2 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${m.percentile}%`,
+                      backgroundColor: m.percentile >= 75 ? '#059669' : m.percentile >= 50 ? '#d97706' : '#6b7280',
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">Add more profile data to see how you compare with peers.</p>
         )}
       </Card>
 

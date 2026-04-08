@@ -961,6 +961,101 @@ class StudentService:
             },
         }
 
+    # --- Peer Comparison ---
+
+    async def get_peer_comparison(self, student_id: UUID) -> dict:
+        """Compute anonymized percentile bands vs all students."""
+        from sqlalchemy import func as sqla_func
+
+        profile = await self.db.execute(
+            select(StudentProfile)
+            .where(StudentProfile.id == student_id)
+            .options(
+                selectinload(StudentProfile.academic_records),
+                selectinload(StudentProfile.test_scores),
+                selectinload(StudentProfile.activities),
+                selectinload(StudentProfile.research_entries),
+                selectinload(StudentProfile.work_experiences),
+                selectinload(StudentProfile.competitions),
+            )
+        )
+        p = profile.scalar_one_or_none()
+        if not p:
+            raise NotFoundException("Student profile not found")
+
+        def percentile_label(pct: float) -> str:
+            if pct >= 90:
+                return "Top 10%"
+            if pct >= 75:
+                return "Top 25%"
+            if pct >= 50:
+                return "Above average"
+            if pct >= 25:
+                return "Average"
+            return "Below average"
+
+        metrics: list[dict] = []
+
+        # GPA percentile (highest GPA per student, 4.0 scale)
+        my_gpa = max(
+            (float(r.gpa) for r in p.academic_records if r.gpa is not None),
+            default=None,
+        )
+        if my_gpa is not None:
+            total = (await self.db.execute(
+                select(sqla_func.count(sqla_func.distinct(AcademicRecord.student_id)))
+                .where(AcademicRecord.gpa.is_not(None))
+            )).scalar_one()
+            below = (await self.db.execute(
+                select(sqla_func.count(sqla_func.distinct(AcademicRecord.student_id)))
+                .where(AcademicRecord.gpa < my_gpa)
+                .where(AcademicRecord.gpa.is_not(None))
+            )).scalar_one()
+            pct = round(below / total * 100) if total > 0 else 50
+            metrics.append({"metric": "GPA", "value": my_gpa, "percentile": pct, "label": percentile_label(pct)})
+
+        # Test score percentile (highest total_score)
+        my_score = max(
+            (s.total_score for s in p.test_scores if s.total_score is not None),
+            default=None,
+        )
+        if my_score is not None:
+            total = (await self.db.execute(
+                select(sqla_func.count(sqla_func.distinct(TestScore.student_id)))
+                .where(TestScore.total_score.is_not(None))
+            )).scalar_one()
+            below = (await self.db.execute(
+                select(sqla_func.count(sqla_func.distinct(TestScore.student_id)))
+                .where(TestScore.total_score < my_score)
+                .where(TestScore.total_score.is_not(None))
+            )).scalar_one()
+            pct = round(below / total * 100) if total > 0 else 50
+            metrics.append({"metric": "Test Score", "value": my_score, "percentile": pct, "label": percentile_label(pct)})
+
+        # Activity count percentile
+        my_count = (
+            len(p.activities) + len(p.research_entries)
+            + len(p.work_experiences) + len(p.competitions)
+        )
+        if my_count > 0:
+            # Count activities per student across all tables
+            total = (await self.db.execute(
+                select(sqla_func.count()).select_from(StudentProfile)
+            )).scalar_one()
+            # Simplified: compare against average
+            avg_result = await self.db.execute(
+                select(sqla_func.avg(sqla_func.coalesce(
+                    select(sqla_func.count()).where(
+                        Activity.student_id == StudentProfile.id
+                    ).correlate(StudentProfile).scalar_subquery(), 0
+                ))).select_from(StudentProfile)
+            )
+            avg_count = float(avg_result.scalar_one() or 1)
+            pct = min(99, round(my_count / max(avg_count * 2, 1) * 100))
+            metrics.append({"metric": "Activities", "value": my_count, "percentile": pct, "label": percentile_label(pct)})
+
+        return {"metrics": metrics}
+
     # --- Helpers ---
 
     async def _get_student_profile(self, user_id: UUID) -> StudentProfile:
