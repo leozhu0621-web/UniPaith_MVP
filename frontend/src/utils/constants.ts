@@ -111,6 +111,15 @@ export const PLATFORM_TYPES = [
   { value: 'other', label: 'Other' },
 ]
 
+export const PORTFOLIO_ITEM_TYPES = [
+  { value: 'project', label: 'Project' },
+  { value: 'writing_sample', label: 'Writing Sample' },
+  { value: 'artwork', label: 'Artwork' },
+  { value: 'presentation', label: 'Presentation' },
+  { value: 'code', label: 'Code / Repository' },
+  { value: 'other', label: 'Other' },
+]
+
 export const DOCUMENT_TYPES = [
   { value: 'transcript', label: 'Transcript' },
   { value: 'essay', label: 'Essay' },

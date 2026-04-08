@@ -234,6 +234,47 @@ class OnlinePresenceResponse(BaseModel):
     updated_at: datetime
 
 
+class CreatePortfolioItemRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    description: str | None = None
+    item_type: Literal[
+        "project", "writing_sample", "artwork",
+        "presentation", "code", "other",
+    ]
+    url: str | None = Field(None, max_length=1000)
+    document_id: UUID | None = None
+    display_order: int = 0
+
+
+class UpdatePortfolioItemRequest(BaseModel):
+    title: str | None = Field(None, min_length=1, max_length=255)
+    description: str | None = None
+    item_type: (
+        Literal[
+            "project", "writing_sample", "artwork",
+            "presentation", "code", "other",
+        ]
+        | None
+    ) = None
+    url: str | None = Field(None, max_length=1000)
+    document_id: UUID | None = None
+    display_order: int | None = None
+
+
+class PortfolioItemResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    student_id: UUID
+    title: str
+    description: str | None
+    item_type: str
+    url: str | None
+    document_id: UUID | None
+    display_order: int
+    created_at: datetime
+    updated_at: datetime
+
+
 class NextStepResponse(BaseModel):
     section: str
     fields: list[str]
@@ -263,6 +304,7 @@ class StudentProfileResponse(BaseModel):
     test_scores: list[TestScoreResponse] = []
     activities: list[ActivityResponse] = []
     online_presence: list[OnlinePresenceResponse] = []
+    portfolio_items: list[PortfolioItemResponse] = []
     preferences: StudentPreferenceResponse | None = None
     onboarding: OnboardingStatusResponse | None = None
 

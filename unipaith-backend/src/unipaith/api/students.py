@@ -24,10 +24,12 @@ from unipaith.schemas.student import (
     CreateAcademicRecordRequest,
     CreateActivityRequest,
     CreateOnlinePresenceRequest,
+    CreatePortfolioItemRequest,
     CreateTestScoreRequest,
     NextStepResponse,
     OnboardingStatusResponse,
     OnlinePresenceResponse,
+    PortfolioItemResponse,
     StudentAssistantChatRequest,
     StudentAssistantChatResponse,
     StudentPreferenceResponse,
@@ -36,6 +38,7 @@ from unipaith.schemas.student import (
     UpdateAcademicRecordRequest,
     UpdateActivityRequest,
     UpdateOnlinePresenceRequest,
+    UpdatePortfolioItemRequest,
     UpdateProfileRequest,
     UpdateTestScoreRequest,
     UpsertPreferencesRequest,
@@ -309,6 +312,60 @@ async def delete_online_presence(
     svc = _svc(db)
     profile = await svc._get_student_profile(user.id)
     await svc.delete_online_presence(profile.id, record_id)
+
+
+# --- Portfolio Items ---
+
+
+@router.get("/me/portfolio", response_model=list[PortfolioItemResponse])
+async def list_portfolio_items(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.list_portfolio_items(profile.id)
+
+
+@router.post(
+    "/me/portfolio",
+    response_model=PortfolioItemResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_portfolio_item(
+    body: CreatePortfolioItemRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.create_portfolio_item(profile.id, body)
+
+
+@router.put("/me/portfolio/{record_id}", response_model=PortfolioItemResponse)
+async def update_portfolio_item(
+    record_id: UUID,
+    body: UpdatePortfolioItemRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.update_portfolio_item(profile.id, record_id, body)
+
+
+@router.delete(
+    "/me/portfolio/{record_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_portfolio_item(
+    record_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    await svc.delete_portfolio_item(profile.id, record_id)
 
 
 # --- Preferences ---

@@ -30,6 +30,7 @@ export interface StudentProfile {
   test_scores: TestScore[]
   activities: Activity[]
   online_presence: OnlinePresence[]
+  portfolio_items: PortfolioItem[]
   preferences: StudentPreference | null
   onboarding: OnboardingStatus | null
 }
@@ -40,6 +41,19 @@ export interface OnlinePresence {
   platform_type: string
   url: string
   display_name: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface PortfolioItem {
+  id: string
+  student_id: string
+  title: string
+  description: string | null
+  item_type: string
+  url: string | null
+  document_id: string | null
+  display_order: number
   created_at: string
   updated_at: string
 }

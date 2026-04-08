@@ -3,7 +3,7 @@ import Button from '../../../components/ui/Button'
 import Input from '../../../components/ui/Input'
 import Textarea from '../../../components/ui/Textarea'
 import Select from '../../../components/ui/Select'
-import { DEGREE_LABELS, TEST_TYPES, ACTIVITY_TYPES, GPA_SCALES, CITY_SIZE_OPTIONS, FUNDING_OPTIONS, PLATFORM_TYPES } from '../../../utils/constants'
+import { DEGREE_LABELS, TEST_TYPES, ACTIVITY_TYPES, GPA_SCALES, CITY_SIZE_OPTIONS, FUNDING_OPTIONS, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES } from '../../../utils/constants'
 
 interface FormProps {
   defaultValues: any
@@ -106,6 +106,19 @@ export function OnlinePresenceForm({ defaultValues, onSubmit, loading }: FormPro
       <Select label="Platform" options={PLATFORM_TYPES} {...register('platform_type')} />
       <Input label="URL" type="url" placeholder="https://..." {...register('url')} />
       <Input label="Display Name (optional)" placeholder="My Portfolio" {...register('display_name')} />
+      <Button type="submit" loading={loading} className="w-full">Save</Button>
+    </form>
+  )
+}
+
+export function PortfolioItemForm({ defaultValues, onSubmit, loading }: FormProps) {
+  const { register, handleSubmit } = useForm({ defaultValues: { title: defaultValues?.title || '', description: defaultValues?.description || '', item_type: defaultValues?.item_type || 'project', url: defaultValues?.url || '' } })
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+      <Input label="Title" placeholder="My capstone project" {...register('title')} />
+      <Select label="Type" options={PORTFOLIO_ITEM_TYPES} {...register('item_type')} />
+      <Input label="URL (optional)" type="url" placeholder="https://..." {...register('url')} />
+      <Textarea label="Description (optional)" placeholder="Brief description of this work..." {...register('description')} />
       <Button type="submit" loading={loading} className="w-full">Save</Button>
     </form>
   )

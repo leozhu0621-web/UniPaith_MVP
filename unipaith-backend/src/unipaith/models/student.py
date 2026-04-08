@@ -62,6 +62,9 @@ class StudentProfile(Base):
     online_presence: Mapped[list[StudentOnlinePresence]] = relationship(
         back_populates="student", cascade="all, delete-orphan"
     )
+    portfolio_items: Mapped[list[StudentPortfolioItem]] = relationship(
+        back_populates="student", cascade="all, delete-orphan"
+    )
     recommendation_requests: Mapped[list[RecommendationRequest]] = relationship(
         back_populates="student", cascade="all, delete-orphan"
     )
@@ -280,3 +283,32 @@ class StudentOnlinePresence(Base):
     )
 
     student: Mapped[StudentProfile] = relationship(back_populates="online_presence")
+
+
+class StudentPortfolioItem(Base):
+    __tablename__ = "student_portfolio_items"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    item_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    url: Mapped[str | None] = mapped_column(String(1000))
+    document_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_documents.id", ondelete="SET NULL"),
+    )
+    display_order: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    student: Mapped[StudentProfile] = relationship(back_populates="portfolio_items")

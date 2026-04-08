@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, createOnlinePresence, updateOnlinePresence, deleteOnlinePresence, upsertPreferences, getNextStep } from '../../api/students'
+import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, createOnlinePresence, updateOnlinePresence, deleteOnlinePresence, createPortfolioItem, updatePortfolioItem, deletePortfolioItem, upsertPreferences, getNextStep } from '../../api/students'
 import { getOnboarding } from '../../api/students'
 import { listDocuments } from '../../api/documents'
 import Modal from '../../components/ui/Modal'
@@ -10,9 +10,9 @@ import Badge from '../../components/ui/Badge'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatDate, formatCurrency, formatFileSize } from '../../utils/format'
-import { DEGREE_LABELS, ACTIVITY_TYPES, PLATFORM_TYPES } from '../../utils/constants'
-import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink } from 'lucide-react'
-import { BasicInfoForm, AcademicForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm } from './components/ProfileForms'
+import { DEGREE_LABELS, ACTIVITY_TYPES, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES } from '../../utils/constants'
+import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen } from 'lucide-react'
+import { BasicInfoForm, AcademicForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm } from './components/ProfileForms'
 import type { StudentProfile } from '../../types'
 
 // --- Profile Strength Ring ---
@@ -50,6 +50,7 @@ const PROFILE_SECTIONS = [
   { key: 'test_scores', label: 'Test Scores', fields: [] },
   { key: 'activities', label: 'Activities', fields: [] },
   { key: 'online_presence', label: 'Online Presence', fields: [] },
+  { key: 'portfolio', label: 'Portfolio', fields: [] },
   { key: 'preferences', label: 'Preferences', fields: [] },
   { key: 'documents', label: 'Documents', fields: [] },
 ]
@@ -83,6 +84,9 @@ export default function ProfilePage() {
   const opCreateMut = useMutation({ mutationFn: createOnlinePresence, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Link added', 'success') } })
   const opUpdateMut = useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => updateOnlinePresence(id, data), onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Link updated', 'success') } })
   const opDeleteMut = useMutation({ mutationFn: deleteOnlinePresence, onSuccess: () => { invalidateAll(); showToast('Link removed', 'success') } })
+  const pfCreateMut = useMutation({ mutationFn: createPortfolioItem, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Item added', 'success') } })
+  const pfUpdateMut = useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => updatePortfolioItem(id, data), onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Item updated', 'success') } })
+  const pfDeleteMut = useMutation({ mutationFn: deletePortfolioItem, onSuccess: () => { invalidateAll(); showToast('Item removed', 'success') } })
   const prefsMut = useMutation({ mutationFn: upsertPreferences, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Preferences updated', 'success') } })
 
   if (isLoading) return <div className="p-6 space-y-4">{Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}</div>
@@ -101,6 +105,7 @@ export default function ProfilePage() {
       case 'test_scores': return (p?.test_scores ?? []).length > 0
       case 'activities': return (p?.activities ?? []).length > 0
       case 'online_presence': return (p?.online_presence ?? []).length > 0
+      case 'portfolio': return (p?.portfolio_items ?? []).length > 0
       case 'preferences': return !!p?.preferences
       case 'documents': return documentsList.length > 0
       default: return false
@@ -266,6 +271,37 @@ export default function ProfilePage() {
         )}
       </Card>
 
+      {/* Portfolio */}
+      <Card className="p-5">
+        <div className="flex justify-between items-start mb-3">
+          <h2 className="font-semibold text-stone-800">Portfolio</h2>
+          <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('portfolio') }}><Plus size={14} /></Button>
+        </div>
+        {(p?.portfolio_items ?? []).length === 0 ? (
+          <p className="text-sm text-stone-500">Showcase your projects and work samples</p>
+        ) : (
+          <div className="space-y-3">
+            {p!.portfolio_items.map(item => (
+              <div key={item.id} className="flex justify-between items-start border-b border-stone-100 pb-3 last:border-0">
+                <div className="flex items-start gap-2">
+                  <FolderOpen size={14} className="text-stone-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-sm">{item.title}</p>
+                    <p className="text-xs text-stone-500">{PORTFOLIO_ITEM_TYPES.find(t => t.value === item.item_type)?.label || item.item_type}</p>
+                    {item.url && <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-xs text-sky-600 hover:underline truncate block max-w-xs">{item.url}</a>}
+                    {item.description && <p className="text-xs text-stone-400 mt-1 line-clamp-2">{item.description}</p>}
+                  </div>
+                </div>
+                <div className="flex gap-1">
+                  <Button size="sm" variant="ghost" onClick={() => { setEditItem(item); setEditModal('portfolio') }}><Pencil size={12} /></Button>
+                  <Button size="sm" variant="ghost" onClick={() => pfDeleteMut.mutate(item.id)}><Trash2 size={12} /></Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
       {/* Preferences */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
@@ -348,6 +384,15 @@ export default function ProfilePage() {
           defaultValues={editItem}
           onSubmit={data => editItem ? opUpdateMut.mutate({ id: editItem.id, data }) : opCreateMut.mutate(data)}
           loading={opCreateMut.isPending || opUpdateMut.isPending}
+        />
+      </Modal>
+
+      {/* Portfolio Modal */}
+      <Modal isOpen={editModal === 'portfolio'} onClose={() => setEditModal(null)} title={editItem ? 'Edit Portfolio Item' : 'Add Portfolio Item'}>
+        <PortfolioItemForm
+          defaultValues={editItem}
+          onSubmit={data => editItem ? pfUpdateMut.mutate({ id: editItem.id, data }) : pfCreateMut.mutate(data)}
+          loading={pfCreateMut.isPending || pfUpdateMut.isPending}
         />
       </Modal>
 

@@ -13,6 +13,7 @@ from unipaith.models.student import (
     Activity,
     OnboardingProgress,
     StudentOnlinePresence,
+    StudentPortfolioItem,
     StudentPreference,
     StudentProfile,
     TestScore,
@@ -21,12 +22,14 @@ from unipaith.schemas.student import (
     CreateAcademicRecordRequest,
     CreateActivityRequest,
     CreateOnlinePresenceRequest,
+    CreatePortfolioItemRequest,
     CreateTestScoreRequest,
     NextStepResponse,
     OnboardingStatusResponse,
     UpdateAcademicRecordRequest,
     UpdateActivityRequest,
     UpdateOnlinePresenceRequest,
+    UpdatePortfolioItemRequest,
     UpdateProfileRequest,
     UpdateTestScoreRequest,
     UpsertPreferencesRequest,
@@ -46,6 +49,7 @@ class StudentService:
                 selectinload(StudentProfile.test_scores),
                 selectinload(StudentProfile.activities),
                 selectinload(StudentProfile.online_presence),
+                selectinload(StudentProfile.portfolio_items),
                 selectinload(StudentProfile.preferences),
                 selectinload(StudentProfile.onboarding_progress),
             )
@@ -214,6 +218,46 @@ class StudentService:
         await self.db.flush()
         await self._update_onboarding(student_id)
 
+    # --- Portfolio Items ---
+
+    async def list_portfolio_items(self, student_id: UUID) -> list[StudentPortfolioItem]:
+        result = await self.db.execute(
+            select(StudentPortfolioItem)
+            .where(StudentPortfolioItem.student_id == student_id)
+            .order_by(StudentPortfolioItem.display_order)
+        )
+        return list(result.scalars().all())
+
+    async def create_portfolio_item(
+        self, student_id: UUID, data: CreatePortfolioItemRequest,
+    ) -> StudentPortfolioItem:
+        record = StudentPortfolioItem(student_id=student_id, **data.model_dump())
+        self.db.add(record)
+        await self.db.flush()
+        await self._update_onboarding(student_id)
+        return record
+
+    async def update_portfolio_item(
+        self, student_id: UUID, record_id: UUID, data: UpdatePortfolioItemRequest,
+    ) -> StudentPortfolioItem:
+        record = await self._get_record(StudentPortfolioItem, record_id)
+        await self._verify_ownership(student_id, record.student_id)
+        update_data = data.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(record, key, value)
+        await self.db.flush()
+        await self._update_onboarding(student_id)
+        return record
+
+    async def delete_portfolio_item(
+        self, student_id: UUID, record_id: UUID,
+    ) -> None:
+        record = await self._get_record(StudentPortfolioItem, record_id)
+        await self._verify_ownership(student_id, record.student_id)
+        await self.db.delete(record)
+        await self.db.flush()
+        await self._update_onboarding(student_id)
+
     # --- Preferences ---
 
     async def get_preferences(self, student_id: UUID) -> StudentPreference | None:
@@ -253,6 +297,7 @@ class StudentService:
                 selectinload(StudentProfile.test_scores),
                 selectinload(StudentProfile.activities),
                 selectinload(StudentProfile.online_presence),
+                selectinload(StudentProfile.portfolio_items),
                 selectinload(StudentProfile.preferences),
             )
         )
@@ -292,15 +337,20 @@ class StudentService:
             steps.append("online_presence")
             pct += 5
 
+        # at least 1 portfolio item: 5%
+        if p.portfolio_items:
+            steps.append("portfolio")
+            pct += 5
+
         # bio_text: 5%
         if p.bio_text:
             steps.append("bio")
             pct += 5
 
-        # goals_text: 10%
+        # goals_text: 5%
         if p.goals_text:
             steps.append("goals")
-            pct += 10
+            pct += 5
 
         # preferences set: 15%
         if p.preferences:
@@ -359,6 +409,12 @@ class StudentService:
                 section="online_presence",
                 fields=["platform_type", "url"],
                 guidance_text="Add your LinkedIn or portfolio links.",
+            )
+        if "portfolio" not in steps:
+            return NextStepResponse(
+                section="portfolio",
+                fields=["title", "item_type", "url"],
+                guidance_text="Showcase a project or work sample.",
             )
         if "goals" not in steps:
             return NextStepResponse(

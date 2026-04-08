@@ -21,6 +21,11 @@ export const createActivity = (data: any) => apiClient.post('/students/me/activi
 export const updateActivity = (id: string, data: any) => apiClient.put(`/students/me/activities/${id}`, data).then(r => r.data)
 export const deleteActivity = (id: string) => apiClient.delete(`/students/me/activities/${id}`)
 
+export const listPortfolio = () => apiClient.get('/students/me/portfolio').then(r => r.data)
+export const createPortfolioItem = (data: any) => apiClient.post('/students/me/portfolio', data).then(r => r.data)
+export const updatePortfolioItem = (id: string, data: any) => apiClient.put(`/students/me/portfolio/${id}`, data).then(r => r.data)
+export const deletePortfolioItem = (id: string) => apiClient.delete(`/students/me/portfolio/${id}`)
+
 export const listOnlinePresence = () => apiClient.get('/students/me/online-presence').then(r => r.data)
 export const createOnlinePresence = (data: any) => apiClient.post('/students/me/online-presence', data).then(r => r.data)
 export const updateOnlinePresence = (id: string, data: any) => apiClient.put(`/students/me/online-presence/${id}`, data).then(r => r.data)
