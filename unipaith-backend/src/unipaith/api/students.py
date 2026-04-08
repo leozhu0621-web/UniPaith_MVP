@@ -795,6 +795,33 @@ async def get_peer_comparison(
     return await svc.get_peer_comparison(profile.id)
 
 
+# --- Profile Export ---
+
+
+@router.get("/me/export", response_model=StudentProfileResponse)
+async def export_profile(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Export the full student profile as JSON."""
+    from fastapi.responses import JSONResponse
+
+    svc = _svc(db)
+    profile = await svc.get_profile(user.id)
+    onboarding = await svc.get_onboarding_status(profile.id)
+    resp = StudentProfileResponse.model_validate(profile)
+    resp.onboarding = onboarding
+    data = resp.model_dump(mode="json")
+    return JSONResponse(
+        content=data,
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="unipaith-profile-{user.id}.json"'
+            ),
+        },
+    )
+
+
 # --- Preferences ---
 
 
