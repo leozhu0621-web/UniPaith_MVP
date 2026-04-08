@@ -225,6 +225,30 @@ class MonthlyApplicationCount(BaseModel):
     count: int
 
 
+class FunnelStage(BaseModel):
+    stage: str
+    count: int
+    conversion_rate: float | None = None
+
+
+class CampaignAttribution(BaseModel):
+    campaign_id: UUID
+    campaign_name: str
+    recipients: int
+    delivered: int
+    opened: int
+    clicked: int
+    applications_started: int
+
+
+class EventAttribution(BaseModel):
+    event_id: UUID
+    event_name: str
+    rsvps: int
+    attended: int
+    applications_after: int
+
+
 class AnalyticsResponse(BaseModel):
     total_applications: int
     acceptance_rate: float | None
@@ -234,6 +258,9 @@ class AnalyticsResponse(BaseModel):
     apps_by_program: list[ProgramApplicationCount]
     apps_by_month: list[MonthlyApplicationCount]
     decisions_breakdown: dict[str, int]
+    funnel_stages: list[FunnelStage] | None = None
+    campaign_attribution: list[CampaignAttribution] | None = None
+    event_attribution: list[EventAttribution] | None = None
 
 
 # --- Campaigns ---

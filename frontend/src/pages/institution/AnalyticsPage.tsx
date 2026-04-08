@@ -1,9 +1,12 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { BarChart3, TrendingUp, Target, Users, Award } from 'lucide-react'
 import { getAnalytics } from '../../api/institutions'
 import Card from '../../components/ui/Card'
+import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
+import Tabs from '../../components/ui/Tabs'
 import Skeleton from '../../components/ui/Skeleton'
 import InstitutionPageHeader from '../../components/institution/InstitutionPageHeader'
 import { formatPercent } from '../../utils/format'
@@ -11,6 +14,7 @@ import type { AnalyticsData } from '../../types'
 
 export default function AnalyticsPage() {
   const navigate = useNavigate()
+  const [activeTab, setActiveTab] = useState('overview')
   const analyticsQ = useQuery({ queryKey: ['institution-analytics'], queryFn: getAnalytics })
   const analytics: AnalyticsData | undefined = analyticsQ.data
 
@@ -67,13 +71,17 @@ export default function AnalyticsPage() {
         )}
       />
 
-      <Card className="p-4">
-        <h3 className="text-sm font-semibold text-gray-900 mb-1">What this page is for</h3>
-        <p className="text-sm text-gray-600">
-          Use Insights for trend analysis and outcome reporting. For daily operations and queue work, use Overview and Applications.
-        </p>
-      </Card>
+      <Tabs
+        tabs={[
+          { id: 'overview', label: 'Overview' },
+          { id: 'funnel', label: 'Funnel' },
+          { id: 'attribution', label: 'Attribution' },
+        ]}
+        activeTab={activeTab}
+        onChange={setActiveTab}
+      />
 
+      {activeTab === 'overview' && (<>
       {/* Executive KPI Cards */}
       <div>
         <h3 className="text-sm font-semibold text-gray-900 mb-3">Executive Outcomes</h3>
@@ -203,6 +211,111 @@ export default function AnalyticsPage() {
           )}
         </Card>
       </div>
+      </>)}
+
+      {activeTab === 'funnel' && (
+        <div className="space-y-4">
+          <Card className="p-5">
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">Application Funnel</h3>
+            {analytics?.funnel_stages?.length ? (() => {
+              const maxCount = Math.max(...analytics.funnel_stages.map(s => s.count), 1)
+              return (
+                <div className="space-y-3">
+                  {analytics.funnel_stages.map((stage) => (
+                    <div key={stage.stage} className="flex items-center gap-4">
+                      <div className="w-32 text-sm text-right text-gray-600 capitalize">{stage.stage.replace(/_/g, ' ')}</div>
+                      <div className="flex-1">
+                        <div
+                          className="bg-brand-slate-500 rounded h-8 transition-all min-w-[4px]"
+                          style={{ width: `${(stage.count / maxCount) * 100}%` }}
+                        />
+                      </div>
+                      <div className="w-16 text-sm font-semibold text-gray-900">{stage.count}</div>
+                      <div className="w-20 text-xs text-gray-500">
+                        {stage.conversion_rate != null ? `${Math.round(stage.conversion_rate * 100)}% conv.` : ''}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            })() : (
+              <p className="text-sm text-gray-500 text-center py-8">No funnel data yet. Applications will appear here once students apply.</p>
+            )}
+          </Card>
+        </div>
+      )}
+
+      {activeTab === 'attribution' && (
+        <div className="space-y-6">
+          <Card className="p-5">
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">Campaign Performance</h3>
+            {analytics?.campaign_attribution?.length ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-500 border-b">
+                      <th className="py-2 pr-4">Campaign</th>
+                      <th className="py-2 px-2 text-right">Recipients</th>
+                      <th className="py-2 px-2 text-right">Delivered</th>
+                      <th className="py-2 px-2 text-right">Opened</th>
+                      <th className="py-2 px-2 text-right">Clicked</th>
+                      <th className="py-2 pl-2 text-right">Apps Started</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {analytics.campaign_attribution.map(c => (
+                      <tr key={c.campaign_id} className="border-b border-gray-50">
+                        <td className="py-2 pr-4 font-medium text-gray-900">{c.campaign_name}</td>
+                        <td className="py-2 px-2 text-right">{c.recipients}</td>
+                        <td className="py-2 px-2 text-right">{c.delivered}</td>
+                        <td className="py-2 px-2 text-right">{c.opened}</td>
+                        <td className="py-2 px-2 text-right">{c.clicked}</td>
+                        <td className="py-2 pl-2 text-right">
+                          <Badge variant={c.applications_started > 0 ? 'success' : 'neutral'}>{c.applications_started}</Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-8">No sent campaigns yet.</p>
+            )}
+          </Card>
+
+          <Card className="p-5">
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">Event Performance</h3>
+            {analytics?.event_attribution?.length ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-500 border-b">
+                      <th className="py-2 pr-4">Event</th>
+                      <th className="py-2 px-2 text-right">RSVPs</th>
+                      <th className="py-2 px-2 text-right">Attended</th>
+                      <th className="py-2 pl-2 text-right">Apps After</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {analytics.event_attribution.map(e => (
+                      <tr key={e.event_id} className="border-b border-gray-50">
+                        <td className="py-2 pr-4 font-medium text-gray-900">{e.event_name}</td>
+                        <td className="py-2 px-2 text-right">{e.rsvps}</td>
+                        <td className="py-2 px-2 text-right">{e.attended}</td>
+                        <td className="py-2 pl-2 text-right">
+                          <Badge variant={e.applications_after > 0 ? 'success' : 'neutral'}>{e.applications_after}</Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-8">No events yet.</p>
+            )}
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

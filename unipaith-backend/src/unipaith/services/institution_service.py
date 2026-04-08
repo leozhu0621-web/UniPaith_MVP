@@ -20,6 +20,7 @@ from unipaith.models.institution import (
     Campaign,
     CampaignRecipient,
     Event,
+    EventRSVP,
     Institution,
     Program,
     TargetSegment,
@@ -29,12 +30,15 @@ from unipaith.models.student import StudentProfile
 from unipaith.models.workflow import Notification
 from unipaith.schemas.institution import (
     AnalyticsResponse,
+    CampaignAttribution,
     CampaignMetricsResponse,
     CreateCampaignRequest,
     CreateInstitutionRequest,
     CreateProgramRequest,
     CreateSegmentRequest,
     DashboardSummaryResponse,
+    EventAttribution,
+    FunnelStage,
     MonthlyApplicationCount,
     PaginatedResponse,
     ProgramApplicationCount,
@@ -553,6 +557,114 @@ class InstitutionService:
             MonthlyApplicationCount(month=row[0], count=row[1]) for row in month_result.all()
         ]
 
+        # --- Funnel: cumulative stage counting ---
+        stage_order = [
+            "submitted", "under_review", "interview", "decision_made",
+        ]
+        funnel: list[FunnelStage] = []
+        prev_count = total_apps
+        for stage in stage_order:
+            stage_count = apps_by_status.get(stage, 0)
+            rate = (
+                stage_count / prev_count
+                if prev_count > 0 and funnel
+                else None
+            )
+            funnel.append(FunnelStage(
+                stage=stage,
+                count=stage_count,
+                conversion_rate=rate,
+            ))
+            if stage_count > 0:
+                prev_count = stage_count
+
+        # --- Campaign attribution ---
+        campaign_attr: list[CampaignAttribution] = []
+        sent_campaigns = await self.db.execute(
+            select(Campaign).where(
+                Campaign.institution_id == institution_id,
+                Campaign.status == "sent",
+            )
+        )
+        for camp in sent_campaigns.scalars().all():
+            metrics = await self.db.execute(
+                select(
+                    func.count().label("total"),
+                    func.count().filter(
+                        CampaignRecipient.delivered_at.isnot(None),
+                    ).label("delivered"),
+                    func.count().filter(
+                        CampaignRecipient.opened_at.isnot(None),
+                    ).label("opened"),
+                    func.count().filter(
+                        CampaignRecipient.clicked_at.isnot(None),
+                    ).label("clicked"),
+                ).where(CampaignRecipient.campaign_id == camp.id)
+            )
+            m = metrics.one()
+            # Count recipients who also applied
+            app_count = await self.db.scalar(
+                select(func.count(Application.id.distinct()))
+                .select_from(Application)
+                .join(
+                    CampaignRecipient,
+                    CampaignRecipient.student_id
+                    == Application.student_id,
+                )
+                .where(
+                    CampaignRecipient.campaign_id == camp.id,
+                    Application.status != "draft",
+                )
+            ) or 0
+            campaign_attr.append(CampaignAttribution(
+                campaign_id=camp.id,
+                campaign_name=camp.campaign_name,
+                recipients=m.total,
+                delivered=m.delivered,
+                opened=m.opened,
+                clicked=m.clicked,
+                applications_started=app_count,
+            ))
+
+        # --- Event attribution ---
+        event_attr: list[EventAttribution] = []
+        events = await self.db.execute(
+            select(Event).where(
+                Event.institution_id == institution_id,
+            )
+        )
+        for evt in events.scalars().all():
+            rsvp_count = await self.db.scalar(
+                select(func.count()).select_from(EventRSVP).where(
+                    EventRSVP.event_id == evt.id,
+                )
+            ) or 0
+            attended_count = await self.db.scalar(
+                select(func.count()).select_from(EventRSVP).where(
+                    EventRSVP.event_id == evt.id,
+                    EventRSVP.attended_at.isnot(None),
+                )
+            ) or 0
+            apps_after = await self.db.scalar(
+                select(func.count(Application.id.distinct()))
+                .select_from(Application)
+                .join(
+                    EventRSVP,
+                    EventRSVP.student_id == Application.student_id,
+                )
+                .where(
+                    EventRSVP.event_id == evt.id,
+                    Application.status != "draft",
+                )
+            ) or 0
+            event_attr.append(EventAttribution(
+                event_id=evt.id,
+                event_name=evt.event_name,
+                rsvps=rsvp_count,
+                attended=attended_count,
+                applications_after=apps_after,
+            ))
+
         return AnalyticsResponse(
             total_applications=total_apps,
             acceptance_rate=acceptance_rate,
@@ -562,6 +674,9 @@ class InstitutionService:
             apps_by_program=apps_by_program,
             apps_by_month=apps_by_month,
             decisions_breakdown=decisions_breakdown,
+            funnel_stages=funnel,
+            campaign_attribution=campaign_attr,
+            event_attribution=event_attr,
         )
 
     # --- Campaigns ---

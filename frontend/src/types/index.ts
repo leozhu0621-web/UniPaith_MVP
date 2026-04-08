@@ -608,6 +608,30 @@ export interface MonthlyApplicationCount {
   count: number
 }
 
+export interface FunnelStage {
+  stage: string
+  count: number
+  conversion_rate: number | null
+}
+
+export interface CampaignAttributionData {
+  campaign_id: string
+  campaign_name: string
+  recipients: number
+  delivered: number
+  opened: number
+  clicked: number
+  applications_started: number
+}
+
+export interface EventAttributionData {
+  event_id: string
+  event_name: string
+  rsvps: number
+  attended: number
+  applications_after: number
+}
+
 export interface AnalyticsData {
   total_applications: number
   acceptance_rate: number | null
@@ -617,6 +641,9 @@ export interface AnalyticsData {
   apps_by_program: ProgramApplicationCount[]
   apps_by_month: MonthlyApplicationCount[]
   decisions_breakdown: Record<string, number>
+  funnel_stages: FunnelStage[] | null
+  campaign_attribution: CampaignAttributionData[] | null
+  event_attribution: EventAttributionData[] | null
 }
 
 // ============ CAMPAIGNS ============
