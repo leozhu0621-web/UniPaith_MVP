@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Megaphone, Plus, Send, Edit2, Trash2, BarChart3, Clock } from 'lucide-react'
+import { Megaphone, Plus, Send, Edit2, Trash2, BarChart3, Clock, Users } from 'lucide-react'
 import {
   getCampaigns, createCampaign, updateCampaign, deleteCampaign,
   sendCampaign, getCampaignMetrics, getSegments, getInstitutionPrograms,
+  previewCampaignAudience,
 } from '../../api/institutions'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -40,6 +41,9 @@ export default function CampaignsPage() {
   const [editTarget, setEditTarget] = useState<Campaign | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Campaign | null>(null)
   const [metricsTarget, setMetricsTarget] = useState<string | null>(null)
+  const [sendTarget, setSendTarget] = useState<Campaign | null>(null)
+  const [audienceCount, setAudienceCount] = useState<number | null>(null)
+  const [audienceLoading, setAudienceLoading] = useState(false)
 
   // Form state
   const [campaignName, setCampaignName] = useState('')
@@ -141,9 +145,25 @@ export default function CampaignsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] })
       showToast('Campaign sent!', 'success')
+      setSendTarget(null)
+      setAudienceCount(null)
     },
     onError: () => showToast('Failed to send campaign', 'error'),
   })
+
+  const openSendConfirm = async (c: Campaign) => {
+    setSendTarget(c)
+    setAudienceCount(null)
+    setAudienceLoading(true)
+    try {
+      const preview = await previewCampaignAudience(c.id)
+      setAudienceCount(preview.audience_count)
+    } catch {
+      setAudienceCount(0)
+    } finally {
+      setAudienceLoading(false)
+    }
+  }
 
   const handleSubmit = () => {
     if (!campaignName.trim()) { showToast('Name is required', 'warning'); return }
@@ -247,7 +267,7 @@ export default function CampaignsPage() {
                       <Button variant="ghost" size="sm" onClick={() => openEdit(c)} className="flex items-center gap-1">
                         <Edit2 size={14} /> Edit
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => sendMut.mutate(c.id)} disabled={sendMut.isPending}
+                      <Button variant="ghost" size="sm" onClick={() => openSendConfirm(c)}
                         className="flex items-center gap-1 text-green-600">
                         <Send size={14} /> Send
                       </Button>
@@ -343,6 +363,48 @@ export default function CampaignsPage() {
             ))}
           </div>
         )}
+      </Modal>
+
+      {/* Send Confirmation */}
+      <Modal isOpen={!!sendTarget} onClose={() => { setSendTarget(null); setAudienceCount(null) }} title="Send Campaign">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            You are about to send <strong>{sendTarget?.campaign_name}</strong>.
+          </p>
+          {sendTarget?.segment_id && (
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Users size={14} />
+              Segment: <strong>{segments.find(s => s.id === sendTarget.segment_id)?.segment_name ?? 'Unknown'}</strong>
+            </div>
+          )}
+          <div className="bg-gray-50 rounded-lg p-4 text-center">
+            {audienceLoading ? (
+              <p className="text-sm text-gray-500 animate-pulse">Calculating audience...</p>
+            ) : (
+              <>
+                <p className="text-3xl font-bold text-gray-900">{audienceCount ?? 0}</p>
+                <p className="text-sm text-gray-500">
+                  {audienceCount === 0 ? 'No recipients found' : audienceCount === 1 ? 'recipient' : 'recipients'}
+                </p>
+              </>
+            )}
+          </div>
+          {audienceCount === 0 && !audienceLoading && (
+            <p className="text-xs text-amber-600">
+              No students match this campaign's targeting. Try attaching a segment or checking that programs have applicants.
+            </p>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => { setSendTarget(null); setAudienceCount(null) }}>Cancel</Button>
+            <Button
+              onClick={() => sendTarget && sendMut.mutate(sendTarget.id)}
+              disabled={sendMut.isPending || audienceLoading || audienceCount === 0}
+              className="flex items-center gap-2"
+            >
+              <Send size={14} /> {sendMut.isPending ? 'Sending...' : `Send to ${audienceCount ?? 0} recipients`}
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   )

@@ -158,6 +158,16 @@ export async function getCampaignMetrics(campaignId: string): Promise<CampaignMe
   return data
 }
 
+export async function previewCampaignAudience(campaignId: string): Promise<{ campaign_id: string; audience_count: number }> {
+  const { data } = await apiClient.get(`/institutions/me/campaigns/${campaignId}/audience`)
+  return data
+}
+
+export async function previewSegmentAudience(segmentId: string): Promise<{ segment_id: string; audience_count: number }> {
+  const { data } = await apiClient.get(`/institutions/me/segments/${segmentId}/preview`)
+  return data
+}
+
 export async function chatInstitutionAssistant(message: string, contextProgramId?: string): Promise<{ reply: string; model: string; provider: string }> {
   const { data } = await apiClient.post('/institutions/me/assistant/chat', {
     message,

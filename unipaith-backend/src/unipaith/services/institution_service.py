@@ -517,6 +517,29 @@ class InstitutionService:
         await self.db.delete(campaign)
         await self.db.flush()
 
+    async def preview_campaign_audience(
+        self, institution_id: UUID, campaign_id: UUID,
+    ) -> int:
+        """Return the number of students that would receive this campaign."""
+        campaign = await self._verify_campaign_ownership(institution_id, campaign_id)
+        if campaign.segment_id:
+            student_ids = await self.resolve_segment_members(
+                institution_id, campaign.segment_id,
+            )
+            return len(student_ids)
+        # No segment — count all non-draft applicants for the campaign's program(s)
+        programs = await self.list_programs(institution_id)
+        program_ids = [campaign.program_id] if campaign.program_id else [p.id for p in programs]
+        if not program_ids:
+            return 0
+        result = await self.db.execute(
+            select(func.count(Application.student_id.distinct())).where(
+                Application.program_id.in_(program_ids),
+                Application.status != "draft",
+            )
+        )
+        return result.scalar_one() or 0
+
     async def send_campaign(self, institution_id: UUID, campaign_id: UUID) -> Campaign:
         campaign = await self._verify_campaign_ownership(institution_id, campaign_id)
         if campaign.status == "sent":

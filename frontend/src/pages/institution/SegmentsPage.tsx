@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Layers, Plus, Edit2, Trash2, ToggleLeft, ToggleRight } from 'lucide-react'
-import { getSegments, createSegment, updateSegment, deleteSegment, getInstitutionPrograms } from '../../api/institutions'
+import { getSegments, createSegment, updateSegment, deleteSegment, getInstitutionPrograms, previewSegmentAudience } from '../../api/institutions'
 import InstitutionPageHeader from '../../components/institution/InstitutionPageHeader'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -48,6 +48,14 @@ export default function SegmentsPage() {
   const [criteriaText, setCriteriaText] = useState('{}')
   const [templateKey, setTemplateKey] = useState('')
   const [isActive, setIsActive] = useState(true)
+  const [audienceCounts, setAudienceCounts] = useState<Record<string, number>>({})
+
+  const loadAudienceCount = async (segId: string) => {
+    try {
+      const res = await previewSegmentAudience(segId)
+      setAudienceCounts(prev => ({ ...prev, [segId]: res.audience_count }))
+    } catch { /* ignore */ }
+  }
 
   const segmentsQ = useQuery({ queryKey: ['segments'], queryFn: getSegments })
   const segments: Segment[] = Array.isArray(segmentsQ.data) ? segmentsQ.data : []
@@ -160,7 +168,17 @@ export default function SegmentsPage() {
                     {seg.is_active ? 'Active' : 'Inactive'}
                   </Badge>
                 </div>
-                <p className="text-xs text-gray-400 mb-3">Created {formatDate(seg.created_at)}</p>
+                <p className="text-xs text-gray-400 mb-2">Created {formatDate(seg.created_at)}</p>
+                <div className="flex items-center gap-2 mb-3 text-sm">
+                  <span className="text-gray-500">Audience:</span>
+                  {audienceCounts[seg.id] != null ? (
+                    <span className="font-semibold text-gray-900">{audienceCounts[seg.id]} students</span>
+                  ) : (
+                    <button onClick={() => loadAudienceCount(seg.id)} className="text-indigo-600 hover:underline text-xs">
+                      Preview
+                    </button>
+                  )}
+                </div>
                 {seg.criteria && (
                   <pre className="text-xs bg-gray-50 rounded p-2 mb-3 max-h-24 overflow-auto text-gray-600">
                     {JSON.stringify(seg.criteria, null, 2)}

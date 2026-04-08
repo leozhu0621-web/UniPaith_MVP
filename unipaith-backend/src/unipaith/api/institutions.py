@@ -294,6 +294,32 @@ async def delete_campaign(
     await svc.delete_campaign(inst.id, campaign_id)
 
 
+@router.get("/me/segments/{segment_id}/preview")
+async def preview_segment_audience(
+    segment_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Preview how many students match this segment's criteria."""
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    student_ids = await svc.resolve_segment_members(inst.id, segment_id)
+    return {"segment_id": str(segment_id), "audience_count": len(student_ids)}
+
+
+@router.get("/me/campaigns/{campaign_id}/audience")
+async def preview_campaign_audience(
+    campaign_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Preview the audience that will receive this campaign when sent."""
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    count = await svc.preview_campaign_audience(inst.id, campaign_id)
+    return {"campaign_id": str(campaign_id), "audience_count": count}
+
+
 @router.post("/me/campaigns/{campaign_id}/send", response_model=CampaignResponse)
 async def send_campaign(
     campaign_id: UUID,
