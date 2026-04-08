@@ -311,3 +311,55 @@ class CampaignMetricsResponse(BaseModel):
     opened: int
     clicked: int
     responded: int
+
+
+# --- Datasets ---
+
+
+class CreateDatasetRequest(BaseModel):
+    dataset_name: str = Field(min_length=1, max_length=255)
+    dataset_type: Literal["admissions_history", "prospect_list", "outcomes_summary"]
+    description: str | None = None
+    file_name: str = Field(min_length=1)
+    content_type: str = "text/csv"
+    file_size_bytes: int | None = None
+    usage_scope: Literal["marketing", "analytics", "admissions", "all"] | None = None
+
+
+class UpdateDatasetRequest(BaseModel):
+    dataset_name: str | None = Field(None, min_length=1, max_length=255)
+    description: str | None = None
+    column_mapping: dict | None = None
+    usage_scope: str | None = None
+    status: Literal["pending", "validated", "active", "archived"] | None = None
+
+
+class DatasetResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    institution_id: UUID
+    dataset_name: str
+    dataset_type: str
+    description: str | None
+    file_name: str
+    file_size_bytes: int | None
+    row_count: int | None
+    column_mapping: dict | None
+    validation_errors: list | dict | None = None
+    status: str
+    usage_scope: str | None
+    version: int
+    created_at: datetime
+    updated_at: datetime
+    download_url: str | None = None
+
+
+class DatasetUploadResponse(BaseModel):
+    dataset_id: UUID
+    upload_url: str
+
+
+class DatasetPreviewResponse(BaseModel):
+    columns: list[str]
+    rows: list[dict]
+    total_rows: int

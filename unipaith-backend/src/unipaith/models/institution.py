@@ -69,6 +69,9 @@ class Institution(Base):
     reviewers: Mapped[list[Reviewer]] = relationship(
         back_populates="institution", cascade="all, delete-orphan"
     )
+    datasets: Mapped[list[InstitutionDataset]] = relationship(
+        back_populates="institution", cascade="all, delete-orphan"
+    )
 
 
 class Program(Base):
@@ -263,3 +266,35 @@ class Reviewer(Base):
     )
 
     institution: Mapped[Institution] = relationship(back_populates="reviewers")
+
+
+class InstitutionDataset(Base):
+    __tablename__ = "institution_datasets"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    institution_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False
+    )
+    dataset_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    dataset_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    s3_key: Mapped[str] = mapped_column(String(1000), nullable=False)
+    file_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    file_size_bytes: Mapped[int | None] = mapped_column(Integer)
+    row_count: Mapped[int | None] = mapped_column(Integer)
+    column_mapping: Mapped[dict | None] = mapped_column(JSONB)
+    validation_errors: Mapped[dict | None] = mapped_column(JSONB)
+    status: Mapped[str] = mapped_column(String(20), default="pending")
+    usage_scope: Mapped[str | None] = mapped_column(String(50))
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    uploaded_by: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    institution: Mapped[Institution] = relationship(back_populates="datasets")

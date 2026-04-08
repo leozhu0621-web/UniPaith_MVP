@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import uuid
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -9,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from unipaith.ai.jobs import on_program_updated
+from unipaith.config import settings
 from unipaith.core.exceptions import (
     BadRequestException,
     ConflictException,
@@ -22,6 +24,7 @@ from unipaith.models.institution import (
     Event,
     EventRSVP,
     Institution,
+    InstitutionDataset,
     Program,
     TargetSegment,
 )
@@ -33,10 +36,14 @@ from unipaith.schemas.institution import (
     CampaignAttribution,
     CampaignMetricsResponse,
     CreateCampaignRequest,
+    CreateDatasetRequest,
     CreateInstitutionRequest,
     CreateProgramRequest,
     CreateSegmentRequest,
     DashboardSummaryResponse,
+    DatasetPreviewResponse,
+    DatasetResponse,
+    DatasetUploadResponse,
     EventAttribution,
     FunnelStage,
     MonthlyApplicationCount,
@@ -44,6 +51,7 @@ from unipaith.schemas.institution import (
     ProgramApplicationCount,
     ProgramSummaryResponse,
     UpdateCampaignRequest,
+    UpdateDatasetRequest,
     UpdateInstitutionRequest,
     UpdateProgramRequest,
     UpdateSegmentRequest,
@@ -867,6 +875,132 @@ class InstitutionService:
         if not campaign:
             raise NotFoundException("Campaign not found")
         return campaign
+
+    # --- Datasets ---
+
+    async def list_datasets(self, institution_id: UUID) -> list[InstitutionDataset]:
+        result = await self.db.execute(
+            select(InstitutionDataset)
+            .where(InstitutionDataset.institution_id == institution_id)
+            .order_by(InstitutionDataset.created_at.desc())
+        )
+        return list(result.scalars().all())
+
+    async def request_dataset_upload(
+        self, institution_id: UUID, user_id: UUID, data: CreateDatasetRequest,
+    ) -> DatasetUploadResponse:
+        from unipaith.core.s3 import S3Client
+
+        s3_key = f"datasets/{institution_id}/{uuid.uuid4()}/{data.file_name}"
+        s3 = S3Client()
+        upload_url = s3.generate_upload_url(s3_key, data.content_type)
+
+        dataset = InstitutionDataset(
+            institution_id=institution_id,
+            dataset_name=data.dataset_name,
+            dataset_type=data.dataset_type,
+            description=data.description,
+            s3_key=s3_key,
+            file_name=data.file_name,
+            file_size_bytes=data.file_size_bytes,
+            usage_scope=data.usage_scope,
+            status="pending",
+            uploaded_by=user_id,
+        )
+        self.db.add(dataset)
+        await self.db.flush()
+        await self.db.refresh(dataset)
+        return DatasetUploadResponse(dataset_id=dataset.id, upload_url=upload_url)
+
+    async def confirm_dataset_upload(
+        self, institution_id: UUID, dataset_id: UUID,
+    ) -> InstitutionDataset:
+        dataset = await self._verify_dataset_ownership(institution_id, dataset_id)
+        dataset.status = "validated"
+        await self.db.flush()
+        await self.db.refresh(dataset)
+        return dataset
+
+    async def get_dataset(self, institution_id: UUID, dataset_id: UUID) -> DatasetResponse:
+        dataset = await self._verify_dataset_ownership(institution_id, dataset_id)
+        from unipaith.core.s3 import S3Client
+
+        s3 = S3Client()
+        download_url = s3.generate_download_url(dataset.s3_key)
+        resp = DatasetResponse.model_validate(dataset)
+        resp.download_url = download_url
+        return resp
+
+    async def get_dataset_preview(
+        self, institution_id: UUID, dataset_id: UUID,
+    ) -> DatasetPreviewResponse:
+        dataset = await self._verify_dataset_ownership(institution_id, dataset_id)
+        import csv
+        import io
+
+        # Read file from S3 (or local)
+        if settings.s3_local_mode:
+            from pathlib import Path
+
+            local_path = Path(settings.s3_local_path) / dataset.s3_key
+            if not local_path.exists():
+                return DatasetPreviewResponse(columns=[], rows=[], total_rows=0)
+            content = local_path.read_text(encoding="utf-8")
+        else:
+            import boto3
+
+            client = boto3.client("s3", region_name=settings.aws_region)
+            obj = client.get_object(Bucket=settings.s3_bucket_name, Key=dataset.s3_key)
+            content = obj["Body"].read().decode("utf-8")
+
+        reader = csv.DictReader(io.StringIO(content))
+        columns = reader.fieldnames or []
+        rows = []
+        total = 0
+        for row in reader:
+            total += 1
+            if len(rows) < 10:
+                rows.append(dict(row))
+
+        # Update row_count if not set
+        if dataset.row_count is None:
+            dataset.row_count = total
+            await self.db.flush()
+
+        return DatasetPreviewResponse(columns=list(columns), rows=rows, total_rows=total)
+
+    async def update_dataset(
+        self, institution_id: UUID, dataset_id: UUID, data: UpdateDatasetRequest,
+    ) -> InstitutionDataset:
+        dataset = await self._verify_dataset_ownership(institution_id, dataset_id)
+        update_data = data.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(dataset, key, value)
+        await self.db.flush()
+        await self.db.refresh(dataset)
+        return dataset
+
+    async def delete_dataset(self, institution_id: UUID, dataset_id: UUID) -> None:
+        dataset = await self._verify_dataset_ownership(institution_id, dataset_id)
+        from unipaith.core.s3 import S3Client
+
+        S3Client().delete_object(dataset.s3_key)
+        await self.db.delete(dataset)
+        await self.db.flush()
+
+    async def _verify_dataset_ownership(
+        self, institution_id: UUID, dataset_id: UUID,
+    ) -> InstitutionDataset:
+        result = await self.db.execute(
+            select(InstitutionDataset).where(
+                InstitutionDataset.id == dataset_id,
+                InstitutionDataset.institution_id == institution_id,
+            )
+        )
+        dataset = result.scalar_one_or_none()
+        if not dataset:
+            raise NotFoundException("Dataset not found")
+        return dataset
 
     # --- Public Program Browsing ---
 

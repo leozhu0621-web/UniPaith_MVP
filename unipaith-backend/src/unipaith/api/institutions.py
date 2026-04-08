@@ -14,14 +14,18 @@ from unipaith.schemas.institution import (
     CampaignMetricsResponse,
     CampaignResponse,
     CreateCampaignRequest,
+    CreateDatasetRequest,
     CreateInstitutionRequest,
     CreateProgramRequest,
     CreateSegmentRequest,
     DashboardSummaryResponse,
+    DatasetResponse,
+    DatasetUploadResponse,
     InstitutionResponse,
     ProgramResponse,
     SegmentResponse,
     UpdateCampaignRequest,
+    UpdateDatasetRequest,
     UpdateInstitutionRequest,
     UpdateProgramRequest,
     UpdateSegmentRequest,
@@ -378,6 +382,89 @@ async def institution_assistant_chat(
     llm = get_llm_client()
     reply = await llm.generate_reasoning(system_prompt=system_prompt, user_content=user_prompt)
     return InstitutionAssistantChatResponse(reply=reply, model=settings.llm_reasoning_model)
+
+
+# --- Datasets ---
+
+
+@router.post("/me/datasets/upload", response_model=DatasetUploadResponse)
+async def request_dataset_upload(
+    body: CreateDatasetRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.request_dataset_upload(inst.id, user.id, body)
+
+
+@router.post("/me/datasets/{dataset_id}/confirm", response_model=DatasetResponse)
+async def confirm_dataset_upload(
+    dataset_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    dataset = await svc.confirm_dataset_upload(inst.id, dataset_id)
+    return DatasetResponse.model_validate(dataset)
+
+
+@router.get("/me/datasets", response_model=list[DatasetResponse])
+async def list_datasets(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    datasets = await svc.list_datasets(inst.id)
+    return [DatasetResponse.model_validate(d) for d in datasets]
+
+
+@router.get("/me/datasets/{dataset_id}", response_model=DatasetResponse)
+async def get_dataset(
+    dataset_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.get_dataset(inst.id, dataset_id)
+
+
+@router.get("/me/datasets/{dataset_id}/preview")
+async def get_dataset_preview(
+    dataset_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.get_dataset_preview(inst.id, dataset_id)
+
+
+@router.put("/me/datasets/{dataset_id}", response_model=DatasetResponse)
+async def update_dataset(
+    dataset_id: UUID,
+    body: UpdateDatasetRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    dataset = await svc.update_dataset(inst.id, dataset_id, body)
+    return DatasetResponse.model_validate(dataset)
+
+
+@router.delete("/me/datasets/{dataset_id}", status_code=204)
+async def delete_dataset(
+    dataset_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    await svc.delete_dataset(inst.id, dataset_id)
 
 
 # --- Public Profile ---
