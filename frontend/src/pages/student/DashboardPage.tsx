@@ -49,7 +49,7 @@ export default function DashboardPage() {
     <div className="p-6 max-w-3xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">Today with your admissions counselor</h1>
-        <p className="text-sm text-stone-500 mt-1">What matters now, what is next, and what can wait.</p>
+        <p className="text-sm text-gray-500 mt-1">What matters now, what is next, and what can wait.</p>
       </div>
 
       {(matchesError || deadlinesError) && (
@@ -66,10 +66,10 @@ export default function DashboardPage() {
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-2">
-              <ShieldCheck size={17} className="text-stone-700" />
-              <h2 className="font-semibold text-stone-800">Counselor Brief</h2>
+              <ShieldCheck size={17} className="text-brand-slate-600" />
+              <h2 className="font-semibold text-brand-slate-700">Counselor Brief</h2>
             </div>
-            <p className="text-sm text-stone-700">
+            <p className="text-sm text-brand-slate-600">
               {nextStep?.guidance_text
                 ? `You are on track. The best step right now is: ${nextStep.guidance_text}`
                 : 'You are in a stable place. Continue your current plan and we will refine it together.'}
@@ -86,8 +86,8 @@ export default function DashboardPage() {
         <Card className="p-5">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-2">
-              <User size={18} className="text-stone-600" />
-              <h2 className="font-semibold text-stone-800">Profile Completion</h2>
+              <User size={18} className="text-gray-600" />
+              <h2 className="font-semibold text-brand-slate-700">Profile Completion</h2>
             </div>
             <Button size="sm" variant="secondary" onClick={() => navigate('/s/profile')}>
               Complete Profile <ArrowRight size={14} className="ml-1" />
@@ -97,7 +97,7 @@ export default function DashboardPage() {
             <Skeleton className="h-6" />
           ) : (
             <>
-              <p className="text-sm text-stone-600 mb-2">
+              <p className="text-sm text-gray-600 mb-2">
                 {completionPct < 30 ? 'Getting started' : completionPct < 60 ? 'Building momentum' : completionPct < 80 ? 'Almost there' : 'Looking strong'}
               </p>
               <ProgressBar value={completionPct} />
@@ -113,20 +113,20 @@ export default function DashboardPage() {
 
       {/* Summary stats row */}
       <div className="grid grid-cols-3 gap-4">
-        <Card className="p-4 text-center cursor-pointer hover:bg-stone-50" onClick={() => navigate('/s/discover')}>
+        <Card className="p-4 text-center cursor-pointer hover:bg-gray-50" onClick={() => navigate('/s/discover')}>
           <Sparkles size={20} className="mx-auto text-purple-500 mb-1" />
           <p className="text-2xl font-bold">{matchCount}</p>
-          <p className="text-xs text-stone-500">AI Matches</p>
+          <p className="text-xs text-gray-500">AI Matches</p>
         </Card>
-        <Card className="p-4 text-center cursor-pointer hover:bg-stone-50" onClick={() => navigate('/s/applications')}>
+        <Card className="p-4 text-center cursor-pointer hover:bg-gray-50" onClick={() => navigate('/s/applications')}>
           <FileText size={20} className="mx-auto text-blue-500 mb-1" />
           <p className="text-2xl font-bold">{appCount}</p>
-          <p className="text-xs text-stone-500">Applications</p>
+          <p className="text-xs text-gray-500">Applications</p>
         </Card>
-        <Card className="p-4 text-center cursor-pointer hover:bg-stone-50" onClick={() => navigate('/s/calendar')}>
+        <Card className="p-4 text-center cursor-pointer hover:bg-gray-50" onClick={() => navigate('/s/calendar')}>
           <Calendar size={20} className="mx-auto text-amber-500 mb-1" />
           <p className="text-2xl font-bold">{deadlines.length}</p>
-          <p className="text-xs text-stone-500">Deadlines</p>
+          <p className="text-xs text-gray-500">Deadlines</p>
         </Card>
       </div>
 
@@ -145,12 +145,12 @@ export default function DashboardPage() {
 
       {/* Quick Actions */}
       <Card className="p-5">
-        <h2 className="font-semibold text-stone-800 mb-4">Quick Actions</h2>
+        <h2 className="font-semibold text-brand-slate-700 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-2 gap-3">
           {completionPct < 100 && (
             <button
               onClick={() => navigate('/s/profile')}
-              className="flex items-center gap-3 p-3 rounded-lg border border-stone-100 hover:bg-stone-50 text-left"
+              className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 text-left"
             >
               <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
                 <User size={16} className="text-blue-600" />
@@ -160,7 +160,7 @@ export default function DashboardPage() {
           )}
           <button
             onClick={() => navigate('/s/discover')}
-            className="flex items-center gap-3 p-3 rounded-lg border border-stone-100 hover:bg-stone-50 text-left"
+            className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 text-left"
           >
             <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
               <Search size={16} className="text-purple-600" />
@@ -169,7 +169,7 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={() => navigate('/s/chat')}
-            className="flex items-center gap-3 p-3 rounded-lg border border-stone-100 hover:bg-stone-50 text-left"
+            className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 text-left"
           >
             <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
               <MessageSquare size={16} className="text-green-600" />
@@ -182,7 +182,7 @@ export default function DashboardPage() {
                 const draft = applicationsList.find((a: Application) => a.status === 'draft')
                 if (draft) navigate(`/s/applications/${draft.id}`)
               }}
-              className="flex items-center gap-3 p-3 rounded-lg border border-stone-100 hover:bg-stone-50 text-left"
+              className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 text-left"
             >
               <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
                 <FileText size={16} className="text-amber-600" />

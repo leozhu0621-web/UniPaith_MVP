@@ -173,12 +173,14 @@ export default function InstitutionLayout() {
   }, [])
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-institution">
       {/* Sidebar */}
       <aside className={`${sidebarWidth} flex flex-col border-r border-gray-200 bg-white transition-all duration-200`}>
         <div className="flex items-center justify-between h-14 px-4 border-b border-gray-100">
           {!sidebarCollapsed && (
-            <span className="text-lg font-bold text-indigo-600">UniPaith</span>
+            <span className="text-lg font-bold">
+              <span className="text-brand-slate-600">Uni</span><span className="text-brand-slate-800 font-extrabold">Paith</span>
+            </span>
           )}
           <button onClick={toggleSidebar} className="p-1 rounded hover:bg-gray-100">
             {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
@@ -200,7 +202,7 @@ export default function InstitutionLayout() {
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-4 py-2 mx-2 rounded-md text-sm transition-colors ${
                       isActive
-                        ? 'bg-indigo-50 text-indigo-700 font-medium'
+                        ? 'bg-brand-slate-50 text-brand-slate-700 font-medium'
                         : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     }`
                   }
@@ -219,7 +221,7 @@ export default function InstitutionLayout() {
         <header className="sticky top-0 z-10 flex items-center justify-between h-14 px-6 border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/90">
           <div className="flex items-center gap-4">
             <div className="hidden md:flex items-center gap-2">
-              <span className="px-2 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wide bg-indigo-50 text-indigo-700">
+              <span className="px-2 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wide bg-brand-slate-50 text-brand-slate-700">
                 {currentSection}
               </span>
               <span className="text-sm font-medium text-gray-700">{currentArea}</span>
@@ -298,7 +300,7 @@ export default function InstitutionLayout() {
                 }}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100"
               >
-                <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-medium text-indigo-700">
+                <div className="w-7 h-7 rounded-full bg-brand-slate-100 flex items-center justify-center text-xs font-medium text-brand-slate-700">
                   {user?.email?.charAt(0).toUpperCase()}
                 </div>
                 {!sidebarCollapsed && (

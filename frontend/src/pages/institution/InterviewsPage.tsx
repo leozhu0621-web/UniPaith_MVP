@@ -149,7 +149,7 @@ export default function InterviewsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Card className="p-3">
             <p className="text-xs text-gray-500">Confirmed</p>
-            <p className="text-xl font-semibold text-indigo-700">{confirmedCount}</p>
+            <p className="text-xl font-semibold text-brand-slate-700">{confirmedCount}</p>
           </Card>
           <Card className="p-3">
             <p className="text-xs text-gray-500">In Scheduling</p>

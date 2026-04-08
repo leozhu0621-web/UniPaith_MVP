@@ -152,7 +152,7 @@ export default function SettingsPage() {
   return (
     <div className="p-6 space-y-4 max-w-3xl">
       <div className="flex items-center gap-2">
-        <Settings size={24} className="text-indigo-600" />
+        <Settings size={24} className="text-brand-slate-600" />
         <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
       </div>
 
@@ -263,7 +263,7 @@ export default function SettingsPage() {
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" checked={emailEnabled} onChange={() => setEmailEnabled(!emailEnabled)} className="sr-only peer" />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-brand-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-slate-600"></div>
                 </label>
               </div>
 
@@ -275,7 +275,7 @@ export default function SettingsPage() {
                     <p className="text-sm text-gray-700 capitalize">{key.replace(/_/g, ' ')}</p>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" checked={enabled} onChange={() => togglePref(key)} className="sr-only peer" />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-brand-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-slate-600"></div>
                     </label>
                   </div>
                 ))

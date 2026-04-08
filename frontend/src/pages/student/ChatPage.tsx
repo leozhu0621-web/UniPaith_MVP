@@ -134,16 +134,16 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Header with context indicator */}
-      <div className="px-6 py-3 border-b border-stone-200 bg-white flex items-center justify-between">
+      <div className="px-6 py-3 border-b border-gray-200 bg-white flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-semibold">Your Admission Counselor</h1>
           <Sparkles size={16} className="text-amber-500" />
         </div>
-        <div className="flex items-center gap-3 text-xs text-stone-500">
+        <div className="flex items-center gap-3 text-xs text-gray-500">
           <span>Profile: {completionPct}%</span>
-          <span className="w-px h-3 bg-stone-300" />
+          <span className="w-px h-3 bg-gray-300" />
           <span>{matchCount} matches</span>
-          <span className="w-px h-3 bg-stone-300" />
+          <span className="w-px h-3 bg-gray-300" />
           <span>{appCount} apps</span>
         </div>
       </div>
@@ -161,16 +161,16 @@ export default function ChatPage() {
           </div>
         ) : messageList.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center mb-4">
+            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
               <Sparkles size={28} className="text-amber-500" />
             </div>
-            <h2 className="text-lg font-medium text-stone-700">You are not doing this alone.</h2>
-            <p className="text-sm text-stone-500 mt-1 max-w-md">
+            <h2 className="text-lg font-medium text-brand-slate-600">You are not doing this alone.</h2>
+            <p className="text-sm text-gray-500 mt-1 max-w-md">
               I am your counselor-style AI guide. I will help you prioritize calmly,
               explain options clearly, and turn uncertainty into next steps.
             </p>
-            <div className="mt-3 flex items-center gap-2 text-xs text-stone-500 bg-stone-100 rounded-full px-3 py-1">
-              <ShieldCheck size={13} className="text-stone-600" />
+            <div className="mt-3 flex items-center gap-2 text-xs text-gray-500 bg-gray-100 rounded-full px-3 py-1">
+              <ShieldCheck size={13} className="text-gray-600" />
               Recommendations include explanation and confidence context.
             </div>
           </div>
@@ -187,12 +187,12 @@ export default function ChatPage() {
                   <div>
                     <div className={`px-4 py-2 rounded-2xl text-sm whitespace-pre-wrap ${
                       isOwn
-                        ? 'bg-stone-800 text-white rounded-br-md'
-                        : 'bg-white shadow-sm text-stone-800 rounded-bl-md'
+                        ? 'bg-brand-slate-700 text-white rounded-br-md'
+                        : 'bg-white shadow-sm text-brand-slate-700 rounded-bl-md'
                     }`}>
                       {msg.message_body}
                     </div>
-                    <p className="text-[10px] text-stone-400 mt-1 px-1">
+                    <p className="text-[10px] text-gray-400 mt-1 px-1">
                       {formatRelative(msg.sent_at)}
                     </p>
                   </div>
@@ -204,7 +204,7 @@ export default function ChatPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="px-6 py-3 border-t border-stone-200 bg-white">
+      <div className="px-6 py-3 border-t border-gray-200 bg-white">
         <div className="flex items-end gap-2">
           <textarea
             value={input}
@@ -212,12 +212,12 @@ export default function ChatPage() {
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
             rows={1}
-            className="flex-1 resize-none border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-stone-800"
+            className="flex-1 resize-none border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-slate-700"
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || sendMut.isPending}
-            className="p-2 bg-stone-800 text-white rounded-lg hover:bg-stone-700 disabled:opacity-50"
+            className="p-2 bg-brand-slate-700 text-white rounded-lg hover:bg-brand-slate-600 disabled:opacity-50"
           >
             <ArrowUp size={18} />
           </button>
@@ -232,7 +232,7 @@ export default function ChatPage() {
             <button
               key={i}
               onClick={() => handleQuickAction(qa.action)}
-              className="px-3 py-1 text-xs bg-stone-100 text-stone-600 rounded-full hover:bg-stone-200 whitespace-nowrap flex-shrink-0"
+              className="px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 whitespace-nowrap flex-shrink-0"
             >
               {qa.label}
             </button>

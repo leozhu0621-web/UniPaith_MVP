@@ -37,7 +37,7 @@ function StrengthRing({ value }: { value: number }) {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-2xl font-bold">{value}%</span>
-        <span className="text-[10px] text-stone-500">Complete</span>
+        <span className="text-[10px] text-gray-500">Complete</span>
       </div>
     </div>
   )
@@ -133,16 +133,16 @@ export default function ProfilePage() {
         <div className="flex items-center gap-6">
           <StrengthRing value={completionPct} />
           <div className="flex-1 min-w-0">
-            <h2 className="font-semibold text-stone-800 mb-2">Profile Strength</h2>
+            <h2 className="font-semibold text-brand-slate-700 mb-2">Profile Strength</h2>
             <div className="grid grid-cols-2 gap-1.5">
               {PROFILE_SECTIONS.map(s => (
                 <div key={s.key} className="flex items-center gap-2 text-sm">
                   {sectionDone(s.key) ? (
                     <CheckCircle2 size={14} className="text-green-500 flex-shrink-0" />
                   ) : (
-                    <Circle size={14} className="text-stone-300 flex-shrink-0" />
+                    <Circle size={14} className="text-gray-300 flex-shrink-0" />
                   )}
-                  <span className={sectionDone(s.key) ? 'text-stone-500' : 'text-stone-800'}>{s.label}</span>
+                  <span className={sectionDone(s.key) ? 'text-gray-500' : 'text-brand-slate-700'}>{s.label}</span>
                 </div>
               ))}
             </div>
@@ -161,33 +161,33 @@ export default function ProfilePage() {
       {/* Basic Info */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
-          <h2 className="font-semibold text-stone-800">Basic Info</h2>
+          <h2 className="font-semibold text-brand-slate-700">Basic Info</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(p); setEditModal('basic') }}><Pencil size={14} /></Button>
         </div>
         <dl className="grid grid-cols-2 gap-2 text-sm">
-          <div><dt className="text-stone-500">Name</dt><dd>{p?.first_name ?? '—'} {p?.last_name ?? ''}</dd></div>
-          <div><dt className="text-stone-500">Nationality</dt><dd>{p?.nationality ?? '—'}</dd></div>
-          <div><dt className="text-stone-500">Residence</dt><dd>{p?.country_of_residence ?? '—'}</dd></div>
-          <div><dt className="text-stone-500">DOB</dt><dd>{formatDate(p?.date_of_birth)}</dd></div>
+          <div><dt className="text-gray-500">Name</dt><dd>{p?.first_name ?? '—'} {p?.last_name ?? ''}</dd></div>
+          <div><dt className="text-gray-500">Nationality</dt><dd>{p?.nationality ?? '—'}</dd></div>
+          <div><dt className="text-gray-500">Residence</dt><dd>{p?.country_of_residence ?? '—'}</dd></div>
+          <div><dt className="text-gray-500">DOB</dt><dd>{formatDate(p?.date_of_birth)}</dd></div>
         </dl>
-        {p?.bio_text && <p className="mt-3 text-sm text-stone-600">{p.bio_text}</p>}
+        {p?.bio_text && <p className="mt-3 text-sm text-gray-600">{p.bio_text}</p>}
       </Card>
 
       {/* Academic Records */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
-          <h2 className="font-semibold text-stone-800">Academic Records</h2>
+          <h2 className="font-semibold text-brand-slate-700">Academic Records</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('academic') }}><Plus size={14} /></Button>
         </div>
         {(p?.academic_records ?? []).length === 0 ? (
-          <p className="text-sm text-stone-500">No academic records yet</p>
+          <p className="text-sm text-gray-500">No academic records yet</p>
         ) : (
           <div className="space-y-3">
             {p!.academic_records.map(rec => (
-              <div key={rec.id} className="flex justify-between items-start border-b border-stone-100 pb-3 last:border-0">
+              <div key={rec.id} className="flex justify-between items-start border-b border-gray-100 pb-3 last:border-0">
                 <div>
                   <p className="font-medium text-sm">{rec.institution_name} — {DEGREE_LABELS[rec.degree_type] || rec.degree_type} {rec.field_of_study || ''}</p>
-                  <p className="text-xs text-stone-500">GPA: {rec.gpa ?? '—'}/{rec.gpa_scale ?? '4.0'} | {rec.start_date?.slice(0, 4)}-{rec.is_current ? 'Present' : rec.end_date?.slice(0, 4)}</p>
+                  <p className="text-xs text-gray-500">GPA: {rec.gpa ?? '—'}/{rec.gpa_scale ?? '4.0'} | {rec.start_date?.slice(0, 4)}-{rec.is_current ? 'Present' : rec.end_date?.slice(0, 4)}</p>
                 </div>
                 <div className="flex gap-1">
                   <Button size="sm" variant="ghost" onClick={() => { setEditItem(rec); setEditModal('academic') }}><Pencil size={12} /></Button>
@@ -202,19 +202,19 @@ export default function ProfilePage() {
       {/* Test Scores */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
-          <h2 className="font-semibold text-stone-800">Test Scores</h2>
+          <h2 className="font-semibold text-brand-slate-700">Test Scores</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('test') }}><Plus size={14} /></Button>
         </div>
         {(p?.test_scores ?? []).length === 0 ? (
-          <p className="text-sm text-stone-500">No test scores yet</p>
+          <p className="text-sm text-gray-500">No test scores yet</p>
         ) : (
           <div className="space-y-3">
             {p!.test_scores.map(ts => (
-              <div key={ts.id} className="flex justify-between items-start border-b border-stone-100 pb-3 last:border-0">
+              <div key={ts.id} className="flex justify-between items-start border-b border-gray-100 pb-3 last:border-0">
                 <div>
                   <p className="font-medium text-sm">{ts.test_type}: {ts.total_score ?? '—'}</p>
-                  {ts.section_scores && <p className="text-xs text-stone-500">{Object.entries(ts.section_scores).map(([k, v]) => `${k}: ${v}`).join(', ')}</p>}
-                  <p className="text-xs text-stone-400">{ts.is_official ? 'Official' : 'Self-reported'} | {formatDate(ts.test_date)}</p>
+                  {ts.section_scores && <p className="text-xs text-gray-500">{Object.entries(ts.section_scores).map(([k, v]) => `${k}: ${v}`).join(', ')}</p>}
+                  <p className="text-xs text-gray-400">{ts.is_official ? 'Official' : 'Self-reported'} | {formatDate(ts.test_date)}</p>
                 </div>
                 <div className="flex gap-1">
                   <Button size="sm" variant="ghost" onClick={() => { setEditItem(ts); setEditModal('test') }}><Pencil size={12} /></Button>
@@ -229,18 +229,18 @@ export default function ProfilePage() {
       {/* Activities */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
-          <h2 className="font-semibold text-stone-800">Activities</h2>
+          <h2 className="font-semibold text-brand-slate-700">Activities</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('activity') }}><Plus size={14} /></Button>
         </div>
         {(p?.activities ?? []).length === 0 ? (
-          <p className="text-sm text-stone-500">No activities yet</p>
+          <p className="text-sm text-gray-500">No activities yet</p>
         ) : (
           <div className="space-y-3">
             {p!.activities.map(act => (
-              <div key={act.id} className="flex justify-between items-start border-b border-stone-100 pb-3 last:border-0">
+              <div key={act.id} className="flex justify-between items-start border-b border-gray-100 pb-3 last:border-0">
                 <div>
                   <p className="font-medium text-sm">{act.title} — {act.organization ?? ''}</p>
-                  <p className="text-xs text-stone-500">{ACTIVITY_TYPES.find(t => t.value === act.activity_type)?.label} | {act.start_date?.slice(0, 7)}-{act.is_current ? 'Present' : act.end_date?.slice(0, 7) ?? ''} {act.hours_per_week ? `| ${act.hours_per_week} hrs/wk` : ''}</p>
+                  <p className="text-xs text-gray-500">{ACTIVITY_TYPES.find(t => t.value === act.activity_type)?.label} | {act.start_date?.slice(0, 7)}-{act.is_current ? 'Present' : act.end_date?.slice(0, 7) ?? ''} {act.hours_per_week ? `| ${act.hours_per_week} hrs/wk` : ''}</p>
                 </div>
                 <div className="flex gap-1">
                   <Button size="sm" variant="ghost" onClick={() => { setEditItem(act); setEditModal('activity') }}><Pencil size={12} /></Button>
@@ -255,17 +255,17 @@ export default function ProfilePage() {
       {/* Online Presence */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
-          <h2 className="font-semibold text-stone-800">Online Presence</h2>
+          <h2 className="font-semibold text-brand-slate-700">Online Presence</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('online_presence') }}><Plus size={14} /></Button>
         </div>
         {(p?.online_presence ?? []).length === 0 ? (
-          <p className="text-sm text-stone-500">Add your LinkedIn, GitHub, or portfolio links</p>
+          <p className="text-sm text-gray-500">Add your LinkedIn, GitHub, or portfolio links</p>
         ) : (
           <div className="space-y-3">
             {p!.online_presence.map(op => (
-              <div key={op.id} className="flex justify-between items-start border-b border-stone-100 pb-3 last:border-0">
+              <div key={op.id} className="flex justify-between items-start border-b border-gray-100 pb-3 last:border-0">
                 <div className="flex items-center gap-2">
-                  <ExternalLink size={14} className="text-stone-400 flex-shrink-0" />
+                  <ExternalLink size={14} className="text-gray-400 flex-shrink-0" />
                   <div>
                     <p className="font-medium text-sm">{PLATFORM_TYPES.find(t => t.value === op.platform_type)?.label || op.platform_type}</p>
                     <a href={op.url} target="_blank" rel="noopener noreferrer" className="text-xs text-sky-600 hover:underline truncate block max-w-xs">{op.display_name || op.url}</a>
@@ -284,22 +284,22 @@ export default function ProfilePage() {
       {/* Portfolio */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
-          <h2 className="font-semibold text-stone-800">Portfolio</h2>
+          <h2 className="font-semibold text-brand-slate-700">Portfolio</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('portfolio') }}><Plus size={14} /></Button>
         </div>
         {(p?.portfolio_items ?? []).length === 0 ? (
-          <p className="text-sm text-stone-500">Showcase your projects and work samples</p>
+          <p className="text-sm text-gray-500">Showcase your projects and work samples</p>
         ) : (
           <div className="space-y-3">
             {p!.portfolio_items.map(item => (
-              <div key={item.id} className="flex justify-between items-start border-b border-stone-100 pb-3 last:border-0">
+              <div key={item.id} className="flex justify-between items-start border-b border-gray-100 pb-3 last:border-0">
                 <div className="flex items-start gap-2">
-                  <FolderOpen size={14} className="text-stone-400 mt-0.5 flex-shrink-0" />
+                  <FolderOpen size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="font-medium text-sm">{item.title}</p>
-                    <p className="text-xs text-stone-500">{PORTFOLIO_ITEM_TYPES.find(t => t.value === item.item_type)?.label || item.item_type}</p>
+                    <p className="text-xs text-gray-500">{PORTFOLIO_ITEM_TYPES.find(t => t.value === item.item_type)?.label || item.item_type}</p>
                     {item.url && <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-xs text-sky-600 hover:underline truncate block max-w-xs">{item.url}</a>}
-                    {item.description && <p className="text-xs text-stone-400 mt-1 line-clamp-2">{item.description}</p>}
+                    {item.description && <p className="text-xs text-gray-400 mt-1 line-clamp-2">{item.description}</p>}
                   </div>
                 </div>
                 <div className="flex gap-1">
@@ -315,24 +315,24 @@ export default function ProfilePage() {
       {/* Research */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
-          <h2 className="font-semibold text-stone-800">Research</h2>
+          <h2 className="font-semibold text-brand-slate-700">Research</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('research') }}><Plus size={14} /></Button>
         </div>
         {(p?.research_entries ?? []).length === 0 ? (
-          <p className="text-sm text-stone-500">Add your research experience, labs, and publications</p>
+          <p className="text-sm text-gray-500">Add your research experience, labs, and publications</p>
         ) : (
           <div className="space-y-3">
             {p!.research_entries.map(r => (
-              <div key={r.id} className="flex justify-between items-start border-b border-stone-100 pb-3 last:border-0">
+              <div key={r.id} className="flex justify-between items-start border-b border-gray-100 pb-3 last:border-0">
                 <div className="flex items-start gap-2">
-                  <FlaskConical size={14} className="text-stone-400 mt-0.5 flex-shrink-0" />
+                  <FlaskConical size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="font-medium text-sm">{r.title}</p>
-                    <p className="text-xs text-stone-500">
+                    <p className="text-xs text-gray-500">
                       {RESEARCH_ROLES.find(x => x.value === r.role)?.label || r.role}
                       {r.institution_lab ? ` at ${r.institution_lab}` : ''}
                     </p>
-                    {r.field_discipline && <p className="text-xs text-stone-400">{r.field_discipline}</p>}
+                    {r.field_discipline && <p className="text-xs text-gray-400">{r.field_discipline}</p>}
                     {r.publication_link && <a href={r.publication_link} target="_blank" rel="noopener noreferrer" className="text-xs text-sky-600 hover:underline">{RESEARCH_OUTPUTS.find(x => x.value === r.outputs)?.label || 'Link'}</a>}
                   </div>
                 </div>
@@ -349,21 +349,21 @@ export default function ProfilePage() {
       {/* Languages */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
-          <h2 className="font-semibold text-stone-800">Languages</h2>
+          <h2 className="font-semibold text-brand-slate-700">Languages</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('language') }}><Plus size={14} /></Button>
         </div>
         {(p?.languages ?? []).length === 0 ? (
-          <p className="text-sm text-stone-500">Add the languages you speak and any certifications</p>
+          <p className="text-sm text-gray-500">Add the languages you speak and any certifications</p>
         ) : (
           <div className="space-y-3">
             {p!.languages.map(lang => (
-              <div key={lang.id} className="flex justify-between items-start border-b border-stone-100 pb-3 last:border-0">
+              <div key={lang.id} className="flex justify-between items-start border-b border-gray-100 pb-3 last:border-0">
                 <div className="flex items-start gap-2">
-                  <Languages size={14} className="text-stone-400 mt-0.5 flex-shrink-0" />
+                  <Languages size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="font-medium text-sm">{lang.language}</p>
-                    <p className="text-xs text-stone-500">{PROFICIENCY_LEVELS.find(x => x.value === lang.proficiency_level)?.label || lang.proficiency_level}</p>
-                    {lang.certification_type && <p className="text-xs text-stone-400">{lang.certification_type}{lang.certification_score ? `: ${lang.certification_score}` : ''}</p>}
+                    <p className="text-xs text-gray-500">{PROFICIENCY_LEVELS.find(x => x.value === lang.proficiency_level)?.label || lang.proficiency_level}</p>
+                    {lang.certification_type && <p className="text-xs text-gray-400">{lang.certification_type}{lang.certification_score ? `: ${lang.certification_score}` : ''}</p>}
                   </div>
                 </div>
                 <div className="flex gap-1">
@@ -379,29 +379,29 @@ export default function ProfilePage() {
       {/* Preferences */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
-          <h2 className="font-semibold text-stone-800">Preferences</h2>
+          <h2 className="font-semibold text-brand-slate-700">Preferences</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(p?.preferences); setEditModal('preferences') }}><Pencil size={14} /></Button>
         </div>
         {p?.preferences ? (
           <dl className="grid grid-cols-2 gap-2 text-sm">
-            <div><dt className="text-stone-500">Countries</dt><dd>{p.preferences.preferred_countries?.join(', ') || '—'}</dd></div>
-            <div><dt className="text-stone-500">Budget</dt><dd>{p.preferences.budget_min != null ? `${formatCurrency(p.preferences.budget_min)} - ${formatCurrency(p.preferences.budget_max)}` : '—'}</dd></div>
-            <div><dt className="text-stone-500">Funding</dt><dd>{p.preferences.funding_requirement ?? '—'}</dd></div>
-            <div><dt className="text-stone-500">City Size</dt><dd>{p.preferences.preferred_city_size ?? '—'}</dd></div>
+            <div><dt className="text-gray-500">Countries</dt><dd>{p.preferences.preferred_countries?.join(', ') || '—'}</dd></div>
+            <div><dt className="text-gray-500">Budget</dt><dd>{p.preferences.budget_min != null ? `${formatCurrency(p.preferences.budget_min)} - ${formatCurrency(p.preferences.budget_max)}` : '—'}</dd></div>
+            <div><dt className="text-gray-500">Funding</dt><dd>{p.preferences.funding_requirement ?? '—'}</dd></div>
+            <div><dt className="text-gray-500">City Size</dt><dd>{p.preferences.preferred_city_size ?? '—'}</dd></div>
           </dl>
         ) : (
-          <p className="text-sm text-stone-500">No preferences set yet</p>
+          <p className="text-sm text-gray-500">No preferences set yet</p>
         )}
       </Card>
 
       {/* Documents */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
-          <h2 className="font-semibold text-stone-800">Documents</h2>
+          <h2 className="font-semibold text-brand-slate-700">Documents</h2>
           <Button size="sm" variant="ghost" onClick={() => setEditModal('upload')}><Upload size={14} /></Button>
         </div>
         {documentsList.length === 0 ? (
-          <p className="text-sm text-stone-500">No documents uploaded</p>
+          <p className="text-sm text-gray-500">No documents uploaded</p>
         ) : (
           <div className="space-y-2">
             {documentsList.map((doc: any) => (
