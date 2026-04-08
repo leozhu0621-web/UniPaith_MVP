@@ -106,7 +106,7 @@ class AuthService:
                     "No application account for this email. Please sign up first."
                 )
             return {
-                "access_token": auth_result["AccessToken"],
+                "access_token": auth_result.get("IdToken", auth_result["AccessToken"]),
                 "refresh_token": auth_result.get("RefreshToken"),
                 "expires_in": auth_result["ExpiresIn"],
                 "token_type": "Bearer",
@@ -147,8 +147,8 @@ class AuthService:
             )
             auth_result = resp["AuthenticationResult"]
             return {
-                "access_token": auth_result["AccessToken"],
-                "expires_in": auth_result["ExpiresIn"],
+                "access_token": auth_result.get("IdToken", auth_result["AccessToken"]),
+                "expires_in": auth_result.get("ExpiresIn", 3600),
                 "token_type": "Bearer",
             }
         except Exception as e:
@@ -220,7 +220,7 @@ class AuthService:
                 await self.db.flush()
 
         return {
-            "access_token": tokens["access_token"],
+            "access_token": tokens.get("id_token", tokens["access_token"]),
             "refresh_token": tokens.get("refresh_token"),
             "expires_in": tokens.get("expires_in", 3600),
             "token_type": "Bearer",
