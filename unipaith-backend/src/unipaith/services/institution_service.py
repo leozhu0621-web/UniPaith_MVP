@@ -605,6 +605,28 @@ class InstitutionService:
         campaign.status = "sent"
         campaign.sent_at = now
         await self.db.flush()
+
+        # Send emails for email-type campaigns
+        if campaign.campaign_type in ("email", None):
+            from unipaith.services.campaign_email_service import CampaignEmailService
+
+            inst_result = await self.db.execute(
+                select(Institution).where(Institution.id == institution_id)
+            )
+            inst = inst_result.scalar_one_or_none()
+            inst_name = inst.name if inst else "UniPaith"
+
+            program_name = None
+            if campaign.program_id:
+                prog_result = await self.db.execute(
+                    select(Program).where(Program.id == campaign.program_id)
+                )
+                p = prog_result.scalar_one_or_none()
+                program_name = p.program_name if p else None
+
+            email_svc = CampaignEmailService(self.db)
+            await email_svc.send_campaign_emails(campaign, inst_name, program_name)
+
         await self.db.refresh(campaign)
         return campaign
 
