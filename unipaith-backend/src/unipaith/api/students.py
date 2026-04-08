@@ -20,6 +20,7 @@ from unipaith.schemas.matching import (
 )
 from unipaith.schemas.student import (
     AcademicRecordResponse,
+    AccommodationResponse,
     ActivityResponse,
     CompetitionResponse,
     CreateAcademicRecordRequest,
@@ -52,6 +53,7 @@ from unipaith.schemas.student import (
     UpdateResearchRequest,
     UpdateTestScoreRequest,
     UpdateWorkExperienceRequest,
+    UpsertAccommodationRequest,
     UpsertPreferencesRequest,
     WorkExperienceResponse,
 )
@@ -603,6 +605,33 @@ async def delete_competition(
     svc = _svc(db)
     profile = await svc._get_student_profile(user.id)
     await svc.delete_competition(profile.id, record_id)
+
+
+# --- Accommodations ---
+
+
+@router.get(
+    "/me/accommodations",
+    response_model=AccommodationResponse | None,
+)
+async def get_accommodations(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.get_accommodations(profile.id)
+
+
+@router.put("/me/accommodations", response_model=AccommodationResponse)
+async def upsert_accommodations(
+    body: UpsertAccommodationRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.upsert_accommodations(profile.id, body)
 
 
 # --- Preferences ---

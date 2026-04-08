@@ -35,6 +35,7 @@ export interface StudentProfile {
   languages: StudentLanguage[]
   work_experiences: WorkExperience[]
   competitions: Competition[]
+  accommodations: StudentAccommodation | null
   preferences: StudentPreference | null
   onboarding: OnboardingStatus | null
 }
@@ -109,6 +110,19 @@ export interface WorkExperience {
   supervisor_name: string | null
   organization_country: string | null
   organization_city: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface StudentAccommodation {
+  id: string
+  student_id: string
+  accommodations_needed: boolean
+  category: string | null
+  details_text: string | null
+  documentation_status: string | null
+  dyslexia_friendly_mode: boolean
+  font_size_pref: string | null
   created_at: string
   updated_at: string
 }

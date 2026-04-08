@@ -77,6 +77,9 @@ class StudentProfile(Base):
     competitions: Mapped[list[StudentCompetition]] = relationship(
         back_populates="student", cascade="all, delete-orphan"
     )
+    accommodations: Mapped[StudentAccommodation | None] = relationship(
+        back_populates="student", uselist=False, cascade="all, delete-orphan"
+    )
     recommendation_requests: Mapped[list[RecommendationRequest]] = relationship(
         back_populates="student", cascade="all, delete-orphan"
     )
@@ -443,3 +446,29 @@ class StudentCompetition(Base):
     )
 
     student: Mapped[StudentProfile] = relationship(back_populates="competitions")
+
+
+class StudentAccommodation(Base):
+    __tablename__ = "student_accommodations"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_profiles.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    )
+    accommodations_needed: Mapped[bool] = mapped_column(Boolean, default=False)
+    category: Mapped[str | None] = mapped_column(String(100))
+    details_text: Mapped[str | None] = mapped_column(Text)
+    documentation_status: Mapped[str | None] = mapped_column(String(30))
+    dyslexia_friendly_mode: Mapped[bool] = mapped_column(Boolean, default=False)
+    font_size_pref: Mapped[str | None] = mapped_column(String(20))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    student: Mapped[StudentProfile] = relationship(back_populates="accommodations")

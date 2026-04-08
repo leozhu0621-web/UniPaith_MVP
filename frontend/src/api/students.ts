@@ -21,6 +21,9 @@ export const createActivity = (data: any) => apiClient.post('/students/me/activi
 export const updateActivity = (id: string, data: any) => apiClient.put(`/students/me/activities/${id}`, data).then(r => r.data)
 export const deleteActivity = (id: string) => apiClient.delete(`/students/me/activities/${id}`)
 
+export const getAccommodations = () => apiClient.get('/students/me/accommodations').then(r => r.data)
+export const upsertAccommodations = (data: any) => apiClient.put('/students/me/accommodations', data).then(r => r.data)
+
 export const listCompetitions = () => apiClient.get('/students/me/competitions').then(r => r.data)
 export const createCompetition = (data: any) => apiClient.post('/students/me/competitions', data).then(r => r.data)
 export const updateCompetition = (id: string, data: any) => apiClient.put(`/students/me/competitions/${id}`, data).then(r => r.data)

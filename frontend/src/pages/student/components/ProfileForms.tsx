@@ -3,7 +3,7 @@ import Button from '../../../components/ui/Button'
 import Input from '../../../components/ui/Input'
 import Textarea from '../../../components/ui/Textarea'
 import Select from '../../../components/ui/Select'
-import { DEGREE_LABELS, TEST_TYPES, ACTIVITY_TYPES, GPA_SCALES, CITY_SIZE_OPTIONS, FUNDING_OPTIONS, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS, WORK_EXPERIENCE_TYPES, COMPENSATION_TYPES, COMPETITION_LEVELS } from '../../../utils/constants'
+import { DEGREE_LABELS, TEST_TYPES, ACTIVITY_TYPES, GPA_SCALES, CITY_SIZE_OPTIONS, FUNDING_OPTIONS, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS, WORK_EXPERIENCE_TYPES, COMPENSATION_TYPES, COMPETITION_LEVELS, ACCOMMODATION_CATEGORIES, DOC_STATUS_OPTIONS, FONT_SIZE_OPTIONS } from '../../../utils/constants'
 
 interface FormProps {
   defaultValues: any
@@ -214,6 +214,24 @@ export function CompetitionForm({ defaultValues, onSubmit, loading }: FormProps)
       </div>
       <Textarea label="Description (optional)" placeholder="What you built or achieved..." {...register('description')} />
       <Input label="Proof Link (optional)" type="url" placeholder="https://..." {...register('link_proof')} />
+      <Button type="submit" loading={loading} className="w-full">Save</Button>
+    </form>
+  )
+}
+
+export function AccommodationForm({ defaultValues, onSubmit, loading }: FormProps) {
+  const { register, handleSubmit } = useForm({ defaultValues: { accommodations_needed: defaultValues?.accommodations_needed || false, category: defaultValues?.category || '', details_text: defaultValues?.details_text || '', documentation_status: defaultValues?.documentation_status || 'none', dyslexia_friendly_mode: defaultValues?.dyslexia_friendly_mode || false, font_size_pref: defaultValues?.font_size_pref || 'default' } })
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+      <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('accommodations_needed')} /> I need accommodations</label>
+      <Select label="Category (optional)" options={[{ value: '', label: 'Select...' }, ...ACCOMMODATION_CATEGORIES]} {...register('category')} />
+      <Textarea label="Details (optional)" placeholder="Describe your accommodation needs..." {...register('details_text')} />
+      <Select label="Documentation Status" options={DOC_STATUS_OPTIONS} {...register('documentation_status')} />
+      <div className="border-t border-stone-100 pt-3 mt-3">
+        <p className="text-xs text-stone-500 mb-2">Display preferences</p>
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('dyslexia_friendly_mode')} /> Dyslexia-friendly mode</label>
+        <Select label="Font Size" options={FONT_SIZE_OPTIONS} {...register('font_size_pref')} />
+      </div>
       <Button type="submit" loading={loading} className="w-full">Save</Button>
     </form>
   )

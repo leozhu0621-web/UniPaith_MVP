@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, createOnlinePresence, updateOnlinePresence, deleteOnlinePresence, createPortfolioItem, updatePortfolioItem, deletePortfolioItem, createResearch, updateResearch, deleteResearch, createLanguage, updateLanguage, deleteLanguage, createWorkExperience, updateWorkExperience, deleteWorkExperience, createCompetition, updateCompetition, deleteCompetition, upsertPreferences, getNextStep } from '../../api/students'
+import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, createOnlinePresence, updateOnlinePresence, deleteOnlinePresence, createPortfolioItem, updatePortfolioItem, deletePortfolioItem, createResearch, updateResearch, deleteResearch, createLanguage, updateLanguage, deleteLanguage, createWorkExperience, updateWorkExperience, deleteWorkExperience, createCompetition, updateCompetition, deleteCompetition, upsertAccommodations, upsertPreferences, getNextStep } from '../../api/students'
 import { getOnboarding } from '../../api/students'
 import { listDocuments } from '../../api/documents'
 import Modal from '../../components/ui/Modal'
@@ -11,8 +11,8 @@ import { SkeletonCard } from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatDate, formatCurrency, formatFileSize } from '../../utils/format'
 import { DEGREE_LABELS, ACTIVITY_TYPES, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS, WORK_EXPERIENCE_TYPES, COMPETITION_LEVELS } from '../../utils/constants'
-import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical, Languages, Briefcase, Trophy } from 'lucide-react'
-import { BasicInfoForm, AcademicForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm, ResearchForm, LanguageForm, WorkExperienceForm, CompetitionForm } from './components/ProfileForms'
+import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical, Languages, Briefcase, Trophy, Accessibility } from 'lucide-react'
+import { BasicInfoForm, AcademicForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm, ResearchForm, LanguageForm, WorkExperienceForm, CompetitionForm, AccommodationForm } from './components/ProfileForms'
 import type { StudentProfile } from '../../types'
 
 // --- Profile Strength Ring ---
@@ -103,6 +103,7 @@ export default function ProfilePage() {
   const cpCreateMut = useMutation({ mutationFn: createCompetition, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Competition added', 'success') } })
   const cpUpdateMut = useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => updateCompetition(id, data), onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Competition updated', 'success') } })
   const cpDeleteMut = useMutation({ mutationFn: deleteCompetition, onSuccess: () => { invalidateAll(); showToast('Competition removed', 'success') } })
+  const accomMut = useMutation({ mutationFn: upsertAccommodations, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Accommodations updated', 'success') } })
   const prefsMut = useMutation({ mutationFn: upsertPreferences, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Preferences updated', 'success') } })
 
   if (isLoading) return <div className="p-6 space-y-4">{Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}</div>
@@ -446,6 +447,26 @@ export default function ProfilePage() {
         )}
       </Card>
 
+      {/* Accommodations */}
+      <Card className="p-5">
+        <div className="flex justify-between items-start mb-3">
+          <h2 className="font-semibold text-brand-slate-700">Accommodations</h2>
+          <Button size="sm" variant="ghost" onClick={() => { setEditItem(p?.accommodations); setEditModal('accommodations') }}><Pencil size={14} /></Button>
+        </div>
+        {p?.accommodations ? (
+          <div className="flex items-start gap-2">
+            <Accessibility size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
+            <dl className="text-sm space-y-1">
+              <div><dt className="text-gray-500 inline">Needed:</dt> <dd className="inline">{p.accommodations.accommodations_needed ? 'Yes' : 'No'}</dd></div>
+              {p.accommodations.category && <div><dt className="text-gray-500 inline">Category:</dt> <dd className="inline">{p.accommodations.category}</dd></div>}
+              {p.accommodations.documentation_status && <div><dt className="text-gray-500 inline">Documentation:</dt> <dd className="inline capitalize">{p.accommodations.documentation_status.replace(/_/g, ' ')}</dd></div>}
+            </dl>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">Optional — add if you need accessibility support</p>
+        )}
+      </Card>
+
       {/* Preferences */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
@@ -573,6 +594,15 @@ export default function ProfilePage() {
           defaultValues={editItem}
           onSubmit={data => editItem ? cpUpdateMut.mutate({ id: editItem.id, data }) : cpCreateMut.mutate(data)}
           loading={cpCreateMut.isPending || cpUpdateMut.isPending}
+        />
+      </Modal>
+
+      {/* Accommodations Modal */}
+      <Modal isOpen={editModal === 'accommodations'} onClose={() => setEditModal(null)} title="Accommodations">
+        <AccommodationForm
+          defaultValues={editItem}
+          onSubmit={data => accomMut.mutate(data)}
+          loading={accomMut.isPending}
         />
       </Modal>
 

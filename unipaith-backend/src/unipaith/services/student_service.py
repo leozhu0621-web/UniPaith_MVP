@@ -12,6 +12,7 @@ from unipaith.models.student import (
     AcademicRecord,
     Activity,
     OnboardingProgress,
+    StudentAccommodation,
     StudentCompetition,
     StudentLanguage,
     StudentOnlinePresence,
@@ -44,6 +45,7 @@ from unipaith.schemas.student import (
     UpdateResearchRequest,
     UpdateTestScoreRequest,
     UpdateWorkExperienceRequest,
+    UpsertAccommodationRequest,
     UpsertPreferencesRequest,
 )
 
@@ -66,6 +68,7 @@ class StudentService:
                 selectinload(StudentProfile.languages),
                 selectinload(StudentProfile.work_experiences),
                 selectinload(StudentProfile.competitions),
+                selectinload(StudentProfile.accommodations),
                 selectinload(StudentProfile.preferences),
                 selectinload(StudentProfile.onboarding_progress),
             )
@@ -430,6 +433,37 @@ class StudentService:
         await self.db.delete(record)
         await self.db.flush()
         await self._update_onboarding(student_id)
+
+    # --- Accommodations ---
+
+    async def get_accommodations(
+        self, student_id: UUID,
+    ) -> StudentAccommodation | None:
+        result = await self.db.execute(
+            select(StudentAccommodation).where(
+                StudentAccommodation.student_id == student_id,
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def upsert_accommodations(
+        self, student_id: UUID, data: UpsertAccommodationRequest,
+    ) -> StudentAccommodation:
+        result = await self.db.execute(
+            select(StudentAccommodation).where(
+                StudentAccommodation.student_id == student_id,
+            )
+        )
+        record = result.scalar_one_or_none()
+        update_data = data.model_dump(exclude_unset=True)
+        if record is None:
+            record = StudentAccommodation(student_id=student_id, **update_data)
+            self.db.add(record)
+        else:
+            for key, value in update_data.items():
+                setattr(record, key, value)
+        await self.db.flush()
+        return record
 
     # --- Preferences ---
 

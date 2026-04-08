@@ -469,6 +469,34 @@ class CompetitionResponse(BaseModel):
     updated_at: datetime
 
 
+class UpsertAccommodationRequest(BaseModel):
+    accommodations_needed: bool = False
+    category: str | None = Field(None, max_length=100)
+    details_text: str | None = None
+    documentation_status: (
+        Literal["none", "in_progress", "available", "verified"]
+        | None
+    ) = None
+    dyslexia_friendly_mode: bool = False
+    font_size_pref: (
+        Literal["default", "large", "extra_large"] | None
+    ) = None
+
+
+class AccommodationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    student_id: UUID
+    accommodations_needed: bool
+    category: str | None
+    details_text: str | None
+    documentation_status: str | None
+    dyslexia_friendly_mode: bool
+    font_size_pref: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
 class NextStepResponse(BaseModel):
     section: str
     fields: list[str]
@@ -503,6 +531,7 @@ class StudentProfileResponse(BaseModel):
     languages: list[LanguageResponse] = []
     work_experiences: list[WorkExperienceResponse] = []
     competitions: list[CompetitionResponse] = []
+    accommodations: AccommodationResponse | None = None
     preferences: StudentPreferenceResponse | None = None
     onboarding: OnboardingStatusResponse | None = None
 

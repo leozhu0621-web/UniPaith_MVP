@@ -1,3 +1,26 @@
+export const ACCOMMODATION_CATEGORIES = [
+  { value: 'learning_disability', label: 'Learning Disability' },
+  { value: 'physical_disability', label: 'Physical Disability' },
+  { value: 'visual_impairment', label: 'Visual Impairment' },
+  { value: 'hearing_impairment', label: 'Hearing Impairment' },
+  { value: 'mental_health', label: 'Mental Health' },
+  { value: 'chronic_illness', label: 'Chronic Illness' },
+  { value: 'other', label: 'Other' },
+]
+
+export const DOC_STATUS_OPTIONS = [
+  { value: 'none', label: 'None' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'available', label: 'Available' },
+  { value: 'verified', label: 'Verified' },
+]
+
+export const FONT_SIZE_OPTIONS = [
+  { value: 'default', label: 'Default' },
+  { value: 'large', label: 'Large' },
+  { value: 'extra_large', label: 'Extra Large' },
+]
+
 export const COMPETITION_LEVELS = [
   { value: 'school', label: 'School' },
   { value: 'state', label: 'State / Regional' },
