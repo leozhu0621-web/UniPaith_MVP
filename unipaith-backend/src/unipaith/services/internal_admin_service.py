@@ -16,8 +16,10 @@ from unipaith.models.application import Application
 from unipaith.models.crawler import CrawlJob
 from unipaith.models.engagement import StudentEngagementSignal
 from unipaith.models.institution import Institution, Program
+from unipaith.models.knowledge import CrawlFrontier, KnowledgeDocument
 from unipaith.models.matching import Embedding, MatchResult
-from unipaith.models.student import StudentProfile
+from unipaith.models.pipeline import PipelineStageSnapshot
+from unipaith.models.student import RecommendationRequest, StudentProfile
 from unipaith.models.user import User, UserRole
 
 
@@ -788,6 +790,55 @@ class InternalAdminService:
             for row in recent_apps_result.all()
         ]
 
+        # Recommendation counts
+        total_recs = await self.db.scalar(
+            select(func.count(RecommendationRequest.id))
+        ) or 0
+        rec_by_status: dict[str, int] = {}
+        for rec_status in ["draft", "requested", "submitted", "received"]:
+            rc = await self.db.scalar(
+                select(func.count(RecommendationRequest.id)).where(
+                    RecommendationRequest.status == rec_status
+                )
+            )
+            rec_by_status[rec_status] = int(rc or 0)
+
+        # Pipeline / crawl status
+        pipeline_stages: dict[str, dict] = {}
+        for stage_name in ("crawl", "extract", "ml"):
+            snap = await self.db.get(PipelineStageSnapshot, stage_name)
+            if snap:
+                pipeline_stages[stage_name] = {
+                    "status": snap.status,
+                    "items_processed_total": snap.items_processed_total,
+                    "items_processed_hour": snap.items_processed_hour,
+                    "last_activity_at": (
+                        snap.last_activity_at.isoformat()
+                        if snap.last_activity_at else None
+                    ),
+                }
+            else:
+                pipeline_stages[stage_name] = {"status": "not_started"}
+
+        frontier_pending = await self.db.scalar(
+            select(func.count()).select_from(CrawlFrontier).where(
+                CrawlFrontier.status == "pending"
+            )
+        ) or 0
+        frontier_completed = await self.db.scalar(
+            select(func.count()).select_from(CrawlFrontier).where(
+                CrawlFrontier.status == "completed"
+            )
+        ) or 0
+        frontier_failed = await self.db.scalar(
+            select(func.count()).select_from(CrawlFrontier).where(
+                CrawlFrontier.status == "failed"
+            )
+        ) or 0
+        total_knowledge_docs = await self.db.scalar(
+            select(func.count()).select_from(KnowledgeDocument)
+        ) or 0
+
         return {
             "users": {
                 "total": total_users or 0,
@@ -811,6 +862,19 @@ class InternalAdminService:
             },
             "engagement": {
                 "total_signals": total_engagements or 0,
+            },
+            "recommendations": {
+                "total": total_recs,
+                "by_status": rec_by_status,
+            },
+            "pipeline": {
+                "stages": pipeline_stages,
+                "frontier": {
+                    "pending": frontier_pending,
+                    "completed": frontier_completed,
+                    "failed": frontier_failed,
+                },
+                "knowledge_docs": total_knowledge_docs,
             },
             "recent_users": recent_users,
             "recent_applications": recent_apps,

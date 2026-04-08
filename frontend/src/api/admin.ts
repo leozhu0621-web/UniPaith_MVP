@@ -98,6 +98,16 @@ export const runAIEngineGraph = () =>
 export const getAIEngineState = () =>
   apiClient.get('/internal/ai/engine/state').then(r => r.data)
 
+// ─── Pipeline: Config & Budget ───
+export const getPipelineConfig = () =>
+  apiClient.get('/admin/pipeline/config').then(r => r.data)
+
+export const patchPipelineConfig = (updates: Record<string, unknown>) =>
+  apiClient.patch('/admin/pipeline/config', { updates }).then(r => r.data)
+
+export const setPipelineBudget = (budgetPerHour: number) =>
+  apiClient.post('/admin/pipeline/throttle', { budget_per_hour: budgetPerHour }).then(r => r.data)
+
 // ─── Crawler: Dashboard ───
 export const getCrawlerDashboard = () =>
   apiClient.get('/admin/crawler/dashboard').then(r => r.data)

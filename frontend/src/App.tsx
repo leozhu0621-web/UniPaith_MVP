@@ -134,7 +134,7 @@ const router = createBrowserRouter([
       { path: 'ai', element: <AdminAICenterPage /> },
       { path: 'system', element: <AdminSystemPage /> },
       // Legacy redirects — keep bookmarks working
-      { path: 'ops', element: <Navigate to="/admin/ai?tab=monitor" replace /> },
+      { path: 'ops', element: <Navigate to="/admin/ai?tab=pipeline" replace /> },
       { path: 'crawler', element: <AdminCrawlerDashboardPage /> },
       { path: 'ml', element: <Navigate to="/admin/ai?tab=learning" replace /> },
       { path: 'knowledge', element: <Navigate to="/admin/ai?tab=knowledge" replace /> },

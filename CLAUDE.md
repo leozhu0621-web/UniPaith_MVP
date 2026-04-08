@@ -2,6 +2,14 @@
 
 Two-sided AI matching platform for higher education admissions. Students find programs; institutions find applicants.
 
+## Pre-Work Checklist
+
+Before starting new feature work, always verify the environment is healthy first: DB connections active, Docker/Postgres running, zero build errors, all existing tests passing. Do NOT proceed to feature building until confirmed.
+
+## Project Overview
+
+This is a TypeScript + Python monorepo (UniPaith MVP). Frontend is TypeScript/React, backend has both TypeScript and Python services. Infrastructure is Terraform/AWS (ECS, RDS, Cognito, SES). Domain: unipaith.co.
+
 ## Project Structure
 
 ```
@@ -72,3 +80,42 @@ Key vars:
 - Backend: `pytest` with `pytest-asyncio`. Fixtures in `tests/conftest.py` provide `db_session`, `client`, role-specific clients
 - Frontend: `vitest` with `@testing-library/react` and `jsdom`
 - CI: GitHub Actions runs backend tests with pgvector service container
+
+### Test Commands
+
+```bash
+# Full suites
+make test-backend     # 41 test files, 177+ tests — pytest with async DB
+make test-frontend    # vitest smoke tests
+
+# Backend — single file
+cd unipaith-backend && PYTHONPATH=src AI_MOCK_MODE=true \
+  .venv/bin/pytest tests/test_<name>.py -v --tb=short
+
+# Backend — single test
+cd unipaith-backend && PYTHONPATH=src AI_MOCK_MODE=true \
+  .venv/bin/pytest tests/test_<name>.py::test_function -v --tb=long
+
+# Frontend — single file
+cd frontend && npx vitest run src/test/smoke.test.ts
+
+# Required env vars for backend tests
+DATABASE_URL="postgresql+asyncpg://unipaith:unipaith@localhost:5432/unipaith"
+COGNITO_BYPASS=true  AI_MOCK_MODE=true  S3_LOCAL_MODE=true
+```
+
+### Test Failure Workflow
+
+1. Read the failing test and the source code it tests
+2. Determine if the bug is in source code or in the test
+3. Fix the actual bug (prefer fixing source code over changing test expectations)
+4. Re-run just that test to confirm the fix
+5. After all fixes, run the full suite to check for regressions
+
+## Common Pitfalls
+
+When asked to review or audit code, go directly to the code files. Do NOT set up dev servers, launch.json, or other environment tooling unless explicitly asked.
+
+## Infrastructure
+
+Infrastructure debugging notes: RDS is in a VPC - ensure new services have correct security groups. ECS task definitions can overwrite env vars on redeploy. S3 frontend bundles can go stale - always invalidate CloudFront after deploy. DB password is managed via AWS Secrets Manager.

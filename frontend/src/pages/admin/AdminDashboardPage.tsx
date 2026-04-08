@@ -10,7 +10,7 @@ import Skeleton from '../../components/ui/Skeleton'
 import Button from '../../components/ui/Button'
 import {
   Users, GraduationCap, FileText, Building2, Activity,
-  Target, RefreshCw, Cpu,
+  Target, RefreshCw, Cpu, Mail, Database,
 } from 'lucide-react'
 
 function KPICard({ icon: Icon, label, value, sub, color }: {
@@ -47,6 +47,17 @@ function BarSegment({ label, value, total, color }: {
   )
 }
 
+const STAGE_DOT: Record<string, string> = {
+  running: 'bg-green-500',
+  local_online: 'bg-green-500',
+  waiting: 'bg-yellow-400',
+  completed: 'bg-green-500',
+  error: 'bg-red-500',
+  paused: 'bg-gray-400',
+  off: 'bg-gray-300',
+  not_started: 'bg-gray-300',
+}
+
 export default function AdminDashboardPage() {
   const navigate = useNavigate()
   const { data: stats, isLoading, refetch, isFetching } = useQuery({
@@ -74,6 +85,11 @@ export default function AdminDashboardPage() {
   const appTotal = stats?.applications?.total ?? 0
   const byStatus = stats?.applications?.by_status ?? {}
   const byDecision = stats?.applications?.by_decision ?? {}
+  const pipeline = stats?.pipeline ?? {}
+  const frontier = pipeline?.frontier ?? {}
+  const stages = pipeline?.stages ?? {}
+  const recs = stats?.recommendations ?? {}
+  const recByStatus = recs?.by_status ?? {}
 
   return (
     <div className="p-8 space-y-6">
@@ -146,19 +162,78 @@ export default function AdminDashboardPage() {
           color="bg-cyan-100 text-cyan-600"
         />
         <KPICard
+          icon={Mail}
+          label="Recommendations"
+          value={recs?.total ?? 0}
+          sub={`${recByStatus.submitted ?? 0} submitted, ${recByStatus.requested ?? 0} pending`}
+          color="bg-rose-100 text-rose-600"
+        />
+        <KPICard
           icon={Activity}
           label="Engagement Signals"
           value={stats?.engagement?.total_signals ?? 0}
           color="bg-amber-100 text-amber-600"
         />
-        <KPICard
-          icon={FileText}
-          label="Decisions Made"
-          value={(byDecision.admitted ?? 0) + (byDecision.rejected ?? 0) + (byDecision.waitlisted ?? 0) + (byDecision.deferred ?? 0)}
-          sub={`${byDecision.admitted ?? 0} admitted`}
-          color="bg-emerald-100 text-emerald-600"
-        />
       </div>
+
+      {/* Pipeline status row */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-gray-700">Pipeline Status</h3>
+          <Button size="sm" variant="secondary" onClick={() => navigate('/admin/ai')}>
+            Manage
+          </Button>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          {(['crawl', 'extract', 'ml'] as const).map(stage => {
+            const s = stages[stage] ?? { status: 'not_started' }
+            const dotColor = STAGE_DOT[s.status] || 'bg-gray-300'
+            return (
+              <div key={stage} className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`h-2.5 w-2.5 rounded-full ${dotColor}`} />
+                  <span className="text-sm font-semibold text-gray-800 capitalize">{stage}</span>
+                  <span className="text-xs text-gray-400 ml-auto">{s.status}</span>
+                </div>
+                <div className="text-xs text-gray-500 space-y-1">
+                  <div className="flex justify-between">
+                    <span>Processed</span>
+                    <span className="font-mono text-gray-800">{s.items_processed_total ?? 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>This hour</span>
+                    <span className="font-mono text-gray-800">{s.items_processed_hour ?? 0}</span>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+          <div className="border border-gray-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Database size={14} className="text-gray-500" />
+              <span className="text-sm font-semibold text-gray-800">Frontier</span>
+            </div>
+            <div className="text-xs text-gray-500 space-y-1">
+              <div className="flex justify-between">
+                <span>Pending</span>
+                <span className="font-mono text-yellow-600">{frontier.pending ?? 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Completed</span>
+                <span className="font-mono text-green-600">{frontier.completed ?? 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Failed</span>
+                <span className="font-mono text-red-600">{frontier.failed ?? 0}</span>
+              </div>
+              <div className="flex justify-between border-t border-gray-100 pt-1 mt-1">
+                <span>Knowledge docs</span>
+                <span className="font-mono text-gray-800">{pipeline.knowledge_docs ?? 0}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
 
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
