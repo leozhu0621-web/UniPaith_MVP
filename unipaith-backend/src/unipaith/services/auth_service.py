@@ -105,6 +105,17 @@ class AuthService:
                 raise BadRequestException(
                     "No application account for this email. Please sign up first."
                 )
+            # Sync cognito_sub from the token so /auth/me lookups work
+            id_token = auth_result.get("IdToken")
+            if id_token:
+                try:
+                    claims = jwt.get_unverified_claims(id_token)
+                    token_sub = claims.get("sub")
+                    if token_sub and user.cognito_sub != token_sub:
+                        user.cognito_sub = token_sub
+                        await self.db.flush()
+                except Exception:
+                    pass  # Non-critical — login still succeeds
             return {
                 "access_token": auth_result.get("IdToken", auth_result["AccessToken"]),
                 "refresh_token": auth_result.get("RefreshToken"),
