@@ -83,6 +83,9 @@ class StudentProfile(Base):
     scheduling: Mapped[StudentScheduling | None] = relationship(
         back_populates="student", uselist=False, cascade="all, delete-orphan"
     )
+    visa_info: Mapped[StudentVisaInfo | None] = relationship(
+        back_populates="student", uselist=False, cascade="all, delete-orphan"
+    )
     recommendation_requests: Mapped[list[RecommendationRequest]] = relationship(
         back_populates="student", cascade="all, delete-orphan"
     )
@@ -500,3 +503,34 @@ class StudentScheduling(Base):
     )
 
     student: Mapped[StudentProfile] = relationship(back_populates="scheduling")
+
+
+class StudentVisaInfo(Base):
+    __tablename__ = "student_visa_info"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_profiles.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    )
+    current_immigration_status: Mapped[str | None] = mapped_column(String(50))
+    visa_required: Mapped[bool] = mapped_column(Boolean, default=False)
+    target_study_country: Mapped[str | None] = mapped_column(String(100))
+    passport_expiration_date: Mapped[date | None] = mapped_column(Date)
+    sponsorship_source: Mapped[str | None] = mapped_column(String(50))
+    financial_proof_available: Mapped[bool] = mapped_column(Boolean, default=False)
+    financial_proof_amount_band: Mapped[str | None] = mapped_column(String(50))
+    post_study_work_interest: Mapped[bool] = mapped_column(Boolean, default=False)
+    prior_visa_refusals: Mapped[bool] = mapped_column(Boolean, default=False)
+    travel_constraints: Mapped[str | None] = mapped_column(Text)
+    work_authorization_needed: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    student: Mapped[StudentProfile] = relationship(back_populates="visa_info")

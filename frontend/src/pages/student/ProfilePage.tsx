@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, createOnlinePresence, updateOnlinePresence, deleteOnlinePresence, createPortfolioItem, updatePortfolioItem, deletePortfolioItem, createResearch, updateResearch, deleteResearch, createLanguage, updateLanguage, deleteLanguage, createWorkExperience, updateWorkExperience, deleteWorkExperience, createCompetition, updateCompetition, deleteCompetition, upsertAccommodations, upsertScheduling, upsertPreferences, getNextStep } from '../../api/students'
+import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, createOnlinePresence, updateOnlinePresence, deleteOnlinePresence, createPortfolioItem, updatePortfolioItem, deletePortfolioItem, createResearch, updateResearch, deleteResearch, createLanguage, updateLanguage, deleteLanguage, createWorkExperience, updateWorkExperience, deleteWorkExperience, createCompetition, updateCompetition, deleteCompetition, upsertAccommodations, upsertScheduling, upsertVisaInfo, upsertPreferences, getNextStep } from '../../api/students'
 import { getOnboarding } from '../../api/students'
 import { listDocuments } from '../../api/documents'
 import Modal from '../../components/ui/Modal'
@@ -11,8 +11,8 @@ import { SkeletonCard } from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatDate, formatCurrency, formatFileSize } from '../../utils/format'
 import { DEGREE_LABELS, ACTIVITY_TYPES, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS, WORK_EXPERIENCE_TYPES, COMPETITION_LEVELS } from '../../utils/constants'
-import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical, Languages, Briefcase, Trophy, Accessibility, CalendarClock } from 'lucide-react'
-import { BasicInfoForm, AcademicForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm, ResearchForm, LanguageForm, WorkExperienceForm, CompetitionForm, AccommodationForm, SchedulingForm } from './components/ProfileForms'
+import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical, Languages, Briefcase, Trophy, Accessibility, CalendarClock, Plane } from 'lucide-react'
+import { BasicInfoForm, AcademicForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm, ResearchForm, LanguageForm, WorkExperienceForm, CompetitionForm, AccommodationForm, SchedulingForm, VisaInfoForm } from './components/ProfileForms'
 import type { StudentProfile } from '../../types'
 
 // --- Profile Strength Ring ---
@@ -105,6 +105,7 @@ export default function ProfilePage() {
   const cpDeleteMut = useMutation({ mutationFn: deleteCompetition, onSuccess: () => { invalidateAll(); showToast('Competition removed', 'success') } })
   const accomMut = useMutation({ mutationFn: upsertAccommodations, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Accommodations updated', 'success') } })
   const schedMut = useMutation({ mutationFn: upsertScheduling, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Scheduling updated', 'success') } })
+  const visaMut = useMutation({ mutationFn: upsertVisaInfo, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Visa info updated', 'success') } })
   const prefsMut = useMutation({ mutationFn: upsertPreferences, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Preferences updated', 'success') } })
 
   if (isLoading) return <div className="p-6 space-y-4">{Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}</div>
@@ -489,6 +490,28 @@ export default function ProfilePage() {
         )}
       </Card>
 
+      {/* Visa & Immigration */}
+      <Card className="p-5">
+        <div className="flex justify-between items-start mb-3">
+          <h2 className="font-semibold text-brand-slate-700">Visa & Immigration</h2>
+          <Button size="sm" variant="ghost" onClick={() => { setEditItem(p?.visa_info); setEditModal('visa_info') }}><Pencil size={14} /></Button>
+        </div>
+        {p?.visa_info ? (
+          <div className="flex items-start gap-2">
+            <Plane size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
+            <dl className="text-sm space-y-1">
+              {p.visa_info.current_immigration_status && <div><dt className="text-gray-500 inline">Status:</dt> <dd className="inline">{p.visa_info.current_immigration_status}</dd></div>}
+              {p.visa_info.target_study_country && <div><dt className="text-gray-500 inline">Target:</dt> <dd className="inline">{p.visa_info.target_study_country}</dd></div>}
+              {p.visa_info.sponsorship_source && <div><dt className="text-gray-500 inline">Sponsorship:</dt> <dd className="inline capitalize">{p.visa_info.sponsorship_source}</dd></div>}
+              <div><dt className="text-gray-500 inline">Visa required:</dt> <dd className="inline">{p.visa_info.visa_required ? 'Yes' : 'No'}</dd></div>
+              {p.visa_info.post_study_work_interest && <div className="text-xs text-sky-600">Interested in post-study work</div>}
+            </dl>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">Add visa and immigration details if applicable</p>
+        )}
+      </Card>
+
       {/* Preferences */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
@@ -634,6 +657,15 @@ export default function ProfilePage() {
           defaultValues={editItem}
           onSubmit={data => schedMut.mutate(data)}
           loading={schedMut.isPending}
+        />
+      </Modal>
+
+      {/* Visa Info Modal */}
+      <Modal isOpen={editModal === 'visa_info'} onClose={() => setEditModal(null)} title="Visa & Immigration" size="lg">
+        <VisaInfoForm
+          defaultValues={editItem}
+          onSubmit={data => visaMut.mutate(data)}
+          loading={visaMut.isPending}
         />
       </Modal>
 

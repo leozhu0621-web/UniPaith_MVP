@@ -1,3 +1,10 @@
+export const SPONSORSHIP_SOURCES = [
+  { value: 'self', label: 'Self-funded' },
+  { value: 'family', label: 'Family' },
+  { value: 'scholarship', label: 'Scholarship' },
+  { value: 'employer', label: 'Employer' },
+]
+
 export const INTERVIEW_FORMAT_OPTIONS = [
   { value: 'video', label: 'Video Call' },
   { value: 'in_person', label: 'In Person' },

@@ -521,6 +521,41 @@ class SchedulingResponse(BaseModel):
     updated_at: datetime
 
 
+class UpsertVisaInfoRequest(BaseModel):
+    current_immigration_status: str | None = Field(None, max_length=50)
+    visa_required: bool = False
+    target_study_country: str | None = Field(None, max_length=100)
+    passport_expiration_date: date | None = None
+    sponsorship_source: (
+        Literal["self", "family", "scholarship", "employer"] | None
+    ) = None
+    financial_proof_available: bool = False
+    financial_proof_amount_band: str | None = Field(None, max_length=50)
+    post_study_work_interest: bool = False
+    prior_visa_refusals: bool = False
+    travel_constraints: str | None = None
+    work_authorization_needed: bool = False
+
+
+class VisaInfoResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    student_id: UUID
+    current_immigration_status: str | None
+    visa_required: bool
+    target_study_country: str | None
+    passport_expiration_date: date | None
+    sponsorship_source: str | None
+    financial_proof_available: bool
+    financial_proof_amount_band: str | None
+    post_study_work_interest: bool
+    prior_visa_refusals: bool
+    travel_constraints: str | None
+    work_authorization_needed: bool
+    created_at: datetime
+    updated_at: datetime
+
+
 class NextStepResponse(BaseModel):
     section: str
     fields: list[str]
@@ -557,6 +592,7 @@ class StudentProfileResponse(BaseModel):
     competitions: list[CompetitionResponse] = []
     accommodations: AccommodationResponse | None = None
     scheduling: SchedulingResponse | None = None
+    visa_info: VisaInfoResponse | None = None
     preferences: StudentPreferenceResponse | None = None
     onboarding: OnboardingStatusResponse | None = None
 

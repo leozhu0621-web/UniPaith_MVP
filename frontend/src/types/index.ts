@@ -37,6 +37,7 @@ export interface StudentProfile {
   competitions: Competition[]
   accommodations: StudentAccommodation | null
   scheduling: StudentScheduling | null
+  visa_info: StudentVisaInfo | null
   preferences: StudentPreference | null
   onboarding: OnboardingStatus | null
 }
@@ -124,6 +125,24 @@ export interface StudentAccommodation {
   documentation_status: string | null
   dyslexia_friendly_mode: boolean
   font_size_pref: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface StudentVisaInfo {
+  id: string
+  student_id: string
+  current_immigration_status: string | null
+  visa_required: boolean
+  target_study_country: string | null
+  passport_expiration_date: string | null
+  sponsorship_source: string | null
+  financial_proof_available: boolean
+  financial_proof_amount_band: string | null
+  post_study_work_interest: boolean
+  prior_visa_refusals: boolean
+  travel_constraints: string | null
+  work_authorization_needed: boolean
   created_at: string
   updated_at: string
 }
