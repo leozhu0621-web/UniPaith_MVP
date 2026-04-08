@@ -46,13 +46,16 @@ async def setup_db():
         await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         await conn.run_sync(Base.metadata.create_all)
     yield
-    async with test_engine.begin() as conn:
-        # metadata.drop_all() cannot sort crawl_frontier <-> knowledge_documents FK cycle;
-        # reset the test schema instead (ephemeral CI Postgres).
-        await conn.execute(text("DROP SCHEMA public CASCADE"))
-        await conn.execute(text("CREATE SCHEMA public"))
-        await conn.execute(text("GRANT ALL ON SCHEMA public TO public"))
-        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+    # Teardown: best-effort cleanup. Setup already does DROP+CREATE, so if the
+    # connection died mid-test (asyncpg race) we can safely skip cleanup here.
+    try:
+        async with test_engine.begin() as conn:
+            await conn.execute(text("DROP SCHEMA public CASCADE"))
+            await conn.execute(text("CREATE SCHEMA public"))
+            await conn.execute(text("GRANT ALL ON SCHEMA public TO public"))
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+    except Exception:
+        pass
     await test_engine.dispose()
 
 
