@@ -17,7 +17,7 @@ export default function AnalyticsPage() {
   const isLoading = analyticsQ.isLoading
 
   const kpis = [
-    { label: 'Total Applications', value: analytics?.total_applications ?? 0, icon: Users, color: 'text-indigo-600 bg-indigo-100' },
+    { label: 'Total Applications', value: analytics?.total_applications ?? 0, icon: Users, color: 'text-brand-slate-600 bg-brand-slate-100' },
     { label: 'Acceptance Rate', value: analytics?.acceptance_rate != null ? formatPercent(analytics.acceptance_rate) : '\u2014', icon: Target, color: 'text-green-600 bg-green-100' },
     { label: 'Avg Match Score', value: analytics?.avg_match_score != null ? `${Math.round(analytics.avg_match_score * 100)}` : '\u2014', icon: Award, color: 'text-amber-600 bg-amber-100' },
     { label: 'Yield Rate', value: analytics?.yield_rate != null ? formatPercent(analytics.yield_rate) : '\u2014', icon: TrendingUp, color: 'text-purple-600 bg-purple-100' },
@@ -48,7 +48,7 @@ export default function AnalyticsPage() {
       <div className="p-6">
         <Card className="p-8 text-center">
           <p className="text-red-600 mb-2">Failed to load analytics</p>
-          <button onClick={() => analyticsQ.refetch()} className="text-indigo-600 hover:underline text-sm">Retry</button>
+          <button onClick={() => analyticsQ.refetch()} className="text-brand-slate-600 hover:underline text-sm">Retry</button>
         </Card>
       </div>
     )
@@ -59,7 +59,7 @@ export default function AnalyticsPage() {
       <InstitutionPageHeader
         title="Insights"
         description="Track trends, diagnose bottlenecks, and monitor admissions outcomes over time."
-        badge={<BarChart3 size={20} className="text-indigo-600" />}
+        badge={<BarChart3 size={20} className="text-brand-slate-600" />}
         actions={(
           <Button variant="secondary" size="sm" onClick={() => navigate('/i/pipeline?tab=review')}>
             Open Needs Review
@@ -112,7 +112,7 @@ export default function AnalyticsPage() {
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-2">
                     <div
-                      className="bg-indigo-500 rounded-full h-2 transition-all"
+                      className="bg-brand-slate-500 rounded-full h-2 transition-all"
                       style={{ width: `${(count / maxStatusCount) * 100}%` }}
                     />
                   </div>
@@ -158,7 +158,7 @@ export default function AnalyticsPage() {
                 <div key={month} className="flex-1 flex flex-col items-center gap-1">
                   <span className="text-xs font-medium text-gray-900">{count}</span>
                   <div
-                    className="w-full bg-indigo-500 rounded-t transition-all min-h-[4px]"
+                    className="w-full bg-brand-slate-500 rounded-t transition-all min-h-[4px]"
                     style={{ height: `${(count / maxMonthCount) * 100}%` }}
                   />
                   <span className="text-[10px] text-gray-500 rotate-[-45deg] origin-top-left whitespace-nowrap">

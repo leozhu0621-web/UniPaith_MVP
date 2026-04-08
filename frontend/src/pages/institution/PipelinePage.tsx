@@ -62,7 +62,7 @@ function DraggableCard({ app, onClick }: { app: Application; onClick: () => void
       </div>
       <div className="flex items-center justify-between mt-2">
         {app.match_score != null && (
-          <span className="text-xs font-medium text-indigo-600">{formatScore(app.match_score / 100)}</span>
+          <span className="text-xs font-medium text-brand-slate-600">{formatScore(app.match_score / 100)}</span>
         )}
         <span className="text-xs text-gray-400">{formatRelative(app.updated_at)}</span>
       </div>
@@ -80,7 +80,7 @@ function DroppableColumn({ id, label, color, children }: { id: string; label: st
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 min-w-[240px] rounded-lg p-3 transition-colors ${isOver ? 'bg-indigo-50 ring-2 ring-indigo-300' : 'bg-gray-50'}`}
+      className={`flex-1 min-w-[240px] rounded-lg p-3 transition-colors ${isOver ? 'bg-brand-slate-50 ring-2 ring-brand-slate-300' : 'bg-gray-50'}`}
     >
       <div className="flex items-center gap-2 mb-3">
         <div className={`w-3 h-3 rounded-full ${color}`} />
@@ -220,7 +220,7 @@ export default function PipelinePage() {
       render: (row: Application) => (
         <button
           onClick={() => navigate(`/i/pipeline/${row.id}`)}
-          className="text-indigo-600 hover:underline font-medium"
+          className="text-brand-slate-600 hover:underline font-medium"
         >
           Applicant {row.student_id.slice(0, 8)}
         </button>

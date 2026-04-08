@@ -80,7 +80,7 @@ export default function SignupPage() {
             className={clsx(
               'flex-1 p-3 rounded-lg border text-center transition-colors',
               role === opt.value
-                ? 'border-gray-900 bg-gray-50'
+                ? 'border-brand-slate-600 bg-brand-slate-50'
                 : 'border-gray-200 hover:border-gray-300'
             )}
           >
@@ -146,7 +146,7 @@ export default function SignupPage() {
 
       <p className="text-center text-sm text-gray-500">
         Already have an account?{' '}
-        <Link to="/login" className="text-gray-900 font-medium hover:underline">
+        <Link to="/login" className="text-brand-slate-600 font-medium hover:underline">
           Log in
         </Link>
       </p>

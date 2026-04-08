@@ -169,16 +169,16 @@ export default function SetupPage() {
             <div
               className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
                 i < currentStep
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-brand-slate-600 text-white'
                   : i === currentStep
-                  ? 'bg-indigo-100 text-indigo-700 ring-2 ring-indigo-600'
+                  ? 'bg-brand-slate-100 text-brand-slate-700 ring-2 ring-brand-slate-600'
                   : 'bg-gray-100 text-gray-400'
               }`}
             >
               {i < currentStep ? <Check size={16} /> : i + 1}
             </div>
             {i < STEPS.length - 1 && (
-              <div className={`w-12 h-0.5 ${i < currentStep ? 'bg-indigo-600' : 'bg-gray-200'}`} />
+              <div className={`w-12 h-0.5 ${i < currentStep ? 'bg-brand-slate-600' : 'bg-gray-200'}`} />
             )}
           </div>
         ))}
@@ -290,7 +290,7 @@ export default function SetupPage() {
       {/* Step 4: Done */}
       {currentStep === 3 && (
         <Card className="p-8 text-center">
-          <PartyPopper size={48} className="mx-auto text-indigo-500 mb-4" />
+          <PartyPopper size={48} className="mx-auto text-brand-slate-500 mb-4" />
           <h3 className="text-xl font-bold text-gray-900 mb-2">You're all set!</h3>
           <p className="text-gray-600 mb-6">Your institution and first program are ready. You can now manage programs, review applications, and more.</p>
           <div className="flex justify-center gap-3">

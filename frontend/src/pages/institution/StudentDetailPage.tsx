@@ -137,8 +137,8 @@ export default function StudentDetailPage() {
         <div className="col-span-1 space-y-4">
           <Card className="p-5">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                <User size={24} className="text-indigo-600" />
+              <div className="w-12 h-12 bg-brand-slate-100 rounded-full flex items-center justify-center">
+                <User size={24} className="text-brand-slate-600" />
               </div>
               <div>
                 <p className="font-semibold text-gray-900">{app.student_id.slice(0, 12)}...</p>
@@ -154,7 +154,7 @@ export default function StudentDetailPage() {
                     <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e5e7eb" strokeWidth="3" />
                     <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#6366f1" strokeWidth="3" strokeDasharray={`${app.match_score}, 100`} />
                   </svg>
-                  <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-indigo-600">
+                  <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-brand-slate-600">
                     {formatScore(app.match_score / 100)}
                   </span>
                 </div>
@@ -271,7 +271,7 @@ export default function StudentDetailPage() {
             {activeTab === 'ai' && (
               <Card className="p-5 space-y-4">
                 <div className="flex items-center gap-2">
-                  <Brain size={20} className="text-indigo-600" />
+                  <Brain size={20} className="text-brand-slate-600" />
                   <h3 className="font-semibold text-gray-900">AI Insights</h3>
                 </div>
                 {aiQ.isLoading ? (

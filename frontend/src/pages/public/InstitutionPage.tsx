@@ -95,7 +95,7 @@ export default function InstitutionPage() {
           <Building2 size={48} className="mx-auto text-gray-300 mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Institution not found</h2>
           <p className="text-gray-500 mb-6">This institution profile is not available.</p>
-          <Link to="/browse" className="text-indigo-600 hover:underline">Browse programs</Link>
+          <Link to="/browse" className="text-brand-slate-600 hover:underline">Browse programs</Link>
         </div>
       </div>
     )
@@ -122,8 +122,8 @@ export default function InstitutionPage() {
             {inst.logo_url ? (
               <img src={inst.logo_url} alt={inst.name} className="w-16 h-16 rounded-lg object-cover border" />
             ) : (
-              <div className="w-16 h-16 rounded-lg bg-indigo-100 flex items-center justify-center">
-                <Building2 size={28} className="text-indigo-600" />
+              <div className="w-16 h-16 rounded-lg bg-brand-slate-100 flex items-center justify-center">
+                <Building2 size={28} className="text-brand-slate-600" />
               </div>
             )}
             <div className="flex-1 min-w-0">
@@ -209,7 +209,7 @@ export default function InstitutionPage() {
                   <h3 className="text-sm font-semibold text-gray-900 mb-3">Social Links</h3>
                   <div className="flex flex-wrap gap-3">
                     {Object.entries(inst.social_links).map(([platform, url]) => (
-                      <a key={platform} href={url} target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-600 hover:underline capitalize flex items-center gap-1">
+                      <a key={platform} href={url} target="_blank" rel="noopener noreferrer" className="text-sm text-brand-slate-600 hover:underline capitalize flex items-center gap-1">
                         {platform} <ExternalLink size={12} />
                       </a>
                     ))}

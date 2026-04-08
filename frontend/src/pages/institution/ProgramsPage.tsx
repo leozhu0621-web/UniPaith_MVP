@@ -57,7 +57,7 @@ export default function ProgramsPage() {
       key: 'program_name',
       label: 'Name',
       render: (row: Program) => (
-        <button onClick={() => navigate(`/i/programs/${row.id}/edit`)} className="text-indigo-600 hover:underline font-medium">
+        <button onClick={() => navigate(`/i/programs/${row.id}/edit`)} className="text-brand-slate-600 hover:underline font-medium">
           {row.program_name}
         </button>
       ),

@@ -93,7 +93,7 @@ export default function ProgramBrowsePage() {
                     tabIndex={0}
                     onClick={e => { e.preventDefault(); e.stopPropagation(); window.location.href = `/school/${p.institution_id}` }}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); window.location.href = `/school/${p.institution_id}` } }}
-                    className="hover:underline hover:text-indigo-600 cursor-pointer"
+                    className="hover:underline hover:text-brand-slate-600 cursor-pointer"
                   >{p.institution_name}</span> — {p.institution_country}
                 </p>
                 <div className="flex items-center gap-2 mt-3">

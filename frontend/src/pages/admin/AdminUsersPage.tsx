@@ -485,9 +485,9 @@ export default function AdminUsersPage() {
           </Card>
 
           {(selectedUserIds.length > 0 || selectedInstitutionIds.length > 0) && (
-            <Card className="p-3 border-indigo-200 bg-indigo-50">
+            <Card className="p-3 border-brand-slate-200 bg-brand-slate-50">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-sm text-indigo-900">
+                <p className="text-sm text-brand-slate-900">
                   Selected: {selectedUserIds.length} users, {selectedInstitutionIds.length}{' '}
                   institutions
                 </p>
@@ -817,7 +817,7 @@ export default function AdminUsersPage() {
           <Card className="p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <ShieldCheck size={16} className="text-indigo-600" />
+                <ShieldCheck size={16} className="text-brand-slate-600" />
                 <p className="text-sm font-medium text-gray-700">Quality checks (AI-ranked)</p>
               </div>
             </div>

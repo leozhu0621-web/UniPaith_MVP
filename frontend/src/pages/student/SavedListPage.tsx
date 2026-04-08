@@ -52,7 +52,7 @@ export default function SavedListPage() {
   }
 
   const ValueIndicator = ({ value, best, lower }: { value: number | null | undefined; best: number | null; lower?: boolean }) => {
-    if (value == null || best == null) return <Minus size={12} className="text-stone-300" />
+    if (value == null || best == null) return <Minus size={12} className="text-gray-300" />
     if (value === best) return <ArrowUp size={12} className={lower ? 'text-green-500' : 'text-green-500'} />
     return <ArrowDown size={12} className={lower ? 'text-red-500' : 'text-red-500'} />
   }
@@ -95,7 +95,7 @@ export default function SavedListPage() {
                         <p className="font-semibold text-sm cursor-pointer hover:underline" onClick={() => navigate(`/s/programs/${sp.program_id}`)}>
                           {sp.program?.program_name || 'Program'}
                         </p>
-                        <p className="text-xs text-stone-500">{sp.program?.institution_name}</p>
+                        <p className="text-xs text-gray-500">{sp.program?.institution_name}</p>
                       </div>
                       {matchInfo && tierInfo && (
                         <div className="flex items-center gap-2 flex-shrink-0">
@@ -104,11 +104,11 @@ export default function SavedListPage() {
                         </div>
                       )}
                     </div>
-                    <div className="flex gap-4 mt-1 text-xs text-stone-400">
+                    <div className="flex gap-4 mt-1 text-xs text-gray-400">
                       {sp.program?.tuition != null && <span>Tuition: {formatCurrency(sp.program.tuition)}</span>}
                       {sp.program?.application_deadline && <span>Deadline: {formatDate(sp.program.application_deadline)}</span>}
                     </div>
-                    {sp.notes && <p className="text-xs text-stone-600 mt-1 italic">"{sp.notes}"</p>}
+                    {sp.notes && <p className="text-xs text-gray-600 mt-1 italic">"{sp.notes}"</p>}
                   </div>
                   <div className="flex gap-1">
                     <Button size="sm" variant="ghost" onClick={() => setEditingNotes({ id: sp.program_id, notes: sp.notes || '' })}><Pencil size={12} /></Button>
@@ -143,7 +143,7 @@ export default function SavedListPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-2 px-2 text-stone-500 font-medium">Feature</th>
+                  <th className="text-left py-2 px-2 text-gray-500 font-medium">Feature</th>
                   {comparison.programs.map(p => (
                     <th key={p.id} className="text-left py-2 px-2 font-semibold">{p.program_name}</th>
                   ))}
@@ -152,7 +152,7 @@ export default function SavedListPage() {
               <tbody>
                 {/* Institution */}
                 <tr className="border-b">
-                  <td className="py-2 px-2 text-stone-500">Institution</td>
+                  <td className="py-2 px-2 text-gray-500">Institution</td>
                   {comparison.programs.map(p => (
                     <td key={p.id} className="py-2 px-2">{p.institution_name}</td>
                   ))}
@@ -160,7 +160,7 @@ export default function SavedListPage() {
 
                 {/* Country */}
                 <tr className="border-b">
-                  <td className="py-2 px-2 text-stone-500">Country</td>
+                  <td className="py-2 px-2 text-gray-500">Country</td>
                   {comparison.programs.map(p => (
                     <td key={p.id} className="py-2 px-2">{p.institution_country}</td>
                   ))}
@@ -168,7 +168,7 @@ export default function SavedListPage() {
 
                 {/* Degree */}
                 <tr className="border-b">
-                  <td className="py-2 px-2 text-stone-500">Degree</td>
+                  <td className="py-2 px-2 text-gray-500">Degree</td>
                   {comparison.programs.map(p => (
                     <td key={p.id} className="py-2 px-2">
                       <Badge variant="info" size="sm">{DEGREE_LABELS[p.degree_type] || p.degree_type}</Badge>
@@ -181,8 +181,8 @@ export default function SavedListPage() {
                   const scores = comparison.programs.map(p => matchLookup[p.id]?.match_score)
                   const best = bestValue(scores, true)
                   return (
-                    <tr className="border-b bg-stone-50">
-                      <td className="py-2 px-2 text-stone-500 font-medium">Match Score</td>
+                    <tr className="border-b bg-gray-50">
+                      <td className="py-2 px-2 text-gray-500 font-medium">Match Score</td>
                       {comparison.programs.map((p, i) => {
                         const m = matchLookup[p.id]
                         const tierInfo = m ? TIER_LABELS[m.match_tier] : null
@@ -208,7 +208,7 @@ export default function SavedListPage() {
                   const best = bestValue(tuitions, false)
                   return (
                     <tr className="border-b">
-                      <td className="py-2 px-2 text-stone-500">Tuition</td>
+                      <td className="py-2 px-2 text-gray-500">Tuition</td>
                       {comparison.programs.map((p, i) => (
                         <td key={p.id} className="py-2 px-2">
                           <div className="flex items-center gap-2">
@@ -227,7 +227,7 @@ export default function SavedListPage() {
                   const best = bestValue(rates, true)
                   return (
                     <tr className="border-b">
-                      <td className="py-2 px-2 text-stone-500">Acceptance Rate</td>
+                      <td className="py-2 px-2 text-gray-500">Acceptance Rate</td>
                       {comparison.programs.map((p, i) => (
                         <td key={p.id} className="py-2 px-2">
                           <div className="flex items-center gap-2">
@@ -242,7 +242,7 @@ export default function SavedListPage() {
 
                 {/* Deadline */}
                 <tr className="border-b">
-                  <td className="py-2 px-2 text-stone-500">Deadline</td>
+                  <td className="py-2 px-2 text-gray-500">Deadline</td>
                   {comparison.programs.map(p => (
                     <td key={p.id} className="py-2 px-2">{formatDate(p.application_deadline)}</td>
                   ))}
@@ -250,7 +250,7 @@ export default function SavedListPage() {
 
                 {/* Duration */}
                 <tr className="border-b">
-                  <td className="py-2 px-2 text-stone-500">Duration</td>
+                  <td className="py-2 px-2 text-gray-500">Duration</td>
                   {comparison.programs.map(p => (
                     <td key={p.id} className="py-2 px-2">{(p as any).duration_months ? `${(p as any).duration_months} months` : '—'}</td>
                   ))}

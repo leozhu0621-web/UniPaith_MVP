@@ -422,7 +422,7 @@ function KnowledgeTab() {
         <Card className="p-4">
           <div className="flex flex-wrap items-center gap-6">
             <div className="flex items-center gap-2">
-              <Brain size={20} className="text-indigo-600" />
+              <Brain size={20} className="text-brand-slate-600" />
               <span className="font-semibold">Status:</span>
               {statusBadge(engine.paused ? 'paused' : engine.status)}
             </div>
@@ -486,7 +486,7 @@ function KnowledgeTab() {
       {/* Knowledge Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-4 text-center">
-          <div className="text-3xl font-bold text-indigo-600">{knowledge?.total_documents ?? '—'}</div>
+          <div className="text-3xl font-bold text-brand-slate-600">{knowledge?.total_documents ?? '—'}</div>
           <div className="text-xs text-gray-500 mt-1">Total Documents</div>
         </Card>
         <Card className="p-4 text-center">

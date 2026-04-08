@@ -117,12 +117,12 @@ export default function MessagingPage() {
               <div
                 key={conv.id}
                 onClick={() => setSelectedConv(conv.id)}
-                className={`p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${selectedConv === conv.id ? 'bg-indigo-50' : ''}`}
+                className={`p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${selectedConv === conv.id ? 'bg-brand-slate-50' : ''}`}
               >
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-gray-900 truncate">{conv.subject ?? 'No subject'}</p>
                   {(conv.unread_count ?? 0) > 0 && (
-                    <span className="ml-2 w-5 h-5 bg-indigo-600 text-white text-xs rounded-full flex items-center justify-center">
+                    <span className="ml-2 w-5 h-5 bg-brand-slate-600 text-white text-xs rounded-full flex items-center justify-center">
                       {conv.unread_count}
                     </span>
                   )}
@@ -166,11 +166,11 @@ export default function MessagingPage() {
                   <div key={msg.id} className={`flex ${msg.sender_type === 'institution' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[70%] rounded-lg px-4 py-2 ${
                       msg.sender_type === 'institution'
-                        ? 'bg-indigo-600 text-white'
+                        ? 'bg-brand-slate-600 text-white'
                         : 'bg-white border border-gray-200 text-gray-800'
                     }`}>
                       <p className="text-sm">{msg.message_body}</p>
-                      <p className={`text-xs mt-1 ${msg.sender_type === 'institution' ? 'text-indigo-200' : 'text-gray-400'}`}>
+                      <p className={`text-xs mt-1 ${msg.sender_type === 'institution' ? 'text-brand-slate-200' : 'text-gray-400'}`}>
                         {formatRelative(msg.sent_at)}
                       </p>
                     </div>

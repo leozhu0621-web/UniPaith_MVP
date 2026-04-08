@@ -62,8 +62,8 @@ export default function DashboardPage() {
   if (institutionQ.isError) {
     return (
       <div className="p-6">
-        <Card className="p-8 text-center border-dashed border-2 border-indigo-300 bg-indigo-50/30">
-          <LayoutDashboard size={48} className="mx-auto text-indigo-400 mb-4" />
+        <Card className="p-8 text-center border-dashed border-2 border-brand-slate-300 bg-brand-slate-50/30">
+          <LayoutDashboard size={48} className="mx-auto text-brand-slate-400 mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Welcome to UniPaith</h2>
           <p className="text-gray-600 mb-6 max-w-md mx-auto">
             Set up your institution profile and create your first program to start receiving applications.
@@ -81,7 +81,7 @@ export default function DashboardPage() {
       label: 'Applications',
       value: summary?.total_applications ?? 0,
       icon: Users,
-      color: 'text-indigo-600 bg-indigo-100',
+      color: 'text-brand-slate-600 bg-brand-slate-100',
     },
     {
       label: 'Acceptance Rate',
@@ -269,7 +269,7 @@ export default function DashboardPage() {
             <div className="space-y-3">
               {notifications.slice(0, 8).map(n => (
                 <div key={n.id} className="flex items-start gap-2">
-                  <div className={`w-2 h-2 mt-1.5 rounded-full flex-shrink-0 ${n.is_read ? 'bg-gray-300' : 'bg-indigo-500'}`} />
+                  <div className={`w-2 h-2 mt-1.5 rounded-full flex-shrink-0 ${n.is_read ? 'bg-gray-300' : 'bg-brand-slate-500'}`} />
                   <div className="min-w-0">
                     <p className="text-sm text-gray-800 truncate">{n.title}</p>
                     <p className="text-xs text-gray-400">{formatRelative(n.created_at)}</p>

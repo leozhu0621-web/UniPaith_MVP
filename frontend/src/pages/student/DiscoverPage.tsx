@@ -96,7 +96,7 @@ export default function DiscoverPage() {
       )}
 
       <div className="flex items-center justify-between mb-6">
-        <p className="text-sm text-stone-500">Need help choosing? Your counselor can guide you.</p>
+        <p className="text-sm text-gray-500">Need help choosing? Your counselor can guide you.</p>
         <Button size="sm" variant="secondary" onClick={() => navigate('/s/chat')}>
           <MessageSquare size={14} className="mr-1" /> Ask Counselor
         </Button>
@@ -108,7 +108,7 @@ export default function DiscoverPage() {
           {matchesLoading ? (
             <div className="flex gap-4">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-32 w-64" />)}</div>
           ) : matchesList.length === 0 ? (
-            <p className="text-sm text-stone-500">No matches yet — check back after your profile is processed.</p>
+            <p className="text-sm text-gray-500">No matches yet — check back after your profile is processed.</p>
           ) : (
             [3, 2, 1].map(tier => {
               const items = matchesByTier[tier]
@@ -118,19 +118,19 @@ export default function DiscoverPage() {
                 <div key={tier} className="mb-6">
                   <div className="flex items-center gap-2 mb-2">
                     <Badge variant={tierInfo.color as any}>{tierInfo.label}</Badge>
-                    <span className="text-sm text-stone-500">({items.length} programs)</span>
+                    <span className="text-sm text-gray-500">({items.length} programs)</span>
                   </div>
                   <div className="flex gap-3 overflow-x-auto pb-2">
                     {items.sort((a, b) => b.match_score - a.match_score).map(m => (
                       <Card key={m.id} onClick={() => handleCardClick(m.program_id)} className="flex-shrink-0 w-64 p-4">
                         <p className="font-semibold text-sm truncate">{m.program?.program_name || 'Program'}</p>
-                        <p className="text-xs text-stone-500 mt-1 truncate">{m.program?.department || ''}</p>
+                        <p className="text-xs text-gray-500 mt-1 truncate">{m.program?.department || ''}</p>
                         <div className="flex items-center justify-between mt-3">
                           <span className="text-lg font-bold">{formatScore(m.match_score)}</span>
                           <Badge variant={tierInfo.color as any} size="sm">{tierInfo.label}</Badge>
                         </div>
                         {m.program?.tuition != null && (
-                          <p className="text-xs text-stone-400 mt-1">{formatCurrency(m.program.tuition)}</p>
+                          <p className="text-xs text-gray-400 mt-1">{formatCurrency(m.program.tuition)}</p>
                         )}
                       </Card>
                     ))}
@@ -147,55 +147,55 @@ export default function DiscoverPage() {
       {/* Search + Filter Bar */}
       <div className="flex gap-3 mb-4">
         <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text" value={q} onChange={e => { setQ(e.target.value); setPage(1) }}
             placeholder="Search programs..."
-            className="w-full pl-9 pr-4 py-2 text-sm border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-800"
+            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-slate-700"
           />
         </div>
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className={`flex items-center gap-2 px-4 py-2 text-sm border rounded-lg hover:bg-stone-50 ${
-            activeFilterCount > 0 ? 'border-stone-800 text-stone-800' : 'border-stone-300 text-stone-600'
+          className={`flex items-center gap-2 px-4 py-2 text-sm border rounded-lg hover:bg-gray-50 ${
+            activeFilterCount > 0 ? 'border-brand-slate-700 text-brand-slate-700' : 'border-gray-300 text-gray-600'
           }`}
         >
           <SlidersHorizontal size={16} />
           Filters
           {activeFilterCount > 0 && (
-            <span className="bg-stone-800 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{activeFilterCount}</span>
+            <span className="bg-brand-slate-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{activeFilterCount}</span>
           )}
         </button>
         <div className="relative">
           <select
             value={sortBy}
             onChange={e => setSortBy(e.target.value)}
-            className="appearance-none px-4 py-2 pr-8 text-sm border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-800 bg-white"
+            className="appearance-none px-4 py-2 pr-8 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-slate-700 bg-white"
           >
             {SORT_OPTIONS.map(o => (
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
-          <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" />
+          <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
         </div>
       </div>
 
       {/* Filter Panel */}
       {showFilters && (
-        <div className="bg-stone-50 border border-stone-200 rounded-lg p-4 mb-4">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-medium">Filters</h3>
             {activeFilterCount > 0 && (
-              <button onClick={resetFilters} className="text-xs text-stone-500 hover:text-stone-700">Clear all</button>
+              <button onClick={resetFilters} className="text-xs text-gray-500 hover:text-brand-slate-600">Clear all</button>
             )}
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
-              <label className="text-xs text-stone-500 mb-1 block">Country</label>
+              <label className="text-xs text-gray-500 mb-1 block">Country</label>
               <select
                 value={country}
                 onChange={e => { setCountry(e.target.value); setPage(1) }}
-                className="w-full text-sm border border-stone-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-stone-800"
+                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-slate-700"
               >
                 <option value="">All Countries</option>
                 {COUNTRY_OPTIONS.map(c => (
@@ -204,11 +204,11 @@ export default function DiscoverPage() {
               </select>
             </div>
             <div>
-              <label className="text-xs text-stone-500 mb-1 block">Degree Type</label>
+              <label className="text-xs text-gray-500 mb-1 block">Degree Type</label>
               <select
                 value={degreeType}
                 onChange={e => { setDegreeType(e.target.value); setPage(1) }}
-                className="w-full text-sm border border-stone-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-stone-800"
+                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-slate-700"
               >
                 <option value="">All Degrees</option>
                 {Object.entries(DEGREE_LABELS).map(([v, l]) => (
@@ -217,23 +217,23 @@ export default function DiscoverPage() {
               </select>
             </div>
             <div>
-              <label className="text-xs text-stone-500 mb-1 block">Min Tuition ($)</label>
+              <label className="text-xs text-gray-500 mb-1 block">Min Tuition ($)</label>
               <input
                 type="number"
                 value={minTuition}
                 onChange={e => { setMinTuition(e.target.value); setPage(1) }}
                 placeholder="0"
-                className="w-full text-sm border border-stone-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-stone-800"
+                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-slate-700"
               />
             </div>
             <div>
-              <label className="text-xs text-stone-500 mb-1 block">Max Tuition ($)</label>
+              <label className="text-xs text-gray-500 mb-1 block">Max Tuition ($)</label>
               <input
                 type="number"
                 value={maxTuition}
                 onChange={e => { setMaxTuition(e.target.value); setPage(1) }}
                 placeholder="Any"
-                className="w-full text-sm border border-stone-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-stone-800"
+                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-slate-700"
               />
             </div>
           </div>
@@ -244,25 +244,25 @@ export default function DiscoverPage() {
       {activeFilterCount > 0 && (
         <div className="flex flex-wrap gap-2 mb-4">
           {country && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 text-xs bg-stone-100 rounded-full">
+            <span className="inline-flex items-center gap-1 px-3 py-1 text-xs bg-gray-100 rounded-full">
               {country}
               <button onClick={() => { setCountry(''); setPage(1) }}><X size={12} /></button>
             </span>
           )}
           {degreeType && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 text-xs bg-stone-100 rounded-full">
+            <span className="inline-flex items-center gap-1 px-3 py-1 text-xs bg-gray-100 rounded-full">
               {DEGREE_LABELS[degreeType] || degreeType}
               <button onClick={() => { setDegreeType(''); setPage(1) }}><X size={12} /></button>
             </span>
           )}
           {minTuition && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 text-xs bg-stone-100 rounded-full">
+            <span className="inline-flex items-center gap-1 px-3 py-1 text-xs bg-gray-100 rounded-full">
               Min: ${Number(minTuition).toLocaleString()}
               <button onClick={() => { setMinTuition(''); setPage(1) }}><X size={12} /></button>
             </span>
           )}
           {maxTuition && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 text-xs bg-stone-100 rounded-full">
+            <span className="inline-flex items-center gap-1 px-3 py-1 text-xs bg-gray-100 rounded-full">
               Max: ${Number(maxTuition).toLocaleString()}
               <button onClick={() => { setMaxTuition(''); setPage(1) }}><X size={12} /></button>
             </span>
@@ -276,22 +276,22 @@ export default function DiscoverPage() {
         </div>
       ) : programs.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-stone-500 mb-2">No programs match yet — try adjusting your search.</p>
+          <p className="text-gray-500 mb-2">No programs match yet — try adjusting your search.</p>
           {activeFilterCount > 0 && (
             <Button size="sm" variant="secondary" onClick={resetFilters}>Clear Filters</Button>
           )}
         </div>
       ) : (
         <>
-          <p className="text-xs text-stone-500 mb-3">{browseData?.total ?? 0} programs found</p>
+          <p className="text-xs text-gray-500 mb-3">{browseData?.total ?? 0} programs found</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {programs.map((p: ProgramSummary) => (
               <Card key={p.id} onClick={() => handleCardClick(p.id)} className="p-4">
                 <p className="font-semibold text-sm truncate">{p.program_name}</p>
-                <p className="text-xs text-stone-500 mt-1">{p.institution_name} — {p.institution_country}</p>
+                <p className="text-xs text-gray-500 mt-1">{p.institution_name} — {p.institution_country}</p>
                 <div className="flex items-center gap-2 mt-2">
                   <Badge variant="info" size="sm">{DEGREE_LABELS[p.degree_type] || p.degree_type}</Badge>
-                  {p.tuition != null && <span className="text-xs text-stone-500">{formatCurrency(p.tuition)}</span>}
+                  {p.tuition != null && <span className="text-xs text-gray-500">{formatCurrency(p.tuition)}</span>}
                 </div>
               </Card>
             ))}
@@ -308,7 +308,7 @@ export default function DiscoverPage() {
               >
                 Previous
               </Button>
-              <span className="text-sm text-stone-500">
+              <span className="text-sm text-gray-500">
                 Page {page} of {browseData.total_pages}
               </span>
               <Button

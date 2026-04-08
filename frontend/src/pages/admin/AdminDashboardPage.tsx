@@ -111,7 +111,7 @@ export default function AdminDashboardPage() {
 
       <Card className="p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-indigo-100 text-indigo-600"><Cpu size={18} /></div>
+          <div className="p-2 rounded-lg bg-brand-slate-100 text-brand-slate-600"><Cpu size={18} /></div>
           <div>
             <p className="text-sm font-medium text-gray-800">AI Engine</p>
             <p className="text-xs text-gray-500">Monitor, control, and maintain the AI pipeline from one place.</p>
@@ -152,7 +152,7 @@ export default function AdminDashboardPage() {
           icon={Users}
           label="Student Profiles"
           value={stats?.profiles ?? 0}
-          color="bg-indigo-100 text-indigo-600"
+          color="bg-brand-slate-100 text-brand-slate-600"
         />
         <KPICard
           icon={Target}

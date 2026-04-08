@@ -26,7 +26,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           value={value}
           maxLength={maxLength}
           className={clsx(
-            'w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-y min-h-[80px]',
+            'w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-slate-600 focus:border-transparent resize-y min-h-[80px]',
             error ? 'border-red-500' : 'border-gray-300',
             className
           )}

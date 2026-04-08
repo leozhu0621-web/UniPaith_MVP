@@ -12,7 +12,7 @@ const VARIANT_CLASSES = {
   warning: 'bg-amber-100 text-amber-800',
   danger: 'bg-rose-100 text-rose-800',
   info: 'bg-sky-100 text-sky-800',
-  neutral: 'bg-stone-100 text-stone-700',
+  neutral: 'bg-gray-100 text-gray-700',
 }
 
 export default function Badge({ variant = 'neutral', size = 'sm', children, className }: BadgeProps) {

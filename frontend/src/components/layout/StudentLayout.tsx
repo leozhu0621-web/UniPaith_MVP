@@ -39,12 +39,12 @@ export default function StudentLayout() {
   const milestone = completionPct < 30 ? 'Getting started' : completionPct < 60 ? 'Building momentum' : completionPct < 80 ? 'Almost there' : 'Looking strong'
 
   return (
-    <div className="flex flex-col h-screen bg-stone-50">
+    <div className="flex flex-col h-screen bg-student">
       {/* Top Navigation Bar */}
-      <header className="h-14 flex items-center justify-between px-6 bg-white border-b border-stone-100 flex-shrink-0 z-30">
+      <header className="h-14 flex items-center justify-between px-6 bg-white border-b border-gray-100 flex-shrink-0 z-30">
         {/* Logo */}
-        <NavLink to="/s/dashboard" className="text-lg font-bold text-stone-800 tracking-tight">
-          UniPaith
+        <NavLink to="/s/dashboard" className="text-lg font-bold tracking-tight">
+          <span className="text-brand-slate-700">Uni</span><span className="text-brand-slate-900 font-extrabold">Paith</span>
         </NavLink>
 
         {/* Center nav icons */}
@@ -56,8 +56,8 @@ export default function StudentLayout() {
               className={({ isActive }) =>
                 `flex flex-col items-center px-4 py-1.5 rounded-xl transition-colors relative ${
                   isActive
-                    ? 'text-stone-800'
-                    : 'text-stone-400 hover:text-stone-600'
+                    ? 'text-brand-slate-700'
+                    : 'text-gray-400 hover:text-brand-slate-600'
                 }`
               }
             >
@@ -66,7 +66,7 @@ export default function StudentLayout() {
                   <item.icon size={20} />
                   <span className="text-[10px] mt-0.5 font-medium">{item.label}</span>
                   {isActive && (
-                    <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-stone-800 rounded-full" />
+                    <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-brand-slate-600 rounded-full" />
                   )}
                 </>
               )}
@@ -78,17 +78,17 @@ export default function StudentLayout() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate('/s/messages')}
-            className="relative p-2 rounded-xl hover:bg-stone-100 text-stone-500 hover:text-stone-700 transition-colors"
+            className="relative p-2 rounded-xl hover:bg-gray-100 text-gray-500 hover:text-brand-slate-700 transition-colors"
           >
             <Bell size={20} />
             {hasUnread && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-brand-amber-500" />
             )}
           </button>
 
           <Dropdown
             trigger={
-              <button className="p-1 rounded-xl hover:bg-stone-100 transition-colors">
+              <button className="p-1 rounded-xl hover:bg-gray-100 transition-colors">
                 <Avatar name={user?.email || '?'} size="sm" />
               </button>
             }
@@ -112,30 +112,30 @@ export default function StudentLayout() {
             <div className="flex items-center gap-3 mb-3">
               <Avatar name={user?.email || '?'} size="md" />
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-stone-800 truncate">
+                <p className="text-sm font-semibold text-brand-slate-800 truncate">
                   {user?.email?.split('@')[0] || 'Student'}
                 </p>
-                <p className="text-xs text-stone-500">{milestone}</p>
+                <p className="text-xs text-gray-500">{milestone}</p>
               </div>
             </div>
             {/* Mini progress ring */}
             <div className="flex items-center gap-3">
               <div className="relative w-10 h-10 flex-shrink-0">
                 <svg className="w-10 h-10 -rotate-90" viewBox="0 0 36 36">
-                  <circle cx="18" cy="18" r="15" fill="none" stroke="#e7e5e4" strokeWidth="3" />
+                  <circle cx="18" cy="18" r="15" fill="none" stroke="#E8EDF5" strokeWidth="3" />
                   <circle
                     cx="18" cy="18" r="15" fill="none"
-                    stroke={completionPct >= 80 ? '#059669' : completionPct >= 50 ? '#d97706' : '#78716c'}
+                    stroke={completionPct >= 80 ? '#059669' : completionPct >= 50 ? '#E5A100' : '#3B5998'}
                     strokeWidth="3"
                     strokeDasharray={`${completionPct * 0.94} 94`}
                     strokeLinecap="round"
                   />
                 </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-stone-700">
+                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-brand-slate-700">
                   {completionPct}%
                 </span>
               </div>
-              <div className="text-xs text-stone-500">
+              <div className="text-xs text-gray-500">
                 Profile strength
               </div>
             </div>
@@ -143,7 +143,7 @@ export default function StudentLayout() {
 
           {/* Quick links */}
           <div className="bg-white rounded-2xl shadow-sm p-3 mb-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-400 px-1 mb-2">Quick access</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 px-1 mb-2">Quick access</p>
             {[
               { to: '/s/saved', label: 'Saved Programs' },
               { to: '/s/recommendations', label: 'Recommenders' },
@@ -157,8 +157,8 @@ export default function StudentLayout() {
                 className={({ isActive }) =>
                   `block px-2 py-1.5 text-sm rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-stone-100 text-stone-800 font-medium'
-                      : 'text-stone-500 hover:text-stone-700 hover:bg-stone-50'
+                      ? 'bg-brand-slate-50 text-brand-slate-700 font-medium'
+                      : 'text-gray-500 hover:text-brand-slate-700 hover:bg-gray-50'
                   }`
                 }
               >
@@ -173,10 +173,10 @@ export default function StudentLayout() {
             className="bg-white rounded-2xl shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow"
           >
             <div className="flex items-center gap-2 mb-2">
-              <Sparkles size={14} className="text-amber-500" />
-              <p className="text-xs font-semibold text-stone-700">Your Counselor</p>
+              <Sparkles size={14} className="text-brand-amber-500" />
+              <p className="text-xs font-semibold text-brand-slate-700">Your Counselor</p>
             </div>
-            <p className="text-xs text-stone-500 leading-relaxed">
+            <p className="text-xs text-gray-500 leading-relaxed">
               Have a question about your journey? Your AI counselor is here to help.
             </p>
           </div>

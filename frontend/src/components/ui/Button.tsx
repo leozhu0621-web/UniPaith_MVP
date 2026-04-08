@@ -16,9 +16,9 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={clsx(
           'inline-flex items-center justify-center rounded font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
           {
-            'bg-stone-800 text-white hover:bg-stone-700': variant === 'primary',
-            'border border-stone-200 bg-white text-stone-700 hover:bg-stone-50': variant === 'secondary',
-            'text-stone-700 hover:bg-stone-100': variant === 'ghost',
+            'bg-brand-slate-600 text-white hover:bg-brand-slate-700': variant === 'primary',
+            'border border-brand-slate-200 bg-white text-brand-slate-700 hover:bg-brand-slate-50': variant === 'secondary',
+            'text-brand-slate-700 hover:bg-brand-slate-50': variant === 'ghost',
             'bg-rose-600 text-white hover:bg-rose-700': variant === 'danger',
             'px-2.5 py-1 text-xs': size === 'sm',
             'px-3.5 py-2 text-sm': size === 'md',

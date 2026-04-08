@@ -14,9 +14,9 @@ const SIZE_MAP = {
 }
 
 const COLORS = [
-  'bg-indigo-100 text-indigo-700',
+  'bg-brand-slate-100 text-brand-slate-700',
   'bg-emerald-100 text-emerald-700',
-  'bg-amber-100 text-amber-700',
+  'bg-brand-amber-100 text-brand-amber-700',
   'bg-rose-100 text-rose-700',
   'bg-cyan-100 text-cyan-700',
   'bg-purple-100 text-purple-700',
