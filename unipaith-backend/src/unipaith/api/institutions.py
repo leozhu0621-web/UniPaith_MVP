@@ -354,6 +354,23 @@ async def institution_assistant_chat(
     return InstitutionAssistantChatResponse(reply=reply, model=settings.llm_reasoning_model)
 
 
+# --- Public Profile ---
+
+
+@router.get("/{institution_id}", response_model=InstitutionResponse)
+async def get_public_institution(
+    institution_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Public endpoint — no auth required. Returns institution profile."""
+    svc = _svc(db)
+    inst = await svc.get_public_institution(institution_id)
+    count = await svc.get_program_count(inst.id)
+    resp = InstitutionResponse.model_validate(inst)
+    resp.program_count = count
+    return resp
+
+
 # --- Institution Intelligence ---
 
 

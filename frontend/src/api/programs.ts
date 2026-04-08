@@ -1,7 +1,7 @@
 import apiClient from './client'
 
 export const searchPrograms = (params: {
-  q?: string; country?: string; degree_type?: string;
+  q?: string; country?: string; degree_type?: string; institution_id?: string;
   min_tuition?: number; max_tuition?: number; sort_by?: string; page?: number; page_size?: number
 }) => apiClient.get('/programs', { params }).then(r => r.data)
 

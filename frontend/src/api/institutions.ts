@@ -6,6 +6,11 @@ export async function getInstitution(): Promise<Institution> {
   return data
 }
 
+export async function getPublicInstitution(institutionId: string): Promise<Institution> {
+  const { data } = await apiClient.get(`/institutions/${institutionId}`)
+  return data
+}
+
 export async function createInstitution(payload: {
   name: string; type: string; country: string; region?: string; city?: string;
   website_url?: string; description_text?: string; logo_url?: string

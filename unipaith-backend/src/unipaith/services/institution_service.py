@@ -627,6 +627,7 @@ class InstitutionService:
         query: str | None = None,
         country: str | None = None,
         degree_type: str | None = None,
+        institution_id: UUID | None = None,
         min_tuition: int | None = None,
         max_tuition: int | None = None,
         sort_by: str | None = None,
@@ -657,6 +658,8 @@ class InstitutionService:
             stmt = stmt.where(Institution.country.ilike(f"%{country}%"))
         if degree_type:
             stmt = stmt.where(Program.degree_type == degree_type)
+        if institution_id:
+            stmt = stmt.where(Program.institution_id == institution_id)
         if min_tuition is not None:
             stmt = stmt.where(Program.tuition >= min_tuition)
         if max_tuition is not None:
@@ -681,6 +684,7 @@ class InstitutionService:
         items = [
             ProgramSummaryResponse(
                 id=prog.id,
+                institution_id=prog.institution_id,
                 program_name=prog.program_name,
                 degree_type=prog.degree_type,
                 department=prog.department,
@@ -708,6 +712,15 @@ class InstitutionService:
         if not program:
             raise NotFoundException("Program not found")
         return program
+
+    async def get_public_institution(self, institution_id: UUID) -> Institution:
+        result = await self.db.execute(
+            select(Institution).where(Institution.id == institution_id)
+        )
+        institution = result.scalar_one_or_none()
+        if not institution:
+            raise NotFoundException("Institution not found")
+        return institution
 
     async def semantic_search_programs(
         self,
@@ -751,6 +764,7 @@ class InstitutionService:
             ordered.append(
                 ProgramSummaryResponse(
                     id=program.id,
+                    institution_id=program.institution_id,
                     program_name=program.program_name,
                     degree_type=program.degree_type,
                     department=program.department,

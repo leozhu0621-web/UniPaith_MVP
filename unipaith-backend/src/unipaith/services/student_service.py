@@ -12,6 +12,7 @@ from unipaith.models.student import (
     AcademicRecord,
     Activity,
     OnboardingProgress,
+    StudentOnlinePresence,
     StudentPreference,
     StudentProfile,
     TestScore,
@@ -19,11 +20,13 @@ from unipaith.models.student import (
 from unipaith.schemas.student import (
     CreateAcademicRecordRequest,
     CreateActivityRequest,
+    CreateOnlinePresenceRequest,
     CreateTestScoreRequest,
     NextStepResponse,
     OnboardingStatusResponse,
     UpdateAcademicRecordRequest,
     UpdateActivityRequest,
+    UpdateOnlinePresenceRequest,
     UpdateProfileRequest,
     UpdateTestScoreRequest,
     UpsertPreferencesRequest,
@@ -42,6 +45,7 @@ class StudentService:
                 selectinload(StudentProfile.academic_records),
                 selectinload(StudentProfile.test_scores),
                 selectinload(StudentProfile.activities),
+                selectinload(StudentProfile.online_presence),
                 selectinload(StudentProfile.preferences),
                 selectinload(StudentProfile.onboarding_progress),
             )
@@ -168,6 +172,48 @@ class StudentService:
         await self.db.flush()
         await self._update_onboarding(student_id)
 
+    # --- Online Presence ---
+
+    async def list_online_presence(
+        self, student_id: UUID,
+    ) -> list[StudentOnlinePresence]:
+        result = await self.db.execute(
+            select(StudentOnlinePresence).where(
+                StudentOnlinePresence.student_id == student_id,
+            )
+        )
+        return list(result.scalars().all())
+
+    async def create_online_presence(
+        self, student_id: UUID, data: CreateOnlinePresenceRequest,
+    ) -> StudentOnlinePresence:
+        record = StudentOnlinePresence(student_id=student_id, **data.model_dump())
+        self.db.add(record)
+        await self.db.flush()
+        await self._update_onboarding(student_id)
+        return record
+
+    async def update_online_presence(
+        self, student_id: UUID, record_id: UUID, data: UpdateOnlinePresenceRequest,
+    ) -> StudentOnlinePresence:
+        record = await self._get_record(StudentOnlinePresence, record_id)
+        await self._verify_ownership(student_id, record.student_id)
+        update_data = data.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(record, key, value)
+        await self.db.flush()
+        await self._update_onboarding(student_id)
+        return record
+
+    async def delete_online_presence(
+        self, student_id: UUID, record_id: UUID,
+    ) -> None:
+        record = await self._get_record(StudentOnlinePresence, record_id)
+        await self._verify_ownership(student_id, record.student_id)
+        await self.db.delete(record)
+        await self.db.flush()
+        await self._update_onboarding(student_id)
+
     # --- Preferences ---
 
     async def get_preferences(self, student_id: UUID) -> StudentPreference | None:
@@ -206,6 +252,7 @@ class StudentService:
                 selectinload(StudentProfile.academic_records),
                 selectinload(StudentProfile.test_scores),
                 selectinload(StudentProfile.activities),
+                selectinload(StudentProfile.online_presence),
                 selectinload(StudentProfile.preferences),
             )
         )
@@ -240,10 +287,15 @@ class StudentService:
             steps.append("activities")
             pct += 10
 
-        # bio_text: 10%
+        # at least 1 online presence link: 5%
+        if p.online_presence:
+            steps.append("online_presence")
+            pct += 5
+
+        # bio_text: 5%
         if p.bio_text:
             steps.append("bio")
-            pct += 10
+            pct += 5
 
         # goals_text: 10%
         if p.goals_text:
@@ -301,6 +353,12 @@ class StudentService:
                 section="bio",
                 fields=["bio_text"],
                 guidance_text="Write a short bio about yourself.",
+            )
+        if "online_presence" not in steps:
+            return NextStepResponse(
+                section="online_presence",
+                fields=["platform_type", "url"],
+                guidance_text="Add your LinkedIn or portfolio links.",
             )
         if "goals" not in steps:
             return NextStepResponse(

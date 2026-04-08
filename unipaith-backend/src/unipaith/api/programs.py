@@ -21,6 +21,7 @@ async def search_programs(
     q: str | None = Query(None),
     country: str | None = Query(None),
     degree_type: str | None = Query(None),
+    institution_id: UUID | None = Query(None),
     min_tuition: int | None = Query(None),
     max_tuition: int | None = Query(None),
     sort_by: str | None = Query(
@@ -35,6 +36,7 @@ async def search_programs(
         query=q,
         country=country,
         degree_type=degree_type,
+        institution_id=institution_id,
         min_tuition=min_tuition,
         max_tuition=max_tuition,
         sort_by=sort_by,

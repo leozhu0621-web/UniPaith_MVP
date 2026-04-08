@@ -59,6 +59,9 @@ class StudentProfile(Base):
     preferences: Mapped[StudentPreference | None] = relationship(
         back_populates="student", uselist=False, cascade="all, delete-orphan"
     )
+    online_presence: Mapped[list[StudentOnlinePresence]] = relationship(
+        back_populates="student", cascade="all, delete-orphan"
+    )
     recommendation_requests: Mapped[list[RecommendationRequest]] = relationship(
         back_populates="student", cascade="all, delete-orphan"
     )
@@ -254,3 +257,26 @@ class OnboardingProgress(Base):
     nudge_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     student: Mapped[StudentProfile] = relationship(back_populates="onboarding_progress")
+
+
+class StudentOnlinePresence(Base):
+    __tablename__ = "student_online_presence"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    platform_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    url: Mapped[str] = mapped_column(String(1000), nullable=False)
+    display_name: Mapped[str | None] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    student: Mapped[StudentProfile] = relationship(back_populates="online_presence")

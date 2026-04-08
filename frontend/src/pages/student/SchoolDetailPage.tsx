@@ -97,6 +97,7 @@ export default function SchoolDetailPage() {
       <div className="flex justify-between items-start mb-6">
         <div>
           <h1 className="text-2xl font-bold">{p.program_name}</h1>
+          <Link to={`/school/${p.institution_id}`} className="text-sm text-indigo-600 hover:underline">View Institution Profile</Link>
           <p className="text-stone-500">{p.department || ''}</p>
           {match && tierInfo && (
             <div className="flex items-center gap-2 mt-2">

@@ -29,8 +29,19 @@ export interface StudentProfile {
   academic_records: AcademicRecord[]
   test_scores: TestScore[]
   activities: Activity[]
+  online_presence: OnlinePresence[]
   preferences: StudentPreference | null
   onboarding: OnboardingStatus | null
+}
+
+export interface OnlinePresence {
+  id: string
+  student_id: string
+  platform_type: string
+  url: string
+  display_name: string | null
+  created_at: string
+  updated_at: string
 }
 
 export interface AcademicRecord {
@@ -135,6 +146,7 @@ export interface Program {
 
 export interface ProgramSummary {
   id: string
+  institution_id: string
   program_name: string
   degree_type: string
   department: string | null

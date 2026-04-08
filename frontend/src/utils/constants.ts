@@ -101,6 +101,16 @@ export const GPA_SCALES = [
   { value: '10.0', label: '10.0 Scale' },
 ]
 
+export const PLATFORM_TYPES = [
+  { value: 'linkedin', label: 'LinkedIn' },
+  { value: 'github', label: 'GitHub' },
+  { value: 'personal_site', label: 'Personal Website' },
+  { value: 'portfolio', label: 'Portfolio' },
+  { value: 'wechat', label: 'WeChat' },
+  { value: 'twitter', label: 'Twitter/X' },
+  { value: 'other', label: 'Other' },
+]
+
 export const DOCUMENT_TYPES = [
   { value: 'transcript', label: 'Transcript' },
   { value: 'essay', label: 'Essay' },

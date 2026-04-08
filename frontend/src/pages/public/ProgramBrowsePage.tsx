@@ -87,7 +87,15 @@ export default function ProgramBrowsePage() {
                 className="bg-white rounded-lg border p-4 hover:shadow-md transition-shadow"
               >
                 <h3 className="font-semibold text-gray-900 truncate">{p.program_name}</h3>
-                <p className="text-sm text-gray-500 mt-1">{p.institution_name} — {p.institution_country}</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  <span
+                    role="link"
+                    tabIndex={0}
+                    onClick={e => { e.preventDefault(); e.stopPropagation(); window.location.href = `/school/${p.institution_id}` }}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); window.location.href = `/school/${p.institution_id}` } }}
+                    className="hover:underline hover:text-indigo-600 cursor-pointer"
+                  >{p.institution_name}</span> — {p.institution_country}
+                </p>
                 <div className="flex items-center gap-2 mt-3">
                   <Badge variant="info">{DEGREE_LABELS[p.degree_type] || p.degree_type}</Badge>
                   {p.tuition != null && (

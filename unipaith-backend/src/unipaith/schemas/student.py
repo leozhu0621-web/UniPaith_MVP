@@ -202,6 +202,38 @@ class StudentPreferenceResponse(BaseModel):
     updated_at: datetime
 
 
+class CreateOnlinePresenceRequest(BaseModel):
+    platform_type: Literal[
+        "linkedin", "github", "personal_site", "portfolio",
+        "wechat", "twitter", "other",
+    ]
+    url: str = Field(min_length=1, max_length=1000)
+    display_name: str | None = Field(None, max_length=255)
+
+
+class UpdateOnlinePresenceRequest(BaseModel):
+    platform_type: (
+        Literal[
+            "linkedin", "github", "personal_site", "portfolio",
+            "wechat", "twitter", "other",
+        ]
+        | None
+    ) = None
+    url: str | None = Field(None, min_length=1, max_length=1000)
+    display_name: str | None = Field(None, max_length=255)
+
+
+class OnlinePresenceResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    student_id: UUID
+    platform_type: str
+    url: str
+    display_name: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
 class NextStepResponse(BaseModel):
     section: str
     fields: list[str]
@@ -230,6 +262,7 @@ class StudentProfileResponse(BaseModel):
     academic_records: list[AcademicRecordResponse] = []
     test_scores: list[TestScoreResponse] = []
     activities: list[ActivityResponse] = []
+    online_presence: list[OnlinePresenceResponse] = []
     preferences: StudentPreferenceResponse | None = None
     onboarding: OnboardingStatusResponse | None = None
 

@@ -18,6 +18,7 @@ import SignupPage from './pages/auth/SignupPage'
 
 // Public pages
 import ProgramBrowsePage from './pages/public/ProgramBrowsePage'
+import InstitutionPage from './pages/public/InstitutionPage'
 
 // Student pages
 import StudentDashboardPage from './pages/student/DashboardPage'
@@ -69,6 +70,7 @@ const router = createBrowserRouter([
   // Public routes
   { path: '/', element: <LandingPage />, errorElement: <RouteErrorPage /> },
   { path: '/browse', element: <ProgramBrowsePage />, errorElement: <RouteErrorPage /> },
+  { path: '/school/:institutionId', element: <InstitutionPage />, errorElement: <RouteErrorPage /> },
   { path: '/login', element: <AuthLayout><LoginPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
   { path: '/signup', element: <AuthLayout><SignupPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
 

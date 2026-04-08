@@ -159,6 +159,7 @@ class ProgramResponse(BaseModel):
 
 class ProgramSummaryResponse(BaseModel):
     id: UUID
+    institution_id: UUID
     program_name: str
     degree_type: str
     department: str | None

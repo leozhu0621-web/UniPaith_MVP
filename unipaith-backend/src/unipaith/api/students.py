@@ -23,9 +23,11 @@ from unipaith.schemas.student import (
     ActivityResponse,
     CreateAcademicRecordRequest,
     CreateActivityRequest,
+    CreateOnlinePresenceRequest,
     CreateTestScoreRequest,
     NextStepResponse,
     OnboardingStatusResponse,
+    OnlinePresenceResponse,
     StudentAssistantChatRequest,
     StudentAssistantChatResponse,
     StudentPreferenceResponse,
@@ -33,6 +35,7 @@ from unipaith.schemas.student import (
     TestScoreResponse,
     UpdateAcademicRecordRequest,
     UpdateActivityRequest,
+    UpdateOnlinePresenceRequest,
     UpdateProfileRequest,
     UpdateTestScoreRequest,
     UpsertPreferencesRequest,
@@ -249,6 +252,63 @@ async def delete_activity(
     svc = _svc(db)
     profile = await svc._get_student_profile(user.id)
     await svc.delete_activity(profile.id, activity_id)
+
+
+# --- Online Presence ---
+
+
+@router.get("/me/online-presence", response_model=list[OnlinePresenceResponse])
+async def list_online_presence(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.list_online_presence(profile.id)
+
+
+@router.post(
+    "/me/online-presence",
+    response_model=OnlinePresenceResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_online_presence(
+    body: CreateOnlinePresenceRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.create_online_presence(profile.id, body)
+
+
+@router.put(
+    "/me/online-presence/{record_id}",
+    response_model=OnlinePresenceResponse,
+)
+async def update_online_presence(
+    record_id: UUID,
+    body: UpdateOnlinePresenceRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.update_online_presence(profile.id, record_id, body)
+
+
+@router.delete(
+    "/me/online-presence/{record_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_online_presence(
+    record_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    await svc.delete_online_presence(profile.id, record_id)
 
 
 # --- Preferences ---
