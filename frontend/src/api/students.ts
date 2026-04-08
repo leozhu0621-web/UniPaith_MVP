@@ -11,6 +11,11 @@ export const createAcademic = (data: any) => apiClient.post('/students/me/academ
 export const updateAcademic = (id: string, data: any) => apiClient.put(`/students/me/academics/${id}`, data).then(r => r.data)
 export const deleteAcademic = (id: string) => apiClient.delete(`/students/me/academics/${id}`)
 
+export const listCourses = (recordId: string) => apiClient.get(`/students/me/academics/${recordId}/courses`).then(r => r.data)
+export const createCourse = (recordId: string, data: any) => apiClient.post(`/students/me/academics/${recordId}/courses`, data).then(r => r.data)
+export const updateCourse = (recordId: string, courseId: string, data: any) => apiClient.put(`/students/me/academics/${recordId}/courses/${courseId}`, data).then(r => r.data)
+export const deleteCourse = (recordId: string, courseId: string) => apiClient.delete(`/students/me/academics/${recordId}/courses/${courseId}`)
+
 export const listTestScores = () => apiClient.get('/students/me/test-scores').then(r => r.data)
 export const createTestScore = (data: any) => apiClient.post('/students/me/test-scores', data).then(r => r.data)
 export const updateTestScore = (id: string, data: any) => apiClient.put(`/students/me/test-scores/${id}`, data).then(r => r.data)

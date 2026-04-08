@@ -23,7 +23,9 @@ from unipaith.schemas.student import (
     AccommodationResponse,
     ActivityResponse,
     CompetitionResponse,
+    CourseResponse,
     CreateAcademicRecordRequest,
+    CreateCourseRequest,
     CreateActivityRequest,
     CreateCompetitionRequest,
     CreateLanguageRequest,
@@ -48,6 +50,7 @@ from unipaith.schemas.student import (
     UpdateAcademicRecordRequest,
     UpdateActivityRequest,
     UpdateCompetitionRequest,
+    UpdateCourseRequest,
     UpdateLanguageRequest,
     UpdateOnlinePresenceRequest,
     UpdatePortfolioItemRequest,
@@ -171,6 +174,70 @@ async def delete_academic(
     svc = _svc(db)
     profile = await svc._get_student_profile(user.id)
     await svc.delete_academic_record(profile.id, record_id)
+
+
+# --- Courses (nested under AcademicRecord) ---
+
+
+@router.get(
+    "/me/academics/{record_id}/courses",
+    response_model=list[CourseResponse],
+)
+async def list_courses(
+    record_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.list_courses(profile.id, record_id)
+
+
+@router.post(
+    "/me/academics/{record_id}/courses",
+    response_model=CourseResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_course(
+    record_id: UUID,
+    body: CreateCourseRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.create_course(profile.id, record_id, body)
+
+
+@router.put(
+    "/me/academics/{record_id}/courses/{course_id}",
+    response_model=CourseResponse,
+)
+async def update_course(
+    record_id: UUID,
+    course_id: UUID,
+    body: UpdateCourseRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.update_course(profile.id, record_id, course_id, body)
+
+
+@router.delete(
+    "/me/academics/{record_id}/courses/{course_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_course(
+    record_id: UUID,
+    course_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    await svc.delete_course(profile.id, record_id, course_id)
 
 
 # --- Test Scores ---

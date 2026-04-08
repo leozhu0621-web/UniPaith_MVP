@@ -3,7 +3,7 @@ import Button from '../../../components/ui/Button'
 import Input from '../../../components/ui/Input'
 import Textarea from '../../../components/ui/Textarea'
 import Select from '../../../components/ui/Select'
-import { DEGREE_LABELS, TEST_TYPES, ACTIVITY_TYPES, GPA_SCALES, CITY_SIZE_OPTIONS, FUNDING_OPTIONS, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS, WORK_EXPERIENCE_TYPES, COMPENSATION_TYPES, COMPETITION_LEVELS, ACCOMMODATION_CATEGORIES, DOC_STATUS_OPTIONS, FONT_SIZE_OPTIONS, INTERVIEW_FORMAT_OPTIONS, SPONSORSHIP_SOURCES } from '../../../utils/constants'
+import { DEGREE_LABELS, TEST_TYPES, ACTIVITY_TYPES, GPA_SCALES, CITY_SIZE_OPTIONS, FUNDING_OPTIONS, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS, WORK_EXPERIENCE_TYPES, COMPENSATION_TYPES, COMPETITION_LEVELS, ACCOMMODATION_CATEGORIES, DOC_STATUS_OPTIONS, FONT_SIZE_OPTIONS, INTERVIEW_FORMAT_OPTIONS, SPONSORSHIP_SOURCES, COURSE_LEVELS, CREDENTIAL_EVAL_STATUS } from '../../../utils/constants'
 
 interface FormProps {
   defaultValues: any
@@ -30,9 +30,9 @@ export function BasicInfoForm({ defaultValues, onSubmit, loading }: FormProps) {
 }
 
 export function AcademicForm({ defaultValues, onSubmit, loading }: FormProps) {
-  const { register, handleSubmit } = useForm({ defaultValues: { institution_name: defaultValues?.institution_name || '', degree_type: defaultValues?.degree_type || 'bachelors', field_of_study: defaultValues?.field_of_study || '', gpa: defaultValues?.gpa || '', gpa_scale: defaultValues?.gpa_scale || '4.0', start_date: defaultValues?.start_date?.slice(0, 10) || '', end_date: defaultValues?.end_date?.slice(0, 10) || '', is_current: defaultValues?.is_current || false, country: defaultValues?.country || '' } })
+  const { register, handleSubmit } = useForm({ defaultValues: { institution_name: defaultValues?.institution_name || '', degree_type: defaultValues?.degree_type || 'bachelors', field_of_study: defaultValues?.field_of_study || '', gpa: defaultValues?.gpa || '', gpa_scale: defaultValues?.gpa_scale || '4.0', start_date: defaultValues?.start_date?.slice(0, 10) || '', end_date: defaultValues?.end_date?.slice(0, 10) || '', is_current: defaultValues?.is_current || false, country: defaultValues?.country || '', transcript_language: defaultValues?.transcript_language || '', credential_evaluation_status: defaultValues?.credential_evaluation_status || '', rigor_indicator_count: defaultValues?.rigor_indicator_count || '' } })
   return (
-    <form onSubmit={handleSubmit(d => onSubmit({ ...d, gpa: d.gpa ? Number(d.gpa) : null }))} className="space-y-3">
+    <form onSubmit={handleSubmit(d => onSubmit({ ...d, gpa: d.gpa ? Number(d.gpa) : null, rigor_indicator_count: d.rigor_indicator_count ? Number(d.rigor_indicator_count) : null }))} className="space-y-3">
       <Input label="Institution Name" {...register('institution_name')} />
       <Select label="Degree Type" options={Object.entries(DEGREE_LABELS).map(([v, l]) => ({ value: v, label: l }))} {...register('degree_type')} />
       <Input label="Field of Study" {...register('field_of_study')} />
@@ -45,6 +45,33 @@ export function AcademicForm({ defaultValues, onSubmit, loading }: FormProps) {
         <Input label="End Date" type="date" {...register('end_date')} />
       </div>
       <Input label="Country" {...register('country')} />
+      <div className="grid grid-cols-2 gap-3">
+        <Input label="Transcript Language" placeholder="English" {...register('transcript_language')} />
+        <Select label="Credential Evaluation" options={[{ value: '', label: 'Select...' }, ...CREDENTIAL_EVAL_STATUS]} {...register('credential_evaluation_status')} />
+      </div>
+      <Input label="AP/IB/Honors Courses Count" type="number" placeholder="0" {...register('rigor_indicator_count')} />
+      <Button type="submit" loading={loading} className="w-full">Save</Button>
+    </form>
+  )
+}
+
+export function CourseForm({ defaultValues, onSubmit, loading }: FormProps) {
+  const { register, handleSubmit } = useForm({ defaultValues: { course_name: defaultValues?.course_name || '', course_code: defaultValues?.course_code || '', subject_area: defaultValues?.subject_area || '', course_level: defaultValues?.course_level || 'regular', grade: defaultValues?.grade || '', credits: defaultValues?.credits || '', term: defaultValues?.term || '' } })
+  return (
+    <form onSubmit={handleSubmit(d => onSubmit({ ...d, credits: d.credits ? Number(d.credits) : null }))} className="space-y-3">
+      <Input label="Course Name" placeholder="Calculus II" {...register('course_name')} />
+      <div className="grid grid-cols-2 gap-3">
+        <Input label="Course Code" placeholder="MATH201" {...register('course_code')} />
+        <Select label="Level" options={COURSE_LEVELS} {...register('course_level')} />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Input label="Subject Area" placeholder="Math, CS..." {...register('subject_area')} />
+        <Input label="Grade" placeholder="A, 95, Pass..." {...register('grade')} />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Input label="Credits" type="number" step="0.5" {...register('credits')} />
+        <Input label="Term" placeholder="Fall 2024" {...register('term')} />
+      </div>
       <Button type="submit" loading={loading} className="w-full">Save</Button>
     </form>
   )

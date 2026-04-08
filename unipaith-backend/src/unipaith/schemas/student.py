@@ -30,6 +30,14 @@ class CreateAcademicRecordRequest(BaseModel):
     honors: str | None = None
     thesis_title: str | None = None
     country: str | None = None
+    transcript_language: str | None = None
+    credential_evaluation_status: (
+        Literal["none", "in_progress", "provided", "verified"] | None
+    ) = None
+    credential_evaluation_report_url: str | None = Field(
+        None, max_length=1000,
+    )
+    rigor_indicator_count: int | None = None
 
 
 class UpdateAcademicRecordRequest(BaseModel):
@@ -46,6 +54,29 @@ class UpdateAcademicRecordRequest(BaseModel):
     honors: str | None = None
     thesis_title: str | None = None
     country: str | None = None
+    transcript_language: str | None = None
+    credential_evaluation_status: (
+        Literal["none", "in_progress", "provided", "verified"] | None
+    ) = None
+    credential_evaluation_report_url: str | None = Field(
+        None, max_length=1000,
+    )
+    rigor_indicator_count: int | None = None
+
+
+class CourseResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    academic_record_id: UUID
+    course_name: str
+    course_code: str | None
+    subject_area: str | None
+    course_level: str
+    grade: str | None
+    credits: Decimal | None
+    term: str | None
+    created_at: datetime
+    updated_at: datetime
 
 
 class AcademicRecordResponse(BaseModel):
@@ -63,8 +94,37 @@ class AcademicRecordResponse(BaseModel):
     honors: str | None
     thesis_title: str | None
     country: str | None
+    transcript_language: str | None
+    credential_evaluation_status: str | None
+    credential_evaluation_report_url: str | None
+    rigor_indicator_count: int | None
+    courses: list[CourseResponse] = []
     created_at: datetime
     updated_at: datetime
+
+
+class CreateCourseRequest(BaseModel):
+    course_name: str = Field(min_length=1, max_length=255)
+    course_code: str | None = Field(None, max_length=50)
+    subject_area: str | None = Field(None, max_length=100)
+    course_level: Literal[
+        "regular", "honors", "AP", "IB", "college",
+    ]
+    grade: str | None = Field(None, max_length=20)
+    credits: Decimal | None = None
+    term: str | None = Field(None, max_length=50)
+
+
+class UpdateCourseRequest(BaseModel):
+    course_name: str | None = Field(None, min_length=1, max_length=255)
+    course_code: str | None = Field(None, max_length=50)
+    subject_area: str | None = Field(None, max_length=100)
+    course_level: (
+        Literal["regular", "honors", "AP", "IB", "college"] | None
+    ) = None
+    grade: str | None = Field(None, max_length=20)
+    credits: Decimal | None = None
+    term: str | None = Field(None, max_length=50)
 
 
 class CreateTestScoreRequest(BaseModel):

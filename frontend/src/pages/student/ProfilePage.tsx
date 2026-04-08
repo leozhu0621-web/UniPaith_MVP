@@ -12,7 +12,8 @@ import { showToast } from '../../stores/toast-store'
 import { formatDate, formatCurrency, formatFileSize } from '../../utils/format'
 import { DEGREE_LABELS, ACTIVITY_TYPES, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS, WORK_EXPERIENCE_TYPES, COMPETITION_LEVELS } from '../../utils/constants'
 import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical, Languages, Briefcase, Trophy, Accessibility, CalendarClock, Plane } from 'lucide-react'
-import { BasicInfoForm, AcademicForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm, ResearchForm, LanguageForm, WorkExperienceForm, CompetitionForm, AccommodationForm, SchedulingForm, VisaInfoForm } from './components/ProfileForms'
+import { BasicInfoForm, AcademicForm, CourseForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm, ResearchForm, LanguageForm, WorkExperienceForm, CompetitionForm, AccommodationForm, SchedulingForm, VisaInfoForm } from './components/ProfileForms'
+import { createCourse, updateCourse, deleteCourse } from '../../api/students'
 import type { StudentProfile } from '../../types'
 
 // --- Profile Strength Ring ---
@@ -62,6 +63,7 @@ const PROFILE_SECTIONS = [
 export default function ProfilePage() {
   const queryClient = useQueryClient()
   const [editModal, setEditModal] = useState<string | null>(null)
+  const [courseRecordId, setCourseRecordId] = useState<string | null>(null)
   const [editItem, setEditItem] = useState<any>(null)
 
   const { data: profile, isLoading } = useQuery({ queryKey: ['profile'], queryFn: getProfile })
@@ -79,6 +81,9 @@ export default function ProfilePage() {
   const acadCreateMut = useMutation({ mutationFn: createAcademic, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Record added', 'success') } })
   const acadUpdateMut = useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => updateAcademic(id, data), onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Record updated', 'success') } })
   const acadDeleteMut = useMutation({ mutationFn: deleteAcademic, onSuccess: () => { invalidateAll(); showToast('Record deleted', 'success') } })
+  const courseCreateMut = useMutation({ mutationFn: ({ recordId, data }: { recordId: string; data: any }) => createCourse(recordId, data), onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Course added', 'success') } })
+  const courseUpdateMut = useMutation({ mutationFn: ({ recordId, courseId, data }: { recordId: string; courseId: string; data: any }) => updateCourse(recordId, courseId, data), onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Course updated', 'success') } })
+  const courseDeleteMut = useMutation({ mutationFn: ({ recordId, courseId }: { recordId: string; courseId: string }) => deleteCourse(recordId, courseId), onSuccess: () => { invalidateAll(); showToast('Course removed', 'success') } })
   const testCreateMut = useMutation({ mutationFn: createTestScore, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Score added', 'success') } })
   const testUpdateMut = useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => updateTestScore(id, data), onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Score updated', 'success') } })
   const testDeleteMut = useMutation({ mutationFn: deleteTestScore, onSuccess: () => { invalidateAll(); showToast('Score deleted', 'success') } })
@@ -195,17 +200,42 @@ export default function ProfilePage() {
         {(p?.academic_records ?? []).length === 0 ? (
           <p className="text-sm text-gray-500">No academic records yet</p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {p!.academic_records.map(rec => (
-              <div key={rec.id} className="flex justify-between items-start border-b border-gray-100 pb-3 last:border-0">
-                <div>
-                  <p className="font-medium text-sm">{rec.institution_name} — {DEGREE_LABELS[rec.degree_type] || rec.degree_type} {rec.field_of_study || ''}</p>
-                  <p className="text-xs text-gray-500">GPA: {rec.gpa ?? '—'}/{rec.gpa_scale ?? '4.0'} | {rec.start_date?.slice(0, 4)}-{rec.is_current ? 'Present' : rec.end_date?.slice(0, 4)}</p>
+              <div key={rec.id} className="border-b border-gray-100 pb-4 last:border-0">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-medium text-sm">{rec.institution_name} — {DEGREE_LABELS[rec.degree_type] || rec.degree_type} {rec.field_of_study || ''}</p>
+                    <p className="text-xs text-gray-500">GPA: {rec.gpa ?? '—'}/{rec.gpa_scale ?? '4.0'} | {rec.start_date?.slice(0, 4)}-{rec.is_current ? 'Present' : rec.end_date?.slice(0, 4)}</p>
+                    {rec.transcript_language && <p className="text-xs text-gray-400">Transcript: {rec.transcript_language}</p>}
+                    {rec.credential_evaluation_status && rec.credential_evaluation_status !== 'none' && <p className="text-xs text-gray-400">Credential eval: {rec.credential_evaluation_status}</p>}
+                    {rec.rigor_indicator_count != null && rec.rigor_indicator_count > 0 && <p className="text-xs text-gray-400">{rec.rigor_indicator_count} AP/IB/Honors courses</p>}
+                  </div>
+                  <div className="flex gap-1">
+                    <Button size="sm" variant="ghost" onClick={() => { setEditItem(rec); setEditModal('academic') }}><Pencil size={12} /></Button>
+                    <Button size="sm" variant="ghost" onClick={() => acadDeleteMut.mutate(rec.id)}><Trash2 size={12} /></Button>
+                  </div>
                 </div>
-                <div className="flex gap-1">
-                  <Button size="sm" variant="ghost" onClick={() => { setEditItem(rec); setEditModal('academic') }}><Pencil size={12} /></Button>
-                  <Button size="sm" variant="ghost" onClick={() => acadDeleteMut.mutate(rec.id)}><Trash2 size={12} /></Button>
-                </div>
+                {/* Nested courses */}
+                {(rec.courses ?? []).length > 0 && (
+                  <div className="mt-2 ml-4 space-y-1">
+                    {rec.courses.map(c => (
+                      <div key={c.id} className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600">{c.course_code ? `${c.course_code} — ` : ''}{c.course_name} <span className="text-gray-400">({c.course_level})</span>{c.grade ? ` — ${c.grade}` : ''}</span>
+                        <div className="flex gap-1">
+                          <Button size="sm" variant="ghost" onClick={() => { setCourseRecordId(rec.id); setEditItem(c); setEditModal('course') }}><Pencil size={10} /></Button>
+                          <Button size="sm" variant="ghost" onClick={() => courseDeleteMut.mutate({ recordId: rec.id, courseId: c.id })}><Trash2 size={10} /></Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <button
+                  onClick={() => { setCourseRecordId(rec.id); setEditItem(null); setEditModal('course') }}
+                  className="mt-2 ml-4 text-xs text-sky-600 hover:underline"
+                >
+                  + Add course
+                </button>
               </div>
             ))}
           </div>
@@ -567,6 +597,18 @@ export default function ProfilePage() {
           defaultValues={editItem}
           onSubmit={data => editItem ? acadUpdateMut.mutate({ id: editItem.id, data }) : acadCreateMut.mutate(data)}
           loading={acadCreateMut.isPending || acadUpdateMut.isPending}
+        />
+      </Modal>
+
+      {/* Course Modal */}
+      <Modal isOpen={editModal === 'course'} onClose={() => { setEditModal(null); setCourseRecordId(null) }} title={editItem ? 'Edit Course' : 'Add Course'}>
+        <CourseForm
+          defaultValues={editItem}
+          onSubmit={data => editItem && courseRecordId
+            ? courseUpdateMut.mutate({ recordId: courseRecordId, courseId: editItem.id, data })
+            : courseRecordId ? courseCreateMut.mutate({ recordId: courseRecordId, data }) : undefined
+          }
+          loading={courseCreateMut.isPending || courseUpdateMut.isPending}
         />
       </Modal>
 

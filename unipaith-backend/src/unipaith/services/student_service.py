@@ -14,6 +14,7 @@ from unipaith.models.student import (
     OnboardingProgress,
     StudentAccommodation,
     StudentCompetition,
+    StudentCourse,
     StudentLanguage,
     StudentOnlinePresence,
     StudentPortfolioItem,
@@ -29,6 +30,7 @@ from unipaith.schemas.student import (
     CreateAcademicRecordRequest,
     CreateActivityRequest,
     CreateCompetitionRequest,
+    CreateCourseRequest,
     CreateLanguageRequest,
     CreateOnlinePresenceRequest,
     CreatePortfolioItemRequest,
@@ -40,6 +42,7 @@ from unipaith.schemas.student import (
     UpdateAcademicRecordRequest,
     UpdateActivityRequest,
     UpdateCompetitionRequest,
+    UpdateCourseRequest,
     UpdateLanguageRequest,
     UpdateOnlinePresenceRequest,
     UpdatePortfolioItemRequest,
@@ -63,7 +66,7 @@ class StudentService:
             select(StudentProfile)
             .where(StudentProfile.user_id == user_id)
             .options(
-                selectinload(StudentProfile.academic_records),
+                selectinload(StudentProfile.academic_records).selectinload(AcademicRecord.courses),
                 selectinload(StudentProfile.test_scores),
                 selectinload(StudentProfile.activities),
                 selectinload(StudentProfile.online_presence),
@@ -132,6 +135,52 @@ class StudentService:
         await self.db.delete(record)
         await self.db.flush()
         await self._update_onboarding(student_id)
+
+    # --- Courses (nested under AcademicRecord) ---
+
+    async def list_courses(
+        self, student_id: UUID, record_id: UUID,
+    ) -> list[StudentCourse]:
+        record = await self._get_record(AcademicRecord, record_id)
+        await self._verify_ownership(student_id, record.student_id)
+        result = await self.db.execute(
+            select(StudentCourse).where(StudentCourse.academic_record_id == record_id)
+        )
+        return list(result.scalars().all())
+
+    async def create_course(
+        self, student_id: UUID, record_id: UUID, data: CreateCourseRequest,
+    ) -> StudentCourse:
+        record = await self._get_record(AcademicRecord, record_id)
+        await self._verify_ownership(student_id, record.student_id)
+        course = StudentCourse(academic_record_id=record_id, **data.model_dump())
+        self.db.add(course)
+        await self.db.flush()
+        return course
+
+    async def update_course(
+        self, student_id: UUID, record_id: UUID, course_id: UUID, data: UpdateCourseRequest,
+    ) -> StudentCourse:
+        record = await self._get_record(AcademicRecord, record_id)
+        await self._verify_ownership(student_id, record.student_id)
+        course = await self._get_record(StudentCourse, course_id)
+        if course.academic_record_id != record_id:
+            raise ForbiddenException("Course does not belong to this record")
+        for key, value in data.model_dump(exclude_unset=True).items():
+            setattr(course, key, value)
+        await self.db.flush()
+        return course
+
+    async def delete_course(
+        self, student_id: UUID, record_id: UUID, course_id: UUID,
+    ) -> None:
+        record = await self._get_record(AcademicRecord, record_id)
+        await self._verify_ownership(student_id, record.student_id)
+        course = await self._get_record(StudentCourse, course_id)
+        if course.academic_record_id != record_id:
+            raise ForbiddenException("Course does not belong to this record")
+        await self.db.delete(course)
+        await self.db.flush()
 
     # --- Test Scores ---
 
@@ -556,7 +605,7 @@ class StudentService:
             select(StudentProfile)
             .where(StudentProfile.id == student_id)
             .options(
-                selectinload(StudentProfile.academic_records),
+                selectinload(StudentProfile.academic_records).selectinload(AcademicRecord.courses),
                 selectinload(StudentProfile.test_scores),
                 selectinload(StudentProfile.activities),
                 selectinload(StudentProfile.online_presence),
