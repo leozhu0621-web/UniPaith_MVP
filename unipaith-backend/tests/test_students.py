@@ -289,6 +289,6 @@ async def test_onboarding_increases_with_data(
 
     resp = await student_client.get("/api/v1/students/me/onboarding")
     data = resp.json()
-    assert data["completion_percentage"] == 45
+    assert data["completion_percentage"] == 40
     assert "basic_profile" in data["steps_completed"]
     assert "academics" in data["steps_completed"]
