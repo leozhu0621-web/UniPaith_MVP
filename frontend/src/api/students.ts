@@ -21,6 +21,11 @@ export const createActivity = (data: any) => apiClient.post('/students/me/activi
 export const updateActivity = (id: string, data: any) => apiClient.put(`/students/me/activities/${id}`, data).then(r => r.data)
 export const deleteActivity = (id: string) => apiClient.delete(`/students/me/activities/${id}`)
 
+export const listLanguages = () => apiClient.get('/students/me/languages').then(r => r.data)
+export const createLanguage = (data: any) => apiClient.post('/students/me/languages', data).then(r => r.data)
+export const updateLanguage = (id: string, data: any) => apiClient.put(`/students/me/languages/${id}`, data).then(r => r.data)
+export const deleteLanguage = (id: string) => apiClient.delete(`/students/me/languages/${id}`)
+
 export const listResearch = () => apiClient.get('/students/me/research').then(r => r.data)
 export const createResearch = (data: any) => apiClient.post('/students/me/research', data).then(r => r.data)
 export const updateResearch = (id: string, data: any) => apiClient.put(`/students/me/research/${id}`, data).then(r => r.data)

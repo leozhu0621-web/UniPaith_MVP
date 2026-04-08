@@ -68,6 +68,9 @@ class StudentProfile(Base):
     research_entries: Mapped[list[StudentResearch]] = relationship(
         back_populates="student", cascade="all, delete-orphan"
     )
+    languages: Mapped[list[StudentLanguage]] = relationship(
+        back_populates="student", cascade="all, delete-orphan"
+    )
     recommendation_requests: Mapped[list[RecommendationRequest]] = relationship(
         back_populates="student", cascade="all, delete-orphan"
     )
@@ -347,3 +350,28 @@ class StudentResearch(Base):
     )
 
     student: Mapped[StudentProfile] = relationship(back_populates="research_entries")
+
+
+class StudentLanguage(Base):
+    __tablename__ = "student_languages"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    language: Mapped[str] = mapped_column(String(100), nullable=False)
+    proficiency_level: Mapped[str] = mapped_column(String(30), nullable=False)
+    certification_type: Mapped[str | None] = mapped_column(String(100))
+    certification_score: Mapped[str | None] = mapped_column(String(50))
+    test_date: Mapped[date | None] = mapped_column(Date)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    student: Mapped[StudentProfile] = relationship(back_populates="languages")

@@ -32,6 +32,7 @@ export interface StudentProfile {
   online_presence: OnlinePresence[]
   portfolio_items: PortfolioItem[]
   research_entries: ResearchEntry[]
+  languages: StudentLanguage[]
   preferences: StudentPreference | null
   onboarding: OnboardingStatus | null
 }
@@ -74,6 +75,18 @@ export interface ResearchEntry {
   start_date: string | null
   end_date: string | null
   is_current: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface StudentLanguage {
+  id: string
+  student_id: string
+  language: string
+  proficiency_level: string
+  certification_type: string | null
+  certification_score: string | null
+  test_date: string | null
   created_at: string
   updated_at: string
 }

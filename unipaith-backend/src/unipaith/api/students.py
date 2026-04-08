@@ -23,10 +23,12 @@ from unipaith.schemas.student import (
     ActivityResponse,
     CreateAcademicRecordRequest,
     CreateActivityRequest,
+    CreateLanguageRequest,
     CreateOnlinePresenceRequest,
     CreatePortfolioItemRequest,
     CreateResearchRequest,
     CreateTestScoreRequest,
+    LanguageResponse,
     NextStepResponse,
     OnboardingStatusResponse,
     OnlinePresenceResponse,
@@ -39,6 +41,7 @@ from unipaith.schemas.student import (
     TestScoreResponse,
     UpdateAcademicRecordRequest,
     UpdateActivityRequest,
+    UpdateLanguageRequest,
     UpdateOnlinePresenceRequest,
     UpdatePortfolioItemRequest,
     UpdateProfileRequest,
@@ -423,6 +426,60 @@ async def delete_research(
     svc = _svc(db)
     profile = await svc._get_student_profile(user.id)
     await svc.delete_research(profile.id, record_id)
+
+
+# --- Languages ---
+
+
+@router.get("/me/languages", response_model=list[LanguageResponse])
+async def list_languages(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.list_languages(profile.id)
+
+
+@router.post(
+    "/me/languages",
+    response_model=LanguageResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_language(
+    body: CreateLanguageRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.create_language(profile.id, body)
+
+
+@router.put("/me/languages/{record_id}", response_model=LanguageResponse)
+async def update_language(
+    record_id: UUID,
+    body: UpdateLanguageRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.update_language(profile.id, record_id, body)
+
+
+@router.delete(
+    "/me/languages/{record_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_language(
+    record_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    await svc.delete_language(profile.id, record_id)
 
 
 # --- Preferences ---

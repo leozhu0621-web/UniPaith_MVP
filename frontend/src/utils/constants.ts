@@ -111,6 +111,24 @@ export const PLATFORM_TYPES = [
   { value: 'other', label: 'Other' },
 ]
 
+export const PROFICIENCY_LEVELS = [
+  { value: 'native', label: 'Native' },
+  { value: 'fluent', label: 'Fluent' },
+  { value: 'advanced', label: 'Advanced' },
+  { value: 'intermediate', label: 'Intermediate' },
+  { value: 'beginner', label: 'Beginner' },
+]
+
+export const LANGUAGE_CERT_TYPES = [
+  { value: 'TOEFL', label: 'TOEFL' },
+  { value: 'IELTS', label: 'IELTS' },
+  { value: 'DELF', label: 'DELF/DALF' },
+  { value: 'HSK', label: 'HSK' },
+  { value: 'JLPT', label: 'JLPT' },
+  { value: 'TOPIK', label: 'TOPIK' },
+  { value: 'other', label: 'Other' },
+]
+
 export const RESEARCH_ROLES = [
   { value: 'assistant', label: 'Research Assistant' },
   { value: 'independent', label: 'Independent Researcher' },

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, createOnlinePresence, updateOnlinePresence, deleteOnlinePresence, createPortfolioItem, updatePortfolioItem, deletePortfolioItem, createResearch, updateResearch, deleteResearch, upsertPreferences, getNextStep } from '../../api/students'
+import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, createOnlinePresence, updateOnlinePresence, deleteOnlinePresence, createPortfolioItem, updatePortfolioItem, deletePortfolioItem, createResearch, updateResearch, deleteResearch, createLanguage, updateLanguage, deleteLanguage, upsertPreferences, getNextStep } from '../../api/students'
 import { getOnboarding } from '../../api/students'
 import { listDocuments } from '../../api/documents'
 import Modal from '../../components/ui/Modal'
@@ -10,9 +10,9 @@ import Badge from '../../components/ui/Badge'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatDate, formatCurrency, formatFileSize } from '../../utils/format'
-import { DEGREE_LABELS, ACTIVITY_TYPES, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS } from '../../utils/constants'
-import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical } from 'lucide-react'
-import { BasicInfoForm, AcademicForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm, ResearchForm } from './components/ProfileForms'
+import { DEGREE_LABELS, ACTIVITY_TYPES, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS } from '../../utils/constants'
+import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical, Languages } from 'lucide-react'
+import { BasicInfoForm, AcademicForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm, ResearchForm, LanguageForm } from './components/ProfileForms'
 import type { StudentProfile } from '../../types'
 
 // --- Profile Strength Ring ---
@@ -52,6 +52,7 @@ const PROFILE_SECTIONS = [
   { key: 'online_presence', label: 'Online Presence', fields: [] },
   { key: 'portfolio', label: 'Portfolio', fields: [] },
   { key: 'research', label: 'Research', fields: [] },
+  { key: 'languages', label: 'Languages', fields: [] },
   { key: 'preferences', label: 'Preferences', fields: [] },
   { key: 'documents', label: 'Documents', fields: [] },
 ]
@@ -91,6 +92,9 @@ export default function ProfilePage() {
   const rsCreateMut = useMutation({ mutationFn: createResearch, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Research added', 'success') } })
   const rsUpdateMut = useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => updateResearch(id, data), onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Research updated', 'success') } })
   const rsDeleteMut = useMutation({ mutationFn: deleteResearch, onSuccess: () => { invalidateAll(); showToast('Research removed', 'success') } })
+  const lnCreateMut = useMutation({ mutationFn: createLanguage, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Language added', 'success') } })
+  const lnUpdateMut = useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => updateLanguage(id, data), onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Language updated', 'success') } })
+  const lnDeleteMut = useMutation({ mutationFn: deleteLanguage, onSuccess: () => { invalidateAll(); showToast('Language removed', 'success') } })
   const prefsMut = useMutation({ mutationFn: upsertPreferences, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Preferences updated', 'success') } })
 
   if (isLoading) return <div className="p-6 space-y-4">{Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}</div>
@@ -111,6 +115,7 @@ export default function ProfilePage() {
       case 'online_presence': return (p?.online_presence ?? []).length > 0
       case 'portfolio': return (p?.portfolio_items ?? []).length > 0
       case 'research': return (p?.research_entries ?? []).length > 0
+      case 'languages': return (p?.languages ?? []).length > 0
       case 'preferences': return !!p?.preferences
       case 'documents': return documentsList.length > 0
       default: return false
@@ -341,6 +346,36 @@ export default function ProfilePage() {
         )}
       </Card>
 
+      {/* Languages */}
+      <Card className="p-5">
+        <div className="flex justify-between items-start mb-3">
+          <h2 className="font-semibold text-stone-800">Languages</h2>
+          <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('language') }}><Plus size={14} /></Button>
+        </div>
+        {(p?.languages ?? []).length === 0 ? (
+          <p className="text-sm text-stone-500">Add the languages you speak and any certifications</p>
+        ) : (
+          <div className="space-y-3">
+            {p!.languages.map(lang => (
+              <div key={lang.id} className="flex justify-between items-start border-b border-stone-100 pb-3 last:border-0">
+                <div className="flex items-start gap-2">
+                  <Languages size={14} className="text-stone-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-sm">{lang.language}</p>
+                    <p className="text-xs text-stone-500">{PROFICIENCY_LEVELS.find(x => x.value === lang.proficiency_level)?.label || lang.proficiency_level}</p>
+                    {lang.certification_type && <p className="text-xs text-stone-400">{lang.certification_type}{lang.certification_score ? `: ${lang.certification_score}` : ''}</p>}
+                  </div>
+                </div>
+                <div className="flex gap-1">
+                  <Button size="sm" variant="ghost" onClick={() => { setEditItem(lang); setEditModal('language') }}><Pencil size={12} /></Button>
+                  <Button size="sm" variant="ghost" onClick={() => lnDeleteMut.mutate(lang.id)}><Trash2 size={12} /></Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
       {/* Preferences */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
@@ -441,6 +476,15 @@ export default function ProfilePage() {
           defaultValues={editItem}
           onSubmit={data => editItem ? rsUpdateMut.mutate({ id: editItem.id, data }) : rsCreateMut.mutate(data)}
           loading={rsCreateMut.isPending || rsUpdateMut.isPending}
+        />
+      </Modal>
+
+      {/* Language Modal */}
+      <Modal isOpen={editModal === 'language'} onClose={() => setEditModal(null)} title={editItem ? 'Edit Language' : 'Add Language'}>
+        <LanguageForm
+          defaultValues={editItem}
+          onSubmit={data => editItem ? lnUpdateMut.mutate({ id: editItem.id, data }) : lnCreateMut.mutate(data)}
+          loading={lnCreateMut.isPending || lnUpdateMut.isPending}
         />
       </Modal>
 

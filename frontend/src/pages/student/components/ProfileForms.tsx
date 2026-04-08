@@ -3,7 +3,7 @@ import Button from '../../../components/ui/Button'
 import Input from '../../../components/ui/Input'
 import Textarea from '../../../components/ui/Textarea'
 import Select from '../../../components/ui/Select'
-import { DEGREE_LABELS, TEST_TYPES, ACTIVITY_TYPES, GPA_SCALES, CITY_SIZE_OPTIONS, FUNDING_OPTIONS, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS } from '../../../utils/constants'
+import { DEGREE_LABELS, TEST_TYPES, ACTIVITY_TYPES, GPA_SCALES, CITY_SIZE_OPTIONS, FUNDING_OPTIONS, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS } from '../../../utils/constants'
 
 interface FormProps {
   defaultValues: any
@@ -146,6 +146,22 @@ export function ResearchForm({ defaultValues, onSubmit, loading }: FormProps) {
         <Input label="End Date" type="date" {...register('end_date')} />
       </div>
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('is_current')} /> Currently active</label>
+      <Button type="submit" loading={loading} className="w-full">Save</Button>
+    </form>
+  )
+}
+
+export function LanguageForm({ defaultValues, onSubmit, loading }: FormProps) {
+  const { register, handleSubmit } = useForm({ defaultValues: { language: defaultValues?.language || '', proficiency_level: defaultValues?.proficiency_level || 'intermediate', certification_type: defaultValues?.certification_type || '', certification_score: defaultValues?.certification_score || '', test_date: defaultValues?.test_date?.slice(0, 10) || '' } })
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+      <Input label="Language" placeholder="English, Mandarin, Spanish..." {...register('language')} />
+      <Select label="Proficiency" options={PROFICIENCY_LEVELS} {...register('proficiency_level')} />
+      <div className="grid grid-cols-2 gap-3">
+        <Input label="Certification (optional)" placeholder="TOEFL, IELTS..." {...register('certification_type')} />
+        <Input label="Score (optional)" placeholder="110, 7.5..." {...register('certification_score')} />
+      </div>
+      <Input label="Test Date (optional)" type="date" {...register('test_date')} />
       <Button type="submit" loading={loading} className="w-full">Save</Button>
     </form>
   )

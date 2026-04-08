@@ -12,6 +12,7 @@ from unipaith.models.student import (
     AcademicRecord,
     Activity,
     OnboardingProgress,
+    StudentLanguage,
     StudentOnlinePresence,
     StudentPortfolioItem,
     StudentPreference,
@@ -22,6 +23,7 @@ from unipaith.models.student import (
 from unipaith.schemas.student import (
     CreateAcademicRecordRequest,
     CreateActivityRequest,
+    CreateLanguageRequest,
     CreateOnlinePresenceRequest,
     CreatePortfolioItemRequest,
     CreateResearchRequest,
@@ -30,6 +32,7 @@ from unipaith.schemas.student import (
     OnboardingStatusResponse,
     UpdateAcademicRecordRequest,
     UpdateActivityRequest,
+    UpdateLanguageRequest,
     UpdateOnlinePresenceRequest,
     UpdatePortfolioItemRequest,
     UpdateProfileRequest,
@@ -54,6 +57,7 @@ class StudentService:
                 selectinload(StudentProfile.online_presence),
                 selectinload(StudentProfile.portfolio_items),
                 selectinload(StudentProfile.research_entries),
+                selectinload(StudentProfile.languages),
                 selectinload(StudentProfile.preferences),
                 selectinload(StudentProfile.onboarding_progress),
             )
@@ -304,6 +308,43 @@ class StudentService:
         await self.db.flush()
         await self._update_onboarding(student_id)
 
+    # --- Languages ---
+
+    async def list_languages(self, student_id: UUID) -> list[StudentLanguage]:
+        result = await self.db.execute(
+            select(StudentLanguage).where(StudentLanguage.student_id == student_id)
+        )
+        return list(result.scalars().all())
+
+    async def create_language(
+        self, student_id: UUID, data: CreateLanguageRequest,
+    ) -> StudentLanguage:
+        record = StudentLanguage(student_id=student_id, **data.model_dump())
+        self.db.add(record)
+        await self.db.flush()
+        await self._update_onboarding(student_id)
+        return record
+
+    async def update_language(
+        self, student_id: UUID, record_id: UUID, data: UpdateLanguageRequest,
+    ) -> StudentLanguage:
+        record = await self._get_record(StudentLanguage, record_id)
+        await self._verify_ownership(student_id, record.student_id)
+        for key, value in data.model_dump(exclude_unset=True).items():
+            setattr(record, key, value)
+        await self.db.flush()
+        await self._update_onboarding(student_id)
+        return record
+
+    async def delete_language(
+        self, student_id: UUID, record_id: UUID,
+    ) -> None:
+        record = await self._get_record(StudentLanguage, record_id)
+        await self._verify_ownership(student_id, record.student_id)
+        await self.db.delete(record)
+        await self.db.flush()
+        await self._update_onboarding(student_id)
+
     # --- Preferences ---
 
     async def get_preferences(self, student_id: UUID) -> StudentPreference | None:
@@ -345,6 +386,7 @@ class StudentService:
                 selectinload(StudentProfile.online_presence),
                 selectinload(StudentProfile.portfolio_items),
                 selectinload(StudentProfile.research_entries),
+                selectinload(StudentProfile.languages),
                 selectinload(StudentProfile.preferences),
             )
         )
@@ -394,6 +436,11 @@ class StudentService:
             steps.append("research")
             pct += 5
 
+        # at least 1 language: 5%
+        if p.languages:
+            steps.append("languages")
+            pct += 5
+
         # bio_text: 5%
         if p.bio_text:
             steps.append("bio")
@@ -404,10 +451,10 @@ class StudentService:
             steps.append("goals")
             pct += 5
 
-        # preferences set: 15%
+        # preferences set: 10%
         if p.preferences:
             steps.append("preferences")
-            pct += 15
+            pct += 10
 
         next_step = self._compute_next_step(steps, p)
         return OnboardingStatusResponse(
@@ -473,6 +520,12 @@ class StudentService:
                 section="research",
                 fields=["title", "role", "institution_lab"],
                 guidance_text="Add any research experience you have.",
+            )
+        if "languages" not in steps:
+            return NextStepResponse(
+                section="languages",
+                fields=["language", "proficiency_level"],
+                guidance_text="Add the languages you speak.",
             )
         if "goals" not in steps:
             return NextStepResponse(

@@ -327,6 +327,40 @@ class ResearchResponse(BaseModel):
     updated_at: datetime
 
 
+class CreateLanguageRequest(BaseModel):
+    language: str = Field(min_length=1, max_length=100)
+    proficiency_level: Literal[
+        "native", "fluent", "advanced", "intermediate", "beginner",
+    ]
+    certification_type: str | None = Field(None, max_length=100)
+    certification_score: str | None = Field(None, max_length=50)
+    test_date: date | None = None
+
+
+class UpdateLanguageRequest(BaseModel):
+    language: str | None = Field(None, min_length=1, max_length=100)
+    proficiency_level: (
+        Literal["native", "fluent", "advanced", "intermediate", "beginner"]
+        | None
+    ) = None
+    certification_type: str | None = Field(None, max_length=100)
+    certification_score: str | None = Field(None, max_length=50)
+    test_date: date | None = None
+
+
+class LanguageResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    student_id: UUID
+    language: str
+    proficiency_level: str
+    certification_type: str | None
+    certification_score: str | None
+    test_date: date | None
+    created_at: datetime
+    updated_at: datetime
+
+
 class NextStepResponse(BaseModel):
     section: str
     fields: list[str]
@@ -358,6 +392,7 @@ class StudentProfileResponse(BaseModel):
     online_presence: list[OnlinePresenceResponse] = []
     portfolio_items: list[PortfolioItemResponse] = []
     research_entries: list[ResearchResponse] = []
+    languages: list[LanguageResponse] = []
     preferences: StudentPreferenceResponse | None = None
     onboarding: OnboardingStatusResponse | None = None
 
