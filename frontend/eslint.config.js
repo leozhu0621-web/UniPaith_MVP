@@ -25,7 +25,7 @@ export default tseslint.config(
       ],
       "@typescript-eslint/no-unused-vars": [
         "warn",
-        { argsIgnorePattern: "^_" },
+        { argsIgnorePattern: "^_", destructuredArrayIgnorePattern: "^_" },
       ],
       "@typescript-eslint/no-explicit-any": "warn",
     },

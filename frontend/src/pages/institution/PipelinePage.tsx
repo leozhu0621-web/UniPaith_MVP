@@ -120,12 +120,13 @@ export default function PipelinePage() {
     queryFn: () => getApplicationsByProgram(selectedProgram),
     enabled: !!selectedProgram,
   })
-  const applications: Application[] = Array.isArray(applicationsQ.data) ? applicationsQ.data : []
   const interviewsQ = useQuery({
     queryKey: ['institution-interviews', selectedProgram],
     queryFn: () => getInstitutionInterviews(),
     enabled: activeTab === 'interviews',
   })
+
+  const applications: Application[] = Array.isArray(applicationsQ.data) ? applicationsQ.data : []
 
   useEffect(() => {
     const tabParam = (searchParams.get('tab') as PipelineTab) || 'board'

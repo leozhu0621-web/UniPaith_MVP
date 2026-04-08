@@ -357,7 +357,7 @@ async def student_assistant_chat(
     )
 
 
-@router.post("/me/recommendations")
+@router.post("/me/recommendations/ai")
 async def get_student_recommendations(
     user: User = Depends(require_student),
     db: AsyncSession = Depends(get_db),
