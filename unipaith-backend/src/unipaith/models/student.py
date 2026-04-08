@@ -80,6 +80,9 @@ class StudentProfile(Base):
     accommodations: Mapped[StudentAccommodation | None] = relationship(
         back_populates="student", uselist=False, cascade="all, delete-orphan"
     )
+    scheduling: Mapped[StudentScheduling | None] = relationship(
+        back_populates="student", uselist=False, cascade="all, delete-orphan"
+    )
     recommendation_requests: Mapped[list[RecommendationRequest]] = relationship(
         back_populates="student", cascade="all, delete-orphan"
     )
@@ -472,3 +475,28 @@ class StudentAccommodation(Base):
     )
 
     student: Mapped[StudentProfile] = relationship(back_populates="accommodations")
+
+
+class StudentScheduling(Base):
+    __tablename__ = "student_scheduling"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_profiles.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    )
+    timezone: Mapped[str | None] = mapped_column(String(50))
+    general_availability: Mapped[dict | None] = mapped_column(JSONB)
+    preferred_interview_format: Mapped[str | None] = mapped_column(String(30))
+    campus_visit_interest: Mapped[bool] = mapped_column(Boolean, default=False)
+    notes: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    student: Mapped[StudentProfile] = relationship(back_populates="scheduling")

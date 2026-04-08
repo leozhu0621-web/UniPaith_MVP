@@ -497,6 +497,30 @@ class AccommodationResponse(BaseModel):
     updated_at: datetime
 
 
+class UpsertSchedulingRequest(BaseModel):
+    timezone: str | None = Field(None, max_length=50)
+    general_availability: dict | None = None
+    preferred_interview_format: (
+        Literal["video", "in_person", "phone", "no_preference"]
+        | None
+    ) = None
+    campus_visit_interest: bool = False
+    notes: str | None = None
+
+
+class SchedulingResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    student_id: UUID
+    timezone: str | None
+    general_availability: dict | None
+    preferred_interview_format: str | None
+    campus_visit_interest: bool
+    notes: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
 class NextStepResponse(BaseModel):
     section: str
     fields: list[str]
@@ -532,6 +556,7 @@ class StudentProfileResponse(BaseModel):
     work_experiences: list[WorkExperienceResponse] = []
     competitions: list[CompetitionResponse] = []
     accommodations: AccommodationResponse | None = None
+    scheduling: SchedulingResponse | None = None
     preferences: StudentPreferenceResponse | None = None
     onboarding: OnboardingStatusResponse | None = None
 

@@ -38,6 +38,7 @@ from unipaith.schemas.student import (
     OnlinePresenceResponse,
     PortfolioItemResponse,
     ResearchResponse,
+    SchedulingResponse,
     StudentAssistantChatRequest,
     StudentAssistantChatResponse,
     StudentPreferenceResponse,
@@ -55,6 +56,7 @@ from unipaith.schemas.student import (
     UpdateWorkExperienceRequest,
     UpsertAccommodationRequest,
     UpsertPreferencesRequest,
+    UpsertSchedulingRequest,
     WorkExperienceResponse,
 )
 from unipaith.services.matching_service import MatchingService
@@ -632,6 +634,30 @@ async def upsert_accommodations(
     svc = _svc(db)
     profile = await svc._get_student_profile(user.id)
     return await svc.upsert_accommodations(profile.id, body)
+
+
+# --- Scheduling ---
+
+
+@router.get("/me/scheduling", response_model=SchedulingResponse | None)
+async def get_scheduling(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.get_scheduling(profile.id)
+
+
+@router.put("/me/scheduling", response_model=SchedulingResponse)
+async def upsert_scheduling(
+    body: UpsertSchedulingRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.upsert_scheduling(profile.id, body)
 
 
 # --- Preferences ---
