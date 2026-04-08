@@ -1,3 +1,16 @@
+export const WORK_EXPERIENCE_TYPES = [
+  { value: 'employment', label: 'Employment' },
+  { value: 'internship', label: 'Internship' },
+  { value: 'volunteering', label: 'Volunteering' },
+  { value: 'service', label: 'Community Service' },
+]
+
+export const COMPENSATION_TYPES = [
+  { value: 'paid', label: 'Paid' },
+  { value: 'unpaid', label: 'Unpaid' },
+  { value: 'stipend', label: 'Stipend' },
+]
+
 export const DEGREE_LABELS: Record<string, string> = {
   bachelors: 'B.S.',
   masters: 'M.S.',
@@ -57,6 +70,18 @@ export const INSTITUTION_TYPES = [
   { value: 'technical_institute', label: 'Technical Institute' },
   { value: 'community_college', label: 'Community College' },
 ]
+
+export const DELIVERY_FORMAT_LABELS: Record<string, string> = {
+  in_person: 'In Person',
+  online: 'Online',
+  hybrid: 'Hybrid',
+}
+
+export const CAMPUS_SETTING_LABELS: Record<string, string> = {
+  urban: 'Urban',
+  suburban: 'Suburban',
+  rural: 'Rural',
+}
 
 export const EVENT_TYPES = [
   { value: 'webinar', label: 'Webinar' },

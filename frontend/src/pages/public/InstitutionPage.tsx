@@ -245,7 +245,7 @@ export default function InstitutionPage() {
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {programs.map(p => (
-                      <Link key={p.id} to={`/s/programs/${p.id}`} className="bg-white rounded-lg border p-4 hover:shadow-md transition-shadow">
+                      <Link key={p.id} to={`/program/${p.id}`} className="bg-white rounded-lg border p-4 hover:shadow-md transition-shadow">
                         <h3 className="font-semibold text-gray-900 truncate">{p.program_name}</h3>
                         <div className="flex items-center gap-2 mt-2">
                           <Badge variant="info">{DEGREE_LABELS[p.degree_type] || p.degree_type}</Badge>
