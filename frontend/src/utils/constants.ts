@@ -1,3 +1,10 @@
+export const INTERVIEW_FORMAT_OPTIONS = [
+  { value: 'video', label: 'Video Call' },
+  { value: 'in_person', label: 'In Person' },
+  { value: 'phone', label: 'Phone' },
+  { value: 'no_preference', label: 'No Preference' },
+]
+
 export const ACCOMMODATION_CATEGORIES = [
   { value: 'learning_disability', label: 'Learning Disability' },
   { value: 'physical_disability', label: 'Physical Disability' },

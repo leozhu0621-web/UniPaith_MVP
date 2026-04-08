@@ -3,7 +3,7 @@ import Button from '../../../components/ui/Button'
 import Input from '../../../components/ui/Input'
 import Textarea from '../../../components/ui/Textarea'
 import Select from '../../../components/ui/Select'
-import { DEGREE_LABELS, TEST_TYPES, ACTIVITY_TYPES, GPA_SCALES, CITY_SIZE_OPTIONS, FUNDING_OPTIONS, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS, WORK_EXPERIENCE_TYPES, COMPENSATION_TYPES, COMPETITION_LEVELS, ACCOMMODATION_CATEGORIES, DOC_STATUS_OPTIONS, FONT_SIZE_OPTIONS } from '../../../utils/constants'
+import { DEGREE_LABELS, TEST_TYPES, ACTIVITY_TYPES, GPA_SCALES, CITY_SIZE_OPTIONS, FUNDING_OPTIONS, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS, WORK_EXPERIENCE_TYPES, COMPENSATION_TYPES, COMPETITION_LEVELS, ACCOMMODATION_CATEGORIES, DOC_STATUS_OPTIONS, FONT_SIZE_OPTIONS, INTERVIEW_FORMAT_OPTIONS } from '../../../utils/constants'
 
 interface FormProps {
   defaultValues: any
@@ -232,6 +232,19 @@ export function AccommodationForm({ defaultValues, onSubmit, loading }: FormProp
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('dyslexia_friendly_mode')} /> Dyslexia-friendly mode</label>
         <Select label="Font Size" options={FONT_SIZE_OPTIONS} {...register('font_size_pref')} />
       </div>
+      <Button type="submit" loading={loading} className="w-full">Save</Button>
+    </form>
+  )
+}
+
+export function SchedulingForm({ defaultValues, onSubmit, loading }: FormProps) {
+  const { register, handleSubmit } = useForm({ defaultValues: { timezone: defaultValues?.timezone || '', preferred_interview_format: defaultValues?.preferred_interview_format || 'no_preference', campus_visit_interest: defaultValues?.campus_visit_interest || false, notes: defaultValues?.notes || '' } })
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+      <Input label="Timezone" placeholder="America/New_York, Asia/Shanghai..." {...register('timezone')} />
+      <Select label="Preferred Interview Format" options={INTERVIEW_FORMAT_OPTIONS} {...register('preferred_interview_format')} />
+      <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('campus_visit_interest')} /> Interested in campus visits</label>
+      <Textarea label="Notes (optional)" placeholder="Availability notes, scheduling preferences..." {...register('notes')} />
       <Button type="submit" loading={loading} className="w-full">Save</Button>
     </form>
   )

@@ -54,5 +54,8 @@ export const createOnlinePresence = (data: any) => apiClient.post('/students/me/
 export const updateOnlinePresence = (id: string, data: any) => apiClient.put(`/students/me/online-presence/${id}`, data).then(r => r.data)
 export const deleteOnlinePresence = (id: string) => apiClient.delete(`/students/me/online-presence/${id}`)
 
+export const getScheduling = () => apiClient.get('/students/me/scheduling').then(r => r.data)
+export const upsertScheduling = (data: any) => apiClient.put('/students/me/scheduling', data).then(r => r.data)
+
 export const getPreferences = () => apiClient.get('/students/me/preferences').then(r => r.data)
 export const upsertPreferences = (data: any) => apiClient.put('/students/me/preferences', data).then(r => r.data)

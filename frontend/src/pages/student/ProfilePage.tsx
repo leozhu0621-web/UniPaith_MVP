@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, createOnlinePresence, updateOnlinePresence, deleteOnlinePresence, createPortfolioItem, updatePortfolioItem, deletePortfolioItem, createResearch, updateResearch, deleteResearch, createLanguage, updateLanguage, deleteLanguage, createWorkExperience, updateWorkExperience, deleteWorkExperience, createCompetition, updateCompetition, deleteCompetition, upsertAccommodations, upsertPreferences, getNextStep } from '../../api/students'
+import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, createOnlinePresence, updateOnlinePresence, deleteOnlinePresence, createPortfolioItem, updatePortfolioItem, deletePortfolioItem, createResearch, updateResearch, deleteResearch, createLanguage, updateLanguage, deleteLanguage, createWorkExperience, updateWorkExperience, deleteWorkExperience, createCompetition, updateCompetition, deleteCompetition, upsertAccommodations, upsertScheduling, upsertPreferences, getNextStep } from '../../api/students'
 import { getOnboarding } from '../../api/students'
 import { listDocuments } from '../../api/documents'
 import Modal from '../../components/ui/Modal'
@@ -11,8 +11,8 @@ import { SkeletonCard } from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatDate, formatCurrency, formatFileSize } from '../../utils/format'
 import { DEGREE_LABELS, ACTIVITY_TYPES, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS, WORK_EXPERIENCE_TYPES, COMPETITION_LEVELS } from '../../utils/constants'
-import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical, Languages, Briefcase, Trophy, Accessibility } from 'lucide-react'
-import { BasicInfoForm, AcademicForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm, ResearchForm, LanguageForm, WorkExperienceForm, CompetitionForm, AccommodationForm } from './components/ProfileForms'
+import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical, Languages, Briefcase, Trophy, Accessibility, CalendarClock } from 'lucide-react'
+import { BasicInfoForm, AcademicForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm, ResearchForm, LanguageForm, WorkExperienceForm, CompetitionForm, AccommodationForm, SchedulingForm } from './components/ProfileForms'
 import type { StudentProfile } from '../../types'
 
 // --- Profile Strength Ring ---
@@ -104,6 +104,7 @@ export default function ProfilePage() {
   const cpUpdateMut = useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => updateCompetition(id, data), onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Competition updated', 'success') } })
   const cpDeleteMut = useMutation({ mutationFn: deleteCompetition, onSuccess: () => { invalidateAll(); showToast('Competition removed', 'success') } })
   const accomMut = useMutation({ mutationFn: upsertAccommodations, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Accommodations updated', 'success') } })
+  const schedMut = useMutation({ mutationFn: upsertScheduling, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Scheduling updated', 'success') } })
   const prefsMut = useMutation({ mutationFn: upsertPreferences, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Preferences updated', 'success') } })
 
   if (isLoading) return <div className="p-6 space-y-4">{Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}</div>
@@ -467,6 +468,27 @@ export default function ProfilePage() {
         )}
       </Card>
 
+      {/* Scheduling */}
+      <Card className="p-5">
+        <div className="flex justify-between items-start mb-3">
+          <h2 className="font-semibold text-brand-slate-700">Scheduling</h2>
+          <Button size="sm" variant="ghost" onClick={() => { setEditItem(p?.scheduling); setEditModal('scheduling') }}><Pencil size={14} /></Button>
+        </div>
+        {p?.scheduling ? (
+          <div className="flex items-start gap-2">
+            <CalendarClock size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
+            <dl className="text-sm space-y-1">
+              {p.scheduling.timezone && <div><dt className="text-gray-500 inline">Timezone:</dt> <dd className="inline">{p.scheduling.timezone}</dd></div>}
+              {p.scheduling.preferred_interview_format && <div><dt className="text-gray-500 inline">Interview:</dt> <dd className="inline capitalize">{p.scheduling.preferred_interview_format.replace(/_/g, ' ')}</dd></div>}
+              <div><dt className="text-gray-500 inline">Campus visits:</dt> <dd className="inline">{p.scheduling.campus_visit_interest ? 'Interested' : 'Not interested'}</dd></div>
+              {p.scheduling.notes && <div className="text-xs text-gray-400 italic mt-1">{p.scheduling.notes}</div>}
+            </dl>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">Set your availability for interviews and visits</p>
+        )}
+      </Card>
+
       {/* Preferences */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
@@ -603,6 +625,15 @@ export default function ProfilePage() {
           defaultValues={editItem}
           onSubmit={data => accomMut.mutate(data)}
           loading={accomMut.isPending}
+        />
+      </Modal>
+
+      {/* Scheduling Modal */}
+      <Modal isOpen={editModal === 'scheduling'} onClose={() => setEditModal(null)} title="Scheduling & Availability">
+        <SchedulingForm
+          defaultValues={editItem}
+          onSubmit={data => schedMut.mutate(data)}
+          loading={schedMut.isPending}
         />
       </Modal>
 

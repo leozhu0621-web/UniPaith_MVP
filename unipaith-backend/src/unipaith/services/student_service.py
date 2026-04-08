@@ -20,6 +20,7 @@ from unipaith.models.student import (
     StudentPreference,
     StudentProfile,
     StudentResearch,
+    StudentScheduling,
     StudentWorkExperience,
     TestScore,
 )
@@ -47,6 +48,7 @@ from unipaith.schemas.student import (
     UpdateWorkExperienceRequest,
     UpsertAccommodationRequest,
     UpsertPreferencesRequest,
+    UpsertSchedulingRequest,
 )
 
 
@@ -69,6 +71,7 @@ class StudentService:
                 selectinload(StudentProfile.work_experiences),
                 selectinload(StudentProfile.competitions),
                 selectinload(StudentProfile.accommodations),
+                selectinload(StudentProfile.scheduling),
                 selectinload(StudentProfile.preferences),
                 selectinload(StudentProfile.onboarding_progress),
             )
@@ -458,6 +461,31 @@ class StudentService:
         update_data = data.model_dump(exclude_unset=True)
         if record is None:
             record = StudentAccommodation(student_id=student_id, **update_data)
+            self.db.add(record)
+        else:
+            for key, value in update_data.items():
+                setattr(record, key, value)
+        await self.db.flush()
+        return record
+
+    # --- Scheduling ---
+
+    async def get_scheduling(self, student_id: UUID) -> StudentScheduling | None:
+        result = await self.db.execute(
+            select(StudentScheduling).where(StudentScheduling.student_id == student_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def upsert_scheduling(
+        self, student_id: UUID, data: UpsertSchedulingRequest,
+    ) -> StudentScheduling:
+        result = await self.db.execute(
+            select(StudentScheduling).where(StudentScheduling.student_id == student_id)
+        )
+        record = result.scalar_one_or_none()
+        update_data = data.model_dump(exclude_unset=True)
+        if record is None:
+            record = StudentScheduling(student_id=student_id, **update_data)
             self.db.add(record)
         else:
             for key, value in update_data.items():

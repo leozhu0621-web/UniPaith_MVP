@@ -47,3 +47,4 @@ infra/tfplan
 infra/.terraform.lock.hcl
 infra/terraform.tfvars
 .claude/worktrees/
+node_modules
