@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   FileText, Plus, Pin, PinOff, Send, Edit2, Trash2, Eye, Clock,
-  Image, Tag, Copy, Calendar,
+  Image, Tag, Copy,
 } from 'lucide-react'
 import {
   getPosts, createPost, updatePost, deletePost, publishPost, pinPost,
@@ -173,7 +173,7 @@ export default function PostsPage() {
         description="Publish announcements, updates, and content to your public profile."
         actions={
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setShowTemplatesModal(true)}>
+            <Button variant="secondary" size="sm" onClick={() => setShowTemplatesModal(true)}>
               <Copy size={16} className="mr-1" /> Templates
             </Button>
             <Button size="sm" onClick={openCreate}>
@@ -189,7 +189,7 @@ export default function PostsPage() {
         <div className="space-y-4">{[1, 2, 3].map(i => <Skeleton key={i} className="h-32" />)}</div>
       ) : filtered.length === 0 ? (
         <EmptyState
-          icon={FileText}
+          icon={<FileText size={40} />}
           title={activeTab === 'all' ? 'No posts yet' : `No ${activeTab} posts`}
           description="Create your first post to share updates with prospective students."
           action={activeTab === 'all' ? { label: 'New Post', onClick: openCreate } : undefined}
@@ -289,7 +289,7 @@ export default function PostsPage() {
                   <button onClick={() => setMediaUrls(prev => prev.filter((_, j) => j !== i))} className="text-red-400 ml-1">&times;</button>
                 </div>
               ))}
-              <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+              <Button variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
                 <Image size={14} className="mr-1" /> {uploading ? 'Uploading...' : 'Add Media'}
               </Button>
               <input
@@ -373,7 +373,7 @@ export default function PostsPage() {
           </div>
 
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
-            <Button variant="outline" onClick={() => setShowCreateModal(false)}>Cancel</Button>
+            <Button variant="secondary" onClick={() => setShowCreateModal(false)}>Cancel</Button>
             <Button
               onClick={handleSubmit}
               disabled={!title.trim() || !body.trim() || createM.isPending || updateM.isPending}
@@ -390,7 +390,7 @@ export default function PostsPage() {
           Are you sure you want to delete &ldquo;{deleteTarget?.title}&rdquo;? This cannot be undone.
         </p>
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+          <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Cancel</Button>
           <Button variant="danger" onClick={() => deleteTarget && deleteM.mutate(deleteTarget.id)} disabled={deleteM.isPending}>
             {deleteM.isPending ? 'Deleting...' : 'Delete'}
           </Button>
@@ -412,7 +412,7 @@ export default function PostsPage() {
                     <h4 className="text-sm font-medium text-gray-900">{t.template_name || t.title}</h4>
                     <p className="text-xs text-gray-500 line-clamp-1 mt-0.5">{t.body}</p>
                   </div>
-                  <Button variant="outline" size="sm">Use</Button>
+                  <Button variant="secondary" size="sm">Use</Button>
                 </div>
               </Card>
             ))}

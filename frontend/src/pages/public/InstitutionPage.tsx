@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   Building2, MapPin, Users, Globe, Mail, ExternalLink,
-  BookOpen, CalendarDays, FileText, Pin, Eye, Clock,
+  BookOpen, CalendarDays, FileText, Pin,
 } from 'lucide-react'
 import { getPublicInstitution, getPublicPosts } from '../../api/institutions'
 import { searchPrograms } from '../../api/programs'
@@ -47,16 +47,24 @@ export default function InstitutionPage() {
     enabled: !!institutionId,
   })
 
+  const postsQ = useQuery({
+    queryKey: ['public-inst-posts', institutionId],
+    queryFn: () => getPublicPosts(institutionId!),
+    enabled: !!institutionId,
+  })
+
   const inst: Institution | undefined = instQ.data
   const programs: ProgramSummary[] = (programsQ.data as PaginatedResponse<ProgramSummary>)?.items ?? []
   const totalProgramPages = (programsQ.data as PaginatedResponse<ProgramSummary>)?.total_pages ?? 1
   const events: EventItem[] = Array.isArray(eventsQ.data) ? eventsQ.data : []
+  const publicPosts: InstitutionPost[] = postsQ.data ?? []
   const gallery: string[] = Array.isArray(inst?.media_gallery) ? inst.media_gallery : []
 
   const tabs = [
     { id: 'overview', label: 'Overview' },
     { id: 'programs', label: `Programs${inst?.program_count != null ? ` (${inst.program_count})` : ''}` },
     { id: 'events', label: `Events${events.length ? ` (${events.length})` : ''}` },
+    ...(publicPosts.length > 0 ? [{ id: 'posts', label: `Posts (${publicPosts.length})` }] : []),
     ...(gallery.length > 0 ? [{ id: 'gallery', label: 'Gallery' }] : []),
   ]
 
@@ -290,6 +298,41 @@ export default function InstitutionPage() {
                     {e.capacity != null && (
                       <span className="text-xs text-gray-400">{e.rsvp_count}/{e.capacity} spots</span>
                     )}
+                  </Card>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* Posts Tab */}
+          {tab === 'posts' && (
+            <div className="space-y-4">
+              {publicPosts.length === 0 ? (
+                <EmptyState icon={<FileText size={40} />} title="No posts yet" description="This institution hasn't published any updates yet." />
+              ) : (
+                publicPosts.map(post => (
+                  <Card key={post.id} className="p-5">
+                    <div className="flex items-start gap-3">
+                      {post.pinned && <Pin size={14} className="text-amber-500 mt-1 flex-shrink-0" />}
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900 mb-1">{post.title}</h4>
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap mb-3">{post.body}</p>
+                        {post.media_urls && Array.isArray(post.media_urls) && post.media_urls.length > 0 && (
+                          <div className="flex gap-2 mb-3 flex-wrap">
+                            {post.media_urls.filter(m => m.type === 'image').map((m, i) => (
+                              <img key={i} src={m.url} alt={m.caption || `Media ${i + 1}`} className="h-32 rounded-lg object-cover border" />
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-3 text-xs text-gray-500">
+                          {post.published_at && <span>{formatDate(post.published_at)}</span>}
+                          {post.program_names && post.program_names.length > 0 && (
+                            <span className="flex items-center gap-1">{post.program_names.join(', ')}</span>
+                          )}
+                          {post.tagged_intake && <Badge variant="neutral">{post.tagged_intake}</Badge>}
+                        </div>
+                      </div>
+                    </div>
                   </Card>
                 ))
               )}
