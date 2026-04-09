@@ -24,6 +24,14 @@ export default function SchoolDetailPage() {
   const queryClient = useQueryClient()
   const [tab, setTab] = useState('overview')
 
+  // Insight filters
+  const [reviewDegree, setReviewDegree] = useState('')
+  const [reviewYear, setReviewYear] = useState('')
+  const [reviewMinRating, setReviewMinRating] = useState('')
+  const [empIndustry, setEmpIndustry] = useState('')
+  const [empYear, setEmpYear] = useState('')
+  const [empSentiment, setEmpSentiment] = useState('')
+
   const { data: program, isLoading } = useQuery({
     queryKey: ['program', programId],
     queryFn: () => getProgram(programId!),
@@ -463,6 +471,7 @@ export default function SchoolDetailPage() {
 
         {tab === 'reviews' && (() => {
           const rd = reviewsData || { total_reviews: 0, reviews: [] }
+          const allReviews: any[] = rd.reviews || []
           const dims: { key: string; label: string }[] = [
             { key: 'avg_teaching', label: 'Teaching Quality' },
             { key: 'avg_workload', label: 'Workload' },
@@ -471,8 +480,41 @@ export default function SchoolDetailPage() {
             { key: 'avg_overall', label: 'Overall' },
           ]
 
+          const degreeOptions = [...new Set(allReviews.map(r => r.reviewer_context?.degree).filter(Boolean))]
+          const yearOptions = [...new Set(allReviews.map(r => r.reviewer_context?.graduation_year || r.reviewer_context?.cohort_year).filter(Boolean))].sort()
+
+          const filtered = allReviews.filter(r => {
+            if (reviewDegree && r.reviewer_context?.degree !== reviewDegree) return false
+            const ry = r.reviewer_context?.graduation_year || r.reviewer_context?.cohort_year
+            if (reviewYear && String(ry) !== reviewYear) return false
+            if (reviewMinRating && (r.rating_overall || 0) < Number(reviewMinRating)) return false
+            return true
+          })
+
           return (
             <div className="space-y-4">
+              {allReviews.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  <select value={reviewDegree} onChange={e => setReviewDegree(e.target.value)} className="text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white">
+                    <option value="">All Degrees</option>
+                    {degreeOptions.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                  <select value={reviewYear} onChange={e => setReviewYear(e.target.value)} className="text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white">
+                    <option value="">All Cohorts</option>
+                    {yearOptions.map(y => <option key={y} value={String(y)}>{y}</option>)}
+                  </select>
+                  <select value={reviewMinRating} onChange={e => setReviewMinRating(e.target.value)} className="text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white">
+                    <option value="">Any Rating</option>
+                    <option value="4">4+ Stars</option>
+                    <option value="3">3+ Stars</option>
+                    <option value="2">2+ Stars</option>
+                  </select>
+                  {(reviewDegree || reviewYear || reviewMinRating) && (
+                    <button onClick={() => { setReviewDegree(''); setReviewYear(''); setReviewMinRating('') }} className="text-xs text-gray-500 hover:text-stone-700">Clear</button>
+                  )}
+                </div>
+              )}
+
               {rd.total_reviews > 0 && (
                 <Card className="p-4">
                   <div className="flex items-center gap-2 mb-3">
@@ -498,9 +540,9 @@ export default function SchoolDetailPage() {
                 </Card>
               )}
 
-              {rd.reviews?.length > 0 ? (
+              {filtered.length > 0 ? (
                 <div className="space-y-3">
-                  {rd.reviews.map((r: any) => (
+                  {filtered.map((r: any) => (
                     <Card key={r.id} className="p-4">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
@@ -548,6 +590,7 @@ export default function SchoolDetailPage() {
 
         {tab === 'employers' && (() => {
           const ed = employerData || { total_feedback: 0, feedback: [], sentiment_counts: {} }
+          const allFeedback: any[] = ed.feedback || []
           const dims: { key: string; label: string }[] = [
             { key: 'avg_technical', label: 'Technical Skills' },
             { key: 'avg_practical', label: 'Practical Experience' },
@@ -557,8 +600,40 @@ export default function SchoolDetailPage() {
           const sentiments = ed.sentiment_counts || {}
           const totalSent = Object.values(sentiments).reduce((s: number, v: any) => s + (Number(v) || 0), 0)
 
+          const industryOptions = [...new Set(allFeedback.map(f => f.industry).filter(Boolean))]
+          const empYearOptions = [...new Set(allFeedback.map(f => f.feedback_year).filter(Boolean))].sort()
+
+          const filteredFb = allFeedback.filter(f => {
+            if (empIndustry && f.industry !== empIndustry) return false
+            if (empYear && String(f.feedback_year) !== empYear) return false
+            if (empSentiment && f.job_readiness_sentiment !== empSentiment) return false
+            return true
+          })
+
           return (
             <div className="space-y-4">
+              {allFeedback.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  <select value={empIndustry} onChange={e => setEmpIndustry(e.target.value)} className="text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white">
+                    <option value="">All Industries</option>
+                    {industryOptions.map(i => <option key={i} value={i}>{i}</option>)}
+                  </select>
+                  <select value={empYear} onChange={e => setEmpYear(e.target.value)} className="text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white">
+                    <option value="">All Years</option>
+                    {empYearOptions.map(y => <option key={y} value={String(y)}>{y}</option>)}
+                  </select>
+                  <select value={empSentiment} onChange={e => setEmpSentiment(e.target.value)} className="text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white">
+                    <option value="">All Sentiments</option>
+                    <option value="positive">Positive</option>
+                    <option value="neutral">Neutral</option>
+                    <option value="negative">Negative</option>
+                  </select>
+                  {(empIndustry || empYear || empSentiment) && (
+                    <button onClick={() => { setEmpIndustry(''); setEmpYear(''); setEmpSentiment('') }} className="text-xs text-gray-500 hover:text-stone-700">Clear</button>
+                  )}
+                </div>
+              )}
+
               {ed.total_feedback === 0 ? (
                 <Card className="p-6 text-center">
                   <Building2 size={32} className="text-gray-300 mx-auto mb-3" />
@@ -614,7 +689,7 @@ export default function SchoolDetailPage() {
                   </Card>
 
                   <div className="space-y-3">
-                    {ed.feedback.map((fb: any) => (
+                    {filteredFb.map((fb: any) => (
                       <Card key={fb.id} className="p-4">
                         <div className="flex items-center justify-between mb-2">
                           <div>
