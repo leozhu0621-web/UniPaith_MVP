@@ -25,6 +25,7 @@ from unipaith.models.student import (
     StudentProfile,
     StudentResearch,
     StudentScheduling,
+    StudentDataConsent,
     StudentVisaInfo,
     StudentWorkExperience,
     TestScore,
@@ -54,6 +55,7 @@ from unipaith.schemas.student import (
     UpdateTestScoreRequest,
     UpdateWorkExperienceRequest,
     UpsertAccommodationRequest,
+    UpsertDataConsentRequest,
     UpsertPreferencesRequest,
     UpsertSchedulingRequest,
     UpsertVisaInfoRequest,
@@ -81,6 +83,7 @@ class StudentService:
                 selectinload(StudentProfile.accommodations),
                 selectinload(StudentProfile.scheduling),
                 selectinload(StudentProfile.visa_info),
+                selectinload(StudentProfile.data_consent),
                 selectinload(StudentProfile.preferences),
                 selectinload(StudentProfile.onboarding_progress),
             )
@@ -960,6 +963,41 @@ class StudentService:
                 "total_signals": engagement_count,
             },
         }
+
+    # --- Data Rights ---
+
+    async def get_data_consent(self, student_id: UUID) -> StudentDataConsent | None:
+        result = await self.db.execute(
+            select(StudentDataConsent).where(StudentDataConsent.student_id == student_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def upsert_data_consent(
+        self, student_id: UUID, data: UpsertDataConsentRequest,
+    ) -> StudentDataConsent:
+        from datetime import datetime as dt, timezone
+
+        result = await self.db.execute(
+            select(StudentDataConsent).where(StudentDataConsent.student_id == student_id)
+        )
+        record = result.scalar_one_or_none()
+        update_data = data.model_dump(exclude_unset=True)
+
+        if record is None:
+            record = StudentDataConsent(student_id=student_id, **update_data)
+            self.db.add(record)
+        else:
+            for key, value in update_data.items():
+                setattr(record, key, value)
+
+        # Track when deletion was requested
+        if record.deletion_requested and record.deletion_requested_at is None:
+            record.deletion_requested_at = dt.now(timezone.utc)
+        elif not record.deletion_requested:
+            record.deletion_requested_at = None
+
+        await self.db.flush()
+        return record
 
     # --- Peer Comparison ---
 

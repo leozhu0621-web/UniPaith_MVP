@@ -40,8 +40,10 @@ from unipaith.schemas.student import (
     OnlinePresenceResponse,
     PortfolioItemResponse,
     ResearchResponse,
+    DataConsentResponse,
     SchedulingResponse,
     StudentAssistantChatRequest,
+    UpsertDataConsentRequest,
     VisaInfoResponse,
     StudentAssistantChatResponse,
     StudentPreferenceResponse,
@@ -820,6 +822,30 @@ async def export_profile(
             ),
         },
     )
+
+
+# --- Data Rights ---
+
+
+@router.get("/me/data-rights", response_model=DataConsentResponse | None)
+async def get_data_rights(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.get_data_consent(profile.id)
+
+
+@router.put("/me/data-rights", response_model=DataConsentResponse)
+async def upsert_data_rights(
+    body: UpsertDataConsentRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.upsert_data_consent(profile.id, body)
 
 
 # --- Preferences ---
