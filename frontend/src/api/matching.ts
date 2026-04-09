@@ -17,3 +17,29 @@ export const chatStudentAssistant = (message: string, contextProgramId?: string)
       context_program_id: contextProgramId,
     })
     .then(r => r.data)
+
+// ============ CONVERSATION / PROGRAM MATCH ============
+
+export const sendConversationTurn = (message: string, options?: { session_id?: string; entrypoint?: string; context_program_id?: string }) =>
+  apiClient.post('/students/me/conversation/turn', { message, ...options }).then(r => r.data)
+
+export const getConversationSession = () =>
+  apiClient.get('/students/me/conversation/session').then(r => r.data)
+
+export const getConversationResume = () =>
+  apiClient.get('/students/me/conversation/session/resume').then(r => r.data)
+
+export const getConversationRequirements = () =>
+  apiClient.get('/students/me/conversation/requirements').then(r => r.data)
+
+export const getConversationConfidence = () =>
+  apiClient.get('/students/me/conversation/confidence').then(r => r.data)
+
+export const getShortlistUnlock = () =>
+  apiClient.get('/students/me/conversation/shortlist-unlock').then(r => r.data)
+
+export const resolveConflict = (conflictId: string, resolution: string) =>
+  apiClient.post(`/students/me/conversation/conflicts/${conflictId}/resolve`, { selected_resolution: resolution }).then(r => r.data)
+
+export const generateShortlist = () =>
+  apiClient.post('/students/me/conversation/generate-shortlist').then(r => r.data)

@@ -352,6 +352,58 @@ export interface EngagementSignal {
   created_at: string
 }
 
+// ============ CONVERSATION / PROGRAM MATCH ============
+export type ConversationStage = 'understand_context' | 'identify_issues' | 'define_demand' | 'translate_requirements' | 'ready_for_shortlist'
+export type ConversationDomain = 'academic_readiness' | 'budget_finance' | 'country_location' | 'timeline_intake' | 'career_outcome' | 'eligibility_compliance' | 'learning_preferences'
+
+export interface ConversationSession {
+  session_id: string
+  student_id: string
+  current_stage: ConversationStage
+  active_domain: ConversationDomain
+  turn_count: number
+  last_updated_at: string
+}
+
+export interface ConversationTurnResponse {
+  session: ConversationSession
+  assistant_message: {
+    message_id: string
+    reply_text: string
+    why_asked: string | null
+    suggested_next_actions: string[]
+  }
+  state_delta: {
+    updated_domains: ConversationDomain[]
+    new_requirements_count: number
+    new_conflicts_count: number
+  }
+  confidence_summary: {
+    global_confidence: number
+    global_level: string
+  }
+}
+
+export interface ConversationRequirement {
+  requirement_id: string
+  domain: ConversationDomain
+  field: string
+  value: unknown
+  priority: 'must_have' | 'should_have' | 'optional'
+  source: string
+  confidence: number
+  status: 'draft' | 'confirmed' | 'rejected'
+  updated_at: string
+}
+
+export interface ShortlistUnlock {
+  eligible: boolean
+  reasons: string[]
+  blocking_conflicts: string[]
+  missing_required_fields: string[]
+  recommended_next_actions: string[]
+}
+
 // ============ APPLICATIONS ============
 export interface Application {
   id: string
