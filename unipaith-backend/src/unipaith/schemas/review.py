@@ -64,6 +64,35 @@ class AIReviewSummaryResponse(BaseModel):
     recommended_score_range: dict | None
 
 
+class EvidenceCitation(BaseModel):
+    field: str
+    value: str
+    citation: str | None = None
+
+
+class CriterionAssessment(BaseModel):
+    criterion_name: str
+    score: float | None = None
+    max_score: float = 10
+    assessment: str
+    evidence: list[EvidenceCitation] = []
+
+
+class AIPacketSummaryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID | None = None
+    application_id: UUID
+    rubric_id: UUID | None = None
+    overall_summary: str
+    strengths: list[dict] | None = None
+    concerns: list[dict] | None = None
+    criterion_assessments: list[dict] | None = None
+    recommended_score: Decimal | None = None
+    confidence_level: str | None = None
+    model_used: str | None = None
+    generated_at: datetime | None = None
+
+
 class PipelineResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
 

@@ -1,5 +1,6 @@
 from unipaith.models.admin_audit_event import AdminAuditEvent
 from unipaith.models.application import (
+    AIPacketSummary,
     Application,
     ApplicationChecklist,
     ApplicationScore,
@@ -153,6 +154,7 @@ __all__ = [
     "InstitutionPost",
     "Promotion",
     "HistoricalOutcome",
+    "AIPacketSummary",
     "Application",
     "ApplicationChecklist",
     "ApplicationSubmission",

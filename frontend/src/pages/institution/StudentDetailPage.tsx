@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { User, Star, Brain, ClipboardCheck, Calendar, Award, FileText } from 'lucide-react'
+import { User, Star, Brain, ClipboardCheck, Calendar, Award, FileText, RefreshCw, Shield } from 'lucide-react'
 import { reviewApplication, makeDecision, createOffer } from '../../api/applications-admin'
 import { chatInstitutionAssistant } from '../../api/institutions'
-import { getScores, getAISummary, assignReviewer, scoreApplication, getRubrics } from '../../api/reviews'
+import { getScores, getAISummary, assignReviewer, scoreApplication, getRubrics, getAIPacketSummary, regenerateAIPacketSummary } from '../../api/reviews'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -17,7 +17,7 @@ import Skeleton from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatDate, formatScore } from '../../utils/format'
 import { STATUS_COLORS, DECISION_OPTIONS } from '../../utils/constants'
-import type { ApplicationScore, AIReviewSummary, Rubric } from '../../types'
+import type { AIPacketSummary, ApplicationScore, AIReviewSummary, Rubric } from '../../types'
 
 export default function StudentDetailPage() {
   const { appId, studentId } = useParams<{ appId?: string; studentId?: string }>()
@@ -61,6 +61,23 @@ export default function StudentDetailPage() {
     queryKey: ['rubrics'],
     queryFn: () => getRubrics(),
     enabled: showScoringModal,
+  })
+
+  const [packetRubricId, setPacketRubricId] = useState<string>('')
+
+  const packetQ = useQuery({
+    queryKey: ['ai-packet', applicationId, packetRubricId],
+    queryFn: () => getAIPacketSummary(applicationId!, packetRubricId || undefined),
+    enabled: !!applicationId && activeTab === 'ai',
+  })
+  const packet: AIPacketSummary | undefined = packetQ.data
+
+  const regenMut = useMutation({
+    mutationFn: () => regenerateAIPacketSummary(applicationId!, packetRubricId || undefined),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ai-packet'] })
+      showToast('AI summary regenerated', 'success')
+    },
   })
 
   const app = applicationQ.data
@@ -270,39 +287,104 @@ export default function StudentDetailPage() {
 
             {activeTab === 'ai' && (
               <Card className="p-5 space-y-4">
-                <div className="flex items-center gap-2">
-                  <Brain size={20} className="text-brand-slate-600" />
-                  <h3 className="font-semibold text-gray-900">AI Insights</h3>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Brain size={20} className="text-brand-slate-600" />
+                    <h3 className="font-semibold text-gray-900">AI Packet Summary</h3>
+                    {packet?.confidence_level && (
+                      <Badge variant={packet.confidence_level === 'high' ? 'success' : packet.confidence_level === 'medium' ? 'info' : 'warning'}>
+                        <Shield size={10} className="mr-1" />{packet.confidence_level} confidence
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Select label="" options={[{ value: '', label: 'No rubric' }, ...rubrics.map(r => ({ value: r.id, label: r.rubric_name }))]} value={packetRubricId} onChange={e => setPacketRubricId(e.target.value)} />
+                    <Button variant="ghost" size="sm" onClick={() => regenMut.mutate()} disabled={regenMut.isPending} className="flex items-center gap-1">
+                      <RefreshCw size={14} className={regenMut.isPending ? 'animate-spin' : ''} /> {regenMut.isPending ? 'Generating...' : 'Regenerate'}
+                    </Button>
+                  </div>
                 </div>
-                {aiQ.isLoading ? (
-                  <Skeleton className="h-32" />
-                ) : !aiSummary ? (
-                  <p className="text-sm text-gray-500">AI summary not available.</p>
+
+                {packetQ.isLoading ? (
+                  <Skeleton className="h-40" />
+                ) : !packet ? (
+                  <p className="text-sm text-gray-500">AI packet summary not available. Click Regenerate to create one.</p>
                 ) : (
-                  <>
-                    <p className="text-sm text-gray-700">{aiSummary.summary}</p>
-                    {aiSummary.strengths.length > 0 && (
-                      <div>
-                        <h4 className="text-sm font-medium text-green-700 mb-1">Strengths</h4>
-                        <ul className="list-disc list-inside text-sm text-gray-600">
-                          {aiSummary.strengths.map((s, i) => <li key={i}>{s}</li>)}
-                        </ul>
+                  <div className="space-y-4">
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{packet.overall_summary}</p>
+                    </div>
+
+                    {packet.recommended_score != null && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-500">Recommended Score:</span>
+                        <span className="text-lg font-bold text-brand-slate-700">{packet.recommended_score.toFixed(1)}</span>
+                        <span className="text-sm text-gray-400">/ 10</span>
                       </div>
                     )}
-                    {aiSummary.concerns.length > 0 && (
+
+                    {packet.strengths && packet.strengths.length > 0 && (
                       <div>
-                        <h4 className="text-sm font-medium text-red-700 mb-1">Concerns</h4>
-                        <ul className="list-disc list-inside text-sm text-gray-600">
-                          {aiSummary.concerns.map((c, i) => <li key={i}>{c}</li>)}
-                        </ul>
+                        <h4 className="text-sm font-medium text-green-700 mb-2">Strengths (with evidence)</h4>
+                        <div className="space-y-2">
+                          {packet.strengths.map((s, i) => (
+                            <div key={i} className="bg-green-50 rounded p-2.5">
+                              <p className="text-sm text-gray-800">{s.text}</p>
+                              {s.evidence && <p className="text-xs text-green-600 mt-1 font-mono">{s.source_field}: {s.evidence}</p>}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
-                    {aiSummary.recommended_score_range && (
-                      <p className="text-sm text-gray-600">
-                        Recommended score range: <strong>{aiSummary.recommended_score_range.min}-{aiSummary.recommended_score_range.max}</strong>
-                      </p>
+
+                    {packet.concerns && packet.concerns.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-medium text-red-700 mb-2">Concerns (with evidence)</h4>
+                        <div className="space-y-2">
+                          {packet.concerns.map((c, i) => (
+                            <div key={i} className="bg-red-50 rounded p-2.5">
+                              <p className="text-sm text-gray-800">{c.text}</p>
+                              {c.evidence && <p className="text-xs text-red-600 mt-1 font-mono">{c.source_field}: {c.evidence}</p>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     )}
-                  </>
+
+                    {packet.criterion_assessments && packet.criterion_assessments.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Rubric Criterion Assessments</h4>
+                        <div className="border rounded-lg overflow-hidden">
+                          {packet.criterion_assessments.map((ca, i) => (
+                            <div key={i} className={`p-3 ${i > 0 ? 'border-t' : ''}`}>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-sm font-medium text-gray-900">{ca.criterion_name}</span>
+                                {ca.score != null && (
+                                  <Badge variant={ca.score >= 7 ? 'success' : ca.score >= 4 ? 'info' : 'warning'}>
+                                    {ca.score}/10
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600">{ca.assessment}</p>
+                              {ca.evidence && ca.evidence.length > 0 && (
+                                <div className="mt-1 flex flex-wrap gap-1">
+                                  {ca.evidence.map((e, j) => (
+                                    <span key={j} className="text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-mono">
+                                      {e.field}: {e.value}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {packet.model_used && (
+                      <p className="text-xs text-gray-400">Model: {packet.model_used} | Generated: {packet.generated_at ? new Date(packet.generated_at).toLocaleString() : 'N/A'}</p>
+                    )}
+                  </div>
                 )}
 
                 <div className="border-t pt-4 mt-4">

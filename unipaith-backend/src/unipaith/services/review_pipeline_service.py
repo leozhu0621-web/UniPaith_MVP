@@ -19,6 +19,7 @@ from unipaith.ai.llm_client import get_llm_client
 from unipaith.config import settings
 from unipaith.core.exceptions import BadRequestException, NotFoundException
 from unipaith.models.application import (
+    AIPacketSummary,
     Application,
     ApplicationScore,
     ReviewAssignment,
@@ -374,6 +375,255 @@ class ReviewPipelineService:
             }
 
         return review_data
+
+    # ------------------------------------------------------------------
+    # AI Packet Summary (rubric-aligned with evidence)
+    # ------------------------------------------------------------------
+
+    async def get_or_generate_packet_summary(
+        self,
+        institution_id: UUID,
+        application_id: UUID,
+        rubric_id: UUID | None = None,
+        force_regenerate: bool = False,
+    ) -> dict:
+        """Get cached AI packet summary or generate a new one."""
+        from datetime import UTC, datetime
+
+        # Check cache
+        if not force_regenerate:
+            cached = await self.db.execute(
+                select(AIPacketSummary).where(
+                    AIPacketSummary.application_id == application_id,
+                )
+            )
+            existing = cached.scalar_one_or_none()
+            if existing:
+                return self._packet_to_dict(existing)
+
+        # Load application + program + rubric
+        app_r = await self.db.execute(
+            select(Application).where(Application.id == application_id)
+        )
+        app = app_r.scalar_one_or_none()
+        if not app:
+            raise NotFoundException("Application not found")
+
+        prog_r = await self.db.execute(
+            select(Program).where(Program.id == app.program_id)
+        )
+        program = prog_r.scalar_one_or_none()
+        if not program:
+            raise NotFoundException("Program not found")
+
+        # Load student
+        profile_r = await self.db.execute(
+            select(StudentProfile)
+            .where(StudentProfile.id == app.student_id)
+            .options(
+                selectinload(StudentProfile.academic_records),
+                selectinload(StudentProfile.test_scores),
+                selectinload(StudentProfile.activities),
+            )
+        )
+        profile = profile_r.scalar_one_or_none()
+
+        # Load rubric if provided
+        rubric_criteria = []
+        if rubric_id:
+            rub_r = await self.db.execute(
+                select(Rubric).where(Rubric.id == rubric_id)
+            )
+            rubric = rub_r.scalar_one_or_none()
+            if rubric and rubric.criteria:
+                rubric_criteria = (
+                    rubric.criteria
+                    if isinstance(rubric.criteria, list)
+                    else []
+                )
+
+        # Build context
+        student_data = self._build_student_context(profile)
+        program_data = {
+            "name": program.program_name,
+            "degree_type": program.degree_type,
+            "department": program.department,
+            "requirements": program.requirements,
+            "description": program.description_text,
+        }
+
+        # Build prompt
+        rubric_section = ""
+        if rubric_criteria:
+            criteria_list = "\n".join(
+                f"- {c.get('name', 'Unknown')}"
+                f" (weight: {c.get('weight', 1)})"
+                f": {c.get('description', '')}"
+                for c in rubric_criteria
+            )
+            rubric_section = (
+                f"\n\nRubric Criteria:\n{criteria_list}\n\n"
+                "For each criterion, provide a score (0-10), "
+                "an assessment, and cite specific evidence "
+                "from the application."
+            )
+
+        system_prompt = (
+            "You are an expert admissions reviewer. Generate a "
+            "comprehensive applicant packet summary. Respond in "
+            "valid JSON with these keys:\n"
+            '- "overall_summary": string (2-3 paragraph narrative)\n'
+            '- "strengths": list of objects with keys "text", '
+            '"evidence" (specific data point), "source_field" '
+            "(which part of the application)\n"
+            '- "concerns": same structure as strengths\n'
+            '- "criterion_assessments": list of objects with keys '
+            '"criterion_name", "score" (0-10), "assessment" '
+            '(string), "evidence" (list of objects with "field", '
+            '"value", "citation")\n'
+            '- "recommended_score": number (0-10)\n'
+            '- "confidence_level": "high" | "medium" | "low"\n\n'
+            "IMPORTANT: Cite specific evidence from the applicant's "
+            "profile for every claim. Reference exact GPA, test "
+            "scores, activity titles, and organization names."
+            f"{rubric_section}"
+        )
+
+        user_content = (
+            f"Student Profile:\n{json.dumps(student_data, indent=2)}"
+            f"\n\nProgram:\n{json.dumps(program_data, indent=2)}"
+        )
+
+        llm = get_llm_client()
+        raw = await llm.generate_reasoning(system_prompt, user_content)
+
+        # Parse response
+        try:
+            data = json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            data = {
+                "overall_summary": raw or "Summary generation failed",
+                "strengths": [],
+                "concerns": [],
+                "criterion_assessments": [],
+                "recommended_score": None,
+                "confidence_level": "low",
+            }
+
+        # Upsert to database
+        existing_r = await self.db.execute(
+            select(AIPacketSummary).where(
+                AIPacketSummary.application_id == application_id,
+            )
+        )
+        existing = existing_r.scalar_one_or_none()
+
+        model_name = getattr(settings, "llm_reasoning_model", "unknown")
+
+        if existing:
+            existing.rubric_id = rubric_id
+            existing.overall_summary = data.get(
+                "overall_summary", "",
+            )
+            existing.strengths = data.get("strengths")
+            existing.concerns = data.get("concerns")
+            existing.criterion_assessments = data.get(
+                "criterion_assessments",
+            )
+            existing.recommended_score = (
+                Decimal(str(data["recommended_score"]))
+                if data.get("recommended_score")
+                else None
+            )
+            existing.confidence_level = data.get("confidence_level")
+            existing.model_used = model_name
+            existing.generated_at = datetime.now(UTC)
+            await self.db.flush()
+            await self.db.refresh(existing)
+            return self._packet_to_dict(existing)
+
+        summary = AIPacketSummary(
+            application_id=application_id,
+            institution_id=institution_id,
+            rubric_id=rubric_id,
+            overall_summary=data.get("overall_summary", ""),
+            strengths=data.get("strengths"),
+            concerns=data.get("concerns"),
+            criterion_assessments=data.get(
+                "criterion_assessments",
+            ),
+            recommended_score=(
+                Decimal(str(data["recommended_score"]))
+                if data.get("recommended_score")
+                else None
+            ),
+            confidence_level=data.get("confidence_level"),
+            model_used=model_name,
+            generated_at=datetime.now(UTC),
+        )
+        self.db.add(summary)
+        await self.db.flush()
+        await self.db.refresh(summary)
+        return self._packet_to_dict(summary)
+
+    def _build_student_context(self, profile) -> dict:
+        """Build student data dict for LLM prompt."""
+        if not profile:
+            return {"name": "Unknown", "academics": [], "test_scores": [], "activities": []}
+        return {
+            "name": f"{profile.first_name or ''} {profile.last_name or ''}".strip(),
+            "nationality": getattr(profile, "nationality", None),
+            "bio": getattr(profile, "bio_text", None),
+            "goals": getattr(profile, "goals_text", None),
+            "academics": [
+                {
+                    "institution": r.institution_name,
+                    "degree": r.degree_type,
+                    "field": r.field_of_study,
+                    "gpa": str(r.gpa) if r.gpa else None,
+                }
+                for r in (profile.academic_records or [])
+            ],
+            "test_scores": [
+                {
+                    "type": s.test_type,
+                    "total": str(s.total_score) if s.total_score else None,
+                }
+                for s in (profile.test_scores or [])
+            ],
+            "activities": [
+                {
+                    "type": a.activity_type,
+                    "title": a.title,
+                    "organization": a.organization,
+                }
+                for a in (profile.activities or [])
+            ],
+        }
+
+    @staticmethod
+    def _packet_to_dict(s: AIPacketSummary) -> dict:
+        return {
+            "id": str(s.id),
+            "application_id": str(s.application_id),
+            "rubric_id": str(s.rubric_id) if s.rubric_id else None,
+            "overall_summary": s.overall_summary,
+            "strengths": s.strengths,
+            "concerns": s.concerns,
+            "criterion_assessments": s.criterion_assessments,
+            "recommended_score": (
+                float(s.recommended_score)
+                if s.recommended_score
+                else None
+            ),
+            "confidence_level": s.confidence_level,
+            "model_used": s.model_used,
+            "generated_at": (
+                s.generated_at.isoformat()
+                if s.generated_at
+                else None
+            ),
+        }
 
     # ------------------------------------------------------------------
     # Pipeline analytics

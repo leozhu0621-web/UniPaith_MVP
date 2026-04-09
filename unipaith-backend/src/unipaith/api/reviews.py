@@ -118,6 +118,36 @@ async def ai_review_summary(
     return await svc.generate_ai_review_summary(inst.id, application_id)
 
 
+@router.get("/applications/{application_id}/ai-packet")
+async def get_ai_packet_summary(
+    application_id: UUID,
+    rubric_id: UUID | None = Query(None),
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get cached AI packet summary or generate a new one."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    svc = ReviewPipelineService(db)
+    return await svc.get_or_generate_packet_summary(
+        inst.id, application_id, rubric_id,
+    )
+
+
+@router.post("/applications/{application_id}/ai-packet/regenerate")
+async def regenerate_ai_packet_summary(
+    application_id: UUID,
+    rubric_id: UUID | None = Query(None),
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Force regenerate AI packet summary."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    svc = ReviewPipelineService(db)
+    return await svc.get_or_generate_packet_summary(
+        inst.id, application_id, rubric_id, force_regenerate=True,
+    )
+
+
 # --- Batch Operations ---
 
 

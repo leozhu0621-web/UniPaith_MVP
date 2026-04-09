@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { BatchOperationResult, CohortComparisonData, Rubric, ApplicationScore, ReviewAssignment, AIReviewSummary, PipelineData } from '../types'
+import type { AIPacketSummary, BatchOperationResult, CohortComparisonData, Rubric, ApplicationScore, ReviewAssignment, AIReviewSummary, PipelineData } from '../types'
 
 export async function getRubrics(programId?: string): Promise<Rubric[]> {
   const params = programId ? { program_id: programId } : {}
@@ -42,6 +42,20 @@ export async function getAISummary(applicationId: string): Promise<AIReviewSumma
 
 export async function getPipeline(programId: string): Promise<PipelineData> {
   const { data } = await apiClient.get(`/reviews/pipeline/${programId}`)
+  return data
+}
+
+// --- AI Packet Summary ---
+
+export async function getAIPacketSummary(applicationId: string, rubricId?: string): Promise<AIPacketSummary> {
+  const params = rubricId ? { rubric_id: rubricId } : undefined
+  const { data } = await apiClient.get(`/reviews/applications/${applicationId}/ai-packet`, { params })
+  return data
+}
+
+export async function regenerateAIPacketSummary(applicationId: string, rubricId?: string): Promise<AIPacketSummary> {
+  const params = rubricId ? { rubric_id: rubricId } : undefined
+  const { data } = await apiClient.post(`/reviews/applications/${applicationId}/ai-packet/regenerate`, null, { params })
   return data
 }
 

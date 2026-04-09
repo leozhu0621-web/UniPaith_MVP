@@ -692,6 +692,25 @@ export interface AIReviewSummary {
   recommended_score_range: { min: number; max: number } | null
 }
 
+export interface AIPacketSummary {
+  id: string | null
+  application_id: string
+  rubric_id: string | null
+  overall_summary: string
+  strengths: { text: string; evidence: string; source_field: string }[] | null
+  concerns: { text: string; evidence: string; source_field: string }[] | null
+  criterion_assessments: {
+    criterion_name: string
+    score: number | null
+    assessment: string
+    evidence: { field: string; value: string; citation?: string }[]
+  }[] | null
+  recommended_score: number | null
+  confidence_level: 'high' | 'medium' | 'low' | null
+  model_used: string | null
+  generated_at: string | null
+}
+
 export interface PipelineData {
   total: number
   program_id: string | null
