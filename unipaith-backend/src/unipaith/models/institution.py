@@ -472,6 +472,50 @@ class Inquiry(Base):
     program: Mapped[Program | None] = relationship()
 
 
+class CommunicationTemplate(Base):
+    __tablename__ = "communication_templates"
+    __table_args__ = (
+        Index(
+            "ix_comm_templates_inst_type",
+            "institution_id",
+            "template_type",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    institution_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("institutions.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    program_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("programs.id", ondelete="SET NULL"),
+    )
+    template_type: Mapped[str] = mapped_column(
+        String(30), nullable=False,
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    subject: Mapped[str] = mapped_column(String(500), nullable=False)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    variables: Mapped[dict | None] = mapped_column(JSONB)
+    is_default: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    institution: Mapped[Institution] = relationship()
+    program: Mapped[Program | None] = relationship()
+
 class Promotion(Base):
     __tablename__ = "promotions"
     __table_args__ = (

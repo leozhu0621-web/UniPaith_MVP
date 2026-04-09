@@ -9,6 +9,14 @@ from unipaith.config import settings
 from unipaith.database import get_db
 from unipaith.dependencies import require_institution_admin, require_student
 from unipaith.models.user import User
+from unipaith.schemas.communication import (
+    CreateTemplateRequest,
+    SendFromTemplateRequest,
+    SendResult,
+    TemplatePreviewResponse,
+    TemplateResponse,
+    UpdateTemplateRequest,
+)
 from unipaith.schemas.institution import (
     AnalyticsResponse,
     CampaignAttributionDetail,
@@ -753,6 +761,102 @@ async def update_inquiry(
     svc = _svc(db)
     inst = await svc.get_institution(user.id)
     return await svc.update_inquiry(inst.id, inquiry_id, body)
+
+
+# --- Communication Templates ---
+
+
+@router.get("/me/templates", response_model=list[TemplateResponse])
+async def list_templates(
+    template_type: str | None = Query(None),
+    program_id: UUID | None = Query(None),
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from unipaith.services.communication_service import CommunicationService
+
+    inst = await _svc(db).get_institution(user.id)
+    svc = CommunicationService(db)
+    return await svc.list_templates(inst.id, template_type, program_id)
+
+
+@router.post("/me/templates", response_model=TemplateResponse)
+async def create_template(
+    body: CreateTemplateRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from unipaith.services.communication_service import CommunicationService
+
+    inst = await _svc(db).get_institution(user.id)
+    return await CommunicationService(db).create_template(inst.id, body)
+
+
+@router.put("/me/templates/{template_id}", response_model=TemplateResponse)
+async def update_template(
+    template_id: UUID,
+    body: UpdateTemplateRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from unipaith.services.communication_service import CommunicationService
+
+    inst = await _svc(db).get_institution(user.id)
+    return await CommunicationService(db).update_template(
+        inst.id, template_id, body,
+    )
+
+
+@router.delete(
+    "/me/templates/{template_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_template(
+    template_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from unipaith.services.communication_service import CommunicationService
+
+    inst = await _svc(db).get_institution(user.id)
+    await CommunicationService(db).delete_template(inst.id, template_id)
+
+
+@router.post(
+    "/me/templates/{template_id}/send",
+    response_model=SendResult,
+)
+async def send_from_template(
+    template_id: UUID,
+    body: SendFromTemplateRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from unipaith.services.communication_service import CommunicationService
+
+    inst = await _svc(db).get_institution(user.id)
+    return await CommunicationService(db).send_from_template(
+        inst.id, user.id, template_id, body.application_ids,
+        body.variable_overrides,
+    )
+
+
+@router.post(
+    "/me/templates/{template_id}/preview",
+    response_model=TemplatePreviewResponse,
+)
+async def preview_template(
+    template_id: UUID,
+    application_id: UUID | None = Query(None),
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from unipaith.services.communication_service import CommunicationService
+
+    inst = await _svc(db).get_institution(user.id)
+    return await CommunicationService(db).preview_template(
+        inst.id, template_id, application_id,
+    )
 
 
 # --- Audit Log ---

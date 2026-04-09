@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AnalyticsData, AuditLogList, Campaign, CampaignAttributionDetail, CampaignLink, CampaignMetrics, DashboardSummary, DatasetPreview, Inquiry, Institution, InstitutionDataset, InstitutionPost, Program, Promotion, Segment } from '../types'
+import type { AnalyticsData, AuditLogList, Campaign, CommunicationTemplate, CampaignAttributionDetail, CampaignLink, CampaignMetrics, DashboardSummary, DatasetPreview, Inquiry, Institution, InstitutionDataset, InstitutionPost, Program, Promotion, Segment } from '../types'
 
 export async function getInstitution(): Promise<Institution> {
   const { data } = await apiClient.get('/institutions/me')
@@ -228,6 +228,47 @@ export async function updateInquiry(inquiryId: string, payload: {
   response_text?: string
 }): Promise<Inquiry> {
   const { data } = await apiClient.put(`/institutions/me/inquiries/${inquiryId}`, payload)
+  return data
+}
+
+// --- Communication Templates ---
+
+export async function getTemplates(templateType?: string, programId?: string): Promise<CommunicationTemplate[]> {
+  const params: Record<string, string> = {}
+  if (templateType) params.template_type = templateType
+  if (programId) params.program_id = programId
+  const { data } = await apiClient.get('/institutions/me/templates', { params })
+  return data
+}
+
+export async function createTemplate(payload: {
+  template_type: string; name: string; subject: string; body: string;
+  program_id?: string; variables?: string[]; is_default?: boolean
+}): Promise<CommunicationTemplate> {
+  const { data } = await apiClient.post('/institutions/me/templates', payload)
+  return data
+}
+
+export async function updateTemplate(templateId: string, payload: Partial<{
+  template_type: string; name: string; subject: string; body: string;
+  program_id: string; variables: string[]; is_default: boolean; is_active: boolean
+}>): Promise<CommunicationTemplate> {
+  const { data } = await apiClient.put(`/institutions/me/templates/${templateId}`, payload)
+  return data
+}
+
+export async function deleteTemplate(templateId: string): Promise<void> {
+  await apiClient.delete(`/institutions/me/templates/${templateId}`)
+}
+
+export async function sendFromTemplate(templateId: string, applicationIds: string[], overrides?: Record<string, string>): Promise<{ success_count: number; failed_ids: string[] }> {
+  const { data } = await apiClient.post(`/institutions/me/templates/${templateId}/send`, { application_ids: applicationIds, variable_overrides: overrides })
+  return data
+}
+
+export async function previewTemplate(templateId: string, applicationId?: string): Promise<{ rendered_subject: string; rendered_body: string; variables_used: string[] }> {
+  const params = applicationId ? { application_id: applicationId } : undefined
+  const { data } = await apiClient.post(`/institutions/me/templates/${templateId}/preview`, null, { params })
   return data
 }
 

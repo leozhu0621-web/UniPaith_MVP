@@ -26,6 +26,10 @@ async def search_programs(
     institution_id: UUID | None = Query(None),
     min_tuition: int | None = Query(None),
     max_tuition: int | None = Query(None),
+    delivery_format: str | None = Query(None),
+    campus_setting: str | None = Query(None),
+    max_duration_months: int | None = Query(None),
+    city: str | None = Query(None),
     sort_by: str | None = Query(
         None, description="Sort: relevance, tuition_asc, tuition_desc, deadline"
     ),
@@ -41,6 +45,10 @@ async def search_programs(
         institution_id=institution_id,
         min_tuition=min_tuition,
         max_tuition=max_tuition,
+        delivery_format=delivery_format,
+        campus_setting=campus_setting,
+        max_duration_months=max_duration_months,
+        city=city,
         sort_by=sort_by,
         page=page,
         page_size=page_size,

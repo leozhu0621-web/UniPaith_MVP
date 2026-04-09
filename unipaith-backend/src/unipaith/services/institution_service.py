@@ -1604,6 +1604,10 @@ class InstitutionService:
         institution_id: UUID | None = None,
         min_tuition: int | None = None,
         max_tuition: int | None = None,
+        delivery_format: str | None = None,
+        campus_setting: str | None = None,
+        max_duration_months: int | None = None,
+        city: str | None = None,
         sort_by: str | None = None,
         page: int = 1,
         page_size: int = 20,
@@ -1638,6 +1642,14 @@ class InstitutionService:
             stmt = stmt.where(Program.tuition >= min_tuition)
         if max_tuition is not None:
             stmt = stmt.where(Program.tuition <= max_tuition)
+        if delivery_format:
+            stmt = stmt.where(Program.delivery_format == delivery_format)
+        if campus_setting:
+            stmt = stmt.where(Program.campus_setting == campus_setting)
+        if max_duration_months is not None:
+            stmt = stmt.where(Program.duration_months <= max_duration_months)
+        if city:
+            stmt = stmt.where(Institution.city.ilike(f"%{city}%"))
 
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total = (await self.db.execute(count_stmt)).scalar_one()

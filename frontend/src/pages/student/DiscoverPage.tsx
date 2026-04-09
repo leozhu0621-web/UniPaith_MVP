@@ -60,6 +60,25 @@ const DEGREE_OPTIONS = [
   { value: 'diploma', label: 'Diploma' },
 ]
 
+const DELIVERY_FORMAT_OPTIONS = [
+  { value: 'on_campus', label: 'On Campus' },
+  { value: 'hybrid', label: 'Hybrid' },
+  { value: 'online', label: 'Online' },
+]
+
+const CAMPUS_SETTING_OPTIONS = [
+  { value: 'urban', label: 'Urban' },
+  { value: 'suburban', label: 'Suburban' },
+  { value: 'rural', label: 'Rural' },
+]
+
+const DURATION_OPTIONS = [
+  { value: '12', label: '≤ 1 year' },
+  { value: '24', label: '≤ 2 years' },
+  { value: '36', label: '≤ 3 years' },
+  { value: '48', label: '≤ 4 years' },
+]
+
 function EditableChip({
   label,
   value,
@@ -122,6 +141,10 @@ export default function DiscoverPage() {
   const [degreeType, setDegreeType] = useState('')
   const [minTuition, setMinTuition] = useState('')
   const [maxTuition, setMaxTuition] = useState('')
+  const [deliveryFormat, setDeliveryFormat] = useState('')
+  const [campusSetting, setCampusSetting] = useState('')
+  const [maxDuration, setMaxDuration] = useState('')
+  const [city, setCity] = useState('')
 
   // Compare
   const compareStore = useCompareStore()
@@ -190,7 +213,7 @@ export default function DiscoverPage() {
   })
 
   const { data: browseData, isLoading: browseLoading } = useQuery({
-    queryKey: ['programs', { q, page, sortBy, country, degreeType, minTuition, maxTuition }],
+    queryKey: ['programs', { q, page, sortBy, country, degreeType, minTuition, maxTuition, deliveryFormat, campusSetting, maxDuration, city }],
     queryFn: () => searchPrograms({
       q: q || undefined,
       page,
@@ -199,6 +222,10 @@ export default function DiscoverPage() {
       degree_type: degreeType || undefined,
       min_tuition: minTuition ? Number(minTuition) : undefined,
       max_tuition: maxTuition ? Number(maxTuition) : undefined,
+      delivery_format: deliveryFormat || undefined,
+      campus_setting: campusSetting || undefined,
+      max_duration_months: maxDuration ? Number(maxDuration) : undefined,
+      city: city || undefined,
       sort_by: sortBy !== 'relevance' ? sortBy : undefined,
     }),
   })
@@ -219,11 +246,15 @@ export default function DiscoverPage() {
     setDegreeType('')
     setMinTuition('')
     setMaxTuition('')
+    setDeliveryFormat('')
+    setCampusSetting('')
+    setMaxDuration('')
+    setCity('')
     setNlpResult(null)
     setPage(1)
   }
 
-  const activeFilterCount = [country, degreeType, minTuition, maxTuition].filter(Boolean).length
+  const activeFilterCount = [country, degreeType, minTuition, maxTuition, deliveryFormat, campusSetting, maxDuration, city].filter(Boolean).length
 
   // Use NLP results when available, otherwise fall back to browse results
   const displayData = nlpResult ? nlpResult.results : browseData
@@ -428,6 +459,57 @@ export default function DiscoverPage() {
               />
             </div>
           </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">Delivery Format</label>
+              <select
+                value={deliveryFormat}
+                onChange={e => handleManualFilterChange(setDeliveryFormat, e.target.value)}
+                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-slate-700"
+              >
+                <option value="">Any Format</option>
+                {DELIVERY_FORMAT_OPTIONS.map(o => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">Campus Setting</label>
+              <select
+                value={campusSetting}
+                onChange={e => handleManualFilterChange(setCampusSetting, e.target.value)}
+                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-slate-700"
+              >
+                <option value="">Any Setting</option>
+                {CAMPUS_SETTING_OPTIONS.map(o => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">Max Duration</label>
+              <select
+                value={maxDuration}
+                onChange={e => handleManualFilterChange(setMaxDuration, e.target.value)}
+                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-slate-700"
+              >
+                <option value="">Any Duration</option>
+                {DURATION_OPTIONS.map(o => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">City</label>
+              <input
+                type="text"
+                value={city}
+                onChange={e => handleManualFilterChange(setCity, e.target.value)}
+                placeholder="e.g. Boston"
+                className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-slate-700"
+              />
+            </div>
+          </div>
         </div>
       )}
 
@@ -477,6 +559,44 @@ export default function DiscoverPage() {
               value={`Max: $${Number(maxTuition).toLocaleString()}`}
               isNlp={!!nlpResult}
               onRemove={() => { setMaxTuition(''); setNlpResult(null); setPage(1) }}
+            />
+          )}
+          {deliveryFormat && (
+            <EditableChip
+              label="Format"
+              value={DELIVERY_FORMAT_OPTIONS.find(o => o.value === deliveryFormat)?.label || deliveryFormat}
+              isNlp={false}
+              options={DELIVERY_FORMAT_OPTIONS}
+              onSelect={v => handleManualFilterChange(setDeliveryFormat, v)}
+              onRemove={() => { setDeliveryFormat(''); setPage(1) }}
+            />
+          )}
+          {campusSetting && (
+            <EditableChip
+              label="Setting"
+              value={CAMPUS_SETTING_OPTIONS.find(o => o.value === campusSetting)?.label || campusSetting}
+              isNlp={false}
+              options={CAMPUS_SETTING_OPTIONS}
+              onSelect={v => handleManualFilterChange(setCampusSetting, v)}
+              onRemove={() => { setCampusSetting(''); setPage(1) }}
+            />
+          )}
+          {maxDuration && (
+            <EditableChip
+              label="Duration"
+              value={DURATION_OPTIONS.find(o => o.value === maxDuration)?.label || `≤ ${maxDuration} mo`}
+              isNlp={false}
+              options={DURATION_OPTIONS}
+              onSelect={v => handleManualFilterChange(setMaxDuration, v)}
+              onRemove={() => { setMaxDuration(''); setPage(1) }}
+            />
+          )}
+          {city && (
+            <EditableChip
+              label="City"
+              value={city}
+              isNlp={false}
+              onRemove={() => { setCity(''); setPage(1) }}
             />
           )}
           {sortBy !== 'relevance' && (

@@ -842,6 +842,29 @@ export interface Inquiry {
   program_name: string | null
 }
 
+// ============ COMMUNICATION TEMPLATES ============
+export interface CommunicationTemplate {
+  id: string
+  institution_id: string
+  program_id: string | null
+  template_type: string
+  name: string
+  subject: string
+  body: string
+  variables: string[] | null
+  is_default: boolean
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  program_name: string | null
+}
+
+export interface TemplatePreview {
+  rendered_subject: string
+  rendered_body: string
+  variables_used: string[]
+}
+
 // ============ AUDIT LOG ============
 export interface AuditLogEntry {
   id: string
