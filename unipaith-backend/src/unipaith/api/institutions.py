@@ -7,12 +7,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from unipaith.ai.llm_client import get_llm_client
 from unipaith.config import settings
 from unipaith.database import get_db
-from unipaith.dependencies import require_institution_admin
+from unipaith.dependencies import require_institution_admin, require_student
 from unipaith.models.user import User
 from unipaith.schemas.institution import (
     AnalyticsResponse,
+    CampaignAttributionDetail,
+    CampaignLinkResponse,
     CampaignMetricsResponse,
     CampaignResponse,
+    CreateCampaignLinkRequest,
     CreateCampaignRequest,
     CreateDatasetRequest,
     CreateInstitutionRequest,
@@ -26,6 +29,7 @@ from unipaith.schemas.institution import (
     PostMediaUploadResponse,
     PostResponse,
     ProgramResponse,
+    RecordActionRequest,
     SegmentResponse,
     UpdateCampaignRequest,
     UpdateDatasetRequest,
@@ -353,6 +357,67 @@ async def get_campaign_metrics(
     return await svc.get_campaign_metrics(inst.id, campaign_id)
 
 
+# --- Campaign Links & Attribution ---
+
+
+@router.post(
+    "/me/campaigns/{campaign_id}/links",
+    response_model=CampaignLinkResponse,
+)
+async def create_campaign_link(
+    campaign_id: UUID,
+    body: CreateCampaignLinkRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.create_campaign_link(inst.id, campaign_id, body)
+
+
+@router.get(
+    "/me/campaigns/{campaign_id}/links",
+    response_model=list[CampaignLinkResponse],
+)
+async def get_campaign_links(
+    campaign_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.get_campaign_links(inst.id, campaign_id)
+
+
+@router.delete(
+    "/me/campaigns/{campaign_id}/links/{link_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_campaign_link(
+    campaign_id: UUID,
+    link_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    await svc.delete_campaign_link(inst.id, campaign_id, link_id)
+
+
+@router.get(
+    "/me/campaigns/{campaign_id}/attribution",
+    response_model=CampaignAttributionDetail,
+)
+async def get_campaign_attribution(
+    campaign_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.get_campaign_attribution(inst.id, campaign_id)
+
+
 @router.post("/me/assistant/chat", response_model=InstitutionAssistantChatResponse)
 async def institution_assistant_chat(
     body: InstitutionAssistantChatRequest,
@@ -594,6 +659,33 @@ async def get_public_posts(
     """Public endpoint — returns published posts for an institution."""
     svc = _svc(db)
     return await svc.get_public_posts(institution_id)
+
+
+# --- Campaign Action Tracking (student-facing) ---
+
+
+@router.post("/track/action", status_code=status.HTTP_204_NO_CONTENT)
+async def record_campaign_action(
+    body: RecordActionRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Record a downstream action attributed to a campaign (student auth)."""
+    from sqlalchemy import select as sel
+
+    from unipaith.models.student import StudentProfile
+
+    r = await db.execute(
+        sel(StudentProfile.id).where(StudentProfile.user_id == user.id)
+    )
+    student_id = r.scalar_one_or_none()
+    if not student_id:
+        return
+
+    svc = _svc(db)
+    await svc.record_campaign_action(
+        body.campaign_id, student_id, body.action_type, body.target_id,
+    )
 
 
 # --- Institution Intelligence ---

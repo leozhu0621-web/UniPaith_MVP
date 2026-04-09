@@ -20,6 +20,8 @@ from unipaith.models.application import Application, OfferLetter
 from unipaith.models.engagement import Conversation, Message, StudentEngagementSignal
 from unipaith.models.institution import (
     Campaign,
+    CampaignAction,
+    CampaignLink,
     CampaignRecipient,
     Event,
     EventRSVP,
@@ -35,7 +37,10 @@ from unipaith.models.workflow import Notification
 from unipaith.schemas.institution import (
     AnalyticsResponse,
     CampaignAttribution,
+    CampaignAttributionDetail,
+    CampaignLinkResponse,
     CampaignMetricsResponse,
+    CreateCampaignLinkRequest,
     CreateCampaignRequest,
     CreateDatasetRequest,
     CreateInstitutionRequest,
@@ -48,6 +53,7 @@ from unipaith.schemas.institution import (
     DatasetUploadResponse,
     EventAttribution,
     FunnelStage,
+    LinkPerformance,
     MonthlyApplicationCount,
     PaginatedResponse,
     PostMediaUploadResponse,
@@ -880,6 +886,259 @@ class InstitutionService:
         if not campaign:
             raise NotFoundException("Campaign not found")
         return campaign
+
+    # --- Campaign Links & Attribution ---
+
+    @staticmethod
+    def _generate_short_code() -> str:
+        import secrets
+        import string
+        alphabet = string.ascii_letters + string.digits
+        return "".join(secrets.choice(alphabet) for _ in range(10))
+
+    async def create_campaign_link(
+        self,
+        institution_id: UUID,
+        campaign_id: UUID,
+        data: CreateCampaignLinkRequest,
+    ) -> CampaignLinkResponse:
+        await self._verify_campaign_ownership(institution_id, campaign_id)
+        short_code = self._generate_short_code()
+        link = CampaignLink(
+            campaign_id=campaign_id,
+            institution_id=institution_id,
+            destination_type=data.destination_type,
+            destination_id=data.destination_id,
+            custom_url=data.custom_url,
+            short_code=short_code,
+            label=data.label,
+        )
+        self.db.add(link)
+        await self.db.flush()
+        await self.db.refresh(link)
+        return await self._enrich_campaign_link(link)
+
+    async def get_campaign_links(
+        self, institution_id: UUID, campaign_id: UUID,
+    ) -> list[CampaignLinkResponse]:
+        await self._verify_campaign_ownership(institution_id, campaign_id)
+        result = await self.db.execute(
+            select(CampaignLink)
+            .where(CampaignLink.campaign_id == campaign_id)
+            .order_by(CampaignLink.created_at.desc())
+        )
+        links = list(result.scalars().all())
+        return [await self._enrich_campaign_link(lnk) for lnk in links]
+
+    async def delete_campaign_link(
+        self, institution_id: UUID, campaign_id: UUID, link_id: UUID,
+    ) -> None:
+        await self._verify_campaign_ownership(institution_id, campaign_id)
+        result = await self.db.execute(
+            select(CampaignLink).where(
+                CampaignLink.id == link_id,
+                CampaignLink.campaign_id == campaign_id,
+            )
+        )
+        link = result.scalar_one_or_none()
+        if not link:
+            raise NotFoundException("Campaign link not found")
+        await self.db.delete(link)
+        await self.db.flush()
+
+    async def record_link_click(
+        self, short_code: str, student_id: UUID | None = None,
+    ) -> CampaignLink:
+        result = await self.db.execute(
+            select(CampaignLink).where(
+                CampaignLink.short_code == short_code,
+            )
+        )
+        link = result.scalar_one_or_none()
+        if not link:
+            raise NotFoundException("Link not found")
+        link.click_count = (link.click_count or 0) + 1
+        await self.db.flush()
+
+        if student_id:
+            action = CampaignAction(
+                campaign_id=link.campaign_id,
+                link_id=link.id,
+                student_id=student_id,
+                action_type="click",
+                target_id=link.destination_id,
+            )
+            self.db.add(action)
+            # Update CampaignRecipient.clicked_at
+            recip_r = await self.db.execute(
+                select(CampaignRecipient).where(
+                    CampaignRecipient.campaign_id == link.campaign_id,
+                    CampaignRecipient.student_id == student_id,
+                )
+            )
+            recip = recip_r.scalar_one_or_none()
+            if recip and not recip.clicked_at:
+                recip.clicked_at = datetime.now(UTC)
+            await self.db.flush()
+
+        await self.db.refresh(link)
+        return link
+
+    async def record_campaign_action(
+        self,
+        campaign_id: UUID,
+        student_id: UUID,
+        action_type: str,
+        target_id: UUID | None = None,
+    ) -> None:
+        action = CampaignAction(
+            campaign_id=campaign_id,
+            student_id=student_id,
+            action_type=action_type,
+            target_id=target_id,
+        )
+        self.db.add(action)
+        await self.db.flush()
+
+    async def get_campaign_attribution(
+        self, institution_id: UUID, campaign_id: UUID,
+    ) -> CampaignAttributionDetail:
+        campaign = await self._verify_campaign_ownership(
+            institution_id, campaign_id,
+        )
+        # Recipient-level counts
+        recip_r = await self.db.execute(
+            select(
+                func.count(CampaignRecipient.id),
+                func.count(CampaignRecipient.delivered_at),
+                func.count(CampaignRecipient.opened_at),
+                func.count(CampaignRecipient.clicked_at),
+            ).where(CampaignRecipient.campaign_id == campaign_id)
+        )
+        row = recip_r.one()
+        total, delivered, opened, clicked = (
+            row[0], row[1], row[2], row[3],
+        )
+
+        # Action-type counts
+        action_counts: dict[str, int] = {}
+        for atype in (
+            "view", "save", "rsvp", "request_info", "apply",
+        ):
+            cnt_r = await self.db.execute(
+                select(func.count(CampaignAction.id)).where(
+                    CampaignAction.campaign_id == campaign_id,
+                    CampaignAction.action_type == atype,
+                )
+            )
+            action_counts[atype] = cnt_r.scalar() or 0
+
+        # Per-link breakdown
+        links_r = await self.db.execute(
+            select(CampaignLink).where(
+                CampaignLink.campaign_id == campaign_id,
+            )
+        )
+        link_perfs: list[LinkPerformance] = []
+        for lnk in links_r.scalars().all():
+            dest_name = await self._resolve_destination_name(
+                lnk.destination_type, lnk.destination_id,
+            )
+            lnk_views = await self._count_link_actions(
+                lnk.id, "view",
+            )
+            lnk_saves = await self._count_link_actions(
+                lnk.id, "save",
+            )
+            lnk_apps = await self._count_link_actions(
+                lnk.id, "apply",
+            )
+            link_perfs.append(LinkPerformance(
+                link_id=lnk.id,
+                label=lnk.label,
+                destination_name=dest_name,
+                clicks=lnk.click_count or 0,
+                views=lnk_views,
+                saves=lnk_saves,
+                applications=lnk_apps,
+            ))
+
+        return CampaignAttributionDetail(
+            campaign_id=campaign_id,
+            campaign_name=campaign.campaign_name,
+            recipients=total,
+            delivered=delivered,
+            opened=opened,
+            clicked=clicked,
+            views=action_counts.get("view", 0),
+            saves=action_counts.get("save", 0),
+            rsvps=action_counts.get("rsvp", 0),
+            request_infos=action_counts.get("request_info", 0),
+            applications=action_counts.get("apply", 0),
+            links=link_perfs,
+        )
+
+    async def _count_link_actions(
+        self, link_id: UUID, action_type: str,
+    ) -> int:
+        r = await self.db.execute(
+            select(func.count(CampaignAction.id)).where(
+                CampaignAction.link_id == link_id,
+                CampaignAction.action_type == action_type,
+            )
+        )
+        return r.scalar() or 0
+
+    async def _resolve_destination_name(
+        self, dest_type: str, dest_id: UUID | None,
+    ) -> str | None:
+        if not dest_id:
+            return None
+        if dest_type == "program":
+            r = await self.db.execute(
+                select(Program.program_name).where(
+                    Program.id == dest_id,
+                )
+            )
+            return r.scalar_one_or_none()
+        if dest_type == "event":
+            r = await self.db.execute(
+                select(Event.event_name).where(Event.id == dest_id)
+            )
+            return r.scalar_one_or_none()
+        if dest_type == "institution":
+            r = await self.db.execute(
+                select(Institution.name).where(
+                    Institution.id == dest_id,
+                )
+            )
+            return r.scalar_one_or_none()
+        return None
+
+    @staticmethod
+    def _build_trackable_url(short_code: str) -> str:
+        return f"https://api.unipaith.co/api/v1/t/{short_code}"
+
+    async def _enrich_campaign_link(
+        self, link: CampaignLink,
+    ) -> CampaignLinkResponse:
+        dest_name = await self._resolve_destination_name(
+            link.destination_type, link.destination_id,
+        )
+        return CampaignLinkResponse(
+            id=link.id,
+            campaign_id=link.campaign_id,
+            institution_id=link.institution_id,
+            destination_type=link.destination_type,
+            destination_id=link.destination_id,
+            custom_url=link.custom_url,
+            short_code=link.short_code,
+            label=link.label,
+            click_count=link.click_count or 0,
+            trackable_url=self._build_trackable_url(link.short_code),
+            destination_name=dest_name,
+            created_at=link.created_at,
+        )
 
     # --- Datasets ---
 

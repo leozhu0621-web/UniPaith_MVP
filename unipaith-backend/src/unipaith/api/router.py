@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -27,8 +27,9 @@ from unipaith.api.saved_lists import router as saved_lists_router
 from unipaith.api.students import router as students_router
 from unipaith.api.workshops import router as workshops_router
 from unipaith.database import get_db
-from unipaith.models.institution import CampaignRecipient
+from unipaith.models.institution import CampaignLink, CampaignRecipient
 from unipaith.services.campaign_email_service import verify_unsubscribe_token
+from unipaith.services.institution_service import InstitutionService
 
 api_router = APIRouter()
 
@@ -58,6 +59,50 @@ api_router.include_router(pipeline_router)
 @api_router.get("/health", tags=["health"])
 async def health_check():
     return {"status": "ok", "version": "0.1.0"}
+
+
+@api_router.get("/t/{short_code}", tags=["tracking"])
+async def redirect_campaign_link(
+    short_code: str,
+    sid: UUID | None = Query(None, description="Student profile ID"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Public — redirect trackable campaign link and record click."""
+    result = await db.execute(
+        select(CampaignLink).where(CampaignLink.short_code == short_code)
+    )
+    link = result.scalar_one_or_none()
+    if not link:
+        return RedirectResponse("https://unipaith.co", status_code=302)
+
+    svc = InstitutionService(db)
+    await svc.record_link_click(short_code, student_id=sid)
+    await db.commit()
+
+    # Resolve destination URL
+    base = "https://unipaith.co"
+    cid_param = f"cid={link.campaign_id}"
+    if link.destination_type == "custom" and link.custom_url:
+        sep = "&" if "?" in link.custom_url else "?"
+        url = f"{link.custom_url}{sep}{cid_param}"
+    elif link.destination_type == "program" and link.destination_id:
+        url = f"{base}/programs/{link.destination_id}?{cid_param}"
+    elif link.destination_type == "institution" and link.destination_id:
+        url = f"{base}/school/{link.destination_id}?{cid_param}"
+    elif link.destination_type == "event" and link.destination_id:
+        url = (
+            f"{base}/school/{link.institution_id}"
+            f"?tab=events&{cid_param}"
+        )
+    elif link.destination_type == "post" and link.destination_id:
+        url = (
+            f"{base}/school/{link.institution_id}"
+            f"?tab=posts&{cid_param}"
+        )
+    else:
+        url = base
+
+    return RedirectResponse(url, status_code=302)
 
 
 _UNSUB_PATH = "/campaigns/unsubscribe/{recipient_id}"

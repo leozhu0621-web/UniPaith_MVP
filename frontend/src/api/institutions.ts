@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AnalyticsData, Campaign, CampaignMetrics, DashboardSummary, DatasetPreview, Institution, InstitutionDataset, InstitutionPost, Program, Segment } from '../types'
+import type { AnalyticsData, Campaign, CampaignAttributionDetail, CampaignLink, CampaignMetrics, DashboardSummary, DatasetPreview, Institution, InstitutionDataset, InstitutionPost, Program, Segment } from '../types'
 
 export async function getInstitution(): Promise<Institution> {
   const { data } = await apiClient.get('/institutions/me')
@@ -161,6 +161,40 @@ export async function getCampaignMetrics(campaignId: string): Promise<CampaignMe
 export async function previewCampaignAudience(campaignId: string): Promise<{ campaign_id: string; audience_count: number }> {
   const { data } = await apiClient.get(`/institutions/me/campaigns/${campaignId}/audience`)
   return data
+}
+
+// --- Campaign Links & Attribution ---
+
+export async function getCampaignLinks(campaignId: string): Promise<CampaignLink[]> {
+  const { data } = await apiClient.get(`/institutions/me/campaigns/${campaignId}/links`)
+  return data
+}
+
+export async function createCampaignLink(campaignId: string, payload: {
+  destination_type: string
+  destination_id?: string
+  custom_url?: string
+  label?: string
+}): Promise<CampaignLink> {
+  const { data } = await apiClient.post(`/institutions/me/campaigns/${campaignId}/links`, payload)
+  return data
+}
+
+export async function deleteCampaignLink(campaignId: string, linkId: string): Promise<void> {
+  await apiClient.delete(`/institutions/me/campaigns/${campaignId}/links/${linkId}`)
+}
+
+export async function getCampaignAttribution(campaignId: string): Promise<CampaignAttributionDetail> {
+  const { data } = await apiClient.get(`/institutions/me/campaigns/${campaignId}/attribution`)
+  return data
+}
+
+export async function recordCampaignAction(payload: {
+  campaign_id: string
+  action_type: string
+  target_id?: string
+}): Promise<void> {
+  await apiClient.post('/institutions/track/action', payload)
 }
 
 export async function previewSegmentAudience(segmentId: string): Promise<{ segment_id: string; audience_count: number }> {

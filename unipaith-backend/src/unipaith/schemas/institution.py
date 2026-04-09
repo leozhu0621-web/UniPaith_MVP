@@ -313,6 +313,67 @@ class CampaignMetricsResponse(BaseModel):
     responded: int
 
 
+# --- Campaign Links & Attribution ---
+
+
+class CreateCampaignLinkRequest(BaseModel):
+    destination_type: str = Field(
+        ..., pattern=r"^(program|institution|event|post|custom)$",
+    )
+    destination_id: UUID | None = None
+    custom_url: str | None = None
+    label: str | None = None
+
+
+class CampaignLinkResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    campaign_id: UUID
+    institution_id: UUID
+    destination_type: str
+    destination_id: UUID | None
+    custom_url: str | None
+    short_code: str
+    label: str | None
+    click_count: int
+    trackable_url: str | None = None
+    destination_name: str | None = None
+    created_at: datetime
+
+
+class LinkPerformance(BaseModel):
+    link_id: UUID
+    label: str | None
+    destination_name: str | None
+    clicks: int
+    views: int
+    saves: int
+    applications: int
+
+
+class CampaignAttributionDetail(BaseModel):
+    campaign_id: UUID
+    campaign_name: str
+    recipients: int
+    delivered: int
+    opened: int
+    clicked: int
+    views: int
+    saves: int
+    rsvps: int
+    request_infos: int
+    applications: int
+    links: list[LinkPerformance]
+
+
+class RecordActionRequest(BaseModel):
+    campaign_id: UUID
+    action_type: str = Field(
+        ..., pattern=r"^(view|save|rsvp|request_info|apply)$",
+    )
+    target_id: UUID | None = None
+
+
 # --- Datasets ---
 
 

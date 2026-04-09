@@ -20,8 +20,9 @@ import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import Avatar from '../../components/ui/Avatar'
 import Skeleton from '../../components/ui/Skeleton'
-import { formatRelative } from '../../utils/format'
-import { Sparkles, ArrowUp, Target, GraduationCap, ShieldCheck, ChevronRight } from 'lucide-react'
+import { formatRelative, formatCurrency } from '../../utils/format'
+import { Link } from 'react-router-dom'
+import { Sparkles, ArrowUp, Target, GraduationCap, ShieldCheck, ChevronRight, MapPin, Clock, Calendar, Monitor, ExternalLink, ArrowLeft } from 'lucide-react'
 
 type ChatMessage = {
   id: string
@@ -160,6 +161,15 @@ interface ShortlistProgram {
   match_score?: number
   reasoning?: string
   category?: string
+  fit_summary?: string
+  degree_type?: string
+  tuition?: number
+  duration_months?: number
+  delivery_format?: string
+  acceptance_rate?: number
+  application_deadline?: string
+  institution_country?: string
+  institution_city?: string
 }
 
 interface ShortlistData {
@@ -170,47 +180,158 @@ interface ShortlistData {
   total: number
 }
 
-function ShortlistResults({ result }: { result: ShortlistData }) {
-  const tiers: { key: 'best_fit' | 'stretch' | 'safer'; label: string; color: string }[] = [
-    { key: 'best_fit', label: 'Best Fit', color: 'text-emerald-700' },
-    { key: 'stretch', label: 'Stretch', color: 'text-amber-700' },
-    { key: 'safer', label: 'Safer', color: 'text-sky-700' },
-  ]
+const TIER_CONFIG: { key: 'best_fit' | 'stretch' | 'safer'; label: string; color: string; bg: string; badge: 'success' | 'warning' | 'info' }[] = [
+  { key: 'best_fit', label: 'Best Fit', color: 'text-emerald-700', bg: 'bg-emerald-50', badge: 'success' },
+  { key: 'stretch', label: 'Stretch', color: 'text-amber-700', bg: 'bg-amber-50', badge: 'warning' },
+  { key: 'safer', label: 'Safer', color: 'text-sky-700', bg: 'bg-sky-50', badge: 'info' },
+]
+
+function QuickFacts({ prog }: { prog: ShortlistProgram }) {
+  const facts: { icon: typeof GraduationCap; text: string }[] = []
+  if (prog.degree_type) facts.push({ icon: GraduationCap, text: prog.degree_type })
+  if (prog.tuition != null) facts.push({ icon: Target, text: formatCurrency(prog.tuition) + '/yr' })
+  if (prog.duration_months) facts.push({ icon: Clock, text: `${prog.duration_months} mo` })
+  if (prog.institution_city || prog.institution_country) {
+    const loc = [prog.institution_city, prog.institution_country].filter(Boolean).join(', ')
+    facts.push({ icon: MapPin, text: loc })
+  }
+  if (prog.application_deadline) {
+    const d = new Date(prog.application_deadline)
+    facts.push({ icon: Calendar, text: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) })
+  }
+  if (prog.delivery_format) facts.push({ icon: Monitor, text: prog.delivery_format.replace(/_/g, ' ') })
+  if (facts.length === 0) return null
 
   return (
-    <div className="space-y-4">
-      {tiers.map(tier => {
+    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
+      {facts.map((f, i) => (
+        <span key={i} className="inline-flex items-center gap-1 text-xs text-gray-500">
+          <f.icon size={12} className="text-gray-400 flex-shrink-0" />
+          {f.text}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+function ProgramCard({ prog, tierBadge }: { prog: ShortlistProgram; tierBadge: 'success' | 'warning' | 'info' }) {
+  const [expanded, setExpanded] = useState(false)
+
+  return (
+    <Card className="p-4 hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-semibold text-stone-700 truncate">
+              {prog.program_name || prog.program_id}
+            </p>
+            {prog.degree_type && (
+              <Badge variant={tierBadge} size="sm">{prog.degree_type}</Badge>
+            )}
+          </div>
+          {prog.institution_name && (
+            <p className="text-xs text-gray-500 mt-0.5">
+              {prog.institution_name}
+              {(prog.institution_city || prog.institution_country) && (
+                <span className="text-gray-400">
+                  {' \u2014 '}{[prog.institution_city, prog.institution_country].filter(Boolean).join(', ')}
+                </span>
+              )}
+            </p>
+          )}
+          <QuickFacts prog={prog} />
+          {prog.fit_summary && (
+            <p className="text-xs text-stone-600 mt-2 font-medium">{prog.fit_summary}</p>
+          )}
+          {prog.reasoning && (
+            <div className="mt-1">
+              <p className={`text-xs text-gray-500 ${expanded ? '' : 'line-clamp-2'}`}>
+                {prog.reasoning}
+              </p>
+              {prog.reasoning.length > 120 && (
+                <button
+                  onClick={() => setExpanded(!expanded)}
+                  className="text-xs text-stone-500 hover:text-stone-700 mt-0.5"
+                >
+                  {expanded ? 'Show less' : 'Read more'}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+        <div className="flex flex-col items-center gap-2 flex-shrink-0">
+          {prog.match_score != null && (
+            <div className="w-12 h-12 rounded-full border-2 border-stone-200 flex items-center justify-center">
+              <span className="text-sm font-bold text-stone-700">{Math.round(prog.match_score)}%</span>
+            </div>
+          )}
+          <Link
+            to={`/s/programs/${prog.program_id}`}
+            className="inline-flex items-center gap-1 text-xs text-stone-500 hover:text-stone-700"
+          >
+            View <ExternalLink size={10} />
+          </Link>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+function ShortlistResultsFullView({ result, onBack }: { result: ShortlistData; onBack: () => void }) {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} className="p-1 rounded-lg hover:bg-gray-100">
+            <ArrowLeft size={18} className="text-stone-500" />
+          </button>
+          <div>
+            <h2 className="text-lg font-semibold text-stone-700">Your Shortlist</h2>
+            <p className="text-xs text-gray-500">{result.total} programs matched across 3 tiers</p>
+          </div>
+        </div>
+      </div>
+
+      {TIER_CONFIG.map(tier => {
         const programs = result[tier.key]
         if (!programs || programs.length === 0) return null
         return (
           <div key={tier.key}>
-            <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${tier.color}`}>
-              {tier.label}
-            </p>
-            <div className="space-y-2">
+            <div className={`flex items-center gap-2 mb-3 px-3 py-1.5 rounded-lg ${tier.bg}`}>
+              <span className={`text-sm font-semibold ${tier.color}`}>{tier.label}</span>
+              <Badge variant={tier.badge} size="sm">{programs.length}</Badge>
+            </div>
+            <div className="space-y-3">
               {programs.map(prog => (
-                <Card key={prog.program_id} className="p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-stone-700 truncate">
-                        {prog.program_name || prog.program_id}
-                      </p>
-                      {prog.institution_name && (
-                        <p className="text-xs text-gray-500">{prog.institution_name}</p>
-                      )}
-                      {prog.reasoning && (
-                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">{prog.reasoning}</p>
-                      )}
-                    </div>
-                    {prog.match_score != null && (
-                      <div className="flex-shrink-0 text-right">
-                        <span className="text-lg font-bold text-stone-700">
-                          {Math.round(prog.match_score)}%
-                        </span>
-                      </div>
-                    )}
+                <ProgramCard key={prog.program_id} prog={prog} tierBadge={tier.badge} />
+              ))}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function ShortlistResultsSidebar({ result }: { result: ShortlistData }) {
+  return (
+    <div className="space-y-3">
+      {TIER_CONFIG.map(tier => {
+        const programs = result[tier.key]
+        if (!programs || programs.length === 0) return null
+        return (
+          <div key={tier.key}>
+            <p className={`text-[10px] font-semibold uppercase tracking-wider mb-1.5 ${tier.color}`}>
+              {tier.label} ({programs.length})
+            </p>
+            <div className="space-y-1.5">
+              {programs.map(prog => (
+                <Link key={prog.program_id} to={`/s/programs/${prog.program_id}`} className="block">
+                  <div className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                    <p className="text-xs font-medium text-stone-700 truncate">{prog.program_name || prog.program_id}</p>
+                    <p className="text-[10px] text-gray-500 truncate">{prog.institution_name}</p>
                   </div>
-                </Card>
+                </Link>
               ))}
             </div>
           </div>
@@ -373,7 +494,7 @@ export default function ProgramMatchPage() {
             <p className="text-xs font-semibold text-stone-700 uppercase tracking-wider mb-2">
               Your Shortlist
             </p>
-            <ShortlistResults result={shortlistResult} />
+            <ShortlistResultsSidebar result={shortlistResult} />
           </div>
         )}
       </div>
@@ -392,7 +513,12 @@ export default function ProgramMatchPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 bg-stone-50">
-          {chatMessages.length === 0 ? (
+          {shortlistResult ? (
+            <ShortlistResultsFullView
+              result={shortlistResult}
+              onBack={() => setShortlistResult(null)}
+            />
+          ) : chatMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center mb-4">
                 <Sparkles size={28} className="text-amber-500" />
@@ -436,7 +562,7 @@ export default function ProgramMatchPage() {
             })
           )}
 
-          {turnMut.isPending && (
+          {!shortlistResult && turnMut.isPending && (
             <div className="flex justify-start">
               <div className="flex gap-2 max-w-[80%]">
                 <Avatar name="Match" size="sm" />
@@ -451,63 +577,65 @@ export default function ProgramMatchPage() {
             </div>
           )}
 
-          <div ref={messagesEndRef} />
+          {!shortlistResult && <div ref={messagesEndRef} />}
         </div>
 
-        <div className="px-6 py-3 border-t border-gray-100 bg-white">
-          <div className="flex items-end gap-2">
-            <textarea
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Tell me about what you're looking for..."
-              rows={1}
-              className="flex-1 resize-none border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-stone-700"
-            />
-            <button
-              onClick={handleSend}
-              disabled={!input.trim() || turnMut.isPending}
-              className="p-2 bg-stone-700 text-white rounded-lg hover:bg-stone-600 disabled:opacity-50"
-            >
-              <ArrowUp size={18} />
-            </button>
-          </div>
-          {sendError && (
-            <p className="text-xs text-red-600 mt-2">
-              {sendError} You can retry now without losing your message.
-            </p>
-          )}
-          <div className="flex gap-2 mt-2 overflow-x-auto">
-            {latestActions.map((action: string, i: number) => (
+        {!shortlistResult && (
+          <div className="px-6 py-3 border-t border-gray-100 bg-white">
+            <div className="flex items-end gap-2">
+              <textarea
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Tell me about what you're looking for..."
+                rows={1}
+                className="flex-1 resize-none border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-stone-700"
+              />
               <button
-                key={i}
-                onClick={() => handleQuickAction(action)}
-                className="px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 whitespace-nowrap flex-shrink-0"
+                onClick={handleSend}
+                disabled={!input.trim() || turnMut.isPending}
+                className="p-2 bg-stone-700 text-white rounded-lg hover:bg-stone-600 disabled:opacity-50"
               >
-                {action}
+                <ArrowUp size={18} />
               </button>
-            ))}
-          </div>
-
-          <div className="lg:hidden mt-3 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500">
-                Confidence: {Math.round(globalConfidence)}%
-              </span>
-              <Badge variant={confidenceMeta.variant} size="sm">
-                {confidenceMeta.label}
-              </Badge>
             </div>
-            <Button
-              onClick={() => shortlistMut.mutate()}
-              disabled={!unlockData.eligible || shortlistMut.isPending}
-              loading={shortlistMut.isPending}
-              size="sm"
-            >
-              Generate Shortlist
-            </Button>
+            {sendError && (
+              <p className="text-xs text-red-600 mt-2">
+                {sendError} You can retry now without losing your message.
+              </p>
+            )}
+            <div className="flex gap-2 mt-2 overflow-x-auto">
+              {latestActions.map((action: string, i: number) => (
+                <button
+                  key={i}
+                  onClick={() => handleQuickAction(action)}
+                  className="px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 whitespace-nowrap flex-shrink-0"
+                >
+                  {action}
+                </button>
+              ))}
+            </div>
+
+            <div className="lg:hidden mt-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">
+                  Confidence: {Math.round(globalConfidence)}%
+                </span>
+                <Badge variant={confidenceMeta.variant} size="sm">
+                  {confidenceMeta.label}
+                </Badge>
+              </div>
+              <Button
+                onClick={() => shortlistMut.mutate()}
+                disabled={!unlockData.eligible || shortlistMut.isPending}
+                loading={shortlistMut.isPending}
+                size="sm"
+              >
+                Generate Shortlist
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {sidebar}

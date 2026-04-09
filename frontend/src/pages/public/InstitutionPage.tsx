@@ -1,11 +1,11 @@
-import { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useParams, Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   Building2, MapPin, Users, Globe, Mail, ExternalLink,
   BookOpen, CalendarDays, FileText, Pin,
 } from 'lucide-react'
-import { getPublicInstitution, getPublicPosts } from '../../api/institutions'
+import { getPublicInstitution, getPublicPosts, recordCampaignAction } from '../../api/institutions'
 import { searchPrograms } from '../../api/programs'
 import { listEvents } from '../../api/events'
 import Card from '../../components/ui/Card'
@@ -20,7 +20,20 @@ import type { Institution, InstitutionPost, ProgramSummary, PaginatedResponse, E
 
 export default function InstitutionPage() {
   const { institutionId } = useParams<{ institutionId: string }>()
-  const [tab, setTab] = useState('overview')
+  const [searchParams] = useSearchParams()
+  const [tab, setTab] = useState(searchParams.get('tab') || 'overview')
+
+  // Campaign attribution tracking
+  useEffect(() => {
+    const cid = searchParams.get('cid')
+    if (cid && institutionId) {
+      recordCampaignAction({
+        campaign_id: cid,
+        action_type: 'view',
+        target_id: institutionId,
+      }).catch(() => {})  // silently ignore auth errors for anonymous visitors
+    }
+  }, [searchParams, institutionId])
   const [programPage, setProgPage] = useState(1)
   const [degreeFilter, setDegreeFilter] = useState('')
 

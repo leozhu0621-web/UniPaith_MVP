@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Megaphone, Plus, Send, Edit2, Trash2, BarChart3, Clock, Users } from 'lucide-react'
+import { Megaphone, Plus, Send, Edit2, Trash2, BarChart3, Clock, Users, Link2, Copy, ExternalLink } from 'lucide-react'
 import {
   getCampaigns, createCampaign, updateCampaign, deleteCampaign,
   sendCampaign, getCampaignMetrics, getSegments, getInstitutionPrograms,
-  previewCampaignAudience,
+  previewCampaignAudience, getCampaignLinks, createCampaignLink,
+  deleteCampaignLink, getCampaignAttribution,
 } from '../../api/institutions'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -19,7 +20,7 @@ import Skeleton from '../../components/ui/Skeleton'
 import InstitutionPageHeader from '../../components/institution/InstitutionPageHeader'
 import { showToast } from '../../stores/toast-store'
 import { formatDateTime, formatDate } from '../../utils/format'
-import type { Campaign, CampaignMetrics, Segment, Program } from '../../types'
+import type { Campaign, CampaignAttributionDetail, CampaignLink, CampaignMetrics, Segment, Program } from '../../types'
 
 const CAMPAIGN_TYPES = [
   { value: 'email', label: 'Email' },
@@ -44,6 +45,13 @@ export default function CampaignsPage() {
   const [sendTarget, setSendTarget] = useState<Campaign | null>(null)
   const [audienceCount, setAudienceCount] = useState<number | null>(null)
   const [audienceLoading, setAudienceLoading] = useState(false)
+  const [linksTarget, setLinksTarget] = useState<string | null>(null)
+  const [showLinksModal, setShowLinksModal] = useState(false)
+  const [showAttribution, setShowAttribution] = useState(false)
+  const [newLinkDest, setNewLinkDest] = useState('program')
+  const [newLinkDestId, setNewLinkDestId] = useState('')
+  const [newLinkLabel, setNewLinkLabel] = useState('')
+  const [newLinkCustomUrl, setNewLinkCustomUrl] = useState('')
 
   // Form state
   const [campaignName, setCampaignName] = useState('')
@@ -80,6 +88,51 @@ export default function CampaignsPage() {
     enabled: !!metricsTarget && showMetricsModal,
   })
   const metrics: CampaignMetrics | undefined = metricsQ.data
+
+  const linksQ = useQuery({
+    queryKey: ['campaign-links', linksTarget],
+    queryFn: () => getCampaignLinks(linksTarget!),
+    enabled: !!linksTarget && showLinksModal,
+  })
+  const links: CampaignLink[] = Array.isArray(linksQ.data) ? linksQ.data : []
+
+  const attributionQ = useQuery({
+    queryKey: ['campaign-attribution', linksTarget],
+    queryFn: () => getCampaignAttribution(linksTarget!),
+    enabled: !!linksTarget && showAttribution,
+  })
+  const attribution: CampaignAttributionDetail | undefined = attributionQ.data
+
+  const createLinkMut = useMutation({
+    mutationFn: (p: { campaignId: string; payload: { destination_type: string; destination_id?: string; custom_url?: string; label?: string } }) =>
+      createCampaignLink(p.campaignId, p.payload),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['campaign-links'] }); showToast('Link created', 'success'); setNewLinkLabel(''); setNewLinkDestId(''); setNewLinkCustomUrl('') },
+  })
+
+  const deleteLinkMut = useMutation({
+    mutationFn: (p: { campaignId: string; linkId: string }) => deleteCampaignLink(p.campaignId, p.linkId),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['campaign-links'] }); showToast('Link deleted', 'success') },
+  })
+
+  const handleCreateLink = () => {
+    if (!linksTarget) return
+    const payload: { destination_type: string; destination_id?: string; custom_url?: string; label?: string } = {
+      destination_type: newLinkDest,
+      label: newLinkLabel || undefined,
+    }
+    if (newLinkDest === 'custom') {
+      if (!newLinkCustomUrl.trim()) { showToast('URL is required', 'warning'); return }
+      payload.custom_url = newLinkCustomUrl
+    } else if (newLinkDestId) {
+      payload.destination_id = newLinkDestId
+    }
+    createLinkMut.mutate({ campaignId: linksTarget, payload })
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+    showToast('Copied to clipboard', 'success')
+  }
 
   const programOptions = [{ value: '', label: 'None' }, ...programs.map(p => ({ value: p.id, label: p.program_name }))]
   const segmentOptions = [{ value: '', label: 'None' }, ...segments.map(s => ({ value: s.id, label: s.segment_name }))]
@@ -276,11 +329,21 @@ export default function CampaignsPage() {
                       </Button>
                     </>
                   )}
+                  <Button variant="ghost" size="sm" onClick={() => { setLinksTarget(c.id); setShowLinksModal(true) }}
+                    className="flex items-center gap-1">
+                    <Link2 size={14} /> Links
+                  </Button>
                   {c.status === 'sent' && (
-                    <Button variant="ghost" size="sm" onClick={() => { setMetricsTarget(c.id); setShowMetricsModal(true) }}
-                      className="flex items-center gap-1">
-                      <BarChart3 size={14} /> Metrics
-                    </Button>
+                    <>
+                      <Button variant="ghost" size="sm" onClick={() => { setMetricsTarget(c.id); setShowMetricsModal(true) }}
+                        className="flex items-center gap-1">
+                        <BarChart3 size={14} /> Metrics
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => { setLinksTarget(c.id); setShowAttribution(true) }}
+                        className="flex items-center gap-1 text-indigo-600">
+                        <ExternalLink size={14} /> Attribution
+                      </Button>
+                    </>
                   )}
                   {c.status !== 'sent' && (
                     <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(c)}
@@ -373,6 +436,143 @@ export default function CampaignsPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+      </Modal>
+
+      {/* Links Modal */}
+      <Modal isOpen={showLinksModal} onClose={() => { setShowLinksModal(false); setLinksTarget(null) }} title="Trackable Links">
+        <div className="space-y-4">
+          <div className="border rounded-lg p-3 space-y-3">
+            <p className="text-sm font-medium text-gray-700">Generate New Link</p>
+            <div className="grid grid-cols-2 gap-2">
+              <Select label="Destination" options={[
+                { value: 'program', label: 'Program' },
+                { value: 'institution', label: 'Institution Page' },
+                { value: 'event', label: 'Event' },
+                { value: 'custom', label: 'Custom URL' },
+              ]} value={newLinkDest} onChange={e => setNewLinkDest(e.target.value)} />
+              {newLinkDest === 'custom' ? (
+                <Input label="URL" value={newLinkCustomUrl} onChange={e => setNewLinkCustomUrl(e.target.value)} placeholder="https://..." />
+              ) : (
+                <Select label="Target" options={[
+                  { value: '', label: 'Select...' },
+                  ...programs.map(p => ({ value: p.id, label: p.program_name })),
+                ]} value={newLinkDestId} onChange={e => setNewLinkDestId(e.target.value)} />
+              )}
+            </div>
+            <Input label="Label (optional)" value={newLinkLabel} onChange={e => setNewLinkLabel(e.target.value)} placeholder="e.g. CTA Button" />
+            <Button size="sm" onClick={handleCreateLink} disabled={createLinkMut.isPending}>
+              {createLinkMut.isPending ? 'Creating...' : 'Generate Link'}
+            </Button>
+          </div>
+
+          {linksQ.isLoading ? (
+            <Skeleton className="h-20" />
+          ) : links.length === 0 ? (
+            <p className="text-sm text-gray-500 text-center py-4">No trackable links yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {links.map(lnk => (
+                <div key={lnk.id} className="border rounded-lg p-3 flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-900 truncate">{lnk.label || lnk.destination_name || lnk.destination_type}</span>
+                      <Badge variant="neutral">{lnk.destination_type}</Badge>
+                    </div>
+                    <p className="text-xs text-gray-500 truncate mt-1">{lnk.trackable_url}</p>
+                    <p className="text-xs text-gray-400 mt-1">{lnk.click_count} clicks</p>
+                  </div>
+                  <div className="flex items-center gap-1 ml-2">
+                    <Button variant="ghost" size="sm" onClick={() => lnk.trackable_url && copyToClipboard(lnk.trackable_url)} className="flex items-center gap-1">
+                      <Copy size={14} />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => linksTarget && deleteLinkMut.mutate({ campaignId: linksTarget, linkId: lnk.id })}
+                      className="text-red-500">
+                      <Trash2 size={14} />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* Attribution Modal */}
+      <Modal isOpen={showAttribution} onClose={() => { setShowAttribution(false); setLinksTarget(null) }} title="Campaign Attribution">
+        {attributionQ.isLoading ? (
+          <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-8" />)}</div>
+        ) : !attribution ? (
+          <p className="text-sm text-gray-500 text-center py-4">No attribution data available.</p>
+        ) : (
+          <div className="space-y-5">
+            <div className="text-center">
+              <p className="text-sm text-gray-500">{attribution.campaign_name}</p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-gray-500 uppercase">Engagement Funnel</p>
+              {[
+                { label: 'Recipients', value: attribution.recipients, color: 'bg-gray-400' },
+                { label: 'Delivered', value: attribution.delivered, color: 'bg-blue-400' },
+                { label: 'Opened', value: attribution.opened, color: 'bg-blue-500' },
+                { label: 'Clicked', value: attribution.clicked, color: 'bg-amber-500' },
+              ].map(s => (
+                <div key={s.label} className="flex items-center justify-between text-sm">
+                  <span className="text-gray-700">{s.label}</span>
+                  <span className="font-medium">{s.value} {attribution.recipients > 0 && <span className="text-gray-400 text-xs">({Math.round(s.value / attribution.recipients * 100)}%)</span>}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-gray-500 uppercase">Downstream Actions</p>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { label: 'Views', value: attribution.views },
+                  { label: 'Saves', value: attribution.saves },
+                  { label: 'RSVPs', value: attribution.rsvps },
+                  { label: 'Info Requests', value: attribution.request_infos },
+                  { label: 'Applications', value: attribution.applications },
+                ].map(a => (
+                  <div key={a.label} className="bg-gray-50 rounded-lg p-2 text-center">
+                    <p className="text-lg font-bold text-gray-900">{a.value}</p>
+                    <p className="text-xs text-gray-500">{a.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {attribution.links.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-gray-500 uppercase">Per-Link Breakdown</p>
+                <div className="border rounded-lg overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="text-left px-3 py-2 font-medium text-gray-600">Link</th>
+                        <th className="text-right px-3 py-2 font-medium text-gray-600">Clicks</th>
+                        <th className="text-right px-3 py-2 font-medium text-gray-600">Views</th>
+                        <th className="text-right px-3 py-2 font-medium text-gray-600">Saves</th>
+                        <th className="text-right px-3 py-2 font-medium text-gray-600">Apps</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {attribution.links.map(l => (
+                        <tr key={l.link_id} className="border-t">
+                          <td className="px-3 py-2 truncate max-w-[160px]">{l.label || l.destination_name || '—'}</td>
+                          <td className="text-right px-3 py-2">{l.clicks}</td>
+                          <td className="text-right px-3 py-2">{l.views}</td>
+                          <td className="text-right px-3 py-2">{l.saves}</td>
+                          <td className="text-right px-3 py-2">{l.applications}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </Modal>

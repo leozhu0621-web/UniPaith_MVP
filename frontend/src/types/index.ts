@@ -776,6 +776,47 @@ export interface CampaignMetrics {
   responded: number
 }
 
+// ============ CAMPAIGN LINKS & ATTRIBUTION ============
+export interface CampaignLink {
+  id: string
+  campaign_id: string
+  institution_id: string
+  destination_type: 'program' | 'institution' | 'event' | 'post' | 'custom'
+  destination_id: string | null
+  custom_url: string | null
+  short_code: string
+  label: string | null
+  click_count: number
+  trackable_url: string | null
+  destination_name: string | null
+  created_at: string
+}
+
+export interface LinkPerformance {
+  link_id: string
+  label: string | null
+  destination_name: string | null
+  clicks: number
+  views: number
+  saves: number
+  applications: number
+}
+
+export interface CampaignAttributionDetail {
+  campaign_id: string
+  campaign_name: string
+  recipients: number
+  delivered: number
+  opened: number
+  clicked: number
+  views: number
+  saves: number
+  rsvps: number
+  request_infos: number
+  applications: number
+  links: LinkPerformance[]
+}
+
 // ============ SEGMENTS ============
 export interface Segment {
   id: string

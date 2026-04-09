@@ -105,8 +105,7 @@ class RecommendationEngine:
                     pid = rec.get("program_id")
                     if pid and pid in programs:
                         p = programs[pid]
-                        rec["degree_type"] = p.degree_type
-                        rec["tuition"] = p.tuition
+                        self._enrich_with_quick_facts(rec, p)
                 return parsed[:count]
         except Exception:
             logger.exception("Recommendation generation failed")
@@ -157,6 +156,21 @@ class RecommendationEngine:
             )
         return "\n".join(lines)
 
+    @staticmethod
+    def _enrich_with_quick_facts(rec: dict, p: Program) -> None:
+        """Add standardized quick-fact fields from Program + Institution."""
+        rec["degree_type"] = p.degree_type
+        rec["tuition"] = p.tuition
+        rec["duration_months"] = p.duration_months
+        rec["delivery_format"] = p.delivery_format
+        rec["acceptance_rate"] = float(p.acceptance_rate) if p.acceptance_rate else None
+        rec["application_deadline"] = (
+            p.application_deadline.isoformat() if p.application_deadline else None
+        )
+        rec["institution_country"] = p.institution.country if p.institution else None
+        rec["institution_city"] = p.institution.city if p.institution else None
+        rec.setdefault("fit_summary", "")
+
     def _fallback_recommendations(
         self, matches: list[MatchResult], programs: dict[UUID, Program], count: int,
     ) -> list[dict]:
@@ -166,7 +180,7 @@ class RecommendationEngine:
             p = programs.get(match.program_id)
             if not p:
                 continue
-            recs.append({
+            rec = {
                 "program_id": str(p.id),
                 "program_name": p.program_name,
                 "institution_name": p.institution.name if p.institution else "Unknown",
@@ -176,9 +190,9 @@ class RecommendationEngine:
                 ),
                 "category": categories[i % len(categories)],
                 "fit_summary": "Strong match based on your background and goals.",
-                "degree_type": p.degree_type,
-                "tuition": p.tuition,
-            })
+            }
+            self._enrich_with_quick_facts(rec, p)
+            recs.append(rec)
         return recs
 
     async def _load_top_matches(self, student_id: UUID, limit: int) -> list[MatchResult]:

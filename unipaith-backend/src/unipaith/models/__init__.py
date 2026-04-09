@@ -33,6 +33,8 @@ from unipaith.models.engagement import (
 )
 from unipaith.models.institution import (
     Campaign,
+    CampaignAction,
+    CampaignLink,
     CampaignRecipient,
     Event,
     EventRSVP,
@@ -131,6 +133,8 @@ __all__ = [
     "Program",
     "TargetSegment",
     "Campaign",
+    "CampaignLink",
+    "CampaignAction",
     "CampaignRecipient",
     "Event",
     "EventRSVP",

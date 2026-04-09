@@ -173,6 +173,12 @@ class Campaign(Base):
     recipients: Mapped[list[CampaignRecipient]] = relationship(
         back_populates="campaign", cascade="all, delete-orphan"
     )
+    links: Mapped[list[CampaignLink]] = relationship(
+        back_populates="campaign", cascade="all, delete-orphan"
+    )
+    actions: Mapped[list[CampaignAction]] = relationship(
+        back_populates="campaign", cascade="all, delete-orphan"
+    )
 
 
 class CampaignRecipient(Base):
@@ -336,3 +342,72 @@ class InstitutionPost(Base):
     )
 
     institution: Mapped[Institution] = relationship(back_populates="posts")
+
+
+class CampaignLink(Base):
+    __tablename__ = "campaign_links"
+    __table_args__ = (
+        Index("ix_campaign_links_code", "short_code", unique=True),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    campaign_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("campaigns.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    institution_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("institutions.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    destination_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    destination_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    custom_url: Mapped[str | None] = mapped_column(String(1000))
+    short_code: Mapped[str] = mapped_column(String(12), unique=True, nullable=False)
+    label: Mapped[str | None] = mapped_column(String(255))
+    click_count: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    campaign: Mapped[Campaign] = relationship(back_populates="links")
+
+
+class CampaignAction(Base):
+    __tablename__ = "campaign_actions"
+    __table_args__ = (
+        Index(
+            "ix_campaign_actions_campaign_type",
+            "campaign_id",
+            "action_type",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    campaign_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("campaigns.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    link_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("campaign_links.id", ondelete="SET NULL"),
+    )
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    action_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    target_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    metadata_json: Mapped[dict | None] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    campaign: Mapped[Campaign] = relationship(back_populates="actions")
