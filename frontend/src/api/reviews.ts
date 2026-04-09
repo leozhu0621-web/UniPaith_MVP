@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AIPacketSummary, BatchOperationResult, CohortComparisonData, PrioritizedApplication, Rubric, ApplicationScore, ReviewAssignment, AIReviewSummary, PipelineData } from '../types'
+import type { AIPacketSummary, BatchOperationResult, CohortComparisonData, IntegritySignal, PrioritizedApplication, Rubric, ApplicationScore, ReviewAssignment, AIReviewSummary, PipelineData } from '../types'
 
 export async function getRubrics(programId?: string): Promise<Rubric[]> {
   const params = programId ? { program_id: programId } : {}
@@ -56,6 +56,27 @@ export async function getAIPacketSummary(applicationId: string, rubricId?: strin
 export async function regenerateAIPacketSummary(applicationId: string, rubricId?: string): Promise<AIPacketSummary> {
   const params = rubricId ? { rubric_id: rubricId } : undefined
   const { data } = await apiClient.post(`/reviews/applications/${applicationId}/ai-packet/regenerate`, null, { params })
+  return data
+}
+
+// --- Integrity Signals ---
+
+export async function scanIntegrity(applicationId: string): Promise<IntegritySignal[]> {
+  const { data } = await apiClient.post(`/reviews/applications/${applicationId}/integrity-scan`)
+  return data
+}
+
+export async function getIntegritySignals(applicationId?: string, signalStatus?: string): Promise<IntegritySignal[]> {
+  const params: Record<string, string> = {}
+  if (applicationId) params.application_id = applicationId
+  if (signalStatus) params.signal_status = signalStatus
+  const { data } = await apiClient.get('/reviews/integrity-signals', { params })
+  return data
+}
+
+export async function resolveIntegritySignal(signalId: string, notes?: string): Promise<{ id: string; status: string }> {
+  const params = notes ? { notes } : undefined
+  const { data } = await apiClient.post(`/reviews/integrity-signals/${signalId}/resolve`, null, { params })
   return data
 }
 

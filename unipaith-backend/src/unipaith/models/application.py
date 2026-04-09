@@ -308,3 +308,43 @@ class AIPacketSummary(Base):
         onupdate=func.now(),
         nullable=False,
     )
+
+
+class IntegritySignal(Base):
+    __tablename__ = "integrity_signals"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    application_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("applications.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    institution_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("institutions.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    signal_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    severity: Mapped[str] = mapped_column(
+        String(20), default="medium", nullable=False,
+    )
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    evidence: Mapped[dict | None] = mapped_column(JSONB)
+    status: Mapped[str] = mapped_column(
+        String(20), default="open", nullable=False,
+    )
+    resolved_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+    )
+    resolved_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+    )
+    resolution_notes: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )

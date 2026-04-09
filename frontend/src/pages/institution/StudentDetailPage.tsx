@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { User, Star, Brain, ClipboardCheck, Calendar, Award, FileText, RefreshCw, Shield } from 'lucide-react'
 import { reviewApplication, makeDecision, createOffer } from '../../api/applications-admin'
 import { chatInstitutionAssistant } from '../../api/institutions'
-import { getScores, getAISummary, assignReviewer, scoreApplication, getRubrics, getAIPacketSummary, regenerateAIPacketSummary, getAIPrefill } from '../../api/reviews'
+import { getScores, getAISummary, assignReviewer, scoreApplication, getRubrics, getAIPacketSummary, regenerateAIPacketSummary, getAIPrefill, scanIntegrity, getIntegritySignals, resolveIntegritySignal } from '../../api/reviews'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -17,7 +17,7 @@ import Skeleton from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatDate, formatScore } from '../../utils/format'
 import { STATUS_COLORS, DECISION_OPTIONS } from '../../utils/constants'
-import type { AIPacketSummary, ApplicationScore, AIReviewSummary, Rubric } from '../../types'
+import type { AIPacketSummary, ApplicationScore, AIReviewSummary, IntegritySignal, Rubric } from '../../types'
 
 export default function StudentDetailPage() {
   const { appId, studentId } = useParams<{ appId?: string; studentId?: string }>()
@@ -79,6 +79,29 @@ export default function StudentDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ai-packet'] })
       showToast('AI summary regenerated', 'success')
+    },
+  })
+
+  const integrityQ = useQuery({
+    queryKey: ['integrity-signals', applicationId],
+    queryFn: () => getIntegritySignals(applicationId!),
+    enabled: !!applicationId && activeTab === 'integrity',
+  })
+  const integritySignals: IntegritySignal[] = Array.isArray(integrityQ.data) ? integrityQ.data : []
+
+  const scanMut = useMutation({
+    mutationFn: () => scanIntegrity(applicationId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['integrity-signals'] })
+      showToast('Integrity scan complete', 'success')
+    },
+  })
+
+  const resolveMut = useMutation({
+    mutationFn: (signalId: string) => resolveIntegritySignal(signalId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['integrity-signals'] })
+      showToast('Signal resolved', 'success')
     },
   })
 
@@ -145,6 +168,7 @@ export default function StudentDetailPage() {
     { id: 'scores', label: 'Scores' },
     { id: 'interview', label: 'Interview' },
     { id: 'ai', label: 'AI Insights' },
+    { id: 'integrity', label: 'Integrity' },
   ]
 
   const currentRubric = rubrics.find(r => r.id === selectedRubric)
@@ -416,6 +440,67 @@ export default function StudentDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Integrity Tab */}
+      {activeTab === 'integrity' && (
+        <Card className="p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Shield size={20} className="text-amber-600" />
+              <h3 className="font-semibold text-gray-900">Integrity Signals</h3>
+              {integritySignals.filter(s => s.status === 'open').length > 0 && (
+                <Badge variant="warning">{integritySignals.filter(s => s.status === 'open').length} open</Badge>
+              )}
+            </div>
+            <Button variant="secondary" size="sm" onClick={() => scanMut.mutate()} disabled={scanMut.isPending} className="flex items-center gap-1">
+              <RefreshCw size={14} className={scanMut.isPending ? 'animate-spin' : ''} />
+              {scanMut.isPending ? 'Scanning...' : 'Run Integrity Scan'}
+            </Button>
+          </div>
+
+          {integrityQ.isLoading ? (
+            <Skeleton className="h-32" />
+          ) : integritySignals.length === 0 ? (
+            <div className="text-center py-6 text-gray-500">
+              <Shield size={32} className="mx-auto mb-2 text-green-400" />
+              <p className="text-sm">No integrity signals detected. Run a scan to check.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {integritySignals.map(sig => (
+                <div key={sig.id} className={`border rounded-lg p-3 ${sig.status === 'resolved' ? 'opacity-50' : ''}`}>
+                  <div className="flex items-start justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${sig.severity === 'high' ? 'bg-red-500' : sig.severity === 'medium' ? 'bg-amber-500' : 'bg-blue-400'}`} />
+                      <span className="text-sm font-medium text-gray-900">{sig.title}</span>
+                      <Badge variant={sig.severity === 'high' ? 'warning' : 'neutral'}>{sig.severity}</Badge>
+                      <Badge variant="neutral">{sig.signal_type.replace(/_/g, ' ')}</Badge>
+                    </div>
+                    {sig.status === 'open' && (
+                      <Button variant="ghost" size="sm" onClick={() => resolveMut.mutate(sig.id)} disabled={resolveMut.isPending}>
+                        Resolve
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600 ml-4">{sig.description}</p>
+                  {sig.evidence && (
+                    <div className="ml-4 mt-1 flex flex-wrap gap-1">
+                      {Object.entries(sig.evidence).map(([k, v]) => (
+                        <span key={k} className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-mono">
+                          {k}: {String(v)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {sig.status === 'resolved' && (
+                    <p className="text-xs text-green-600 ml-4 mt-1">Resolved {sig.resolved_at ? new Date(sig.resolved_at).toLocaleDateString() : ''}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
 
       {/* Decision Modal */}
       <Modal isOpen={showDecisionModal} onClose={() => setShowDecisionModal(false)} title="Make Decision">

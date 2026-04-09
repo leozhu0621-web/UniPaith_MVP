@@ -194,6 +194,51 @@ async def ai_rubric_prefill(
     }
 
 
+# --- Integrity Signals ---
+
+
+@router.post("/applications/{application_id}/integrity-scan")
+async def scan_application_integrity(
+    application_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Run AI integrity scan on an application."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    svc = ReviewPipelineService(db)
+    return await svc.scan_integrity(inst.id, application_id)
+
+
+@router.get("/integrity-signals")
+async def list_integrity_signals(
+    application_id: UUID | None = Query(None),
+    signal_status: str | None = Query(None),
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """List integrity signals for the institution."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    svc = ReviewPipelineService(db)
+    return await svc.list_integrity_signals(
+        inst.id, application_id, signal_status,
+    )
+
+
+@router.post("/integrity-signals/{signal_id}/resolve")
+async def resolve_integrity_signal(
+    signal_id: UUID,
+    notes: str | None = Query(None),
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Resolve an integrity signal."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    svc = ReviewPipelineService(db)
+    return await svc.resolve_integrity_signal(
+        inst.id, signal_id, user.id, notes,
+    )
+
+
 @router.get("/priority-queue")
 async def get_review_priority_queue(
     program_id: UUID | None = Query(None),

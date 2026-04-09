@@ -626,6 +626,270 @@ class ReviewPipelineService:
         }
 
     # ------------------------------------------------------------------
+    # AI Anomaly & Integrity Signals
+    # ------------------------------------------------------------------
+
+    async def scan_integrity(
+        self,
+        institution_id: UUID,
+        application_id: UUID,
+    ) -> list[dict]:
+        """AI-powered integrity scan — flag anomalies and inconsistencies."""
+        from datetime import UTC, datetime
+
+        from unipaith.models.application import IntegritySignal
+
+        # Load application + student
+        app_r = await self.db.execute(
+            select(Application).where(Application.id == application_id)
+        )
+        app = app_r.scalar_one_or_none()
+        if not app:
+            raise NotFoundException("Application not found")
+
+        profile_r = await self.db.execute(
+            select(StudentProfile)
+            .where(StudentProfile.id == app.student_id)
+            .options(
+                selectinload(StudentProfile.academic_records),
+                selectinload(StudentProfile.test_scores),
+                selectinload(StudentProfile.activities),
+            )
+        )
+        profile = profile_r.scalar_one_or_none()
+        if not profile:
+            return []
+
+        signals: list[dict] = []
+
+        # Rule-based checks first (fast, no LLM needed)
+
+        # 1. Duplicate application check
+        dup_r = await self.db.execute(
+            select(func.count(Application.id)).where(
+                Application.student_id == app.student_id,
+                Application.program_id == app.program_id,
+                Application.id != application_id,
+            )
+        )
+        if (dup_r.scalar() or 0) > 0:
+            signals.append({
+                "signal_type": "duplicate_submission",
+                "severity": "high",
+                "title": "Duplicate application detected",
+                "description": (
+                    "This student has another application "
+                    "to the same program."
+                ),
+                "evidence": {
+                    "student_id": str(app.student_id),
+                    "program_id": str(app.program_id),
+                },
+            })
+
+        # 2. GPA consistency check
+        for rec in (profile.academic_records or []):
+            if rec.gpa and float(rec.gpa) > 4.0:
+                signals.append({
+                    "signal_type": "credential_mismatch",
+                    "severity": "medium",
+                    "title": f"Unusual GPA: {rec.gpa}",
+                    "description": (
+                        f"GPA of {rec.gpa} at {rec.institution_name} "
+                        "exceeds typical 4.0 scale. Verify grading system."
+                    ),
+                    "evidence": {
+                        "institution": rec.institution_name,
+                        "gpa": str(rec.gpa),
+                        "scale_note": "Exceeds 4.0 scale",
+                    },
+                })
+
+        # 3. Test score range check
+        score_ranges = {
+            "SAT": (400, 1600),
+            "ACT": (1, 36),
+            "GRE": (260, 340),
+            "GMAT": (200, 800),
+            "TOEFL": (0, 120),
+            "IELTS": (0, 9),
+        }
+        for ts in (profile.test_scores or []):
+            if ts.total_score and ts.test_type:
+                tt = ts.test_type.upper()
+                for key, (lo, hi) in score_ranges.items():
+                    if key in tt:
+                        score_val = float(ts.total_score)
+                        if score_val < lo or score_val > hi:
+                            signals.append({
+                                "signal_type": "credential_mismatch",
+                                "severity": "high",
+                                "title": (
+                                    f"Out-of-range {ts.test_type} score"
+                                ),
+                                "description": (
+                                    f"{ts.test_type} score of "
+                                    f"{ts.total_score} is outside "
+                                    f"valid range ({lo}-{hi})."
+                                ),
+                                "evidence": {
+                                    "test_type": ts.test_type,
+                                    "score": str(ts.total_score),
+                                    "valid_range": f"{lo}-{hi}",
+                                },
+                            })
+                        break
+
+        # 4. Missing critical fields
+        if not profile.first_name or not profile.last_name:
+            signals.append({
+                "signal_type": "incomplete_profile",
+                "severity": "low",
+                "title": "Missing name fields",
+                "description": "Student profile missing first or last name.",
+                "evidence": {
+                    "first_name": profile.first_name,
+                    "last_name": profile.last_name,
+                },
+            })
+
+        # 5. LLM-powered deeper analysis (if enabled)
+        if not settings.ai_mock_mode:
+            try:
+                student_data = self._build_student_context(profile)
+                system_prompt = (
+                    "You are an admissions integrity analyst. "
+                    "Review the applicant profile for inconsistencies, "
+                    "red flags, or unusual patterns. Respond in JSON: "
+                    '{"flags": [{"type": string, "severity": '
+                    '"high"|"medium"|"low", "title": string, '
+                    '"description": string, "evidence": object}]}'
+                )
+                llm = get_llm_client()
+                raw = await llm.generate_reasoning(
+                    system_prompt,
+                    f"Profile:\n{json.dumps(student_data, indent=2)}",
+                )
+                try:
+                    ai_data = json.loads(raw)
+                    for flag in ai_data.get("flags", []):
+                        signals.append({
+                            "signal_type": flag.get(
+                                "type", "ai_detected",
+                            ),
+                            "severity": flag.get("severity", "medium"),
+                            "title": flag.get("title", "AI-detected"),
+                            "description": flag.get(
+                                "description", "",
+                            ),
+                            "evidence": flag.get("evidence"),
+                        })
+                except (json.JSONDecodeError, TypeError):
+                    pass
+            except Exception:
+                pass  # LLM failure is non-fatal
+
+        # Persist signals
+        now = datetime.now(UTC)
+        persisted: list[dict] = []
+        for sig in signals:
+            entry = IntegritySignal(
+                application_id=application_id,
+                institution_id=institution_id,
+                signal_type=sig["signal_type"],
+                severity=sig["severity"],
+                title=sig["title"],
+                description=sig["description"],
+                evidence=sig.get("evidence"),
+            )
+            self.db.add(entry)
+            persisted.append({
+                **sig,
+                "status": "open",
+                "created_at": now.isoformat(),
+            })
+
+        if persisted:
+            await self.db.flush()
+
+        return persisted
+
+    async def list_integrity_signals(
+        self,
+        institution_id: UUID,
+        application_id: UUID | None = None,
+        status_filter: str | None = None,
+    ) -> list[dict]:
+        from unipaith.models.application import IntegritySignal
+
+        stmt = (
+            select(IntegritySignal)
+            .where(IntegritySignal.institution_id == institution_id)
+            .order_by(IntegritySignal.created_at.desc())
+        )
+        if application_id:
+            stmt = stmt.where(
+                IntegritySignal.application_id == application_id,
+            )
+        if status_filter:
+            stmt = stmt.where(IntegritySignal.status == status_filter)
+        result = await self.db.execute(stmt)
+        return [
+            {
+                "id": str(s.id),
+                "application_id": str(s.application_id),
+                "signal_type": s.signal_type,
+                "severity": s.severity,
+                "title": s.title,
+                "description": s.description,
+                "evidence": s.evidence,
+                "status": s.status,
+                "resolved_by": (
+                    str(s.resolved_by) if s.resolved_by else None
+                ),
+                "resolved_at": (
+                    s.resolved_at.isoformat()
+                    if s.resolved_at
+                    else None
+                ),
+                "resolution_notes": s.resolution_notes,
+                "created_at": s.created_at.isoformat(),
+            }
+            for s in result.scalars().all()
+        ]
+
+    async def resolve_integrity_signal(
+        self,
+        institution_id: UUID,
+        signal_id: UUID,
+        user_id: UUID,
+        notes: str | None = None,
+    ) -> dict:
+        from datetime import UTC, datetime
+
+        from unipaith.models.application import IntegritySignal
+
+        result = await self.db.execute(
+            select(IntegritySignal).where(
+                IntegritySignal.id == signal_id,
+                IntegritySignal.institution_id == institution_id,
+            )
+        )
+        sig = result.scalar_one_or_none()
+        if not sig:
+            raise NotFoundException("Signal not found")
+        sig.status = "resolved"
+        sig.resolved_by = user_id
+        sig.resolved_at = datetime.now(UTC)
+        sig.resolution_notes = notes
+        await self.db.flush()
+        return {
+            "id": str(sig.id),
+            "status": sig.status,
+            "resolved_at": sig.resolved_at.isoformat(),
+        }
+
+    # ------------------------------------------------------------------
     # AI Queue Prioritization
     # ------------------------------------------------------------------
 
