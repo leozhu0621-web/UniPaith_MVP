@@ -1404,13 +1404,19 @@ class InstitutionService:
                 ]:
                     continue
 
-            # Increment impression
-            p.impression_count = (p.impression_count or 0) + 1
-            promos.append(await self._enrich_promotion(p))
+            # Collect matching promotions
+            promos.append(p)
 
+        # Increment impressions and enrich
+        results: list[PromotionResponse] = []
+        for p in promos:
+            p.impression_count = (p.impression_count or 0) + 1
         if promos:
             await self.db.flush()
-        return promos
+            for p in promos:
+                await self.db.refresh(p)
+                results.append(await self._enrich_promotion(p))
+        return results
 
     async def _enrich_promotion(
         self, promo: Promotion,
