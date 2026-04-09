@@ -6,7 +6,6 @@ import { getCohortComparison } from '../../api/reviews'
 import { getInstitutionPrograms } from '../../api/institutions'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
-import Button from '../../components/ui/Button'
 import Select from '../../components/ui/Select'
 import Skeleton from '../../components/ui/Skeleton'
 import EmptyState from '../../components/ui/EmptyState'
@@ -44,7 +43,7 @@ export default function CohortComparisonPage() {
     queryFn: () => getCohortComparison(selectedIds),
     enabled: selectedIds.length >= 2,
   })
-  const applicants: CohortApplicant[] = cohortQ.data?.applicants ?? []
+  const applicants: CohortApplicant[] = useMemo(() => cohortQ.data?.applicants ?? [], [cohortQ.data])
 
   const sorted = useMemo(() => {
     const arr = [...applicants]
