@@ -1193,6 +1193,23 @@ async def preview_template(
     )
 
 
+@router.post("/me/templates/ai-draft")
+async def generate_ai_communication_draft(
+    application_id: UUID = Query(...),
+    message_type: str = Query(...),
+    context_notes: str | None = Query(None),
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """AI-generate a context-aware message draft for an applicant."""
+    from unipaith.services.communication_service import CommunicationService
+
+    inst = await _svc(db).get_institution(user.id)
+    return await CommunicationService(db).generate_ai_draft(
+        inst.id, application_id, message_type, context_notes,
+    )
+
+
 # --- Audit Log ---
 
 

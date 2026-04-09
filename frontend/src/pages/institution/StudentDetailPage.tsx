@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { User, Star, Brain, ClipboardCheck, Calendar, Award, FileText, RefreshCw, Shield } from 'lucide-react'
 import { reviewApplication, makeDecision, createOffer } from '../../api/applications-admin'
-import { chatInstitutionAssistant } from '../../api/institutions'
+import { chatInstitutionAssistant, generateAIDraft, sendFromTemplate } from '../../api/institutions'
 import { getScores, getAISummary, assignReviewer, scoreApplication, getRubrics, getAIPacketSummary, regenerateAIPacketSummary, getAIPrefill, scanIntegrity, getIntegritySignals, resolveIntegritySignal } from '../../api/reviews'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -40,6 +40,11 @@ export default function StudentDetailPage() {
   const [prefilling, setPrefilling] = useState(false)
   const [assistantPrompt, setAssistantPrompt] = useState('')
   const [assistantReply, setAssistantReply] = useState<string | null>(null)
+  const [showDraftModal, setShowDraftModal] = useState(false)
+  const [draftType, setDraftType] = useState('missing_items')
+  const [draftSubject, setDraftSubject] = useState('')
+  const [draftBody, setDraftBody] = useState('')
+  const [draftLoading, setDraftLoading] = useState(false)
 
   const applicationQ = useQuery({
     queryKey: ['application-review', applicationId],
@@ -236,6 +241,9 @@ export default function StudentDetailPage() {
             </Button>
             <Button className="w-full flex items-center gap-2" onClick={() => setShowDecisionModal(true)}>
               <Award size={16} /> Make Decision
+            </Button>
+            <Button variant="secondary" className="w-full flex items-center gap-2" onClick={() => setShowDraftModal(true)}>
+              <Brain size={16} /> AI Message Draft
             </Button>
             {app.decision === 'admitted' && (
               <Button variant="secondary" className="w-full flex items-center gap-2" onClick={() => setShowOfferModal(true)}>
@@ -501,6 +509,57 @@ export default function StudentDetailPage() {
           )}
         </Card>
       )}
+
+      {/* AI Draft Modal */}
+      <Modal isOpen={showDraftModal} onClose={() => setShowDraftModal(false)} title="AI Communication Draft" size="lg">
+        <div className="space-y-4">
+          <div className="flex items-end gap-3">
+            <div className="flex-1">
+              <Select label="Message Type" options={[
+                { value: 'missing_items', label: 'Missing Items Request' },
+                { value: 'interview_invite', label: 'Interview Invitation' },
+                { value: 'clarification', label: 'Clarification Request' },
+                { value: 'decision_admit', label: 'Admission Letter' },
+                { value: 'decision_reject', label: 'Rejection Letter' },
+                { value: 'decision_waitlist', label: 'Waitlist Notice' },
+                { value: 'offer_notice', label: 'Offer Notice' },
+              ]} value={draftType} onChange={e => setDraftType(e.target.value)} />
+            </div>
+            <Button
+              variant="secondary"
+              disabled={draftLoading}
+              onClick={async () => {
+                setDraftLoading(true)
+                try {
+                  const result = await generateAIDraft(applicationId!, draftType)
+                  setDraftSubject(result.subject)
+                  setDraftBody(result.body)
+                  showToast('AI draft generated — edit before sending', 'success')
+                } catch { showToast('Draft generation failed', 'error') }
+                finally { setDraftLoading(false) }
+              }}
+              className="flex items-center gap-1 whitespace-nowrap"
+            >
+              <Brain size={14} /> {draftLoading ? 'Generating...' : 'Generate Draft'}
+            </Button>
+          </div>
+          <Input label="Subject" value={draftSubject} onChange={e => setDraftSubject(e.target.value)} />
+          <Textarea label="Message Body (editable)" value={draftBody} onChange={e => setDraftBody(e.target.value)} rows={8} />
+          <p className="text-xs text-gray-400">Review and edit the AI-generated draft before sending.</p>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setShowDraftModal(false)}>Cancel</Button>
+            <Button
+              disabled={!draftSubject.trim() || !draftBody.trim()}
+              onClick={() => {
+                showToast('Message ready — use Send from Template to deliver', 'success')
+                setShowDraftModal(false)
+              }}
+            >
+              Done Editing
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Decision Modal */}
       <Modal isOpen={showDecisionModal} onClose={() => setShowDecisionModal(false)} title="Make Decision">

@@ -334,6 +334,17 @@ export async function previewTemplate(templateId: string, applicationId?: string
   return data
 }
 
+// --- AI Communication Drafts ---
+
+export async function generateAIDraft(applicationId: string, messageType: string, contextNotes?: string): Promise<{
+  subject: string; body: string; message_type: string; editable: boolean
+}> {
+  const params: Record<string, string> = { application_id: applicationId, message_type: messageType }
+  if (contextNotes) params.context_notes = contextNotes
+  const { data } = await apiClient.post('/institutions/me/templates/ai-draft', null, { params })
+  return data
+}
+
 // --- Audit Log ---
 
 export async function getAuditLog(params?: {

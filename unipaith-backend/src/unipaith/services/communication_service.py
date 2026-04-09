@@ -310,3 +310,132 @@ class CommunicationService:
             updated_at=tmpl.updated_at,
             program_name=prog_name,
         )
+
+    # --- AI Draft Generation ---
+
+    async def generate_ai_draft(
+        self,
+        institution_id: UUID,
+        application_id: UUID,
+        message_type: str,
+        context_notes: str | None = None,
+    ) -> dict:
+        """Generate a context-aware message draft using AI."""
+        import json
+
+        from unipaith.ai.llm_client import get_llm_client
+
+        variables = await self._resolve_variables(
+            institution_id, application_id,
+        )
+
+        # Load application context for richer drafts
+        app_context = {}
+        ar = await self.db.execute(
+            select(Application).where(Application.id == application_id)
+        )
+        app = ar.scalar_one_or_none()
+        if app:
+            app_context = {
+                "status": app.status,
+                "decision": app.decision,
+                "completeness": app.completeness_status,
+                "missing_items": app.missing_items,
+            }
+
+        # Get institution name
+        ir = await self.db.execute(
+            select(Institution.name).where(
+                Institution.id == institution_id,
+            )
+        )
+        inst_name = ir.scalar_one_or_none() or "Institution"
+
+        type_instructions = {
+            "missing_items": (
+                "Write a polite, professional email requesting the "
+                "student submit missing application materials. "
+                "Be specific about what's missing based on the context."
+            ),
+            "interview_invite": (
+                "Write a warm, professional interview invitation. "
+                "Express interest in the applicant and provide "
+                "logistical details placeholder."
+            ),
+            "clarification": (
+                "Write a professional email requesting clarification "
+                "on specific aspects of the application. Be clear "
+                "about what needs to be clarified."
+            ),
+            "decision_admit": (
+                "Write a congratulatory admission letter. Express "
+                "enthusiasm about the student joining the program."
+            ),
+            "decision_reject": (
+                "Write a respectful, encouraging rejection letter. "
+                "Thank the student for their interest and wish them "
+                "well in their future endeavors."
+            ),
+            "decision_waitlist": (
+                "Write an informative waitlist notification. "
+                "Explain the process and timeline."
+            ),
+            "offer_notice": (
+                "Write a formal offer letter with financial details "
+                "placeholder and response deadline."
+            ),
+        }
+
+        instruction = type_instructions.get(
+            message_type,
+            "Write a professional email for the admissions context.",
+        )
+
+        system_prompt = (
+            f"You are writing on behalf of {inst_name} admissions. "
+            f"{instruction} "
+            "Respond in JSON with keys: "
+            '"subject" (email subject line) and "body" (email body). '
+            "Use the student's first name. Be professional but warm. "
+            "Keep it concise (under 200 words for body)."
+        )
+
+        user_content = (
+            f"Student: {variables.get('first_name', '')} "
+            f"{variables.get('last_name', '')}\n"
+            f"Program: {variables.get('program_name', '')}\n"
+            f"Application status: {app_context.get('status', 'N/A')}\n"
+            f"Completeness: {app_context.get('completeness', 'N/A')}\n"
+        )
+        if app_context.get("missing_items"):
+            user_content += (
+                f"Missing items: {json.dumps(app_context['missing_items'])}\n"
+            )
+        if app_context.get("decision"):
+            user_content += f"Decision: {app_context['decision']}\n"
+        if context_notes:
+            user_content += f"Additional context: {context_notes}\n"
+
+        llm = get_llm_client()
+        raw = await llm.generate_reasoning(system_prompt, user_content)
+
+        try:
+            data = json.loads(raw)
+            return {
+                "subject": data.get("subject", ""),
+                "body": data.get("body", ""),
+                "message_type": message_type,
+                "variables_used": variables,
+                "editable": True,
+            }
+        except (json.JSONDecodeError, TypeError):
+            return {
+                "subject": (
+                    "Regarding your application to "
+                    f"{variables.get('program_name', 'our program')}"
+                ),
+                "body": raw or "Draft generation failed.",
+                "message_type": message_type,
+                "variables_used": variables,
+                "editable": True,
+            }
