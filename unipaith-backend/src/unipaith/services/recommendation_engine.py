@@ -32,22 +32,27 @@ for a student. You know this student deeply. Write warm, specific reasoning for
 each program -- explain WHY this program suits WHO THEY ARE, not just their numbers.
 
 Rules:
-- Reference specific things from their PersonInsight profile
+- Reference the student's specific stated priorities and constraints (listed under
+  "Student's Stated Priorities") — tie each recommendation back to what THEY said matters
 - Acknowledge concerns or tradeoffs honestly
 - Frame chances naturally ("I've seen students like you thrive here") not as percentages
 - One recommendation should be familiar (on their radar), one should surprise them,
   one should be a "hidden gem" they wouldn't have found
-- Keep each recommendation to 3-5 sentences
+- Keep reasoning to 3-5 sentences; fit_summary to ONE sentence
 - Never lead with ranking or statistics
+- For priority_matches: list 2-5 of the student's stated priorities that this program
+  satisfies, phrased as short confirmations (e.g. "Within your $40k budget",
+  "US-based as requested", "Strong CS program matching your interest")
 
 Return a JSON array of objects:
 [{
   "program_id": "<uuid>",
   "program_name": "<name>",
   "institution_name": "<name>",
-  "reasoning": "<warm, personal reasoning>",
+  "reasoning": "<warm, personal reasoning referencing their stated priorities>",
   "category": "<on_your_radar|might_surprise_you|hidden_gem>",
-  "fit_summary": "<one-line summary of why>"
+  "fit_summary": "<one-line summary of why this fits THEM>",
+  "priority_matches": ["<short confirmation of met priority>", ...]
 }]
 
 Return ONLY valid JSON."""
@@ -87,13 +92,21 @@ class RecommendationEngine:
         program_summaries = self._build_program_summaries(matches, programs)
         knowledge_text = format_knowledge_for_prompt(knowledge_items, max_chars=2000)
 
+        priorities_section = ""
         if conversation_context:
             student_context += f"\n\n## Recent Conversation Context\n{conversation_context[:1000]}"
+            ctx = conversation_context[:1500]
+            priorities_section = (
+                f"\n\n## Student's Stated Priorities\n"
+                f"The student explicitly told us these matter:\n{ctx}\n"
+                f"Tie every recommendation back to these priorities."
+            )
 
         prompt = (
             f"{student_context}\n\n"
             f"## Available Programs (ranked by prediction model)\n{program_summaries}\n\n"
-            f"{knowledge_text}\n\n"
+            f"{knowledge_text}"
+            f"{priorities_section}\n\n"
             f"Generate {count} personalized recommendations from the programs above."
         )
 
@@ -170,6 +183,7 @@ class RecommendationEngine:
         rec["institution_country"] = p.institution.country if p.institution else None
         rec["institution_city"] = p.institution.city if p.institution else None
         rec.setdefault("fit_summary", "")
+        rec.setdefault("priority_matches", [])
 
     def _fallback_recommendations(
         self, matches: list[MatchResult], programs: dict[UUID, Program], count: int,

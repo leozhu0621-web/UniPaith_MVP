@@ -22,7 +22,7 @@ import Avatar from '../../components/ui/Avatar'
 import Skeleton from '../../components/ui/Skeleton'
 import { formatRelative, formatCurrency } from '../../utils/format'
 import { Link } from 'react-router-dom'
-import { Sparkles, ArrowUp, Target, GraduationCap, ShieldCheck, ChevronRight, MapPin, Clock, Calendar, Monitor, ExternalLink, ArrowLeft } from 'lucide-react'
+import { Sparkles, ArrowUp, Target, GraduationCap, ShieldCheck, ChevronRight, MapPin, Clock, Calendar, Monitor, ExternalLink, ArrowLeft, CheckCircle2 } from 'lucide-react'
 
 type ChatMessage = {
   id: string
@@ -162,6 +162,7 @@ interface ShortlistProgram {
   reasoning?: string
   category?: string
   fit_summary?: string
+  priority_matches?: string[]
   degree_type?: string
   tuition?: number
   duration_months?: number
@@ -240,6 +241,19 @@ function ProgramCard({ prog, tierBadge }: { prog: ShortlistProgram; tierBadge: '
             </p>
           )}
           <QuickFacts prog={prog} />
+          {prog.priority_matches && prog.priority_matches.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {prog.priority_matches.map((match: string, i: number) => (
+                <span
+                  key={i}
+                  className="inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full"
+                >
+                  <CheckCircle2 size={10} className="flex-shrink-0" />
+                  {match}
+                </span>
+              ))}
+            </div>
+          )}
           {prog.fit_summary && (
             <p className="text-xs text-stone-600 mt-2 font-medium">{prog.fit_summary}</p>
           )}
