@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getMatches, logEngagement } from '../../api/matching'
-import { searchPrograms, nlpSearch } from '../../api/programs'
+import { searchPrograms, semanticSearch, nlpSearch } from '../../api/programs'
 import { getOnboarding } from '../../api/students'
 import Badge from '../../components/ui/Badge'
 import Card from '../../components/ui/Card'
@@ -258,6 +258,15 @@ export default function DiscoverPage() {
   }
 
   const activeFilterCount = [country, degreeType, minTuition, maxTuition, deliveryFormat, campusSetting, maxDuration, city].filter(Boolean).length
+
+  // Semantic search — runs when query is 3+ chars and no NLP/filter override
+  const { data: semanticResults, isLoading: semanticLoading } = useQuery({
+    queryKey: ['semantic-search', q],
+    queryFn: () => semanticSearch(q, 6),
+    enabled: q.trim().length >= 3 && !nlpResult && activeFilterCount === 0,
+    retry: false,
+  })
+  const semanticPrograms: ProgramSummary[] = Array.isArray(semanticResults) ? semanticResults : []
 
   // Use NLP results when available, otherwise fall back to browse results
   const displayData = nlpResult ? nlpResult.results : browseData
@@ -612,6 +621,41 @@ export default function DiscoverPage() {
               onRemove={() => { setSortBy('relevance'); setPage(1) }}
             />
           )}
+        </div>
+      )}
+
+      {/* Semantic Matches */}
+      {semanticPrograms.length > 0 && !nlpResult && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles size={14} className="text-purple-500" />
+            <h3 className="text-sm font-medium text-stone-700">AI-Suggested Matches</h3>
+            <span className="text-xs text-gray-400">Based on meaning, not just keywords</span>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {semanticPrograms.map((p: ProgramSummary) => (
+              <Card
+                key={`sem-${p.id}`}
+                onClick={() => handleCardClick(p.id)}
+                className="flex-shrink-0 w-60 p-3 border border-purple-100"
+              >
+                <p className="font-semibold text-sm text-stone-700 truncate">{p.program_name}</p>
+                <p className="text-xs text-gray-500 mt-0.5 truncate">
+                  {p.institution_name}{p.institution_city ? `, ${p.institution_city}` : ''}
+                </p>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <Badge variant="info" size="sm">{DEGREE_LABELS[p.degree_type] || p.degree_type}</Badge>
+                  {p.tuition != null && <span className="text-xs text-gray-500">{formatCurrency(p.tuition)}</span>}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+      {semanticLoading && q.trim().length >= 3 && !nlpResult && activeFilterCount === 0 && (
+        <div className="flex items-center gap-2 mb-4 text-xs text-purple-500">
+          <Loader2 size={12} className="animate-spin" />
+          Finding similar programs...
         </div>
       )}
 
