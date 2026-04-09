@@ -9,7 +9,8 @@ import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Skeleton from '../../components/ui/Skeleton'
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
-import { Search, SlidersHorizontal, X, ChevronDown, MessageSquare, Sparkles, Loader2, Pencil, Monitor, Briefcase, Wrench, Heart, Palette, BookOpen, Scale, Users, Bookmark, BookmarkCheck, MapPin, Clock, BarChart3, ExternalLink } from 'lucide-react'
+import { useCompareStore } from '../../stores/compare-store'
+import { Search, SlidersHorizontal, X, ChevronDown, MessageSquare, Sparkles, Loader2, Pencil, Monitor, Briefcase, Wrench, Heart, Palette, BookOpen, Scale, Users, Bookmark, BookmarkCheck, MapPin, Clock, BarChart3, ExternalLink, ArrowRightLeft } from 'lucide-react'
 import { formatCurrency, formatScore } from '../../utils/format'
 import { DEGREE_LABELS, TIER_LABELS } from '../../utils/constants'
 import type { MatchResult, PaginatedResponse, ProgramSummary } from '../../types'
@@ -121,6 +122,9 @@ export default function DiscoverPage() {
   const [degreeType, setDegreeType] = useState('')
   const [minTuition, setMinTuition] = useState('')
   const [maxTuition, setMaxTuition] = useState('')
+
+  // Compare
+  const compareStore = useCompareStore()
 
   // Saved programs
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
@@ -558,6 +562,25 @@ export default function DiscoverPage() {
                 </div>
 
                 <div className="flex items-center justify-end gap-2 mt-3 pt-2 border-t border-gray-100">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (compareStore.has(p.id)) {
+                        compareStore.remove(p.id)
+                      } else {
+                        compareStore.add({
+                          program_id: p.id,
+                          program_name: p.program_name,
+                          institution_name: p.institution_name,
+                          degree_type: p.degree_type,
+                        })
+                      }
+                    }}
+                    className={`inline-flex items-center gap-1 text-xs ${compareStore.has(p.id) ? 'text-purple-600' : 'text-stone-400 hover:text-stone-600'}`}
+                  >
+                    <ArrowRightLeft size={10} />
+                    {compareStore.has(p.id) ? 'In compare' : 'Compare'}
+                  </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); navigate(`/s/programs/${p.id}`) }}
                     className="inline-flex items-center gap-1 text-xs text-stone-500 hover:text-stone-700"

@@ -9,6 +9,7 @@ import Avatar from '../ui/Avatar'
 import Dropdown from '../ui/Dropdown'
 import { getOnboarding } from '../../api/students'
 import { getUnreadCount } from '../../api/notifications'
+import CompareTray from '../student/CompareTray'
 
 const NAV_ITEMS = [
   { to: '/s/dashboard', icon: LayoutDashboard, label: 'Home' },
@@ -188,6 +189,7 @@ export default function StudentLayout() {
           <Outlet />
         </main>
       </div>
+      <CompareTray />
     </div>
   )
 }
