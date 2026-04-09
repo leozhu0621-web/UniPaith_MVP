@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import UTC
 from uuid import UUID
 
 from sqlalchemy import select
@@ -18,6 +19,7 @@ from unipaith.models.student import (
     StudentAccommodation,
     StudentCompetition,
     StudentCourse,
+    StudentDataConsent,
     StudentLanguage,
     StudentOnlinePresence,
     StudentPortfolioItem,
@@ -25,7 +27,6 @@ from unipaith.models.student import (
     StudentProfile,
     StudentResearch,
     StudentScheduling,
-    StudentDataConsent,
     StudentVisaInfo,
     StudentWorkExperience,
     TestScore,
@@ -106,7 +107,9 @@ class StudentService:
 
     async def list_academic_records(self, student_id: UUID) -> list[AcademicRecord]:
         result = await self.db.execute(
-            select(AcademicRecord).where(AcademicRecord.student_id == student_id)
+            select(AcademicRecord)
+            .where(AcademicRecord.student_id == student_id)
+            .options(selectinload(AcademicRecord.courses))
         )
         return list(result.scalars().all())
 
@@ -118,6 +121,7 @@ class StudentService:
             record.end_date = None
         self.db.add(record)
         await self.db.flush()
+        await self.db.refresh(record, attribute_names=["courses"])
         await self._update_onboarding(student_id)
         return record
 
@@ -132,6 +136,7 @@ class StudentService:
         if record.is_current:
             record.end_date = None
         await self.db.flush()
+        await self.db.refresh(record, attribute_names=["courses"])
         await self._update_onboarding(student_id)
         return record
 
@@ -848,14 +853,14 @@ class StudentService:
             milestones.append({
                 "date": app.created_at.isoformat(),
                 "event_type": "application_created",
-                "label": f"Started application",
+                "label": "Started application",
                 "detail": None,
             })
             if app.submitted_at:
                 milestones.append({
                     "date": app.submitted_at.isoformat(),
                     "event_type": "application_submitted",
-                    "label": f"Submitted application",
+                    "label": "Submitted application",
                     "detail": None,
                 })
             if app.decision_at:
@@ -975,7 +980,7 @@ class StudentService:
     async def upsert_data_consent(
         self, student_id: UUID, data: UpsertDataConsentRequest,
     ) -> StudentDataConsent:
-        from datetime import datetime as dt, timezone
+        from datetime import datetime as dt
 
         result = await self.db.execute(
             select(StudentDataConsent).where(StudentDataConsent.student_id == student_id)
@@ -992,7 +997,7 @@ class StudentService:
 
         # Track when deletion was requested
         if record.deletion_requested and record.deletion_requested_at is None:
-            record.deletion_requested_at = dt.now(timezone.utc)
+            record.deletion_requested_at = dt.now(UTC)
         elif not record.deletion_requested:
             record.deletion_requested_at = None
 
@@ -1050,7 +1055,10 @@ class StudentService:
                 .where(AcademicRecord.gpa.is_not(None))
             )).scalar_one()
             pct = round(below / total * 100) if total > 0 else 50
-            metrics.append({"metric": "GPA", "value": my_gpa, "percentile": pct, "label": percentile_label(pct)})
+            metrics.append({
+                "metric": "GPA", "value": my_gpa,
+                "percentile": pct, "label": percentile_label(pct),
+            })
 
         # Test score percentile (highest total_score)
         my_score = max(
@@ -1068,7 +1076,10 @@ class StudentService:
                 .where(TestScore.total_score.is_not(None))
             )).scalar_one()
             pct = round(below / total * 100) if total > 0 else 50
-            metrics.append({"metric": "Test Score", "value": my_score, "percentile": pct, "label": percentile_label(pct)})
+            metrics.append({
+                "metric": "Test Score", "value": my_score,
+                "percentile": pct, "label": percentile_label(pct),
+            })
 
         # Activity count percentile
         my_count = (
@@ -1090,7 +1101,10 @@ class StudentService:
             )
             avg_count = float(avg_result.scalar_one() or 1)
             pct = min(99, round(my_count / max(avg_count * 2, 1) * 100))
-            metrics.append({"metric": "Activities", "value": my_count, "percentile": pct, "label": percentile_label(pct)})
+            metrics.append({
+                "metric": "Activities", "value": my_count,
+                "percentile": pct, "label": percentile_label(pct),
+            })
 
         return {"metrics": metrics}
 
