@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getMatches, logEngagement } from '../../api/matching'
@@ -124,16 +124,16 @@ export default function DiscoverPage() {
 
   // Saved programs
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
-  useQuery({
+  const { data: savedData } = useQuery({
     queryKey: ['saved-programs'],
     queryFn: listSaved,
     retry: false,
-    select: (data: any[]) => {
-      const ids = new Set(data.map((s: any) => String(s.program_id)))
-      setSavedIds(ids)
-      return ids
-    },
   })
+  useEffect(() => {
+    if (savedData) {
+      setSavedIds(new Set(savedData.map((s: any) => String(s.program_id))))
+    }
+  }, [savedData])
   const queryClient = useQueryClient()
   const toggleSave = async (programId: string, e: React.MouseEvent) => {
     e.stopPropagation()
