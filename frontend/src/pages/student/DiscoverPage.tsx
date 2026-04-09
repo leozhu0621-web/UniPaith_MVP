@@ -1,17 +1,31 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import { getMatches, logEngagement } from '../../api/matching'
-import { searchPrograms } from '../../api/programs'
+import { searchPrograms, nlpSearch } from '../../api/programs'
 import { getOnboarding } from '../../api/students'
 import Badge from '../../components/ui/Badge'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Skeleton from '../../components/ui/Skeleton'
-import { Search, SlidersHorizontal, X, ChevronDown, MessageSquare } from 'lucide-react'
+import { Search, SlidersHorizontal, X, ChevronDown, MessageSquare, Sparkles, Loader2 } from 'lucide-react'
 import { formatCurrency, formatScore } from '../../utils/format'
 import { DEGREE_LABELS, TIER_LABELS } from '../../utils/constants'
-import type { MatchResult, ProgramSummary } from '../../types'
+import type { MatchResult, PaginatedResponse, ProgramSummary } from '../../types'
+
+interface NlpFiltersApplied {
+  country?: string
+  degree_type?: string
+  min_tuition?: number
+  max_tuition?: number
+  [key: string]: unknown
+}
+
+interface NlpSearchResult {
+  filters_applied: NlpFiltersApplied
+  results: PaginatedResponse<ProgramSummary>
+  interpretation: string
+}
 
 const SORT_OPTIONS = [
   { value: 'relevance', label: 'Relevance' },
@@ -37,6 +51,33 @@ export default function DiscoverPage() {
   const [degreeType, setDegreeType] = useState('')
   const [minTuition, setMinTuition] = useState('')
   const [maxTuition, setMaxTuition] = useState('')
+
+  // NLP search state
+  const [nlpResult, setNlpResult] = useState<NlpSearchResult | null>(null)
+
+  const nlpMutation = useMutation({
+    mutationFn: nlpSearch,
+    onSuccess: (data: NlpSearchResult) => {
+      setNlpResult(data)
+      const f = data.filters_applied
+      if (f.country) setCountry(f.country)
+      if (f.degree_type) setDegreeType(f.degree_type)
+      if (f.min_tuition != null) setMinTuition(String(f.min_tuition))
+      if (f.max_tuition != null) setMaxTuition(String(f.max_tuition))
+      setPage(1)
+    },
+    onError: () => { setNlpResult(null) },
+  })
+
+  const handleNlpSearch = () => {
+    if (q.trim().length >= 5) nlpMutation.mutate(q.trim())
+  }
+
+  const handleManualFilterChange = <T,>(setter: (v: T) => void, value: T) => {
+    setter(value)
+    setNlpResult(null)
+    setPage(1)
+  }
 
   const { data: onboarding } = useQuery({ queryKey: ['onboarding'], queryFn: getOnboarding })
   const showMatches = (onboarding?.completion_percentage ?? 0) >= 80
@@ -77,12 +118,16 @@ export default function DiscoverPage() {
     setDegreeType('')
     setMinTuition('')
     setMaxTuition('')
+    setNlpResult(null)
     setPage(1)
   }
 
   const activeFilterCount = [country, degreeType, minTuition, maxTuition].filter(Boolean).length
 
-  const programs: ProgramSummary[] = Array.isArray(browseData?.items) ? browseData.items : []
+  // Use NLP results when available, otherwise fall back to browse results
+  const displayData = nlpResult ? nlpResult.results : browseData
+  const programs: ProgramSummary[] = Array.isArray(displayData?.items) ? displayData.items : []
+  const isLoading = nlpMutation.isPending || browseLoading
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -149,10 +194,26 @@ export default function DiscoverPage() {
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
-            type="text" value={q} onChange={e => { setQ(e.target.value); setPage(1) }}
-            placeholder="Search programs..."
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-slate-700"
+            type="text" value={q}
+            onChange={e => { setQ(e.target.value); setPage(1) }}
+            onKeyDown={e => { if (e.key === 'Enter') handleNlpSearch() }}
+            placeholder="Try: &quot;CS programs in California under $30k&quot;"
+            className="w-full pl-9 pr-20 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-slate-700"
           />
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+            {nlpMutation.isPending ? (
+              <Loader2 size={16} className="text-purple-500 animate-spin" />
+            ) : (
+              <button
+                onClick={handleNlpSearch}
+                disabled={q.trim().length < 5}
+                className="text-purple-500 hover:text-purple-700 disabled:text-gray-300 transition-colors"
+                title="AI-powered search"
+              >
+                <Sparkles size={16} />
+              </button>
+            )}
+          </div>
         </div>
         <button
           onClick={() => setShowFilters(!showFilters)}
@@ -194,7 +255,7 @@ export default function DiscoverPage() {
               <label className="text-xs text-gray-500 mb-1 block">Country</label>
               <select
                 value={country}
-                onChange={e => { setCountry(e.target.value); setPage(1) }}
+                onChange={e => handleManualFilterChange(setCountry, e.target.value)}
                 className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-slate-700"
               >
                 <option value="">All Countries</option>
@@ -207,7 +268,7 @@ export default function DiscoverPage() {
               <label className="text-xs text-gray-500 mb-1 block">Degree Type</label>
               <select
                 value={degreeType}
-                onChange={e => { setDegreeType(e.target.value); setPage(1) }}
+                onChange={e => handleManualFilterChange(setDegreeType, e.target.value)}
                 className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-slate-700"
               >
                 <option value="">All Degrees</option>
@@ -221,7 +282,7 @@ export default function DiscoverPage() {
               <input
                 type="number"
                 value={minTuition}
-                onChange={e => { setMinTuition(e.target.value); setPage(1) }}
+                onChange={e => handleManualFilterChange(setMinTuition, e.target.value)}
                 placeholder="0"
                 className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-slate-700"
               />
@@ -231,7 +292,7 @@ export default function DiscoverPage() {
               <input
                 type="number"
                 value={maxTuition}
-                onChange={e => { setMaxTuition(e.target.value); setPage(1) }}
+                onChange={e => handleManualFilterChange(setMaxTuition, e.target.value)}
                 placeholder="Any"
                 className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-slate-700"
               />
@@ -240,37 +301,46 @@ export default function DiscoverPage() {
         </div>
       )}
 
-      {/* Active Filter Chips */}
+      {/* NLP Interpretation */}
+      {nlpResult && (
+        <div className="flex items-center gap-2 mb-3 text-xs text-purple-700 bg-purple-50 border border-purple-100 rounded-lg px-3 py-2">
+          <Sparkles size={14} className="flex-shrink-0" />
+          <span>AI understood: {nlpResult.interpretation}</span>
+          <button onClick={resetFilters} className="ml-auto text-purple-400 hover:text-purple-600"><X size={14} /></button>
+        </div>
+      )}
+
+      {/* Active Filter Chips (NLP-extracted shown as purple pills, manual as gray) */}
       {activeFilterCount > 0 && (
         <div className="flex flex-wrap gap-2 mb-4">
           {country && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 text-xs bg-gray-100 rounded-full">
+            <span className={`inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full ${nlpResult ? 'bg-purple-100 text-purple-800' : 'bg-gray-100'}`}>
               {country}
-              <button onClick={() => { setCountry(''); setPage(1) }}><X size={12} /></button>
+              <button onClick={() => { setCountry(''); setNlpResult(null); setPage(1) }}><X size={12} /></button>
             </span>
           )}
           {degreeType && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 text-xs bg-gray-100 rounded-full">
+            <span className={`inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full ${nlpResult ? 'bg-purple-100 text-purple-800' : 'bg-gray-100'}`}>
               {DEGREE_LABELS[degreeType] || degreeType}
-              <button onClick={() => { setDegreeType(''); setPage(1) }}><X size={12} /></button>
+              <button onClick={() => { setDegreeType(''); setNlpResult(null); setPage(1) }}><X size={12} /></button>
             </span>
           )}
           {minTuition && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 text-xs bg-gray-100 rounded-full">
+            <span className={`inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full ${nlpResult ? 'bg-purple-100 text-purple-800' : 'bg-gray-100'}`}>
               Min: ${Number(minTuition).toLocaleString()}
-              <button onClick={() => { setMinTuition(''); setPage(1) }}><X size={12} /></button>
+              <button onClick={() => { setMinTuition(''); setNlpResult(null); setPage(1) }}><X size={12} /></button>
             </span>
           )}
           {maxTuition && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 text-xs bg-gray-100 rounded-full">
+            <span className={`inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full ${nlpResult ? 'bg-purple-100 text-purple-800' : 'bg-gray-100'}`}>
               Max: ${Number(maxTuition).toLocaleString()}
-              <button onClick={() => { setMaxTuition(''); setPage(1) }}><X size={12} /></button>
+              <button onClick={() => { setMaxTuition(''); setNlpResult(null); setPage(1) }}><X size={12} /></button>
             </span>
           )}
         </div>
       )}
 
-      {browseLoading ? (
+      {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-28" />)}
         </div>
@@ -283,7 +353,7 @@ export default function DiscoverPage() {
         </div>
       ) : (
         <>
-          <p className="text-xs text-gray-500 mb-3">{browseData?.total ?? 0} programs found</p>
+          <p className="text-xs text-gray-500 mb-3">{displayData?.total ?? 0} programs found</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {programs.map((p: ProgramSummary) => (
               <Card key={p.id} onClick={() => handleCardClick(p.id)} className="p-4">
@@ -298,7 +368,7 @@ export default function DiscoverPage() {
           </div>
 
           {/* Pagination */}
-          {browseData && browseData.total_pages > 1 && (
+          {displayData && displayData.total_pages > 1 && (
             <div className="flex items-center justify-center gap-2 mt-6">
               <Button
                 size="sm"
@@ -309,12 +379,12 @@ export default function DiscoverPage() {
                 Previous
               </Button>
               <span className="text-sm text-gray-500">
-                Page {page} of {browseData.total_pages}
+                Page {page} of {displayData.total_pages}
               </span>
               <Button
                 size="sm"
                 variant="secondary"
-                disabled={page >= browseData.total_pages}
+                disabled={page >= displayData.total_pages}
                 onClick={() => setPage(p => p + 1)}
               >
                 Next
