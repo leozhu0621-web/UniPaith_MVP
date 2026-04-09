@@ -25,14 +25,17 @@ from unipaith.schemas.institution import (
     DashboardSummaryResponse,
     DatasetResponse,
     DatasetUploadResponse,
+    InquiryResponse,
     InstitutionResponse,
     PostMediaUploadResponse,
     PostResponse,
     ProgramResponse,
     RecordActionRequest,
     SegmentResponse,
+    SubmitInquiryRequest,
     UpdateCampaignRequest,
     UpdateDatasetRequest,
+    UpdateInquiryRequest,
     UpdateInstitutionRequest,
     UpdatePostRequest,
     UpdateProgramRequest,
@@ -686,6 +689,60 @@ async def record_campaign_action(
     await svc.record_campaign_action(
         body.campaign_id, student_id, body.action_type, body.target_id,
     )
+
+
+# --- Inquiries ---
+
+
+@router.post("/inquiries", response_model=InquiryResponse)
+async def submit_inquiry(
+    body: SubmitInquiryRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Student submits a request-info inquiry to an institution."""
+    from sqlalchemy import select as sel
+
+    from unipaith.models.student import StudentProfile
+
+    r = await db.execute(
+        sel(StudentProfile).where(StudentProfile.user_id == user.id)
+    )
+    profile = r.scalar_one_or_none()
+
+    svc = _svc(db)
+    return await svc.submit_inquiry(
+        data=body,
+        student_id=profile.id if profile else None,
+        student_name=user.name or user.email,
+        student_email=user.email,
+    )
+
+
+@router.get("/me/inquiries", response_model=list[InquiryResponse])
+async def list_inquiries(
+    status: str | None = Query(None),
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.list_inquiries(inst.id, status)
+
+
+@router.put(
+    "/me/inquiries/{inquiry_id}",
+    response_model=InquiryResponse,
+)
+async def update_inquiry(
+    inquiry_id: UUID,
+    body: UpdateInquiryRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.update_inquiry(inst.id, inquiry_id, body)
 
 
 # --- Institution Intelligence ---

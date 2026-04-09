@@ -1,26 +1,46 @@
 import { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useParams, Link, useSearchParams } from 'react-router-dom'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import {
   GraduationCap, MapPin, Clock, DollarSign, CalendarDays,
-  Users, Globe, ExternalLink, BookOpen, CheckCircle2, ArrowLeft,
+  Users, Globe, ExternalLink, BookOpen, CheckCircle2, ArrowLeft, MessageSquare,
 } from 'lucide-react'
 import { getProgram } from '../../api/programs'
-import { getPublicInstitution } from '../../api/institutions'
+import { getPublicInstitution, submitInquiry } from '../../api/institutions'
 import { listEvents } from '../../api/events'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
+import Modal from '../../components/ui/Modal'
+import Input from '../../components/ui/Input'
+import Textarea from '../../components/ui/Textarea'
 import Tabs from '../../components/ui/Tabs'
 import Skeleton from '../../components/ui/Skeleton'
 import EmptyState from '../../components/ui/EmptyState'
+import { showToast } from '../../stores/toast-store'
 import { formatCurrency, formatDate, formatPercent } from '../../utils/format'
 import { DEGREE_LABELS, DELIVERY_FORMAT_LABELS, CAMPUS_SETTING_LABELS } from '../../utils/constants'
 import type { Program, Institution, EventItem } from '../../types'
 
 export default function ProgramDetailPage() {
   const { programId } = useParams<{ programId: string }>()
+  const [searchParams] = useSearchParams()
   const [tab, setTab] = useState('overview')
+  const [showInquiryModal, setShowInquiryModal] = useState(false)
+  const [inquirySubject, setInquirySubject] = useState('')
+  const [inquiryMessage, setInquiryMessage] = useState('')
+
+  const inquiryMut = useMutation({
+    mutationFn: (payload: { institution_id: string; program_id?: string; subject: string; message: string; campaign_id?: string }) =>
+      submitInquiry(payload),
+    onSuccess: () => {
+      showToast('Inquiry sent! The institution will respond soon.', 'success')
+      setShowInquiryModal(false)
+      setInquirySubject('')
+      setInquiryMessage('')
+    },
+    onError: () => showToast('Please sign in as a student to send inquiries.', 'warning'),
+  })
 
   const programQ = useQuery({
     queryKey: ['public-program', programId],
@@ -152,6 +172,9 @@ export default function ProgramDetailPage() {
               <Link to="/login">
                 <Button variant="secondary" className="w-full">Save Program</Button>
               </Link>
+              <Button variant="secondary" onClick={() => setShowInquiryModal(true)} className="w-full flex items-center gap-2">
+                <MessageSquare size={14} /> Request Info
+              </Button>
               {inst?.website_url && (
                 <a href={inst.website_url} target="_blank" rel="noopener noreferrer">
                   <Button variant="ghost" className="w-full flex items-center gap-2">
@@ -394,6 +417,29 @@ export default function ProgramDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Request Info Modal */}
+      <Modal isOpen={showInquiryModal} onClose={() => setShowInquiryModal(false)} title={`Request Info — ${p?.program_name ?? ''}`}>
+        <div className="space-y-4">
+          <Input label="Subject" value={inquirySubject} onChange={e => setInquirySubject(e.target.value)} placeholder="What would you like to know about this program?" />
+          <Textarea label="Message" value={inquiryMessage} onChange={e => setInquiryMessage(e.target.value)} rows={4} placeholder="Tell us about your interests, questions about admissions, curriculum, financial aid..." />
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setShowInquiryModal(false)}>Cancel</Button>
+            <Button
+              onClick={() => p && inquiryMut.mutate({
+                institution_id: p.institution_id,
+                program_id: p.id,
+                subject: inquirySubject,
+                message: inquiryMessage,
+                campaign_id: searchParams.get('cid') || undefined,
+              })}
+              disabled={inquiryMut.isPending || !inquirySubject.trim() || !inquiryMessage.trim()}
+            >
+              {inquiryMut.isPending ? 'Sending...' : 'Send Inquiry'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

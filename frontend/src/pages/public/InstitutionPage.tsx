@@ -1,19 +1,24 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import {
   Building2, MapPin, Users, Globe, Mail, ExternalLink,
-  BookOpen, CalendarDays, FileText, Pin,
+  BookOpen, CalendarDays, FileText, Pin, MessageSquare,
 } from 'lucide-react'
-import { getPublicInstitution, getPublicPosts, recordCampaignAction } from '../../api/institutions'
+import { getPublicInstitution, getPublicPosts, recordCampaignAction, submitInquiry } from '../../api/institutions'
 import { searchPrograms } from '../../api/programs'
 import { listEvents } from '../../api/events'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
+import Modal from '../../components/ui/Modal'
+import Input from '../../components/ui/Input'
+import Textarea from '../../components/ui/Textarea'
 import Tabs from '../../components/ui/Tabs'
 import Skeleton from '../../components/ui/Skeleton'
 import EmptyState from '../../components/ui/EmptyState'
+import { showToast } from '../../stores/toast-store'
 import { formatCurrency, formatDate } from '../../utils/format'
 import { DEGREE_LABELS } from '../../utils/constants'
 import type { Institution, InstitutionPost, ProgramSummary, PaginatedResponse, EventItem } from '../../types'
@@ -36,6 +41,21 @@ export default function InstitutionPage() {
   }, [searchParams, institutionId])
   const [programPage, setProgPage] = useState(1)
   const [degreeFilter, setDegreeFilter] = useState('')
+  const [showInquiryModal, setShowInquiryModal] = useState(false)
+  const [inquirySubject, setInquirySubject] = useState('')
+  const [inquiryMessage, setInquiryMessage] = useState('')
+
+  const inquiryMut = useMutation({
+    mutationFn: (p: { institution_id: string; subject: string; message: string; campaign_id?: string }) =>
+      submitInquiry(p),
+    onSuccess: () => {
+      showToast('Inquiry sent! The institution will respond soon.', 'success')
+      setShowInquiryModal(false)
+      setInquirySubject('')
+      setInquiryMessage('')
+    },
+    onError: () => showToast('Please sign in as a student to send inquiries.', 'warning'),
+  })
 
   const instQ = useQuery({
     queryKey: ['public-institution', institutionId],
@@ -191,6 +211,9 @@ export default function InstitutionPage() {
                   </Button>
                 </a>
               )}
+              <Button onClick={() => setShowInquiryModal(true)} className="flex items-center gap-2 w-full">
+                <MessageSquare size={14} /> Request Info
+              </Button>
             </div>
           </div>
         </div>
@@ -364,6 +387,28 @@ export default function InstitutionPage() {
           )}
         </div>
       </div>
+
+      {/* Request Info Modal */}
+      <Modal isOpen={showInquiryModal} onClose={() => setShowInquiryModal(false)} title={`Request Info — ${inst?.name ?? ''}`}>
+        <div className="space-y-4">
+          <Input label="Subject" value={inquirySubject} onChange={e => setInquirySubject(e.target.value)} placeholder="What would you like to know?" />
+          <Textarea label="Message" value={inquiryMessage} onChange={e => setInquiryMessage(e.target.value)} rows={4} placeholder="Tell us about your interests, questions about programs, admissions, campus life..." />
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setShowInquiryModal(false)}>Cancel</Button>
+            <Button
+              onClick={() => institutionId && inquiryMut.mutate({
+                institution_id: institutionId,
+                subject: inquirySubject,
+                message: inquiryMessage,
+                campaign_id: searchParams.get('cid') || undefined,
+              })}
+              disabled={inquiryMut.isPending || !inquirySubject.trim() || !inquiryMessage.trim()}
+            >
+              {inquiryMut.isPending ? 'Sending...' : 'Send Inquiry'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

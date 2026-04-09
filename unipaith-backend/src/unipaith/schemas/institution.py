@@ -53,6 +53,7 @@ class UpdateInstitutionRequest(BaseModel):
     website_url: str | None = None
     media_gallery: list[str] | None = None
     social_links: dict | None = None
+    inquiry_routing: dict | None = None
 
 
 class InstitutionResponse(BaseModel):
@@ -73,6 +74,7 @@ class InstitutionResponse(BaseModel):
     website_url: str | None
     media_gallery: list | dict | None = None
     social_links: dict | None = None
+    inquiry_routing: dict | None = None
     is_verified: bool
     created_at: datetime
     updated_at: datetime
@@ -372,6 +374,56 @@ class RecordActionRequest(BaseModel):
         ..., pattern=r"^(view|save|rsvp|request_info|apply)$",
     )
     target_id: UUID | None = None
+
+
+# --- Inquiries ---
+
+
+class SubmitInquiryRequest(BaseModel):
+    institution_id: UUID
+    program_id: UUID | None = None
+    subject: str = Field(min_length=1, max_length=500)
+    message: str = Field(min_length=1, max_length=5000)
+    inquiry_type: str = "general"
+    campaign_id: UUID | None = None
+
+
+class UpdateInquiryRequest(BaseModel):
+    status: str | None = Field(
+        None, pattern=r"^(new|in_progress|responded|closed)$",
+    )
+    assigned_to: UUID | None = None
+    response_text: str | None = None
+
+
+class InquiryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    institution_id: UUID
+    program_id: UUID | None
+    student_id: UUID | None
+    student_name: str
+    student_email: str
+    subject: str
+    message: str
+    inquiry_type: str
+    status: str
+    assigned_to: UUID | None
+    response_text: str | None
+    responded_at: datetime | None
+    campaign_id: UUID | None
+    created_at: datetime
+    updated_at: datetime
+    program_name: str | None = None
+
+
+class InquiryRoutingConfig(BaseModel):
+    """Institution's inquiry routing preferences."""
+    default_email: str | None = None
+    auto_reply_enabled: bool = False
+    auto_reply_message: str | None = None
+    forward_to_email: bool = True
+    inquiry_types: list[str] | None = None
 
 
 # --- Datasets ---

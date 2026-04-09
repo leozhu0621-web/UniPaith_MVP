@@ -817,6 +817,27 @@ export interface CampaignAttributionDetail {
   links: LinkPerformance[]
 }
 
+// ============ INQUIRIES ============
+export interface Inquiry {
+  id: string
+  institution_id: string
+  program_id: string | null
+  student_id: string | null
+  student_name: string
+  student_email: string
+  subject: string
+  message: string
+  inquiry_type: string
+  status: 'new' | 'in_progress' | 'responded' | 'closed'
+  assigned_to: string | null
+  response_text: string | null
+  responded_at: string | null
+  campaign_id: string | null
+  created_at: string
+  updated_at: string
+  program_name: string | null
+}
+
 // ============ SEGMENTS ============
 export interface Segment {
   id: string

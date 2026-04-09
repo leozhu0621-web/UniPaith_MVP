@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AnalyticsData, Campaign, CampaignAttributionDetail, CampaignLink, CampaignMetrics, DashboardSummary, DatasetPreview, Institution, InstitutionDataset, InstitutionPost, Program, Segment } from '../types'
+import type { AnalyticsData, Campaign, CampaignAttributionDetail, CampaignLink, CampaignMetrics, DashboardSummary, DatasetPreview, Inquiry, Institution, InstitutionDataset, InstitutionPost, Program, Segment } from '../types'
 
 export async function getInstitution(): Promise<Institution> {
   const { data } = await apiClient.get('/institutions/me')
@@ -199,6 +199,35 @@ export async function recordCampaignAction(payload: {
 
 export async function previewSegmentAudience(segmentId: string): Promise<{ segment_id: string; audience_count: number }> {
   const { data } = await apiClient.get(`/institutions/me/segments/${segmentId}/preview`)
+  return data
+}
+
+// --- Inquiries ---
+
+export async function submitInquiry(payload: {
+  institution_id: string
+  program_id?: string
+  subject: string
+  message: string
+  inquiry_type?: string
+  campaign_id?: string
+}): Promise<Inquiry> {
+  const { data } = await apiClient.post('/institutions/inquiries', payload)
+  return data
+}
+
+export async function getInquiries(status?: string): Promise<Inquiry[]> {
+  const params = status ? { status } : undefined
+  const { data } = await apiClient.get('/institutions/me/inquiries', { params })
+  return data
+}
+
+export async function updateInquiry(inquiryId: string, payload: {
+  status?: string
+  assigned_to?: string
+  response_text?: string
+}): Promise<Inquiry> {
+  const { data } = await apiClient.put(`/institutions/me/inquiries/${inquiryId}`, payload)
   return data
 }
 

@@ -25,6 +25,7 @@ from unipaith.models.institution import (
     CampaignRecipient,
     Event,
     EventRSVP,
+    Inquiry,
     Institution,
     InstitutionDataset,
     InstitutionPost,
@@ -53,6 +54,7 @@ from unipaith.schemas.institution import (
     DatasetUploadResponse,
     EventAttribution,
     FunnelStage,
+    InquiryResponse,
     LinkPerformance,
     MonthlyApplicationCount,
     PaginatedResponse,
@@ -60,8 +62,10 @@ from unipaith.schemas.institution import (
     PostResponse,
     ProgramApplicationCount,
     ProgramSummaryResponse,
+    SubmitInquiryRequest,
     UpdateCampaignRequest,
     UpdateDatasetRequest,
+    UpdateInquiryRequest,
     UpdateInstitutionRequest,
     UpdatePostRequest,
     UpdateProgramRequest,
@@ -1138,6 +1142,132 @@ class InstitutionService:
             trackable_url=self._build_trackable_url(link.short_code),
             destination_name=dest_name,
             created_at=link.created_at,
+        )
+
+    # --- Inquiries ---
+
+    async def submit_inquiry(
+        self,
+        data: SubmitInquiryRequest,
+        student_id: UUID | None,
+        student_name: str,
+        student_email: str,
+    ) -> InquiryResponse:
+        inquiry = Inquiry(
+            institution_id=data.institution_id,
+            program_id=data.program_id,
+            student_id=student_id,
+            student_name=student_name,
+            student_email=student_email,
+            subject=data.subject,
+            message=data.message,
+            inquiry_type=data.inquiry_type,
+            campaign_id=data.campaign_id,
+        )
+        self.db.add(inquiry)
+        await self.db.flush()
+        await self.db.refresh(inquiry)
+
+        # Notify institution admin
+        inst_r = await self.db.execute(
+            select(Institution).where(
+                Institution.id == data.institution_id,
+            )
+        )
+        institution = inst_r.scalar_one_or_none()
+        if institution:
+            notif = Notification(
+                user_id=institution.admin_user_id,
+                title=f"New inquiry: {data.subject}",
+                body=f"From {student_name} ({student_email})",
+                notification_type="inquiry",
+                action_url="/i/inquiries",
+            )
+            self.db.add(notif)
+            await self.db.flush()
+
+        prog_name = await self._get_program_name(inquiry.program_id)
+        return self._build_inquiry_response(inquiry, prog_name)
+
+    async def list_inquiries(
+        self,
+        institution_id: UUID,
+        status_filter: str | None = None,
+    ) -> list[InquiryResponse]:
+        stmt = (
+            select(Inquiry)
+            .where(Inquiry.institution_id == institution_id)
+            .order_by(Inquiry.created_at.desc())
+        )
+        if status_filter:
+            stmt = stmt.where(Inquiry.status == status_filter)
+        result = await self.db.execute(stmt)
+
+        responses: list[InquiryResponse] = []
+        for inq in result.scalars().all():
+            pn = await self._get_program_name(inq.program_id)
+            responses.append(self._build_inquiry_response(inq, pn))
+        return responses
+
+    async def update_inquiry(
+        self,
+        institution_id: UUID,
+        inquiry_id: UUID,
+        data: UpdateInquiryRequest,
+    ) -> InquiryResponse:
+        result = await self.db.execute(
+            select(Inquiry).where(
+                Inquiry.id == inquiry_id,
+                Inquiry.institution_id == institution_id,
+            )
+        )
+        inquiry = result.scalar_one_or_none()
+        if not inquiry:
+            raise NotFoundException("Inquiry not found")
+
+        for key, val in data.model_dump(exclude_unset=True).items():
+            setattr(inquiry, key, val)
+        if data.response_text and not inquiry.responded_at:
+            inquiry.responded_at = datetime.now(UTC)
+            inquiry.status = "responded"
+
+        await self.db.flush()
+        await self.db.refresh(inquiry)
+        pn = await self._get_program_name(inquiry.program_id)
+        return self._build_inquiry_response(inquiry, pn)
+
+    async def _get_program_name(
+        self, program_id: UUID | None,
+    ) -> str | None:
+        if not program_id:
+            return None
+        r = await self.db.execute(
+            select(Program.program_name).where(
+                Program.id == program_id,
+            )
+        )
+        return r.scalar_one_or_none()
+
+    @staticmethod
+    def _build_inquiry_response(inq: Inquiry, prog_name: str | None) -> InquiryResponse:
+        return InquiryResponse(
+            id=inq.id,
+            institution_id=inq.institution_id,
+            program_id=inq.program_id,
+            student_id=inq.student_id,
+            student_name=inq.student_name,
+            student_email=inq.student_email,
+            subject=inq.subject,
+            message=inq.message,
+            inquiry_type=inq.inquiry_type,
+            status=inq.status,
+            assigned_to=inq.assigned_to,
+            response_text=inq.response_text,
+            responded_at=inq.responded_at,
+            campaign_id=inq.campaign_id,
+            created_at=inq.created_at,
+            updated_at=inq.updated_at,
+            program_name=prog_name,
         )
 
     # --- Datasets ---

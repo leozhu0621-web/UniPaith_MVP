@@ -45,6 +45,7 @@ class Institution(Base):
     website_url: Mapped[str | None] = mapped_column(String(1000))
     media_gallery: Mapped[dict | None] = mapped_column(JSONB)
     social_links: Mapped[dict | None] = mapped_column(JSONB)
+    inquiry_routing: Mapped[dict | None] = mapped_column(JSONB)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -411,3 +412,61 @@ class CampaignAction(Base):
     )
 
     campaign: Mapped[Campaign] = relationship(back_populates="actions")
+
+
+class Inquiry(Base):
+    __tablename__ = "inquiries"
+    __table_args__ = (
+        Index("ix_inquiries_institution_status", "institution_id", "status"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    institution_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("institutions.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    program_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("programs.id", ondelete="SET NULL"),
+    )
+    student_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_profiles.id", ondelete="SET NULL"),
+    )
+    student_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    student_email: Mapped[str] = mapped_column(String(255), nullable=False)
+    subject: Mapped[str] = mapped_column(String(500), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    inquiry_type: Mapped[str] = mapped_column(
+        String(30), default="general", nullable=False,
+    )
+    status: Mapped[str] = mapped_column(
+        String(20), default="new", nullable=False,
+    )
+    assigned_to: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+    )
+    response_text: Mapped[str | None] = mapped_column(Text)
+    responded_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+    )
+    campaign_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("campaigns.id", ondelete="SET NULL"),
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    institution: Mapped[Institution] = relationship()
+    program: Mapped[Program | None] = relationship()
