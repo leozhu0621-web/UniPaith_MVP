@@ -120,6 +120,45 @@ class Program(Base):
     institution: Mapped[Institution] = relationship(back_populates="programs")
 
 
+class IntakeRound(Base):
+    __tablename__ = "intake_rounds"
+    __table_args__ = (
+        Index("ix_intake_rounds_program", "program_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    program_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("programs.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    round_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    intake_term: Mapped[str | None] = mapped_column(String(50))
+    application_open: Mapped[date | None] = mapped_column(Date)
+    application_deadline: Mapped[date | None] = mapped_column(Date)
+    decision_date: Mapped[date | None] = mapped_column(Date)
+    program_start: Mapped[date | None] = mapped_column(Date)
+    capacity: Mapped[int | None] = mapped_column(Integer)
+    enrolled_count: Mapped[int] = mapped_column(Integer, default=0)
+    requirements: Mapped[dict | None] = mapped_column(JSONB)
+    status: Mapped[str] = mapped_column(
+        String(20), default="upcoming", nullable=False,
+    )
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+
 class TargetSegment(Base):
     __tablename__ = "target_segments"
 

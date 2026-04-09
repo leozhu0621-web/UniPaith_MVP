@@ -845,6 +845,27 @@ export interface Inquiry {
   program_name: string | null
 }
 
+// ============ INTAKE ROUNDS ============
+export interface IntakeRound {
+  id: string
+  program_id: string
+  round_name: string
+  intake_term: string | null
+  application_open: string | null
+  application_deadline: string | null
+  decision_date: string | null
+  program_start: string | null
+  capacity: number | null
+  enrolled_count: number
+  requirements: Record<string, unknown> | null
+  status: 'upcoming' | 'open' | 'closed' | 'completed'
+  is_active: boolean
+  sort_order: number
+  created_at: string
+  updated_at: string
+  spots_remaining: number | null
+}
+
 // ============ COHORT COMPARISON ============
 export interface CohortApplicant {
   application_id: string

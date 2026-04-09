@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AnalyticsData, AuditLogList, Campaign, CommunicationTemplate, CampaignAttributionDetail, CampaignLink, CampaignMetrics, DashboardSummary, DatasetPreview, Inquiry, Institution, InstitutionDataset, InstitutionPost, Program, Promotion, Segment } from '../types'
+import type { AnalyticsData, AuditLogList, Campaign, CommunicationTemplate, IntakeRound, CampaignAttributionDetail, CampaignLink, CampaignMetrics, DashboardSummary, DatasetPreview, Inquiry, Institution, InstitutionDataset, InstitutionPost, Program, Promotion, Segment } from '../types'
 
 export async function getInstitution(): Promise<Institution> {
   const { data } = await apiClient.get('/institutions/me')
@@ -228,6 +228,41 @@ export async function updateInquiry(inquiryId: string, payload: {
   response_text?: string
 }): Promise<Inquiry> {
   const { data } = await apiClient.put(`/institutions/me/inquiries/${inquiryId}`, payload)
+  return data
+}
+
+// --- Intake Rounds ---
+
+export async function getIntakeRounds(programId: string): Promise<IntakeRound[]> {
+  const { data } = await apiClient.get(`/institutions/me/programs/${programId}/intakes`)
+  return data
+}
+
+export async function createIntakeRound(programId: string, payload: {
+  round_name: string; intake_term?: string; application_open?: string;
+  application_deadline?: string; decision_date?: string; program_start?: string;
+  capacity?: number; requirements?: Record<string, unknown>; sort_order?: number
+}): Promise<IntakeRound> {
+  const { data } = await apiClient.post(`/institutions/me/programs/${programId}/intakes`, payload)
+  return data
+}
+
+export async function updateIntakeRound(programId: string, intakeId: string, payload: Partial<{
+  round_name: string; intake_term: string; application_open: string;
+  application_deadline: string; decision_date: string; program_start: string;
+  capacity: number; requirements: Record<string, unknown>; status: string;
+  is_active: boolean; sort_order: number
+}>): Promise<IntakeRound> {
+  const { data } = await apiClient.put(`/institutions/me/programs/${programId}/intakes/${intakeId}`, payload)
+  return data
+}
+
+export async function deleteIntakeRound(programId: string, intakeId: string): Promise<void> {
+  await apiClient.delete(`/institutions/me/programs/${programId}/intakes/${intakeId}`)
+}
+
+export async function getPublicIntakeRounds(institutionId: string, programId: string): Promise<IntakeRound[]> {
+  const { data } = await apiClient.get(`/institutions/${institutionId}/programs/${programId}/intakes`)
   return data
 }
 

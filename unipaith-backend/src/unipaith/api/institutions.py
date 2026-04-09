@@ -52,6 +52,11 @@ from unipaith.schemas.institution import (
     UpdatePromotionRequest,
     UpdateSegmentRequest,
 )
+from unipaith.schemas.intake import (
+    CreateIntakeRoundRequest,
+    IntakeRoundResponse,
+    UpdateIntakeRoundRequest,
+)
 from unipaith.services.institution_service import InstitutionService
 
 router = APIRouter(prefix="/institutions", tags=["institutions"])
@@ -761,6 +766,177 @@ async def update_inquiry(
     svc = _svc(db)
     inst = await svc.get_institution(user.id)
     return await svc.update_inquiry(inst.id, inquiry_id, body)
+
+
+# --- Intake Rounds ---
+
+
+@router.get(
+    "/me/programs/{program_id}/intakes",
+    response_model=list[IntakeRoundResponse],
+)
+async def list_intake_rounds(
+    program_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from sqlalchemy import select
+
+    from unipaith.models.institution import IntakeRound
+
+    await _svc(db).get_institution(user.id)
+    result = await db.execute(
+        select(IntakeRound)
+        .where(IntakeRound.program_id == program_id)
+        .order_by(IntakeRound.sort_order, IntakeRound.application_deadline)
+    )
+    rounds = list(result.scalars().all())
+    return [_enrich_intake(r) for r in rounds]
+
+
+@router.post(
+    "/me/programs/{program_id}/intakes",
+    response_model=IntakeRoundResponse,
+)
+async def create_intake_round(
+    program_id: UUID,
+    body: CreateIntakeRoundRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from unipaith.models.institution import IntakeRound
+
+    await _svc(db).get_institution(user.id)
+    intake = IntakeRound(
+        program_id=program_id,
+        round_name=body.round_name,
+        intake_term=body.intake_term,
+        application_open=body.application_open,
+        application_deadline=body.application_deadline,
+        decision_date=body.decision_date,
+        program_start=body.program_start,
+        capacity=body.capacity,
+        requirements=body.requirements,
+        sort_order=body.sort_order,
+    )
+    db.add(intake)
+    await db.flush()
+    await db.refresh(intake)
+    return _enrich_intake(intake)
+
+
+@router.put(
+    "/me/programs/{program_id}/intakes/{intake_id}",
+    response_model=IntakeRoundResponse,
+)
+async def update_intake_round(
+    program_id: UUID,
+    intake_id: UUID,
+    body: UpdateIntakeRoundRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from sqlalchemy import select
+
+    from unipaith.models.institution import IntakeRound
+
+    await _svc(db).get_institution(user.id)
+    result = await db.execute(
+        select(IntakeRound).where(
+            IntakeRound.id == intake_id,
+            IntakeRound.program_id == program_id,
+        )
+    )
+    intake = result.scalar_one_or_none()
+    if not intake:
+        from unipaith.core.exceptions import NotFoundException
+
+        raise NotFoundException("Intake round not found")
+    for key, val in body.model_dump(exclude_unset=True).items():
+        setattr(intake, key, val)
+    await db.flush()
+    await db.refresh(intake)
+    return _enrich_intake(intake)
+
+
+@router.delete(
+    "/me/programs/{program_id}/intakes/{intake_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_intake_round(
+    program_id: UUID,
+    intake_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from sqlalchemy import select
+
+    from unipaith.models.institution import IntakeRound
+
+    await _svc(db).get_institution(user.id)
+    result = await db.execute(
+        select(IntakeRound).where(
+            IntakeRound.id == intake_id,
+            IntakeRound.program_id == program_id,
+        )
+    )
+    intake = result.scalar_one_or_none()
+    if not intake:
+        from unipaith.core.exceptions import NotFoundException
+
+        raise NotFoundException("Intake round not found")
+    await db.delete(intake)
+    await db.flush()
+
+
+@router.get(
+    "/{institution_id}/programs/{program_id}/intakes",
+    response_model=list[IntakeRoundResponse],
+)
+async def get_public_intake_rounds(
+    institution_id: UUID,
+    program_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Public — get active intake rounds for a program."""
+    from sqlalchemy import select
+
+    from unipaith.models.institution import IntakeRound
+
+    result = await db.execute(
+        select(IntakeRound).where(
+            IntakeRound.program_id == program_id,
+            IntakeRound.is_active.is_(True),
+        ).order_by(IntakeRound.sort_order, IntakeRound.application_deadline)
+    )
+    return [_enrich_intake(r) for r in result.scalars().all()]
+
+
+def _enrich_intake(r):  # type: ignore[no-untyped-def]
+    """Enrich an IntakeRound model instance to IntakeRoundResponse."""
+
+    spots = None
+    if r.capacity is not None:
+        spots = max(0, r.capacity - (r.enrolled_count or 0))
+    return IntakeRoundResponse(
+        id=r.id,
+        program_id=r.program_id,
+        round_name=r.round_name,
+        intake_term=r.intake_term,
+        application_open=r.application_open,
+        application_deadline=r.application_deadline,
+        decision_date=r.decision_date,
+        program_start=r.program_start,
+        capacity=r.capacity,
+        enrolled_count=r.enrolled_count or 0,
+        requirements=r.requirements,
+        status=r.status,
+        is_active=r.is_active,
+        sort_order=r.sort_order,
+        created_at=r.created_at,
+        updated_at=r.updated_at,
+        spots_remaining=spots,
+    )
 
 
 # --- Communication Templates ---
