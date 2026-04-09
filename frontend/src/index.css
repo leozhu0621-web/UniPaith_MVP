@@ -3,7 +3,72 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --background: 40 33% 97%;
+    --foreground: 120 27% 14%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 120 27% 14%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 120 27% 14%;
+
+    --primary: 118 27% 23%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 96 8% 48%;
+    --secondary-foreground: 0 0% 100%;
+
+    --accent: 42 100% 45%;
+    --accent-foreground: 120 27% 14%;
+
+    --muted: 40 18% 90%;
+    --muted-foreground: 96 8% 38%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 15% 85%;
+    --input: 40 15% 85%;
+    --ring: 118 27% 23%;
+
+    --radius: 0.75rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
   body {
-    @apply font-sans antialiased;
+    @apply bg-background text-foreground font-body antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Lora', serif;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@layer utilities {
+  .story-link {
+    @apply relative inline-block;
+  }
+  .story-link::after {
+    content: '';
+    @apply absolute w-full h-0.5 bottom-0 left-0 bg-primary origin-bottom-right transition-transform duration-300 scale-x-0;
+  }
+  .story-link:hover::after {
+    @apply origin-bottom-left scale-x-100;
+  }
+
+  .hover-lift {
+    @apply transition-all duration-300 ease-out;
+  }
+  .hover-lift:hover {
+    @apply -translate-y-1;
+    box-shadow: 0 8px 25px -5px hsl(var(--foreground) / 0.1);
   }
 }
