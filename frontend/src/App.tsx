@@ -21,6 +21,10 @@ import AuthCallbackPage from './pages/auth/AuthCallbackPage'
 import ProgramBrowsePage from './pages/public/ProgramBrowsePage'
 import InstitutionPage from './pages/public/InstitutionPage'
 import ProgramDetailPage from './pages/public/ProgramDetailPage'
+import ForStudentsPage from './pages/public/ForStudentsPage'
+import ForInstitutionsPage from './pages/public/ForInstitutionsPage'
+import EnginePage from './pages/public/EnginePage'
+import PublicLayout from './components/layout/PublicLayout'
 
 // Student pages
 import StudentDashboardPage from './pages/student/DashboardPage'
@@ -79,6 +83,18 @@ const router = createBrowserRouter([
   { path: '/browse', element: <ProgramBrowsePage />, errorElement: <RouteErrorPage /> },
   { path: '/school/:institutionId', element: <InstitutionPage />, errorElement: <RouteErrorPage /> },
   { path: '/program/:programId', element: <ProgramDetailPage />, errorElement: <RouteErrorPage /> },
+
+  // Marketing pages (with shared Navbar + Footer via PublicLayout)
+  {
+    element: <PublicLayout />,
+    errorElement: <RouteErrorPage />,
+    children: [
+      { path: '/for-students', element: <ForStudentsPage /> },
+      { path: '/for-institutions', element: <ForInstitutionsPage /> },
+      { path: '/engine', element: <EnginePage /> },
+    ],
+  },
+
   { path: '/login', element: <AuthLayout><LoginPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
   { path: '/signup', element: <AuthLayout><SignupPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
   { path: '/auth/callback', element: <AuthCallbackPage />, errorElement: <RouteErrorPage /> },

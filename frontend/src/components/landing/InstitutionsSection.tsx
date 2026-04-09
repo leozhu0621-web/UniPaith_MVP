@@ -34,7 +34,7 @@ const features = [
 ];
 
 const InstitutionsSection = () => (
-  <section id="institutions" className="py-24 px-4 sm:px-6 lg:px-8 bg-forest-50">
+  <section id="institutions" className="py-24 px-4 sm:px-6 lg:px-8 bg-brand-slate-50">
     <div className="max-w-5xl mx-auto">
       <ScrollReveal variant="blur-in">
         <div className="text-center mb-16">

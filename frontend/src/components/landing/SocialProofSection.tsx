@@ -14,16 +14,16 @@ const founders = [
     role: "Co-Founder · Product & Operations",
     desc: "International student turned entrepreneur — navigated the admissions system firsthand.",
     initials: "LZ",
-    bg: "bg-gold-100",
-    textColor: "text-gold-700",
+    bg: "bg-brand-amber-100",
+    textColor: "text-brand-amber-700",
   },
   {
     name: "Rick Arrowood",
     role: "Co-Founder · Strategy & Partnerships",
     desc: "Education executive and academic — decades on the institutional side of admissions.",
     initials: "RA",
-    bg: "bg-forest-100",
-    textColor: "text-forest-700",
+    bg: "bg-brand-slate-100",
+    textColor: "text-brand-slate-700",
   },
 ];
 

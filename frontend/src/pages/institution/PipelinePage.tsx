@@ -12,10 +12,11 @@ import {
   type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core'
-import { Search, GripVertical, ClipboardCheck, List, Video } from 'lucide-react'
+import { Search, GripVertical, ClipboardCheck, List, Video, CheckSquare } from 'lucide-react'
 import { getInstitutionPrograms } from '../../api/institutions'
-import { getApplicationsByProgram, updateApplicationStatus } from '../../api/applications-admin'
-import { getInstitutionInterviews } from '../../api/interviews-admin'
+import { getApplicationsByProgram, updateApplicationStatus, batchRequestMissingItems, batchUpdateStatus, batchReleaseDecision } from '../../api/applications-admin'
+import { batchAssignReviewers } from '../../api/reviews'
+import { getInstitutionInterviews, batchInviteInterviews } from '../../api/interviews-admin'
 import { showToast } from '../../stores/toast-store'
 import Badge from '../../components/ui/Badge'
 import Select from '../../components/ui/Select'
@@ -28,7 +29,9 @@ import Skeleton from '../../components/ui/Skeleton'
 import EmptyState from '../../components/ui/EmptyState'
 import { formatRelative, formatScore } from '../../utils/format'
 import { STATUS_COLORS } from '../../utils/constants'
-import type { Application, Program } from '../../types'
+import Modal from '../../components/ui/Modal'
+import Textarea from '../../components/ui/Textarea'
+import type { Application, BatchOperationResult, Program } from '../../types'
 
 const PIPELINE_COLUMNS = [
   { id: 'submitted', label: 'Applied', color: 'bg-blue-500' },
@@ -40,7 +43,9 @@ const PIPELINE_COLUMNS = [
 type ColumnId = typeof PIPELINE_COLUMNS[number]['id']
 type PipelineTab = 'board' | 'review' | 'list' | 'interviews'
 
-function DraggableCard({ app, onClick }: { app: Application; onClick: () => void }) {
+function DraggableCard({ app, onClick, selected, onToggleSelect }: {
+  app: Application; onClick: () => void; selected?: boolean; onToggleSelect?: (id: string) => void
+}) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: app.id })
   const style = transform ? { transform: `translate(${transform.x}px, ${transform.y}px)` } : undefined
 
@@ -48,13 +53,24 @@ function DraggableCard({ app, onClick }: { app: Application; onClick: () => void
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-white border rounded-lg p-3 cursor-pointer hover:shadow-md transition-shadow ${isDragging ? 'opacity-50' : ''}`}
+      className={`bg-white border rounded-lg p-3 cursor-pointer hover:shadow-md transition-shadow ${isDragging ? 'opacity-50' : ''} ${selected ? 'ring-2 ring-brand-slate-500 border-brand-slate-300' : ''}`}
       onClick={onClick}
     >
       <div className="flex items-start justify-between">
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-gray-900 truncate">Applicant {app.student_id.slice(0, 8)}</p>
-          <p className="text-xs text-gray-500 mt-0.5">{app.program?.program_name ?? 'Program'}</p>
+        <div className="flex items-start gap-2 min-w-0 flex-1">
+          {onToggleSelect && (
+            <input
+              type="checkbox"
+              checked={selected}
+              onChange={(e) => { e.stopPropagation(); onToggleSelect(app.id) }}
+              onClick={(e) => e.stopPropagation()}
+              className="mt-1 rounded border-gray-300"
+            />
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-gray-900 truncate">Applicant {app.student_id.slice(0, 8)}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{app.program?.program_name ?? 'Program'}</p>
+          </div>
         </div>
         <div {...listeners} {...attributes} className="p-1 cursor-grab text-gray-400">
           <GripVertical size={14} />
@@ -109,6 +125,23 @@ export default function PipelinePage() {
   const [activeApp, setActiveApp] = useState<Application | null>(null)
   const initialTab = (searchParams.get('tab') as PipelineTab) || 'board'
   const [activeTab, setActiveTab] = useState<PipelineTab>(initialTab)
+
+  // Batch selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [batchAction, setBatchAction] = useState<string | null>(null)
+  const [batchItems, setBatchItems] = useState('')
+  const [batchStatus, setBatchStatus] = useState('under_review')
+  const [batchDecision, setBatchDecision] = useState('admitted')
+  const [batchNotes, setBatchNotes] = useState('')
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+  const clearSelection = () => setSelectedIds(new Set())
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
@@ -183,6 +216,37 @@ export default function PipelinePage() {
       queryClient.invalidateQueries({ queryKey: ['pipeline-applications', selectedProgram] })
       showToast('Failed to update status', 'error')
     },
+  })
+
+  const handleBatchResult = (result: BatchOperationResult) => {
+    const msg = `${result.success_count} succeeded` + (result.failed_ids.length > 0 ? `, ${result.failed_ids.length} failed` : '')
+    showToast(msg, result.failed_ids.length > 0 ? 'warning' : 'success')
+    clearSelection()
+    setBatchAction(null)
+    setBatchItems('')
+    setBatchNotes('')
+    queryClient.invalidateQueries({ queryKey: ['pipeline-applications'] })
+  }
+
+  const batchAssignMut = useMutation({
+    mutationFn: () => batchAssignReviewers(Array.from(selectedIds)),
+    onSuccess: handleBatchResult,
+  })
+  const batchItemsMut = useMutation({
+    mutationFn: () => batchRequestMissingItems(Array.from(selectedIds), batchItems.split(',').map(s => s.trim()).filter(Boolean)),
+    onSuccess: handleBatchResult,
+  })
+  const batchStatusMut = useMutation({
+    mutationFn: () => batchUpdateStatus(Array.from(selectedIds), batchStatus),
+    onSuccess: handleBatchResult,
+  })
+  const batchDecisionMut = useMutation({
+    mutationFn: () => batchReleaseDecision(Array.from(selectedIds), batchDecision, batchNotes || undefined),
+    onSuccess: handleBatchResult,
+  })
+  const batchInterviewMut = useMutation({
+    mutationFn: () => batchInviteInterviews(Array.from(selectedIds), '', 'standard', [new Date().toISOString()]),
+    onSuccess: handleBatchResult,
   })
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -322,6 +386,8 @@ export default function PipelinePage() {
                         <DraggableCard
                           key={app.id}
                           app={app}
+                          selected={selectedIds.has(app.id)}
+                          onToggleSelect={toggleSelect}
                           onClick={() => navigate(`/i/pipeline/${app.id}`)}
                         />
                       ))
@@ -396,6 +462,100 @@ export default function PipelinePage() {
           )}
         </>
       )}
+
+      {/* Batch Action Bar */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg px-6 py-3 flex items-center justify-between z-50">
+          <span className="text-sm font-medium flex items-center gap-2">
+            <CheckSquare size={16} className="text-brand-slate-600" />
+            {selectedIds.size} selected
+          </span>
+          <div className="flex gap-2">
+            <Button size="sm" variant="secondary" onClick={() => setBatchAction('assign')}>Assign Reviewer</Button>
+            <Button size="sm" variant="secondary" onClick={() => setBatchAction('request-items')}>Request Items</Button>
+            <Button size="sm" variant="secondary" onClick={() => setBatchAction('interview')}>Schedule Interview</Button>
+            <Button size="sm" variant="secondary" onClick={() => setBatchAction('status')}>Update Status</Button>
+            <Button size="sm" variant="secondary" onClick={() => setBatchAction('decision')}>Release Decision</Button>
+            <Button size="sm" variant="ghost" onClick={clearSelection}>Clear</Button>
+          </div>
+        </div>
+      )}
+
+      {/* Batch Assign Modal */}
+      <Modal isOpen={batchAction === 'assign'} onClose={() => setBatchAction(null)} title="Batch Assign Reviewers">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">Auto-assign reviewers to {selectedIds.size} application(s).</p>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setBatchAction(null)}>Cancel</Button>
+            <Button onClick={() => batchAssignMut.mutate()} disabled={batchAssignMut.isPending}>
+              {batchAssignMut.isPending ? 'Assigning...' : `Assign to ${selectedIds.size} apps`}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Batch Request Items Modal */}
+      <Modal isOpen={batchAction === 'request-items'} onClose={() => setBatchAction(null)} title="Batch Request Missing Items">
+        <div className="space-y-4">
+          <Textarea label="Missing Items (comma-separated)" value={batchItems} onChange={e => setBatchItems(e.target.value)} rows={3} placeholder="e.g. Transcript, Letter of Recommendation, Test Scores" />
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setBatchAction(null)}>Cancel</Button>
+            <Button onClick={() => batchItemsMut.mutate()} disabled={batchItemsMut.isPending || !batchItems.trim()}>
+              {batchItemsMut.isPending ? 'Requesting...' : `Request from ${selectedIds.size} apps`}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Batch Interview Modal */}
+      <Modal isOpen={batchAction === 'interview'} onClose={() => setBatchAction(null)} title="Batch Schedule Interviews">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">Schedule standard interviews for {selectedIds.size} application(s).</p>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setBatchAction(null)}>Cancel</Button>
+            <Button onClick={() => batchInterviewMut.mutate()} disabled={batchInterviewMut.isPending}>
+              {batchInterviewMut.isPending ? 'Scheduling...' : `Schedule ${selectedIds.size} interviews`}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Batch Status Modal */}
+      <Modal isOpen={batchAction === 'status'} onClose={() => setBatchAction(null)} title="Batch Update Status">
+        <div className="space-y-4">
+          <Select label="New Status" options={[
+            { value: 'submitted', label: 'Applied' },
+            { value: 'under_review', label: 'Under Review' },
+            { value: 'interview', label: 'Interview' },
+            { value: 'decision_made', label: 'Decision Made' },
+          ]} value={batchStatus} onChange={e => setBatchStatus(e.target.value)} />
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setBatchAction(null)}>Cancel</Button>
+            <Button onClick={() => batchStatusMut.mutate()} disabled={batchStatusMut.isPending}>
+              {batchStatusMut.isPending ? 'Updating...' : `Update ${selectedIds.size} apps`}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Batch Decision Modal */}
+      <Modal isOpen={batchAction === 'decision'} onClose={() => setBatchAction(null)} title="Batch Release Decision">
+        <div className="space-y-4">
+          <Select label="Decision" options={[
+            { value: 'admitted', label: 'Admitted' },
+            { value: 'rejected', label: 'Rejected' },
+            { value: 'waitlisted', label: 'Waitlisted' },
+            { value: 'deferred', label: 'Deferred' },
+          ]} value={batchDecision} onChange={e => setBatchDecision(e.target.value)} />
+          <Textarea label="Notes (optional)" value={batchNotes} onChange={e => setBatchNotes(e.target.value)} rows={3} placeholder="Decision notes for all selected applications..." />
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setBatchAction(null)}>Cancel</Button>
+            <Button onClick={() => batchDecisionMut.mutate()} disabled={batchDecisionMut.isPending}>
+              {batchDecisionMut.isPending ? 'Releasing...' : `Release to ${selectedIds.size} apps`}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

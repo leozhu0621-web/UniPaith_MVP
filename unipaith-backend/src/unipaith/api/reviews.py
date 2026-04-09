@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from unipaith.database import get_db
 from unipaith.dependencies import require_institution_admin
 from unipaith.models.user import User
+from unipaith.schemas.batch import BatchAssignRequest, BatchOperationResult
 from unipaith.schemas.review import (
     AIReviewSummaryResponse,
     ApplicationScoreResponse,
@@ -106,6 +107,28 @@ async def ai_review_summary(
     inst = await InstitutionService(db).get_institution(user.id)
     svc = ReviewPipelineService(db)
     return await svc.generate_ai_review_summary(inst.id, application_id)
+
+
+# --- Batch Operations ---
+
+
+@router.post("/batch/assign", response_model=BatchOperationResult)
+async def batch_assign_reviewers(
+    body: BatchAssignRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await InstitutionService(db).get_institution(user.id)
+    svc = ReviewPipelineService(db)
+    result = BatchOperationResult(success_count=0, failed_ids=[], errors=[])
+    for app_id in body.application_ids:
+        try:
+            await svc.assign_reviewers(app_id, inst.id)
+            result.success_count += 1
+        except Exception as e:
+            result.failed_ids.append(app_id)
+            result.errors.append(str(e))
+    return result
 
 
 # --- Pipeline ---

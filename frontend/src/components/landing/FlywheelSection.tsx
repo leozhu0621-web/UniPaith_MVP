@@ -3,12 +3,12 @@ import ScrollReveal from "./ScrollReveal";
 
 const nodes = [
   { icon: Users, label: "More Participation", desc: "Students & institutions join the platform", color: "text-primary", bg: "bg-primary/10" },
-  { icon: TrendingUp, label: "Better Matching", desc: "AI improves with every data point", color: "text-gold-600", bg: "bg-gold-100" },
-  { icon: Award, label: "Better Outcomes", desc: "Higher satisfaction, higher yield", color: "text-forest-500", bg: "bg-forest-100" },
+  { icon: TrendingUp, label: "Better Matching", desc: "AI improves with every data point", color: "text-brand-amber-600", bg: "bg-brand-amber-100" },
+  { icon: Award, label: "Better Outcomes", desc: "Higher satisfaction, higher yield", color: "text-brand-slate-500", bg: "bg-brand-slate-100" },
 ];
 
 const FlywheelSection = () => (
-  <section id="flywheel" className="py-24 px-4 sm:px-6 lg:px-8 bg-forest-50">
+  <section id="flywheel" className="py-24 px-4 sm:px-6 lg:px-8 bg-brand-slate-50">
     <div className="max-w-4xl mx-auto text-center">
       <ScrollReveal variant="blur-in">
         <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4 font-heading">The UniPaith flywheel</h2>
@@ -19,7 +19,7 @@ const FlywheelSection = () => (
 
       <ScrollReveal delay={200} variant="scale-up">
         <div className="relative w-72 h-72 sm:w-96 sm:h-96 mx-auto">
-          <div className="absolute inset-0 rounded-full border-2 border-dashed border-forest-200 animate-orbit" style={{ animationDuration: "30s" }} />
+          <div className="absolute inset-0 rounded-full border-2 border-dashed border-brand-slate-200 animate-orbit" style={{ animationDuration: "30s" }} />
           
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-primary/10 flex items-center justify-center">

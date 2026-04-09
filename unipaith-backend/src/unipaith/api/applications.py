@@ -16,6 +16,12 @@ from unipaith.schemas.application import (
     OfferRespondRequest,
     UpdateApplicationRequest,
 )
+from unipaith.schemas.batch import (
+    BatchDecisionRequest,
+    BatchOperationResult,
+    BatchRequestItemsRequest,
+    BatchStatusRequest,
+)
 from unipaith.services.application_service import ApplicationService
 from unipaith.services.institution_service import InstitutionService
 from unipaith.services.student_service import StudentService
@@ -176,3 +182,84 @@ async def create_offer(
         conditions=body.conditions,
         response_deadline=body.response_deadline,
     )
+
+
+# --- Batch Operations ---
+
+
+@router.post("/batch/request-items", response_model=BatchOperationResult)
+async def batch_request_missing_items(
+    body: BatchRequestItemsRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from sqlalchemy import select
+
+    from unipaith.models.application import Application
+
+    await InstitutionService(db).get_institution(user.id)  # auth check
+    result = BatchOperationResult(
+        success_count=0, failed_ids=[], errors=[],
+    )
+    for app_id in body.application_ids:
+        try:
+            r = await db.execute(
+                select(Application).where(Application.id == app_id)
+            )
+            app = r.scalar_one_or_none()
+            if not app:
+                result.failed_ids.append(app_id)
+                result.errors.append(f"{app_id}: not found")
+                continue
+            app.missing_items = {"items": body.items}
+            app.completeness_status = "incomplete"
+            result.success_count += 1
+        except Exception as e:
+            result.failed_ids.append(app_id)
+            result.errors.append(str(e))
+    await db.flush()
+    return result
+
+
+@router.post("/batch/status", response_model=BatchOperationResult)
+async def batch_update_status(
+    body: BatchStatusRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await InstitutionService(db).get_institution(user.id)
+    svc = ApplicationService(db)
+    result = BatchOperationResult(
+        success_count=0, failed_ids=[], errors=[],
+    )
+    for app_id in body.application_ids:
+        try:
+            await svc.update_status(inst.id, app_id, body.status)
+            result.success_count += 1
+        except Exception as e:
+            result.failed_ids.append(app_id)
+            result.errors.append(str(e))
+    return result
+
+
+@router.post("/batch/decision", response_model=BatchOperationResult)
+async def batch_release_decision(
+    body: BatchDecisionRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await InstitutionService(db).get_institution(user.id)
+    svc = ApplicationService(db)
+    result = BatchOperationResult(
+        success_count=0, failed_ids=[], errors=[],
+    )
+    for app_id in body.application_ids:
+        try:
+            await svc.make_decision(
+                inst.id, app_id, body.decision, body.decision_notes,
+            )
+            result.success_count += 1
+        except Exception as e:
+            result.failed_ids.append(app_id)
+            result.errors.append(str(e))
+    return result

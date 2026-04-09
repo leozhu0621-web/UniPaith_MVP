@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { Interview, InterviewScore } from '../types'
+import type { BatchOperationResult, Interview, InterviewScore } from '../types'
 
 export async function getInstitutionInterviews(status?: string): Promise<Interview[]> {
   const params = status ? { status } : undefined
@@ -31,5 +31,19 @@ export async function scoreInterview(interviewId: string, payload: {
   rubric_id?: string | null
 }): Promise<InterviewScore> {
   const { data } = await apiClient.post(`/interviews/${interviewId}/score`, payload)
+  return data
+}
+
+// --- Batch Operations ---
+
+export async function batchInviteInterviews(
+  applicationIds: string[], interviewerId: string, interviewType: string,
+  proposedTimes: string[], durationMinutes?: number, locationOrLink?: string,
+): Promise<BatchOperationResult> {
+  const { data } = await apiClient.post('/interviews/batch/invite', {
+    application_ids: applicationIds, interviewer_id: interviewerId,
+    interview_type: interviewType, proposed_times: proposedTimes,
+    duration_minutes: durationMinutes ?? 30, location_or_link: locationOrLink,
+  })
   return data
 }

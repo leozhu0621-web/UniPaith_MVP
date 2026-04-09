@@ -7,9 +7,9 @@ const steps = [
     title: "Build Your Universal Profile",
     description:
       "One profile that works everywhere. Academics, activities, essays, documents \u2014 enter it once, reuse across every application. No more copy-pasting between portals.",
-    color: "text-gold-600",
-    bg: "bg-gold-100",
-    line: "bg-gold-500",
+    color: "text-brand-amber-600",
+    bg: "bg-brand-amber-100",
+    line: "bg-brand-amber-500",
   },
   {
     icon: Search,
@@ -25,18 +25,18 @@ const steps = [
     title: "Apply & Track Everything",
     description:
       "Submit to multiple programs from one dashboard. Track deadlines, manage documents, monitor every status update. Your entire application portfolio in one view.",
-    color: "text-forest-500",
-    bg: "bg-forest-100",
-    line: "bg-forest-500",
+    color: "text-brand-slate-500",
+    bg: "bg-brand-slate-100",
+    line: "bg-brand-slate-500",
   },
   {
     icon: MessageCircle,
     title: "Get Guided by Your AI Counselor",
     description:
       "Ask questions, get essay feedback, check your readiness score, explore financial aid options. Like having a knowledgeable advisor available 24/7 \u2014 for free.",
-    color: "text-gold-600",
-    bg: "bg-gold-100",
-    line: "bg-forest-500",
+    color: "text-brand-amber-600",
+    bg: "bg-brand-amber-100",
+    line: "bg-brand-slate-500",
   },
 ];
 
@@ -53,7 +53,7 @@ const StudentsSection = () => (
     <div className="max-w-5xl mx-auto">
       <ScrollReveal variant="blur-in">
         <div className="text-center mb-20">
-          <span className="inline-block bg-gold-100 text-gold-700 text-sm font-medium rounded-full px-4 py-1.5 mb-4 uppercase tracking-wide">
+          <span className="inline-block bg-brand-amber-100 text-brand-amber-700 text-sm font-medium rounded-full px-4 py-1.5 mb-4 uppercase tracking-wide">
             For Students
           </span>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4 font-heading">
@@ -120,7 +120,7 @@ const StudentsSection = () => (
           {featureChips.map((chip) => (
             <span
               key={chip}
-              className="inline-block bg-forest-100 text-forest-700 text-xs font-medium rounded-full px-3 py-1.5 border border-forest-200"
+              className="inline-block bg-brand-slate-100 text-brand-slate-700 text-xs font-medium rounded-full px-3 py-1.5 border border-brand-slate-200"
             >
               {chip}
             </span>

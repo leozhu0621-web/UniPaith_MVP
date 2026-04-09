@@ -838,6 +838,13 @@ export interface Inquiry {
   program_name: string | null
 }
 
+// ============ BATCH OPERATIONS ============
+export interface BatchOperationResult {
+  success_count: number
+  failed_ids: string[]
+  errors: string[]
+}
+
 // ============ PROMOTIONS ============
 export interface Promotion {
   id: string

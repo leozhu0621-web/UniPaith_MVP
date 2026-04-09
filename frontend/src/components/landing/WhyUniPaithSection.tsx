@@ -6,8 +6,8 @@ const differentiators = [
     icon: Layers,
     title: "Not just an application portal",
     description: "Common App and UCAS handle submission. UniPaith handles the entire journey — from profile building and matching to readiness, application management, and decision tracking.",
-    color: "text-gold-600",
-    bg: "bg-gold-100",
+    color: "text-brand-amber-600",
+    bg: "bg-brand-amber-100",
   },
   {
     icon: Database,
@@ -20,8 +20,8 @@ const differentiators = [
     icon: Globe,
     title: "Not just a marketplace",
     description: "ApplyBoard and IDP route students. UniPaith gives both sides a shared workflow rail — transparent, governed, and built to compound value as the network grows.",
-    color: "text-forest-500",
-    bg: "bg-forest-100",
+    color: "text-brand-slate-500",
+    bg: "bg-brand-slate-100",
   },
 ];
 

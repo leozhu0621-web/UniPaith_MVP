@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { Rubric, ApplicationScore, ReviewAssignment, AIReviewSummary, PipelineData } from '../types'
+import type { BatchOperationResult, Rubric, ApplicationScore, ReviewAssignment, AIReviewSummary, PipelineData } from '../types'
 
 export async function getRubrics(programId?: string): Promise<Rubric[]> {
   const params = programId ? { program_id: programId } : {}
@@ -42,5 +42,12 @@ export async function getAISummary(applicationId: string): Promise<AIReviewSumma
 
 export async function getPipeline(programId: string): Promise<PipelineData> {
   const { data } = await apiClient.get(`/reviews/pipeline/${programId}`)
+  return data
+}
+
+// --- Batch Operations ---
+
+export async function batchAssignReviewers(applicationIds: string[], reviewerId?: string): Promise<BatchOperationResult> {
+  const { data } = await apiClient.post('/reviews/batch/assign', { application_ids: applicationIds, reviewer_id: reviewerId })
   return data
 }

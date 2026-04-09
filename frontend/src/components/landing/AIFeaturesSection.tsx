@@ -6,9 +6,9 @@ const features = [
     icon: Brain,
     title: "Explainable Matching",
     description: "See exactly why a program was recommended — tied to your goals, constraints, and profile. No black-box algorithms. Students understand their options; institutions understand their pipeline.",
-    color: "text-gold-600",
-    bg: "bg-gold-100",
-    mockBg: "from-gold-100 to-gold-50",
+    color: "text-brand-amber-600",
+    bg: "bg-brand-amber-100",
+    mockBg: "from-brand-amber-100 to-brand-amber-50",
   },
   {
     icon: FileSearch,
@@ -16,15 +16,15 @@ const features = [
     description: "Upload transcripts, essays, and certificates once. AI extracts, structures, and verifies — turning messy documents into clean, structured data that institutions can trust.",
     color: "text-primary",
     bg: "bg-primary/10",
-    mockBg: "from-forest-100 to-forest-50",
+    mockBg: "from-brand-slate-100 to-brand-slate-50",
   },
   {
     icon: Target,
     title: "Readiness Diagnostics",
     description: "Before you submit, know where you stand. Readiness scores show strengths, flag gaps, and guide preparation — like a GPS for your application journey.",
-    color: "text-forest-500",
-    bg: "bg-forest-100",
-    mockBg: "from-forest-200/50 to-forest-100/50",
+    color: "text-brand-slate-500",
+    bg: "bg-brand-slate-100",
+    mockBg: "from-brand-slate-200/50 to-brand-slate-100/50",
   },
   {
     icon: Shield,
@@ -32,7 +32,7 @@ const features = [
     description: "Anomaly detection, plagiarism checks, document verification, and full audit trails. FERPA-ready, GDPR-compliant, with human oversight at every decision point.",
     color: "text-primary",
     bg: "bg-primary/10",
-    mockBg: "from-forest-100 to-forest-50",
+    mockBg: "from-brand-slate-100 to-brand-slate-50",
   },
 ];
 
@@ -48,7 +48,7 @@ const AIFeaturesSection = () => (
     <div className="max-w-5xl mx-auto">
       <ScrollReveal variant="blur-in">
         <div className="text-center mb-20">
-          <span className="inline-flex items-center gap-1.5 bg-gold-100 text-gold-700 text-sm font-medium rounded-full px-5 py-1.5 mb-4">
+          <span className="inline-flex items-center gap-1.5 bg-brand-amber-100 text-brand-amber-700 text-sm font-medium rounded-full px-5 py-1.5 mb-4">
             <Brain size={14} /> Powered by AI
           </span>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4 font-heading">Intelligence you can trust</h2>
@@ -94,7 +94,7 @@ const AIFeaturesSection = () => (
         <div className="mt-20 flex flex-wrap justify-center gap-8 sm:gap-12">
           {trustBadges.map((badge, i) => (
             <div key={i} className="flex items-center gap-2 text-muted-foreground">
-              <badge.icon size={18} className="text-forest-500" />
+              <badge.icon size={18} className="text-brand-slate-500" />
               <span className="text-sm font-medium">{badge.label}</span>
             </div>
           ))}

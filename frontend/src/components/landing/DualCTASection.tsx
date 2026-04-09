@@ -4,7 +4,7 @@ import { ArrowRight, GraduationCap, Building2 } from "lucide-react";
 import ScrollReveal from "./ScrollReveal";
 
 const DualCTASection = () => (
-  <section id="cta" className="py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-br from-forest-600 to-forest-800">
+  <section id="cta" className="py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-br from-brand-slate-600 to-brand-slate-800">
     <div className="max-w-5xl mx-auto">
       <ScrollReveal variant="blur-in">
         <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center text-background mb-4 font-heading">
@@ -18,12 +18,12 @@ const DualCTASection = () => (
       <div className="grid md:grid-cols-2 gap-8">
         <ScrollReveal delay={100} variant="fade-left">
           <div className="bg-card rounded-2xl border p-8 sm:p-10 text-center shadow-sm hover-lift transition-all h-full group">
-            <div className="w-16 h-16 rounded-2xl bg-gold-100 flex items-center justify-center mx-auto mb-6">
-              <GraduationCap className="text-gold-600 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3" size={32} />
+            <div className="w-16 h-16 rounded-2xl bg-brand-amber-100 flex items-center justify-center mx-auto mb-6">
+              <GraduationCap className="text-brand-amber-600 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3" size={32} />
             </div>
             <h3 className="text-2xl font-bold text-foreground mb-3 font-heading">Start your journey</h3>
             <p className="text-muted-foreground mb-8">Join thousands of students already building their Universal Profile. Free forever — no credit card, no catches.</p>
-            <Button size="lg" className="w-full sm:w-auto px-10 py-7 rounded-xl text-base bg-gold-500 hover:bg-gold-600 text-white text-lg" asChild>
+            <Button size="lg" className="w-full sm:w-auto px-10 py-7 rounded-xl text-base bg-brand-amber-500 hover:bg-brand-amber-600 text-white text-lg" asChild>
               <Link to="/signup?role=student">
                 Create Your Profile
                 <ArrowRight size={20} className="ml-2" />

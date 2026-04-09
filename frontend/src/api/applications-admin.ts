@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { Application, OfferLetter } from '../types'
+import type { Application, BatchOperationResult, OfferLetter } from '../types'
 
 export async function getApplicationsByProgram(programId: string): Promise<Application[]> {
   const { data } = await apiClient.get(`/applications/programs/${programId}`)
@@ -33,5 +33,22 @@ export async function createOffer(applicationId: string, payload: {
   response_deadline?: string | null
 }): Promise<OfferLetter> {
   const { data } = await apiClient.post(`/applications/review/${applicationId}/offer`, payload)
+  return data
+}
+
+// --- Batch Operations ---
+
+export async function batchRequestMissingItems(applicationIds: string[], items: string[]): Promise<BatchOperationResult> {
+  const { data } = await apiClient.post('/applications/batch/request-items', { application_ids: applicationIds, items })
+  return data
+}
+
+export async function batchUpdateStatus(applicationIds: string[], status: string): Promise<BatchOperationResult> {
+  const { data } = await apiClient.post('/applications/batch/status', { application_ids: applicationIds, status })
+  return data
+}
+
+export async function batchReleaseDecision(applicationIds: string[], decision: string, decisionNotes?: string): Promise<BatchOperationResult> {
+  const { data } = await apiClient.post('/applications/batch/decision', { application_ids: applicationIds, decision, decision_notes: decisionNotes })
   return data
 }

@@ -71,13 +71,13 @@ const FAQSection = () => (
       <div className="grid md:grid-cols-2 gap-10">
         <ScrollReveal variant="fade-left" delay={100}>
           <div className="flex items-center gap-2 mb-4">
-            <GraduationCap className="h-5 w-5 text-gold-500" />
+            <GraduationCap className="h-5 w-5 text-brand-amber-500" />
             <h3 className="text-xl font-semibold text-foreground font-heading">For Students</h3>
           </div>
           <Accordion type="single" collapsible className="w-full">
             {studentFAQs.map((faq, i) => (
               <AccordionItem key={i} value={`student-${i}`}>
-                <AccordionTrigger className="text-left text-foreground hover:no-underline hover:text-gold-600 transition-colors">
+                <AccordionTrigger className="text-left text-foreground hover:no-underline hover:text-brand-amber-600 transition-colors">
                   {faq.q}
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">{faq.a}</AccordionContent>

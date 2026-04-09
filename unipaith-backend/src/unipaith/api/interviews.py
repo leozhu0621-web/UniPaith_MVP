@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from unipaith.database import get_db
 from unipaith.dependencies import require_institution_admin, require_student
 from unipaith.models.user import User
+from unipaith.schemas.batch import BatchInviteRequest, BatchOperationResult
 from unipaith.schemas.interview import (
     ConfirmInterviewRequest,
     InterviewResponse,
@@ -121,3 +122,35 @@ async def my_interviews(
     profile = await StudentService(db)._get_student_profile(user.id)
     svc = InterviewService(db)
     return await svc.get_student_interviews(profile.id)
+
+
+# --- Batch Operations ---
+
+
+@router.post("/batch/invite", response_model=BatchOperationResult)
+async def batch_invite_interviews(
+    body: BatchInviteRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await InstitutionService(db).get_institution(user.id)
+    svc = InterviewService(db)
+    result = BatchOperationResult(
+        success_count=0, failed_ids=[], errors=[],
+    )
+    for app_id in body.application_ids:
+        try:
+            await svc.propose_interview(
+                institution_id=inst.id,
+                application_id=app_id,
+                interviewer_id=body.interviewer_id,
+                interview_type=body.interview_type,
+                proposed_times=body.proposed_times,
+                duration_minutes=body.duration_minutes,
+                location_or_link=body.location_or_link,
+            )
+            result.success_count += 1
+        except Exception as e:
+            result.failed_ids.append(app_id)
+            result.errors.append(str(e))
+    return result
