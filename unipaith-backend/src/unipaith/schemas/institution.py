@@ -426,6 +426,63 @@ class InquiryRoutingConfig(BaseModel):
     inquiry_types: list[str] | None = None
 
 
+# --- Promotions ---
+
+
+class TargetingScope(BaseModel):
+    regions: list[str] | None = None
+    countries: list[str] | None = None
+    degree_types: list[str] | None = None
+    interests: list[str] | None = None
+
+
+class CreatePromotionRequest(BaseModel):
+    program_id: UUID | None = None
+    promotion_type: str = Field(
+        "spotlight",
+        pattern=r"^(spotlight|featured|banner)$",
+    )
+    title: str = Field(min_length=1, max_length=255)
+    description: str | None = None
+    targeting: TargetingScope | None = None
+    starts_at: datetime | None = None
+    ends_at: datetime | None = None
+
+
+class UpdatePromotionRequest(BaseModel):
+    program_id: UUID | None = None
+    promotion_type: str | None = None
+    title: str | None = Field(None, min_length=1, max_length=255)
+    description: str | None = None
+    targeting: TargetingScope | None = None
+    status: str | None = Field(
+        None, pattern=r"^(draft|active|paused|expired)$",
+    )
+    starts_at: datetime | None = None
+    ends_at: datetime | None = None
+
+
+class PromotionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    institution_id: UUID
+    program_id: UUID | None
+    promotion_type: str
+    title: str
+    description: str | None
+    targeting: dict | None
+    status: str
+    starts_at: datetime | None
+    ends_at: datetime | None
+    impression_count: int
+    click_count: int
+    created_at: datetime
+    updated_at: datetime
+    program_name: str | None = None
+    institution_name: str | None = None
+    is_eligible: bool = True
+
+
 # --- Datasets ---
 
 

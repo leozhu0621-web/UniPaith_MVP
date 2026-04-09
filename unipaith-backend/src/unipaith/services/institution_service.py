@@ -30,6 +30,7 @@ from unipaith.models.institution import (
     InstitutionDataset,
     InstitutionPost,
     Program,
+    Promotion,
     TargetSegment,
 )
 from unipaith.models.matching import MatchResult
@@ -47,6 +48,7 @@ from unipaith.schemas.institution import (
     CreateInstitutionRequest,
     CreatePostRequest,
     CreateProgramRequest,
+    CreatePromotionRequest,
     CreateSegmentRequest,
     DashboardSummaryResponse,
     DatasetPreviewResponse,
@@ -62,6 +64,7 @@ from unipaith.schemas.institution import (
     PostResponse,
     ProgramApplicationCount,
     ProgramSummaryResponse,
+    PromotionResponse,
     SubmitInquiryRequest,
     UpdateCampaignRequest,
     UpdateDatasetRequest,
@@ -69,6 +72,7 @@ from unipaith.schemas.institution import (
     UpdateInstitutionRequest,
     UpdatePostRequest,
     UpdateProgramRequest,
+    UpdatePromotionRequest,
     UpdateSegmentRequest,
 )
 
@@ -1268,6 +1272,188 @@ class InstitutionService:
             created_at=inq.created_at,
             updated_at=inq.updated_at,
             program_name=prog_name,
+        )
+
+    # --- Promotions ---
+
+    async def list_promotions(
+        self, institution_id: UUID,
+    ) -> list[PromotionResponse]:
+        result = await self.db.execute(
+            select(Promotion)
+            .where(Promotion.institution_id == institution_id)
+            .order_by(Promotion.created_at.desc())
+        )
+        return [
+            await self._enrich_promotion(p)
+            for p in result.scalars().all()
+        ]
+
+    async def create_promotion(
+        self,
+        institution_id: UUID,
+        data: CreatePromotionRequest,
+    ) -> PromotionResponse:
+
+        targeting_dict = (
+            data.targeting.model_dump() if data.targeting else None
+        )
+        promo = Promotion(
+            institution_id=institution_id,
+            program_id=data.program_id,
+            promotion_type=data.promotion_type,
+            title=data.title,
+            description=data.description,
+            targeting=targeting_dict,
+            starts_at=data.starts_at,
+            ends_at=data.ends_at,
+        )
+        self.db.add(promo)
+        await self.db.flush()
+        await self.db.refresh(promo)
+        return await self._enrich_promotion(promo)
+
+    async def update_promotion(
+        self,
+        institution_id: UUID,
+        promotion_id: UUID,
+        data: UpdatePromotionRequest,
+    ) -> PromotionResponse:
+        result = await self.db.execute(
+            select(Promotion).where(
+                Promotion.id == promotion_id,
+                Promotion.institution_id == institution_id,
+            )
+        )
+        promo = result.scalar_one_or_none()
+        if not promo:
+            raise NotFoundException("Promotion not found")
+
+        update = data.model_dump(exclude_unset=True)
+        if "targeting" in update and update["targeting"] is not None:
+            t = update["targeting"]
+            update["targeting"] = (
+                t.model_dump() if hasattr(t, "model_dump") else t
+            )
+        for key, val in update.items():
+            setattr(promo, key, val)
+
+        # Auto-expire check
+        if data.status == "active" and promo.ends_at:
+            if promo.ends_at < datetime.now(UTC):
+                promo.status = "expired"
+
+        await self.db.flush()
+        await self.db.refresh(promo)
+        return await self._enrich_promotion(promo)
+
+    async def delete_promotion(
+        self, institution_id: UUID, promotion_id: UUID,
+    ) -> None:
+        result = await self.db.execute(
+            select(Promotion).where(
+                Promotion.id == promotion_id,
+                Promotion.institution_id == institution_id,
+            )
+        )
+        promo = result.scalar_one_or_none()
+        if not promo:
+            raise NotFoundException("Promotion not found")
+        await self.db.delete(promo)
+        await self.db.flush()
+
+    async def get_active_promotions(
+        self,
+        region: str | None = None,
+        country: str | None = None,
+        degree_type: str | None = None,
+    ) -> list[PromotionResponse]:
+        """Public — get currently active promotions matching scope."""
+        now = datetime.now(UTC)
+        stmt = (
+            select(Promotion)
+            .where(
+                Promotion.status == "active",
+            )
+        )
+        result = await self.db.execute(stmt)
+
+        promos: list[PromotionResponse] = []
+        for p in result.scalars().all():
+            # Time-box check
+            if p.starts_at and p.starts_at > now:
+                continue
+            if p.ends_at and p.ends_at < now:
+                continue
+
+            # Targeting scope filter
+            targeting = p.targeting or {}
+            if region and targeting.get("regions"):
+                if region.lower() not in [
+                    r.lower() for r in targeting["regions"]
+                ]:
+                    continue
+            if country and targeting.get("countries"):
+                if country.lower() not in [
+                    c.lower() for c in targeting["countries"]
+                ]:
+                    continue
+            if degree_type and targeting.get("degree_types"):
+                if degree_type.lower() not in [
+                    d.lower() for d in targeting["degree_types"]
+                ]:
+                    continue
+
+            # Increment impression
+            p.impression_count = (p.impression_count or 0) + 1
+            promos.append(await self._enrich_promotion(p))
+
+        if promos:
+            await self.db.flush()
+        return promos
+
+    async def _enrich_promotion(
+        self, promo: Promotion,
+    ) -> PromotionResponse:
+        prog_name = await self._get_program_name(promo.program_id)
+        inst_name = None
+        r = await self.db.execute(
+            select(Institution.name).where(
+                Institution.id == promo.institution_id,
+            )
+        )
+        inst_name = r.scalar_one_or_none()
+
+        # Eligibility: must have program published
+        is_eligible = True
+        if promo.program_id:
+            pr = await self.db.execute(
+                select(Program.is_published).where(
+                    Program.id == promo.program_id,
+                )
+            )
+            published = pr.scalar_one_or_none()
+            if not published:
+                is_eligible = False
+
+        return PromotionResponse(
+            id=promo.id,
+            institution_id=promo.institution_id,
+            program_id=promo.program_id,
+            promotion_type=promo.promotion_type,
+            title=promo.title,
+            description=promo.description,
+            targeting=promo.targeting,
+            status=promo.status,
+            starts_at=promo.starts_at,
+            ends_at=promo.ends_at,
+            impression_count=promo.impression_count or 0,
+            click_count=promo.click_count or 0,
+            created_at=promo.created_at,
+            updated_at=promo.updated_at,
+            program_name=prog_name,
+            institution_name=inst_name,
+            is_eligible=is_eligible,
         )
 
     # --- Datasets ---

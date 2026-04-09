@@ -56,6 +56,7 @@ import InstitutionSettingsPage from './pages/institution/SettingsPage'
 import DataUploadPage from './pages/institution/DataUploadPage'
 import PostsPage from './pages/institution/PostsPage'
 import InquiriesPage from './pages/institution/InquiriesPage'
+import PromotionsPage from './pages/institution/PromotionsPage'
 
 // Admin pages
 import AdminLayout from './components/layout/AdminLayout'
@@ -130,6 +131,7 @@ const router = createBrowserRouter([
       { path: 'events', element: <EventsPage /> },
       { path: 'posts', element: <PostsPage /> },
       { path: 'inquiries', element: <InquiriesPage /> },
+      { path: 'promotions', element: <PromotionsPage /> },
       { path: 'analytics', element: <AnalyticsPage /> },
       { path: 'data', element: <DataUploadPage /> },
       { path: 'settings', element: <InstitutionSettingsPage /> },

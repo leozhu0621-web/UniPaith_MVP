@@ -43,6 +43,7 @@ from unipaith.models.institution import (
     InstitutionDataset,
     InstitutionPost,
     Program,
+    Promotion,
     Reviewer,
     TargetSegment,
 )
@@ -143,6 +144,7 @@ __all__ = [
     "Reviewer",
     "InstitutionDataset",
     "InstitutionPost",
+    "Promotion",
     "HistoricalOutcome",
     "Application",
     "ApplicationChecklist",

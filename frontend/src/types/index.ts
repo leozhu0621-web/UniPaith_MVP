@@ -838,6 +838,32 @@ export interface Inquiry {
   program_name: string | null
 }
 
+// ============ PROMOTIONS ============
+export interface Promotion {
+  id: string
+  institution_id: string
+  program_id: string | null
+  promotion_type: 'spotlight' | 'featured' | 'banner'
+  title: string
+  description: string | null
+  targeting: {
+    regions?: string[]
+    countries?: string[]
+    degree_types?: string[]
+    interests?: string[]
+  } | null
+  status: 'draft' | 'active' | 'paused' | 'expired'
+  starts_at: string | null
+  ends_at: string | null
+  impression_count: number
+  click_count: number
+  created_at: string
+  updated_at: string
+  program_name: string | null
+  institution_name: string | null
+  is_eligible: boolean
+}
+
 // ============ SEGMENTS ============
 export interface Segment {
   id: string

@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AnalyticsData, Campaign, CampaignAttributionDetail, CampaignLink, CampaignMetrics, DashboardSummary, DatasetPreview, Inquiry, Institution, InstitutionDataset, InstitutionPost, Program, Segment } from '../types'
+import type { AnalyticsData, Campaign, CampaignAttributionDetail, CampaignLink, CampaignMetrics, DashboardSummary, DatasetPreview, Inquiry, Institution, InstitutionDataset, InstitutionPost, Program, Promotion, Segment } from '../types'
 
 export async function getInstitution(): Promise<Institution> {
   const { data } = await apiClient.get('/institutions/me')
@@ -228,6 +228,51 @@ export async function updateInquiry(inquiryId: string, payload: {
   response_text?: string
 }): Promise<Inquiry> {
   const { data } = await apiClient.put(`/institutions/me/inquiries/${inquiryId}`, payload)
+  return data
+}
+
+// --- Promotions ---
+
+export async function getPromotions(): Promise<Promotion[]> {
+  const { data } = await apiClient.get('/institutions/me/promotions')
+  return data
+}
+
+export async function createPromotion(payload: {
+  program_id?: string
+  promotion_type?: string
+  title: string
+  description?: string
+  targeting?: { regions?: string[]; countries?: string[]; degree_types?: string[]; interests?: string[] }
+  starts_at?: string
+  ends_at?: string
+}): Promise<Promotion> {
+  const { data } = await apiClient.post('/institutions/me/promotions', payload)
+  return data
+}
+
+export async function updatePromotion(promotionId: string, payload: Partial<{
+  program_id: string
+  promotion_type: string
+  title: string
+  description: string
+  targeting: { regions?: string[]; countries?: string[]; degree_types?: string[]; interests?: string[] }
+  status: string
+  starts_at: string
+  ends_at: string
+}>): Promise<Promotion> {
+  const { data } = await apiClient.put(`/institutions/me/promotions/${promotionId}`, payload)
+  return data
+}
+
+export async function deletePromotion(promotionId: string): Promise<void> {
+  await apiClient.delete(`/institutions/me/promotions/${promotionId}`)
+}
+
+export async function getFeaturedPromotions(params?: {
+  region?: string; country?: string; degree_type?: string
+}): Promise<Promotion[]> {
+  const { data } = await apiClient.get('/institutions/promotions/featured', { params })
   return data
 }
 

@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../stores/auth-store'
 import { useUIStore } from '../../stores/ui-store'
 import {
-  LayoutDashboard, GraduationCap, Kanban, Video, Inbox,
+  LayoutDashboard, GraduationCap, Kanban, Video, Inbox, Star,
   MessageSquare, Users, Megaphone, CalendarDays, BarChart3, FileText,
   Settings, ChevronLeft, ChevronRight, Bell, Search, LogOut, Rocket, Command, Upload,
 } from 'lucide-react'
@@ -43,6 +43,7 @@ const buildNavSections = (showSetup: boolean) => [
       { to: '/i/events', icon: CalendarDays, label: 'Events' },
       { to: '/i/posts', icon: FileText, label: 'Posts' },
       { to: '/i/inquiries', icon: Inbox, label: 'Inquiries' },
+      { to: '/i/promotions', icon: Star, label: 'Promotions' },
     ],
   },
   {

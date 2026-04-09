@@ -21,6 +21,7 @@ from unipaith.schemas.institution import (
     CreateInstitutionRequest,
     CreatePostRequest,
     CreateProgramRequest,
+    CreatePromotionRequest,
     CreateSegmentRequest,
     DashboardSummaryResponse,
     DatasetResponse,
@@ -30,6 +31,7 @@ from unipaith.schemas.institution import (
     PostMediaUploadResponse,
     PostResponse,
     ProgramResponse,
+    PromotionResponse,
     RecordActionRequest,
     SegmentResponse,
     SubmitInquiryRequest,
@@ -39,6 +41,7 @@ from unipaith.schemas.institution import (
     UpdateInstitutionRequest,
     UpdatePostRequest,
     UpdateProgramRequest,
+    UpdatePromotionRequest,
     UpdateSegmentRequest,
 )
 from unipaith.services.institution_service import InstitutionService
@@ -750,6 +753,71 @@ async def update_inquiry(
     svc = _svc(db)
     inst = await svc.get_institution(user.id)
     return await svc.update_inquiry(inst.id, inquiry_id, body)
+
+
+# --- Promotions ---
+
+
+@router.get("/me/promotions", response_model=list[PromotionResponse])
+async def list_promotions(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.list_promotions(inst.id)
+
+
+@router.post("/me/promotions", response_model=PromotionResponse)
+async def create_promotion(
+    body: CreatePromotionRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.create_promotion(inst.id, body)
+
+
+@router.put(
+    "/me/promotions/{promotion_id}",
+    response_model=PromotionResponse,
+)
+async def update_promotion(
+    promotion_id: UUID,
+    body: UpdatePromotionRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.update_promotion(inst.id, promotion_id, body)
+
+
+@router.delete(
+    "/me/promotions/{promotion_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_promotion(
+    promotion_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    await svc.delete_promotion(inst.id, promotion_id)
+
+
+@router.get("/promotions/featured", response_model=list[PromotionResponse])
+async def get_featured_promotions(
+    region: str | None = Query(None),
+    country: str | None = Query(None),
+    degree_type: str | None = Query(None),
+    db: AsyncSession = Depends(get_db),
+):
+    """Public — get currently active featured promotions."""
+    svc = _svc(db)
+    return await svc.get_active_promotions(region, country, degree_type)
 
 
 # --- Institution Intelligence ---

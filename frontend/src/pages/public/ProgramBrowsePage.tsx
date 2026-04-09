@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { searchPrograms } from '../../api/programs'
-import { Search } from 'lucide-react'
+import { getFeaturedPromotions } from '../../api/institutions'
+import { Search, Star } from 'lucide-react'
 import Badge from '../../components/ui/Badge'
 import Skeleton from '../../components/ui/Skeleton'
 import { formatCurrency, formatDate } from '../../utils/format'
 import { DEGREE_LABELS } from '../../utils/constants'
-import type { ProgramSummary, PaginatedResponse } from '../../types'
+import type { ProgramSummary, PaginatedResponse, Promotion } from '../../types'
 
 export default function ProgramBrowsePage() {
   const [q, setQ] = useState('')
@@ -22,6 +23,16 @@ export default function ProgramBrowsePage() {
 
   const programs: ProgramSummary[] = data?.items ?? []
   const totalPages = (data as PaginatedResponse<ProgramSummary>)?.total_pages ?? 1
+
+  const featuredQ = useQuery({
+    queryKey: ['featured-promotions', { country, degree_type: degreeType }],
+    queryFn: () => getFeaturedPromotions({
+      country: country || undefined,
+      degree_type: degreeType || undefined,
+    }),
+  })
+  const featured: Promotion[] = Array.isArray(featuredQ.data) ? featuredQ.data : []
+  const featuredProgramIds = new Set(featured.filter(f => f.program_id).map(f => f.program_id!))
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -86,7 +97,14 @@ export default function ProgramBrowsePage() {
                 to={`/program/${p.id}`}
                 className="bg-white rounded-lg border p-4 hover:shadow-md transition-shadow"
               >
-                <h3 className="font-semibold text-gray-900 truncate">{p.program_name}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-gray-900 truncate">{p.program_name}</h3>
+                  {featuredProgramIds.has(p.id) && (
+                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">
+                      <Star size={10} className="fill-amber-500" /> Featured
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-gray-500 mt-1">
                   <span
                     role="link"
