@@ -3,8 +3,8 @@ import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { User, Star, Brain, ClipboardCheck, Calendar, Award, FileText, RefreshCw, Shield } from 'lucide-react'
 import { reviewApplication, makeDecision, createOffer } from '../../api/applications-admin'
-import { chatInstitutionAssistant, generateAIDraft, sendFromTemplate } from '../../api/institutions'
-import { getScores, getAISummary, assignReviewer, scoreApplication, getRubrics, getAIPacketSummary, regenerateAIPacketSummary, getAIPrefill, scanIntegrity, getIntegritySignals, resolveIntegritySignal } from '../../api/reviews'
+import { chatInstitutionAssistant, generateAIDraft } from '../../api/institutions'
+import { getScores, assignReviewer, scoreApplication, getRubrics, getAIPacketSummary, regenerateAIPacketSummary, getAIPrefill, scanIntegrity, getIntegritySignals, resolveIntegritySignal } from '../../api/reviews'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -17,7 +17,7 @@ import Skeleton from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatDate, formatScore } from '../../utils/format'
 import { STATUS_COLORS, DECISION_OPTIONS } from '../../utils/constants'
-import type { AIPacketSummary, ApplicationScore, AIReviewSummary, IntegritySignal, Rubric } from '../../types'
+import type { AIPacketSummary, ApplicationScore, IntegritySignal, Rubric } from '../../types'
 
 export default function StudentDetailPage() {
   const { appId, studentId } = useParams<{ appId?: string; studentId?: string }>()
@@ -56,12 +56,6 @@ export default function StudentDetailPage() {
     queryKey: ['application-scores', applicationId],
     queryFn: () => getScores(applicationId!),
     enabled: !!applicationId && activeTab === 'scores',
-  })
-
-  const aiQ = useQuery({
-    queryKey: ['ai-summary', applicationId],
-    queryFn: () => getAISummary(applicationId!),
-    enabled: !!applicationId && activeTab === 'ai',
   })
 
   const rubricsQ = useQuery({
@@ -112,7 +106,6 @@ export default function StudentDetailPage() {
 
   const app = applicationQ.data
   const scores: ApplicationScore[] = Array.isArray(scoresQ.data) ? scoresQ.data : []
-  const aiSummary: AIReviewSummary | undefined = aiQ.data
   const rubrics: Rubric[] = Array.isArray(rubricsQ.data) ? rubricsQ.data : []
 
   const assignMut = useMutation({

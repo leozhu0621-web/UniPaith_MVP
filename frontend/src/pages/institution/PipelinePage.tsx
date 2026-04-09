@@ -12,7 +12,7 @@ import {
   type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core'
-import { Search, GripVertical, ClipboardCheck, List, Video, CheckSquare, Zap, AlertTriangle, Clock } from 'lucide-react'
+import { Search, GripVertical, ClipboardCheck, List, Video, CheckSquare, Zap, Clock } from 'lucide-react'
 import { getInstitutionPrograms } from '../../api/institutions'
 import { getApplicationsByProgram, updateApplicationStatus, batchRequestMissingItems, batchUpdateStatus, batchReleaseDecision } from '../../api/applications-admin'
 import { batchAssignReviewers, getReviewPriorityQueue } from '../../api/reviews'
