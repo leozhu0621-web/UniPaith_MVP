@@ -22,7 +22,7 @@ import Avatar from '../../components/ui/Avatar'
 import Skeleton from '../../components/ui/Skeleton'
 import { formatRelative, formatCurrency } from '../../utils/format'
 import { Link } from 'react-router-dom'
-import { Sparkles, ArrowUp, Target, GraduationCap, ShieldCheck, ChevronRight, MapPin, Clock, Calendar, Monitor, ExternalLink, ArrowLeft, CheckCircle2 } from 'lucide-react'
+import { Sparkles, ArrowUp, Target, GraduationCap, ShieldCheck, ChevronRight, MapPin, Clock, Calendar, Monitor, ExternalLink, ArrowLeft, CheckCircle2, AlertTriangle } from 'lucide-react'
 
 type ChatMessage = {
   id: string
@@ -163,6 +163,7 @@ interface ShortlistProgram {
   category?: string
   fit_summary?: string
   priority_matches?: string[]
+  tradeoffs?: string[]
   degree_type?: string
   tuition?: number
   duration_months?: number
@@ -250,6 +251,19 @@ function ProgramCard({ prog, tierBadge }: { prog: ShortlistProgram; tierBadge: '
                 >
                   <CheckCircle2 size={10} className="flex-shrink-0" />
                   {match}
+                </span>
+              ))}
+            </div>
+          )}
+          {prog.tradeoffs && prog.tradeoffs.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-1.5">
+              {prog.tradeoffs.map((t: string, i: number) => (
+                <span
+                  key={i}
+                  className="inline-flex items-center gap-1 text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full"
+                >
+                  <AlertTriangle size={10} className="flex-shrink-0" />
+                  {t}
                 </span>
               ))}
             </div>

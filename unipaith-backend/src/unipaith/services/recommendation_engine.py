@@ -43,6 +43,10 @@ Rules:
 - For priority_matches: list 2-5 of the student's stated priorities that this program
   satisfies, phrased as short confirmations (e.g. "Within your $40k budget",
   "US-based as requested", "Strong CS program matching your interest")
+- For tradeoffs: list 1-3 honest tradeoffs where this program is strong on one
+  dimension but requires compromise on another. Format each as
+  "Strong: <strength> — But: <tradeoff>" (e.g. "Strong: top-10 CS ranking —
+  But: tuition $15k above your stated budget"). Use empty array if no tradeoffs.
 
 Return a JSON array of objects:
 [{
@@ -52,7 +56,8 @@ Return a JSON array of objects:
   "reasoning": "<warm, personal reasoning referencing their stated priorities>",
   "category": "<on_your_radar|might_surprise_you|hidden_gem>",
   "fit_summary": "<one-line summary of why this fits THEM>",
-  "priority_matches": ["<short confirmation of met priority>", ...]
+  "priority_matches": ["<short confirmation of met priority>", ...],
+  "tradeoffs": ["Strong: <x> — But: <y>", ...]
 }]
 
 Return ONLY valid JSON."""
@@ -184,6 +189,7 @@ class RecommendationEngine:
         rec["institution_city"] = p.institution.city if p.institution else None
         rec.setdefault("fit_summary", "")
         rec.setdefault("priority_matches", [])
+        rec.setdefault("tradeoffs", [])
 
     def _fallback_recommendations(
         self, matches: list[MatchResult], programs: dict[UUID, Program], count: int,
