@@ -15,13 +15,13 @@ export const chatStudentAssistant = (message: string, contextProgramId?: string)
     .post('/students/me/assistant/chat', {
       message,
       context_program_id: contextProgramId,
-    })
+    }, { timeout: 120_000 })
     .then(r => r.data)
 
 // ============ CONVERSATION / PROGRAM MATCH ============
 
 export const sendConversationTurn = (message: string, options?: { session_id?: string; entrypoint?: string; context_program_id?: string }) =>
-  apiClient.post('/students/me/conversation/turn', { message, ...options }).then(r => r.data)
+  apiClient.post('/students/me/conversation/turn', { message, ...options }, { timeout: 120_000 }).then(r => r.data)
 
 export const getConversationSession = () =>
   apiClient.get('/students/me/conversation/session').then(r => r.data)
@@ -42,4 +42,4 @@ export const resolveConflict = (conflictId: string, resolution: string) =>
   apiClient.post(`/students/me/conversation/conflicts/${conflictId}/resolve`, { selected_resolution: resolution }).then(r => r.data)
 
 export const generateShortlist = () =>
-  apiClient.post('/students/me/conversation/generate-shortlist').then(r => r.data)
+  apiClient.post('/students/me/conversation/generate-shortlist', {}, { timeout: 120_000 }).then(r => r.data)
