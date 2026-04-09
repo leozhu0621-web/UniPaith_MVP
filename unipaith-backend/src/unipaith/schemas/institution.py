@@ -173,6 +173,9 @@ class ProgramSummaryResponse(BaseModel):
     institution_name: str
     institution_country: str
     institution_city: str | None = None
+    median_salary: int | None = None
+    employment_rate: float | None = None
+    payback_months: int | None = None
 
 
 # --- Target Segments ---

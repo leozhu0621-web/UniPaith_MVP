@@ -83,6 +83,28 @@ from unipaith.schemas.institution import (
 logger = logging.getLogger(__name__)
 
 
+def _outcomes_int(prog: Program, key: str) -> int | None:
+    if prog.outcomes_data and isinstance(prog.outcomes_data, dict):
+        val = prog.outcomes_data.get(key)
+        if val is not None:
+            try:
+                return int(val)
+            except (ValueError, TypeError):
+                pass
+    return None
+
+
+def _outcomes_float(prog: Program, key: str) -> float | None:
+    if prog.outcomes_data and isinstance(prog.outcomes_data, dict):
+        val = prog.outcomes_data.get(key)
+        if val is not None:
+            try:
+                return float(val)
+            except (ValueError, TypeError):
+                pass
+    return None
+
+
 class InstitutionService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -1659,7 +1681,30 @@ class InstitutionService:
         elif sort_by == "tuition_desc":
             stmt = stmt.order_by(Program.tuition.desc().nulls_last())
         elif sort_by == "deadline":
-            stmt = stmt.order_by(Program.application_deadline.asc().nulls_last())
+            stmt = stmt.order_by(
+                Program.application_deadline.asc().nulls_last(),
+            )
+        elif sort_by == "salary_desc":
+            stmt = stmt.order_by(
+                Program.outcomes_data["median_salary"]
+                .as_integer()
+                .desc()
+                .nulls_last(),
+            )
+        elif sort_by == "employment_desc":
+            stmt = stmt.order_by(
+                Program.outcomes_data["employment_rate"]
+                .as_float()
+                .desc()
+                .nulls_last(),
+            )
+        elif sort_by == "payback_asc":
+            stmt = stmt.order_by(
+                Program.outcomes_data["payback_months"]
+                .as_integer()
+                .asc()
+                .nulls_last(),
+            )
         else:
             stmt = stmt.order_by(Program.program_name.asc())
 
@@ -1686,6 +1731,9 @@ class InstitutionService:
                 institution_name=inst.name,
                 institution_country=inst.country,
                 institution_city=inst.city,
+                median_salary=_outcomes_int(prog, "median_salary"),
+                employment_rate=_outcomes_float(prog, "employment_rate"),
+                payback_months=_outcomes_int(prog, "payback_months"),
             )
             for prog, inst in rows
         ]
@@ -1775,6 +1823,9 @@ class InstitutionService:
                     institution_name=inst.name if inst else "",
                     institution_country=inst.country if inst else "",
                     institution_city=inst.city if inst else None,
+                    median_salary=_outcomes_int(program, "median_salary"),
+                    employment_rate=_outcomes_float(program, "employment_rate"),
+                    payback_months=_outcomes_int(program, "payback_months"),
                 )
             )
         return ordered

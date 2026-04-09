@@ -10,7 +10,7 @@ import Button from '../../components/ui/Button'
 import Skeleton from '../../components/ui/Skeleton'
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
 import { useCompareStore } from '../../stores/compare-store'
-import { Search, SlidersHorizontal, X, ChevronDown, MessageSquare, Sparkles, Loader2, Pencil, Monitor, Briefcase, Wrench, Heart, Palette, BookOpen, Scale, Users, Bookmark, BookmarkCheck, MapPin, Clock, BarChart3, ExternalLink, ArrowRightLeft } from 'lucide-react'
+import { Search, SlidersHorizontal, X, ChevronDown, MessageSquare, Sparkles, Loader2, Pencil, Monitor, Briefcase, Wrench, Heart, Palette, BookOpen, Scale, Users, Bookmark, BookmarkCheck, MapPin, Clock, BarChart3, ExternalLink, ArrowRightLeft, DollarSign, TrendingUp } from 'lucide-react'
 import { formatCurrency, formatScore } from '../../utils/format'
 import { DEGREE_LABELS, TIER_LABELS } from '../../utils/constants'
 import type { MatchResult, PaginatedResponse, ProgramSummary } from '../../types'
@@ -34,6 +34,9 @@ const SORT_OPTIONS = [
   { value: 'tuition_asc', label: 'Tuition: Low → High' },
   { value: 'tuition_desc', label: 'Tuition: High → Low' },
   { value: 'deadline', label: 'Deadline: Soonest' },
+  { value: 'salary_desc', label: 'Salary: Highest' },
+  { value: 'employment_desc', label: 'Employment: Highest' },
+  { value: 'payback_asc', label: 'Payback: Fastest' },
 ]
 
 const COUNTRY_OPTIONS = [
@@ -680,6 +683,26 @@ export default function DiscoverPage() {
                     </span>
                   )}
                 </div>
+
+                {(p.median_salary != null || p.employment_rate != null || p.payback_months != null) && (
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5">
+                    {p.median_salary != null && (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600">
+                        <DollarSign size={10} />${(p.median_salary / 1000).toFixed(0)}k salary
+                      </span>
+                    )}
+                    {p.employment_rate != null && (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600">
+                        <TrendingUp size={10} />{(p.employment_rate * 100).toFixed(0)}% employed
+                      </span>
+                    )}
+                    {p.payback_months != null && (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600">
+                        <Clock size={10} />{p.payback_months} mo payback
+                      </span>
+                    )}
+                  </div>
+                )}
 
                 <div className="flex items-center justify-end gap-2 mt-3 pt-2 border-t border-gray-100">
                   <button

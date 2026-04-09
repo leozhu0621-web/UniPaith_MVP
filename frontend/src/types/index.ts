@@ -322,6 +322,9 @@ export interface ProgramSummary {
   institution_name: string
   institution_country: string
   institution_city: string | null
+  median_salary: number | null
+  employment_rate: number | null
+  payback_months: number | null
 }
 
 export interface PaginatedResponse<T> {
@@ -840,6 +843,36 @@ export interface Inquiry {
   created_at: string
   updated_at: string
   program_name: string | null
+}
+
+// ============ COHORT COMPARISON ============
+export interface CohortApplicant {
+  application_id: string
+  student_id: string
+  student_name: string
+  status: string | null
+  match_score: number | null
+  decision: string | null
+  completeness_status: string | null
+  submitted_at: string | null
+  scores: {
+    id: string
+    reviewer_id: string
+    rubric_id: string
+    criterion_scores: Record<string, number> | null
+    total_weighted_score: number | null
+    reviewer_notes: string | null
+    scored_by_type: string | null
+    scored_at: string | null
+  }[]
+  avg_score: number | null
+  gpa: number | null
+  nationality: string | null
+}
+
+export interface CohortComparisonData {
+  applicants: CohortApplicant[]
+  count: number
 }
 
 // ============ COMMUNICATION TEMPLATES ============
