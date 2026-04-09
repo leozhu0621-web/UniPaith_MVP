@@ -5,7 +5,7 @@ import AnimatedCounter from '@/components/landing/AnimatedCounter'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/shadcn/accordion'
 import {
   ArrowRight, MessageCircle, UserCircle, Search, Send, Target,
-  FileText, DollarSign, Shield, CheckCircle2, Sparkles, Clock,
+  FileText, DollarSign, Shield, CheckCircle2, Sparkles,
   BookOpen, Heart, Brain, Lock, ChevronRight,
 } from 'lucide-react'
 
