@@ -755,6 +755,58 @@ async def update_inquiry(
     return await svc.update_inquiry(inst.id, inquiry_id, body)
 
 
+# --- Audit Log ---
+
+
+@router.get("/me/audit-log")
+async def get_audit_log(
+    application_id: UUID | None = Query(None),
+    action: str | None = Query(None),
+    entity_type: str | None = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from unipaith.schemas.audit import AuditLogListResponse, AuditLogResponse
+    from unipaith.services.audit_service import AuditService
+
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    audit = AuditService(db)
+    logs = await audit.list_logs(
+        inst.id,
+        application_id=application_id,
+        action=action,
+        entity_type=entity_type,
+        limit=limit,
+        offset=offset,
+    )
+    total = await audit.count_logs(inst.id, application_id)
+
+    items = []
+    for entry in logs:
+        actor_email = None
+        if entry.actor_user and hasattr(entry.actor_user, "email"):
+            actor_email = entry.actor_user.email
+        items.append(AuditLogResponse(
+            id=entry.id,
+            institution_id=entry.institution_id,
+            application_id=entry.application_id,
+            actor_user_id=entry.actor_user_id,
+            action=entry.action,
+            entity_type=entry.entity_type,
+            entity_id=entry.entity_id,
+            description=entry.description,
+            old_value=entry.old_value,
+            new_value=entry.new_value,
+            metadata_json=entry.metadata_json,
+            created_at=entry.created_at,
+            actor_email=actor_email,
+        ))
+    return AuditLogListResponse(items=items, total=total)
+
+
 # --- Promotions ---
 
 

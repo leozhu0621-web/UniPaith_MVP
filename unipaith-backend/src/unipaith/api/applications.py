@@ -129,7 +129,19 @@ async def update_application_status(
 ):
     inst = await InstitutionService(db).get_institution(user.id)
     svc = ApplicationService(db)
-    return await svc.update_status(inst.id, application_id, body.status)
+    # Get old status for audit
+    old = await svc.get_application_detail(inst.id, application_id)
+    result = await svc.update_status(inst.id, application_id, body.status)
+    # Audit log
+    from unipaith.services.audit_service import AuditService
+    await AuditService(db).log(
+        institution_id=inst.id, actor_user_id=user.id,
+        action="status_change", entity_type="application",
+        entity_id=str(application_id), application_id=application_id,
+        description=f"Status changed from {old.status} to {body.status}",
+        old_value={"status": old.status}, new_value={"status": body.status},
+    )
+    return result
 
 
 @router.get("/review/{application_id}", response_model=ApplicationDetailResponse)
@@ -155,7 +167,16 @@ async def make_decision(
 ):
     inst = await InstitutionService(db).get_institution(user.id)
     svc = ApplicationService(db)
-    return await svc.make_decision(inst.id, application_id, body.decision, body.decision_notes)
+    result = await svc.make_decision(inst.id, application_id, body.decision, body.decision_notes)
+    from unipaith.services.audit_service import AuditService
+    await AuditService(db).log(
+        institution_id=inst.id, actor_user_id=user.id,
+        action="decision_release", entity_type="application",
+        entity_id=str(application_id), application_id=application_id,
+        description=f"Decision: {body.decision}",
+        new_value={"decision": body.decision, "notes": body.decision_notes},
+    )
+    return result
 
 
 @router.post(

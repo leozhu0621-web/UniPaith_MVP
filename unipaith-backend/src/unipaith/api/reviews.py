@@ -65,7 +65,16 @@ async def assign_reviewers(
 ):
     inst = await InstitutionService(db).get_institution(user.id)
     svc = ReviewPipelineService(db)
-    return await svc.assign_reviewers(application_id, inst.id)
+    result = await svc.assign_reviewers(application_id, inst.id)
+    from unipaith.services.audit_service import AuditService
+    await AuditService(db).log(
+        institution_id=inst.id, actor_user_id=user.id,
+        action="reviewer_assigned", entity_type="application",
+        entity_id=str(application_id), application_id=application_id,
+        description=f"Assigned {len(result)} reviewer(s)",
+        new_value={"reviewer_count": len(result)},
+    )
+    return result
 
 
 @router.post("/applications/{application_id}/score", response_model=ApplicationScoreResponse)

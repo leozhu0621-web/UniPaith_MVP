@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AnalyticsData, Campaign, CampaignAttributionDetail, CampaignLink, CampaignMetrics, DashboardSummary, DatasetPreview, Inquiry, Institution, InstitutionDataset, InstitutionPost, Program, Promotion, Segment } from '../types'
+import type { AnalyticsData, AuditLogList, Campaign, CampaignAttributionDetail, CampaignLink, CampaignMetrics, DashboardSummary, DatasetPreview, Inquiry, Institution, InstitutionDataset, InstitutionPost, Program, Promotion, Segment } from '../types'
 
 export async function getInstitution(): Promise<Institution> {
   const { data } = await apiClient.get('/institutions/me')
@@ -228,6 +228,15 @@ export async function updateInquiry(inquiryId: string, payload: {
   response_text?: string
 }): Promise<Inquiry> {
   const { data } = await apiClient.put(`/institutions/me/inquiries/${inquiryId}`, payload)
+  return data
+}
+
+// --- Audit Log ---
+
+export async function getAuditLog(params?: {
+  application_id?: string; action?: string; entity_type?: string; limit?: number; offset?: number
+}): Promise<AuditLogList> {
+  const { data } = await apiClient.get('/institutions/me/audit-log', { params })
   return data
 }
 

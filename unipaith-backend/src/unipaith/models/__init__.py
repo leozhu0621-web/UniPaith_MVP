@@ -12,6 +12,7 @@ from unipaith.models.application import (
     ReviewAssignment,
     Rubric,
 )
+from unipaith.models.audit import AdmissionsAuditLog
 from unipaith.models.base import Base
 from unipaith.models.crawler import (
     CrawlJob,
@@ -189,6 +190,7 @@ __all__ = [
     "SourceURLPattern",
     "EnrichmentRecord",
     "AdminAuditEvent",
+    "AdmissionsAuditLog",
     "KnowledgeDocument",
     "KnowledgeLink",
     "CrawlFrontier",

@@ -842,6 +842,28 @@ export interface Inquiry {
   program_name: string | null
 }
 
+// ============ AUDIT LOG ============
+export interface AuditLogEntry {
+  id: string
+  institution_id: string
+  application_id: string | null
+  actor_user_id: string | null
+  action: string
+  entity_type: string
+  entity_id: string
+  description: string | null
+  old_value: Record<string, unknown> | null
+  new_value: Record<string, unknown> | null
+  metadata_json: Record<string, unknown> | null
+  created_at: string
+  actor_email: string | null
+}
+
+export interface AuditLogList {
+  items: AuditLogEntry[]
+  total: number
+}
+
 // ============ BATCH OPERATIONS ============
 export interface BatchOperationResult {
   success_count: number

@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../stores/auth-store'
 import { useUIStore } from '../../stores/ui-store'
 import {
-  LayoutDashboard, GraduationCap, Kanban, Video, Inbox, Star,
+  LayoutDashboard, GraduationCap, Kanban, Video, Inbox, Star, ScrollText,
   MessageSquare, Users, Megaphone, CalendarDays, BarChart3, FileText,
   Settings, ChevronLeft, ChevronRight, Bell, Search, LogOut, Rocket, Command, Upload,
 } from 'lucide-react'
@@ -50,6 +50,7 @@ const buildNavSections = (showSetup: boolean) => [
     label: 'Insights',
     items: [
       { to: '/i/analytics', icon: BarChart3, label: 'Analytics' },
+      { to: '/i/audit-log', icon: ScrollText, label: 'Audit Log' },
     ],
   },
   {
