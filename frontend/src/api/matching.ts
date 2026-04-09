@@ -38,6 +38,15 @@ export const getConversationConfidence = () =>
 export const getShortlistUnlock = () =>
   apiClient.get('/students/me/conversation/shortlist-unlock').then(r => r.data)
 
+export const updateRequirement = (
+  requirementId: string,
+  updates: { status?: string; value?: unknown; priority?: string },
+) =>
+  apiClient.patch(
+    `/students/me/conversation/requirements/${requirementId}`,
+    updates,
+  ).then(r => r.data)
+
 export const resolveConflict = (conflictId: string, resolution: string) =>
   apiClient.post(`/students/me/conversation/conflicts/${conflictId}/resolve`, { selected_resolution: resolution }).then(r => r.data)
 

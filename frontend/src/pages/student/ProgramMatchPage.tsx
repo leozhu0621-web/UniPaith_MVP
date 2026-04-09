@@ -8,6 +8,7 @@ import {
   getConversationConfidence,
   getShortlistUnlock,
   generateShortlist,
+  updateRequirement,
 } from '../../api/matching'
 import type {
   ConversationTurnResponse,
@@ -22,7 +23,7 @@ import Avatar from '../../components/ui/Avatar'
 import Skeleton from '../../components/ui/Skeleton'
 import { formatRelative, formatCurrency } from '../../utils/format'
 import { Link } from 'react-router-dom'
-import { Sparkles, ArrowUp, Target, GraduationCap, ShieldCheck, ChevronRight, MapPin, Clock, Calendar, Monitor, ExternalLink, ArrowLeft, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { Sparkles, ArrowUp, Target, GraduationCap, ShieldCheck, ChevronRight, MapPin, Clock, Calendar, Monitor, ExternalLink, ArrowLeft, CheckCircle2, AlertTriangle, RefreshCw, X } from 'lucide-react'
 
 type ChatMessage = {
   id: string
@@ -114,19 +115,39 @@ const CONFIDENCE_LABELS: Record<string, { label: string; variant: 'neutral' | 'w
   high_confidence: { label: 'Strong understanding', variant: 'success' },
 }
 
-function RequirementsList({ requirements }: { requirements: ConversationRequirement[] }) {
+const PRIORITY_CYCLE: Record<string, string> = {
+  must_have: 'should_have',
+  should_have: 'optional',
+  optional: 'must_have',
+}
+
+const PRIORITY_LABEL: Record<string, string> = {
+  must_have: 'Must',
+  should_have: 'Should',
+  optional: 'Optional',
+}
+
+const priorityVariant = (p: string): 'danger' | 'warning' | 'neutral' => {
+  if (p === 'must_have') return 'danger'
+  if (p === 'should_have') return 'warning'
+  return 'neutral'
+}
+
+function RequirementsList({
+  requirements,
+  editable = false,
+  onUpdate,
+}: {
+  requirements: ConversationRequirement[]
+  editable?: boolean
+  onUpdate?: (id: string, updates: { priority?: string; status?: string }) => void
+}) {
   const grouped = requirements.reduce<Record<string, ConversationRequirement[]>>((acc, req) => {
     const domain = req.domain || 'General'
     if (!acc[domain]) acc[domain] = []
     acc[domain].push(req)
     return acc
   }, {})
-
-  const priorityVariant = (p: string): 'danger' | 'warning' | 'neutral' => {
-    if (p === 'must_have') return 'danger'
-    if (p === 'should_have') return 'warning'
-    return 'neutral'
-  }
 
   return (
     <div className="space-y-3">
@@ -137,14 +158,34 @@ function RequirementsList({ requirements }: { requirements: ConversationRequirem
           </p>
           <div className="space-y-1.5">
             {reqs.map(req => (
-              <div key={req.requirement_id} className="flex items-center justify-between gap-2 text-sm">
+              <div key={req.requirement_id} className="flex items-center justify-between gap-2 text-sm group">
                 <div className="min-w-0">
                   <span className="text-stone-700 font-medium">{req.field}: </span>
                   <span className="text-gray-600">{String(req.value ?? '')}</span>
                 </div>
-                <Badge variant={priorityVariant(req.priority)} size="sm">
-                  {req.priority === 'must_have' ? 'Must' : req.priority === 'should_have' ? 'Should' : 'Optional'}
-                </Badge>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => editable && onUpdate?.(req.requirement_id, {
+                      priority: PRIORITY_CYCLE[req.priority] || 'must_have',
+                    })}
+                    disabled={!editable}
+                    className={editable ? 'cursor-pointer hover:opacity-80' : ''}
+                    title={editable ? 'Click to change priority' : undefined}
+                  >
+                    <Badge variant={priorityVariant(req.priority)} size="sm">
+                      {PRIORITY_LABEL[req.priority] || req.priority}
+                    </Badge>
+                  </button>
+                  {editable && (
+                    <button
+                      onClick={() => onUpdate?.(req.requirement_id, { status: 'rejected' })}
+                      className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all"
+                      title="Remove requirement"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -440,8 +481,22 @@ export default function ProgramMatchPage() {
     mutationFn: generateShortlist,
     onSuccess: (data: ShortlistData) => {
       setShortlistResult(data)
+      setRequirementsEdited(false)
     },
   })
+
+  const [requirementsEdited, setRequirementsEdited] = useState(false)
+
+  const handleUpdateRequirement = async (id: string, updates: { priority?: string; status?: string }) => {
+    try {
+      await updateRequirement(id, updates)
+      queryClient.invalidateQueries({ queryKey: ['match-requirements'] })
+      queryClient.invalidateQueries({ queryKey: ['match-confidence'] })
+      setRequirementsEdited(true)
+    } catch {
+      // silently fail — requirement may have been removed
+    }
+  }
 
   const handleSend = () => {
     const trimmed = input.trim()
@@ -491,30 +546,55 @@ export default function ProgramMatchPage() {
 
         {requirementsList.length > 0 && (
           <Card className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Target size={14} className="text-stone-600" />
-              <p className="text-xs font-semibold text-stone-700 uppercase tracking-wider">
-                Your Requirements
-              </p>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Target size={14} className="text-stone-600" />
+                <p className="text-xs font-semibold text-stone-700 uppercase tracking-wider">
+                  Your Requirements
+                </p>
+              </div>
+              {shortlistResult && (
+                <span className="text-[10px] text-gray-400">Click to edit</span>
+              )}
             </div>
-            <RequirementsList requirements={requirementsList} />
+            <RequirementsList
+              requirements={requirementsList}
+              editable={!!shortlistResult}
+              onUpdate={handleUpdateRequirement}
+            />
           </Card>
         )}
 
-        <Button
-          onClick={() => shortlistMut.mutate()}
-          disabled={!unlockData.eligible || shortlistMut.isPending}
-          loading={shortlistMut.isPending}
-          className="w-full"
-          size="md"
-        >
-          <GraduationCap size={16} className="mr-2" />
-          Generate Shortlist
-        </Button>
-        {!unlockData.eligible && unlockData.recommended_next_actions.length > 0 && (
-          <p className="text-xs text-gray-500 text-center -mt-2">
-            {unlockData.recommended_next_actions[0]}
-          </p>
+        {shortlistResult && requirementsEdited && (
+          <Button
+            onClick={() => shortlistMut.mutate()}
+            loading={shortlistMut.isPending}
+            className="w-full"
+            size="md"
+          >
+            <RefreshCw size={16} className="mr-2" />
+            Re-run with Changes
+          </Button>
+        )}
+
+        {!shortlistResult && (
+          <>
+            <Button
+              onClick={() => shortlistMut.mutate()}
+              disabled={!unlockData.eligible || shortlistMut.isPending}
+              loading={shortlistMut.isPending}
+              className="w-full"
+              size="md"
+            >
+              <GraduationCap size={16} className="mr-2" />
+              Generate Shortlist
+            </Button>
+            {!unlockData.eligible && unlockData.recommended_next_actions.length > 0 && (
+              <p className="text-xs text-gray-500 text-center -mt-2">
+                {unlockData.recommended_next_actions[0]}
+              </p>
+            )}
+          </>
         )}
 
         {shortlistResult && (
