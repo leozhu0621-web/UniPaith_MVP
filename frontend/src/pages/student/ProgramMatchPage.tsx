@@ -493,16 +493,16 @@ export default function ProgramMatchPage() {
     retry: false,
   })
 
-  useQuery({
+  const { data: savedData } = useQuery({
     queryKey: ['saved-programs'],
     queryFn: listSaved,
     retry: false,
-    select: (data: any[]) => {
-      const ids = new Set(data.map((s: any) => String(s.program_id)))
-      setSavedProgramIds(ids)
-      return ids
-    },
   })
+  useEffect(() => {
+    if (savedData) {
+      setSavedProgramIds(new Set(savedData.map((s: any) => String(s.program_id))))
+    }
+  }, [savedData])
 
   const { data: unlock } = useQuery({
     queryKey: ['match-unlock'],
