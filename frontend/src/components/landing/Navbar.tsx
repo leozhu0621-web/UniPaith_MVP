@@ -10,6 +10,8 @@ const Navbar = () => {
     { label: "For Students", to: "/for-students" },
     { label: "For Institutions", to: "/for-institutions" },
     { label: "AI Engine", to: "/engine" },
+    { label: "Pricing", to: "/pricing" },
+    { label: "About", to: "/about" },
   ];
 
   return (

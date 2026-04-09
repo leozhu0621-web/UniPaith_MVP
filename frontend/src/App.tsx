@@ -24,6 +24,9 @@ import ProgramDetailPage from './pages/public/ProgramDetailPage'
 import ForStudentsPage from './pages/public/ForStudentsPage'
 import ForInstitutionsPage from './pages/public/ForInstitutionsPage'
 import EnginePage from './pages/public/EnginePage'
+import PricingPage from './pages/public/PricingPage'
+import AboutPage from './pages/public/AboutPage'
+import BlogPage from './pages/public/BlogPage'
 import PublicLayout from './components/layout/PublicLayout'
 
 // Student pages
@@ -94,6 +97,9 @@ const router = createBrowserRouter([
       { path: '/for-students', element: <ForStudentsPage /> },
       { path: '/for-institutions', element: <ForInstitutionsPage /> },
       { path: '/engine', element: <EnginePage /> },
+      { path: '/pricing', element: <PricingPage /> },
+      { path: '/about', element: <AboutPage /> },
+      { path: '/blog', element: <BlogPage /> },
     ],
   },
 

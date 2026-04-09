@@ -1,21 +1,20 @@
-import { UserCircle, Search, Send, MessageCircle } from "lucide-react";
+import { Link } from "react-router-dom";
+import { UserCircle, Search, Send, MessageCircle, ArrowRight } from "lucide-react";
 import ScrollReveal from "./ScrollReveal";
 
 const steps = [
   {
     icon: UserCircle,
     title: "Build Your Universal Profile",
-    description:
-      "One profile that works everywhere. Academics, activities, essays, documents \u2014 enter it once, reuse across every application. No more copy-pasting between portals.",
+    description: "One profile that works everywhere — academics, activities, essays, documents.",
     color: "text-brand-amber-600",
     bg: "bg-brand-amber-100",
     line: "bg-brand-amber-500",
   },
   {
     icon: Search,
-    title: "Discover Programs That Actually Fit",
-    description:
-      "AI-powered matching based on your goals, budget, location, and academic profile. See why each program is recommended \u2014 with transparent reasoning, not a black box.",
+    title: "Get AI-Powered Matches",
+    description: "Programs ranked by fit, with transparent reasoning tied to your goals.",
     color: "text-primary",
     bg: "bg-primary/10",
     line: "bg-primary",
@@ -23,17 +22,15 @@ const steps = [
   {
     icon: Send,
     title: "Apply & Track Everything",
-    description:
-      "Submit to multiple programs from one dashboard. Track deadlines, manage documents, monitor every status update. Your entire application portfolio in one view.",
+    description: "Deadlines, documents, status updates — one dashboard for your entire portfolio.",
     color: "text-brand-slate-500",
     bg: "bg-brand-slate-100",
     line: "bg-brand-slate-500",
   },
   {
     icon: MessageCircle,
-    title: "Get Guided by Your AI Counselor",
-    description:
-      "Ask questions, get essay feedback, check your readiness score, explore financial aid options. Like having a knowledgeable advisor available 24/7 \u2014 for free.",
+    title: "AI Counselor 24/7",
+    description: "Essay feedback, readiness scores, financial aid guidance — like a private advisor, free.",
     color: "text-brand-amber-600",
     bg: "bg-brand-amber-100",
     line: "bg-brand-slate-500",
@@ -52,15 +49,15 @@ const StudentsSection = () => (
   <section id="students" className="py-24 px-4 sm:px-6 lg:px-8 bg-background">
     <div className="max-w-5xl mx-auto">
       <ScrollReveal variant="blur-in">
-        <div className="text-center mb-20">
+        <div className="text-center mb-16">
           <span className="inline-block bg-brand-amber-100 text-brand-amber-700 text-sm font-medium rounded-full px-4 py-1.5 mb-4 uppercase tracking-wide">
             For Students
           </span>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4 font-heading">
-            Your entire admissions journey. One place.
+            Your private education advisor
           </h2>
           <p className="text-muted-foreground max-w-lg mx-auto text-lg">
-            From profile to acceptance letter &mdash; guided every step.
+            One profile. AI-powered matching. Guided applications.
           </p>
         </div>
       </ScrollReveal>
@@ -68,18 +65,18 @@ const StudentsSection = () => (
       <div className="relative">
         <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-0.5 bg-border -translate-x-1/2" />
 
-        <div className="space-y-16 md:space-y-24">
+        <div className="space-y-16 md:space-y-20">
           {steps.map((step, i) => (
             <ScrollReveal
               key={i}
-              delay={i * 250}
+              delay={i * 200}
               variant={i % 2 === 0 ? "fade-left" : "fade-right"}
             >
               <div
                 className={`flex flex-col md:flex-row items-center gap-8 ${i % 2 === 1 ? "md:flex-row-reverse" : ""}`}
               >
                 <div className="flex-1 text-center md:text-left">
-                  <div className="inline-flex items-center gap-2 mb-3">
+                  <div className="inline-flex items-center gap-2 mb-2">
                     <span
                       className={`w-8 h-8 rounded-full ${step.line} text-card flex items-center justify-center text-sm font-bold`}
                     >
@@ -115,8 +112,8 @@ const StudentsSection = () => (
         </div>
       </div>
 
-      <ScrollReveal delay={1200}>
-        <div className="mt-16 flex flex-wrap justify-center gap-3">
+      <ScrollReveal delay={1000}>
+        <div className="mt-14 flex flex-wrap justify-center gap-3">
           {featureChips.map((chip) => (
             <span
               key={chip}
@@ -125,6 +122,14 @@ const StudentsSection = () => (
               {chip}
             </span>
           ))}
+        </div>
+        <div className="mt-6 text-center">
+          <Link
+            to="/for-students"
+            className="inline-flex items-center gap-1 text-sm font-medium text-brand-amber-600 hover:text-brand-amber-700 transition-colors"
+          >
+            See how it works <ArrowRight size={14} />
+          </Link>
         </div>
       </ScrollReveal>
     </div>

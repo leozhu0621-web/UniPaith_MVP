@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { FileStack, Plus, Edit2, Trash2, Star, Send, Eye } from 'lucide-react'
+import { FileStack, Plus, Edit2, Trash2, Star, Eye } from 'lucide-react'
 import {
   getTemplates, createTemplate, updateTemplate, deleteTemplate,
   previewTemplate, getInstitutionPrograms,

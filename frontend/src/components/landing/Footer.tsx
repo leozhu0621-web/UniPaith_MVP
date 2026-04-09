@@ -9,7 +9,7 @@ const Footer = () => (
             <span className="font-normal text-brand-slate-200">Uni</span>
             <span className="font-extrabold text-white">Paith</span>
           </h4>
-          <p className="text-sm text-background/60">Apply once, go anywhere. AI-powered admissions for a connected world.</p>
+          <p className="text-sm text-background/60">Everyone's private education advisor. AI-powered admissions for students and institutions.</p>
         </div>
         <div>
           <h5 className="font-semibold mb-3 text-sm">Platform</h5>
@@ -17,13 +17,15 @@ const Footer = () => (
             <li><Link to="/for-students" className="hover:text-brand-amber-400 transition-colors">For Students</Link></li>
             <li><Link to="/for-institutions" className="hover:text-brand-amber-400 transition-colors">For Institutions</Link></li>
             <li><Link to="/engine" className="hover:text-brand-amber-400 transition-colors">AI Engine</Link></li>
+            <li><Link to="/browse" className="hover:text-brand-amber-400 transition-colors">Browse Programs</Link></li>
           </ul>
         </div>
         <div>
-          <h5 className="font-semibold mb-3 text-sm">Account</h5>
+          <h5 className="font-semibold mb-3 text-sm">Company</h5>
           <ul className="space-y-2 text-sm text-background/60">
-            <li><Link to="/login" className="hover:text-brand-amber-400 transition-colors">Log in</Link></li>
-            <li><Link to="/signup" className="hover:text-brand-amber-400 transition-colors">Sign up</Link></li>
+            <li><Link to="/about" className="hover:text-brand-amber-400 transition-colors">About</Link></li>
+            <li><Link to="/pricing" className="hover:text-brand-amber-400 transition-colors">Pricing</Link></li>
+            <li><Link to="/blog" className="hover:text-brand-amber-400 transition-colors">Blog</Link></li>
           </ul>
         </div>
         <div>

@@ -18,13 +18,10 @@ export default function LandingPage() {
       <Navbar />
       <HeroSection />
       <ProblemSection />
-      <NarrativeBreak text="What if one platform could fix both sides at once?" />
       <StudentsSection />
       <NarrativeBreak text="And it's not just students who benefit." />
       <InstitutionsSection />
-      <NarrativeBreak text="Why does this need to exist?" />
       <WhyUniPaithSection />
-      <NarrativeBreak text="Here's the intelligence behind it all." />
       <AIFeaturesSection />
       <FlywheelSection />
       <SocialProofSection />
