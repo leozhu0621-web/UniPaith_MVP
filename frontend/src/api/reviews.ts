@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { BatchOperationResult, Rubric, ApplicationScore, ReviewAssignment, AIReviewSummary, PipelineData } from '../types'
+import type { BatchOperationResult, CohortComparisonData, Rubric, ApplicationScore, ReviewAssignment, AIReviewSummary, PipelineData } from '../types'
 
 export async function getRubrics(programId?: string): Promise<Rubric[]> {
   const params = programId ? { program_id: programId } : {}
@@ -42,6 +42,13 @@ export async function getAISummary(applicationId: string): Promise<AIReviewSumma
 
 export async function getPipeline(programId: string): Promise<PipelineData> {
   const { data } = await apiClient.get(`/reviews/pipeline/${programId}`)
+  return data
+}
+
+// --- Cohort Comparison ---
+
+export async function getCohortComparison(applicationIds: string[]): Promise<CohortComparisonData> {
+  const { data } = await apiClient.get('/reviews/cohort-compare', { params: { application_ids: applicationIds.join(',') } })
   return data
 }
 

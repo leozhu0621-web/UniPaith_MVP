@@ -140,6 +140,128 @@ async def batch_assign_reviewers(
     return result
 
 
+# --- Cohort Comparison ---
+
+
+@router.get("/cohort-compare")
+async def cohort_comparison(
+    application_ids: str = Query(
+        ..., description="Comma-separated application UUIDs",
+    ),
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Side-by-side comparison of multiple applicants on rubric scores."""
+    from sqlalchemy import select
+
+    from unipaith.models.application import Application, ApplicationScore
+    from unipaith.models.student import StudentProfile
+
+    await InstitutionService(db).get_institution(user.id)  # auth check
+    ids = [UUID(aid.strip()) for aid in application_ids.split(",") if aid.strip()]
+
+    applicants = []
+    for app_id in ids:
+        try:
+            # Get application detail
+            ar = await db.execute(
+                select(Application).where(Application.id == app_id)
+            )
+            app = ar.scalar_one_or_none()
+            if not app:
+                continue
+
+            # Get student profile
+            sr = await db.execute(
+                select(StudentProfile).where(
+                    StudentProfile.id == app.student_id,
+                )
+            )
+            student = sr.scalar_one_or_none()
+
+            # Get scores
+            scores_r = await db.execute(
+                select(ApplicationScore)
+                .where(ApplicationScore.application_id == app_id)
+                .order_by(ApplicationScore.scored_at.desc())
+            )
+            scores = [
+                {
+                    "id": str(s.id),
+                    "reviewer_id": str(s.reviewer_id),
+                    "rubric_id": str(s.rubric_id),
+                    "criterion_scores": s.criterion_scores,
+                    "total_weighted_score": (
+                        float(s.total_weighted_score)
+                        if s.total_weighted_score
+                        else None
+                    ),
+                    "reviewer_notes": s.reviewer_notes,
+                    "scored_by_type": s.scored_by_type,
+                    "scored_at": s.scored_at.isoformat()
+                    if s.scored_at
+                    else None,
+                }
+                for s in scores_r.scalars().all()
+            ]
+
+            applicants.append({
+                "application_id": str(app.id),
+                "student_id": str(app.student_id),
+                "student_name": (
+                    f"{student.first_name or ''} {student.last_name or ''}".strip()
+                    if student
+                    else "Unknown"
+                ),
+                "status": app.status,
+                "match_score": (
+                    float(app.match_score)
+                    if app.match_score
+                    else None
+                ),
+                "decision": app.decision,
+                "completeness_status": app.completeness_status,
+                "submitted_at": (
+                    app.submitted_at.isoformat()
+                    if app.submitted_at
+                    else None
+                ),
+                "scores": scores,
+                "avg_score": (
+                    round(
+                        sum(
+                            float(s["total_weighted_score"])
+                            for s in scores
+                            if s["total_weighted_score"]
+                        )
+                        / len(
+                            [
+                                s
+                                for s in scores
+                                if s["total_weighted_score"]
+                            ]
+                        ),
+                        2,
+                    )
+                    if any(s["total_weighted_score"] for s in scores)
+                    else None
+                ),
+                "gpa": (
+                    student.gpa if student and hasattr(student, "gpa")
+                    else None
+                ),
+                "nationality": (
+                    student.nationality
+                    if student and hasattr(student, "nationality")
+                    else None
+                ),
+            })
+        except Exception:
+            continue
+
+    return {"applicants": applicants, "count": len(applicants)}
+
+
 # --- Pipeline ---
 
 

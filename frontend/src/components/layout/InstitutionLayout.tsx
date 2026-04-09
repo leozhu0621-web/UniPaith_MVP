@@ -31,6 +31,7 @@ const buildNavSections = (showSetup: boolean) => [
     label: 'Pipeline',
     items: [
       { to: '/i/pipeline', icon: Kanban, label: 'Applications' },
+      { to: '/i/cohort-compare', icon: Users, label: 'Cohort Compare' },
       { to: '/i/interviews', icon: Video, label: 'Interviews' },
       { to: '/i/messages', icon: MessageSquare, label: 'Inbox' },
     ],
