@@ -588,3 +588,16 @@ class PostResponse(BaseModel):
 class PostMediaUploadResponse(BaseModel):
     upload_url: str
     media_key: str
+
+
+# --- NLP Search ---
+
+
+class NLPSearchRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=500)
+
+
+class NLPSearchResponse(BaseModel):
+    filters_applied: dict
+    results: PaginatedResponse[ProgramSummaryResponse]
+    interpretation: str

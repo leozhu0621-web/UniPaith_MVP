@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import json
+import logging
 import math
+import re
 import uuid
 from datetime import UTC, datetime
 from uuid import UUID
@@ -59,6 +62,7 @@ from unipaith.schemas.institution import (
     InquiryResponse,
     LinkPerformance,
     MonthlyApplicationCount,
+    NLPSearchResponse,
     PaginatedResponse,
     PostMediaUploadResponse,
     PostResponse,
@@ -75,6 +79,8 @@ from unipaith.schemas.institution import (
     UpdatePromotionRequest,
     UpdateSegmentRequest,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class InstitutionService:
@@ -1960,3 +1966,108 @@ class InstitutionService:
             author_email=author_email,
             program_names=program_names,
         )
+
+    # ------------------------------------------------------------------
+    # NLP Search
+    # ------------------------------------------------------------------
+
+    async def nlp_search_programs(self, query: str) -> NLPSearchResponse:
+        """Parse a natural-language query into structured filters via LLM,
+        then delegate to search_programs()."""
+
+        parsed = await self._parse_nlp_query(query)
+
+        results = await self.search_programs(
+            query=parsed.get("parsed_query"),
+            country=parsed.get("country"),
+            degree_type=parsed.get("degree_type"),
+            min_tuition=parsed.get("min_tuition"),
+            max_tuition=parsed.get("max_tuition"),
+            sort_by=parsed.get("sort_by"),
+        )
+
+        interpretation = parsed.get(
+            "interpretation",
+            f"Showing results for: {query}",
+        )
+
+        filters_applied = {
+            k: v
+            for k, v in parsed.items()
+            if k != "interpretation" and v is not None
+        }
+
+        return NLPSearchResponse(
+            filters_applied=filters_applied,
+            results=results,
+            interpretation=interpretation,
+        )
+
+    async def _parse_nlp_query(self, query: str) -> dict:
+        """Use LLM to extract structured search params from natural language."""
+
+        if settings.ai_mock_mode:
+            return {
+                "parsed_query": query,
+                "country": None,
+                "degree_type": None,
+                "max_tuition": None,
+                "min_tuition": None,
+                "sort_by": None,
+                "interpretation": f"Showing results for: {query}",
+            }
+
+        from unipaith.ai.llm_client import get_llm_client
+
+        system_prompt = (
+            "You are a search query parser for a graduate program search engine. "
+            "Extract structured filters from the user's natural language query.\n\n"
+            "Return ONLY valid JSON with these fields:\n"
+            '- "parsed_query": cleaned keyword search term (string)\n'
+            '- "country": full country name if mentioned, e.g. "UK" -> "United Kingdom", '
+            '"US" -> "United States" (string or null)\n'
+            '- "degree_type": one of MS, MBA, PhD, MA, bachelors, masters, phd, '
+            "certificate, diploma if mentioned (string or null)\n"
+            '- "max_tuition": integer if budget mentioned, e.g. "affordable" -> 30000, '
+            '"under 40k" -> 40000 (integer or null)\n'
+            '- "min_tuition": integer if a tuition floor is mentioned (integer or null)\n'
+            '- "sort_by": one of tuition_asc, tuition_desc, deadline if implied '
+            "(string or null)\n"
+            '- "interpretation": one-sentence human summary of what was understood\n\n'
+            "Return ONLY valid JSON. No markdown, no extra text."
+        )
+
+        try:
+            llm = get_llm_client()
+            raw = await llm.extract_features(system_prompt, query)
+            parsed = _safe_json(raw)
+            if parsed and isinstance(parsed, dict):
+                return parsed
+        except Exception:
+            logger.warning("NLP query parsing failed for: %s", query, exc_info=True)
+
+        # Fallback: pass query through unmodified
+        return {
+            "parsed_query": query,
+            "interpretation": f"Showing results for: {query}",
+        }
+
+
+def _safe_json(text: str):
+    """Safely parse JSON from LLM output, stripping markdown fences."""
+    if not text:
+        return None
+    text = text.strip()
+    if text.startswith("```"):
+        lines = text.split("\n")
+        text = "\n".join(lines[1:-1]) if len(lines) > 2 else text
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        match = re.search(r"[\[\{].*[\]\}]", text, re.DOTALL)
+        if match:
+            try:
+                return json.loads(match.group())
+            except json.JSONDecodeError:
+                pass
+    return None

@@ -7,6 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.database import get_db
 from unipaith.schemas.institution import (
+    NLPSearchRequest,
+    NLPSearchResponse,
     PaginatedResponse,
     ProgramResponse,
     ProgramSummaryResponse,
@@ -43,6 +45,17 @@ async def search_programs(
         page=page,
         page_size=page_size,
     )
+
+
+@router.post("/search/nlp", response_model=NLPSearchResponse)
+async def nlp_search_programs(
+    body: NLPSearchRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Search programs using natural language. The LLM extracts structured
+    filters from the query and returns matching programs."""
+    svc = InstitutionService(db)
+    return await svc.nlp_search_programs(body.query)
 
 
 @router.get("/search/semantic", response_model=list[ProgramSummaryResponse])
