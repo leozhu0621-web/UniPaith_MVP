@@ -1663,9 +1663,17 @@ class InstitutionService:
                 degree_type=prog.degree_type,
                 department=prog.department,
                 tuition=prog.tuition,
+                duration_months=prog.duration_months,
+                delivery_format=prog.delivery_format,
+                acceptance_rate=(
+                    float(prog.acceptance_rate)
+                    if prog.acceptance_rate is not None
+                    else None
+                ),
                 application_deadline=prog.application_deadline,
                 institution_name=inst.name,
                 institution_country=inst.country,
+                institution_city=inst.city,
             )
             for prog, inst in rows
         ]
@@ -1735,6 +1743,7 @@ class InstitutionService:
             program = programs.get(program_id)
             if not program:
                 continue
+            inst = program.institution
             ordered.append(
                 ProgramSummaryResponse(
                     id=program.id,
@@ -1743,9 +1752,17 @@ class InstitutionService:
                     degree_type=program.degree_type,
                     department=program.department,
                     tuition=program.tuition,
+                    duration_months=program.duration_months,
+                    delivery_format=program.delivery_format,
+                    acceptance_rate=(
+                        float(program.acceptance_rate)
+                        if program.acceptance_rate is not None
+                        else None
+                    ),
                     application_deadline=program.application_deadline,
-                    institution_name=program.institution.name if program.institution else "",
-                    institution_country=program.institution.country if program.institution else "",
+                    institution_name=inst.name if inst else "",
+                    institution_country=inst.country if inst else "",
+                    institution_city=inst.city if inst else None,
                 )
             )
         return ordered

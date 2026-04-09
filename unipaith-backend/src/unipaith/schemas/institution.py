@@ -166,9 +166,13 @@ class ProgramSummaryResponse(BaseModel):
     degree_type: str
     department: str | None
     tuition: int | None
+    duration_months: int | None = None
+    delivery_format: str | None = None
+    acceptance_rate: float | None = None
     application_deadline: date | None
     institution_name: str
     institution_country: str
+    institution_city: str | None = None
 
 
 # --- Target Segments ---

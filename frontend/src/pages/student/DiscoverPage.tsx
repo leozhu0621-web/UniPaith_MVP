@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getMatches, logEngagement } from '../../api/matching'
 import { searchPrograms, nlpSearch } from '../../api/programs'
 import { getOnboarding } from '../../api/students'
@@ -8,7 +8,8 @@ import Badge from '../../components/ui/Badge'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Skeleton from '../../components/ui/Skeleton'
-import { Search, SlidersHorizontal, X, ChevronDown, MessageSquare, Sparkles, Loader2, Pencil, Monitor, Briefcase, Wrench, Heart, Palette, BookOpen, Scale, Users } from 'lucide-react'
+import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
+import { Search, SlidersHorizontal, X, ChevronDown, MessageSquare, Sparkles, Loader2, Pencil, Monitor, Briefcase, Wrench, Heart, Palette, BookOpen, Scale, Users, Bookmark, BookmarkCheck, MapPin, Clock, BarChart3, ExternalLink } from 'lucide-react'
 import { formatCurrency, formatScore } from '../../utils/format'
 import { DEGREE_LABELS, TIER_LABELS } from '../../utils/constants'
 import type { MatchResult, PaginatedResponse, ProgramSummary } from '../../types'
@@ -120,6 +121,33 @@ export default function DiscoverPage() {
   const [degreeType, setDegreeType] = useState('')
   const [minTuition, setMinTuition] = useState('')
   const [maxTuition, setMaxTuition] = useState('')
+
+  // Saved programs
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
+  useQuery({
+    queryKey: ['saved-programs'],
+    queryFn: listSaved,
+    retry: false,
+    select: (data: any[]) => {
+      const ids = new Set(data.map((s: any) => String(s.program_id)))
+      setSavedIds(ids)
+      return ids
+    },
+  })
+  const queryClient = useQueryClient()
+  const toggleSave = async (programId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      if (savedIds.has(programId)) {
+        await unsaveProgram(programId)
+        setSavedIds(prev => { const n = new Set(prev); n.delete(programId); return n })
+      } else {
+        await saveProgram(programId)
+        setSavedIds(prev => new Set(prev).add(programId))
+      }
+      queryClient.invalidateQueries({ queryKey: ['saved-programs'] })
+    } catch { /* ignore */ }
+  }
 
   // NLP search state
   const [nlpResult, setNlpResult] = useState<NlpSearchResult | null>(null)
@@ -476,12 +504,66 @@ export default function DiscoverPage() {
           <p className="text-xs text-gray-500 mb-3">{displayData?.total ?? 0} programs found</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {programs.map((p: ProgramSummary) => (
-              <Card key={p.id} onClick={() => handleCardClick(p.id)} className="p-4">
-                <p className="font-semibold text-sm truncate">{p.program_name}</p>
-                <p className="text-xs text-gray-500 mt-1">{p.institution_name} — {p.institution_country}</p>
+              <Card key={p.id} onClick={() => handleCardClick(p.id)} className="p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-sm text-stone-700 truncate">{p.program_name}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {p.institution_name}
+                      {(p.institution_city || p.institution_country) && (
+                        <span className="text-gray-400">
+                          {' \u2014 '}{[p.institution_city, p.institution_country].filter(Boolean).join(', ')}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <button
+                    onClick={(e) => toggleSave(p.id, e)}
+                    className={`p-1 rounded transition-colors ${savedIds.has(p.id) ? 'text-amber-500' : 'text-gray-300 hover:text-amber-500'}`}
+                    title={savedIds.has(p.id) ? 'Saved' : 'Save'}
+                  >
+                    {savedIds.has(p.id) ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}
+                  </button>
+                </div>
+
                 <div className="flex items-center gap-2 mt-2">
                   <Badge variant="info" size="sm">{DEGREE_LABELS[p.degree_type] || p.degree_type}</Badge>
-                  {p.tuition != null && <span className="text-xs text-gray-500">{formatCurrency(p.tuition)}</span>}
+                  {p.tuition != null && (
+                    <span className="text-xs text-gray-500">{formatCurrency(p.tuition)}/yr</span>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
+                  {p.duration_months && (
+                    <span className="inline-flex items-center gap-1 text-[11px] text-gray-500">
+                      <Clock size={10} className="text-gray-400" />{p.duration_months} mo
+                    </span>
+                  )}
+                  {p.delivery_format && (
+                    <span className="inline-flex items-center gap-1 text-[11px] text-gray-500">
+                      <Monitor size={10} className="text-gray-400" />{p.delivery_format.replace(/_/g, ' ')}
+                    </span>
+                  )}
+                  {p.acceptance_rate != null && (
+                    <span className="inline-flex items-center gap-1 text-[11px] text-gray-500">
+                      <BarChart3 size={10} className="text-gray-400" />{(p.acceptance_rate * 100).toFixed(0)}% accept
+                    </span>
+                  )}
+                  {p.application_deadline && (
+                    <span className="inline-flex items-center gap-1 text-[11px] text-gray-500">
+                      <MapPin size={10} className="text-gray-400" />
+                      {new Date(p.application_deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-end gap-2 mt-3 pt-2 border-t border-gray-100">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); navigate(`/s/programs/${p.id}`) }}
+                    className="inline-flex items-center gap-1 text-xs text-stone-500 hover:text-stone-700"
+                  >
+                    Details <ExternalLink size={10} />
+                  </button>
                 </div>
               </Card>
             ))}

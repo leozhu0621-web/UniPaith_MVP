@@ -315,9 +315,13 @@ export interface ProgramSummary {
   degree_type: string
   department: string | null
   tuition: number | null
+  duration_months: number | null
+  delivery_format: string | null
+  acceptance_rate: number | null
   application_deadline: string | null
   institution_name: string
   institution_country: string
+  institution_city: string | null
 }
 
 export interface PaginatedResponse<T> {
