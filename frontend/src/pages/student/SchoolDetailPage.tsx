@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getProgram, getProgramReviews, getEmployerFeedback } from '../../api/programs'
+import { getProgram, getProgramReviews, getEmployerFeedback, searchPrograms, semanticSearch } from '../../api/programs'
 import { getMatchDetail, logEngagement } from '../../api/matching'
 import { listEvents, rsvpEvent } from '../../api/events'
 import { listMyApplications, createApplication } from '../../api/applications'
@@ -60,6 +60,29 @@ export default function SchoolDetailPage() {
     queryFn: () => getEmployerFeedback(programId!),
     retry: false,
   })
+
+  const { data: sameSchoolData } = useQuery({
+    queryKey: ['same-school-programs', program?.institution_id],
+    queryFn: () => searchPrograms({
+      institution_id: program?.institution_id,
+      page_size: 7,
+    }),
+    enabled: !!program?.institution_id,
+    retry: false,
+  })
+  const sameSchoolPrograms = (sameSchoolData?.items ?? [])
+    .filter((sp: any) => sp.id !== programId)
+    .slice(0, 6)
+
+  const { data: similarData } = useQuery({
+    queryKey: ['similar-programs', program?.program_name],
+    queryFn: () => semanticSearch(program!.program_name, 7),
+    enabled: !!program?.program_name,
+    retry: false,
+  })
+  const similarPrograms = (Array.isArray(similarData) ? similarData : [])
+    .filter((sp: any) => sp.id !== programId)
+    .slice(0, 6)
 
   useEffect(() => {
     if (programId) logEngagement(programId, 'viewed_program', 1).catch(() => {})
@@ -677,6 +700,64 @@ export default function SchoolDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Other Programs at This School */}
+      {sameSchoolPrograms.length > 0 && (
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-medium text-sm">Other Programs at This School</h3>
+            <Link to={`/school/${p.institution_id}?tab=programs`} className="text-xs text-stone-500 hover:text-stone-700">
+              View all
+            </Link>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {sameSchoolPrograms.map((sp: any) => (
+              <Card
+                key={sp.id}
+                onClick={() => navigate(`/s/programs/${sp.id}`)}
+                className="flex-shrink-0 w-56 p-3"
+              >
+                <p className="text-sm font-semibold text-stone-700 truncate">{sp.program_name}</p>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <Badge variant="info" size="sm">{DEGREE_LABELS[sp.degree_type] || sp.degree_type}</Badge>
+                  {sp.tuition != null && <span className="text-xs text-gray-500">{formatCurrency(sp.tuition)}</span>}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Similar Programs */}
+      {similarPrograms.length > 0 && (
+        <div className="mt-8">
+          <h3 className="font-medium text-sm mb-3">Similar Programs</h3>
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {similarPrograms.map((sp: any) => (
+              <Card
+                key={sp.id}
+                onClick={() => navigate(`/s/programs/${sp.id}`)}
+                className="flex-shrink-0 w-56 p-3 border border-purple-100"
+              >
+                <p className="text-sm font-semibold text-stone-700 truncate">{sp.program_name}</p>
+                <p className="text-xs text-gray-500 truncate mt-0.5">{sp.institution_name}</p>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <Badge variant="info" size="sm">{DEGREE_LABELS[sp.degree_type] || sp.degree_type}</Badge>
+                  {sp.tuition != null && <span className="text-xs text-gray-500">{formatCurrency(sp.tuition)}</span>}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Back to Discovery */}
+      <div className="mt-8 pt-6 border-t border-gray-100 flex items-center justify-between">
+        <p className="text-sm text-gray-500">Want to explore more options?</p>
+        <Button size="sm" variant="secondary" onClick={() => navigate('/s/discover')}>
+          Back to Discovery
+        </Button>
+      </div>
     </div>
   )
 }
