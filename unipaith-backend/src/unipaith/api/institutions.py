@@ -710,11 +710,18 @@ async def submit_inquiry(
     )
     profile = r.scalar_one_or_none()
 
+    student_name = user.email
+    if profile:
+        parts = [profile.first_name or "", profile.last_name or ""]
+        full = " ".join(p for p in parts if p).strip()
+        if full:
+            student_name = full
+
     svc = _svc(db)
     return await svc.submit_inquiry(
         data=body,
         student_id=profile.id if profile else None,
-        student_name=user.name or user.email,
+        student_name=student_name,
         student_email=user.email,
     )
 
