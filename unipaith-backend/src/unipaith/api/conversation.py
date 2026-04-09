@@ -97,3 +97,35 @@ async def resolve_conversation_conflict(
     db: AsyncSession = Depends(get_db),
 ):
     return await _svc(db).resolve_conflict(user.id, conflict_id, body.selected_resolution)
+
+
+@router.post("/generate-shortlist")
+async def generate_shortlist(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Generate program shortlist from collected conversation requirements."""
+    from unipaith.services.recommendation_engine import RecommendationEngine
+
+    svc = _svc(db)
+    unlock = await svc.get_shortlist_unlock(user.id)
+    context = await svc.get_conversation_context_summary(user.id)
+
+    engine = RecommendationEngine(db)
+    recommendations = await engine.generate_recommendations(
+        student_user_id=user.id,
+        count=10,
+        conversation_context=context,
+    )
+
+    best_fit = [r for r in recommendations if r.get("category") == "on_your_radar"]
+    stretch = [r for r in recommendations if r.get("category") == "might_surprise_you"]
+    safer = [r for r in recommendations if r.get("category") == "hidden_gem"]
+
+    return {
+        "eligible": unlock.eligible,
+        "best_fit": best_fit,
+        "stretch": stretch,
+        "safer": safer,
+        "total": len(recommendations),
+    }
