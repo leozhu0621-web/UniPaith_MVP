@@ -12,6 +12,7 @@ from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -528,7 +529,7 @@ class ReviewPipelineService:
             existing.strengths = data.get("strengths")
             existing.concerns = data.get("concerns")
             existing.criterion_assessments = data.get(
-                "criterion_assessments",
+                "criterion_assessments", [],
             )
             existing.recommended_score = (
                 Decimal(str(data["recommended_score"]))
@@ -550,7 +551,7 @@ class ReviewPipelineService:
             strengths=data.get("strengths"),
             concerns=data.get("concerns"),
             criterion_assessments=data.get(
-                "criterion_assessments",
+                "criterion_assessments", [],
             ),
             recommended_score=(
                 Decimal(str(data["recommended_score"]))
@@ -562,7 +563,33 @@ class ReviewPipelineService:
             generated_at=datetime.now(UTC),
         )
         self.db.add(summary)
-        await self.db.flush()
+        try:
+            await self.db.flush()
+        except IntegrityError:
+            # Concurrent insert race — fall back to update
+            await self.db.rollback()
+            retry_r = await self.db.execute(
+                select(AIPacketSummary).where(
+                    AIPacketSummary.application_id == application_id,
+                )
+            )
+            existing = retry_r.scalar_one()
+            existing.rubric_id = rubric_id
+            existing.overall_summary = data.get("overall_summary", "")
+            existing.strengths = data.get("strengths")
+            existing.concerns = data.get("concerns")
+            existing.criterion_assessments = data.get("criterion_assessments", [])
+            existing.recommended_score = (
+                Decimal(str(data["recommended_score"]))
+                if data.get("recommended_score")
+                else None
+            )
+            existing.confidence_level = data.get("confidence_level")
+            existing.model_used = model_name
+            existing.generated_at = datetime.now(UTC)
+            await self.db.flush()
+            await self.db.refresh(existing)
+            return self._packet_to_dict(existing)
         await self.db.refresh(summary)
         return self._packet_to_dict(summary)
 
@@ -950,7 +977,7 @@ class ReviewPipelineService:
                 func.count(ReviewAssignment.id),
             )
             .where(
-                ReviewAssignment.status.in_(["pending", "in_progress"]),
+                ReviewAssignment.status.in_(["assigned", "pending", "in_progress"]),
             )
             .group_by(ReviewAssignment.reviewer_id)
         )

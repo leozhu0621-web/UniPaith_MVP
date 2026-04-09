@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class CreateTemplateRequest(BaseModel):
     template_type: str = Field(
         ...,
-        pattern=r"^(missing_items|interview_invite|clarification|decision_notice|offer_notice|custom)$",
+        pattern=r"^(missing_items|interview_invite|clarification|decision_admit|decision_reject|decision_waitlist|offer_notice|custom)$",
     )
     name: str = Field(min_length=1, max_length=255)
     subject: str = Field(min_length=1, max_length=500)

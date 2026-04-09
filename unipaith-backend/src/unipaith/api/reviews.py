@@ -113,7 +113,7 @@ async def ai_review_summary(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    inst = await InstitutionService(db).get_institution(user.id)
+    await InstitutionService(db).get_institution(user.id)
     svc = ReviewPipelineService(db)
     return await svc.generate_ai_review_summary(application_id)
 

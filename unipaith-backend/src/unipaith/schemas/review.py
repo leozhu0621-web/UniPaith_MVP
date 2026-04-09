@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
@@ -53,7 +53,7 @@ class ReviewAssignmentResponse(BaseModel):
     application_id: UUID
     reviewer_id: UUID
     assigned_at: datetime
-    due_date: datetime | None = None
+    due_date: date | None = None
     status: str | None
 
 
@@ -62,6 +62,7 @@ class AIReviewSummaryResponse(BaseModel):
     strengths: list[str]
     concerns: list[str]
     recommended_score_range: dict | None
+    comparable_admitted_profiles: str | None = None
 
 
 class EvidenceCitation(BaseModel):
