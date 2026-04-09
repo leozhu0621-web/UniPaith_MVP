@@ -5,6 +5,7 @@ import { useMutation } from '@tanstack/react-query'
 import {
   Building2, MapPin, Users, Globe, Mail, ExternalLink,
   BookOpen, CalendarDays, FileText, Pin, MessageSquare,
+  Shield, HeartHandshake, Plane, TrendingUp, Briefcase,
 } from 'lucide-react'
 import { getPublicInstitution, getPublicPosts, recordCampaignAction, submitInquiry } from '../../api/institutions'
 import { searchPrograms } from '../../api/programs'
@@ -96,6 +97,9 @@ export default function InstitutionPage() {
   const tabs = [
     { id: 'overview', label: 'Overview' },
     { id: 'programs', label: `Programs${inst?.program_count != null ? ` (${inst.program_count})` : ''}` },
+    { id: 'services', label: 'Services' },
+    { id: 'international', label: 'International' },
+    { id: 'outcomes', label: 'Outcomes' },
     { id: 'events', label: `Events${events.length ? ` (${events.length})` : ''}` },
     ...(publicPosts.length > 0 ? [{ id: 'posts', label: `Posts (${publicPosts.length})` }] : []),
     ...(gallery.length > 0 ? [{ id: 'gallery', label: 'Gallery' }] : []),
@@ -317,6 +321,197 @@ export default function InstitutionPage() {
               )}
             </div>
           )}
+
+          {/* Services Tab */}
+          {tab === 'services' && (() => {
+            const ss = inst.support_services || {}
+            const pol = inst.policies || {}
+            const hasServices = Object.keys(ss).length > 0
+            const hasPolicies = Object.keys(pol).length > 0
+
+            return (
+              <div className="space-y-6">
+                <Card className="p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <HeartHandshake size={16} className="text-stone-600" />
+                    <h3 className="text-sm font-semibold text-gray-900">Support Services</h3>
+                  </div>
+                  {hasServices ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {Object.entries(ss).map(([key, val]) => (
+                        <div key={key} className="bg-stone-50 rounded-lg p-3">
+                          <p className="text-sm font-medium text-stone-700 capitalize">{key.replace(/_/g, ' ')}</p>
+                          <p className="text-xs text-gray-600 mt-0.5">{String(val)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">Support service details not yet available. Contact the institution for more information.</p>
+                  )}
+                </Card>
+
+                <Card className="p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Shield size={16} className="text-stone-600" />
+                    <h3 className="text-sm font-semibold text-gray-900">Policies</h3>
+                  </div>
+                  {hasPolicies ? (
+                    <dl className="space-y-2 text-sm">
+                      {Object.entries(pol).map(([key, val]) => (
+                        <div key={key} className="flex justify-between border-b border-gray-100 pb-2">
+                          <dt className="text-gray-500 capitalize">{key.replace(/_/g, ' ')}</dt>
+                          <dd className="font-medium text-stone-700">{String(val)}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ) : (
+                    <p className="text-sm text-gray-500">Policy information not yet available.</p>
+                  )}
+                </Card>
+              </div>
+            )
+          })()}
+
+          {/* International Tab */}
+          {tab === 'international' && (() => {
+            const ii = inst.international_info || {}
+            const hasInfo = Object.keys(ii).length > 0
+
+            return (
+              <div className="space-y-6">
+                <Card className="p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Plane size={16} className="text-stone-600" />
+                    <h3 className="text-sm font-semibold text-gray-900">International Student Information</h3>
+                  </div>
+                  {hasInfo ? (
+                    <div className="space-y-3">
+                      {ii.visa_support && (
+                        <div className="bg-emerald-50 rounded-lg p-3">
+                          <p className="text-sm font-medium text-emerald-700">Visa Support Available</p>
+                          <p className="text-xs text-emerald-600 mt-0.5">{String(ii.visa_support)}</p>
+                        </div>
+                      )}
+                      {ii.english_requirements && (
+                        <div className="bg-stone-50 rounded-lg p-3">
+                          <p className="text-sm font-medium text-stone-700">English Requirements</p>
+                          <p className="text-xs text-gray-600 mt-0.5">{String(ii.english_requirements)}</p>
+                        </div>
+                      )}
+                      {ii.international_student_percentage != null && (
+                        <div className="bg-stone-50 rounded-lg p-3">
+                          <p className="text-sm font-medium text-stone-700">International Students</p>
+                          <p className="text-xs text-gray-600 mt-0.5">{ii.international_student_percentage}% of student body</p>
+                        </div>
+                      )}
+                      {Object.entries(ii)
+                        .filter(([k]) => !['visa_support', 'english_requirements', 'international_student_percentage'].includes(k))
+                        .map(([key, val]) => (
+                          <div key={key} className="bg-stone-50 rounded-lg p-3">
+                            <p className="text-sm font-medium text-stone-700 capitalize">{key.replace(/_/g, ' ')}</p>
+                            <p className="text-xs text-gray-600 mt-0.5">{String(val)}</p>
+                          </div>
+                        ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">International student information not yet available. Contact the institution for details.</p>
+                  )}
+                </Card>
+              </div>
+            )
+          })()}
+
+          {/* Outcomes Tab */}
+          {tab === 'outcomes' && (() => {
+            const so = inst.school_outcomes || {}
+            const hasOutcomes = Object.keys(so).length > 0
+
+            return (
+              <div className="space-y-6">
+                {hasOutcomes ? (
+                  <>
+                    <Card className="p-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <TrendingUp size={16} className="text-stone-600" />
+                        <h3 className="text-sm font-semibold text-gray-900">School-Level Outcomes</h3>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {so.overall_employment_rate != null && (
+                          <div className="text-center">
+                            <p className="text-2xl font-bold text-emerald-700">{(Number(so.overall_employment_rate) * 100).toFixed(0)}%</p>
+                            <p className="text-xs text-gray-500">Employment Rate</p>
+                          </div>
+                        )}
+                        {so.median_starting_salary != null && (
+                          <div className="text-center">
+                            <p className="text-2xl font-bold text-stone-700">{formatCurrency(Number(so.median_starting_salary))}</p>
+                            <p className="text-xs text-gray-500">Median Starting Salary</p>
+                          </div>
+                        )}
+                        {so.graduation_rate != null && (
+                          <div className="text-center">
+                            <p className="text-2xl font-bold text-stone-700">{(Number(so.graduation_rate) * 100).toFixed(0)}%</p>
+                            <p className="text-xs text-gray-500">Graduation Rate</p>
+                          </div>
+                        )}
+                        {so.avg_time_to_employment && (
+                          <div className="text-center">
+                            <p className="text-2xl font-bold text-stone-700">{so.avg_time_to_employment}</p>
+                            <p className="text-xs text-gray-500">Avg Time to Employment</p>
+                          </div>
+                        )}
+                        {so.alumni_network_size != null && (
+                          <div className="text-center">
+                            <p className="text-2xl font-bold text-stone-700">{Number(so.alumni_network_size).toLocaleString()}</p>
+                            <p className="text-xs text-gray-500">Alumni Network</p>
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+
+                    {so.top_hiring_companies && Array.isArray(so.top_hiring_companies) && (
+                      <Card className="p-5">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Briefcase size={16} className="text-stone-600" />
+                          <h3 className="text-sm font-semibold text-gray-900">Top Hiring Companies</h3>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {so.top_hiring_companies.map((c: string) => (
+                            <Badge key={c} variant="neutral">{c}</Badge>
+                          ))}
+                        </div>
+                      </Card>
+                    )}
+
+                    {so.industry_breakdown && typeof so.industry_breakdown === 'object' && (
+                      <Card className="p-5">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Building2 size={16} className="text-stone-600" />
+                          <h3 className="text-sm font-semibold text-gray-900">Industry Breakdown</h3>
+                        </div>
+                        <div className="space-y-2">
+                          {Object.entries(so.industry_breakdown).map(([ind, pct]) => (
+                            <div key={ind} className="flex items-center gap-3">
+                              <span className="text-xs text-gray-500 w-32 capitalize">{ind.replace(/_/g, ' ')}</span>
+                              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-stone-500 rounded-full" style={{ width: `${Number(pct)}%` }} />
+                              </div>
+                              <span className="text-xs font-medium text-stone-700 w-10 text-right">{Number(pct)}%</span>
+                            </div>
+                          ))}
+                        </div>
+                      </Card>
+                    )}
+                  </>
+                ) : (
+                  <Card className="p-6 text-center">
+                    <TrendingUp size={32} className="text-gray-300 mx-auto mb-3" />
+                    <p className="text-sm text-gray-500">School-level outcomes data is not yet available.</p>
+                  </Card>
+                )}
+              </div>
+            )
+          })()}
 
           {/* Events Tab */}
           {tab === 'events' && (

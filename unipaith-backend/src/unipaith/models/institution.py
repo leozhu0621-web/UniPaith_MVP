@@ -46,6 +46,10 @@ class Institution(Base):
     media_gallery: Mapped[dict | None] = mapped_column(JSONB)
     social_links: Mapped[dict | None] = mapped_column(JSONB)
     inquiry_routing: Mapped[dict | None] = mapped_column(JSONB)
+    support_services: Mapped[dict | None] = mapped_column(JSONB)
+    policies: Mapped[dict | None] = mapped_column(JSONB)
+    international_info: Mapped[dict | None] = mapped_column(JSONB)
+    school_outcomes: Mapped[dict | None] = mapped_column(JSONB)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

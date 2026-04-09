@@ -639,6 +639,10 @@ export interface Institution {
   website_url: string | null
   media_gallery: string[] | null
   social_links: Record<string, string> | null
+  support_services: Record<string, any> | null
+  policies: Record<string, any> | null
+  international_info: Record<string, any> | null
+  school_outcomes: Record<string, any> | null
   is_verified: boolean
   created_at: string
   updated_at: string
@@ -690,6 +694,21 @@ export interface AIReviewSummary {
   strengths: string[]
   concerns: string[]
   recommended_score_range: { min: number; max: number } | null
+}
+
+export interface IntegritySignal {
+  id: string
+  application_id: string
+  signal_type: string
+  severity: 'high' | 'medium' | 'low'
+  title: string
+  description: string
+  evidence: Record<string, unknown> | null
+  status: 'open' | 'resolved' | 'dismissed'
+  resolved_by: string | null
+  resolved_at: string | null
+  resolution_notes: string | null
+  created_at: string
 }
 
 export interface AIPacketSummary {

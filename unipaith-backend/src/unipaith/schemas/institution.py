@@ -75,6 +75,10 @@ class InstitutionResponse(BaseModel):
     media_gallery: list | dict | None = None
     social_links: dict | None = None
     inquiry_routing: dict | None = None
+    support_services: dict | None = None
+    policies: dict | None = None
+    international_info: dict | None = None
+    school_outcomes: dict | None = None
     is_verified: bool
     created_at: datetime
     updated_at: datetime
