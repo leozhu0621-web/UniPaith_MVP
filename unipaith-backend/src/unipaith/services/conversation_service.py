@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from copy import deepcopy
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -7,6 +8,8 @@ from uuid import UUID, uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from unipaith.ai.llm_client import get_llm_client
+from unipaith.config import settings
 from unipaith.core.exceptions import ConflictException, NotFoundException
 from unipaith.schemas.conversation import (
     AssistantMessageResponse,
@@ -29,6 +32,8 @@ from unipaith.schemas.conversation import (
     UpdateConversationRequirementRequest,
 )
 from unipaith.services.student_service import StudentService
+
+logger = logging.getLogger("unipaith.conversation_service")
 
 
 @dataclass
@@ -68,6 +73,13 @@ class _ConversationSessionState:
 
 _SESSIONS_BY_STUDENT: dict[UUID, _ConversationSessionState] = {}
 
+_TEMPLATE_REPLY = (
+    "Thanks for sharing that — I have updated your {domain} context. "
+    "You are making solid progress. Next, we can fill one "
+    "missing requirement to increase recommendation confidence "
+    "and keep your plan calm and clear."
+)
+
 _REQUIRED_FIELDS_BY_DOMAIN: dict[ConversationDomain, list[str]] = {
     "budget_finance": ["max_annual_tuition"],
     "timeline_intake": ["target_intake"],
@@ -83,6 +95,7 @@ class ConversationService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.student_service = StudentService(db)
+        self.llm = get_llm_client()
 
     async def send_turn(
         self, student_user_id: UUID, body: ConversationTurnRequest
@@ -117,7 +130,7 @@ class ConversationService:
                 ],
             )
 
-        assistant_text = self._build_assistant_reply(selected_domain, body.message)
+        assistant_text = await self._build_assistant_reply(selected_domain, body.message, session)
         session.last_assistant_prompt = assistant_text
 
         if selected_domain == "budget_finance":
@@ -408,13 +421,48 @@ class ConversationService:
             return "academic_readiness"
         return "learning_preferences"
 
-    def _build_assistant_reply(self, domain: ConversationDomain, message: str) -> str:
-        return (
-            f"Thanks for sharing that — I have updated your {domain} context. "
-            "You are making solid progress. Next, we can fill one "
-            "missing requirement to increase recommendation confidence "
-            "and keep your plan calm and clear."
+    async def _build_assistant_reply(
+        self,
+        domain: ConversationDomain,
+        message: str,
+        session: _ConversationSessionState,
+    ) -> str:
+        if settings.ai_mock_mode:
+            return _TEMPLATE_REPLY.format(domain=domain)
+
+        system_prompt = (
+            "You are a warm, knowledgeable admissions counselor at UniPaith. "
+            "Your role is to help students explore their study-abroad goals "
+            "and collect the information needed to generate a great program shortlist. "
+            "Be encouraging, concise (2-4 sentences), and naturally guide the student "
+            "toward filling gaps in their profile. Never sound robotic or formulaic. "
+            "Ask one clear follow-up question to keep the conversation moving."
         )
+
+        collected = self._active_requirements_map(session)
+        user_context = (
+            f"Student message: {message}\n"
+            f"Current domain: {domain}\n"
+            f"Conversation stage: {session.current_stage}\n"
+            f"Collected requirements so far: {collected}\n"
+            f"Open tasks: {self._open_tasks(session)}"
+        )
+
+        try:
+            return await self.llm.generate_reasoning(system_prompt, user_context)
+        except Exception:
+            logger.exception("LLM call failed in _build_assistant_reply, falling back to template")
+            return _TEMPLATE_REPLY.format(domain=domain)
+
+    @staticmethod
+    def _active_requirements_map(
+        session: _ConversationSessionState,
+    ) -> dict[str, object]:
+        return {
+            req.field: req.value
+            for req in session.requirements.values()
+            if req.status != "rejected" and req.value is not None
+        }
 
     def _extract_budget_hint(self, message: str) -> int | None:
         digits = "".join(ch if ch.isdigit() else " " for ch in message).split()
@@ -494,6 +542,15 @@ class ConversationService:
                 if (domain, field_name) not in existing:
                     open_tasks.append(f"{domain}.{field_name}")
         return open_tasks
+
+    async def get_conversation_context_summary(self, student_user_id: UUID) -> str:
+        """Build a text summary of collected requirements for recommendation context."""
+        profile = await self.student_service._get_student_profile(student_user_id)
+        session = _SESSIONS_BY_STUDENT.get(profile.id)
+        if session is None:
+            return ""
+        active = self._active_requirements_map(session)
+        return "; ".join(f"{k} = {v}" for k, v in active.items()) if active else ""
 
     def _blocking_issues(self, session: _ConversationSessionState) -> list[str]:
         issues = []
