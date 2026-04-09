@@ -115,7 +115,7 @@ async def ai_review_summary(
 ):
     inst = await InstitutionService(db).get_institution(user.id)
     svc = ReviewPipelineService(db)
-    return await svc.generate_ai_review_summary(inst.id, application_id)
+    return await svc.generate_ai_review_summary(application_id)
 
 
 @router.get("/applications/{application_id}/ai-packet")
