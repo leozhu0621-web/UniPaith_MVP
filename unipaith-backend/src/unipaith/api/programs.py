@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.database import get_db
-from unipaith.models.institution import StudentProgramReview
+from unipaith.models.institution import EmployerFeedback, StudentProgramReview
 from unipaith.schemas.institution import (
     NLPSearchRequest,
     NLPSearchResponse,
@@ -179,5 +179,110 @@ async def get_program_reviews(
                 created_at=r.created_at.isoformat(),
             )
             for r in reviews
+        ],
+    )
+
+
+# --- Employer Feedback ---
+
+
+class EmployerFeedbackResponse(BaseModel):
+    id: UUID
+    program_id: UUID
+    employer_name: str
+    industry: str | None = None
+    rating_technical: int | None = None
+    rating_practical: int | None = None
+    rating_communication: int | None = None
+    rating_overall: int | None = None
+    job_readiness_sentiment: str | None = None
+    feedback_text: str | None = None
+    hiring_pattern: str | None = None
+    feedback_year: int | None = None
+    created_at: str
+
+
+class EmployerFeedbackSummaryResponse(BaseModel):
+    total_feedback: int
+    avg_technical: float | None = None
+    avg_practical: float | None = None
+    avg_communication: float | None = None
+    avg_overall: float | None = None
+    sentiment_counts: dict[str, int]
+    feedback: list[EmployerFeedbackResponse]
+
+
+@router.get(
+    "/{program_id}/employer-feedback",
+    response_model=EmployerFeedbackSummaryResponse,
+)
+async def get_employer_feedback(
+    program_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = (
+        select(EmployerFeedback)
+        .where(
+            EmployerFeedback.program_id == program_id,
+            EmployerFeedback.is_published.is_(True),
+        )
+        .order_by(EmployerFeedback.created_at.desc())
+        .limit(50)
+    )
+    result = await db.execute(stmt)
+    items = list(result.scalars().all())
+
+    avg_stmt = (
+        select(
+            func.count().label("cnt"),
+            func.avg(EmployerFeedback.rating_technical),
+            func.avg(EmployerFeedback.rating_practical),
+            func.avg(EmployerFeedback.rating_communication),
+            func.avg(EmployerFeedback.rating_overall),
+        )
+        .where(
+            EmployerFeedback.program_id == program_id,
+            EmployerFeedback.is_published.is_(True),
+        )
+    )
+    agg = (await db.execute(avg_stmt)).one()
+
+    sentiments: dict[str, int] = {}
+    for fb in items:
+        s = fb.job_readiness_sentiment or "unknown"
+        sentiments[s] = sentiments.get(s, 0) + 1
+
+    return EmployerFeedbackSummaryResponse(
+        total_feedback=agg[0] or 0,
+        avg_technical=(
+            round(float(agg[1]), 1) if agg[1] else None
+        ),
+        avg_practical=(
+            round(float(agg[2]), 1) if agg[2] else None
+        ),
+        avg_communication=(
+            round(float(agg[3]), 1) if agg[3] else None
+        ),
+        avg_overall=(
+            round(float(agg[4]), 1) if agg[4] else None
+        ),
+        sentiment_counts=sentiments,
+        feedback=[
+            EmployerFeedbackResponse(
+                id=fb.id,
+                program_id=fb.program_id,
+                employer_name=fb.employer_name,
+                industry=fb.industry,
+                rating_technical=fb.rating_technical,
+                rating_practical=fb.rating_practical,
+                rating_communication=fb.rating_communication,
+                rating_overall=fb.rating_overall,
+                job_readiness_sentiment=fb.job_readiness_sentiment,
+                feedback_text=fb.feedback_text,
+                hiring_pattern=fb.hiring_pattern,
+                feedback_year=fb.feedback_year,
+                created_at=fb.created_at.isoformat(),
+            )
+            for fb in items
         ],
     )

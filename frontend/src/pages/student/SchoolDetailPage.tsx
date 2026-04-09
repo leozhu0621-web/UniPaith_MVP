@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getProgram, getProgramReviews } from '../../api/programs'
+import { getProgram, getProgramReviews, getEmployerFeedback } from '../../api/programs'
 import { getMatchDetail, logEngagement } from '../../api/matching'
 import { listEvents, rsvpEvent } from '../../api/events'
 import { listMyApplications, createApplication } from '../../api/applications'
@@ -52,6 +52,12 @@ export default function SchoolDetailPage() {
   const { data: reviewsData } = useQuery({
     queryKey: ['program-reviews', programId],
     queryFn: () => getProgramReviews(programId!),
+    retry: false,
+  })
+
+  const { data: employerData } = useQuery({
+    queryKey: ['employer-feedback', programId],
+    queryFn: () => getEmployerFeedback(programId!),
     retry: false,
   })
 
@@ -131,6 +137,7 @@ export default function SchoolDetailPage() {
           { id: 'costs', label: 'Costs & Aid' },
           { id: 'outcomes', label: 'Outcomes' },
           { id: 'reviews', label: `Reviews${reviewsData?.total_reviews ? ` (${reviewsData.total_reviews})` : ''}` },
+          { id: 'employers', label: `Employer Insights${employerData?.total_feedback ? ` (${employerData.total_feedback})` : ''}` },
           { id: 'match', label: 'Match Analysis' },
         ]}
         activeTab={tab}
@@ -511,6 +518,108 @@ export default function SchoolDetailPage() {
                   <p className="text-sm text-gray-500">No reviews yet for this program.</p>
                   <p className="text-xs text-gray-400 mt-1">Be the first to share your experience.</p>
                 </Card>
+              )}
+            </div>
+          )
+        })()}
+
+        {tab === 'employers' && (() => {
+          const ed = employerData || { total_feedback: 0, feedback: [], sentiment_counts: {} }
+          const dims: { key: string; label: string }[] = [
+            { key: 'avg_technical', label: 'Technical Skills' },
+            { key: 'avg_practical', label: 'Practical Experience' },
+            { key: 'avg_communication', label: 'Communication' },
+            { key: 'avg_overall', label: 'Overall Readiness' },
+          ]
+          const sentiments = ed.sentiment_counts || {}
+          const totalSent = Object.values(sentiments).reduce((s: number, v: any) => s + (Number(v) || 0), 0)
+
+          return (
+            <div className="space-y-4">
+              {ed.total_feedback === 0 ? (
+                <Card className="p-6 text-center">
+                  <Building2 size={32} className="text-gray-300 mx-auto mb-3" />
+                  <p className="text-sm text-gray-500">No employer feedback yet for this program.</p>
+                </Card>
+              ) : (
+                <>
+                  {totalSent > 0 && (
+                    <Card className="p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <TrendingUp size={16} className="text-stone-600" />
+                        <h3 className="font-medium text-sm text-stone-700">Job Readiness Sentiment</h3>
+                      </div>
+                      <div className="flex gap-3">
+                        {['positive', 'neutral', 'negative'].map(s => {
+                          const count = sentiments[s] || 0
+                          const pct = totalSent > 0 ? Math.round((count / totalSent) * 100) : 0
+                          const color = s === 'positive' ? 'bg-emerald-400' : s === 'neutral' ? 'bg-amber-400' : 'bg-red-400'
+                          return (
+                            <div key={s} className="flex-1 text-center">
+                              <div className="h-20 bg-gray-100 rounded-lg flex items-end overflow-hidden">
+                                <div className={`w-full ${color} rounded-lg transition-all`} style={{ height: `${Math.max(pct, 5)}%` }} />
+                              </div>
+                              <p className="text-xs font-medium mt-1 capitalize">{s}</p>
+                              <p className="text-[10px] text-gray-400">{pct}% ({count})</p>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </Card>
+                  )}
+
+                  <Card className="p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <BarChart3 size={16} className="text-stone-600" />
+                      <h3 className="font-medium text-sm text-stone-700">Skills Assessment</h3>
+                    </div>
+                    <div className="space-y-2">
+                      {dims.map(d => {
+                        const val: number | null = (ed as any)[d.key]
+                        if (val == null) return null
+                        return (
+                          <div key={d.key} className="flex items-center gap-3">
+                            <span className="text-xs text-gray-500 w-32">{d.label}</span>
+                            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-stone-500 rounded-full" style={{ width: `${(val / 5) * 100}%` }} />
+                            </div>
+                            <span className="text-xs font-medium text-stone-700 w-8 text-right">{val.toFixed(1)}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </Card>
+
+                  <div className="space-y-3">
+                    {ed.feedback.map((fb: any) => (
+                      <Card key={fb.id} className="p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <p className="text-sm font-medium text-stone-700">{fb.employer_name}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              {fb.industry && <Badge variant="info" size="sm">{fb.industry}</Badge>}
+                              {fb.feedback_year && <span className="text-[10px] text-gray-400">{fb.feedback_year}</span>}
+                            </div>
+                          </div>
+                          {fb.job_readiness_sentiment && (
+                            <Badge
+                              variant={fb.job_readiness_sentiment === 'positive' ? 'success' : fb.job_readiness_sentiment === 'negative' ? 'danger' : 'warning'}
+                              size="sm"
+                            >
+                              {fb.job_readiness_sentiment}
+                            </Badge>
+                          )}
+                        </div>
+                        {fb.feedback_text && <p className="text-sm text-gray-600 mt-2">{fb.feedback_text}</p>}
+                        {fb.hiring_pattern && (
+                          <p className="text-xs text-stone-500 mt-2 bg-stone-50 rounded px-2 py-1">
+                            <Briefcase size={10} className="inline mr-1" />{fb.hiring_pattern}
+                          </p>
+                        )}
+                      </Card>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           )

@@ -18,3 +18,6 @@ export const nlpSearch = (query: string) =>
 
 export const getProgramReviews = (programId: string) =>
   apiClient.get(`/programs/${programId}/reviews`).then(r => r.data)
+
+export const getEmployerFeedback = (programId: string) =>
+  apiClient.get(`/programs/${programId}/employer-feedback`).then(r => r.data)

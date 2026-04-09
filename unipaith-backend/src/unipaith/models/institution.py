@@ -675,3 +675,33 @@ class StudentProgramReview(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False,
     )
+
+
+class EmployerFeedback(Base):
+    __tablename__ = "employer_feedback"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
+    )
+    program_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("programs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    employer_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    industry: Mapped[str | None] = mapped_column(String(100))
+    rating_technical: Mapped[int | None] = mapped_column(Integer)
+    rating_practical: Mapped[int | None] = mapped_column(Integer)
+    rating_communication: Mapped[int | None] = mapped_column(Integer)
+    rating_overall: Mapped[int | None] = mapped_column(Integer)
+    job_readiness_sentiment: Mapped[str | None] = mapped_column(
+        String(20),
+    )
+    feedback_text: Mapped[str | None] = mapped_column(Text)
+    hiring_pattern: Mapped[str | None] = mapped_column(String(255))
+    feedback_year: Mapped[int | None] = mapped_column(Integer)
+    is_published: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False,
+    )
