@@ -8,10 +8,10 @@ const DualCTASection = () => (
     <div className="max-w-5xl mx-auto">
       <ScrollReveal variant="blur-in">
         <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center text-background mb-4 font-heading">
-          Your future starts here
+          The admissions system the industry has been waiting for
         </h2>
         <p className="text-center text-background/70 mb-14 text-lg max-w-xl mx-auto">
-          Whether you're a student ready to explore or an institution ready to evolve — UniPaith is being built for you.
+          Whether you're a student ready to take control of your future, or an institution ready to modernize — UniPaith is being built for you.
         </p>
       </ScrollReveal>
 
@@ -22,10 +22,10 @@ const DualCTASection = () => (
               <GraduationCap className="text-gold-600 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3" size={32} />
             </div>
             <h3 className="text-2xl font-bold text-foreground mb-3 font-heading">Start your journey</h3>
-            <p className="text-muted-foreground mb-8">Be among the first to experience a smarter way to discover and apply to programs. Sign up free — it takes 30 seconds.</p>
+            <p className="text-muted-foreground mb-8">Join thousands of students already building their Universal Profile. Free forever — no credit card, no catches.</p>
             <Button size="lg" className="w-full sm:w-auto px-10 py-7 rounded-xl text-base bg-gold-500 hover:bg-gold-600 text-white text-lg" asChild>
               <Link to="/signup?role=student">
-                Sign Up as Student
+                Create Your Profile
                 <ArrowRight size={20} className="ml-2" />
               </Link>
             </Button>
@@ -38,10 +38,10 @@ const DualCTASection = () => (
               <Building2 className="text-primary transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3" size={32} />
             </div>
             <h3 className="text-2xl font-bold text-foreground mb-3 font-heading">Transform your admissions</h3>
-            <p className="text-muted-foreground mb-8">See how UniPaith can streamline your intake, improve matching, and free your team to focus on what matters.</p>
+            <p className="text-muted-foreground mb-8">See how UniPaith can cut review time, improve candidate quality, and give your team AI-powered workflow support.</p>
             <Button size="lg" variant="outline" className="w-full sm:w-auto px-10 py-7 rounded-xl text-base border-primary text-primary hover:bg-primary hover:text-primary-foreground text-lg" asChild>
               <Link to="/signup?role=institution_admin">
-                Register Institution
+                Schedule a Demo
                 <ArrowRight size={20} className="ml-2" />
               </Link>
             </Button>

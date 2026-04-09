@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/shadcn/button";
-import { ArrowRight, Sparkles, ChevronDown } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import ScrollReveal from "./ScrollReveal";
 
 const HeroSection = () => (
@@ -14,9 +14,8 @@ const HeroSection = () => (
 
     <div className="max-w-5xl mx-auto text-center">
       <ScrollReveal variant="blur-in">
-        <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-5 py-2 text-sm font-medium mb-8">
-          <Sparkles size={16} />
-          AI-Powered Admissions Platform
+        <div className="inline-flex items-center gap-2 bg-forest-100 text-forest-700 rounded-full px-5 py-2 text-sm font-medium mb-8">
+          The admissions infrastructure built for both sides
         </div>
       </ScrollReveal>
 
@@ -29,8 +28,12 @@ const HeroSection = () => (
       </ScrollReveal>
 
       <ScrollReveal delay={400}>
-        <p className="text-xl sm:text-2xl text-muted-foreground max-w-2xl mx-auto mb-12 leading-relaxed">
-          UniPaith is the AI-powered platform that gives students a single profile to discover and apply to programs worldwide — and gives institutions smarter, faster, fairer admissions.
+        <p className="text-xl sm:text-2xl text-muted-foreground max-w-3xl mx-auto mb-6 leading-relaxed">
+          Students get one portable profile to discover, match, and apply to programs worldwide.
+          Institutions get AI-powered admissions operations that actually work.
+        </p>
+        <p className="text-base text-muted-foreground/70 max-w-xl mx-auto mb-12">
+          No more fragmented systems. No more duplicate paperwork. One connected workflow for everyone.
         </p>
       </ScrollReveal>
 
@@ -45,6 +48,16 @@ const HeroSection = () => (
           <Button size="lg" variant="outline" className="text-base px-10 py-7 rounded-xl text-lg" asChild>
             <a href="#students">See How It Works</a>
           </Button>
+        </div>
+      </ScrollReveal>
+
+      <ScrollReveal delay={800}>
+        <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 mt-12 text-sm text-muted-foreground/60">
+          <span>Free for students, always</span>
+          <span className="hidden sm:block w-1 h-1 rounded-full bg-muted-foreground/30" />
+          <span>No credit card required</span>
+          <span className="hidden sm:block w-1 h-1 rounded-full bg-muted-foreground/30" />
+          <span>FERPA &amp; GDPR ready</span>
         </div>
       </ScrollReveal>
     </div>

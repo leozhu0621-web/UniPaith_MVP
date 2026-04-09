@@ -1,11 +1,11 @@
-import { Sparkles, FileSearch, Activity, AlertTriangle } from "lucide-react";
+import { Brain, FileSearch, Target, Shield, Lock, User, ClipboardCheck } from "lucide-react";
 import ScrollReveal from "./ScrollReveal";
 
 const features = [
   {
-    icon: Sparkles,
-    title: "Smart Matching",
-    description: "Our AI doesn't just filter — it understands. It analyzes your profile against thousands of program criteria and surfaces the schools where you'll thrive. No more scrolling through endless lists.",
+    icon: Brain,
+    title: "Explainable Matching",
+    description: "See exactly why a program was recommended — tied to your goals, constraints, and profile. No black-box algorithms. Students understand their options; institutions understand their pipeline.",
     color: "text-gold-600",
     bg: "bg-gold-100",
     mockBg: "from-gold-100 to-gold-50",
@@ -13,27 +13,34 @@ const features = [
   {
     icon: FileSearch,
     title: "Document Intelligence",
-    description: "Upload your transcripts, essays, and certificates once. Our AI extracts, structures, and verifies everything — turning messy documents into clean, actionable data for institutions.",
+    description: "Upload transcripts, essays, and certificates once. AI extracts, structures, and verifies — turning messy documents into clean, structured data that institutions can trust.",
     color: "text-primary",
     bg: "bg-primary/10",
     mockBg: "from-forest-100 to-forest-50",
   },
   {
-    icon: Activity,
+    icon: Target,
     title: "Readiness Diagnostics",
-    description: "Before you hit submit, know exactly where you stand. Your readiness score shows strengths, flags gaps, and tells you what to improve — like a GPS for your application.",
+    description: "Before you submit, know where you stand. Readiness scores show strengths, flag gaps, and guide preparation — like a GPS for your application journey.",
     color: "text-forest-500",
     bg: "bg-forest-100",
     mockBg: "from-forest-200/50 to-forest-100/50",
   },
   {
-    icon: AlertTriangle,
-    title: "Integrity Shield",
-    description: "Every application passes through anomaly detection, plagiarism checks, and document verification. Institutions get peace of mind. Students get a fair process.",
+    icon: Shield,
+    title: "Integrity & Compliance",
+    description: "Anomaly detection, plagiarism checks, document verification, and full audit trails. FERPA-ready, GDPR-compliant, with human oversight at every decision point.",
     color: "text-primary",
     bg: "bg-primary/10",
     mockBg: "from-forest-100 to-forest-50",
   },
+];
+
+const trustBadges = [
+  { icon: Shield, label: "FERPA Ready" },
+  { icon: Lock, label: "End-to-End Encrypted" },
+  { icon: User, label: "Human-in-the-Loop" },
+  { icon: ClipboardCheck, label: "Full Audit Trails" },
 ];
 
 const AIFeaturesSection = () => (
@@ -42,10 +49,10 @@ const AIFeaturesSection = () => (
       <ScrollReveal variant="blur-in">
         <div className="text-center mb-20">
           <span className="inline-flex items-center gap-1.5 bg-gold-100 text-gold-700 text-sm font-medium rounded-full px-5 py-1.5 mb-4">
-            <Sparkles size={14} /> Powered by AI
+            <Brain size={14} /> Powered by AI
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4 font-heading">Intelligence at every step</h2>
-          <p className="text-muted-foreground max-w-xl mx-auto text-lg">From discovery to decision, AI works behind the scenes so you can focus on what matters.</p>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4 font-heading">Intelligence you can trust</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto text-lg">Every AI output comes with reasoning. Every decision stays with humans. That's not a disclaimer — it's how we're built.</p>
         </div>
       </ScrollReveal>
 
@@ -82,6 +89,17 @@ const AIFeaturesSection = () => (
           </ScrollReveal>
         ))}
       </div>
+
+      <ScrollReveal delay={200} variant="fade-up">
+        <div className="mt-20 flex flex-wrap justify-center gap-8 sm:gap-12">
+          {trustBadges.map((badge, i) => (
+            <div key={i} className="flex items-center gap-2 text-muted-foreground">
+              <badge.icon size={18} className="text-forest-500" />
+              <span className="text-sm font-medium">{badge.label}</span>
+            </div>
+          ))}
+        </div>
+      </ScrollReveal>
     </div>
   </section>
 );
