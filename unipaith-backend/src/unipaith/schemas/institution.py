@@ -155,6 +155,7 @@ class ProgramResponse(BaseModel):
     media_urls: list | dict | None = None
     highlights: list | dict | None
     faculty_contacts: list | dict | None = None
+    cost_data: dict | None = None
     created_at: datetime
     updated_at: datetime
 
