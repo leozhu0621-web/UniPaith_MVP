@@ -1245,6 +1245,7 @@ class InstitutionService:
             post.published_at = datetime.now(UTC)
         self.db.add(post)
         await self.db.flush()
+        await self.db.refresh(post)
         return await self._enrich_post(post)
 
     async def update_post(
@@ -1265,6 +1266,7 @@ class InstitutionService:
         if not was_published and post.status == "published":
             post.published_at = datetime.now(UTC)
         await self.db.flush()
+        await self.db.refresh(post)
         return await self._enrich_post(post)
 
     async def delete_post(
@@ -1280,6 +1282,7 @@ class InstitutionService:
         post = await self._get_post(institution_id, post_id)
         post.pinned = not post.pinned
         await self.db.flush()
+        await self.db.refresh(post)
         return await self._enrich_post(post)
 
     async def publish_post(
@@ -1289,6 +1292,7 @@ class InstitutionService:
         post.status = "published"
         post.published_at = datetime.now(UTC)
         await self.db.flush()
+        await self.db.refresh(post)
         return await self._enrich_post(post)
 
     async def request_post_media_upload(
