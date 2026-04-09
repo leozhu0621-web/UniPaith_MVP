@@ -23,7 +23,8 @@ import Avatar from '../../components/ui/Avatar'
 import Skeleton from '../../components/ui/Skeleton'
 import { formatRelative, formatCurrency } from '../../utils/format'
 import { Link } from 'react-router-dom'
-import { Sparkles, ArrowUp, Target, GraduationCap, ShieldCheck, ChevronRight, MapPin, Clock, Calendar, Monitor, ExternalLink, ArrowLeft, CheckCircle2, AlertTriangle, RefreshCw, X } from 'lucide-react'
+import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
+import { Sparkles, ArrowUp, Target, GraduationCap, ShieldCheck, ChevronRight, MapPin, Clock, Calendar, Monitor, ExternalLink, ArrowLeft, CheckCircle2, AlertTriangle, RefreshCw, X, Bookmark, BookmarkCheck } from 'lucide-react'
 
 type ChatMessage = {
   id: string
@@ -257,7 +258,17 @@ function QuickFacts({ prog }: { prog: ShortlistProgram }) {
   )
 }
 
-function ProgramCard({ prog, tierBadge }: { prog: ShortlistProgram; tierBadge: 'success' | 'warning' | 'info' }) {
+function ProgramCard({
+  prog,
+  tierBadge,
+  isSaved,
+  onToggleSave,
+}: {
+  prog: ShortlistProgram
+  tierBadge: 'success' | 'warning' | 'info'
+  isSaved: boolean
+  onToggleSave: (programId: string) => void
+}) {
   const [expanded, setExpanded] = useState(false)
 
   return (
@@ -334,6 +345,17 @@ function ProgramCard({ prog, tierBadge }: { prog: ShortlistProgram; tierBadge: '
               <span className="text-sm font-bold text-stone-700">{Math.round(prog.match_score)}%</span>
             </div>
           )}
+          <button
+            onClick={() => onToggleSave(prog.program_id)}
+            className={`p-1 rounded-lg transition-colors ${
+              isSaved
+                ? 'text-amber-500 hover:text-amber-600'
+                : 'text-gray-300 hover:text-amber-500'
+            }`}
+            title={isSaved ? 'Saved' : 'Save to list'}
+          >
+            {isSaved ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}
+          </button>
           <Link
             to={`/s/programs/${prog.program_id}`}
             className="inline-flex items-center gap-1 text-xs text-stone-500 hover:text-stone-700"
@@ -346,7 +368,24 @@ function ProgramCard({ prog, tierBadge }: { prog: ShortlistProgram; tierBadge: '
   )
 }
 
-function ShortlistResultsFullView({ result, onBack }: { result: ShortlistData; onBack: () => void }) {
+function ShortlistResultsFullView({
+  result,
+  onBack,
+  savedIds,
+  onToggleSave,
+  onSaveAll,
+  savingAll,
+}: {
+  result: ShortlistData
+  onBack: () => void
+  savedIds: Set<string>
+  onToggleSave: (programId: string) => void
+  onSaveAll: () => void
+  savingAll: boolean
+}) {
+  const allPrograms = [...(result.best_fit || []), ...(result.stretch || []), ...(result.safer || [])]
+  const allSaved = allPrograms.length > 0 && allPrograms.every(p => savedIds.has(p.program_id))
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -359,6 +398,15 @@ function ShortlistResultsFullView({ result, onBack }: { result: ShortlistData; o
             <p className="text-xs text-gray-500">{result.total} programs matched across 3 tiers</p>
           </div>
         </div>
+        <Button
+          onClick={onSaveAll}
+          disabled={allSaved || savingAll}
+          loading={savingAll}
+          size="sm"
+        >
+          <Bookmark size={14} className="mr-1.5" />
+          {allSaved ? 'All Saved' : 'Save All'}
+        </Button>
       </div>
 
       {TIER_CONFIG.map(tier => {
@@ -372,7 +420,13 @@ function ShortlistResultsFullView({ result, onBack }: { result: ShortlistData; o
             </div>
             <div className="space-y-3">
               {programs.map(prog => (
-                <ProgramCard key={prog.program_id} prog={prog} tierBadge={tier.badge} />
+                <ProgramCard
+                  key={prog.program_id}
+                  prog={prog}
+                  tierBadge={tier.badge}
+                  isSaved={savedIds.has(prog.program_id)}
+                  onToggleSave={onToggleSave}
+                />
               ))}
             </div>
           </div>
@@ -416,6 +470,8 @@ export default function ProgramMatchPage() {
   const [input, setInput] = useState('')
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [sendError, setSendError] = useState<string | null>(null)
+  const [savedProgramIds, setSavedProgramIds] = useState<Set<string>>(new Set())
+  const [savingAll, setSavingAll] = useState(false)
   const [shortlistResult, setShortlistResult] = useState<ShortlistData | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -435,6 +491,17 @@ export default function ProgramMatchPage() {
     queryKey: ['match-confidence'],
     queryFn: getConversationConfidence,
     retry: false,
+  })
+
+  useQuery({
+    queryKey: ['saved-programs'],
+    queryFn: listSaved,
+    retry: false,
+    select: (data: any[]) => {
+      const ids = new Set(data.map((s: any) => String(s.program_id)))
+      setSavedProgramIds(ids)
+      return ids
+    },
   })
 
   const { data: unlock } = useQuery({
@@ -496,6 +563,42 @@ export default function ProgramMatchPage() {
     } catch {
       // silently fail — requirement may have been removed
     }
+  }
+
+  const handleToggleSave = async (programId: string) => {
+    try {
+      if (savedProgramIds.has(programId)) {
+        await unsaveProgram(programId)
+        setSavedProgramIds(prev => { const next = new Set(prev); next.delete(programId); return next })
+      } else {
+        await saveProgram(programId)
+        setSavedProgramIds(prev => new Set(prev).add(programId))
+      }
+      queryClient.invalidateQueries({ queryKey: ['saved-programs'] })
+    } catch {
+      // silently fail
+    }
+  }
+
+  const handleSaveAll = async () => {
+    if (!shortlistResult) return
+    setSavingAll(true)
+    const all = [
+      ...(shortlistResult.best_fit || []),
+      ...(shortlistResult.stretch || []),
+      ...(shortlistResult.safer || []),
+    ]
+    const unsaved = all.filter(p => !savedProgramIds.has(p.program_id))
+    for (const p of unsaved) {
+      try {
+        await saveProgram(p.program_id)
+        setSavedProgramIds(prev => new Set(prev).add(p.program_id))
+      } catch {
+        // skip already-saved or missing programs
+      }
+    }
+    queryClient.invalidateQueries({ queryKey: ['saved-programs'] })
+    setSavingAll(false)
   }
 
   const handleSend = () => {
@@ -625,6 +728,10 @@ export default function ProgramMatchPage() {
             <ShortlistResultsFullView
               result={shortlistResult}
               onBack={() => setShortlistResult(null)}
+              savedIds={savedProgramIds}
+              onToggleSave={handleToggleSave}
+              onSaveAll={handleSaveAll}
+              savingAll={savingAll}
             />
           ) : chatMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
