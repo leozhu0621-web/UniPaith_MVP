@@ -86,6 +86,9 @@ class StudentProfile(Base):
     visa_info: Mapped[StudentVisaInfo | None] = relationship(
         back_populates="student", uselist=False, cascade="all, delete-orphan"
     )
+    data_consent: Mapped[StudentDataConsent | None] = relationship(
+        back_populates="student", uselist=False, cascade="all, delete-orphan"
+    )
     recommendation_requests: Mapped[list[RecommendationRequest]] = relationship(
         back_populates="student", cascade="all, delete-orphan"
     )
@@ -568,3 +571,29 @@ class StudentVisaInfo(Base):
     )
 
     student: Mapped[StudentProfile] = relationship(back_populates="visa_info")
+
+
+class StudentDataConsent(Base):
+    __tablename__ = "student_data_consent"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_profiles.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    )
+    consent_matching: Mapped[bool] = mapped_column(Boolean, default=True)
+    consent_outreach: Mapped[bool] = mapped_column(Boolean, default=True)
+    consent_research: Mapped[bool] = mapped_column(Boolean, default=True)
+    data_retention_preference: Mapped[str | None] = mapped_column(String(30))
+    deletion_requested: Mapped[bool] = mapped_column(Boolean, default=False)
+    deletion_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    student: Mapped[StudentProfile] = relationship(back_populates="data_consent")

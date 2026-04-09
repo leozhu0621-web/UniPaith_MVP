@@ -38,6 +38,7 @@ export interface StudentProfile {
   accommodations: StudentAccommodation | null
   scheduling: StudentScheduling | null
   visa_info: StudentVisaInfo | null
+  data_consent: StudentDataConsent | null
   preferences: StudentPreference | null
   onboarding: OnboardingStatus | null
 }
@@ -125,6 +126,19 @@ export interface StudentAccommodation {
   documentation_status: string | null
   dyslexia_friendly_mode: boolean
   font_size_pref: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface StudentDataConsent {
+  id: string
+  student_id: string
+  consent_matching: boolean
+  consent_outreach: boolean
+  consent_research: boolean
+  data_retention_preference: string | null
+  deletion_requested: boolean
+  deletion_requested_at: string | null
   created_at: string
   updated_at: string
 }

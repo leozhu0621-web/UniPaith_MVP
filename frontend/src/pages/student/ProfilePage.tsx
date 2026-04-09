@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, createOnlinePresence, updateOnlinePresence, deleteOnlinePresence, createPortfolioItem, updatePortfolioItem, deletePortfolioItem, createResearch, updateResearch, deleteResearch, createLanguage, updateLanguage, deleteLanguage, createWorkExperience, updateWorkExperience, deleteWorkExperience, createCompetition, updateCompetition, deleteCompetition, upsertAccommodations, upsertScheduling, upsertVisaInfo, upsertPreferences, getNextStep } from '../../api/students'
-import { getOnboarding, getTimeline, getAnalytics, getPeerComparison, exportProfileJson } from '../../api/students'
+import { getOnboarding, getTimeline, getAnalytics, getPeerComparison, exportProfileJson, upsertDataRights } from '../../api/students'
 import { listDocuments } from '../../api/documents'
 import Modal from '../../components/ui/Modal'
 import Button from '../../components/ui/Button'
@@ -11,8 +11,8 @@ import { SkeletonCard } from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatDate, formatCurrency, formatFileSize } from '../../utils/format'
 import { DEGREE_LABELS, ACTIVITY_TYPES, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS, WORK_EXPERIENCE_TYPES, COMPETITION_LEVELS } from '../../utils/constants'
-import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical, Languages, Briefcase, Trophy, Accessibility, CalendarClock, Plane, Clock, BarChart3, Users, Download } from 'lucide-react'
-import { BasicInfoForm, AcademicForm, CourseForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm, ResearchForm, LanguageForm, WorkExperienceForm, CompetitionForm, AccommodationForm, SchedulingForm, VisaInfoForm } from './components/ProfileForms'
+import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical, Languages, Briefcase, Trophy, Accessibility, CalendarClock, Plane, Clock, BarChart3, Users, Download, Shield } from 'lucide-react'
+import { BasicInfoForm, AcademicForm, CourseForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm, ResearchForm, LanguageForm, WorkExperienceForm, CompetitionForm, AccommodationForm, SchedulingForm, VisaInfoForm, DataRightsForm } from './components/ProfileForms'
 import { createCourse, updateCourse, deleteCourse } from '../../api/students'
 import type { StudentProfile } from '../../types'
 
@@ -114,6 +114,7 @@ export default function ProfilePage() {
   const accomMut = useMutation({ mutationFn: upsertAccommodations, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Accommodations updated', 'success') } })
   const schedMut = useMutation({ mutationFn: upsertScheduling, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Scheduling updated', 'success') } })
   const visaMut = useMutation({ mutationFn: upsertVisaInfo, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Visa info updated', 'success') } })
+  const dataRightsMut = useMutation({ mutationFn: upsertDataRights, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Data rights updated', 'success') } })
   const prefsMut = useMutation({ mutationFn: upsertPreferences, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Preferences updated', 'success') } })
 
   if (isLoading) return <div className="p-6 space-y-4">{Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}</div>
@@ -689,6 +690,28 @@ export default function ProfilePage() {
         </div>
       </Card>
 
+      {/* Data Rights */}
+      <Card className="p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Shield size={18} className="text-gray-500" />
+            <h2 className="font-semibold text-brand-slate-700">Data Rights</h2>
+          </div>
+          <Button size="sm" variant="ghost" onClick={() => { setEditItem(p?.data_consent); setEditModal('data_rights') }}><Pencil size={14} /></Button>
+        </div>
+        {p?.data_consent ? (
+          <div className="text-sm space-y-1">
+            <p className="text-gray-600">Matching: {p.data_consent.consent_matching ? 'Allowed' : 'Denied'}</p>
+            <p className="text-gray-600">Outreach: {p.data_consent.consent_outreach ? 'Allowed' : 'Denied'}</p>
+            <p className="text-gray-600">Research: {p.data_consent.consent_research ? 'Allowed' : 'Denied'}</p>
+            {p.data_consent.data_retention_preference && <p className="text-gray-400 text-xs">Retention: {p.data_consent.data_retention_preference.replace(/_/g, ' ')}</p>}
+            {p.data_consent.deletion_requested && <p className="text-xs text-rose-600 font-medium">Data deletion requested</p>}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">Manage how your data is used and stored.</p>
+        )}
+      </Card>
+
       {/* === MODALS === */}
 
       {/* Basic Info Modal */}
@@ -817,6 +840,15 @@ export default function ProfilePage() {
           defaultValues={editItem}
           onSubmit={data => visaMut.mutate(data)}
           loading={visaMut.isPending}
+        />
+      </Modal>
+
+      {/* Data Rights Modal */}
+      <Modal isOpen={editModal === 'data_rights'} onClose={() => setEditModal(null)} title="Data Rights & Privacy">
+        <DataRightsForm
+          defaultValues={editItem}
+          onSubmit={data => dataRightsMut.mutate(data)}
+          loading={dataRightsMut.isPending}
         />
       </Modal>
 

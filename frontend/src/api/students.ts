@@ -65,6 +65,9 @@ export const upsertVisaInfo = (data: any) => apiClient.put('/students/me/visa-in
 export const getScheduling = () => apiClient.get('/students/me/scheduling').then(r => r.data)
 export const upsertScheduling = (data: any) => apiClient.put('/students/me/scheduling', data).then(r => r.data)
 
+export const getDataRights = () => apiClient.get('/students/me/data-rights').then(r => r.data)
+export const upsertDataRights = (data: any) => apiClient.put('/students/me/data-rights', data).then(r => r.data)
+
 export const exportProfileJson = async () => {
   const res = await apiClient.get('/students/me/export')
   const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' })

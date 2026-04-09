@@ -1,3 +1,9 @@
+export const DATA_RETENTION_OPTIONS = [
+  { value: 'standard', label: 'Standard' },
+  { value: 'minimum', label: 'Minimum retention' },
+  { value: 'delete_after_cycle', label: 'Delete after admissions cycle' },
+]
+
 export const SPONSORSHIP_SOURCES = [
   { value: 'self', label: 'Self-funded' },
   { value: 'family', label: 'Family' },

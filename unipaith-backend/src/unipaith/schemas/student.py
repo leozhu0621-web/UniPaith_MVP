@@ -616,6 +616,30 @@ class VisaInfoResponse(BaseModel):
     updated_at: datetime
 
 
+class UpsertDataConsentRequest(BaseModel):
+    consent_matching: bool | None = None
+    consent_outreach: bool | None = None
+    consent_research: bool | None = None
+    data_retention_preference: (
+        Literal["standard", "minimum", "delete_after_cycle"] | None
+    ) = None
+    deletion_requested: bool | None = None
+
+
+class DataConsentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    student_id: UUID
+    consent_matching: bool
+    consent_outreach: bool
+    consent_research: bool
+    data_retention_preference: str | None
+    deletion_requested: bool
+    deletion_requested_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+
+
 class NextStepResponse(BaseModel):
     section: str
     fields: list[str]
@@ -653,6 +677,7 @@ class StudentProfileResponse(BaseModel):
     accommodations: AccommodationResponse | None = None
     scheduling: SchedulingResponse | None = None
     visa_info: VisaInfoResponse | None = None
+    data_consent: DataConsentResponse | None = None
     preferences: StudentPreferenceResponse | None = None
     onboarding: OnboardingStatusResponse | None = None
 

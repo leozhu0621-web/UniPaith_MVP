@@ -3,7 +3,7 @@ import Button from '../../../components/ui/Button'
 import Input from '../../../components/ui/Input'
 import Textarea from '../../../components/ui/Textarea'
 import Select from '../../../components/ui/Select'
-import { DEGREE_LABELS, TEST_TYPES, ACTIVITY_TYPES, GPA_SCALES, CITY_SIZE_OPTIONS, FUNDING_OPTIONS, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS, WORK_EXPERIENCE_TYPES, COMPENSATION_TYPES, COMPETITION_LEVELS, ACCOMMODATION_CATEGORIES, DOC_STATUS_OPTIONS, FONT_SIZE_OPTIONS, INTERVIEW_FORMAT_OPTIONS, SPONSORSHIP_SOURCES, COURSE_LEVELS, CREDENTIAL_EVAL_STATUS } from '../../../utils/constants'
+import { DEGREE_LABELS, TEST_TYPES, ACTIVITY_TYPES, GPA_SCALES, CITY_SIZE_OPTIONS, FUNDING_OPTIONS, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS, WORK_EXPERIENCE_TYPES, COMPENSATION_TYPES, COMPETITION_LEVELS, ACCOMMODATION_CATEGORIES, DOC_STATUS_OPTIONS, FONT_SIZE_OPTIONS, INTERVIEW_FORMAT_OPTIONS, SPONSORSHIP_SOURCES, COURSE_LEVELS, CREDENTIAL_EVAL_STATUS, DATA_RETENTION_OPTIONS } from '../../../utils/constants'
 
 interface FormProps {
   defaultValues: any
@@ -292,6 +292,28 @@ export function VisaInfoForm({ defaultValues, onSubmit, loading }: FormProps) {
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('prior_visa_refusals')} /> Prior visa refusals</label>
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('work_authorization_needed')} /> Need work authorization during study</label>
       <Textarea label="Travel Constraints (optional)" placeholder="Any travel restrictions..." {...register('travel_constraints')} />
+      <Button type="submit" loading={loading} className="w-full">Save</Button>
+    </form>
+  )
+}
+
+export function DataRightsForm({ defaultValues, onSubmit, loading }: FormProps) {
+  const { register, handleSubmit } = useForm({ defaultValues: { consent_matching: defaultValues?.consent_matching ?? true, consent_outreach: defaultValues?.consent_outreach ?? true, consent_research: defaultValues?.consent_research ?? true, data_retention_preference: defaultValues?.data_retention_preference || 'standard', deletion_requested: defaultValues?.deletion_requested || false } })
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div>
+        <p className="text-sm font-medium text-gray-700 mb-2">Data Usage Consent</p>
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('consent_matching')} /> Allow use for program matching</label>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('consent_outreach')} /> Allow use for outreach and marketing</label>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('consent_research')} /> Allow use for research and analytics</label>
+        </div>
+      </div>
+      <Select label="Data Retention" options={DATA_RETENTION_OPTIONS} {...register('data_retention_preference')} />
+      <div className="border-t border-gray-100 pt-3">
+        <label className="flex items-center gap-2 text-sm text-rose-600"><input type="checkbox" {...register('deletion_requested')} /> Request data deletion</label>
+        <p className="text-xs text-gray-400 mt-1">This will flag your account for data removal. The process may take up to 30 days.</p>
+      </div>
       <Button type="submit" loading={loading} className="w-full">Save</Button>
     </form>
   )
