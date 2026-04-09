@@ -717,6 +717,22 @@ export interface PipelineData {
   [column: string]: any
 }
 
+// ============ PRIORITY QUEUE ============
+export interface PrioritizedApplication {
+  application_id: string
+  student_id: string
+  program_id: string
+  program_name: string
+  status: string
+  match_score: number | null
+  completeness_status: string | null
+  submitted_at: string | null
+  priority_score: number
+  priority_reasons: string[]
+  deadline_days: number | null
+  assigned_count: number
+}
+
 // ============ DASHBOARD & ANALYTICS ============
 export interface DashboardSummary {
   program_count: number

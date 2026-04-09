@@ -11,7 +11,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -624,6 +624,186 @@ class ReviewPipelineService:
                 else None
             ),
         }
+
+    # ------------------------------------------------------------------
+    # AI Queue Prioritization
+    # ------------------------------------------------------------------
+
+    async def calculate_review_priorities(
+        self,
+        institution_id: UUID,
+        program_id: UUID | None = None,
+    ) -> list[dict]:
+        """Score and rank applications by review priority."""
+        from datetime import UTC, datetime
+
+        from unipaith.models.institution import IntakeRound
+
+        # Load applications needing review
+        stmt = (
+            select(Application)
+            .join(Program, Application.program_id == Program.id)
+            .where(
+                Program.institution_id == institution_id,
+                Application.status.in_(["submitted", "under_review"]),
+            )
+        )
+        if program_id:
+            stmt = stmt.where(Application.program_id == program_id)
+        result = await self.db.execute(stmt)
+        apps = list(result.scalars().all())
+
+        if not apps:
+            return []
+
+        # Load programs for deadlines
+        prog_ids = list({a.program_id for a in apps})
+        prog_r = await self.db.execute(
+            select(Program).where(Program.id.in_(prog_ids))
+        )
+        programs = {p.id: p for p in prog_r.scalars().all()}
+
+        # Load intake round deadlines
+        intake_r = await self.db.execute(
+            select(IntakeRound).where(
+                IntakeRound.program_id.in_(prog_ids),
+                IntakeRound.is_active.is_(True),
+            )
+        )
+        intake_deadlines: dict[UUID, date | None] = {}
+        for ir in intake_r.scalars().all():
+            existing = intake_deadlines.get(ir.program_id)
+            if ir.application_deadline:
+                if not existing or ir.application_deadline < existing:
+                    intake_deadlines[ir.program_id] = (
+                        ir.application_deadline
+                    )
+
+        # Load reviewer workload counts
+        assign_r = await self.db.execute(
+            select(
+                ReviewAssignment.reviewer_id,
+                func.count(ReviewAssignment.id),
+            )
+            .where(
+                ReviewAssignment.status.in_(["pending", "in_progress"]),
+            )
+            .group_by(ReviewAssignment.reviewer_id)
+        )
+        reviewer_load = dict(assign_r.all())
+
+        # Load assignments per application
+        app_ids = [a.id for a in apps]
+        app_assign_r = await self.db.execute(
+            select(ReviewAssignment).where(
+                ReviewAssignment.application_id.in_(app_ids),
+            )
+        )
+        app_assignments: dict[UUID, list] = {}
+        for ra in app_assign_r.scalars().all():
+            app_assignments.setdefault(ra.application_id, []).append(ra)
+
+        now = datetime.now(UTC).date()
+        prioritized = []
+
+        for app in apps:
+            score = 0.0
+            reasons: list[str] = []
+            deadline_days: int | None = None
+
+            # 1. Deadline urgency (40 points max)
+            prog = programs.get(app.program_id)
+            deadline = None
+            if app.program_id in intake_deadlines:
+                deadline = intake_deadlines[app.program_id]
+            elif prog and prog.application_deadline:
+                deadline = prog.application_deadline
+
+            if deadline:
+                days = (deadline - now).days
+                deadline_days = days
+                if days <= 0:
+                    score += 40
+                    reasons.append("Past deadline")
+                elif days <= 7:
+                    score += 35
+                    reasons.append(f"Deadline in {days}d")
+                elif days <= 14:
+                    score += 25
+                    reasons.append(f"Deadline in {days}d")
+                elif days <= 30:
+                    score += 15
+                    reasons.append(f"Deadline in {days}d")
+                else:
+                    score += 5
+
+            # 2. Completeness (20 points max)
+            cs = app.completeness_status
+            if cs == "complete":
+                score += 20
+                reasons.append("Complete application")
+            elif cs == "incomplete":
+                score += 5
+                reasons.append("Incomplete — missing items")
+            else:
+                score += 10
+
+            # 3. Match score (20 points max)
+            if app.match_score:
+                ms = float(app.match_score)
+                match_pts = min(20, ms * 20)
+                score += match_pts
+                if ms >= 0.8:
+                    reasons.append(f"High match ({ms:.0%})")
+                elif ms >= 0.6:
+                    reasons.append(f"Good match ({ms:.0%})")
+
+            # 4. Reviewer workload (20 points max)
+            assignments = app_assignments.get(app.id, [])
+            if not assignments:
+                score += 20
+                reasons.append("Unassigned")
+            else:
+                # Lower priority if assigned to overloaded reviewer
+                avg_load = sum(
+                    reviewer_load.get(ra.reviewer_id, 0)
+                    for ra in assignments
+                ) / len(assignments)
+                if avg_load <= 5:
+                    score += 15
+                elif avg_load <= 10:
+                    score += 10
+                else:
+                    score += 5
+                    reasons.append("Reviewer overloaded")
+
+            prioritized.append({
+                "application_id": str(app.id),
+                "student_id": str(app.student_id),
+                "program_id": str(app.program_id),
+                "program_name": (
+                    prog.program_name if prog else "Unknown"
+                ),
+                "status": app.status,
+                "match_score": (
+                    float(app.match_score)
+                    if app.match_score
+                    else None
+                ),
+                "completeness_status": app.completeness_status,
+                "submitted_at": (
+                    app.submitted_at.isoformat()
+                    if app.submitted_at
+                    else None
+                ),
+                "priority_score": round(score, 1),
+                "priority_reasons": reasons,
+                "deadline_days": deadline_days,
+                "assigned_count": len(assignments),
+            })
+
+        prioritized.sort(key=lambda x: x["priority_score"], reverse=True)
+        return prioritized
 
     # ------------------------------------------------------------------
     # Pipeline analytics

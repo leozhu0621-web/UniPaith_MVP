@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AIPacketSummary, BatchOperationResult, CohortComparisonData, Rubric, ApplicationScore, ReviewAssignment, AIReviewSummary, PipelineData } from '../types'
+import type { AIPacketSummary, BatchOperationResult, CohortComparisonData, PrioritizedApplication, Rubric, ApplicationScore, ReviewAssignment, AIReviewSummary, PipelineData } from '../types'
 
 export async function getRubrics(programId?: string): Promise<Rubric[]> {
   const params = programId ? { program_id: programId } : {}
@@ -56,6 +56,14 @@ export async function getAIPacketSummary(applicationId: string, rubricId?: strin
 export async function regenerateAIPacketSummary(applicationId: string, rubricId?: string): Promise<AIPacketSummary> {
   const params = rubricId ? { rubric_id: rubricId } : undefined
   const { data } = await apiClient.post(`/reviews/applications/${applicationId}/ai-packet/regenerate`, null, { params })
+  return data
+}
+
+// --- Priority Queue ---
+
+export async function getReviewPriorityQueue(programId?: string): Promise<PrioritizedApplication[]> {
+  const params = programId ? { program_id: programId } : undefined
+  const { data } = await apiClient.get('/reviews/priority-queue', { params })
   return data
 }
 

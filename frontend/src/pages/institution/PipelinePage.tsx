@@ -12,10 +12,10 @@ import {
   type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core'
-import { Search, GripVertical, ClipboardCheck, List, Video, CheckSquare } from 'lucide-react'
+import { Search, GripVertical, ClipboardCheck, List, Video, CheckSquare, Zap, AlertTriangle, Clock } from 'lucide-react'
 import { getInstitutionPrograms } from '../../api/institutions'
 import { getApplicationsByProgram, updateApplicationStatus, batchRequestMissingItems, batchUpdateStatus, batchReleaseDecision } from '../../api/applications-admin'
-import { batchAssignReviewers } from '../../api/reviews'
+import { batchAssignReviewers, getReviewPriorityQueue } from '../../api/reviews'
 import { getInstitutionInterviews, batchInviteInterviews } from '../../api/interviews-admin'
 import { showToast } from '../../stores/toast-store'
 import Badge from '../../components/ui/Badge'
@@ -31,7 +31,7 @@ import { formatRelative, formatScore } from '../../utils/format'
 import { STATUS_COLORS } from '../../utils/constants'
 import Modal from '../../components/ui/Modal'
 import Textarea from '../../components/ui/Textarea'
-import type { Application, BatchOperationResult, Program } from '../../types'
+import type { Application, BatchOperationResult, PrioritizedApplication, Program } from '../../types'
 
 const PIPELINE_COLUMNS = [
   { id: 'submitted', label: 'Applied', color: 'bg-blue-500' },
@@ -41,7 +41,7 @@ const PIPELINE_COLUMNS = [
 ] as const
 
 type ColumnId = typeof PIPELINE_COLUMNS[number]['id']
-type PipelineTab = 'board' | 'review' | 'list' | 'interviews'
+type PipelineTab = 'board' | 'review' | 'list' | 'interviews' | 'priority'
 
 function DraggableCard({ app, onClick, selected, onToggleSelect }: {
   app: Application; onClick: () => void; selected?: boolean; onToggleSelect?: (id: string) => void
@@ -159,6 +159,13 @@ export default function PipelinePage() {
     enabled: activeTab === 'interviews',
   })
 
+  const priorityQ = useQuery({
+    queryKey: ['priority-queue', selectedProgram],
+    queryFn: () => getReviewPriorityQueue(selectedProgram || undefined),
+    enabled: activeTab === 'priority',
+  })
+  const prioritized: PrioritizedApplication[] = Array.isArray(priorityQ.data) ? priorityQ.data : []
+
   const applications: Application[] = Array.isArray(applicationsQ.data) ? applicationsQ.data : []
 
   useEffect(() => {
@@ -201,6 +208,7 @@ export default function PipelinePage() {
   const programOptions = programs.map(p => ({ value: p.id, label: p.program_name }))
   const tabs = [
     { id: 'board', label: 'Board' },
+    { id: 'priority', label: 'Priority Queue' },
     { id: 'review', label: 'Needs Review' },
     { id: 'list', label: 'All Applications' },
     { id: 'interviews', label: 'Interviews' },
@@ -434,6 +442,51 @@ export default function PipelinePage() {
                 <Table columns={reviewColumns} data={filteredAllApps} onRowClick={(row) => navigate(`/i/pipeline/${row.id}`)} />
               )}
             </Card>
+          )}
+
+          {activeTab === 'priority' && (
+            <div className="space-y-2">
+              {priorityQ.isLoading ? (
+                <Skeleton className="h-40" />
+              ) : prioritized.length === 0 ? (
+                <EmptyState icon={<Zap size={40} />} title="No applications to prioritize" description="Applications needing review will be ranked here by urgency." />
+              ) : (
+                prioritized.map((p, i) => (
+                  <Card key={p.application_id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/i/pipeline/${p.application_id}`)}>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full shrink-0 font-bold text-white text-sm"
+                        style={{ backgroundColor: p.priority_score >= 70 ? '#ef4444' : p.priority_score >= 40 ? '#f59e0b' : '#22c55e' }}>
+                        {Math.round(p.priority_score)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium text-gray-900">#{i + 1} — Applicant {p.student_id.slice(0, 8)}</span>
+                          <Badge variant="info">{p.program_name}</Badge>
+                          <Badge variant="neutral">{p.status}</Badge>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {p.priority_reasons.map((r, j) => (
+                            <span key={j} className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{r}</span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        {p.deadline_days != null && (
+                          <div className={`flex items-center gap-1 text-xs font-medium ${p.deadline_days <= 7 ? 'text-red-600' : p.deadline_days <= 14 ? 'text-amber-600' : 'text-gray-500'}`}>
+                            <Clock size={12} />
+                            {p.deadline_days <= 0 ? 'Past due' : `${p.deadline_days}d left`}
+                          </div>
+                        )}
+                        {p.match_score != null && (
+                          <p className="text-xs text-gray-400 mt-0.5">Match: {(p.match_score * 100).toFixed(0)}%</p>
+                        )}
+                        <p className="text-xs text-gray-400">{p.assigned_count === 0 ? 'Unassigned' : `${p.assigned_count} reviewer(s)`}</p>
+                      </div>
+                    </div>
+                  </Card>
+                ))
+              )}
+            </div>
           )}
 
           {activeTab === 'interviews' && (

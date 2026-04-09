@@ -194,6 +194,20 @@ async def ai_rubric_prefill(
     }
 
 
+@router.get("/priority-queue")
+async def get_review_priority_queue(
+    program_id: UUID | None = Query(None),
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """AI-ranked priority queue for application review."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    svc = ReviewPipelineService(db)
+    return await svc.calculate_review_priorities(
+        inst.id, program_id,
+    )
+
+
 # --- Batch Operations ---
 
 
