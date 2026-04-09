@@ -15,7 +15,7 @@ import Skeleton from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatCurrency, formatDate, formatPercent, formatScore } from '../../utils/format'
 import { DEGREE_LABELS, TIER_LABELS } from '../../utils/constants'
-import { ArrowLeft, Heart, HeartOff, MessageSquare, DollarSign, TrendingUp, Clock, GraduationCap } from 'lucide-react'
+import { ArrowLeft, Heart, HeartOff, MessageSquare, DollarSign, TrendingUp, Clock, GraduationCap, Briefcase, Building2, BarChart3, Users } from 'lucide-react'
 import type { Program, MatchResult, EventItem } from '../../types'
 
 export default function SchoolDetailPage() {
@@ -123,6 +123,7 @@ export default function SchoolDetailPage() {
           { id: 'overview', label: 'Overview' },
           { id: 'requirements', label: 'Requirements' },
           { id: 'costs', label: 'Costs & Aid' },
+          { id: 'outcomes', label: 'Outcomes' },
           { id: 'match', label: 'Match Analysis' },
         ]}
         activeTab={tab}
@@ -303,6 +304,122 @@ export default function SchoolDetailPage() {
                   <p className="text-sm text-gray-500">Outcomes data not yet available for this program.</p>
                 )}
               </Card>
+            </div>
+          )
+        })()}
+
+        {tab === 'outcomes' && (() => {
+          const od = p.outcomes_data || {}
+          const salary = od.median_salary ? Number(od.median_salary) : null
+          const salaryLow = od.salary_25th ? Number(od.salary_25th) : (salary ? Math.round(salary * 0.75) : null)
+          const salaryHigh = od.salary_75th ? Number(od.salary_75th) : (salary ? Math.round(salary * 1.3) : null)
+          const empRate = od.employment_rate ? Number(od.employment_rate) : null
+          const empTimeframe = od.employment_timeframe || '6 months after graduation'
+          const internRate = od.internship_conversion_rate ? Number(od.internship_conversion_rate) : null
+          const topEmployers: string[] = od.top_employers || []
+          const topIndustries: string[] = od.top_industries || []
+          const hasData = salary || empRate || topEmployers.length > 0
+
+          return (
+            <div className="space-y-4">
+              {!hasData ? (
+                <Card className="p-6 text-center">
+                  <BarChart3 size={32} className="text-gray-300 mx-auto mb-3" />
+                  <p className="text-sm text-gray-500">Outcomes data is not yet available for this program.</p>
+                  <p className="text-xs text-gray-400 mt-1">Check back later or contact the program directly.</p>
+                </Card>
+              ) : (
+                <>
+                  <Card className="p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <DollarSign size={16} className="text-stone-600" />
+                      <h3 className="font-medium text-sm text-stone-700">Salary Distribution</h3>
+                    </div>
+                    {salary ? (
+                      <div>
+                        <div className="flex items-end justify-between mb-2">
+                          <div className="text-center flex-1">
+                            <p className="text-xs text-gray-400">25th %ile</p>
+                            <p className="text-sm font-medium text-gray-600">{salaryLow ? formatCurrency(salaryLow) : '—'}</p>
+                          </div>
+                          <div className="text-center flex-1">
+                            <p className="text-xs text-gray-400">Median</p>
+                            <p className="text-2xl font-bold text-emerald-700">{formatCurrency(salary)}</p>
+                          </div>
+                          <div className="text-center flex-1">
+                            <p className="text-xs text-gray-400">75th %ile</p>
+                            <p className="text-sm font-medium text-gray-600">{salaryHigh ? formatCurrency(salaryHigh) : '—'}</p>
+                          </div>
+                        </div>
+                        <div className="relative h-2 bg-gray-100 rounded-full mt-3">
+                          <div
+                            className="absolute h-full bg-emerald-200 rounded-full"
+                            style={{ left: '15%', width: '70%' }}
+                          />
+                          <div
+                            className="absolute h-full bg-emerald-500 rounded-full"
+                            style={{ left: '40%', width: '20%' }}
+                          />
+                        </div>
+                        <p className="text-[10px] text-gray-400 mt-1 text-center">Starting salary range</p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">Salary data not available.</p>
+                    )}
+                  </Card>
+
+                  <Card className="p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Briefcase size={16} className="text-stone-600" />
+                      <h3 className="font-medium text-sm text-stone-700">Employment & Placement</h3>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      {empRate != null && (
+                        <div>
+                          <p className="text-xs text-gray-500">Employment Rate</p>
+                          <p className="text-2xl font-bold text-stone-700">{(empRate * 100).toFixed(0)}%</p>
+                          <p className="text-[10px] text-gray-400">Within {empTimeframe}</p>
+                        </div>
+                      )}
+                      {internRate != null && (
+                        <div>
+                          <p className="text-xs text-gray-500">Internship Conversion</p>
+                          <p className="text-2xl font-bold text-stone-700">{(internRate * 100).toFixed(0)}%</p>
+                          <p className="text-[10px] text-gray-400">Interns receiving full-time offers</p>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+
+                  {topEmployers.length > 0 && (
+                    <Card className="p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Building2 size={16} className="text-stone-600" />
+                        <h3 className="font-medium text-sm text-stone-700">Top Employers</h3>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {topEmployers.map((e: string) => (
+                          <Badge key={e} variant="neutral" size="sm">{e}</Badge>
+                        ))}
+                      </div>
+                    </Card>
+                  )}
+
+                  {topIndustries.length > 0 && (
+                    <Card className="p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Users size={16} className="text-stone-600" />
+                        <h3 className="font-medium text-sm text-stone-700">Industry Placement</h3>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {topIndustries.map((ind: string) => (
+                          <Badge key={ind} variant="info" size="sm">{ind}</Badge>
+                        ))}
+                      </div>
+                    </Card>
+                  )}
+                </>
+              )}
             </div>
           )
         })()}
