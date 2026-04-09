@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AnalyticsData, AuditLogList, Campaign, CommunicationTemplate, IntakeRound, CampaignAttributionDetail, CampaignLink, CampaignMetrics, DashboardSummary, DatasetPreview, Inquiry, Institution, InstitutionDataset, InstitutionPost, Program, Promotion, Segment } from '../types'
+import type { AnalyticsData, AuditLogList, Campaign, CommunicationTemplate, IntakeRound, ProgramChecklistItem, CampaignAttributionDetail, CampaignLink, CampaignMetrics, DashboardSummary, DatasetPreview, Inquiry, Institution, InstitutionDataset, InstitutionPost, Program, Promotion, Segment } from '../types'
 
 export async function getInstitution(): Promise<Institution> {
   const { data } = await apiClient.get('/institutions/me')
@@ -229,6 +229,33 @@ export async function updateInquiry(inquiryId: string, payload: {
 }): Promise<Inquiry> {
   const { data } = await apiClient.put(`/institutions/me/inquiries/${inquiryId}`, payload)
   return data
+}
+
+// --- Program Checklist ---
+
+export async function getProgramChecklist(programId: string): Promise<ProgramChecklistItem[]> {
+  const { data } = await apiClient.get(`/institutions/me/programs/${programId}/checklist`)
+  return data
+}
+
+export async function createChecklistItem(programId: string, payload: {
+  item_name: string; category?: string; requirement_level?: string;
+  description?: string; instructions?: string; sort_order?: number
+}): Promise<ProgramChecklistItem> {
+  const { data } = await apiClient.post(`/institutions/me/programs/${programId}/checklist`, payload)
+  return data
+}
+
+export async function updateChecklistItem(programId: string, itemId: string, payload: Partial<{
+  item_name: string; category: string; requirement_level: string;
+  description: string; instructions: string; sort_order: number; is_active: boolean
+}>): Promise<ProgramChecklistItem> {
+  const { data } = await apiClient.put(`/institutions/me/programs/${programId}/checklist/${itemId}`, payload)
+  return data
+}
+
+export async function deleteChecklistItem(programId: string, itemId: string): Promise<void> {
+  await apiClient.delete(`/institutions/me/programs/${programId}/checklist/${itemId}`)
 }
 
 // --- Intake Rounds ---

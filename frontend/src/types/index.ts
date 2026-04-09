@@ -845,6 +845,21 @@ export interface Inquiry {
   program_name: string | null
 }
 
+// ============ PROGRAM CHECKLIST ============
+export interface ProgramChecklistItem {
+  id: string
+  program_id: string
+  item_name: string
+  category: 'essay' | 'test_score' | 'recommendation' | 'interview' | 'portfolio' | 'document' | 'financial' | 'other'
+  requirement_level: 'required' | 'optional' | 'conditional' | 'not_applicable'
+  description: string | null
+  instructions: string | null
+  sort_order: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
 // ============ INTAKE ROUNDS ============
 export interface IntakeRound {
   id: string

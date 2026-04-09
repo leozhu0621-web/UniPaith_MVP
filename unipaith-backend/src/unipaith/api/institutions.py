@@ -9,6 +9,12 @@ from unipaith.config import settings
 from unipaith.database import get_db
 from unipaith.dependencies import require_institution_admin, require_student
 from unipaith.models.user import User
+from unipaith.schemas.checklist import (
+    BulkChecklistRequest,
+    CreateProgramChecklistItemRequest,
+    ProgramChecklistItemResponse,
+    UpdateProgramChecklistItemRequest,
+)
 from unipaith.schemas.communication import (
     CreateTemplateRequest,
     SendFromTemplateRequest,
@@ -766,6 +772,158 @@ async def update_inquiry(
     svc = _svc(db)
     inst = await svc.get_institution(user.id)
     return await svc.update_inquiry(inst.id, inquiry_id, body)
+
+
+# --- Program Checklist ---
+
+
+@router.get(
+    "/me/programs/{program_id}/checklist",
+    response_model=list[ProgramChecklistItemResponse],
+)
+async def list_checklist_items(
+    program_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from sqlalchemy import select
+
+    from unipaith.models.institution import ProgramChecklistItem
+
+    await _svc(db).get_institution(user.id)
+    result = await db.execute(
+        select(ProgramChecklistItem)
+        .where(ProgramChecklistItem.program_id == program_id)
+        .order_by(
+            ProgramChecklistItem.sort_order,
+            ProgramChecklistItem.item_name,
+        )
+    )
+    return list(result.scalars().all())
+
+
+@router.post(
+    "/me/programs/{program_id}/checklist",
+    response_model=ProgramChecklistItemResponse,
+)
+async def create_checklist_item(
+    program_id: UUID,
+    body: CreateProgramChecklistItemRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from unipaith.models.institution import ProgramChecklistItem
+
+    await _svc(db).get_institution(user.id)
+    item = ProgramChecklistItem(
+        program_id=program_id,
+        item_name=body.item_name,
+        category=body.category,
+        requirement_level=body.requirement_level,
+        description=body.description,
+        instructions=body.instructions,
+        sort_order=body.sort_order,
+    )
+    db.add(item)
+    await db.flush()
+    await db.refresh(item)
+    return item
+
+
+@router.post(
+    "/me/programs/{program_id}/checklist/bulk",
+    response_model=list[ProgramChecklistItemResponse],
+)
+async def bulk_create_checklist(
+    program_id: UUID,
+    body: BulkChecklistRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from unipaith.models.institution import ProgramChecklistItem
+
+    await _svc(db).get_institution(user.id)
+    created = []
+    for item_data in body.items:
+        item = ProgramChecklistItem(
+            program_id=program_id,
+            item_name=item_data.item_name,
+            category=item_data.category,
+            requirement_level=item_data.requirement_level,
+            description=item_data.description,
+            instructions=item_data.instructions,
+            sort_order=item_data.sort_order,
+        )
+        db.add(item)
+        created.append(item)
+    await db.flush()
+    for item in created:
+        await db.refresh(item)
+    return created
+
+
+@router.put(
+    "/me/programs/{program_id}/checklist/{item_id}",
+    response_model=ProgramChecklistItemResponse,
+)
+async def update_checklist_item(
+    program_id: UUID,
+    item_id: UUID,
+    body: UpdateProgramChecklistItemRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from sqlalchemy import select
+
+    from unipaith.models.institution import ProgramChecklistItem
+
+    await _svc(db).get_institution(user.id)
+    result = await db.execute(
+        select(ProgramChecklistItem).where(
+            ProgramChecklistItem.id == item_id,
+            ProgramChecklistItem.program_id == program_id,
+        )
+    )
+    item = result.scalar_one_or_none()
+    if not item:
+        from unipaith.core.exceptions import NotFoundException
+
+        raise NotFoundException("Checklist item not found")
+    for key, val in body.model_dump(exclude_unset=True).items():
+        setattr(item, key, val)
+    await db.flush()
+    await db.refresh(item)
+    return item
+
+
+@router.delete(
+    "/me/programs/{program_id}/checklist/{item_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_checklist_item(
+    program_id: UUID,
+    item_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from sqlalchemy import select
+
+    from unipaith.models.institution import ProgramChecklistItem
+
+    await _svc(db).get_institution(user.id)
+    result = await db.execute(
+        select(ProgramChecklistItem).where(
+            ProgramChecklistItem.id == item_id,
+            ProgramChecklistItem.program_id == program_id,
+        )
+    )
+    item = result.scalar_one_or_none()
+    if not item:
+        from unipaith.core.exceptions import NotFoundException
+
+        raise NotFoundException("Checklist item not found")
+    await db.delete(item)
+    await db.flush()
 
 
 # --- Intake Rounds ---

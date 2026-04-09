@@ -68,6 +68,7 @@ import AuditLogPage from './pages/institution/AuditLogPage'
 import TemplatesPage from './pages/institution/TemplatesPage'
 import CohortComparisonPage from './pages/institution/CohortComparisonPage'
 import IntakeRoundsPage from './pages/institution/IntakeRoundsPage'
+import RequirementsChecklistPage from './pages/institution/RequirementsChecklistPage'
 
 // Admin pages
 import AdminLayout from './components/layout/AdminLayout'
@@ -162,6 +163,7 @@ const router = createBrowserRouter([
       { path: 'templates', element: <TemplatesPage /> },
       { path: 'cohort-compare', element: <CohortComparisonPage /> },
       { path: 'intake-rounds', element: <IntakeRoundsPage /> },
+      { path: 'requirements', element: <RequirementsChecklistPage /> },
       { path: 'analytics', element: <AnalyticsPage /> },
       { path: 'data', element: <DataUploadPage /> },
       { path: 'settings', element: <InstitutionSettingsPage /> },

@@ -20,24 +20,16 @@ const HeroSection = () => (
 
       <ScrollReveal delay={200} variant="scale-up">
         <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-foreground leading-[1.1] mb-6 tracking-tight font-heading">
-          Everyone&rsquo;s private{" "}
+          Your private{" "}
           <br className="hidden sm:block" />
-          <span className="text-primary">education advisor</span>
+          <span className="text-primary">college advisor</span>
         </h1>
       </ScrollReveal>
 
       <ScrollReveal delay={400}>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-x-8 gap-y-3 text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-12">
-          <p>
-            <span className="font-semibold text-foreground">Students:</span>{" "}
-            AI guidance from profile to acceptance.
-          </p>
-          <span className="hidden sm:block w-1 h-1 rounded-full bg-muted-foreground/40" />
-          <p>
-            <span className="font-semibold text-foreground">Institutions:</span>{" "}
-            The admissions ops system your team deserves.
-          </p>
-        </div>
+        <p className="text-xl sm:text-2xl text-muted-foreground max-w-3xl mx-auto mb-12 leading-relaxed">
+          AI-powered guidance from first thought to final decision. One profile, transparent matching, and tools that actually help — free forever.
+        </p>
       </ScrollReveal>
 
       <ScrollReveal delay={600}>
