@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getProgram } from '../../api/programs'
+import { getProgram, getProgramReviews } from '../../api/programs'
 import { getMatchDetail, logEngagement } from '../../api/matching'
 import { listEvents, rsvpEvent } from '../../api/events'
 import { listMyApplications, createApplication } from '../../api/applications'
@@ -15,7 +15,7 @@ import Skeleton from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatCurrency, formatDate, formatPercent, formatScore } from '../../utils/format'
 import { DEGREE_LABELS, TIER_LABELS } from '../../utils/constants'
-import { ArrowLeft, Heart, HeartOff, MessageSquare, DollarSign, TrendingUp, Clock, GraduationCap, Briefcase, Building2, BarChart3, Users } from 'lucide-react'
+import { ArrowLeft, Heart, HeartOff, MessageSquare, DollarSign, TrendingUp, Clock, GraduationCap, Briefcase, Building2, BarChart3, Users, Star, Quote } from 'lucide-react'
 import type { Program, MatchResult, EventItem } from '../../types'
 
 export default function SchoolDetailPage() {
@@ -48,6 +48,12 @@ export default function SchoolDetailPage() {
   const applicationsList: any[] = Array.isArray(applications) ? applications : []
   const existingApp = applicationsList.find((a: any) => a.program_id === programId)
   const eventsList: EventItem[] = Array.isArray(events) ? events : []
+
+  const { data: reviewsData } = useQuery({
+    queryKey: ['program-reviews', programId],
+    queryFn: () => getProgramReviews(programId!),
+    retry: false,
+  })
 
   useEffect(() => {
     if (programId) logEngagement(programId, 'viewed_program', 1).catch(() => {})
@@ -124,6 +130,7 @@ export default function SchoolDetailPage() {
           { id: 'requirements', label: 'Requirements' },
           { id: 'costs', label: 'Costs & Aid' },
           { id: 'outcomes', label: 'Outcomes' },
+          { id: 'reviews', label: `Reviews${reviewsData?.total_reviews ? ` (${reviewsData.total_reviews})` : ''}` },
           { id: 'match', label: 'Match Analysis' },
         ]}
         activeTab={tab}
@@ -419,6 +426,91 @@ export default function SchoolDetailPage() {
                     </Card>
                   )}
                 </>
+              )}
+            </div>
+          )
+        })()}
+
+        {tab === 'reviews' && (() => {
+          const rd = reviewsData || { total_reviews: 0, reviews: [] }
+          const dims: { key: string; label: string }[] = [
+            { key: 'avg_teaching', label: 'Teaching Quality' },
+            { key: 'avg_workload', label: 'Workload' },
+            { key: 'avg_career_support', label: 'Career Support' },
+            { key: 'avg_roi', label: 'Return on Investment' },
+            { key: 'avg_overall', label: 'Overall' },
+          ]
+
+          return (
+            <div className="space-y-4">
+              {rd.total_reviews > 0 && (
+                <Card className="p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Star size={16} className="text-amber-500" />
+                    <h3 className="font-medium text-sm text-stone-700">Rating Summary</h3>
+                    <span className="text-xs text-gray-400">{rd.total_reviews} review{rd.total_reviews !== 1 ? 's' : ''}</span>
+                  </div>
+                  <div className="space-y-2">
+                    {dims.map(d => {
+                      const val: number | null = (rd as any)[d.key]
+                      if (val == null) return null
+                      return (
+                        <div key={d.key} className="flex items-center gap-3">
+                          <span className="text-xs text-gray-500 w-28">{d.label}</span>
+                          <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-amber-400 rounded-full" style={{ width: `${(val / 5) * 100}%` }} />
+                          </div>
+                          <span className="text-xs font-medium text-stone-700 w-8 text-right">{val.toFixed(1)}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </Card>
+              )}
+
+              {rd.reviews?.length > 0 ? (
+                <div className="space-y-3">
+                  {rd.reviews.map((r: any) => (
+                    <Card key={r.id} className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          {r.rating_overall && (
+                            <div className="flex items-center gap-0.5">
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <Star key={i} size={12} className={i < r.rating_overall ? 'text-amber-400 fill-amber-400' : 'text-gray-200'} />
+                              ))}
+                            </div>
+                          )}
+                          {r.is_verified && <Badge variant="success" size="sm">Verified</Badge>}
+                        </div>
+                        <span className="text-[10px] text-gray-400">{formatDate(r.created_at)}</span>
+                      </div>
+                      {r.reviewer_context && (
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          {Object.entries(r.reviewer_context).map(([k, v]) => (
+                            <Badge key={k} variant="neutral" size="sm">{String(v)}</Badge>
+                          ))}
+                        </div>
+                      )}
+                      {r.review_text && <p className="text-sm text-gray-700 mb-2">{r.review_text}</p>}
+                      {r.who_thrives_here && (
+                        <div className="bg-stone-50 rounded-lg p-3 mt-2">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Quote size={12} className="text-stone-400" />
+                            <span className="text-xs font-medium text-stone-600">Who thrives here</span>
+                          </div>
+                          <p className="text-xs text-stone-600">{r.who_thrives_here}</p>
+                        </div>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <Card className="p-6 text-center">
+                  <Star size={32} className="text-gray-300 mx-auto mb-3" />
+                  <p className="text-sm text-gray-500">No reviews yet for this program.</p>
+                  <p className="text-xs text-gray-400 mt-1">Be the first to share your experience.</p>
+                </Card>
               )}
             </div>
           )

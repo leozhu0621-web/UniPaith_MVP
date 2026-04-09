@@ -15,3 +15,6 @@ export const semanticSearch = (q: string, limit = 10) =>
 
 export const nlpSearch = (query: string) =>
   apiClient.post('/programs/search/nlp', { query }, { timeout: 30_000 }).then(r => r.data)
+
+export const getProgramReviews = (programId: string) =>
+  apiClient.get(`/programs/${programId}/reviews`).then(r => r.data)
