@@ -303,7 +303,7 @@ class InstitutionService:
                     Application.submitted_at >= datetime.fromisoformat(applied_after)
                 )
             stmt = stmt.join(
-                Application, Application.student_id == StudentProfile.user_id
+                Application, Application.student_id == StudentProfile.id
             ).where(*app_conditions)
         elif has_applied is False:
             # Exclude students who have any application for these programs
@@ -311,7 +311,7 @@ class InstitutionService:
             app_exists = (
                 select(Application.id)
                 .where(
-                    Application.student_id == StudentProfile.user_id,
+                    Application.student_id == StudentProfile.id,
                     Application.program_id.in_(program_ids),
                 )
                 .correlate(StudentProfile)
@@ -380,7 +380,7 @@ class InstitutionService:
         # --- Fallback: if NO criteria at all, return all non-draft applicants ---
         if not has_criteria:
             stmt = stmt.join(
-                Application, Application.student_id == StudentProfile.user_id
+                Application, Application.student_id == StudentProfile.id
             ).where(
                 Application.program_id.in_(program_ids),
                 Application.status != "draft",
