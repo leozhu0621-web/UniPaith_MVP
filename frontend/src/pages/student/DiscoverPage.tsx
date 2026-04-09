@@ -8,7 +8,7 @@ import Badge from '../../components/ui/Badge'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Skeleton from '../../components/ui/Skeleton'
-import { Search, SlidersHorizontal, X, ChevronDown, MessageSquare, Sparkles, Loader2, Pencil } from 'lucide-react'
+import { Search, SlidersHorizontal, X, ChevronDown, MessageSquare, Sparkles, Loader2, Pencil, Monitor, Briefcase, Wrench, Heart, Palette, BookOpen, Scale, Users } from 'lucide-react'
 import { formatCurrency, formatScore } from '../../utils/format'
 import { DEGREE_LABELS, TIER_LABELS } from '../../utils/constants'
 import type { MatchResult, PaginatedResponse, ProgramSummary } from '../../types'
@@ -37,6 +37,17 @@ const SORT_OPTIONS = [
 const COUNTRY_OPTIONS = [
   'United States', 'United Kingdom', 'Canada', 'Australia',
   'Germany', 'Netherlands', 'France', 'Singapore', 'Japan', 'South Korea',
+]
+
+const GENRE_TILES: { key: string; label: string; icon: typeof Monitor; query: string }[] = [
+  { key: 'cs', label: 'Computer Science', icon: Monitor, query: 'Computer Science' },
+  { key: 'biz', label: 'Business', icon: Briefcase, query: 'Business' },
+  { key: 'eng', label: 'Engineering', icon: Wrench, query: 'Engineering' },
+  { key: 'health', label: 'Health Sciences', icon: Heart, query: 'Health Sciences' },
+  { key: 'arts', label: 'Arts & Design', icon: Palette, query: 'Arts Design' },
+  { key: 'edu', label: 'Education', icon: BookOpen, query: 'Education' },
+  { key: 'law', label: 'Law', icon: Scale, query: 'Law' },
+  { key: 'social', label: 'Social Sciences', icon: Users, query: 'Social Sciences' },
 ]
 
 const DEGREE_OPTIONS = [
@@ -244,6 +255,35 @@ export default function DiscoverPage() {
           )}
         </div>
       )}
+
+      {/* Genre Tiles */}
+      <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
+        {GENRE_TILES.map(tile => {
+          const active = q === tile.query
+          return (
+            <button
+              key={tile.key}
+              onClick={() => {
+                if (active) {
+                  setQ('')
+                } else {
+                  setQ(tile.query)
+                  setNlpResult(null)
+                }
+                setPage(1)
+              }}
+              className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                active
+                  ? 'bg-stone-700 text-white shadow-sm'
+                  : 'bg-white border border-gray-200 text-stone-600 hover:bg-stone-50'
+              }`}
+            >
+              <tile.icon size={16} />
+              {tile.label}
+            </button>
+          )
+        })}
+      </div>
 
       <h2 className="text-lg font-medium mb-3">Browse All Programs</h2>
 
