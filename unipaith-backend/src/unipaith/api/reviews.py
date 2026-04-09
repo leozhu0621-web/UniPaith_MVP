@@ -154,6 +154,8 @@ async def cohort_comparison(
     """Side-by-side comparison of multiple applicants on rubric scores."""
     from sqlalchemy import select
 
+    from sqlalchemy.orm import selectinload
+
     from unipaith.models.application import Application, ApplicationScore
     from unipaith.models.student import StudentProfile
 
@@ -171,11 +173,11 @@ async def cohort_comparison(
             if not app:
                 continue
 
-            # Get student profile
+            # Get student profile with academic records for GPA
             sr = await db.execute(
-                select(StudentProfile).where(
-                    StudentProfile.id == app.student_id,
-                )
+                select(StudentProfile)
+                .where(StudentProfile.id == app.student_id)
+                .options(selectinload(StudentProfile.academic_records))
             )
             student = sr.scalar_one_or_none()
 
@@ -247,13 +249,14 @@ async def cohort_comparison(
                     else None
                 ),
                 "gpa": (
-                    student.gpa if student and hasattr(student, "gpa")
-                    else None
+                    float(best_gpa) if student
+                    and (best_gpa := max(
+                        (r.gpa for r in student.academic_records if r.gpa is not None),
+                        default=None,
+                    )) is not None else None
                 ),
                 "nationality": (
-                    student.nationality
-                    if student and hasattr(student, "nationality")
-                    else None
+                    student.nationality if student else None
                 ),
             })
         except Exception:
