@@ -17,7 +17,7 @@ import EmptyState from '../../components/ui/EmptyState'
 import Skeleton from '../../components/ui/Skeleton'
 import InstitutionPageHeader from '../../components/institution/InstitutionPageHeader'
 import { showToast } from '../../stores/toast-store'
-import { formatDateTime, formatDate } from '../../utils/format'
+import { formatDate } from '../../utils/format'
 import type { Promotion, Program } from '../../types'
 
 const STATUS_BADGE: Record<string, 'neutral' | 'info' | 'success' | 'warning'> = {
