@@ -304,6 +304,7 @@ export interface Program {
   media_urls: string[] | null
   highlights: string[] | null
   faculty_contacts: Record<string, any>[] | null
+  cost_data: Record<string, any> | null
   created_at: string
   updated_at: string
 }

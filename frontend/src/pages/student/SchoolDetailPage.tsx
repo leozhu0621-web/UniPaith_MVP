@@ -15,7 +15,7 @@ import Skeleton from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatCurrency, formatDate, formatPercent, formatScore } from '../../utils/format'
 import { DEGREE_LABELS, TIER_LABELS } from '../../utils/constants'
-import { ArrowLeft, Heart, HeartOff, MessageSquare } from 'lucide-react'
+import { ArrowLeft, Heart, HeartOff, MessageSquare, DollarSign, TrendingUp, Clock, GraduationCap } from 'lucide-react'
 import type { Program, MatchResult, EventItem } from '../../types'
 
 export default function SchoolDetailPage() {
@@ -122,6 +122,7 @@ export default function SchoolDetailPage() {
         tabs={[
           { id: 'overview', label: 'Overview' },
           { id: 'requirements', label: 'Requirements' },
+          { id: 'costs', label: 'Costs & Aid' },
           { id: 'match', label: 'Match Analysis' },
         ]}
         activeTab={tab}
@@ -167,6 +168,144 @@ export default function SchoolDetailPage() {
             )}
           </div>
         )}
+
+        {tab === 'costs' && (() => {
+          const cd = p.cost_data || {}
+          const years = (p.duration_months || 24) / 12
+          const annual = p.tuition || 0
+          const fees = cd.fees || {}
+          const feeTotal = Object.values(fees).reduce((s: number, v: any) => s + (Number(v) || 0), 0)
+          const living = cd.estimated_living_cost || 15000
+          const books = cd.book_supplies || 1200
+          const intlPremium = cd.international_premium || 0
+          const totalTuitionOnly = annual * years
+          const totalMid = (annual + feeTotal + living + books) * years
+          const totalHigh = Math.round(totalMid * 1.15)
+          const od = p.outcomes_data || {}
+          const salary = od.median_salary ? Number(od.median_salary) : null
+          const empRate = od.employment_rate ? Number(od.employment_rate) : null
+          const payback = od.payback_months ? Number(od.payback_months) : null
+
+          return (
+            <div className="space-y-4">
+              <Card className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <DollarSign size={16} className="text-stone-600" />
+                  <h3 className="font-medium text-sm text-stone-700">Tuition & Fees</h3>
+                </div>
+                <dl className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">Annual Tuition</dt>
+                    <dd className="font-medium">{formatCurrency(annual)}</dd>
+                  </div>
+                  {Object.entries(fees).map(([k, v]) => (
+                    <div key={k} className="flex justify-between">
+                      <dt className="text-gray-500 capitalize">{k.replace(/_/g, ' ')}</dt>
+                      <dd>{formatCurrency(Number(v))}</dd>
+                    </div>
+                  ))}
+                  {intlPremium > 0 && (
+                    <div className="flex justify-between">
+                      <dt className="text-gray-500">International Premium</dt>
+                      <dd>{formatCurrency(intlPremium)}</dd>
+                    </div>
+                  )}
+                  {feeTotal > 0 && (
+                    <div className="flex justify-between border-t pt-2 font-medium">
+                      <dt>Annual Subtotal</dt>
+                      <dd>{formatCurrency(annual + feeTotal)}</dd>
+                    </div>
+                  )}
+                </dl>
+              </Card>
+
+              <Card className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <GraduationCap size={16} className="text-stone-600" />
+                  <h3 className="font-medium text-sm text-stone-700">Estimated Total Cost ({years.toFixed(1)} years)</h3>
+                </div>
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <div className="bg-emerald-50 rounded-lg p-3">
+                    <p className="text-xs text-gray-500 mb-1">Tuition Only</p>
+                    <p className="text-lg font-bold text-emerald-700">{formatCurrency(totalTuitionOnly)}</p>
+                  </div>
+                  <div className="bg-stone-50 rounded-lg p-3">
+                    <p className="text-xs text-gray-500 mb-1">With Living Costs</p>
+                    <p className="text-lg font-bold text-stone-700">{formatCurrency(totalMid)}</p>
+                  </div>
+                  <div className="bg-amber-50 rounded-lg p-3">
+                    <p className="text-xs text-gray-500 mb-1">High Estimate</p>
+                    <p className="text-lg font-bold text-amber-700">{formatCurrency(totalHigh)}</p>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <DollarSign size={16} className="text-stone-600" />
+                  <h3 className="font-medium text-sm text-stone-700">Financial Aid</h3>
+                </div>
+                {cd.financial_aid_available ? (
+                  <div className="space-y-2">
+                    <Badge variant="success" size="sm">Aid Available</Badge>
+                    {cd.aid_types?.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {cd.aid_types.map((t: string) => (
+                          <Badge key={t} variant="info" size="sm">{t.replace(/_/g, ' ')}</Badge>
+                        ))}
+                      </div>
+                    )}
+                    {cd.avg_aid_amount && (
+                      <p className="text-sm text-gray-600 mt-2">Average aid: {formatCurrency(cd.avg_aid_amount)}</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">Contact the program for financial aid details.</p>
+                )}
+              </Card>
+
+              <Card className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <TrendingUp size={16} className="text-stone-600" />
+                  <h3 className="font-medium text-sm text-stone-700">ROI Snapshot</h3>
+                </div>
+                {salary || empRate || payback ? (
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    {salary && (
+                      <div>
+                        <p className="text-gray-500 text-xs">Median Starting Salary</p>
+                        <p className="font-bold text-emerald-700 text-lg">{formatCurrency(salary)}</p>
+                      </div>
+                    )}
+                    {empRate && (
+                      <div>
+                        <p className="text-gray-500 text-xs">Employment Rate</p>
+                        <p className="font-bold text-stone-700 text-lg">{(empRate * 100).toFixed(0)}%</p>
+                      </div>
+                    )}
+                    {payback && (
+                      <div className="flex items-center gap-2">
+                        <Clock size={14} className="text-gray-400" />
+                        <div>
+                          <p className="text-gray-500 text-xs">Payback Period</p>
+                          <p className="font-medium">{payback} months</p>
+                        </div>
+                      </div>
+                    )}
+                    {salary && totalMid > 0 && (
+                      <div>
+                        <p className="text-gray-500 text-xs">Cost-to-Salary Ratio</p>
+                        <p className="font-medium">1:{(salary / totalMid).toFixed(1)}x</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">Outcomes data not yet available for this program.</p>
+                )}
+              </Card>
+            </div>
+          )
+        })()}
 
         {tab === 'match' && (
           <div>
