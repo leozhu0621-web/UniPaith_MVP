@@ -25,6 +25,7 @@ from unipaith.models.institution import (
     EventRSVP,
     Institution,
     InstitutionDataset,
+    InstitutionPost,
     Program,
     TargetSegment,
 )
@@ -38,6 +39,7 @@ from unipaith.schemas.institution import (
     CreateCampaignRequest,
     CreateDatasetRequest,
     CreateInstitutionRequest,
+    CreatePostRequest,
     CreateProgramRequest,
     CreateSegmentRequest,
     DashboardSummaryResponse,
@@ -48,11 +50,14 @@ from unipaith.schemas.institution import (
     FunnelStage,
     MonthlyApplicationCount,
     PaginatedResponse,
+    PostMediaUploadResponse,
+    PostResponse,
     ProgramApplicationCount,
     ProgramSummaryResponse,
     UpdateCampaignRequest,
     UpdateDatasetRequest,
     UpdateInstitutionRequest,
+    UpdatePostRequest,
     UpdateProgramRequest,
     UpdateSegmentRequest,
 )
@@ -1191,3 +1196,188 @@ class InstitutionService:
             )
         )
         return result.scalar_one()
+
+    # ------------------------------------------------------------------ #
+    # Posts
+    # ------------------------------------------------------------------ #
+
+    async def list_posts(
+        self, institution_id: UUID, include_drafts: bool = True,
+    ) -> list[PostResponse]:
+        q = (
+            select(InstitutionPost)
+            .where(InstitutionPost.institution_id == institution_id)
+        )
+        if not include_drafts:
+            q = q.where(InstitutionPost.status == "published")
+        q = q.order_by(
+            InstitutionPost.pinned.desc(),
+            InstitutionPost.published_at.desc().nulls_last(),
+            InstitutionPost.created_at.desc(),
+        )
+        result = await self.db.execute(q)
+        posts = list(result.scalars().all())
+        return [await self._enrich_post(p) for p in posts]
+
+    async def create_post(
+        self, institution_id: UUID, user_id: UUID, data: CreatePostRequest,
+    ) -> PostResponse:
+        post = InstitutionPost(
+            institution_id=institution_id,
+            author_id=user_id,
+            title=data.title,
+            body=data.body,
+            media_urls=(
+                [m if isinstance(m, dict) else {"url": m} for m in data.media_urls]
+                if data.media_urls else None
+            ),
+            tagged_program_ids=(
+                [str(pid) for pid in data.tagged_program_ids]
+                if data.tagged_program_ids else None
+            ),
+            tagged_intake=data.tagged_intake,
+            status=data.status,
+            scheduled_for=data.scheduled_for,
+            is_template=data.is_template,
+            template_name=data.template_name,
+        )
+        if data.status == "published":
+            post.published_at = datetime.now(UTC)
+        self.db.add(post)
+        await self.db.flush()
+        return await self._enrich_post(post)
+
+    async def update_post(
+        self,
+        institution_id: UUID,
+        post_id: UUID,
+        data: UpdatePostRequest,
+    ) -> PostResponse:
+        post = await self._get_post(institution_id, post_id)
+        update_data = data.model_dump(exclude_unset=True)
+        if "tagged_program_ids" in update_data and update_data["tagged_program_ids"]:
+            update_data["tagged_program_ids"] = [
+                str(pid) for pid in update_data["tagged_program_ids"]
+            ]
+        was_published = post.status == "published"
+        for key, value in update_data.items():
+            setattr(post, key, value)
+        if not was_published and post.status == "published":
+            post.published_at = datetime.now(UTC)
+        await self.db.flush()
+        return await self._enrich_post(post)
+
+    async def delete_post(
+        self, institution_id: UUID, post_id: UUID,
+    ) -> None:
+        post = await self._get_post(institution_id, post_id)
+        await self.db.delete(post)
+        await self.db.flush()
+
+    async def pin_post(
+        self, institution_id: UUID, post_id: UUID,
+    ) -> PostResponse:
+        post = await self._get_post(institution_id, post_id)
+        post.pinned = not post.pinned
+        await self.db.flush()
+        return await self._enrich_post(post)
+
+    async def publish_post(
+        self, institution_id: UUID, post_id: UUID,
+    ) -> PostResponse:
+        post = await self._get_post(institution_id, post_id)
+        post.status = "published"
+        post.published_at = datetime.now(UTC)
+        await self.db.flush()
+        return await self._enrich_post(post)
+
+    async def request_post_media_upload(
+        self, institution_id: UUID, content_type: str,
+    ) -> PostMediaUploadResponse:
+        from unipaith.core.s3 import S3Client
+        s3 = S3Client()
+        key = f"institutions/{institution_id}/posts/media/{uuid.uuid4()}"
+        upload_url = s3.generate_upload_url(key, content_type)
+        return PostMediaUploadResponse(upload_url=upload_url, media_key=key)
+
+    async def list_post_templates(
+        self, institution_id: UUID,
+    ) -> list[PostResponse]:
+        result = await self.db.execute(
+            select(InstitutionPost).where(
+                InstitutionPost.institution_id == institution_id,
+                InstitutionPost.is_template.is_(True),
+            ).order_by(InstitutionPost.created_at.desc())
+        )
+        posts = list(result.scalars().all())
+        return [await self._enrich_post(p) for p in posts]
+
+    async def get_public_posts(
+        self, institution_id: UUID,
+    ) -> list[PostResponse]:
+        result = await self.db.execute(
+            select(InstitutionPost).where(
+                InstitutionPost.institution_id == institution_id,
+                InstitutionPost.status == "published",
+            ).order_by(
+                InstitutionPost.pinned.desc(),
+                InstitutionPost.published_at.desc().nulls_last(),
+            )
+        )
+        posts = list(result.scalars().all())
+        return [await self._enrich_post(p) for p in posts]
+
+    async def _get_post(
+        self, institution_id: UUID, post_id: UUID,
+    ) -> InstitutionPost:
+        result = await self.db.execute(
+            select(InstitutionPost).where(
+                InstitutionPost.id == post_id,
+                InstitutionPost.institution_id == institution_id,
+            )
+        )
+        post = result.scalar_one_or_none()
+        if not post:
+            raise NotFoundException("Post not found")
+        return post
+
+    async def _enrich_post(self, post: InstitutionPost) -> PostResponse:
+        from unipaith.models.user import User
+        author_email: str | None = None
+        if post.author_id:
+            user_r = await self.db.execute(
+                select(User.email).where(User.id == post.author_id)
+            )
+            author_email = user_r.scalar_one_or_none()
+
+        program_names: list[str] | None = None
+        tag_ids = post.tagged_program_ids
+        if tag_ids and isinstance(tag_ids, list) and len(tag_ids) > 0:
+            prog_r = await self.db.execute(
+                select(Program.program_name).where(
+                    Program.id.in_(tag_ids)
+                )
+            )
+            program_names = list(prog_r.scalars().all())
+
+        return PostResponse(
+            id=post.id,
+            institution_id=post.institution_id,
+            author_id=post.author_id,
+            title=post.title,
+            body=post.body,
+            media_urls=post.media_urls,
+            pinned=post.pinned,
+            tagged_program_ids=post.tagged_program_ids,
+            tagged_intake=post.tagged_intake,
+            status=post.status,
+            scheduled_for=post.scheduled_for,
+            published_at=post.published_at,
+            is_template=post.is_template,
+            template_name=post.template_name,
+            view_count=post.view_count,
+            created_at=post.created_at,
+            updated_at=post.updated_at,
+            author_email=author_email,
+            program_names=program_names,
+        )

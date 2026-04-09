@@ -4,7 +4,7 @@ import { useAuthStore } from '../../stores/auth-store'
 import { useUIStore } from '../../stores/ui-store'
 import {
   LayoutDashboard, GraduationCap, Kanban, Video,
-  MessageSquare, Users, Megaphone, CalendarDays, BarChart3,
+  MessageSquare, Users, Megaphone, CalendarDays, BarChart3, FileText,
   Settings, ChevronLeft, ChevronRight, Bell, Search, LogOut, Rocket, Command, Upload,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
@@ -41,6 +41,7 @@ const buildNavSections = (showSetup: boolean) => [
       { to: '/i/campaigns', icon: Megaphone, label: 'Campaigns' },
       { to: '/i/segments', icon: Users, label: 'Segments' },
       { to: '/i/events', icon: CalendarDays, label: 'Events' },
+      { to: '/i/posts', icon: FileText, label: 'Posts' },
     ],
   },
   {

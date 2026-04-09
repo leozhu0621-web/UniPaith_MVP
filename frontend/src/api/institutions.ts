@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AnalyticsData, Campaign, CampaignMetrics, DashboardSummary, DatasetPreview, Institution, InstitutionDataset, Program, Segment } from '../types'
+import type { AnalyticsData, Campaign, CampaignMetrics, DashboardSummary, DatasetPreview, Institution, InstitutionDataset, InstitutionPost, Program, Segment } from '../types'
 
 export async function getInstitution(): Promise<Institution> {
   const { data } = await apiClient.get('/institutions/me')
@@ -217,4 +217,60 @@ export async function updateDataset(datasetId: string, payload: Partial<{
 
 export async function deleteDataset(datasetId: string): Promise<void> {
   await apiClient.delete(`/institutions/me/datasets/${datasetId}`)
+}
+
+// --- Posts ---
+
+export async function getPosts(): Promise<InstitutionPost[]> {
+  const { data } = await apiClient.get('/institutions/me/posts')
+  return data
+}
+
+export async function createPost(payload: {
+  title: string; body: string; media_urls?: { url: string; type: string; caption?: string }[];
+  tagged_program_ids?: string[]; tagged_intake?: string;
+  status?: string; scheduled_for?: string;
+  is_template?: boolean; template_name?: string;
+}): Promise<InstitutionPost> {
+  const { data } = await apiClient.post('/institutions/me/posts', payload)
+  return data
+}
+
+export async function updatePost(postId: string, payload: Partial<{
+  title: string; body: string; media_urls: { url: string; type: string; caption?: string }[];
+  tagged_program_ids: string[]; tagged_intake: string;
+  status: string; scheduled_for: string;
+  is_template: boolean; template_name: string;
+}>): Promise<InstitutionPost> {
+  const { data } = await apiClient.put(`/institutions/me/posts/${postId}`, payload)
+  return data
+}
+
+export async function deletePost(postId: string): Promise<void> {
+  await apiClient.delete(`/institutions/me/posts/${postId}`)
+}
+
+export async function publishPost(postId: string): Promise<InstitutionPost> {
+  const { data } = await apiClient.post(`/institutions/me/posts/${postId}/publish`)
+  return data
+}
+
+export async function pinPost(postId: string): Promise<InstitutionPost> {
+  const { data } = await apiClient.post(`/institutions/me/posts/${postId}/pin`)
+  return data
+}
+
+export async function requestPostMediaUpload(contentType: string): Promise<{ upload_url: string; media_key: string }> {
+  const { data } = await apiClient.post('/institutions/me/posts/media/upload', { content_type: contentType })
+  return data
+}
+
+export async function getPostTemplates(): Promise<InstitutionPost[]> {
+  const { data } = await apiClient.get('/institutions/me/posts/templates')
+  return data
+}
+
+export async function getPublicPosts(institutionId: string): Promise<InstitutionPost[]> {
+  const { data } = await apiClient.get(`/institutions/${institutionId}/posts`)
+  return data
 }

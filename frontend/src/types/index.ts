@@ -825,6 +825,29 @@ export interface DatasetPreview {
   total_rows: number
 }
 
+// ============ POSTS ============
+export interface InstitutionPost {
+  id: string
+  institution_id: string
+  author_id: string | null
+  title: string
+  body: string
+  media_urls: { url: string; type: string; caption?: string }[] | null
+  pinned: boolean
+  tagged_program_ids: string[] | null
+  tagged_intake: string | null
+  status: 'draft' | 'published' | 'scheduled' | 'archived'
+  scheduled_for: string | null
+  published_at: string | null
+  is_template: boolean
+  template_name: string | null
+  view_count: number
+  created_at: string
+  updated_at: string
+  author_email?: string
+  program_names?: string[]
+}
+
 // ============ PIPELINE KANBAN ============
 export type PipelineColumn =
   | 'discovered'

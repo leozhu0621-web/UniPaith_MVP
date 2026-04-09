@@ -37,6 +37,7 @@ import CalendarPage from './pages/student/CalendarPage'
 import FinancialAidPage from './pages/student/FinancialAidPage'
 import RecommendationsPage from './pages/student/RecommendationsPage'
 import StudentSettingsPage from './pages/student/SettingsPage'
+import ProgramMatchPage from './pages/student/ProgramMatchPage'
 
 // Institution pages
 import DashboardPage from './pages/institution/DashboardPage'
@@ -53,6 +54,7 @@ import EventsPage from './pages/institution/EventsPage'
 import AnalyticsPage from './pages/institution/AnalyticsPage'
 import InstitutionSettingsPage from './pages/institution/SettingsPage'
 import DataUploadPage from './pages/institution/DataUploadPage'
+import PostsPage from './pages/institution/PostsPage'
 
 // Admin pages
 import AdminLayout from './components/layout/AdminLayout'
@@ -89,6 +91,7 @@ const router = createBrowserRouter([
       { path: 'dashboard', element: <StudentDashboardPage /> },
       { path: 'chat', element: <ChatPage /> },
       { path: 'profile', element: <ProfilePage /> },
+      { path: 'match', element: <ProgramMatchPage /> },
       { path: 'discover', element: <DiscoverPage /> },
       { path: 'programs/:programId', element: <SchoolDetailPage /> },
       { path: 'schools/:programId', element: <SchoolDetailPage /> },
@@ -124,6 +127,7 @@ const router = createBrowserRouter([
       { path: 'segments', element: <SegmentsPage /> },
       { path: 'campaigns', element: <CampaignsPage /> },
       { path: 'events', element: <EventsPage /> },
+      { path: 'posts', element: <PostsPage /> },
       { path: 'analytics', element: <AnalyticsPage /> },
       { path: 'data', element: <DataUploadPage /> },
       { path: 'settings', element: <InstitutionSettingsPage /> },

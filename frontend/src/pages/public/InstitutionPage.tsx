@@ -3,9 +3,9 @@ import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   Building2, MapPin, Users, Globe, Mail, ExternalLink,
-  BookOpen, CalendarDays,
+  BookOpen, CalendarDays, FileText, Pin, Eye, Clock,
 } from 'lucide-react'
-import { getPublicInstitution } from '../../api/institutions'
+import { getPublicInstitution, getPublicPosts } from '../../api/institutions'
 import { searchPrograms } from '../../api/programs'
 import { listEvents } from '../../api/events'
 import Card from '../../components/ui/Card'
@@ -16,7 +16,7 @@ import Skeleton from '../../components/ui/Skeleton'
 import EmptyState from '../../components/ui/EmptyState'
 import { formatCurrency, formatDate } from '../../utils/format'
 import { DEGREE_LABELS } from '../../utils/constants'
-import type { Institution, ProgramSummary, PaginatedResponse, EventItem } from '../../types'
+import type { Institution, InstitutionPost, ProgramSummary, PaginatedResponse, EventItem } from '../../types'
 
 export default function InstitutionPage() {
   const { institutionId } = useParams<{ institutionId: string }>()

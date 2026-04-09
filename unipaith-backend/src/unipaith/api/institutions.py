@@ -16,17 +16,21 @@ from unipaith.schemas.institution import (
     CreateCampaignRequest,
     CreateDatasetRequest,
     CreateInstitutionRequest,
+    CreatePostRequest,
     CreateProgramRequest,
     CreateSegmentRequest,
     DashboardSummaryResponse,
     DatasetResponse,
     DatasetUploadResponse,
     InstitutionResponse,
+    PostMediaUploadResponse,
+    PostResponse,
     ProgramResponse,
     SegmentResponse,
     UpdateCampaignRequest,
     UpdateDatasetRequest,
     UpdateInstitutionRequest,
+    UpdatePostRequest,
     UpdateProgramRequest,
     UpdateSegmentRequest,
 )
@@ -467,6 +471,104 @@ async def delete_dataset(
     await svc.delete_dataset(inst.id, dataset_id)
 
 
+# --- Posts ---
+
+
+@router.get("/me/posts", response_model=list[PostResponse])
+async def list_posts(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.list_posts(inst.id)
+
+
+@router.post(
+    "/me/posts",
+    response_model=PostResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_post(
+    body: CreatePostRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.create_post(inst.id, user.id, body)
+
+
+@router.put("/me/posts/{post_id}", response_model=PostResponse)
+async def update_post(
+    post_id: UUID,
+    body: UpdatePostRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.update_post(inst.id, post_id, body)
+
+
+@router.delete("/me/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_post(
+    post_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    await svc.delete_post(inst.id, post_id)
+
+
+@router.post("/me/posts/{post_id}/publish", response_model=PostResponse)
+async def publish_post(
+    post_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.publish_post(inst.id, post_id)
+
+
+@router.post("/me/posts/{post_id}/pin", response_model=PostResponse)
+async def pin_post(
+    post_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.pin_post(inst.id, post_id)
+
+
+class MediaUploadRequest(BaseModel):
+    content_type: str = "image/jpeg"
+
+
+@router.post("/me/posts/media/upload", response_model=PostMediaUploadResponse)
+async def request_post_media_upload(
+    body: MediaUploadRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.request_post_media_upload(inst.id, body.content_type)
+
+
+@router.get("/me/posts/templates", response_model=list[PostResponse])
+async def list_post_templates(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.list_post_templates(inst.id)
+
+
 # --- Public Profile ---
 
 
@@ -482,6 +584,16 @@ async def get_public_institution(
     resp = InstitutionResponse.model_validate(inst)
     resp.program_count = count
     return resp
+
+
+@router.get("/{institution_id}/posts", response_model=list[PostResponse])
+async def get_public_posts(
+    institution_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Public endpoint — returns published posts for an institution."""
+    svc = _svc(db)
+    return await svc.get_public_posts(institution_id)
 
 
 # --- Institution Intelligence ---

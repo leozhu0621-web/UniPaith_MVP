@@ -13,6 +13,7 @@ import { getUnreadCount } from '../../api/notifications'
 const NAV_ITEMS = [
   { to: '/s/dashboard', icon: LayoutDashboard, label: 'Home' },
   { to: '/s/profile', icon: User, label: 'Profile' },
+  { to: '/s/match', icon: Sparkles, label: 'Match' },
   { to: '/s/discover', icon: Search, label: 'Discover' },
   { to: '/s/applications', icon: FileText, label: 'Applications' },
   { to: '/s/calendar', icon: Calendar, label: 'Calendar' },

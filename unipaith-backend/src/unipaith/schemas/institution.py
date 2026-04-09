@@ -363,3 +363,58 @@ class DatasetPreviewResponse(BaseModel):
     columns: list[str]
     rows: list[dict]
     total_rows: int
+
+
+# --- Posts ---
+
+
+class CreatePostRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    body: str = Field(min_length=1)
+    media_urls: list[dict] | None = None
+    tagged_program_ids: list[UUID] | None = None
+    tagged_intake: str | None = None
+    status: Literal["draft", "published", "scheduled"] = "draft"
+    scheduled_for: datetime | None = None
+    is_template: bool = False
+    template_name: str | None = None
+
+
+class UpdatePostRequest(BaseModel):
+    title: str | None = Field(None, min_length=1, max_length=255)
+    body: str | None = Field(None, min_length=1)
+    media_urls: list[dict] | None = None
+    tagged_program_ids: list[UUID] | None = None
+    tagged_intake: str | None = None
+    status: Literal["draft", "published", "scheduled", "archived"] | None = None
+    scheduled_for: datetime | None = None
+    is_template: bool | None = None
+    template_name: str | None = None
+
+
+class PostResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    institution_id: UUID
+    author_id: UUID | None
+    title: str
+    body: str
+    media_urls: list | dict | None = None
+    pinned: bool
+    tagged_program_ids: list | dict | None = None
+    tagged_intake: str | None
+    status: str
+    scheduled_for: datetime | None
+    published_at: datetime | None
+    is_template: bool
+    template_name: str | None
+    view_count: int
+    created_at: datetime
+    updated_at: datetime
+    author_email: str | None = None
+    program_names: list[str] | None = None
+
+
+class PostMediaUploadResponse(BaseModel):
+    upload_url: str
+    media_key: str
