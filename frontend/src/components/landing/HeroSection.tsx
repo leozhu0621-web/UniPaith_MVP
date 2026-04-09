@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Button } from "@/components/shadcn/button";
 import { ArrowRight, Sparkles, ChevronDown } from "lucide-react";
 import ScrollReveal from "./ScrollReveal";
@@ -36,10 +37,10 @@ const HeroSection = () => (
       <ScrollReveal delay={600}>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Button size="lg" className="text-base px-10 py-7 rounded-xl shadow-lg text-lg bg-gold-500 hover:bg-gold-600 text-white" asChild>
-            <a href="#cta">
-              Join the Waitlist
+            <Link to="/signup">
+              Get Started Free
               <ArrowRight size={20} className="ml-2" />
-            </a>
+            </Link>
           </Button>
           <Button size="lg" variant="outline" className="text-base px-10 py-7 rounded-xl text-lg" asChild>
             <a href="#students">See How It Works</a>

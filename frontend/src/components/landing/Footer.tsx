@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 const Footer = () => (
   <footer className="bg-forest-900 text-background py-14 px-4 sm:px-6 lg:px-8">
     <div className="max-w-6xl mx-auto">
@@ -18,10 +20,10 @@ const Footer = () => (
           </ul>
         </div>
         <div>
-          <h5 className="font-semibold mb-3 text-sm">Company</h5>
+          <h5 className="font-semibold mb-3 text-sm">Account</h5>
           <ul className="space-y-2 text-sm text-background/60">
-            <li><a href="#" className="hover:text-gold-400 transition-colors">About</a></li>
-            <li><a href="#" className="hover:text-gold-400 transition-colors">Contact</a></li>
+            <li><Link to="/login" className="hover:text-gold-400 transition-colors">Log in</Link></li>
+            <li><Link to="/signup" className="hover:text-gold-400 transition-colors">Sign up</Link></li>
           </ul>
         </div>
         <div>

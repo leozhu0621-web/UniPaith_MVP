@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/shadcn/button";
 import { Menu, X } from "lucide-react";
 
@@ -28,10 +29,10 @@ const Navbar = () => {
               </a>
             ))}
             <Button variant="outline" size="sm" asChild>
-              <a href="#cta">Request a Demo</a>
+              <Link to="/login">Log in</Link>
             </Button>
-            <Button size="sm" asChild>
-              <a href="#cta">Join the Waitlist</a>
+            <Button size="sm" className="bg-gold-500 hover:bg-gold-600 text-white" asChild>
+              <Link to="/signup">Get Started</Link>
             </Button>
           </div>
 
@@ -50,10 +51,10 @@ const Navbar = () => {
           ))}
           <div className="flex flex-col gap-2 pt-2">
             <Button variant="outline" size="sm" asChild>
-              <a href="#cta">Request a Demo</a>
+              <Link to="/login" onClick={() => setMobileOpen(false)}>Log in</Link>
             </Button>
-            <Button size="sm" asChild>
-              <a href="#cta">Join the Waitlist</a>
+            <Button size="sm" className="bg-gold-500 hover:bg-gold-600 text-white" asChild>
+              <Link to="/signup" onClick={() => setMobileOpen(false)}>Get Started</Link>
             </Button>
           </div>
         </div>

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Button } from "@/components/shadcn/button";
 import { ArrowRight, GraduationCap, Building2 } from "lucide-react";
 import ScrollReveal from "./ScrollReveal";
@@ -21,10 +22,12 @@ const DualCTASection = () => (
               <GraduationCap className="text-gold-600 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3" size={32} />
             </div>
             <h3 className="text-2xl font-bold text-foreground mb-3 font-heading">Start your journey</h3>
-            <p className="text-muted-foreground mb-8">Be among the first to experience a smarter way to discover and apply to programs. Join our waitlist — it takes 30 seconds.</p>
-            <Button size="lg" className="w-full sm:w-auto px-10 py-7 rounded-xl text-base bg-gold-500 hover:bg-gold-600 text-white text-lg">
-              Join the Waitlist
-              <ArrowRight size={20} className="ml-2" />
+            <p className="text-muted-foreground mb-8">Be among the first to experience a smarter way to discover and apply to programs. Sign up free — it takes 30 seconds.</p>
+            <Button size="lg" className="w-full sm:w-auto px-10 py-7 rounded-xl text-base bg-gold-500 hover:bg-gold-600 text-white text-lg" asChild>
+              <Link to="/signup?role=student">
+                Sign Up as Student
+                <ArrowRight size={20} className="ml-2" />
+              </Link>
             </Button>
           </div>
         </ScrollReveal>
@@ -36,9 +39,11 @@ const DualCTASection = () => (
             </div>
             <h3 className="text-2xl font-bold text-foreground mb-3 font-heading">Transform your admissions</h3>
             <p className="text-muted-foreground mb-8">See how UniPaith can streamline your intake, improve matching, and free your team to focus on what matters.</p>
-            <Button size="lg" variant="outline" className="w-full sm:w-auto px-10 py-7 rounded-xl text-base border-primary text-primary hover:bg-primary hover:text-primary-foreground text-lg">
-              Request a Demo
-              <ArrowRight size={20} className="ml-2" />
+            <Button size="lg" variant="outline" className="w-full sm:w-auto px-10 py-7 rounded-xl text-base border-primary text-primary hover:bg-primary hover:text-primary-foreground text-lg" asChild>
+              <Link to="/signup?role=institution_admin">
+                Register Institution
+                <ArrowRight size={20} className="ml-2" />
+              </Link>
             </Button>
           </div>
         </ScrollReveal>
