@@ -8,7 +8,7 @@ import Badge from '../../components/ui/Badge'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Skeleton from '../../components/ui/Skeleton'
-import { Search, SlidersHorizontal, X, ChevronDown, MessageSquare, Sparkles, Loader2 } from 'lucide-react'
+import { Search, SlidersHorizontal, X, ChevronDown, MessageSquare, Sparkles, Loader2, Pencil } from 'lucide-react'
 import { formatCurrency, formatScore } from '../../utils/format'
 import { DEGREE_LABELS, TIER_LABELS } from '../../utils/constants'
 import type { MatchResult, PaginatedResponse, ProgramSummary } from '../../types'
@@ -38,6 +38,64 @@ const COUNTRY_OPTIONS = [
   'United States', 'United Kingdom', 'Canada', 'Australia',
   'Germany', 'Netherlands', 'France', 'Singapore', 'Japan', 'South Korea',
 ]
+
+const DEGREE_OPTIONS = [
+  { value: 'masters', label: 'M.S.' },
+  { value: 'phd', label: 'Ph.D.' },
+  { value: 'bachelors', label: 'B.S.' },
+  { value: 'certificate', label: 'Certificate' },
+  { value: 'diploma', label: 'Diploma' },
+]
+
+function EditableChip({
+  label,
+  value,
+  onRemove,
+  options,
+  onSelect,
+  isNlp,
+}: {
+  label: string
+  value: string
+  onRemove: () => void
+  options?: { value: string; label: string }[]
+  onSelect?: (v: string) => void
+  isNlp: boolean
+}) {
+  const [editing, setEditing] = useState(false)
+  const bg = isNlp ? 'bg-purple-100 text-purple-800' : 'bg-stone-100 text-stone-700'
+
+  if (editing && options && onSelect) {
+    return (
+      <span className={`inline-flex items-center gap-1 px-1 py-0.5 text-xs rounded-full ${bg}`}>
+        <select
+          autoFocus
+          className="bg-transparent text-xs outline-none cursor-pointer pr-1"
+          value=""
+          onChange={e => { onSelect(e.target.value); setEditing(false) }}
+          onBlur={() => setEditing(false)}
+        >
+          <option value="" disabled>{label}</option>
+          {options.map(o => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+      </span>
+    )
+  }
+
+  return (
+    <span className={`inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full ${bg}`}>
+      {value}
+      {options && (
+        <button onClick={() => setEditing(true)} className="opacity-60 hover:opacity-100">
+          <Pencil size={10} />
+        </button>
+      )}
+      <button onClick={onRemove}><X size={12} /></button>
+    </span>
+  )
+}
 
 export default function DiscoverPage() {
   const navigate = useNavigate()
@@ -310,32 +368,54 @@ export default function DiscoverPage() {
         </div>
       )}
 
-      {/* Active Filter Chips (NLP-extracted shown as purple pills, manual as gray) */}
-      {activeFilterCount > 0 && (
+      {/* Editable Constraint Chips */}
+      {(activeFilterCount > 0 || sortBy !== 'relevance') && (
         <div className="flex flex-wrap gap-2 mb-4">
           {country && (
-            <span className={`inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full ${nlpResult ? 'bg-purple-100 text-purple-800' : 'bg-gray-100'}`}>
-              {country}
-              <button onClick={() => { setCountry(''); setNlpResult(null); setPage(1) }}><X size={12} /></button>
-            </span>
+            <EditableChip
+              label="Country"
+              value={country}
+              isNlp={!!nlpResult}
+              options={COUNTRY_OPTIONS.map(c => ({ value: c, label: c }))}
+              onSelect={v => handleManualFilterChange(setCountry, v)}
+              onRemove={() => { setCountry(''); setNlpResult(null); setPage(1) }}
+            />
           )}
           {degreeType && (
-            <span className={`inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full ${nlpResult ? 'bg-purple-100 text-purple-800' : 'bg-gray-100'}`}>
-              {DEGREE_LABELS[degreeType] || degreeType}
-              <button onClick={() => { setDegreeType(''); setNlpResult(null); setPage(1) }}><X size={12} /></button>
-            </span>
+            <EditableChip
+              label="Degree"
+              value={DEGREE_LABELS[degreeType] || degreeType}
+              isNlp={!!nlpResult}
+              options={DEGREE_OPTIONS}
+              onSelect={v => handleManualFilterChange(setDegreeType, v)}
+              onRemove={() => { setDegreeType(''); setNlpResult(null); setPage(1) }}
+            />
           )}
           {minTuition && (
-            <span className={`inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full ${nlpResult ? 'bg-purple-100 text-purple-800' : 'bg-gray-100'}`}>
-              Min: ${Number(minTuition).toLocaleString()}
-              <button onClick={() => { setMinTuition(''); setNlpResult(null); setPage(1) }}><X size={12} /></button>
-            </span>
+            <EditableChip
+              label="Min Budget"
+              value={`Min: $${Number(minTuition).toLocaleString()}`}
+              isNlp={!!nlpResult}
+              onRemove={() => { setMinTuition(''); setNlpResult(null); setPage(1) }}
+            />
           )}
           {maxTuition && (
-            <span className={`inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full ${nlpResult ? 'bg-purple-100 text-purple-800' : 'bg-gray-100'}`}>
-              Max: ${Number(maxTuition).toLocaleString()}
-              <button onClick={() => { setMaxTuition(''); setNlpResult(null); setPage(1) }}><X size={12} /></button>
-            </span>
+            <EditableChip
+              label="Max Budget"
+              value={`Max: $${Number(maxTuition).toLocaleString()}`}
+              isNlp={!!nlpResult}
+              onRemove={() => { setMaxTuition(''); setNlpResult(null); setPage(1) }}
+            />
+          )}
+          {sortBy !== 'relevance' && (
+            <EditableChip
+              label="Sort"
+              value={SORT_OPTIONS.find(s => s.value === sortBy)?.label || sortBy}
+              isNlp={false}
+              options={SORT_OPTIONS.filter(s => s.value !== 'relevance')}
+              onSelect={v => handleManualFilterChange(setSortBy, v)}
+              onRemove={() => { setSortBy('relevance'); setPage(1) }}
+            />
           )}
         </div>
       )}
