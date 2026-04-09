@@ -59,6 +59,17 @@ export async function regenerateAIPacketSummary(applicationId: string, rubricId?
   return data
 }
 
+// --- AI Rubric Pre-fill ---
+
+export async function getAIPrefill(applicationId: string, rubricId: string): Promise<{
+  application_id: string; rubric_id: string;
+  prefill: Record<string, { suggested_score: number | null; suggested_note: string }>;
+  overall_note: string; recommended_score: number | null
+}> {
+  const { data } = await apiClient.post(`/reviews/applications/${applicationId}/ai-prefill`, null, { params: { rubric_id: rubricId } })
+  return data
+}
+
 // --- Cohort Comparison ---
 
 export async function getCohortComparison(applicationIds: string[]): Promise<CohortComparisonData> {

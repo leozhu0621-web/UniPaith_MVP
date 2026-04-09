@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { User, Star, Brain, ClipboardCheck, Calendar, Award, FileText, RefreshCw, Shield } from 'lucide-react'
 import { reviewApplication, makeDecision, createOffer } from '../../api/applications-admin'
 import { chatInstitutionAssistant } from '../../api/institutions'
-import { getScores, getAISummary, assignReviewer, scoreApplication, getRubrics, getAIPacketSummary, regenerateAIPacketSummary } from '../../api/reviews'
+import { getScores, getAISummary, assignReviewer, scoreApplication, getRubrics, getAIPacketSummary, regenerateAIPacketSummary, getAIPrefill } from '../../api/reviews'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -35,7 +35,9 @@ export default function StudentDetailPage() {
   const [responseDeadline, setResponseDeadline] = useState('')
   const [selectedRubric, setSelectedRubric] = useState('')
   const [criterionScores, setCriterionScores] = useState<Record<string, number>>({})
+  const [criterionNotes, setCriterionNotes] = useState<Record<string, string>>({})
   const [reviewerNotes, setReviewerNotes] = useState('')
+  const [prefilling, setPrefilling] = useState(false)
   const [assistantPrompt, setAssistantPrompt] = useState('')
   const [assistantReply, setAssistantReply] = useState<string | null>(null)
 
@@ -464,35 +466,80 @@ export default function StudentDetailPage() {
       {/* Scoring Modal */}
       <Modal isOpen={showScoringModal} onClose={() => setShowScoringModal(false)} title="Score Application" size="lg">
         <div className="space-y-4">
-          <Select
-            label="Rubric"
-            options={rubrics.map(r => ({ value: r.id, label: r.rubric_name }))}
-            placeholder="Select rubric"
-            value={selectedRubric}
-            onChange={e => {
-              setSelectedRubric(e.target.value)
-              setCriterionScores({})
-            }}
-          />
+          <div className="flex items-end gap-3">
+            <div className="flex-1">
+              <Select
+                label="Rubric"
+                options={rubrics.map(r => ({ value: r.id, label: r.rubric_name }))}
+                placeholder="Select rubric"
+                value={selectedRubric}
+                onChange={e => {
+                  setSelectedRubric(e.target.value)
+                  setCriterionScores({})
+                  setCriterionNotes({})
+                }}
+              />
+            </div>
+            {selectedRubric && (
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={prefilling}
+                onClick={async () => {
+                  setPrefilling(true)
+                  try {
+                    const result = await getAIPrefill(applicationId!, selectedRubric)
+                    const scores: Record<string, number> = {}
+                    const notes: Record<string, string> = {}
+                    for (const [name, data] of Object.entries(result.prefill)) {
+                      if (data.suggested_score != null) scores[name] = data.suggested_score
+                      if (data.suggested_note) notes[name] = data.suggested_note
+                    }
+                    setCriterionScores(scores)
+                    setCriterionNotes(notes)
+                    if (result.overall_note) setReviewerNotes(result.overall_note)
+                    showToast('AI pre-fill applied — review and adjust scores', 'success')
+                  } catch {
+                    showToast('AI pre-fill failed', 'error')
+                  } finally {
+                    setPrefilling(false)
+                  }
+                }}
+                className="flex items-center gap-1 whitespace-nowrap"
+              >
+                <Brain size={14} /> {prefilling ? 'AI Filling...' : 'AI Pre-fill'}
+              </Button>
+            )}
+          </div>
           {currentRubric?.criteria && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {currentRubric.criteria.map(c => (
-                <div key={c.name} className="flex items-center gap-3">
-                  <span className="text-sm text-gray-700 w-40">{c.name} ({c.weight}%)</span>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    placeholder="0-100"
-                    value={criterionScores[c.name] ?? ''}
-                    onChange={e => setCriterionScores({ ...criterionScores, [c.name]: Number(e.target.value) })}
-                    className="w-24"
+                <div key={c.name} className="border rounded-lg p-3">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-sm font-medium text-gray-700 flex-1">{c.name} ({c.weight}%)</span>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      placeholder="0-100"
+                      value={criterionScores[c.name] ?? ''}
+                      onChange={e => setCriterionScores({ ...criterionScores, [c.name]: Number(e.target.value) })}
+                      className="w-24"
+                    />
+                  </div>
+                  <Textarea
+                    label=""
+                    value={criterionNotes[c.name] ?? ''}
+                    onChange={e => setCriterionNotes({ ...criterionNotes, [c.name]: e.target.value })}
+                    rows={2}
+                    placeholder={`Notes for ${c.name}...`}
+                    className="text-xs"
                   />
                 </div>
               ))}
             </div>
           )}
-          <Textarea label="Reviewer Notes" value={reviewerNotes} onChange={e => setReviewerNotes(e.target.value)} rows={3} />
+          <Textarea label="Overall Reviewer Notes" value={reviewerNotes} onChange={e => setReviewerNotes(e.target.value)} rows={3} />
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setShowScoringModal(false)}>Cancel</Button>
             <Button onClick={() => scoreMut.mutate()} disabled={!selectedRubric || scoreMut.isPending}>

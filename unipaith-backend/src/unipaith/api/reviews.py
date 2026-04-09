@@ -148,6 +148,52 @@ async def regenerate_ai_packet_summary(
     )
 
 
+@router.post("/applications/{application_id}/ai-prefill")
+async def ai_rubric_prefill(
+    application_id: UUID,
+    rubric_id: UUID = Query(...),
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """AI pre-fill reviewer notes + scores per rubric criterion."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    svc = ReviewPipelineService(db)
+
+    # Get or generate packet summary with the rubric
+    packet = await svc.get_or_generate_packet_summary(
+        inst.id, application_id, rubric_id,
+    )
+
+    # Map criterion assessments to pre-fill format
+    prefill: dict[str, dict] = {}
+    assessments = packet.get("criterion_assessments") or []
+    for ca in assessments:
+        name = ca.get("criterion_name", "")
+        if name:
+            evidence_text = ""
+            for ev in ca.get("evidence", []):
+                evidence_text += (
+                    f"{ev.get('field', '')}: {ev.get('value', '')}. "
+                )
+            prefill[name] = {
+                "suggested_score": ca.get("score"),
+                "suggested_note": (
+                    f"{ca.get('assessment', '')} "
+                    f"[Evidence: {evidence_text.strip()}]"
+                ).strip() if evidence_text else ca.get(
+                    "assessment", "",
+                ),
+            }
+
+    return {
+        "application_id": str(application_id),
+        "rubric_id": str(rubric_id),
+        "prefill": prefill,
+        "overall_note": packet.get("overall_summary", ""),
+        "recommended_score": packet.get("recommended_score"),
+    }
+
+
 # --- Batch Operations ---
 
 

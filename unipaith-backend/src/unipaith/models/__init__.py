@@ -50,6 +50,7 @@ from unipaith.models.institution import (
     ProgramChecklistItem,
     Promotion,
     Reviewer,
+    StudentProgramReview,
     TargetSegment,
 )
 from unipaith.models.knowledge import (
@@ -153,6 +154,7 @@ __all__ = [
     "ProgramChecklistItem",
     "InstitutionPost",
     "Promotion",
+    "StudentProgramReview",
     "HistoricalOutcome",
     "AIPacketSummary",
     "Application",

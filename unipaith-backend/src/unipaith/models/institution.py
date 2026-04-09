@@ -639,3 +639,39 @@ class Promotion(Base):
 
     institution: Mapped[Institution] = relationship()
     program: Mapped[Program | None] = relationship()
+
+
+class StudentProgramReview(Base):
+    __tablename__ = "student_program_reviews"
+    __table_args__ = (
+        UniqueConstraint("student_id", "program_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
+    )
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    program_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("programs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    rating_teaching: Mapped[int | None] = mapped_column(Integer)
+    rating_workload: Mapped[int | None] = mapped_column(Integer)
+    rating_career_support: Mapped[int | None] = mapped_column(Integer)
+    rating_roi: Mapped[int | None] = mapped_column(Integer)
+    rating_overall: Mapped[int | None] = mapped_column(Integer)
+    review_text: Mapped[str | None] = mapped_column(Text)
+    who_thrives_here: Mapped[str | None] = mapped_column(Text)
+    reviewer_context: Mapped[dict | None] = mapped_column(JSONB)
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_published: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False,
+    )
