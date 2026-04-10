@@ -3,13 +3,12 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.database import get_db
 from unipaith.dependencies import require_student
-from unipaith.models.institution import Program
+from unipaith.models.institution import Institution, Program
 from unipaith.models.user import User
 from unipaith.schemas.saved_list import (
     CompareProgramsRequest,
@@ -40,7 +39,12 @@ async def list_saved_programs(
     program_ids = [item.program_id for item in items]
     if program_ids:
         prog_result = await db.execute(
-            select(Program.id, Program.program_name, Program.institution_name)
+            select(
+                Program.id,
+                Program.program_name,
+                Institution.name.label("institution_name"),
+            )
+            .join(Institution, Program.institution_id == Institution.id)
             .where(Program.id.in_(program_ids))
         )
         prog_map = {row.id: row for row in prog_result.all()}

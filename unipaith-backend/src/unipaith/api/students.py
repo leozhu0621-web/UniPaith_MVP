@@ -995,8 +995,6 @@ async def intake_chat(
     """Chat-based onboarding: extract profile fields from free text."""
     from unipaith.ai.llm_client import get_llm_client
 
-    svc = StudentService(db)
-
     # Get-or-create student profile (new signups may not have one yet)
     result = await db.execute(
         select(StudentProfile).where(StudentProfile.user_id == user.id)
@@ -1010,16 +1008,23 @@ async def intake_chat(
     llm = get_llm_client()
 
     system_prompt = (
-        "You are an onboarding assistant for a college application platform called UniPaith. "
-        "You are having a warm, conversational chat with a new student to learn about them. "
-        "Extract structured profile fields from the student's message AND generate an engaging follow-up question.\n\n"
-        "Fields to extract when mentioned: first_name, last_name, nationality, "
-        "country_of_residence, bio_text, goals_text.\n\n"
-        "Return JSON with:\n"
-        '- "extracted_fields": dict of field_name: value (only fields actually mentioned)\n'
-        '- "next_question": a warm, conversational follow-up that digs deeper into their story\n\n'
-        "Make your follow-up question feel natural and curious — like a good mentor getting to know them. "
-        "Ask about their motivations, dreams, experiences, or what excites them about their field.\n"
+        "You are an onboarding assistant for a college application "
+        "platform called UniPaith. "
+        "You are having a warm, conversational chat with a new "
+        "student to learn about them. "
+        "Extract structured profile fields from the student's "
+        "message AND generate an engaging follow-up question.\n\n"
+        "Fields to extract when mentioned: first_name, last_name, "
+        "nationality, country_of_residence, bio_text, goals_text."
+        "\n\nReturn JSON with:\n"
+        '- "extracted_fields": dict of field_name: value '
+        "(only fields actually mentioned)\n"
+        '- "next_question": a warm, conversational follow-up '
+        "that digs deeper into their story\n\n"
+        "Make your follow-up question feel natural and curious "
+        "— like a good mentor getting to know them. "
+        "Ask about their motivations, dreams, experiences, "
+        "or what excites them about their field.\n"
         "Return ONLY valid JSON."
     )
 
@@ -1053,13 +1058,28 @@ async def intake_chat(
         name = extracted.get("first_name", "")
         greeting = f"Nice to meet you, {name}! " if name else "Great to hear that! "
         if "goals_text" in extracted and "country_of_residence" not in extracted:
-            next_q = f"{greeting}That sounds like an exciting path. Where are you currently based, and what sparked your interest in this field?"
+            next_q = (
+                f"{greeting}That sounds like an exciting path. "
+                "Where are you currently based, and what "
+                "sparked your interest in this field?"
+            )
         elif "country_of_residence" in extracted and "goals_text" not in extracted:
-            next_q = f"{greeting}What are you hoping to study, and what draws you to that area?"
+            next_q = (
+                f"{greeting}What are you hoping to study, "
+                "and what draws you to that area?"
+            )
         elif extracted:
-            next_q = f"{greeting}I'd love to learn more about what drives you. What experiences or moments led you to this path?"
+            next_q = (
+                f"{greeting}I'd love to learn more about what "
+                "drives you. What experiences or moments "
+                "led you to this path?"
+            )
         else:
-            next_q = "That's interesting! Could you tell me a bit more about what you're hoping to study and what excites you about it?"
+            next_q = (
+                "That's interesting! Could you tell me a bit "
+                "more about what you're hoping to study "
+                "and what excites you about it?"
+            )
     else:
         import json as _json
 
@@ -1070,7 +1090,10 @@ async def intake_chat(
             next_q = parsed.get("next_question", "Tell me more about what excites you.")
         except Exception:
             extracted = {}
-            next_q = "That's really interesting! Could you tell me more about what draws you to that field?"
+            next_q = (
+                "That's really interesting! Could you tell "
+                "me more about what draws you to that field?"
+            )
 
     updated = False
     for field, value in extracted.items():
