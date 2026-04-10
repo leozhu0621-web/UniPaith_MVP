@@ -233,7 +233,7 @@ class RecommendationEngine:
             .where(Program.id.in_(program_ids))
             .options(selectinload(Program.institution))
         )
-        return {p.id: p for p in result.scalars().all()}
+        return {str(p.id): p for p in result.scalars().all()}
 
     async def _load_preferences(self, student_id: UUID) -> StudentPreference | None:
         result = await self.db.execute(

@@ -921,7 +921,7 @@ class StudentService:
         matches = list(matches_result.scalars().all())
         match_count = len(matches)
         avg_score = (
-            round(sum(m.match_score for m in matches) / match_count, 1)
+            round(sum(m.match_score for m in matches if m.match_score is not None) / match_count, 1)
             if match_count > 0
             else None
         )

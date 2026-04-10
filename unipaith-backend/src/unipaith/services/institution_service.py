@@ -184,7 +184,7 @@ class InstitutionService:
             errors.append("degree_type is required")
         if not program.description_text:
             errors.append("description_text is required")
-        if not program.tuition and not program.application_deadline:
+        if program.tuition is None and program.application_deadline is None:
             errors.append("At least one of tuition or application_deadline is required")
         if errors:
             raise BadRequestException(f"Cannot publish: {'; '.join(errors)}")

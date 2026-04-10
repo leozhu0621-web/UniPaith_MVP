@@ -125,8 +125,8 @@ async def get_next_onboarding_step(
 ):
     svc = _svc(db)
     profile = await svc._get_student_profile(user.id)
-    status = await svc.get_onboarding_status(profile.id)
-    return status.next_step
+    onboarding = await svc.get_onboarding_status(profile.id)
+    return onboarding.next_step
 
 
 # --- Academic Records ---
