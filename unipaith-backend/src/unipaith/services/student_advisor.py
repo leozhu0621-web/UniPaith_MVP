@@ -91,9 +91,13 @@ class StudentAdvisor:
 
         knowledge_context = ""
         if context_program_id:
+            from sqlalchemy.orm import selectinload
+
             from unipaith.models.institution import Program
             prog_result = await self.db.execute(
-                select(Program).where(Program.id == context_program_id)
+                select(Program)
+                .where(Program.id == context_program_id)
+                .options(selectinload(Program.institution))
             )
             program = prog_result.scalar_one_or_none()
             if program:

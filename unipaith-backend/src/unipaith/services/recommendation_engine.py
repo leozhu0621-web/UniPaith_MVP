@@ -120,7 +120,11 @@ class RecommendationEngine:
             parsed = _safe_json(result)
             if parsed and isinstance(parsed, list):
                 for rec in parsed:
-                    pid = rec.get("program_id")
+                    pid_raw = rec.get("program_id")
+                    try:
+                        pid = UUID(str(pid_raw)) if pid_raw else None
+                    except ValueError:
+                        pid = None
                     if pid and pid in programs:
                         p = programs[pid]
                         self._enrich_with_quick_facts(rec, p)
