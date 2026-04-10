@@ -107,7 +107,10 @@ async def create_institution(
 ):
     svc = _svc(db)
     inst = await svc.create_institution(user.id, body)
-    return InstitutionResponse.model_validate(inst)
+    count = await svc.get_program_count(inst.id)
+    resp = InstitutionResponse.model_validate(inst)
+    resp.program_count = count
+    return resp
 
 
 @router.put("/me", response_model=InstitutionResponse)
@@ -118,7 +121,10 @@ async def update_institution(
 ):
     svc = _svc(db)
     inst = await svc.update_institution(user.id, body)
-    return InstitutionResponse.model_validate(inst)
+    count = await svc.get_program_count(inst.id)
+    resp = InstitutionResponse.model_validate(inst)
+    resp.program_count = count
+    return resp
 
 
 # --- Programs (institution admin) ---
@@ -790,7 +796,9 @@ async def list_checklist_items(
 
     from unipaith.models.institution import ProgramChecklistItem
 
-    await _svc(db).get_institution(user.id)
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    await svc.get_program(inst.id, program_id)
     result = await db.execute(
         select(ProgramChecklistItem)
         .where(ProgramChecklistItem.program_id == program_id)
@@ -814,7 +822,9 @@ async def create_checklist_item(
 ):
     from unipaith.models.institution import ProgramChecklistItem
 
-    await _svc(db).get_institution(user.id)
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    await svc.get_program(inst.id, program_id)
     item = ProgramChecklistItem(
         program_id=program_id,
         item_name=body.item_name,
@@ -877,7 +887,9 @@ async def update_checklist_item(
 
     from unipaith.models.institution import ProgramChecklistItem
 
-    await _svc(db).get_institution(user.id)
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    await svc.get_program(inst.id, program_id)
     result = await db.execute(
         select(ProgramChecklistItem).where(
             ProgramChecklistItem.id == item_id,
@@ -910,7 +922,9 @@ async def delete_checklist_item(
 
     from unipaith.models.institution import ProgramChecklistItem
 
-    await _svc(db).get_institution(user.id)
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    await svc.get_program(inst.id, program_id)
     result = await db.execute(
         select(ProgramChecklistItem).where(
             ProgramChecklistItem.id == item_id,
@@ -942,7 +956,9 @@ async def list_intake_rounds(
 
     from unipaith.models.institution import IntakeRound
 
-    await _svc(db).get_institution(user.id)
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    await svc.get_program(inst.id, program_id)
     result = await db.execute(
         select(IntakeRound)
         .where(IntakeRound.program_id == program_id)
@@ -964,7 +980,9 @@ async def create_intake_round(
 ):
     from unipaith.models.institution import IntakeRound
 
-    await _svc(db).get_institution(user.id)
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    await svc.get_program(inst.id, program_id)
     intake = IntakeRound(
         program_id=program_id,
         round_name=body.round_name,
@@ -998,7 +1016,9 @@ async def update_intake_round(
 
     from unipaith.models.institution import IntakeRound
 
-    await _svc(db).get_institution(user.id)
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    await svc.get_program(inst.id, program_id)
     result = await db.execute(
         select(IntakeRound).where(
             IntakeRound.id == intake_id,
@@ -1031,7 +1051,9 @@ async def delete_intake_round(
 
     from unipaith.models.institution import IntakeRound
 
-    await _svc(db).get_institution(user.id)
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    await svc.get_program(inst.id, program_id)
     result = await db.execute(
         select(IntakeRound).where(
             IntakeRound.id == intake_id,
