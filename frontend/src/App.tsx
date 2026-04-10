@@ -45,6 +45,7 @@ import FinancialAidPage from './pages/student/FinancialAidPage'
 import RecommendationsPage from './pages/student/RecommendationsPage'
 import StudentSettingsPage from './pages/student/SettingsPage'
 import ProgramMatchPage from './pages/student/ProgramMatchPage'
+import TestScorePage from './pages/student/TestScorePage'
 
 // Institution pages
 import DashboardPage from './pages/institution/DashboardPage'
@@ -132,6 +133,7 @@ const router = createBrowserRouter([
       { path: 'calendar', element: <CalendarPage /> },
       { path: 'deadlines', element: <Navigate to="/s/calendar?view=agenda" replace /> },
       { path: 'financial-aid', element: <FinancialAidPage /> },
+      { path: 'test-scores', element: <TestScorePage /> },
       { path: 'recommendations', element: <RecommendationsPage /> },
       { path: 'settings', element: <StudentSettingsPage /> },
     ],
