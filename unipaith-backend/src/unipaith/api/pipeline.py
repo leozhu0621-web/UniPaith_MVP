@@ -201,4 +201,6 @@ async def pipeline_force(
         )
         return {"action": "flush_failed", "reset_count": count.rowcount}
 
-    return {"error": f"Unknown action: {action}"}
+    from unipaith.core.exceptions import BadRequestException
+
+    raise BadRequestException(f"Unknown action: {action}")

@@ -217,15 +217,18 @@ async def batch_request_missing_items(
     from sqlalchemy import select
 
     from unipaith.models.application import Application
+    from unipaith.models.institution import Program
 
-    await InstitutionService(db).get_institution(user.id)  # auth check
+    inst = await InstitutionService(db).get_institution(user.id)
     result = BatchOperationResult(
         success_count=0, failed_ids=[], errors=[],
     )
     for app_id in body.application_ids:
         try:
             r = await db.execute(
-                select(Application).where(Application.id == app_id)
+                select(Application)
+                .join(Program, Application.program_id == Program.id)
+                .where(Application.id == app_id, Program.institution_id == inst.id)
             )
             app = r.scalar_one_or_none()
             if not app:

@@ -332,8 +332,8 @@ export default function TestScorePage() {
                       <div className="space-y-2">
                         {reqs.map(r => {
                           const has = hasScore(r.test)
-                          const best = scoreList.filter((s: any) => s.test_type === r.test).sort((a: any, b: any) => (b.score ?? 0) - (a.score ?? 0))[0]
-                          const meetsMin = r.minScore && best?.score ? best.score >= r.minScore : true
+                          const best = scoreList.filter((s: any) => s.test_type === r.test).sort((a: any, b: any) => (b.total_score ?? 0) - (a.total_score ?? 0))[0]
+                          const meetsMin = r.minScore && best?.total_score ? best.total_score >= r.minScore : true
                           return (
                             <div key={r.test} className="flex items-center justify-between text-sm">
                               <div className="flex items-center gap-2">
@@ -349,7 +349,7 @@ export default function TestScorePage() {
                               </div>
                               <div className="text-right text-xs text-gray-500">
                                 {r.minScore && <span className="mr-2">Min: {r.minScore}</span>}
-                                {best ? <span className="font-medium text-gray-700">Your score: {best.score}</span> : <span className="text-gray-400">No score</span>}
+                                {best ? <span className="font-medium text-gray-700">Your score: {best.total_score}</span> : <span className="text-gray-400">No score</span>}
                               </div>
                             </div>
                           )

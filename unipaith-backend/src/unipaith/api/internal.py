@@ -21,6 +21,9 @@ from unipaith.services.matching_service import MatchingService
 
 router = APIRouter(prefix="/internal", tags=["internal"])
 
+# Strong references to background tasks so they aren't garbage-collected mid-execution
+_background_tasks: set[asyncio.Task] = set()  # type: ignore[type-arg]
+
 
 class AIControlPolicyPatchRequest(BaseModel):
     autonomy_enabled: bool | None = None
@@ -292,7 +295,9 @@ async def trigger_bootstrap(
         )
 
     # Run in background — don't block the HTTP response
-    asyncio.create_task(_run_bootstrap_background())
+    task = asyncio.create_task(_run_bootstrap_background())
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
 
     return {
         "status": "started",

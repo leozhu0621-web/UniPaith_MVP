@@ -80,4 +80,8 @@ async def update_preferences(
     db: AsyncSession = Depends(get_db),
 ):
     svc = NotificationService(db)
-    return await svc.update_preferences(user.id, body)
+    return await svc.update_preferences(
+        user.id,
+        email_enabled=body.email_enabled,
+        preferences=body.preferences,
+    )

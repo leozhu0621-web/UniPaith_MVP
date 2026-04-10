@@ -852,7 +852,9 @@ async def bulk_create_checklist(
 ):
     from unipaith.models.institution import ProgramChecklistItem
 
-    await _svc(db).get_institution(user.id)
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    await svc.get_program(inst.id, program_id)
     created = []
     for item_data in body.items:
         item = ProgramChecklistItem(
@@ -1259,7 +1261,9 @@ async def get_audit_log(
         limit=limit,
         offset=offset,
     )
-    total = await audit.count_logs(inst.id, application_id)
+    total = await audit.count_logs(
+        inst.id, application_id=application_id, action=action, entity_type=entity_type,
+    )
 
     items = []
     for entry in logs:

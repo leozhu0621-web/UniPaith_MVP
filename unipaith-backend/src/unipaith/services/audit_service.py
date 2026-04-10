@@ -77,6 +77,8 @@ class AuditService:
         self,
         institution_id: UUID,
         application_id: UUID | None = None,
+        action: str | None = None,
+        entity_type: str | None = None,
     ) -> int:
         from sqlalchemy import func
 
@@ -87,5 +89,9 @@ class AuditService:
             stmt = stmt.where(
                 AdmissionsAuditLog.application_id == application_id,
             )
+        if action:
+            stmt = stmt.where(AdmissionsAuditLog.action == action)
+        if entity_type:
+            stmt = stmt.where(AdmissionsAuditLog.entity_type == entity_type)
         result = await self.db.execute(stmt)
         return result.scalar() or 0

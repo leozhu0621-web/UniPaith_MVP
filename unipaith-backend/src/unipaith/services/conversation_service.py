@@ -110,6 +110,7 @@ class ConversationService:
         session.turn_count += 1
         session.last_updated_at = datetime.now(UTC)
         turn_id = uuid4()
+        conflicts_before = len(session.conflicts)
 
         selected_domain = self._pick_domain(body.message)
         session.active_domain = selected_domain
@@ -158,7 +159,7 @@ class ConversationService:
             state_delta=ConversationStateDeltaResponse(
                 updated_domains=[selected_domain],
                 new_requirements_count=1 if selected_domain == "budget_finance" else 0,
-                new_conflicts_count=1 if session.conflicts else 0,
+                new_conflicts_count=len(session.conflicts) - conflicts_before,
             ),
             confidence_summary=confidence,
         )

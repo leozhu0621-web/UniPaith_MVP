@@ -246,16 +246,13 @@ async def frontier_status(
     _admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    query = (
-        select(CrawlFrontier)
-        .order_by(
-            CrawlFrontier.priority.desc(),
-            CrawlFrontier.created_at.desc(),
-        )
-        .limit(limit)
-    )
+    query = select(CrawlFrontier)
     if status:
         query = query.where(CrawlFrontier.status == status)
+    query = query.order_by(
+        CrawlFrontier.priority.desc(),
+        CrawlFrontier.created_at.desc(),
+    ).limit(limit)
 
     result = await db.execute(query)
     items = result.scalars().all()
@@ -275,10 +272,14 @@ async def frontier_status(
     ]
 
 
+class AddFrontierRequest(BaseModel):
+    url: str
+    priority: int = 50
+
+
 @router.post("/frontier/add")
 async def add_to_frontier(
-    url: str,
-    priority: int = 50,
+    body: AddFrontierRequest,
     _admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
@@ -286,8 +287,8 @@ async def add_to_frontier(
 
     discoverer = SourceDiscoverer(db)
     item = await discoverer.add_to_frontier(
-        url=url,
-        priority=priority,
+        url=body.url,
+        priority=body.priority,
         discovery_method="admin_manual",
     )
     if not item:

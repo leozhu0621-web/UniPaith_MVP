@@ -278,9 +278,10 @@ class InternalAdminService:
         limit: int = 50,
         entity_type: str | None = None,
     ) -> list[dict]:
-        stmt = select(AdminAuditEvent).order_by(AdminAuditEvent.created_at.desc()).limit(limit)
+        stmt = select(AdminAuditEvent)
         if entity_type:
             stmt = stmt.where(AdminAuditEvent.entity_type == entity_type)
+        stmt = stmt.order_by(AdminAuditEvent.created_at.desc()).limit(limit)
         result = await self.db.execute(stmt)
         events = result.scalars().all()
         return [

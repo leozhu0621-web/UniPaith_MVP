@@ -488,9 +488,10 @@ async def list_jobs(
     _admin: User = Depends(require_admin),
 ):
     """List crawl jobs, optionally filtered by source."""
-    stmt = select(CrawlJob).order_by(CrawlJob.created_at.desc()).limit(limit)
+    stmt = select(CrawlJob)
     if source_id:
         stmt = stmt.where(CrawlJob.source_id == source_id)
+    stmt = stmt.order_by(CrawlJob.created_at.desc()).limit(limit)
     result = await db.execute(stmt)
     jobs = list(result.scalars().all())
     return CrawlJobListResponse(jobs=jobs, total=len(jobs))
