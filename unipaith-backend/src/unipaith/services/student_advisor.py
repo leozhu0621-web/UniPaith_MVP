@@ -141,11 +141,6 @@ class StudentAdvisor:
             + [{"role": "user", "content": user_content}]
         )
 
-        [
-            {"role": "system", "content": system_prompt},
-            *full_messages[-30:],
-        ]
-
         response = await self.llm.generate_reasoning(
             system_prompt=system_prompt,
             user_content=self._build_user_prompt(full_messages[-10:]),

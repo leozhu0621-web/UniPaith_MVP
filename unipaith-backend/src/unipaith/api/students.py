@@ -802,7 +802,7 @@ async def get_peer_comparison(
 # --- Profile Export ---
 
 
-@router.get("/me/export", response_model=StudentProfileResponse)
+@router.get("/me/export")
 async def export_profile(
     user: User = Depends(require_student),
     db: AsyncSession = Depends(get_db),
