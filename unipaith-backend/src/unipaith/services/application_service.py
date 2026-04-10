@@ -370,7 +370,7 @@ class ApplicationService:
                 {
                     "test_type": s.test_type,
                     "total_score": str(s.total_score) if s.total_score else None,
-                    "sub_scores": s.sub_scores,
+                    "section_scores": s.section_scores,
                     "test_date": s.test_date.isoformat() if s.test_date else None,
                 }
                 for s in profile.test_scores

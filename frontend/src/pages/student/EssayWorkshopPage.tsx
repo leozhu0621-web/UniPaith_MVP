@@ -116,11 +116,13 @@ export default function EssayWorkshopPage() {
   })
 
   const lastSyncedId = useRef<string | null>(null)
-  if (selectedEssay && selectedEssay.id !== lastSyncedId.current) {
-    lastSyncedId.current = selectedEssay.id
-    setEditorContent(selectedEssay.content ?? '')
-    setFeedbackResult(null)
-  }
+  useEffect(() => {
+    if (selectedEssay && selectedEssay.id !== lastSyncedId.current) {
+      lastSyncedId.current = selectedEssay.id
+      setEditorContent(selectedEssay.content ?? '')
+      setFeedbackResult(null)
+    }
+  }, [selectedEssay])
 
   const createMut = useMutation({
     mutationFn: createEssay,
