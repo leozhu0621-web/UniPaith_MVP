@@ -9,22 +9,22 @@ import {
 
 const journeyStages = [
   { num: '01', title: 'Understand Your Context', desc: 'Goals, motivations, constraints — through conversation, not forms.', color: 'bg-brand-amber-500' },
-  { num: '02', title: 'Surface Hidden Blockers', desc: 'Budget gaps, visa risks, timeline pressure, eligibility unknowns.', color: 'bg-brand-slate-500' },
+  { num: '02', title: 'Surface Hidden Blockers', desc: 'Budget gaps, visa risks, timeline pressure, eligibility unknowns.', color: 'bg-brand-green-500' },
   { num: '03', title: 'Define Your Priorities', desc: 'Cost vs ranking, location vs timeline — your tradeoffs, your rules.', color: 'bg-brand-amber-500' },
-  { num: '04', title: 'Translate to Requirements', desc: 'Goals become must-haves and nice-to-haves. Review and edit anytime.', color: 'bg-brand-slate-500' },
+  { num: '04', title: 'Translate to Requirements', desc: 'Goals become must-haves and nice-to-haves. Review and edit anytime.', color: 'bg-brand-green-500' },
   { num: '05', title: 'Shortlist & Plan', desc: 'Programs with transparent fit rationale. Know why each was picked.', color: 'bg-brand-amber-500' },
-  { num: '06', title: 'Prepare & Submit', desc: 'Checklists, documents, essays, deadlines — managed in one place.', color: 'bg-brand-slate-500' },
+  { num: '06', title: 'Prepare & Submit', desc: 'Checklists, documents, essays, deadlines — managed in one place.', color: 'bg-brand-green-500' },
   { num: '07', title: 'Track & Respond', desc: 'Status updates, interview requests, and decisions as they happen.', color: 'bg-brand-amber-500' },
-  { num: '08', title: 'Compare & Decide', desc: 'Side-by-side offers with cost normalization and deadline tracking.', color: 'bg-brand-slate-500' },
+  { num: '08', title: 'Compare & Decide', desc: 'Side-by-side offers with cost normalization and deadline tracking.', color: 'bg-brand-green-500' },
 ]
 
 const features = [
   { icon: UserCircle, title: 'Universal Profile', desc: 'Build once, use everywhere. One portable profile across every application.', color: 'text-brand-amber-500', bg: 'bg-brand-amber-50' },
-  { icon: Search, title: 'AI Matching', desc: 'Explainable recommendations tied to your goals, budget, and profile.', color: 'text-brand-slate-600', bg: 'bg-brand-slate-50' },
+  { icon: Search, title: 'AI Matching', desc: 'Explainable recommendations tied to your goals, budget, and profile.', color: 'text-brand-green-600', bg: 'bg-brand-green-50' },
   { icon: Send, title: 'Application Manager', desc: 'Deadlines, checklists, status updates — one dashboard for everything.', color: 'text-brand-amber-500', bg: 'bg-brand-amber-50' },
-  { icon: FileText, title: 'Essay Workshop', desc: 'AI-assisted writing with feedback, version history, and program-specific guidance.', color: 'text-brand-slate-600', bg: 'bg-brand-slate-50' },
+  { icon: FileText, title: 'Essay Workshop', desc: 'AI-assisted writing with feedback, version history, and program-specific guidance.', color: 'text-brand-green-600', bg: 'bg-brand-green-50' },
   { icon: DollarSign, title: 'Financial Aid Navigator', desc: 'Discover scholarships, compare costs, and make informed financial decisions.', color: 'text-brand-amber-500', bg: 'bg-brand-amber-50' },
-  { icon: Target, title: 'Readiness Diagnostics', desc: 'Know where you stand before you submit. Strengths, gaps, and a clear path.', color: 'text-brand-slate-600', bg: 'bg-brand-slate-50' },
+  { icon: Target, title: 'Readiness Diagnostics', desc: 'Know where you stand before you submit. Strengths, gaps, and a clear path.', color: 'text-brand-green-600', bg: 'bg-brand-green-50' },
 ]
 
 const chatMessages = [
@@ -47,7 +47,7 @@ export default function ForStudentsPage() {
       <section className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div className="absolute inset-0 -z-10">
           <div className="absolute top-20 left-[10%] w-72 h-72 bg-brand-amber-100/60 rounded-full blur-3xl animate-float" />
-          <div className="absolute bottom-20 right-[10%] w-96 h-96 bg-brand-slate-100/40 rounded-full blur-3xl animate-float-slow" />
+          <div className="absolute bottom-20 right-[10%] w-96 h-96 bg-brand-green-100/40 rounded-full blur-3xl animate-float-slow" />
         </div>
         <div className="max-w-4xl mx-auto text-center">
           <ScrollReveal variant="blur-in">
@@ -136,7 +136,7 @@ export default function ForStudentsPage() {
       </section>
 
       {/* AI Counselor */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-brand-slate-900">
+      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-brand-green-900">
         <div className="max-w-5xl mx-auto">
           <ScrollReveal variant="blur-in">
             <div className="text-center mb-14">
@@ -144,12 +144,12 @@ export default function ForStudentsPage() {
                 <MessageCircle size={14} /> AI Counselor
               </span>
               <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3 font-heading">Conversation-first. Not form-first.</h2>
-              <p className="text-brand-slate-300 max-w-xl mx-auto text-lg">Your AI counselor learns through dialogue — understanding goals, surfacing blind spots, building requirements you agree with.</p>
+              <p className="text-brand-green-300 max-w-xl mx-auto text-lg">Your AI counselor learns through dialogue — understanding goals, surfacing blind spots, building requirements you agree with.</p>
             </div>
           </ScrollReveal>
           <ScrollReveal delay={200}>
-            <div className="max-w-2xl mx-auto bg-brand-slate-800 rounded-2xl border border-brand-slate-700 overflow-hidden">
-              <div className="px-6 py-3 border-b border-brand-slate-700 flex items-center gap-3">
+            <div className="max-w-2xl mx-auto bg-brand-green-800 rounded-2xl border border-brand-green-700 overflow-hidden">
+              <div className="px-6 py-3 border-b border-brand-green-700 flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-brand-amber-500 flex items-center justify-center"><Sparkles size={16} className="text-white" /></div>
                 <span className="text-white font-medium text-sm">UniPaith Counselor</span>
               </div>
@@ -157,7 +157,7 @@ export default function ForStudentsPage() {
                 {chatMessages.map((msg, i) => (
                   <div key={i} className={`flex ${msg.from === 'student' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                      msg.from === 'student' ? 'bg-brand-amber-500 text-white rounded-br-sm' : 'bg-brand-slate-700 text-brand-slate-100 rounded-bl-sm'
+                      msg.from === 'student' ? 'bg-brand-amber-500 text-white rounded-br-sm' : 'bg-brand-green-700 text-brand-green-100 rounded-bl-sm'
                     }`}>{msg.text}</div>
                   </div>
                 ))}
@@ -183,7 +183,7 @@ export default function ForStudentsPage() {
                 { icon: BookOpen, label: 'Full Audit Trails' },
               ].map((badge, i) => (
                 <div key={i} className="flex flex-col items-center gap-2 p-4">
-                  <badge.icon size={24} className="text-brand-slate-500" />
+                  <badge.icon size={24} className="text-brand-green-500" />
                   <span className="text-sm font-medium text-foreground">{badge.label}</span>
                 </div>
               ))}
@@ -212,11 +212,11 @@ export default function ForStudentsPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-brand-slate-700 to-brand-slate-900">
+      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-brand-green-700 to-brand-green-900">
         <div className="max-w-3xl mx-auto text-center">
           <ScrollReveal variant="blur-in">
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4 font-heading">Ready to take control of your future?</h2>
-            <p className="text-brand-slate-300 mb-10 text-lg max-w-xl mx-auto">Create your free profile in under 2 minutes. No credit card, no catches.</p>
+            <p className="text-brand-green-300 mb-10 text-lg max-w-xl mx-auto">Create your free profile in under 2 minutes. No credit card, no catches.</p>
           </ScrollReveal>
           <ScrollReveal delay={200}>
             <Button size="lg" className="text-base px-12 py-7 rounded-xl shadow-lg text-lg bg-brand-amber-500 hover:bg-brand-amber-600 text-white" asChild>

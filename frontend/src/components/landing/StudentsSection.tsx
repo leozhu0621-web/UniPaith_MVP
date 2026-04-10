@@ -15,17 +15,17 @@ const steps = [
     icon: Search,
     title: "Get AI-Powered Matches",
     description: "Programs ranked by fit, with transparent reasoning tied to your goals.",
-    color: "text-primary",
-    bg: "bg-primary/10",
-    line: "bg-primary",
+    color: "text-brand-green-600",
+    bg: "bg-brand-green-100",
+    line: "bg-brand-green-600",
   },
   {
     icon: Send,
     title: "Apply & Track Everything",
     description: "Deadlines, documents, status updates — one dashboard for your entire portfolio.",
-    color: "text-brand-slate-500",
+    color: "text-brand-green-500",
     bg: "bg-brand-slate-100",
-    line: "bg-brand-slate-500",
+    line: "bg-brand-green-500",
   },
   {
     icon: MessageCircle,
@@ -33,7 +33,7 @@ const steps = [
     description: "Essay feedback, readiness scores, financial aid guidance — like a private advisor, free.",
     color: "text-brand-amber-600",
     bg: "bg-brand-amber-100",
-    line: "bg-brand-slate-500",
+    line: "bg-brand-green-500",
   },
 ];
 
@@ -117,7 +117,7 @@ const StudentsSection = () => (
           {featureChips.map((chip) => (
             <span
               key={chip}
-              className="inline-block bg-brand-slate-100 text-brand-slate-700 text-xs font-medium rounded-full px-3 py-1.5 border border-brand-slate-200"
+              className="inline-block bg-brand-green-100 text-brand-green-700 text-xs font-medium rounded-full px-3 py-1.5 border border-brand-green-200"
             >
               {chip}
             </span>

@@ -13,8 +13,8 @@ const differentiators = [
     icon: Database,
     title: "Not just a CRM",
     description: "Slate and Salesforce manage your workflow. UniPaith feeds them better data — structured student profiles, AI-prioritized queues, and standardized application packets.",
-    color: "text-primary",
-    bg: "bg-primary/10",
+    color: "text-brand-slate-600",
+    bg: "bg-brand-slate-600/10",
   },
   {
     icon: Globe,

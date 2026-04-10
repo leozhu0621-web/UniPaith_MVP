@@ -24,7 +24,7 @@ const InstitutionsSection = () => (
     <div className="max-w-5xl mx-auto">
       <ScrollReveal variant="blur-in">
         <div className="text-center mb-16">
-          <span className="inline-block bg-primary/10 text-primary text-sm font-medium rounded-full px-4 py-1.5 mb-4 uppercase tracking-wide">
+          <span className="inline-block bg-brand-slate-600/10 text-brand-slate-600 text-sm font-medium rounded-full px-4 py-1.5 mb-4 uppercase tracking-wide">
             For Institutions
           </span>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4 font-heading">
@@ -44,8 +44,8 @@ const InstitutionsSection = () => (
             </div>
           </ScrollReveal>
           <ScrollReveal delay={200} variant="fade-right">
-            <div className="p-5 sm:p-6 text-center bg-primary/5">
-              <h3 className="text-base font-bold text-primary font-heading">With UniPaith</h3>
+            <div className="p-5 sm:p-6 text-center bg-brand-slate-600/5">
+              <h3 className="text-base font-bold text-brand-slate-600 font-heading">With UniPaith</h3>
             </div>
           </ScrollReveal>
         </div>
@@ -57,8 +57,8 @@ const InstitutionsSection = () => (
                 <X className="text-destructive flex-shrink-0 mt-0.5" size={16} />
                 <p className="text-sm text-muted-foreground">{row.before}</p>
               </div>
-              <div className="p-4 sm:p-5 flex items-start gap-3 bg-primary/[0.02]">
-                <Check className="text-primary flex-shrink-0 mt-0.5" size={16} />
+              <div className="p-4 sm:p-5 flex items-start gap-3 bg-brand-slate-600/[0.02]">
+                <Check className="text-brand-slate-600 flex-shrink-0 mt-0.5" size={16} />
                 <p className="text-sm text-foreground font-medium">{row.after}</p>
               </div>
             </div>
@@ -74,7 +74,7 @@ const InstitutionsSection = () => (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
             {features.map((feat, i) => (
               <div key={i} className="flex flex-col items-center gap-2 bg-card rounded-xl border p-5 hover-lift">
-                <feat.icon className="text-primary" size={24} strokeWidth={1.4} />
+                <feat.icon className="text-brand-slate-600" size={24} strokeWidth={1.4} />
                 <span className="text-sm font-semibold text-foreground">{feat.label}</span>
               </div>
             ))}
@@ -89,7 +89,7 @@ const InstitutionsSection = () => (
         <div className="mt-4 text-center">
           <Link
             to="/for-institutions"
-            className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-brand-slate-700 transition-colors"
+            className="inline-flex items-center gap-1 text-sm font-medium text-brand-slate-600 hover:text-brand-slate-700 transition-colors"
           >
             See the full platform <ArrowRight size={14} />
           </Link>

@@ -3,60 +3,42 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../stores/auth-store'
 import { useUIStore } from '../../stores/ui-store'
 import {
-  LayoutDashboard, GraduationCap, Kanban, Video, Inbox, ScrollText, FileStack,
-  MessageSquare, Users, Megaphone, CalendarDays, BarChart3, FileText,
-  Settings, ChevronLeft, ChevronRight, Bell, Search, LogOut, Rocket, Command, Upload,
+  LayoutDashboard, GraduationCap, Kanban, Megaphone, MessageSquare,
+  BarChart3, Settings, ChevronLeft, ChevronRight, Bell, Search, LogOut,
+  Rocket, Command, ChevronDown,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { getUnreadCount } from '../../api/notifications'
-import { getInstitution } from '../../api/institutions'
+import { getInstitution, getInstitutionPrograms } from '../../api/institutions'
 import Modal from '../ui/Modal'
 import Input from '../ui/Input'
 
 const buildNavSections = (showSetup: boolean) => [
   {
-    label: 'Overview',
+    label: '',
     items: [
       { to: '/i/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
       ...(showSetup ? [{ to: '/i/setup', icon: Rocket, label: 'Get Started' }] : []),
     ],
   },
   {
-    label: 'Programs',
+    label: 'Manage',
     items: [
       { to: '/i/programs', icon: GraduationCap, label: 'Programs' },
+      { to: '/i/admissions', icon: Kanban, label: 'Admissions' },
+      { to: '/i/outreach', icon: Megaphone, label: 'Outreach' },
+      { to: '/i/communications', icon: MessageSquare, label: 'Communications' },
     ],
   },
   {
-    label: 'Admissions',
-    items: [
-      { to: '/i/pipeline', icon: Kanban, label: 'Pipeline' },
-      { to: '/i/interviews', icon: Video, label: 'Interviews' },
-      { to: '/i/inquiries', icon: Inbox, label: 'Inquiries' },
-      { to: '/i/messages', icon: MessageSquare, label: 'Inbox' },
-    ],
-  },
-  {
-    label: 'Outreach',
-    items: [
-      { to: '/i/campaigns', icon: Megaphone, label: 'Campaigns' },
-      { to: '/i/segments', icon: Users, label: 'Segments' },
-      { to: '/i/events', icon: CalendarDays, label: 'Events' },
-      { to: '/i/posts', icon: FileText, label: 'Posts' },
-      { to: '/i/templates', icon: FileStack, label: 'Templates' },
-    ],
-  },
-  {
-    label: 'Insights',
+    label: 'Analyze',
     items: [
       { to: '/i/analytics', icon: BarChart3, label: 'Analytics' },
-      { to: '/i/audit-log', icon: ScrollText, label: 'Audit Log' },
     ],
   },
   {
-    label: 'Config',
+    label: '',
     items: [
-      { to: '/i/data', icon: Upload, label: 'Data' },
       { to: '/i/settings', icon: Settings, label: 'Settings' },
     ],
   },
@@ -76,6 +58,9 @@ export default function InstitutionLayout() {
   const notificationsMenuRef = useRef<HTMLDivElement | null>(null)
   const userMenuRef = useRef<HTMLDivElement | null>(null)
 
+  const { selectedProgramId, selectedProgramName, setSelectedProgram } = useUIStore()
+  const [showProgramList, setShowProgramList] = useState(false)
+
   const { data: unreadCount } = useQuery({
     queryKey: ['unread-count'],
     queryFn: getUnreadCount,
@@ -86,6 +71,11 @@ export default function InstitutionLayout() {
     queryFn: getInstitution,
     retry: false,
   })
+  const programsQ = useQuery({
+    queryKey: ['institution-programs'],
+    queryFn: getInstitutionPrograms,
+  })
+  const programs = Array.isArray(programsQ.data) ? programsQ.data : []
   const institutionMissing =
     institutionQ.isError &&
     institutionQ.error instanceof Error &&
@@ -192,11 +182,46 @@ export default function InstitutionLayout() {
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-4">
+        {/* Program Switcher */}
+        {!sidebarCollapsed && programs.length > 0 && (
+          <div className="px-3 py-2 border-b border-gray-100">
+            <button
+              onClick={() => setShowProgramList(!showProgramList)}
+              className="w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm bg-brand-slate-50 hover:bg-brand-slate-100 transition-colors"
+            >
+              <span className="truncate font-medium text-brand-slate-700">
+                {selectedProgramName || 'All Programs'}
+              </span>
+              <ChevronDown size={14} className={`text-brand-slate-400 transition-transform ${showProgramList ? 'rotate-180' : ''}`} />
+            </button>
+            {showProgramList && (
+              <div className="mt-1 max-h-48 overflow-y-auto space-y-0.5">
+                <button
+                  onClick={() => { setSelectedProgram(null); setShowProgramList(false) }}
+                  className={`w-full text-left px-2 py-1 rounded text-xs transition-colors ${!selectedProgramId ? 'bg-brand-slate-100 text-brand-slate-800 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}
+                >
+                  All Programs
+                </button>
+                {programs.map((p: any) => (
+                  <button
+                    key={p.id}
+                    onClick={() => { setSelectedProgram(p.id, p.program_name); setShowProgramList(false) }}
+                    className={`w-full text-left px-2 py-1 rounded text-xs flex items-center gap-1.5 transition-colors ${selectedProgramId === p.id ? 'bg-brand-slate-100 text-brand-slate-800 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${p.is_published ? 'bg-green-400' : 'bg-gray-300'}`} />
+                    <span className="truncate">{p.program_name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <nav className="flex-1 overflow-y-auto py-3">
           {navSections.map(section => (
-            <div key={section.label} className="mb-4">
-              {!sidebarCollapsed && (
-                <div className="px-4 mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+            <div key={section.label || 'root'} className={section.label ? 'mb-3' : 'mb-1'}>
+              {!sidebarCollapsed && section.label && (
+                <div className="px-4 mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
                   {section.label}
                 </div>
               )}

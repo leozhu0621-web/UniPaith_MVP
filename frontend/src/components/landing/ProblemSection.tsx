@@ -37,13 +37,13 @@ const ProblemSection = () => (
             <p className="text-sm text-muted-foreground">apps per student</p>
           </div>
           <div className="text-center">
-            <div className="text-4xl sm:text-5xl font-bold text-primary mb-1 font-heading">
+            <div className="text-4xl sm:text-5xl font-bold text-brand-slate-600 mb-1 font-heading">
               <AnimatedCounter end={40} suffix=" hrs" />
             </div>
             <p className="text-sm text-muted-foreground">repetitive paperwork</p>
           </div>
           <div className="text-center">
-            <div className="text-4xl sm:text-5xl font-bold text-brand-slate-400 mb-1 font-heading">
+            <div className="text-4xl sm:text-5xl font-bold text-brand-green-500 mb-1 font-heading">
               <AnimatedCounter end={68} suffix="%" />
             </div>
             <p className="text-sm text-muted-foreground">feel overwhelmed</p>
@@ -76,14 +76,14 @@ const ProblemSection = () => (
 
         <ScrollReveal delay={300} variant="fade-right">
           <div className="bg-background rounded-2xl border p-8 shadow-sm h-full">
-            <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center mb-5">
-              <Building2 className="text-primary" size={24} />
+            <div className="w-12 h-12 rounded-xl bg-brand-slate-600/15 flex items-center justify-center mb-5">
+              <Building2 className="text-brand-slate-600" size={24} />
             </div>
             <h3 className="text-xl font-bold text-foreground mb-4 font-heading">Institution side</h3>
             <ul className="space-y-3 text-muted-foreground text-sm">
               {institutionPains.map((pain, i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <span className="text-primary mt-0.5">✦</span> {pain}
+                  <span className="text-brand-slate-600 mt-0.5">✦</span> {pain}
                 </li>
               ))}
             </ul>

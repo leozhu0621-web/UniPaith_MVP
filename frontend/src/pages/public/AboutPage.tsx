@@ -38,7 +38,7 @@ export default function AboutPage() {
           <ScrollReveal variant="blur-in">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 tracking-tight font-heading">
               Built by people who&rsquo;ve{' '}
-              <span className="text-primary">lived both sides</span>
+              <span className="text-brand-green-600">lived both sides</span>
             </h1>
           </ScrollReveal>
           <ScrollReveal delay={200}>
@@ -81,7 +81,7 @@ export default function AboutPage() {
                     <span className={`text-lg font-bold ${f.textColor}`}>{f.initials}</span>
                   </div>
                   <h3 className="text-xl font-bold text-foreground mb-1 font-heading">{f.name}</h3>
-                  <p className="text-sm text-primary font-medium mb-3">{f.role}</p>
+                  <p className="text-sm text-brand-green-600 font-medium mb-3">{f.role}</p>
                   <p className="text-muted-foreground text-sm leading-relaxed">{f.desc}</p>
                 </div>
               </ScrollReveal>

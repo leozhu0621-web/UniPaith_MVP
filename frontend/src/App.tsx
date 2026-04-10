@@ -76,6 +76,9 @@ import TemplatesPage from './pages/institution/TemplatesPage'
 import CohortComparisonPage from './pages/institution/CohortComparisonPage'
 import IntakeRoundsPage from './pages/institution/IntakeRoundsPage'
 import RequirementsChecklistPage from './pages/institution/RequirementsChecklistPage'
+import AdmissionsPage from './pages/institution/AdmissionsPage'
+import OutreachPage from './pages/institution/OutreachPage'
+import CommunicationsPage from './pages/institution/CommunicationsPage'
 
 // Admin pages
 import AdminLayout from './components/layout/AdminLayout'
@@ -160,9 +163,14 @@ const router = createBrowserRouter([
       { index: true, element: <Navigate to="/i/dashboard" replace /> },
       { path: 'dashboard', element: <DashboardPage /> },
       { path: 'setup', element: <SetupPage /> },
+      // Unified pages
       { path: 'programs', element: <ProgramsPage /> },
       { path: 'programs/new', element: <ProgramEditorPage /> },
       { path: 'programs/:id/edit', element: <ProgramEditorPage /> },
+      { path: 'admissions', element: <AdmissionsPage /> },
+      { path: 'outreach', element: <OutreachPage /> },
+      { path: 'communications', element: <CommunicationsPage /> },
+      // Legacy routes (still work via direct URL)
       { path: 'pipeline', element: <PipelinePage /> },
       { path: 'pipeline/:studentId', element: <StudentDetailPage /> },
       { path: 'interviews', element: <InterviewsPage /> },

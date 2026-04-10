@@ -58,6 +58,29 @@ async def on_application_submitted(
             application_id=application_id,
             description=f"Application submitted (#{confirmation_number})",
         )
+
+        # Proactive AI: auto-generate packet summary + integrity scan
+        try:
+            from unipaith.services.review_pipeline_service import (
+                ReviewPipelineService,
+            )
+
+            review_svc = ReviewPipelineService(db)
+            await review_svc.get_or_generate_packet_summary(
+                institution_id, application_id,
+            )
+            await review_svc.scan_integrity(
+                institution_id, application_id,
+            )
+            logger.info(
+                "Auto-generated AI packet + integrity scan for %s",
+                application_id,
+            )
+        except Exception:
+            logger.warning(
+                "Proactive AI failed for application %s (non-fatal)",
+                application_id,
+            )
     except Exception:
         logger.exception("Hook on_application_submitted failed for application %s", application_id)
 

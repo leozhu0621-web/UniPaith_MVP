@@ -15,8 +15,8 @@ const features = [
     icon: FileSearch,
     title: "Document Intelligence",
     description: "Upload once. AI extracts, structures, and verifies — turning documents into clean data institutions trust.",
-    color: "text-primary",
-    bg: "bg-primary/10",
+    color: "text-brand-slate-600",
+    bg: "bg-brand-slate-600/10",
     mockBg: "from-brand-slate-100 to-brand-slate-50",
   },
   {
@@ -31,8 +31,8 @@ const features = [
     icon: Shield,
     title: "Integrity & Compliance",
     description: "Anomaly detection, document verification, full audit trails. FERPA-ready, GDPR-compliant.",
-    color: "text-primary",
-    bg: "bg-primary/10",
+    color: "text-brand-slate-600",
+    bg: "bg-brand-slate-600/10",
     mockBg: "from-brand-slate-100 to-brand-slate-50",
   },
 ];
@@ -103,7 +103,7 @@ const AIFeaturesSection = () => (
         <div className="mt-6 text-center">
           <Link
             to="/engine"
-            className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-brand-slate-700 transition-colors"
+            className="inline-flex items-center gap-1 text-sm font-medium text-brand-slate-600 hover:text-brand-slate-700 transition-colors"
           >
             Explore the AI engine <ArrowRight size={14} />
           </Link>

@@ -69,7 +69,7 @@ export default function PricingPage() {
               <ul className="space-y-3 mb-8 flex-1">
                 {studentFeatures.map((f, i) => (
                   <li key={i} className="flex items-center gap-2 text-sm text-foreground">
-                    <Check size={16} className="text-brand-amber-500 flex-shrink-0" /> {f}
+                    <Check size={16} className="text-brand-green-500 flex-shrink-0" /> {f}
                   </li>
                 ))}
               </ul>

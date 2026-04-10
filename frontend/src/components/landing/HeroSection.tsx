@@ -6,14 +6,14 @@ import ScrollReveal from "./ScrollReveal";
 const HeroSection = () => (
   <section className="relative min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 overflow-hidden">
     <div className="absolute inset-0 -z-10">
-      <div className="absolute top-20 left-[10%] w-72 h-72 bg-brand-slate-100/60 rounded-full blur-3xl animate-float" />
-      <div className="absolute bottom-20 right-[10%] w-96 h-96 bg-brand-slate-300/30 rounded-full blur-3xl animate-float-slow" />
+      <div className="absolute top-20 left-[10%] w-72 h-72 bg-brand-green-100/60 rounded-full blur-3xl animate-float" />
+      <div className="absolute bottom-20 right-[10%] w-96 h-96 bg-brand-green-300/30 rounded-full blur-3xl animate-float-slow" />
       <div className="absolute top-1/3 right-[20%] w-48 h-48 bg-brand-amber-300/20 rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }} />
     </div>
 
     <div className="max-w-5xl mx-auto text-center">
       <ScrollReveal variant="blur-in">
-        <div className="inline-flex items-center gap-2 bg-brand-slate-100 text-brand-slate-700 rounded-full px-5 py-2 text-sm font-medium mb-8">
+        <div className="inline-flex items-center gap-2 bg-brand-green-100 text-brand-green-700 rounded-full px-5 py-2 text-sm font-medium mb-8">
           AI-powered admissions for students &amp; institutions
         </div>
       </ScrollReveal>
@@ -22,7 +22,7 @@ const HeroSection = () => (
         <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-foreground leading-[1.1] mb-6 tracking-tight font-heading">
           Your private{" "}
           <br className="hidden sm:block" />
-          <span className="text-primary">college advisor</span>
+          <span className="text-brand-green-600">college advisor</span>
         </h1>
       </ScrollReveal>
 

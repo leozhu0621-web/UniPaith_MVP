@@ -2,7 +2,7 @@ import { Users, TrendingUp, Award } from "lucide-react";
 import ScrollReveal from "./ScrollReveal";
 
 const nodes = [
-  { icon: Users, label: "More Participation", desc: "Students & institutions join the platform", color: "text-primary", bg: "bg-primary/10" },
+  { icon: Users, label: "More Participation", desc: "Students & institutions join the platform", color: "text-brand-green-600", bg: "bg-brand-green-600/10" },
   { icon: TrendingUp, label: "Better Matching", desc: "AI improves with every data point", color: "text-brand-amber-600", bg: "bg-brand-amber-100" },
   { icon: Award, label: "Better Outcomes", desc: "Higher satisfaction, higher yield", color: "text-brand-slate-500", bg: "bg-brand-slate-100" },
 ];
@@ -22,8 +22,8 @@ const FlywheelSection = () => (
           <div className="absolute inset-0 rounded-full border-2 border-dashed border-brand-slate-200 animate-orbit" style={{ animationDuration: "30s" }} />
           
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-sm sm:text-base font-bold text-primary font-heading">UniPaith</span>
+            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-brand-green-600/10 flex items-center justify-center">
+              <span className="text-sm sm:text-base font-bold text-brand-green-600 font-heading">UniPaith</span>
             </div>
           </div>
 

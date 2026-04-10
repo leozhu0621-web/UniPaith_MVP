@@ -53,20 +53,45 @@ When speaking as UniPaith (landing pages, marketing, shared UI):
 
 ## Color System
 
-### Core Palette — Slate Blue + Amber
+### Dual Theme System — Green+Gold (Students) / Blue+Gold (Institutions)
+
+**Student theme**: `brand-green-*` (green) + `brand-amber-*` (gold)
+**Institution theme**: `brand-slate-*` (blue) + `brand-amber-*` (gold)
+
+#### Student Green Scale
 
 | Token | Hex | Usage |
 |-------|-----|-------|
-| `brand-slate-50` | `#F0F3F9` | Light backgrounds, hover states |
-| `brand-slate-100` | `#E8EDF5` | Selected states, light fills |
-| `brand-slate-200` | `#C9D3E8` | Borders on brand elements |
-| `brand-slate-300` | `#A3B3D4` | Decorative borders |
-| `brand-slate-400` | `#7A91BC` | Muted brand icons |
-| `brand-slate-500` | `#4E6A9E` | Secondary brand text |
-| `brand-slate-600` | `#3B5998` | **Primary** — buttons, links, active states |
-| `brand-slate-700` | `#2C4370` | Headings, emphasis text |
-| `brand-slate-800` | `#1E2E4D` | Dark brand text |
-| `brand-slate-900` | `#111B2E` | Deepest brand shade |
+| `brand-green-50` | `#F0FDF4` | Light student backgrounds |
+| `brand-green-100` | `#DCFCE7` | Student fills, badges |
+| `brand-green-200` | `#BBF7D0` | Student borders |
+| `brand-green-300` | `#86EFAC` | Decorative green |
+| `brand-green-400` | `#4ADE80` | Green hover states |
+| `brand-green-500` | `#22C55E` | Secondary student green |
+| `brand-green-600` | `#16A34A` | **Student primary** — buttons, links, accents |
+| `brand-green-700` | `#15803D` | Student headings, dark sections |
+| `brand-green-800` | `#166534` | Dark student text |
+| `brand-green-900` | `#14532D` | Deepest student shade |
+
+#### Institution Blue Scale
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `brand-slate-50` | `#F0F3F9` | Light institution backgrounds |
+| `brand-slate-100` | `#E8EDF5` | Institution fills, badges |
+| `brand-slate-200` | `#C9D3E8` | Institution borders |
+| `brand-slate-300` | `#A3B3D4` | Decorative blue |
+| `brand-slate-400` | `#7A91BC` | Muted institution icons |
+| `brand-slate-500` | `#4E6A9E` | Secondary institution blue |
+| `brand-slate-600` | `#3B5998` | **Institution primary** — buttons, links, accents |
+| `brand-slate-700` | `#2C4370` | Institution headings, dark sections |
+| `brand-slate-800` | `#1E2E4D` | Dark institution text |
+| `brand-slate-900` | `#111B2E` | Deepest institution shade |
+
+#### Shared Gold Accent
+
+| Token | Hex | Usage |
+|-------|-----|-------|
 | `brand-amber-50` | `#FFF8E7` | Warm accent backgrounds |
 | `brand-amber-100` | `#FFEFC2` | Light amber fills |
 | `brand-amber-200` | `#FFE08A` | Amber borders |
@@ -78,15 +103,17 @@ When speaking as UniPaith (landing pages, marketing, shared UI):
 
 ### Audience Variations
 
-**Student side** (warm):
+**Student side** (green + gold):
 - Background: `bg-student` (`#FAFAF8` — warm off-white)
-- More amber accent usage (progress rings, counselor, achievements)
-- Brand-slate for navigation active states
+- Primary: `brand-green-600` for buttons, links, active states
+- Accent: `brand-amber-*` for CTAs, highlights, warmth
+- Used on: homepage hero, /for-students, student sections, pricing student card
 
-**Institution side** (cool/professional):
+**Institution side** (blue + gold):
 - Background: `bg-institution` (`#F8FAFC` — cool gray)
-- Minimal amber — used sparingly for warnings/highlights
-- Brand-slate dominates active states and data visualization
+- Primary: `brand-slate-600` for buttons, links, active states
+- Accent: `brand-amber-*` used sparingly for highlights
+- Used on: /for-institutions, institution sections, pricing institution card
 
 **Admin:**
 - Dark sidebar (gray-900) with `brand-slate-600` active states
