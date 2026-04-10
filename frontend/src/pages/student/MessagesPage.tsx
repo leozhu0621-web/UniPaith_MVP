@@ -95,8 +95,8 @@ export default function MessagesPage() {
     setShowAttachments(false)
   }
 
-  const convList: Conversation[] = conversations ?? []
-  const msgList: Message[] = messages ?? []
+  const convList: Conversation[] = Array.isArray(conversations) ? conversations : []
+  const msgList: Message[] = Array.isArray(messages) ? messages : []
   const docList: any[] = Array.isArray(documents) ? documents : []
 
   const filteredConvs = convList.filter(c => {

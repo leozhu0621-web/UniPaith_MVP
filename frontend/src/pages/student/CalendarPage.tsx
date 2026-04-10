@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useDeadlines } from '../../hooks/useDeadlines'
-import { getMyInterviews, confirmInterview } from '../../api/interviews'
+import { confirmInterview } from '../../api/interviews'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -70,13 +70,7 @@ export default function CalendarPage() {
   const [showWorkBlockModal, setShowWorkBlockModal] = useState(false)
   const [workBlocks, setWorkBlocks] = useState<WorkBlock[]>([])
   const [wbForm, setWbForm] = useState({ title: '', date: '', duration: '60', category: 'general' })
-  const { deadlines, isLoading } = useDeadlines()
-
-  const { data: interviews } = useQuery({
-    queryKey: ['my-interviews'],
-    queryFn: getMyInterviews,
-    retry: false,
-  })
+  const { deadlines, isLoading, interviews } = useDeadlines()
   const interviewList: any[] = Array.isArray(interviews) ? interviews : []
 
   const confirmMut = useMutation({
@@ -89,19 +83,25 @@ export default function CalendarPage() {
     setSearchParams(v === 'month' ? {} : { view: v })
   }
 
-  const allItems: CalendarItem[] = useMemo(() => {
-    const items: CalendarItem[] = [...deadlines]
+  // Build a lookup from interview time to raw interview object for agenda meta
+  const interviewMetaLookup = useMemo(() => {
+    const map = new Map<string, any>()
     interviewList.forEach(iv => {
-      if (iv.scheduled_at) {
-        items.push({
-          date: new Date(iv.scheduled_at),
-          label: `Interview: ${iv.program_name || 'Program'}`,
-          sublabel: iv.interview_type?.replace(/_/g, ' '),
-          type: 'interview' as const,
-          link: iv.application_id ? `/s/applications/${iv.application_id}` : '/s/calendar',
-          meta: iv,
-        })
+      const time = iv.confirmed_time || iv.proposed_times?.[0]
+      if (time) map.set(time, iv)
+    })
+    return map
+  }, [interviewList])
+
+  const allItems: CalendarItem[] = useMemo(() => {
+    // deadlines already includes interviews from useDeadlines — enrich with meta
+    const items: CalendarItem[] = deadlines.map(d => {
+      if (d.type === 'interview') {
+        // Find the matching raw interview for confirm/decline actions
+        const meta = interviewMetaLookup.get(d.date.toISOString()) ?? null
+        return { ...d, meta }
       }
+      return d
     })
     workBlocks.forEach(wb => {
       items.push({
@@ -114,7 +114,7 @@ export default function CalendarPage() {
     })
     items.sort((a, b) => a.date.getTime() - b.date.getTime())
     return items
-  }, [deadlines, interviewList, workBlocks])
+  }, [deadlines, interviewMetaLookup, workBlocks])
 
   const filtered = typeFilter === 'all' ? allItems : allItems.filter(i => i.type === typeFilter)
 
@@ -335,11 +335,11 @@ export default function CalendarPage() {
                                     {item.meta.interview_type === 'video' && <span className="flex items-center gap-1"><Video size={12} /> Video</span>}
                                     {item.meta.interview_type === 'phone' && <span className="flex items-center gap-1"><Phone size={12} /> Phone</span>}
                                     {item.meta.interview_type === 'in_person' && <span className="flex items-center gap-1"><MapPin size={12} /> In Person</span>}
-                                    {item.meta.location && <span>{item.meta.location}</span>}
+                                    {item.meta.location_or_link && <span>{item.meta.location_or_link}</span>}
                                   </div>
-                                  {item.meta.status === 'pending' && (
+                                  {item.meta.status === 'invited' && (
                                     <div className="flex gap-2">
-                                      <Button size="sm" onClick={() => confirmMut.mutate({ id: item.meta.id, time: item.meta.scheduled_at })}>
+                                      <Button size="sm" onClick={() => confirmMut.mutate({ id: item.meta.id, time: item.meta.proposed_times?.[0] ?? '' })}>
                                         <Check size={12} className="mr-1" /> Accept
                                       </Button>
                                       <Button size="sm" variant="secondary">Tentative</Button>

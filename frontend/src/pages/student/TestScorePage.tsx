@@ -183,8 +183,8 @@ export default function TestScorePage() {
     setEditingId(s.id)
     setForm({
       test_type: s.test_type,
-      score: String(s.score ?? ''),
-      sub_scores: Object.fromEntries(Object.entries(s.sub_scores ?? {}).map(([k, v]) => [k, String(v)])),
+      score: String(s.total_score ?? ''),
+      sub_scores: Object.fromEntries(Object.entries(s.section_scores ?? {}).map(([k, v]) => [k, String(v)])),
       test_date: s.test_date ? s.test_date.slice(0, 10) : '',
     })
     setModalOpen(true)
@@ -196,8 +196,8 @@ export default function TestScorePage() {
     }
     const payload = {
       test_type: form.test_type,
-      score: form.score ? Number(form.score) : null,
-      sub_scores: Object.keys(numericSubs).length > 0 ? numericSubs : null,
+      total_score: form.score ? Number(form.score) : null,
+      section_scores: Object.keys(numericSubs).length > 0 ? numericSubs : null,
       test_date: form.test_date || null,
     }
     if (editingId) updateMut.mutate({ id: editingId, data: payload })
@@ -264,13 +264,13 @@ export default function TestScorePage() {
               {scoreList.map((s: any) => {
                 const defs = SUB_SCORE_DEFS[s.test_type] ?? []
                 const max = MAX_SCORES[s.test_type]
-                const pct = max && s.score ? Math.min(100, Math.round((s.score / max) * 100)) : null
+                const pct = max && s.total_score ? Math.min(100, Math.round((s.total_score / max) * 100)) : null
                 return (
                   <Card key={s.id} className="p-5 flex flex-col gap-3">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2">
                         <Badge variant={TEST_BADGE_VARIANT[s.test_type] ?? 'neutral'}>{s.test_type}</Badge>
-                        <span className="text-xl font-bold">{s.score ?? '\u2014'}</span>
+                        <span className="text-xl font-bold">{s.total_score ?? '\u2014'}</span>
                         {max && <span className="text-xs text-gray-400">/ {max}</span>}
                       </div>
                       <div className="flex gap-1">
@@ -289,12 +289,12 @@ export default function TestScorePage() {
                       </div>
                     )}
 
-                    {defs.length > 0 && s.sub_scores && (
+                    {defs.length > 0 && s.section_scores && (
                       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                         {defs.map(d => (
                           <div key={d.key} className="flex justify-between">
                             <span className="text-gray-500">{d.label}</span>
-                            <span className="font-medium">{s.sub_scores?.[d.key] ?? '\u2014'}</span>
+                            <span className="font-medium">{s.section_scores?.[d.key] ?? '\u2014'}</span>
                           </div>
                         ))}
                       </div>
@@ -389,7 +389,7 @@ export default function TestScorePage() {
                             className="rounded border-gray-300 text-brand-slate-600 focus:ring-brand-slate-500"
                           />
                           <Badge variant={TEST_BADGE_VARIANT[s.test_type] ?? 'neutral'} size="sm">{s.test_type}</Badge>
-                          <span className="font-medium">{s.score ?? '\u2014'}</span>
+                          <span className="font-medium">{s.total_score ?? '\u2014'}</span>
                           {s.test_date && <span className="text-xs text-gray-400 ml-auto">{formatDate(s.test_date)}</span>}
                         </label>
                       ))}
@@ -432,7 +432,7 @@ export default function TestScorePage() {
                     {scoreList.map((s: any) => (
                       <th key={s.id} className="text-center py-3 px-3 text-xs font-medium text-gray-500 uppercase">
                         {s.test_type}
-                        <div className="text-sm font-bold text-gray-900 mt-0.5">{s.score ?? '\u2014'}</div>
+                        <div className="text-sm font-bold text-gray-900 mt-0.5">{s.total_score ?? '\u2014'}</div>
                       </th>
                     ))}
                   </tr>
@@ -458,7 +458,7 @@ export default function TestScorePage() {
                             if (!req) {
                               return <td key={s.id} className="text-center py-3 px-3 text-gray-300">--</td>
                             }
-                            const meets = req.minScore ? (s.score ?? 0) >= req.minScore : true
+                            const meets = req.minScore ? (s.total_score ?? 0) >= req.minScore : true
                             return (
                               <td key={s.id} className="text-center py-3 px-3">
                                 <div className="flex flex-col items-center gap-0.5">
