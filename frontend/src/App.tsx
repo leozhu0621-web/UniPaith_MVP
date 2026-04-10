@@ -45,6 +45,7 @@ import FinancialAidPage from './pages/student/FinancialAidPage'
 import RecommendationsPage from './pages/student/RecommendationsPage'
 import StudentSettingsPage from './pages/student/SettingsPage'
 import ProgramMatchPage from './pages/student/ProgramMatchPage'
+import DecisionComparisonPage from './pages/student/DecisionComparisonPage'
 
 // Institution pages
 import DashboardPage from './pages/institution/DashboardPage'
@@ -134,6 +135,7 @@ const router = createBrowserRouter([
       { path: 'financial-aid', element: <FinancialAidPage /> },
       { path: 'recommendations', element: <RecommendationsPage /> },
       { path: 'settings', element: <StudentSettingsPage /> },
+      { path: 'decisions', element: <DecisionComparisonPage /> },
     ],
   },
 
