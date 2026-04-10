@@ -121,9 +121,13 @@ class RecommendationEngine:
             if parsed and isinstance(parsed, list):
                 for rec in parsed:
                     pid = rec.get("program_id")
-                    if pid and pid in programs:
-                        p = programs[pid]
-                        self._enrich_with_quick_facts(rec, p)
+                    if pid:
+                        try:
+                            pid_uuid = UUID(str(pid))
+                        except (ValueError, TypeError):
+                            continue
+                        if pid_uuid in programs:
+                            self._enrich_with_quick_facts(rec, programs[pid_uuid])
                 return parsed[:count]
         except Exception:
             logger.exception("Recommendation generation failed")
@@ -233,7 +237,7 @@ class RecommendationEngine:
             .where(Program.id.in_(program_ids))
             .options(selectinload(Program.institution))
         )
-        return {str(p.id): p for p in result.scalars().all()}
+        return {p.id: p for p in result.scalars().all()}
 
     async def _load_preferences(self, student_id: UUID) -> StudentPreference | None:
         result = await self.db.execute(
