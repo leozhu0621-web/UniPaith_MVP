@@ -1132,22 +1132,21 @@ async def get_completion_map(
 ):
     """Per-section completion with match-ready vs apply-ready."""
     svc = StudentService(db)
-    onboarding = await svc.get_onboarding(user.id)
-    steps = (
-        onboarding.get("steps_completed", {}) if onboarding else {}
-    )
+    profile = await svc._get_student_profile(user.id)
+    onboarding = await svc.get_onboarding_status(profile.id)
+    completed = set(onboarding.steps_completed) if onboarding else set()
 
     def _sec(name: str, key: str, match: bool) -> dict:
         return {
             "name": name,
             "key": key,
-            "done": bool(steps.get(key)),
+            "done": key in completed,
             "match_required": match,
             "apply_required": True,
         }
 
     sections = [
-        _sec("Basic Info", "basic_info", True),
+        _sec("Basic Info", "basic_profile", True),
         _sec("Academics", "academics", True),
         _sec("Test Scores", "test_scores", False),
         _sec("Activities", "activities", False),
@@ -1223,5 +1222,8 @@ async def portable_export(
 ):
     """Export full portable profile as JSON."""
     svc = StudentService(db)
-    profile = await svc.get_full_profile(user.id)
-    return profile
+    profile = await svc.get_profile(user.id)
+    onboarding = await svc.get_onboarding_status(profile.id)
+    resp = StudentProfileResponse.model_validate(profile)
+    resp.onboarding = onboarding
+    return resp.model_dump(mode="json")
