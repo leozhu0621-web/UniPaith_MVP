@@ -52,7 +52,7 @@ async def get_current_user(
 
             user = User(
                 id=dev_user_id,
-                email=claims.email or f"dev-{claims.sub[:8]}@dev.local",
+                email=claims.email or f"dev-{claims.sub}@dev.local",
                 cognito_sub=claims.sub,
                 role=role,
             )

@@ -47,7 +47,7 @@ def _verify_dev_token(token: str) -> CognitoClaims:
         uuid.UUID(parts[1])
     except ValueError:
         raise BadRequestException("Invalid user_id in dev token")  # noqa: B904
-    return CognitoClaims(sub=parts[1], email=f"dev-{parts[1][:8]}@dev.local", role=parts[2])
+    return CognitoClaims(sub=parts[1], email=f"dev-{parts[1]}@dev.local", role=parts[2])
 
 
 async def verify_token(token: str) -> CognitoClaims:
