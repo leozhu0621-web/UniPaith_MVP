@@ -111,8 +111,9 @@ export default function ChatPage() {
         sent_at: new Date().toISOString(),
       }
       setChatMessages(prev => [...prev, assistantMessage])
+      sendMut.reset()
     }
-  }, [sendMut.data])
+  }, [sendMut.data]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {

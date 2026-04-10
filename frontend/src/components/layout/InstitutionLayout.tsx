@@ -87,7 +87,7 @@ export default function InstitutionLayout() {
     navigate('/i/setup', { replace: true })
   }, [institutionMissing, location.pathname, navigate])
 
-  const navSections = buildNavSections(institutionQ.isError)
+  const navSections = buildNavSections(institutionMissing)
   const currentArea =
     navSections.flatMap(section => section.items).find(item => location.pathname.startsWith(item.to))?.label ?? 'Overview'
   const currentSection =

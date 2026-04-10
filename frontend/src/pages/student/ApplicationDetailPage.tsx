@@ -63,7 +63,6 @@ export default function ApplicationDetailPage() {
   const { data: interviews } = useQuery({ queryKey: ['interviews'], queryFn: getMyInterviews, enabled: tab === 'interviews' })
 
   const [guardrailResult, setGuardrailResult] = useState<any>(null)
-  void setGuardrailResult
   const [intentReason, setIntentReason] = useState('')
   const [rationale, setRationale] = useState('')
 
