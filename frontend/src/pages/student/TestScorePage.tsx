@@ -402,7 +402,7 @@ export default function TestScorePage() {
                           {[...selected].map(sid => {
                             const sc = scoreList.find((s: any) => s.id === sid)
                             return sc ? (
-                              <Badge key={sid} variant="info" size="sm">{sc.test_type}: {sc.score ?? '\u2014'}</Badge>
+                              <Badge key={sid} variant="info" size="sm">{sc.test_type}: {sc.total_score ?? '\u2014'}</Badge>
                             ) : null
                           })}
                         </div>
