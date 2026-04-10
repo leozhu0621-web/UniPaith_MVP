@@ -3,6 +3,7 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -968,3 +969,185 @@ async def get_student_recommendations(
         count=5,
     )
     return {"recommendations": recommendations}
+
+
+# ============ CONVERSATIONAL INTAKE & INTELLIGENCE ============
+
+
+class IntakeChatRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=4000)
+
+
+class IntakeChatResponse(BaseModel):
+    extracted_fields: dict
+    next_question: str
+    profile_updated: bool
+    completion_pct: int
+
+
+@router.post("/me/intake/chat", response_model=IntakeChatResponse)
+async def intake_chat(
+    body: IntakeChatRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Chat-based onboarding: extract profile fields from free text."""
+    from unipaith.ai.llm_client import get_llm_client
+
+    svc = StudentService(db)
+    profile = await svc._get_student_profile(user.id)
+    llm = get_llm_client()
+
+    system_prompt = (
+        "You are an onboarding assistant for a college application platform. "
+        "Extract structured profile fields from the student's message. "
+        "Return JSON with: extracted_fields (dict of field_name: value), "
+        "next_question (the next thing to ask), and any insights.\n"
+        "Fields to extract: first_name, last_name, nationality, "
+        "country_of_residence, date_of_birth, bio_text, goals_text, "
+        "gpa, test_type, test_score.\n"
+        "Return ONLY valid JSON."
+    )
+
+    if settings.ai_mock_mode:
+        extracted = {"goals_text": body.message[:100]}
+        next_q = "What country are you from?"
+    else:
+        import json as _json
+
+        raw = await llm.extract_features(system_prompt, body.message)
+        try:
+            parsed = _json.loads(raw)
+            extracted = parsed.get("extracted_fields", {})
+            next_q = parsed.get("next_question", "Tell me more.")
+        except Exception:
+            extracted = {}
+            next_q = "Could you tell me more about yourself?"
+
+    updated = False
+    for field, value in extracted.items():
+        if hasattr(profile, field) and value:
+            setattr(profile, field, value)
+            updated = True
+    if updated:
+        await db.flush()
+
+    onboarding = await svc.get_onboarding(user.id)
+    pct = onboarding.get("completion_percentage", 0) if onboarding else 0
+
+    return IntakeChatResponse(
+        extracted_fields=extracted,
+        next_question=next_q,
+        profile_updated=updated,
+        completion_pct=pct,
+    )
+
+
+class CompletionMapResponse(BaseModel):
+    sections: list[dict]
+    match_ready: bool
+    apply_ready: bool
+    match_ready_pct: int
+    apply_ready_pct: int
+
+
+@router.get("/me/completion-map", response_model=CompletionMapResponse)
+async def get_completion_map(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Per-section completion with match-ready vs apply-ready."""
+    svc = StudentService(db)
+    onboarding = await svc.get_onboarding(user.id)
+    steps = (
+        onboarding.get("steps_completed", {}) if onboarding else {}
+    )
+
+    def _sec(name: str, key: str, match: bool) -> dict:
+        return {
+            "name": name,
+            "key": key,
+            "done": bool(steps.get(key)),
+            "match_required": match,
+            "apply_required": True,
+        }
+
+    sections = [
+        _sec("Basic Info", "basic_info", True),
+        _sec("Academics", "academics", True),
+        _sec("Test Scores", "test_scores", False),
+        _sec("Activities", "activities", False),
+        _sec("Preferences", "preferences", True),
+        _sec("Essays", "essays", False),
+        _sec("Documents", "documents", False),
+    ]
+    match_sections = [s for s in sections if s["match_required"]]
+    apply_sections = sections
+    match_done = sum(1 for s in match_sections if s["done"])
+    apply_done = sum(1 for s in apply_sections if s["done"])
+
+    return CompletionMapResponse(
+        sections=sections,
+        match_ready=all(s["done"] for s in match_sections),
+        apply_ready=all(s["done"] for s in apply_sections),
+        match_ready_pct=(
+            round(match_done / len(match_sections) * 100)
+            if match_sections
+            else 0
+        ),
+        apply_ready_pct=(
+            round(apply_done / len(apply_sections) * 100)
+            if apply_sections
+            else 0
+        ),
+    )
+
+
+@router.get("/me/insights/confidence")
+async def get_insights_confidence(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """PersonInsights grouped by confidence with provenance."""
+    from unipaith.models.knowledge import PersonInsight
+
+    result = await db.execute(
+        select(PersonInsight).where(
+            PersonInsight.user_id == user.id,
+            PersonInsight.is_active.is_(True),
+        ).order_by(PersonInsight.confidence.desc())
+    )
+    insights = list(result.scalars().all())
+
+    high = [i for i in insights if i.confidence >= 0.8]
+    medium = [i for i in insights if 0.5 <= i.confidence < 0.8]
+    low = [i for i in insights if i.confidence < 0.5]
+
+    def serialize(i: PersonInsight) -> dict:
+        return {
+            "id": str(i.id),
+            "type": i.insight_type,
+            "text": i.insight_text,
+            "confidence": round(i.confidence, 2),
+            "source": i.source,
+            "created_at": i.created_at.isoformat(),
+        }
+
+    return {
+        "high_confidence": [serialize(i) for i in high],
+        "medium_confidence": [serialize(i) for i in medium],
+        "low_confidence": [serialize(i) for i in low],
+        "total": len(insights),
+        "needs_clarification": len(low),
+    }
+
+
+@router.get("/me/profile/portable-export")
+async def portable_export(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Export full portable profile as JSON."""
+    svc = StudentService(db)
+    profile = await svc.get_full_profile(user.id)
+    return profile

@@ -49,6 +49,8 @@ import ResumeWorkshopPage from './pages/student/ResumeWorkshopPage'
 import EssayWorkshopPage from './pages/student/EssayWorkshopPage'
 import TestScorePage from './pages/student/TestScorePage'
 import DecisionComparisonPage from './pages/student/DecisionComparisonPage'
+import IntakePage from './pages/student/IntakePage'
+import IntelligenceDashboardPage from './pages/student/IntelligenceDashboardPage'
 
 // Institution pages
 import DashboardPage from './pages/institution/DashboardPage'
@@ -141,6 +143,8 @@ const router = createBrowserRouter([
       { path: 'essay-workshop', element: <EssayWorkshopPage /> },
       { path: 'test-scores', element: <TestScorePage /> },
       { path: 'decisions', element: <DecisionComparisonPage /> },
+      { path: 'intake', element: <IntakePage /> },
+      { path: 'intelligence', element: <IntelligenceDashboardPage /> },
       { path: 'settings', element: <StudentSettingsPage /> },
     ],
   },
