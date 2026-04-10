@@ -71,7 +71,7 @@ export default function ApplicationDetailPage() {
   const essayMut = useMutation({ mutationFn: (data: any) => createEssay(data), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['essays'] }); setShowEssayModal(false); setEssayContent(''); setEssayPrompt(''); showToast('Essay created', 'success') } })
   const essayUpdateMut = useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => updateEssay(id, data), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['essays'] }); setEditingEssay(null); showToast('Essay updated', 'success') } })
   const resumeGenMut = useMutation({ mutationFn: () => generateResume({ format_type: 'standard', target_program_id: app?.program_id }), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['resumes'] }); showToast('Resume generated', 'success') } })
-  const offerMut = useMutation({ mutationFn: () => respondToOffer(appId!, offerResponse, declineReason || undefined), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['application', appId] }); showToast('Response submitted', 'success') } })
+  const offerMut = useMutation({ mutationFn: (response: string) => respondToOffer(appId!, response, response === 'declined' ? declineReason || undefined : undefined), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['application', appId] }); showToast('Response submitted', 'success') } })
 
   // File upload handler
   const handleFileUpload = useCallback(async (files: FileList | File[]) => {
@@ -146,6 +146,7 @@ export default function ApplicationDetailPage() {
   const wordCount = (text: string) => text.trim() ? text.trim().split(/\s+/).length : 0
 
   if (isLoading) return <div className="p-6"><Skeleton className="h-64" /></div>
+  if (!app) return <div className="p-6 text-center text-gray-500">Application not found.</div>
 
   const application: Application = app
   const currentStepIdx = STATUS_STEPS.indexOf(application.status)
@@ -571,13 +572,13 @@ export default function ApplicationDetailPage() {
                 <p className="text-sm text-gray-600">Decision: <Badge variant="success">{application.decision}</Badge></p>
                 {application.decision_notes && <p className="text-sm text-gray-600 mt-2">{application.decision_notes}</p>}
                 <div className="flex gap-3 mt-4">
-                  <Button onClick={() => { setOfferResponse('accepted'); offerMut.mutate() }} loading={offerMut.isPending}>Accept</Button>
+                  <Button onClick={() => offerMut.mutate('accepted')} loading={offerMut.isPending}>Accept</Button>
                   <Button variant="danger" onClick={() => setOfferResponse('declined')}>Decline</Button>
                 </div>
                 {offerResponse === 'declined' && (
                   <div className="mt-3 space-y-2">
                     <Textarea label="Reason (optional)" value={declineReason} onChange={e => setDeclineReason(e.target.value)} />
-                    <Button variant="danger" onClick={() => offerMut.mutate()} loading={offerMut.isPending}>Confirm Decline</Button>
+                    <Button variant="danger" onClick={() => offerMut.mutate('declined')} loading={offerMut.isPending}>Confirm Decline</Button>
                   </div>
                 )}
               </Card>

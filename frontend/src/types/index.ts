@@ -305,6 +305,7 @@ export interface Program {
   highlights: string[] | null
   faculty_contacts: Record<string, any>[] | null
   cost_data: Record<string, any> | null
+  institution_name?: string | null
   created_at: string
   updated_at: string
 }

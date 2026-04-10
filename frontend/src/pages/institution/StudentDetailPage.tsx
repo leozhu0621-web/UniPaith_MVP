@@ -196,7 +196,7 @@ export default function StudentDetailPage() {
                     <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#6366f1" strokeWidth="3" strokeDasharray={`${app.match_score}, 100`} />
                   </svg>
                   <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-brand-slate-600">
-                    {formatScore(app.match_score / 100)}
+                    {formatScore(app.match_score)}
                   </span>
                 </div>
               </div>

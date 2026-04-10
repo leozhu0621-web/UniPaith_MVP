@@ -78,7 +78,7 @@ function DraggableCard({ app, onClick, selected, onToggleSelect }: {
       </div>
       <div className="flex items-center justify-between mt-2">
         {app.match_score != null && (
-          <span className="text-xs font-medium text-brand-slate-600">{formatScore(app.match_score / 100)}</span>
+          <span className="text-xs font-medium text-brand-slate-600">{formatScore(app.match_score)}</span>
         )}
         <span className="text-xs text-gray-400">{formatRelative(app.updated_at)}</span>
       </div>
@@ -171,7 +171,8 @@ export default function PipelinePage() {
   useEffect(() => {
     const tabParam = (searchParams.get('tab') as PipelineTab) || 'board'
     if (tabParam !== activeTab) setActiveTab(tabParam)
-  }, [activeTab, searchParams])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   const grouped = useMemo(() => {
     const apps: Application[] = Array.isArray(applicationsQ.data) ? applicationsQ.data : []
@@ -310,7 +311,7 @@ export default function PipelinePage() {
     {
       key: 'match_score',
       label: 'Match Score',
-      render: (row: Application) => row.match_score != null ? formatScore(row.match_score / 100) : '-',
+      render: (row: Application) => row.match_score != null ? formatScore(row.match_score) : '-',
     },
     {
       key: 'updated_at',

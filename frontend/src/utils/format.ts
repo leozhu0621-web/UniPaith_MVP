@@ -31,7 +31,9 @@ export function formatPercent(value: number | null | undefined, decimals = 0): s
 
 export function formatScore(score: number | null | undefined): string {
   if (score == null) return '—'
-  return `${Math.round(score)}%`
+  // Scores are stored as 0-1 decimals; display as percentage
+  const pct = score <= 1 ? score * 100 : score
+  return `${Math.round(pct)}%`
 }
 
 export function formatFileSize(bytes: number | null | undefined): string {
