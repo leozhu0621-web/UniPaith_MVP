@@ -4,40 +4,40 @@ import ScrollReveal from '@/components/landing/ScrollReveal'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/shadcn/accordion'
 import {
   ArrowRight, MessageCircle, UserCircle, Search, Send, Target,
-  FileText, DollarSign, Shield, Sparkles, Lock, BookOpen, Brain, Heart,
+  FileText, DollarSign, Shield, Sparkles, Lock, BookOpen, Brain,
 } from 'lucide-react'
 
 const journeyStages = [
-  { num: '01', title: 'Understand Your Context', desc: 'Goals, motivations, constraints — through conversation, not forms.', color: 'bg-brand-amber-500' },
-  { num: '02', title: 'Surface Hidden Blockers', desc: 'Budget gaps, visa risks, timeline pressure, eligibility unknowns.', color: 'bg-brand-green-500' },
-  { num: '03', title: 'Define Your Priorities', desc: 'Cost vs ranking, location vs timeline — your tradeoffs, your rules.', color: 'bg-brand-amber-500' },
-  { num: '04', title: 'Translate to Requirements', desc: 'Goals become must-haves and nice-to-haves. Review and edit anytime.', color: 'bg-brand-green-500' },
-  { num: '05', title: 'Shortlist & Plan', desc: 'Programs with transparent fit rationale. Know why each was picked.', color: 'bg-brand-amber-500' },
-  { num: '06', title: 'Prepare & Submit', desc: 'Checklists, documents, essays, deadlines — managed in one place.', color: 'bg-brand-green-500' },
-  { num: '07', title: 'Track & Respond', desc: 'Status updates, interview requests, and decisions as they happen.', color: 'bg-brand-amber-500' },
-  { num: '08', title: 'Compare & Decide', desc: 'Side-by-side offers with cost normalization and deadline tracking.', color: 'bg-brand-green-500' },
+  { num: '01', title: 'Tell Us About You', desc: 'Goals, budget, location, timeline — a quick conversation, not a 20-page form.', color: 'bg-brand-amber-500' },
+  { num: '02', title: 'Spot the Blind Spots', desc: 'We flag things you might miss: visa requirements, hidden costs, eligibility gaps.', color: 'bg-brand-green-500' },
+  { num: '03', title: 'Lock In Your Priorities', desc: 'Cost vs ranking, location vs timeline — you decide the tradeoffs, we respect them.', color: 'bg-brand-amber-500' },
+  { num: '04', title: 'Build Your Shortlist', desc: 'Programs matched to your criteria. You\'ll see why each one made the cut.', color: 'bg-brand-green-500' },
+  { num: '05', title: 'Get Application-Ready', desc: 'Checklists, documents, essays — everything organized with clear next steps.', color: 'bg-brand-amber-500' },
+  { num: '06', title: 'Apply From One Dashboard', desc: 'Submit to multiple programs without re-entering the same info on 12 portals.', color: 'bg-brand-green-500' },
+  { num: '07', title: 'Track Every Response', desc: 'Status updates, interview invites, and decisions — all in one feed.', color: 'bg-brand-amber-500' },
+  { num: '08', title: 'Compare Offers & Decide', desc: 'Side-by-side comparison with real costs, conditions, and deadlines.', color: 'bg-brand-green-500' },
 ]
 
 const features = [
-  { icon: UserCircle, title: 'Universal Profile', desc: 'Build once, use everywhere. One portable profile across every application.', color: 'text-brand-amber-500', bg: 'bg-brand-amber-50' },
-  { icon: Search, title: 'AI Matching', desc: 'Explainable recommendations tied to your goals, budget, and profile.', color: 'text-brand-green-600', bg: 'bg-brand-green-50' },
-  { icon: Send, title: 'Application Manager', desc: 'Deadlines, checklists, status updates — one dashboard for everything.', color: 'text-brand-amber-500', bg: 'bg-brand-amber-50' },
-  { icon: FileText, title: 'Essay Workshop', desc: 'AI-assisted writing with feedback, version history, and program-specific guidance.', color: 'text-brand-green-600', bg: 'bg-brand-green-50' },
-  { icon: DollarSign, title: 'Financial Aid Navigator', desc: 'Discover scholarships, compare costs, and make informed financial decisions.', color: 'text-brand-amber-500', bg: 'bg-brand-amber-50' },
-  { icon: Target, title: 'Readiness Diagnostics', desc: 'Know where you stand before you submit. Strengths, gaps, and a clear path.', color: 'text-brand-green-600', bg: 'bg-brand-green-50' },
+  { icon: UserCircle, title: 'One Profile, Every School', desc: 'Fill it out once. Academics, activities, essays, documents — reuse across every application.', color: 'text-brand-amber-500', bg: 'bg-brand-amber-50' },
+  { icon: Search, title: 'Smart Matching', desc: 'Programs ranked by how well they fit your goals, budget, and profile — with clear reasoning.', color: 'text-brand-green-600', bg: 'bg-brand-green-50' },
+  { icon: Send, title: 'Application Tracker', desc: 'Deadlines, checklists, status — stop juggling spreadsheets and email tabs.', color: 'text-brand-amber-500', bg: 'bg-brand-amber-50' },
+  { icon: FileText, title: 'Essay Workshop', desc: 'Get feedback on your essays, track versions, and tailor drafts per program.', color: 'text-brand-green-600', bg: 'bg-brand-green-50' },
+  { icon: DollarSign, title: 'Cost & Aid Breakdown', desc: 'Compare real costs across programs. Find scholarships you qualify for.', color: 'text-brand-amber-500', bg: 'bg-brand-amber-50' },
+  { icon: Target, title: 'Readiness Check', desc: 'Know where you stand before you hit submit. Strengths, gaps, and what to fix.', color: 'text-brand-green-600', bg: 'bg-brand-green-50' },
 ]
 
 const chatMessages = [
-  { from: 'ai', text: "Based on our conversation, your top priorities are budget under $30K/year and a strong CS program in North America. Still accurate?" },
-  { from: 'student', text: "Yes, but I'm also now open to Europe if the cost is lower." },
-  { from: 'ai', text: "Adding Europe expands your options — 3 programs in Germany and 2 in the Netherlands have zero tuition for international students. Want me to add them to your shortlist?" },
+  { from: 'ai', text: "Your top priorities: budget under $30K/year, strong CS program, North America. Still right?" },
+  { from: 'student', text: "Yes, but I'm now open to Europe if it's cheaper." },
+  { from: 'ai', text: "Good call. 3 programs in Germany and 2 in the Netherlands have zero tuition for international students. Want me to add them to your shortlist?" },
 ]
 
 const faqs = [
-  { q: 'How is this different from Common App?', a: 'Common App handles submission to ~1,100 member schools. UniPaith handles your entire journey — matching, readiness, applications, tracking, and offer comparison. Your profile works across every institution.' },
-  { q: 'Is it really free?', a: 'Yes, completely free — forever. No credit card, no trial period. Institutions pay for their operations platform; students never pay.' },
-  { q: 'Does AI decide where I apply?', a: 'Never. AI explains why programs might fit and flags what you\'re missing. Every decision — where to apply, what to submit, which offer to accept — is yours.' },
-  { q: 'What happens to my data?', a: 'Your data belongs to you. FERPA-ready, GDPR-compliant, end-to-end encrypted. Export or delete anytime.' },
+  { q: 'How is this different from Common App?', a: 'Common App handles submission to ~1,100 member schools. UniPaith handles matching, readiness, applications, tracking, and offer comparison — across any program worldwide. One profile works everywhere.' },
+  { q: 'Is it really free?', a: 'Yes. Institutions pay for their operations platform. Students pay nothing — no trial, no premium tier, no credit card.' },
+  { q: 'Does the AI decide where I apply?', a: 'No. It recommends programs and shows you why. You choose where to apply, what to submit, and which offer to accept.' },
+  { q: 'What happens to my data?', a: 'It\'s yours. Encrypted, never sold, only shared with schools you choose to apply to. Export or delete anytime.' },
 ]
 
 export default function ForStudentsPage() {
@@ -51,20 +51,20 @@ export default function ForStudentsPage() {
         </div>
         <div className="max-w-4xl mx-auto text-center">
           <ScrollReveal variant="blur-in">
-            <span className="inline-flex items-center gap-2 bg-brand-amber-50 text-brand-amber-700 rounded-full px-5 py-2 text-sm font-medium mb-8">
-              <Heart size={14} /> For Students
+            <span className="inline-flex items-center gap-2 bg-brand-green-100 text-brand-green-700 rounded-full px-5 py-2 text-sm font-medium mb-8">
+              Everything a $6K agent does &mdash; for free
             </span>
           </ScrollReveal>
           <ScrollReveal delay={200} variant="scale-up">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-[1.1] mb-6 tracking-tight font-heading">
-              Your private education advisor.{' '}
+              Find the right school.{' '}
               <br className="hidden sm:block" />
-              <span className="text-brand-amber-500">Available 24/7.</span>
+              <span className="text-brand-green-600">Get in.</span>
             </h1>
           </ScrollReveal>
           <ScrollReveal delay={400}>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-              One profile. AI-powered matching. Essay help, deadline tracking, financial guidance — from first thought to final decision. Free forever.
+              UniPaith matches you with programs that actually fit, manages your applications, and helps you put your best foot forward &mdash; all from one place.
             </p>
           </ScrollReveal>
           <ScrollReveal delay={600}>
@@ -73,20 +73,20 @@ export default function ForStudentsPage() {
                 <Link to="/signup?role=student">Create Your Profile <ArrowRight size={20} className="ml-2" /></Link>
               </Button>
               <Button size="lg" variant="outline" className="text-base px-10 py-7 rounded-xl text-lg" asChild>
-                <a href="#journey">See How It Works</a>
+                <a href="#how-it-works">See How It Works</a>
               </Button>
             </div>
           </ScrollReveal>
         </div>
       </section>
 
-      {/* Journey map */}
-      <section id="journey" className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/30">
+      {/* How it works */}
+      <section id="how-it-works" className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/30">
         <div className="max-w-5xl mx-auto">
           <ScrollReveal variant="blur-in">
             <div className="text-center mb-14">
-              <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-3 font-heading">From first thought to final decision</h2>
-              <p className="text-muted-foreground max-w-lg mx-auto text-lg">Eight guided stages. One connected experience.</p>
+              <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-3 font-heading">Here&rsquo;s what happens when you sign up</h2>
+              <p className="text-muted-foreground max-w-lg mx-auto text-lg">Eight steps. One place. No guesswork.</p>
             </div>
           </ScrollReveal>
           <div className="relative">
@@ -110,13 +110,13 @@ export default function ForStudentsPage() {
         </div>
       </section>
 
-      {/* Features */}
+      {/* What you get */}
       <section className="py-24 px-4 sm:px-6 lg:px-8 bg-background">
         <div className="max-w-6xl mx-auto">
           <ScrollReveal variant="blur-in">
             <div className="text-center mb-14">
-              <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-3 font-heading">Everything you need. One place.</h2>
-              <p className="text-muted-foreground max-w-lg mx-auto text-lg">Six integrated tools that work together.</p>
+              <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-3 font-heading">What you get</h2>
+              <p className="text-muted-foreground max-w-lg mx-auto text-lg">Six tools that work together so you don&rsquo;t have to juggle six apps.</p>
             </div>
           </ScrollReveal>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -135,23 +135,23 @@ export default function ForStudentsPage() {
         </div>
       </section>
 
-      {/* AI Counselor */}
+      {/* Counselor preview */}
       <section className="py-24 px-4 sm:px-6 lg:px-8 bg-brand-green-900">
         <div className="max-w-5xl mx-auto">
           <ScrollReveal variant="blur-in">
             <div className="text-center mb-14">
               <span className="inline-flex items-center gap-1.5 bg-brand-amber-500/20 text-brand-amber-300 text-sm font-medium rounded-full px-5 py-1.5 mb-4">
-                <MessageCircle size={14} /> AI Counselor
+                <MessageCircle size={14} /> Your Counselor
               </span>
-              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3 font-heading">Conversation-first. Not form-first.</h2>
-              <p className="text-brand-green-300 max-w-xl mx-auto text-lg">Your AI counselor learns through dialogue — understanding goals, surfacing blind spots, building requirements you agree with.</p>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3 font-heading">Like texting a friend who knows admissions inside out</h2>
+              <p className="text-brand-green-300 max-w-xl mx-auto text-lg">Ask anything. It knows your profile, your priorities, and your deadlines.</p>
             </div>
           </ScrollReveal>
           <ScrollReveal delay={200}>
             <div className="max-w-2xl mx-auto bg-brand-green-800 rounded-2xl border border-brand-green-700 overflow-hidden">
               <div className="px-6 py-3 border-b border-brand-green-700 flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-brand-amber-500 flex items-center justify-center"><Sparkles size={16} className="text-white" /></div>
-                <span className="text-white font-medium text-sm">UniPaith Counselor</span>
+                <span className="text-white font-medium text-sm">UniPaith</span>
               </div>
               <div className="p-5 space-y-3">
                 {chatMessages.map((msg, i) => (
@@ -171,16 +171,16 @@ export default function ForStudentsPage() {
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background">
         <div className="max-w-4xl mx-auto text-center">
           <ScrollReveal variant="blur-in">
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-3 font-heading">You're always in control</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto text-lg mb-10">Every recommendation shows its reasoning. Every inference is editable. Every decision is yours.</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-3 font-heading">You stay in control</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto text-lg mb-10">Every recommendation shows its reasoning. You can edit, reject, or override anything.</p>
           </ScrollReveal>
           <ScrollReveal delay={200}>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {[
-                { icon: Shield, label: 'FERPA & GDPR Ready' },
-                { icon: Lock, label: 'End-to-End Encrypted' },
-                { icon: Brain, label: 'Human-in-the-Loop' },
-                { icon: BookOpen, label: 'Full Audit Trails' },
+                { icon: Shield, label: 'FERPA & GDPR' },
+                { icon: Lock, label: 'Encrypted' },
+                { icon: Brain, label: 'You Decide' },
+                { icon: BookOpen, label: 'Full Audit Trail' },
               ].map((badge, i) => (
                 <div key={i} className="flex flex-col items-center gap-2 p-4">
                   <badge.icon size={24} className="text-brand-green-500" />
@@ -196,7 +196,7 @@ export default function ForStudentsPage() {
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted/30">
         <div className="max-w-3xl mx-auto">
           <ScrollReveal variant="blur-in">
-            <h2 className="text-3xl font-bold text-center text-foreground mb-10 font-heading">Questions students ask</h2>
+            <h2 className="text-3xl font-bold text-center text-foreground mb-10 font-heading">Common questions</h2>
           </ScrollReveal>
           <ScrollReveal delay={200}>
             <Accordion type="single" collapsible className="space-y-3">
@@ -215,12 +215,12 @@ export default function ForStudentsPage() {
       <section className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-brand-green-700 to-brand-green-900">
         <div className="max-w-3xl mx-auto text-center">
           <ScrollReveal variant="blur-in">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4 font-heading">Ready to take control of your future?</h2>
-            <p className="text-brand-green-300 mb-10 text-lg max-w-xl mx-auto">Create your free profile in under 2 minutes. No credit card, no catches.</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4 font-heading">Ready to get started?</h2>
+            <p className="text-brand-green-300 mb-10 text-lg max-w-xl mx-auto">Set up your profile in under 2 minutes. No cost, no commitment.</p>
           </ScrollReveal>
           <ScrollReveal delay={200}>
             <Button size="lg" className="text-base px-12 py-7 rounded-xl shadow-lg text-lg bg-brand-amber-500 hover:bg-brand-amber-600 text-white" asChild>
-              <Link to="/signup?role=student">Create Your Profile — Free Forever <ArrowRight size={20} className="ml-2" /></Link>
+              <Link to="/signup?role=student">Create Your Profile <ArrowRight size={20} className="ml-2" /></Link>
             </Button>
           </ScrollReveal>
         </div>

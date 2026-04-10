@@ -3,10 +3,10 @@ import ScrollReveal from "./ScrollReveal";
 import AnimatedCounter from "./AnimatedCounter";
 
 const studentPains = [
-  "Filling out the same forms across 12+ portals",
-  "No clear signal on which programs actually fit",
-  "Tracking deadlines across dozens of schools",
-  "Paying $6K+ for agents who guess at eligibility",
+  "Re-entering the same info across 12+ portals",
+  "No idea which programs you'd actually get into",
+  "Juggling deadlines across dozens of schools",
+  "Paying $6K+ for agents who can't explain their picks",
 ];
 
 const institutionPains = [

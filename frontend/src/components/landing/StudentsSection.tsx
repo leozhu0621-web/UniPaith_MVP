@@ -5,32 +5,32 @@ import ScrollReveal from "./ScrollReveal";
 const steps = [
   {
     icon: UserCircle,
-    title: "Build Your Universal Profile",
-    description: "One profile that works everywhere — academics, activities, essays, documents.",
+    title: "One Profile, Every School",
+    description: "Fill it out once. Use it for every application — transcripts, essays, activities, documents.",
     color: "text-brand-amber-600",
     bg: "bg-brand-amber-100",
     line: "bg-brand-amber-500",
   },
   {
     icon: Search,
-    title: "Get AI-Powered Matches",
-    description: "Programs ranked by fit, with transparent reasoning tied to your goals.",
+    title: "See Programs That Actually Fit",
+    description: "Matched to your goals, budget, and profile. You'll see exactly why each one was picked.",
     color: "text-brand-green-600",
     bg: "bg-brand-green-100",
     line: "bg-brand-green-600",
   },
   {
     icon: Send,
-    title: "Apply & Track Everything",
-    description: "Deadlines, documents, status updates — one dashboard for your entire portfolio.",
+    title: "Apply & Track in One Place",
+    description: "Manage deadlines, upload documents, track status — stop juggling 10 different portals.",
     color: "text-brand-green-500",
     bg: "bg-brand-slate-100",
     line: "bg-brand-green-500",
   },
   {
     icon: MessageCircle,
-    title: "AI Counselor 24/7",
-    description: "Essay feedback, readiness scores, financial aid guidance — like a private advisor, free.",
+    title: "Get Help When You Need It",
+    description: "Essay feedback, cost breakdowns, readiness checks — a counselor who knows your file, anytime.",
     color: "text-brand-amber-600",
     bg: "bg-brand-amber-100",
     line: "bg-brand-green-500",
@@ -54,10 +54,10 @@ const StudentsSection = () => (
             For Students
           </span>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4 font-heading">
-            Your private education advisor
+            How it works for students
           </h2>
           <p className="text-muted-foreground max-w-lg mx-auto text-lg">
-            One profile. AI-powered matching. Guided applications.
+            The same things a great counselor does &mdash; but faster, cheaper, and available whenever you need it.
           </p>
         </div>
       </ScrollReveal>

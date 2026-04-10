@@ -14,7 +14,7 @@ const HeroSection = () => (
     <div className="max-w-5xl mx-auto text-center">
       <ScrollReveal variant="blur-in">
         <div className="inline-flex items-center gap-2 bg-brand-green-100 text-brand-green-700 rounded-full px-5 py-2 text-sm font-medium mb-8">
-          AI-powered admissions for students &amp; institutions
+          Everything a $6K agent does &mdash; for free
         </div>
       </ScrollReveal>
 
@@ -28,7 +28,7 @@ const HeroSection = () => (
 
       <ScrollReveal delay={400}>
         <p className="text-xl sm:text-2xl text-muted-foreground max-w-3xl mx-auto mb-12 leading-relaxed">
-          AI-powered guidance from first thought to final decision. One profile, transparent matching, and tools that actually help — free forever.
+          Find the right programs, manage every application, and know your real chances &mdash; all in one place. Like having a great counselor who actually knows your profile.
         </p>
       </ScrollReveal>
 
@@ -48,11 +48,11 @@ const HeroSection = () => (
 
       <ScrollReveal delay={800}>
         <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 mt-12 text-sm text-muted-foreground/60">
-          <span>Free for students, always</span>
+          <span>10,000+ programs</span>
           <span className="hidden sm:block w-1 h-1 rounded-full bg-muted-foreground/30" />
-          <span>FERPA &amp; GDPR ready</span>
+          <span>50+ countries</span>
           <span className="hidden sm:block w-1 h-1 rounded-full bg-muted-foreground/30" />
-          <span>10,000+ programs indexed</span>
+          <span>$0 for students</span>
         </div>
       </ScrollReveal>
     </div>
