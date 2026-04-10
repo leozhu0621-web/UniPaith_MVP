@@ -11,7 +11,7 @@ import ProgressBar from '../../components/ui/ProgressBar'
 import Skeleton from '../../components/ui/Skeleton'
 import {
   MessageSquare, Search, FileText, User,
-  ArrowRight, ShieldCheck, AlertTriangle, Sparkles, Calendar, Zap,
+  ArrowRight, AlertTriangle, Sparkles, Calendar, Zap,
 } from 'lucide-react'
 import { differenceInDays, parseISO } from 'date-fns'
 import { formatDate } from '../../utils/format'
@@ -152,11 +152,25 @@ export default function DashboardPage() {
     return counts
   }, [applications])
 
+  const journeyStage = completionPct < 30
+    ? { label: 'Self-Discovery', color: 'text-purple-600', desc: 'Understanding who you are and what you want' }
+    : completionPct < 60
+      ? { label: 'Exploration', color: 'text-blue-600', desc: 'Discovering programs that fit your unique story' }
+      : completionPct < 80
+        ? { label: 'Refinement', color: 'text-amber-600', desc: 'Sharpening your preferences and building your narrative' }
+        : appCount > 0
+          ? { label: 'Application', color: 'text-emerald-600', desc: 'Bringing your best self to each program' }
+          : { label: 'Ready to Apply', color: 'text-emerald-600', desc: 'Your profile is strong — time to take the next step' }
+
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Today with your admissions counselor</h1>
-        <p className="text-sm text-gray-500 mt-1">What matters now, what is next, and what can wait.</p>
+        <div className="flex items-center gap-2 mb-1">
+          <Sparkles size={20} className="text-amber-500" />
+          <span className={`text-xs font-semibold uppercase tracking-wider ${journeyStage.color}`}>{journeyStage.label} Phase</span>
+        </div>
+        <h1 className="text-2xl font-semibold text-stone-800">Your Journey Today</h1>
+        <p className="text-sm text-gray-500 mt-1">{journeyStage.desc}</p>
       </div>
 
       {(matchesError || deadlinesError) && (
@@ -168,36 +182,67 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      {/* Counselor brief */}
-      <Card className="p-5">
+      {/* AI Guide */}
+      <Card className="p-5 bg-gradient-to-br from-stone-50 to-amber-50/30 border-stone-200">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-2">
-              <ShieldCheck size={17} className="text-brand-slate-600" />
-              <h2 className="font-semibold text-brand-slate-700">Counselor Brief</h2>
+              <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
+                <Sparkles size={16} className="text-amber-600" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-stone-700">Your AI Counselor</h2>
+                <p className="text-[10px] text-gray-400">Personalized guidance based on your journey</p>
+              </div>
             </div>
-            <p className="text-sm text-brand-slate-600">
+            <p className="text-sm text-stone-600 leading-relaxed">
               {nextStep?.guidance_text
-                ? `You are on track. The best step right now is: ${nextStep.guidance_text}`
-                : 'You are in a stable place. Continue your current plan and we will refine it together.'}
+                ? nextStep.guidance_text
+                : completionPct < 30
+                  ? "Let's start by getting to know you. I'll ask a few questions to understand your goals and interests — no forms, just a conversation."
+                  : completionPct < 60
+                    ? "You're building a strong foundation. Let's explore what programs might be the right fit for who you are becoming."
+                    : completionPct < 80
+                      ? "Your story is coming together. A few more details will help me find programs where you'll truly thrive."
+                      : "Your profile is looking great. Ready to discover your best-fit programs?"}
             </p>
           </div>
-          <Button size="sm" variant="secondary" onClick={() => navigate('/s/chat')}>
-            Talk to counselor <ArrowRight size={14} className="ml-1" />
-          </Button>
+          <div className="flex flex-col gap-2 flex-shrink-0">
+            {completionPct < 30 && (
+              <Button size="sm" onClick={() => navigate('/s/intake')}>
+                <Sparkles size={14} className="mr-1" /> Start Conversation
+              </Button>
+            )}
+            {completionPct >= 30 && completionPct < 80 && (
+              <Button size="sm" onClick={() => navigate('/s/profile')}>
+                Continue Profile <ArrowRight size={14} className="ml-1" />
+              </Button>
+            )}
+            {completionPct >= 80 && (
+              <Button size="sm" onClick={() => navigate('/s/match')}>
+                <Sparkles size={14} className="mr-1" /> Find Programs
+              </Button>
+            )}
+            <Button size="sm" variant="secondary" onClick={() => navigate('/s/chat')}>
+              <MessageSquare size={14} className="mr-1" /> Talk to Counselor
+            </Button>
+          </div>
         </div>
       </Card>
 
-      {/* Profile Completion */}
+      {/* Self-Discovery Progress */}
       {completionPct < 100 && (
         <Card className="p-5">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-2">
-              <User size={18} className="text-gray-600" />
-              <h2 className="font-semibold text-brand-slate-700">Profile Completion</h2>
+              <User size={18} className="text-stone-600" />
+              <div>
+                <h2 className="font-semibold text-stone-700">Your Story</h2>
+                <p className="text-[10px] text-gray-400">The more I know, the better I can guide you</p>
+              </div>
             </div>
             <Button size="sm" variant="secondary" onClick={() => navigate('/s/profile')}>
-              Complete Profile <ArrowRight size={14} className="ml-1" />
+              Continue <ArrowRight size={14} className="ml-1" />
             </Button>
           </div>
           {onbLoading ? (

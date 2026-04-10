@@ -275,7 +275,8 @@ export default function DiscoverPage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-2">Discover Programs</h1>
+      <h1 className="text-2xl font-semibold mb-1">Explore Your Future</h1>
+      <p className="text-xs text-gray-400 mb-2">Every program is a possible path — let the AI help you see which ones fit your story</p>
 
       {!showMatches && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-6 text-sm text-blue-800">
@@ -285,7 +286,7 @@ export default function DiscoverPage() {
       )}
 
       <div className="flex items-center justify-between mb-6">
-        <p className="text-sm text-gray-500">Need help choosing? Your counselor can guide you.</p>
+        <p className="text-sm text-gray-500">Not sure where to start? Your AI counselor knows your story.</p>
         <Button size="sm" variant="secondary" onClick={() => navigate('/s/chat')}>
           <MessageSquare size={14} className="mr-1" /> Ask Counselor
         </Button>

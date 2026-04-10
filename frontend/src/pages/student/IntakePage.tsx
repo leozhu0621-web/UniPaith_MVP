@@ -21,10 +21,10 @@ interface ChatMsg {
 }
 
 const INITIAL_QUESTIONS = [
-  "Hi! Let's get to know you. What's your name and where are you from?",
-  "What field are you interested in studying?",
-  "What degree level are you looking for? (Bachelor's, Master's, PhD)",
-  "Do you have any budget or location preferences?",
+  "Welcome to your self-discovery journey. I'm here to listen, not judge. Let's start simple — what's your name and where are you from?",
+  "What sparks your curiosity? What do you imagine yourself doing after graduation?",
+  "What kind of learning environment helps you thrive? (Think about degree level, class size, campus vibe)",
+  "Any practical boundaries I should know about? Budget, location, timing — all valid.",
 ]
 
 export default function IntakePage() {

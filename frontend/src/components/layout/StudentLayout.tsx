@@ -13,10 +13,10 @@ import CompareTray from '../student/CompareTray'
 
 const NAV_ITEMS = [
   { to: '/s/dashboard', icon: LayoutDashboard, label: 'Home' },
-  { to: '/s/profile', icon: User, label: 'Profile' },
+  { to: '/s/profile', icon: User, label: 'My Story' },
   { to: '/s/match', icon: Sparkles, label: 'Match' },
   { to: '/s/discover', icon: Search, label: 'Discover' },
-  { to: '/s/applications', icon: FileText, label: 'Applications' },
+  { to: '/s/applications', icon: FileText, label: 'Apply' },
   { to: '/s/calendar', icon: Calendar, label: 'Calendar' },
   { to: '/s/chat', icon: MessageSquare, label: 'Counselor' },
 ]

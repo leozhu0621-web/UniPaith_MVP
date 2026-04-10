@@ -739,11 +739,11 @@ export default function ProgramMatchPage() {
                 <Sparkles size={28} className="text-amber-500" />
               </div>
               <h2 className="text-lg font-medium text-stone-600">
-                Let's find the right programs for you.
+                This is your space for self-discovery.
               </h2>
               <p className="text-sm text-gray-500 mt-1 max-w-md">
-                Tell me about your goals, interests, and what matters most to you in a program.
-                I will listen, learn, and match you with programs that truly fit.
+                Tell me what excites you, what matters to you, and what kind of future you imagine.
+                I'll listen deeply and find programs where you'll truly belong.
               </p>
               <div className="mt-3 flex items-center gap-2 text-xs text-gray-500 bg-white rounded-full px-3 py-1 shadow-sm">
                 <ShieldCheck size={13} className="text-gray-600" />

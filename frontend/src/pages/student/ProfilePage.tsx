@@ -124,16 +124,20 @@ export default function ProfilePage() {
 
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">My Profile</h1>
+      <div>
+        <div className="flex items-center gap-2 mb-1">
+          <Sparkles size={18} className="text-amber-500" />
+          <h1 className="text-2xl font-semibold text-stone-800">My Story</h1>
+        </div>
+        <p className="text-sm text-gray-500">Every detail helps the AI understand who you are and where you'll thrive.</p>
       </div>
 
-      {/* Profile Strength Card */}
+      {/* Self-Discovery Progress */}
       <Card className="p-5">
         <div className="flex items-center gap-6">
           <StrengthRing value={completionPct} />
           <div className="flex-1 min-w-0">
-            <h2 className="font-semibold text-brand-slate-700 mb-2">Profile Strength</h2>
+            <h2 className="font-semibold text-stone-700 mb-2">Self-Discovery Progress</h2>
             <div className="grid grid-cols-2 gap-1.5">
               {PROFILE_SECTIONS.map(s => (
                 <div key={s.key} className="flex items-center gap-2 text-sm">

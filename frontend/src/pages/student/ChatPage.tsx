@@ -136,7 +136,7 @@ export default function ChatPage() {
       {/* Header with context indicator */}
       <div className="px-6 py-3 border-b border-gray-200 bg-white flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h1 className="text-lg font-semibold">Your Admission Counselor</h1>
+          <h1 className="text-lg font-semibold text-stone-700">Your AI Guide</h1>
           <Sparkles size={16} className="text-amber-500" />
         </div>
         <div className="flex items-center gap-3 text-xs text-gray-500">
