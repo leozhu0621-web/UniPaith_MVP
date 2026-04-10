@@ -221,7 +221,7 @@ class ResumeWorkshopService:
         student_id: UUID,
         resume_id: UUID,
         feedback_type: str = "full_review",
-    ) -> dict:
+    ) -> StudentResume:
         """
         Use the LLM to review the resume and return structured feedback.
 

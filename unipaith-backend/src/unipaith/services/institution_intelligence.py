@@ -137,7 +137,7 @@ class InstitutionIntelligence:
             "match_data": [
                 {
                     "program_id": str(m.program_id),
-                    "score": float(m.match_score),
+                    "score": float(m.match_score) if m.match_score is not None else 0.0,
                     "tier": m.match_tier,
                 }
                 for m in matches

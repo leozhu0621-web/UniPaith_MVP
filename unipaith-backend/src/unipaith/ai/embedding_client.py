@@ -37,7 +37,7 @@ class EmbeddingClient:
 
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
         """Generate embeddings for multiple texts in one call."""
-        last_error = None
+        last_error: Exception | None = None
         for attempt in range(1, settings.ai_request_max_retries + 1):
             started = start_timer()
             try:
@@ -55,7 +55,7 @@ class EmbeddingClient:
                 last_error = exc
             if attempt < settings.ai_request_max_retries:
                 await asyncio.sleep(settings.ai_request_backoff_seconds * attempt)
-        raise last_error
+        raise last_error  # type: ignore[misc]
 
 
 class AWSEmbeddingClient:
@@ -80,7 +80,7 @@ class AWSEmbeddingClient:
 
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
         """Generate embeddings with retry on transient failures."""
-        last_error = None
+        last_error: Exception | None = None
         for attempt in range(1, self.MAX_RETRIES + 1):
             started = start_timer()
             try:
@@ -110,7 +110,7 @@ class AWSEmbeddingClient:
                     await asyncio.sleep(wait)
 
         logger.error("Embedding request failed after %d attempts: %s", self.MAX_RETRIES, last_error)
-        raise last_error
+        raise last_error  # type: ignore[misc]
 
 
 class MockEmbeddingClient:
