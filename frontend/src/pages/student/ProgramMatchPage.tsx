@@ -694,7 +694,10 @@ export default function ProgramMatchPage() {
             </Button>
             {!unlockData.eligible && unlockData.recommended_next_actions.length > 0 && (
               <p className="text-xs text-gray-500 text-center -mt-2">
-                {unlockData.recommended_next_actions[0]}
+                {unlockData.recommended_next_actions[0]
+                  .replace(/^fill:/, '')
+                  .replace(/[._]/g, ' ')
+                  .replace(/\b\w/g, c => c.toUpperCase())}
               </p>
             )}
           </>

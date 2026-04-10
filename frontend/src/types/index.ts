@@ -514,6 +514,8 @@ export interface SavedProgram {
   program_id: string
   notes: string | null
   added_at: string
+  program_name?: string | null
+  institution_name?: string | null
   program?: ProgramSummary
 }
 

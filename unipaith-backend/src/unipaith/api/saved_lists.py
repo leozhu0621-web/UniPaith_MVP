@@ -5,8 +5,11 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from sqlalchemy import select
+
 from unipaith.database import get_db
 from unipaith.dependencies import require_student
+from unipaith.models.institution import Program
 from unipaith.models.user import User
 from unipaith.schemas.saved_list import (
     CompareProgramsRequest,
@@ -31,7 +34,32 @@ async def list_saved_programs(
 ):
     profile = await StudentService(db)._get_student_profile(user.id)
     svc = SavedListService(db)
-    return await svc.list_saved(profile.id)
+    items = await svc.list_saved(profile.id)
+
+    # Enrich with program names
+    program_ids = [item.program_id for item in items]
+    if program_ids:
+        prog_result = await db.execute(
+            select(Program.id, Program.program_name, Program.institution_name)
+            .where(Program.id.in_(program_ids))
+        )
+        prog_map = {row.id: row for row in prog_result.all()}
+    else:
+        prog_map = {}
+
+    enriched = []
+    for item in items:
+        prog = prog_map.get(item.program_id)
+        enriched.append(SavedProgramResponse(
+            id=item.id,
+            list_id=item.list_id,
+            program_id=item.program_id,
+            notes=item.notes,
+            added_at=item.added_at,
+            program_name=prog.program_name if prog else None,
+            institution_name=prog.institution_name if prog else None,
+        ))
+    return enriched
 
 
 @router.post("", response_model=SavedProgramResponse, status_code=status.HTTP_201_CREATED)

@@ -170,9 +170,9 @@ export default function SavedListPage() {
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className={`font-semibold text-sm cursor-pointer hover:underline ${isDropped ? 'line-through text-gray-400' : ''}`} onClick={() => navigate(`/s/programs/${sp.program_id}`)}>
-                  {sp.program?.program_name || 'Program'}
+                  {sp.program_name || sp.program?.program_name || 'Program'}
                 </p>
-                <p className="text-xs text-gray-500">{sp.program?.institution_name}</p>
+                <p className="text-xs text-gray-500">{sp.institution_name || sp.program?.institution_name}</p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 {matchInfo && tierInfo && (
