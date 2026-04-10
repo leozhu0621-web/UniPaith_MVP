@@ -46,6 +46,9 @@ import RecommendationsPage from './pages/student/RecommendationsPage'
 import StudentSettingsPage from './pages/student/SettingsPage'
 import ProgramMatchPage from './pages/student/ProgramMatchPage'
 import ResumeWorkshopPage from './pages/student/ResumeWorkshopPage'
+import EssayWorkshopPage from './pages/student/EssayWorkshopPage'
+import TestScorePage from './pages/student/TestScorePage'
+import DecisionComparisonPage from './pages/student/DecisionComparisonPage'
 
 // Institution pages
 import DashboardPage from './pages/institution/DashboardPage'
@@ -135,6 +138,9 @@ const router = createBrowserRouter([
       { path: 'financial-aid', element: <FinancialAidPage /> },
       { path: 'recommendations', element: <RecommendationsPage /> },
       { path: 'resume-workshop', element: <ResumeWorkshopPage /> },
+      { path: 'essay-workshop', element: <EssayWorkshopPage /> },
+      { path: 'test-scores', element: <TestScorePage /> },
+      { path: 'decisions', element: <DecisionComparisonPage /> },
       { path: 'settings', element: <StudentSettingsPage /> },
     ],
   },

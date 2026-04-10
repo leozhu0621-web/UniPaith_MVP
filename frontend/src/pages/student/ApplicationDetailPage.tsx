@@ -16,7 +16,8 @@ import ProgressBar from '../../components/ui/ProgressBar'
 import Skeleton from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { STATUS_COLORS } from '../../utils/constants'
-import { ArrowLeft, Check, Circle, Upload, Sparkles, AlertCircle, FileCheck } from 'lucide-react'
+import { getMyInterviews } from '../../api/interviews'
+import { ArrowLeft, Check, Circle, Upload, Sparkles, AlertCircle, FileCheck, ListChecks, Video, Phone, Users, AlertTriangle, ShieldCheck } from 'lucide-react'
 import type { Application, Essay, Resume } from '../../types'
 
 const STATUS_STEPS = ['draft', 'submitted', 'under_review', 'interview', 'decision_made']
@@ -59,6 +60,12 @@ export default function ApplicationDetailPage() {
   const { data: essays } = useQuery({ queryKey: ['essays', app?.program_id], queryFn: () => listEssays(app?.program_id), enabled: !!app?.program_id && (tab === 'essays' || tab === 'documents') })
   const { data: resumes } = useQuery({ queryKey: ['resumes', app?.program_id], queryFn: () => listResumes(app?.program_id), enabled: !!app?.program_id && tab === 'resume' })
   const { data: documents } = useQuery({ queryKey: ['documents'], queryFn: listDocuments, enabled: tab === 'documents' })
+  const { data: interviews } = useQuery({ queryKey: ['interviews'], queryFn: getMyInterviews, enabled: tab === 'interviews' })
+
+  const [guardrailResult, setGuardrailResult] = useState<any>(null)
+  void setGuardrailResult
+  const [intentReason, setIntentReason] = useState('')
+  const [rationale, setRationale] = useState('')
 
   const submitMut = useMutation({ mutationFn: () => submitApplication(appId!), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['application', appId] }); showToast('Application submitted!', 'success') } })
   const essayMut = useMutation({ mutationFn: (data: any) => createEssay(data), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['essays'] }); setShowEssayModal(false); setEssayContent(''); setEssayPrompt(''); showToast('Essay created', 'success') } })
@@ -152,6 +159,9 @@ export default function ApplicationDetailPage() {
     { id: 'documents', label: 'Documents' },
     { id: 'essays', label: 'Essays' },
     { id: 'resume', label: 'Resume' },
+    { id: 'checklist', label: 'Checklist' },
+    { id: 'interviews', label: 'Interviews' },
+    { id: 'guardrails', label: 'Guardrails' },
     ...(application.decision === 'admitted' ? [{ id: 'offer', label: 'Offer' }] : []),
   ]
 
@@ -379,6 +389,178 @@ export default function ApplicationDetailPage() {
                       <Badge variant={(STATUS_COLORS[r.status] || 'neutral') as any} size="sm">{r.status}</Badge>
                     </Card>
                   ))
+                )}
+              </div>
+            )}
+
+            {tab === 'checklist' && (() => {
+              const items: any[] = Array.isArray(checklist?.items) ? checklist.items : []
+              const completed = items.filter((i: any) => i.status === 'completed').length
+              const required = items.filter((i: any) => i.required !== false).length
+              const pct = required > 0 ? Math.round((completed / required) * 100) : 0
+              const OWNER_COLORS: Record<string, string> = { student: 'info', recommender: 'warning', institution: 'neutral' }
+              const grouped = items.reduce<Record<string, any[]>>((acc, item) => {
+                const cat = item.category || 'general'
+                if (!acc[cat]) acc[cat] = []
+                acc[cat].push(item)
+                return acc
+              }, {})
+
+              return (
+                <div className="space-y-4">
+                  <Card className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <ListChecks size={16} className="text-stone-600" />
+                        <span className="text-sm font-medium text-stone-700">Readiness: {pct}%</span>
+                      </div>
+                      {pct >= 100 && <Badge variant="success">Ready to Submit</Badge>}
+                    </div>
+                    <ProgressBar value={pct} />
+                  </Card>
+                  {Object.entries(grouped).map(([cat, catItems]) => (
+                    <div key={cat}>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">{cat.replace(/_/g, ' ')}</p>
+                      <div className="space-y-2">
+                        {catItems.map((item: any, idx: number) => (
+                          <Card key={idx} className="p-3 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <input
+                                type="checkbox"
+                                checked={item.status === 'completed'}
+                                onChange={() => {}}
+                                className="rounded border-gray-300"
+                              />
+                              <div className="min-w-0">
+                                <p className="text-sm text-stone-700">{item.item_name || item.name}</p>
+                                {item.expected_format && <p className="text-xs text-gray-400">Format: {item.expected_format}</p>}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              {item.owner && <Badge variant={(OWNER_COLORS[item.owner] || 'neutral') as any} size="sm">{item.owner}</Badge>}
+                              {item.required !== false && <Badge variant="danger" size="sm">Required</Badge>}
+                              {item.mismatch && <AlertTriangle size={14} className="text-amber-500" />}
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  {items.length === 0 && (
+                    <Card className="p-6 text-center">
+                      <ListChecks size={32} className="text-gray-300 mx-auto mb-3" />
+                      <p className="text-sm text-gray-500">No checklist items yet.</p>
+                    </Card>
+                  )}
+                </div>
+              )
+            })()}
+
+            {tab === 'interviews' && (() => {
+              const interviewList: any[] = Array.isArray(interviews) ? interviews.filter((i: any) => i.application_id === appId) : []
+              const TYPE_ICONS: Record<string, typeof Video> = { video: Video, phone: Phone, in_person: Users }
+
+              return (
+                <div className="space-y-4">
+                  {interviewList.length > 0 ? interviewList.map((iv: any) => {
+                    const Icon = TYPE_ICONS[iv.interview_type] || Users
+                    return (
+                      <Card key={iv.id} className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center">
+                              <Icon size={18} className="text-stone-600" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-stone-700 capitalize">{(iv.interview_type || 'interview').replace(/_/g, ' ')}</p>
+                              <p className="text-xs text-gray-500">
+                                {iv.scheduled_at ? new Date(iv.scheduled_at).toLocaleString() : 'Not yet scheduled'}
+                              </p>
+                            </div>
+                          </div>
+                          <Badge variant={iv.status === 'completed' ? 'success' : iv.status === 'scheduled' ? 'info' : 'warning'} size="sm">
+                            {iv.status || 'pending'}
+                          </Badge>
+                        </div>
+                        {iv.status === 'scheduled' && (
+                          <Card className="mt-3 p-3 bg-stone-50">
+                            <p className="text-xs font-medium text-stone-600 mb-1">Prep Checklist</p>
+                            <ul className="text-xs text-gray-500 space-y-1">
+                              <li className="flex items-center gap-1"><Check size={10} /> Research the program</li>
+                              <li className="flex items-center gap-1"><Check size={10} /> Prepare key talking points</li>
+                              <li className="flex items-center gap-1"><Check size={10} /> {iv.interview_type === 'video' ? 'Test camera & microphone' : 'Plan arrival logistics'}</li>
+                            </ul>
+                          </Card>
+                        )}
+                      </Card>
+                    )
+                  }) : (
+                    <Card className="p-6 text-center">
+                      <Users size={32} className="text-gray-300 mx-auto mb-3" />
+                      <p className="text-sm text-gray-500">No interviews scheduled yet.</p>
+                      <p className="text-xs text-gray-400 mt-1">You'll be notified when an interview is requested.</p>
+                    </Card>
+                  )}
+                </div>
+              )
+            })()}
+
+            {tab === 'guardrails' && (
+              <div className="space-y-4">
+                {application.match_score != null && application.match_score < 0.3 && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+                    <AlertTriangle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-amber-800">Low Fit Warning</p>
+                      <p className="text-xs text-amber-700 mt-0.5">This program's match score is below 30%. Review the Match Analysis tab to understand why.</p>
+                    </div>
+                  </div>
+                )}
+
+                <Card className="p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <ShieldCheck size={16} className="text-stone-600" />
+                    <h3 className="text-sm font-medium text-stone-700">Why are you applying?</h3>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {['Dream school', 'Safety option', 'Recommended', 'Exploring', 'Location fit', 'Program fit'].map(reason => (
+                      <button
+                        key={reason}
+                        onClick={() => setIntentReason(reason)}
+                        className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+                          intentReason === reason
+                            ? 'bg-stone-700 text-white border-stone-700'
+                            : 'bg-white text-stone-600 border-gray-300 hover:bg-stone-50'
+                        }`}
+                      >
+                        {reason}
+                      </button>
+                    ))}
+                  </div>
+                </Card>
+
+                {guardrailResult && (
+                  <Card className={`p-4 ${guardrailResult.level === 'green' ? 'bg-emerald-50' : guardrailResult.level === 'red' ? 'bg-red-50' : 'bg-amber-50'}`}>
+                    <p className={`text-sm font-medium ${guardrailResult.level === 'green' ? 'text-emerald-700' : guardrailResult.level === 'red' ? 'text-red-700' : 'text-amber-700'}`}>
+                      {guardrailResult.message || 'AI analysis complete'}
+                    </p>
+                    {guardrailResult.points && (
+                      <ul className="mt-2 space-y-1">
+                        {guardrailResult.points.map((pt: string, i: number) => (
+                          <li key={i} className="text-xs text-gray-600 flex items-start gap-1">
+                            <span>-</span> {pt}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </Card>
+                )}
+
+                {(guardrailResult?.level === 'red' || (application.match_score != null && application.match_score < 0.3)) && (
+                  <Card className="p-4">
+                    <p className="text-xs text-gray-500 mb-2">Please explain your rationale for proceeding:</p>
+                    <Textarea value={rationale} onChange={e => setRationale(e.target.value)} placeholder="I'm applying because..." />
+                  </Card>
                 )}
               </div>
             )}
