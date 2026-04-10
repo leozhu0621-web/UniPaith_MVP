@@ -58,7 +58,9 @@ class EngineMetrics:
         result = await self.db.execute(
             select(OutcomeRecord).order_by(OutcomeRecord.created_at.desc()).limit(1000)
         )
-        outcomes = list(result.scalars().all())
+        outcomes = [
+            o for o in result.scalars().all() if o.predicted_score is not None
+        ]
         if len(outcomes) < 10:
             return {"status": "insufficient_data", "count": len(outcomes)}
 
@@ -296,6 +298,7 @@ class EngineMetrics:
 
     def _compute_ndcg(self, outcomes: list[OutcomeRecord], k: int = 10) -> float | None:
         """NDCG@K for ranking quality."""
+        outcomes = [o for o in outcomes if o.predicted_score is not None]
         if len(outcomes) < k:
             return None
 

@@ -91,7 +91,7 @@ export default function InstitutionPage() {
   const programs: ProgramSummary[] = (programsQ.data as PaginatedResponse<ProgramSummary>)?.items ?? []
   const totalProgramPages = (programsQ.data as PaginatedResponse<ProgramSummary>)?.total_pages ?? 1
   const events: EventItem[] = Array.isArray(eventsQ.data) ? eventsQ.data : []
-  const publicPosts: InstitutionPost[] = postsQ.data ?? []
+  const publicPosts: InstitutionPost[] = Array.isArray(postsQ.data) ? postsQ.data : []
   const gallery: string[] = Array.isArray(inst?.media_gallery) ? inst.media_gallery : []
 
   const tabs = [

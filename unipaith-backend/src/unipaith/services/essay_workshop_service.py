@@ -210,4 +210,4 @@ class EssayWorkshopService:
         essay.ai_feedback = feedback
         await self.db.flush()
         await self.db.refresh(essay)
-        return essay
+        return feedback

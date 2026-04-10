@@ -96,7 +96,7 @@ export default function InterviewsPage() {
   const columns = [
     { key: 'application_id', label: 'Student', render: (row: Interview) => row.application_id.slice(0, 10) + '...' },
     { key: 'interview_type', label: 'Type', render: (row: Interview) => <Badge variant="info">{row.interview_type}</Badge> },
-    { key: 'confirmed_time', label: 'Date', render: (row: Interview) => formatDateTime(row.confirmed_time ?? row.proposed_times[0]) },
+    { key: 'confirmed_time', label: 'Date', render: (row: Interview) => formatDateTime(row.confirmed_time ?? row.proposed_times?.[0] ?? '') },
     { key: 'status', label: 'Status', render: (row: Interview) => <Badge variant={(STATUS_COLORS[row.status] as any) ?? 'neutral'}>{row.status}</Badge> },
     { key: 'duration_minutes', label: 'Duration', render: (row: Interview) => `${row.duration_minutes} min` },
     {

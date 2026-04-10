@@ -290,4 +290,4 @@ class ResumeWorkshopService:
         resume.ai_suggestions = feedback
         await self.db.flush()
         await self.db.refresh(resume)
-        return resume
+        return feedback

@@ -150,7 +150,8 @@ class AIEngineOrchestrator:
                     except Exception as exc:
                         errors.append({"program_id": str(program_id), "error": str(exc)})
 
-            await asyncio.gather(*(process_program(pid) for pid in program_ids))
+            for pid in program_ids:
+                await process_program(pid)
             await self.db.commit()
             return {
                 "status": "ok",

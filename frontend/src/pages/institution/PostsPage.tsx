@@ -55,8 +55,8 @@ export default function PostsPage() {
   const programsQ = useQuery({ queryKey: ['institution-programs'], queryFn: getInstitutionPrograms })
   const templatesQ = useQuery({ queryKey: ['post-templates'], queryFn: getPostTemplates, enabled: showTemplatesModal })
 
-  const posts: InstitutionPost[] = postsQ.data ?? []
-  const programs: Program[] = programsQ.data ?? []
+  const posts: InstitutionPost[] = Array.isArray(postsQ.data) ? postsQ.data : []
+  const programs: Program[] = Array.isArray(programsQ.data) ? programsQ.data : []
 
   const filtered = activeTab === 'all'
     ? posts
