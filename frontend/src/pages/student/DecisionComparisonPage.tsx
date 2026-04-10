@@ -474,57 +474,13 @@ export default function DecisionComparisonPage() {
             </Card>
           )}
 
-          {comparison && (
+          {comparison?.ai_analysis && (
             <Card className="p-5 mb-6">
               <div className="flex items-center gap-2 mb-3">
                 <Sparkles size={16} className="text-brand-slate-600" />
                 <h3 className="font-medium">AI Comparison Analysis</h3>
               </div>
-              {comparison.comparison?.summary && (
-                <p className="text-sm text-gray-700 mb-3">{comparison.comparison.summary}</p>
-              )}
-              {comparison.comparison?.pros_cons && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {Object.entries(comparison.comparison.pros_cons as Record<string, { pros: string[]; cons: string[] }>).map(([programName, pc]) => (
-                    <div key={programName} className="bg-gray-50 rounded-lg p-3">
-                      <p className="font-medium text-sm mb-2">{programName}</p>
-                      {pc.pros?.length > 0 && (
-                        <div className="mb-2">
-                          <p className="text-xs font-medium text-green-700 mb-1">Pros</p>
-                          <ul className="space-y-0.5">
-                            {pc.pros.map((p: string, i: number) => (
-                              <li key={i} className="text-xs text-gray-600 flex items-start gap-1">
-                                <Check size={10} className="text-green-500 mt-0.5 flex-shrink-0" />
-                                <span>{p}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      {pc.cons?.length > 0 && (
-                        <div>
-                          <p className="text-xs font-medium text-red-700 mb-1">Cons</p>
-                          <ul className="space-y-0.5">
-                            {pc.cons.map((c: string, i: number) => (
-                              <li key={i} className="text-xs text-gray-600 flex items-start gap-1">
-                                <X size={10} className="text-red-400 mt-0.5 flex-shrink-0" />
-                                <span>{c}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {!comparison.comparison?.pros_cons && comparison.comparison && (
-                <pre className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg overflow-x-auto whitespace-pre-wrap">
-                  {typeof comparison.comparison === 'string'
-                    ? comparison.comparison
-                    : JSON.stringify(comparison.comparison, null, 2)}
-                </pre>
-              )}
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">{comparison.ai_analysis}</p>
             </Card>
           )}
 

@@ -521,7 +521,7 @@ export interface SavedProgram {
 
 export interface ComparisonResponse {
   programs: ProgramSummary[]
-  comparison: Record<string, any>
+  ai_analysis: string | null
 }
 
 // ============ MESSAGING ============

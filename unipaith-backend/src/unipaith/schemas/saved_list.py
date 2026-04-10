@@ -34,5 +34,5 @@ class SavedProgramResponse(BaseModel):
 class ComparisonResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    comparison_data: dict
+    programs: list[dict]
     ai_analysis: str | None

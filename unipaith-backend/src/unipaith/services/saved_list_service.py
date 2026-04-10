@@ -161,13 +161,17 @@ class SavedListService:
             match = match_map.get(prog.id)
             comparison_data.append(
                 {
-                    "program_id": str(prog.id),
+                    "id": str(prog.id),
+                    "institution_id": str(prog.institution_id),
                     "program_name": prog.program_name,
                     "institution_name": inst.name if inst else None,
-                    "country": inst.country if inst else None,
+                    "institution_country": inst.country if inst else None,
+                    "institution_city": inst.city if inst else None,
                     "degree_type": prog.degree_type,
+                    "department": prog.department,
                     "duration_months": prog.duration_months,
                     "tuition": prog.tuition,
+                    "delivery_format": prog.delivery_format,
                     "acceptance_rate": float(prog.acceptance_rate)
                     if prog.acceptance_rate
                     else None,
@@ -196,6 +200,6 @@ class SavedListService:
         ai_analysis = await llm.generate_reasoning(system_prompt, user_content)
 
         return {
-            "comparison_data": comparison_data,
+            "programs": comparison_data,
             "ai_analysis": ai_analysis,
         }

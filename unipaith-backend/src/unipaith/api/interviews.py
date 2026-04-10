@@ -133,7 +133,7 @@ async def batch_invite_interviews(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    inst = await InstitutionService(db).get_institution(user.id)
+    await InstitutionService(db).get_institution(user.id)
     svc = InterviewService(db)
     result = BatchOperationResult(
         success_count=0, failed_ids=[], errors=[],
@@ -141,7 +141,6 @@ async def batch_invite_interviews(
     for app_id in body.application_ids:
         try:
             await svc.propose_interview(
-                institution_id=inst.id,
                 application_id=app_id,
                 interviewer_id=body.interviewer_id,
                 interview_type=body.interview_type,
