@@ -8,6 +8,21 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict
 
 
+class EmbeddedProgramResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    institution_id: UUID
+    program_name: str
+    degree_type: str | None = None
+    department: str | None = None
+    duration_months: int | None = None
+    tuition: int | None = None
+    acceptance_rate: Decimal | None = None
+    delivery_format: str | None = None
+    campus_setting: str | None = None
+    application_deadline: date | None = None
+
+
 class CreateApplicationRequest(BaseModel):
     program_id: UUID
 
@@ -44,6 +59,7 @@ class ApplicationResponse(BaseModel):
     missing_items: dict | None
     created_at: datetime
     updated_at: datetime
+    program: EmbeddedProgramResponse | None = None
 
 
 class ApplicationDetailResponse(ApplicationResponse):

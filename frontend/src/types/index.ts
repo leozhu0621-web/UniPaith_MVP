@@ -510,7 +510,7 @@ export interface Resume {
 // ============ SAVED LISTS ============
 export interface SavedProgram {
   id: string
-  student_id: string
+  list_id: string
   program_id: string
   notes: string | null
   added_at: string
