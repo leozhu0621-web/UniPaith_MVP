@@ -3,7 +3,7 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../stores/auth-store'
 import { useUIStore } from '../../stores/ui-store'
 import {
-  LayoutDashboard, GraduationCap, Kanban, Video, Inbox, Star, ScrollText, FileStack, CalendarRange, ClipboardList,
+  LayoutDashboard, GraduationCap, Kanban, Video, Inbox, ScrollText, FileStack,
   MessageSquare, Users, Megaphone, CalendarDays, BarChart3, FileText,
   Settings, ChevronLeft, ChevronRight, Bell, Search, LogOut, Rocket, Command, Upload,
 } from 'lucide-react'
@@ -15,9 +15,9 @@ import Input from '../ui/Input'
 
 const buildNavSections = (showSetup: boolean) => [
   {
-    label: 'Today',
+    label: 'Overview',
     items: [
-      { to: '/i/dashboard', icon: LayoutDashboard, label: 'Overview' },
+      { to: '/i/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
       ...(showSetup ? [{ to: '/i/setup', icon: Rocket, label: 'Get Started' }] : []),
     ],
   },
@@ -25,16 +25,14 @@ const buildNavSections = (showSetup: boolean) => [
     label: 'Programs',
     items: [
       { to: '/i/programs', icon: GraduationCap, label: 'Programs' },
-      { to: '/i/intake-rounds', icon: CalendarRange, label: 'Intake Rounds' },
-      { to: '/i/requirements', icon: ClipboardList, label: 'Requirements' },
     ],
   },
   {
-    label: 'Pipeline',
+    label: 'Admissions',
     items: [
-      { to: '/i/pipeline', icon: Kanban, label: 'Applications' },
-      { to: '/i/cohort-compare', icon: Users, label: 'Cohort Compare' },
+      { to: '/i/pipeline', icon: Kanban, label: 'Pipeline' },
       { to: '/i/interviews', icon: Video, label: 'Interviews' },
+      { to: '/i/inquiries', icon: Inbox, label: 'Inquiries' },
       { to: '/i/messages', icon: MessageSquare, label: 'Inbox' },
     ],
   },
@@ -45,8 +43,6 @@ const buildNavSections = (showSetup: boolean) => [
       { to: '/i/segments', icon: Users, label: 'Segments' },
       { to: '/i/events', icon: CalendarDays, label: 'Events' },
       { to: '/i/posts', icon: FileText, label: 'Posts' },
-      { to: '/i/inquiries', icon: Inbox, label: 'Inquiries' },
-      { to: '/i/promotions', icon: Star, label: 'Promotions' },
       { to: '/i/templates', icon: FileStack, label: 'Templates' },
     ],
   },
@@ -58,7 +54,7 @@ const buildNavSections = (showSetup: boolean) => [
     ],
   },
   {
-    label: 'Settings',
+    label: 'Config',
     items: [
       { to: '/i/data', icon: Upload, label: 'Data' },
       { to: '/i/settings', icon: Settings, label: 'Settings' },

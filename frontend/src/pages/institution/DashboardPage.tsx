@@ -12,8 +12,14 @@ import {
   TrendingUp,
   Target,
   Mail,
+  Brain,
+  Shield,
+  Zap,
+  MessageSquare,
+  Inbox,
 } from 'lucide-react'
-import { getInstitution, getInstitutionPrograms, getDashboardSummary } from '../../api/institutions'
+import { getInstitution, getInstitutionPrograms, getDashboardSummary, getInquiries } from '../../api/institutions'
+import { getReviewPriorityQueue, getIntegritySignals } from '../../api/reviews'
 import { getNotifications } from '../../api/notifications'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -23,7 +29,7 @@ import EmptyState from '../../components/ui/EmptyState'
 import Table from '../../components/ui/Table'
 import { formatDate, formatRelative, formatCurrency, formatPercent } from '../../utils/format'
 import { DEGREE_LABELS } from '../../utils/constants'
-import type { Notification, Program, DashboardSummary } from '../../types'
+import type { Notification, PrioritizedApplication, IntegritySignal, Inquiry, Program, DashboardSummary } from '../../types'
 
 export default function DashboardPage() {
   const navigate = useNavigate()
@@ -40,10 +46,29 @@ export default function DashboardPage() {
     queryFn: () => getNotifications({ limit: 10 }),
   })
 
+  const priorityQ = useQuery({
+    queryKey: ['dashboard-priority'],
+    queryFn: () => getReviewPriorityQueue(),
+    enabled: !!institutionQ.data,
+  })
+  const integrityQ = useQuery({
+    queryKey: ['dashboard-integrity'],
+    queryFn: () => getIntegritySignals(undefined, 'open'),
+    enabled: !!institutionQ.data,
+  })
+  const inquiriesQ = useQuery({
+    queryKey: ['dashboard-inquiries', 'new'],
+    queryFn: () => getInquiries('new'),
+    enabled: !!institutionQ.data,
+  })
+
   const institution = institutionQ.data
   const programs: Program[] = Array.isArray(programsQ.data) ? programsQ.data : []
   const summary: DashboardSummary | undefined = summaryQ.data
   const notifications: Notification[] = Array.isArray(notificationsQ.data) ? notificationsQ.data : []
+  const topPriority: PrioritizedApplication[] = (Array.isArray(priorityQ.data) ? priorityQ.data : []).slice(0, 5)
+  const openAlerts: IntegritySignal[] = Array.isArray(integrityQ.data) ? integrityQ.data : []
+  const newInquiries: Inquiry[] = Array.isArray(inquiriesQ.data) ? inquiriesQ.data : []
 
   const isLoading = institutionQ.isLoading || programsQ.isLoading
 
@@ -181,8 +206,98 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      {/* AI Command Center */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        {/* Integrity Alerts */}
+        <Card className={`p-4 ${openAlerts.length > 0 ? 'border-amber-300 bg-amber-50/30' : ''}`}>
+          <div className="flex items-center gap-2 mb-2">
+            <Shield size={18} className={openAlerts.length > 0 ? 'text-amber-600' : 'text-green-500'} />
+            <h3 className="text-sm font-semibold text-gray-900">Integrity Signals</h3>
+          </div>
+          {openAlerts.length > 0 ? (
+            <>
+              <p className="text-2xl font-bold text-amber-700">{openAlerts.length}</p>
+              <p className="text-xs text-amber-600 mb-2">open alerts need review</p>
+              <Button size="sm" variant="secondary" onClick={() => navigate('/i/pipeline?tab=board')} className="flex items-center gap-1">
+                <Shield size={12} /> Review Alerts
+              </Button>
+            </>
+          ) : (
+            <p className="text-sm text-green-600">All clear — no integrity issues</p>
+          )}
+        </Card>
+
+        {/* New Inquiries */}
+        <Card className={`p-4 ${newInquiries.length > 0 ? 'border-blue-300 bg-blue-50/30' : ''}`}>
+          <div className="flex items-center gap-2 mb-2">
+            <Inbox size={18} className={newInquiries.length > 0 ? 'text-blue-600' : 'text-gray-400'} />
+            <h3 className="text-sm font-semibold text-gray-900">New Inquiries</h3>
+          </div>
+          <p className="text-2xl font-bold text-gray-900">{newInquiries.length}</p>
+          <p className="text-xs text-gray-500 mb-2">awaiting response</p>
+          {newInquiries.length > 0 && (
+            <Button size="sm" variant="secondary" onClick={() => navigate('/i/inquiries')} className="flex items-center gap-1">
+              <MessageSquare size={12} /> Respond
+            </Button>
+          )}
+        </Card>
+
+        {/* AI Quick Actions */}
+        <Card className="p-4 bg-gradient-to-br from-brand-slate-50 to-white">
+          <div className="flex items-center gap-2 mb-2">
+            <Brain size={18} className="text-brand-slate-600" />
+            <h3 className="text-sm font-semibold text-gray-900">AI Actions</h3>
+          </div>
+          <div className="space-y-1.5">
+            <Button size="sm" variant="secondary" onClick={() => navigate('/i/pipeline?tab=priority')} className="w-full flex items-center gap-1 justify-start text-left">
+              <Zap size={12} /> Review Next Priority
+            </Button>
+            <Button size="sm" variant="secondary" onClick={() => navigate('/i/templates')} className="w-full flex items-center gap-1 justify-start text-left">
+              <Brain size={12} /> Compose AI Message
+            </Button>
+            <Button size="sm" variant="secondary" onClick={() => navigate('/i/pipeline?tab=board')} className="w-full flex items-center gap-1 justify-start text-left">
+              <ClipboardCheck size={12} /> Run Batch Action
+            </Button>
+          </div>
+        </Card>
+      </div>
+
+      {/* AI Priority Queue Preview */}
+      {topPriority.length > 0 && (
+        <Card className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Zap size={16} className="text-amber-500" />
+              <h3 className="text-sm font-semibold text-gray-900">Priority Review Queue</h3>
+              <Badge variant="warning">{topPriority.length} urgent</Badge>
+            </div>
+            <Button size="sm" variant="ghost" onClick={() => navigate('/i/pipeline?tab=priority')}>View All</Button>
+          </div>
+          <div className="space-y-1.5">
+            {topPriority.map((p, i) => (
+              <div key={p.application_id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/i/pipeline/${p.application_id}`)}>
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+                  style={{ backgroundColor: p.priority_score >= 70 ? '#ef4444' : p.priority_score >= 40 ? '#f59e0b' : '#22c55e' }}>
+                  {Math.round(p.priority_score)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm text-gray-900">#{i + 1} Applicant {p.student_id.slice(0, 8)}</span>
+                  <span className="text-xs text-gray-400 ml-2">{p.program_name}</span>
+                </div>
+                <div className="flex gap-1">
+                  {p.priority_reasons.slice(0, 2).map((r, j) => (
+                    <span key={j} className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{r}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Quick Actions */}
       <Card className="p-4">
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">Today&apos;s Action Panel</h3>
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">Quick Actions</h3>
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => navigate('/i/programs/new')} className="flex items-center gap-2">
             <Plus size={16} /> Add Program
@@ -191,7 +306,7 @@ export default function DashboardPage() {
             <ClipboardCheck size={16} /> Triage Review Queue
           </Button>
           <Button onClick={() => navigate('/i/pipeline?tab=board')} variant="secondary" className="flex items-center gap-2">
-            <GitBranch size={16} /> Open Applications Board
+            <GitBranch size={16} /> Applications Board
           </Button>
           <Button onClick={() => navigate('/i/campaigns')} variant="secondary" className="flex items-center gap-2">
             <Bell size={16} /> Launch Outreach
@@ -201,7 +316,7 @@ export default function DashboardPage() {
 
       <Card className="p-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-900">Today&apos;s Priorities</h3>
+          <h3 className="text-sm font-semibold text-gray-900">Operational Priorities</h3>
           <Badge variant="info">Operations</Badge>
         </div>
         <div className="space-y-2">
