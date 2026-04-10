@@ -131,7 +131,9 @@ export default function CalendarPage() {
 
   const urgencyBadge = (date: Date) => {
     const d = differenceInDays(date, new Date())
-    if (d <= 7) return <Badge variant="warning">{d === 0 ? 'Today' : `${d}d`}</Badge>
+    if (d < 0) return <Badge variant="danger">Past</Badge>
+    if (d === 0) return <Badge variant="warning">Today</Badge>
+    if (d <= 7) return <Badge variant="warning">{d}d</Badge>
     if (d <= 30) return <Badge variant="info">This month</Badge>
     return <Badge variant="neutral">Upcoming</Badge>
   }
@@ -214,7 +216,7 @@ export default function CalendarPage() {
       </div>
 
       {/* Focus banner */}
-      {filtered.length > 0 && differenceInDays(filtered[0].date, new Date()) <= 3 && (
+      {filtered.length > 0 && differenceInDays(filtered[0].date, new Date()) >= 0 && differenceInDays(filtered[0].date, new Date()) <= 3 && (
         <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4">
           <AlertTriangle size={18} className="text-amber-600 mt-0.5 flex-shrink-0" />
           <div>

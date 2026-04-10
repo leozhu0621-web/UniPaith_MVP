@@ -25,7 +25,7 @@ function bestValue(values: (number | null | undefined)[], higher = true) {
   return higher ? Math.max(...nums) : Math.min(...nums)
 }
 
-function ValueIndicator({ value, best, lower: _lower }: { value: number | null | undefined; best: number | null; lower?: boolean }) {
+function ValueIndicator({ value, best }: { value: number | null | undefined; best: number | null }) {
   if (value == null || best == null) return <Minus size={12} className="text-gray-300" />
   if (value === best) return <ArrowUp size={12} className="text-green-500" />
   return <ArrowDown size={12} className="text-red-400" />
@@ -283,7 +283,7 @@ export default function DecisionComparisonPage() {
                             <td key={a.id} className={`py-3 px-4 ${values[i] === best && best != null ? 'bg-green-50' : ''}`}>
                               <div className="flex items-center gap-2">
                                 <span>{formatCurrency(values[i])}</span>
-                                <ValueIndicator value={values[i]} best={best} lower />
+                                <ValueIndicator value={values[i]} best={best} />
                               </div>
                             </td>
                           ))}
@@ -305,7 +305,7 @@ export default function DecisionComparisonPage() {
                             <td key={a.id} className={`py-3 px-4 ${fees[i] === best && best != null ? 'bg-green-50' : ''}`}>
                               <div className="flex items-center gap-2">
                                 <span>{fees[i] != null ? formatCurrency(fees[i]) : '--'}</span>
-                                <ValueIndicator value={fees[i]} best={best} lower />
+                                <ValueIndicator value={fees[i]} best={best} />
                               </div>
                             </td>
                           ))}
@@ -328,7 +328,7 @@ export default function DecisionComparisonPage() {
                             <td key={a.id} className={`py-3 px-4 font-semibold ${totals[i] === best && best != null ? 'bg-green-50' : ''}`}>
                               <div className="flex items-center gap-2">
                                 <span>{formatCurrency(totals[i])}</span>
-                                <ValueIndicator value={totals[i]} best={best} lower />
+                                <ValueIndicator value={totals[i]} best={best} />
                               </div>
                             </td>
                           ))}
@@ -439,7 +439,7 @@ export default function DecisionComparisonPage() {
                             <td key={a.id} className={`py-3 px-4 ${durations[i] === best && best != null ? 'bg-green-50' : ''}`}>
                               <div className="flex items-center gap-2">
                                 <span>{durations[i] != null ? `${durations[i]} months` : '--'}</span>
-                                <ValueIndicator value={durations[i]} best={best} lower />
+                                <ValueIndicator value={durations[i]} best={best} />
                               </div>
                             </td>
                           ))}

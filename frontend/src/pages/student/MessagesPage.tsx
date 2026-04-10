@@ -222,7 +222,7 @@ export default function MessagesPage() {
                           ? 'bg-gray-50 text-gray-500 rounded-bl-md border border-gray-200'
                           : 'bg-gray-100 text-stone-700 rounded-bl-md'
                     }`}>
-                      {msg.message_body || msg.message_body}
+                      {msg.message_body}
                       <p className={`text-[10px] mt-1 ${isOwn ? 'text-white/60' : 'text-gray-400'}`}>
                         {formatRelative(msg.sent_at)}
                       </p>
