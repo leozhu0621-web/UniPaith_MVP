@@ -155,30 +155,36 @@ class SavedListService:
         match_map: dict[UUID, MatchResult] = {m.program_id: m for m in match_result.scalars().all()}
 
         # Build structured comparison data.
-        comparison_data: list[dict] = []
+        programs_list: list[dict] = []
+        comparison_raw: list[dict] = []
         for prog in programs:
             inst: Institution = prog.institution
             match = match_map.get(prog.id)
-            comparison_data.append(
+            program_summary = {
+                "id": str(prog.id),
+                "program_name": prog.program_name,
+                "institution_name": inst.name if inst else None,
+                "institution_country": inst.country if inst else None,
+                "degree_type": prog.degree_type,
+                "duration_months": prog.duration_months,
+                "tuition": prog.tuition,
+                "acceptance_rate": float(prog.acceptance_rate)
+                if prog.acceptance_rate
+                else None,
+                "application_deadline": str(prog.application_deadline)
+                if prog.application_deadline
+                else None,
+                "match_score": float(match.match_score)
+                if match and match.match_score
+                else None,
+                "match_tier": match.match_tier if match else None,
+            }
+            programs_list.append(program_summary)
+            # Include extra fields for AI analysis context
+            comparison_raw.append(
                 {
-                    "program_id": str(prog.id),
-                    "program_name": prog.program_name,
-                    "institution_name": inst.name if inst else None,
-                    "country": inst.country if inst else None,
-                    "degree_type": prog.degree_type,
-                    "duration_months": prog.duration_months,
-                    "tuition": prog.tuition,
-                    "acceptance_rate": float(prog.acceptance_rate)
-                    if prog.acceptance_rate
-                    else None,
-                    "application_deadline": str(prog.application_deadline)
-                    if prog.application_deadline
-                    else None,
+                    **program_summary,
                     "requirements": prog.requirements,
-                    "match_score": float(match.match_score)
-                    if match and match.match_score
-                    else None,
-                    "match_tier": match.match_tier if match else None,
                     "match_reasoning": match.reasoning_text if match else None,
                 }
             )
@@ -187,15 +193,24 @@ class SavedListService:
         llm = get_llm_client()
         system_prompt = (
             "You are an expert graduate-school advisor. The user is comparing "
-            "multiple programs. Provide a concise narrative analysis covering: "
-            "key differences, which program best fits the student, trade-offs in "
-            "cost, location, and career outcomes. Be specific and reference the "
-            "data provided."
+            "multiple programs. Provide a concise narrative analysis as JSON with:\n"
+            '- "summary": a 2-3 sentence overview\n'
+            '- "pros_cons": an object keyed by program name, each with "pros" '
+            'and "cons" arrays of short strings\n'
+            "Cover key differences, trade-offs in cost, location, and career "
+            "outcomes. Be specific. Return ONLY valid JSON."
         )
-        user_content = json.dumps(comparison_data, indent=2, default=str)
-        ai_analysis = await llm.generate_reasoning(system_prompt, user_content)
+        user_content = json.dumps(comparison_raw, indent=2, default=str)
+        ai_text = await llm.generate_reasoning(system_prompt, user_content)
+
+        # Parse AI response into structured comparison object
+        comparison_obj: dict = {}
+        try:
+            comparison_obj = json.loads(ai_text)
+        except Exception:
+            comparison_obj = {"summary": ai_text}
 
         return {
-            "comparison_data": comparison_data,
-            "ai_analysis": ai_analysis,
+            "programs": programs_list,
+            "comparison": comparison_obj,
         }

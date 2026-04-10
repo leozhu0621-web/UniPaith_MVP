@@ -519,9 +519,26 @@ export interface SavedProgram {
   program?: ProgramSummary
 }
 
+export interface ComparisonProgramSummary {
+  id: string
+  program_name: string | null
+  institution_name: string | null
+  institution_country: string | null
+  degree_type: string | null
+  duration_months: number | null
+  tuition: number | null
+  acceptance_rate: number | null
+  application_deadline: string | null
+  match_score: number | null
+  match_tier: number | null
+}
+
 export interface ComparisonResponse {
-  programs: ProgramSummary[]
-  comparison: Record<string, any>
+  programs: ComparisonProgramSummary[]
+  comparison: {
+    summary?: string
+    pros_cons?: Record<string, { pros: string[]; cons: string[] }>
+  }
 }
 
 // ============ MESSAGING ============

@@ -31,8 +31,22 @@ class SavedProgramResponse(BaseModel):
     institution_name: str | None = None
 
 
+class ComparisonProgramSummary(BaseModel):
+    id: str
+    program_name: str | None = None
+    institution_name: str | None = None
+    institution_country: str | None = None
+    degree_type: str | None = None
+    duration_months: int | None = None
+    tuition: float | None = None
+    acceptance_rate: float | None = None
+    application_deadline: str | None = None
+    match_score: float | None = None
+    match_tier: int | None = None
+
+
 class ComparisonResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    comparison_data: dict
-    ai_analysis: str | None
+    programs: list[ComparisonProgramSummary]
+    comparison: dict
