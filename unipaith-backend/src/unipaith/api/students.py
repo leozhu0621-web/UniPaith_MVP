@@ -13,6 +13,7 @@ from unipaith.database import get_db
 from unipaith.dependencies import require_student
 from unipaith.models.engagement import StudentEngagementSignal
 from unipaith.models.matching import MatchResult
+from unipaith.models.student import StudentProfile
 from unipaith.models.user import User
 from unipaith.schemas.matching import (
     EngagementSignalRequest,
@@ -995,23 +996,70 @@ async def intake_chat(
     from unipaith.ai.llm_client import get_llm_client
 
     svc = StudentService(db)
-    profile = await svc._get_student_profile(user.id)
+
+    # Get-or-create student profile (new signups may not have one yet)
+    result = await db.execute(
+        select(StudentProfile).where(StudentProfile.user_id == user.id)
+    )
+    profile = result.scalar_one_or_none()
+    if not profile:
+        profile = StudentProfile(user_id=user.id)
+        db.add(profile)
+        await db.flush()
+
     llm = get_llm_client()
 
     system_prompt = (
-        "You are an onboarding assistant for a college application platform. "
-        "Extract structured profile fields from the student's message. "
-        "Return JSON with: extracted_fields (dict of field_name: value), "
-        "next_question (the next thing to ask), and any insights.\n"
-        "Fields to extract: first_name, last_name, nationality, "
-        "country_of_residence, date_of_birth, bio_text, goals_text, "
-        "gpa, test_type, test_score.\n"
+        "You are an onboarding assistant for a college application platform called UniPaith. "
+        "You are having a warm, conversational chat with a new student to learn about them. "
+        "Extract structured profile fields from the student's message AND generate an engaging follow-up question.\n\n"
+        "Fields to extract when mentioned: first_name, last_name, nationality, "
+        "country_of_residence, bio_text, goals_text.\n\n"
+        "Return JSON with:\n"
+        '- "extracted_fields": dict of field_name: value (only fields actually mentioned)\n'
+        '- "next_question": a warm, conversational follow-up that digs deeper into their story\n\n'
+        "Make your follow-up question feel natural and curious — like a good mentor getting to know them. "
+        "Ask about their motivations, dreams, experiences, or what excites them about their field.\n"
         "Return ONLY valid JSON."
     )
 
     if settings.ai_mock_mode:
-        extracted = {"goals_text": body.message[:100]}
-        next_q = "What country are you from?"
+        # Smart mock: parse common fields from the message
+        msg_lower = body.message.lower()
+        extracted: dict[str, str] = {}
+        # Try to extract name
+        if "i'm " in msg_lower or "my name is " in msg_lower or "i am " in msg_lower:
+            parts = body.message.split()
+            for i, w in enumerate(parts):
+                if w.lower() in ("i'm", "am") and i + 1 < len(parts):
+                    extracted["first_name"] = parts[i + 1].strip(".,!")
+                    break
+                if w.lower() == "name" and i + 2 < len(parts) and parts[i + 1].lower() == "is":
+                    extracted["first_name"] = parts[i + 2].strip(".,!")
+                    break
+        # Try to extract country/location
+        for kw in ("from ", "in ", "living in "):
+            if kw in msg_lower:
+                after = body.message[msg_lower.index(kw) + len(kw):]
+                loc = after.split(".")[0].split(",")[0].strip()
+                if loc and len(loc) < 40:
+                    extracted["country_of_residence"] = loc
+                    break
+        # Store goals
+        if any(w in msg_lower for w in ("study", "want", "interested", "goal", "dream", "plan")):
+            extracted["goals_text"] = body.message[:200]
+
+        # Adaptive follow-up questions based on what we learned
+        name = extracted.get("first_name", "")
+        greeting = f"Nice to meet you, {name}! " if name else "Great to hear that! "
+        if "goals_text" in extracted and "country_of_residence" not in extracted:
+            next_q = f"{greeting}That sounds like an exciting path. Where are you currently based, and what sparked your interest in this field?"
+        elif "country_of_residence" in extracted and "goals_text" not in extracted:
+            next_q = f"{greeting}What are you hoping to study, and what draws you to that area?"
+        elif extracted:
+            next_q = f"{greeting}I'd love to learn more about what drives you. What experiences or moments led you to this path?"
+        else:
+            next_q = "That's interesting! Could you tell me a bit more about what you're hoping to study and what excites you about it?"
     else:
         import json as _json
 
@@ -1019,10 +1067,10 @@ async def intake_chat(
         try:
             parsed = _json.loads(raw)
             extracted = parsed.get("extracted_fields", {})
-            next_q = parsed.get("next_question", "Tell me more.")
+            next_q = parsed.get("next_question", "Tell me more about what excites you.")
         except Exception:
             extracted = {}
-            next_q = "Could you tell me more about yourself?"
+            next_q = "That's really interesting! Could you tell me more about what draws you to that field?"
 
     updated = False
     for field, value in extracted.items():
@@ -1032,8 +1080,11 @@ async def intake_chat(
     if updated:
         await db.flush()
 
-    onboarding = await svc.get_onboarding(user.id)
-    pct = onboarding.get("completion_percentage", 0) if onboarding else 0
+    # Calculate completion percentage from extracted fields so far
+    filled = sum(1 for f in ["first_name", "last_name", "nationality",
+                             "country_of_residence", "bio_text", "goals_text"]
+                 if getattr(profile, f, None))
+    pct = min(95, filled * 15)
 
     return IntakeChatResponse(
         extracted_fields=extracted,

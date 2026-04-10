@@ -78,6 +78,13 @@ export default function OnboardingPage() {
         setTimeout(() => setShowTransition(true), 2000)
       }
     },
+    onError: () => {
+      setMessages(prev => [...prev, {
+        id: `ai-err-${Date.now()}`,
+        role: 'ai',
+        text: "Sorry, I had a brief hiccup. Could you try sending that again?",
+      }])
+    },
   })
 
   const handleSend = () => {
