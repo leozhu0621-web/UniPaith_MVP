@@ -134,6 +134,7 @@ async def delete_recommendation(
     if not rec:
         raise NotFoundException("Recommendation request not found")
     await db.delete(rec)
+    await db.flush()
 
 
 @router.post("/{rec_id}/send", response_model=RecommendationResponse)

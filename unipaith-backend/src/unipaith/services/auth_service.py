@@ -136,15 +136,22 @@ class AuthService:
     async def refresh_token(self, refresh_token: str) -> dict[str, Any]:
         if settings.cognito_bypass:
             parts = refresh_token.split(":")
-            user_id = parts[1] if len(parts) > 1 else None
-            if user_id:
-                result = await self.db.execute(select(User).where(User.id == user_id))
-                user = result.scalar_one_or_none()
-                role = user.role.value if user else "student"
-            else:
-                role = "student"
+            user_id_str = parts[1] if len(parts) > 1 else None
+            role = "student"
+            user_id_resolved = user_id_str or "unknown"
+            if user_id_str:
+                try:
+                    parsed_id = uuid.UUID(user_id_str)
+                except ValueError:
+                    parsed_id = None
+                if parsed_id:
+                    result = await self.db.execute(select(User).where(User.id == parsed_id))
+                    user = result.scalar_one_or_none()
+                    if user:
+                        role = user.role.value
+                        user_id_resolved = str(parsed_id)
             return {
-                "access_token": f"dev:{user_id or 'unknown'}:{role}",
+                "access_token": f"dev:{user_id_resolved}:{role}",
                 "expires_in": 3600,
                 "token_type": "Bearer",
             }

@@ -77,7 +77,7 @@ async def redirect_campaign_link(
 
     svc = InstitutionService(db)
     await svc.record_link_click(short_code, student_id=sid)
-    await db.commit()
+    await db.flush()
 
     # Resolve destination URL
     base = "https://unipaith.co"
@@ -135,7 +135,7 @@ async def unsubscribe_from_campaign(
         return HTMLResponse("<h2>Already unsubscribed</h2>")
 
     await db.delete(recipient)
-    await db.commit()
+    await db.flush()
 
     html = (
         '<div style="font-family:sans-serif;max-width:500px;'

@@ -42,6 +42,16 @@ async def list_upcoming_events(
     )
 
 
+@router.get("/me/rsvps", response_model=list[RSVPResponse])
+async def my_rsvps(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    profile = await StudentService(db)._get_student_profile(user.id)
+    svc = EventService(db)
+    return await svc.list_student_rsvps(profile.id)
+
+
 @router.post("/{event_id}/rsvp", response_model=RSVPResponse, status_code=status.HTTP_201_CREATED)
 async def rsvp_to_event(
     event_id: UUID,
@@ -72,16 +82,6 @@ async def download_calendar(
     svc = EventService(db)
     ical_data = await svc.generate_ics(event_id)
     return Response(content=ical_data, media_type="text/calendar")
-
-
-@router.get("/me/rsvps", response_model=list[RSVPResponse])
-async def my_rsvps(
-    user: User = Depends(require_student),
-    db: AsyncSession = Depends(get_db),
-):
-    profile = await StudentService(db)._get_student_profile(user.id)
-    svc = EventService(db)
-    return await svc.list_student_rsvps(profile.id)
 
 
 # --- Institution Management ---
