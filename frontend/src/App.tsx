@@ -51,6 +51,7 @@ import TestScorePage from './pages/student/TestScorePage'
 import DecisionComparisonPage from './pages/student/DecisionComparisonPage'
 import IntakePage from './pages/student/IntakePage'
 import IntelligenceDashboardPage from './pages/student/IntelligenceDashboardPage'
+import OnboardingPage from './pages/student/OnboardingPage'
 
 // Institution pages
 import DashboardPage from './pages/institution/DashboardPage'
@@ -115,6 +116,7 @@ const router = createBrowserRouter([
   { path: '/login', element: <AuthLayout><LoginPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
   { path: '/signup', element: <AuthLayout><SignupPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
   { path: '/auth/callback', element: <AuthCallbackPage />, errorElement: <RouteErrorPage /> },
+  { path: '/onboarding', element: <OnboardingPage />, errorElement: <RouteErrorPage /> },
 
   // Student routes
   {

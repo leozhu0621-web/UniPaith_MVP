@@ -39,7 +39,7 @@ export default function SignupPage() {
       await signup(data.email, data.password, role)
       const user = useAuthStore.getState().user
       const dest = user?.role === 'admin' ? '/admin'
-        : user?.role === 'student' ? '/s/chat'
+        : user?.role === 'student' ? '/onboarding'
         : '/i/dashboard'
       navigate(dest)
     } catch (err: any) {
