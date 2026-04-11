@@ -66,7 +66,7 @@ resource "aws_cloudfront_distribution" "main" {
   enabled             = true
   is_ipv6_enabled     = true
   default_root_object = "index.html"
-  aliases             = [var.domain_name, "www.${var.domain_name}"]
+  aliases             = ["app.${var.domain_name}"]
   price_class         = "PriceClass_100" # US, Canada, Europe only (cheapest)
 
   # --- Frontend origin (S3) ---

@@ -41,10 +41,9 @@ resource "aws_acm_certificate_validation" "api" {
 
 # --- ACM Certificate for CloudFront (must be in us-east-1) ---
 resource "aws_acm_certificate" "cdn" {
-  provider                  = aws.us_east_1
-  domain_name               = var.domain_name
-  subject_alternative_names = ["www.${var.domain_name}"]
-  validation_method         = "DNS"
+  provider          = aws.us_east_1
+  domain_name       = "app.${var.domain_name}"
+  validation_method = "DNS"
 
   lifecycle {
     create_before_destroy = true
@@ -75,10 +74,10 @@ resource "aws_acm_certificate_validation" "cdn" {
 }
 
 # --- DNS Records ---
-# Main domain → CloudFront
-resource "aws_route53_record" "root" {
+# App subdomain → CloudFront (React product app)
+resource "aws_route53_record" "app" {
   zone_id = data.aws_route53_zone.main.zone_id
-  name    = var.domain_name
+  name    = "app.${var.domain_name}"
   type    = "A"
 
   alias {
@@ -88,17 +87,8 @@ resource "aws_route53_record" "root" {
   }
 }
 
-resource "aws_route53_record" "www" {
-  zone_id = data.aws_route53_zone.main.zone_id
-  name    = "www.${var.domain_name}"
-  type    = "A"
-
-  alias {
-    name                   = aws_cloudfront_distribution.main.domain_name
-    zone_id                = aws_cloudfront_distribution.main.hosted_zone_id
-    evaluate_target_health = false
-  }
-}
+# NOTE: unipaith.co and www.unipaith.co DNS records are managed by Squarespace.
+# Add CNAME or A records manually in Route53 after Squarespace provides them.
 
 # API subdomain → ALB (for direct API access)
 resource "aws_route53_record" "api" {

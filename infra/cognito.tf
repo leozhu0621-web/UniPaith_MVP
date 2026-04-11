@@ -78,13 +78,11 @@ resource "aws_cognito_user_pool_client" "web" {
   supported_identity_providers = ["COGNITO"]
 
   callback_urls = [
-    "https://${var.domain_name}/auth/callback",
-    "https://www.${var.domain_name}/auth/callback",
+    "https://app.${var.domain_name}/auth/callback",
   ]
 
   logout_urls = [
-    "https://${var.domain_name}",
-    "https://www.${var.domain_name}",
+    "https://app.${var.domain_name}/login",
   ]
 
   access_token_validity  = 1  # hours
