@@ -260,9 +260,10 @@ class ResumeWorkshopService:
             )
             program = prog_result.scalar_one_or_none()
             if program:
+                inst_name = program.institution.name if program.institution else "Unknown"
                 user_content = (
                     f"Target program: {program.program_name} at "
-                    f"{program.institution.name}\n\n{user_content}"
+                    f"{inst_name}\n\n{user_content}"
                 )
 
         llm = get_llm_client()

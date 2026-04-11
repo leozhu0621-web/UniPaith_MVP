@@ -69,7 +69,7 @@ class MessagingService:
         await self.db.flush()
         return conversation
 
-    async def list_conversations(self, user_id: UUID) -> list[dict]:
+    async def list_conversations(self, user_id: UUID) -> list[Conversation]:
         """
         List conversations for a user with unread counts.
 

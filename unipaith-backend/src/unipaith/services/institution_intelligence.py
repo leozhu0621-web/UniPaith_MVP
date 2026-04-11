@@ -111,8 +111,16 @@ class InstitutionIntelligence:
             return {"status": "not_found"}
 
         matches = await self._load_student_matches(student_id, institution_id)
+        # Use first matched program name for knowledge retrieval, falling back
+        # to a general institution-level query when no matches exist.
+        first_program_name = None
+        if matches:
+            prog_result = await self.db.execute(
+                select(Program.program_name).where(Program.id == matches[0].program_id)
+            )
+            first_program_name = prog_result.scalar_one_or_none()
         knowledge_items = await self.knowledge.retrieve_for_program(
-            program_name=institution.name,
+            program_name=first_program_name or f"{institution.name} programs",
             institution_name=institution.name,
             limit=3,
         )
