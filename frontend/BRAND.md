@@ -1,127 +1,135 @@
 # UniPaith Brand Guidelines
 
+## Brand Identity
+
+**Name:** UniPaith (Uni = universal, Paith = path)
+**Tagline:** Your private college advisor
+**Positioning:** Everything a $6K agent does — for free. Smart matching, application management, and guidance for students. AI admissions operations for institutions.
+
+---
+
 ## Brand Voice
 
-UniPaith speaks with two distinct voices depending on the audience.
+### Student Voice — Friendly Expert
 
-### Student Voice — "Your Private Education Advisor"
+Like a great college counselor who's also a good friend. Confident, concrete, direct.
 
-**Tone:** Warm, encouraging, clear, personal. Like a knowledgeable friend guiding you through admissions.
+- Lead with outcomes, not AI. Show what UniPaith does; mention AI as the how.
+- Be specific: numbers, features, concrete examples.
+- Friendly and comfortable — but never therapist-y.
+- "You" language — speak directly to the student.
 
-- Use "you/your" language — speak directly to the student
-- Be encouraging but honest — never vague or patronizing
-- Keep language simple and jargon-free
-- Celebrate progress, guide next steps
+**Do:**
+- "We found 8 programs that match your budget and goals."
+- "Your readiness score is 74 — here's what to work on."
+- "3 programs in Germany have zero tuition for international students."
 
-**Examples:**
-- "Your profile is 72% complete — let's strengthen your activities section next."
-- "Based on your goals, here are 5 programs worth exploring."
-- "You're making great progress. Two more items and your application is ready to submit."
+**Don't:**
+- "We understand how stressful this process can be..." (therapist)
+- "AI-powered guidance from first thought to final decision" (vague poetry)
+- "Free forever, no catches, no credit card" (sounds desperate)
+- "The system has determined..." (robotic)
 
-**Avoid:**
-- Robotic language ("The system has determined...")
-- Overly casual/slangy tone
-- Anxiety-inducing urgency ("You MUST complete this NOW")
+### Institution Voice — Professional Operator
 
-### Institution Voice — "AI Admission Operations System"
+Like a sharp consultant delivering operational results. Data-forward, concise.
 
-**Tone:** Professional, efficient, data-driven. Like a trusted consultant delivering operational intelligence.
+- Lead with operational impact, not feature lists.
+- Use precise, industry-standard terminology.
+- Frame insights in terms of time saved, yield improved, pipeline clarity.
 
-- Lead with data and metrics
-- Be concise and action-oriented
-- Use precise, industry-standard terminology
-- Frame insights in terms of operational impact
+**Do:**
+- "12 applications ready for review. 3 flagged for attention."
+- "Yield rate up 8% this cycle."
+- "AI-prioritized queue with rubric-aligned summaries."
 
-**Examples:**
-- "12 applications are ready for review. 3 flagged items require attention."
-- "Yield rate is up 8% this cycle. Top-performing campaign: Fall Open House."
-- "Pipeline summary: 247 active, 18 decision-pending, 4 past deadline."
+**Don't:**
+- Casual or chatty language.
+- Marketing-speak aimed at students.
+- Vague claims without numbers.
 
-**Avoid:**
-- Casual or chatty language
-- Vague statements without data
-- Marketing-speak aimed at students
+### Shared Voice (Homepage, About, Engine)
 
-### Shared Brand Voice
-
-When speaking as UniPaith (landing pages, marketing, shared UI):
-- Confident, transparent, modern
-- "We simplify admissions" energy
-- Neither too warm nor too cold — balanced and credible
+Confident and transparent. Neither too warm nor too cold.
+"We simplify admissions" energy — balanced and credible.
 
 ---
 
 ## Color System
 
-### Dual Theme System — Green+Gold (Students) / Blue+Gold (Institutions)
+UniPaith uses a two-mode color system: **Forest Green** for student-facing content and **Sapphire Blue** for institution-facing content, unified by **Warm Gold** accents and shared neutrals.
 
-**Student theme**: `brand-green-*` (green) + `brand-amber-*` (gold)
-**Institution theme**: `brand-slate-*` (blue) + `brand-amber-*` (gold)
+### Core Student Colors
 
-#### Student Green Scale
+| Role | Color | Hex | Tailwind |
+|---|---|---|---|
+| Primary | Forest Green | `#2F5D50` | `student` |
+| Primary Hover | Deep Forest | `#254A40` | `student-hover` |
+| Soft Background | Sage Mist | `#EEF4F1` | `student-mist` |
+| Section Background | Soft Moss | `#E3ECE7` | `student-moss` |
+| Accent | Warm Gold | `#C89A3D` | `gold` |
+| Accent Soft | Pale Gold | `#F3E6C7` | `gold-pale` |
+| Headings | Deep Pine | `#1E2E29` | `student-ink` |
+| Body Text | Olive Slate | `#5E6B65` | `student-text` |
 
-| Token | Hex | Usage |
-|-------|-----|-------|
-| `brand-green-50` | `#F0FDF4` | Light student backgrounds |
-| `brand-green-100` | `#DCFCE7` | Student fills, badges |
-| `brand-green-200` | `#BBF7D0` | Student borders |
-| `brand-green-300` | `#86EFAC` | Decorative green |
-| `brand-green-400` | `#4ADE80` | Green hover states |
-| `brand-green-500` | `#22C55E` | Secondary student green |
-| `brand-green-600` | `#16A34A` | **Student primary** — buttons, links, accents |
-| `brand-green-700` | `#15803D` | Student headings, dark sections |
-| `brand-green-800` | `#166534` | Dark student text |
-| `brand-green-900` | `#14532D` | Deepest student shade |
+**Feeling:** Grounded, reassuring, anti-stress, trustworthy.
+**Ratio:** 65% neutral/sage, 25% green, 10% gold accent.
 
-#### Institution Blue Scale
+### Core School Colors
 
-| Token | Hex | Usage |
-|-------|-----|-------|
-| `brand-slate-50` | `#F0F3F9` | Light institution backgrounds |
-| `brand-slate-100` | `#E8EDF5` | Institution fills, badges |
-| `brand-slate-200` | `#C9D3E8` | Institution borders |
-| `brand-slate-300` | `#A3B3D4` | Decorative blue |
-| `brand-slate-400` | `#7A91BC` | Muted institution icons |
-| `brand-slate-500` | `#4E6A9E` | Secondary institution blue |
-| `brand-slate-600` | `#3B5998` | **Institution primary** — buttons, links, accents |
-| `brand-slate-700` | `#2C4370` | Institution headings, dark sections |
-| `brand-slate-800` | `#1E2E4D` | Dark institution text |
-| `brand-slate-900` | `#111B2E` | Deepest institution shade |
+| Role | Color | Hex | Tailwind |
+|---|---|---|---|
+| Primary | Sapphire Blue | `#1F4E79` | `school` |
+| Primary Hover | Deep Sapphire | `#183C5D` | `school-hover` |
+| Soft Background | Ice Blue | `#EFF5FA` | `school-mist` |
+| Section Background | Mist Blue | `#E4EDF5` | `school-moss` |
+| Accent | Warm Gold | `#C89A3D` | `gold` |
+| Accent Soft | Pale Gold | `#F3E6C7` | `gold-pale` |
+| Headings | Midnight Blue | `#162535` | `school-ink` |
+| Body Text | Steel Slate | `#5D6B78` | `school-text` |
 
-#### Shared Gold Accent
+**Feeling:** Structured, capable, polished, institution-safe.
+**Ratio:** 70% white/neutral, 20% blue, 10% gold accent.
 
-| Token | Hex | Usage |
-|-------|-----|-------|
-| `brand-amber-50` | `#FFF8E7` | Warm accent backgrounds |
-| `brand-amber-100` | `#FFEFC2` | Light amber fills |
-| `brand-amber-200` | `#FFE08A` | Amber borders |
-| `brand-amber-300` | `#FFCF4D` | Amber decorative |
-| `brand-amber-400` | `#F5B800` | Amber hover |
-| `brand-amber-500` | `#E5A100` | **Accent** — CTAs, highlights, energy |
-| `brand-amber-600` | `#B8820D` | Amber on light backgrounds |
-| `brand-amber-700` | `#8C6310` | Dark amber text |
+### Shared Neutrals
 
-### Audience Variations
+| Role | Color | Hex | Tailwind |
+|---|---|---|---|
+| White | Pure White | `#FFFFFF` | `white` |
+| Main Background | Off White | `#FAFBF9` | `offwhite` |
+| Border | Soft Stone | `#D9E1DC` | `stone` |
+| Light Divider | Mist Gray | `#E9EEEB` | `divider` |
+| Dark Text | Charcoal Ink | `#202529` | `charcoal` |
+| Secondary Text | Muted Slate | `#667085` | `slate` |
 
-**Student side** (green + gold):
-- Background: `bg-student` (`#FAFAF8` — warm off-white)
-- Primary: `brand-green-600` for buttons, links, active states
-- Accent: `brand-amber-*` for CTAs, highlights, warmth
-- Used on: homepage hero, /for-students, student sections, pricing student card
+### Shared Gold
 
-**Institution side** (blue + gold):
-- Background: `bg-institution` (`#F8FAFC` — cool gray)
-- Primary: `brand-slate-600` for buttons, links, active states
-- Accent: `brand-amber-*` used sparingly for highlights
-- Used on: /for-institutions, institution sections, pricing institution card
+| Role | Color | Hex | Tailwind |
+|---|---|---|---|
+| Brand Accent | Warm Gold | `#C89A3D` | `gold` |
+| Hover Accent | Burnished Gold | `#AE8433` | `gold-hover` |
+| Soft Accent Bg | Cream Gold | `#F8F1E2` | `gold-soft` |
 
-**Admin:**
-- Dark sidebar (gray-900) with `brand-slate-600` active states
+### CTA Rules
 
-### Semantic Colors (shared, do not modify)
+Keep this strict.
+
+**Student CTA:**
+- Primary button: Forest Green (`bg-student hover:bg-student-hover text-white`)
+- Secondary button: white with green border (`border-student text-student`)
+- Gold only for tiny emphasis, never default CTA
+
+**School CTA:**
+- Primary button: Sapphire Blue (`bg-school hover:bg-school-hover text-white`)
+- Secondary button: white with blue border (`border-school text-school`)
+- Gold only for trust accents, premium markers, or highlighted numbers
+
+**Gold should not become the action color. Gold is for value, not navigation.**
+
+### Semantic Colors
 
 | Color | Hex | Usage |
-|-------|-----|-------|
+|---|---|---|
 | Success | `#059669` (emerald-600) | Completed, accepted, verified |
 | Warning | `#D97706` (amber-600) | Deadlines, attention needed |
 | Danger | `#DC2626` (red-600) | Errors, rejected, destructive |
@@ -131,16 +139,16 @@ When speaking as UniPaith (landing pages, marketing, shared UI):
 
 ## Typography
 
-**Font:** Inter (loaded via Google Fonts)
+**Headings:** Lora (serif) — bold, tracking-tight. Gives warmth and credibility.
+**Body:** Inter (sans-serif) — regular, clean, highly readable.
 
-| Element | Weight | Size | Usage |
-|---------|--------|------|-------|
-| Page title | 700 (bold) | text-2xl | Main page headings |
-| Section heading | 600 (semibold) | text-lg | Card/section titles |
-| Body | 400 (regular) | text-sm | Default body text |
-| Label | 500 (medium) | text-sm | Form labels, nav items |
-| Caption | 400 (regular) | text-xs | Helper text, timestamps |
-| Overline | 600 (semibold) | text-[11px] uppercase | Section labels in sidebars |
+| Element | Font | Weight | Size |
+|---|---|---|---|
+| Page title | Lora | 700 (bold) | text-2xl+ |
+| Section heading | Lora | 600 (semibold) | text-lg |
+| Body | Inter | 400 (regular) | text-sm |
+| Label | Inter | 500 (medium) | text-sm |
+| Caption | Inter | 400 (regular) | text-xs |
 
 ---
 
@@ -148,53 +156,77 @@ When speaking as UniPaith (landing pages, marketing, shared UI):
 
 Text-only mark: **Uni**Paith
 
-- "Uni" in `brand-slate-600` (regular weight)
-- "Paith" in `brand-slate-800` (extrabold weight)
-- Rendered in Inter font family
+- "Uni" in Forest Green (`student`) on student pages, Sapphire Blue (`school`) on institution pages
+- "Paith" in Charcoal (`charcoal`) bold
+- Font: Inter
 
 ```jsx
-<span className="text-brand-slate-600">Uni</span>
-<span className="text-brand-slate-800 font-extrabold">Paith</span>
+// Student context
+<span className="text-student">Uni</span>
+<span className="text-charcoal font-extrabold">Paith</span>
+
+// Institution context
+<span className="text-school">Uni</span>
+<span className="text-charcoal font-extrabold">Paith</span>
 ```
+
+---
+
+## CTA Rules
+
+### Student CTA
+- Primary: Forest Green bg (`bg-student hover:bg-student-hover text-white`)
+- Secondary: White with green border (`border-student text-student`)
+
+### School CTA
+- Primary: Sapphire Blue bg (`bg-school hover:bg-school-hover text-white`)
+- Secondary: White with blue border (`border-school text-school`)
+
+### Gold is NOT a CTA color
+Gold is for value, not navigation. Never use it as a button background.
 
 ---
 
 ## Component Conventions
 
 ### Buttons
-- **Primary:** `bg-brand-slate-600 text-white hover:bg-brand-slate-700`
-- **Secondary:** `border-brand-slate-200 text-brand-slate-700 hover:bg-brand-slate-50`
-- **Ghost:** `text-brand-slate-700 hover:bg-brand-slate-50`
-- **Danger:** `bg-rose-600 text-white hover:bg-rose-700`
-
-### Links
-- Default: `text-brand-slate-600 hover:underline`
-- Navigation active: `text-brand-slate-700 font-medium` with `bg-brand-slate-50`
+- Primary student: `bg-student hover:bg-student-hover text-white rounded-xl`
+- Primary school: `bg-school hover:bg-school-hover text-white rounded-xl`
+- Outline: `border-gray-300 text-charcoal hover:bg-student-mist rounded-xl`
+- Ghost: `text-charcoal hover:bg-gray-50`
 
 ### Cards
-- `bg-white rounded-2xl shadow-sm`
-- Interactive: `hover:shadow-md transition-shadow`
+- `bg-white rounded-2xl border border-gray-200`
+- Interactive: `hover:shadow-md transition-shadow` (use `hover-lift` utility)
+
+### Badges / Pills
+- Student: `bg-student-mist text-student rounded-full`
+- School: `bg-school-mist text-school rounded-full`
+
+### Dark Sections
+- Background: `bg-charcoal` or `bg-student-ink` / `bg-school-ink`
+- Text: `text-white`, secondary: `text-gray-400`
+- Accent: `text-student` or `text-school`
 
 ### Form Inputs
-- Focus ring: `focus:ring-brand-slate-600`
-- Error border: `border-red-500`
-
-### Tabs
-- Active: `border-brand-slate-600 text-brand-slate-600`
-- Inactive: `text-gray-500 hover:text-gray-700`
-
-### Badges
-- Keep semantic colors (success/warning/danger/info/neutral)
-- Do not use brand colors for badges
+- Focus ring: `focus:ring-student` (student context) or `focus:ring-school`
+- Error: `border-red-500`
 
 ---
 
-## Usage Rules
+## Audience Variations
 
-1. **Brand-slate-600 is the primary action color** — use for buttons, links, active nav states
-2. **Amber is the accent** — use sparingly for energy, highlights, and student-side warmth
-3. **Never mix indigo/blue with brand-slate** — they are too similar and create visual confusion
-4. **Keep semantic colors pure** — success is always emerald, danger is always rose/red
-5. **Gray for neutrals** — text, borders, backgrounds that aren't brand-colored use Tailwind gray scale
-6. **Student pages use slightly warmer neutrals** — achieved through the `bg-student` background
-7. **Institution pages use cooler neutrals** — achieved through the `bg-institution` background
+### Student Pages
+- Background: `bg-offwhite` or `bg-student-mist`
+- More warm tones, more gold micro-accents
+- Softer card contrast, fewer dark blocks
+
+### Institution Pages
+- Background: `bg-white` or `bg-school-mist`
+- More white, sharper contrast
+- Clearer data emphasis, more structured layouts
+
+### Shared Pages (Homepage, About, Engine)
+- Use both student green and school blue contextually
+- Student CTA = green, school CTA = blue
+- Neutral dark sections use `bg-charcoal`

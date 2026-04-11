@@ -9,16 +9,16 @@ const founders = [
     role: 'Co-Founder · Product & Operations',
     desc: 'International student turned entrepreneur. Navigated the admissions system firsthand — the broken portals, the guesswork, the stress. Built UniPaith to fix it.',
     initials: 'LZ',
-    bg: 'bg-mist',
-    textColor: 'text-ink',
+    bg: 'bg-student-mist',
+    textColor: 'text-charcoal',
   },
   {
     name: 'Rick Arrowood',
     role: 'Co-Founder · Strategy & Partnerships',
     desc: 'Education executive and academic with decades on the institutional side of admissions. Understands the operational challenges admissions teams face daily.',
     initials: 'RA',
-    bg: 'bg-mist',
-    textColor: 'text-ink',
+    bg: 'bg-student-mist',
+    textColor: 'text-charcoal',
   },
 ]
 
@@ -38,7 +38,7 @@ export default function AboutPage() {
           <ScrollReveal variant="blur-in">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 tracking-tight font-heading">
               Built by people who&rsquo;ve{' '}
-              <span className="text-harbor">lived both sides</span>
+              <span className="text-student">lived both sides</span>
             </h1>
           </ScrollReveal>
           <ScrollReveal delay={200}>
@@ -54,7 +54,7 @@ export default function AboutPage() {
       <section className="pb-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto">
           <ScrollReveal variant="blur-in">
-            <div className="bg-cloud rounded-2xl border border-gray-200 p-8 sm:p-10 text-center">
+            <div className="bg-offwhite rounded-2xl border border-gray-200 p-8 sm:p-10 text-center">
               <h2 className="text-2xl font-bold text-foreground mb-4 font-heading">Our mission</h2>
               <p className="text-muted-foreground text-lg leading-relaxed">
                 Make admissions fair, transparent, and efficient for everyone. One connected platform
@@ -81,7 +81,7 @@ export default function AboutPage() {
                     <span className={`text-lg font-bold ${f.textColor}`}>{f.initials}</span>
                   </div>
                   <h3 className="text-xl font-bold text-foreground mb-1 font-heading">{f.name}</h3>
-                  <p className="text-sm text-harbor font-medium mb-3">{f.role}</p>
+                  <p className="text-sm text-student font-medium mb-3">{f.role}</p>
                   <p className="text-muted-foreground text-sm leading-relaxed">{f.desc}</p>
                 </div>
               </ScrollReveal>
@@ -101,7 +101,7 @@ export default function AboutPage() {
             {values.map((v, i) => (
               <ScrollReveal key={i} delay={i * 100} variant="fade-up">
                 <div className="bg-card rounded-2xl border p-6 text-center h-full">
-                  <v.icon size={28} className="text-harbor mx-auto mb-3" />
+                  <v.icon size={28} className="text-student mx-auto mb-3" />
                   <h3 className="text-base font-bold text-foreground mb-2 font-heading">{v.title}</h3>
                   <p className="text-muted-foreground text-sm">{v.desc}</p>
                 </div>
@@ -120,7 +120,7 @@ export default function AboutPage() {
           </ScrollReveal>
           <ScrollReveal delay={200}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" className="text-base px-10 py-7 rounded-xl shadow-lg text-lg bg-harbor hover:bg-harbor-hover text-white" asChild>
+              <Button size="lg" className="text-base px-10 py-7 rounded-xl shadow-lg text-lg bg-student hover:bg-student-hover text-white" asChild>
                 <Link to="/signup">Get Started <ArrowRight size={20} className="ml-2" /></Link>
               </Button>
             </div>

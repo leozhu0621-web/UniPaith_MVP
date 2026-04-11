@@ -7,32 +7,32 @@ const features = [
     icon: Brain,
     title: "Explainable Matching",
     description: "See exactly why a program was recommended — tied to your goals and profile. No black boxes.",
-    color: "text-harbor",
-    bg: "bg-mist",
+    color: "text-student",
+    bg: "bg-student-mist",
     mockBg: "from-mist to-cloud",
   },
   {
     icon: FileSearch,
     title: "Document Intelligence",
     description: "Upload once. AI extracts, structures, and verifies — turning documents into clean data institutions trust.",
-    color: "text-ink",
-    bg: "bg-ink/10",
+    color: "text-charcoal",
+    bg: "bg-charcoal/10",
     mockBg: "from-gray-100 to-cloud",
   },
   {
     icon: Target,
     title: "Readiness Diagnostics",
     description: "Know where you stand before you submit. Strengths, gaps, and a clear preparation path.",
-    color: "text-harbor",
-    bg: "bg-mist",
+    color: "text-student",
+    bg: "bg-student-mist",
     mockBg: "from-mist to-cloud",
   },
   {
     icon: Shield,
     title: "Integrity & Compliance",
     description: "Anomaly detection, document verification, full audit trails. FERPA-ready, GDPR-compliant.",
-    color: "text-ink",
-    bg: "bg-ink/10",
+    color: "text-charcoal",
+    bg: "bg-charcoal/10",
     mockBg: "from-gray-100 to-cloud",
   },
 ];
@@ -49,10 +49,10 @@ const AIFeaturesSection = () => (
     <div className="max-w-5xl mx-auto">
       <ScrollReveal variant="blur-in">
         <div className="text-center mb-16">
-          <span className="inline-flex items-center gap-1.5 bg-mist text-harbor text-sm font-medium rounded-full px-5 py-1.5 mb-4">
+          <span className="inline-flex items-center gap-1.5 bg-student-mist text-student text-sm font-medium rounded-full px-5 py-1.5 mb-4">
             <Brain size={14} /> Powered by AI
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-ink mb-4 font-heading">Intelligence you can trust</h2>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-charcoal mb-4 font-heading">Intelligence you can trust</h2>
           <p className="text-gray-500 max-w-xl mx-auto text-lg">Every AI output comes with reasoning. Every decision stays with humans.</p>
         </div>
       </ScrollReveal>
@@ -65,7 +65,7 @@ const AIFeaturesSection = () => (
                 <div className={`w-12 h-12 rounded-xl ${f.bg} flex items-center justify-center mb-4 group`}>
                   <f.icon className={`${f.color} transition-transform duration-300 group-hover:scale-110`} size={24} />
                 </div>
-                <h3 className="text-xl font-bold text-ink mb-2 font-heading">{f.title}</h3>
+                <h3 className="text-xl font-bold text-charcoal mb-2 font-heading">{f.title}</h3>
                 <p className="text-gray-500 leading-relaxed text-sm">{f.description}</p>
               </div>
 
@@ -95,7 +95,7 @@ const AIFeaturesSection = () => (
         <div className="mt-16 flex flex-wrap justify-center gap-8 sm:gap-12">
           {trustBadges.map((badge, i) => (
             <div key={i} className="flex items-center gap-2 text-gray-500">
-              <badge.icon size={18} className="text-harbor" />
+              <badge.icon size={18} className="text-student" />
               <span className="text-sm font-medium">{badge.label}</span>
             </div>
           ))}
@@ -103,7 +103,7 @@ const AIFeaturesSection = () => (
         <div className="mt-6 text-center">
           <Link
             to="/engine"
-            className="inline-flex items-center gap-1 text-sm font-medium text-harbor hover:text-harbor-hover transition-colors"
+            className="inline-flex items-center gap-1 text-sm font-medium text-student hover:text-student-hover transition-colors"
           >
             Explore the AI engine <ArrowRight size={14} />
           </Link>

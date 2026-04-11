@@ -7,33 +7,33 @@ const steps = [
     icon: UserCircle,
     title: "One Profile, Every School",
     description: "Fill it out once. Use it for every application — transcripts, essays, activities, documents.",
-    iconColor: "text-harbor",
-    bg: "bg-mist",
-    line: "bg-harbor",
+    iconColor: "text-student",
+    bg: "bg-student-mist",
+    line: "bg-student",
   },
   {
     icon: Search,
     title: "See Programs That Actually Fit",
     description: "Matched to your goals, budget, and profile. You'll see exactly why each one was picked.",
-    iconColor: "text-harbor",
-    bg: "bg-mist",
-    line: "bg-harbor",
+    iconColor: "text-student",
+    bg: "bg-student-mist",
+    line: "bg-student",
   },
   {
     icon: Send,
     title: "Apply & Track in One Place",
     description: "Manage deadlines, upload documents, track status — stop juggling 10 different portals.",
-    iconColor: "text-harbor",
-    bg: "bg-mist",
-    line: "bg-harbor",
+    iconColor: "text-student",
+    bg: "bg-student-mist",
+    line: "bg-student",
   },
   {
     icon: MessageCircle,
     title: "Get Help When You Need It",
     description: "Essay feedback, cost breakdowns, readiness checks — a counselor who knows your file, anytime.",
-    iconColor: "text-harbor",
-    bg: "bg-sand-light",
-    line: "bg-harbor",
+    iconColor: "text-student",
+    bg: "bg-gold-pale",
+    line: "bg-student",
   },
 ];
 
@@ -46,14 +46,14 @@ const featureChips = [
 ];
 
 const StudentsSection = () => (
-  <section id="students" className="py-24 px-4 sm:px-6 lg:px-8 bg-cloud">
+  <section id="students" className="py-24 px-4 sm:px-6 lg:px-8 bg-offwhite">
     <div className="max-w-5xl mx-auto">
       <ScrollReveal variant="blur-in">
         <div className="text-center mb-16">
-          <span className="inline-block bg-mist text-harbor text-sm font-medium rounded-full px-4 py-1.5 mb-4 uppercase tracking-wide">
+          <span className="inline-block bg-student-mist text-student text-sm font-medium rounded-full px-4 py-1.5 mb-4 uppercase tracking-wide">
             For Students
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-ink mb-4 font-heading">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-charcoal mb-4 font-heading">
             How it works for students
           </h2>
           <p className="text-gray-500 max-w-lg mx-auto text-lg">
@@ -80,7 +80,7 @@ const StudentsSection = () => (
                     <span className={`w-8 h-8 rounded-full ${step.line} text-white flex items-center justify-center text-sm font-bold`}>
                       {i + 1}
                     </span>
-                    <h3 className="text-xl font-bold text-ink font-heading">
+                    <h3 className="text-xl font-bold text-charcoal font-heading">
                       {step.title}
                     </h3>
                   </div>
@@ -113,7 +113,7 @@ const StudentsSection = () => (
           {featureChips.map((chip) => (
             <span
               key={chip}
-              className="inline-block bg-mist text-harbor text-xs font-medium rounded-full px-3 py-1.5 border border-harbor/20"
+              className="inline-block bg-student-mist text-student text-xs font-medium rounded-full px-3 py-1.5 border border-student/20"
             >
               {chip}
             </span>
@@ -122,7 +122,7 @@ const StudentsSection = () => (
         <div className="mt-6 text-center">
           <Link
             to="/for-students"
-            className="inline-flex items-center gap-1 text-sm font-medium text-harbor hover:text-harbor-hover transition-colors"
+            className="inline-flex items-center gap-1 text-sm font-medium text-student hover:text-student-hover transition-colors"
           >
             See how it works <ArrowRight size={14} />
           </Link>

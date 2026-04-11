@@ -15,11 +15,11 @@ const SocialProofSection = () => (
     <div className="max-w-4xl mx-auto">
       <ScrollReveal variant="blur-in">
         <div className="text-center mb-16">
-          <h3 className="text-sm font-semibold text-harbor uppercase tracking-wider mb-8">By the numbers</h3>
+          <h3 className="text-sm font-semibold text-student uppercase tracking-wider mb-8">By the numbers</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, i) => (
               <div key={i} className="text-center">
-                <div className="text-3xl sm:text-4xl font-bold text-ink font-heading mb-1">
+                <div className="text-3xl sm:text-4xl font-bold text-charcoal font-heading mb-1">
                   {"end" in stat && stat.end ? (
                     <AnimatedCounter end={stat.end} suffix={stat.suffix} />
                   ) : (
@@ -37,7 +37,7 @@ const SocialProofSection = () => (
 
       <ScrollReveal variant="blur-in">
         <div className="text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-ink mb-4 font-heading">
+          <h2 className="text-2xl sm:text-3xl font-bold text-charcoal mb-4 font-heading">
             Built by people who&rsquo;ve lived both sides
           </h2>
           <p className="text-gray-500 max-w-2xl mx-auto text-base leading-relaxed mb-6">
@@ -46,7 +46,7 @@ const SocialProofSection = () => (
           </p>
           <Link
             to="/about"
-            className="inline-flex items-center gap-1 text-sm font-medium text-harbor hover:text-harbor-hover transition-colors"
+            className="inline-flex items-center gap-1 text-sm font-medium text-student hover:text-student-hover transition-colors"
           >
             Meet the team <ArrowRight size={14} />
           </Link>
