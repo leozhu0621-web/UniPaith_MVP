@@ -257,7 +257,15 @@ class ConversationService:
         session.last_updated_at = datetime.now(UTC)
         turn_id = uuid4()
 
-        selected_domain = self._pick_domain(body.message)
+        # LLM-powered extraction in non-mock mode, keyword fallback otherwise
+        extracted_fields: list[dict] = []
+        if settings.ai_mock_mode:
+            selected_domain = self._pick_domain_keyword(body.message)
+        else:
+            selected_domain, extracted_fields = await self._pick_domain_llm(
+                body.message, session
+            )
+
         session.active_domain = selected_domain
         session.current_stage = self._pick_stage(session.turn_count)
 
@@ -279,7 +287,25 @@ class ConversationService:
         assistant_text = await self._build_assistant_reply(selected_domain, body.message, session)
         session.last_assistant_prompt = assistant_text
 
-        if selected_domain == "budget_finance":
+        # Apply LLM-extracted fields
+        new_reqs_count = 0
+        if extracted_fields:
+            for ef in extracted_fields:
+                field_name = ef.get("field")
+                value = ef.get("value")
+                if field_name and value is not None:
+                    self._upsert_requirement(
+                        session=session,
+                        domain=selected_domain,
+                        field=field_name,
+                        value=value,
+                        source="llm_extracted",
+                        evidence_turn_id=turn_id,
+                    )
+                    new_reqs_count += 1
+
+        # Keyword fallback for budget extraction in mock mode
+        if not extracted_fields and selected_domain == "budget_finance":
             self._upsert_requirement(
                 session=session,
                 domain="budget_finance",
@@ -288,6 +314,7 @@ class ConversationService:
                 source="inferred",
                 evidence_turn_id=turn_id,
             )
+            new_reqs_count = 1
 
         # Persist updated session to DB
         await self._save_session(session)
@@ -306,7 +333,7 @@ class ConversationService:
             ),
             state_delta=ConversationStateDeltaResponse(
                 updated_domains=[selected_domain],
-                new_requirements_count=1 if selected_domain == "budget_finance" else 0,
+                new_requirements_count=new_reqs_count,
                 new_conflicts_count=1 if session.conflicts else 0,
             ),
             confidence_summary=confidence,
@@ -574,7 +601,8 @@ class ConversationService:
             return "translate_requirements"
         return "ready_for_shortlist"
 
-    def _pick_domain(self, message: str) -> ConversationDomain:
+    def _pick_domain_keyword(self, message: str) -> ConversationDomain:
+        """Keyword-based domain detection — fast fallback for mock mode."""
         lower = message.lower()
         if "budget" in lower or "tuition" in lower or "scholarship" in lower:
             return "budget_finance"
@@ -589,6 +617,64 @@ class ConversationService:
         if "gpa" in lower or "test" in lower or "score" in lower:
             return "academic_readiness"
         return "learning_preferences"
+
+    async def _pick_domain_llm(
+        self, message: str, session: _ConversationSessionState
+    ) -> tuple[ConversationDomain, list[dict]]:
+        """LLM-powered domain detection + structured field extraction.
+
+        Returns (domain, extracted_fields) where extracted_fields is a list
+        of dicts: [{"field": str, "value": any, "confidence": int}].
+        """
+        system_prompt = (
+            "You are a requirement extraction engine for a university admissions advisor.\n"
+            "Given a student message, determine the primary domain and extract any "
+            "concrete requirements mentioned.\n\n"
+            "Domains: budget_finance, timeline_intake, eligibility_compliance, "
+            "country_location, career_outcome, academic_readiness, learning_preferences\n\n"
+            "Return ONLY valid JSON:\n"
+            '{"domain": "<domain>", "extracted_fields": [\n'
+            '  {"field": "<field_name>", "value": <extracted_value>, "confidence": <0-100>}\n'
+            "]}\n\n"
+            "Field names per domain:\n"
+            "- budget_finance: max_annual_tuition, funding_requirement, scholarship_needed\n"
+            "- timeline_intake: target_intake, application_deadline\n"
+            "- eligibility_compliance: language_test_min, visa_requirement\n"
+            "- country_location: allowed_countries, preferred_cities\n"
+            "- career_outcome: primary_goal, target_industry, target_role\n"
+            "- academic_readiness: gpa, test_scores\n"
+            "- learning_preferences: program_format, campus_setting\n\n"
+            "Extract concrete values when the student mentions them. "
+            "For budget, extract as an integer (annual USD). "
+            "For countries, extract as a list of strings. "
+            "If no concrete value is mentioned, omit that field."
+        )
+
+        collected = self._active_requirements_map(session)
+        user_content = (
+            f"Student message: {message}\n"
+            f"Already collected: {collected}"
+        )
+
+        try:
+            raw = await self.llm.extract_features(system_prompt, user_content)
+            parsed = _safe_json_parse(raw)
+            if parsed and isinstance(parsed, dict):
+                domain = parsed.get("domain", "learning_preferences")
+                if domain not in _REQUIRED_FIELDS_BY_DOMAIN:
+                    domain = "learning_preferences"
+                fields = parsed.get("extracted_fields", [])
+                if not isinstance(fields, list):
+                    fields = []
+                return domain, fields
+        except Exception:
+            logger.debug("LLM extraction failed, falling back to keyword")
+
+        return self._pick_domain_keyword(message), []
+
+    def _pick_domain(self, message: str) -> ConversationDomain:
+        """Synchronous keyword fallback — used when async extraction is not needed."""
+        return self._pick_domain_keyword(message)
 
     # ------------------------------------------------------------------
     # LLM reply generation
@@ -725,3 +811,26 @@ class ConversationService:
         issues.extend([c.reason for c in session.conflicts.values()])
         issues.extend([f"Missing required field: {task}" for task in self._open_tasks(session)])
         return issues
+
+
+def _safe_json_parse(text: str) -> dict | list | None:
+    """Parse JSON from LLM output, stripping markdown code fences if present."""
+    import json
+    import re
+
+    if not text:
+        return None
+    text = text.strip()
+    if text.startswith("```"):
+        lines = text.split("\n")
+        text = "\n".join(lines[1:-1]) if len(lines) > 2 else text
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        match = re.search(r"[\[\{].*[\]\}]", text, re.DOTALL)
+        if match:
+            try:
+                return json.loads(match.group())
+            except json.JSONDecodeError:
+                pass
+    return None
