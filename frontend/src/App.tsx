@@ -12,22 +12,14 @@ import InstitutionLayout from './components/layout/InstitutionLayout'
 import RequireAuth from './components/layout/RequireAuth'
 
 // Auth pages
-import LandingPage from './pages/auth/LandingPage'
 import LoginPage from './pages/auth/LoginPage'
 import SignupPage from './pages/auth/SignupPage'
 import AuthCallbackPage from './pages/auth/AuthCallbackPage'
 
-// Public pages
+// Public pages (program browsing — linked from Squarespace)
 import ProgramBrowsePage from './pages/public/ProgramBrowsePage'
 import InstitutionPage from './pages/public/InstitutionPage'
 import ProgramDetailPage from './pages/public/ProgramDetailPage'
-import ForStudentsPage from './pages/public/ForStudentsPage'
-import ForInstitutionsPage from './pages/public/ForInstitutionsPage'
-import EnginePage from './pages/public/EnginePage'
-import PricingPage from './pages/public/PricingPage'
-import AboutPage from './pages/public/AboutPage'
-import BlogPage from './pages/public/BlogPage'
-import PublicLayout from './components/layout/PublicLayout'
 
 // Student pages
 import StudentDashboardPage from './pages/student/DashboardPage'
@@ -92,25 +84,13 @@ const queryClient = new QueryClient({
 })
 
 const router = createBrowserRouter([
-  // Public routes
-  { path: '/', element: <LandingPage />, errorElement: <RouteErrorPage /> },
+  // Root → login (landing pages on Squarespace at unipaith.co)
+  { path: '/', element: <Navigate to="/login" replace />, errorElement: <RouteErrorPage /> },
+
+  // Public program browsing (linked from Squarespace CTAs)
   { path: '/browse', element: <ProgramBrowsePage />, errorElement: <RouteErrorPage /> },
   { path: '/school/:institutionId', element: <InstitutionPage />, errorElement: <RouteErrorPage /> },
   { path: '/program/:programId', element: <ProgramDetailPage />, errorElement: <RouteErrorPage /> },
-
-  // Marketing pages (with shared Navbar + Footer via PublicLayout)
-  {
-    element: <PublicLayout />,
-    errorElement: <RouteErrorPage />,
-    children: [
-      { path: '/for-students', element: <ForStudentsPage /> },
-      { path: '/for-institutions', element: <ForInstitutionsPage /> },
-      { path: '/engine', element: <EnginePage /> },
-      { path: '/pricing', element: <PricingPage /> },
-      { path: '/about', element: <AboutPage /> },
-      { path: '/blog', element: <BlogPage /> },
-    ],
-  },
 
   { path: '/login', element: <AuthLayout><LoginPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
   { path: '/signup', element: <AuthLayout><SignupPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
@@ -207,8 +187,8 @@ const router = createBrowserRouter([
     ],
   },
 
-  // Catch-all
-  { path: '*', element: <Navigate to="/" replace />, errorElement: <RouteErrorPage /> },
+  // Catch-all → login
+  { path: '*', element: <Navigate to="/login" replace />, errorElement: <RouteErrorPage /> },
 ])
 
 export default function App() {
