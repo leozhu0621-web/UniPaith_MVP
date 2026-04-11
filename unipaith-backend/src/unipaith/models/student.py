@@ -258,9 +258,9 @@ class StudentPreference(Base):
     budget_max: Mapped[int | None] = mapped_column(Integer)
     funding_requirement: Mapped[str | None] = mapped_column(String(30))
     program_size_preference: Mapped[str | None] = mapped_column(String(20))
-    career_goals: Mapped[dict | None] = mapped_column(JSONB)
+    career_goals: Mapped[list | None] = mapped_column(JSONB)
     values_priorities: Mapped[dict | None] = mapped_column(JSONB)
-    dealbreakers: Mapped[dict | None] = mapped_column(JSONB)
+    dealbreakers: Mapped[list | None] = mapped_column(JSONB)
     goals_text: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -312,7 +312,7 @@ class OnboardingProgress(Base):
         unique=True,
         nullable=False,
     )
-    steps_completed: Mapped[dict | None] = mapped_column(JSONB)
+    steps_completed: Mapped[list | None] = mapped_column(JSONB)
     completion_percentage: Mapped[int] = mapped_column(Integer, default=0)
     last_step_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     nudge_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
