@@ -373,14 +373,14 @@ CRITICAL RULES:
             conversation_id=conv.id,
             sender_id=user_id,
             sender_type="student",
-            content=user_message,
+            message_body=user_message,
             sent_at=now,
         ))
         self.db.add(Message(
             conversation_id=conv.id,
             sender_id=user_id,
             sender_type="advisor",
-            content=advisor_reply,
+            message_body=advisor_reply,
             sent_at=now,
         ))
         conv.last_message_at = now
@@ -436,7 +436,7 @@ CRITICAL RULES:
         return [
             {
                 "role": m.sender_type,
-                "text": m.content,
+                "text": m.message_body,
                 "at": m.sent_at.isoformat() if m.sent_at else "",
             }
             for m in messages

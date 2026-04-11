@@ -34,7 +34,7 @@ class ConversationResponse(BaseModel):
 
     id: UUID
     student_id: UUID
-    institution_id: UUID
+    institution_id: UUID | None
     program_id: UUID | None
     subject: str | None
     status: str | None
