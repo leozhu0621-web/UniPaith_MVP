@@ -80,9 +80,18 @@ export default function ChatPage() {
 
   const sendMut = useMutation({
     mutationFn: (content: string) => chatStudentAssistant(content),
-    onSuccess: () => {
+    onSuccess: (data) => {
       setInput('')
       setSendError(null)
+      if (data?.reply) {
+        const assistantMessage: ChatMessage = {
+          id: `assistant-${Date.now()}`,
+          sender_type: 'assistant',
+          message_body: data.reply,
+          sent_at: new Date().toISOString(),
+        }
+        setChatMessages(prev => [...prev, assistantMessage])
+      }
     },
     onError: (err) => {
       setSendError(err instanceof Error ? err.message : 'Message failed to send. Please try again.')
@@ -101,18 +110,6 @@ export default function ChatPage() {
     setChatMessages(prev => [...prev, studentMessage])
     sendMut.mutate(trimmed)
   }
-
-  useEffect(() => {
-    if (sendMut.data?.reply) {
-      const assistantMessage: ChatMessage = {
-        id: `assistant-${Date.now()}`,
-        sender_type: 'assistant',
-        message_body: sendMut.data.reply,
-        sent_at: new Date().toISOString(),
-      }
-      setChatMessages(prev => [...prev, assistantMessage])
-    }
-  }, [sendMut.data])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {

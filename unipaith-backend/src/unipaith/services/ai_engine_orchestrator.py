@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import logging
 import time
 from datetime import UTC, datetime
@@ -136,21 +135,16 @@ class AIEngineOrchestrator:
             extractor = FeatureExtractor(self.db)
             embedder = EmbeddingPipeline(self.db)
 
-            sem = asyncio.Semaphore(5)
             errors: list[dict[str, str]] = []
             processed = 0
 
-            async def process_program(program_id: UUID) -> None:
-                nonlocal processed
-                async with sem:
-                    try:
-                        await extractor.extract_program_features(program_id)
-                        await embedder.generate_program_embedding(program_id)
-                        processed += 1
-                    except Exception as exc:
-                        errors.append({"program_id": str(program_id), "error": str(exc)})
-
-            await asyncio.gather(*(process_program(pid) for pid in program_ids))
+            for pid in program_ids:
+                try:
+                    await extractor.extract_program_features(pid)
+                    await embedder.generate_program_embedding(pid)
+                    processed += 1
+                except Exception as exc:
+                    errors.append({"program_id": str(pid), "error": str(exc)})
             await self.db.commit()
             return {
                 "status": "ok",

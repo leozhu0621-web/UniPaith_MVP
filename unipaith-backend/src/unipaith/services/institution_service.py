@@ -2026,7 +2026,7 @@ class InstitutionService:
         if tag_ids and isinstance(tag_ids, list) and len(tag_ids) > 0:
             prog_r = await self.db.execute(
                 select(Program.program_name).where(
-                    Program.id.in_(tag_ids)
+                    Program.id.in_([uuid.UUID(t) if isinstance(t, str) else t for t in tag_ids])
                 )
             )
             program_names = list(prog_r.scalars().all())

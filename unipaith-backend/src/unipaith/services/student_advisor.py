@@ -404,7 +404,7 @@ CRITICAL RULES:
             student_id=student_id,
             institution_id=None,
             subject="__advisor__",
-            created_at=datetime.now(UTC),
+            started_at=datetime.now(UTC),
             last_message_at=datetime.now(UTC),
         )
         self.db.add(conv)

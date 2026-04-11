@@ -564,10 +564,11 @@ class ReviewPipelineService:
         )
         self.db.add(summary)
         try:
+            nested = await self.db.begin_nested()
             await self.db.flush()
         except IntegrityError:
-            # Concurrent insert race — fall back to update
-            await self.db.rollback()
+            # Concurrent insert race — roll back only the savepoint
+            await nested.rollback()
             retry_r = await self.db.execute(
                 select(AIPacketSummary).where(
                     AIPacketSummary.application_id == application_id,

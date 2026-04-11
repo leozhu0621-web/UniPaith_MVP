@@ -135,7 +135,7 @@ class EngineMetrics:
 
         entropies = []
         for run in runs:
-            perf = run.performance_metrics or {}
+            perf = run.test_metrics or {}
             accuracy = float(perf.get("accuracy", 0.5) or 0.5)
             p = max(0.01, min(0.99, accuracy))
             entropy = -(p * np.log2(p) + (1 - p) * np.log2(1 - p))

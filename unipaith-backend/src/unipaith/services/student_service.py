@@ -920,12 +920,13 @@ class StudentService:
         )
         matches = list(matches_result.scalars().all())
         match_count = len(matches)
+        scored_matches = [m for m in matches if m.match_score is not None]
         avg_score = (
-            round(sum(m.match_score for m in matches if m.match_score is not None) / match_count, 1)
-            if match_count > 0
+            round(sum(m.match_score for m in scored_matches) / len(scored_matches), 1)
+            if scored_matches
             else None
         )
-        top_tier = min((m.match_tier for m in matches), default=None)
+        top_tier = min((m.match_tier for m in matches if m.match_tier is not None), default=None)
 
         # Application stats
         apps_result = await self.db.execute(

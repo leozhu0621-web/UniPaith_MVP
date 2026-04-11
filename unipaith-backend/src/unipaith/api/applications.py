@@ -218,7 +218,11 @@ async def batch_request_missing_items(
 
     from unipaith.models.application import Application
 
-    await InstitutionService(db).get_institution(user.id)  # auth check
+    inst = await InstitutionService(db).get_institution(user.id)
+    # Get programs owned by this institution for authorization
+    from unipaith.models.institution import Program
+    prog_r = await db.execute(select(Program.id).where(Program.institution_id == inst.id))
+    inst_program_ids = {row[0] for row in prog_r.all()}
     result = BatchOperationResult(
         success_count=0, failed_ids=[], errors=[],
     )
@@ -228,7 +232,7 @@ async def batch_request_missing_items(
                 select(Application).where(Application.id == app_id)
             )
             app = r.scalar_one_or_none()
-            if not app:
+            if not app or app.program_id not in inst_program_ids:
                 result.failed_ids.append(app_id)
                 result.errors.append(f"{app_id}: not found")
                 continue

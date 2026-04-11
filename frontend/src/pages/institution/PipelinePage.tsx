@@ -123,7 +123,7 @@ export default function PipelinePage() {
   const [selectedProgram, setSelectedProgram] = useState<string>('')
   const [search, setSearch] = useState('')
   const [activeApp, setActiveApp] = useState<Application | null>(null)
-  const initialTab = (searchParams.get('tab') as PipelineTab) || 'board'
+  const initialTab = (searchParams.get('subtab') as PipelineTab) || 'board'
   const [activeTab, setActiveTab] = useState<PipelineTab>(initialTab)
 
   // Batch selection state
@@ -281,7 +281,7 @@ export default function PipelinePage() {
     setActiveTab(nextTab)
     setSearchParams(prev => {
       const next = new URLSearchParams(prev)
-      next.set('tab', nextTab)
+      next.set('subtab', nextTab)
       return next
     })
   }

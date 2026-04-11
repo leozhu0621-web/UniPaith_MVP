@@ -36,7 +36,7 @@ export default function InterviewsPage() {
   // Score form state
   const [scoreNotes, setScoreNotes] = useState('')
   const [scoreRec, setScoreRec] = useState('')
-  const scoreCriteria: Record<string, number> = {}
+  const [scoreCriteria, setScoreCriteria] = useState<Record<string, number>>({})
 
   const qc = useQueryClient()
 
@@ -108,7 +108,7 @@ export default function InterviewsPage() {
             <Button size="sm" variant="ghost" onClick={() => completeMut.mutate(row.id)}>Complete</Button>
           )}
           {row.status === 'completed' && (
-            <Button size="sm" variant="ghost" onClick={() => { setSelectedInterview(row.id); setShowScoreModal(true) }}>Score</Button>
+            <Button size="sm" variant="ghost" onClick={() => { setSelectedInterview(row.id); setScoreNotes(''); setScoreRec(''); setScoreCriteria({}); setShowScoreModal(true) }}>Score</Button>
           )}
         </div>
       ),

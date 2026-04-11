@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -201,4 +201,4 @@ async def pipeline_force(
         )
         return {"action": "flush_failed", "reset_count": count.rowcount}
 
-    return {"error": f"Unknown action: {action}"}
+    raise HTTPException(status_code=400, detail=f"Unknown action: {action}")

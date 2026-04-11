@@ -1,10 +1,11 @@
 import apiClient from './client'
+import { toArrayData } from './normalize'
 
 export const createEssay = (data: { program_id: string; essay_type: string; content: string; prompt_text?: string }) =>
   apiClient.post('/students/me/essays', data).then(r => r.data)
 
 export const listEssays = (programId?: string) =>
-  apiClient.get('/students/me/essays', { params: { program_id: programId } }).then(r => r.data)
+  apiClient.get('/students/me/essays', { params: { program_id: programId } }).then(r => toArrayData<any>(r.data))
 
 export const getEssay = (essayId: string) =>
   apiClient.get(`/students/me/essays/${essayId}`).then(r => r.data)

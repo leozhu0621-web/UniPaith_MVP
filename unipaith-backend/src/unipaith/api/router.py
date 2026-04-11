@@ -86,7 +86,7 @@ async def redirect_campaign_link(
         sep = "&" if "?" in link.custom_url else "?"
         url = f"{link.custom_url}{sep}{cid_param}"
     elif link.destination_type == "program" and link.destination_id:
-        url = f"{base}/programs/{link.destination_id}?{cid_param}"
+        url = f"{base}/program/{link.destination_id}?{cid_param}"
     elif link.destination_type == "institution" and link.destination_id:
         url = f"{base}/school/{link.destination_id}?{cid_param}"
     elif link.destination_type == "event" and link.destination_id:
