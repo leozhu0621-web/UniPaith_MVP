@@ -399,6 +399,43 @@ export async function getFeaturedPromotions(params?: {
   return data
 }
 
+// --- AI Intelligence ---
+
+export async function getIntelligenceDigest(): Promise<{
+  institution_id: string; institution_name: string; digest: string
+  stats: Record<string, number>; generated_at: string
+}> {
+  const { data } = await apiClient.get('/institutions/me/intelligence/digest', { timeout: 60_000 })
+  return data
+}
+
+export async function getDemandForecast(): Promise<{
+  institution_id: string; institution_name: string
+  programs: { program_id: string; program_name: string; degree_type: string; active_matches: number; recent_predictions: number; demand_signal: string }[]
+  forecast_period: string; generated_at: string
+}> {
+  const { data } = await apiClient.get('/institutions/me/intelligence/demand')
+  return data
+}
+
+export async function getYieldRiskAlerts(): Promise<{
+  institution_id: string
+  alerts: { application_id: string; student_id: string; program_id: string; risk_level: string; competing_programs: number; reason: string }[]
+  generated_at: string
+}> {
+  const { data } = await apiClient.get('/institutions/me/intelligence/yield-risks')
+  return data
+}
+
+export async function getApplicantContext(studentId: string): Promise<{
+  institution_id: string; student_id: string; student_name: string; context: string
+  match_data: { program_id: string; score: number | null; tier: number }[]
+  generated_at: string
+}> {
+  const { data } = await apiClient.get(`/institutions/me/intelligence/applicant/${studentId}`, { timeout: 60_000 })
+  return data
+}
+
 export async function chatInstitutionAssistant(message: string, contextProgramId?: string): Promise<{ reply: string; model: string; provider: string }> {
   const { data } = await apiClient.post('/institutions/me/assistant/chat', {
     message,
