@@ -57,6 +57,8 @@ from unipaith.schemas.ml_loop import (
     TriggerTrainingRequest,
 )
 from unipaith.services.ai_control_plane_service import AIControlPlaneService
+from unipaith.services.ai_engine_orchestrator import AIEngineOrchestrator
+from unipaith.services.matching_service import MatchingService
 
 logger = logging.getLogger(__name__)
 
@@ -802,3 +804,46 @@ async def validation_status(
 
     framework = ValidationFramework(db)
     return await framework.get_validation_summary()
+
+
+# ======================================================================
+# Engine bootstrap & orchestration
+# ======================================================================
+
+
+@router.post("/engine/bootstrap-programs")
+async def bootstrap_program_embeddings(
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_admin),
+):
+    """Bootstrap feature extraction + embedding generation for all published programs.
+
+    Must be run at least once before matching, semantic search, or discover
+    page will return results.
+    """
+    svc = MatchingService(db)
+    result = await svc.bootstrap_all_programs()
+    await db.commit()
+    return result
+
+
+@router.post("/engine/run")
+async def run_engine_full_graph(
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_admin),
+):
+    """Trigger the full AI engine pipeline: ingest → features/embeddings → ML cycle."""
+    orchestrator = AIEngineOrchestrator(db)
+    result = await orchestrator.run_full_graph(trigger="manual")
+    await db.commit()
+    return result
+
+
+@router.get("/engine/status")
+async def get_engine_status(
+    _admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get the current engine runtime state (stage, timing, errors)."""
+    orchestrator = AIEngineOrchestrator(db)
+    return orchestrator.get_runtime_state()
