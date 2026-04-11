@@ -175,6 +175,33 @@ class Message(Base):
     conversation: Mapped[Conversation] = relationship(back_populates="messages")
 
 
+class ConversationSession(Base):
+    """Persisted state for the guided-discovery conversation flow."""
+
+    __tablename__ = "conversation_sessions"
+    __table_args__ = (UniqueConstraint("student_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    current_stage: Mapped[str] = mapped_column(String(50), default="understand_context")
+    active_domain: Mapped[str] = mapped_column(String(50), default="career_outcome")
+    turn_count: Mapped[int] = mapped_column(Integer, default=0)
+    requirements_json: Mapped[dict | None] = mapped_column(JSONB)
+    conflicts_json: Mapped[dict | None] = mapped_column(JSONB)
+    last_assistant_prompt: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    last_updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
 class StudentResume(Base):
     __tablename__ = "student_resumes"
 

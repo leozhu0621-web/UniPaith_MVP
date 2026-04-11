@@ -25,6 +25,7 @@ from unipaith.models.crawler import (
 )
 from unipaith.models.engagement import (
     Conversation,
+    ConversationSession,
     CRMRecord,
     Message,
     SavedList,
@@ -177,6 +178,7 @@ __all__ = [
     "StudentCalendar",
     "CRMRecord",
     "Conversation",
+    "ConversationSession",
     "Message",
     "StudentResume",
     "StudentEssay",
