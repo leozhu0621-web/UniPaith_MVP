@@ -277,6 +277,35 @@ export const getKnowledgeFrontier = (params?: { status?: string; limit?: number 
 export const addToKnowledgeFrontier = (url: string, priority = 50) =>
   apiClient.post('/admin/knowledge/frontier/add', null, { params: { url, priority } }).then(r => r.data)
 
+// ─── Engine Orchestration ───
+export const bootstrapProgramEmbeddings = () =>
+  apiClient.post('/admin/ml/engine/bootstrap-programs', null, { timeout: 120_000 }).then(r => r.data)
+
+export const runEngineFullGraph = () =>
+  apiClient.post('/admin/ml/engine/run', null, { timeout: 300_000 }).then(r => r.data)
+
+export const getEngineStatus = () =>
+  apiClient.get('/admin/ml/engine/status').then(r => r.data)
+
+export const seedKnowledgeFromPrograms = () =>
+  apiClient.post('/admin/knowledge/seed-from-programs', null, { timeout: 120_000 }).then(r => r.data)
+
+// ─── ML: Advanced Metrics ───
+export const getScientificMetrics = () =>
+  apiClient.get('/admin/ml/scientific-metrics').then(r => r.data)
+
+export const getValidationStatus = () =>
+  apiClient.get('/admin/ml/validation-status').then(r => r.data)
+
+export const getCycleHealth = () =>
+  apiClient.get('/admin/ml/cycle/health').then(r => r.data)
+
+export const getLearningTrends = (days = 7) =>
+  apiClient.get('/admin/ml/trends', { params: { days } }).then(r => r.data)
+
+export const getSchedulerSmoke = () =>
+  apiClient.get('/admin/ml/scheduler/smoke').then(r => r.data)
+
 // ─── Advisor Persona ───
 export const getAdvisorPersona = () =>
   apiClient.get('/admin/knowledge/persona').then(r => r.data)

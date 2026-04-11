@@ -10,6 +10,8 @@ import {
   triggerKnowledgeTick, triggerKnowledgeDiscovery, pauseKnowledgeEngine,
   resumeKnowledgeEngine, setKnowledgeThrottle, addToKnowledgeFrontier,
   updateKnowledgeDirective,
+  bootstrapProgramEmbeddings, runEngineFullGraph, getEngineStatus,
+  seedKnowledgeFromPrograms, getCycleHealth,
 } from '../../api/admin'
 import { formatRelative } from '../../utils/format'
 import { useToastStore } from '../../stores/toast-store'
@@ -66,9 +68,93 @@ export default function AdminAICenterPage() {
 
       <Tabs tabs={tabs} activeTab={activeTab} onChange={setTab} />
 
-      {activeTab === 'pipeline' && <PipelineDashboard />}
+      {activeTab === 'pipeline' && <><EngineControlPanel /><PipelineDashboard /></>}
       {activeTab === 'learning' && <LearningTab />}
       {activeTab === 'knowledge' && <KnowledgeTab />}
+    </div>
+  )
+}
+
+/* ─────────────────── Engine Control Panel ─────────────────── */
+
+function EngineControlPanel() {
+  const qc = useQueryClient()
+  const toast = useToastStore.getState()
+
+  const engineQ = useQuery({ queryKey: ['engine-status'], queryFn: getEngineStatus, refetchInterval: 5000 })
+  const healthQ = useQuery({ queryKey: ['cycle-health'], queryFn: getCycleHealth })
+
+  const bootstrapM = useMutation({
+    mutationFn: bootstrapProgramEmbeddings,
+    onSuccess: (d) => { toast.addToast(`Bootstrap complete: ${d.embeddings_generated ?? d.features_extracted ?? 0} programs`, 'success'); qc.invalidateQueries({ queryKey: ['engine-status'] }) },
+    onError: () => toast.addToast('Bootstrap failed', 'error'),
+  })
+  const runEngineM = useMutation({
+    mutationFn: runEngineFullGraph,
+    onSuccess: () => { toast.addToast('Engine run complete', 'success'); qc.invalidateQueries({ queryKey: ['engine-status'] }) },
+    onError: () => toast.addToast('Engine run failed', 'error'),
+  })
+  const seedKnowledgeM = useMutation({
+    mutationFn: seedKnowledgeFromPrograms,
+    onSuccess: (d) => { toast.addToast(`Knowledge seeded: ${d.documents_created ?? 0} documents`, 'success'); qc.invalidateQueries({ queryKey: ['knowledge-status'] }) },
+    onError: () => toast.addToast('Knowledge seeding failed', 'error'),
+  })
+
+  const engineState = engineQ.data ?? {}
+  const health = healthQ.data ?? {}
+
+  return (
+    <div className="space-y-4 mb-6">
+      <Card className="p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Brain size={20} className="text-brand-slate-600" />
+            <h3 className="font-semibold text-gray-900">Engine Control</h3>
+            {engineState.status && statusBadge(engineState.status)}
+          </div>
+          {engineState.current_stage && (
+            <span className="text-sm text-gray-500">Stage: {engineState.current_stage}</span>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+          <Button size="sm" onClick={() => bootstrapM.mutate()} disabled={bootstrapM.isPending} className="flex items-center gap-1">
+            <Zap size={14} /> {bootstrapM.isPending ? 'Bootstrapping...' : 'Bootstrap Programs'}
+          </Button>
+          <Button size="sm" onClick={() => seedKnowledgeM.mutate()} disabled={seedKnowledgeM.isPending} className="flex items-center gap-1">
+            <Search size={14} /> {seedKnowledgeM.isPending ? 'Seeding...' : 'Seed Knowledge'}
+          </Button>
+          <Button size="sm" onClick={() => runEngineM.mutate()} disabled={runEngineM.isPending} className="flex items-center gap-1">
+            <Play size={14} /> {runEngineM.isPending ? 'Running...' : 'Run Full Pipeline'}
+          </Button>
+          <Button size="sm" variant="secondary" onClick={() => qc.invalidateQueries({ queryKey: ['engine-status'] })} className="flex items-center gap-1">
+            <RefreshCw size={14} /> Refresh Status
+          </Button>
+        </div>
+
+        {health.readiness_score != null && (
+          <div className="flex items-center gap-3 text-sm">
+            <span className="text-gray-500">Readiness:</span>
+            <div className="flex-1 bg-gray-100 rounded-full h-2 max-w-xs">
+              <div
+                className={`rounded-full h-2 transition-all ${health.readiness_score >= 0.7 ? 'bg-green-500' : health.readiness_score >= 0.4 ? 'bg-amber-500' : 'bg-red-500'}`}
+                style={{ width: `${Math.round(health.readiness_score * 100)}%` }}
+              />
+            </div>
+            <span className="text-gray-700 font-medium">{Math.round(health.readiness_score * 100)}%</span>
+            {health.blocking_reasons?.length > 0 && (
+              <span className="text-xs text-amber-600">{health.blocking_reasons.length} blocker(s)</span>
+            )}
+          </div>
+        )}
+
+        {engineState.last_error && (
+          <div className="mt-3 text-sm text-red-600 bg-red-50 rounded p-2">
+            <AlertTriangle size={14} className="inline mr-1" />
+            {engineState.last_error}
+          </div>
+        )}
+      </Card>
     </div>
   )
 }
