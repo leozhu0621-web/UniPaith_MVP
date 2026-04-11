@@ -372,6 +372,142 @@ async def update_persona(
     return {"status": "updated", "id": str(persona.id)}
 
 
+@router.post("/seed-from-programs")
+async def seed_knowledge_from_programs(
+    _admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Seed knowledge documents from all published programs and their institutions.
+
+    Creates one KnowledgeDocument per program, with entity links and embeddings.
+    This grounds the advisor and recommendation engine in real program data.
+    """
+    from datetime import UTC, datetime
+
+    from sqlalchemy.orm import selectinload
+
+    from unipaith.ai.embedding_client import get_embedding_client
+    from unipaith.models.institution import Program
+
+    result = await db.execute(
+        select(Program)
+        .where(Program.is_published.is_(True))
+        .options(selectinload(Program.institution))
+    )
+    programs = result.scalars().all()
+
+    embedding_client = get_embedding_client()
+    created = 0
+    skipped = 0
+    errors: list[dict[str, str]] = []
+
+    for program in programs:
+        # Check if knowledge doc already exists for this program
+        existing = await db.execute(
+            select(KnowledgeDocument).where(
+                KnowledgeDocument.source_url == f"internal://program/{program.id}",
+            )
+        )
+        if existing.scalar_one_or_none():
+            skipped += 1
+            continue
+
+        inst = program.institution
+        inst_name = inst.name if inst else "Unknown University"
+        inst_country = inst.country if inst else ""
+        inst_city = inst.city if inst else ""
+
+        # Build rich text from program data
+        parts = [
+            f"{program.program_name} — {program.degree_type} program at {inst_name}.",
+        ]
+        if inst_city and inst_country:
+            parts.append(f"Located in {inst_city}, {inst_country}.")
+        if program.description_text:
+            parts.append(program.description_text)
+        if program.department:
+            parts.append(f"Department: {program.department}.")
+        if program.tuition is not None:
+            parts.append(f"Annual tuition: ${program.tuition:,}.")
+        if program.duration_months:
+            parts.append(f"Duration: {program.duration_months} months.")
+        if program.acceptance_rate is not None:
+            parts.append(f"Acceptance rate: {float(program.acceptance_rate) * 100:.0f}%.")
+        if program.highlights:
+            parts.append("Highlights: " + ", ".join(program.highlights[:5]) + ".")
+        if program.who_its_for:
+            parts.append(f"Who it's for: {program.who_its_for}")
+        if program.application_deadline:
+            parts.append(f"Application deadline: {program.application_deadline}.")
+        if inst and inst.description_text:
+            parts.append(f"About {inst_name}: {inst.description_text}")
+
+        full_text = "\n".join(parts)
+        summary = parts[0]
+        if len(parts) > 1:
+            summary += " " + parts[1]
+
+        try:
+            emb = await embedding_client.embed_text(full_text[:4000])
+        except Exception as e:
+            errors.append({"program_id": str(program.id), "error": str(e)})
+            continue
+
+        doc = KnowledgeDocument(
+            source_url=f"internal://program/{program.id}",
+            source_domain="internal",
+            content_format="program_profile",
+            content_type="program",
+            title=f"{program.program_name} at {inst_name}",
+            raw_text=full_text,
+            extracted_text=full_text,
+            summary=summary,
+            embedding=emb,
+            quality_score=0.9,
+            credibility_score=1.0,
+            relevance_score=0.8,
+            language="en",
+            word_count=len(full_text.split()),
+            ingested_at=datetime.now(UTC),
+            is_active=True,
+            processing_status="completed",
+        )
+        db.add(doc)
+        await db.flush()
+
+        # Create entity links
+        from unipaith.models.knowledge import KnowledgeLink
+
+        db.add(KnowledgeLink(
+            document_id=doc.id,
+            entity_type="program",
+            entity_id=program.id,
+            entity_name=program.program_name,
+            relationship_type="describes",
+            confidence=1.0,
+        ))
+        if inst:
+            db.add(KnowledgeLink(
+                document_id=doc.id,
+                entity_type="institution",
+                entity_id=inst.id,
+                entity_name=inst.name,
+                relationship_type="belongs_to",
+                confidence=1.0,
+            ))
+
+        created += 1
+
+    await db.commit()
+    return {
+        "status": "completed",
+        "programs_total": len(programs),
+        "documents_created": created,
+        "documents_skipped": skipped,
+        "errors": errors,
+    }
+
+
 @router.get("/insights/{user_id}")
 async def get_person_insights(
     user_id: UUID,
