@@ -62,6 +62,10 @@ class EngineMetrics:
         if len(outcomes) < 10:
             return {"status": "insufficient_data", "count": len(outcomes)}
 
+        outcomes = [o for o in outcomes if o.predicted_score is not None]
+        if len(outcomes) < 10:
+            return {"status": "insufficient_data", "count": len(outcomes)}
+
         y_pred = np.array([float(o.predicted_score) for o in outcomes])
         y_true = np.array(
             [1.0 if o.actual_outcome in ("admitted", "enrolled") else 0.0 for o in outcomes]
@@ -296,6 +300,10 @@ class EngineMetrics:
 
     def _compute_ndcg(self, outcomes: list[OutcomeRecord], k: int = 10) -> float | None:
         """NDCG@K for ranking quality."""
+        if len(outcomes) < k:
+            return None
+
+        outcomes = [o for o in outcomes if o.predicted_score is not None]
         if len(outcomes) < k:
             return None
 

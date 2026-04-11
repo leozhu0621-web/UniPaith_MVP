@@ -64,7 +64,7 @@ const DEGREE_OPTIONS = [
 ]
 
 const DELIVERY_FORMAT_OPTIONS = [
-  { value: 'on_campus', label: 'On Campus' },
+  { value: 'in_person', label: 'On Campus' },
   { value: 'hybrid', label: 'Hybrid' },
   { value: 'online', label: 'Online' },
 ]
@@ -161,7 +161,7 @@ export default function DiscoverPage() {
   // Saved programs
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const { data: savedData } = useQuery({
-    queryKey: ['saved-programs'],
+    queryKey: ['saved'],
     queryFn: listSaved,
     retry: false,
   })
@@ -181,7 +181,7 @@ export default function DiscoverPage() {
         await saveProgram(programId)
         setSavedIds(prev => new Set(prev).add(programId))
       }
-      queryClient.invalidateQueries({ queryKey: ['saved-programs'] })
+      queryClient.invalidateQueries({ queryKey: ['saved'] })
     } catch { /* ignore */ }
   }
 

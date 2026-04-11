@@ -62,7 +62,7 @@ export default function MessagesPage() {
   })
 
   const { data: documents } = useQuery({
-    queryKey: ['my-documents'],
+    queryKey: ['documents'],
     queryFn: listDocuments,
     enabled: showAttachments,
   })

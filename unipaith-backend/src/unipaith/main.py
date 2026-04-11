@@ -54,7 +54,8 @@ async def lifespan(app: FastAPI):  # noqa: ARG001
 
     setup_scheduler()
     yield
-    await pipeline.stop()
+    if settings.pipeline_enabled:
+        await pipeline.stop()
     shutdown_scheduler()
 
 

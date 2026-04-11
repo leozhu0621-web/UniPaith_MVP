@@ -357,7 +357,7 @@ class ApplicationService:
                     "institution_name": r.institution_name,
                     "degree_type": r.degree_type,
                     "field_of_study": r.field_of_study,
-                    "gpa": str(r.gpa) if r.gpa else None,
+                    "gpa": str(r.gpa) if r.gpa is not None else None,
                     "gpa_scale": r.gpa_scale,
                     "start_date": r.start_date.isoformat() if r.start_date else None,
                     "end_date": r.end_date.isoformat() if r.end_date else None,
@@ -371,7 +371,7 @@ class ApplicationService:
             "test_scores": [
                 {
                     "test_type": s.test_type,
-                    "total_score": str(s.total_score) if s.total_score else None,
+                    "total_score": str(s.total_score) if s.total_score is not None else None,
                     "section_scores": s.section_scores,
                     "test_date": s.test_date.isoformat() if s.test_date else None,
                 }

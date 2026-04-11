@@ -153,7 +153,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         headers: { Authorization: `Bearer ${token}` },
       })
       set({
-        user: { id: user.user_id, email: user.email, role: user.role, created_at: user.created_at },
+        user: { id: String(user.user_id ?? user.id ?? ''), email: user.email, role: user.role, created_at: user.created_at },
         isAuthenticated: true,
         isLoading: false,
       })

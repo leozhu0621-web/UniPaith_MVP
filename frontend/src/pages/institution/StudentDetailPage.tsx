@@ -76,7 +76,7 @@ export default function StudentDetailPage() {
   const regenMut = useMutation({
     mutationFn: () => regenerateAIPacketSummary(applicationId!, packetRubricId || undefined),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ai-packet'] })
+      queryClient.invalidateQueries({ queryKey: ['ai-packet', applicationId, packetRubricId] })
       showToast('AI summary regenerated', 'success')
     },
   })
@@ -91,7 +91,7 @@ export default function StudentDetailPage() {
   const scanMut = useMutation({
     mutationFn: () => scanIntegrity(applicationId!),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['integrity-signals'] })
+      queryClient.invalidateQueries({ queryKey: ['integrity-signals', applicationId] })
       showToast('Integrity scan complete', 'success')
     },
   })
@@ -99,7 +99,7 @@ export default function StudentDetailPage() {
   const resolveMut = useMutation({
     mutationFn: (signalId: string) => resolveIntegritySignal(signalId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['integrity-signals'] })
+      queryClient.invalidateQueries({ queryKey: ['integrity-signals', applicationId] })
       showToast('Signal resolved', 'success')
     },
   })

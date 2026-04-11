@@ -729,7 +729,7 @@ class InternalAdminService:
         total_institutions = await self.db.scalar(select(func.count(Institution.id)))
         total_programs = await self.db.scalar(select(func.count(Program.id)))
         published_programs = await self.db.scalar(
-            select(func.count(Program.id)).where(Program.is_published == True)  # noqa: E712
+            select(func.count(Program.id)).where(Program.is_published.is_(True))
         )
         total_applications = await self.db.scalar(select(func.count(Application.id)))
 
