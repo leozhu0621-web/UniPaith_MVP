@@ -60,11 +60,12 @@ export default function OnboardingPage() {
     mutationFn: intakeChat,
     onSuccess: (data) => {
       const extracted = data.extracted_fields || {}
-      const newTotal = { ...extractedTotal, ...extracted }
-      setExtractedTotal(newTotal)
-
-      const newPct = data.completion_pct || Math.min(Object.keys(newTotal).length * 12, 95)
-      setUnderstanding(newPct)
+      setExtractedTotal(prev => {
+        const newTotal = { ...prev, ...extracted }
+        const newPct = data.completion_pct || Math.min(Object.keys(newTotal).length * 12, 95)
+        setUnderstanding(newPct)
+        return newTotal
+      })
 
       const aiMsg: ChatMsg = {
         id: `ai-${Date.now()}`,

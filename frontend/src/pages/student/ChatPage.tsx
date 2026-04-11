@@ -102,8 +102,11 @@ export default function ChatPage() {
     sendMut.mutate(trimmed)
   }
 
+  const lastProcessedData = useRef<unknown>(null)
+
   useEffect(() => {
-    if (sendMut.data?.reply) {
+    if (sendMut.data?.reply && sendMut.data !== lastProcessedData.current) {
+      lastProcessedData.current = sendMut.data
       const assistantMessage: ChatMessage = {
         id: `assistant-${Date.now()}`,
         sender_type: 'assistant',

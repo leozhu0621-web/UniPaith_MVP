@@ -214,24 +214,14 @@ async def batch_request_missing_items(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    from sqlalchemy import select
-
-    from unipaith.models.application import Application
-
-    await InstitutionService(db).get_institution(user.id)  # auth check
+    inst = await InstitutionService(db).get_institution(user.id)
+    app_svc = ApplicationService(db)
     result = BatchOperationResult(
         success_count=0, failed_ids=[], errors=[],
     )
     for app_id in body.application_ids:
         try:
-            r = await db.execute(
-                select(Application).where(Application.id == app_id)
-            )
-            app = r.scalar_one_or_none()
-            if not app:
-                result.failed_ids.append(app_id)
-                result.errors.append(f"{app_id}: not found")
-                continue
+            app = await app_svc.get_application_detail(inst.id, app_id)
             app.missing_items = {"items": body.items}
             app.completeness_status = "incomplete"
             result.success_count += 1

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '../../stores/auth-store'
 
@@ -8,7 +8,12 @@ export default function AuthCallbackPage() {
   const [error, setError] = useState('')
   const googleCallback = useAuthStore(s => s.googleCallback)
 
+  const calledRef = useRef(false)
+
   useEffect(() => {
+    if (calledRef.current) return
+    calledRef.current = true
+
     const code = searchParams.get('code')
     const state = searchParams.get('state') || ''
 

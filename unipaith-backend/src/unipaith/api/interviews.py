@@ -16,6 +16,7 @@ from unipaith.schemas.interview import (
     ProposeInterviewRequest,
     ScoreInterviewRequest,
 )
+from unipaith.services.application_service import ApplicationService
 from unipaith.services.institution_service import InstitutionService
 from unipaith.services.interview_service import InterviewService
 from unipaith.services.review_pipeline_service import ReviewPipelineService
@@ -33,7 +34,8 @@ async def propose_interview(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    await InstitutionService(db).get_institution(user.id)
+    inst = await InstitutionService(db).get_institution(user.id)
+    await ApplicationService(db).get_application_detail(inst.id, body.application_id)
     svc = InterviewService(db)
     return await svc.propose_interview(
         application_id=body.application_id,
@@ -62,7 +64,8 @@ async def list_interviews(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    await InstitutionService(db).get_institution(user.id)
+    inst = await InstitutionService(db).get_institution(user.id)
+    await ApplicationService(db).get_application_detail(inst.id, application_id)
     svc = InterviewService(db)
     return await svc.list_application_interviews(application_id)
 
@@ -73,8 +76,10 @@ async def complete_interview(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    await InstitutionService(db).get_institution(user.id)
+    inst = await InstitutionService(db).get_institution(user.id)
     svc = InterviewService(db)
+    interview = await svc._get_interview(interview_id)
+    await ApplicationService(db).get_application_detail(inst.id, interview.application_id)
     return await svc.complete_interview(interview_id)
 
 
@@ -133,13 +138,15 @@ async def batch_invite_interviews(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    await InstitutionService(db).get_institution(user.id)
+    inst = await InstitutionService(db).get_institution(user.id)
+    app_svc = ApplicationService(db)
     svc = InterviewService(db)
     result = BatchOperationResult(
         success_count=0, failed_ids=[], errors=[],
     )
     for app_id in body.application_ids:
         try:
+            await app_svc.get_application_detail(inst.id, app_id)
             await svc.propose_interview(
                 application_id=app_id,
                 interviewer_id=body.interviewer_id,

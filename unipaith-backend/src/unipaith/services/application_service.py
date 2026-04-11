@@ -110,10 +110,12 @@ class ApplicationService:
             raise NotFoundException("Program not found")
 
         result = await self.db.execute(
-            select(Application).where(
+            select(Application)
+            .where(
                 Application.program_id == program_id,
                 Application.status != "draft",
             )
+            .options(selectinload(Application.program))
         )
         return list(result.scalars().all())
 
@@ -445,6 +447,7 @@ class ApplicationService:
                 Application.id == application_id,
                 Program.institution_id == institution_id,
             )
+            .options(selectinload(Application.program))
         )
         app = result.scalar_one_or_none()
         if not app:

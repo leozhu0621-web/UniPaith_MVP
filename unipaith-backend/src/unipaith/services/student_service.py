@@ -701,7 +701,7 @@ class StudentService:
 
         next_step = self._compute_next_step(steps, p)
         return OnboardingStatusResponse(
-            completion_percentage=pct,
+            completion_percentage=min(pct, 100),
             steps_completed=steps,
             next_step=next_step,
         )
@@ -920,12 +920,9 @@ class StudentService:
         )
         matches = list(matches_result.scalars().all())
         match_count = len(matches)
-        avg_score = (
-            round(sum(m.match_score for m in matches if m.match_score is not None) / match_count, 1)
-            if match_count > 0
-            else None
-        )
-        top_tier = min((m.match_tier for m in matches), default=None)
+        scored = [m.match_score for m in matches if m.match_score is not None]
+        avg_score = round(sum(scored) / len(scored), 1) if scored else None
+        top_tier = min((m.match_tier for m in matches if m.match_tier is not None), default=None)
 
         # Application stats
         apps_result = await self.db.execute(
