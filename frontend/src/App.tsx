@@ -168,7 +168,7 @@ const router = createBrowserRouter([
       { path: 'communications', element: <CommunicationsPage /> },
       // Legacy routes (still work via direct URL)
       { path: 'pipeline', element: <PipelinePage /> },
-      { path: 'pipeline/:studentId', element: <StudentDetailPage /> },
+      { path: 'pipeline/:appId', element: <StudentDetailPage /> },
       { path: 'interviews', element: <InterviewsPage /> },
       { path: 'messages', element: <InstitutionMessagingPage /> },
       { path: 'segments', element: <SegmentsPage /> },

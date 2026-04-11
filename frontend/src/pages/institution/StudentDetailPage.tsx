@@ -20,8 +20,8 @@ import { STATUS_COLORS, DECISION_OPTIONS } from '../../utils/constants'
 import type { AIPacketSummary, ApplicationScore, IntegritySignal, Rubric } from '../../types'
 
 export default function StudentDetailPage() {
-  const { appId, studentId } = useParams<{ appId?: string; studentId?: string }>()
-  const applicationId = appId ?? studentId
+  const { appId } = useParams<{ appId: string }>()
+  const applicationId = appId
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState('overview')
   const [showDecisionModal, setShowDecisionModal] = useState(false)
