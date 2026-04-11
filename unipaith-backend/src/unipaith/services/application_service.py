@@ -58,10 +58,14 @@ class ApplicationService:
         return app
 
     async def list_student_applications(self, student_id: UUID) -> list[Application]:
+        from unipaith.models.institution import Program
+
         result = await self.db.execute(
             select(Application)
             .where(Application.student_id == student_id)
-            .options(selectinload(Application.program))
+            .options(
+                selectinload(Application.program).selectinload(Program.institution)
+            )
         )
         return list(result.scalars().all())
 

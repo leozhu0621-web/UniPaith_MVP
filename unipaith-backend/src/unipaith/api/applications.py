@@ -14,6 +14,7 @@ from unipaith.schemas.application import (
     DecisionRequest,
     OfferLetterResponse,
     OfferRespondRequest,
+    ProgramBrief,
     UpdateApplicationRequest,
 )
 from unipaith.schemas.batch import (
@@ -50,7 +51,19 @@ async def list_my_applications(
 ):
     profile = await StudentService(db)._get_student_profile(user.id)
     svc = ApplicationService(db)
-    return await svc.list_student_applications(profile.id)
+    apps = await svc.list_student_applications(profile.id)
+    results = []
+    for app in apps:
+        resp = ApplicationResponse.model_validate(app)
+        if app.program:
+            inst = app.program.institution if hasattr(app.program, "institution") else None
+            brief = ProgramBrief.model_validate(app.program)
+            if inst:
+                brief.institution_name = inst.name
+                brief.institution_country = inst.country
+            resp.program = brief
+        results.append(resp)
+    return results
 
 
 @router.get("/me/{application_id}", response_model=ApplicationResponse)

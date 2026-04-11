@@ -53,27 +53,27 @@ export default function FinancialAidPage() {
     const result: { id: string; name: string; institution: string; country: string; tuition: number | null }[] = []
 
     sl.forEach((s: any) => {
-      if (s.program && !seen.has(s.program_id)) {
+      if (s.program_id && !seen.has(s.program_id)) {
         seen.add(s.program_id)
         result.push({
           id: s.program_id,
-          name: s.program.program_name,
-          institution: s.program.institution_name,
-          country: s.program.institution_country || '',
-          tuition: s.program.tuition,
+          name: s.program_name || s.program?.program_name || 'Program',
+          institution: s.institution_name || s.program?.institution_name || '',
+          country: s.institution_country || s.program?.institution_country || '',
+          tuition: s.tuition ?? s.program?.tuition ?? null,
         })
       }
     })
 
     al.forEach((a: any) => {
-      if (a.program && !seen.has(a.program_id)) {
+      if (a.program_id && !seen.has(a.program_id)) {
         seen.add(a.program_id)
         result.push({
           id: a.program_id,
-          name: a.program.program_name || 'Program',
-          institution: a.program.institution_name || '',
-          country: a.program.institution_country || '',
-          tuition: a.program.tuition ?? null,
+          name: a.program?.program_name || 'Program',
+          institution: a.program?.institution_name || '',
+          country: a.program?.institution_country || '',
+          tuition: a.program?.tuition ?? null,
         })
       }
     })

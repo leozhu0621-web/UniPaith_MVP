@@ -86,13 +86,13 @@ export default function EssayWorkshopPage() {
     const apps: any[] = Array.isArray(applications) ? applications : []
     const svd: any[] = Array.isArray(saved) ? saved : []
     apps.forEach((a: any) => {
-      if (a.program && !map.has(a.program_id)) {
-        map.set(a.program_id, { id: a.program_id, name: a.program.program_name ?? 'Program', institution: a.program.institution_name ?? '' })
+      if (a.program_id && !map.has(a.program_id)) {
+        map.set(a.program_id, { id: a.program_id, name: a.program?.program_name ?? 'Program', institution: a.program?.institution_name ?? '' })
       }
     })
     svd.forEach((s: any) => {
-      if (s.program && !map.has(s.program_id)) {
-        map.set(s.program_id, { id: s.program_id, name: s.program.program_name ?? 'Program', institution: s.program.institution_name ?? '' })
+      if (s.program_id && !map.has(s.program_id)) {
+        map.set(s.program_id, { id: s.program_id, name: s.program_name ?? s.program?.program_name ?? 'Program', institution: s.institution_name ?? s.program?.institution_name ?? '' })
       }
     })
     return Array.from(map.values())

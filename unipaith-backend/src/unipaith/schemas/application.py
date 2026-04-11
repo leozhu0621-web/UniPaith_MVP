@@ -38,6 +38,8 @@ class ProgramBrief(BaseModel):
     tuition: int | None = None
     duration_months: int | None = None
     application_deadline: date | None = None
+    institution_name: str | None = None
+    institution_country: str | None = None
 
 
 class ApplicationResponse(BaseModel):
