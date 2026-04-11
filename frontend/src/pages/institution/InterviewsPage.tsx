@@ -56,13 +56,13 @@ export default function InterviewsPage() {
   ]
 
   const filteredInterviews = interviews.filter(i => {
-    if (activeTab === 'upcoming') return ['invited', 'scheduling', 'confirmed'].includes(i.status)
+    if (activeTab === 'upcoming') return ['proposed', 'confirmed'].includes(i.status)
     if (activeTab === 'completed') return i.status === 'completed'
     return true
   })
   const confirmedCount = interviews.filter(i => i.status === 'confirmed').length
   const completedCount = interviews.filter(i => i.status === 'completed').length
-  const schedulingCount = interviews.filter(i => i.status === 'scheduling').length
+  const proposedCount = interviews.filter(i => i.status === 'proposed').length
 
   const proposeMut = useMutation({
     mutationFn: proposeInterview,
@@ -152,8 +152,8 @@ export default function InterviewsPage() {
             <p className="text-xl font-semibold text-brand-slate-700">{confirmedCount}</p>
           </Card>
           <Card className="p-3">
-            <p className="text-xs text-gray-500">In Scheduling</p>
-            <p className="text-xl font-semibold text-amber-700">{schedulingCount}</p>
+            <p className="text-xs text-gray-500">Proposed</p>
+            <p className="text-xl font-semibold text-amber-700">{proposedCount}</p>
           </Card>
           <Card className="p-3">
             <p className="text-xs text-gray-500">Completed</p>

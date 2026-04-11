@@ -130,8 +130,7 @@ export default function EventsPage() {
 
   const statusOptions = [
     { value: '', label: 'All Statuses' },
-    { value: 'open', label: 'Open' },
-    { value: 'closed', label: 'Closed' },
+    { value: 'upcoming', label: 'Upcoming' },
     { value: 'cancelled', label: 'Cancelled' },
   ]
 
@@ -157,8 +156,8 @@ export default function EventsPage() {
       {events.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Card className="p-3">
-            <p className="text-xs text-gray-500">Open Events</p>
-            <p className="text-xl font-semibold text-gray-900">{events.filter(e => e.status === 'open').length}</p>
+            <p className="text-xs text-gray-500">Upcoming Events</p>
+            <p className="text-xl font-semibold text-gray-900">{events.filter(e => e.status === 'upcoming').length}</p>
           </Card>
           <Card className="p-3">
             <p className="text-xs text-gray-500">Total RSVPs</p>
