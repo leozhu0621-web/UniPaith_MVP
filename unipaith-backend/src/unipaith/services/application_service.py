@@ -59,7 +59,9 @@ class ApplicationService:
 
     async def list_student_applications(self, student_id: UUID) -> list[Application]:
         result = await self.db.execute(
-            select(Application).where(Application.student_id == student_id)
+            select(Application)
+            .where(Application.student_id == student_id)
+            .options(selectinload(Application.program))
         )
         return list(result.scalars().all())
 
@@ -421,10 +423,12 @@ class ApplicationService:
         self, student_id: UUID, application_id: UUID
     ) -> Application:
         result = await self.db.execute(
-            select(Application).where(
+            select(Application)
+            .where(
                 Application.id == application_id,
                 Application.student_id == student_id,
             )
+            .options(selectinload(Application.program))
         )
         app = result.scalar_one_or_none()
         if not app:

@@ -29,6 +29,17 @@ class DecisionRequest(BaseModel):
     decision_notes: str | None = None
 
 
+class ProgramBrief(BaseModel):
+    """Minimal program info embedded in application responses."""
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    program_name: str
+    degree_type: str
+    tuition: int | None = None
+    duration_months: int | None = None
+    application_deadline: date | None = None
+
+
 class ApplicationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
@@ -44,6 +55,7 @@ class ApplicationResponse(BaseModel):
     missing_items: dict | None
     created_at: datetime
     updated_at: datetime
+    program: ProgramBrief | None = None
 
 
 class ApplicationDetailResponse(ApplicationResponse):

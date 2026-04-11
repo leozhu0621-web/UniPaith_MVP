@@ -17,7 +17,7 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from unipaith.models.base import Base
 
@@ -76,6 +76,8 @@ class Application(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
+
+    program: Mapped[Program] = relationship("Program", lazy="noload")  # type: ignore[name-defined]  # noqa: F821
 
 
 class ApplicationChecklist(Base):
