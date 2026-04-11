@@ -12,120 +12,62 @@ export default {
     },
     extend: {
       colors: {
-        // New landing palette
-        harbor: {
-          DEFAULT: '#0E6B6F',
-          hover: '#0C5A5E',
+        // ── Student — Forest Green ──
+        student: {
+          DEFAULT: '#2F5D50',   // Primary — Forest Green
+          hover: '#254A40',     // Primary Hover — Deep Forest
+          mist: '#EEF4F1',     // Soft Background — Sage Mist
+          moss: '#E3ECE7',     // Section Background — Soft Moss
+          ink: '#1E2E29',       // Headings — Deep Pine
+          text: '#5E6B65',      // Body Text — Olive Slate
         },
-        ink: '#123047',
-        mist: '#EAF5F4',
-        cloud: '#F7FBFB',
-        sand: {
-          DEFAULT: '#E9D6C7',
-          light: '#F5EDE6',
+        // ── School — Sapphire Blue ──
+        school: {
+          DEFAULT: '#1F4E79',   // Primary — Sapphire Blue
+          hover: '#183C5D',     // Primary Hover — Deep Sapphire
+          mist: '#EFF5FA',     // Soft Background — Ice Blue
+          moss: '#E4EDF5',     // Section Background — Mist Blue
+          ink: '#162535',       // Headings — Midnight Blue
+          text: '#5D6B78',      // Body Text — Steel Slate
         },
-        // Legacy brand scales (used in app dashboard)
+        // ── Shared gold accent ──
+        gold: {
+          DEFAULT: '#C89A3D',   // Brand Accent — Warm Gold
+          hover: '#AE8433',     // Hover Accent — Burnished Gold
+          soft: '#F8F1E2',      // Soft Accent Bg — Cream Gold
+          pale: '#F3E6C7',     // Accent Soft — Pale Gold
+        },
+        // ── Shared neutrals ──
+        offwhite: '#FAFBF9',    // Main Background — Off White
+        charcoal: '#202529',    // Dark Text — Charcoal Ink
+        slate: '#667085',       // Secondary Text — Muted Slate
+        stone: '#D9E1DC',       // Border — Soft Stone
+        divider: '#E9EEEB',     // Light Divider — Mist Gray
+        // ── Legacy brand scales (product dashboards — migrate separately) ──
         brand: {
-          green: {
-            50: '#F0FDF4',
-            100: '#DCFCE7',
-            200: '#BBF7D0',
-            300: '#86EFAC',
-            400: '#4ADE80',
-            500: '#22C55E',
-            600: '#16A34A',
-            700: '#15803D',
-            800: '#166534',
-            900: '#14532D',
-          },
           slate: {
-            50: '#F0F3F9',
-            100: '#E8EDF5',
-            200: '#C9D3E8',
-            300: '#A3B3D4',
-            400: '#7A91BC',
-            500: '#4E6A9E',
-            600: '#3B5998',
-            700: '#2C4370',
-            800: '#1E2E4D',
-            900: '#111B2E',
+            50: '#F0F3F9', 100: '#E8EDF5', 200: '#C9D3E8', 300: '#A3B3D4',
+            400: '#7A91BC', 500: '#4E6A9E', 600: '#3B5998', 700: '#2C4370',
+            800: '#1E2E4D', 900: '#111B2E',
           },
           amber: {
-            50: '#FFF8E7',
-            100: '#FFEFC2',
-            200: '#FFE08A',
-            300: '#FFCF4D',
-            400: '#F5B800',
-            500: '#E5A100',
-            600: '#B8820D',
-            700: '#8C6310',
-            800: '#6B4B0F',
-            900: '#4A340D',
+            50: '#FFF8E7', 100: '#FFEFC2', 200: '#FFE08A', 300: '#FFCF4D',
+            400: '#F5B800', 500: '#E5A100', 600: '#B8820D', 700: '#8C6310',
           },
         },
-        // shadcn semantic colors (CSS variable based)
+        // ── shadcn semantic (CSS variable based) ──
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
-        },
-        // Landing page color scales
-        forest: {
-          50: "#F2F5F0",
-          100: "#E0E7DB",
-          200: "#C1CFBA",
-          300: "#A4AC86",
-          400: "#6B7A5A",
-          500: "#4A6345",
-          600: "#2D4A2B",
-          700: "#223A21",
-          800: "#1A2E1A",
-          900: "#0F1C0F",
-        },
-        sage: {
-          300: "#A8AE9C",
-          400: "#8F9682",
-          500: "#7D8471",
-          600: "#686F5E",
-        },
-        gold: {
-          50: "#FFF8E7",
-          100: "#FFEFC2",
-          200: "#FFE08A",
-          300: "#FFCF4D",
-          400: "#F5B800",
-          500: "#E5A100",
-          600: "#B8820D",
-          700: "#8C6310",
-        },
+        primary: { DEFAULT: "hsl(var(--primary))", foreground: "hsl(var(--primary-foreground))" },
+        secondary: { DEFAULT: "hsl(var(--secondary))", foreground: "hsl(var(--secondary-foreground))" },
+        destructive: { DEFAULT: "hsl(var(--destructive))", foreground: "hsl(var(--destructive-foreground))" },
+        muted: { DEFAULT: "hsl(var(--muted))", foreground: "hsl(var(--muted-foreground))" },
+        accent: { DEFAULT: "hsl(var(--accent))", foreground: "hsl(var(--accent-foreground))" },
+        popover: { DEFAULT: "hsl(var(--popover))", foreground: "hsl(var(--popover-foreground))" },
+        card: { DEFAULT: "hsl(var(--card))", foreground: "hsl(var(--card-foreground))" },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],

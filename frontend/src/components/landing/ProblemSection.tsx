@@ -20,7 +20,7 @@ const ProblemSection = () => (
   <section id="problem" className="py-24 px-4 sm:px-6 lg:px-8 bg-white">
     <div className="max-w-6xl mx-auto">
       <ScrollReveal variant="blur-in">
-        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center text-ink mb-6 font-heading">
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center text-charcoal mb-6 font-heading">
           Admissions is still stuck in 2005
         </h2>
         <p className="text-center text-gray-500 mb-12 max-w-2xl mx-auto text-lg">
@@ -31,25 +31,25 @@ const ProblemSection = () => (
       <ScrollReveal delay={200}>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-4xl mx-auto mb-16">
           <div className="text-center">
-            <div className="text-4xl sm:text-5xl font-bold text-harbor mb-1 font-heading">
+            <div className="text-4xl sm:text-5xl font-bold text-student mb-1 font-heading">
               <AnimatedCounter end={12} suffix="+" />
             </div>
             <p className="text-sm text-gray-500">apps per student</p>
           </div>
           <div className="text-center">
-            <div className="text-4xl sm:text-5xl font-bold text-ink mb-1 font-heading">
+            <div className="text-4xl sm:text-5xl font-bold text-charcoal mb-1 font-heading">
               <AnimatedCounter end={40} suffix=" hrs" />
             </div>
             <p className="text-sm text-gray-500">repetitive paperwork</p>
           </div>
           <div className="text-center">
-            <div className="text-4xl sm:text-5xl font-bold text-harbor mb-1 font-heading">
+            <div className="text-4xl sm:text-5xl font-bold text-student mb-1 font-heading">
               <AnimatedCounter end={68} suffix="%" />
             </div>
             <p className="text-sm text-gray-500">feel overwhelmed</p>
           </div>
           <div className="text-center">
-            <div className="text-4xl sm:text-5xl font-bold text-ink mb-1 font-heading">
+            <div className="text-4xl sm:text-5xl font-bold text-charcoal mb-1 font-heading">
               $<AnimatedCounter end={6} suffix="K+" />
             </div>
             <p className="text-sm text-gray-500">avg agent cost</p>
@@ -59,15 +59,15 @@ const ProblemSection = () => (
 
       <div className="grid md:grid-cols-2 gap-8">
         <ScrollReveal delay={100} variant="fade-left">
-          <div className="bg-mist rounded-2xl p-8 h-full">
-            <div className="w-12 h-12 rounded-xl bg-harbor/10 flex items-center justify-center mb-5">
-              <GraduationCap className="text-harbor" size={24} />
+          <div className="bg-student-mist rounded-2xl p-8 h-full">
+            <div className="w-12 h-12 rounded-xl bg-student/10 flex items-center justify-center mb-5">
+              <GraduationCap className="text-student" size={24} />
             </div>
-            <h3 className="text-xl font-bold text-ink mb-4 font-heading">Student side</h3>
+            <h3 className="text-xl font-bold text-charcoal mb-4 font-heading">Student side</h3>
             <ul className="space-y-3 text-gray-500 text-sm">
               {studentPains.map((pain, i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <span className="text-harbor mt-0.5">&#x2022;</span> {pain}
+                  <span className="text-student mt-0.5">&#x2022;</span> {pain}
                 </li>
               ))}
             </ul>
@@ -75,15 +75,15 @@ const ProblemSection = () => (
         </ScrollReveal>
 
         <ScrollReveal delay={300} variant="fade-right">
-          <div className="bg-cloud rounded-2xl border border-gray-200 p-8 h-full">
-            <div className="w-12 h-12 rounded-xl bg-ink/10 flex items-center justify-center mb-5">
-              <Building2 className="text-ink" size={24} />
+          <div className="bg-offwhite rounded-2xl border border-gray-200 p-8 h-full">
+            <div className="w-12 h-12 rounded-xl bg-charcoal/10 flex items-center justify-center mb-5">
+              <Building2 className="text-charcoal" size={24} />
             </div>
-            <h3 className="text-xl font-bold text-ink mb-4 font-heading">Institution side</h3>
+            <h3 className="text-xl font-bold text-charcoal mb-4 font-heading">Institution side</h3>
             <ul className="space-y-3 text-gray-500 text-sm">
               {institutionPains.map((pain, i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <span className="text-ink mt-0.5">&#x2022;</span> {pain}
+                  <span className="text-charcoal mt-0.5">&#x2022;</span> {pain}
                 </li>
               ))}
             </ul>
@@ -92,7 +92,7 @@ const ProblemSection = () => (
       </div>
 
       <ScrollReveal delay={500}>
-        <p className="text-center text-lg font-semibold text-ink mt-12">
+        <p className="text-center text-lg font-semibold text-charcoal mt-12">
           UniPaith fixes both sides with one connected platform.
         </p>
       </ScrollReveal>

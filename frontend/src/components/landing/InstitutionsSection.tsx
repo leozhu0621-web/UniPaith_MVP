@@ -20,14 +20,14 @@ const features = [
 ];
 
 const InstitutionsSection = () => (
-  <section id="institutions" className="py-24 px-4 sm:px-6 lg:px-8 bg-mist">
+  <section id="institutions" className="py-24 px-4 sm:px-6 lg:px-8 bg-school-mist">
     <div className="max-w-5xl mx-auto">
       <ScrollReveal variant="blur-in">
         <div className="text-center mb-16">
-          <span className="inline-block bg-ink/10 text-ink text-sm font-medium rounded-full px-4 py-1.5 mb-4 uppercase tracking-wide">
+          <span className="inline-block bg-school/10 text-school text-sm font-medium rounded-full px-4 py-1.5 mb-4 uppercase tracking-wide">
             For Institutions
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-ink mb-4 font-heading">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-charcoal mb-4 font-heading">
             AI admissions operations
           </h2>
           <p className="text-gray-500 max-w-lg mx-auto text-lg">
@@ -44,8 +44,8 @@ const InstitutionsSection = () => (
             </div>
           </ScrollReveal>
           <ScrollReveal delay={200} variant="fade-right">
-            <div className="p-5 sm:p-6 text-center bg-mist">
-              <h3 className="text-base font-bold text-harbor font-heading">With UniPaith</h3>
+            <div className="p-5 sm:p-6 text-center bg-school-mist">
+              <h3 className="text-base font-bold text-school font-heading">With UniPaith</h3>
             </div>
           </ScrollReveal>
         </div>
@@ -58,8 +58,8 @@ const InstitutionsSection = () => (
                 <p className="text-sm text-gray-500">{row.before}</p>
               </div>
               <div className="p-4 sm:p-5 flex items-start gap-3">
-                <Check className="text-harbor flex-shrink-0 mt-0.5" size={16} />
-                <p className="text-sm text-ink font-medium">{row.after}</p>
+                <Check className="text-school flex-shrink-0 mt-0.5" size={16} />
+                <p className="text-sm text-charcoal font-medium">{row.after}</p>
               </div>
             </div>
           </ScrollReveal>
@@ -68,14 +68,14 @@ const InstitutionsSection = () => (
 
       <ScrollReveal delay={800}>
         <div className="mt-14">
-          <h3 className="text-center text-lg font-bold text-ink font-heading mb-6">
+          <h3 className="text-center text-lg font-bold text-charcoal font-heading mb-6">
             What you get
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
             {features.map((feat, i) => (
               <div key={i} className="flex flex-col items-center gap-2 bg-white rounded-xl border border-gray-200 p-5 hover-lift">
-                <feat.icon className="text-ink" size={24} strokeWidth={1.4} />
-                <span className="text-sm font-semibold text-ink">{feat.label}</span>
+                <feat.icon className="text-charcoal" size={24} strokeWidth={1.4} />
+                <span className="text-sm font-semibold text-charcoal">{feat.label}</span>
               </div>
             ))}
           </div>
@@ -89,7 +89,7 @@ const InstitutionsSection = () => (
         <div className="mt-4 text-center">
           <Link
             to="/for-institutions"
-            className="inline-flex items-center gap-1 text-sm font-medium text-harbor hover:text-harbor-hover transition-colors"
+            className="inline-flex items-center gap-1 text-sm font-medium text-school hover:text-school-hover transition-colors"
           >
             See the full platform <ArrowRight size={14} />
           </Link>

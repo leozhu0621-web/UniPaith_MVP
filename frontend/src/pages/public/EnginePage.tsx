@@ -19,10 +19,10 @@ const pipelineSteps = [
 ]
 
 const confidenceDimensions = [
-  { label: 'Coverage', weight: 40, desc: 'Required fields completed per domain.', color: 'bg-harbor' },
-  { label: 'Consistency', weight: 25, desc: 'No unresolved conflicts between priorities.', color: 'bg-harbor' },
-  { label: 'Evidence Quality', weight: 20, desc: 'Explicit confirmations, not assumptions.', color: 'bg-harbor' },
-  { label: 'Temporal Validity', weight: 15, desc: 'Freshness of scores, budgets, deadlines.', color: 'bg-harbor' },
+  { label: 'Coverage', weight: 40, desc: 'Required fields completed per domain.', color: 'bg-student' },
+  { label: 'Consistency', weight: 25, desc: 'No unresolved conflicts between priorities.', color: 'bg-student' },
+  { label: 'Evidence Quality', weight: 20, desc: 'Explicit confirmations, not assumptions.', color: 'bg-student' },
+  { label: 'Temporal Validity', weight: 15, desc: 'Freshness of scores, budgets, deadlines.', color: 'bg-student' },
 ]
 
 const trustBadges = [
@@ -40,18 +40,18 @@ export default function EnginePage() {
       {/* Hero */}
       <section className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div className="absolute inset-0 -z-10">
-          <div className="absolute top-20 left-[10%] w-72 h-72 bg-mist/60 rounded-full blur-3xl animate-float" />
-          <div className="absolute bottom-20 right-[10%] w-96 h-96 bg-mist/40 rounded-full blur-3xl animate-float-slow" />
+          <div className="absolute top-20 left-[10%] w-72 h-72 bg-student-mist/60 rounded-full blur-3xl animate-float" />
+          <div className="absolute bottom-20 right-[10%] w-96 h-96 bg-student-mist/40 rounded-full blur-3xl animate-float-slow" />
         </div>
         <div className="max-w-4xl mx-auto text-center">
           <ScrollReveal variant="blur-in">
-            <span className="inline-flex items-center gap-2 bg-cloud text-ink rounded-full px-5 py-2 text-sm font-medium mb-8">
+            <span className="inline-flex items-center gap-2 bg-offwhite text-charcoal rounded-full px-5 py-2 text-sm font-medium mb-8">
               <Brain size={14} /> AI Engine
             </span>
           </ScrollReveal>
           <ScrollReveal delay={200} variant="scale-up">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-[1.1] mb-6 tracking-tight font-heading">
-              Intelligence you{' '}<span className="text-harbor">can trust</span>
+              Intelligence you{' '}<span className="text-student">can trust</span>
             </h1>
           </ScrollReveal>
           <ScrollReveal delay={400}>
@@ -61,7 +61,7 @@ export default function EnginePage() {
           </ScrollReveal>
           <ScrollReveal delay={600}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" className="text-base px-10 py-7 rounded-xl shadow-lg text-lg bg-harbor hover:bg-harbor-hover text-white" asChild>
+              <Button size="lg" className="text-base px-10 py-7 rounded-xl shadow-lg text-lg bg-student hover:bg-student-hover text-white" asChild>
                 <Link to="/signup">Get Started Free <ArrowRight size={20} className="ml-2" /></Link>
               </Button>
               <Button size="lg" variant="outline" className="text-base px-10 py-7 rounded-xl text-lg" asChild>
@@ -87,7 +87,7 @@ export default function EnginePage() {
               <ScrollReveal key={i} delay={i * 60} variant="fade-up">
                 <div className="flex items-center">
                   <div className="w-32 sm:w-36 flex flex-col items-center text-center">
-                    <div className="w-14 h-14 rounded-xl bg-harbor text-white flex items-center justify-center mb-2 shadow-md">
+                    <div className="w-14 h-14 rounded-xl bg-student text-white flex items-center justify-center mb-2 shadow-md">
                       <step.icon size={22} />
                     </div>
                     <h3 className="text-xs font-bold text-foreground mb-0.5 font-heading">{step.title}</h3>
@@ -121,7 +121,7 @@ export default function EnginePage() {
                 <div className="bg-card rounded-xl border p-5">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-sm font-bold text-foreground font-heading">{dim.label}</h3>
-                    <span className="text-sm font-bold text-harbor"><AnimatedCounter end={dim.weight} suffix="%" /></span>
+                    <span className="text-sm font-bold text-student"><AnimatedCounter end={dim.weight} suffix="%" /></span>
                   </div>
                   <div className="w-full h-2 bg-muted rounded-full mb-2 overflow-hidden">
                     <div className={`h-full rounded-full ${dim.color}`} style={{ width: `${dim.weight}%` }} />
@@ -133,7 +133,7 @@ export default function EnginePage() {
           </div>
 
           <ScrollReveal delay={400}>
-            <div className="mt-10 bg-cloud rounded-xl border border-gray-200 p-6 text-center">
+            <div className="mt-10 bg-offwhite rounded-xl border border-gray-200 p-6 text-center">
               <p className="text-sm text-muted-foreground">
                 <span className="font-semibold text-foreground">0-39</span> Insufficient — focused follow-ups{' · '}
                 <span className="font-semibold text-foreground">40-69</span> Provisional — limited shortlist with warnings{' · '}
@@ -155,7 +155,7 @@ export default function EnginePage() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {trustBadges.map((badge, i) => (
                 <div key={i} className="bg-card rounded-xl border p-4 flex flex-col items-center text-center hover:shadow-md transition-shadow">
-                  <badge.icon size={22} className="text-harbor mb-2" />
+                  <badge.icon size={22} className="text-student mb-2" />
                   <span className="text-xs font-bold text-foreground">{badge.label}</span>
                 </div>
               ))}
@@ -173,10 +173,10 @@ export default function EnginePage() {
           </ScrollReveal>
           <ScrollReveal delay={200}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" className="text-base px-10 py-7 rounded-xl shadow-lg text-lg bg-harbor hover:bg-harbor-hover text-white" asChild>
+              <Button size="lg" className="text-base px-10 py-7 rounded-xl shadow-lg text-lg bg-student hover:bg-student-hover text-white" asChild>
                 <Link to="/signup">Get Started Free <ArrowRight size={20} className="ml-2" /></Link>
               </Button>
-              <Button size="lg" variant="outline" className="text-base px-10 py-7 rounded-xl text-lg border-harbor text-white hover:bg-ink hover:text-white" asChild>
+              <Button size="lg" variant="outline" className="text-base px-10 py-7 rounded-xl text-lg border-student text-white hover:bg-charcoal hover:text-white" asChild>
                 <Link to="/signup?role=institution_admin">Schedule a Demo</Link>
               </Button>
             </div>

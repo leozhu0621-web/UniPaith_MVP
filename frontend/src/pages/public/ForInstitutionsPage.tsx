@@ -56,12 +56,12 @@ export default function ForInstitutionsPage() {
       {/* Hero */}
       <section className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div className="absolute inset-0 -z-10">
-          <div className="absolute top-20 left-[10%] w-72 h-72 bg-mist/60 rounded-full blur-3xl animate-float" />
-          <div className="absolute bottom-20 right-[10%] w-96 h-96 bg-mist/30 rounded-full blur-3xl animate-float-slow" />
+          <div className="absolute top-20 left-[10%] w-72 h-72 bg-school-mist/60 rounded-full blur-3xl animate-float" />
+          <div className="absolute bottom-20 right-[10%] w-96 h-96 bg-school-mist/30 rounded-full blur-3xl animate-float-slow" />
         </div>
         <div className="max-w-4xl mx-auto text-center">
           <ScrollReveal variant="blur-in">
-            <span className="inline-flex items-center gap-2 bg-mist text-ink rounded-full px-5 py-2 text-sm font-medium mb-8">
+            <span className="inline-flex items-center gap-2 bg-school-mist text-charcoal rounded-full px-5 py-2 text-sm font-medium mb-8">
               <Building2 size={14} /> For Institutions
             </span>
           </ScrollReveal>
@@ -69,7 +69,7 @@ export default function ForInstitutionsPage() {
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-[1.1] mb-6 tracking-tight font-heading">
               AI admissions operations.{' '}
               <br className="hidden sm:block" />
-              <span className="text-harbor">Built for your team.</span>
+              <span className="text-school">Built for your team.</span>
             </h1>
           </ScrollReveal>
           <ScrollReveal delay={400}>
@@ -79,7 +79,7 @@ export default function ForInstitutionsPage() {
           </ScrollReveal>
           <ScrollReveal delay={600}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" className="text-base px-10 py-7 rounded-xl shadow-lg text-lg bg-harbor hover:bg-ink text-white" asChild>
+              <Button size="lg" className="text-base px-10 py-7 rounded-xl shadow-lg text-lg bg-school hover:bg-school-hover text-white" asChild>
                 <Link to="/signup?role=institution_admin">Schedule a Demo <ArrowRight size={20} className="ml-2" /></Link>
               </Button>
               <Button size="lg" variant="outline" className="text-base px-10 py-7 rounded-xl text-lg" asChild>
@@ -109,12 +109,12 @@ export default function ForInstitutionsPage() {
             <div className="bg-card rounded-2xl border overflow-hidden">
               <div className="grid grid-cols-2 border-b bg-muted/50">
                 <div className="px-6 py-3 text-center"><span className="font-semibold text-muted-foreground text-sm uppercase tracking-wide">Before</span></div>
-                <div className="px-6 py-3 text-center"><span className="font-semibold text-harbor text-sm uppercase tracking-wide">With UniPaith</span></div>
+                <div className="px-6 py-3 text-center"><span className="font-semibold text-school text-sm uppercase tracking-wide">With UniPaith</span></div>
               </div>
               {comparisons.map((row, i) => (
                 <div key={i} className={`grid grid-cols-2 ${i < comparisons.length - 1 ? 'border-b' : ''}`}>
                   <div className="px-5 py-4 flex items-start gap-3"><X size={16} className="text-destructive flex-shrink-0 mt-0.5" /><span className="text-sm text-muted-foreground">{row.before}</span></div>
-                  <div className="px-5 py-4 flex items-start gap-3"><Check size={16} className="text-harbor flex-shrink-0 mt-0.5" /><span className="text-sm text-foreground">{row.after}</span></div>
+                  <div className="px-5 py-4 flex items-start gap-3"><Check size={16} className="text-school flex-shrink-0 mt-0.5" /><span className="text-sm text-foreground">{row.after}</span></div>
                 </div>
               ))}
             </div>
@@ -135,8 +135,8 @@ export default function ForInstitutionsPage() {
             {platformFeatures.map((f, i) => (
               <ScrollReveal key={i} delay={i * 60} variant="fade-up">
                 <div className="bg-card rounded-xl border p-6 hover:shadow-md transition-all h-full group">
-                  <div className="w-10 h-10 rounded-lg bg-mist flex items-center justify-center mb-3">
-                    <f.icon className="text-harbor group-hover:scale-110 transition-transform" size={20} />
+                  <div className="w-10 h-10 rounded-lg bg-school-mist flex items-center justify-center mb-3">
+                    <f.icon className="text-school group-hover:scale-110 transition-transform" size={20} />
                   </div>
                   <h3 className="text-sm font-bold text-foreground mb-1 font-heading">{f.title}</h3>
                   <p className="text-muted-foreground text-xs leading-relaxed">{f.desc}</p>
@@ -151,7 +151,7 @@ export default function ForInstitutionsPage() {
       </section>
 
       {/* AI capabilities */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-ink">
+      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-charcoal">
         <div className="max-w-5xl mx-auto">
           <ScrollReveal variant="blur-in">
             <div className="text-center mb-14">
@@ -163,12 +163,12 @@ export default function ForInstitutionsPage() {
             {aiCapabilities.map((cap, i) => (
               <ScrollReveal key={i} delay={i * 100} variant="fade-up">
                 <div className="bg-white/5 rounded-xl border border-white/10 p-6 h-full">
-                  <div className="w-10 h-10 rounded-lg bg-harbor/15 flex items-center justify-center mb-3">
-                    <cap.icon size={20} className="text-harbor" />
+                  <div className="w-10 h-10 rounded-lg bg-school/15 flex items-center justify-center mb-3">
+                    <cap.icon size={20} className="text-school" />
                   </div>
                   <h3 className="text-base font-bold text-white mb-1.5 font-heading">{cap.title}</h3>
                   <p className="text-gray-300 text-sm mb-3">{cap.desc}</p>
-                  <div className="flex items-center gap-2 text-harbor/80 text-xs">
+                  <div className="flex items-center gap-2 text-school/80 text-xs">
                     <ShieldCheck size={12} className="flex-shrink-0" /><span>{cap.note}</span>
                   </div>
                 </div>
@@ -188,7 +188,7 @@ export default function ForInstitutionsPage() {
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
               {complianceBadges.map((badge, i) => (
                 <div key={i} className="flex flex-col items-center gap-2 p-4 bg-card rounded-xl border">
-                  <badge.icon size={22} className="text-harbor" />
+                  <badge.icon size={22} className="text-school" />
                   <span className="text-xs font-medium text-foreground">{badge.label}</span>
                 </div>
               ))}
@@ -224,7 +224,7 @@ export default function ForInstitutionsPage() {
             <p className="text-gray-300 mb-10 text-lg max-w-xl mx-auto">Reduce review time, improve yield, give your team the tools they deserve. No long procurement process.</p>
           </ScrollReveal>
           <ScrollReveal delay={200}>
-            <Button size="lg" className="text-base px-12 py-7 rounded-xl shadow-lg text-lg bg-harbor hover:bg-harbor-hover text-white" asChild>
+            <Button size="lg" className="text-base px-12 py-7 rounded-xl shadow-lg text-lg bg-school hover:bg-school-hover text-white" asChild>
               <Link to="/signup?role=institution_admin">Schedule a Demo <ArrowRight size={20} className="ml-2" /></Link>
             </Button>
           </ScrollReveal>

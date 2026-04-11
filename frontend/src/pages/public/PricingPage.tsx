@@ -56,8 +56,8 @@ export default function PricingPage() {
           {/* Student card */}
           <ScrollReveal delay={100} variant="fade-left">
             <div className="bg-card rounded-2xl border-2 border-sand p-8 sm:p-10 h-full flex flex-col">
-              <div className="w-14 h-14 rounded-xl bg-mist flex items-center justify-center mb-5">
-                <GraduationCap className="text-harbor-hover" size={28} />
+              <div className="w-14 h-14 rounded-xl bg-student-mist flex items-center justify-center mb-5">
+                <GraduationCap className="text-student-hover" size={28} />
               </div>
               <h2 className="text-2xl font-bold text-foreground mb-2 font-heading">Students</h2>
               <div className="mb-4">
@@ -69,12 +69,12 @@ export default function PricingPage() {
               <ul className="space-y-3 mb-8 flex-1">
                 {studentFeatures.map((f, i) => (
                   <li key={i} className="flex items-center gap-2 text-sm text-foreground">
-                    <Check size={16} className="text-harbor flex-shrink-0" /> {f}
+                    <Check size={16} className="text-student flex-shrink-0" /> {f}
                   </li>
                 ))}
               </ul>
 
-              <Button size="lg" className="w-full rounded-xl py-6 text-base bg-harbor hover:bg-harbor-hover text-white" asChild>
+              <Button size="lg" className="w-full rounded-xl py-6 text-base bg-student hover:bg-student-hover text-white" asChild>
                 <Link to="/signup?role=student">Create Your Profile <ArrowRight size={18} className="ml-2" /></Link>
               </Button>
             </div>
@@ -83,8 +83,8 @@ export default function PricingPage() {
           {/* Institution card */}
           <ScrollReveal delay={200} variant="fade-right">
             <div className="bg-card rounded-2xl border-2 border-gray-200 p-8 sm:p-10 h-full flex flex-col">
-              <div className="w-14 h-14 rounded-xl bg-mist flex items-center justify-center mb-5">
-                <Building2 className="text-harbor" size={28} />
+              <div className="w-14 h-14 rounded-xl bg-school-mist flex items-center justify-center mb-5">
+                <Building2 className="text-school" size={28} />
               </div>
               <h2 className="text-2xl font-bold text-foreground mb-2 font-heading">Institutions</h2>
               <div className="mb-4">
@@ -96,12 +96,12 @@ export default function PricingPage() {
               <ul className="space-y-3 mb-8 flex-1">
                 {institutionFeatures.map((f, i) => (
                   <li key={i} className="flex items-center gap-2 text-sm text-foreground">
-                    <Check size={16} className="text-harbor flex-shrink-0" /> {f}
+                    <Check size={16} className="text-school flex-shrink-0" /> {f}
                   </li>
                 ))}
               </ul>
 
-              <Button size="lg" variant="outline" className="w-full rounded-xl py-6 text-base border-harbor text-harbor hover:bg-harbor hover:text-white" asChild>
+              <Button size="lg" variant="outline" className="w-full rounded-xl py-6 text-base border-school text-school hover:bg-school hover:text-white" asChild>
                 <Link to="/signup?role=institution_admin">Schedule a Demo <ArrowRight size={18} className="ml-2" /></Link>
               </Button>
             </div>
