@@ -10,39 +10,39 @@ import { GraduationCap, Building2 } from "lucide-react";
 const studentFAQs = [
   {
     q: "How is UniPaith different from Common App?",
-    a: "Common App handles submission to ~1,100 member schools. UniPaith handles the entire journey — profile, AI matching, readiness diagnostics, essay support, deadline tracking, and application management across any program worldwide.",
+    a: "Common App handles submission to ~1,100 member schools. UniPaith handles your entire journey — matching, readiness, applications, tracking, and offer comparison across any program worldwide.",
   },
   {
     q: "Is it really free for students?",
-    a: "Yes, always. Profile, matching, applications, and AI counselor — all free. We're funded by institutional partnerships, so students never pay.",
+    a: "Yes. Institutions pay for their operations platform. Students pay nothing — no trial, no premium tier, no credit card.",
   },
   {
     q: "Does the AI make decisions for me?",
-    a: "Never. AI provides recommendations with transparent reasoning. Every decision — where to apply, what to submit, which offer to accept — is yours.",
+    a: "No. It recommends programs and shows you why. Every decision — where to apply, what to submit, which offer to accept — is yours.",
   },
 ];
 
 const institutionFAQs = [
   {
     q: "Do we need to replace our current CRM?",
-    a: "No. UniPaith works alongside Slate, Salesforce, or your existing system. Think of it as an intelligent layer that feeds structured data and AI insights into your workflow.",
+    a: "No. UniPaith works alongside Slate, Salesforce, or your existing system. It feeds structured data and AI insights into your workflow.",
   },
   {
     q: "How is this different from Element451 or EAB?",
-    a: "Those are institution-side CRMs. UniPaith is a two-sided platform — it connects you to students with structured, standardized profiles, plus AI-assisted review, triage, and communication.",
+    a: "Those are institution-side CRMs. UniPaith is a two-sided platform — it connects you to students with structured, standardized profiles, plus AI-assisted review and communication.",
   },
   {
     q: "What does pricing look like?",
-    a: "Flexible plans based on institution size and volume. Free entry tier for eligible community colleges and regional institutions. Request a demo for a tailored quote.",
+    a: "Flexible plans based on institution size and volume. Free entry tier for eligible community colleges and regional institutions.",
   },
 ];
 
 const FAQSection = () => (
-  <section className="py-24 px-4 bg-background">
+  <section className="py-24 px-4 bg-cloud">
     <div className="max-w-5xl mx-auto">
       <ScrollReveal>
         <div className="text-center mb-14">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 font-heading">
+          <h2 className="text-3xl md:text-4xl font-bold text-ink mb-4 font-heading">
             Frequently Asked Questions
           </h2>
         </div>
@@ -51,16 +51,16 @@ const FAQSection = () => (
       <div className="grid md:grid-cols-2 gap-10">
         <ScrollReveal variant="fade-left" delay={100}>
           <div className="flex items-center gap-2 mb-4">
-            <GraduationCap className="h-5 w-5 text-brand-amber-500" />
-            <h3 className="text-lg font-semibold text-foreground font-heading">For Students</h3>
+            <GraduationCap className="h-5 w-5 text-harbor" />
+            <h3 className="text-lg font-semibold text-ink font-heading">For Students</h3>
           </div>
           <Accordion type="single" collapsible className="w-full">
             {studentFAQs.map((faq, i) => (
               <AccordionItem key={i} value={`student-${i}`}>
-                <AccordionTrigger className="text-left text-foreground hover:no-underline hover:text-brand-amber-600 transition-colors text-sm">
+                <AccordionTrigger className="text-left text-ink hover:no-underline hover:text-harbor transition-colors text-sm">
                   {faq.q}
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground text-sm">{faq.a}</AccordionContent>
+                <AccordionContent className="text-gray-500 text-sm">{faq.a}</AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>
@@ -68,16 +68,16 @@ const FAQSection = () => (
 
         <ScrollReveal variant="fade-right" delay={200}>
           <div className="flex items-center gap-2 mb-4">
-            <Building2 className="h-5 w-5 text-brand-slate-600" />
-            <h3 className="text-lg font-semibold text-foreground font-heading">For Institutions</h3>
+            <Building2 className="h-5 w-5 text-ink" />
+            <h3 className="text-lg font-semibold text-ink font-heading">For Institutions</h3>
           </div>
           <Accordion type="single" collapsible className="w-full">
             {institutionFAQs.map((faq, i) => (
               <AccordionItem key={i} value={`institution-${i}`}>
-                <AccordionTrigger className="text-left text-foreground hover:no-underline hover:text-brand-slate-600 transition-colors text-sm">
+                <AccordionTrigger className="text-left text-ink hover:no-underline hover:text-harbor transition-colors text-sm">
                   {faq.q}
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground text-sm">{faq.a}</AccordionContent>
+                <AccordionContent className="text-gray-500 text-sm">{faq.a}</AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>

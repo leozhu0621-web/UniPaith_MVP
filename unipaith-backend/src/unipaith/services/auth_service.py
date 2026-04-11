@@ -18,12 +18,11 @@ logger = logging.getLogger("unipaith.auth")
 
 
 def _get_cognito_client():  # type: ignore[no-untyped-def]
-    return boto3.client(
-        "cognito-idp",
-        region_name=settings.aws_region,
-        aws_access_key_id=settings.aws_access_key_id,
-        aws_secret_access_key=settings.aws_secret_access_key,
-    )
+    kwargs: dict = {"region_name": settings.aws_region}
+    if settings.aws_access_key_id and settings.aws_secret_access_key:
+        kwargs["aws_access_key_id"] = settings.aws_access_key_id
+        kwargs["aws_secret_access_key"] = settings.aws_secret_access_key
+    return boto3.client("cognito-idp", **kwargs)
 
 
 class AuthService:
@@ -46,7 +45,7 @@ class AuthService:
                     Password=password,
                     UserAttributes=[
                         {"Name": "email", "Value": email},
-                        {"Name": "custom:role", "Value": role},
+                        {"Name": "name", "Value": email.split("@")[0]},
                     ],
                 )
                 cognito_sub = resp["UserSub"]

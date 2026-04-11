@@ -7,8 +7,8 @@ export default function BlogPage() {
       <section className="py-32 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto text-center">
           <ScrollReveal variant="blur-in">
-            <div className="w-16 h-16 rounded-2xl bg-brand-slate-100 flex items-center justify-center mx-auto mb-6">
-              <BookOpen className="text-brand-slate-600" size={32} />
+            <div className="w-16 h-16 rounded-2xl bg-mist flex items-center justify-center mx-auto mb-6">
+              <BookOpen className="text-harbor" size={32} />
             </div>
             <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-4 tracking-tight font-heading">Blog &amp; Resources</h1>
             <p className="text-xl text-muted-foreground mb-10">Insights on AI-powered admissions, student success, and institutional operations. Coming soon.</p>
@@ -22,9 +22,9 @@ export default function BlogPage() {
                 <input
                   type="email"
                   placeholder="your@email.com"
-                  className="flex-1 rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-slate-600"
+                  className="flex-1 rounded-lg border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-harbor"
                 />
-                <button className="bg-brand-slate-600 hover:bg-brand-slate-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors">
+                <button className="bg-harbor hover:bg-ink text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors">
                   Notify me
                 </button>
               </div>

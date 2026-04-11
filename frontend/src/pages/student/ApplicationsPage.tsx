@@ -10,6 +10,7 @@ import { SkeletonCard } from '../../components/ui/Skeleton'
 import { formatDate, formatScore } from '../../utils/format'
 import { STATUS_COLORS } from '../../utils/constants'
 import { FileText } from 'lucide-react'
+import CounselorNudge from './components/CounselorNudge'
 import type { Application } from '../../types'
 
 const FILTER_TABS = [
@@ -40,6 +41,16 @@ export default function ApplicationsPage() {
     <div className="p-6 max-w-3xl mx-auto">
       <h1 className="text-2xl font-semibold mb-4">My Applications</h1>
 
+      {applicationsList.length === 0 && (
+        <div className="mb-4">
+          <CounselorNudge
+            message="Your counselor can help you decide which programs to apply to first based on your profile and goals."
+            actionLabel="Ask counselor"
+            actionTo="/s/chat?prefill=Which programs should I apply to first based on my profile?"
+          />
+        </div>
+      )}
+
       <Tabs tabs={FILTER_TABS} activeTab={filter} onChange={setFilter} />
 
       <div className="mt-4 space-y-3">
@@ -47,8 +58,8 @@ export default function ApplicationsPage() {
           <EmptyState
             icon={<FileText size={48} />}
             title="Your applications will appear here"
-            description="When you're ready, discover programs to apply to."
-            action={{ label: 'Discover', onClick: () => navigate('/s/discover') }}
+            description="Save programs you're interested in, then start applications when you're ready."
+            action={{ label: 'Explore programs', onClick: () => navigate('/s/discover') }}
           />
         ) : (
           filtered.map((app: Application) => (

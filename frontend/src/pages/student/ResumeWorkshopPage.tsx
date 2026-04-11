@@ -30,6 +30,7 @@ import {
   BarChart3,
   Lightbulb,
 } from 'lucide-react'
+import CounselorNudge from './components/CounselorNudge'
 
 interface ResumeItem {
   id: string
@@ -405,6 +406,14 @@ export default function ResumeWorkshopPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
+      <div className="mb-4">
+        <CounselorNudge
+          message="Your resume is built from your profile. Keep your story complete for the best AI-generated resume."
+          actionLabel="Complete profile"
+          actionTo="/s/profile"
+          counselorLink="/s/chat?prefill=How can I improve my resume for graduate school applications?"
+        />
+      </div>
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold flex items-center gap-2">

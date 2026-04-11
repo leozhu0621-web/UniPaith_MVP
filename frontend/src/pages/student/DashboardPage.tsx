@@ -9,6 +9,9 @@ import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import ProgressBar from '../../components/ui/ProgressBar'
 import Skeleton from '../../components/ui/Skeleton'
+import CounselorSessionCard from './components/CounselorSessionCard'
+import CounselorNudge from './components/CounselorNudge'
+import { listSaved } from '../../api/saved-lists'
 import {
   MessageSquare, Search, FileText, User,
   ArrowRight, AlertTriangle, Sparkles, Calendar, Zap,
@@ -118,8 +121,14 @@ export default function DashboardPage() {
 
   const { deadlines, isError: deadlinesError, applications } = useDeadlines()
 
+  const { data: savedList } = useQuery({
+    queryKey: ['saved'],
+    queryFn: listSaved,
+  })
+
   const applicationsList: Application[] = Array.isArray(applications) ? applications : []
   const matchCount = Array.isArray(matches) ? matches.length : 0
+  const savedCount = Array.isArray(savedList) ? savedList.length : 0
   const appCount = applicationsList.length
   const draftCount = applicationsList.filter(a => a.status === 'draft').length
   const nextDeadline = deadlines[0] ?? null
@@ -182,53 +191,68 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      {/* AI Guide */}
-      <Card className="p-5 bg-gradient-to-br from-stone-50 to-amber-50/30 border-stone-200">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
-                <Sparkles size={16} className="text-amber-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-stone-700">Your AI Counselor</h2>
-                <p className="text-[10px] text-gray-400">Personalized guidance based on your journey</p>
-              </div>
-            </div>
-            <p className="text-sm text-stone-600 leading-relaxed">
-              {nextStep?.guidance_text
-                ? nextStep.guidance_text
-                : completionPct < 30
-                  ? "Let's start by getting to know you. I'll ask a few questions to understand your goals and interests — no forms, just a conversation."
-                  : completionPct < 60
-                    ? "You're building a strong foundation. Let's explore what programs might be the right fit for who you are becoming."
-                    : completionPct < 80
-                      ? "Your story is coming together. A few more details will help me find programs where you'll truly thrive."
-                      : "Your profile is looking great. Ready to discover your best-fit programs?"}
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 flex-shrink-0">
-            {completionPct < 30 && (
-              <Button size="sm" onClick={() => navigate('/s/intake')}>
-                <Sparkles size={14} className="mr-1" /> Start Conversation
-              </Button>
-            )}
-            {completionPct >= 30 && completionPct < 80 && (
-              <Button size="sm" onClick={() => navigate('/s/profile')}>
-                Continue Profile <ArrowRight size={14} className="ml-1" />
-              </Button>
-            )}
-            {completionPct >= 80 && (
-              <Button size="sm" onClick={() => navigate('/s/match')}>
-                <Sparkles size={14} className="mr-1" /> Find Programs
-              </Button>
-            )}
-            <Button size="sm" variant="secondary" onClick={() => navigate('/s/chat')}>
-              <MessageSquare size={14} className="mr-1" /> Talk to Counselor
-            </Button>
-          </div>
-        </div>
-      </Card>
+      {/* AI Counselor Session Card */}
+      <CounselorSessionCard
+        guidanceText={
+          nextStep?.guidance_text
+            ? nextStep.guidance_text
+            : completionPct < 30
+              ? "Welcome! I'm your private college counselor. Let's start by getting to know you — your goals, interests, and what kind of future excites you."
+              : completionPct < 60
+                ? "You're building a strong foundation. Let's explore what programs might be the right fit for who you are becoming."
+                : completionPct < 80
+                  ? "Your story is coming together. A few more details will help me find programs where you'll truly thrive."
+                  : "Your profile is looking great. Ready to discover your best-fit programs?"
+        }
+        completionPct={completionPct}
+        matchCount={matchCount}
+        savedCount={savedCount}
+        appCount={appCount}
+      />
+
+      {/* Journey flow nudge — adapts to student's stage */}
+      {completionPct < 80 && (
+        <CounselorNudge
+          message={`Your story is ${completionPct}% complete. A few more details help me find programs where you truly belong.`}
+          actionLabel="Continue your story"
+          actionTo="/s/profile"
+          counselorLink="/s/chat?prefill=What should I add to my profile next?"
+        />
+      )}
+      {completionPct >= 80 && matchCount === 0 && (
+        <CounselorNudge
+          message="Your profile looks strong. Let me show you programs that match who you are."
+          actionLabel="Explore programs"
+          actionTo="/s/discover"
+          variant="celebrate"
+        />
+      )}
+      {matchCount > 0 && savedCount === 0 && (
+        <CounselorNudge
+          message={`I found ${matchCount} programs that could be great for you. Save the ones that resonate.`}
+          actionLabel="View matches"
+          actionTo="/s/discover"
+          variant="suggestion"
+        />
+      )}
+      {savedCount > 0 && appCount === 0 && (
+        <CounselorNudge
+          message={`You have ${savedCount} programs saved. Ready to take the next step?`}
+          actionLabel="Start applying"
+          actionTo="/s/applications"
+          variant="celebrate"
+          counselorLink="/s/chat?prefill=Which of my saved programs should I apply to first?"
+        />
+      )}
+      {draftCount > 0 && (
+        <CounselorNudge
+          message={`You have ${draftCount} application${draftCount > 1 ? 's' : ''} in progress. Let me help you finish strong.`}
+          actionLabel="Continue application"
+          actionTo={`/s/applications/${applicationsList.find(a => a.status === 'draft')?.id || ''}`}
+          variant="urgent"
+          counselorLink="/s/chat?prefill=Help me with my application in progress"
+        />
+      )}
 
       {/* Self-Discovery Progress */}
       {completionPct < 100 && (
@@ -288,9 +312,16 @@ export default function DashboardPage() {
         </div>
 
         {nextActions.length === 0 ? (
-          <p className="text-sm text-gray-500 py-4 text-center">
-            No active applications — start by saving programs you are interested in.
-          </p>
+          <div className="text-center py-6">
+            <p className="text-sm text-gray-500 mb-3">
+              {savedCount > 0
+                ? `You have ${savedCount} programs saved. When you're ready, start an application and your next steps will appear here.`
+                : "Your next steps will appear here once you start exploring and applying to programs."}
+            </p>
+            <Button size="sm" variant="secondary" onClick={() => navigate(savedCount > 0 ? '/s/saved' : '/s/discover')}>
+              {savedCount > 0 ? 'View saved programs' : 'Explore programs'} <ArrowRight size={14} className="ml-1" />
+            </Button>
+          </div>
         ) : (
           <div className="space-y-2">
             {nextActions.map(na => {
@@ -334,24 +365,26 @@ export default function DashboardPage() {
         )}
       </Card>
 
-      {/* Summary stats row */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card className="p-4 text-center cursor-pointer hover:bg-gray-50" onClick={() => navigate('/s/discover')}>
-          <Sparkles size={20} className="mx-auto text-purple-500 mb-1" />
-          <p className="text-2xl font-bold">{matchCount}</p>
-          <p className="text-xs text-gray-500">AI Matches</p>
-        </Card>
-        <Card className="p-4 text-center cursor-pointer hover:bg-gray-50" onClick={() => navigate('/s/applications')}>
-          <FileText size={20} className="mx-auto text-blue-500 mb-1" />
-          <p className="text-2xl font-bold">{appCount}</p>
-          <p className="text-xs text-gray-500">Applications</p>
-        </Card>
-        <Card className="p-4 text-center cursor-pointer hover:bg-gray-50" onClick={() => navigate('/s/calendar')}>
-          <Calendar size={20} className="mx-auto text-amber-500 mb-1" />
-          <p className="text-2xl font-bold">{deadlines.length}</p>
-          <p className="text-xs text-gray-500">Deadlines</p>
-        </Card>
-      </div>
+      {/* Summary stats row — only show when there's meaningful data */}
+      {(matchCount > 0 || appCount > 0 || deadlines.length > 0) && (
+        <div className="grid grid-cols-3 gap-4">
+          <Card className="p-4 text-center cursor-pointer hover:bg-gray-50" onClick={() => navigate('/s/discover')}>
+            <Sparkles size={20} className="mx-auto text-purple-500 mb-1" />
+            <p className="text-2xl font-bold">{matchCount}</p>
+            <p className="text-xs text-gray-500">AI Matches</p>
+          </Card>
+          <Card className="p-4 text-center cursor-pointer hover:bg-gray-50" onClick={() => navigate('/s/applications')}>
+            <FileText size={20} className="mx-auto text-blue-500 mb-1" />
+            <p className="text-2xl font-bold">{appCount}</p>
+            <p className="text-xs text-gray-500">Applications</p>
+          </Card>
+          <Card className="p-4 text-center cursor-pointer hover:bg-gray-50" onClick={() => navigate('/s/calendar')}>
+            <Calendar size={20} className="mx-auto text-amber-500 mb-1" />
+            <p className="text-2xl font-bold">{deadlines.length}</p>
+            <p className="text-xs text-gray-500">Deadlines</p>
+          </Card>
+        </div>
+      )}
 
       {/* Next deadline alert */}
       {nextDeadline && nextDeadlineDays != null && nextDeadlineDays <= 14 && (

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../stores/auth-store'
 import {
   LayoutDashboard, MessageSquare, User, Search, FileText,
-  Calendar, Bell, LogOut, Sparkles,
+  Bell, LogOut, Sparkles,
 } from 'lucide-react'
 import Avatar from '../ui/Avatar'
 import Dropdown from '../ui/Dropdown'
@@ -14,10 +14,8 @@ import CompareTray from '../student/CompareTray'
 const NAV_ITEMS = [
   { to: '/s/dashboard', icon: LayoutDashboard, label: 'Home' },
   { to: '/s/profile', icon: User, label: 'My Story' },
-  { to: '/s/match', icon: Sparkles, label: 'Match' },
-  { to: '/s/discover', icon: Search, label: 'Discover' },
+  { to: '/s/discover', icon: Search, label: 'Explore' },
   { to: '/s/applications', icon: FileText, label: 'Apply' },
-  { to: '/s/calendar', icon: Calendar, label: 'Calendar' },
   { to: '/s/chat', icon: MessageSquare, label: 'Counselor' },
 ]
 
@@ -148,6 +146,7 @@ export default function StudentLayout() {
             <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 px-1 mb-2">Quick access</p>
             {[
               { to: '/s/saved', label: 'Saved Programs' },
+              { to: '/s/calendar', label: 'Calendar & Deadlines' },
               { to: '/s/recommendations', label: 'Recommenders' },
               { to: '/s/financial-aid', label: 'Financial Aid' },
               { to: '/s/messages', label: 'Messages' },

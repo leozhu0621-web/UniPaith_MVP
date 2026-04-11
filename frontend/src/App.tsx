@@ -44,13 +44,9 @@ import CalendarPage from './pages/student/CalendarPage'
 import FinancialAidPage from './pages/student/FinancialAidPage'
 import RecommendationsPage from './pages/student/RecommendationsPage'
 import StudentSettingsPage from './pages/student/SettingsPage'
-import ProgramMatchPage from './pages/student/ProgramMatchPage'
 import ResumeWorkshopPage from './pages/student/ResumeWorkshopPage'
 import EssayWorkshopPage from './pages/student/EssayWorkshopPage'
-import TestScorePage from './pages/student/TestScorePage'
 import DecisionComparisonPage from './pages/student/DecisionComparisonPage'
-import IntakePage from './pages/student/IntakePage'
-import IntelligenceDashboardPage from './pages/student/IntelligenceDashboardPage'
 import OnboardingPage from './pages/student/OnboardingPage'
 
 // Institution pages
@@ -131,7 +127,7 @@ const router = createBrowserRouter([
       { path: 'dashboard', element: <StudentDashboardPage /> },
       { path: 'chat', element: <ChatPage /> },
       { path: 'profile', element: <ProfilePage /> },
-      { path: 'match', element: <ProgramMatchPage /> },
+      { path: 'match', element: <Navigate to="/s/discover?mode=match" replace /> },
       { path: 'discover', element: <DiscoverPage /> },
       { path: 'programs/:programId', element: <SchoolDetailPage /> },
       { path: 'schools/:programId', element: <SchoolDetailPage /> },
@@ -146,10 +142,10 @@ const router = createBrowserRouter([
       { path: 'recommendations', element: <RecommendationsPage /> },
       { path: 'resume-workshop', element: <ResumeWorkshopPage /> },
       { path: 'essay-workshop', element: <EssayWorkshopPage /> },
-      { path: 'test-scores', element: <TestScorePage /> },
+      { path: 'test-scores', element: <Navigate to="/s/profile" replace /> },
       { path: 'decisions', element: <DecisionComparisonPage /> },
-      { path: 'intake', element: <IntakePage /> },
-      { path: 'intelligence', element: <IntelligenceDashboardPage /> },
+      { path: 'intake', element: <Navigate to="/s/chat" replace /> },
+      { path: 'intelligence', element: <Navigate to="/s/dashboard" replace /> },
       { path: 'settings', element: <StudentSettingsPage /> },
     ],
   },

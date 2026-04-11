@@ -7,33 +7,33 @@ const features = [
     icon: Brain,
     title: "Explainable Matching",
     description: "See exactly why a program was recommended — tied to your goals and profile. No black boxes.",
-    color: "text-brand-amber-600",
-    bg: "bg-brand-amber-100",
-    mockBg: "from-brand-amber-100 to-brand-amber-50",
+    color: "text-harbor",
+    bg: "bg-mist",
+    mockBg: "from-mist to-cloud",
   },
   {
     icon: FileSearch,
     title: "Document Intelligence",
     description: "Upload once. AI extracts, structures, and verifies — turning documents into clean data institutions trust.",
-    color: "text-brand-slate-600",
-    bg: "bg-brand-slate-600/10",
-    mockBg: "from-brand-slate-100 to-brand-slate-50",
+    color: "text-ink",
+    bg: "bg-ink/10",
+    mockBg: "from-gray-100 to-cloud",
   },
   {
     icon: Target,
     title: "Readiness Diagnostics",
     description: "Know where you stand before you submit. Strengths, gaps, and a clear preparation path.",
-    color: "text-brand-slate-500",
-    bg: "bg-brand-slate-100",
-    mockBg: "from-brand-slate-200/50 to-brand-slate-100/50",
+    color: "text-harbor",
+    bg: "bg-mist",
+    mockBg: "from-mist to-cloud",
   },
   {
     icon: Shield,
     title: "Integrity & Compliance",
     description: "Anomaly detection, document verification, full audit trails. FERPA-ready, GDPR-compliant.",
-    color: "text-brand-slate-600",
-    bg: "bg-brand-slate-600/10",
-    mockBg: "from-brand-slate-100 to-brand-slate-50",
+    color: "text-ink",
+    bg: "bg-ink/10",
+    mockBg: "from-gray-100 to-cloud",
   },
 ];
 
@@ -45,15 +45,15 @@ const trustBadges = [
 ];
 
 const AIFeaturesSection = () => (
-  <section id="ai-features" className="py-24 px-4 sm:px-6 lg:px-8 bg-card">
+  <section id="ai-features" className="py-24 px-4 sm:px-6 lg:px-8 bg-white">
     <div className="max-w-5xl mx-auto">
       <ScrollReveal variant="blur-in">
         <div className="text-center mb-16">
-          <span className="inline-flex items-center gap-1.5 bg-brand-amber-100 text-brand-amber-700 text-sm font-medium rounded-full px-5 py-1.5 mb-4">
+          <span className="inline-flex items-center gap-1.5 bg-mist text-harbor text-sm font-medium rounded-full px-5 py-1.5 mb-4">
             <Brain size={14} /> Powered by AI
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4 font-heading">Intelligence you can trust</h2>
-          <p className="text-muted-foreground max-w-xl mx-auto text-lg">Every AI output comes with reasoning. Every decision stays with humans.</p>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-ink mb-4 font-heading">Intelligence you can trust</h2>
+          <p className="text-gray-500 max-w-xl mx-auto text-lg">Every AI output comes with reasoning. Every decision stays with humans.</p>
         </div>
       </ScrollReveal>
 
@@ -65,23 +65,23 @@ const AIFeaturesSection = () => (
                 <div className={`w-12 h-12 rounded-xl ${f.bg} flex items-center justify-center mb-4 group`}>
                   <f.icon className={`${f.color} transition-transform duration-300 group-hover:scale-110`} size={24} />
                 </div>
-                <h3 className="text-xl font-bold text-foreground mb-2 font-heading">{f.title}</h3>
-                <p className="text-muted-foreground leading-relaxed text-sm">{f.description}</p>
+                <h3 className="text-xl font-bold text-ink mb-2 font-heading">{f.title}</h3>
+                <p className="text-gray-500 leading-relaxed text-sm">{f.description}</p>
               </div>
 
               <div className="flex-1 w-full">
-                <div className={`bg-gradient-to-br ${f.mockBg} rounded-2xl border p-8 h-44 flex items-center justify-center`}>
-                  <div className="bg-card/80 backdrop-blur rounded-xl p-5 shadow-lg border w-full max-w-xs hover-lift">
+                <div className={`bg-gradient-to-br ${f.mockBg} rounded-2xl border border-gray-200 p-8 h-44 flex items-center justify-center`}>
+                  <div className="bg-white/80 backdrop-blur rounded-xl p-5 shadow-lg border border-gray-200 w-full max-w-xs hover-lift">
                     <div className="flex items-center gap-3 mb-3">
                       <div className={`w-8 h-8 rounded-lg ${f.bg} flex items-center justify-center`}>
                         <f.icon className={f.color} size={16} />
                       </div>
-                      <div className="w-24 h-2.5 bg-muted rounded-full" />
+                      <div className="w-24 h-2.5 bg-gray-200 rounded-full" />
                     </div>
                     <div className="space-y-2">
-                      <div className="w-full h-2 bg-muted rounded-full" />
-                      <div className="w-4/5 h-2 bg-muted rounded-full" />
-                      <div className="w-3/5 h-2 bg-muted rounded-full" />
+                      <div className="w-full h-2 bg-gray-200 rounded-full" />
+                      <div className="w-4/5 h-2 bg-gray-200 rounded-full" />
+                      <div className="w-3/5 h-2 bg-gray-200 rounded-full" />
                     </div>
                   </div>
                 </div>
@@ -94,8 +94,8 @@ const AIFeaturesSection = () => (
       <ScrollReveal delay={200} variant="fade-up">
         <div className="mt-16 flex flex-wrap justify-center gap-8 sm:gap-12">
           {trustBadges.map((badge, i) => (
-            <div key={i} className="flex items-center gap-2 text-muted-foreground">
-              <badge.icon size={18} className="text-brand-slate-500" />
+            <div key={i} className="flex items-center gap-2 text-gray-500">
+              <badge.icon size={18} className="text-harbor" />
               <span className="text-sm font-medium">{badge.label}</span>
             </div>
           ))}
@@ -103,7 +103,7 @@ const AIFeaturesSection = () => (
         <div className="mt-6 text-center">
           <Link
             to="/engine"
-            className="inline-flex items-center gap-1 text-sm font-medium text-brand-slate-600 hover:text-brand-slate-700 transition-colors"
+            className="inline-flex items-center gap-1 text-sm font-medium text-harbor hover:text-harbor-hover transition-colors"
           >
             Explore the AI engine <ArrowRight size={14} />
           </Link>

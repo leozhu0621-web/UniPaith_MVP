@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, createOnlinePresence, updateOnlinePresence, deleteOnlinePresence, createPortfolioItem, updatePortfolioItem, deletePortfolioItem, createResearch, updateResearch, deleteResearch, createLanguage, updateLanguage, deleteLanguage, upsertPreferences, getNextStep } from '../../api/students'
 import { getOnboarding } from '../../api/students'
@@ -11,7 +12,7 @@ import { SkeletonCard } from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatDate, formatCurrency, formatFileSize } from '../../utils/format'
 import { DEGREE_LABELS, ACTIVITY_TYPES, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS } from '../../utils/constants'
-import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical, Languages } from 'lucide-react'
+import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical, Languages, MessageSquare } from 'lucide-react'
 import { BasicInfoForm, AcademicForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm, ResearchForm, LanguageForm } from './components/ProfileForms'
 import type { StudentProfile } from '../../types'
 
@@ -57,8 +58,22 @@ const PROFILE_SECTIONS = [
   { key: 'documents', label: 'Documents', fields: [] },
 ]
 
+const SECTION_COUNSELOR_TIPS: Record<string, { tip: string; prefill: string }> = {
+  basic_info: { tip: "Your basic info helps programs know where you're coming from.", prefill: 'What basic info should I include to strengthen my profile?' },
+  academics: { tip: 'Academic records show your foundation — even one record helps.', prefill: 'What academic records should I add to my profile?' },
+  test_scores: { tip: 'Test scores help programs assess your readiness. Add what you have.', prefill: 'Which test scores matter most for my target programs?' },
+  activities: { tip: 'Activities show who you are beyond academics — even one meaningful one helps.', prefill: 'What activities should I include to make my profile stand out?' },
+  online_presence: { tip: 'LinkedIn, GitHub, or a portfolio site shows programs your professional side.', prefill: 'What online profiles should I link to strengthen my application?' },
+  portfolio: { tip: 'Portfolio items demonstrate tangible skills and achievements.', prefill: 'What kind of portfolio items would strengthen my profile?' },
+  research: { tip: 'Research experience is valued highly — include papers, projects, or lab work.', prefill: 'How should I present my research experience?' },
+  languages: { tip: 'Language skills matter for international programs and career flexibility.', prefill: 'How do programs evaluate language proficiency?' },
+  preferences: { tip: 'Your preferences help the AI find programs that truly fit your life.', prefill: 'How should I think about my program preferences?' },
+  documents: { tip: 'Upload transcripts, certificates, or recommendation letters.', prefill: 'What documents do I need for my applications?' },
+}
+
 export default function ProfilePage() {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const [editModal, setEditModal] = useState<string | null>(null)
   const [editItem, setEditItem] = useState<any>(null)
 
@@ -165,7 +180,15 @@ export default function ProfilePage() {
       {/* Basic Info */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
-          <h2 className="font-semibold text-brand-slate-700">Basic Info</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="font-semibold text-brand-slate-700">Basic Info</h2>
+            <button
+              onClick={() => navigate(`/s/chat?prefill=${encodeURIComponent(SECTION_COUNSELOR_TIPS.basic_info.prefill)}`)}
+              className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-brand-slate-600 transition-colors"
+            >
+              <MessageSquare size={10} /> Ask counselor
+            </button>
+          </div>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(p); setEditModal('basic') }}><Pencil size={14} /></Button>
         </div>
         <dl className="grid grid-cols-2 gap-2 text-sm">
@@ -184,7 +207,12 @@ export default function ProfilePage() {
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('academic') }}><Plus size={14} /></Button>
         </div>
         {(p?.academic_records ?? []).length === 0 ? (
-          <p className="text-sm text-gray-500">No academic records yet</p>
+          <>
+            <p className="text-sm text-gray-500">No academic records yet</p>
+            <p className="text-xs text-blue-600 mt-1 cursor-pointer hover:underline" onClick={() => navigate(`/s/chat?prefill=${encodeURIComponent(SECTION_COUNSELOR_TIPS.academics.prefill)}`)}>
+              <Sparkles size={10} className="inline mr-1" />{SECTION_COUNSELOR_TIPS.academics.tip}
+            </p>
+          </>
         ) : (
           <div className="space-y-3">
             {p!.academic_records.map(rec => (
@@ -210,7 +238,12 @@ export default function ProfilePage() {
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('test') }}><Plus size={14} /></Button>
         </div>
         {(p?.test_scores ?? []).length === 0 ? (
-          <p className="text-sm text-gray-500">No test scores yet</p>
+          <>
+            <p className="text-sm text-gray-500">No test scores yet</p>
+            <p className="text-xs text-blue-600 mt-1 cursor-pointer hover:underline" onClick={() => navigate(`/s/chat?prefill=${encodeURIComponent(SECTION_COUNSELOR_TIPS.test_scores.prefill)}`)}>
+              <Sparkles size={10} className="inline mr-1" />{SECTION_COUNSELOR_TIPS.test_scores.tip}
+            </p>
+          </>
         ) : (
           <div className="space-y-3">
             {p!.test_scores.map(ts => (
@@ -237,7 +270,12 @@ export default function ProfilePage() {
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('activity') }}><Plus size={14} /></Button>
         </div>
         {(p?.activities ?? []).length === 0 ? (
-          <p className="text-sm text-gray-500">No activities yet</p>
+          <>
+            <p className="text-sm text-gray-500">No activities yet</p>
+            <p className="text-xs text-blue-600 mt-1 cursor-pointer hover:underline" onClick={() => navigate(`/s/chat?prefill=${encodeURIComponent(SECTION_COUNSELOR_TIPS.activities.prefill)}`)}>
+              <Sparkles size={10} className="inline mr-1" />{SECTION_COUNSELOR_TIPS.activities.tip}
+            </p>
+          </>
         ) : (
           <div className="space-y-3">
             {p!.activities.map(act => (

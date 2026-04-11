@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { getOnboarding } from '../../api/students'
 import { getMatches } from '../../api/matching'
@@ -20,11 +20,22 @@ type ChatMessage = {
 
 export default function ChatPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const user = useAuthStore(s => s.user)
   const [input, setInput] = useState('')
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [sendError, setSendError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const prefillHandled = useRef(false)
+
+  // Prefill support — other pages can link with ?prefill=... to pre-populate the input
+  useEffect(() => {
+    const prefill = searchParams.get('prefill')
+    if (prefill && !prefillHandled.current) {
+      prefillHandled.current = true
+      setInput(prefill)
+    }
+  }, [searchParams])
 
   // Context data for dynamic quick actions
   const { data: onboarding, isError: onboardingError } = useQuery({ queryKey: ['onboarding'], queryFn: getOnboarding })

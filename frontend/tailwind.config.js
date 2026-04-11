@@ -12,6 +12,19 @@ export default {
     },
     extend: {
       colors: {
+        // New landing palette
+        harbor: {
+          DEFAULT: '#0E6B6F',
+          hover: '#0C5A5E',
+        },
+        ink: '#123047',
+        mist: '#EAF5F4',
+        cloud: '#F7FBFB',
+        sand: {
+          DEFAULT: '#E9D6C7',
+          light: '#F5EDE6',
+        },
+        // Legacy brand scales (used in app dashboard)
         brand: {
           green: {
             50: '#F0FDF4',

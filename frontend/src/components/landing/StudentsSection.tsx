@@ -7,33 +7,33 @@ const steps = [
     icon: UserCircle,
     title: "One Profile, Every School",
     description: "Fill it out once. Use it for every application — transcripts, essays, activities, documents.",
-    color: "text-brand-amber-600",
-    bg: "bg-brand-amber-100",
-    line: "bg-brand-amber-500",
+    iconColor: "text-harbor",
+    bg: "bg-mist",
+    line: "bg-harbor",
   },
   {
     icon: Search,
     title: "See Programs That Actually Fit",
     description: "Matched to your goals, budget, and profile. You'll see exactly why each one was picked.",
-    color: "text-brand-green-600",
-    bg: "bg-brand-green-100",
-    line: "bg-brand-green-600",
+    iconColor: "text-harbor",
+    bg: "bg-mist",
+    line: "bg-harbor",
   },
   {
     icon: Send,
     title: "Apply & Track in One Place",
     description: "Manage deadlines, upload documents, track status — stop juggling 10 different portals.",
-    color: "text-brand-green-500",
-    bg: "bg-brand-slate-100",
-    line: "bg-brand-green-500",
+    iconColor: "text-harbor",
+    bg: "bg-mist",
+    line: "bg-harbor",
   },
   {
     icon: MessageCircle,
     title: "Get Help When You Need It",
     description: "Essay feedback, cost breakdowns, readiness checks — a counselor who knows your file, anytime.",
-    color: "text-brand-amber-600",
-    bg: "bg-brand-amber-100",
-    line: "bg-brand-green-500",
+    iconColor: "text-harbor",
+    bg: "bg-sand-light",
+    line: "bg-harbor",
   },
 ];
 
@@ -46,24 +46,24 @@ const featureChips = [
 ];
 
 const StudentsSection = () => (
-  <section id="students" className="py-24 px-4 sm:px-6 lg:px-8 bg-background">
+  <section id="students" className="py-24 px-4 sm:px-6 lg:px-8 bg-cloud">
     <div className="max-w-5xl mx-auto">
       <ScrollReveal variant="blur-in">
         <div className="text-center mb-16">
-          <span className="inline-block bg-brand-amber-100 text-brand-amber-700 text-sm font-medium rounded-full px-4 py-1.5 mb-4 uppercase tracking-wide">
+          <span className="inline-block bg-mist text-harbor text-sm font-medium rounded-full px-4 py-1.5 mb-4 uppercase tracking-wide">
             For Students
           </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4 font-heading">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-ink mb-4 font-heading">
             How it works for students
           </h2>
-          <p className="text-muted-foreground max-w-lg mx-auto text-lg">
+          <p className="text-gray-500 max-w-lg mx-auto text-lg">
             The same things a great counselor does &mdash; but faster, cheaper, and available whenever you need it.
           </p>
         </div>
       </ScrollReveal>
 
       <div className="relative">
-        <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-0.5 bg-border -translate-x-1/2" />
+        <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-0.5 bg-gray-200 -translate-x-1/2" />
 
         <div className="space-y-16 md:space-y-20">
           {steps.map((step, i) => (
@@ -77,30 +77,26 @@ const StudentsSection = () => (
               >
                 <div className="flex-1 text-center md:text-left">
                   <div className="inline-flex items-center gap-2 mb-2">
-                    <span
-                      className={`w-8 h-8 rounded-full ${step.line} text-card flex items-center justify-center text-sm font-bold`}
-                    >
+                    <span className={`w-8 h-8 rounded-full ${step.line} text-white flex items-center justify-center text-sm font-bold`}>
                       {i + 1}
                     </span>
-                    <h3 className="text-xl font-bold text-foreground font-heading">
+                    <h3 className="text-xl font-bold text-ink font-heading">
                       {step.title}
                     </h3>
                   </div>
-                  <p className="text-muted-foreground leading-relaxed max-w-md">
+                  <p className="text-gray-500 leading-relaxed max-w-md">
                     {step.description}
                   </p>
                 </div>
 
-                <div className="hidden md:flex w-5 h-5 rounded-full border-4 border-background shadow-md flex-shrink-0 z-10">
+                <div className="hidden md:flex w-5 h-5 rounded-full border-4 border-cloud shadow-md flex-shrink-0 z-10">
                   <div className={`w-full h-full rounded-full ${step.line}`} />
                 </div>
 
                 <div className="flex-1">
-                  <div
-                    className={`${step.bg} rounded-2xl p-8 flex items-center justify-center hover-lift group`}
-                  >
+                  <div className={`${step.bg} rounded-2xl p-8 flex items-center justify-center hover-lift group`}>
                     <step.icon
-                      className={`${step.color} transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}
+                      className={`${step.iconColor} transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}
                       size={64}
                       strokeWidth={1.2}
                     />
@@ -117,7 +113,7 @@ const StudentsSection = () => (
           {featureChips.map((chip) => (
             <span
               key={chip}
-              className="inline-block bg-brand-green-100 text-brand-green-700 text-xs font-medium rounded-full px-3 py-1.5 border border-brand-green-200"
+              className="inline-block bg-mist text-harbor text-xs font-medium rounded-full px-3 py-1.5 border border-harbor/20"
             >
               {chip}
             </span>
@@ -126,7 +122,7 @@ const StudentsSection = () => (
         <div className="mt-6 text-center">
           <Link
             to="/for-students"
-            className="inline-flex items-center gap-1 text-sm font-medium text-brand-amber-600 hover:text-brand-amber-700 transition-colors"
+            className="inline-flex items-center gap-1 text-sm font-medium text-harbor hover:text-harbor-hover transition-colors"
           >
             See how it works <ArrowRight size={14} />
           </Link>

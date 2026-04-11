@@ -19,10 +19,10 @@ const pipelineSteps = [
 ]
 
 const confidenceDimensions = [
-  { label: 'Coverage', weight: 40, desc: 'Required fields completed per domain.', color: 'bg-brand-slate-600' },
-  { label: 'Consistency', weight: 25, desc: 'No unresolved conflicts between priorities.', color: 'bg-brand-slate-500' },
-  { label: 'Evidence Quality', weight: 20, desc: 'Explicit confirmations, not assumptions.', color: 'bg-brand-amber-500' },
-  { label: 'Temporal Validity', weight: 15, desc: 'Freshness of scores, budgets, deadlines.', color: 'bg-brand-amber-400' },
+  { label: 'Coverage', weight: 40, desc: 'Required fields completed per domain.', color: 'bg-harbor' },
+  { label: 'Consistency', weight: 25, desc: 'No unresolved conflicts between priorities.', color: 'bg-harbor' },
+  { label: 'Evidence Quality', weight: 20, desc: 'Explicit confirmations, not assumptions.', color: 'bg-harbor' },
+  { label: 'Temporal Validity', weight: 15, desc: 'Freshness of scores, budgets, deadlines.', color: 'bg-harbor' },
 ]
 
 const trustBadges = [
@@ -40,18 +40,18 @@ export default function EnginePage() {
       {/* Hero */}
       <section className="relative py-24 sm:py-32 px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div className="absolute inset-0 -z-10">
-          <div className="absolute top-20 left-[10%] w-72 h-72 bg-brand-slate-100/60 rounded-full blur-3xl animate-float" />
-          <div className="absolute bottom-20 right-[10%] w-96 h-96 bg-brand-amber-100/40 rounded-full blur-3xl animate-float-slow" />
+          <div className="absolute top-20 left-[10%] w-72 h-72 bg-mist/60 rounded-full blur-3xl animate-float" />
+          <div className="absolute bottom-20 right-[10%] w-96 h-96 bg-mist/40 rounded-full blur-3xl animate-float-slow" />
         </div>
         <div className="max-w-4xl mx-auto text-center">
           <ScrollReveal variant="blur-in">
-            <span className="inline-flex items-center gap-2 bg-brand-slate-50 text-brand-slate-700 rounded-full px-5 py-2 text-sm font-medium mb-8">
+            <span className="inline-flex items-center gap-2 bg-cloud text-ink rounded-full px-5 py-2 text-sm font-medium mb-8">
               <Brain size={14} /> AI Engine
             </span>
           </ScrollReveal>
           <ScrollReveal delay={200} variant="scale-up">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-[1.1] mb-6 tracking-tight font-heading">
-              Intelligence you{' '}<span className="text-brand-slate-600">can trust</span>
+              Intelligence you{' '}<span className="text-harbor">can trust</span>
             </h1>
           </ScrollReveal>
           <ScrollReveal delay={400}>
@@ -61,7 +61,7 @@ export default function EnginePage() {
           </ScrollReveal>
           <ScrollReveal delay={600}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" className="text-base px-10 py-7 rounded-xl shadow-lg text-lg bg-brand-amber-500 hover:bg-brand-amber-600 text-white" asChild>
+              <Button size="lg" className="text-base px-10 py-7 rounded-xl shadow-lg text-lg bg-harbor hover:bg-harbor-hover text-white" asChild>
                 <Link to="/signup">Get Started Free <ArrowRight size={20} className="ml-2" /></Link>
               </Button>
               <Button size="lg" variant="outline" className="text-base px-10 py-7 rounded-xl text-lg" asChild>
@@ -87,7 +87,7 @@ export default function EnginePage() {
               <ScrollReveal key={i} delay={i * 60} variant="fade-up">
                 <div className="flex items-center">
                   <div className="w-32 sm:w-36 flex flex-col items-center text-center">
-                    <div className="w-14 h-14 rounded-xl bg-brand-slate-600 text-white flex items-center justify-center mb-2 shadow-md">
+                    <div className="w-14 h-14 rounded-xl bg-harbor text-white flex items-center justify-center mb-2 shadow-md">
                       <step.icon size={22} />
                     </div>
                     <h3 className="text-xs font-bold text-foreground mb-0.5 font-heading">{step.title}</h3>
@@ -95,7 +95,7 @@ export default function EnginePage() {
                   </div>
                   {i < pipelineSteps.length - 1 && (
                     <div className="hidden lg:flex items-center px-0.5 mt-[-2rem]">
-                      <ChevronRight size={16} className="text-brand-slate-300" />
+                      <ChevronRight size={16} className="text-gray-300" />
                     </div>
                   )}
                 </div>
@@ -121,7 +121,7 @@ export default function EnginePage() {
                 <div className="bg-card rounded-xl border p-5">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-sm font-bold text-foreground font-heading">{dim.label}</h3>
-                    <span className="text-sm font-bold text-brand-slate-600"><AnimatedCounter end={dim.weight} suffix="%" /></span>
+                    <span className="text-sm font-bold text-harbor"><AnimatedCounter end={dim.weight} suffix="%" /></span>
                   </div>
                   <div className="w-full h-2 bg-muted rounded-full mb-2 overflow-hidden">
                     <div className={`h-full rounded-full ${dim.color}`} style={{ width: `${dim.weight}%` }} />
@@ -133,7 +133,7 @@ export default function EnginePage() {
           </div>
 
           <ScrollReveal delay={400}>
-            <div className="mt-10 bg-brand-slate-50 rounded-xl border border-brand-slate-200 p-6 text-center">
+            <div className="mt-10 bg-cloud rounded-xl border border-gray-200 p-6 text-center">
               <p className="text-sm text-muted-foreground">
                 <span className="font-semibold text-foreground">0-39</span> Insufficient — focused follow-ups{' · '}
                 <span className="font-semibold text-foreground">40-69</span> Provisional — limited shortlist with warnings{' · '}
@@ -155,7 +155,7 @@ export default function EnginePage() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {trustBadges.map((badge, i) => (
                 <div key={i} className="bg-card rounded-xl border p-4 flex flex-col items-center text-center hover:shadow-md transition-shadow">
-                  <badge.icon size={22} className="text-brand-slate-600 mb-2" />
+                  <badge.icon size={22} className="text-harbor mb-2" />
                   <span className="text-xs font-bold text-foreground">{badge.label}</span>
                 </div>
               ))}
@@ -165,18 +165,18 @@ export default function EnginePage() {
       </section>
 
       {/* CTA */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-brand-slate-700 to-brand-slate-900">
+      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-ink to-ink">
         <div className="max-w-3xl mx-auto text-center">
           <ScrollReveal variant="blur-in">
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4 font-heading">See the engine in action</h2>
-            <p className="text-brand-slate-300 mb-10 text-lg max-w-xl mx-auto">Whether you're a student exploring programs or an institution optimizing admissions — the engine works for you.</p>
+            <p className="text-gray-300 mb-10 text-lg max-w-xl mx-auto">Whether you're a student exploring programs or an institution optimizing admissions — the engine works for you.</p>
           </ScrollReveal>
           <ScrollReveal delay={200}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" className="text-base px-10 py-7 rounded-xl shadow-lg text-lg bg-brand-amber-500 hover:bg-brand-amber-600 text-white" asChild>
+              <Button size="lg" className="text-base px-10 py-7 rounded-xl shadow-lg text-lg bg-harbor hover:bg-harbor-hover text-white" asChild>
                 <Link to="/signup">Get Started Free <ArrowRight size={20} className="ml-2" /></Link>
               </Button>
-              <Button size="lg" variant="outline" className="text-base px-10 py-7 rounded-xl text-lg border-brand-slate-500 text-white hover:bg-brand-slate-800 hover:text-white" asChild>
+              <Button size="lg" variant="outline" className="text-base px-10 py-7 rounded-xl text-lg border-harbor text-white hover:bg-ink hover:text-white" asChild>
                 <Link to="/signup?role=institution_admin">Schedule a Demo</Link>
               </Button>
             </div>

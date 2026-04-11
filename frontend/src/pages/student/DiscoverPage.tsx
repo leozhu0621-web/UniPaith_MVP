@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, lazy, Suspense } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getMatches, logEngagement } from '../../api/matching'
 import { searchPrograms, semanticSearch, nlpSearch } from '../../api/programs'
@@ -132,8 +132,14 @@ function EditableChip({
   )
 }
 
+// Lazy-load ProgramMatchPage for AI Match mode
+const ProgramMatchPage = lazy(() => import('./ProgramMatchPage'))
+
 export default function DiscoverPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const initialMode = searchParams.get('mode') === 'match' ? 'match' : 'browse'
+  const [mode, setMode] = useState<'browse' | 'match'>(initialMode)
   const [q, setQ] = useState('')
   const [page, setPage] = useState(1)
   const [showFilters, setShowFilters] = useState(false)
@@ -273,9 +279,51 @@ export default function DiscoverPage() {
   const programs: ProgramSummary[] = Array.isArray(displayData?.items) ? displayData.items : []
   const isLoading = nlpMutation.isPending || browseLoading
 
+  // If in match mode, render ProgramMatchPage
+  if (mode === 'match') {
+    return (
+      <div className="p-6 max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-semibold">Explore Your Future</h1>
+          <div className="flex bg-gray-100 rounded-lg p-0.5">
+            <button
+              onClick={() => { setMode('browse'); navigate('/s/discover', { replace: true }) }}
+              className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors text-gray-500 hover:text-gray-700"
+            >
+              Browse & Search
+            </button>
+            <button
+              className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors bg-white shadow-sm text-brand-slate-700"
+            >
+              AI Match Conversation
+            </button>
+          </div>
+        </div>
+        <Suspense fallback={<div className="flex items-center justify-center py-20"><Sparkles className="animate-spin text-gray-400" size={24} /></div>}>
+          <ProgramMatchPage />
+        </Suspense>
+      </div>
+    )
+  }
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-1">Explore Your Future</h1>
+      <div className="flex items-center justify-between mb-1">
+        <h1 className="text-2xl font-semibold">Explore Your Future</h1>
+        <div className="flex bg-gray-100 rounded-lg p-0.5">
+          <button
+            className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors bg-white shadow-sm text-brand-slate-700"
+          >
+            Browse & Search
+          </button>
+          <button
+            onClick={() => { setMode('match'); navigate('/s/discover?mode=match', { replace: true }) }}
+            className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors text-gray-500 hover:text-gray-700"
+          >
+            AI Match Conversation
+          </button>
+        </div>
+      </div>
       <p className="text-xs text-gray-400 mb-2">Every program is a possible path — let the AI help you see which ones fit your story</p>
 
       {!showMatches && (

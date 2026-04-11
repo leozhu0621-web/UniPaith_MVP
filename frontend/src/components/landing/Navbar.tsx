@@ -15,46 +15,46 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-cloud/90 backdrop-blur-md border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="text-2xl hover:scale-105 transition-transform">
-            <span className="font-normal text-brand-slate-600">Uni</span>
-            <span className="font-extrabold text-brand-slate-800">Paith</span>
+            <span className="font-normal text-harbor">Uni</span>
+            <span className="font-extrabold text-ink">Paith</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-6">
             {links.map((l) => (
-              <Link key={l.to} to={l.to} className="story-link text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              <Link key={l.to} to={l.to} className="text-sm font-medium text-gray-500 hover:text-ink transition-colors">
                 {l.label}
               </Link>
             ))}
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" className="border-gray-300 text-ink hover:bg-mist" asChild>
               <Link to="/login">Log in</Link>
             </Button>
-            <Button size="sm" className="bg-brand-amber-500 hover:bg-brand-amber-600 text-white" asChild>
+            <Button size="sm" className="bg-harbor hover:bg-harbor-hover text-white" asChild>
               <Link to="/signup">Get Started</Link>
             </Button>
           </div>
 
-          <button className="md:hidden text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
+          <button className="md:hidden text-ink" onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden bg-background border-b px-4 pb-4 space-y-3">
+        <div className="md:hidden bg-cloud border-b border-gray-200 px-4 pb-4 space-y-3">
           {links.map((l) => (
-            <Link key={l.to} to={l.to} onClick={() => setMobileOpen(false)} className="block text-sm font-medium text-muted-foreground hover:text-foreground">
+            <Link key={l.to} to={l.to} onClick={() => setMobileOpen(false)} className="block text-sm font-medium text-gray-500 hover:text-ink">
               {l.label}
             </Link>
           ))}
           <div className="flex flex-col gap-2 pt-2">
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" className="border-gray-300 text-ink" asChild>
               <Link to="/login" onClick={() => setMobileOpen(false)}>Log in</Link>
             </Button>
-            <Button size="sm" className="bg-brand-amber-500 hover:bg-brand-amber-600 text-white" asChild>
+            <Button size="sm" className="bg-harbor hover:bg-harbor-hover text-white" asChild>
               <Link to="/signup" onClick={() => setMobileOpen(false)}>Get Started</Link>
             </Button>
           </div>

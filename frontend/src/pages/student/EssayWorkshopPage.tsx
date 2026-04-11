@@ -15,6 +15,7 @@ import {
   Pencil, Plus, Lock, MessageSquare, ChevronRight,
   FileText, Sparkles, History, Copy,
 } from 'lucide-react'
+import CounselorNudge from './components/CounselorNudge'
 
 interface Essay {
   id: string
@@ -191,6 +192,13 @@ export default function EssayWorkshopPage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
+      <div className="mb-4">
+        <CounselorNudge
+          message="Your counselor can help brainstorm essay ideas and review your drafts based on your unique story."
+          actionLabel="Brainstorm with counselor"
+          actionTo="/s/chat?prefill=Help me brainstorm ideas for my personal statement based on my profile"
+        />
+      </div>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <Pencil size={22} className="text-brand-slate-600" />
