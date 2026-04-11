@@ -312,14 +312,14 @@ class ReviewPipelineService:
                     "institution": r.institution_name,
                     "degree": r.degree_type,
                     "field": r.field_of_study,
-                    "gpa": str(r.gpa) if r.gpa else None,
+                    "gpa": str(r.gpa) if r.gpa is not None else None,
                 }
                 for r in profile.academic_records
             ],
             "test_scores": [
                 {
                     "type": s.test_type,
-                    "total": str(s.total_score) if s.total_score else None,
+                    "total": str(s.total_score) if s.total_score is not None else None,
                 }
                 for s in profile.test_scores
             ],
@@ -607,14 +607,14 @@ class ReviewPipelineService:
                     "institution": r.institution_name,
                     "degree": r.degree_type,
                     "field": r.field_of_study,
-                    "gpa": str(r.gpa) if r.gpa else None,
+                    "gpa": str(r.gpa) if r.gpa is not None else None,
                 }
                 for r in (profile.academic_records or [])
             ],
             "test_scores": [
                 {
                     "type": s.test_type,
-                    "total": str(s.total_score) if s.total_score else None,
+                    "total": str(s.total_score) if s.total_score is not None else None,
                 }
                 for s in (profile.test_scores or [])
             ],

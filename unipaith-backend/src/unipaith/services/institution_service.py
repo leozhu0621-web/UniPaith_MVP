@@ -563,7 +563,7 @@ class InstitutionService:
             .where(*base_filter, Application.match_score.isnot(None))
         )
         avg_match_score_raw = avg_score_result.scalar_one()
-        avg_match_score = float(avg_match_score_raw) if avg_match_score_raw else None
+        avg_match_score = float(avg_match_score_raw) if avg_match_score_raw is not None else None
 
         # Yield rate: accepted offers / total offers sent
         yield_result = await self.db.execute(
@@ -616,13 +616,21 @@ class InstitutionService:
         stage_order = [
             "submitted", "under_review", "interview", "decision_made",
         ]
+        # Build cumulative counts: each stage = apps that reached *at least* that stage
+        cumulative_counts: list[int] = []
+        running = 0
+        for stage in reversed(stage_order):
+            running += apps_by_status.get(stage, 0)
+            cumulative_counts.append(running)
+        cumulative_counts.reverse()
+
         funnel: list[FunnelStage] = []
-        prev_count = total_apps
-        for stage in stage_order:
-            stage_count = apps_by_status.get(stage, 0)
+        for i, stage in enumerate(stage_order):
+            stage_count = cumulative_counts[i]
+            prev_count = cumulative_counts[i - 1] if i > 0 else total_apps
             rate = (
                 stage_count / prev_count
-                if prev_count > 0 and funnel
+                if prev_count > 0 and i > 0
                 else None
             )
             funnel.append(FunnelStage(
@@ -630,8 +638,6 @@ class InstitutionService:
                 count=stage_count,
                 conversion_rate=rate,
             ))
-            if stage_count > 0:
-                prev_count = stage_count
 
         # --- Campaign attribution ---
         campaign_attr: list[CampaignAttribution] = []

@@ -115,6 +115,7 @@ class ConversationService:
         session.active_domain = selected_domain
         session.current_stage = self._pick_stage(session.turn_count)
 
+        new_conflict_created = False
         if "budget" in body.message.lower() and "full scholarship" in body.message.lower():
             conflict_id = uuid4()
             session.conflicts[conflict_id] = _ConflictState(
@@ -129,6 +130,7 @@ class ConversationService:
                     "Keep strict constraints and accept fewer options",
                 ],
             )
+            new_conflict_created = True
 
         assistant_text = await self._build_assistant_reply(selected_domain, body.message, session)
         session.last_assistant_prompt = assistant_text
@@ -158,7 +160,7 @@ class ConversationService:
             state_delta=ConversationStateDeltaResponse(
                 updated_domains=[selected_domain],
                 new_requirements_count=1 if selected_domain == "budget_finance" else 0,
-                new_conflicts_count=1 if session.conflicts else 0,
+                new_conflicts_count=1 if new_conflict_created else 0,
             ),
             confidence_summary=confidence,
         )

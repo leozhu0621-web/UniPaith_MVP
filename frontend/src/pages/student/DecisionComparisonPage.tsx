@@ -461,7 +461,7 @@ export default function DecisionComparisonPage() {
                     </tr>
 
                     <tr className="border-b bg-gray-50">
-                      <td className="py-3 px-4 text-gray-500 font-medium">Response Deadline</td>
+                      <td className="py-3 px-4 text-gray-500 font-medium">Application Deadline</td>
                       {selectedApps.map(a => (
                         <td key={a.id} className="py-3 px-4">
                           {a.program?.application_deadline ? formatDate(a.program.application_deadline) : '--'}

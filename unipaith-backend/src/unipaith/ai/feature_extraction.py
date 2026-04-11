@@ -224,7 +224,9 @@ class FeatureExtractor:
             "degree_type": program.degree_type,
             "tuition_annual": program.tuition,
             "duration_months": program.duration_months,
-            "acceptance_rate": float(program.acceptance_rate) if program.acceptance_rate else None,
+            "acceptance_rate": (
+                float(program.acceptance_rate) if program.acceptance_rate is not None else None
+            ),
             "min_gpa_required": reqs.get("min_gpa"),
             "gre_required": reqs.get("gre_required", False),
             "toefl_min": reqs.get("toefl_min"),

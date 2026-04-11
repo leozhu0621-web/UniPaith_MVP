@@ -185,7 +185,7 @@ class RecommendationEngine:
         rec["tuition"] = p.tuition
         rec["duration_months"] = p.duration_months
         rec["delivery_format"] = p.delivery_format
-        rec["acceptance_rate"] = float(p.acceptance_rate) if p.acceptance_rate else None
+        rec["acceptance_rate"] = float(p.acceptance_rate) if p.acceptance_rate is not None else None
         rec["application_deadline"] = (
             p.application_deadline.isoformat() if p.application_deadline else None
         )

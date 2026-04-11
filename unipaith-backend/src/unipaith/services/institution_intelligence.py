@@ -111,8 +111,16 @@ class InstitutionIntelligence:
             return {"status": "not_found"}
 
         matches = await self._load_student_matches(student_id, institution_id)
+        # Use the first matched program's name for knowledge retrieval
+        first_program_name = None
+        if matches:
+            from unipaith.models.institution import Program
+            prog_result = await self.db.execute(
+                select(Program.program_name).where(Program.id == matches[0].program_id)
+            )
+            first_program_name = prog_result.scalar_one_or_none()
         knowledge_items = await self.knowledge.retrieve_for_program(
-            program_name=institution.name,
+            program_name=first_program_name or institution.name,
             institution_name=institution.name,
             limit=3,
         )
@@ -218,7 +226,7 @@ class InstitutionIntelligence:
                     MatchResult.student_id == app.student_id,
                     MatchResult.program_id.notin_(program_ids),
                     (MatchResult.match_score > app.match_score)
-                    if hasattr(app, "match_score") else True,
+                    if app.match_score is not None else True,
                 )
             )
             competing_count = other_matches.scalar() or 0

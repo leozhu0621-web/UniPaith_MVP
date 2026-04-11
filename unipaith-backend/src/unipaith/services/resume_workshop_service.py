@@ -109,7 +109,7 @@ class ResumeWorkshopService:
                 "institution": rec.institution_name,
                 "degree_type": rec.degree_type,
                 "field_of_study": rec.field_of_study,
-                "gpa": float(rec.gpa) if rec.gpa else None,
+                "gpa": float(rec.gpa) if rec.gpa is not None else None,
                 "start_date": str(rec.start_date) if rec.start_date else None,
                 "end_date": str(rec.end_date) if rec.end_date else None,
                 "is_current": rec.is_current,
@@ -120,7 +120,7 @@ class ResumeWorkshopService:
         test_scores = [
             {
                 "test_type": ts.test_type,
-                "total_score": float(ts.total_score) if ts.total_score else None,
+                "total_score": float(ts.total_score) if ts.total_score is not None else None,
                 "section_scores": ts.section_scores,
                 "test_date": str(ts.test_date) if ts.test_date else None,
             }

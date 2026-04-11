@@ -458,7 +458,9 @@ async def list_extracted_programs(
                 "program_name": p.program_name,
                 "degree_type": p.degree_type,
                 "department": p.department,
-                "confidence": float(p.extraction_confidence) if p.extraction_confidence else None,
+                "confidence": (
+                    float(p.extraction_confidence) if p.extraction_confidence is not None else None
+                ),
                 "review_status": p.review_status,
                 "match_type": p.match_type,
                 "created_at": p.created_at.isoformat() if p.created_at else None,
@@ -496,7 +498,7 @@ async def ai_status(user: User = Depends(require_admin)):
         status["8b_instance"]["state"] = m8b.get_instance_state()
         status["70b_instance"]["state"] = m70b.get_instance_state()
         idle = m70b.idle_seconds
-        status["70b_instance"]["idle_seconds"] = round(idle, 1) if idle else None
+        status["70b_instance"]["idle_seconds"] = round(idle, 1) if idle is not None else None
 
     return status
 
