@@ -13,7 +13,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from unipaith.core.exceptions import BadRequestException, NotFoundException
+from unipaith.core.exceptions import BadRequestException, ForbiddenException, NotFoundException
 from unipaith.models.application import (
     Application,
     Interview,
@@ -253,6 +253,35 @@ class InterviewService:
         interview = result.scalar_one_or_none()
         if not interview:
             raise NotFoundException("Interview not found")
+        return interview
+
+    async def _verify_application_ownership(
+        self, institution_id: UUID, application_id: UUID,
+    ) -> Application:
+        """Verify the application belongs to a program owned by the institution."""
+        result = await self.db.execute(
+            select(Application)
+            .join(Program, Application.program_id == Program.id)
+            .where(Application.id == application_id, Program.institution_id == institution_id)
+        )
+        app = result.scalar_one_or_none()
+        if not app:
+            raise ForbiddenException("Application does not belong to your institution")
+        return app
+
+    async def _verify_interview_ownership(
+        self, institution_id: UUID, interview_id: UUID,
+    ) -> Interview:
+        """Verify the interview belongs to an application owned by the institution."""
+        result = await self.db.execute(
+            select(Interview)
+            .join(Application, Interview.application_id == Application.id)
+            .join(Program, Application.program_id == Program.id)
+            .where(Interview.id == interview_id, Program.institution_id == institution_id)
+        )
+        interview = result.scalar_one_or_none()
+        if not interview:
+            raise ForbiddenException("Interview does not belong to your institution")
         return interview
 
     async def _get_student_interview(self, student_id: UUID, interview_id: UUID) -> Interview:

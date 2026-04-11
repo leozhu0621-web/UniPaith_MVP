@@ -18,7 +18,7 @@ from sqlalchemy.orm import selectinload
 
 from unipaith.ai.llm_client import get_llm_client
 from unipaith.config import settings
-from unipaith.core.exceptions import BadRequestException, NotFoundException
+from unipaith.core.exceptions import BadRequestException, ForbiddenException, NotFoundException
 from unipaith.models.application import (
     AIPacketSummary,
     Application,
@@ -54,6 +54,20 @@ class ReviewPipelineService:
         if reviewer is None:
             raise NotFoundException("Reviewer profile not found for this user")
         return reviewer
+
+    async def verify_application_ownership(
+        self, institution_id: UUID, application_id: UUID,
+    ) -> Application:
+        """Verify the application belongs to a program owned by the institution."""
+        result = await self.db.execute(
+            select(Application)
+            .join(Program, Application.program_id == Program.id)
+            .where(Application.id == application_id, Program.institution_id == institution_id)
+        )
+        app = result.scalar_one_or_none()
+        if not app:
+            raise ForbiddenException("Application does not belong to your institution")
+        return app
 
     # ------------------------------------------------------------------
     # Rubric management

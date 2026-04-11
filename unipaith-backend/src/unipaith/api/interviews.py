@@ -33,8 +33,9 @@ async def propose_interview(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    await InstitutionService(db).get_institution(user.id)
+    inst = await InstitutionService(db).get_institution(user.id)
     svc = InterviewService(db)
+    await svc._verify_application_ownership(inst.id, body.application_id)
     return await svc.propose_interview(
         application_id=body.application_id,
         interviewer_id=body.interviewer_id,
@@ -62,8 +63,9 @@ async def list_interviews(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    await InstitutionService(db).get_institution(user.id)
+    inst = await InstitutionService(db).get_institution(user.id)
     svc = InterviewService(db)
+    await svc._verify_application_ownership(inst.id, application_id)
     return await svc.list_application_interviews(application_id)
 
 
@@ -73,8 +75,9 @@ async def complete_interview(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    await InstitutionService(db).get_institution(user.id)
+    inst = await InstitutionService(db).get_institution(user.id)
     svc = InterviewService(db)
+    await svc._verify_interview_ownership(inst.id, interview_id)
     return await svc.complete_interview(interview_id)
 
 
@@ -133,8 +136,10 @@ async def batch_invite_interviews(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    await InstitutionService(db).get_institution(user.id)
+    inst = await InstitutionService(db).get_institution(user.id)
     svc = InterviewService(db)
+    for app_id in body.application_ids:
+        await svc._verify_application_ownership(inst.id, app_id)
     result = BatchOperationResult(
         success_count=0, failed_ids=[], errors=[],
     )

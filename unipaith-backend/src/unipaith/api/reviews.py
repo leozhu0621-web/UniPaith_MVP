@@ -102,8 +102,9 @@ async def get_scores(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    await InstitutionService(db).get_institution(user.id)
+    inst = await InstitutionService(db).get_institution(user.id)
     svc = ReviewPipelineService(db)
+    await svc.verify_application_ownership(inst.id, application_id)
     return await svc.get_application_scores(application_id)
 
 
@@ -113,8 +114,9 @@ async def ai_review_summary(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    await InstitutionService(db).get_institution(user.id)
+    inst = await InstitutionService(db).get_institution(user.id)
     svc = ReviewPipelineService(db)
+    await svc.verify_application_ownership(inst.id, application_id)
     return await svc.generate_ai_review_summary(application_id)
 
 
@@ -293,12 +295,14 @@ async def cohort_comparison(
     from unipaith.models.application import Application, ApplicationScore
     from unipaith.models.student import StudentProfile
 
-    await InstitutionService(db).get_institution(user.id)  # auth check
+    inst = await InstitutionService(db).get_institution(user.id)
+    svc = ReviewPipelineService(db)
     ids = [UUID(aid.strip()) for aid in application_ids.split(",") if aid.strip()]
 
     applicants = []
     for app_id in ids:
         try:
+            await svc.verify_application_ownership(inst.id, app_id)
             # Get application detail
             ar = await db.execute(
                 select(Application).where(Application.id == app_id)
