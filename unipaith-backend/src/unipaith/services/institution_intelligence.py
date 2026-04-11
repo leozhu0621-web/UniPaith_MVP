@@ -213,12 +213,16 @@ class InstitutionIntelligence:
 
         alerts = []
         for app in apps[:20]:
+            match_filter = (
+                (MatchResult.match_score > app.match_score)
+                if app.match_score is not None
+                else True
+            )
             other_matches = await self.db.execute(
                 select(func.count()).select_from(MatchResult).where(
                     MatchResult.student_id == app.student_id,
                     MatchResult.program_id.notin_(program_ids),
-                    (MatchResult.match_score > app.match_score)
-                    if hasattr(app, "match_score") else True,
+                    match_filter,
                 )
             )
             competing_count = other_matches.scalar() or 0

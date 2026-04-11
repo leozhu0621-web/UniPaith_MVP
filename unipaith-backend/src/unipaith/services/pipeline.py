@@ -355,8 +355,8 @@ class ContinuousPipeline:
                     else:
                         snap.items_processed_hour = (snap.items_processed_hour or 0) + items
 
-                if error and last_error:
-                    snap.last_error = last_error
+                if error:
+                    snap.last_error = last_error or "Unknown error (no details captured)"
 
                 if extra:
                     snap.extra_json = {**(snap.extra_json or {}), **extra}

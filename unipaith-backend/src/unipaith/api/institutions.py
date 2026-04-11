@@ -852,7 +852,9 @@ async def bulk_create_checklist(
 ):
     from unipaith.models.institution import ProgramChecklistItem
 
-    await _svc(db).get_institution(user.id)
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    await svc.get_program(inst.id, program_id)
     created = []
     for item_data in body.items:
         item = ProgramChecklistItem(
@@ -1081,7 +1083,17 @@ async def get_public_intake_rounds(
     """Public — get active intake rounds for a program."""
     from sqlalchemy import select
 
-    from unipaith.models.institution import IntakeRound
+    from unipaith.models.institution import IntakeRound, Program
+
+    prog = await db.execute(
+        select(Program).where(
+            Program.id == program_id,
+            Program.institution_id == institution_id,
+        )
+    )
+    if not prog.scalar_one_or_none():
+        from unipaith.core.exceptions import NotFoundException
+        raise NotFoundException("Program not found for this institution")
 
     result = await db.execute(
         select(IntakeRound).where(

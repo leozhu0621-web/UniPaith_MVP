@@ -23,6 +23,28 @@ from unipaith.services.student_service import StudentService
 router = APIRouter(prefix="/students/me/saved", tags=["saved-lists"])
 
 
+async def _enrich_saved_item(db: AsyncSession, item) -> SavedProgramResponse:
+    """Enrich a SavedListItem with program_name and institution_name."""
+    prog_result = await db.execute(
+        select(
+            Program.program_name,
+            Institution.name.label("institution_name"),
+        )
+        .join(Institution, Program.institution_id == Institution.id)
+        .where(Program.id == item.program_id)
+    )
+    prog = prog_result.one_or_none()
+    return SavedProgramResponse(
+        id=item.id,
+        list_id=item.list_id,
+        program_id=item.program_id,
+        notes=item.notes,
+        added_at=item.added_at,
+        program_name=prog.program_name if prog else None,
+        institution_name=prog.institution_name if prog else None,
+    )
+
+
 # --- Saved Programs ---
 
 
@@ -74,7 +96,8 @@ async def save_program(
 ):
     profile = await StudentService(db)._get_student_profile(user.id)
     svc = SavedListService(db)
-    return await svc.save_program(profile.id, body.program_id, body.notes)
+    item = await svc.save_program(profile.id, body.program_id, body.notes)
+    return await _enrich_saved_item(db, item)
 
 
 @router.delete("/{program_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -97,7 +120,8 @@ async def update_notes(
 ):
     profile = await StudentService(db)._get_student_profile(user.id)
     svc = SavedListService(db)
-    return await svc.update_notes(profile.id, program_id, body.notes)
+    item = await svc.update_notes(profile.id, program_id, body.notes)
+    return await _enrich_saved_item(db, item)
 
 
 @router.post("/compare", response_model=ComparisonResponse)

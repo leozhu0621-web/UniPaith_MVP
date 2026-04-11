@@ -613,13 +613,21 @@ class InstitutionService:
         ]
 
         # --- Funnel: cumulative stage counting ---
+        # An app that reached "decision_made" also passed through earlier stages,
+        # so each stage count includes all apps at that stage or beyond.
         stage_order = [
             "submitted", "under_review", "interview", "decision_made",
         ]
+        cumulative: dict[str, int] = {}
+        running = 0
+        for stage in reversed(stage_order):
+            running += apps_by_status.get(stage, 0)
+            cumulative[stage] = running
+
         funnel: list[FunnelStage] = []
         prev_count = total_apps
         for stage in stage_order:
-            stage_count = apps_by_status.get(stage, 0)
+            stage_count = cumulative.get(stage, 0)
             rate = (
                 stage_count / prev_count
                 if prev_count > 0 and funnel

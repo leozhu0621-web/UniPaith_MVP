@@ -675,7 +675,7 @@ async def engine_health(
             with open("/proc/uptime") as f:
                 sys_uptime = float(f.read().split()[0])
             proc_start = sys_uptime - (boot_time / clk_tck)
-            checks["uptime_seconds"] = round(sys_uptime - proc_start, 0) if proc_start > 0 else None
+            checks["uptime_seconds"] = round(proc_start, 0) if proc_start > 0 else None
     except Exception:
         pass
 
