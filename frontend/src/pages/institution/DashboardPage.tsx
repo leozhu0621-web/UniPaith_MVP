@@ -18,7 +18,7 @@ import {
   MessageSquare,
   Inbox,
 } from 'lucide-react'
-import { getInstitution, getInstitutionPrograms, getDashboardSummary, getInquiries } from '../../api/institutions'
+import { getInstitution, getInstitutionPrograms, getDashboardSummary, getInquiries, getIntelligenceDigest, getYieldRiskAlerts } from '../../api/institutions'
 import { getReviewPriorityQueue, getIntegritySignals } from '../../api/reviews'
 import { getNotifications } from '../../api/notifications'
 import Card from '../../components/ui/Card'
@@ -60,6 +60,18 @@ export default function DashboardPage() {
     queryKey: ['dashboard-inquiries', 'new'],
     queryFn: () => getInquiries('new'),
     enabled: !!institutionQ.data,
+  })
+  const digestQ = useQuery({
+    queryKey: ['intelligence-digest'],
+    queryFn: getIntelligenceDigest,
+    enabled: !!institutionQ.data,
+    staleTime: 1000 * 60 * 30,
+  })
+  const yieldRiskQ = useQuery({
+    queryKey: ['yield-risk-alerts'],
+    queryFn: getYieldRiskAlerts,
+    enabled: !!institutionQ.data,
+    staleTime: 1000 * 60 * 15,
   })
 
   const institution = institutionQ.data
@@ -261,6 +273,43 @@ export default function DashboardPage() {
           </div>
         </Card>
       </div>
+
+      {/* AI Intelligence Digest */}
+      {digestQ.data?.digest && (
+        <Card className="p-4 border-brand-slate-200 bg-gradient-to-r from-brand-slate-50/50 to-white">
+          <div className="flex items-center gap-2 mb-3">
+            <Brain size={18} className="text-brand-slate-600" />
+            <h3 className="text-sm font-semibold text-gray-900">AI Intelligence Digest</h3>
+            <Badge variant="info">Auto-generated</Badge>
+          </div>
+          <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+            {digestQ.data.digest}
+          </div>
+          <p className="text-xs text-gray-400 mt-2">Generated {formatRelative(digestQ.data.generated_at)}</p>
+        </Card>
+      )}
+
+      {/* Yield Risk Alerts */}
+      {(yieldRiskQ.data?.alerts?.length ?? 0) > 0 && (
+        <Card className="p-4 border-amber-200 bg-amber-50/30">
+          <div className="flex items-center gap-2 mb-3">
+            <TrendingUp size={16} className="text-amber-600" />
+            <h3 className="text-sm font-semibold text-gray-900">Yield Risk Alerts</h3>
+            <Badge variant="warning">{yieldRiskQ.data!.alerts.length} at risk</Badge>
+          </div>
+          <div className="space-y-2">
+            {yieldRiskQ.data!.alerts.slice(0, 5).map(alert => (
+              <div key={alert.application_id} className="flex items-center justify-between p-2 rounded-lg bg-white border border-amber-100">
+                <div>
+                  <span className="text-sm text-gray-900">Student {alert.student_id.slice(0, 8)}</span>
+                  <span className="text-xs text-gray-500 ml-2">{alert.reason}</span>
+                </div>
+                <Badge variant={alert.risk_level === 'high' ? 'danger' : 'warning'}>{alert.risk_level}</Badge>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* AI Priority Queue Preview */}
       {topPriority.length > 0 && (
