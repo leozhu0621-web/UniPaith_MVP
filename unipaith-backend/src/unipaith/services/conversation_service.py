@@ -6,11 +6,13 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.ai.llm_client import get_llm_client
 from unipaith.config import settings
 from unipaith.core.exceptions import ConflictException, NotFoundException
+from unipaith.models.engagement import ConversationSession
 from unipaith.schemas.conversation import (
     AssistantMessageResponse,
     ConfidenceLevel,
@@ -71,8 +73,6 @@ class _ConversationSessionState:
     conflicts: dict[UUID, _ConflictState] = field(default_factory=dict)
 
 
-_SESSIONS_BY_STUDENT: dict[UUID, _ConversationSessionState] = {}
-
 _TEMPLATE_REPLY = (
     "Thanks for sharing that — I have updated your {domain} context. "
     "You are making solid progress. Next, we can fill one "
@@ -91,21 +91,167 @@ _REQUIRED_FIELDS_BY_DOMAIN: dict[ConversationDomain, list[str]] = {
 }
 
 
+# ======================================================================
+# DB serialization helpers
+# ======================================================================
+
+
+def _serialize_requirements(requirements: dict[UUID, _RequirementState]) -> list[dict]:
+    return [
+        {
+            "requirement_id": str(r.requirement_id),
+            "domain": r.domain,
+            "field": r.field,
+            "value": r.value,
+            "priority": r.priority,
+            "source": r.source,
+            "confidence": r.confidence,
+            "status": r.status,
+            "evidence_turn_ids": [str(tid) for tid in r.evidence_turn_ids],
+            "updated_at": r.updated_at.isoformat(),
+        }
+        for r in requirements.values()
+    ]
+
+
+def _deserialize_requirements(data: list[dict] | None) -> dict[UUID, _RequirementState]:
+    if not data:
+        return {}
+    result: dict[UUID, _RequirementState] = {}
+    for item in data:
+        rid = UUID(item["requirement_id"])
+        result[rid] = _RequirementState(
+            requirement_id=rid,
+            domain=item["domain"],
+            field=item["field"],
+            value=item.get("value"),
+            priority=item.get("priority", "must_have"),
+            source=item.get("source", "imported"),
+            confidence=item.get("confidence", 50),
+            status=item.get("status", "draft"),
+            evidence_turn_ids=[UUID(t) for t in item.get("evidence_turn_ids", [])],
+            updated_at=datetime.fromisoformat(item["updated_at"])
+            if item.get("updated_at")
+            else datetime.now(UTC),
+        )
+    return result
+
+
+def _serialize_conflicts(conflicts: dict[UUID, _ConflictState]) -> list[dict]:
+    return [
+        {
+            "conflict_id": str(c.conflict_id),
+            "reason": c.reason,
+            "resolution_options": c.resolution_options,
+            "selected_resolution": c.selected_resolution,
+        }
+        for c in conflicts.values()
+    ]
+
+
+def _deserialize_conflicts(data: list[dict] | None) -> dict[UUID, _ConflictState]:
+    if not data:
+        return {}
+    result: dict[UUID, _ConflictState] = {}
+    for item in data:
+        cid = UUID(item["conflict_id"])
+        result[cid] = _ConflictState(
+            conflict_id=cid,
+            reason=item["reason"],
+            resolution_options=item.get("resolution_options", []),
+            selected_resolution=item.get("selected_resolution"),
+        )
+    return result
+
+
 class ConversationService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.student_service = StudentService(db)
         self.llm = get_llm_client()
 
+    # ------------------------------------------------------------------
+    # DB persistence helpers
+    # ------------------------------------------------------------------
+
+    async def _load_session(self, student_id: UUID) -> _ConversationSessionState | None:
+        """Load session state from DB."""
+        result = await self.db.execute(
+            select(ConversationSession).where(ConversationSession.student_id == student_id)
+        )
+        row = result.scalar_one_or_none()
+        if row is None:
+            return None
+
+        return _ConversationSessionState(
+            session_id=row.id,
+            student_id=row.student_id,
+            current_stage=row.current_stage,
+            active_domain=row.active_domain,
+            turn_count=row.turn_count,
+            last_updated_at=row.last_updated_at,
+            last_assistant_prompt=row.last_assistant_prompt,
+            requirements=_deserialize_requirements(row.requirements_json),
+            conflicts=_deserialize_conflicts(row.conflicts_json),
+        )
+
+    async def _save_session(self, session: _ConversationSessionState) -> None:
+        """Persist session state to DB (upsert)."""
+        result = await self.db.execute(
+            select(ConversationSession).where(
+                ConversationSession.student_id == session.student_id
+            )
+        )
+        row = result.scalar_one_or_none()
+
+        reqs_json = _serialize_requirements(session.requirements)
+        conflicts_json = _serialize_conflicts(session.conflicts)
+
+        if row:
+            row.current_stage = session.current_stage
+            row.active_domain = session.active_domain
+            row.turn_count = session.turn_count
+            row.requirements_json = reqs_json
+            row.conflicts_json = conflicts_json
+            row.last_assistant_prompt = session.last_assistant_prompt
+            row.last_updated_at = datetime.now(UTC)
+        else:
+            self.db.add(
+                ConversationSession(
+                    id=session.session_id,
+                    student_id=session.student_id,
+                    current_stage=session.current_stage,
+                    active_domain=session.active_domain,
+                    turn_count=session.turn_count,
+                    requirements_json=reqs_json,
+                    conflicts_json=conflicts_json,
+                    last_assistant_prompt=session.last_assistant_prompt,
+                )
+            )
+        await self.db.flush()
+
+    async def _get_or_create_session(
+        self, student_user_id: UUID, profile_id: UUID
+    ) -> _ConversationSessionState:
+        """Load existing session or create a new one with bootstrapped requirements."""
+        session = await self._load_session(profile_id)
+        if session is not None:
+            return session
+
+        session = _ConversationSessionState(session_id=uuid4(), student_id=profile_id)
+        await self._bootstrap_requirements(session, student_user_id)
+        await self._save_session(session)
+        return session
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
     async def send_turn(
         self, student_user_id: UUID, body: ConversationTurnRequest
     ) -> ConversationTurnResponse:
         profile = await self.student_service._get_student_profile(student_user_id)
-        session = _SESSIONS_BY_STUDENT.get(profile.id)
-        if session is None:
-            session = _ConversationSessionState(session_id=uuid4(), student_id=profile.id)
-            _SESSIONS_BY_STUDENT[profile.id] = session
-            await self._bootstrap_requirements(session, student_user_id)
+        session = await self._get_or_create_session(student_user_id, profile.id)
 
         session.turn_count += 1
         session.last_updated_at = datetime.now(UTC)
@@ -143,6 +289,9 @@ class ConversationService:
                 evidence_turn_id=turn_id,
             )
 
+        # Persist updated session to DB
+        await self._save_session(session)
+
         confidence = self._compute_confidence(session)
         return ConversationTurnResponse(
             session=self._to_session_response(session),
@@ -165,16 +314,12 @@ class ConversationService:
 
     async def get_session(self, student_user_id: UUID) -> ConversationSessionResponse:
         profile = await self.student_service._get_student_profile(student_user_id)
-        session = _SESSIONS_BY_STUDENT.get(profile.id)
-        if session is None:
-            session = _ConversationSessionState(session_id=uuid4(), student_id=profile.id)
-            _SESSIONS_BY_STUDENT[profile.id] = session
-            await self._bootstrap_requirements(session, student_user_id)
+        session = await self._get_or_create_session(student_user_id, profile.id)
         return self._to_session_response(session)
 
     async def get_resume_checkpoint(self, student_user_id: UUID) -> ResumeCheckpointResponse:
         profile = await self.student_service._get_student_profile(student_user_id)
-        session = _SESSIONS_BY_STUDENT.get(profile.id)
+        session = await self._load_session(profile.id)
         if session is None:
             raise NotFoundException("Conversation session not found")
 
@@ -192,7 +337,7 @@ class ConversationService:
         self, student_user_id: UUID
     ) -> ListConversationRequirementsResponse:
         profile = await self.student_service._get_student_profile(student_user_id)
-        session = _SESSIONS_BY_STUDENT.get(profile.id)
+        session = await self._load_session(profile.id)
         if session is None:
             return ListConversationRequirementsResponse(requirements=[])
         return ListConversationRequirementsResponse(
@@ -208,7 +353,7 @@ class ConversationService:
         body: UpdateConversationRequirementRequest,
     ) -> ConversationRequirementResponse:
         profile = await self.student_service._get_student_profile(student_user_id)
-        session = _SESSIONS_BY_STUDENT.get(profile.id)
+        session = await self._load_session(profile.id)
         if session is None or requirement_id not in session.requirements:
             raise NotFoundException("Requirement not found")
 
@@ -221,11 +366,12 @@ class ConversationService:
             req.value = body.value
         req.updated_at = datetime.now(UTC)
 
+        await self._save_session(session)
         return self._to_requirement_response(req)
 
     async def get_confidence_report(self, student_user_id: UUID) -> ConfidenceReportResponse:
         profile = await self.student_service._get_student_profile(student_user_id)
-        session = _SESSIONS_BY_STUDENT.get(profile.id)
+        session = await self._load_session(profile.id)
         if session is None:
             raise NotFoundException("Conversation session not found")
 
@@ -270,7 +416,7 @@ class ConversationService:
 
     async def get_shortlist_unlock(self, student_user_id: UUID) -> ShortlistUnlockResponse:
         profile = await self.student_service._get_student_profile(student_user_id)
-        session = _SESSIONS_BY_STUDENT.get(profile.id)
+        session = await self._load_session(profile.id)
         if session is None:
             raise NotFoundException("Conversation session not found")
 
@@ -309,7 +455,7 @@ class ConversationService:
         self, student_user_id: UUID, conflict_id: UUID, selected_resolution: str
     ) -> ResolveConflictResponse:
         profile = await self.student_service._get_student_profile(student_user_id)
-        session = _SESSIONS_BY_STUDENT.get(profile.id)
+        session = await self._load_session(profile.id)
         if session is None or conflict_id not in session.conflicts:
             raise NotFoundException("Conflict not found")
 
@@ -319,6 +465,8 @@ class ConversationService:
 
         conflict.selected_resolution = selected_resolution
         del session.conflicts[conflict_id]
+
+        await self._save_session(session)
         confidence = self._compute_confidence(session)
         return ResolveConflictResponse(
             conflict_id=conflict_id,
@@ -326,6 +474,19 @@ class ConversationService:
             selected_resolution=selected_resolution,
             updated_confidence=confidence,
         )
+
+    async def get_conversation_context_summary(self, student_user_id: UUID) -> str:
+        """Build a text summary of collected requirements for recommendation context."""
+        profile = await self.student_service._get_student_profile(student_user_id)
+        session = await self._load_session(profile.id)
+        if session is None:
+            return ""
+        active = self._active_requirements_map(session)
+        return "; ".join(f"{k} = {v}" for k, v in active.items()) if active else ""
+
+    # ------------------------------------------------------------------
+    # Bootstrap
+    # ------------------------------------------------------------------
 
     async def _bootstrap_requirements(
         self, session: _ConversationSessionState, student_user_id: UUID
@@ -359,6 +520,10 @@ class ConversationService:
                 source="imported",
                 evidence_turn_id=uuid4(),
             )
+
+    # ------------------------------------------------------------------
+    # Requirement management
+    # ------------------------------------------------------------------
 
     def _upsert_requirement(
         self,
@@ -394,6 +559,10 @@ class ConversationService:
         )
         session.requirements[req.requirement_id] = req
 
+    # ------------------------------------------------------------------
+    # Domain & stage picking
+    # ------------------------------------------------------------------
+
     def _pick_stage(self, turn_count: int) -> ConversationStage:
         if turn_count <= 2:
             return "understand_context"
@@ -420,6 +589,10 @@ class ConversationService:
         if "gpa" in lower or "test" in lower or "score" in lower:
             return "academic_readiness"
         return "learning_preferences"
+
+    # ------------------------------------------------------------------
+    # LLM reply generation
+    # ------------------------------------------------------------------
 
     async def _build_assistant_reply(
         self,
@@ -453,6 +626,10 @@ class ConversationService:
         except Exception:
             logger.exception("LLM call failed in _build_assistant_reply, falling back to template")
             return _TEMPLATE_REPLY.format(domain=domain)
+
+    # ------------------------------------------------------------------
+    # Scoring & helpers
+    # ------------------------------------------------------------------
 
     @staticmethod
     def _active_requirements_map(
@@ -542,15 +719,6 @@ class ConversationService:
                 if (domain, field_name) not in existing:
                     open_tasks.append(f"{domain}.{field_name}")
         return open_tasks
-
-    async def get_conversation_context_summary(self, student_user_id: UUID) -> str:
-        """Build a text summary of collected requirements for recommendation context."""
-        profile = await self.student_service._get_student_profile(student_user_id)
-        session = _SESSIONS_BY_STUDENT.get(profile.id)
-        if session is None:
-            return ""
-        active = self._active_requirements_map(session)
-        return "; ".join(f"{k} = {v}" for k, v in active.items()) if active else ""
 
     def _blocking_issues(self, session: _ConversationSessionState) -> list[str]:
         issues = []
