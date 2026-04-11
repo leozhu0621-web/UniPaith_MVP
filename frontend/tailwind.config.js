@@ -74,10 +74,8 @@ export default {
         heading: ['Lora', 'serif'],
         body: ['Inter', 'sans-serif'],
       },
-      backgroundColor: {
-        'student': '#FAFAF8',
-        'institution': '#F8FAFC',
-      },
+      // Note: bg-student and bg-school come from colors.student and colors.school
+      // Old backgroundColor overrides for '#FAFAF8' and '#F8FAFC' removed — use bg-offwhite instead
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
