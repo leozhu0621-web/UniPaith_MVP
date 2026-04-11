@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { BarChart3, TrendingUp, Target, Users, Award } from 'lucide-react'
-import { getAnalytics } from '../../api/institutions'
+import { getAnalytics, getDemandForecast } from '../../api/institutions'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -16,6 +16,7 @@ export default function AnalyticsPage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
   const analyticsQ = useQuery({ queryKey: ['institution-analytics'], queryFn: getAnalytics })
+  const demandQ = useQuery({ queryKey: ['demand-forecast'], queryFn: getDemandForecast, staleTime: 1000 * 60 * 15 })
   const analytics: AnalyticsData | undefined = analyticsQ.data
 
   const isLoading = analyticsQ.isLoading
@@ -211,6 +212,35 @@ export default function AnalyticsPage() {
           )}
         </Card>
       </div>
+
+      {/* AI Demand Forecast */}
+      {demandQ.data?.programs?.length ? (
+        <Card className="p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Target size={18} className="text-brand-slate-600" />
+            <h3 className="text-sm font-semibold text-gray-900">AI Demand Forecast</h3>
+            <Badge variant="info">Next 30 days</Badge>
+          </div>
+          <div className="space-y-3">
+            {demandQ.data.programs.map(p => {
+              const signalColors: Record<string, string> = { high: 'bg-green-500', moderate: 'bg-amber-500', low: 'bg-gray-400' }
+              return (
+                <div key={p.program_id} className="flex items-center gap-4">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-900 truncate">{p.program_name}</p>
+                    <p className="text-xs text-gray-500">{p.degree_type} &middot; {p.active_matches} active matches</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${signalColors[p.demand_signal] ?? 'bg-gray-400'}`} />
+                    <span className="text-xs text-gray-600 capitalize w-16">{p.demand_signal}</span>
+                    <span className="text-sm font-medium text-gray-900 w-8 text-right">{p.recent_predictions}</span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </Card>
+      ) : null}
       </>)}
 
       {activeTab === 'funnel' && (
