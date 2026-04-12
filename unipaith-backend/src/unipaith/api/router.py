@@ -26,6 +26,7 @@ from unipaith.api.reviews import router as reviews_router
 from unipaith.api.saved_lists import router as saved_lists_router
 from unipaith.api.students import router as students_router
 from unipaith.api.workshops import router as workshops_router
+from unipaith.config import settings
 from unipaith.database import get_db
 from unipaith.models.institution import CampaignLink, CampaignRecipient
 from unipaith.services.campaign_email_service import verify_unsubscribe_token
@@ -73,14 +74,14 @@ async def redirect_campaign_link(
     )
     link = result.scalar_one_or_none()
     if not link:
-        return RedirectResponse("https://unipaith.co", status_code=302)
+        return RedirectResponse(settings.frontend_url, status_code=302)
 
     svc = InstitutionService(db)
     await svc.record_link_click(short_code, student_id=sid)
     await db.commit()
 
     # Resolve destination URL
-    base = "https://unipaith.co"
+    base = settings.frontend_url
     cid_param = f"cid={link.campaign_id}"
     if link.destination_type == "custom" and link.custom_url:
         sep = "&" if "?" in link.custom_url else "?"

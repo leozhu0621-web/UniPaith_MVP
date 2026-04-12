@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     app_name: str = "UniPaith API"
     debug: bool = False
     environment: str = "development"
+    frontend_url: str = "https://app.unipaith.co"
 
     # Database
     database_url: str = "postgresql+asyncpg://unipaith:unipaith@localhost:5432/unipaith"

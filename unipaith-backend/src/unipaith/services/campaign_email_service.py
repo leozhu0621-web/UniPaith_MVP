@@ -112,7 +112,7 @@ class CampaignEmailService:
             return False
 
         # Build personalization variables
-        base_url = "https://unipaith.co"
+        base_url = settings.frontend_url
         unsub_token = _generate_unsubscribe_token(recipient.id)
         variables = {
             "first_name": profile.first_name or "Student",
