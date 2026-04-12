@@ -665,7 +665,22 @@ async def list_post_templates(
     return await svc.list_post_templates(inst.id)
 
 
-# --- Public Profile ---
+# --- Public (no-auth) routes MUST be registered BEFORE /{institution_id} ---
+
+
+@router.get("/promotions/featured", response_model=list[PromotionResponse])
+async def get_featured_promotions(
+    region: str | None = Query(None),
+    country: str | None = Query(None),
+    degree_type: str | None = Query(None),
+    db: AsyncSession = Depends(get_db),
+):
+    """Public — get currently active featured promotions."""
+    svc = _svc(db)
+    return await svc.get_active_promotions(region, country, degree_type)
+
+
+# --- Public Profile (catch-all path param — must be last among GETs) ---
 
 
 @router.get("/{institution_id}", response_model=InstitutionResponse)
@@ -1335,18 +1350,6 @@ async def delete_promotion(
     svc = _svc(db)
     inst = await svc.get_institution(user.id)
     await svc.delete_promotion(inst.id, promotion_id)
-
-
-@router.get("/promotions/featured", response_model=list[PromotionResponse])
-async def get_featured_promotions(
-    region: str | None = Query(None),
-    country: str | None = Query(None),
-    degree_type: str | None = Query(None),
-    db: AsyncSession = Depends(get_db),
-):
-    """Public — get currently active featured promotions."""
-    svc = _svc(db)
-    return await svc.get_active_promotions(region, country, degree_type)
 
 
 # --- Institution Intelligence ---
