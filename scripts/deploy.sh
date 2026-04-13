@@ -109,7 +109,7 @@ case "${1:-all}" in
         deploy_backend
         deploy_frontend
         log "=== Full deployment complete! ==="
-        log "Site: https://unipaith.co"
+        log "Site: https://app.unipaith.co"
         log "API:  https://api.unipaith.co/api/v1/health"
         ;;
     *)
