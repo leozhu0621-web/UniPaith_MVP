@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, Index, Integer, String, Text
+from sqlalchemy import DateTime, Float, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -47,7 +47,3 @@ class PipelineConfig(TimestampMixin, Base):
     value_json: Mapped[dict | None] = mapped_column(JSONB)
     description: Mapped[str | None] = mapped_column(Text)
     updated_by: Mapped[str | None] = mapped_column(String(255))
-
-    __table_args__ = (
-        Index("ix_pipeline_configs_key", "key"),
-    )
