@@ -7,7 +7,7 @@ Autonomous infrastructure verification. Create a TodoWrite checklist and work th
 Region: `us-east-1`
 Cluster: `unipaith-cluster`
 Service: `unipaith-backend`
-Domain: `unipaith.co` / `api.unipaith.co`
+Domain: `app.unipaith.co` / `api.unipaith.co`
 S3 bucket: `unipaith-frontend`
 
 Create a TodoWrite checklist with these 5 items, then work through each one. If any check fails, fix it before moving to the next.
@@ -109,15 +109,15 @@ ZONE_ID=$(aws route53 list-hosted-zones --query "HostedZones[?Name=='unipaith.co
 aws route53 list-resource-record-sets --hosted-zone-id $ZONE_ID --query "ResourceRecordSets[?Name=='api.unipaith.co.']" --output table
 ```
 
-**Verify unipaith.co points to CloudFront:**
+**Verify app.unipaith.co points to CloudFront:**
 ```bash
-aws route53 list-resource-record-sets --hosted-zone-id $ZONE_ID --query "ResourceRecordSets[?Name=='unipaith.co.']" --output table
+aws route53 list-resource-record-sets --hosted-zone-id $ZONE_ID --query "ResourceRecordSets[?Name=='app.unipaith.co.']" --output table
 ```
 
 **Live DNS resolution:**
 ```bash
 nslookup api.unipaith.co
-nslookup unipaith.co
+nslookup app.unipaith.co
 ```
 
 **Verify ALB DNS matches Route53 target:**
@@ -126,7 +126,7 @@ ALB_DNS=$(aws elbv2 describe-load-balancers --region us-east-1 --query "LoadBala
 echo "ALB DNS: $ALB_DNS"
 ```
 
-Pass criteria: api.unipaith.co resolves to ALB, unipaith.co resolves to CloudFront, DNS records are ALIAS type.
+Pass criteria: api.unipaith.co resolves to ALB, app.unipaith.co resolves to CloudFront, DNS records are ALIAS type.
 
 ## 5. S3 Frontend Bundle & CORS
 
@@ -143,7 +143,7 @@ aws s3api get-bucket-cors --bucket unipaith-frontend --region us-east-1 --output
 
 **CloudFront distribution status:**
 ```bash
-DIST_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items[?contains(@,'unipaith.co')]].Id" --output text)
+DIST_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items[?contains(@,'app.unipaith.co')]].Id" --output text)
 aws cloudfront get-distribution --id $DIST_ID --query "Distribution.{Status:Status,DomainName:DomainName,Enabled:DistributionConfig.Enabled}" --output table
 ```
 
@@ -154,10 +154,10 @@ aws cloudfront list-invalidations --distribution-id $DIST_ID --query "Invalidati
 
 **Live site check:**
 ```bash
-curl -sf -o /dev/null -w "%{http_code}" https://unipaith.co
+curl -sf -o /dev/null -w "%{http_code}" https://app.unipaith.co
 ```
 
-Pass criteria: index.html exists and is recent, CORS allows unipaith.co origins, CloudFront enabled and deployed, site returns 200.
+Pass criteria: index.html exists and is recent, CORS allows app.unipaith.co origins, CloudFront enabled and deployed, site returns 200.
 
 ## Final Report
 
