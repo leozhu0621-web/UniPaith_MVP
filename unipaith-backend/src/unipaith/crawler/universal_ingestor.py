@@ -131,8 +131,8 @@ class TranscriptAdapter(BaseAdapter):
         try:
             from youtube_transcript_api import YouTubeTranscriptApi
 
-            transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
-            text = " ".join(entry["text"] for entry in transcript_list)
+            transcript = YouTubeTranscriptApi().fetch(video_id)
+            text = " ".join(snippet.text for snippet in transcript)
         except Exception:
             logger.warning("Could not fetch transcript for %s", url)
             return []
@@ -352,7 +352,7 @@ class SearchAdapter(BaseAdapter):
         links = []
         for result in soup.select(".result__a"):
             href = result.get("href", "")
-            if href.startswith("http"):
+            if isinstance(href, str) and href.startswith("http"):
                 links.append(href)
 
         return [
