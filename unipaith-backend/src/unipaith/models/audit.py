@@ -9,7 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from unipaith.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
-class AdmissionsAuditLog(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+class AdmissionsAuditLog(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     """Immutable audit trail for admissions pipeline actions."""
 
     __tablename__ = "admissions_audit_log"

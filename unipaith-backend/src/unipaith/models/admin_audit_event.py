@@ -9,7 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from unipaith.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
-class AdminAuditEvent(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+class AdminAuditEvent(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "admin_audit_events"
 
     actor_user_id: Mapped[uuid.UUID | None] = mapped_column(

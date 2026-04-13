@@ -136,7 +136,7 @@ class CrawlFrontier(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
 
 
-class EngineLoopSnapshot(Base, TimestampMixin):
+class EngineLoopSnapshot(TimestampMixin, Base):
     """Singleton row (id=1) persisted each knowledge-engine tick for cross-worker admin truth."""
 
     __tablename__ = "engine_loop_snapshot"
