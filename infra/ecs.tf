@@ -165,7 +165,7 @@ resource "aws_ecs_task_definition" "backend" {
       { name = "COGNITO_DOMAIN", value = "${var.project}.auth.${var.aws_region}.amazoncognito.com" },
       { name = "COGNITO_BYPASS", value = "false" },
       { name = "AI_MOCK_MODE", value = "false" },
-      { name = "CORS_ORIGINS", value = "[\"https://${var.domain_name}\",\"https://www.${var.domain_name}\"]" },
+      { name = "CORS_ORIGINS", value = "[\"https://app.${var.domain_name}\"]" },
       { name = "SES_SENDER_EMAIL", value = "noreply@${var.domain_name}" },
       { name = "NOTIFICATIONS_ENABLED", value = "true" },
     ]
