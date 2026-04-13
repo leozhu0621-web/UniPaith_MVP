@@ -38,7 +38,7 @@ test_engine = create_async_engine(TEST_DATABASE_URL, echo=False, poolclass=NullP
 TestSession = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 async def setup_db():
     # Retry setup — the first connection can be stale after a previous dispose().
     for _attempt in range(3):
@@ -68,7 +68,7 @@ async def setup_db():
 
 
 @pytest.fixture
-async def db_session() -> AsyncGenerator[AsyncSession, None]:
+async def db_session(setup_db) -> AsyncGenerator[AsyncSession, None]:
     async with TestSession() as session:
         yield session
 
