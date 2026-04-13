@@ -119,10 +119,27 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
       : null
 
+    // If the backend didn't return a user payload, fetch /auth/me (same as login path).
+    const resolvedUser = normalizedUser?.id
+      ? normalizedUser
+      : await (async () => {
+          const meToken = data?.access_token
+          if (!meToken) throw new Error('Google sign-in succeeded but access token is missing')
+          const { data: me } = await apiClient.get('/auth/me', {
+            headers: { Authorization: `Bearer ${meToken}` },
+          })
+          return {
+            id: String(me.user_id ?? me.id),
+            email: String(me.email ?? ''),
+            role: me.role as User['role'],
+            created_at: String(me.created_at ?? new Date().toISOString()),
+          }
+        })()
+
     set({
       accessToken: data.access_token,
       refreshToken: data.refresh_token ?? null,
-      user: normalizedUser,
+      user: resolvedUser,
       isAuthenticated: true,
     })
     persistRefreshToken(data.refresh_token ?? null)
@@ -137,7 +154,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const rt = get().refreshToken
     if (!rt) throw new Error('No refresh token')
     const { data } = await apiClient.post('/auth/refresh', { refresh_token: rt })
-    set({ accessToken: data.access_token })
+    const newRt = data.refresh_token ?? rt
+    set({ accessToken: data.access_token, refreshToken: newRt })
+    persistRefreshToken(newRt)
     return data.access_token
   },
 

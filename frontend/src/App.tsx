@@ -84,7 +84,7 @@ const queryClient = new QueryClient({
 })
 
 const router = createBrowserRouter([
-  // Root → login (landing pages on Squarespace at unipaith.co)
+  // Root → login (landing pages on Squarespace at app.unipaith.co)
   { path: '/', element: <Navigate to="/login" replace />, errorElement: <RouteErrorPage /> },
 
   // Public program browsing (linked from Squarespace CTAs)
