@@ -10,6 +10,7 @@ Insight delivery formats:
 - Competitive analysis: how the school compares from applicants' perspective
 - Yield risk alerts: admits showing signals of choosing elsewhere
 """
+
 from __future__ import annotations
 
 import logging
@@ -64,7 +65,8 @@ class InstitutionIntelligence:
         self.knowledge = KnowledgeRetriever(db)
 
     async def generate_narrative_digest(
-        self, institution_id: UUID,
+        self,
+        institution_id: UUID,
     ) -> dict:
         """Generate a weekly narrative digest for the institution."""
         institution = await self._load_institution(institution_id)
@@ -82,12 +84,17 @@ class InstitutionIntelligence:
         )
 
         context = self._build_digest_context(
-            institution, programs, app_stats, outcome_patterns, knowledge_items,
+            institution,
+            programs,
+            app_stats,
+            outcome_patterns,
+            knowledge_items,
         )
 
         try:
             narrative = await self.llm.generate_reasoning(
-                NARRATIVE_DIGEST_PROMPT, context,
+                NARRATIVE_DIGEST_PROMPT,
+                context,
             )
         except Exception:
             logger.exception("Narrative digest generation failed")
@@ -102,7 +109,9 @@ class InstitutionIntelligence:
         }
 
     async def generate_applicant_context(
-        self, institution_id: UUID, student_id: UUID,
+        self,
+        institution_id: UUID,
+        student_id: UUID,
     ) -> dict:
         """Generate deep applicant context card for admissions review."""
         institution = await self._load_institution(institution_id)
@@ -126,12 +135,16 @@ class InstitutionIntelligence:
         )
 
         context = self._build_applicant_context(
-            institution, student, matches, knowledge_items,
+            institution,
+            student,
+            matches,
+            knowledge_items,
         )
 
         try:
             narrative = await self.llm.generate_reasoning(
-                APPLICANT_CONTEXT_PROMPT, context,
+                APPLICANT_CONTEXT_PROMPT,
+                context,
             )
         except Exception:
             logger.exception("Applicant context generation failed")
@@ -154,7 +167,8 @@ class InstitutionIntelligence:
         }
 
     async def generate_demand_forecast(
-        self, institution_id: UUID,
+        self,
+        institution_id: UUID,
     ) -> dict:
         """Forecast application demand based on interest signals."""
         institution = await self._load_institution(institution_id)
@@ -165,31 +179,45 @@ class InstitutionIntelligence:
 
         program_demand = []
         for program in programs:
-            match_count = await self.db.scalar(
-                select(func.count()).select_from(MatchResult).where(
-                    MatchResult.program_id == program.id,
-                    MatchResult.is_stale.is_(False),
+            match_count = (
+                await self.db.scalar(
+                    select(func.count())
+                    .select_from(MatchResult)
+                    .where(
+                        MatchResult.program_id == program.id,
+                        MatchResult.is_stale.is_(False),
+                    )
                 )
-            ) or 0
-            prediction_count = await self.db.scalar(
-                select(func.count()).select_from(PredictionLog).where(
-                    PredictionLog.program_id == program.id,
-                    PredictionLog.predicted_at >= datetime.now(UTC) - timedelta(days=30),
+                or 0
+            )
+            prediction_count = (
+                await self.db.scalar(
+                    select(func.count())
+                    .select_from(PredictionLog)
+                    .where(
+                        PredictionLog.program_id == program.id,
+                        PredictionLog.predicted_at >= datetime.now(UTC) - timedelta(days=30),
+                    )
                 )
-            ) or 0
+                or 0
+            )
 
-            program_demand.append({
-                "program_id": str(program.id),
-                "program_name": program.program_name,
-                "degree_type": program.degree_type,
-                "active_matches": match_count,
-                "recent_predictions": prediction_count,
-                "demand_signal": (
-                    "high" if prediction_count > 10
-                    else "moderate" if prediction_count > 3
-                    else "low"
-                ),
-            })
+            program_demand.append(
+                {
+                    "program_id": str(program.id),
+                    "program_name": program.program_name,
+                    "degree_type": program.degree_type,
+                    "active_matches": match_count,
+                    "recent_predictions": prediction_count,
+                    "demand_signal": (
+                        "high"
+                        if prediction_count > 10
+                        else "moderate"
+                        if prediction_count > 3
+                        else "low"
+                    ),
+                }
+            )
 
         program_demand.sort(key=lambda x: x["recent_predictions"], reverse=True)
 
@@ -202,7 +230,8 @@ class InstitutionIntelligence:
         }
 
     async def generate_yield_risk_alerts(
-        self, institution_id: UUID,
+        self,
+        institution_id: UUID,
     ) -> dict:
         """Identify admits showing signals of choosing elsewhere."""
         programs = await self._load_programs(institution_id)
@@ -222,24 +251,29 @@ class InstitutionIntelligence:
         alerts = []
         for app in apps[:20]:
             other_matches = await self.db.execute(
-                select(func.count()).select_from(MatchResult).where(
+                select(func.count())
+                .select_from(MatchResult)
+                .where(
                     MatchResult.student_id == app.student_id,
                     MatchResult.program_id.notin_(program_ids),
                     (MatchResult.match_score > app.match_score)
-                    if hasattr(app, "match_score") else True,
+                    if hasattr(app, "match_score")
+                    else True,
                 )
             )
             competing_count = other_matches.scalar() or 0
 
             if competing_count > 2:
-                alerts.append({
-                    "application_id": str(app.id),
-                    "student_id": str(app.student_id),
-                    "program_id": str(app.program_id),
-                    "risk_level": "high" if competing_count > 5 else "moderate",
-                    "competing_programs": competing_count,
-                    "reason": f"Student has {competing_count} other strong matches",
-                })
+                alerts.append(
+                    {
+                        "application_id": str(app.id),
+                        "student_id": str(app.student_id),
+                        "program_id": str(app.program_id),
+                        "risk_level": "high" if competing_count > 5 else "moderate",
+                        "competing_programs": competing_count,
+                        "reason": f"Student has {competing_count} other strong matches",
+                    }
+                )
 
         return {
             "institution_id": str(institution_id),
@@ -248,7 +282,12 @@ class InstitutionIntelligence:
         }
 
     def _build_digest_context(
-        self, institution, programs, app_stats, outcome_patterns, knowledge_items,
+        self,
+        institution,
+        programs,
+        app_stats,
+        outcome_patterns,
+        knowledge_items,
     ) -> str:
         parts = [
             f"## Institution: {institution.name}",
@@ -264,7 +303,11 @@ class InstitutionIntelligence:
         return "\n".join(parts)
 
     def _build_applicant_context(
-        self, institution, student, matches, knowledge_items,
+        self,
+        institution,
+        student,
+        matches,
+        knowledge_items,
     ) -> str:
         parts = [
             f"## Institution: {institution.name}",
@@ -277,17 +320,14 @@ class InstitutionIntelligence:
             parts.append("\n## Match Data")
             for m in matches:
                 parts.append(
-                    f"- Program {m.program_id}: "
-                    f"score={m.match_score}, tier={m.match_tier}"
+                    f"- Program {m.program_id}: score={m.match_score}, tier={m.match_tier}"
                 )
         if knowledge_items:
             parts.append(format_knowledge_for_prompt(knowledge_items, max_chars=1500))
         return "\n".join(parts)
 
     async def _load_institution(self, institution_id: UUID) -> Institution | None:
-        result = await self.db.execute(
-            select(Institution).where(Institution.id == institution_id)
-        )
+        result = await self.db.execute(select(Institution).where(Institution.id == institution_id))
         return result.scalar_one_or_none()
 
     async def _load_programs(self, institution_id: UUID) -> list[Program]:
@@ -306,7 +346,9 @@ class InstitutionIntelligence:
         return result.scalar_one_or_none()
 
     async def _load_student_matches(
-        self, student_id: UUID, institution_id: UUID,
+        self,
+        student_id: UUID,
+        institution_id: UUID,
     ) -> list[MatchResult]:
         programs = await self._load_programs(institution_id)
         if not programs:
@@ -325,11 +367,16 @@ class InstitutionIntelligence:
         if not program_ids:
             return {"total_applications": 0}
 
-        total = await self.db.scalar(
-            select(func.count()).select_from(Application).where(
-                Application.program_id.in_(program_ids),
+        total = (
+            await self.db.scalar(
+                select(func.count())
+                .select_from(Application)
+                .where(
+                    Application.program_id.in_(program_ids),
+                )
             )
-        ) or 0
+            or 0
+        )
 
         return {
             "total_applications": total,

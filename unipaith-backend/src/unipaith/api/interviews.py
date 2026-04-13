@@ -136,7 +136,9 @@ async def batch_invite_interviews(
     await InstitutionService(db).get_institution(user.id)
     svc = InterviewService(db)
     result = BatchOperationResult(
-        success_count=0, failed_ids=[], errors=[],
+        success_count=0,
+        failed_ids=[],
+        errors=[],
     )
     for app_id in body.application_ids:
         try:

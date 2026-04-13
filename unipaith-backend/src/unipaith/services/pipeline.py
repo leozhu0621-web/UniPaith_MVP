@@ -107,9 +107,7 @@ class ContinuousPipeline:
         extractor = KnowledgeExtractor(db)
 
         now = datetime.now(UTC)
-        ready = (CrawlFrontier.next_crawl_after.is_(None)) | (
-            CrawlFrontier.next_crawl_after <= now
-        )
+        ready = (CrawlFrontier.next_crawl_after.is_(None)) | (CrawlFrontier.next_crawl_after <= now)
         result = await db.execute(
             select(CrawlFrontier)
             .where(CrawlFrontier.status == "pending", ready)
@@ -122,21 +120,25 @@ class ContinuousPipeline:
         if item is None:
             if settings.engine_bootstrap_enabled:
                 pending_count = await db.scalar(
-                    select(func.count()).select_from(CrawlFrontier)
+                    select(func.count())
+                    .select_from(CrawlFrontier)
                     .where(CrawlFrontier.status == "pending")
                 )
                 if (pending_count or 0) == 0:
-                    added = await discoverer.ensure_bootstrap_frontier(
-                        get_engine_bootstrap_urls()
-                    )
+                    added = await discoverer.ensure_bootstrap_frontier(get_engine_bootstrap_urls())
                     if added:
                         logger.info("Bootstrap: added %d seed URLs", added)
 
             discovery = await discoverer.run_discovery_cycle(max_new_urls=20)
             discovered = sum(discovery.values())
-            await self._update_stage("crawl", "waiting", extra={
-                "action": "discovery", "discovered": discovered,
-            })
+            await self._update_stage(
+                "crawl",
+                "waiting",
+                extra={
+                    "action": "discovery",
+                    "discovered": discovered,
+                },
+            )
             return 0
 
         try:
@@ -163,8 +165,7 @@ class ContinuousPipeline:
         except Exception as exc:
             logger.warning("Failed to crawl %s: %s", item.url, exc)
             await discoverer.mark_crawled(item.id, success=False, error=str(exc)[:500])
-            await self._update_stage("crawl", "running", error=True,
-                                     last_error=str(exc)[:500])
+            await self._update_stage("crawl", "running", error=True, last_error=str(exc)[:500])
             return 0
 
     # ------------------------------------------------------------------
@@ -197,6 +198,7 @@ class ContinuousPipeline:
                     await self.budget_gate.acquire(settings.pipeline_extract_cost_per_doc)
 
                     from unipaith.crawler.knowledge_extractor import KnowledgeExtractor
+
                     extractor = KnowledgeExtractor(db)
                     await extractor.extract_knowledge(doc)
                     await db.commit()
@@ -243,26 +245,34 @@ class ContinuousPipeline:
 
                 async with async_session() as db:
                     from unipaith.models.ml_loop import OutcomeRecord
-                    count = await db.scalar(
-                        select(func.count()).select_from(OutcomeRecord)
-                    ) or 0
+
+                    count = await db.scalar(select(func.count()).select_from(OutcomeRecord)) or 0
 
                 threshold = settings.pipeline_ml_threshold
                 if count < threshold:
-                    await self._update_stage("ml", "waiting", extra={
-                        "current_outcomes": count,
-                        "required_outcomes": threshold,
-                        "reason": "insufficient_outcomes",
-                    })
+                    await self._update_stage(
+                        "ml",
+                        "waiting",
+                        extra={
+                            "current_outcomes": count,
+                            "required_outcomes": threshold,
+                            "reason": "insufficient_outcomes",
+                        },
+                    )
                     await asyncio.sleep(settings.pipeline_ml_check_seconds)
                     continue
 
-                await self._update_stage("ml", "training", extra={
-                    "current_outcomes": count,
-                    "required_outcomes": threshold,
-                })
+                await self._update_stage(
+                    "ml",
+                    "training",
+                    extra={
+                        "current_outcomes": count,
+                        "required_outcomes": threshold,
+                    },
+                )
                 async with async_session() as db:
                     from unipaith.ml.orchestrator import MLOrchestrator
+
                     orch = MLOrchestrator(db)
                     try:
                         result = await orch.run_full_cycle(
@@ -270,18 +280,23 @@ class ContinuousPipeline:
                             preferred_mode=settings.training_default_cycle_mode,
                         )
                         await db.commit()
-                        await self._update_stage("ml", "completed", items=1, extra={
-                            "current_outcomes": count,
-                            "required_outcomes": threshold,
-                            "cycle_result": {
-                                k: v for k, v in result.items()
-                                if k in ("evaluation", "training", "promotion", "decision")
+                        await self._update_stage(
+                            "ml",
+                            "completed",
+                            items=1,
+                            extra={
+                                "current_outcomes": count,
+                                "required_outcomes": threshold,
+                                "cycle_result": {
+                                    k: v
+                                    for k, v in result.items()
+                                    if k in ("evaluation", "training", "promotion", "decision")
+                                },
                             },
-                        })
+                        )
                     except Exception as exc:
                         logger.exception("ML cycle failed")
-                        await self._update_stage("ml", "error",
-                                                 last_error=str(exc)[:500])
+                        await self._update_stage("ml", "error", last_error=str(exc)[:500])
 
                 await asyncio.sleep(settings.pipeline_ml_cooldown_seconds)
 
@@ -366,14 +381,16 @@ class ContinuousPipeline:
                     snap.budget_per_hour = self.budget_gate.budget_per_hour
 
                 raw_count = await db.scalar(
-                    select(func.count()).select_from(KnowledgeDocument)
+                    select(func.count())
+                    .select_from(KnowledgeDocument)
                     .where(KnowledgeDocument.processing_status == "raw")
                 )
                 if stage == "extract":
                     snap.queue_depth = raw_count or 0
                 elif stage == "crawl":
                     frontier_count = await db.scalar(
-                        select(func.count()).select_from(CrawlFrontier)
+                        select(func.count())
+                        .select_from(CrawlFrontier)
                         .where(CrawlFrontier.status == "pending")
                     )
                     snap.queue_depth = frontier_count or 0

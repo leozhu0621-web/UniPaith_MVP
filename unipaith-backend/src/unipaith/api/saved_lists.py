@@ -54,15 +54,17 @@ async def list_saved_programs(
     enriched = []
     for item in items:
         prog = prog_map.get(item.program_id)
-        enriched.append(SavedProgramResponse(
-            id=item.id,
-            list_id=item.list_id,
-            program_id=item.program_id,
-            notes=item.notes,
-            added_at=item.added_at,
-            program_name=prog.program_name if prog else None,
-            institution_name=prog.institution_name if prog else None,
-        ))
+        enriched.append(
+            SavedProgramResponse(
+                id=item.id,
+                list_id=item.list_id,
+                program_id=item.program_id,
+                notes=item.notes,
+                added_at=item.added_at,
+                program_name=prog.program_name if prog else None,
+                institution_name=prog.institution_name if prog else None,
+            )
+        )
     return enriched
 
 

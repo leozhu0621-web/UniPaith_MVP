@@ -28,7 +28,8 @@ class UpdateIntakeRoundRequest(BaseModel):
     capacity: int | None = Field(None, ge=1)
     requirements: dict | None = None
     status: str | None = Field(
-        None, pattern=r"^(upcoming|open|closed|completed)$",
+        None,
+        pattern=r"^(upcoming|open|closed|completed)$",
     )
     is_active: bool | None = None
     sort_order: int | None = None

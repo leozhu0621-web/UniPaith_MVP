@@ -1,4 +1,5 @@
 """Campaign email delivery via Amazon SES with personalization and unsubscribe."""
+
 from __future__ import annotations
 
 import hashlib
@@ -77,13 +78,17 @@ class CampaignEmailService:
         for recipient in recipients:
             try:
                 success = await self._send_to_recipient(
-                    campaign, recipient, institution_name, program_name,
+                    campaign,
+                    recipient,
+                    institution_name,
+                    program_name,
                 )
                 if success:
                     sent_count += 1
             except Exception:
                 logger.exception(
-                    "Failed to send campaign email to recipient %s", recipient.id,
+                    "Failed to send campaign email to recipient %s",
+                    recipient.id,
                 )
 
         return sent_count
@@ -104,15 +109,14 @@ class CampaignEmailService:
         if not profile:
             return False
 
-        user_result = await self.db.execute(
-            select(User).where(User.id == profile.user_id)
-        )
+        user_result = await self.db.execute(select(User).where(User.id == profile.user_id))
         user = user_result.scalar_one_or_none()
         if not user or not user.email:
             return False
 
         # Build personalization variables
-        base_url = "https://app.unipaith.co"
+        app_url = "https://app.unipaith.co"
+        api_url = "https://api.unipaith.co"
         unsub_token = _generate_unsubscribe_token(recipient.id)
         variables = {
             "first_name": profile.first_name or "Student",
@@ -122,10 +126,9 @@ class CampaignEmailService:
             "program_name": program_name or "",
             "campaign_name": campaign.campaign_name,
             "unsubscribe_url": (
-                f"{base_url}/api/v1/campaigns/unsubscribe"
-                f"/{recipient.id}?token={unsub_token}"
+                f"{api_url}/api/v1/campaigns/unsubscribe/{recipient.id}?token={unsub_token}"
             ),
-            "platform_url": base_url,
+            "platform_url": app_url,
         }
 
         # Personalize subject and body
@@ -150,9 +153,9 @@ class CampaignEmailService:
             '<div style="color:#374151;font-size:14px;'
             f'line-height:1.6">{body_html}</div>'
             '<div style="margin-top:24px;text-align:center">'
-            f'<a href="{base_url}" style="display:inline-block;'
+            f'<a href="{app_url}" style="display:inline-block;'
             "padding:10px 24px;background:#1a1a1a;color:#fff;"
-            'text-decoration:none;border-radius:6px;'
+            "text-decoration:none;border-radius:6px;"
             'font-size:14px">Visit UniPaith</a></div>'
             '<div style="margin-top:32px;padding-top:16px;'
             "border-top:1px solid #e5e7eb;text-align:center;"

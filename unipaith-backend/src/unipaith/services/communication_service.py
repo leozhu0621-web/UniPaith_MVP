@@ -1,4 +1,5 @@
 """Communication template service — CRUD, personalization, and delivery."""
+
 from __future__ import annotations
 
 import re
@@ -59,7 +60,9 @@ class CommunicationService:
         return [await self._enrich(t) for t in result.scalars().all()]
 
     async def create_template(
-        self, institution_id: UUID, data: CreateTemplateRequest,
+        self,
+        institution_id: UUID,
+        data: CreateTemplateRequest,
     ) -> TemplateResponse:
         # If setting as default, unset existing default of same type
         if data.is_default:
@@ -72,7 +75,8 @@ class CommunicationService:
             name=data.name,
             subject=data.subject,
             body=data.body,
-            variables=data.variables or _extract_variables(
+            variables=data.variables
+            or _extract_variables(
                 data.subject + " " + data.body,
             ),
             is_default=data.is_default,
@@ -109,7 +113,9 @@ class CommunicationService:
         return await self._enrich(tmpl)
 
     async def delete_template(
-        self, institution_id: UUID, template_id: UUID,
+        self,
+        institution_id: UUID,
+        template_id: UUID,
     ) -> None:
         tmpl = await self._get(institution_id, template_id)
         await self.db.delete(tmpl)
@@ -123,7 +129,8 @@ class CommunicationService:
     ) -> TemplatePreviewResponse:
         tmpl = await self._get(institution_id, template_id)
         variables = await self._resolve_variables(
-            institution_id, application_id,
+            institution_id,
+            application_id,
         )
         return TemplatePreviewResponse(
             rendered_subject=_personalize(tmpl.subject, variables),
@@ -149,7 +156,8 @@ class CommunicationService:
         for app_id in application_ids:
             try:
                 variables = await self._resolve_variables(
-                    institution_id, app_id,
+                    institution_id,
+                    app_id,
                 )
                 if overrides:
                     variables.update(overrides)
@@ -198,7 +206,9 @@ class CommunicationService:
     # --- Helpers ---
 
     async def _get(
-        self, institution_id: UUID, template_id: UUID,
+        self,
+        institution_id: UUID,
+        template_id: UUID,
     ) -> CommunicationTemplate:
         r = await self.db.execute(
             select(CommunicationTemplate).where(
@@ -212,7 +222,9 @@ class CommunicationService:
         return tmpl
 
     async def _unset_defaults(
-        self, institution_id: UUID, template_type: str,
+        self,
+        institution_id: UUID,
+        template_type: str,
     ) -> None:
         from sqlalchemy import update
 
@@ -235,9 +247,7 @@ class CommunicationService:
         variables: dict[str, str] = {}
 
         # Institution info
-        ir = await self.db.execute(
-            select(Institution).where(Institution.id == institution_id)
-        )
+        ir = await self.db.execute(select(Institution).where(Institution.id == institution_id))
         inst = ir.scalar_one_or_none()
         if inst:
             variables["institution_name"] = inst.name
@@ -250,9 +260,7 @@ class CommunicationService:
             return variables
 
         # Application + student + program
-        ar = await self.db.execute(
-            select(Application).where(Application.id == application_id)
-        )
+        ar = await self.db.execute(select(Application).where(Application.id == application_id))
         app = ar.scalar_one_or_none()
         if app:
             # Program
@@ -284,7 +292,8 @@ class CommunicationService:
         return variables
 
     async def _enrich(
-        self, tmpl: CommunicationTemplate,
+        self,
+        tmpl: CommunicationTemplate,
     ) -> TemplateResponse:
         prog_name = None
         if tmpl.program_id:
@@ -326,14 +335,13 @@ class CommunicationService:
         from unipaith.ai.llm_client import get_llm_client
 
         variables = await self._resolve_variables(
-            institution_id, application_id,
+            institution_id,
+            application_id,
         )
 
         # Load application context for richer drafts
         app_context = {}
-        ar = await self.db.execute(
-            select(Application).where(Application.id == application_id)
-        )
+        ar = await self.db.execute(select(Application).where(Application.id == application_id))
         app = ar.scalar_one_or_none()
         if app:
             app_context = {
@@ -377,8 +385,7 @@ class CommunicationService:
                 "well in their future endeavors."
             ),
             "decision_waitlist": (
-                "Write an informative waitlist notification. "
-                "Explain the process and timeline."
+                "Write an informative waitlist notification. Explain the process and timeline."
             ),
             "offer_notice": (
                 "Write a formal offer letter with financial details "
@@ -408,9 +415,7 @@ class CommunicationService:
             f"Completeness: {app_context.get('completeness', 'N/A')}\n"
         )
         if app_context.get("missing_items"):
-            user_content += (
-                f"Missing items: {json.dumps(app_context['missing_items'])}\n"
-            )
+            user_content += f"Missing items: {json.dumps(app_context['missing_items'])}\n"
         if app_context.get("decision"):
             user_content += f"Decision: {app_context['decision']}\n"
         if context_notes:
@@ -431,8 +436,7 @@ class CommunicationService:
         except (json.JSONDecodeError, TypeError):
             return {
                 "subject": (
-                    "Regarding your application to "
-                    f"{variables.get('program_name', 'our program')}"
+                    f"Regarding your application to {variables.get('program_name', 'our program')}"
                 ),
                 "body": raw or "Draft generation failed.",
                 "message_type": message_type,

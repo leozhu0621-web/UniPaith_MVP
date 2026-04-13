@@ -138,19 +138,16 @@ async def get_program_reviews(
     result = await db.execute(stmt)
     reviews = list(result.scalars().all())
 
-    avg_stmt = (
-        select(
-            func.count().label("cnt"),
-            func.avg(StudentProgramReview.rating_teaching),
-            func.avg(StudentProgramReview.rating_workload),
-            func.avg(StudentProgramReview.rating_career_support),
-            func.avg(StudentProgramReview.rating_roi),
-            func.avg(StudentProgramReview.rating_overall),
-        )
-        .where(
-            StudentProgramReview.program_id == program_id,
-            StudentProgramReview.is_published.is_(True),
-        )
+    avg_stmt = select(
+        func.count().label("cnt"),
+        func.avg(StudentProgramReview.rating_teaching),
+        func.avg(StudentProgramReview.rating_workload),
+        func.avg(StudentProgramReview.rating_career_support),
+        func.avg(StudentProgramReview.rating_roi),
+        func.avg(StudentProgramReview.rating_overall),
+    ).where(
+        StudentProgramReview.program_id == program_id,
+        StudentProgramReview.is_published.is_(True),
     )
     agg = (await db.execute(avg_stmt)).one()
 
@@ -158,9 +155,7 @@ async def get_program_reviews(
         total_reviews=agg[0] or 0,
         avg_teaching=round(float(agg[1]), 1) if agg[1] else None,
         avg_workload=round(float(agg[2]), 1) if agg[2] else None,
-        avg_career_support=(
-            round(float(agg[3]), 1) if agg[3] else None
-        ),
+        avg_career_support=(round(float(agg[3]), 1) if agg[3] else None),
         avg_roi=round(float(agg[4]), 1) if agg[4] else None,
         avg_overall=round(float(agg[5]), 1) if agg[5] else None,
         reviews=[
@@ -232,18 +227,15 @@ async def get_employer_feedback(
     result = await db.execute(stmt)
     items = list(result.scalars().all())
 
-    avg_stmt = (
-        select(
-            func.count().label("cnt"),
-            func.avg(EmployerFeedback.rating_technical),
-            func.avg(EmployerFeedback.rating_practical),
-            func.avg(EmployerFeedback.rating_communication),
-            func.avg(EmployerFeedback.rating_overall),
-        )
-        .where(
-            EmployerFeedback.program_id == program_id,
-            EmployerFeedback.is_published.is_(True),
-        )
+    avg_stmt = select(
+        func.count().label("cnt"),
+        func.avg(EmployerFeedback.rating_technical),
+        func.avg(EmployerFeedback.rating_practical),
+        func.avg(EmployerFeedback.rating_communication),
+        func.avg(EmployerFeedback.rating_overall),
+    ).where(
+        EmployerFeedback.program_id == program_id,
+        EmployerFeedback.is_published.is_(True),
     )
     agg = (await db.execute(avg_stmt)).one()
 
@@ -254,18 +246,10 @@ async def get_employer_feedback(
 
     return EmployerFeedbackSummaryResponse(
         total_feedback=agg[0] or 0,
-        avg_technical=(
-            round(float(agg[1]), 1) if agg[1] else None
-        ),
-        avg_practical=(
-            round(float(agg[2]), 1) if agg[2] else None
-        ),
-        avg_communication=(
-            round(float(agg[3]), 1) if agg[3] else None
-        ),
-        avg_overall=(
-            round(float(agg[4]), 1) if agg[4] else None
-        ),
+        avg_technical=(round(float(agg[1]), 1) if agg[1] else None),
+        avg_practical=(round(float(agg[2]), 1) if agg[2] else None),
+        avg_communication=(round(float(agg[3]), 1) if agg[3] else None),
+        avg_overall=(round(float(agg[4]), 1) if agg[4] else None),
         sentiment_counts=sentiments,
         feedback=[
             EmployerFeedbackResponse(

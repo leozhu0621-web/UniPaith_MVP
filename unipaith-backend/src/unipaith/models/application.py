@@ -269,13 +269,9 @@ class EnrollmentRecord(Base):
 
 class AIPacketSummary(Base):
     __tablename__ = "ai_packet_summaries"
-    __table_args__ = (
-        UniqueConstraint("application_id", name="uq_ai_packet_app"),
-    )
+    __table_args__ = (UniqueConstraint("application_id", name="uq_ai_packet_app"),)
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     application_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("applications.id", ondelete="CASCADE"),
@@ -298,9 +294,7 @@ class AIPacketSummary(Base):
     recommended_score: Mapped[Decimal | None] = mapped_column(Numeric(6, 3))
     confidence_level: Mapped[str | None] = mapped_column(String(20))
     model_used: Mapped[str | None] = mapped_column(String(100))
-    generated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -315,9 +309,7 @@ class AIPacketSummary(Base):
 class IntegritySignal(Base):
     __tablename__ = "integrity_signals"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     application_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("applications.id", ondelete="CASCADE"),
@@ -331,13 +323,17 @@ class IntegritySignal(Base):
     )
     signal_type: Mapped[str] = mapped_column(String(50), nullable=False)
     severity: Mapped[str] = mapped_column(
-        String(20), default="medium", nullable=False,
+        String(20),
+        default="medium",
+        nullable=False,
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     evidence: Mapped[dict | None] = mapped_column(JSONB)
     status: Mapped[str] = mapped_column(
-        String(20), default="open", nullable=False,
+        String(20),
+        default="open",
+        nullable=False,
     )
     resolved_by: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),

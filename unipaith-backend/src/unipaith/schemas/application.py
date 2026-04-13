@@ -31,6 +31,7 @@ class DecisionRequest(BaseModel):
 
 class ProgramBrief(BaseModel):
     """Minimal program info embedded in application responses."""
+
     model_config = ConfigDict(from_attributes=True)
     id: UUID
     program_name: str

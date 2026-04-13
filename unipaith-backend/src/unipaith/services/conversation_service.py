@@ -198,9 +198,7 @@ class ConversationService:
     async def _save_session(self, session: _ConversationSessionState) -> None:
         """Persist session state to DB (upsert)."""
         result = await self.db.execute(
-            select(ConversationSession).where(
-                ConversationSession.student_id == session.student_id
-            )
+            select(ConversationSession).where(ConversationSession.student_id == session.student_id)
         )
         row = result.scalar_one_or_none()
 
@@ -262,9 +260,7 @@ class ConversationService:
         if settings.ai_mock_mode:
             selected_domain = self._pick_domain_keyword(body.message)
         else:
-            selected_domain, extracted_fields = await self._pick_domain_llm(
-                body.message, session
-            )
+            selected_domain, extracted_fields = await self._pick_domain_llm(body.message, session)
 
         session.active_domain = selected_domain
         session.current_stage = self._pick_stage(session.turn_count)
@@ -651,10 +647,7 @@ class ConversationService:
         )
 
         collected = self._active_requirements_map(session)
-        user_content = (
-            f"Student message: {message}\n"
-            f"Already collected: {collected}"
-        )
+        user_content = f"Student message: {message}\nAlready collected: {collected}"
 
         try:
             raw = await self.llm.extract_features(system_prompt, user_content)

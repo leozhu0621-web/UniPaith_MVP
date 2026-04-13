@@ -791,9 +791,7 @@ class InternalAdminService:
         ]
 
         # Recommendation counts
-        total_recs = await self.db.scalar(
-            select(func.count(RecommendationRequest.id))
-        ) or 0
+        total_recs = await self.db.scalar(select(func.count(RecommendationRequest.id))) or 0
         rec_by_status: dict[str, int] = {}
         for rec_status in ["draft", "requested", "submitted", "received"]:
             rc = await self.db.scalar(
@@ -813,31 +811,39 @@ class InternalAdminService:
                     "items_processed_total": snap.items_processed_total,
                     "items_processed_hour": snap.items_processed_hour,
                     "last_activity_at": (
-                        snap.last_activity_at.isoformat()
-                        if snap.last_activity_at else None
+                        snap.last_activity_at.isoformat() if snap.last_activity_at else None
                     ),
                 }
             else:
                 pipeline_stages[stage_name] = {"status": "not_started"}
 
-        frontier_pending = await self.db.scalar(
-            select(func.count()).select_from(CrawlFrontier).where(
-                CrawlFrontier.status == "pending"
+        frontier_pending = (
+            await self.db.scalar(
+                select(func.count())
+                .select_from(CrawlFrontier)
+                .where(CrawlFrontier.status == "pending")
             )
-        ) or 0
-        frontier_completed = await self.db.scalar(
-            select(func.count()).select_from(CrawlFrontier).where(
-                CrawlFrontier.status == "completed"
+            or 0
+        )
+        frontier_completed = (
+            await self.db.scalar(
+                select(func.count())
+                .select_from(CrawlFrontier)
+                .where(CrawlFrontier.status == "completed")
             )
-        ) or 0
-        frontier_failed = await self.db.scalar(
-            select(func.count()).select_from(CrawlFrontier).where(
-                CrawlFrontier.status == "failed"
+            or 0
+        )
+        frontier_failed = (
+            await self.db.scalar(
+                select(func.count())
+                .select_from(CrawlFrontier)
+                .where(CrawlFrontier.status == "failed")
             )
-        ) or 0
-        total_knowledge_docs = await self.db.scalar(
-            select(func.count()).select_from(KnowledgeDocument)
-        ) or 0
+            or 0
+        )
+        total_knowledge_docs = (
+            await self.db.scalar(select(func.count()).select_from(KnowledgeDocument)) or 0
+        )
 
         return {
             "users": {

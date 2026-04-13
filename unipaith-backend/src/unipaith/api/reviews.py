@@ -67,10 +67,14 @@ async def assign_reviewers(
     svc = ReviewPipelineService(db)
     result = await svc.assign_reviewers(application_id, inst.id)
     from unipaith.services.audit_service import AuditService
+
     await AuditService(db).log(
-        institution_id=inst.id, actor_user_id=user.id,
-        action="reviewer_assigned", entity_type="application",
-        entity_id=str(application_id), application_id=application_id,
+        institution_id=inst.id,
+        actor_user_id=user.id,
+        action="reviewer_assigned",
+        entity_type="application",
+        entity_id=str(application_id),
+        application_id=application_id,
         description=f"Assigned {len(result)} reviewer(s)",
         new_value={"reviewer_count": len(result)},
     )
@@ -129,7 +133,9 @@ async def get_ai_packet_summary(
     inst = await InstitutionService(db).get_institution(user.id)
     svc = ReviewPipelineService(db)
     return await svc.get_or_generate_packet_summary(
-        inst.id, application_id, rubric_id,
+        inst.id,
+        application_id,
+        rubric_id,
     )
 
 
@@ -144,7 +150,10 @@ async def regenerate_ai_packet_summary(
     inst = await InstitutionService(db).get_institution(user.id)
     svc = ReviewPipelineService(db)
     return await svc.get_or_generate_packet_summary(
-        inst.id, application_id, rubric_id, force_regenerate=True,
+        inst.id,
+        application_id,
+        rubric_id,
+        force_regenerate=True,
     )
 
 
@@ -161,7 +170,9 @@ async def ai_rubric_prefill(
 
     # Get or generate packet summary with the rubric
     packet = await svc.get_or_generate_packet_summary(
-        inst.id, application_id, rubric_id,
+        inst.id,
+        application_id,
+        rubric_id,
     )
 
     # Map criterion assessments to pre-fill format
@@ -172,16 +183,16 @@ async def ai_rubric_prefill(
         if name:
             evidence_text = ""
             for ev in ca.get("evidence", []):
-                evidence_text += (
-                    f"{ev.get('field', '')}: {ev.get('value', '')}. "
-                )
+                evidence_text += f"{ev.get('field', '')}: {ev.get('value', '')}. "
             prefill[name] = {
                 "suggested_score": ca.get("score"),
                 "suggested_note": (
-                    f"{ca.get('assessment', '')} "
-                    f"[Evidence: {evidence_text.strip()}]"
-                ).strip() if evidence_text else ca.get(
-                    "assessment", "",
+                    f"{ca.get('assessment', '')} [Evidence: {evidence_text.strip()}]"
+                ).strip()
+                if evidence_text
+                else ca.get(
+                    "assessment",
+                    "",
                 ),
             }
 
@@ -220,7 +231,9 @@ async def list_integrity_signals(
     inst = await InstitutionService(db).get_institution(user.id)
     svc = ReviewPipelineService(db)
     return await svc.list_integrity_signals(
-        inst.id, application_id, signal_status,
+        inst.id,
+        application_id,
+        signal_status,
     )
 
 
@@ -235,7 +248,10 @@ async def resolve_integrity_signal(
     inst = await InstitutionService(db).get_institution(user.id)
     svc = ReviewPipelineService(db)
     return await svc.resolve_integrity_signal(
-        inst.id, signal_id, user.id, notes,
+        inst.id,
+        signal_id,
+        user.id,
+        notes,
     )
 
 
@@ -249,7 +265,8 @@ async def get_review_priority_queue(
     inst = await InstitutionService(db).get_institution(user.id)
     svc = ReviewPipelineService(db)
     return await svc.calculate_review_priorities(
-        inst.id, program_id,
+        inst.id,
+        program_id,
     )
 
 
@@ -281,7 +298,8 @@ async def batch_assign_reviewers(
 @router.get("/cohort-compare")
 async def cohort_comparison(
     application_ids: str = Query(
-        ..., description="Comma-separated application UUIDs",
+        ...,
+        description="Comma-separated application UUIDs",
     ),
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
@@ -300,9 +318,7 @@ async def cohort_comparison(
     for app_id in ids:
         try:
             # Get application detail
-            ar = await db.execute(
-                select(Application).where(Application.id == app_id)
-            )
+            ar = await db.execute(select(Application).where(Application.id == app_id))
             app = ar.scalar_one_or_none()
             if not app:
                 continue
@@ -330,74 +346,60 @@ async def cohort_comparison(
                     "rubric_id": str(s.rubric_id),
                     "criterion_scores": s.criterion_scores,
                     "total_weighted_score": (
-                        float(s.total_weighted_score)
-                        if s.total_weighted_score
-                        else None
+                        float(s.total_weighted_score) if s.total_weighted_score else None
                     ),
                     "reviewer_notes": s.reviewer_notes,
                     "scored_by_type": s.scored_by_type,
-                    "scored_at": s.scored_at.isoformat()
-                    if s.scored_at
-                    else None,
+                    "scored_at": s.scored_at.isoformat() if s.scored_at else None,
                 }
                 for s in scores_r.scalars().all()
             ]
 
-            applicants.append({
-                "application_id": str(app.id),
-                "student_id": str(app.student_id),
-                "student_name": (
-                    f"{student.first_name or ''} {student.last_name or ''}".strip()
-                    if student
-                    else "Unknown"
-                ),
-                "status": app.status,
-                "match_score": (
-                    float(app.match_score)
-                    if app.match_score
-                    else None
-                ),
-                "decision": app.decision,
-                "completeness_status": app.completeness_status,
-                "submitted_at": (
-                    app.submitted_at.isoformat()
-                    if app.submitted_at
-                    else None
-                ),
-                "scores": scores,
-                "avg_score": (
-                    round(
-                        sum(
-                            float(s["total_weighted_score"])
-                            for s in scores
-                            if s["total_weighted_score"]
-                        )
-                        / len(
-                            [
-                                s
+            applicants.append(
+                {
+                    "application_id": str(app.id),
+                    "student_id": str(app.student_id),
+                    "student_name": (
+                        f"{student.first_name or ''} {student.last_name or ''}".strip()
+                        if student
+                        else "Unknown"
+                    ),
+                    "status": app.status,
+                    "match_score": (float(app.match_score) if app.match_score else None),
+                    "decision": app.decision,
+                    "completeness_status": app.completeness_status,
+                    "submitted_at": (app.submitted_at.isoformat() if app.submitted_at else None),
+                    "scores": scores,
+                    "avg_score": (
+                        round(
+                            sum(
+                                float(s["total_weighted_score"])
                                 for s in scores
                                 if s["total_weighted_score"]
-                            ]
-                        ),
-                        2,
-                    )
-                    if any(s["total_weighted_score"] for s in scores)
-                    else None
-                ),
-                "gpa": (
-                    max(
-                        (float(ar.gpa) for ar in student.academic_records if ar.gpa is not None),
-                        default=None,
-                    )
-                    if student and student.academic_records
-                    else None
-                ),
-                "nationality": (
-                    student.nationality
-                    if student and hasattr(student, "nationality")
-                    else None
-                ),
-            })
+                            )
+                            / len([s for s in scores if s["total_weighted_score"]]),
+                            2,
+                        )
+                        if any(s["total_weighted_score"] for s in scores)
+                        else None
+                    ),
+                    "gpa": (
+                        max(
+                            (
+                                float(ar.gpa)
+                                for ar in student.academic_records
+                                if ar.gpa is not None
+                            ),
+                            default=None,
+                        )
+                        if student and student.academic_records
+                        else None
+                    ),
+                    "nationality": (
+                        student.nationality if student and hasattr(student, "nationality") else None
+                    ),
+                }
+            )
         except Exception:
             continue
 

@@ -264,7 +264,9 @@ class InstitutionService:
         await self.db.flush()
 
     async def resolve_segment_members(
-        self, institution_id: UUID, segment_id: UUID,
+        self,
+        institution_id: UUID,
+        segment_id: UUID,
     ) -> list[UUID]:
         """Execute segment criteria and return matching student IDs.
 
@@ -324,9 +326,9 @@ class InstitutionService:
                 app_conditions.append(
                     Application.submitted_at >= datetime.fromisoformat(applied_after)
                 )
-            stmt = stmt.join(
-                Application, Application.student_id == StudentProfile.id
-            ).where(*app_conditions)
+            stmt = stmt.join(Application, Application.student_id == StudentProfile.id).where(
+                *app_conditions
+            )
         elif has_applied is False:
             # Exclude students who have any application for these programs
             has_criteria = True
@@ -353,19 +355,15 @@ class InstitutionService:
                 MatchResult.is_stale.is_(False),
             ]
             if min_match_score is not None:
-                match_conditions.append(
-                    MatchResult.match_score >= min_match_score / 100
-                )
+                match_conditions.append(MatchResult.match_score >= min_match_score / 100)
             if max_match_score is not None:
-                match_conditions.append(
-                    MatchResult.match_score <= max_match_score / 100
-                )
+                match_conditions.append(MatchResult.match_score <= max_match_score / 100)
             if match_tiers:
                 match_conditions.append(MatchResult.match_tier.in_(match_tiers))
 
-            stmt = stmt.outerjoin(
-                MatchResult, MatchResult.student_id == StudentProfile.id
-            ).where(*match_conditions)
+            stmt = stmt.outerjoin(MatchResult, MatchResult.student_id == StudentProfile.id).where(
+                *match_conditions
+            )
 
         # --- Engagement criteria (min count, signal types) ---
         min_engagement = criteria.get("min_engagement_signals")
@@ -378,9 +376,7 @@ class InstitutionService:
                 StudentEngagementSignal.program_id.in_(program_ids),
             ]
             if engagement_types:
-                eng_conditions.append(
-                    StudentEngagementSignal.signal_type.in_(engagement_types)
-                )
+                eng_conditions.append(StudentEngagementSignal.signal_type.in_(engagement_types))
             eng_subq = (
                 select(StudentEngagementSignal.student_id)
                 .where(*eng_conditions)
@@ -389,9 +385,7 @@ class InstitutionService:
             )
             if min_engagement is not None:
                 eng_subq = eng_subq.having(func.count() >= min_engagement)
-            stmt = stmt.where(
-                StudentProfile.id.in_(eng_subq)
-            )
+            stmt = stmt.where(StudentProfile.id.in_(eng_subq))
 
         # --- Nationality filter ---
         nationalities = criteria.get("nationalities")
@@ -401,9 +395,7 @@ class InstitutionService:
 
         # --- Fallback: if NO criteria at all, return all non-draft applicants ---
         if not has_criteria:
-            stmt = stmt.join(
-                Application, Application.student_id == StudentProfile.id
-            ).where(
+            stmt = stmt.join(Application, Application.student_id == StudentProfile.id).where(
                 Application.program_id.in_(program_ids),
                 Application.status != "draft",
             )
@@ -614,22 +606,23 @@ class InstitutionService:
 
         # --- Funnel: cumulative stage counting ---
         stage_order = [
-            "submitted", "under_review", "interview", "decision_made",
+            "submitted",
+            "under_review",
+            "interview",
+            "decision_made",
         ]
         funnel: list[FunnelStage] = []
         prev_count = total_apps
         for stage in stage_order:
             stage_count = apps_by_status.get(stage, 0)
-            rate = (
-                stage_count / prev_count
-                if prev_count > 0 and funnel
-                else None
+            rate = stage_count / prev_count if prev_count > 0 and funnel else None
+            funnel.append(
+                FunnelStage(
+                    stage=stage,
+                    count=stage_count,
+                    conversion_rate=rate,
+                )
             )
-            funnel.append(FunnelStage(
-                stage=stage,
-                count=stage_count,
-                conversion_rate=rate,
-            ))
             if stage_count > 0:
                 prev_count = stage_count
 
@@ -645,41 +638,51 @@ class InstitutionService:
             metrics = await self.db.execute(
                 select(
                     func.count().label("total"),
-                    func.count().filter(
+                    func.count()
+                    .filter(
                         CampaignRecipient.delivered_at.isnot(None),
-                    ).label("delivered"),
-                    func.count().filter(
+                    )
+                    .label("delivered"),
+                    func.count()
+                    .filter(
                         CampaignRecipient.opened_at.isnot(None),
-                    ).label("opened"),
-                    func.count().filter(
+                    )
+                    .label("opened"),
+                    func.count()
+                    .filter(
                         CampaignRecipient.clicked_at.isnot(None),
-                    ).label("clicked"),
+                    )
+                    .label("clicked"),
                 ).where(CampaignRecipient.campaign_id == camp.id)
             )
             m = metrics.one()
             # Count recipients who also applied
-            app_count = await self.db.scalar(
-                select(func.count(Application.id.distinct()))
-                .select_from(Application)
-                .join(
-                    CampaignRecipient,
-                    CampaignRecipient.student_id
-                    == Application.student_id,
+            app_count = (
+                await self.db.scalar(
+                    select(func.count(Application.id.distinct()))
+                    .select_from(Application)
+                    .join(
+                        CampaignRecipient,
+                        CampaignRecipient.student_id == Application.student_id,
+                    )
+                    .where(
+                        CampaignRecipient.campaign_id == camp.id,
+                        Application.status != "draft",
+                    )
                 )
-                .where(
-                    CampaignRecipient.campaign_id == camp.id,
-                    Application.status != "draft",
+                or 0
+            )
+            campaign_attr.append(
+                CampaignAttribution(
+                    campaign_id=camp.id,
+                    campaign_name=camp.campaign_name,
+                    recipients=m.total,
+                    delivered=m.delivered,
+                    opened=m.opened,
+                    clicked=m.clicked,
+                    applications_started=app_count,
                 )
-            ) or 0
-            campaign_attr.append(CampaignAttribution(
-                campaign_id=camp.id,
-                campaign_name=camp.campaign_name,
-                recipients=m.total,
-                delivered=m.delivered,
-                opened=m.opened,
-                clicked=m.clicked,
-                applications_started=app_count,
-            ))
+            )
 
         # --- Event attribution ---
         event_attr: list[EventAttribution] = []
@@ -689,36 +692,51 @@ class InstitutionService:
             )
         )
         for evt in events.scalars().all():
-            rsvp_count = await self.db.scalar(
-                select(func.count()).select_from(EventRSVP).where(
-                    EventRSVP.event_id == evt.id,
+            rsvp_count = (
+                await self.db.scalar(
+                    select(func.count())
+                    .select_from(EventRSVP)
+                    .where(
+                        EventRSVP.event_id == evt.id,
+                    )
                 )
-            ) or 0
-            attended_count = await self.db.scalar(
-                select(func.count()).select_from(EventRSVP).where(
-                    EventRSVP.event_id == evt.id,
-                    EventRSVP.attended_at.isnot(None),
+                or 0
+            )
+            attended_count = (
+                await self.db.scalar(
+                    select(func.count())
+                    .select_from(EventRSVP)
+                    .where(
+                        EventRSVP.event_id == evt.id,
+                        EventRSVP.attended_at.isnot(None),
+                    )
                 )
-            ) or 0
-            apps_after = await self.db.scalar(
-                select(func.count(Application.id.distinct()))
-                .select_from(Application)
-                .join(
-                    EventRSVP,
-                    EventRSVP.student_id == Application.student_id,
+                or 0
+            )
+            apps_after = (
+                await self.db.scalar(
+                    select(func.count(Application.id.distinct()))
+                    .select_from(Application)
+                    .join(
+                        EventRSVP,
+                        EventRSVP.student_id == Application.student_id,
+                    )
+                    .where(
+                        EventRSVP.event_id == evt.id,
+                        Application.status != "draft",
+                    )
                 )
-                .where(
-                    EventRSVP.event_id == evt.id,
-                    Application.status != "draft",
+                or 0
+            )
+            event_attr.append(
+                EventAttribution(
+                    event_id=evt.id,
+                    event_name=evt.event_name,
+                    rsvps=rsvp_count,
+                    attended=attended_count,
+                    applications_after=apps_after,
                 )
-            ) or 0
-            event_attr.append(EventAttribution(
-                event_id=evt.id,
-                event_name=evt.event_name,
-                rsvps=rsvp_count,
-                attended=attended_count,
-                applications_after=apps_after,
-            ))
+            )
 
         return AnalyticsResponse(
             total_applications=total_apps,
@@ -776,13 +794,16 @@ class InstitutionService:
         await self.db.flush()
 
     async def preview_campaign_audience(
-        self, institution_id: UUID, campaign_id: UUID,
+        self,
+        institution_id: UUID,
+        campaign_id: UUID,
     ) -> int:
         """Return the number of students that would receive this campaign."""
         campaign = await self._verify_campaign_ownership(institution_id, campaign_id)
         if campaign.segment_id:
             student_ids = await self.resolve_segment_members(
-                institution_id, campaign.segment_id,
+                institution_id,
+                campaign.segment_id,
             )
             return len(student_ids)
         # No segment — count all non-draft applicants for the campaign's program(s)
@@ -809,7 +830,8 @@ class InstitutionService:
         student_ids: list[UUID] = []
         if campaign.segment_id:
             student_ids = await self.resolve_segment_members(
-                institution_id, campaign.segment_id,
+                institution_id,
+                campaign.segment_id,
             )
         else:
             # No segment — target all non-draft applicants for the campaign's program(s)
@@ -929,6 +951,7 @@ class InstitutionService:
     def _generate_short_code() -> str:
         import secrets
         import string
+
         alphabet = string.ascii_letters + string.digits
         return "".join(secrets.choice(alphabet) for _ in range(10))
 
@@ -955,7 +978,9 @@ class InstitutionService:
         return await self._enrich_campaign_link(link)
 
     async def get_campaign_links(
-        self, institution_id: UUID, campaign_id: UUID,
+        self,
+        institution_id: UUID,
+        campaign_id: UUID,
     ) -> list[CampaignLinkResponse]:
         await self._verify_campaign_ownership(institution_id, campaign_id)
         result = await self.db.execute(
@@ -967,7 +992,10 @@ class InstitutionService:
         return [await self._enrich_campaign_link(lnk) for lnk in links]
 
     async def delete_campaign_link(
-        self, institution_id: UUID, campaign_id: UUID, link_id: UUID,
+        self,
+        institution_id: UUID,
+        campaign_id: UUID,
+        link_id: UUID,
     ) -> None:
         await self._verify_campaign_ownership(institution_id, campaign_id)
         result = await self.db.execute(
@@ -983,7 +1011,9 @@ class InstitutionService:
         await self.db.flush()
 
     async def record_link_click(
-        self, short_code: str, student_id: UUID | None = None,
+        self,
+        short_code: str,
+        student_id: UUID | None = None,
     ) -> CampaignLink:
         result = await self.db.execute(
             select(CampaignLink).where(
@@ -1037,10 +1067,13 @@ class InstitutionService:
         await self.db.flush()
 
     async def get_campaign_attribution(
-        self, institution_id: UUID, campaign_id: UUID,
+        self,
+        institution_id: UUID,
+        campaign_id: UUID,
     ) -> CampaignAttributionDetail:
         campaign = await self._verify_campaign_ownership(
-            institution_id, campaign_id,
+            institution_id,
+            campaign_id,
         )
         # Recipient-level counts
         recip_r = await self.db.execute(
@@ -1053,13 +1086,20 @@ class InstitutionService:
         )
         row = recip_r.one()
         total, delivered, opened, clicked = (
-            row[0], row[1], row[2], row[3],
+            row[0],
+            row[1],
+            row[2],
+            row[3],
         )
 
         # Action-type counts
         action_counts: dict[str, int] = {}
         for atype in (
-            "view", "save", "rsvp", "request_info", "apply",
+            "view",
+            "save",
+            "rsvp",
+            "request_info",
+            "apply",
         ):
             cnt_r = await self.db.execute(
                 select(func.count(CampaignAction.id)).where(
@@ -1078,26 +1118,32 @@ class InstitutionService:
         link_perfs: list[LinkPerformance] = []
         for lnk in links_r.scalars().all():
             dest_name = await self._resolve_destination_name(
-                lnk.destination_type, lnk.destination_id,
+                lnk.destination_type,
+                lnk.destination_id,
             )
             lnk_views = await self._count_link_actions(
-                lnk.id, "view",
+                lnk.id,
+                "view",
             )
             lnk_saves = await self._count_link_actions(
-                lnk.id, "save",
+                lnk.id,
+                "save",
             )
             lnk_apps = await self._count_link_actions(
-                lnk.id, "apply",
+                lnk.id,
+                "apply",
             )
-            link_perfs.append(LinkPerformance(
-                link_id=lnk.id,
-                label=lnk.label,
-                destination_name=dest_name,
-                clicks=lnk.click_count or 0,
-                views=lnk_views,
-                saves=lnk_saves,
-                applications=lnk_apps,
-            ))
+            link_perfs.append(
+                LinkPerformance(
+                    link_id=lnk.id,
+                    label=lnk.label,
+                    destination_name=dest_name,
+                    clicks=lnk.click_count or 0,
+                    views=lnk_views,
+                    saves=lnk_saves,
+                    applications=lnk_apps,
+                )
+            )
 
         return CampaignAttributionDetail(
             campaign_id=campaign_id,
@@ -1115,7 +1161,9 @@ class InstitutionService:
         )
 
     async def _count_link_actions(
-        self, link_id: UUID, action_type: str,
+        self,
+        link_id: UUID,
+        action_type: str,
     ) -> int:
         r = await self.db.execute(
             select(func.count(CampaignAction.id)).where(
@@ -1126,7 +1174,9 @@ class InstitutionService:
         return r.scalar() or 0
 
     async def _resolve_destination_name(
-        self, dest_type: str, dest_id: UUID | None,
+        self,
+        dest_type: str,
+        dest_id: UUID | None,
     ) -> str | None:
         if not dest_id:
             return None
@@ -1138,9 +1188,7 @@ class InstitutionService:
             )
             return r.scalar_one_or_none()
         if dest_type == "event":
-            r = await self.db.execute(
-                select(Event.event_name).where(Event.id == dest_id)
-            )
+            r = await self.db.execute(select(Event.event_name).where(Event.id == dest_id))
             return r.scalar_one_or_none()
         if dest_type == "institution":
             r = await self.db.execute(
@@ -1156,10 +1204,12 @@ class InstitutionService:
         return f"https://api.unipaith.co/api/v1/t/{short_code}"
 
     async def _enrich_campaign_link(
-        self, link: CampaignLink,
+        self,
+        link: CampaignLink,
     ) -> CampaignLinkResponse:
         dest_name = await self._resolve_destination_name(
-            link.destination_type, link.destination_id,
+            link.destination_type,
+            link.destination_id,
         )
         return CampaignLinkResponse(
             id=link.id,
@@ -1269,7 +1319,8 @@ class InstitutionService:
         return self._build_inquiry_response(inquiry, pn)
 
     async def _get_program_name(
-        self, program_id: UUID | None,
+        self,
+        program_id: UUID | None,
     ) -> str | None:
         if not program_id:
             return None
@@ -1305,17 +1356,15 @@ class InstitutionService:
     # --- Promotions ---
 
     async def list_promotions(
-        self, institution_id: UUID,
+        self,
+        institution_id: UUID,
     ) -> list[PromotionResponse]:
         result = await self.db.execute(
             select(Promotion)
             .where(Promotion.institution_id == institution_id)
             .order_by(Promotion.created_at.desc())
         )
-        return [
-            await self._enrich_promotion(p)
-            for p in result.scalars().all()
-        ]
+        return [await self._enrich_promotion(p) for p in result.scalars().all()]
 
     async def create_promotion(
         self,
@@ -1323,9 +1372,7 @@ class InstitutionService:
         data: CreatePromotionRequest,
     ) -> PromotionResponse:
 
-        targeting_dict = (
-            data.targeting.model_dump() if data.targeting else None
-        )
+        targeting_dict = data.targeting.model_dump() if data.targeting else None
         promo = Promotion(
             institution_id=institution_id,
             program_id=data.program_id,
@@ -1360,9 +1407,7 @@ class InstitutionService:
         update = data.model_dump(exclude_unset=True)
         if "targeting" in update and update["targeting"] is not None:
             t = update["targeting"]
-            update["targeting"] = (
-                t.model_dump() if hasattr(t, "model_dump") else t
-            )
+            update["targeting"] = t.model_dump() if hasattr(t, "model_dump") else t
         for key, val in update.items():
             setattr(promo, key, val)
 
@@ -1376,7 +1421,9 @@ class InstitutionService:
         return await self._enrich_promotion(promo)
 
     async def delete_promotion(
-        self, institution_id: UUID, promotion_id: UUID,
+        self,
+        institution_id: UUID,
+        promotion_id: UUID,
     ) -> None:
         result = await self.db.execute(
             select(Promotion).where(
@@ -1398,11 +1445,8 @@ class InstitutionService:
     ) -> list[PromotionResponse]:
         """Public — get currently active promotions matching scope."""
         now = datetime.now(UTC)
-        stmt = (
-            select(Promotion)
-            .where(
-                Promotion.status == "active",
-            )
+        stmt = select(Promotion).where(
+            Promotion.status == "active",
         )
         result = await self.db.execute(stmt)
 
@@ -1417,19 +1461,13 @@ class InstitutionService:
             # Targeting scope filter
             targeting = p.targeting or {}
             if region and targeting.get("regions"):
-                if region.lower() not in [
-                    r.lower() for r in targeting["regions"]
-                ]:
+                if region.lower() not in [r.lower() for r in targeting["regions"]]:
                     continue
             if country and targeting.get("countries"):
-                if country.lower() not in [
-                    c.lower() for c in targeting["countries"]
-                ]:
+                if country.lower() not in [c.lower() for c in targeting["countries"]]:
                     continue
             if degree_type and targeting.get("degree_types"):
-                if degree_type.lower() not in [
-                    d.lower() for d in targeting["degree_types"]
-                ]:
+                if degree_type.lower() not in [d.lower() for d in targeting["degree_types"]]:
                     continue
 
             # Collect matching promotions
@@ -1447,7 +1485,8 @@ class InstitutionService:
         return results
 
     async def _enrich_promotion(
-        self, promo: Promotion,
+        self,
+        promo: Promotion,
     ) -> PromotionResponse:
         prog_name = await self._get_program_name(promo.program_id)
         inst_name = None
@@ -1501,7 +1540,10 @@ class InstitutionService:
         return list(result.scalars().all())
 
     async def request_dataset_upload(
-        self, institution_id: UUID, user_id: UUID, data: CreateDatasetRequest,
+        self,
+        institution_id: UUID,
+        user_id: UUID,
+        data: CreateDatasetRequest,
     ) -> DatasetUploadResponse:
         from unipaith.core.s3 import S3Client
 
@@ -1527,7 +1569,9 @@ class InstitutionService:
         return DatasetUploadResponse(dataset_id=dataset.id, upload_url=upload_url)
 
     async def confirm_dataset_upload(
-        self, institution_id: UUID, dataset_id: UUID,
+        self,
+        institution_id: UUID,
+        dataset_id: UUID,
     ) -> InstitutionDataset:
         dataset = await self._verify_dataset_ownership(institution_id, dataset_id)
         dataset.status = "validated"
@@ -1546,7 +1590,9 @@ class InstitutionService:
         return resp
 
     async def get_dataset_preview(
-        self, institution_id: UUID, dataset_id: UUID,
+        self,
+        institution_id: UUID,
+        dataset_id: UUID,
     ) -> DatasetPreviewResponse:
         dataset = await self._verify_dataset_ownership(institution_id, dataset_id)
         import csv
@@ -1584,7 +1630,10 @@ class InstitutionService:
         return DatasetPreviewResponse(columns=list(columns), rows=rows, total_rows=total)
 
     async def update_dataset(
-        self, institution_id: UUID, dataset_id: UUID, data: UpdateDatasetRequest,
+        self,
+        institution_id: UUID,
+        dataset_id: UUID,
+        data: UpdateDatasetRequest,
     ) -> InstitutionDataset:
         dataset = await self._verify_dataset_ownership(institution_id, dataset_id)
         update_data = data.model_dump(exclude_unset=True)
@@ -1603,7 +1652,9 @@ class InstitutionService:
         await self.db.flush()
 
     async def _verify_dataset_ownership(
-        self, institution_id: UUID, dataset_id: UUID,
+        self,
+        institution_id: UUID,
+        dataset_id: UUID,
     ) -> InstitutionDataset:
         result = await self.db.execute(
             select(InstitutionDataset).where(
@@ -1686,24 +1737,15 @@ class InstitutionService:
             )
         elif sort_by == "salary_desc":
             stmt = stmt.order_by(
-                Program.outcomes_data["median_salary"]
-                .as_integer()
-                .desc()
-                .nulls_last(),
+                Program.outcomes_data["median_salary"].as_integer().desc().nulls_last(),
             )
         elif sort_by == "employment_desc":
             stmt = stmt.order_by(
-                Program.outcomes_data["employment_rate"]
-                .as_float()
-                .desc()
-                .nulls_last(),
+                Program.outcomes_data["employment_rate"].as_float().desc().nulls_last(),
             )
         elif sort_by == "payback_asc":
             stmt = stmt.order_by(
-                Program.outcomes_data["payback_months"]
-                .as_integer()
-                .asc()
-                .nulls_last(),
+                Program.outcomes_data["payback_months"].as_integer().asc().nulls_last(),
             )
         else:
             stmt = stmt.order_by(Program.program_name.asc())
@@ -1723,9 +1765,7 @@ class InstitutionService:
                 duration_months=prog.duration_months,
                 delivery_format=prog.delivery_format,
                 acceptance_rate=(
-                    float(prog.acceptance_rate)
-                    if prog.acceptance_rate is not None
-                    else None
+                    float(prog.acceptance_rate) if prog.acceptance_rate is not None else None
                 ),
                 application_deadline=prog.application_deadline,
                 institution_name=inst.name,
@@ -1756,9 +1796,7 @@ class InstitutionService:
         return program
 
     async def get_public_institution(self, institution_id: UUID) -> Institution:
-        result = await self.db.execute(
-            select(Institution).where(Institution.id == institution_id)
-        )
+        result = await self.db.execute(select(Institution).where(Institution.id == institution_id))
         institution = result.scalar_one_or_none()
         if not institution:
             raise NotFoundException("Institution not found")
@@ -1869,12 +1907,11 @@ class InstitutionService:
     # ------------------------------------------------------------------ #
 
     async def list_posts(
-        self, institution_id: UUID, include_drafts: bool = True,
+        self,
+        institution_id: UUID,
+        include_drafts: bool = True,
     ) -> list[PostResponse]:
-        q = (
-            select(InstitutionPost)
-            .where(InstitutionPost.institution_id == institution_id)
-        )
+        q = select(InstitutionPost).where(InstitutionPost.institution_id == institution_id)
         if not include_drafts:
             q = q.where(InstitutionPost.status == "published")
         q = q.order_by(
@@ -1887,7 +1924,10 @@ class InstitutionService:
         return [await self._enrich_post(p) for p in posts]
 
     async def create_post(
-        self, institution_id: UUID, user_id: UUID, data: CreatePostRequest,
+        self,
+        institution_id: UUID,
+        user_id: UUID,
+        data: CreatePostRequest,
     ) -> PostResponse:
         post = InstitutionPost(
             institution_id=institution_id,
@@ -1896,11 +1936,11 @@ class InstitutionService:
             body=data.body,
             media_urls=(
                 [m if isinstance(m, dict) else {"url": m} for m in data.media_urls]
-                if data.media_urls else None
+                if data.media_urls
+                else None
             ),
             tagged_program_ids=(
-                [str(pid) for pid in data.tagged_program_ids]
-                if data.tagged_program_ids else None
+                [str(pid) for pid in data.tagged_program_ids] if data.tagged_program_ids else None
             ),
             tagged_intake=data.tagged_intake,
             status=data.status,
@@ -1937,14 +1977,18 @@ class InstitutionService:
         return await self._enrich_post(post)
 
     async def delete_post(
-        self, institution_id: UUID, post_id: UUID,
+        self,
+        institution_id: UUID,
+        post_id: UUID,
     ) -> None:
         post = await self._get_post(institution_id, post_id)
         await self.db.delete(post)
         await self.db.flush()
 
     async def pin_post(
-        self, institution_id: UUID, post_id: UUID,
+        self,
+        institution_id: UUID,
+        post_id: UUID,
     ) -> PostResponse:
         post = await self._get_post(institution_id, post_id)
         post.pinned = not post.pinned
@@ -1953,7 +1997,9 @@ class InstitutionService:
         return await self._enrich_post(post)
 
     async def publish_post(
-        self, institution_id: UUID, post_id: UUID,
+        self,
+        institution_id: UUID,
+        post_id: UUID,
     ) -> PostResponse:
         post = await self._get_post(institution_id, post_id)
         post.status = "published"
@@ -1963,34 +2009,43 @@ class InstitutionService:
         return await self._enrich_post(post)
 
     async def request_post_media_upload(
-        self, institution_id: UUID, content_type: str,
+        self,
+        institution_id: UUID,
+        content_type: str,
     ) -> PostMediaUploadResponse:
         from unipaith.core.s3 import S3Client
+
         s3 = S3Client()
         key = f"institutions/{institution_id}/posts/media/{uuid.uuid4()}"
         upload_url = s3.generate_upload_url(key, content_type)
         return PostMediaUploadResponse(upload_url=upload_url, media_key=key)
 
     async def list_post_templates(
-        self, institution_id: UUID,
+        self,
+        institution_id: UUID,
     ) -> list[PostResponse]:
         result = await self.db.execute(
-            select(InstitutionPost).where(
+            select(InstitutionPost)
+            .where(
                 InstitutionPost.institution_id == institution_id,
                 InstitutionPost.is_template.is_(True),
-            ).order_by(InstitutionPost.created_at.desc())
+            )
+            .order_by(InstitutionPost.created_at.desc())
         )
         posts = list(result.scalars().all())
         return [await self._enrich_post(p) for p in posts]
 
     async def get_public_posts(
-        self, institution_id: UUID,
+        self,
+        institution_id: UUID,
     ) -> list[PostResponse]:
         result = await self.db.execute(
-            select(InstitutionPost).where(
+            select(InstitutionPost)
+            .where(
                 InstitutionPost.institution_id == institution_id,
                 InstitutionPost.status == "published",
-            ).order_by(
+            )
+            .order_by(
                 InstitutionPost.pinned.desc(),
                 InstitutionPost.published_at.desc().nulls_last(),
             )
@@ -1999,7 +2054,9 @@ class InstitutionService:
         return [await self._enrich_post(p) for p in posts]
 
     async def _get_post(
-        self, institution_id: UUID, post_id: UUID,
+        self,
+        institution_id: UUID,
+        post_id: UUID,
     ) -> InstitutionPost:
         result = await self.db.execute(
             select(InstitutionPost).where(
@@ -2014,20 +2071,17 @@ class InstitutionService:
 
     async def _enrich_post(self, post: InstitutionPost) -> PostResponse:
         from unipaith.models.user import User
+
         author_email: str | None = None
         if post.author_id:
-            user_r = await self.db.execute(
-                select(User.email).where(User.id == post.author_id)
-            )
+            user_r = await self.db.execute(select(User.email).where(User.id == post.author_id))
             author_email = user_r.scalar_one_or_none()
 
         program_names: list[str] | None = None
         tag_ids = post.tagged_program_ids
         if tag_ids and isinstance(tag_ids, list) and len(tag_ids) > 0:
             prog_r = await self.db.execute(
-                select(Program.program_name).where(
-                    Program.id.in_(tag_ids)
-                )
+                select(Program.program_name).where(Program.id.in_(tag_ids))
             )
             program_names = list(prog_r.scalars().all())
 
@@ -2078,9 +2132,7 @@ class InstitutionService:
         )
 
         filters_applied = {
-            k: v
-            for k, v in parsed.items()
-            if k != "interpretation" and v is not None
+            k: v for k, v in parsed.items() if k != "interpretation" and v is not None
         }
 
         return NLPSearchResponse(

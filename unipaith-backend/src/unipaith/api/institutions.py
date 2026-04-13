@@ -706,16 +706,17 @@ async def record_campaign_action(
 
     from unipaith.models.student import StudentProfile
 
-    r = await db.execute(
-        sel(StudentProfile.id).where(StudentProfile.user_id == user.id)
-    )
+    r = await db.execute(sel(StudentProfile.id).where(StudentProfile.user_id == user.id))
     student_id = r.scalar_one_or_none()
     if not student_id:
         return
 
     svc = _svc(db)
     await svc.record_campaign_action(
-        body.campaign_id, student_id, body.action_type, body.target_id,
+        body.campaign_id,
+        student_id,
+        body.action_type,
+        body.target_id,
     )
 
 
@@ -733,9 +734,7 @@ async def submit_inquiry(
 
     from unipaith.models.student import StudentProfile
 
-    r = await db.execute(
-        sel(StudentProfile).where(StudentProfile.user_id == user.id)
-    )
+    r = await db.execute(sel(StudentProfile).where(StudentProfile.user_id == user.id))
     profile = r.scalar_one_or_none()
 
     student_name = user.email
@@ -1084,10 +1083,12 @@ async def get_public_intake_rounds(
     from unipaith.models.institution import IntakeRound
 
     result = await db.execute(
-        select(IntakeRound).where(
+        select(IntakeRound)
+        .where(
             IntakeRound.program_id == program_id,
             IntakeRound.is_active.is_(True),
-        ).order_by(IntakeRound.sort_order, IntakeRound.application_deadline)
+        )
+        .order_by(IntakeRound.sort_order, IntakeRound.application_deadline)
     )
     return [_enrich_intake(r) for r in result.scalars().all()]
 
@@ -1159,7 +1160,9 @@ async def update_template(
 
     inst = await _svc(db).get_institution(user.id)
     return await CommunicationService(db).update_template(
-        inst.id, template_id, body,
+        inst.id,
+        template_id,
+        body,
     )
 
 
@@ -1192,7 +1195,10 @@ async def send_from_template(
 
     inst = await _svc(db).get_institution(user.id)
     return await CommunicationService(db).send_from_template(
-        inst.id, user.id, template_id, body.application_ids,
+        inst.id,
+        user.id,
+        template_id,
+        body.application_ids,
         body.variable_overrides,
     )
 
@@ -1211,7 +1217,9 @@ async def preview_template(
 
     inst = await _svc(db).get_institution(user.id)
     return await CommunicationService(db).preview_template(
-        inst.id, template_id, application_id,
+        inst.id,
+        template_id,
+        application_id,
     )
 
 
@@ -1228,7 +1236,10 @@ async def generate_ai_communication_draft(
 
     inst = await _svc(db).get_institution(user.id)
     return await CommunicationService(db).generate_ai_draft(
-        inst.id, application_id, message_type, context_notes,
+        inst.id,
+        application_id,
+        message_type,
+        context_notes,
     )
 
 
@@ -1266,21 +1277,23 @@ async def get_audit_log(
         actor_email = None
         if entry.actor_user and hasattr(entry.actor_user, "email"):
             actor_email = entry.actor_user.email
-        items.append(AuditLogResponse(
-            id=entry.id,
-            institution_id=entry.institution_id,
-            application_id=entry.application_id,
-            actor_user_id=entry.actor_user_id,
-            action=entry.action,
-            entity_type=entry.entity_type,
-            entity_id=entry.entity_id,
-            description=entry.description,
-            old_value=entry.old_value,
-            new_value=entry.new_value,
-            metadata_json=entry.metadata_json,
-            created_at=entry.created_at,
-            actor_email=actor_email,
-        ))
+        items.append(
+            AuditLogResponse(
+                id=entry.id,
+                institution_id=entry.institution_id,
+                application_id=entry.application_id,
+                actor_user_id=entry.actor_user_id,
+                action=entry.action,
+                entity_type=entry.entity_type,
+                entity_id=entry.entity_id,
+                description=entry.description,
+                old_value=entry.old_value,
+                new_value=entry.new_value,
+                metadata_json=entry.metadata_json,
+                created_at=entry.created_at,
+                actor_email=actor_email,
+            )
+        )
     return AuditLogListResponse(items=items, total=total)
 
 

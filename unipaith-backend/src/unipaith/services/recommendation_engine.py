@@ -9,6 +9,7 @@ Each recommendation includes:
 - Connection to things the student has actually said/expressed
 - A calibrated sense of chances (woven in naturally, not as a number)
 """
+
 from __future__ import annotations
 
 import logging
@@ -161,7 +162,9 @@ class RecommendationEngine:
         return "\n".join(parts)
 
     def _build_program_summaries(
-        self, matches: list[MatchResult], programs: dict[UUID, Program],
+        self,
+        matches: list[MatchResult],
+        programs: dict[UUID, Program],
     ) -> str:
         lines = []
         for i, match in enumerate(matches, 1):
@@ -196,7 +199,10 @@ class RecommendationEngine:
         rec.setdefault("tradeoffs", [])
 
     def _fallback_recommendations(
-        self, matches: list[MatchResult], programs: dict[UUID, Program], count: int,
+        self,
+        matches: list[MatchResult],
+        programs: dict[UUID, Program],
+        count: int,
     ) -> list[dict]:
         recs = []
         categories = ["on_your_radar", "might_surprise_you", "hidden_gem"]
@@ -232,6 +238,7 @@ class RecommendationEngine:
         if not program_ids:
             return {}
         from sqlalchemy.orm import selectinload
+
         result = await self.db.execute(
             select(Program)
             .where(Program.id.in_(program_ids))
@@ -247,9 +254,13 @@ class RecommendationEngine:
 
     async def _load_insights(self, user_id: UUID) -> list[PersonInsight]:
         result = await self.db.execute(
-            select(PersonInsight).where(
-                PersonInsight.user_id == user_id, PersonInsight.is_active.is_(True),
-            ).order_by(PersonInsight.confidence.desc()).limit(15)
+            select(PersonInsight)
+            .where(
+                PersonInsight.user_id == user_id,
+                PersonInsight.is_active.is_(True),
+            )
+            .order_by(PersonInsight.confidence.desc())
+            .limit(15)
         )
         return list(result.scalars().all())
 
@@ -257,6 +268,7 @@ class RecommendationEngine:
 def _safe_json(text: str):
     import json
     import re
+
     if not text:
         return None
     text = text.strip()

@@ -12,6 +12,7 @@ Key behaviors:
 5. Never leads with rankings or data (data supports, doesn't drive)
 6. Is persuasive when it matters (safety schools, realistic expectations)
 """
+
 from __future__ import annotations
 
 import json
@@ -94,6 +95,7 @@ class StudentAdvisor:
             from sqlalchemy.orm import selectinload
 
             from unipaith.models.institution import Program
+
             prog_result = await self.db.execute(
                 select(Program)
                 .where(Program.id == context_program_id)
@@ -102,12 +104,14 @@ class StudentAdvisor:
             program = prog_result.scalar_one_or_none()
             if program:
                 knowledge_items = await self.knowledge.retrieve_for_program(
-                    program.program_name, program.institution.name if program.institution else None,
+                    program.program_name,
+                    program.institution.name if program.institution else None,
                 )
                 knowledge_context = format_knowledge_for_prompt(knowledge_items)
         else:
             knowledge_items = await self.knowledge.retrieve_for_conversation(
-                message, user_context=profile.goals_text,
+                message,
+                user_context=profile.goals_text,
             )
             knowledge_context = format_knowledge_for_prompt(knowledge_items)
 
@@ -140,10 +144,7 @@ class StudentAdvisor:
         history_messages = self._format_history_for_llm(history)
         user_content = message
 
-        full_messages = (
-            history_messages
-            + [{"role": "user", "content": user_content}]
-        )
+        full_messages = history_messages + [{"role": "user", "content": user_content}]
 
         response = await self.llm.generate_reasoning(
             system_prompt=system_prompt,
@@ -154,7 +155,10 @@ class StudentAdvisor:
 
         try:
             await self._extract_insights_background(
-                student_user_id, message, insights, history,
+                student_user_id,
+                message,
+                insights,
+                history,
             )
         except Exception:
             logger.debug("Insight extraction failed (non-blocking)")
@@ -196,35 +200,35 @@ class StudentAdvisor:
             insight_lines = []
             for ins in insights[:15]:
                 insight_lines.append(
-                    f"- [{ins.insight_type}] {ins.insight_text}"
-                    f" (confidence: {ins.confidence})"
+                    f"- [{ins.insight_type}] {ins.insight_text} (confidence: {ins.confidence})"
                 )
             insight_text = "\n## What You Know About This Student\n" + "\n".join(insight_lines)
 
         student_context = f"""
 ## Student Profile
-- Name: {profile.first_name or ''} {profile.last_name or ''}
-- Bio: {profile.bio_text or 'Not provided'}
-- Goals: {profile.goals_text or 'Not specified yet'}
-- Nationality: {profile.nationality or 'Unknown'}"""
+- Name: {profile.first_name or ""} {profile.last_name or ""}
+- Bio: {profile.bio_text or "Not provided"}
+- Goals: {profile.goals_text or "Not specified yet"}
+- Nationality: {profile.nationality or "Unknown"}"""
 
         if preferences:
             countries = (
                 ", ".join(preferences.preferred_countries)
-                if preferences.preferred_countries else "Open"
+                if preferences.preferred_countries
+                else "Open"
             )
             student_context += f"""
 - Preferred countries: {countries}
-- Budget: {preferences.budget_min or '?'} - {preferences.budget_max or '?'}
-- Funding need: {preferences.funding_requirement or 'Not specified'}"""
+- Budget: {preferences.budget_min or "?"} - {preferences.budget_max or "?"}
+- Funding need: {preferences.funding_requirement or "Not specified"}"""
 
         emotion_guidance = ""
         if emotion.get("primary_emotion") and emotion["primary_emotion"] != "neutral":
             needs = emotion.get("needs", "")
             emotion_guidance = f"""
 ## Current Emotional State
-The student seems {emotion['primary_emotion']} (intensity: {emotion.get('intensity', 0.5)}).
-Undertone: {emotion.get('undertone', 'none detected')}
+The student seems {emotion["primary_emotion"]} (intensity: {emotion.get("intensity", 0.5)}).
+Undertone: {emotion.get("undertone", "none detected")}
 What they need right now: {needs}
 Adjust your response accordingly."""
 
@@ -282,8 +286,7 @@ CRITICAL RULES:
 
         if persona.proactivity >= 60:
             parts.append(
-                "Proactively bring up topics the student"
-                " hasn't asked about but should consider."
+                "Proactively bring up topics the student hasn't asked about but should consider."
             )
 
         if persona.data_reference_frequency <= 30:
@@ -351,50 +354,64 @@ CRITICAL RULES:
             if not insight_type or not insight_text or len(insight_text) < 5:
                 continue
 
-            self.db.add(PersonInsight(
-                user_id=user_id,
-                insight_type=insight_type,
-                insight_text=insight_text,
-                confidence=confidence,
-                evidence_turns=[],
-                source="conversation",
-            ))
+            self.db.add(
+                PersonInsight(
+                    user_id=user_id,
+                    insight_type=insight_type,
+                    insight_text=insight_text,
+                    confidence=confidence,
+                    evidence_turns=[],
+                    source="conversation",
+                )
+            )
 
         await self.db.flush()
 
     async def _store_turn(
-        self, user_id: UUID, student_id: UUID, user_message: str, advisor_reply: str,
+        self,
+        user_id: UUID,
+        student_id: UUID,
+        user_message: str,
+        advisor_reply: str,
     ) -> None:
         """Store the conversation turn in the DB for persistent memory."""
         conv = await self._get_or_create_advisor_conversation(user_id, student_id)
 
         now = datetime.now(UTC)
-        self.db.add(Message(
-            conversation_id=conv.id,
-            sender_id=user_id,
-            sender_type="student",
-            message_body=user_message,
-            sent_at=now,
-        ))
-        self.db.add(Message(
-            conversation_id=conv.id,
-            sender_id=user_id,
-            sender_type="advisor",
-            message_body=advisor_reply,
-            sent_at=now,
-        ))
+        self.db.add(
+            Message(
+                conversation_id=conv.id,
+                sender_id=user_id,
+                sender_type="student",
+                message_body=user_message,
+                sent_at=now,
+            )
+        )
+        self.db.add(
+            Message(
+                conversation_id=conv.id,
+                sender_id=user_id,
+                sender_type="advisor",
+                message_body=advisor_reply,
+                sent_at=now,
+            )
+        )
         conv.last_message_at = now
         await self.db.flush()
 
     async def _get_or_create_advisor_conversation(
-        self, user_id: UUID, student_id: UUID,
+        self,
+        user_id: UUID,
+        student_id: UUID,
     ) -> Conversation:
         """Get or create the advisor conversation for this student."""
         result = await self.db.execute(
-            select(Conversation).where(
+            select(Conversation)
+            .where(
                 Conversation.student_id == student_id,
                 Conversation.subject == "__advisor__",
-            ).limit(1)
+            )
+            .limit(1)
         )
         conv = result.scalar_one_or_none()
         if conv:
@@ -413,15 +430,19 @@ CRITICAL RULES:
         return conv
 
     async def _load_recent_history(
-        self, user_id: UUID, limit: int = 20,
+        self,
+        user_id: UUID,
+        limit: int = 20,
     ) -> list[dict]:
         """Load recent conversation turns from DB."""
         profile = await self.student_service._get_student_profile(user_id)
         result = await self.db.execute(
-            select(Conversation).where(
+            select(Conversation)
+            .where(
                 Conversation.student_id == profile.id,
                 Conversation.subject == "__advisor__",
-            ).limit(1)
+            )
+            .limit(1)
         )
         conv = result.scalar_one_or_none()
         if not conv:
@@ -445,10 +466,13 @@ CRITICAL RULES:
 
     async def _load_person_insights(self, user_id: UUID) -> list[PersonInsight]:
         result = await self.db.execute(
-            select(PersonInsight).where(
+            select(PersonInsight)
+            .where(
                 PersonInsight.user_id == user_id,
                 PersonInsight.is_active.is_(True),
-            ).order_by(PersonInsight.confidence.desc()).limit(20)
+            )
+            .order_by(PersonInsight.confidence.desc())
+            .limit(20)
         )
         return list(result.scalars().all())
 
@@ -485,6 +509,7 @@ CRITICAL RULES:
 
 def _safe_json(text: str):
     import re
+
     if not text:
         return None
     text = text.strip()

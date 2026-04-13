@@ -103,9 +103,7 @@ class KnowledgeExtractor:
 
         if source_url:
             existing = await self.db.execute(
-                select(KnowledgeDocument)
-                .where(KnowledgeDocument.source_url == source_url)
-                .limit(1)
+                select(KnowledgeDocument).where(KnowledgeDocument.source_url == source_url).limit(1)
             )
             if existing.scalar_one_or_none():
                 logger.debug("Duplicate source_url, skipping: %s", source_url)

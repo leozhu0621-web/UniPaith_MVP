@@ -403,16 +403,12 @@ class ReviewPipelineService:
                 return self._packet_to_dict(existing)
 
         # Load application + program + rubric
-        app_r = await self.db.execute(
-            select(Application).where(Application.id == application_id)
-        )
+        app_r = await self.db.execute(select(Application).where(Application.id == application_id))
         app = app_r.scalar_one_or_none()
         if not app:
             raise NotFoundException("Application not found")
 
-        prog_r = await self.db.execute(
-            select(Program).where(Program.id == app.program_id)
-        )
+        prog_r = await self.db.execute(select(Program).where(Program.id == app.program_id))
         program = prog_r.scalar_one_or_none()
         if not program:
             raise NotFoundException("Program not found")
@@ -432,16 +428,10 @@ class ReviewPipelineService:
         # Load rubric if provided
         rubric_criteria = []
         if rubric_id:
-            rub_r = await self.db.execute(
-                select(Rubric).where(Rubric.id == rubric_id)
-            )
+            rub_r = await self.db.execute(select(Rubric).where(Rubric.id == rubric_id))
             rubric = rub_r.scalar_one_or_none()
             if rubric and rubric.criteria:
-                rubric_criteria = (
-                    rubric.criteria
-                    if isinstance(rubric.criteria, list)
-                    else []
-                )
+                rubric_criteria = rubric.criteria if isinstance(rubric.criteria, list) else []
 
         # Build context
         student_data = self._build_student_context(profile)
@@ -524,17 +514,17 @@ class ReviewPipelineService:
         if existing:
             existing.rubric_id = rubric_id
             existing.overall_summary = data.get(
-                "overall_summary", "",
+                "overall_summary",
+                "",
             )
             existing.strengths = data.get("strengths")
             existing.concerns = data.get("concerns")
             existing.criterion_assessments = data.get(
-                "criterion_assessments", [],
+                "criterion_assessments",
+                [],
             )
             existing.recommended_score = (
-                Decimal(str(data["recommended_score"]))
-                if data.get("recommended_score")
-                else None
+                Decimal(str(data["recommended_score"])) if data.get("recommended_score") else None
             )
             existing.confidence_level = data.get("confidence_level")
             existing.model_used = model_name
@@ -551,12 +541,11 @@ class ReviewPipelineService:
             strengths=data.get("strengths"),
             concerns=data.get("concerns"),
             criterion_assessments=data.get(
-                "criterion_assessments", [],
+                "criterion_assessments",
+                [],
             ),
             recommended_score=(
-                Decimal(str(data["recommended_score"]))
-                if data.get("recommended_score")
-                else None
+                Decimal(str(data["recommended_score"])) if data.get("recommended_score") else None
             ),
             confidence_level=data.get("confidence_level"),
             model_used=model_name,
@@ -580,9 +569,7 @@ class ReviewPipelineService:
             existing.concerns = data.get("concerns")
             existing.criterion_assessments = data.get("criterion_assessments", [])
             existing.recommended_score = (
-                Decimal(str(data["recommended_score"]))
-                if data.get("recommended_score")
-                else None
+                Decimal(str(data["recommended_score"])) if data.get("recommended_score") else None
             )
             existing.confidence_level = data.get("confidence_level")
             existing.model_used = model_name
@@ -638,18 +625,10 @@ class ReviewPipelineService:
             "strengths": s.strengths,
             "concerns": s.concerns,
             "criterion_assessments": s.criterion_assessments,
-            "recommended_score": (
-                float(s.recommended_score)
-                if s.recommended_score
-                else None
-            ),
+            "recommended_score": (float(s.recommended_score) if s.recommended_score else None),
             "confidence_level": s.confidence_level,
             "model_used": s.model_used,
-            "generated_at": (
-                s.generated_at.isoformat()
-                if s.generated_at
-                else None
-            ),
+            "generated_at": (s.generated_at.isoformat() if s.generated_at else None),
         }
 
     # ------------------------------------------------------------------
@@ -667,9 +646,7 @@ class ReviewPipelineService:
         from unipaith.models.application import IntegritySignal
 
         # Load application + student
-        app_r = await self.db.execute(
-            select(Application).where(Application.id == application_id)
-        )
+        app_r = await self.db.execute(select(Application).where(Application.id == application_id))
         app = app_r.scalar_one_or_none()
         if not app:
             raise NotFoundException("Application not found")
@@ -700,37 +677,38 @@ class ReviewPipelineService:
             )
         )
         if (dup_r.scalar() or 0) > 0:
-            signals.append({
-                "signal_type": "duplicate_submission",
-                "severity": "high",
-                "title": "Duplicate application detected",
-                "description": (
-                    "This student has another application "
-                    "to the same program."
-                ),
-                "evidence": {
-                    "student_id": str(app.student_id),
-                    "program_id": str(app.program_id),
-                },
-            })
+            signals.append(
+                {
+                    "signal_type": "duplicate_submission",
+                    "severity": "high",
+                    "title": "Duplicate application detected",
+                    "description": ("This student has another application to the same program."),
+                    "evidence": {
+                        "student_id": str(app.student_id),
+                        "program_id": str(app.program_id),
+                    },
+                }
+            )
 
         # 2. GPA consistency check
-        for rec in (profile.academic_records or []):
+        for rec in profile.academic_records or []:
             if rec.gpa and float(rec.gpa) > 4.0:
-                signals.append({
-                    "signal_type": "credential_mismatch",
-                    "severity": "medium",
-                    "title": f"Unusual GPA: {rec.gpa}",
-                    "description": (
-                        f"GPA of {rec.gpa} at {rec.institution_name} "
-                        "exceeds typical 4.0 scale. Verify grading system."
-                    ),
-                    "evidence": {
-                        "institution": rec.institution_name,
-                        "gpa": str(rec.gpa),
-                        "scale_note": "Exceeds 4.0 scale",
-                    },
-                })
+                signals.append(
+                    {
+                        "signal_type": "credential_mismatch",
+                        "severity": "medium",
+                        "title": f"Unusual GPA: {rec.gpa}",
+                        "description": (
+                            f"GPA of {rec.gpa} at {rec.institution_name} "
+                            "exceeds typical 4.0 scale. Verify grading system."
+                        ),
+                        "evidence": {
+                            "institution": rec.institution_name,
+                            "gpa": str(rec.gpa),
+                            "scale_note": "Exceeds 4.0 scale",
+                        },
+                    }
+                )
 
         # 3. Test score range check
         score_ranges = {
@@ -741,44 +719,46 @@ class ReviewPipelineService:
             "TOEFL": (0, 120),
             "IELTS": (0, 9),
         }
-        for ts in (profile.test_scores or []):
+        for ts in profile.test_scores or []:
             if ts.total_score and ts.test_type:
                 tt = ts.test_type.upper()
                 for key, (lo, hi) in score_ranges.items():
                     if key in tt:
                         score_val = float(ts.total_score)
                         if score_val < lo or score_val > hi:
-                            signals.append({
-                                "signal_type": "credential_mismatch",
-                                "severity": "high",
-                                "title": (
-                                    f"Out-of-range {ts.test_type} score"
-                                ),
-                                "description": (
-                                    f"{ts.test_type} score of "
-                                    f"{ts.total_score} is outside "
-                                    f"valid range ({lo}-{hi})."
-                                ),
-                                "evidence": {
-                                    "test_type": ts.test_type,
-                                    "score": str(ts.total_score),
-                                    "valid_range": f"{lo}-{hi}",
-                                },
-                            })
+                            signals.append(
+                                {
+                                    "signal_type": "credential_mismatch",
+                                    "severity": "high",
+                                    "title": (f"Out-of-range {ts.test_type} score"),
+                                    "description": (
+                                        f"{ts.test_type} score of "
+                                        f"{ts.total_score} is outside "
+                                        f"valid range ({lo}-{hi})."
+                                    ),
+                                    "evidence": {
+                                        "test_type": ts.test_type,
+                                        "score": str(ts.total_score),
+                                        "valid_range": f"{lo}-{hi}",
+                                    },
+                                }
+                            )
                         break
 
         # 4. Missing critical fields
         if not profile.first_name or not profile.last_name:
-            signals.append({
-                "signal_type": "incomplete_profile",
-                "severity": "low",
-                "title": "Missing name fields",
-                "description": "Student profile missing first or last name.",
-                "evidence": {
-                    "first_name": profile.first_name,
-                    "last_name": profile.last_name,
-                },
-            })
+            signals.append(
+                {
+                    "signal_type": "incomplete_profile",
+                    "severity": "low",
+                    "title": "Missing name fields",
+                    "description": "Student profile missing first or last name.",
+                    "evidence": {
+                        "first_name": profile.first_name,
+                        "last_name": profile.last_name,
+                    },
+                }
+            )
 
         # 5. LLM-powered deeper analysis (if enabled)
         if not settings.ai_mock_mode:
@@ -800,17 +780,21 @@ class ReviewPipelineService:
                 try:
                     ai_data = json.loads(raw)
                     for flag in ai_data.get("flags", []):
-                        signals.append({
-                            "signal_type": flag.get(
-                                "type", "ai_detected",
-                            ),
-                            "severity": flag.get("severity", "medium"),
-                            "title": flag.get("title", "AI-detected"),
-                            "description": flag.get(
-                                "description", "",
-                            ),
-                            "evidence": flag.get("evidence"),
-                        })
+                        signals.append(
+                            {
+                                "signal_type": flag.get(
+                                    "type",
+                                    "ai_detected",
+                                ),
+                                "severity": flag.get("severity", "medium"),
+                                "title": flag.get("title", "AI-detected"),
+                                "description": flag.get(
+                                    "description",
+                                    "",
+                                ),
+                                "evidence": flag.get("evidence"),
+                            }
+                        )
                 except (json.JSONDecodeError, TypeError):
                     pass
             except Exception:
@@ -830,11 +814,13 @@ class ReviewPipelineService:
                 evidence=sig.get("evidence"),
             )
             self.db.add(entry)
-            persisted.append({
-                **sig,
-                "status": "open",
-                "created_at": now.isoformat(),
-            })
+            persisted.append(
+                {
+                    **sig,
+                    "status": "open",
+                    "created_at": now.isoformat(),
+                }
+            )
 
         if persisted:
             await self.db.flush()
@@ -871,14 +857,8 @@ class ReviewPipelineService:
                 "description": s.description,
                 "evidence": s.evidence,
                 "status": s.status,
-                "resolved_by": (
-                    str(s.resolved_by) if s.resolved_by else None
-                ),
-                "resolved_at": (
-                    s.resolved_at.isoformat()
-                    if s.resolved_at
-                    else None
-                ),
+                "resolved_by": (str(s.resolved_by) if s.resolved_by else None),
+                "resolved_at": (s.resolved_at.isoformat() if s.resolved_at else None),
                 "resolution_notes": s.resolution_notes,
                 "created_at": s.created_at.isoformat(),
             }
@@ -949,9 +929,7 @@ class ReviewPipelineService:
 
         # Load programs for deadlines
         prog_ids = list({a.program_id for a in apps})
-        prog_r = await self.db.execute(
-            select(Program).where(Program.id.in_(prog_ids))
-        )
+        prog_r = await self.db.execute(select(Program).where(Program.id.in_(prog_ids)))
         programs = {p.id: p for p in prog_r.scalars().all()}
 
         # Load intake round deadlines
@@ -966,9 +944,7 @@ class ReviewPipelineService:
             existing = intake_deadlines.get(ir.program_id)
             if ir.application_deadline:
                 if not existing or ir.application_deadline < existing:
-                    intake_deadlines[ir.program_id] = (
-                        ir.application_deadline
-                    )
+                    intake_deadlines[ir.program_id] = ir.application_deadline
 
         # Load reviewer workload counts
         assign_r = await self.db.execute(
@@ -1056,10 +1032,9 @@ class ReviewPipelineService:
                 reasons.append("Unassigned")
             else:
                 # Lower priority if assigned to overloaded reviewer
-                avg_load = sum(
-                    reviewer_load.get(ra.reviewer_id, 0)
-                    for ra in assignments
-                ) / len(assignments)
+                avg_load = sum(reviewer_load.get(ra.reviewer_id, 0) for ra in assignments) / len(
+                    assignments
+                )
                 if avg_load <= 5:
                     score += 15
                 elif avg_load <= 10:
@@ -1068,30 +1043,22 @@ class ReviewPipelineService:
                     score += 5
                     reasons.append("Reviewer overloaded")
 
-            prioritized.append({
-                "application_id": str(app.id),
-                "student_id": str(app.student_id),
-                "program_id": str(app.program_id),
-                "program_name": (
-                    prog.program_name if prog else "Unknown"
-                ),
-                "status": app.status,
-                "match_score": (
-                    float(app.match_score)
-                    if app.match_score
-                    else None
-                ),
-                "completeness_status": app.completeness_status,
-                "submitted_at": (
-                    app.submitted_at.isoformat()
-                    if app.submitted_at
-                    else None
-                ),
-                "priority_score": round(score, 1),
-                "priority_reasons": reasons,
-                "deadline_days": deadline_days,
-                "assigned_count": len(assignments),
-            })
+            prioritized.append(
+                {
+                    "application_id": str(app.id),
+                    "student_id": str(app.student_id),
+                    "program_id": str(app.program_id),
+                    "program_name": (prog.program_name if prog else "Unknown"),
+                    "status": app.status,
+                    "match_score": (float(app.match_score) if app.match_score else None),
+                    "completeness_status": app.completeness_status,
+                    "submitted_at": (app.submitted_at.isoformat() if app.submitted_at else None),
+                    "priority_score": round(score, 1),
+                    "priority_reasons": reasons,
+                    "deadline_days": deadline_days,
+                    "assigned_count": len(assignments),
+                }
+            )
 
         prioritized.sort(key=lambda x: x["priority_score"], reverse=True)
         return prioritized

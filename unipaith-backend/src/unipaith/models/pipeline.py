@@ -48,6 +48,4 @@ class PipelineConfig(TimestampMixin, Base):
     description: Mapped[str | None] = mapped_column(Text)
     updated_by: Mapped[str | None] = mapped_column(String(255))
 
-    __table_args__ = (
-        Index("ix_pipeline_configs_key", "key"),
-    )
+    __table_args__ = (Index("ix_pipeline_configs_key", "key"),)

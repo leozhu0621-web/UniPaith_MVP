@@ -1,4 +1,5 @@
 """Admissions audit trail service — records who/when/what for pipeline actions."""
+
 from __future__ import annotations
 
 from uuid import UUID

@@ -92,9 +92,9 @@ class MLOrchestrator:
 
             outcome_count = 0
             try:
-                outcome_count = await self.db.scalar(
-                    select(func.count()).select_from(OutcomeRecord)
-                ) or 0
+                outcome_count = (
+                    await self.db.scalar(select(func.count()).select_from(OutcomeRecord)) or 0
+                )
             except Exception:
                 pass
 

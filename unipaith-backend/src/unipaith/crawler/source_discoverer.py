@@ -266,10 +266,14 @@ class SourceDiscoverer:
         exclusions: set[str],
     ) -> int:
         """Extract URLs from recently processed documents."""
-        total_docs = await self.db.scalar(
-            select(func.count()).select_from(KnowledgeDocument)
-            .where(KnowledgeDocument.processing_status == "completed")
-        ) or 0
+        total_docs = (
+            await self.db.scalar(
+                select(func.count())
+                .select_from(KnowledgeDocument)
+                .where(KnowledgeDocument.processing_status == "completed")
+            )
+            or 0
+        )
         cold_start = total_docs < 100
 
         recent_docs = await self.db.execute(
@@ -393,9 +397,7 @@ class SourceDiscoverer:
 
         return added
 
-    async def _fallback_seed_urls(
-        self, max_urls: int, exclusions: set[str]
-    ) -> int:
+    async def _fallback_seed_urls(self, max_urls: int, exclusions: set[str]) -> int:
         """When search-based discovery fails, seed from a curated list."""
         fallback = [
             "https://www.harvard.edu/programs/",

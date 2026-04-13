@@ -70,13 +70,13 @@ class LocalExtractWorker:
 
         logger.info(
             "Worker started — model=%s ollama=%s host=%s",
-            self.model, self.ollama_url, self.hostname,
+            self.model,
+            self.ollama_url,
+            self.hostname,
         )
         logger.info("Ctrl+C to stop. Fargate fallback auto-engages within 5 minutes.")
 
-        heartbeat_task = asyncio.create_task(
-            self._heartbeat_loop(session_factory)
-        )
+        heartbeat_task = asyncio.create_task(self._heartbeat_loop(session_factory))
 
         try:
             while self._running:
@@ -115,7 +115,8 @@ class LocalExtractWorker:
             await engine.dispose()
             logger.info(
                 "Worker stopped. Processed: %d, Errors: %d",
-                self._processed, self._errors,
+                self._processed,
+                self._errors,
             )
 
     async def _pull_raw_doc(self, db: AsyncSession):
@@ -171,10 +172,15 @@ class LocalExtractWorker:
                     from sqlalchemy import select as sa_select
 
                     from unipaith.models.knowledge import KnowledgeDocument
-                    raw_count = await db.scalar(
-                        sa_select(func.count()).select_from(KnowledgeDocument)
-                        .where(KnowledgeDocument.processing_status == "raw")
-                    ) or 0
+
+                    raw_count = (
+                        await db.scalar(
+                            sa_select(func.count())
+                            .select_from(KnowledgeDocument)
+                            .where(KnowledgeDocument.processing_status == "raw")
+                        )
+                        or 0
+                    )
                     snap.queue_depth = raw_count
 
                     snap.extra_json = {

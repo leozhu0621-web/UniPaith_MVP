@@ -248,9 +248,7 @@ class FeatureExtractor:
         if program.description_text:
             text_parts.append(f"## Program Description\n{program.description_text}")
         if program.who_its_for:
-            text_parts.append(
-                f"## Who It's For\n{program.who_its_for}"
-            )
+            text_parts.append(f"## Who It's For\n{program.who_its_for}")
         if program.highlights:
             text_parts.append(
                 "## Program Highlights\n" + "\n".join(f"- {h}" for h in program.highlights)

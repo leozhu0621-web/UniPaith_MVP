@@ -90,9 +90,7 @@ class EngineLoop:
 
     async def _count_pending_frontier(self) -> int:
         now = datetime.now(UTC)
-        ready = (CrawlFrontier.next_crawl_after.is_(None)) | (
-            CrawlFrontier.next_crawl_after <= now
-        )
+        ready = (CrawlFrontier.next_crawl_after.is_(None)) | (CrawlFrontier.next_crawl_after <= now)
         result = await self.db.execute(
             select(func.count())
             .select_from(CrawlFrontier)

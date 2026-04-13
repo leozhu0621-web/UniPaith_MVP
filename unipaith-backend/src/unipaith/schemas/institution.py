@@ -332,7 +332,8 @@ class CampaignMetricsResponse(BaseModel):
 
 class CreateCampaignLinkRequest(BaseModel):
     destination_type: str = Field(
-        ..., pattern=r"^(program|institution|event|post|custom)$",
+        ...,
+        pattern=r"^(program|institution|event|post|custom)$",
     )
     destination_id: UUID | None = None
     custom_url: str | None = None
@@ -383,7 +384,8 @@ class CampaignAttributionDetail(BaseModel):
 class RecordActionRequest(BaseModel):
     campaign_id: UUID
     action_type: str = Field(
-        ..., pattern=r"^(view|save|rsvp|request_info|apply)$",
+        ...,
+        pattern=r"^(view|save|rsvp|request_info|apply)$",
     )
     target_id: UUID | None = None
 
@@ -402,7 +404,8 @@ class SubmitInquiryRequest(BaseModel):
 
 class UpdateInquiryRequest(BaseModel):
     status: str | None = Field(
-        None, pattern=r"^(new|in_progress|responded|closed)$",
+        None,
+        pattern=r"^(new|in_progress|responded|closed)$",
     )
     assigned_to: UUID | None = None
     response_text: str | None = None
@@ -431,6 +434,7 @@ class InquiryResponse(BaseModel):
 
 class InquiryRoutingConfig(BaseModel):
     """Institution's inquiry routing preferences."""
+
     default_email: str | None = None
     auto_reply_enabled: bool = False
     auto_reply_message: str | None = None
@@ -468,7 +472,8 @@ class UpdatePromotionRequest(BaseModel):
     description: str | None = None
     targeting: TargetingScope | None = None
     status: str | None = Field(
-        None, pattern=r"^(draft|active|paused|expired)$",
+        None,
+        pattern=r"^(draft|active|paused|expired)$",
     )
     starts_at: datetime | None = None
     ends_at: datetime | None = None

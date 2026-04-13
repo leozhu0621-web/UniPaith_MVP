@@ -54,8 +54,7 @@ async def pipeline_status(
             stages[stage_name] = {
                 "status": snap.status,
                 "last_activity_at": (
-                    snap.last_activity_at.isoformat()
-                    if snap.last_activity_at else None
+                    snap.last_activity_at.isoformat() if snap.last_activity_at else None
                 ),
                 "items_processed_total": snap.items_processed_total,
                 "items_processed_hour": snap.items_processed_hour,
@@ -63,8 +62,7 @@ async def pipeline_status(
                 "last_error": snap.last_error,
                 "extra": snap.extra_json,
                 "worker_heartbeat_at": (
-                    snap.worker_heartbeat_at.isoformat()
-                    if snap.worker_heartbeat_at else None
+                    snap.worker_heartbeat_at.isoformat() if snap.worker_heartbeat_at else None
                 ),
                 "worker_hostname": snap.worker_hostname,
                 "budget_spent_this_hour": snap.budget_spent_this_hour,
@@ -73,26 +71,35 @@ async def pipeline_status(
         else:
             stages[stage_name] = {"status": "not_started"}
 
-    raw_count = await db.scalar(
-        select(func.count()).select_from(KnowledgeDocument)
-        .where(KnowledgeDocument.processing_status == "raw")
-    ) or 0
+    raw_count = (
+        await db.scalar(
+            select(func.count())
+            .select_from(KnowledgeDocument)
+            .where(KnowledgeDocument.processing_status == "raw")
+        )
+        or 0
+    )
 
-    completed_count = await db.scalar(
-        select(func.count()).select_from(KnowledgeDocument)
-        .where(KnowledgeDocument.processing_status == "completed")
-    ) or 0
+    completed_count = (
+        await db.scalar(
+            select(func.count())
+            .select_from(KnowledgeDocument)
+            .where(KnowledgeDocument.processing_status == "completed")
+        )
+        or 0
+    )
 
-    frontier_pending = await db.scalar(
-        select(func.count()).select_from(CrawlFrontier)
-        .where(CrawlFrontier.status == "pending")
-    ) or 0
+    frontier_pending = (
+        await db.scalar(
+            select(func.count()).select_from(CrawlFrontier).where(CrawlFrontier.status == "pending")
+        )
+        or 0
+    )
 
-    outcome_count = await db.scalar(
-        select(func.count()).select_from(OutcomeRecord)
-    ) or 0
+    outcome_count = await db.scalar(select(func.count()).select_from(OutcomeRecord)) or 0
 
     from unipaith.services.pipeline import get_pipeline
+
     pipeline = get_pipeline()
 
     return {
@@ -117,6 +124,7 @@ async def pipeline_toggle(
     _=Depends(require_admin),
 ) -> dict:
     from unipaith.services.pipeline import get_pipeline
+
     pipeline = get_pipeline()
     pipeline.enabled = body.enabled
     return {"enabled": pipeline.enabled}
@@ -128,6 +136,7 @@ async def pipeline_throttle(
     _=Depends(require_admin),
 ) -> dict:
     from unipaith.services.pipeline import get_pipeline
+
     pipeline = get_pipeline()
     pipeline.budget_gate.budget_per_hour = body.budget_per_hour
     return {"budget_per_hour": pipeline.budget_gate.budget_per_hour}
@@ -182,18 +191,21 @@ async def pipeline_force(
 
     if action == "discover":
         from unipaith.crawler.source_discoverer import SourceDiscoverer
+
         discoverer = SourceDiscoverer(db)
         result = await discoverer.run_discovery_cycle(max_new_urls=50)
         return {"action": "discover", "result": result}
 
     if action == "train":
         from unipaith.ml.orchestrator import MLOrchestrator
+
         orch = MLOrchestrator(db)
         result = await orch.run_full_cycle(triggered_by="admin_force")
         return {"action": "train", "result": result}
 
     if action == "flush_failed":
         from sqlalchemy import update
+
         count = await db.execute(
             update(KnowledgeDocument)
             .where(KnowledgeDocument.processing_status == "failed")

@@ -262,8 +262,7 @@ class ResumeWorkshopService:
             if program:
                 inst_name = program.institution.name if program.institution else "Unknown"
                 user_content = (
-                    f"Target program: {program.program_name} at "
-                    f"{inst_name}\n\n{user_content}"
+                    f"Target program: {program.program_name} at {inst_name}\n\n{user_content}"
                 )
 
         llm = get_llm_client()

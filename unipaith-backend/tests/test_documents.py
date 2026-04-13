@@ -67,8 +67,7 @@ async def test_request_upload_wrong_mime(
             "document_type": "recommendation",
             "file_name": "rec.docx",
             "content_type": (
-                "application/vnd.openxmlformats-officedocument"
-                ".wordprocessingml.document"
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             ),
             "file_size_bytes": 100,
         },

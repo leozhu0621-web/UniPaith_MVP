@@ -150,7 +150,9 @@ class StudentService:
     # --- Courses (nested under AcademicRecord) ---
 
     async def list_courses(
-        self, student_id: UUID, record_id: UUID,
+        self,
+        student_id: UUID,
+        record_id: UUID,
     ) -> list[StudentCourse]:
         record = await self._get_record(AcademicRecord, record_id)
         await self._verify_ownership(student_id, record.student_id)
@@ -160,7 +162,10 @@ class StudentService:
         return list(result.scalars().all())
 
     async def create_course(
-        self, student_id: UUID, record_id: UUID, data: CreateCourseRequest,
+        self,
+        student_id: UUID,
+        record_id: UUID,
+        data: CreateCourseRequest,
     ) -> StudentCourse:
         record = await self._get_record(AcademicRecord, record_id)
         await self._verify_ownership(student_id, record.student_id)
@@ -170,7 +175,11 @@ class StudentService:
         return course
 
     async def update_course(
-        self, student_id: UUID, record_id: UUID, course_id: UUID, data: UpdateCourseRequest,
+        self,
+        student_id: UUID,
+        record_id: UUID,
+        course_id: UUID,
+        data: UpdateCourseRequest,
     ) -> StudentCourse:
         record = await self._get_record(AcademicRecord, record_id)
         await self._verify_ownership(student_id, record.student_id)
@@ -183,7 +192,10 @@ class StudentService:
         return course
 
     async def delete_course(
-        self, student_id: UUID, record_id: UUID, course_id: UUID,
+        self,
+        student_id: UUID,
+        record_id: UUID,
+        course_id: UUID,
     ) -> None:
         record = await self._get_record(AcademicRecord, record_id)
         await self._verify_ownership(student_id, record.student_id)
@@ -264,7 +276,8 @@ class StudentService:
     # --- Online Presence ---
 
     async def list_online_presence(
-        self, student_id: UUID,
+        self,
+        student_id: UUID,
     ) -> list[StudentOnlinePresence]:
         result = await self.db.execute(
             select(StudentOnlinePresence).where(
@@ -274,7 +287,9 @@ class StudentService:
         return list(result.scalars().all())
 
     async def create_online_presence(
-        self, student_id: UUID, data: CreateOnlinePresenceRequest,
+        self,
+        student_id: UUID,
+        data: CreateOnlinePresenceRequest,
     ) -> StudentOnlinePresence:
         record = StudentOnlinePresence(student_id=student_id, **data.model_dump())
         self.db.add(record)
@@ -283,7 +298,10 @@ class StudentService:
         return record
 
     async def update_online_presence(
-        self, student_id: UUID, record_id: UUID, data: UpdateOnlinePresenceRequest,
+        self,
+        student_id: UUID,
+        record_id: UUID,
+        data: UpdateOnlinePresenceRequest,
     ) -> StudentOnlinePresence:
         record = await self._get_record(StudentOnlinePresence, record_id)
         await self._verify_ownership(student_id, record.student_id)
@@ -295,7 +313,9 @@ class StudentService:
         return record
 
     async def delete_online_presence(
-        self, student_id: UUID, record_id: UUID,
+        self,
+        student_id: UUID,
+        record_id: UUID,
     ) -> None:
         record = await self._get_record(StudentOnlinePresence, record_id)
         await self._verify_ownership(student_id, record.student_id)
@@ -314,7 +334,9 @@ class StudentService:
         return list(result.scalars().all())
 
     async def create_portfolio_item(
-        self, student_id: UUID, data: CreatePortfolioItemRequest,
+        self,
+        student_id: UUID,
+        data: CreatePortfolioItemRequest,
     ) -> StudentPortfolioItem:
         record = StudentPortfolioItem(student_id=student_id, **data.model_dump())
         self.db.add(record)
@@ -323,7 +345,10 @@ class StudentService:
         return record
 
     async def update_portfolio_item(
-        self, student_id: UUID, record_id: UUID, data: UpdatePortfolioItemRequest,
+        self,
+        student_id: UUID,
+        record_id: UUID,
+        data: UpdatePortfolioItemRequest,
     ) -> StudentPortfolioItem:
         record = await self._get_record(StudentPortfolioItem, record_id)
         await self._verify_ownership(student_id, record.student_id)
@@ -335,7 +360,9 @@ class StudentService:
         return record
 
     async def delete_portfolio_item(
-        self, student_id: UUID, record_id: UUID,
+        self,
+        student_id: UUID,
+        record_id: UUID,
     ) -> None:
         record = await self._get_record(StudentPortfolioItem, record_id)
         await self._verify_ownership(student_id, record.student_id)
@@ -352,7 +379,9 @@ class StudentService:
         return list(result.scalars().all())
 
     async def create_research(
-        self, student_id: UUID, data: CreateResearchRequest,
+        self,
+        student_id: UUID,
+        data: CreateResearchRequest,
     ) -> StudentResearch:
         record = StudentResearch(student_id=student_id, **data.model_dump())
         if record.is_current:
@@ -363,7 +392,10 @@ class StudentService:
         return record
 
     async def update_research(
-        self, student_id: UUID, record_id: UUID, data: UpdateResearchRequest,
+        self,
+        student_id: UUID,
+        record_id: UUID,
+        data: UpdateResearchRequest,
     ) -> StudentResearch:
         record = await self._get_record(StudentResearch, record_id)
         await self._verify_ownership(student_id, record.student_id)
@@ -377,7 +409,9 @@ class StudentService:
         return record
 
     async def delete_research(
-        self, student_id: UUID, record_id: UUID,
+        self,
+        student_id: UUID,
+        record_id: UUID,
     ) -> None:
         record = await self._get_record(StudentResearch, record_id)
         await self._verify_ownership(student_id, record.student_id)
@@ -394,7 +428,9 @@ class StudentService:
         return list(result.scalars().all())
 
     async def create_language(
-        self, student_id: UUID, data: CreateLanguageRequest,
+        self,
+        student_id: UUID,
+        data: CreateLanguageRequest,
     ) -> StudentLanguage:
         record = StudentLanguage(student_id=student_id, **data.model_dump())
         self.db.add(record)
@@ -403,7 +439,10 @@ class StudentService:
         return record
 
     async def update_language(
-        self, student_id: UUID, record_id: UUID, data: UpdateLanguageRequest,
+        self,
+        student_id: UUID,
+        record_id: UUID,
+        data: UpdateLanguageRequest,
     ) -> StudentLanguage:
         record = await self._get_record(StudentLanguage, record_id)
         await self._verify_ownership(student_id, record.student_id)
@@ -414,7 +453,9 @@ class StudentService:
         return record
 
     async def delete_language(
-        self, student_id: UUID, record_id: UUID,
+        self,
+        student_id: UUID,
+        record_id: UUID,
     ) -> None:
         record = await self._get_record(StudentLanguage, record_id)
         await self._verify_ownership(student_id, record.student_id)
@@ -431,7 +472,9 @@ class StudentService:
         return list(result.scalars().all())
 
     async def create_work_experience(
-        self, student_id: UUID, data: CreateWorkExperienceRequest,
+        self,
+        student_id: UUID,
+        data: CreateWorkExperienceRequest,
     ) -> StudentWorkExperience:
         record = StudentWorkExperience(student_id=student_id, **data.model_dump())
         if record.is_current:
@@ -442,7 +485,10 @@ class StudentService:
         return record
 
     async def update_work_experience(
-        self, student_id: UUID, record_id: UUID, data: UpdateWorkExperienceRequest,
+        self,
+        student_id: UUID,
+        record_id: UUID,
+        data: UpdateWorkExperienceRequest,
     ) -> StudentWorkExperience:
         record = await self._get_record(StudentWorkExperience, record_id)
         await self._verify_ownership(student_id, record.student_id)
@@ -455,7 +501,9 @@ class StudentService:
         return record
 
     async def delete_work_experience(
-        self, student_id: UUID, record_id: UUID,
+        self,
+        student_id: UUID,
+        record_id: UUID,
     ) -> None:
         record = await self._get_record(StudentWorkExperience, record_id)
         await self._verify_ownership(student_id, record.student_id)
@@ -472,7 +520,9 @@ class StudentService:
         return list(result.scalars().all())
 
     async def create_competition(
-        self, student_id: UUID, data: CreateCompetitionRequest,
+        self,
+        student_id: UUID,
+        data: CreateCompetitionRequest,
     ) -> StudentCompetition:
         record = StudentCompetition(student_id=student_id, **data.model_dump())
         self.db.add(record)
@@ -481,7 +531,10 @@ class StudentService:
         return record
 
     async def update_competition(
-        self, student_id: UUID, record_id: UUID, data: UpdateCompetitionRequest,
+        self,
+        student_id: UUID,
+        record_id: UUID,
+        data: UpdateCompetitionRequest,
     ) -> StudentCompetition:
         record = await self._get_record(StudentCompetition, record_id)
         await self._verify_ownership(student_id, record.student_id)
@@ -492,7 +545,9 @@ class StudentService:
         return record
 
     async def delete_competition(
-        self, student_id: UUID, record_id: UUID,
+        self,
+        student_id: UUID,
+        record_id: UUID,
     ) -> None:
         record = await self._get_record(StudentCompetition, record_id)
         await self._verify_ownership(student_id, record.student_id)
@@ -503,7 +558,8 @@ class StudentService:
     # --- Accommodations ---
 
     async def get_accommodations(
-        self, student_id: UUID,
+        self,
+        student_id: UUID,
     ) -> StudentAccommodation | None:
         result = await self.db.execute(
             select(StudentAccommodation).where(
@@ -513,7 +569,9 @@ class StudentService:
         return result.scalar_one_or_none()
 
     async def upsert_accommodations(
-        self, student_id: UUID, data: UpsertAccommodationRequest,
+        self,
+        student_id: UUID,
+        data: UpsertAccommodationRequest,
     ) -> StudentAccommodation:
         result = await self.db.execute(
             select(StudentAccommodation).where(
@@ -540,7 +598,9 @@ class StudentService:
         return result.scalar_one_or_none()
 
     async def upsert_scheduling(
-        self, student_id: UUID, data: UpsertSchedulingRequest,
+        self,
+        student_id: UUID,
+        data: UpsertSchedulingRequest,
     ) -> StudentScheduling:
         result = await self.db.execute(
             select(StudentScheduling).where(StudentScheduling.student_id == student_id)
@@ -565,7 +625,9 @@ class StudentService:
         return result.scalar_one_or_none()
 
     async def upsert_visa_info(
-        self, student_id: UUID, data: UpsertVisaInfoRequest,
+        self,
+        student_id: UUID,
+        data: UpsertVisaInfoRequest,
     ) -> StudentVisaInfo:
         result = await self.db.execute(
             select(StudentVisaInfo).where(StudentVisaInfo.student_id == student_id)
@@ -816,12 +878,14 @@ class StudentService:
         milestones: list[dict] = []
 
         # Profile created
-        milestones.append({
-            "date": p.created_at.isoformat(),
-            "event_type": "profile_created",
-            "label": "Profile created",
-            "detail": "You started your UniPaith journey.",
-        })
+        milestones.append(
+            {
+                "date": p.created_at.isoformat(),
+                "event_type": "profile_created",
+                "label": "Profile created",
+                "detail": "You started your UniPaith journey.",
+            }
+        )
 
         # Section completions (use created_at of first item)
         section_map = [
@@ -838,38 +902,46 @@ class StudentService:
         for items, evt_type, label in section_map:
             if items:
                 earliest = min(items, key=lambda x: x.created_at)
-                milestones.append({
-                    "date": earliest.created_at.isoformat(),
-                    "event_type": evt_type,
-                    "label": label,
-                    "detail": None,
-                })
+                milestones.append(
+                    {
+                        "date": earliest.created_at.isoformat(),
+                        "event_type": evt_type,
+                        "label": label,
+                        "detail": None,
+                    }
+                )
 
         # Application events
         apps_result = await self.db.execute(
             select(Application).where(Application.student_id == student_id)
         )
         for app in apps_result.scalars().all():
-            milestones.append({
-                "date": app.created_at.isoformat(),
-                "event_type": "application_created",
-                "label": "Started application",
-                "detail": None,
-            })
+            milestones.append(
+                {
+                    "date": app.created_at.isoformat(),
+                    "event_type": "application_created",
+                    "label": "Started application",
+                    "detail": None,
+                }
+            )
             if app.submitted_at:
-                milestones.append({
-                    "date": app.submitted_at.isoformat(),
-                    "event_type": "application_submitted",
-                    "label": "Submitted application",
-                    "detail": None,
-                })
+                milestones.append(
+                    {
+                        "date": app.submitted_at.isoformat(),
+                        "event_type": "application_submitted",
+                        "label": "Submitted application",
+                        "detail": None,
+                    }
+                )
             if app.decision_at:
-                milestones.append({
-                    "date": app.decision_at.isoformat(),
-                    "event_type": "decision_received",
-                    "label": f"Decision: {app.decision or 'pending'}",
-                    "detail": None,
-                })
+                milestones.append(
+                    {
+                        "date": app.decision_at.isoformat(),
+                        "event_type": "decision_received",
+                        "label": f"Decision: {app.decision or 'pending'}",
+                        "detail": None,
+                    }
+                )
 
         milestones.sort(key=lambda m: m["date"])
         return milestones
@@ -941,9 +1013,9 @@ class StudentService:
 
         # Engagement count
         eng_result = await self.db.execute(
-            select(sqla_func.count()).select_from(
-                StudentEngagementSignal
-            ).where(StudentEngagementSignal.student_id == student_id)
+            select(sqla_func.count())
+            .select_from(StudentEngagementSignal)
+            .where(StudentEngagementSignal.student_id == student_id)
         )
         engagement_count = eng_result.scalar_one()
 
@@ -978,7 +1050,9 @@ class StudentService:
         return result.scalar_one_or_none()
 
     async def upsert_data_consent(
-        self, student_id: UUID, data: UpsertDataConsentRequest,
+        self,
+        student_id: UUID,
+        data: UpsertDataConsentRequest,
     ) -> StudentDataConsent:
         from datetime import datetime as dt
 
@@ -1045,20 +1119,29 @@ class StudentService:
             default=None,
         )
         if my_gpa is not None:
-            total = (await self.db.execute(
-                select(sqla_func.count(sqla_func.distinct(AcademicRecord.student_id)))
-                .where(AcademicRecord.gpa.is_not(None))
-            )).scalar_one()
-            below = (await self.db.execute(
-                select(sqla_func.count(sqla_func.distinct(AcademicRecord.student_id)))
-                .where(AcademicRecord.gpa < my_gpa)
-                .where(AcademicRecord.gpa.is_not(None))
-            )).scalar_one()
+            total = (
+                await self.db.execute(
+                    select(sqla_func.count(sqla_func.distinct(AcademicRecord.student_id))).where(
+                        AcademicRecord.gpa.is_not(None)
+                    )
+                )
+            ).scalar_one()
+            below = (
+                await self.db.execute(
+                    select(sqla_func.count(sqla_func.distinct(AcademicRecord.student_id)))
+                    .where(AcademicRecord.gpa < my_gpa)
+                    .where(AcademicRecord.gpa.is_not(None))
+                )
+            ).scalar_one()
             pct = round(below / total * 100) if total > 0 else 50
-            metrics.append({
-                "metric": "GPA", "value": my_gpa,
-                "percentile": pct, "label": percentile_label(pct),
-            })
+            metrics.append(
+                {
+                    "metric": "GPA",
+                    "value": my_gpa,
+                    "percentile": pct,
+                    "label": percentile_label(pct),
+                }
+            )
 
         # Test score percentile (highest total_score)
         my_score = max(
@@ -1066,45 +1149,66 @@ class StudentService:
             default=None,
         )
         if my_score is not None:
-            total = (await self.db.execute(
-                select(sqla_func.count(sqla_func.distinct(TestScore.student_id)))
-                .where(TestScore.total_score.is_not(None))
-            )).scalar_one()
-            below = (await self.db.execute(
-                select(sqla_func.count(sqla_func.distinct(TestScore.student_id)))
-                .where(TestScore.total_score < my_score)
-                .where(TestScore.total_score.is_not(None))
-            )).scalar_one()
+            total = (
+                await self.db.execute(
+                    select(sqla_func.count(sqla_func.distinct(TestScore.student_id))).where(
+                        TestScore.total_score.is_not(None)
+                    )
+                )
+            ).scalar_one()
+            below = (
+                await self.db.execute(
+                    select(sqla_func.count(sqla_func.distinct(TestScore.student_id)))
+                    .where(TestScore.total_score < my_score)
+                    .where(TestScore.total_score.is_not(None))
+                )
+            ).scalar_one()
             pct = round(below / total * 100) if total > 0 else 50
-            metrics.append({
-                "metric": "Test Score", "value": my_score,
-                "percentile": pct, "label": percentile_label(pct),
-            })
+            metrics.append(
+                {
+                    "metric": "Test Score",
+                    "value": my_score,
+                    "percentile": pct,
+                    "label": percentile_label(pct),
+                }
+            )
 
         # Activity count percentile
         my_count = (
-            len(p.activities) + len(p.research_entries)
-            + len(p.work_experiences) + len(p.competitions)
+            len(p.activities)
+            + len(p.research_entries)
+            + len(p.work_experiences)
+            + len(p.competitions)
         )
         if my_count > 0:
             # Count activities per student across all tables
-            total = (await self.db.execute(
-                select(sqla_func.count()).select_from(StudentProfile)
-            )).scalar_one()
+            total = (
+                await self.db.execute(select(sqla_func.count()).select_from(StudentProfile))
+            ).scalar_one()
             # Simplified: compare against average
             avg_result = await self.db.execute(
-                select(sqla_func.avg(sqla_func.coalesce(
-                    select(sqla_func.count()).where(
-                        Activity.student_id == StudentProfile.id
-                    ).correlate(StudentProfile).scalar_subquery(), 0
-                ))).select_from(StudentProfile)
+                select(
+                    sqla_func.avg(
+                        sqla_func.coalesce(
+                            select(sqla_func.count())
+                            .where(Activity.student_id == StudentProfile.id)
+                            .correlate(StudentProfile)
+                            .scalar_subquery(),
+                            0,
+                        )
+                    )
+                ).select_from(StudentProfile)
             )
             avg_count = float(avg_result.scalar_one() or 1)
             pct = min(99, round(my_count / max(avg_count * 2, 1) * 100))
-            metrics.append({
-                "metric": "Activities", "value": my_count,
-                "percentile": pct, "label": percentile_label(pct),
-            })
+            metrics.append(
+                {
+                    "metric": "Activities",
+                    "value": my_count,
+                    "percentile": pct,
+                    "label": percentile_label(pct),
+                }
+            )
 
         return {"metrics": metrics}
 

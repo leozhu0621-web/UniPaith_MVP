@@ -406,9 +406,7 @@ class AIControlPlaneService:
             select(TrainingRun).order_by(TrainingRun.created_at.desc()).limit(1)
         )
         latest_train_obj = latest_train.scalar_one_or_none()
-        latest_failed = bool(
-            latest_train_obj is not None and latest_train_obj.status == "failed"
-        )
+        latest_failed = bool(latest_train_obj is not None and latest_train_obj.status == "failed")
 
         active_row = await self.db.execute(
             select(ModelRegistry).where(ModelRegistry.is_active.is_(True)).limit(1)

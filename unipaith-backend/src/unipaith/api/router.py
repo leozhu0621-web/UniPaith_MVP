@@ -68,9 +68,7 @@ async def redirect_campaign_link(
     db: AsyncSession = Depends(get_db),
 ):
     """Public — redirect trackable campaign link and record click."""
-    result = await db.execute(
-        select(CampaignLink).where(CampaignLink.short_code == short_code)
-    )
+    result = await db.execute(select(CampaignLink).where(CampaignLink.short_code == short_code))
     link = result.scalar_one_or_none()
     if not link:
         return RedirectResponse("https://app.unipaith.co", status_code=302)
@@ -90,15 +88,9 @@ async def redirect_campaign_link(
     elif link.destination_type == "institution" and link.destination_id:
         url = f"{base}/school/{link.destination_id}?{cid_param}"
     elif link.destination_type == "event" and link.destination_id:
-        url = (
-            f"{base}/school/{link.institution_id}"
-            f"?tab=events&{cid_param}"
-        )
+        url = f"{base}/school/{link.institution_id}?tab=events&{cid_param}"
     elif link.destination_type == "post" and link.destination_id:
-        url = (
-            f"{base}/school/{link.institution_id}"
-            f"?tab=posts&{cid_param}"
-        )
+        url = f"{base}/school/{link.institution_id}?tab=posts&{cid_param}"
     else:
         url = base
 

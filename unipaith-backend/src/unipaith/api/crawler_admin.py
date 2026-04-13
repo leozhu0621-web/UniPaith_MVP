@@ -78,15 +78,10 @@ async def dashboard_v2(
 
     snap = await db.get(PipelineStageSnapshot, "crawl")
     status = snap.status if snap else "off"
-    last_activity_at = (
-        snap.last_activity_at.isoformat() if snap and snap.last_activity_at else None
-    )
+    last_activity_at = snap.last_activity_at.isoformat() if snap and snap.last_activity_at else None
 
     queue_rows = (
-        await db.execute(
-            select(CrawlFrontier.status, func.count())
-            .group_by(CrawlFrontier.status)
-        )
+        await db.execute(select(CrawlFrontier.status, func.count()).group_by(CrawlFrontier.status))
     ).all()
     queue: dict[str, int] = {"pending": 0, "completed": 0, "failed": 0}
     total = 0
@@ -158,9 +153,7 @@ async def dashboard_v2(
                     else_=0,
                 )
             ).label("failed"),
-            func.avg(
-                cast(KnowledgeDocument.quality_score, Float)
-            ).label("avg_quality"),
+            func.avg(cast(KnowledgeDocument.quality_score, Float)).label("avg_quality"),
         )
         .where(KnowledgeDocument.source_domain.isnot(None))
         .group_by(KnowledgeDocument.source_domain)
@@ -198,9 +191,7 @@ async def dashboard_v2(
             "domain": r.domain,
             "last_error": r.last_error,
             "consecutive_failures": r.consecutive_failures,
-            "last_crawled_at": (
-                r.last_crawled_at.isoformat() if r.last_crawled_at else None
-            ),
+            "last_crawled_at": (r.last_crawled_at.isoformat() if r.last_crawled_at else None),
         }
         for r in error_result.all()
     ]
@@ -216,17 +207,18 @@ async def dashboard_v2(
     for method, cnt in disc_result:
         discovery[method] = cnt
 
-    seed_count = await db.scalar(
-        select(func.count()).select_from(CrawlFrontier).where(
-            CrawlFrontier.discovery_method.in_(
-                ["bootstrap_seed", "fallback_seed", "manual"]
+    seed_count = (
+        await db.scalar(
+            select(func.count())
+            .select_from(CrawlFrontier)
+            .where(
+                CrawlFrontier.discovery_method.in_(["bootstrap_seed", "fallback_seed", "manual"])
             )
         )
-    ) or 0
+        or 0
+    )
 
-    total_domains = await db.scalar(
-        select(func.count(func.distinct(CrawlFrontier.domain)))
-    ) or 0
+    total_domains = await db.scalar(select(func.count(func.distinct(CrawlFrontier.domain)))) or 0
 
     return {
         "status": status,
@@ -282,9 +274,7 @@ async def add_urls(
         parsed = urlparse(url)
         domain = parsed.netloc or url
         existing = await db.scalar(
-            select(func.count())
-            .select_from(CrawlFrontier)
-            .where(CrawlFrontier.url == url)
+            select(func.count()).select_from(CrawlFrontier).where(CrawlFrontier.url == url)
         )
         if existing and existing > 0:
             continue
@@ -309,9 +299,7 @@ async def delete_frontier(
     _admin: User = Depends(require_admin),
 ) -> dict:
     """Remove a frontier entry."""
-    result = await db.execute(
-        delete(CrawlFrontier).where(CrawlFrontier.id == frontier_id)
-    )
+    result = await db.execute(delete(CrawlFrontier).where(CrawlFrontier.id == frontier_id))
     await db.commit()
     if result.rowcount == 0:
         raise NotFoundException("Frontier entry not found")

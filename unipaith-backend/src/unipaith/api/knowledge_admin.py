@@ -355,12 +355,20 @@ async def update_persona(
     persona = result.scalar_one_or_none()
     if not persona:
         from unipaith.core.exceptions import NotFoundException
+
         raise NotFoundException("No active persona found")
 
     for field_name in [
-        "warmth", "directness", "formality", "challenge_level",
-        "data_reference_frequency", "humor", "proactivity", "empathy_depth",
-        "custom_instructions", "base_persona_prompt",
+        "warmth",
+        "directness",
+        "formality",
+        "challenge_level",
+        "data_reference_frequency",
+        "humor",
+        "proactivity",
+        "empathy_depth",
+        "custom_instructions",
+        "base_persona_prompt",
     ]:
         val = getattr(body, field_name, None)
         if val is not None:
@@ -478,23 +486,27 @@ async def seed_knowledge_from_programs(
         # Create entity links
         from unipaith.models.knowledge import KnowledgeLink
 
-        db.add(KnowledgeLink(
-            document_id=doc.id,
-            entity_type="program",
-            entity_id=program.id,
-            entity_name=program.program_name,
-            relationship_type="describes",
-            confidence=1.0,
-        ))
-        if inst:
-            db.add(KnowledgeLink(
+        db.add(
+            KnowledgeLink(
                 document_id=doc.id,
-                entity_type="institution",
-                entity_id=inst.id,
-                entity_name=inst.name,
-                relationship_type="belongs_to",
+                entity_type="program",
+                entity_id=program.id,
+                entity_name=program.program_name,
+                relationship_type="describes",
                 confidence=1.0,
-            ))
+            )
+        )
+        if inst:
+            db.add(
+                KnowledgeLink(
+                    document_id=doc.id,
+                    entity_type="institution",
+                    entity_id=inst.id,
+                    entity_name=inst.name,
+                    relationship_type="belongs_to",
+                    confidence=1.0,
+                )
+            )
 
         created += 1
 

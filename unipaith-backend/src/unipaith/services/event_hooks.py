@@ -67,10 +67,12 @@ async def on_application_submitted(
 
             review_svc = ReviewPipelineService(db)
             await review_svc.get_or_generate_packet_summary(
-                institution_id, application_id,
+                institution_id,
+                application_id,
             )
             await review_svc.scan_integrity(
-                institution_id, application_id,
+                institution_id,
+                application_id,
             )
             logger.info(
                 "Auto-generated AI packet + integrity scan for %s",

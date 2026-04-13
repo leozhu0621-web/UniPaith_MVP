@@ -819,9 +819,7 @@ async def export_profile(
     return JSONResponse(
         content=data,
         headers={
-            "Content-Disposition": (
-                f'attachment; filename="unipaith-profile-{user.id}.json"'
-            ),
+            "Content-Disposition": (f'attachment; filename="unipaith-profile-{user.id}.json"'),
         },
     )
 
@@ -996,9 +994,7 @@ async def intake_chat(
     from unipaith.ai.llm_client import get_llm_client
 
     # Get-or-create student profile (new signups may not have one yet)
-    result = await db.execute(
-        select(StudentProfile).where(StudentProfile.user_id == user.id)
-    )
+    result = await db.execute(select(StudentProfile).where(StudentProfile.user_id == user.id))
     profile = result.scalar_one_or_none()
     if not profile:
         profile = StudentProfile(user_id=user.id)
@@ -1045,7 +1041,7 @@ async def intake_chat(
         # Try to extract country/location
         for kw in ("from ", "in ", "living in "):
             if kw in msg_lower:
-                after = body.message[msg_lower.index(kw) + len(kw):]
+                after = body.message[msg_lower.index(kw) + len(kw) :]
                 loc = after.split(".")[0].split(",")[0].strip()
                 if loc and len(loc) < 40:
                     extracted["country_of_residence"] = loc
@@ -1064,10 +1060,7 @@ async def intake_chat(
                 "sparked your interest in this field?"
             )
         elif "country_of_residence" in extracted and "goals_text" not in extracted:
-            next_q = (
-                f"{greeting}What are you hoping to study, "
-                "and what draws you to that area?"
-            )
+            next_q = f"{greeting}What are you hoping to study, and what draws you to that area?"
         elif extracted:
             next_q = (
                 f"{greeting}I'd love to learn more about what "
@@ -1104,9 +1097,18 @@ async def intake_chat(
         await db.flush()
 
     # Calculate completion percentage from extracted fields so far
-    filled = sum(1 for f in ["first_name", "last_name", "nationality",
-                             "country_of_residence", "bio_text", "goals_text"]
-                 if getattr(profile, f, None))
+    filled = sum(
+        1
+        for f in [
+            "first_name",
+            "last_name",
+            "nationality",
+            "country_of_residence",
+            "bio_text",
+            "goals_text",
+        ]
+        if getattr(profile, f, None)
+    )
     pct = min(95, filled * 15)
 
     return IntakeChatResponse(
@@ -1163,16 +1165,8 @@ async def get_completion_map(
         sections=sections,
         match_ready=all(s["done"] for s in match_sections),
         apply_ready=all(s["done"] for s in apply_sections),
-        match_ready_pct=(
-            round(match_done / len(match_sections) * 100)
-            if match_sections
-            else 0
-        ),
-        apply_ready_pct=(
-            round(apply_done / len(apply_sections) * 100)
-            if apply_sections
-            else 0
-        ),
+        match_ready_pct=(round(match_done / len(match_sections) * 100) if match_sections else 0),
+        apply_ready_pct=(round(apply_done / len(apply_sections) * 100) if apply_sections else 0),
     )
 
 
@@ -1185,10 +1179,12 @@ async def get_insights_confidence(
     from unipaith.models.knowledge import PersonInsight
 
     result = await db.execute(
-        select(PersonInsight).where(
+        select(PersonInsight)
+        .where(
             PersonInsight.user_id == user.id,
             PersonInsight.is_active.is_(True),
-        ).order_by(PersonInsight.confidence.desc())
+        )
+        .order_by(PersonInsight.confidence.desc())
     )
     insights = list(result.scalars().all())
 

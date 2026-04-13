@@ -121,9 +121,7 @@ class ModelEvaluator:
             OutcomeRecord.prediction_log_id == PredictionLog.id,
         )
 
-        result = await self.db.execute(
-            base.where(PredictionLog.model_version == model_version)
-        )
+        result = await self.db.execute(base.where(PredictionLog.model_version == model_version))
         rows = result.all()
 
         if not rows:
