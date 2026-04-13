@@ -83,7 +83,7 @@ deploy_frontend() {
     cd ..
 
     # Invalidate CloudFront
-    DIST_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items[?contains(@,'unipaith.co')]].Id" --output text)
+    DIST_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items[?contains(@,'app.unipaith.co')]].Id" --output text)
     if [ -n "$DIST_ID" ]; then
         aws cloudfront create-invalidation --distribution-id $DIST_ID --paths "/*" >/dev/null
         log "CloudFront cache invalidated."
@@ -109,7 +109,7 @@ case "${1:-all}" in
         deploy_backend
         deploy_frontend
         log "=== Full deployment complete! ==="
-        log "Site: https://unipaith.co"
+        log "Site: https://app.unipaith.co"
         log "API:  https://api.unipaith.co/api/v1/health"
         ;;
     *)

@@ -73,14 +73,14 @@ async def redirect_campaign_link(
     )
     link = result.scalar_one_or_none()
     if not link:
-        return RedirectResponse("https://unipaith.co", status_code=302)
+        return RedirectResponse("https://app.unipaith.co", status_code=302)
 
     svc = InstitutionService(db)
     await svc.record_link_click(short_code, student_id=sid)
     await db.commit()
 
     # Resolve destination URL
-    base = "https://unipaith.co"
+    base = "https://app.unipaith.co"
     cid_param = f"cid={link.campaign_id}"
     if link.destination_type == "custom" and link.custom_url:
         sep = "&" if "?" in link.custom_url else "?"
@@ -142,7 +142,7 @@ async def unsubscribe_from_campaign(
         'margin:80px auto;text-align:center">'
         "<h2>You've been unsubscribed</h2>"
         "<p>You will no longer receive emails from this campaign.</p>"
-        '<a href="https://unipaith.co">Return to UniPaith</a>'
+        '<a href="https://app.unipaith.co">Return to UniPaith</a>'
         "</div>"
     )
     return HTMLResponse(html)
