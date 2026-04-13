@@ -181,8 +181,9 @@ class EssayWorkshopService:
             "- prompt_alignment_score (int 1-100)\n"
         )
 
+        inst_name = program.institution.name if program.institution else "Unknown"
         user_content_parts = [
-            f"Program: {program.program_name} at {program.institution.name}",
+            f"Program: {program.program_name} at {inst_name}",
         ]
         if essay.prompt_text:
             user_content_parts.append(f"Prompt: {essay.prompt_text}")
