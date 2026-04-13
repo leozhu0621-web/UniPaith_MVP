@@ -142,7 +142,7 @@ async def unsubscribe_from_campaign(
         'margin:80px auto;text-align:center">'
         "<h2>You've been unsubscribed</h2>"
         "<p>You will no longer receive emails from this campaign.</p>"
-        '<a href="https://unipaith.co">Return to UniPaith</a>'
+        '<a href="https://app.unipaith.co">Return to UniPaith</a>'
         "</div>"
     )
     return HTMLResponse(html)
