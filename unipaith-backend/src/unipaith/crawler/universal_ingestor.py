@@ -131,8 +131,9 @@ class TranscriptAdapter(BaseAdapter):
         try:
             from youtube_transcript_api import YouTubeTranscriptApi
 
-            transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
-            text = " ".join(entry["text"] for entry in transcript_list)
+            ytt_api = YouTubeTranscriptApi()
+            transcript_list = ytt_api.fetch(video_id)
+            text = " ".join(snippet.text for snippet in transcript_list)
         except Exception:
             logger.warning("Could not fetch transcript for %s", url)
             return []
