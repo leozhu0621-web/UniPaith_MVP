@@ -201,7 +201,7 @@ class Settings(BaseSettings):
     crawler_max_pages_per_source: int = 500
     crawler_request_timeout: int = 30
     crawler_respect_robots_txt: bool = True
-    crawler_user_agent: str = "UniPaith-Bot/1.0 (+https://unipaith.co/bot)"
+    crawler_user_agent: str = "UniPaith-Bot/1.0 (+https://app.unipaith.co/bot)"
     crawler_splash_url: str = "http://localhost:8050"
 
     # LLM extraction
