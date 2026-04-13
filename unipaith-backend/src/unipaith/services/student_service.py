@@ -101,6 +101,7 @@ class StudentService:
             setattr(profile, key, value)
         await self.db.flush()
         await self._update_onboarding(profile.id)
+        # Re-fetch with all relationships eagerly loaded for serialization
         return await self.get_profile(user_id)
 
     # --- Academic Records ---
