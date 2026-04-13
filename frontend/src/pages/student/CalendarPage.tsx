@@ -71,7 +71,7 @@ export default function CalendarPage() {
   const [workBlocks, setWorkBlocks] = useState<WorkBlock[]>([])
   const [wbForm, setWbForm] = useState({ title: '', date: '', duration: '60', category: 'general' })
   const { deadlines, isLoading, interviews } = useDeadlines()
-  const interviewList: any[] = Array.isArray(interviews) ? interviews : []
+  const interviewList = useMemo(() => Array.isArray(interviews) ? interviews : [], [interviews])
 
   const confirmMut = useMutation({
     mutationFn: ({ id, time }: { id: string; time: string }) => confirmInterview(id, time),
