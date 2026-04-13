@@ -55,6 +55,11 @@ jobs:
           # index.html and manifests: no cache (always fresh)
           aws s3 cp dist/index.html s3://$S3_BUCKET/index.html \
             --cache-control "no-cache,no-store,must-revalidate"
+          # Upload JSON files (manifests, etc.) with no-cache
+          aws s3 sync dist/ s3://$S3_BUCKET/ \
+            --cache-control "no-cache,no-store,must-revalidate" \
+            --exclude "*" \
+            --include "*.json"
 
       - name: Invalidate CloudFront
         run: |

@@ -14,6 +14,7 @@ build/
 *.sqlite3
 .venv/
 venv/
+uploads/
 
 # Caches
 .pytest_cache/
@@ -47,4 +48,3 @@ infra/tfplan
 infra/.terraform.lock.hcl
 infra/terraform.tfvars
 .claude/worktrees/
-node_modules
