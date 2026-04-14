@@ -791,3 +791,96 @@ async def seed_institutions(
         "skipped": skipped,
         "total_programs": total_programs,
     }
+
+
+class EnrichInstitutionRequest(BaseModel):
+    name: str
+    student_body_size: int | None = None
+    ranking_data: dict | None = None
+    description_text: str | None = None
+    campus_description: str | None = None
+    campus_setting: str | None = None
+    logo_url: str | None = None
+    media_gallery: list[str] | None = None
+    website_url: str | None = None
+    contact_email: str | None = None
+
+
+class EnrichProgramRequest(BaseModel):
+    program_name: str
+    institution_name: str
+    tuition: int | None = None
+    duration_months: int | None = None
+    description_text: str | None = None
+    acceptance_rate: float | None = None
+    delivery_format: str | None = None
+    application_deadline: str | None = None
+    highlights: list[str] | None = None
+    media_urls: list[str] | None = None
+
+
+class EnrichBatchRequest(BaseModel):
+    institutions: list[EnrichInstitutionRequest] | None = None
+    programs: list[EnrichProgramRequest] | None = None
+
+
+@router.post("/enrich")
+async def enrich_data(
+    body: EnrichBatchRequest,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Admin-only: enrich existing institutions/programs with additional data."""
+    updated_inst = 0
+    updated_prog = 0
+
+    if body.institutions:
+        for inst_data in body.institutions:
+            result = await db.execute(
+                select(Institution).where(
+                    Institution.name == inst_data.name,
+                )
+            )
+            inst = result.scalar_one_or_none()
+            if not inst:
+                continue
+            for field, value in inst_data.model_dump(
+                exclude_unset=True, exclude={"name"},
+            ).items():
+                if value is not None:
+                    setattr(inst, field, value)
+            updated_inst += 1
+
+    if body.programs:
+        for prog_data in body.programs:
+            # Find institution
+            inst_r = await db.execute(
+                select(Institution).where(
+                    Institution.name == prog_data.institution_name,
+                )
+            )
+            inst = inst_r.scalar_one_or_none()
+            if not inst:
+                continue
+            prog_r = await db.execute(
+                select(Program).where(
+                    Program.institution_id == inst.id,
+                    Program.program_name == prog_data.program_name,
+                )
+            )
+            prog = prog_r.scalar_one_or_none()
+            if not prog:
+                continue
+            for field, value in prog_data.model_dump(
+                exclude_unset=True,
+                exclude={"program_name", "institution_name"},
+            ).items():
+                if value is not None:
+                    setattr(prog, field, value)
+            updated_prog += 1
+
+    await db.commit()
+    return {
+        "updated_institutions": updated_inst,
+        "updated_programs": updated_prog,
+    }
