@@ -708,6 +708,39 @@ async def get_public_institution(
     return resp
 
 
+@router.get("/posts/feed", response_model=list[PostResponse])
+async def get_posts_feed(
+    limit: int = Query(20, ge=1, le=50),
+    db: AsyncSession = Depends(get_db),
+):
+    """Public endpoint — returns latest published posts across all institutions."""
+    from sqlalchemy import select
+    from unipaith.models.institution import InstitutionPost, Institution
+
+    result = await db.execute(
+        select(InstitutionPost)
+        .where(InstitutionPost.status == "published")
+        .order_by(InstitutionPost.created_at.desc())
+        .limit(limit)
+    )
+    posts = result.scalars().all()
+    # Eagerly load institution names
+    inst_ids = {p.institution_id for p in posts}
+    if inst_ids:
+        inst_result = await db.execute(
+            select(Institution).where(Institution.id.in_(inst_ids))
+        )
+        inst_map = {i.id: i.name for i in inst_result.scalars().all()}
+    else:
+        inst_map = {}
+    out = []
+    for p in posts:
+        d = PostResponse.model_validate(p)
+        d.institution_name = inst_map.get(p.institution_id, "")  # type: ignore[attr-defined]
+        out.append(d)
+    return out
+
+
 @router.get("/{institution_id}/posts", response_model=list[PostResponse])
 async def get_public_posts(
     institution_id: UUID,

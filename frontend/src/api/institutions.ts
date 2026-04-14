@@ -554,3 +554,8 @@ export async function getPublicPosts(institutionId: string): Promise<Institution
   const { data } = await apiClient.get(`/institutions/${institutionId}/posts`)
   return data
 }
+
+export async function getPublicPostsFeed(limit = 20): Promise<InstitutionPost[]> {
+  const { data } = await apiClient.get('/institutions/posts/feed', { params: { limit } })
+  return data
+}

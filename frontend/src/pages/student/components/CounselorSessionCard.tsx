@@ -58,12 +58,12 @@ export default function CounselorSessionCard({
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       {/* Counselor header */}
       <div className="flex items-start gap-3 p-5 pb-3">
-        <div className="w-10 h-10 rounded-full bg-brand-amber-100 flex items-center justify-center flex-shrink-0">
-          <Sparkles size={18} className="text-brand-amber-600" />
+        <div className="w-10 h-10 rounded-full bg-gold-pale flex items-center justify-center flex-shrink-0">
+          <Sparkles size={18} className="text-gold" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-sm font-semibold text-brand-slate-800">Your AI Counselor</h3>
+            <h3 className="text-sm font-semibold text-student-ink">Your AI Counselor</h3>
             <span className="text-[10px] text-gray-400 font-medium">Personalized guidance</span>
           </div>
           <p className="text-sm text-gray-600 leading-relaxed">{guidanceText}</p>
@@ -91,7 +91,7 @@ export default function CounselorSessionCard({
           <button
             onClick={handleSend}
             disabled={!input.trim() || chatMut.isPending}
-            className="w-7 h-7 flex items-center justify-center rounded-lg bg-brand-slate-600 text-white disabled:opacity-30 transition-opacity"
+            className="w-7 h-7 flex items-center justify-center rounded-lg bg-student text-white disabled:opacity-30 transition-opacity"
           >
             {chatMut.isPending ? (
               <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -108,7 +108,7 @@ export default function CounselorSessionCard({
           <button
             key={a.to}
             onClick={() => navigate(a.to)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-brand-slate-600 bg-brand-slate-50 hover:bg-brand-slate-100 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-student bg-student-mist hover:bg-student-moss rounded-lg transition-colors"
           >
             <a.icon size={12} />
             {a.label}
