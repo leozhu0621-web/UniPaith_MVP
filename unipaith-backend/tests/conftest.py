@@ -38,6 +38,22 @@ test_engine = create_async_engine(TEST_DATABASE_URL, echo=False, poolclass=NullP
 TestSession = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
 
 
+def _remove_hnsw_indexes():
+    """Temporarily remove HNSW indexes that need the native pgvector C extension."""
+    removed = []
+    for table in Base.metadata.sorted_tables:
+        for idx in list(table.indexes):
+            if idx.kwargs.get("postgresql_using") == "hnsw":
+                table.indexes.discard(idx)
+                removed.append((table, idx))
+    return removed
+
+
+def _restore_hnsw_indexes(removed):
+    for table, idx in removed:
+        table.indexes.add(idx)
+
+
 @pytest.fixture
 async def setup_db():
     # Retry setup — the first connection can be stale after a previous dispose().
@@ -47,7 +63,14 @@ async def setup_db():
                 await conn.execute(text("DROP SCHEMA public CASCADE"))
                 await conn.execute(text("CREATE SCHEMA public"))
                 await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
-                await conn.run_sync(Base.metadata.create_all)
+                # HNSW indexes require the native pgvector C extension and may fail
+                # in environments with only a stub vector type. Remove them before
+                # create_all and restore afterwards so the model stays intact.
+                removed = _remove_hnsw_indexes()
+                try:
+                    await conn.run_sync(Base.metadata.create_all)
+                finally:
+                    _restore_hnsw_indexes(removed)
             break
         except Exception:
             if _attempt == 2:
