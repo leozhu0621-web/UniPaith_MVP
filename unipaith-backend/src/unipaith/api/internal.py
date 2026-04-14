@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from unipaith.core.ai_runtime_metrics import slo_snapshot
 from unipaith.database import get_db
 from unipaith.dependencies import require_admin
-from unipaith.models.institution import Program
+from unipaith.models.institution import Institution, Program
 from unipaith.models.user import User
 from unipaith.services.ai_control_plane_service import AIControlPlaneService
 from unipaith.services.ai_engine_orchestrator import AIEngineOrchestrator
@@ -683,4 +683,111 @@ async def engine_health(
         "status": overall,
         "timestamp": datetime.now(UTC).isoformat(),
         "checks": checks,
+    }
+
+
+# --- Bulk Seed ---
+
+
+class SeedProgramItem(BaseModel):
+    program_name: str
+    degree_type: str = "bachelors"
+    department: str | None = None
+
+
+class SeedInstitutionRequest(BaseModel):
+    name: str
+    type: str = "university"
+    country: str = "United States"
+    region: str | None = None
+    city: str | None = None
+    website_url: str | None = None
+    contact_email: str | None = None
+    description_text: str | None = None
+    logo_url: str | None = None
+    media_gallery: list[str] | None = None
+    ranking_data: dict | None = None
+    programs: list[SeedProgramItem] = []
+
+
+class SeedBatchRequest(BaseModel):
+    institutions: list[SeedInstitutionRequest]
+
+
+@router.post("/seed-institutions")
+async def seed_institutions(
+    body: SeedBatchRequest,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Admin-only: bulk create institutions + programs from seed data."""
+    from unipaith.models.user import UserRole
+
+    created = 0
+    skipped = 0
+    total_programs = 0
+
+    for inst_data in body.institutions:
+        # Check if already exists
+        existing = await db.execute(
+            select(Institution).where(Institution.name == inst_data.name)
+        )
+        if existing.scalar_one_or_none():
+            skipped += 1
+            continue
+
+        # Create system user
+        import uuid as _uuid
+
+        system_user = User(
+            email=f"system+{_uuid.uuid4().hex[:8]}@unipaith.co",
+            role=UserRole.institution_admin,
+            cognito_sub=f"system-{_uuid.uuid4().hex}",
+        )
+        db.add(system_user)
+        await db.flush()
+
+        institution = Institution(
+            admin_user_id=system_user.id,
+            name=inst_data.name,
+            type=inst_data.type,
+            country=inst_data.country,
+            region=inst_data.region,
+            city=inst_data.city,
+            website_url=inst_data.website_url,
+            contact_email=inst_data.contact_email,
+            description_text=inst_data.description_text,
+            logo_url=inst_data.logo_url,
+            media_gallery=inst_data.media_gallery,
+            ranking_data=inst_data.ranking_data,
+            claimed_from_source="public_catalog",
+            is_verified=False,
+        )
+        db.add(institution)
+        await db.flush()
+
+        # Create programs
+        seen: set[str] = set()
+        for prog in inst_data.programs:
+            key = f"{prog.program_name}|{prog.department or ''}"
+            if key in seen:
+                continue
+            seen.add(key)
+            program = Program(
+                institution_id=institution.id,
+                program_name=prog.program_name,
+                degree_type=prog.degree_type,
+                department=prog.department,
+                is_published=True,
+            )
+            db.add(program)
+            total_programs += 1
+
+        created += 1
+
+    await db.commit()
+    return {
+        "created": created,
+        "skipped": skipped,
+        "total_programs": total_programs,
     }
