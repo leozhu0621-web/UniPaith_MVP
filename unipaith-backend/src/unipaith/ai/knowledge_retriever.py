@@ -252,7 +252,8 @@ class KnowledgeRetriever:
         if entity_id:
             query = query.where(KnowledgeLink.entity_id == entity_id)
         if entity_name:
-            query = query.where(KnowledgeLink.entity_name.ilike(f"%{entity_name}%"))
+            escaped = entity_name.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            query = query.where(KnowledgeLink.entity_name.ilike(f"%{escaped}%"))
         if min_quality > 0:
             query = query.where(
                 (KnowledgeDocument.quality_score.is_(None))
