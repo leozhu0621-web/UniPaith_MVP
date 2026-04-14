@@ -107,7 +107,7 @@ const router = createBrowserRouter([
       { path: 'discover', element: <Navigate to="/s/explore" replace /> },
       { path: 'match', element: <Navigate to="/s" replace /> },
       { path: 'applications', element: <Navigate to="/s" replace /> },
-      { path: 'saved', element: <Navigate to="/s/explore?tab=saved" replace /> },
+      { path: 'saved', element: <Navigate to="/s/explore" replace /> },
       { path: 'calendar', element: <Navigate to="/s" replace /> },
       { path: 'deadlines', element: <Navigate to="/s" replace /> },
       { path: 'messages', element: <Navigate to="/s" replace /> },

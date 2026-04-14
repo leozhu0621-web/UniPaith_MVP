@@ -114,7 +114,7 @@ export default function StudentLayout() {
           {/* Quick links */}
           <nav className="bg-white rounded-xl border border-divider p-2 space-y-0.5">
             {[
-              { to: '/s/explore?tab=saved', icon: Bookmark, label: 'Saved Programs' },
+              { to: '/s/explore', icon: Bookmark, label: 'Saved Programs' },
               { to: '/s/profile?tab=essays', icon: GraduationCap, label: 'Essays & Resume' },
               { to: '/s/profile?tab=recommenders', icon: User, label: 'Recommenders' },
               { to: '/s/profile?tab=financial', icon: Calendar, label: 'Financial Aid' },
