@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, lazy, Suspense } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, createOnlinePresence, updateOnlinePresence, deleteOnlinePresence, createPortfolioItem, updatePortfolioItem, deletePortfolioItem, createResearch, updateResearch, deleteResearch, createLanguage, updateLanguage, deleteLanguage, upsertPreferences, getNextStep } from '../../api/students'
 import { getOnboarding } from '../../api/students'
@@ -15,6 +15,21 @@ import { DEGREE_LABELS, ACTIVITY_TYPES, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RE
 import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical, Languages, MessageSquare } from 'lucide-react'
 import { BasicInfoForm, AcademicForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm, ResearchForm, LanguageForm } from './components/ProfileForms'
 import type { StudentProfile } from '../../types'
+
+// Lazy-load absorbed pages as tabs
+const EssayWorkshopPage = lazy(() => import('./EssayWorkshopPage'))
+const ResumeWorkshopPage = lazy(() => import('./ResumeWorkshopPage'))
+const RecommendationsPage = lazy(() => import('./RecommendationsPage'))
+const FinancialAidPage = lazy(() => import('./FinancialAidPage'))
+
+type ProfileTab = 'overview' | 'essays' | 'recommenders' | 'financial'
+
+const PROFILE_TABS: { key: ProfileTab; label: string }[] = [
+  { key: 'overview', label: 'Overview' },
+  { key: 'essays', label: 'Essays & Resume' },
+  { key: 'recommenders', label: 'Recommenders' },
+  { key: 'financial', label: 'Financial' },
+]
 
 // --- Profile Strength Ring ---
 function StrengthRing({ value }: { value: number }) {
@@ -74,6 +89,8 @@ const SECTION_COUNSELOR_TIPS: Record<string, { tip: string; prefill: string }> =
 export default function ProfilePage() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeTab = (searchParams.get('tab') as ProfileTab) || 'overview'
   const [editModal, setEditModal] = useState<string | null>(null)
   const [editItem, setEditItem] = useState<any>(null)
 
@@ -137,6 +154,49 @@ export default function ProfilePage() {
     }
   }
 
+  // Tab content for non-overview tabs
+  if (activeTab !== 'overview') {
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="flex items-center gap-2 mb-1">
+          <Sparkles size={18} className="text-gold" />
+          <h1 className="text-2xl font-semibold text-student-ink">My Story</h1>
+        </div>
+        <p className="text-sm text-gray-500 mb-4">Everything about you in one place.</p>
+
+        {/* Tab bar */}
+        <div className="flex gap-1 mb-6 border-b border-divider">
+          {PROFILE_TABS.map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setSearchParams(tab.key === 'overview' ? {} : { tab: tab.key })}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === tab.key
+                  ? 'border-student text-student'
+                  : 'border-transparent text-student-text hover:text-student-ink'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <Suspense fallback={<div className="py-10 text-center text-student-text">Loading...</div>}>
+          {activeTab === 'essays' && (
+            <div className="-mx-6 -mt-2">
+              <EssayWorkshopPage />
+              <div className="border-t border-divider mt-8 pt-4">
+                <ResumeWorkshopPage />
+              </div>
+            </div>
+          )}
+          {activeTab === 'recommenders' && <div className="-mx-6 -mt-2"><RecommendationsPage /></div>}
+          {activeTab === 'financial' && <div className="-mx-6 -mt-2"><FinancialAidPage /></div>}
+        </Suspense>
+      </div>
+    )
+  }
+
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">
       <div>
@@ -144,7 +204,24 @@ export default function ProfilePage() {
           <Sparkles size={18} className="text-gold" />
           <h1 className="text-2xl font-semibold text-student-ink">My Story</h1>
         </div>
-        <p className="text-sm text-gray-500">Every detail helps the AI understand who you are and where you'll thrive.</p>
+        <p className="text-sm text-gray-500 mb-4">Everything about you in one place.</p>
+
+        {/* Tab bar */}
+        <div className="flex gap-1 border-b border-divider">
+          {PROFILE_TABS.map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setSearchParams(tab.key === 'overview' ? {} : { tab: tab.key })}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === tab.key
+                  ? 'border-student text-student'
+                  : 'border-transparent text-student-text hover:text-student-ink'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Self-Discovery Progress */}
