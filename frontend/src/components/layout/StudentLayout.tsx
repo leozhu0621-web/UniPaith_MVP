@@ -39,7 +39,7 @@ export default function StudentLayout() {
   const milestone = completionPct < 30 ? 'Getting started' : completionPct < 60 ? 'Building momentum' : completionPct < 80 ? 'Almost there' : 'Looking strong'
 
   return (
-    <div className="flex flex-col h-screen bg-student">
+    <div className="flex flex-col h-screen bg-offwhite">
       {/* Top Navigation Bar */}
       <header className="h-14 flex items-center justify-between px-6 bg-white border-b border-gray-100 flex-shrink-0 z-30">
         {/* Logo */}
