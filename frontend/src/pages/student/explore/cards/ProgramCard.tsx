@@ -29,7 +29,7 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
   const imgUrl = program.institution_image_url || program.institution_logo_url
 
   return (
-    <div className="bg-white rounded-xl border border-divider hover:shadow-lg transition-all overflow-hidden flex flex-col">
+    <div className="bg-white rounded-xl border border-divider hover:shadow-lg hover:scale-[1.01] hover:-translate-y-0.5 transition-all duration-200 ease-out overflow-hidden flex flex-col">
       {/* Image area */}
       <div className="relative h-36 bg-student-mist cursor-pointer overflow-hidden" onClick={onView}>
         {imgUrl ? (

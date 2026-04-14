@@ -119,7 +119,7 @@ export default function StudentLayout() {
         {isOtherTab && isMinimized && (
           <button
             onClick={() => setMinimized(false)}
-            className="absolute left-0 top-3 z-20 flex items-center gap-1 pl-1.5 pr-3 py-2 bg-white border border-divider border-l-0 rounded-r-xl shadow-sm text-student hover:bg-student-mist transition-colors"
+            className="absolute left-0 top-3 z-20 flex items-center gap-1 pl-1.5 pr-3 py-2 bg-white border border-divider border-l-0 rounded-r-xl shadow-sm text-student hover:bg-student-mist transition-all duration-200 animate-slide-in-left"
             title="Show counselor"
           >
             <MessageSquare size={14} />
@@ -127,9 +127,11 @@ export default function StudentLayout() {
           </button>
         )}
 
-        {/* Main content area */}
+        {/* Main content area with page transition */}
         <main className="flex-1 overflow-y-auto transition-all duration-300 ease-in-out">
-          <Outlet />
+          <div key={location.pathname} className="animate-page-in h-full">
+            <Outlet />
+          </div>
         </main>
       </div>
       <CompareTray />

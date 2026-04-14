@@ -30,7 +30,7 @@ export default function SchoolCard({ institution: inst }: Props) {
   return (
     <div
       onClick={() => navigate(`/s/institutions/${inst.id}`)}
-      className="bg-white rounded-xl border border-divider hover:shadow-lg transition-all overflow-hidden cursor-pointer flex flex-col"
+      className="bg-white rounded-xl border border-divider hover:shadow-lg hover:scale-[1.01] hover:-translate-y-0.5 transition-all duration-200 ease-out overflow-hidden cursor-pointer flex flex-col"
     >
       {/* Image */}
       <div className="relative h-32 bg-student-mist overflow-hidden">
