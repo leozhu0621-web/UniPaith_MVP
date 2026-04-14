@@ -26,6 +26,7 @@ import CounselorHomePage from './pages/student/CounselorHomePage'
 import ProfilePage from './pages/student/ProfilePage'
 import ExplorePage from './pages/student/ExplorePage'
 import SchoolDetailPage from './pages/student/SchoolDetailPage'
+import InstitutionDetailPage from './pages/student/InstitutionDetailPage'
 import ApplicationDetailPage from './pages/student/ApplicationDetailPage'
 import StudentSettingsPage from './pages/student/SettingsPage'
 import OnboardingPage from './pages/student/OnboardingPage'
@@ -99,6 +100,7 @@ const router = createBrowserRouter([
       // === Drill-down pages ===
       { path: 'programs/:programId', element: <SchoolDetailPage /> },
       { path: 'schools/:programId', element: <SchoolDetailPage /> },
+      { path: 'institutions/:institutionId', element: <InstitutionDetailPage /> },
       { path: 'applications/:appId', element: <ApplicationDetailPage /> },
       { path: 'settings', element: <StudentSettingsPage /> },
       // === Redirects (all old routes still work) ===

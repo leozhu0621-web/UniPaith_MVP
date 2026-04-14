@@ -7,11 +7,18 @@ import Badge from '../../components/ui/Badge'
 import Tabs from '../../components/ui/Tabs'
 import EmptyState from '../../components/ui/EmptyState'
 import { SkeletonCard } from '../../components/ui/Skeleton'
-import { formatDate, formatScore } from '../../utils/format'
+import { formatDate } from '../../utils/format'
 import { STATUS_COLORS } from '../../utils/constants'
-import { FileText } from 'lucide-react'
+import { FileText, Target, TrendingUp, Shield } from 'lucide-react'
 import CounselorNudge from './components/CounselorNudge'
 import type { Application } from '../../types'
+
+function classifyApp(matchScore: number | null): { label: string; color: string; icon: typeof Target } {
+  if (matchScore == null) return { label: 'Unrated', color: 'text-gray-400 bg-gray-50', icon: Target }
+  if (matchScore >= 75) return { label: 'Target', color: 'text-emerald-700 bg-emerald-50', icon: Target }
+  if (matchScore >= 50) return { label: 'Good Fit', color: 'text-blue-700 bg-blue-50', icon: TrendingUp }
+  return { label: 'Reach', color: 'text-amber-700 bg-amber-50', icon: Shield }
+}
 
 const FILTER_TABS = [
   { id: 'all', label: 'All' },
@@ -62,36 +69,49 @@ export default function ApplicationsPage() {
             action={{ label: 'Explore programs', onClick: () => navigate('/s/discover') }}
           />
         ) : (
-          filtered.map((app: Application) => (
-            <Card
-              key={app.id}
-              onClick={() => navigate(`/s/applications/${app.id}`)}
-              className="p-4"
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="font-semibold text-sm">{app.program?.program_name || 'Program'}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge variant={(STATUS_COLORS[app.status] || 'neutral') as any}>
-                      {app.status.replace(/_/g, ' ')}
-                    </Badge>
-                    {app.match_score != null && (
-                      <span className="text-xs text-gray-500">Match: {formatScore(app.match_score)}</span>
+          filtered.map((app: Application) => {
+            const cls = classifyApp(app.match_score)
+            const deadline = app.program?.application_deadline
+            const daysLeft = deadline ? Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000) : null
+            return (
+              <Card
+                key={app.id}
+                onClick={() => navigate(`/s/applications/${app.id}`)}
+                className="p-4 hover:shadow-sm transition-shadow"
+              >
+                <div className="flex justify-between items-start">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-sm text-student-ink truncate">{app.program?.program_name || 'Program'}</p>
+                      <span className={`px-2 py-0.5 text-[10px] font-medium rounded-full ${cls.color}`}>{cls.label}</span>
+                    </div>
+                    {(app.program as any)?.institution_name && (
+                      <p className="text-xs text-student-text mt-0.5">{(app.program as any).institution_name}</p>
+                    )}
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <Badge variant={(STATUS_COLORS[app.status] || 'neutral') as any}>
+                        {app.status.replace(/_/g, ' ')}
+                      </Badge>
+                      {app.decision && (
+                        <Badge variant={(STATUS_COLORS[app.decision] || 'neutral') as any}>
+                          {app.decision}
+                        </Badge>
+                      )}
+                      {daysLeft != null && daysLeft >= 0 && daysLeft <= 30 && app.status === 'draft' && (
+                        <span className={`text-[10px] font-medium ${daysLeft <= 7 ? 'text-red-600' : 'text-amber-600'}`}>
+                          {daysLeft === 0 ? 'Due today' : `${daysLeft}d left`}
+                        </span>
+                      )}
+                    </div>
+                    {app.submitted_at && (
+                      <p className="text-xs text-gray-400 mt-1">Submitted {formatDate(app.submitted_at)}</p>
                     )}
                   </div>
-                  {app.submitted_at && (
-                    <p className="text-xs text-gray-400 mt-1">Submitted: {formatDate(app.submitted_at)}</p>
-                  )}
-                  {app.decision && (
-                    <Badge variant={(STATUS_COLORS[app.decision] || 'neutral') as any} className="mt-1">
-                      {app.decision}
-                    </Badge>
-                  )}
+                  <span className="text-xs text-student-text flex-shrink-0">{app.status === 'draft' ? 'Continue →' : 'View →'}</span>
                 </div>
-                <span className="text-xs text-gray-400">{app.status === 'draft' ? 'Continue' : 'View'} →</span>
-              </div>
-            </Card>
-          ))
+              </Card>
+            )
+          })
         )}
       </div>
     </div>
