@@ -4,6 +4,12 @@ set -e
 echo "=== UniPaith Backend Starting ==="
 echo "Environment: ${ENVIRONMENT:-development}"
 
+# Build DATABASE_URL at runtime from secrets (avoids plaintext password in task definition)
+if [ -n "$DB_PASSWORD" ] && [ -n "$DB_HOST" ] && [ -z "$DATABASE_URL" ]; then
+  export DATABASE_URL="postgresql+asyncpg://${DB_USER:-unipaith}:${DB_PASSWORD}@${DB_HOST}/${DB_NAME:-unipaith}?ssl=require"
+  echo "DATABASE_URL constructed from DB_* components."
+fi
+
 # Run database migrations
 echo "Running Alembic migrations..."
 if alembic upgrade head; then

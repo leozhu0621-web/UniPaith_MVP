@@ -156,7 +156,9 @@ resource "aws_ecs_task_definition" "backend" {
     environment = [
       { name = "ENVIRONMENT", value = "production" },
       { name = "DEBUG", value = "false" },
-      { name = "DATABASE_URL", value = "postgresql+asyncpg://${var.db_username}:${random_password.db_password.result}@${aws_db_instance.main.endpoint}/${var.db_name}?ssl=require" },
+      { name = "DB_USER", value = var.db_username },
+      { name = "DB_HOST", value = aws_db_instance.main.endpoint },
+      { name = "DB_NAME", value = var.db_name },
       { name = "AWS_REGION", value = var.aws_region },
       { name = "S3_BUCKET_NAME", value = "${var.project}-documents" },
       { name = "S3_LOCAL_MODE", value = "false" },
