@@ -132,18 +132,19 @@ function EditableChip({
   )
 }
 
-import CommunityTab from './components/CommunityTab'
+import ExploreFeed from './components/ExploreFeed'
 
 // Lazy-load SavedListPage for Saved tab
 const SavedListPage = lazy(() => import('./SavedListPage'))
 
-type ExploreTab = 'browse' | 'community' | 'saved'
+type ExploreTab = 'feed' | 'search' | 'saved'
 
 export default function DiscoverPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const rawTab = searchParams.get('tab') || searchParams.get('mode')
-  const initialTab: ExploreTab = rawTab === 'community' ? 'community' : rawTab === 'saved' ? 'saved' : 'browse'
+  const rawTab = searchParams.get('tab')
+  const hasSearchQ = !!searchParams.get('q')
+  const initialTab: ExploreTab = rawTab === 'saved' ? 'saved' : (rawTab === 'search' || hasSearchQ) ? 'search' : 'feed'
   const [mode, setMode] = useState<ExploreTab>(initialTab)
   const [q, setQ] = useState('')
   const [page, setPage] = useState(1)
@@ -286,14 +287,14 @@ export default function DiscoverPage() {
 
   const switchTab = (t: ExploreTab) => {
     setMode(t)
-    navigate(t === 'browse' ? '/s/explore' : `/s/explore?tab=${t}`, { replace: true })
+    navigate(t === 'feed' ? '/s/explore' : `/s/explore?tab=${t}`, { replace: true })
   }
 
   const TabBar = () => (
-    <div className="flex gap-1 border-b border-divider">
+    <div className="flex gap-1 border-b border-divider mb-5">
       {([
-        { key: 'browse' as const, label: 'Browse & Search' },
-        { key: 'community' as const, label: 'Community' },
+        { key: 'feed' as const, label: 'Feed' },
+        { key: 'search' as const, label: 'Advanced Search' },
         { key: 'saved' as const, label: 'Saved' },
       ]).map(tab => (
         <button
@@ -311,39 +312,39 @@ export default function DiscoverPage() {
     </div>
   )
 
-  // Non-browse tabs
-  if (mode === 'community') {
+  // Feed tab — LinkedIn/Handshake-style
+  if (mode === 'feed') {
     return (
-      <div className="p-6 max-w-6xl mx-auto">
-        <h1 className="text-2xl font-semibold text-student-ink mb-1">Explore</h1>
-        <p className="text-sm text-student-text mb-4">Discover schools, events, and programs from around the world.</p>
-        <TabBar />
-        <div className="mt-6">
-          <CommunityTab />
+      <div className="p-6">
+        <div className="max-w-2xl mx-auto mb-4">
+          <h1 className="text-2xl font-semibold text-student-ink mb-1">Explore</h1>
+          <p className="text-sm text-student-text mb-4">Programs, school updates, and events from the community.</p>
+          <TabBar />
         </div>
+        <ExploreFeed />
       </div>
     )
   }
 
+  // Saved tab
   if (mode === 'saved') {
     return (
-      <div className="p-6 max-w-6xl mx-auto">
+      <div className="p-6 max-w-4xl mx-auto">
         <h1 className="text-2xl font-semibold text-student-ink mb-1">Explore</h1>
-        <p className="text-sm text-student-text mb-4">Programs you've saved for later.</p>
+        <p className="text-sm text-student-text mb-4">Programs you've saved.</p>
         <TabBar />
-        <div className="mt-6">
-          <Suspense fallback={<div className="py-10 text-center text-student-text">Loading...</div>}>
-            <SavedListPage />
-          </Suspense>
-        </div>
+        <Suspense fallback={<div className="py-10 text-center text-student-text">Loading...</div>}>
+          <SavedListPage />
+        </Suspense>
       </div>
     )
   }
 
+  // Search tab — advanced filters + program grid
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-semibold text-student-ink mb-1">Explore</h1>
-      <p className="text-sm text-student-text mb-4">Find programs, schools, events, and community content.</p>
+      <p className="text-sm text-student-text mb-4">Search with filters, NLP, or browse the program catalog.</p>
       <TabBar />
       <p className="text-xs text-gray-400 mb-2">Every program is a possible path — let the AI help you see which ones fit your story</p>
 
