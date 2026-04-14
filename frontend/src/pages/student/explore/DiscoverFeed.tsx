@@ -123,7 +123,7 @@ export default function DiscoverFeed() {
                 match={matchMap.get(p.id)}
                 comparing={compareStore.has(p.id)}
                 onSave={() => toggleSave(p.id)}
-                onCompare={() => compareStore.has(p.id) ? compareStore.remove(p.id) : compareStore.add({ program_id: p.id, program_name: p.program_name, institution_name: p.institution_name, degree_type: p.degree_type })}
+                onCompare={() => { if (compareStore.has(p.id)) { compareStore.remove(p.id) } else { compareStore.add({ program_id: p.id, program_name: p.program_name, institution_name: p.institution_name, degree_type: p.degree_type }) } }}
                 onAskCounselor={() => navigate(`/s?prefill=${encodeURIComponent(`Tell me about ${p.program_name} at ${p.institution_name}. Is it a good fit for me?`)}`)}
                 onView={() => navigate(`/s/programs/${p.id}`)}
               />
