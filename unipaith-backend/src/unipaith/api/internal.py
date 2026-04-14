@@ -817,6 +817,8 @@ class EnrichProgramRequest(BaseModel):
     application_deadline: str | None = None
     highlights: list[str] | None = None
     media_urls: list[str] | None = None
+    outcomes_data: dict | None = None
+    application_requirements: list[dict] | None = None
     clear_fields: list[str] | None = None
 
 
