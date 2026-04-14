@@ -129,6 +129,124 @@ class InstitutionService:
         await self.db.refresh(institution)
         return institution
 
+    async def search_unclaimed_institutions(
+        self, query: str, limit: int = 20,
+    ) -> list[dict]:
+        """Search extracted_programs for unclaimed institutions."""
+        from unipaith.models.crawler import ExtractedProgram
+
+        stmt = (
+            select(
+                ExtractedProgram.institution_name,
+                ExtractedProgram.institution_country,
+                ExtractedProgram.institution_city,
+                ExtractedProgram.institution_type,
+                ExtractedProgram.institution_website,
+                func.count(ExtractedProgram.id).label("program_count"),
+                func.array_agg(ExtractedProgram.id).label("extracted_ids"),
+            )
+            .where(
+                ExtractedProgram.institution_name.ilike(f"%{query}%"),
+                ExtractedProgram.matched_institution_id.is_(None),
+            )
+            .group_by(
+                ExtractedProgram.institution_name,
+                ExtractedProgram.institution_country,
+                ExtractedProgram.institution_city,
+                ExtractedProgram.institution_type,
+                ExtractedProgram.institution_website,
+            )
+            .order_by(func.count(ExtractedProgram.id).desc())
+            .limit(limit)
+        )
+        result = await self.db.execute(stmt)
+        return [
+            {
+                "institution_name": row.institution_name,
+                "institution_country": row.institution_country,
+                "institution_city": row.institution_city,
+                "institution_type": row.institution_type,
+                "institution_website": row.institution_website,
+                "program_count": row.program_count,
+                "extracted_ids": [str(eid) for eid in row.extracted_ids],
+            }
+            for row in result.all()
+        ]
+
+    async def claim_institution(
+        self, user_id: UUID, extracted_ids: list[UUID],
+    ) -> Institution:
+        """Claim an institution from crawled data, auto-populating profile + programs."""
+        from unipaith.models.crawler import ExtractedProgram
+
+        # Check user doesn't already have an institution
+        existing = await self.db.execute(
+            select(Institution).where(Institution.admin_user_id == user_id)
+        )
+        if existing.scalar_one_or_none():
+            raise ConflictException("Institution already exists")
+
+        # Load extracted programs
+        ep_result = await self.db.execute(
+            select(ExtractedProgram).where(
+                ExtractedProgram.id.in_(extracted_ids),
+            )
+        )
+        programs_data = list(ep_result.scalars().all())
+        if not programs_data:
+            raise NotFoundException("No extracted programs found")
+
+        # Create institution from first record
+        first = programs_data[0]
+        institution = Institution(
+            admin_user_id=user_id,
+            name=first.institution_name or "Unnamed Institution",
+            type=first.institution_type or "university",
+            country=first.institution_country or "Unknown",
+            city=first.institution_city,
+            website_url=first.institution_website,
+            claimed_from_source="crawled",
+            claimed_extracted_ids=[str(eid) for eid in extracted_ids],
+        )
+        self.db.add(institution)
+        await self.db.flush()
+        await self.db.refresh(institution)
+
+        # Create programs from extracted data (deduplicate by name)
+        seen_programs: set[str] = set()
+        for ep in programs_data:
+            if not ep.program_name:
+                continue
+            key = f"{ep.program_name}|{ep.degree_type}"
+            if key in seen_programs:
+                continue
+            seen_programs.add(key)
+
+            program = Program(
+                institution_id=institution.id,
+                program_name=ep.program_name,
+                degree_type=ep.degree_type or "masters",
+                department=ep.department,
+                duration_months=ep.duration_months,
+                tuition=ep.tuition,
+                acceptance_rate=ep.acceptance_rate,
+                requirements=ep.requirements,
+                description_text=ep.description_text,
+                application_deadline=ep.application_deadline,
+                program_start_date=ep.program_start_date,
+                highlights=ep.highlights,
+                faculty_contacts=ep.faculty_contacts,
+            )
+            self.db.add(program)
+
+        # Mark extracted programs as claimed
+        for ep in programs_data:
+            ep.matched_institution_id = institution.id
+
+        await self.db.flush()
+        await self.db.refresh(institution)
+        return institution
+
     async def update_institution(
         self, user_id: UUID, data: UpdateInstitutionRequest
     ) -> Institution:

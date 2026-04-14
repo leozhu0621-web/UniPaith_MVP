@@ -903,6 +903,17 @@ export interface Inquiry {
   program_name: string | null
 }
 
+// ============ INSTITUTION CLAIM ============
+export interface UnclaimedInstitution {
+  institution_name: string
+  institution_country: string | null
+  institution_city: string | null
+  institution_type: string | null
+  institution_website: string | null
+  program_count: number
+  extracted_ids: string[]
+}
+
 // ============ PROGRAM CHECKLIST ============
 export interface ProgramChecklistItem {
   id: string

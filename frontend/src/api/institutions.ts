@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AnalyticsData, AuditLogList, Campaign, CommunicationTemplate, IntakeRound, ProgramChecklistItem, CampaignAttributionDetail, CampaignLink, CampaignMetrics, DashboardSummary, DatasetPreview, Inquiry, Institution, InstitutionDataset, InstitutionPost, Program, Promotion, Segment } from '../types'
+import type { AnalyticsData, AuditLogList, Campaign, CommunicationTemplate, IntakeRound, ProgramChecklistItem, CampaignAttributionDetail, CampaignLink, CampaignMetrics, DashboardSummary, DatasetPreview, Inquiry, Institution, InstitutionDataset, InstitutionPost, Program, Promotion, Segment, UnclaimedInstitution } from '../types'
 
 export async function getInstitution(): Promise<Institution> {
   const { data } = await apiClient.get('/institutions/me')
@@ -8,6 +8,18 @@ export async function getInstitution(): Promise<Institution> {
 
 export async function getPublicInstitution(institutionId: string): Promise<Institution> {
   const { data } = await apiClient.get(`/institutions/${institutionId}`)
+  return data
+}
+
+// --- Institution Search & Claim ---
+
+export async function searchUnclaimedInstitutions(query: string): Promise<UnclaimedInstitution[]> {
+  const { data } = await apiClient.get('/institutions/search-unclaimed', { params: { q: query } })
+  return data
+}
+
+export async function claimInstitution(extractedIds: string[]): Promise<Institution> {
+  const { data } = await apiClient.post('/institutions/me/claim', { extracted_ids: extractedIds })
   return data
 }
 
