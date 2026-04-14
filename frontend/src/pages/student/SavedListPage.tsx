@@ -131,6 +131,23 @@ export default function SavedListPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [programs, priorities])
 
+  // Derive saved schools from unique institutions
+  const savedSchools = useMemo(() => {
+    const schoolMap = new Map<string, { id: string; name: string; country: string; city: string | null; count: number }>()
+    for (const p of programs) {
+      const instId = (p as any).institution_id
+      const instName = (p as any).institution_name || (p as any).program?.institution_name || ''
+      const instCountry = (p as any).institution_country || (p as any).program?.institution_country || ''
+      const instCity = (p as any).institution_city || (p as any).program?.institution_city || null
+      if (instId && instName) {
+        const existing = schoolMap.get(instId)
+        if (existing) { existing.count++ }
+        else { schoolMap.set(instId, { id: instId, name: instName, country: instCountry, city: instCity, count: 1 }) }
+      }
+    }
+    return Array.from(schoolMap.values())
+  }, [programs])
+
   const toggle = (id: string) => {
     const next = new Set(selected)
     if (next.has(id)) next.delete(id); else next.add(id)
@@ -234,23 +251,6 @@ export default function SavedListPage() {
       </Card>
     )
   }
-
-  // Derive saved schools from unique institutions
-  const savedSchools = useMemo(() => {
-    const schoolMap = new Map<string, { id: string; name: string; country: string; city: string | null; count: number }>()
-    for (const p of programs) {
-      const instId = (p as any).institution_id
-      const instName = (p as any).institution_name || (p as any).program?.institution_name || ''
-      const instCountry = (p as any).institution_country || (p as any).program?.institution_country || ''
-      const instCity = (p as any).institution_city || (p as any).program?.institution_city || null
-      if (instId && instName) {
-        const existing = schoolMap.get(instId)
-        if (existing) { existing.count++ }
-        else { schoolMap.set(instId, { id: instId, name: instName, country: instCountry, city: instCity, count: 1 }) }
-      }
-    }
-    return Array.from(schoolMap.values())
-  }, [programs])
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
