@@ -1,7 +1,7 @@
 import { useState, lazy, Suspense } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, createOnlinePresence, updateOnlinePresence, deleteOnlinePresence, createPortfolioItem, updatePortfolioItem, deletePortfolioItem, createResearch, updateResearch, deleteResearch, createLanguage, updateLanguage, deleteLanguage, upsertPreferences, getNextStep } from '../../api/students'
+import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, createOnlinePresence, updateOnlinePresence, deleteOnlinePresence, createPortfolioItem, updatePortfolioItem, deletePortfolioItem, createResearch, updateResearch, deleteResearch, createLanguage, updateLanguage, deleteLanguage, upsertPreferences, getNextStep, listWorkExperiences, createWorkExperience, updateWorkExperience, deleteWorkExperience, listCompetitions, createCompetition, updateCompetition, deleteCompetition, getAccommodations, upsertAccommodations, getScheduling, upsertScheduling, getPeerComparison } from '../../api/students'
 import { getOnboarding } from '../../api/students'
 import { listDocuments } from '../../api/documents'
 import Modal from '../../components/ui/Modal'
@@ -12,8 +12,8 @@ import { SkeletonCard } from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatDate, formatCurrency, formatFileSize } from '../../utils/format'
 import { DEGREE_LABELS, ACTIVITY_TYPES, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS } from '../../utils/constants'
-import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical, Languages, MessageSquare } from 'lucide-react'
-import { BasicInfoForm, AcademicForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm, ResearchForm, LanguageForm } from './components/ProfileForms'
+import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical, Languages, MessageSquare, Briefcase, Trophy, Accessibility, Clock, BarChart3, Download } from 'lucide-react'
+import { BasicInfoForm, AcademicForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm, ResearchForm, LanguageForm, WorkExperienceForm, CompetitionForm, AccommodationForm, SchedulingForm } from './components/ProfileForms'
 import type { StudentProfile } from '../../types'
 
 // Lazy-load absorbed pages as tabs
@@ -98,11 +98,21 @@ export default function ProfilePage() {
   const { data: onboarding } = useQuery({ queryKey: ['onboarding'], queryFn: getOnboarding })
   const { data: nextStep } = useQuery({ queryKey: ['next-step'], queryFn: getNextStep })
   const { data: documents } = useQuery({ queryKey: ['documents'], queryFn: listDocuments })
+  const { data: workExperiences } = useQuery({ queryKey: ['work-experiences'], queryFn: listWorkExperiences })
+  const { data: competitions } = useQuery({ queryKey: ['competitions'], queryFn: listCompetitions })
+  const { data: accommodations } = useQuery({ queryKey: ['accommodations'], queryFn: getAccommodations, retry: false })
+  const { data: scheduling } = useQuery({ queryKey: ['scheduling'], queryFn: getScheduling, retry: false })
+  const { data: peerComparison } = useQuery({ queryKey: ['peer-comparison'], queryFn: getPeerComparison, retry: false })
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ['profile'] })
     queryClient.invalidateQueries({ queryKey: ['onboarding'] })
     queryClient.invalidateQueries({ queryKey: ['next-step'] })
+    queryClient.invalidateQueries({ queryKey: ['work-experiences'] })
+    queryClient.invalidateQueries({ queryKey: ['competitions'] })
+    queryClient.invalidateQueries({ queryKey: ['accommodations'] })
+    queryClient.invalidateQueries({ queryKey: ['scheduling'] })
+    queryClient.invalidateQueries({ queryKey: ['peer-comparison'] })
   }
 
   const profileMut = useMutation({ mutationFn: (data: any) => updateProfile(data), onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Profile updated', 'success') } })
@@ -129,12 +139,25 @@ export default function ProfilePage() {
   const lnDeleteMut = useMutation({ mutationFn: deleteLanguage, onSuccess: () => { invalidateAll(); showToast('Language removed', 'success') } })
   const prefsMut = useMutation({ mutationFn: upsertPreferences, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Preferences updated', 'success') } })
 
+  // New section mutations
+  const weCreateMut = useMutation({ mutationFn: createWorkExperience, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Experience added', 'success') } })
+  const weUpdateMut = useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => updateWorkExperience(id, data), onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Experience updated', 'success') } })
+  const weDeleteMut = useMutation({ mutationFn: deleteWorkExperience, onSuccess: () => { invalidateAll(); showToast('Experience removed', 'success') } })
+  const compCreateMut = useMutation({ mutationFn: createCompetition, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Competition added', 'success') } })
+  const compUpdateMut = useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => updateCompetition(id, data), onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Competition updated', 'success') } })
+  const compDeleteMut = useMutation({ mutationFn: deleteCompetition, onSuccess: () => { invalidateAll(); showToast('Competition removed', 'success') } })
+  const accommMut = useMutation({ mutationFn: upsertAccommodations, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Accommodations updated', 'success') } })
+  const schedMut = useMutation({ mutationFn: upsertScheduling, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Scheduling updated', 'success') } })
+
   if (isLoading) return <div className="p-6 space-y-4">{Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}</div>
 
   const p: StudentProfile | null = profile
   const completionPct = onboarding?.completion_percentage ?? 0
   const stepsCompleted = onboarding?.steps_completed ?? []
   const documentsList: any[] = Array.isArray(documents) ? documents : []
+  const workList: any[] = Array.isArray(workExperiences) ? workExperiences : []
+  const competitionList: any[] = Array.isArray(competitions) ? competitions : []
+  const peerMetrics: any[] = peerComparison?.metrics ?? []
 
   // Derive section completion
   const sectionDone = (key: string) => {
@@ -533,6 +556,155 @@ export default function ProfilePage() {
         )}
       </Card>
 
+      {/* Work & Service */}
+      <Card className="p-5">
+        <div className="flex justify-between items-start mb-3">
+          <div className="flex items-center gap-2">
+            <Briefcase size={16} className="text-student" />
+            <h2 className="font-semibold text-student-ink">Work & Service</h2>
+          </div>
+          <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('work') }}><Plus size={14} /></Button>
+        </div>
+        {workList.length === 0 ? (
+          <p className="text-sm text-gray-500">No work experience, internships, or volunteering yet</p>
+        ) : (
+          <div className="space-y-3">
+            {workList.map((w: any) => (
+              <div key={w.id} className="flex justify-between items-start border-b border-gray-100 pb-3 last:border-0">
+                <div>
+                  <p className="text-sm font-medium">{w.role_title} at {w.organization}</p>
+                  <p className="text-xs text-gray-500">{w.experience_type}{w.is_current ? ' · Current' : ''}{w.start_date ? ` · ${formatDate(w.start_date)}` : ''}{w.end_date ? ` – ${formatDate(w.end_date)}` : ''}</p>
+                  {w.description && <p className="text-xs text-gray-600 mt-1 line-clamp-2">{w.description}</p>}
+                </div>
+                <div className="flex gap-1">
+                  <Button size="sm" variant="ghost" onClick={() => { setEditItem(w); setEditModal('work') }}><Pencil size={12} /></Button>
+                  <Button size="sm" variant="ghost" onClick={() => weDeleteMut.mutate(w.id)}><Trash2 size={12} /></Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {/* Competitions */}
+      <Card className="p-5">
+        <div className="flex justify-between items-start mb-3">
+          <div className="flex items-center gap-2">
+            <Trophy size={16} className="text-gold" />
+            <h2 className="font-semibold text-student-ink">Competitions</h2>
+          </div>
+          <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('competition') }}><Plus size={14} /></Button>
+        </div>
+        {competitionList.length === 0 ? (
+          <p className="text-sm text-gray-500">No competitions, hackathons, or olympiads yet</p>
+        ) : (
+          <div className="space-y-3">
+            {competitionList.map((c: any) => (
+              <div key={c.id} className="flex justify-between items-start border-b border-gray-100 pb-3 last:border-0">
+                <div>
+                  <p className="text-sm font-medium">{c.competition_name}</p>
+                  <p className="text-xs text-gray-500">
+                    {c.level}{c.result_placement ? ` · ${c.result_placement}` : ''}{c.year ? ` · ${c.year}` : ''}
+                    {c.domain ? ` · ${c.domain}` : ''}
+                  </p>
+                  {c.description && <p className="text-xs text-gray-600 mt-1 line-clamp-2">{c.description}</p>}
+                </div>
+                <div className="flex gap-1">
+                  <Button size="sm" variant="ghost" onClick={() => { setEditItem(c); setEditModal('competition') }}><Pencil size={12} /></Button>
+                  <Button size="sm" variant="ghost" onClick={() => compDeleteMut.mutate(c.id)}><Trash2 size={12} /></Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {/* Accommodations */}
+      <Card className="p-5">
+        <div className="flex justify-between items-start mb-3">
+          <div className="flex items-center gap-2">
+            <Accessibility size={16} className="text-student" />
+            <h2 className="font-semibold text-student-ink">Accommodations</h2>
+          </div>
+          <Button size="sm" variant="ghost" onClick={() => { setEditItem(accommodations || {}); setEditModal('accommodations') }}><Pencil size={14} /></Button>
+        </div>
+        {!accommodations?.accommodations_needed ? (
+          <p className="text-sm text-gray-500">No accommodations specified (optional)</p>
+        ) : (
+          <dl className="grid grid-cols-2 gap-2 text-sm">
+            <div><dt className="text-gray-500">Category</dt><dd>{accommodations.category || '—'}</dd></div>
+            <div><dt className="text-gray-500">Documentation</dt><dd>{accommodations.documentation_status || '—'}</dd></div>
+            {accommodations.details_text && <div className="col-span-2"><dt className="text-gray-500">Details</dt><dd>{accommodations.details_text}</dd></div>}
+          </dl>
+        )}
+      </Card>
+
+      {/* Scheduling */}
+      <Card className="p-5">
+        <div className="flex justify-between items-start mb-3">
+          <div className="flex items-center gap-2">
+            <Clock size={16} className="text-student" />
+            <h2 className="font-semibold text-student-ink">Scheduling & Availability</h2>
+          </div>
+          <Button size="sm" variant="ghost" onClick={() => { setEditItem(scheduling || {}); setEditModal('scheduling') }}><Pencil size={14} /></Button>
+        </div>
+        {!scheduling ? (
+          <p className="text-sm text-gray-500">No scheduling preferences set</p>
+        ) : (
+          <dl className="grid grid-cols-2 gap-2 text-sm">
+            <div><dt className="text-gray-500">Timezone</dt><dd>{scheduling.timezone || '—'}</dd></div>
+            <div><dt className="text-gray-500">Preferred Format</dt><dd>{scheduling.preferred_interview_format || '—'}</dd></div>
+            <div><dt className="text-gray-500">Campus Visit</dt><dd>{scheduling.campus_visit_interest ? 'Interested' : 'Not interested'}</dd></div>
+            {scheduling.notes && <div className="col-span-2"><dt className="text-gray-500">Notes</dt><dd>{scheduling.notes}</dd></div>}
+          </dl>
+        )}
+      </Card>
+
+      {/* Peer Comparison */}
+      {peerMetrics.length > 0 && (
+        <Card className="p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <BarChart3 size={16} className="text-student" />
+            <h2 className="font-semibold text-student-ink">Peer Comparison</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {peerMetrics.map((m: any) => (
+              <div key={m.metric} className="bg-student-mist rounded-lg p-3">
+                <p className="text-xs text-student-text mb-0.5">{m.metric}</p>
+                <p className="text-lg font-bold text-student-ink">{m.value}</p>
+                <p className="text-[10px] text-student-text">{m.label} · {m.percentile}th percentile</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Export */}
+      <Card className="p-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Download size={16} className="text-student" />
+            <div>
+              <h2 className="font-semibold text-student-ink">Export Profile</h2>
+              <p className="text-xs text-gray-500">Download your full profile as a portable JSON file</p>
+            </div>
+          </div>
+          <Button size="sm" variant="secondary" onClick={async () => {
+            try {
+              const { data } = await (await import('../../api/client')).default.get('/students/me/profile/portable-export')
+              const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url; a.download = 'unipaith-profile.json'; a.click()
+              URL.revokeObjectURL(url)
+              showToast('Profile exported', 'success')
+            } catch { showToast('Export failed', 'error') }
+          }}>
+            <Download size={14} className="mr-1" /> Export
+          </Button>
+        </div>
+      </Card>
+
       {/* === MODALS === */}
 
       {/* Basic Info Modal */}
@@ -613,6 +785,42 @@ export default function ProfilePage() {
           defaultValues={editItem}
           onSubmit={data => prefsMut.mutate(data)}
           loading={prefsMut.isPending}
+        />
+      </Modal>
+
+      {/* Work Experience Modal */}
+      <Modal isOpen={editModal === 'work'} onClose={() => setEditModal(null)} title={editItem ? 'Edit Work Experience' : 'Add Work Experience'} size="lg">
+        <WorkExperienceForm
+          defaultValues={editItem}
+          onSubmit={data => editItem ? weUpdateMut.mutate({ id: editItem.id, data }) : weCreateMut.mutate(data)}
+          loading={weCreateMut.isPending || weUpdateMut.isPending}
+        />
+      </Modal>
+
+      {/* Competition Modal */}
+      <Modal isOpen={editModal === 'competition'} onClose={() => setEditModal(null)} title={editItem ? 'Edit Competition' : 'Add Competition'} size="lg">
+        <CompetitionForm
+          defaultValues={editItem}
+          onSubmit={data => editItem ? compUpdateMut.mutate({ id: editItem.id, data }) : compCreateMut.mutate(data)}
+          loading={compCreateMut.isPending || compUpdateMut.isPending}
+        />
+      </Modal>
+
+      {/* Accommodations Modal */}
+      <Modal isOpen={editModal === 'accommodations'} onClose={() => setEditModal(null)} title="Accommodations">
+        <AccommodationForm
+          defaultValues={editItem}
+          onSubmit={data => accommMut.mutate(data)}
+          loading={accommMut.isPending}
+        />
+      </Modal>
+
+      {/* Scheduling Modal */}
+      <Modal isOpen={editModal === 'scheduling'} onClose={() => setEditModal(null)} title="Scheduling & Availability">
+        <SchedulingForm
+          defaultValues={editItem}
+          onSubmit={data => schedMut.mutate(data)}
+          loading={schedMut.isPending}
         />
       </Modal>
     </div>
