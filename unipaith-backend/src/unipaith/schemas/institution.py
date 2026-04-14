@@ -38,6 +38,20 @@ class CreateInstitutionRequest(BaseModel):
     social_links: dict | None = None
 
 
+class ClaimInstitutionRequest(BaseModel):
+    extracted_ids: list[UUID] = Field(min_length=1)
+
+
+class UnclaimedInstitutionResult(BaseModel):
+    institution_name: str
+    institution_country: str | None = None
+    institution_city: str | None = None
+    institution_type: str | None = None
+    institution_website: str | None = None
+    program_count: int
+    extracted_ids: list[UUID]
+
+
 class UpdateInstitutionRequest(BaseModel):
     name: str | None = Field(None, min_length=1, max_length=255)
     type: Literal["university", "college", "technical_institute", "community_college"] | None = None

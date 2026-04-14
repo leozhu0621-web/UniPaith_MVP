@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Check, Building2, BookOpen, ClipboardList, PartyPopper, Plus, Trash2 } from 'lucide-react'
-import { createInstitution, createProgram } from '../../api/institutions'
+import { Check, Building2, BookOpen, ClipboardList, PartyPopper, Plus, Trash2, Search, MapPin, GraduationCap } from 'lucide-react'
+import { createInstitution, createProgram, searchUnclaimedInstitutions, claimInstitution } from '../../api/institutions'
 import { createRubric } from '../../api/reviews'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
@@ -57,8 +57,26 @@ export default function SetupPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [currentStep, setCurrentStep] = useState(0)
+  const [showManualForm, setShowManualForm] = useState(false)
+  const [claimQuery, setClaimQuery] = useState('')
+  const [claimResults, setClaimResults] = useState<any[]>([])
+  const [claimSearching, setClaimSearching] = useState(false)
   const [, setCreatedInstitutionId] = useState<string | null>(null)
   const [createdProgramId, setCreatedProgramId] = useState<string | null>(null)
+
+  // Debounced search for unclaimed institutions
+  useEffect(() => {
+    if (claimQuery.length < 2) { setClaimResults([]); return }
+    const timer = setTimeout(async () => {
+      setClaimSearching(true)
+      try {
+        const results = await searchUnclaimedInstitutions(claimQuery)
+        setClaimResults(results)
+      } catch { setClaimResults([]) }
+      finally { setClaimSearching(false) }
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [claimQuery])
 
   // Rubric state
   const [rubricName, setRubricName] = useState('')
@@ -72,6 +90,18 @@ export default function SetupPage() {
 
   const instForm = useForm<InstitutionForm>({ resolver: zodResolver(institutionSchema) })
   const progForm = useForm<ProgramForm>({ resolver: zodResolver(programSchema) as any })
+
+  const claimMut = useMutation({
+    mutationFn: (extractedIds: string[]) => claimInstitution(extractedIds),
+    onSuccess: (data) => {
+      setCreatedInstitutionId(data.id)
+      queryClient.invalidateQueries({ queryKey: ['institution'] })
+      queryClient.invalidateQueries({ queryKey: ['institution-programs'] })
+      showToast(`Claimed ${data.name}! Profile and programs auto-populated.`, 'success')
+      setCurrentStep(2) // Skip to Rubric since institution + programs are done
+    },
+    onError: () => showToast('Failed to claim institution', 'error'),
+  })
 
   const createInstMut = useMutation({
     mutationFn: createInstitution,
@@ -188,9 +218,66 @@ export default function SetupPage() {
         <h2 className="text-xl font-bold text-gray-900">{STEPS[currentStep].label}</h2>
       </div>
 
-      {/* Step 1: Institution */}
-      {currentStep === 0 && (
+      {/* Step 1: Institution (Claim or Create) */}
+      {currentStep === 0 && !showManualForm && (
+        <Card className="p-6 space-y-4">
+          <div className="text-center">
+            <Search size={32} className="mx-auto text-brand-slate-400 mb-2" />
+            <h3 className="text-lg font-semibold text-gray-900">Is your institution already in our database?</h3>
+            <p className="text-sm text-gray-500 mt-1">Search to claim your school and auto-populate your profile with existing data.</p>
+          </div>
+          <Input
+            label=""
+            value={claimQuery}
+            onChange={e => setClaimQuery(e.target.value)}
+            placeholder="Search by institution name..."
+          />
+          {claimSearching && <p className="text-sm text-gray-400 text-center">Searching...</p>}
+          {claimResults.length > 0 && (
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {claimResults.map((r: any, i: number) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => claimMut.mutate(r.extracted_ids)}
+                  disabled={claimMut.isPending}
+                  className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-brand-slate-400 hover:bg-brand-slate-50 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{r.institution_name}</p>
+                      <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+                        {r.institution_city && <span className="flex items-center gap-0.5"><MapPin size={10} /> {r.institution_city}</span>}
+                        {r.institution_country && <span>{r.institution_country}</span>}
+                        {r.institution_type && <span className="capitalize">{r.institution_type}</span>}
+                      </div>
+                    </div>
+                    <span className="flex items-center gap-1 text-xs text-brand-slate-600 bg-brand-slate-50 px-2 py-1 rounded">
+                      <GraduationCap size={12} /> {r.program_count} programs
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+          {claimQuery.length >= 2 && !claimSearching && claimResults.length === 0 && (
+            <p className="text-sm text-gray-400 text-center">No matching institutions found.</p>
+          )}
+          {claimMut.isPending && <p className="text-sm text-brand-slate-600 text-center animate-pulse">Claiming institution and importing programs...</p>}
+          <div className="text-center pt-2">
+            <button type="button" onClick={() => setShowManualForm(true)} className="text-sm text-brand-slate-600 hover:underline">
+              Not listed? Create manually
+            </button>
+          </div>
+        </Card>
+      )}
+
+      {currentStep === 0 && showManualForm && (
         <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-gray-700">Create Institution Manually</h3>
+            <button type="button" onClick={() => setShowManualForm(false)} className="text-xs text-brand-slate-600 hover:underline">Back to search</button>
+          </div>
           <form onSubmit={onSubmitInstitution} className="space-y-4">
             <Input label="Institution Name *" {...instForm.register('name')} error={instForm.formState.errors.name?.message} />
             <Select label="Type *" options={INSTITUTION_TYPES} placeholder="Select type" {...instForm.register('type')} error={instForm.formState.errors.type?.message} />

@@ -29,6 +29,7 @@ from unipaith.schemas.institution import (
     CampaignLinkResponse,
     CampaignMetricsResponse,
     CampaignResponse,
+    ClaimInstitutionRequest,
     CreateCampaignLinkRequest,
     CreateCampaignRequest,
     CreateDatasetRequest,
@@ -81,6 +82,31 @@ class InstitutionAssistantChatResponse(BaseModel):
 
 def _svc(db: AsyncSession) -> InstitutionService:
     return InstitutionService(db)
+
+
+# --- Institution Search & Claim ---
+
+
+@router.get("/search-unclaimed")
+async def search_unclaimed_institutions(
+    q: str = Query("", min_length=2),
+    db: AsyncSession = Depends(get_db),
+):
+    """Public — search crawled institutions available to claim."""
+    svc = _svc(db)
+    return await svc.search_unclaimed_institutions(q)
+
+
+@router.post("/me/claim", response_model=InstitutionResponse)
+async def claim_institution(
+    body: ClaimInstitutionRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Claim an institution from crawled data, auto-populating profile + programs."""
+    svc = _svc(db)
+    inst = await svc.claim_institution(user.id, body.extracted_ids)
+    return InstitutionResponse.model_validate(inst)
 
 
 # --- Institution Profile ---

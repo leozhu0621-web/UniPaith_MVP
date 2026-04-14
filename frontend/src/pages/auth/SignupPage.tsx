@@ -91,6 +91,12 @@ export default function SignupPage() {
         ))}
       </div>
 
+      {role === 'institution_admin' && (
+        <p className="text-xs text-center text-brand-slate-600 bg-brand-slate-50 rounded-lg px-3 py-2">
+          Already have programs in our database? You can claim your school after signup.
+        </p>
+      )}
+
       {role === 'student' && (
         <>
           <button
