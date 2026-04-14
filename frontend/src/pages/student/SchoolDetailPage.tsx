@@ -16,7 +16,7 @@ import { showToast } from '../../stores/toast-store'
 import { formatCurrency, formatDate, formatPercent, formatScore } from '../../utils/format'
 import { DEGREE_LABELS, TIER_LABELS } from '../../utils/constants'
 import { ArrowLeft, Heart, HeartOff, MessageSquare, DollarSign, TrendingUp, Clock, GraduationCap, Briefcase, Building2, BarChart3, Users, Star, Quote } from 'lucide-react'
-import type { Program, MatchResult, EventItem } from '../../types'
+import type { MatchResult, EventItem } from '../../types'
 
 export default function SchoolDetailPage() {
   const { programId } = useParams<{ programId: string }>()
@@ -127,29 +127,58 @@ export default function SchoolDetailPage() {
     )
   }
 
-  const p: Program = program
+  const p: any = program  // enriched with institution data
   const match: MatchResult | null = matchResult ?? null
   const tierInfo = match ? TIER_LABELS[match.match_tier] : null
+  const rd: any = p.ranking_data || {}
+  const instName = p.institution_name || p.department || ''
+  const instLogo = p.institution_logo_url
+  const mediaImg = p.media_urls?.[0]
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <button onClick={() => navigate('/s/discover')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-brand-slate-600 mb-4">
-        <ArrowLeft size={16} /> Back to Discover
+    <div className="p-6 max-w-4xl mx-auto">
+      <button onClick={() => navigate('/s/explore')} className="flex items-center gap-1 text-sm text-student-text hover:text-student-ink mb-4">
+        <ArrowLeft size={16} /> Back to Explore
       </button>
 
-      <div className="flex justify-between items-start mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">{p.program_name}</h1>
-          <Link to={`/school/${p.institution_id}`} className="text-sm text-brand-slate-600 hover:underline">View Institution Profile</Link>
-          <p className="text-gray-500">{p.department || ''}</p>
-          {match && tierInfo && (
-            <div className="flex items-center gap-2 mt-2">
-              <Badge variant={tierInfo.color as any}>{tierInfo.label}</Badge>
-              <span className="text-lg font-bold">{formatScore(match.match_score)} fit</span>
-            </div>
-          )}
+      {/* Hero image */}
+      {mediaImg && (
+        <div className="w-full h-48 rounded-xl overflow-hidden mb-6 bg-student-mist">
+          <img src={mediaImg} alt="" className="w-full h-full object-cover" onError={e => (e.currentTarget.style.display = 'none')} />
         </div>
-        <div className="flex gap-2">
+      )}
+
+      {/* Header */}
+      <div className="flex justify-between items-start mb-6">
+        <div className="flex items-start gap-4">
+          {instLogo && (
+            <img src={instLogo} alt="" className="w-14 h-14 rounded-xl object-contain bg-white border border-divider p-1" onError={e => (e.currentTarget.style.display = 'none')} />
+          )}
+          <div>
+            <h1 className="text-2xl font-bold text-student-ink">{p.program_name}</h1>
+            <div className="flex items-center gap-2 mt-1">
+              <Link to={`/s/institutions/${p.institution_id}`} className="text-sm text-student hover:underline font-medium">
+                {instName}
+              </Link>
+              {p.institution_city && (
+                <span className="text-xs text-student-text">· {p.institution_city}, {p.institution_country}</span>
+              )}
+            </div>
+            {p.department && <p className="text-xs text-student-text mt-0.5">{p.department}</p>}
+            {match && tierInfo && (
+              <div className="flex items-center gap-2 mt-2">
+                <Badge variant={tierInfo.color as any}>{tierInfo.label}</Badge>
+                <span className="text-sm font-bold text-student-ink">{formatScore(match.match_score)} fit</span>
+              </div>
+            )}
+            {rd.us_news_2025 && (
+              <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-medium rounded-full bg-gold-soft text-gold">
+                #{rd.us_news_2025} US News 2025
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="flex gap-2 flex-shrink-0">
           <Button variant="secondary" onClick={() => saveMut.mutate()} loading={saveMut.isPending}>
             {isSaved ? <><HeartOff size={14} className="mr-1" /> Unsave</> : <><Heart size={14} className="mr-1" /> Save</>}
           </Button>
@@ -159,6 +188,52 @@ export default function SchoolDetailPage() {
             <Button onClick={() => applyMut.mutate()} loading={applyMut.isPending}>Apply</Button>
           )}
         </div>
+      </div>
+
+      {/* Quick stats bar */}
+      <div className="flex flex-wrap gap-3 mb-6">
+        {p.tuition != null && (
+          <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
+            <p className="text-[10px] text-student-text">Tuition</p>
+            <p className="text-sm font-bold text-student-ink">{formatCurrency(p.tuition)}/yr</p>
+          </div>
+        )}
+        {(p.acceptance_rate ?? rd.acceptance_rate) != null && (
+          <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
+            <p className="text-[10px] text-student-text">Acceptance</p>
+            <p className="text-sm font-bold text-student-ink">{formatPercent(p.acceptance_rate ?? rd.acceptance_rate, 1)}</p>
+          </div>
+        )}
+        {rd.earnings_10yr_median && (
+          <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
+            <p className="text-[10px] text-student-text">Avg Salary (10yr)</p>
+            <p className="text-sm font-bold text-student-ink">{formatCurrency(rd.earnings_10yr_median)}</p>
+          </div>
+        )}
+        {rd.graduation_rate && (
+          <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
+            <p className="text-[10px] text-student-text">Grad Rate</p>
+            <p className="text-sm font-bold text-student-ink">{Math.round(rd.graduation_rate * 100)}%</p>
+          </div>
+        )}
+        {rd.sat_avg && (
+          <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
+            <p className="text-[10px] text-student-text">SAT Avg</p>
+            <p className="text-sm font-bold text-student-ink">{rd.sat_avg}</p>
+          </div>
+        )}
+        {p.duration_months && (
+          <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
+            <p className="text-[10px] text-student-text">Duration</p>
+            <p className="text-sm font-bold text-student-ink">{p.duration_months}mo</p>
+          </div>
+        )}
+        {rd.total_cost_attendance && (
+          <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
+            <p className="text-[10px] text-student-text">Total Cost</p>
+            <p className="text-sm font-bold text-student-ink">{formatCurrency(rd.total_cost_attendance)}/yr</p>
+          </div>
+        )}
       </div>
 
       <Tabs
@@ -177,24 +252,69 @@ export default function SchoolDetailPage() {
 
       <div className="mt-6">
         {tab === 'overview' && (
-          <div className="space-y-4">
-            {p.description_text && <p className="text-sm text-brand-slate-600">{p.description_text}</p>}
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div><span className="text-gray-500">Degree:</span> {DEGREE_LABELS[p.degree_type] || p.degree_type}</div>
-              <div><span className="text-gray-500">Duration:</span> {p.duration_months ? `${p.duration_months} months` : '—'}</div>
-              <div><span className="text-gray-500">Tuition:</span> {formatCurrency(p.tuition)}</div>
-              <div><span className="text-gray-500">Acceptance Rate:</span> {formatPercent(p.acceptance_rate, 1)}</div>
-              <div><span className="text-gray-500">Deadline:</span> {formatDate(p.application_deadline)}</div>
-              <div><span className="text-gray-500">Start:</span> {formatDate(p.program_start_date)}</div>
-            </div>
-            {p.highlights?.length ? (
-              <div>
-                <h3 className="font-medium text-sm mb-2">Highlights</h3>
-                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                  {p.highlights.map((h, i) => <li key={i}>{h}</li>)}
-                </ul>
+          <div className="space-y-5">
+            {/* Description — program or institution fallback */}
+            {(p.description_text || p.institution_description) && (
+              <Card className="p-5">
+                <h3 className="font-semibold text-student-ink mb-2">About This Program</h3>
+                <p className="text-sm text-student-text leading-relaxed">{p.description_text || p.institution_description}</p>
+              </Card>
+            )}
+
+            {/* Key facts — only show fields that have data */}
+            <Card className="p-5">
+              <h3 className="font-semibold text-student-ink mb-3">Program Details</h3>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div><span className="text-student-text">Degree:</span> <span className="font-medium">{DEGREE_LABELS[p.degree_type] || p.degree_type}</span></div>
+                {p.duration_months && <div><span className="text-student-text">Duration:</span> <span className="font-medium">{p.duration_months} months</span></div>}
+                {p.tuition != null && <div><span className="text-student-text">Tuition:</span> <span className="font-medium">{formatCurrency(p.tuition)}/yr</span></div>}
+                {(p.acceptance_rate ?? rd.acceptance_rate) != null && <div><span className="text-student-text">Acceptance Rate:</span> <span className="font-medium">{formatPercent(p.acceptance_rate ?? rd.acceptance_rate, 1)}</span></div>}
+                {p.delivery_format && <div><span className="text-student-text">Format:</span> <span className="font-medium capitalize">{p.delivery_format.replace(/_/g, ' ')}</span></div>}
+                {(p.campus_setting || p.institution_campus_setting) && <div><span className="text-student-text">Campus:</span> <span className="font-medium capitalize">{p.campus_setting || p.institution_campus_setting}</span></div>}
+                {p.application_deadline && <div><span className="text-student-text">Deadline:</span> <span className="font-medium">{formatDate(p.application_deadline)}</span></div>}
+                {p.program_start_date && <div><span className="text-student-text">Start:</span> <span className="font-medium">{formatDate(p.program_start_date)}</span></div>}
+                {p.institution_student_body_size && <div><span className="text-student-text">Student Body:</span> <span className="font-medium">{p.institution_student_body_size.toLocaleString()}</span></div>}
               </div>
+            </Card>
+
+            {/* School context */}
+            {instName && (
+              <Card className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-student-ink">About {instName}</h3>
+                  <Link to={`/s/institutions/${p.institution_id}`} className="text-xs text-student hover:underline">View full school profile →</Link>
+                </div>
+                {p.institution_description && (
+                  <p className="text-sm text-student-text leading-relaxed mb-3">{p.institution_description}</p>
+                )}
+                {rd.earnings_10yr_median && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                    {rd.earnings_10yr_median && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Median Earnings (10yr)</p><p className="font-bold text-student-ink">{formatCurrency(rd.earnings_10yr_median)}</p></div>}
+                    {rd.graduation_rate && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Graduation Rate</p><p className="font-bold text-student-ink">{Math.round(rd.graduation_rate * 100)}%</p></div>}
+                    {rd.retention_rate && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Retention Rate</p><p className="font-bold text-student-ink">{Math.round(rd.retention_rate * 100)}%</p></div>}
+                    {rd.median_debt && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Median Debt</p><p className="font-bold text-student-ink">{formatCurrency(rd.median_debt)}</p></div>}
+                    {rd.avg_net_price && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Avg Net Price</p><p className="font-bold text-student-ink">{formatCurrency(rd.avg_net_price)}</p></div>}
+                    {rd.pell_grant_rate && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Pell Grant Rate</p><p className="font-bold text-student-ink">{Math.round(rd.pell_grant_rate * 100)}%</p></div>}
+                  </div>
+                )}
+              </Card>
+            )}
+
+            {p.highlights?.length ? (
+              <Card className="p-5">
+                <h3 className="font-semibold text-student-ink mb-2">Highlights</h3>
+                <ul className="list-disc list-inside text-sm text-student-text space-y-1">
+                  {p.highlights.map((h: string, i: number) => <li key={i}>{h}</li>)}
+                </ul>
+              </Card>
             ) : null}
+
+            {p.who_its_for && (
+              <Card className="p-5">
+                <h3 className="font-semibold text-student-ink mb-2">Who It's For</h3>
+                <p className="text-sm text-student-text leading-relaxed">{p.who_its_for}</p>
+              </Card>
+            )}
           </div>
         )}
 

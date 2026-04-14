@@ -80,13 +80,65 @@ async def semantic_program_search(
     return await svc.semantic_search_programs(query=q, limit=limit)
 
 
-@router.get("/{program_id}", response_model=ProgramResponse)
+@router.get("/{program_id}")
 async def get_public_program(
     program_id: UUID,
     db: AsyncSession = Depends(get_db),
 ):
+    """Get program detail enriched with institution data for missing fields."""
+    from unipaith.models.institution import Institution
+
     svc = InstitutionService(db)
-    return await svc.get_public_program(program_id)
+    program = await svc.get_public_program(program_id)
+
+    # Load institution for fallback data
+    inst_result = await db.execute(
+        select(Institution).where(Institution.id == program.institution_id)
+    )
+    inst = inst_result.scalar_one_or_none()
+    rd = (inst.ranking_data or {}) if inst else {}
+
+    resp = ProgramResponse.model_validate(program)
+    resp_dict = resp.model_dump(mode="json")
+
+    # Merge institution data as fallbacks
+    resp_dict["institution_name"] = inst.name if inst else None
+    resp_dict["institution_country"] = inst.country if inst else None
+    resp_dict["institution_city"] = inst.city if inst else None
+    resp_dict["institution_logo_url"] = inst.logo_url if inst else None
+    resp_dict["institution_campus_setting"] = inst.campus_setting if inst else None
+    resp_dict["institution_student_body_size"] = inst.student_body_size if inst else None
+    resp_dict["institution_description"] = inst.description_text if inst else None
+    resp_dict["institution_website_url"] = inst.website_url if inst else None
+
+    # Fill missing program fields from ranking_data
+    if not resp_dict.get("acceptance_rate") and rd.get("acceptance_rate"):
+        resp_dict["acceptance_rate"] = rd["acceptance_rate"]
+    if not resp_dict.get("delivery_format") and inst and inst.campus_setting:
+        resp_dict["delivery_format"] = "on_campus"
+    if not resp_dict.get("campus_setting") and inst:
+        resp_dict["campus_setting"] = inst.campus_setting
+
+    # Enrich with ranking_data fields that programs don't have
+    resp_dict["ranking_data"] = {
+        "sat_avg": rd.get("sat_avg"),
+        "act_midpoint": rd.get("act_midpoint"),
+        "graduation_rate": rd.get("graduation_rate"),
+        "retention_rate": rd.get("retention_rate"),
+        "earnings_6yr_median": rd.get("earnings_6yr_median"),
+        "earnings_10yr_median": rd.get("earnings_10yr_median"),
+        "median_debt": rd.get("median_debt"),
+        "avg_net_price": rd.get("avg_net_price"),
+        "total_cost_attendance": rd.get("total_cost_attendance"),
+        "us_news_2025": rd.get("us_news_2025"),
+        "pell_grant_rate": rd.get("pell_grant_rate"),
+        "room_board": rd.get("room_board"),
+        "endowment": rd.get("endowment"),
+        "gender": rd.get("gender"),
+        "race_ethnicity": rd.get("race_ethnicity"),
+    }
+
+    return resp_dict
 
 
 # --- Student Reviews ---
