@@ -67,27 +67,29 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-4 divide-x divide-divider border-b border-divider">
-        <div className="px-3 py-2.5 text-center">
-          <p className="text-[10px] text-student-text mb-0.5 flex items-center justify-center gap-0.5"><DollarSign size={9} /> Tuition</p>
-          <p className="text-xs font-bold text-student-ink">{program.tuition != null ? formatCurrency(program.tuition) : '—'}</p>
-        </div>
-        <div className="px-3 py-2.5 text-center">
-          <p className="text-[10px] text-student-text mb-0.5 flex items-center justify-center gap-0.5"><TrendingUp size={9} /> Salary</p>
-          <p className="text-xs font-bold text-student-ink">{program.median_salary != null ? formatCurrency(program.median_salary) : '—'}</p>
-        </div>
-        <div className="px-3 py-2.5 text-center">
-          <p className="text-[10px] text-student-text mb-0.5 flex items-center justify-center gap-0.5"><Users size={9} /> Employed</p>
-          <p className="text-xs font-bold text-student-ink">{program.employment_rate != null ? `${Math.round(program.employment_rate * 100)}%` : '—'}</p>
-        </div>
-        <div className="px-3 py-2.5 text-center">
-          <p className="text-[10px] text-student-text mb-0.5 flex items-center justify-center gap-0.5"><Clock size={9} /> Deadline</p>
-          <p className={`text-xs font-bold ${daysLeft != null && daysLeft <= 14 ? 'text-red-600' : 'text-student-ink'}`}>
-            {daysLeft != null && daysLeft >= 0 ? (daysLeft === 0 ? 'Today' : `${daysLeft}d`) : deadlineDate ? deadlineDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
-          </p>
-        </div>
-      </div>
+      {/* Stats — only show fields that have data */}
+      {(() => {
+        const stats: { icon: typeof DollarSign; label: string; value: string; urgent?: boolean }[] = []
+        if (program.tuition != null) stats.push({ icon: DollarSign, label: 'Tuition', value: formatCurrency(program.tuition) })
+        if (program.median_salary != null) stats.push({ icon: TrendingUp, label: 'Avg Salary', value: formatCurrency(program.median_salary) })
+        if (program.employment_rate != null) stats.push({ icon: Users, label: 'Grad Rate', value: `${Math.round(program.employment_rate * 100)}%` })
+        if (program.acceptance_rate != null) stats.push({ icon: GraduationCap, label: 'Accept', value: `${Math.round(program.acceptance_rate * 100)}%` })
+        if (daysLeft != null && daysLeft >= 0) stats.push({ icon: Clock, label: 'Deadline', value: daysLeft === 0 ? 'Today' : `${daysLeft}d`, urgent: daysLeft <= 14 })
+        else if (deadlineDate) stats.push({ icon: Clock, label: 'Deadline', value: deadlineDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) })
+        if (program.duration_months) stats.push({ icon: Clock, label: 'Duration', value: `${program.duration_months}mo` })
+
+        if (stats.length === 0) return null
+        return (
+          <div className="divide-x divide-divider border-b border-divider" style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(stats.length, 4)}, 1fr)` }}>
+            {stats.slice(0, 4).map(s => (
+              <div key={s.label} className="px-3 py-2.5 text-center">
+                <p className="text-[10px] text-student-text mb-0.5 flex items-center justify-center gap-0.5"><s.icon size={9} /> {s.label}</p>
+                <p className={`text-xs font-bold ${s.urgent ? 'text-red-600' : 'text-student-ink'}`}>{s.value}</p>
+              </div>
+            ))}
+          </div>
+        )
+      })()}
 
       {/* Action Bar */}
       <div className="flex items-center divide-x divide-divider">

@@ -1842,20 +1842,20 @@ class InstitutionService:
                 program_name=prog.program_name,
                 degree_type=prog.degree_type,
                 department=prog.department,
-                tuition=prog.tuition,
+                tuition=prog.tuition or (inst.ranking_data or {}).get("tuition_out_of_state"),
                 duration_months=prog.duration_months,
                 delivery_format=prog.delivery_format,
                 acceptance_rate=(
                     float(prog.acceptance_rate)
                     if prog.acceptance_rate is not None
-                    else None
+                    else (inst.ranking_data or {}).get("acceptance_rate")
                 ),
                 application_deadline=prog.application_deadline,
                 institution_name=inst.name,
                 institution_country=inst.country,
                 institution_city=inst.city,
-                median_salary=_outcomes_int(prog, "median_salary"),
-                employment_rate=_outcomes_float(prog, "employment_rate"),
+                median_salary=_outcomes_int(prog, "median_salary") or (inst.ranking_data or {}).get("earnings_10yr_median"),
+                employment_rate=_outcomes_float(prog, "employment_rate") or (inst.ranking_data or {}).get("graduation_rate"),
                 payback_months=_outcomes_int(prog, "payback_months"),
             )
             for prog, inst in rows
@@ -1927,6 +1927,7 @@ class InstitutionService:
             if not program:
                 continue
             inst = program.institution
+            rd = (inst.ranking_data or {}) if inst else {}
             ordered.append(
                 ProgramSummaryResponse(
                     id=program.id,
@@ -1934,20 +1935,20 @@ class InstitutionService:
                     program_name=program.program_name,
                     degree_type=program.degree_type,
                     department=program.department,
-                    tuition=program.tuition,
+                    tuition=program.tuition or rd.get("tuition_out_of_state"),
                     duration_months=program.duration_months,
                     delivery_format=program.delivery_format,
                     acceptance_rate=(
                         float(program.acceptance_rate)
                         if program.acceptance_rate is not None
-                        else None
+                        else rd.get("acceptance_rate")
                     ),
                     application_deadline=program.application_deadline,
                     institution_name=inst.name if inst else "",
                     institution_country=inst.country if inst else "",
                     institution_city=inst.city if inst else None,
-                    median_salary=_outcomes_int(program, "median_salary"),
-                    employment_rate=_outcomes_float(program, "employment_rate"),
+                    median_salary=_outcomes_int(program, "median_salary") or rd.get("earnings_10yr_median"),
+                    employment_rate=_outcomes_float(program, "employment_rate") or rd.get("graduation_rate"),
                     payback_months=_outcomes_int(program, "payback_months"),
                 )
             )
