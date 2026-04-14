@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, createOnlinePresence, updateOnlinePresence, deleteOnlinePresence, createPortfolioItem, updatePortfolioItem, deletePortfolioItem, createResearch, updateResearch, deleteResearch, createLanguage, updateLanguage, deleteLanguage, upsertPreferences, getNextStep, listWorkExperiences, createWorkExperience, updateWorkExperience, deleteWorkExperience, listCompetitions, createCompetition, updateCompetition, deleteCompetition, getAccommodations, upsertAccommodations, getScheduling, upsertScheduling, getPeerComparison, getTimeline, getDataRights, upsertDataRights } from '../../api/students'
 import { getOnboarding } from '../../api/students'
+import apiClient from '../../api/client'
 import { listDocuments } from '../../api/documents'
 import Modal from '../../components/ui/Modal'
 import Button from '../../components/ui/Button'
@@ -738,7 +739,7 @@ export default function ProfilePage() {
           </div>
           <Button size="sm" variant="secondary" onClick={async () => {
             try {
-              const { data } = await (await import('../../api/client')).default.get('/students/me/profile/portable-export')
+              const { data } = await apiClient.get('/students/me/profile/portable-export')
               const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
               const url = URL.createObjectURL(blob)
               const a = document.createElement('a')
