@@ -144,12 +144,39 @@ export default function ExplorePage() {
         </div>
       </div>
 
-      {/* NLP interpretation chip */}
+      {/* NLP interpretation + editable constraint chips */}
       {nlpResult && (
-        <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-gold-soft rounded-lg border border-gold/20">
-          <Sparkles size={12} className="text-gold flex-shrink-0" />
-          <p className="text-xs text-student-ink flex-1">{nlpResult.interpretation}</p>
-          <button onClick={clearSearch} className="text-xs text-student-text hover:text-student-ink">Clear</button>
+        <div className="mb-4 space-y-2">
+          <div className="flex items-center gap-2 px-3 py-2 bg-gold-soft rounded-lg border border-gold/20">
+            <Sparkles size={12} className="text-gold flex-shrink-0" />
+            <p className="text-xs text-student-ink flex-1">{nlpResult.interpretation}</p>
+            <button onClick={clearSearch} className="text-xs text-student-text hover:text-student-ink">Clear</button>
+          </div>
+          {/* Editable constraint chips from NLP filters */}
+          {Object.keys(nlpResult.filters_applied || {}).length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {Object.entries(nlpResult.filters_applied).map(([key, val]) => {
+                if (!val) return null
+                const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+                const display = typeof val === 'number' ? `$${val.toLocaleString()}` : String(val)
+                return (
+                  <span key={key} className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full bg-student-mist text-student-ink">
+                    <span className="text-student-text">{label}:</span> {display}
+                    <button
+                      onClick={() => {
+                        const updated = { ...nlpResult.filters_applied }
+                        delete updated[key]
+                        setNlpResult({ ...nlpResult, filters_applied: updated })
+                      }}
+                      className="ml-0.5 text-student-text hover:text-student-ink"
+                    >
+                      <X size={10} />
+                    </button>
+                  </span>
+                )
+              })}
+            </div>
+          )}
         </div>
       )}
 

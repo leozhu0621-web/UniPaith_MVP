@@ -13,7 +13,7 @@ import { SkeletonCard } from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatCurrency, formatDate, formatPercent, formatScore } from '../../utils/format'
 import { DEGREE_LABELS, TIER_LABELS, STATUS_COLORS } from '../../utils/constants'
-import { Heart, Trash2, Pencil, BarChart3, ArrowUp, ArrowDown, Minus, ArrowUpDown, Filter, FileText, ChevronDown } from 'lucide-react'
+import { Heart, Trash2, Pencil, BarChart3, ArrowUp, ArrowDown, Minus, ArrowUpDown, Filter, FileText, ChevronDown, GraduationCap, MapPin } from 'lucide-react'
 import type { SavedProgram, ComparisonResponse, MatchResult, Application } from '../../types'
 
 type Priority = 'considering' | 'planning' | 'applied' | 'dropped'
@@ -235,6 +235,23 @@ export default function SavedListPage() {
     )
   }
 
+  // Derive saved schools from unique institutions
+  const savedSchools = useMemo(() => {
+    const schoolMap = new Map<string, { id: string; name: string; country: string; city: string | null; count: number }>()
+    for (const p of programs) {
+      const instId = (p as any).institution_id
+      const instName = (p as any).institution_name || (p as any).program?.institution_name || ''
+      const instCountry = (p as any).institution_country || (p as any).program?.institution_country || ''
+      const instCity = (p as any).institution_city || (p as any).program?.institution_city || null
+      if (instId && instName) {
+        const existing = schoolMap.get(instId)
+        if (existing) { existing.count++ }
+        else { schoolMap.set(instId, { id: instId, name: instName, country: instCountry, city: instCity, count: 1 }) }
+      }
+    }
+    return Array.from(schoolMap.values())
+  }, [programs])
+
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <div className="flex justify-between items-center mb-4">
@@ -246,12 +263,38 @@ export default function SavedListPage() {
         )}
       </div>
 
+      {/* Saved Schools strip */}
+      {savedSchools.length > 0 && (
+        <div className="mb-5">
+          <p className="text-xs font-semibold text-student-text uppercase tracking-wider mb-2">Schools You Follow ({savedSchools.length})</p>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {savedSchools.map(s => (
+              <button
+                key={s.id}
+                onClick={() => navigate(`/s/institutions/${s.id}`)}
+                className="flex items-center gap-2 px-3 py-2 bg-white border border-divider rounded-xl hover:shadow-sm transition-shadow flex-shrink-0"
+              >
+                <div className="w-8 h-8 rounded-lg bg-school-mist flex items-center justify-center">
+                  <GraduationCap size={14} className="text-school" />
+                </div>
+                <div className="text-left">
+                  <p className="text-xs font-medium text-student-ink">{s.name}</p>
+                  <p className="text-[10px] text-student-text flex items-center gap-0.5">
+                    <MapPin size={8} /> {s.city ? `${s.city}, ` : ''}{s.country} · {s.count} program{s.count !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {programs.length === 0 ? (
         <EmptyState
           icon={<Heart size={48} />}
           title="Programs you save will appear here"
-          description="Browse Discover to find programs that interest you."
-          action={{ label: 'Discover Programs', onClick: () => navigate('/s/discover') }}
+          description="Browse Explore to find programs that interest you."
+          action={{ label: 'Explore Programs', onClick: () => navigate('/s/explore') }}
         />
       ) : (
         <>

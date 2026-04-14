@@ -187,10 +187,18 @@ export default function MessagesPage() {
                   <div className="flex items-center gap-2 mt-0.5">
                     {selectedConvObj.program_id && (
                       <button
-                        onClick={() => navigate(`/s/applications`)}
+                        onClick={() => navigate(`/s/programs/${selectedConvObj.program_id}`)}
                         className="inline-flex items-center gap-1 text-[10px] text-purple-600 hover:underline"
                       >
-                        <Building2 size={10} /> View Application <ExternalLink size={8} />
+                        <Building2 size={10} /> View Program <ExternalLink size={8} />
+                      </button>
+                    )}
+                    {(selectedConvObj as any).application_id && (
+                      <button
+                        onClick={() => navigate(`/s/applications/${(selectedConvObj as any).application_id}`)}
+                        className="inline-flex items-center gap-1 text-[10px] text-student hover:underline"
+                      >
+                        <ExternalLink size={8} /> View Application
                       </button>
                     )}
                     {deriveActionState(selectedConvObj) && (
