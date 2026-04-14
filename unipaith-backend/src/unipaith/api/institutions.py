@@ -715,7 +715,8 @@ async def get_posts_feed(
 ):
     """Public endpoint — returns latest published posts across all institutions."""
     from sqlalchemy import select
-    from unipaith.models.institution import InstitutionPost, Institution
+
+    from unipaith.models.institution import Institution, InstitutionPost
 
     result = await db.execute(
         select(InstitutionPost)
@@ -736,7 +737,7 @@ async def get_posts_feed(
     out = []
     for p in posts:
         d = PostResponse.model_validate(p)
-        d.institution_name = inst_map.get(p.institution_id, "")  # type: ignore[attr-defined]
+        d.institution_name = inst_map.get(p.institution_id, "")
         out.append(d)
     return out
 
