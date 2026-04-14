@@ -6,6 +6,13 @@ export async function getInstitution(): Promise<Institution> {
   return data
 }
 
+export async function searchInstitutions(params?: {
+  q?: string; country?: string; type?: string; page?: number; page_size?: number
+}) {
+  const { data } = await apiClient.get('/institutions/search', { params })
+  return data
+}
+
 export async function getPublicInstitution(institutionId: string): Promise<Institution> {
   const { data } = await apiClient.get(`/institutions/${institutionId}`)
   return data

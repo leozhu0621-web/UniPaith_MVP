@@ -694,6 +694,95 @@ async def list_post_templates(
 # --- Public Profile ---
 
 
+@router.get("/search")
+async def search_institutions(
+    q: str | None = Query(None),
+    country: str | None = Query(None),
+    inst_type: str | None = Query(None, alias="type"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=50),
+    db: AsyncSession = Depends(get_db),
+):
+    """Public — search/browse institutions."""
+    import math
+
+    from sqlalchemy import func, select
+
+    from unipaith.models.institution import Institution, Program
+
+    stmt = select(Institution)
+
+    if q:
+        stmt = stmt.where(Institution.name.ilike(f"%{q}%"))
+    if country:
+        stmt = stmt.where(Institution.country == country)
+    if inst_type:
+        stmt = stmt.where(Institution.type == inst_type)
+
+    count_stmt = select(func.count()).select_from(stmt.subquery())
+    total = (await db.execute(count_stmt)).scalar_one()
+
+    stmt = stmt.order_by(Institution.name).offset(
+        (page - 1) * page_size
+    ).limit(page_size)
+    result = await db.execute(stmt)
+    institutions = result.scalars().all()
+
+    # Get program counts
+    inst_ids = [i.id for i in institutions]
+    if inst_ids:
+        pc_result = await db.execute(
+            select(
+                Program.institution_id,
+                func.count().label("cnt"),
+            )
+            .where(
+                Program.institution_id.in_(inst_ids),
+                Program.is_published.is_(True),
+            )
+            .group_by(Program.institution_id)
+        )
+        pc_map = {r[0]: r[1] for r in pc_result.all()}
+    else:
+        pc_map = {}
+
+    items = []
+    for inst in institutions:
+        rd = inst.ranking_data or {}
+        items.append({
+            "id": str(inst.id),
+            "name": inst.name,
+            "country": inst.country,
+            "city": inst.city,
+            "type": inst.type,
+            "campus_setting": inst.campus_setting,
+            "student_body_size": inst.student_body_size,
+            "logo_url": inst.logo_url,
+            "image_url": (
+                (inst.media_gallery or [None])[0]
+                if inst.media_gallery
+                else None
+            ),
+            "program_count": pc_map.get(inst.id, 0),
+            "description_text": (
+                (inst.description_text or "")[:200]
+            ),
+            "acceptance_rate": rd.get("acceptance_rate"),
+            "sat_avg": rd.get("sat_avg"),
+            "us_news_rank": rd.get("us_news_2025"),
+            "median_earnings": rd.get("earnings_10yr_median"),
+            "graduation_rate": rd.get("graduation_rate"),
+        })
+
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": max(1, math.ceil(total / page_size)),
+    }
+
+
 @router.get("/{institution_id}", response_model=InstitutionResponse)
 async def get_public_institution(
     institution_id: UUID,

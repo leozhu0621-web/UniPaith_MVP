@@ -2,50 +2,57 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { searchPrograms, nlpSearch } from '../../api/programs'
-import { getProfile } from '../../api/students'
+import { searchInstitutions } from '../../api/institutions'
 import { getMatches } from '../../api/matching'
 import { getOnboarding } from '../../api/students'
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
 import { useCompareStore } from '../../stores/compare-store'
-import { useAuthStore } from '../../stores/auth-store'
 import ProgramCard from './explore/cards/ProgramCard'
+import SchoolCard from './explore/cards/SchoolCard'
 import InterestPills from './explore/shared/InterestPills'
-import Avatar from '../../components/ui/Avatar'
 import {
-  Search, X, Loader2, Sparkles, SlidersHorizontal,
-  MapPin, Pencil, MessageSquare,
+  Search, X, Loader2, Sparkles, GraduationCap, Building2,
 } from 'lucide-react'
 import type { ProgramSummary, MatchResult } from '../../types'
 
 interface NlpResult {
   filters_applied: Record<string, any>
-  results: { items: ProgramSummary[]; total: number; page: number; page_size: number; total_pages: number }
+  results: { items: ProgramSummary[]; total: number }
   interpretation: string
 }
+
+type Tab = 'programs' | 'schools'
+
+const COUNTRY_OPTIONS = ['United States', 'United Kingdom', 'Canada', 'Australia', 'Germany', 'Netherlands', 'France', 'Singapore', 'Japan', 'South Korea']
+const DEGREE_OPTIONS = [{ v: 'masters', l: 'Masters' }, { v: 'phd', l: 'PhD' }, { v: 'bachelors', l: 'Bachelors' }, { v: 'certificate', l: 'Certificate' }]
+const FORMAT_OPTIONS = [{ v: 'on_campus', l: 'On Campus' }, { v: 'hybrid', l: 'Hybrid' }, { v: 'online', l: 'Online' }]
+const CAMPUS_OPTIONS = [{ v: 'urban', l: 'Urban' }, { v: 'suburban', l: 'Suburban' }, { v: 'rural', l: 'Rural' }]
+const DURATION_OPTIONS = [{ v: '12', l: '≤ 1yr' }, { v: '24', l: '≤ 2yr' }, { v: '36', l: '≤ 3yr' }, { v: '48', l: '≤ 4yr' }]
+const SORT_OPTIONS = [{ v: 'relevance', l: 'Relevance' }, { v: 'tuition_asc', l: 'Tuition: Low→High' }, { v: 'tuition_desc', l: 'Tuition: High→Low' }, { v: 'salary_desc', l: 'Salary: Highest' }, { v: 'employment_desc', l: 'Employment: Highest' }, { v: 'deadline', l: 'Deadline: Soonest' }]
 
 export default function ExplorePage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const queryClient = useQueryClient()
   const compareStore = useCompareStore()
-  const user = useAuthStore(s => s.user)
 
+  const [tab, setTab] = useState<Tab>(searchParams.get('tab') === 'schools' ? 'schools' : 'programs')
   const [q, setQ] = useState(searchParams.get('q') || '')
   const [interest, setInterest] = useState('all')
   const [nlpResult, setNlpResult] = useState<NlpResult | null>(null)
-  const [showFilters, setShowFilters] = useState(false)
 
-  // Filter state
+  // Filters
   const [country, setCountry] = useState('')
   const [degreeType, setDegreeType] = useState('')
+  const [minTuition, setMinTuition] = useState('')
   const [maxTuition, setMaxTuition] = useState('')
   const [deliveryFormat, setDeliveryFormat] = useState('')
   const [campusSetting, setCampusSetting] = useState('')
   const [maxDuration, setMaxDuration] = useState('')
+  const [city, setCity] = useState('')
   const [sortBy, setSortBy] = useState('relevance')
 
   // Data
-  const { data: profile } = useQuery({ queryKey: ['profile'], queryFn: getProfile, retry: false })
   const { data: onboarding } = useQuery({ queryKey: ['onboarding'], queryFn: getOnboarding })
   const profileReady = (onboarding?.completion_percentage ?? 0) >= 80
 
@@ -53,20 +60,30 @@ export default function ExplorePage() {
   const matchMap = new Map<string, MatchResult>()
   if (Array.isArray(matchData)) (matchData as MatchResult[]).forEach(m => matchMap.set(m.program_id, m))
 
+  // Programs query
   const { data: programs, isLoading: programsLoading } = useQuery({
-    queryKey: ['explore-programs', interest, country, degreeType, maxTuition, deliveryFormat, campusSetting, maxDuration, sortBy],
+    queryKey: ['explore-programs', interest, country, degreeType, minTuition, maxTuition, deliveryFormat, campusSetting, maxDuration, city, sortBy],
     queryFn: () => searchPrograms({
       q: interest === 'all' ? undefined : interest,
-      page_size: 20,
+      page_size: 21,
       country: country || undefined,
       degree_type: degreeType || undefined,
+      min_tuition: minTuition ? Number(minTuition) : undefined,
       max_tuition: maxTuition ? Number(maxTuition) : undefined,
       delivery_format: deliveryFormat || undefined,
       campus_setting: campusSetting || undefined,
       max_duration_months: maxDuration ? Number(maxDuration) : undefined,
+      city: city || undefined,
       sort_by: sortBy !== 'relevance' ? sortBy : undefined,
     }),
-    enabled: !nlpResult,
+    enabled: tab === 'programs' && !nlpResult,
+  })
+
+  // Schools query
+  const { data: schools, isLoading: schoolsLoading } = useQuery({
+    queryKey: ['explore-schools', q, country],
+    queryFn: () => searchInstitutions({ q: q || undefined, country: country || undefined, page_size: 21 }),
+    enabled: tab === 'schools',
   })
 
   const { data: savedData } = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved, retry: false })
@@ -87,170 +104,127 @@ export default function ExplorePage() {
     } catch { /* */ }
   }
 
-  const handleSearch = () => { if (q.trim().length >= 5) nlpMut.mutate(q.trim()) }
+  const handleSearch = () => { if (q.trim().length >= 5 && tab === 'programs') nlpMut.mutate(q.trim()) }
   const clearSearch = () => { setQ(''); setNlpResult(null) }
 
   const displayPrograms: ProgramSummary[] = nlpResult
     ? (nlpResult.results?.items ?? [])
     : (Array.isArray(programs?.items) ? programs.items : [])
+  const schoolList: any[] = Array.isArray(schools?.items) ? schools.items : []
 
-  const COUNTRY_OPTIONS = ['United States', 'United Kingdom', 'Canada', 'Australia', 'Germany', 'Netherlands', 'France', 'Singapore', 'Japan', 'South Korea']
-  const DEGREE_OPTIONS = [{ v: 'masters', l: 'Masters' }, { v: 'phd', l: 'PhD' }, { v: 'bachelors', l: 'Bachelors' }, { v: 'certificate', l: 'Certificate' }]
-  const FORMAT_OPTIONS = [{ v: 'on_campus', l: 'On Campus' }, { v: 'hybrid', l: 'Hybrid' }, { v: 'online', l: 'Online' }]
-  const CAMPUS_OPTIONS = [{ v: 'urban', l: 'Urban' }, { v: 'suburban', l: 'Suburban' }, { v: 'rural', l: 'Rural' }]
-  const SORT_OPTIONS = [{ v: 'relevance', l: 'Relevance' }, { v: 'tuition_asc', l: 'Tuition: Low-High' }, { v: 'salary_desc', l: 'Salary: Highest' }, { v: 'employment_desc', l: 'Employment: Highest' }, { v: 'deadline', l: 'Deadline: Soonest' }]
+  const FilterSelect = ({ value, onChange, options, placeholder }: {
+    value: string; onChange: (v: string) => void; options: { v: string; l: string }[]; placeholder: string
+  }) => (
+    <select value={value} onChange={e => onChange(e.target.value)} className="text-xs border border-stone rounded-lg px-2 py-1.5 bg-white text-student-text min-w-0">
+      <option value="">{placeholder}</option>
+      {options.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+    </select>
+  )
 
   return (
-    <div className="flex h-full">
-      {/* Left: Mini Profile (~200px, narrow) */}
-      <aside className="w-52 flex-shrink-0 border-r border-divider bg-white overflow-y-auto hidden lg:block">
-        <div className="p-4">
-          <div className="text-center mb-4">
-            <Avatar name={user?.email || '?'} size="lg" />
-            <p className="text-sm font-semibold text-student-ink mt-2">{profile?.first_name || user?.email?.split('@')[0] || 'Student'} {profile?.last_name || ''}</p>
-            {profile?.goals_text && (
-              <p className="text-[10px] text-student-text mt-1 line-clamp-2">{profile.goals_text}</p>
-            )}
-          </div>
-
-          {/* Functional info — what they're looking for */}
-          <div className="space-y-2 text-xs">
-            {profile?.preferences?.preferred_degree_level && (
-              <div className="flex items-center gap-1.5 text-student-text">
-                <span className="text-student-ink font-medium capitalize">{profile.preferences.preferred_degree_level}</span>
-              </div>
-            )}
-            {profile?.preferences?.preferred_countries?.length > 0 && (
-              <div className="flex items-center gap-1.5 text-student-text">
-                <MapPin size={11} />
-                <span>{profile.preferences.preferred_countries.slice(0, 3).join(', ')}</span>
-              </div>
-            )}
-            {profile?.nationality && (
-              <div className="text-student-text">From: {profile.country_of_residence || profile.nationality}</div>
-            )}
-          </div>
-
-          <div className="mt-4 pt-4 border-t border-divider space-y-1.5">
-            <button onClick={() => navigate('/s/profile')} className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-student-text hover:text-student-ink hover:bg-student-mist rounded-lg transition-colors">
-              <Pencil size={12} /> Edit Profile
+    <div className="p-6 max-w-6xl mx-auto">
+      {/* Search bar */}
+      <div className="relative mb-4">
+        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-student-text" />
+        <input
+          type="text" value={q}
+          onChange={e => { setQ(e.target.value); if (!e.target.value.trim()) clearSearch() }}
+          onKeyDown={e => { if (e.key === 'Enter') handleSearch() }}
+          placeholder={tab === 'programs' ? "Search programs: 'CS masters in Canada with internships'" : "Search schools by name..."}
+          className="w-full pl-10 pr-24 py-3 bg-white border border-stone rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-student"
+        />
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+          {q && <button onClick={clearSearch} className="p-1 text-student-text hover:text-student-ink"><X size={14} /></button>}
+          {tab === 'programs' && (
+            <button onClick={handleSearch} disabled={q.trim().length < 5 || nlpMut.isPending} className="px-3 py-1.5 bg-student text-white text-xs font-medium rounded-lg hover:bg-student-hover disabled:opacity-40 transition-colors">
+              {nlpMut.isPending ? <Loader2 size={12} className="animate-spin" /> : 'Search'}
             </button>
-            <button onClick={() => navigate('/s?prefill=Help me find programs')} className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-student-text hover:text-student-ink hover:bg-student-mist rounded-lg transition-colors">
-              <MessageSquare size={12} /> Ask Counselor
-            </button>
-          </div>
+          )}
         </div>
-      </aside>
+      </div>
 
-      {/* Right: Database (flex-1) */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-6 max-w-6xl mx-auto">
-          {/* NLP Search bar */}
-          <div className="relative mb-4">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-student-text" />
-            <input
-              type="text"
-              value={q}
-              onChange={e => { setQ(e.target.value); if (!e.target.value.trim()) clearSearch() }}
-              onKeyDown={e => { if (e.key === 'Enter') handleSearch() }}
-              placeholder="Try: 'Affordable CS masters in Canada with internships'"
-              className="w-full pl-10 pr-24 py-3 bg-white border border-stone rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-student"
-            />
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-              {q && <button onClick={clearSearch} className="p-1 text-student-text hover:text-student-ink"><X size={14} /></button>}
-              <button onClick={handleSearch} disabled={q.trim().length < 5 || nlpMut.isPending} className="px-3 py-1.5 bg-student text-white text-xs font-medium rounded-lg hover:bg-student-hover disabled:opacity-40 transition-colors">
-                {nlpMut.isPending ? <Loader2 size={12} className="animate-spin" /> : 'Search'}
-              </button>
-            </div>
+      {/* NLP chips */}
+      {nlpResult && (
+        <div className="mb-4 space-y-2">
+          <div className="flex items-center gap-2 px-3 py-2 bg-gold-soft rounded-lg border border-gold/20">
+            <Sparkles size={12} className="text-gold flex-shrink-0" />
+            <p className="text-xs text-student-ink flex-1">{nlpResult.interpretation}</p>
+            <button onClick={clearSearch} className="text-xs text-student-text hover:text-student-ink">Clear</button>
           </div>
-
-          {/* NLP interpretation */}
-          {nlpResult && (
-            <div className="mb-4 space-y-2">
-              <div className="flex items-center gap-2 px-3 py-2 bg-gold-soft rounded-lg border border-gold/20">
-                <Sparkles size={12} className="text-gold flex-shrink-0" />
-                <p className="text-xs text-student-ink flex-1">{nlpResult.interpretation}</p>
-                <button onClick={clearSearch} className="text-xs text-student-text hover:text-student-ink">Clear</button>
-              </div>
-              {Object.keys(nlpResult.filters_applied || {}).length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {Object.entries(nlpResult.filters_applied).filter(([_, v]) => v).map(([key, val]) => (
-                    <span key={key} className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full bg-student-mist text-student-ink">
-                      <span className="text-student-text">{key.replace(/_/g, ' ')}:</span> {typeof val === 'number' ? `$${val.toLocaleString()}` : String(val)}
-                      <button onClick={() => { const u = { ...nlpResult.filters_applied }; delete u[key]; setNlpResult({ ...nlpResult, filters_applied: u }) }} className="ml-0.5 text-student-text hover:text-student-ink"><X size={10} /></button>
-                    </span>
-                  ))}
-                </div>
-              )}
+          {Object.keys(nlpResult.filters_applied || {}).length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {Object.entries(nlpResult.filters_applied).filter(([, v]) => v).map(([key, val]) => (
+                <span key={key} className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full bg-student-mist text-student-ink">
+                  <span className="text-student-text">{key.replace(/_/g, ' ')}:</span> {typeof val === 'number' ? `$${val.toLocaleString()}` : String(val)}
+                  <button onClick={() => { const u = { ...nlpResult.filters_applied }; delete u[key]; setNlpResult({ ...nlpResult, filters_applied: u }) }} className="ml-0.5 text-student-text hover:text-student-ink"><X size={10} /></button>
+                </span>
+              ))}
             </div>
           )}
+        </div>
+      )}
 
-          {/* Interest pills */}
-          {!nlpResult && (
-            <div className="mb-4">
-              <InterestPills active={interest} onChange={setInterest} />
-            </div>
-          )}
+      {/* Tabs: Programs / Schools */}
+      <div className="flex items-center gap-4 mb-4">
+        <div className="flex bg-student-mist rounded-lg p-0.5">
+          <button
+            onClick={() => setTab('programs')}
+            className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              tab === 'programs' ? 'bg-white shadow-sm text-student-ink' : 'text-student-text hover:text-student-ink'
+            }`}
+          >
+            <GraduationCap size={14} /> Programs
+          </button>
+          <button
+            onClick={() => setTab('schools')}
+            className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              tab === 'schools' ? 'bg-white shadow-sm text-student-ink' : 'text-student-text hover:text-student-ink'
+            }`}
+          >
+            <Building2 size={14} /> Schools
+          </button>
+        </div>
+      </div>
 
-          {/* Filter toggle + sort */}
-          <div className="flex items-center gap-3 mb-4">
-            <button onClick={() => setShowFilters(!showFilters)} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${showFilters ? 'bg-student text-white border-student' : 'bg-white border-stone text-student-text hover:border-student'}`}>
-              <SlidersHorizontal size={12} /> Filters
-            </button>
-            <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="text-xs border border-stone rounded-lg px-2 py-1.5 bg-white text-student-text">
-              {SORT_OPTIONS.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
-            </select>
-          </div>
+      {/* Interest pills (programs only) */}
+      {tab === 'programs' && !nlpResult && (
+        <div className="mb-4">
+          <InterestPills active={interest} onChange={setInterest} />
+        </div>
+      )}
 
-          {/* Expanded filters */}
-          {showFilters && (
-            <div className="mb-5 p-4 bg-white border border-divider rounded-xl grid grid-cols-2 md:grid-cols-3 gap-3">
-              <div>
-                <label className="text-[10px] font-medium text-student-text mb-1 block">Country</label>
-                <select value={country} onChange={e => setCountry(e.target.value)} className="w-full text-xs border border-stone rounded-lg px-2 py-1.5">
-                  <option value="">Any</option>
-                  {COUNTRY_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-[10px] font-medium text-student-text mb-1 block">Degree</label>
-                <select value={degreeType} onChange={e => setDegreeType(e.target.value)} className="w-full text-xs border border-stone rounded-lg px-2 py-1.5">
-                  <option value="">Any</option>
-                  {DEGREE_OPTIONS.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-[10px] font-medium text-student-text mb-1 block">Max Tuition</label>
-                <input type="number" value={maxTuition} onChange={e => setMaxTuition(e.target.value)} placeholder="e.g. 50000" className="w-full text-xs border border-stone rounded-lg px-2 py-1.5" />
-              </div>
-              <div>
-                <label className="text-[10px] font-medium text-student-text mb-1 block">Format</label>
-                <select value={deliveryFormat} onChange={e => setDeliveryFormat(e.target.value)} className="w-full text-xs border border-stone rounded-lg px-2 py-1.5">
-                  <option value="">Any</option>
-                  {FORMAT_OPTIONS.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-[10px] font-medium text-student-text mb-1 block">Campus</label>
-                <select value={campusSetting} onChange={e => setCampusSetting(e.target.value)} className="w-full text-xs border border-stone rounded-lg px-2 py-1.5">
-                  <option value="">Any</option>
-                  {CAMPUS_OPTIONS.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-[10px] font-medium text-student-text mb-1 block">Max Duration</label>
-                <select value={maxDuration} onChange={e => setMaxDuration(e.target.value)} className="w-full text-xs border border-stone rounded-lg px-2 py-1.5">
-                  <option value="">Any</option>
-                  <option value="12">1 year</option>
-                  <option value="24">2 years</option>
-                  <option value="36">3 years</option>
-                  <option value="48">4 years</option>
-                </select>
-              </div>
-            </div>
-          )}
+      {/* Filters — always visible, compact row */}
+      {tab === 'programs' && !nlpResult && (
+        <div className="flex flex-wrap items-center gap-2 mb-5">
+          <select value={country} onChange={e => setCountry(e.target.value)} className="text-xs border border-stone rounded-lg px-2 py-1.5 bg-white text-student-text">
+            <option value="">Country</option>
+            {COUNTRY_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <FilterSelect value={degreeType} onChange={setDegreeType} options={DEGREE_OPTIONS} placeholder="Degree" />
+          <input type="number" value={minTuition} onChange={e => setMinTuition(e.target.value)} placeholder="Min $" className="w-20 text-xs border border-stone rounded-lg px-2 py-1.5 bg-white text-student-text" />
+          <input type="number" value={maxTuition} onChange={e => setMaxTuition(e.target.value)} placeholder="Max $" className="w-20 text-xs border border-stone rounded-lg px-2 py-1.5 bg-white text-student-text" />
+          <FilterSelect value={deliveryFormat} onChange={setDeliveryFormat} options={FORMAT_OPTIONS} placeholder="Format" />
+          <FilterSelect value={campusSetting} onChange={setCampusSetting} options={CAMPUS_OPTIONS} placeholder="Campus" />
+          <FilterSelect value={maxDuration} onChange={setMaxDuration} options={DURATION_OPTIONS} placeholder="Duration" />
+          <input type="text" value={city} onChange={e => setCity(e.target.value)} placeholder="City" className="w-24 text-xs border border-stone rounded-lg px-2 py-1.5 bg-white text-student-text" />
+          <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="text-xs border border-stone rounded-lg px-2 py-1.5 bg-white text-student-text">
+            {SORT_OPTIONS.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+          </select>
+        </div>
+      )}
 
-          {/* Program cards */}
+      {tab === 'schools' && (
+        <div className="flex flex-wrap items-center gap-2 mb-5">
+          <select value={country} onChange={e => setCountry(e.target.value)} className="text-xs border border-stone rounded-lg px-2 py-1.5 bg-white text-student-text">
+            <option value="">Country</option>
+            {COUNTRY_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+      )}
+
+      {/* Content */}
+      {tab === 'programs' && (
+        <>
           {(programsLoading || nlpMut.isPending) ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map(i => <div key={i} className="h-64 bg-white rounded-xl border border-divider animate-pulse" />)}
@@ -278,8 +252,30 @@ export default function ExplorePage() {
               ))}
             </div>
           )}
-        </div>
-      </div>
+        </>
+      )}
+
+      {tab === 'schools' && (
+        <>
+          {schoolsLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3].map(i => <div key={i} className="h-56 bg-white rounded-xl border border-divider animate-pulse" />)}
+            </div>
+          ) : schoolList.length === 0 ? (
+            <div className="text-center py-16 bg-white rounded-xl border border-divider">
+              <Building2 size={32} className="mx-auto text-stone mb-3" />
+              <p className="text-sm text-student-ink font-medium mb-1">No schools found</p>
+              <p className="text-xs text-student-text">Try a different search or filter.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {schoolList.map((inst: any) => (
+                <SchoolCard key={inst.id} institution={inst} />
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }
