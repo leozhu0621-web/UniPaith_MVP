@@ -66,7 +66,7 @@ export default function EssayWorkshopPage() {
     queryFn: () => listEssays(),
   })
   const { data: applications } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
-  const { data: saved } = useQuery({ queryKey: ['saved'], queryFn: listSaved })
+  const { data: saved } = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved })
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [showNewModal, setShowNewModal] = useState(false)

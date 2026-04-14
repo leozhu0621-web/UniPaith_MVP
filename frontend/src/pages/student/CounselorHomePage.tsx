@@ -36,7 +36,7 @@ export default function CounselorHomePage() {
   // --- Data ---
   const { data: onboarding } = useQuery({ queryKey: ['onboarding'], queryFn: getOnboarding })
   const { data: nextStep } = useQuery({ queryKey: ['next-step'], queryFn: getNextStep })
-  const { data: saved } = useQuery({ queryKey: ['saved'], queryFn: listSaved })
+  const { data: saved } = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved })
   const { data: matches } = useQuery({
     queryKey: ['matches'],
     queryFn: () => getMatches(),

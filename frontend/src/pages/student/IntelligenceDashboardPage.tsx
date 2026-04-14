@@ -179,7 +179,7 @@ export default function IntelligenceDashboardPage() {
                 <p className="text-xs text-gray-500">Possible Fit</p>
               </div>
             </div>
-            <Button size="sm" variant="secondary" onClick={() => navigate('/s/match')} className="mt-2">
+            <Button size="sm" variant="secondary" onClick={() => navigate('/s/explore')} className="mt-2">
               <BarChart3 size={14} className="mr-1" /> View Match Details
             </Button>
           </div>

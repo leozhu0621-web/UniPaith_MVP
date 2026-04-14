@@ -66,7 +66,7 @@ export default function ApplicationsPage() {
             icon={<FileText size={48} />}
             title="Your applications will appear here"
             description="Save programs you're interested in, then start applications when you're ready."
-            action={{ label: 'Explore programs', onClick: () => navigate('/s/discover') }}
+            action={{ label: 'Explore programs', onClick: () => navigate('/s/explore') }}
           />
         ) : (
           filtered.map((app: Application) => {

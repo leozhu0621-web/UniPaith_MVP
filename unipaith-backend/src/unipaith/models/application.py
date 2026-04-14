@@ -77,7 +77,7 @@ class Application(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    program: Mapped[Program] = relationship("Program", lazy="noload")  # type: ignore[name-defined]  # noqa: F821
+    program: Mapped[Program] = relationship("Program", lazy="selectin")  # type: ignore[name-defined]  # noqa: F821
 
 
 class ApplicationChecklist(Base):

@@ -269,6 +269,7 @@ class ConversationService:
         session.active_domain = selected_domain
         session.current_stage = self._pick_stage(session.turn_count)
 
+        conflicts_before = len(session.conflicts) if session.conflicts else 0
         if "budget" in body.message.lower() and "full scholarship" in body.message.lower():
             conflict_id = uuid4()
             session.conflicts[conflict_id] = _ConflictState(
@@ -334,7 +335,7 @@ class ConversationService:
             state_delta=ConversationStateDeltaResponse(
                 updated_domains=[selected_domain],
                 new_requirements_count=new_reqs_count,
-                new_conflicts_count=1 if session.conflicts else 0,
+                new_conflicts_count=max(0, len(session.conflicts or {}) - conflicts_before),
             ),
             confidence_summary=confidence,
         )

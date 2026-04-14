@@ -48,7 +48,7 @@ export default function SchoolDetailPage() {
     queryFn: () => listEvents({ program_id: programId, limit: 5 }),
   })
 
-  const { data: saved } = useQuery({ queryKey: ['saved'], queryFn: listSaved })
+  const { data: saved } = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved })
   const savedList: any[] = Array.isArray(saved) ? saved : []
   const isSaved = savedList.some((s: any) => s.program_id === programId)
 
@@ -103,7 +103,7 @@ export default function SchoolDetailPage() {
 
   const saveMut = useMutation({
     mutationFn: () => isSaved ? unsaveProgram(programId!) : saveProgram(programId!),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['saved'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['saved-programs'] }),
   })
 
   const applyMut = useMutation({
@@ -120,8 +120,8 @@ export default function SchoolDetailPage() {
     return (
       <div className="p-6 max-w-3xl mx-auto">
         <p className="text-sm text-gray-600 mb-3">Program details are unavailable right now.</p>
-        <Button size="sm" variant="secondary" onClick={() => navigate('/s/discover')}>
-          Back to Discover
+        <Button size="sm" variant="secondary" onClick={() => navigate('/s/explore')}>
+          Back to Explore
         </Button>
       </div>
     )
@@ -133,14 +133,14 @@ export default function SchoolDetailPage() {
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
-      <button onClick={() => navigate('/s/discover')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-brand-slate-600 mb-4">
-        <ArrowLeft size={16} /> Back to Discover
+      <button onClick={() => navigate('/s/explore')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-brand-slate-600 mb-4">
+        <ArrowLeft size={16} /> Back to Explore
       </button>
 
       <div className="flex justify-between items-start mb-6">
         <div>
           <h1 className="text-2xl font-bold">{p.program_name}</h1>
-          <Link to={`/school/${p.institution_id}`} className="text-sm text-brand-slate-600 hover:underline">View Institution Profile</Link>
+          <Link to={`/s/institutions/${p.institution_id}`} className="text-sm text-brand-slate-600 hover:underline">View Institution Profile</Link>
           <p className="text-gray-500">{p.department || ''}</p>
           {match && tierInfo && (
             <div className="flex items-center gap-2 mt-2">
@@ -745,7 +745,7 @@ export default function SchoolDetailPage() {
                 <div className="mt-4 border-t pt-4">
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-gray-500">Want to understand this match better?</p>
-                    <Button size="sm" variant="secondary" onClick={() => navigate('/s/chat')}>
+                    <Button size="sm" variant="secondary" onClick={() => navigate('/s')}>
                       <MessageSquare size={14} className="mr-1" /> Ask Counselor
                     </Button>
                   </div>
@@ -781,7 +781,7 @@ export default function SchoolDetailPage() {
         <div className="mt-8">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-medium text-sm">Other Programs at This School</h3>
-            <Link to={`/school/${p.institution_id}?tab=programs`} className="text-xs text-stone-500 hover:text-stone-700">
+            <Link to={`/s/institutions/${p.institution_id}?tab=programs`} className="text-xs text-stone-500 hover:text-stone-700">
               View all
             </Link>
           </div>
@@ -829,8 +829,8 @@ export default function SchoolDetailPage() {
       {/* Back to Discovery */}
       <div className="mt-8 pt-6 border-t border-gray-100 flex items-center justify-between">
         <p className="text-sm text-gray-500">Want to explore more options?</p>
-        <Button size="sm" variant="secondary" onClick={() => navigate('/s/discover')}>
-          Back to Discovery
+        <Button size="sm" variant="secondary" onClick={() => navigate('/s/explore')}>
+          Back to Explore
         </Button>
       </div>
     </div>

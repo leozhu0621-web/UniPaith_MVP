@@ -122,7 +122,7 @@ export default function DashboardPage() {
   const { deadlines, isError: deadlinesError, applications } = useDeadlines()
 
   const { data: savedList } = useQuery({
-    queryKey: ['saved'],
+    queryKey: ['saved-programs'],
     queryFn: listSaved,
   })
 
@@ -368,17 +368,17 @@ export default function DashboardPage() {
       {/* Summary stats row — only show when there's meaningful data */}
       {(matchCount > 0 || appCount > 0 || deadlines.length > 0) && (
         <div className="grid grid-cols-3 gap-4">
-          <Card className="p-4 text-center cursor-pointer hover:bg-gray-50" onClick={() => navigate('/s/discover')}>
+          <Card className="p-4 text-center cursor-pointer hover:bg-gray-50" onClick={() => navigate('/s/explore')}>
             <Sparkles size={20} className="mx-auto text-purple-500 mb-1" />
             <p className="text-2xl font-bold">{matchCount}</p>
             <p className="text-xs text-gray-500">AI Matches</p>
           </Card>
-          <Card className="p-4 text-center cursor-pointer hover:bg-gray-50" onClick={() => navigate('/s/applications')}>
+          <Card className="p-4 text-center cursor-pointer hover:bg-gray-50" onClick={() => navigate('/s')}>
             <FileText size={20} className="mx-auto text-blue-500 mb-1" />
             <p className="text-2xl font-bold">{appCount}</p>
             <p className="text-xs text-gray-500">Applications</p>
           </Card>
-          <Card className="p-4 text-center cursor-pointer hover:bg-gray-50" onClick={() => navigate('/s/calendar')}>
+          <Card className="p-4 text-center cursor-pointer hover:bg-gray-50" onClick={() => navigate('/s')}>
             <Calendar size={20} className="mx-auto text-gold mb-1" />
             <p className="text-2xl font-bold">{deadlines.length}</p>
             <p className="text-xs text-gray-500">Deadlines</p>
@@ -415,7 +415,7 @@ export default function DashboardPage() {
             </button>
           )}
           <button
-            onClick={() => navigate('/s/discover')}
+            onClick={() => navigate('/s/explore')}
             className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 text-left"
           >
             <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">

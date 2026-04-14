@@ -67,7 +67,7 @@ export default function ApplicationDetailPage() {
   const [intentReason, setIntentReason] = useState('')
   const [rationale, setRationale] = useState('')
 
-  const submitMut = useMutation({ mutationFn: () => submitApplication(appId!), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['application', appId] }); showToast('Application submitted!', 'success') } })
+  const submitMut = useMutation({ mutationFn: () => submitApplication(appId!), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['application', appId] }); queryClient.invalidateQueries({ queryKey: ['my-applications'] }); showToast('Application submitted!', 'success') } })
   const essayMut = useMutation({ mutationFn: (data: any) => createEssay(data), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['essays'] }); setShowEssayModal(false); setEssayContent(''); setEssayPrompt(''); showToast('Essay created', 'success') } })
   const essayUpdateMut = useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => updateEssay(id, data), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['essays'] }); setEditingEssay(null); showToast('Essay updated', 'success') } })
   const resumeGenMut = useMutation({ mutationFn: () => generateResume({ format_type: 'standard', target_program_id: app?.program_id }), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['resumes'] }); showToast('Resume generated', 'success') } })
@@ -168,7 +168,7 @@ export default function ApplicationDetailPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <button onClick={() => navigate('/s/applications')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-brand-slate-600 mb-4">
+      <button onClick={() => navigate('/s')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-brand-slate-600 mb-4">
         <ArrowLeft size={16} /> My Applications
       </button>
 

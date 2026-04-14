@@ -40,7 +40,7 @@ export default function FinancialAidPage() {
   const [expectedAid, setExpectedAid] = useState<Record<string, string>>({})
   const [sortBy, setSortBy] = useState<'net' | 'tuition'>('net')
 
-  const { data: saved, isLoading: savedLoading } = useQuery({ queryKey: ['saved'], queryFn: listSaved })
+  const { data: saved, isLoading: savedLoading } = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved })
   const { data: applications, isLoading: appsLoading } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
 
   const isLoading = savedLoading || appsLoading
@@ -125,7 +125,7 @@ export default function FinancialAidPage() {
           icon={<DollarSign size={48} />}
           title="No programs to compare"
           description="Save or apply to programs to see cost estimates here."
-          action={{ label: 'Discover Programs', onClick: () => navigate('/s/discover') }}
+          action={{ label: 'Discover Programs', onClick: () => navigate('/s/explore') }}
         />
       ) : (
         <>

@@ -288,7 +288,7 @@ export default function InstitutionLayout() {
                 <Bell size={18} className="text-gray-600" />
                 {(unreadCount?.count ?? 0) > 0 && (
                   <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">
-                    {unreadCount.count > 9 ? '9+' : unreadCount.count}
+                    {(unreadCount?.count ?? 0) > 9 ? '9+' : unreadCount?.count}
                   </span>
                 )}
               </button>

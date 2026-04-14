@@ -118,7 +118,7 @@ export default function TestScorePage() {
   const addToast = useToastStore(s => s.addToast)
 
   const { data: scores, isLoading: scoresLoading } = useQuery({ queryKey: ['test-scores'], queryFn: listTestScores })
-  const { data: saved } = useQuery({ queryKey: ['saved'], queryFn: listSaved })
+  const { data: saved } = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved })
   const { data: applications } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
 
   const [tab, setTab] = useState('scores')

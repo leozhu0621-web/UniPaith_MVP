@@ -135,7 +135,11 @@ class AuthService:
     async def refresh_token(self, refresh_token: str) -> dict[str, Any]:
         if settings.cognito_bypass:
             parts = refresh_token.split(":")
-            user_id = parts[1] if len(parts) > 1 else None
+            user_id_str = parts[1] if len(parts) > 1 else None
+            try:
+                user_id = uuid.UUID(user_id_str) if user_id_str else None
+            except (ValueError, AttributeError):
+                user_id = None
             if user_id:
                 result = await self.db.execute(select(User).where(User.id == uuid.UUID(user_id)))
                 user = result.scalar_one_or_none()

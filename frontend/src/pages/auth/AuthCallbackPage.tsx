@@ -28,12 +28,16 @@ export default function AuthCallbackPage() {
     googleCallback(code, redirectUri, role)
       .then(() => {
         const user = useAuthStore.getState().user
+        if (!user) {
+          setError('Sign-in succeeded but no user profile was returned. Please try again.')
+          return
+        }
         // New students go to onboarding; returning students go to dashboard
-        const isNewStudent = user?.role === 'student' &&
+        const isNewStudent = user.role === 'student' &&
           new Date(user.created_at).getTime() > Date.now() - 60_000 // created within last minute
-        const dest = user?.role === 'admin' ? '/admin'
+        const dest = user.role === 'admin' ? '/admin'
           : isNewStudent ? '/onboarding'
-          : user?.role === 'student' ? '/s'
+          : user.role === 'student' ? '/s'
           : '/i/dashboard'
         navigate(dest, { replace: true })
       })
