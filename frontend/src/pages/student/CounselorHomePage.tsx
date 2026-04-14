@@ -2,16 +2,10 @@ import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { chatStudentAssistant } from '../../api/matching'
+import { useCounselorStore } from '../../stores/counselor-store'
 import { useAuthStore } from '../../stores/auth-store'
 import Avatar from '../../components/ui/Avatar'
-import { ArrowUp, Sparkles, Compass, BookOpen, Target, Lightbulb } from 'lucide-react'
-
-type ChatMessage = {
-  id: string
-  sender_type: 'student' | 'assistant'
-  message_body: string
-  sent_at: string
-}
+import { ArrowUp, Sparkles, Compass, BookOpen, Target, Lightbulb, Plus, Clock } from 'lucide-react'
 
 const PROMPT_CATEGORIES = [
   {
@@ -55,8 +49,8 @@ const PROMPT_CATEGORIES = [
 export default function CounselorHomePage() {
   const [searchParams] = useSearchParams()
   const user = useAuthStore(s => s.user)
+  const { messages, addMessage } = useCounselorStore()
   const [input, setInput] = useState('')
-  const [messages, setMessages] = useState<ChatMessage[]>([])
   const endRef = useRef<HTMLDivElement>(null)
   const prefillDone = useRef(false)
 
@@ -72,64 +66,94 @@ export default function CounselorHomePage() {
   const sendMut = useMutation({
     mutationFn: (content: string) => chatStudentAssistant(content),
     onError: () => {
-      setMessages(prev => [...prev, {
+      addMessage({
         id: `err-${Date.now()}`,
         sender_type: 'assistant',
         message_body: "Sorry, I had a brief hiccup. Could you try that again?",
         sent_at: new Date().toISOString(),
-      }])
+      })
     },
   })
 
   useEffect(() => {
     if (sendMut.data?.reply) {
-      setMessages(prev => [...prev, {
+      addMessage({
         id: `a-${Date.now()}`,
         sender_type: 'assistant',
         message_body: sendMut.data!.reply,
         sent_at: new Date().toISOString(),
-      }])
+      })
     }
-  }, [sendMut.data])
+  }, [sendMut.data, addMessage])
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
   const handleSend = () => {
     const trimmed = input.trim()
     if (!trimmed || sendMut.isPending) return
-    setMessages(prev => [...prev, {
+    addMessage({
       id: `s-${Date.now()}`,
       sender_type: 'student',
       message_body: trimmed,
       sent_at: new Date().toISOString(),
-    }])
+    })
     sendMut.mutate(trimmed)
     setInput('')
   }
 
-  const handlePrompt = (prompt: string) => {
-    setInput(prompt)
-  }
-
+  const handlePrompt = (prompt: string) => setInput(prompt)
   const name = user?.email?.split('@')[0] || ''
 
   return (
     <div className="flex h-full">
-      {/* Left sidebar — prompt categories (~220px) */}
-      <aside className="w-56 flex-shrink-0 border-r border-divider bg-white overflow-y-auto hidden lg:block">
-        <div className="p-4 space-y-5">
+      {/* Left: Chat History + Prompts (ChatGPT-style sidebar) */}
+      <aside className="w-64 flex-shrink-0 border-r border-divider bg-white overflow-y-auto hidden lg:flex flex-col">
+        {/* New chat button */}
+        <div className="p-3 border-b border-divider">
+          <button className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-student-ink bg-student-mist hover:bg-student-moss rounded-lg transition-colors">
+            <Plus size={14} /> New Conversation
+          </button>
+        </div>
+
+        {/* Chat history */}
+        {messages.length > 0 && (
+          <div className="px-3 pt-3 pb-2">
+            <p className="text-[10px] font-semibold text-student-text uppercase tracking-wider mb-2 px-1">
+              <Clock size={10} className="inline mr-1" />Recent
+            </p>
+            <div className="space-y-0.5">
+              {/* Show first message of each "conversation" (student messages as titles) */}
+              {messages
+                .filter(m => m.sender_type === 'student')
+                .slice(-10)
+                .reverse()
+                .map(m => (
+                  <div
+                    key={m.id}
+                    className="px-2.5 py-1.5 text-[11px] text-student-text hover:text-student-ink hover:bg-student-mist rounded-lg cursor-pointer transition-colors truncate"
+                  >
+                    {m.message_body.slice(0, 50)}{m.message_body.length > 50 ? '...' : ''}
+                  </div>
+                ))
+              }
+            </div>
+          </div>
+        )}
+
+        {/* Prompt suggestions */}
+        <div className="flex-1 px-3 pt-3 space-y-4 overflow-y-auto">
           {PROMPT_CATEGORIES.map(cat => (
             <div key={cat.label}>
-              <div className="flex items-center gap-1.5 mb-2">
-                <cat.icon size={13} className="text-student" />
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <cat.icon size={11} className="text-student" />
                 <p className="text-[10px] font-semibold text-student-ink uppercase tracking-wider">{cat.label}</p>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {cat.prompts.map((p, i) => (
                   <button
                     key={i}
                     onClick={() => handlePrompt(p)}
-                    className="w-full text-left px-2.5 py-2 text-xs text-student-text hover:text-student-ink hover:bg-student-mist rounded-lg transition-colors leading-relaxed"
+                    className="w-full text-left px-2.5 py-1.5 text-[11px] text-student-text hover:text-student-ink hover:bg-student-mist rounded-lg transition-colors leading-relaxed"
                   >
                     {p}
                   </button>
@@ -140,12 +164,11 @@ export default function CounselorHomePage() {
         </div>
       </aside>
 
-      {/* Right — Chat area (flex-1) */}
+      {/* Right: Chat area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-6 py-6">
           <div className="max-w-2xl mx-auto space-y-4">
-            {/* Welcome */}
             {messages.length === 0 && (
               <>
                 <div className="flex gap-3">
@@ -158,7 +181,7 @@ export default function CounselorHomePage() {
                     </p>
                   </div>
                 </div>
-                {/* Mobile prompt suggestions (shown when sidebar is hidden) */}
+                {/* Mobile prompt suggestions */}
                 <div className="flex flex-wrap gap-2 lg:hidden">
                   {PROMPT_CATEGORIES.flatMap(c => c.prompts).slice(0, 4).map((p, i) => (
                     <button
@@ -187,9 +210,7 @@ export default function CounselorHomePage() {
                 }`}>
                   {msg.message_body}
                 </div>
-                {msg.sender_type === 'student' && (
-                  <Avatar name={user?.email || '?'} size="sm" />
-                )}
+                {msg.sender_type === 'student' && <Avatar name={user?.email || '?'} size="sm" />}
               </div>
             ))}
 

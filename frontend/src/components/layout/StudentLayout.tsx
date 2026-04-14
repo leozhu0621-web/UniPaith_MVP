@@ -1,23 +1,24 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../stores/auth-store'
+import { useCounselorStore } from '../../stores/counselor-store'
+import MiniCounselorPanel from '../student/MiniCounselorPanel'
 import {
   Sparkles, Newspaper, Search, FolderKanban,
-  Bell, LogOut, User, Bookmark, Settings,
+  Bell, LogOut, User, Bookmark, Settings, MessageSquare,
 } from 'lucide-react'
 import Avatar from '../ui/Avatar'
 import Dropdown from '../ui/Dropdown'
 import CompareTray from '../student/CompareTray'
 
-const NAV_ITEMS = [
-  { to: '/s', icon: Sparkles, label: 'Counselor', end: true },
-  { to: '/s/posts', icon: Newspaper, label: 'Posts' },
-  { to: '/s/explore', icon: Search, label: 'Explore' },
-  { to: '/s/manage', icon: FolderKanban, label: 'Management' },
-]
-
 export default function StudentLayout() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
+  const { isMinimized, setMinimized } = useCounselorStore()
+
+  const isCounselorTab = location.pathname === '/s' || location.pathname === '/s/'
+  const isOtherTab = !isCounselorTab
+  const showMiniCounselor = isOtherTab && !isMinimized
 
   return (
     <div className="flex flex-col h-screen bg-offwhite">
@@ -27,12 +28,39 @@ export default function StudentLayout() {
           <span className="text-student">Uni</span><span className="text-student-ink font-extrabold">Paith</span>
         </NavLink>
 
-        <nav className="flex items-center gap-1">
-          {NAV_ITEMS.map(item => (
+        {/* Nav with thin divider after Counselor */}
+        <nav className="flex items-center">
+          {/* Counselor — separated */}
+          <NavLink
+            to="/s"
+            end
+            className={({ isActive }) =>
+              `flex flex-col items-center px-4 py-1.5 rounded-lg transition-colors relative ${
+                isActive ? 'text-student' : 'text-slate hover:text-student-ink'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <Sparkles size={19} />
+                <span className="text-[10px] mt-0.5 font-medium">Counselor</span>
+                {isActive && <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-student rounded-full" />}
+              </>
+            )}
+          </NavLink>
+
+          {/* Thin divider line */}
+          <div className="w-px h-8 bg-divider mx-1" />
+
+          {/* Other tabs */}
+          {[
+            { to: '/s/posts', icon: Newspaper, label: 'Posts' },
+            { to: '/s/explore', icon: Search, label: 'Explore' },
+            { to: '/s/manage', icon: FolderKanban, label: 'Management' },
+          ].map(item => (
             <NavLink
               key={item.to}
               to={item.to}
-              end={item.end}
               className={({ isActive }) =>
                 `flex flex-col items-center px-4 py-1.5 rounded-lg transition-colors relative ${
                   isActive ? 'text-student' : 'text-slate hover:text-student-ink'
@@ -43,9 +71,7 @@ export default function StudentLayout() {
                 <>
                   <item.icon size={19} />
                   <span className="text-[10px] mt-0.5 font-medium">{item.label}</span>
-                  {isActive && (
-                    <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-student rounded-full" />
-                  )}
+                  {isActive && <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-student rounded-full" />}
                 </>
               )}
             </NavLink>
@@ -76,10 +102,36 @@ export default function StudentLayout() {
         </div>
       </header>
 
-      {/* Main content — each page owns its own layout (sidebars, splits, etc.) */}
-      <main className="flex-1 overflow-hidden">
-        <Outlet />
-      </main>
+      {/* Body with sliding panels */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Mini counselor panel — slides in/out on non-counselor tabs */}
+        <div
+          className={`flex-shrink-0 overflow-hidden transition-all duration-300 ease-in-out ${
+            showMiniCounselor ? 'w-72 opacity-100' : 'w-0 opacity-0'
+          }`}
+        >
+          <div className="w-72 h-full">
+            <MiniCounselorPanel />
+          </div>
+        </div>
+
+        {/* Show counselor toggle button when minimized on other tabs */}
+        {isOtherTab && isMinimized && (
+          <button
+            onClick={() => setMinimized(false)}
+            className="absolute left-0 top-3 z-20 flex items-center gap-1 pl-1.5 pr-3 py-2 bg-white border border-divider border-l-0 rounded-r-xl shadow-sm text-student hover:bg-student-mist transition-colors"
+            title="Show counselor"
+          >
+            <MessageSquare size={14} />
+            <span className="text-[10px] font-medium">Chat</span>
+          </button>
+        )}
+
+        {/* Main content area */}
+        <main className="flex-1 overflow-y-auto transition-all duration-300 ease-in-out">
+          <Outlet />
+        </main>
+      </div>
       <CompareTray />
     </div>
   )
