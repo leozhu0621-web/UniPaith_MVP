@@ -33,7 +33,7 @@ export default function AuthCallbackPage() {
           new Date(user.created_at).getTime() > Date.now() - 60_000 // created within last minute
         const dest = user?.role === 'admin' ? '/admin'
           : isNewStudent ? '/onboarding'
-          : user?.role === 'student' ? '/s/dashboard'
+          : user?.role === 'student' ? '/s'
           : '/i/dashboard'
         navigate(dest, { replace: true })
       })

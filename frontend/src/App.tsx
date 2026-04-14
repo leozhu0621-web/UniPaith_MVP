@@ -21,24 +21,13 @@ import ProgramBrowsePage from './pages/public/ProgramBrowsePage'
 import InstitutionPage from './pages/public/InstitutionPage'
 import ProgramDetailPage from './pages/public/ProgramDetailPage'
 
-// Student pages
-import StudentDashboardPage from './pages/student/DashboardPage'
-import ChatPage from './pages/student/ChatPage'
+// Student pages — 3 pillars
+import CounselorHomePage from './pages/student/CounselorHomePage'
 import ProfilePage from './pages/student/ProfilePage'
-import DiscoverPage from './pages/student/DiscoverPage'
+import ExplorePage from './pages/student/DiscoverPage'
 import SchoolDetailPage from './pages/student/SchoolDetailPage'
-import ApplicationsPage from './pages/student/ApplicationsPage'
 import ApplicationDetailPage from './pages/student/ApplicationDetailPage'
-import SavedListPage from './pages/student/SavedListPage'
-import MessagesPage from './pages/student/MessagesPage'
-import CalendarPage from './pages/student/CalendarPage'
-// DeadlinesPage merged into CalendarPage as timeline view
-import FinancialAidPage from './pages/student/FinancialAidPage'
-import RecommendationsPage from './pages/student/RecommendationsPage'
 import StudentSettingsPage from './pages/student/SettingsPage'
-import ResumeWorkshopPage from './pages/student/ResumeWorkshopPage'
-import EssayWorkshopPage from './pages/student/EssayWorkshopPage'
-import DecisionComparisonPage from './pages/student/DecisionComparisonPage'
 import OnboardingPage from './pages/student/OnboardingPage'
 
 // Institution pages
@@ -103,30 +92,34 @@ const router = createBrowserRouter([
     element: <RequireAuth role="student"><StudentLayout /></RequireAuth>,
     errorElement: <RouteErrorPage />,
     children: [
-      { index: true, element: <Navigate to="/s/dashboard" replace /> },
-      { path: 'dashboard', element: <StudentDashboardPage /> },
-      { path: 'chat', element: <ChatPage /> },
-      { path: 'profile', element: <ProfilePage /> },
-      { path: 'match', element: <Navigate to="/s/discover?mode=match" replace /> },
-      { path: 'discover', element: <DiscoverPage /> },
+      // === Three Pillars ===
+      { index: true, element: <CounselorHomePage /> },       // Counselor is HOME
+      { path: 'profile', element: <ProfilePage /> },          // My Story
+      { path: 'explore', element: <ExplorePage /> },           // Marketplace
+      // === Drill-down pages ===
       { path: 'programs/:programId', element: <SchoolDetailPage /> },
       { path: 'schools/:programId', element: <SchoolDetailPage /> },
-      { path: 'applications', element: <ApplicationsPage /> },
       { path: 'applications/:appId', element: <ApplicationDetailPage /> },
-      { path: 'saved', element: <SavedListPage /> },
-      { path: 'messages', element: <MessagesPage /> },
-      { path: 'messages/:convId', element: <MessagesPage /> },
-      { path: 'calendar', element: <CalendarPage /> },
-      { path: 'deadlines', element: <Navigate to="/s/calendar?view=agenda" replace /> },
-      { path: 'financial-aid', element: <FinancialAidPage /> },
-      { path: 'recommendations', element: <RecommendationsPage /> },
-      { path: 'resume-workshop', element: <ResumeWorkshopPage /> },
-      { path: 'essay-workshop', element: <EssayWorkshopPage /> },
-      { path: 'test-scores', element: <Navigate to="/s/profile" replace /> },
-      { path: 'decisions', element: <DecisionComparisonPage /> },
-      { path: 'intake', element: <Navigate to="/s/chat" replace /> },
-      { path: 'intelligence', element: <Navigate to="/s/dashboard" replace /> },
       { path: 'settings', element: <StudentSettingsPage /> },
+      // === Redirects (all old routes still work) ===
+      { path: 'dashboard', element: <Navigate to="/s" replace /> },
+      { path: 'chat', element: <Navigate to="/s" replace /> },
+      { path: 'discover', element: <Navigate to="/s/explore" replace /> },
+      { path: 'match', element: <Navigate to="/s" replace /> },
+      { path: 'applications', element: <Navigate to="/s" replace /> },
+      { path: 'saved', element: <Navigate to="/s/explore?tab=saved" replace /> },
+      { path: 'calendar', element: <Navigate to="/s" replace /> },
+      { path: 'deadlines', element: <Navigate to="/s" replace /> },
+      { path: 'messages', element: <Navigate to="/s" replace /> },
+      { path: 'messages/:convId', element: <Navigate to="/s" replace /> },
+      { path: 'financial-aid', element: <Navigate to="/s/profile?tab=financial" replace /> },
+      { path: 'recommendations', element: <Navigate to="/s/profile?tab=recommenders" replace /> },
+      { path: 'resume-workshop', element: <Navigate to="/s/profile?tab=essays" replace /> },
+      { path: 'essay-workshop', element: <Navigate to="/s/profile?tab=essays" replace /> },
+      { path: 'test-scores', element: <Navigate to="/s/profile" replace /> },
+      { path: 'decisions', element: <Navigate to="/s" replace /> },
+      { path: 'intake', element: <Navigate to="/s" replace /> },
+      { path: 'intelligence', element: <Navigate to="/s" replace /> },
     ],
   },
 

@@ -106,11 +106,11 @@ export default function OnboardingPage() {
   }
 
   const handleSkip = () => {
-    navigate('/s/profile')
+    navigate('/s')
   }
 
   const handleTransition = () => {
-    navigate('/s/profile')
+    navigate('/s')
   }
 
   useEffect(() => {

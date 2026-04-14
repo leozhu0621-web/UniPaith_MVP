@@ -132,18 +132,19 @@ function EditableChip({
   )
 }
 
-// Lazy-load ProgramMatchPage for AI Match mode
-const ProgramMatchPage = lazy(() => import('./ProgramMatchPage'))
 import CommunityTab from './components/CommunityTab'
 
-type ExploreMode = 'browse' | 'community' | 'match'
+// Lazy-load SavedListPage for Saved tab
+const SavedListPage = lazy(() => import('./SavedListPage'))
+
+type ExploreTab = 'browse' | 'community' | 'saved'
 
 export default function DiscoverPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const rawMode = searchParams.get('mode')
-  const initialMode: ExploreMode = rawMode === 'match' ? 'match' : rawMode === 'community' ? 'community' : 'browse'
-  const [mode, setMode] = useState<ExploreMode>(initialMode)
+  const rawTab = searchParams.get('tab') || searchParams.get('mode')
+  const initialTab: ExploreTab = rawTab === 'community' ? 'community' : rawTab === 'saved' ? 'saved' : 'browse'
+  const [mode, setMode] = useState<ExploreTab>(initialTab)
   const [q, setQ] = useState('')
   const [page, setPage] = useState(1)
   const [showFilters, setShowFilters] = useState(false)
@@ -283,25 +284,25 @@ export default function DiscoverPage() {
   const programs: ProgramSummary[] = Array.isArray(displayData?.items) ? displayData.items : []
   const isLoading = nlpMutation.isPending || browseLoading
 
-  const switchMode = (m: ExploreMode) => {
-    setMode(m)
-    navigate(m === 'browse' ? '/s/discover' : `/s/discover?mode=${m}`, { replace: true })
+  const switchTab = (t: ExploreTab) => {
+    setMode(t)
+    navigate(t === 'browse' ? '/s/explore' : `/s/explore?tab=${t}`, { replace: true })
   }
 
-  const ModeToggle = () => (
-    <div className="flex bg-student-mist rounded-lg p-0.5">
+  const TabBar = () => (
+    <div className="flex gap-1 border-b border-divider">
       {([
         { key: 'browse' as const, label: 'Browse & Search' },
         { key: 'community' as const, label: 'Community' },
-        { key: 'match' as const, label: 'AI Match' },
+        { key: 'saved' as const, label: 'Saved' },
       ]).map(tab => (
         <button
           key={tab.key}
-          onClick={() => tab.key !== mode && switchMode(tab.key)}
-          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+          onClick={() => tab.key !== mode && switchTab(tab.key)}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             mode === tab.key
-              ? 'bg-white shadow-sm text-student-ink'
-              : 'text-student-text hover:text-student-ink'
+              ? 'border-student text-student'
+              : 'border-transparent text-student-text hover:text-student-ink'
           }`}
         >
           {tab.label}
@@ -310,42 +311,40 @@ export default function DiscoverPage() {
     </div>
   )
 
-  // Non-browse modes
-  if (mode === 'match') {
+  // Non-browse tabs
+  if (mode === 'community') {
     return (
       <div className="p-6 max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-semibold text-student-ink">Explore Your Future</h1>
-          <ModeToggle />
+        <h1 className="text-2xl font-semibold text-student-ink mb-1">Explore</h1>
+        <p className="text-sm text-student-text mb-4">Discover schools, events, and programs from around the world.</p>
+        <TabBar />
+        <div className="mt-6">
+          <CommunityTab />
         </div>
-        <Suspense fallback={<div className="flex items-center justify-center py-20"><Sparkles className="animate-spin text-gray-400" size={24} /></div>}>
-          <ProgramMatchPage />
-        </Suspense>
       </div>
     )
   }
 
-  if (mode === 'community') {
+  if (mode === 'saved') {
     return (
       <div className="p-6 max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-semibold text-student-ink">Explore Your Future</h1>
-          <ModeToggle />
+        <h1 className="text-2xl font-semibold text-student-ink mb-1">Explore</h1>
+        <p className="text-sm text-student-text mb-4">Programs you've saved for later.</p>
+        <TabBar />
+        <div className="mt-6">
+          <Suspense fallback={<div className="py-10 text-center text-student-text">Loading...</div>}>
+            <SavedListPage />
+          </Suspense>
         </div>
-        <p className="text-sm text-student-text mb-6">
-          Discover events, updates, and featured programs from schools around the world.
-        </p>
-        <CommunityTab />
       </div>
     )
   }
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-1">
-        <h1 className="text-2xl font-semibold text-student-ink">Explore Your Future</h1>
-        <ModeToggle />
-      </div>
+      <h1 className="text-2xl font-semibold text-student-ink mb-1">Explore</h1>
+      <p className="text-sm text-student-text mb-4">Find programs, schools, events, and community content.</p>
+      <TabBar />
       <p className="text-xs text-gray-400 mb-2">Every program is a possible path — let the AI help you see which ones fit your story</p>
 
       {!showMatches && (
