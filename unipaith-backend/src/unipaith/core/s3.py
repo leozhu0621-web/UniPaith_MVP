@@ -16,12 +16,11 @@ class S3Client:
             self._local_root.mkdir(parents=True, exist_ok=True)
             self.client = None
         else:
-            self.client = boto3.client(
-                "s3",
-                region_name=settings.aws_region,
-                aws_access_key_id=settings.aws_access_key_id,
-                aws_secret_access_key=settings.aws_secret_access_key,
-            )
+            kwargs = {"region_name": settings.aws_region}
+            if settings.aws_access_key_id and settings.aws_secret_access_key:
+                kwargs["aws_access_key_id"] = settings.aws_access_key_id
+                kwargs["aws_secret_access_key"] = settings.aws_secret_access_key
+            self.client = boto3.client("s3", **kwargs)
         self.bucket = settings.s3_bucket_name
 
     def generate_upload_url(

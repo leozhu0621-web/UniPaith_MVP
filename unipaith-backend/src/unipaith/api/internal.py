@@ -958,10 +958,14 @@ async def download_and_upload_images(
                         Body=resp.content,
                         ContentType=ct,
                     )
-                    region = settings.aws_region
-                    s3_url = (
-                        f"https://{s3.bucket}.s3.{region}"
-                        f".amazonaws.com/{key}"
+                    # Generate long-lived presigned URL (7 days)
+                    s3_url = s3.client.generate_presigned_url(
+                        "get_object",
+                        Params={
+                            "Bucket": s3.bucket,
+                            "Key": key,
+                        },
+                        ExpiresIn=604800,  # 7 days
                     )
 
                 results.append({
