@@ -98,7 +98,7 @@ function EditableChip({
   isNlp: boolean
 }) {
   const [editing, setEditing] = useState(false)
-  const bg = isNlp ? 'bg-purple-100 text-purple-800' : 'bg-stone-100 text-stone-700'
+  const bg = isNlp ? 'bg-purple-100 text-purple-800' : 'bg-stone-100 text-student-ink'
 
   if (editing && options && onSelect) {
     return (
@@ -134,12 +134,16 @@ function EditableChip({
 
 // Lazy-load ProgramMatchPage for AI Match mode
 const ProgramMatchPage = lazy(() => import('./ProgramMatchPage'))
+import CommunityTab from './components/CommunityTab'
+
+type ExploreMode = 'browse' | 'community' | 'match'
 
 export default function DiscoverPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const initialMode = searchParams.get('mode') === 'match' ? 'match' : 'browse'
-  const [mode, setMode] = useState<'browse' | 'match'>(initialMode)
+  const rawMode = searchParams.get('mode')
+  const initialMode: ExploreMode = rawMode === 'match' ? 'match' : rawMode === 'community' ? 'community' : 'browse'
+  const [mode, setMode] = useState<ExploreMode>(initialMode)
   const [q, setQ] = useState('')
   const [page, setPage] = useState(1)
   const [showFilters, setShowFilters] = useState(false)
@@ -279,25 +283,40 @@ export default function DiscoverPage() {
   const programs: ProgramSummary[] = Array.isArray(displayData?.items) ? displayData.items : []
   const isLoading = nlpMutation.isPending || browseLoading
 
-  // If in match mode, render ProgramMatchPage
+  const switchMode = (m: ExploreMode) => {
+    setMode(m)
+    navigate(m === 'browse' ? '/s/discover' : `/s/discover?mode=${m}`, { replace: true })
+  }
+
+  const ModeToggle = () => (
+    <div className="flex bg-student-mist rounded-lg p-0.5">
+      {([
+        { key: 'browse' as const, label: 'Browse & Search' },
+        { key: 'community' as const, label: 'Community' },
+        { key: 'match' as const, label: 'AI Match' },
+      ]).map(tab => (
+        <button
+          key={tab.key}
+          onClick={() => tab.key !== mode && switchMode(tab.key)}
+          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+            mode === tab.key
+              ? 'bg-white shadow-sm text-student-ink'
+              : 'text-student-text hover:text-student-ink'
+          }`}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  )
+
+  // Non-browse modes
   if (mode === 'match') {
     return (
       <div className="p-6 max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-semibold">Explore Your Future</h1>
-          <div className="flex bg-gray-100 rounded-lg p-0.5">
-            <button
-              onClick={() => { setMode('browse'); navigate('/s/discover', { replace: true }) }}
-              className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors text-gray-500 hover:text-gray-700"
-            >
-              Browse & Search
-            </button>
-            <button
-              className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors bg-white shadow-sm text-brand-slate-700"
-            >
-              AI Match Conversation
-            </button>
-          </div>
+          <h1 className="text-2xl font-semibold text-student-ink">Explore Your Future</h1>
+          <ModeToggle />
         </div>
         <Suspense fallback={<div className="flex items-center justify-center py-20"><Sparkles className="animate-spin text-gray-400" size={24} /></div>}>
           <ProgramMatchPage />
@@ -306,23 +325,26 @@ export default function DiscoverPage() {
     )
   }
 
+  if (mode === 'community') {
+    return (
+      <div className="p-6 max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-semibold text-student-ink">Explore Your Future</h1>
+          <ModeToggle />
+        </div>
+        <p className="text-sm text-student-text mb-6">
+          Discover events, updates, and featured programs from schools around the world.
+        </p>
+        <CommunityTab />
+      </div>
+    )
+  }
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-1">
-        <h1 className="text-2xl font-semibold">Explore Your Future</h1>
-        <div className="flex bg-gray-100 rounded-lg p-0.5">
-          <button
-            className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors bg-white shadow-sm text-brand-slate-700"
-          >
-            Browse & Search
-          </button>
-          <button
-            onClick={() => { setMode('match'); navigate('/s/discover?mode=match', { replace: true }) }}
-            className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors text-gray-500 hover:text-gray-700"
-          >
-            AI Match Conversation
-          </button>
-        </div>
+        <h1 className="text-2xl font-semibold text-student-ink">Explore Your Future</h1>
+        <ModeToggle />
       </div>
       <p className="text-xs text-gray-400 mb-2">Every program is a possible path — let the AI help you see which ones fit your story</p>
 
@@ -440,7 +462,7 @@ export default function DiscoverPage() {
         <button
           onClick={() => setShowFilters(!showFilters)}
           className={`flex items-center gap-2 px-4 py-2 text-sm border rounded-lg hover:bg-gray-50 ${
-            activeFilterCount > 0 ? 'border-brand-slate-700 text-brand-slate-700' : 'border-gray-300 text-gray-600'
+            activeFilterCount > 0 ? 'border-brand-slate-700 text-student-ink' : 'border-gray-300 text-gray-600'
           }`}
         >
           <SlidersHorizontal size={16} />
@@ -678,7 +700,7 @@ export default function DiscoverPage() {
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
             <Sparkles size={14} className="text-purple-500" />
-            <h3 className="text-sm font-medium text-stone-700">AI-Suggested Matches</h3>
+            <h3 className="text-sm font-medium text-student-ink">AI-Suggested Matches</h3>
             <span className="text-xs text-gray-400">Based on meaning, not just keywords</span>
           </div>
           <div className="flex gap-3 overflow-x-auto pb-2">
@@ -688,7 +710,7 @@ export default function DiscoverPage() {
                 onClick={() => handleCardClick(p.id)}
                 className="flex-shrink-0 w-60 p-3 border border-purple-100"
               >
-                <p className="font-semibold text-sm text-stone-700 truncate">{p.program_name}</p>
+                <p className="font-semibold text-sm text-student-ink truncate">{p.program_name}</p>
                 <p className="text-xs text-gray-500 mt-0.5 truncate">
                   {p.institution_name}{p.institution_city ? `, ${p.institution_city}` : ''}
                 </p>
@@ -727,7 +749,7 @@ export default function DiscoverPage() {
               <Card key={p.id} onClick={() => handleCardClick(p.id)} className="p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-sm text-stone-700 truncate">{p.program_name}</p>
+                    <p className="font-semibold text-sm text-student-ink truncate">{p.program_name}</p>
                     <p className="text-xs text-gray-500 mt-0.5">
                       {p.institution_name}
                       {(p.institution_city || p.institution_country) && (
@@ -819,7 +841,7 @@ export default function DiscoverPage() {
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); navigate(`/s/programs/${p.id}`) }}
-                    className="inline-flex items-center gap-1 text-xs text-stone-500 hover:text-stone-700"
+                    className="inline-flex items-center gap-1 text-xs text-stone-500 hover:text-student-ink"
                   >
                     Details <ExternalLink size={10} />
                   </button>

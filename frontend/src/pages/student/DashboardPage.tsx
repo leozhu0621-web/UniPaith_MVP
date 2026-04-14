@@ -175,10 +175,10 @@ export default function DashboardPage() {
     <div className="p-6 max-w-3xl mx-auto space-y-6">
       <div>
         <div className="flex items-center gap-2 mb-1">
-          <Sparkles size={20} className="text-amber-500" />
+          <Sparkles size={20} className="text-gold" />
           <span className={`text-xs font-semibold uppercase tracking-wider ${journeyStage.color}`}>{journeyStage.label} Phase</span>
         </div>
-        <h1 className="text-2xl font-semibold text-stone-800">Your Journey Today</h1>
+        <h1 className="text-2xl font-semibold text-student-ink">Your Journey Today</h1>
         <p className="text-sm text-gray-500 mt-1">{journeyStage.desc}</p>
       </div>
 
@@ -259,9 +259,9 @@ export default function DashboardPage() {
         <Card className="p-5">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-2">
-              <User size={18} className="text-stone-600" />
+              <User size={18} className="text-student-text" />
               <div>
-                <h2 className="font-semibold text-stone-700">Your Story</h2>
+                <h2 className="font-semibold text-student-ink">Your Story</h2>
                 <p className="text-[10px] text-gray-400">The more I know, the better I can guide you</p>
               </div>
             </div>
@@ -291,8 +291,8 @@ export default function DashboardPage() {
       <Card className="p-5">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Zap size={18} className="text-amber-500" />
-            <h2 className="font-semibold text-brand-slate-700">Next Actions</h2>
+            <Zap size={18} className="text-gold" />
+            <h2 className="font-semibold text-student-ink">Next Actions</h2>
           </div>
           <div className="flex gap-1">
             {(['priority', 'deadline', 'readiness'] as const).map(key => (
@@ -301,7 +301,7 @@ export default function DashboardPage() {
                 onClick={() => setSortKey(key)}
                 className={`px-2 py-0.5 text-xs rounded-full border transition-colors ${
                   sortKey === key
-                    ? 'bg-stone-800 text-white border-stone-800'
+                    ? 'bg-student text-white border-student'
                     : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
                 }`}
               >
@@ -333,7 +333,7 @@ export default function DashboardPage() {
                   className="w-full text-left flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-stone-700 truncate">
+                    <p className="text-sm font-medium text-student-ink truncate">
                       {na.programName}
                     </p>
                     {na.institutionName && (
@@ -379,7 +379,7 @@ export default function DashboardPage() {
             <p className="text-xs text-gray-500">Applications</p>
           </Card>
           <Card className="p-4 text-center cursor-pointer hover:bg-gray-50" onClick={() => navigate('/s/calendar')}>
-            <Calendar size={20} className="mx-auto text-amber-500 mb-1" />
+            <Calendar size={20} className="mx-auto text-gold mb-1" />
             <p className="text-2xl font-bold">{deadlines.length}</p>
             <p className="text-xs text-gray-500">Deadlines</p>
           </Card>
@@ -401,7 +401,7 @@ export default function DashboardPage() {
 
       {/* Quick Actions */}
       <Card className="p-5">
-        <h2 className="font-semibold text-brand-slate-700 mb-4">Quick Actions</h2>
+        <h2 className="font-semibold text-student-ink mb-4">Quick Actions</h2>
         <div className="grid grid-cols-2 gap-3">
           {completionPct < 100 && (
             <button

@@ -44,7 +44,7 @@ export default function StudentLayout() {
       <header className="h-14 flex items-center justify-between px-6 bg-white border-b border-gray-100 flex-shrink-0 z-30">
         {/* Logo */}
         <NavLink to="/s/dashboard" className="text-lg font-bold tracking-tight">
-          <span className="text-brand-slate-700">Uni</span><span className="text-brand-slate-900 font-extrabold">Paith</span>
+          <span className="text-student-ink">Uni</span><span className="text-brand-slate-900 font-extrabold">Paith</span>
         </NavLink>
 
         {/* Center nav icons */}
@@ -56,8 +56,8 @@ export default function StudentLayout() {
               className={({ isActive }) =>
                 `flex flex-col items-center px-4 py-1.5 rounded-xl transition-colors relative ${
                   isActive
-                    ? 'text-brand-slate-700'
-                    : 'text-gray-400 hover:text-brand-slate-600'
+                    ? 'text-student-ink'
+                    : 'text-gray-400 hover:text-student'
                 }`
               }
             >
@@ -78,7 +78,7 @@ export default function StudentLayout() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate('/s/messages')}
-            className="relative p-2 rounded-xl hover:bg-gray-100 text-gray-500 hover:text-brand-slate-700 transition-colors"
+            className="relative p-2 rounded-xl hover:bg-gray-100 text-gray-500 hover:text-student-ink transition-colors"
           >
             <Bell size={20} />
             {hasUnread && (
@@ -112,7 +112,7 @@ export default function StudentLayout() {
             <div className="flex items-center gap-3 mb-3">
               <Avatar name={user?.email || '?'} size="md" />
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-brand-slate-800 truncate">
+                <p className="text-sm font-semibold text-student-ink truncate">
                   {user?.email?.split('@')[0] || 'Student'}
                 </p>
                 <p className="text-xs text-gray-500">{milestone}</p>
@@ -131,7 +131,7 @@ export default function StudentLayout() {
                     strokeLinecap="round"
                   />
                 </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-brand-slate-700">
+                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-student-ink">
                   {completionPct}%
                 </span>
               </div>
@@ -158,8 +158,8 @@ export default function StudentLayout() {
                 className={({ isActive }) =>
                   `block px-2 py-1.5 text-sm rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-brand-slate-50 text-brand-slate-700 font-medium'
-                      : 'text-gray-500 hover:text-brand-slate-700 hover:bg-gray-50'
+                      ? 'bg-student-mist text-student-ink font-medium'
+                      : 'text-gray-500 hover:text-student-ink hover:bg-gray-50'
                   }`
                 }
               >
@@ -174,8 +174,8 @@ export default function StudentLayout() {
             className="bg-white rounded-2xl shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow"
           >
             <div className="flex items-center gap-2 mb-2">
-              <Sparkles size={14} className="text-brand-amber-500" />
-              <p className="text-xs font-semibold text-brand-slate-700">Your Counselor</p>
+              <Sparkles size={14} className="text-gold" />
+              <p className="text-xs font-semibold text-student-ink">Your Counselor</p>
             </div>
             <p className="text-xs text-gray-500 leading-relaxed">
               Have a question about your journey? Your AI counselor is here to help.

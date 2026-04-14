@@ -147,8 +147,8 @@ export default function ChatPage() {
       {/* Header with context indicator */}
       <div className="px-6 py-3 border-b border-gray-200 bg-white flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h1 className="text-lg font-semibold text-stone-700">Your AI Guide</h1>
-          <Sparkles size={16} className="text-amber-500" />
+          <h1 className="text-lg font-semibold text-student-ink">Your AI Guide</h1>
+          <Sparkles size={16} className="text-gold" />
         </div>
         <div className="flex items-center gap-3 text-xs text-gray-500">
           <span>Profile: {completionPct}%</span>
@@ -173,9 +173,9 @@ export default function ChatPage() {
         ) : messageList.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-              <Sparkles size={28} className="text-amber-500" />
+              <Sparkles size={28} className="text-gold" />
             </div>
-            <h2 className="text-lg font-medium text-brand-slate-600">You are not doing this alone.</h2>
+            <h2 className="text-lg font-medium text-student">You are not doing this alone.</h2>
             <p className="text-sm text-gray-500 mt-1 max-w-md">
               I am your counselor-style AI guide. I will help you prioritize calmly,
               explain options clearly, and turn uncertainty into next steps.
@@ -198,8 +198,8 @@ export default function ChatPage() {
                   <div>
                     <div className={`px-4 py-2 rounded-2xl text-sm whitespace-pre-wrap ${
                       isOwn
-                        ? 'bg-brand-slate-700 text-white rounded-br-md'
-                        : 'bg-white shadow-sm text-brand-slate-700 rounded-bl-md'
+                        ? 'bg-student text-white rounded-br-md'
+                        : 'bg-white shadow-sm text-student-ink rounded-bl-md'
                     }`}>
                       {msg.message_body}
                     </div>
@@ -223,12 +223,12 @@ export default function ChatPage() {
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
             rows={1}
-            className="flex-1 resize-none border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-slate-700"
+            className="flex-1 resize-none border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-student"
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || sendMut.isPending}
-            className="p-2 bg-brand-slate-700 text-white rounded-lg hover:bg-brand-slate-600 disabled:opacity-50"
+            className="p-2 bg-student text-white rounded-lg hover:bg-student-hover disabled:opacity-50"
           >
             <ArrowUp size={18} />
           </button>

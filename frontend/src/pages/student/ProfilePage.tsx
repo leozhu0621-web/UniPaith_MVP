@@ -141,8 +141,8 @@ export default function ProfilePage() {
     <div className="p-6 max-w-3xl mx-auto space-y-6">
       <div>
         <div className="flex items-center gap-2 mb-1">
-          <Sparkles size={18} className="text-amber-500" />
-          <h1 className="text-2xl font-semibold text-stone-800">My Story</h1>
+          <Sparkles size={18} className="text-gold" />
+          <h1 className="text-2xl font-semibold text-student-ink">My Story</h1>
         </div>
         <p className="text-sm text-gray-500">Every detail helps the AI understand who you are and where you'll thrive.</p>
       </div>
@@ -152,7 +152,7 @@ export default function ProfilePage() {
         <div className="flex items-center gap-6">
           <StrengthRing value={completionPct} />
           <div className="flex-1 min-w-0">
-            <h2 className="font-semibold text-stone-700 mb-2">Self-Discovery Progress</h2>
+            <h2 className="font-semibold text-student-ink mb-2">Self-Discovery Progress</h2>
             <div className="grid grid-cols-2 gap-1.5">
               {PROFILE_SECTIONS.map(s => (
                 <div key={s.key} className="flex items-center gap-2 text-sm">
@@ -161,7 +161,7 @@ export default function ProfilePage() {
                   ) : (
                     <Circle size={14} className="text-gray-300 flex-shrink-0" />
                   )}
-                  <span className={sectionDone(s.key) ? 'text-gray-500' : 'text-brand-slate-700'}>{s.label}</span>
+                  <span className={sectionDone(s.key) ? 'text-gray-500' : 'text-student-ink'}>{s.label}</span>
                 </div>
               ))}
             </div>
@@ -181,7 +181,7 @@ export default function ProfilePage() {
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-2">
-            <h2 className="font-semibold text-brand-slate-700">Basic Info</h2>
+            <h2 className="font-semibold text-student-ink">Basic Info</h2>
             <button
               onClick={() => navigate(`/s/chat?prefill=${encodeURIComponent(SECTION_COUNSELOR_TIPS.basic_info.prefill)}`)}
               className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-brand-slate-600 transition-colors"
@@ -203,7 +203,7 @@ export default function ProfilePage() {
       {/* Academic Records */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
-          <h2 className="font-semibold text-brand-slate-700">Academic Records</h2>
+          <h2 className="font-semibold text-student-ink">Academic Records</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('academic') }}><Plus size={14} /></Button>
         </div>
         {(p?.academic_records ?? []).length === 0 ? (
@@ -234,7 +234,7 @@ export default function ProfilePage() {
       {/* Test Scores */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
-          <h2 className="font-semibold text-brand-slate-700">Test Scores</h2>
+          <h2 className="font-semibold text-student-ink">Test Scores</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('test') }}><Plus size={14} /></Button>
         </div>
         {(p?.test_scores ?? []).length === 0 ? (
@@ -266,7 +266,7 @@ export default function ProfilePage() {
       {/* Activities */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
-          <h2 className="font-semibold text-brand-slate-700">Activities</h2>
+          <h2 className="font-semibold text-student-ink">Activities</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('activity') }}><Plus size={14} /></Button>
         </div>
         {(p?.activities ?? []).length === 0 ? (
@@ -297,7 +297,7 @@ export default function ProfilePage() {
       {/* Online Presence */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
-          <h2 className="font-semibold text-brand-slate-700">Online Presence</h2>
+          <h2 className="font-semibold text-student-ink">Online Presence</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('online_presence') }}><Plus size={14} /></Button>
         </div>
         {(p?.online_presence ?? []).length === 0 ? (
@@ -326,7 +326,7 @@ export default function ProfilePage() {
       {/* Portfolio */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
-          <h2 className="font-semibold text-brand-slate-700">Portfolio</h2>
+          <h2 className="font-semibold text-student-ink">Portfolio</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('portfolio') }}><Plus size={14} /></Button>
         </div>
         {(p?.portfolio_items ?? []).length === 0 ? (
@@ -357,7 +357,7 @@ export default function ProfilePage() {
       {/* Research */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
-          <h2 className="font-semibold text-brand-slate-700">Research</h2>
+          <h2 className="font-semibold text-student-ink">Research</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('research') }}><Plus size={14} /></Button>
         </div>
         {(p?.research_entries ?? []).length === 0 ? (
@@ -391,7 +391,7 @@ export default function ProfilePage() {
       {/* Languages */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
-          <h2 className="font-semibold text-brand-slate-700">Languages</h2>
+          <h2 className="font-semibold text-student-ink">Languages</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('language') }}><Plus size={14} /></Button>
         </div>
         {(p?.languages ?? []).length === 0 ? (
@@ -421,7 +421,7 @@ export default function ProfilePage() {
       {/* Preferences */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
-          <h2 className="font-semibold text-brand-slate-700">Preferences</h2>
+          <h2 className="font-semibold text-student-ink">Preferences</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(p?.preferences); setEditModal('preferences') }}><Pencil size={14} /></Button>
         </div>
         {p?.preferences ? (
@@ -439,7 +439,7 @@ export default function ProfilePage() {
       {/* Documents */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
-          <h2 className="font-semibold text-brand-slate-700">Documents</h2>
+          <h2 className="font-semibold text-student-ink">Documents</h2>
           <Button size="sm" variant="ghost" onClick={() => setEditModal('upload')}><Upload size={14} /></Button>
         </div>
         {documentsList.length === 0 ? (
