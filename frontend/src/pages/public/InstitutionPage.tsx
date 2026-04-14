@@ -468,91 +468,183 @@ export default function InstitutionPage() {
 
           {/* Outcomes Tab */}
           {tab === 'outcomes' && (() => {
-            const so = inst.school_outcomes || {}
-            const hasOutcomes = Object.keys(so).length > 0
+            const rd = inst.ranking_data || {}
 
             return (
               <div className="space-y-6">
-                {hasOutcomes ? (
-                  <>
-                    <Card className="p-5">
-                      <div className="flex items-center gap-2 mb-3">
-                        <TrendingUp size={16} className="text-stone-600" />
-                        <h3 className="text-sm font-semibold text-gray-900">School-Level Outcomes</h3>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {so.overall_employment_rate != null && (
-                          <div className="text-center">
-                            <p className="text-2xl font-bold text-emerald-700">{(Number(so.overall_employment_rate) * 100).toFixed(0)}%</p>
-                            <p className="text-xs text-gray-500">Employment Rate</p>
-                          </div>
-                        )}
-                        {so.median_starting_salary != null && (
-                          <div className="text-center">
-                            <p className="text-2xl font-bold text-stone-700">{formatCurrency(Number(so.median_starting_salary))}</p>
-                            <p className="text-xs text-gray-500">Median Starting Salary</p>
-                          </div>
-                        )}
-                        {so.graduation_rate != null && (
-                          <div className="text-center">
-                            <p className="text-2xl font-bold text-stone-700">{(Number(so.graduation_rate) * 100).toFixed(0)}%</p>
-                            <p className="text-xs text-gray-500">Graduation Rate</p>
-                          </div>
-                        )}
-                        {so.avg_time_to_employment && (
-                          <div className="text-center">
-                            <p className="text-2xl font-bold text-stone-700">{so.avg_time_to_employment}</p>
-                            <p className="text-xs text-gray-500">Avg Time to Employment</p>
-                          </div>
-                        )}
-                        {so.alumni_network_size != null && (
-                          <div className="text-center">
-                            <p className="text-2xl font-bold text-stone-700">{Number(so.alumni_network_size).toLocaleString()}</p>
-                            <p className="text-xs text-gray-500">Alumni Network</p>
-                          </div>
-                        )}
-                      </div>
-                    </Card>
-
-                    {so.top_hiring_companies && Array.isArray(so.top_hiring_companies) && (
-                      <Card className="p-5">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Briefcase size={16} className="text-stone-600" />
-                          <h3 className="text-sm font-semibold text-gray-900">Top Hiring Companies</h3>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {so.top_hiring_companies.map((c: string) => (
-                            <Badge key={c} variant="neutral">{c}</Badge>
-                          ))}
-                        </div>
-                      </Card>
-                    )}
-
-                    {so.industry_breakdown && typeof so.industry_breakdown === 'object' && (
-                      <Card className="p-5">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Building2 size={16} className="text-stone-600" />
-                          <h3 className="text-sm font-semibold text-gray-900">Industry Breakdown</h3>
-                        </div>
-                        <div className="space-y-2">
-                          {Object.entries(so.industry_breakdown).map(([ind, pct]) => (
-                            <div key={ind} className="flex items-center gap-3">
-                              <span className="text-xs text-gray-500 w-32 capitalize">{ind.replace(/_/g, ' ')}</span>
-                              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-stone-500 rounded-full" style={{ width: `${Number(pct)}%` }} />
-                              </div>
-                              <span className="text-xs font-medium text-stone-700 w-10 text-right">{Number(pct)}%</span>
-                            </div>
-                          ))}
-                        </div>
-                      </Card>
-                    )}
-                  </>
-                ) : (
-                  <Card className="p-6 text-center">
-                    <TrendingUp size={32} className="text-gray-300 mx-auto mb-3" />
-                    <p className="text-sm text-gray-500">School-level outcomes data is not yet available.</p>
+                {/* Earnings */}
+                {(rd.earnings_6yr_median || rd.earnings_10yr_median) && (
+                  <Card className="p-5">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Earnings After Graduation</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {rd.earnings_6yr_median && <div className="text-center p-3 bg-emerald-50 rounded-lg"><p className="text-2xl font-bold text-emerald-700">${rd.earnings_6yr_median.toLocaleString()}</p><p className="text-xs text-gray-500">Median Salary (6yr after entry)</p></div>}
+                      {rd.earnings_10yr_median && <div className="text-center p-3 bg-emerald-50 rounded-lg"><p className="text-2xl font-bold text-emerald-700">${rd.earnings_10yr_median.toLocaleString()}</p><p className="text-xs text-gray-500">Median Salary (10yr after entry)</p></div>}
+                    </div>
                   </Card>
+                )}
+
+                {/* Graduation & Retention */}
+                {(rd.graduation_rate || rd.retention_rate || rd.graduation_rate_4yr) && (
+                  <Card className="p-5">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Graduation & Retention</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {rd.graduation_rate_4yr && <div className="text-center p-3 bg-blue-50 rounded-lg"><p className="text-2xl font-bold text-blue-700">{(rd.graduation_rate_4yr * 100).toFixed(0)}%</p><p className="text-xs text-gray-500">4-Year Grad Rate</p></div>}
+                      {rd.graduation_rate && <div className="text-center p-3 bg-blue-50 rounded-lg"><p className="text-2xl font-bold text-blue-700">{(rd.graduation_rate * 100).toFixed(0)}%</p><p className="text-xs text-gray-500">6-Year Grad Rate</p></div>}
+                      {rd.retention_rate && <div className="text-center p-3 bg-purple-50 rounded-lg"><p className="text-2xl font-bold text-purple-700">{(rd.retention_rate * 100).toFixed(0)}%</p><p className="text-xs text-gray-500">Retention Rate</p></div>}
+                      {rd.transfer_rate && <div className="text-center p-3 bg-gray-50 rounded-lg"><p className="text-2xl font-bold text-gray-700">{(rd.transfer_rate * 100).toFixed(1)}%</p><p className="text-xs text-gray-500">Transfer Rate</p></div>}
+                    </div>
+                  </Card>
+                )}
+
+                {/* Graduation by Race */}
+                {rd.graduation_rate_by_race && (
+                  <Card className="p-5">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Graduation Rate by Race/Ethnicity</h3>
+                    <div className="space-y-2">
+                      {Object.entries(rd.graduation_rate_by_race).filter(([,v]) => v != null).map(([race, rate]) => (
+                        <div key={race} className="flex items-center gap-3">
+                          <span className="text-xs text-gray-500 w-28 capitalize">{race}</span>
+                          <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-blue-500 rounded-full" style={{ width: `${Number(rate) * 100}%` }} /></div>
+                          <span className="text-xs font-medium text-gray-700 w-12 text-right">{(Number(rate) * 100).toFixed(0)}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+
+                {/* Financial Aid & Debt */}
+                {(rd.pell_grant_rate || rd.median_debt) && (
+                  <Card className="p-5">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Financial Aid & Student Debt</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {rd.pell_grant_rate && <div className="text-center p-3 bg-amber-50 rounded-lg"><p className="text-2xl font-bold text-amber-700">{(rd.pell_grant_rate * 100).toFixed(0)}%</p><p className="text-xs text-gray-500">Receive Pell Grants</p></div>}
+                      {rd.federal_loan_rate && <div className="text-center p-3 bg-amber-50 rounded-lg"><p className="text-2xl font-bold text-amber-700">{(rd.federal_loan_rate * 100).toFixed(0)}%</p><p className="text-xs text-gray-500">Take Federal Loans</p></div>}
+                      {rd.median_debt && <div className="text-center p-3 bg-red-50 rounded-lg"><p className="text-2xl font-bold text-red-700">${rd.median_debt.toLocaleString()}</p><p className="text-xs text-gray-500">Median Debt at Graduation</p></div>}
+                      {rd.median_debt_monthly && <div className="text-center p-3 bg-red-50 rounded-lg"><p className="text-2xl font-bold text-red-700">${rd.median_debt_monthly}/mo</p><p className="text-xs text-gray-500">Median Monthly Payment</p></div>}
+                    </div>
+                    {rd.debt_percentiles && (
+                      <div className="mt-4 text-xs text-gray-500">
+                        <p>Debt range: ${rd.debt_percentiles.p10?.toLocaleString()} (10th pctl) — ${rd.debt_percentiles.p90?.toLocaleString()} (90th pctl)</p>
+                      </div>
+                    )}
+                  </Card>
+                )}
+
+                {/* Net Price by Income */}
+                {rd.net_price_by_income && (
+                  <Card className="p-5">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Average Net Price by Family Income</h3>
+                    <div className="space-y-2">
+                      {[
+                        { label: '$0 - $30,000', value: rd.net_price_by_income['0_30k'] },
+                        { label: '$30,001 - $48,000', value: rd.net_price_by_income['30_48k'] },
+                        { label: '$48,001 - $75,000', value: rd.net_price_by_income['48_75k'] },
+                        { label: '$75,001 - $110,000', value: rd.net_price_by_income['75_110k'] },
+                        { label: '$110,001+', value: rd.net_price_by_income['110k_plus'] },
+                      ].filter(r => r.value != null).map(r => (
+                        <div key={r.label} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <span className="text-sm text-gray-600">{r.label}</span>
+                          <span className="text-sm font-semibold text-gray-900">${r.value?.toLocaleString()}/yr</span>
+                        </div>
+                      ))}
+                    </div>
+                    {rd.avg_net_price && <p className="text-xs text-gray-400 mt-2">Overall average net price: ${rd.avg_net_price.toLocaleString()}/yr</p>}
+                  </Card>
+                )}
+
+                {/* Student Demographics */}
+                {rd.race_ethnicity && (
+                  <Card className="p-5">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Student Demographics</h3>
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      {rd.gender && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-2">Gender</p>
+                          <div className="flex h-4 rounded-full overflow-hidden">
+                            <div className="bg-blue-400" style={{ width: `${rd.gender.male}%` }} />
+                            <div className="bg-pink-400" style={{ width: `${rd.gender.female}%` }} />
+                          </div>
+                          <div className="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>Male {rd.gender.male}%</span>
+                            <span>Female {rd.gender.female}%</span>
+                          </div>
+                        </div>
+                      )}
+                      {rd.first_generation && (
+                        <div className="text-center p-3 bg-indigo-50 rounded-lg">
+                          <p className="text-2xl font-bold text-indigo-700">{rd.first_generation}%</p>
+                          <p className="text-xs text-gray-500">First Generation</p>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mb-2">Race / Ethnicity</p>
+                    <div className="space-y-1.5">
+                      {Object.entries(rd.race_ethnicity).filter(([,v]) => Number(v) > 0).sort(([,a],[,b]) => Number(b) - Number(a)).map(([race, pct]) => (
+                        <div key={race} className="flex items-center gap-3">
+                          <span className="text-xs text-gray-500 w-28 capitalize">{race.replace(/_/g, ' ')}</span>
+                          <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-indigo-500 rounded-full" style={{ width: `${Number(pct)}%` }} /></div>
+                          <span className="text-xs font-medium text-gray-700 w-12 text-right">{Number(pct).toFixed(1)}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+
+                {/* Faculty */}
+                {(rd.faculty_salary_avg_monthly || rd.ft_faculty_rate) && (
+                  <Card className="p-5">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Faculty</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {rd.ft_faculty_rate != null && <div className="text-center p-3 bg-gray-50 rounded-lg"><p className="text-2xl font-bold text-gray-700">{(rd.ft_faculty_rate * 100).toFixed(0)}%</p><p className="text-xs text-gray-500">Full-Time Faculty</p></div>}
+                      {rd.faculty_salary_avg_monthly && <div className="text-center p-3 bg-gray-50 rounded-lg"><p className="text-2xl font-bold text-gray-700">${rd.faculty_salary_avg_monthly.toLocaleString()}</p><p className="text-xs text-gray-500">Avg Faculty Salary (monthly)</p></div>}
+                      {rd.instructional_expenditure_per_fte && <div className="text-center p-3 bg-gray-50 rounded-lg"><p className="text-2xl font-bold text-gray-700">${rd.instructional_expenditure_per_fte.toLocaleString()}</p><p className="text-xs text-gray-500">Instructional Spend / Student</p></div>}
+                    </div>
+                    {rd.faculty_gender && (
+                      <div className="mt-3">
+                        <p className="text-xs text-gray-500 mb-1">Faculty Gender</p>
+                        <div className="flex h-3 rounded-full overflow-hidden">
+                          <div className="bg-blue-400" style={{ width: `${rd.faculty_gender.male}%` }} />
+                          <div className="bg-pink-400" style={{ width: `${rd.faculty_gender.female}%` }} />
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-500 mt-1">
+                          <span>Male {rd.faculty_gender.male}%</span>
+                          <span>Female {rd.faculty_gender.female}%</span>
+                        </div>
+                      </div>
+                    )}
+                  </Card>
+                )}
+
+                {/* Admissions */}
+                {(rd.sat_avg || rd.act_25_75) && (
+                  <Card className="p-5">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Test Scores</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {rd.sat_avg && <div className="text-center p-3 bg-brand-slate-50 rounded-lg"><p className="text-2xl font-bold text-brand-slate-700">{rd.sat_avg}</p><p className="text-xs text-gray-500">SAT Average</p></div>}
+                      {rd.sat_reading_25_75 && <div className="text-center p-3 bg-gray-50 rounded-lg"><p className="text-lg font-bold text-gray-700">{rd.sat_reading_25_75[0]}-{rd.sat_reading_25_75[1]}</p><p className="text-xs text-gray-500">SAT Reading (25th-75th)</p></div>}
+                      {rd.sat_math_25_75 && <div className="text-center p-3 bg-gray-50 rounded-lg"><p className="text-lg font-bold text-gray-700">{rd.sat_math_25_75[0]}-{rd.sat_math_25_75[1]}</p><p className="text-xs text-gray-500">SAT Math (25th-75th)</p></div>}
+                      {rd.act_25_75 && <div className="text-center p-3 bg-brand-slate-50 rounded-lg"><p className="text-lg font-bold text-brand-slate-700">{rd.act_25_75[0]}-{rd.act_25_75[1]}</p><p className="text-xs text-gray-500">ACT (25th-75th)</p></div>}
+                    </div>
+                  </Card>
+                )}
+
+                {/* Costs Breakdown */}
+                {(rd.tuition_in_state || rd.total_cost_attendance) && (
+                  <Card className="p-5">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Cost Breakdown</h3>
+                    <div className="space-y-2">
+                      {rd.tuition_in_state && <div className="flex justify-between p-2 bg-gray-50 rounded"><span className="text-sm text-gray-600">Tuition (In-State)</span><span className="text-sm font-semibold">${rd.tuition_in_state.toLocaleString()}</span></div>}
+                      {rd.tuition_out_of_state && rd.tuition_out_of_state !== rd.tuition_in_state && <div className="flex justify-between p-2 bg-gray-50 rounded"><span className="text-sm text-gray-600">Tuition (Out-of-State)</span><span className="text-sm font-semibold">${rd.tuition_out_of_state.toLocaleString()}</span></div>}
+                      {rd.room_board && <div className="flex justify-between p-2 bg-gray-50 rounded"><span className="text-sm text-gray-600">Room & Board</span><span className="text-sm font-semibold">${rd.room_board.toLocaleString()}</span></div>}
+                      {rd.books_supply && <div className="flex justify-between p-2 bg-gray-50 rounded"><span className="text-sm text-gray-600">Books & Supplies</span><span className="text-sm font-semibold">${rd.books_supply.toLocaleString()}</span></div>}
+                      {rd.total_cost_attendance && <div className="flex justify-between p-2 bg-brand-slate-50 rounded font-semibold"><span className="text-sm text-brand-slate-700">Total Cost of Attendance</span><span className="text-sm text-brand-slate-700">${rd.total_cost_attendance.toLocaleString()}</span></div>}
+                    </div>
+                  </Card>
+                )}
+
+                {/* Data Source */}
+                {rd.source && (
+                  <p className="text-xs text-gray-400 text-center">Data source: {rd.source}</p>
                 )}
               </div>
             )
