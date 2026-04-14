@@ -241,15 +241,60 @@ export default function InstitutionPage() {
                   <p className="text-sm text-gray-700 whitespace-pre-wrap">{inst.campus_description}</p>
                 </Card>
               )}
+              {/* Key Stats (Niche-style) */}
+              {(inst.ranking_data || inst.student_body_size) && (
+                <Card className="p-5">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Key Statistics</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {inst.ranking_data?.acceptance_rate != null && (
+                      <div className="text-center p-3 bg-blue-50 rounded-lg">
+                        <p className="text-2xl font-bold text-blue-700">{(inst.ranking_data.acceptance_rate * 100).toFixed(0)}%</p>
+                        <p className="text-xs text-gray-500">Acceptance Rate</p>
+                      </div>
+                    )}
+                    {inst.ranking_data?.tuition_out_of_state != null && (
+                      <div className="text-center p-3 bg-green-50 rounded-lg">
+                        <p className="text-2xl font-bold text-green-700">${inst.ranking_data.tuition_out_of_state.toLocaleString()}</p>
+                        <p className="text-xs text-gray-500">Tuition (Out-of-State)</p>
+                      </div>
+                    )}
+                    {inst.student_body_size != null && (
+                      <div className="text-center p-3 bg-purple-50 rounded-lg">
+                        <p className="text-2xl font-bold text-purple-700">{inst.student_body_size.toLocaleString()}</p>
+                        <p className="text-xs text-gray-500">Students</p>
+                      </div>
+                    )}
+                    {inst.ranking_data?.graduation_rate != null && (
+                      <div className="text-center p-3 bg-amber-50 rounded-lg">
+                        <p className="text-2xl font-bold text-amber-700">{(inst.ranking_data.graduation_rate * 100).toFixed(0)}%</p>
+                        <p className="text-xs text-gray-500">Graduation Rate</p>
+                      </div>
+                    )}
+                    {inst.ranking_data?.median_earnings != null && (
+                      <div className="text-center p-3 bg-emerald-50 rounded-lg">
+                        <p className="text-2xl font-bold text-emerald-700">${inst.ranking_data.median_earnings.toLocaleString()}</p>
+                        <p className="text-xs text-gray-500">Median Earnings (10yr)</p>
+                      </div>
+                    )}
+                    {inst.ranking_data?.us_news_2025 != null && (
+                      <div className="text-center p-3 bg-brand-slate-50 rounded-lg">
+                        <p className="text-2xl font-bold text-brand-slate-700">#{inst.ranking_data.us_news_2025}</p>
+                        <p className="text-xs text-gray-500">US News Rank</p>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              )}
               <Card className="p-5">
                 <h3 className="text-sm font-semibold text-gray-900 mb-3">Quick Facts</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                  <div><span className="text-gray-500">Type:</span> <span className="font-medium">{inst.type}</span></div>
+                  <div><span className="text-gray-500">Type:</span> <span className="font-medium capitalize">{inst.type}</span></div>
                   <div><span className="text-gray-500">Country:</span> <span className="font-medium">{inst.country}</span></div>
                   {inst.region && <div><span className="text-gray-500">Region:</span> <span className="font-medium">{inst.region}</span></div>}
                   {inst.city && <div><span className="text-gray-500">City:</span> <span className="font-medium">{inst.city}</span></div>}
                   {inst.campus_setting && <div><span className="text-gray-500">Setting:</span> <span className="font-medium">{SETTING_LABELS[inst.campus_setting] ?? inst.campus_setting}</span></div>}
                   {inst.student_body_size != null && <div><span className="text-gray-500">Students:</span> <span className="font-medium">{inst.student_body_size.toLocaleString()}</span></div>}
+                  {inst.ranking_data?.tuition_in_state != null && <div><span className="text-gray-500">In-State Tuition:</span> <span className="font-medium">${inst.ranking_data.tuition_in_state.toLocaleString()}</span></div>}
                 </div>
               </Card>
               {inst.social_links && Object.keys(inst.social_links).length > 0 && (
