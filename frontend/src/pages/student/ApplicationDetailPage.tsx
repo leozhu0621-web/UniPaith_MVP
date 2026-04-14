@@ -228,20 +228,44 @@ export default function ApplicationDetailPage() {
               <FileCheck size={14} className="mr-1" /> Check Readiness
             </Button>
 
-            <Button
-              className="w-full mt-2"
-              disabled={application.status !== 'draft'}
-              onClick={() => submitMut.mutate()}
-              loading={submitMut.isPending}
-              size="sm"
-            >
-              Submit Application
-            </Button>
-            {application.status === 'draft' && (
-              <p className="text-xs text-gray-500 mt-2">
-                You can submit when you feel ready. The readiness check will show any missing items clearly.
-              </p>
-            )}
+            {(() => {
+              const requiredItems = checklistItems.filter((i: any) => i.required !== false)
+              const incompleteRequired = requiredItems.filter((i: any) => i.status !== 'completed')
+              const canSubmit = application.status === 'draft' && incompleteRequired.length === 0
+              return (
+                <>
+                  <Button
+                    className="w-full mt-2"
+                    disabled={!canSubmit}
+                    onClick={() => submitMut.mutate()}
+                    loading={submitMut.isPending}
+                    size="sm"
+                  >
+                    {canSubmit ? 'Submit Application' : `${incompleteRequired.length} Required Item${incompleteRequired.length !== 1 ? 's' : ''} Missing`}
+                  </Button>
+                  {application.status === 'draft' && incompleteRequired.length > 0 && (
+                    <div className="mt-2 text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+                      <p className="font-medium mb-1">Complete these before submitting:</p>
+                      <ul className="space-y-0.5">
+                        {incompleteRequired.slice(0, 5).map((item: any, i: number) => (
+                          <li key={i} className="flex items-center gap-1">
+                            <AlertCircle size={9} /> {item.item_name || item.name}
+                          </li>
+                        ))}
+                        {incompleteRequired.length > 5 && (
+                          <li className="text-amber-600">...and {incompleteRequired.length - 5} more</li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                  {application.status === 'draft' && incompleteRequired.length === 0 && checklistItems.length > 0 && (
+                    <p className="text-xs text-emerald-600 mt-2 flex items-center gap-1">
+                      <Check size={10} /> All required items complete — ready to submit
+                    </p>
+                  )}
+                </>
+              )
+            })()}
           </Card>
         </div>
 
