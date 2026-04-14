@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import apiClient from '../../api/client'
-import { useAuthStore } from '../../stores/auth-store'
+
 import Button from '../../components/ui/Button'
 import { Sparkles, ArrowUp, Check, ArrowRight, SkipForward } from 'lucide-react'
 
@@ -46,7 +46,6 @@ function UnderstandingMeter({ pct }: { pct: number }) {
 
 export default function OnboardingPage() {
   const navigate = useNavigate()
-  useAuthStore()
   const [messages, setMessages] = useState<ChatMsg[]>([])
   const [input, setInput] = useState('')
   const [understanding, setUnderstanding] = useState(0)
