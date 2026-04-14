@@ -63,7 +63,7 @@ class LLMClient:
         return response.choices[0].message.content
 
     async def _call_with_resilience(self, client: AsyncOpenAI, **kwargs):
-        last_error = None
+        last_error: Exception | None = None
         for attempt in range(1, settings.ai_request_max_retries + 1):
             started = start_timer()
             try:
@@ -92,7 +92,9 @@ class LLMClient:
             if attempt < settings.ai_request_max_retries:
                 await asyncio.sleep(settings.ai_request_backoff_seconds * attempt)
 
-        raise last_error
+        if last_error is not None:
+            raise last_error
+        raise RuntimeError("LLM request failed with no retries configured")
 
 
 class AWSLLMClient:
@@ -167,7 +169,7 @@ class AWSLLMClient:
             return self._template_reasoning(user_content)
 
     async def _call_with_resilience(self, client: AsyncOpenAI, **kwargs):
-        last_error = None
+        last_error: Exception | None = None
         for attempt in range(1, settings.ai_request_max_retries + 1):
             started = start_timer()
             try:
@@ -185,7 +187,9 @@ class AWSLLMClient:
                 last_error = exc
             if attempt < settings.ai_request_max_retries:
                 await asyncio.sleep(settings.ai_request_backoff_seconds * attempt)
-        raise last_error
+        if last_error is not None:
+            raise last_error
+        raise RuntimeError("LLM request failed with no retries configured")
 
     async def _is_budget_exceeded(self) -> bool:
         """Check if monthly GPU budget is exceeded."""

@@ -79,7 +79,7 @@ class WebAdapter(BaseAdapter):
         meta_desc = ""
         meta_tag = soup.find("meta", attrs={"name": "description"})
         if meta_tag and meta_tag.get("content"):
-            meta_desc = meta_tag["content"]
+            meta_desc = str(meta_tag["content"])
 
         return [
             IngestedContent(
@@ -131,8 +131,9 @@ class TranscriptAdapter(BaseAdapter):
         try:
             from youtube_transcript_api import YouTubeTranscriptApi
 
-            transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
-            text = " ".join(entry["text"] for entry in transcript_list)
+            api = YouTubeTranscriptApi()
+            transcript = api.fetch(video_id)
+            text = " ".join(snippet.text for snippet in transcript)
         except Exception:
             logger.warning("Could not fetch transcript for %s", url)
             return []
@@ -349,9 +350,9 @@ class SearchAdapter(BaseAdapter):
                 html = await resp.text()
 
         soup = BeautifulSoup(html, "lxml")
-        links = []
+        links: list[str] = []
         for result in soup.select(".result__a"):
-            href = result.get("href", "")
+            href = str(result.get("href", ""))
             if href.startswith("http"):
                 links.append(href)
 

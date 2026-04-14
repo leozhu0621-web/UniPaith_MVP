@@ -364,6 +364,8 @@ class InferencePipeline:
 
         grouped: dict[UUID, list[TargetSegment]] = {program_id: [] for program_id in program_ids}
         for segment in segments:
+            if segment.program_id is None:
+                continue
             grouped.setdefault(segment.program_id, []).append(segment)
 
         return {
