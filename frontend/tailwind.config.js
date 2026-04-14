@@ -12,14 +12,14 @@ export default {
     },
     extend: {
       colors: {
-        // ── Student — Forest Green ──
+        // ── Student — Soft Slate Blue ──
         student: {
-          DEFAULT: '#2F5D50',   // Primary — Forest Green
-          hover: '#254A40',     // Primary Hover — Deep Forest
-          mist: '#EEF4F1',     // Soft Background — Sage Mist
-          moss: '#E3ECE7',     // Section Background — Soft Moss
-          ink: '#1E2E29',       // Headings — Deep Pine
-          text: '#5E6B65',      // Body Text — Olive Slate
+          DEFAULT: '#4A6FA5',   // Primary — Soft Slate Blue
+          hover: '#3D5F8F',     // Primary Hover — Deeper Slate
+          mist: '#F0F4F8',     // Soft Background — Light Blue-Gray
+          moss: '#E8EEF4',     // Section Background — Mist Blue
+          ink: '#1A2B3D',       // Headings — Deep Navy
+          text: '#5A6B7D',      // Body Text — Muted Slate
         },
         // ── School — Sapphire Blue ──
         school: {
@@ -38,7 +38,7 @@ export default {
           pale: '#F3E6C7',     // Accent Soft — Pale Gold
         },
         // ── Shared neutrals ──
-        offwhite: '#FAFBF9',    // Main Background — Off White
+        offwhite: '#F7F8FA',    // Main Background — Cool Light Gray
         charcoal: '#202529',    // Dark Text — Charcoal Ink
         slate: '#667085',       // Secondary Text — Muted Slate
         stone: '#D9E1DC',       // Border — Soft Stone
