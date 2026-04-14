@@ -15,7 +15,7 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -385,9 +385,10 @@ async def chat_tune_persona(
     """Chat-based persona tuning. Send a natural language instruction like
     'be more direct and less warm' and the LLM translates it into slider changes."""
     import json as _json
+
     from unipaith.ai.llm_client import get_llm_client
-    from unipaith.models.knowledge import AdvisorPersona
     from unipaith.config import settings
+    from unipaith.models.knowledge import AdvisorPersona
 
     result = await db.execute(
         select(AdvisorPersona).where(AdvisorPersona.is_active.is_(True)).limit(1)
@@ -410,8 +411,10 @@ async def chat_tune_persona(
     }
 
     system = (
-        "You are a persona tuning assistant. The admin describes how they want the AI counselor to behave. "
-        "You translate their instruction into specific slider changes.\n\n"
+        "You are a persona tuning assistant. "
+        "The admin describes how they want the AI counselor "
+        "to behave. You translate their instruction into "
+        "specific slider changes.\n\n"
         "Current persona settings (each 0-100):\n"
         f"{_json.dumps(current, indent=2)}\n\n"
         "Available sliders:\n"
@@ -443,7 +446,11 @@ async def chat_tune_persona(
     try:
         parsed = _json.loads(raw)
     except Exception:
-        return {"changes": {}, "explanation": "Could not parse LLM response. Try rephrasing.", "current": current}
+        return {
+            "changes": {},
+            "explanation": "Could not parse LLM response. Try rephrasing.",
+            "current": current,
+        }
 
     changes = parsed.get("changes", {})
     new_instructions = parsed.get("custom_instructions")
