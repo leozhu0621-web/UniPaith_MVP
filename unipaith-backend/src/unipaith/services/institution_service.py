@@ -1863,12 +1863,15 @@ class InstitutionService:
                     or (inst.ranking_data or {}).get("graduation_rate")
                 ),
                 payback_months=_outcomes_int(prog, "payback_months"),
+                description_text=prog.description_text,
+                media_urls=prog.media_urls,
+                highlights=prog.highlights,
                 institution_logo_url=inst.logo_url,
                 institution_image_url=(
-                    (inst.media_gallery or [None])[0]
-                    if inst.media_gallery
-                    else (prog.media_urls or [None])[0]
+                    (prog.media_urls or [None])[0]
                     if prog.media_urls
+                    else (inst.media_gallery or [None])[0]
+                    if inst.media_gallery
                     else None
                 ),
             )
@@ -1970,12 +1973,15 @@ class InstitutionService:
                         or rd.get("graduation_rate")
                     ),
                     payback_months=_outcomes_int(program, "payback_months"),
+                    description_text=program.description_text,
+                    media_urls=program.media_urls,
+                    highlights=program.highlights,
                     institution_logo_url=inst.logo_url if inst else None,
                     institution_image_url=(
-                        (inst.media_gallery or [None])[0]
-                        if inst and inst.media_gallery
-                        else (program.media_urls or [None])[0]
+                        (program.media_urls or [None])[0]
                         if program.media_urls
+                        else (inst.media_gallery or [None])[0]
+                        if inst and inst.media_gallery
                         else None
                     ),
                 )
