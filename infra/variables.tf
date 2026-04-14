@@ -97,3 +97,17 @@ variable "openai_api_key" {
   type        = string
   sensitive   = true
 }
+
+# --- Google OAuth (optional — leave empty to disable Google sign-in) ---
+variable "google_client_id" {
+  description = "Google OAuth client ID for Cognito social sign-in"
+  type        = string
+  default     = ""
+}
+
+variable "google_client_secret" {
+  description = "Google OAuth client secret for Cognito social sign-in"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
