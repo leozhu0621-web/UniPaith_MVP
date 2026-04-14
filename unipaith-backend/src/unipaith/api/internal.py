@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from unipaith.core.ai_runtime_metrics import slo_snapshot
 from unipaith.database import get_db
 from unipaith.dependencies import require_admin
-from unipaith.models.institution import Program
+from unipaith.models.institution import Institution, Program
 from unipaith.models.user import User
 from unipaith.services.ai_control_plane_service import AIControlPlaneService
 from unipaith.services.ai_engine_orchestrator import AIEngineOrchestrator
@@ -683,4 +683,139 @@ async def engine_health(
         "status": overall,
         "timestamp": datetime.now(UTC).isoformat(),
         "checks": checks,
+    }
+
+
+# --- Image Download & Upload to S3 ---
+
+
+class DownloadImageRequest(BaseModel):
+    urls: list[str]
+    prefix: str = "catalog"
+
+
+@router.post("/download-images")
+async def download_and_upload_images(
+    body: DownloadImageRequest,
+    user: User = Depends(require_admin),
+):
+    """Download external images and upload to our S3. Returns permanent S3 URLs."""
+    import httpx
+
+    from unipaith.config import settings
+    from unipaith.core.s3 import S3Client
+
+    s3 = S3Client()
+    results = []
+
+    async with httpx.AsyncClient(
+        headers={"User-Agent": "UniPaith-Bot/1.0"},
+        follow_redirects=True,
+        timeout=15,
+    ) as client:
+        for url in body.urls:
+            try:
+                resp = await client.get(url)
+                if resp.status_code != 200:
+                    results.append({"url": url, "status": "failed", "code": resp.status_code})
+                    continue
+
+                # Determine content type and extension
+                ct = resp.headers.get("content-type", "image/jpeg")
+                ext = ".jpg"
+                if "png" in ct:
+                    ext = ".png"
+                elif "svg" in ct:
+                    ext = ".svg"
+                elif "webp" in ct:
+                    ext = ".webp"
+                elif "gif" in ct:
+                    ext = ".gif"
+
+                import uuid as _uuid
+
+                key = f"{body.prefix}/{_uuid.uuid4().hex}{ext}"
+
+                if settings.s3_local_mode:
+                    # Local mode: save to disk
+                    import pathlib
+
+                    local_path = pathlib.Path(settings.s3_local_path) / key
+                    local_path.parent.mkdir(parents=True, exist_ok=True)
+                    local_path.write_bytes(resp.content)
+                    s3_url = f"/uploads/{key}"
+                else:
+                    # Production: upload to S3
+                    s3.client.put_object(
+                        Bucket=s3.bucket,
+                        Key=key,
+                        Body=resp.content,
+                        ContentType=ct,
+                    )
+                    s3_url = (
+                        f"https://{s3.bucket}.s3.{settings.aws_region}"
+                        f".amazonaws.com/{key}"
+                    )
+
+                results.append({
+                    "url": url,
+                    "status": "ok",
+                    "s3_key": key,
+                    "s3_url": s3_url,
+                    "size": len(resp.content),
+                    "content_type": ct,
+                })
+            except Exception as e:
+                results.append({"url": url, "status": "error", "error": str(e)})
+
+    ok_count = sum(1 for r in results if r.get("status") == "ok")
+    return {"uploaded": ok_count, "total": len(body.urls), "results": results}
+
+
+class WipeInstitutionRequest(BaseModel):
+    institution_name: str
+
+
+@router.post("/wipe-institution")
+async def wipe_institution(
+    body: WipeInstitutionRequest,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Admin-only: delete an institution and all its programs. For re-importing."""
+    from unipaith.models.user import UserRole
+
+    result = await db.execute(
+        select(Institution).where(Institution.name == body.institution_name)
+    )
+    inst = result.scalar_one_or_none()
+    if not inst:
+        return {"status": "not_found"}
+
+    # Delete programs (cascade should handle but be explicit)
+    progs = await db.execute(
+        select(Program).where(Program.institution_id == inst.id)
+    )
+    prog_count = 0
+    for p in progs.scalars().all():
+        await db.delete(p)
+        prog_count += 1
+
+    # Delete the system user
+    user_result = await db.execute(
+        select(User).where(User.id == inst.admin_user_id)
+    )
+    sys_user = user_result.scalar_one_or_none()
+
+    await db.delete(inst)
+    if sys_user and sys_user.role == UserRole.institution_admin:
+        email = sys_user.email
+        if email.startswith("system+"):
+            await db.delete(sys_user)
+
+    await db.commit()
+    return {
+        "status": "deleted",
+        "institution": body.institution_name,
+        "programs_deleted": prog_count,
     }
