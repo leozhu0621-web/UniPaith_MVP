@@ -6,7 +6,7 @@ import {
   getOutcomeStats, runMLCycle, runMLEvaluate, runDriftCheck,
   backfillOutcomes, triggerTraining, promoteModel, rollbackModel,
   getKnowledgeStatus, getRecentKnowledgeDocuments, getKnowledgeFrontier,
-  getKnowledgeDirectives, getAdvisorPersona, updateAdvisorPersona,
+  getKnowledgeDirectives, getAdvisorPersona, updateAdvisorPersona, chatTunePersona,
   triggerKnowledgeTick, triggerKnowledgeDiscovery, pauseKnowledgeEngine,
   resumeKnowledgeEngine, setKnowledgeThrottle, addToKnowledgeFrontier,
   updateKnowledgeDirective,
@@ -482,6 +482,22 @@ function KnowledgeTab() {
     onSuccess: () => { addToast('Persona updated', 'success'); qc.invalidateQueries({ queryKey: ['advisor-persona'] }) },
     onError: () => addToast('Persona update failed', 'error'),
   })
+  const [tuneInput, setTuneInput] = useState('')
+  const [tuneHistory, setTuneHistory] = useState<{ role: string; text: string }[]>([])
+  const tuneMut = useMutation({
+    mutationFn: (msg: string) => chatTunePersona(msg),
+    onSuccess: (data) => {
+      const changes = Object.entries(data.changes || {}).map(([k, v]) => `${k}: ${v}`).join(', ')
+      setTuneHistory(prev => [...prev, {
+        role: 'assistant',
+        text: `${data.explanation || 'Done.'}${changes ? `\n\nChanged: ${changes}` : '\n\nNo changes applied.'}`,
+      }])
+      qc.invalidateQueries({ queryKey: ['advisor-persona'] })
+    },
+    onError: () => {
+      setTuneHistory(prev => [...prev, { role: 'assistant', text: 'Failed to process. Try rephrasing.' }])
+    },
+  })
 
   const toggleDirectiveMut = useMutation({
     mutationFn: ({ id, active }: { id: string; active: boolean }) => updateKnowledgeDirective(id, { is_active: active }),
@@ -616,10 +632,62 @@ function KnowledgeTab() {
         )}
       </Card>
 
-      {/* Advisor Persona */}
+      {/* Persona Tuning Chat */}
       <Card className="p-4">
         <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-          <Brain size={16} /> Advisor Persona
+          <Brain size={16} /> Tune Counselor (Chat)
+        </h2>
+        <p className="text-xs text-gray-400 mb-3">Describe how you want the counselor to behave. Changes apply immediately.</p>
+        <div className="bg-gray-50 rounded-lg p-3 max-h-48 overflow-y-auto mb-3 space-y-2">
+          {tuneHistory.length === 0 && (
+            <p className="text-xs text-gray-400 italic">Try: "Be more direct and less warm" or "Always suggest backup schools" or "Sound like a strict mentor"</p>
+          )}
+          {tuneHistory.map((msg, i) => (
+            <div key={i} className={`text-xs px-3 py-2 rounded-lg max-w-[85%] whitespace-pre-wrap ${
+              msg.role === 'user' ? 'bg-blue-100 text-blue-800 ml-auto' : 'bg-white border text-gray-700'
+            }`}>
+              {msg.text}
+            </div>
+          ))}
+          {tuneMut.isPending && (
+            <div className="text-xs text-gray-400 animate-pulse">Thinking...</div>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={tuneInput}
+            onChange={e => setTuneInput(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && tuneInput.trim() && !tuneMut.isPending) {
+                setTuneHistory(prev => [...prev, { role: 'user', text: tuneInput.trim() }])
+                tuneMut.mutate(tuneInput.trim())
+                setTuneInput('')
+              }
+            }}
+            placeholder="e.g., Be more encouraging and less formal..."
+            className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            onClick={() => {
+              if (tuneInput.trim() && !tuneMut.isPending) {
+                setTuneHistory(prev => [...prev, { role: 'user', text: tuneInput.trim() }])
+                tuneMut.mutate(tuneInput.trim())
+                setTuneInput('')
+              }
+            }}
+            disabled={!tuneInput.trim() || tuneMut.isPending}
+            className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-40"
+          >
+            Send
+          </button>
+        </div>
+      </Card>
+
+      {/* Advisor Persona Sliders */}
+      <Card className="p-4">
+        <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+          <Brain size={16} /> Advisor Persona (Manual)
         </h2>
         {personaQ.isLoading ? <Skeleton className="h-32" /> : personaQ.data && !('status' in personaQ.data && personaQ.data.status === 'no_active_persona') ? (
           <div className="space-y-3">

@@ -372,6 +372,117 @@ async def update_persona(
     return {"status": "updated", "id": str(persona.id)}
 
 
+class PersonaChatRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=2000)
+
+
+@router.post("/persona/chat")
+async def chat_tune_persona(
+    body: PersonaChatRequest,
+    _admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Chat-based persona tuning. Send a natural language instruction like
+    'be more direct and less warm' and the LLM translates it into slider changes."""
+    import json as _json
+    from unipaith.ai.llm_client import get_llm_client
+    from unipaith.models.knowledge import AdvisorPersona
+    from unipaith.config import settings
+
+    result = await db.execute(
+        select(AdvisorPersona).where(AdvisorPersona.is_active.is_(True)).limit(1)
+    )
+    persona = result.scalar_one_or_none()
+    if not persona:
+        from unipaith.core.exceptions import NotFoundException
+        raise NotFoundException("No active persona found")
+
+    current = {
+        "warmth": persona.warmth,
+        "directness": persona.directness,
+        "formality": persona.formality,
+        "challenge_level": persona.challenge_level,
+        "data_reference_frequency": persona.data_reference_frequency,
+        "humor": persona.humor,
+        "proactivity": persona.proactivity,
+        "empathy_depth": persona.empathy_depth,
+        "custom_instructions": persona.custom_instructions or "",
+    }
+
+    system = (
+        "You are a persona tuning assistant. The admin describes how they want the AI counselor to behave. "
+        "You translate their instruction into specific slider changes.\n\n"
+        "Current persona settings (each 0-100):\n"
+        f"{_json.dumps(current, indent=2)}\n\n"
+        "Available sliders:\n"
+        "- warmth: 0=cold/professional, 100=very warm/friendly\n"
+        "- directness: 0=gentle/indirect, 100=blunt/direct\n"
+        "- formality: 0=casual, 100=formal/polished\n"
+        "- challenge_level: 0=always supportive, 100=pushes back hard\n"
+        "- data_reference_frequency: 0=never cites numbers, 100=data-heavy\n"
+        "- humor: 0=serious, 100=playful\n"
+        "- proactivity: 0=only answers when asked, 100=brings up topics unprompted\n"
+        "- empathy_depth: 0=surface acknowledgment, 100=deep emotional engagement\n"
+        "- custom_instructions: free text rules appended to the system prompt\n\n"
+        "Return JSON with:\n"
+        '- "changes": dict of slider_name: new_value (only sliders that should change)\n'
+        '- "custom_instructions": new custom instructions text (or null to keep current)\n'
+        '- "explanation": one sentence explaining what you changed and why\n'
+        "Return ONLY valid JSON."
+    )
+
+    if settings.ai_mock_mode:
+        return {
+            "changes": {},
+            "explanation": "AI mock mode is on. Changes would be applied in production.",
+            "current": current,
+        }
+
+    llm = get_llm_client()
+    raw = await llm.extract_features(system, body.message)
+    try:
+        parsed = _json.loads(raw)
+    except Exception:
+        return {"changes": {}, "explanation": "Could not parse LLM response. Try rephrasing.", "current": current}
+
+    changes = parsed.get("changes", {})
+    new_instructions = parsed.get("custom_instructions")
+    explanation = parsed.get("explanation", "")
+
+    # Apply changes
+    applied = {}
+    for key, val in changes.items():
+        if key in current and isinstance(val, int):
+            clamped = max(0, min(100, val))
+            setattr(persona, key, clamped)
+            applied[key] = clamped
+
+    if new_instructions is not None and isinstance(new_instructions, str):
+        persona.custom_instructions = new_instructions
+        applied["custom_instructions"] = new_instructions
+
+    if applied:
+        await db.flush()
+
+    updated = {
+        "warmth": persona.warmth,
+        "directness": persona.directness,
+        "formality": persona.formality,
+        "challenge_level": persona.challenge_level,
+        "data_reference_frequency": persona.data_reference_frequency,
+        "humor": persona.humor,
+        "proactivity": persona.proactivity,
+        "empathy_depth": persona.empathy_depth,
+        "custom_instructions": persona.custom_instructions or "",
+    }
+
+    return {
+        "changes": applied,
+        "explanation": explanation,
+        "current": updated,
+    }
+
+
 @router.post("/seed-from-programs")
 async def seed_knowledge_from_programs(
     _admin: User = Depends(require_admin),

@@ -5,7 +5,7 @@ import { useMutation } from '@tanstack/react-query'
 import {
   Building2, MapPin, Users, Globe, Mail, ExternalLink,
   BookOpen, CalendarDays, FileText, Pin, MessageSquare,
-  Shield, HeartHandshake, Plane, TrendingUp, Briefcase,
+  Shield, HeartHandshake, Plane,
 } from 'lucide-react'
 import { getPublicInstitution, getPublicPosts, recordCampaignAction, submitInquiry } from '../../api/institutions'
 import { searchPrograms } from '../../api/programs'
@@ -468,7 +468,7 @@ export default function InstitutionPage() {
 
           {/* Outcomes Tab */}
           {tab === 'outcomes' && (() => {
-            const rd = inst.ranking_data || {}
+            const rd: any = inst.ranking_data || {}
 
             return (
               <div className="space-y-6">
@@ -524,7 +524,7 @@ export default function InstitutionPage() {
                     </div>
                     {rd.debt_percentiles && (
                       <div className="mt-4 text-xs text-gray-500">
-                        <p>Debt range: ${rd.debt_percentiles.p10?.toLocaleString()} (10th pctl) — ${rd.debt_percentiles.p90?.toLocaleString()} (90th pctl)</p>
+                        <p>Debt range: ${(rd.debt_percentiles as any)?.p10?.toLocaleString()} (10th pctl) — ${(rd.debt_percentiles as any)?.p90?.toLocaleString()} (90th pctl)</p>
                       </div>
                     )}
                   </Card>
@@ -536,11 +536,11 @@ export default function InstitutionPage() {
                     <h3 className="text-sm font-semibold text-gray-900 mb-3">Average Net Price by Family Income</h3>
                     <div className="space-y-2">
                       {[
-                        { label: '$0 - $30,000', value: rd.net_price_by_income['0_30k'] },
-                        { label: '$30,001 - $48,000', value: rd.net_price_by_income['30_48k'] },
-                        { label: '$48,001 - $75,000', value: rd.net_price_by_income['48_75k'] },
-                        { label: '$75,001 - $110,000', value: rd.net_price_by_income['75_110k'] },
-                        { label: '$110,001+', value: rd.net_price_by_income['110k_plus'] },
+                        { label: '$0 - $30,000', value: (rd.net_price_by_income as any)?.['0_30k'] },
+                        { label: '$30,001 - $48,000', value: (rd.net_price_by_income as any)?.['30_48k'] },
+                        { label: '$48,001 - $75,000', value: (rd.net_price_by_income as any)?.['48_75k'] },
+                        { label: '$75,001 - $110,000', value: (rd.net_price_by_income as any)?.['75_110k'] },
+                        { label: '$110,001+', value: (rd.net_price_by_income as any)?.['110k_plus'] },
                       ].filter(r => r.value != null).map(r => (
                         <div key={r.label} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                           <span className="text-sm text-gray-600">{r.label}</span>
@@ -621,9 +621,9 @@ export default function InstitutionPage() {
                     <h3 className="text-sm font-semibold text-gray-900 mb-3">Test Scores</h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       {rd.sat_avg && <div className="text-center p-3 bg-brand-slate-50 rounded-lg"><p className="text-2xl font-bold text-brand-slate-700">{rd.sat_avg}</p><p className="text-xs text-gray-500">SAT Average</p></div>}
-                      {rd.sat_reading_25_75 && <div className="text-center p-3 bg-gray-50 rounded-lg"><p className="text-lg font-bold text-gray-700">{rd.sat_reading_25_75[0]}-{rd.sat_reading_25_75[1]}</p><p className="text-xs text-gray-500">SAT Reading (25th-75th)</p></div>}
-                      {rd.sat_math_25_75 && <div className="text-center p-3 bg-gray-50 rounded-lg"><p className="text-lg font-bold text-gray-700">{rd.sat_math_25_75[0]}-{rd.sat_math_25_75[1]}</p><p className="text-xs text-gray-500">SAT Math (25th-75th)</p></div>}
-                      {rd.act_25_75 && <div className="text-center p-3 bg-brand-slate-50 rounded-lg"><p className="text-lg font-bold text-brand-slate-700">{rd.act_25_75[0]}-{rd.act_25_75[1]}</p><p className="text-xs text-gray-500">ACT (25th-75th)</p></div>}
+                      {rd.sat_reading_25_75 && <div className="text-center p-3 bg-gray-50 rounded-lg"><p className="text-lg font-bold text-gray-700">{(rd.sat_reading_25_75 as any)[0]}-{(rd.sat_reading_25_75 as any)[1]}</p><p className="text-xs text-gray-500">SAT Reading (25th-75th)</p></div>}
+                      {rd.sat_math_25_75 && <div className="text-center p-3 bg-gray-50 rounded-lg"><p className="text-lg font-bold text-gray-700">{(rd.sat_math_25_75 as any)[0]}-{(rd.sat_math_25_75 as any)[1]}</p><p className="text-xs text-gray-500">SAT Math (25th-75th)</p></div>}
+                      {rd.act_25_75 && <div className="text-center p-3 bg-brand-slate-50 rounded-lg"><p className="text-lg font-bold text-brand-slate-700">{(rd.act_25_75 as any)[0]}-{(rd.act_25_75 as any)[1]}</p><p className="text-xs text-gray-500">ACT (25th-75th)</p></div>}
                     </div>
                   </Card>
                 )}

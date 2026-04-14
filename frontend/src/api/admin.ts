@@ -323,5 +323,8 @@ export const updateAdvisorPersona = (data: {
   base_persona_prompt?: string
 }) => apiClient.put('/admin/knowledge/persona', data).then(r => r.data)
 
+export const chatTunePersona = (message: string) =>
+  apiClient.post('/admin/knowledge/persona/chat', { message }, { timeout: 60_000 }).then(r => r.data)
+
 export const getPersonInsights = (userId: string) =>
   apiClient.get(`/admin/knowledge/insights/${userId}`).then(r => r.data)
