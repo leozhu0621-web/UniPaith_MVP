@@ -1857,6 +1857,8 @@ class InstitutionService:
                 median_salary=_outcomes_int(prog, "median_salary") or (inst.ranking_data or {}).get("earnings_10yr_median"),
                 employment_rate=_outcomes_float(prog, "employment_rate") or (inst.ranking_data or {}).get("graduation_rate"),
                 payback_months=_outcomes_int(prog, "payback_months"),
+                institution_logo_url=inst.logo_url,
+                institution_image_url=(inst.media_gallery or [None])[0] if inst.media_gallery else (prog.media_urls or [None])[0] if prog.media_urls else None,
             )
             for prog, inst in rows
         ]
@@ -1950,6 +1952,8 @@ class InstitutionService:
                     median_salary=_outcomes_int(program, "median_salary") or rd.get("earnings_10yr_median"),
                     employment_rate=_outcomes_float(program, "employment_rate") or rd.get("graduation_rate"),
                     payback_months=_outcomes_int(program, "payback_months"),
+                    institution_logo_url=inst.logo_url if inst else None,
+                    institution_image_url=(inst.media_gallery or [None])[0] if inst and inst.media_gallery else (program.media_urls or [None])[0] if program.media_urls else None,
                 )
             )
         return ordered

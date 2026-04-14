@@ -327,6 +327,8 @@ export interface ProgramSummary {
   median_salary: number | null
   employment_rate: number | null
   payback_months: number | null
+  institution_logo_url?: string | null
+  institution_image_url?: string | null
 }
 
 export interface PaginatedResponse<T> {

@@ -195,6 +195,8 @@ class ProgramSummaryResponse(BaseModel):
     median_salary: int | None = None
     employment_rate: float | None = None
     payback_months: int | None = None
+    institution_logo_url: str | None = None
+    institution_image_url: str | None = None
 
 
 # --- Target Segments ---

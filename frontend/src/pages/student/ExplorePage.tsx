@@ -144,7 +144,7 @@ export default function ExplorePage() {
 
       {/* Right: Database (flex-1) */}
       <div className="flex-1 overflow-y-auto">
-        <div className="p-6 max-w-4xl mx-auto">
+        <div className="p-6 max-w-6xl mx-auto">
           {/* NLP Search bar */}
           <div className="relative mb-4">
             <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-student-text" />
@@ -252,8 +252,8 @@ export default function ExplorePage() {
 
           {/* Program cards */}
           {(programsLoading || nlpMut.isPending) ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map(i => <div key={i} className="h-48 bg-white rounded-xl border border-divider animate-pulse" />)}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3].map(i => <div key={i} className="h-64 bg-white rounded-xl border border-divider animate-pulse" />)}
             </div>
           ) : displayPrograms.length === 0 ? (
             <div className="text-center py-16 bg-white rounded-xl border border-divider">
@@ -262,7 +262,7 @@ export default function ExplorePage() {
               <p className="text-xs text-student-text">Try adjusting your search or filters.</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {displayPrograms.map(p => (
                 <ProgramCard
                   key={p.id}

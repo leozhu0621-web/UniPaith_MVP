@@ -133,7 +133,7 @@ export default function SchoolDetailPage() {
   const rd: any = p.ranking_data || {}
   const instName = p.institution_name || p.department || ''
   const instLogo = p.institution_logo_url
-  const mediaImg = p.media_urls?.[0]
+  const mediaImg = p.media_urls?.[0] || p.institution_image_url
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
