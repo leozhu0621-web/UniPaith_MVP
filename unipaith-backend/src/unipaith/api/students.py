@@ -1239,10 +1239,14 @@ async def get_student_feed(
     db: AsyncSession = Depends(get_db),
 ):
     """Combined feed of events + posts from schools the student follows (via saved programs)."""
-    from datetime import datetime, timezone
+    from datetime import UTC, datetime
+
     from unipaith.models.engagement import SavedList, SavedListItem
     from unipaith.models.institution import (
-        Event, Institution, InstitutionPost, Program,
+        Event,
+        Institution,
+        InstitutionPost,
+        Program,
     )
 
     svc = StudentService(db)
@@ -1267,7 +1271,7 @@ async def get_student_feed(
             .join(Institution, Institution.id == Event.institution_id)
             .where(
                 Event.institution_id.in_(followed_inst_ids),
-                Event.start_time >= datetime.now(timezone.utc),
+                Event.start_time >= datetime.now(UTC),
             )
             .order_by(Event.start_time.asc())
             .limit(limit)
