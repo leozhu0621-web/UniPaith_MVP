@@ -1,7 +1,7 @@
 import { useState, lazy, Suspense } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, createOnlinePresence, updateOnlinePresence, deleteOnlinePresence, createPortfolioItem, updatePortfolioItem, deletePortfolioItem, createResearch, updateResearch, deleteResearch, createLanguage, updateLanguage, deleteLanguage, upsertPreferences, getNextStep, listWorkExperiences, createWorkExperience, updateWorkExperience, deleteWorkExperience, listCompetitions, createCompetition, updateCompetition, deleteCompetition, getAccommodations, upsertAccommodations, getScheduling, upsertScheduling, getPeerComparison } from '../../api/students'
+import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, createOnlinePresence, updateOnlinePresence, deleteOnlinePresence, createPortfolioItem, updatePortfolioItem, deletePortfolioItem, createResearch, updateResearch, deleteResearch, createLanguage, updateLanguage, deleteLanguage, upsertPreferences, getNextStep, listWorkExperiences, createWorkExperience, updateWorkExperience, deleteWorkExperience, listCompetitions, createCompetition, updateCompetition, deleteCompetition, getAccommodations, upsertAccommodations, getScheduling, upsertScheduling, getPeerComparison, getTimeline, getDataRights, upsertDataRights } from '../../api/students'
 import { getOnboarding } from '../../api/students'
 import { listDocuments } from '../../api/documents'
 import Modal from '../../components/ui/Modal'
@@ -12,8 +12,8 @@ import { SkeletonCard } from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatDate, formatCurrency, formatFileSize } from '../../utils/format'
 import { DEGREE_LABELS, ACTIVITY_TYPES, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES, RESEARCH_ROLES, RESEARCH_OUTPUTS, PROFICIENCY_LEVELS } from '../../utils/constants'
-import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical, Languages, MessageSquare, Briefcase, Trophy, Accessibility, Clock, BarChart3, Download } from 'lucide-react'
-import { BasicInfoForm, AcademicForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm, ResearchForm, LanguageForm, WorkExperienceForm, CompetitionForm, AccommodationForm, SchedulingForm } from './components/ProfileForms'
+import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalLink, FolderOpen, FlaskConical, Languages, MessageSquare, Briefcase, Trophy, Accessibility, Clock, BarChart3, Download, Milestone, ShieldCheck } from 'lucide-react'
+import { BasicInfoForm, AcademicForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm, ResearchForm, LanguageForm, WorkExperienceForm, CompetitionForm, AccommodationForm, SchedulingForm, DataRightsForm } from './components/ProfileForms'
 import type { StudentProfile } from '../../types'
 
 // Lazy-load absorbed pages as tabs
@@ -103,6 +103,8 @@ export default function ProfilePage() {
   const { data: accommodations } = useQuery({ queryKey: ['accommodations'], queryFn: getAccommodations, retry: false })
   const { data: scheduling } = useQuery({ queryKey: ['scheduling'], queryFn: getScheduling, retry: false })
   const { data: peerComparison } = useQuery({ queryKey: ['peer-comparison'], queryFn: getPeerComparison, retry: false })
+  const { data: timeline } = useQuery({ queryKey: ['timeline'], queryFn: getTimeline, retry: false })
+  const { data: dataRights } = useQuery({ queryKey: ['data-rights'], queryFn: getDataRights, retry: false })
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ['profile'] })
@@ -148,6 +150,7 @@ export default function ProfilePage() {
   const compDeleteMut = useMutation({ mutationFn: deleteCompetition, onSuccess: () => { invalidateAll(); showToast('Competition removed', 'success') } })
   const accommMut = useMutation({ mutationFn: upsertAccommodations, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Accommodations updated', 'success') } })
   const schedMut = useMutation({ mutationFn: upsertScheduling, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Scheduling updated', 'success') } })
+  const dataRightsMut = useMutation({ mutationFn: upsertDataRights, onSuccess: () => { invalidateAll(); setEditModal(null); showToast('Data rights updated', 'success') } })
 
   if (isLoading) return <div className="p-6 space-y-4">{Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}</div>
 
@@ -158,6 +161,7 @@ export default function ProfilePage() {
   const workList: any[] = Array.isArray(workExperiences) ? workExperiences : []
   const competitionList: any[] = Array.isArray(competitions) ? competitions : []
   const peerMetrics: any[] = peerComparison?.metrics ?? []
+  const timelineItems: any[] = Array.isArray(timeline) ? timeline : []
 
   // Derive section completion
   const sectionDone = (key: string) => {
@@ -680,6 +684,49 @@ export default function ProfilePage() {
       )}
 
       {/* Export */}
+      {/* Timeline */}
+      {timelineItems.length > 0 && (
+        <Card className="p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Milestone size={16} className="text-student" />
+            <h2 className="font-semibold text-student-ink">Timeline</h2>
+          </div>
+          <div className="relative pl-6 space-y-3">
+            <div className="absolute left-2 top-1 bottom-1 w-0.5 bg-student-mist" />
+            {timelineItems.map((item: any, i: number) => (
+              <div key={i} className="relative">
+                <div className="absolute -left-4 top-1 w-3 h-3 rounded-full bg-student border-2 border-white" />
+                <div>
+                  <p className="text-sm font-medium text-student-ink">{item.title || item.event || item.label}</p>
+                  <p className="text-xs text-student-text">{item.date ? new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}{item.section ? ` · ${item.section}` : ''}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Data Rights */}
+      <Card className="p-5">
+        <div className="flex justify-between items-start mb-3">
+          <div className="flex items-center gap-2">
+            <ShieldCheck size={16} className="text-student" />
+            <h2 className="font-semibold text-student-ink">Data Rights & Privacy</h2>
+          </div>
+          <Button size="sm" variant="ghost" onClick={() => { setEditItem(dataRights || {}); setEditModal('data_rights') }}><Pencil size={14} /></Button>
+        </div>
+        {!dataRights ? (
+          <p className="text-sm text-gray-500">Configure your data sharing and privacy preferences</p>
+        ) : (
+          <dl className="grid grid-cols-2 gap-2 text-sm">
+            <div><dt className="text-gray-500">AI Matching</dt><dd>{dataRights.consent_matching ? 'Allowed' : 'Not allowed'}</dd></div>
+            <div><dt className="text-gray-500">School Outreach</dt><dd>{dataRights.consent_outreach ? 'Allowed' : 'Not allowed'}</dd></div>
+            {dataRights.data_retention && <div><dt className="text-gray-500">Data Retention</dt><dd className="capitalize">{dataRights.data_retention.replace(/_/g, ' ')}</dd></div>}
+            {dataRights.deletion_requested && <div><dt className="text-gray-500">Deletion</dt><dd className="text-red-600">Requested</dd></div>}
+          </dl>
+        )}
+      </Card>
+
       <Card className="p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -821,6 +868,15 @@ export default function ProfilePage() {
           defaultValues={editItem}
           onSubmit={data => schedMut.mutate(data)}
           loading={schedMut.isPending}
+        />
+      </Modal>
+
+      {/* Data Rights Modal */}
+      <Modal isOpen={editModal === 'data_rights'} onClose={() => setEditModal(null)} title="Data Rights & Privacy">
+        <DataRightsForm
+          defaultValues={editItem}
+          onSubmit={data => dataRightsMut.mutate(data)}
+          loading={dataRightsMut.isPending}
         />
       </Modal>
     </div>
