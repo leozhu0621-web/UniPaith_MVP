@@ -139,10 +139,15 @@ const SavedListPage = lazy(() => import('./SavedListPage'))
 
 type ExploreTab = 'feed' | 'search' | 'saved'
 
-export default function DiscoverPage() {
+// Named export for the search-only view (used by explore/SearchView.tsx)
+export function DiscoverSearchView() {
+  return <DiscoverPage forceTab="search" />
+}
+
+export default function DiscoverPage({ forceTab }: { forceTab?: string } = {}) {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const rawTab = searchParams.get('tab')
+  const rawTab = forceTab || searchParams.get('tab')
   const hasSearchQ = !!searchParams.get('q')
   const initialTab: ExploreTab = rawTab === 'saved' ? 'saved' : (rawTab === 'search' || hasSearchQ) ? 'search' : 'feed'
   const [mode, setMode] = useState<ExploreTab>(initialTab)

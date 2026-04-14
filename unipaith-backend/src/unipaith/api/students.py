@@ -1227,3 +1227,95 @@ async def portable_export(
     resp = StudentProfileResponse.model_validate(profile)
     resp.onboarding = onboarding
     return resp.model_dump(mode="json")
+
+
+# ---------- Student Feed (Steam-style: updates from followed schools) ----------
+
+
+@router.get("/me/feed")
+async def get_student_feed(
+    limit: int = Query(30, ge=1, le=100),
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Combined feed of events + posts from schools the student follows (via saved programs)."""
+    from datetime import datetime, timezone
+    from unipaith.models.engagement import SavedList, SavedListItem
+    from unipaith.models.institution import (
+        Event, Institution, InstitutionPost, Program,
+    )
+
+    svc = StudentService(db)
+    profile = await svc._get_student_profile(user.id)
+
+    # 1. Get institution_ids from saved programs
+    saved_result = await db.execute(
+        select(Program.institution_id)
+        .join(SavedListItem, SavedListItem.program_id == Program.id)
+        .join(SavedList, SavedList.id == SavedListItem.list_id)
+        .where(SavedList.student_id == profile.id)
+        .distinct()
+    )
+    followed_inst_ids = [row[0] for row in saved_result.all()]
+
+    items: list[dict] = []
+
+    if followed_inst_ids:
+        # 2. Events from followed institutions (upcoming)
+        ev_result = await db.execute(
+            select(Event, Institution.name)
+            .join(Institution, Institution.id == Event.institution_id)
+            .where(
+                Event.institution_id.in_(followed_inst_ids),
+                Event.start_time >= datetime.now(timezone.utc),
+            )
+            .order_by(Event.start_time.asc())
+            .limit(limit)
+        )
+        for ev, inst_name in ev_result.all():
+            items.append({
+                "type": "event",
+                "id": str(ev.id),
+                "institution_id": str(ev.institution_id),
+                "institution_name": inst_name,
+                "title": ev.event_name,
+                "description": ev.description,
+                "event_type": ev.event_type,
+                "location": ev.location,
+                "start_time": ev.start_time.isoformat(),
+                "end_time": ev.end_time.isoformat(),
+                "capacity": ev.capacity,
+                "rsvp_count": ev.rsvp_count,
+                "date": ev.start_time.isoformat(),
+            })
+
+        # 3. Posts from followed institutions
+        post_result = await db.execute(
+            select(InstitutionPost, Institution.name)
+            .join(Institution, Institution.id == InstitutionPost.institution_id)
+            .where(
+                InstitutionPost.institution_id.in_(followed_inst_ids),
+                InstitutionPost.status == "published",
+            )
+            .order_by(InstitutionPost.created_at.desc())
+            .limit(limit)
+        )
+        for post, inst_name in post_result.all():
+            items.append({
+                "type": "post",
+                "id": str(post.id),
+                "institution_id": str(post.institution_id),
+                "institution_name": inst_name,
+                "title": post.title,
+                "body": post.body,
+                "media_urls": post.media_urls,
+                "date": post.created_at.isoformat(),
+            })
+
+    # Sort combined feed by date descending
+    items.sort(key=lambda x: x.get("date", ""), reverse=True)
+
+    return {
+        "items": items[:limit],
+        "followed_count": len(followed_inst_ids),
+    }
