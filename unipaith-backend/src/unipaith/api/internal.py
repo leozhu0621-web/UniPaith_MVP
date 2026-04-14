@@ -817,6 +817,7 @@ class EnrichProgramRequest(BaseModel):
     application_deadline: str | None = None
     highlights: list[str] | None = None
     media_urls: list[str] | None = None
+    clear_fields: list[str] | None = None
 
 
 class EnrichBatchRequest(BaseModel):
@@ -871,9 +872,15 @@ async def enrich_data(
             prog = prog_r.scalar_one_or_none()
             if not prog:
                 continue
+            # Explicitly NULL out clear_fields
+            if prog_data.clear_fields:
+                for cf in prog_data.clear_fields:
+                    if hasattr(prog, cf):
+                        setattr(prog, cf, None)
+            # Set non-null values (skip 0 and "" as they mean "no data")
             for field, value in prog_data.model_dump(
                 exclude_unset=True,
-                exclude={"program_name", "institution_name"},
+                exclude={"program_name", "institution_name", "clear_fields"},
             ).items():
                 if value is not None:
                     setattr(prog, field, value)
