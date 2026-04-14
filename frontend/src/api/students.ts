@@ -6,6 +6,9 @@ export const updateProfile = (data: any) => apiClient.put('/students/me/profile'
 export const getOnboarding = () => apiClient.get('/students/me/onboarding').then(r => r.data)
 export const getNextStep = () => apiClient.get('/students/me/onboarding/next-step').then(r => r.data)
 
+export const getStudentFeed = (limit = 30) =>
+  apiClient.get('/students/me/feed', { params: { limit } }).then(r => r.data)
+
 export const listAcademics = () => apiClient.get('/students/me/academics').then(r => r.data)
 export const createAcademic = (data: any) => apiClient.post('/students/me/academics', data).then(r => r.data)
 export const updateAcademic = (id: string, data: any) => apiClient.put(`/students/me/academics/${id}`, data).then(r => r.data)

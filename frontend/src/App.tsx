@@ -24,7 +24,7 @@ import ProgramDetailPage from './pages/public/ProgramDetailPage'
 // Student pages — 3 pillars
 import CounselorHomePage from './pages/student/CounselorHomePage'
 import ProfilePage from './pages/student/ProfilePage'
-import ExplorePage from './pages/student/DiscoverPage'
+import ExplorePage from './pages/student/ExplorePage'
 import SchoolDetailPage from './pages/student/SchoolDetailPage'
 import ApplicationDetailPage from './pages/student/ApplicationDetailPage'
 import StudentSettingsPage from './pages/student/SettingsPage'
