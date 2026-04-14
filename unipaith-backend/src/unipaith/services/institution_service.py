@@ -83,6 +83,11 @@ from unipaith.schemas.institution import (
 logger = logging.getLogger(__name__)
 
 
+def _escape_like(value: str) -> str:
+    """Escape SQL LIKE wildcard characters in user input."""
+    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
 def _outcomes_int(prog: Program, key: str) -> int | None:
     if prog.outcomes_data and isinstance(prog.outcomes_data, dict):
         val = prog.outcomes_data.get(key)
@@ -146,7 +151,7 @@ class InstitutionService:
                 func.array_agg(ExtractedProgram.id).label("extracted_ids"),
             )
             .where(
-                ExtractedProgram.institution_name.ilike(f"%{query}%"),
+                ExtractedProgram.institution_name.ilike(f"%{_escape_like(query)}%"),
                 ExtractedProgram.matched_institution_id.is_(None),
             )
             .group_by(
@@ -1773,7 +1778,7 @@ class InstitutionService:
             ts_query = func.plainto_tsquery(regconfig, query)
             stmt = stmt.where(ts_vector.op("@@")(ts_query))
         if country:
-            stmt = stmt.where(Institution.country.ilike(f"%{country}%"))
+            stmt = stmt.where(Institution.country.ilike(f"%{_escape_like(country)}%"))
         if degree_type:
             stmt = stmt.where(Program.degree_type == degree_type)
         if institution_id:
@@ -1789,7 +1794,7 @@ class InstitutionService:
         if max_duration_months is not None:
             stmt = stmt.where(Program.duration_months <= max_duration_months)
         if city:
-            stmt = stmt.where(Institution.city.ilike(f"%{city}%"))
+            stmt = stmt.where(Institution.city.ilike(f"%{_escape_like(city)}%"))
 
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total = (await self.db.execute(count_stmt)).scalar_one()

@@ -84,7 +84,8 @@ class InternalAdminService:
                 raise BadRequestException("Invalid role filter") from exc
             stmt = stmt.where(User.role == role_enum)
         if q:
-            stmt = stmt.where(User.email.ilike(f"%{q.strip()}%"))
+            escaped_q = q.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            stmt = stmt.where(User.email.ilike(f"%{escaped_q}%"))
         if is_active is not None:
             stmt = stmt.where(User.is_active.is_(is_active))
 

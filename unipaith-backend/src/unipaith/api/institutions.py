@@ -911,7 +911,9 @@ async def bulk_create_checklist(
 ):
     from unipaith.models.institution import ProgramChecklistItem
 
-    await _svc(db).get_institution(user.id)
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    await svc.get_program(inst.id, program_id)
     created = []
     for item_data in body.items:
         item = ProgramChecklistItem(
