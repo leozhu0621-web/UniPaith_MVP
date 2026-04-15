@@ -196,7 +196,7 @@ export default function EssayWorkshopPage() {
         <CounselorNudge
           message="Your counselor can help brainstorm essay ideas and review your drafts based on your unique story."
           actionLabel="Brainstorm with counselor"
-          actionTo="/s/chat?prefill=Help me brainstorm ideas for my personal statement based on my profile"
+          actionTo="/s?prefill=Help me brainstorm ideas for my personal statement based on my profile"
         />
       </div>
       <div className="flex items-center justify-between mb-6">

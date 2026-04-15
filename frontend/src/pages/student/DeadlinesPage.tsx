@@ -71,7 +71,7 @@ export default function DeadlinesPage() {
           icon={<Clock size={48} />}
           title="No upcoming deadlines"
           description="Apply to programs or RSVP to events to see deadlines here."
-          action={{ label: 'Discover Programs', onClick: () => navigate('/s/discover') }}
+          action={{ label: 'Discover Programs', onClick: () => navigate('/s/explore') }}
         />
       ) : (
         <div className="space-y-8">

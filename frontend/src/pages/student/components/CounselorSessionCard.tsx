@@ -15,6 +15,7 @@ interface Props {
 export default function CounselorSessionCard({
   guidanceText,
   completionPct,
+  matchCount,
   savedCount,
   appCount,
 }: Props) {
@@ -45,13 +46,13 @@ export default function CounselorSessionCard({
     actions.push({ label: 'Continue your story', to: '/s/profile', icon: User })
   }
   if (completionPct >= 50) {
-    actions.push({ label: 'Explore programs', to: '/s/discover', icon: Search })
+    actions.push({ label: 'Explore programs', to: '/s/explore', icon: Search })
   }
   if (savedCount > 0 && appCount === 0) {
-    actions.push({ label: 'Start applying', to: '/s/applications', icon: FileText })
+    actions.push({ label: 'Start applying', to: '/s/manage', icon: FileText })
   }
   if (actions.length === 0) {
-    actions.push({ label: 'Explore programs', to: '/s/discover', icon: Search })
+    actions.push({ label: 'Explore programs', to: '/s/explore', icon: Search })
   }
 
   return (
@@ -116,7 +117,7 @@ export default function CounselorSessionCard({
           </button>
         ))}
         <button
-          onClick={() => navigate('/s/chat')}
+          onClick={() => navigate('/s')}
           className="ml-auto text-xs text-gray-400 hover:text-gray-600 transition-colors"
         >
           Full conversation &rarr;

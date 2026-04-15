@@ -411,7 +411,7 @@ export default function ResumeWorkshopPage() {
           message="Your resume is built from your profile. Keep your story complete for the best AI-generated resume."
           actionLabel="Complete profile"
           actionTo="/s/profile"
-          counselorLink="/s/chat?prefill=How can I improve my resume for graduate school applications?"
+          counselorLink="/s?prefill=How can I improve my resume for graduate school applications?"
         />
       </div>
       <div className="flex items-center justify-between mb-6">

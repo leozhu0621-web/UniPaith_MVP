@@ -120,7 +120,7 @@ export default function SchoolDetailPage() {
     return (
       <div className="p-6 max-w-3xl mx-auto">
         <p className="text-sm text-gray-600 mb-3">Program details are unavailable right now.</p>
-        <Button size="sm" variant="secondary" onClick={() => navigate('/s/discover')}>
+        <Button size="sm" variant="secondary" onClick={() => navigate('/s/explore')}>
           Back to Discover
         </Button>
       </div>
@@ -381,10 +381,10 @@ export default function SchoolDetailPage() {
                       <dd>{formatCurrency(intlPremium)}</dd>
                     </div>
                   )}
-                  {feeTotal > 0 && (
+                  {feeTotal > 0 && hasTuition && (
                     <div className="flex justify-between border-t pt-2 font-medium">
                       <dt>Annual Subtotal</dt>
-                      <dd>{formatCurrency(annual + feeTotal)}</dd>
+                      <dd>{formatCurrency((annual as number) + feeTotal)}</dd>
                     </div>
                   )}
                 </dl>
@@ -964,7 +964,7 @@ export default function SchoolDetailPage() {
                 <div className="mt-4 border-t pt-4">
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-gray-500">Want to understand this match better?</p>
-                    <Button size="sm" variant="secondary" onClick={() => navigate('/s/chat')}>
+                    <Button size="sm" variant="secondary" onClick={() => navigate('/s')}>
                       <MessageSquare size={14} className="mr-1" /> Ask Counselor
                     </Button>
                   </div>
@@ -1048,7 +1048,7 @@ export default function SchoolDetailPage() {
       {/* Back to Discovery */}
       <div className="mt-8 pt-6 border-t border-gray-100 flex items-center justify-between">
         <p className="text-sm text-gray-500">Want to explore more options?</p>
-        <Button size="sm" variant="secondary" onClick={() => navigate('/s/discover')}>
+        <Button size="sm" variant="secondary" onClick={() => navigate('/s/explore')}>
           Back to Discovery
         </Button>
       </div>
