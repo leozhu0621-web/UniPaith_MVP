@@ -1,0 +1,374 @@
+{
+  "metadata": {
+    "scraped_at": "2026-04-15",
+    "institution": "New York University",
+    "purpose": "Supplementary data from non-bulletin sources for UniPaith gold-standard database entry"
+  },
+  "sources": {
+    "nyu_about_page": {
+      "url": "https://www.nyu.edu/about.html",
+      "status": "SUCCESS",
+      "data": {
+        "description": "One of the most prominent and respected research universities in the world. A leader in global education, with more international students and more students studying abroad than any other US university. An engine of social mobility with notable representation of low-income and first-generation students among top US universities.",
+        "founded": 1831,
+        "founding_mission": "Reaching out to an emerging middle class — innovator in higher education from inception",
+        "enrollment": "65,000+ students (grew from 158 in first semester)",
+        "student_diversity": "Students from nearly every US state and 133 countries",
+        "research_funding": "$1.27 billion annually",
+        "schools_and_colleges": 20,
+        "faculty_honors": "Recipients of highest scholarly honors; top producer of patents and licensing revenue among US universities",
+        "campus_locations": {
+          "primary": "New York City (5 major centers in Manhattan)",
+          "degree_granting_campuses": ["New York", "Abu Dhabi", "Shanghai"],
+          "global_academic_centers": 12,
+          "study_away_sites": 12,
+          "regional_presence": ["Africa", "Asia", "Europe", "South America"]
+        },
+        "images": [
+          {
+            "description": "Quantum Institute",
+            "url": "https://www.nyu.edu/about/_jcr_content/root/container-header/nyu_hero/image.coreimg.jpeg/1773449103464/quantuminstitutenewsimage.jpeg"
+          },
+          {
+            "description": "NYU Abu Dhabi Pier",
+            "url": "https://www.nyu.edu/about/_jcr_content/root/container/nyu_tabs/item_1/nyu_fullwidth_promo.coreimg.jpeg/1771867662018/abudhabi-pier.jpeg"
+          },
+          {
+            "description": "NYU Shanghai New Bund Campus",
+            "url": "https://www.nyu.edu/about/_jcr_content/root/container/nyu_tabs/item_2/nyu_fullwidth_promo_.coreimg.jpeg/1771867886254/nyu12001-details-144-catalinakulczar-cropped.jpeg"
+          },
+          {
+            "description": "Grammy Awards 2026 News",
+            "url": "https://www.nyu.edu/about/news-publications/news/2026/february/nyu-community-makes-history--takes-home-eight-grammy-awards/_jcr_content/_cq_featuredimage.coreimg.82.500.jpeg/371851879863/Grammy26winnerNews.jpeg"
+          },
+          {
+            "description": "Fulbright Students 2026",
+            "url": "https://www.nyu.edu/about/news-publications/news/2026/february/nyu-among-top-10-in-selected-fulbright-students/_jcr_content/_cq_featuredimage.coreimg.82.500.jpeg/457963820491/BobstFulbright20263x2.jpeg"
+          }
+        ]
+      }
+    },
+    "nyu_degrees_page": {
+      "url": "https://www.nyu.edu/academics/degrees.html",
+      "status": "FAILED - anti-bot (returned empty content / 202)",
+      "note": "NYU main website returns empty content when scraped from servers. The bulletin (bulletins.nyu.edu) is the authoritative source and was successfully scraped."
+    },
+    "petersons": {
+      "url": "https://www.petersons.com/college-search/new-york-university-000_10001648.aspx",
+      "status": "FAILED - redirected to wrong school (Edmonds College)",
+      "note": "Peterson's URL structure may have changed or the ID is incorrect. The URL redirected to an unrelated institution's page."
+    },
+    "niche": {
+      "url": "https://www.niche.com/colleges/new-york-university/academics/",
+      "status": "FAILED - 403 Forbidden (anti-bot protection)",
+      "note": "Niche blocks automated scraping with 403 responses."
+    }
+  },
+  "bulletin_scrape_results": {
+    "successful_schools": [
+      {
+        "school": "College of Arts and Science (CAS)",
+        "url": "https://bulletins.nyu.edu/undergraduate/arts-science/",
+        "status": "SUCCESS",
+        "programs_found": 88,
+        "has_descriptions": true,
+        "detail_pages_scraped": ["computer-science-ba", "economics-ba", "psychology-ba"]
+      },
+      {
+        "school": "Leonard N. Stern School of Business",
+        "url": "https://bulletins.nyu.edu/undergraduate/business/",
+        "status": "SUCCESS",
+        "programs_found": 4,
+        "has_descriptions": true,
+        "detail_pages_scraped": ["business-bs"]
+      },
+      {
+        "school": "Tisch School of the Arts",
+        "url": "https://bulletins.nyu.edu/undergraduate/arts/",
+        "status": "SUCCESS",
+        "programs_found": 11,
+        "has_descriptions": true,
+        "detail_pages_scraped": ["film-television-bfa"]
+      },
+      {
+        "school": "Tandon School of Engineering",
+        "url": "https://bulletins.nyu.edu/undergraduate/engineering/",
+        "status": "SUCCESS",
+        "programs_found": 13,
+        "has_descriptions": true,
+        "detail_pages_scraped": ["computer-science-bs"]
+      },
+      {
+        "school": "Steinhardt School of Culture, Education, and Human Development",
+        "url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/",
+        "status": "SUCCESS",
+        "programs_found": 34,
+        "has_descriptions": true,
+        "detail_pages_scraped": ["applied-psychology-bs"]
+      },
+      {
+        "school": "Silver School of Social Work",
+        "url": "https://bulletins.nyu.edu/undergraduate/social-work/",
+        "status": "SUCCESS",
+        "programs_found": 2,
+        "has_descriptions": true
+      },
+      {
+        "school": "Gallatin School of Individualized Study",
+        "url": "https://bulletins.nyu.edu/undergraduate/individualized-study/",
+        "status": "SUCCESS",
+        "programs_found": 1,
+        "has_descriptions": true
+      },
+      {
+        "school": "School of Professional Studies (SPS)",
+        "url": "https://bulletins.nyu.edu/undergraduate/professional-studies/",
+        "status": "SUCCESS",
+        "programs_found": 18,
+        "has_descriptions": false,
+        "note": "Program names available but no descriptions on listing page"
+      },
+      {
+        "school": "Liberal Studies",
+        "url": "https://bulletins.nyu.edu/undergraduate/liberal-studies/",
+        "status": "SUCCESS",
+        "programs_found": 3,
+        "has_descriptions": true
+      },
+      {
+        "school": "Rory Meyers College of Nursing",
+        "url": "https://bulletins.nyu.edu/undergraduate/nursing/",
+        "status": "SUCCESS",
+        "programs_found": 3,
+        "has_descriptions": true
+      },
+      {
+        "school": "School of Global Public Health",
+        "url": "https://bulletins.nyu.edu/undergraduate/global-public-health/",
+        "status": "SUCCESS",
+        "programs_found": 13,
+        "has_descriptions": true
+      },
+      {
+        "school": "NYU Abu Dhabi",
+        "url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/",
+        "status": "SUCCESS",
+        "programs_found": 26,
+        "has_descriptions": true
+      },
+      {
+        "school": "NYU Shanghai",
+        "url": "https://bulletins.nyu.edu/undergraduate/shanghai/",
+        "status": "SUCCESS",
+        "programs_found": 19,
+        "has_descriptions": true
+      }
+    ],
+    "failed_initial_urls": [
+      {
+        "attempted_url": "https://bulletins.nyu.edu/undergraduate/stern/",
+        "status": "404",
+        "correct_url": "https://bulletins.nyu.edu/undergraduate/business/",
+        "resolved": true
+      },
+      {
+        "attempted_url": "https://bulletins.nyu.edu/undergraduate/tisch/",
+        "status": "404",
+        "correct_url": "https://bulletins.nyu.edu/undergraduate/arts/",
+        "resolved": true
+      },
+      {
+        "attempted_url": "https://bulletins.nyu.edu/undergraduate/tandon/",
+        "status": "404",
+        "correct_url": "https://bulletins.nyu.edu/undergraduate/engineering/",
+        "resolved": true
+      },
+      {
+        "attempted_url": "https://bulletins.nyu.edu/undergraduate/steinhardt/",
+        "status": "404",
+        "correct_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/",
+        "resolved": true
+      },
+      {
+        "attempted_url": "https://bulletins.nyu.edu/undergraduate/silver/",
+        "status": "404",
+        "correct_url": "https://bulletins.nyu.edu/undergraduate/social-work/",
+        "resolved": true
+      },
+      {
+        "attempted_url": "https://bulletins.nyu.edu/undergraduate/gallatin/",
+        "status": "404",
+        "correct_url": "https://bulletins.nyu.edu/undergraduate/individualized-study/",
+        "resolved": true
+      },
+      {
+        "attempted_url": "https://bulletins.nyu.edu/undergraduate/sps/",
+        "status": "404",
+        "correct_url": "https://bulletins.nyu.edu/undergraduate/professional-studies/",
+        "resolved": true
+      }
+    ],
+    "url_corrections_reference": {
+      "note": "The bulletin uses formal school names in URLs, not common abbreviations",
+      "mapping": {
+        "stern": "business",
+        "tisch": "arts",
+        "tandon": "engineering",
+        "steinhardt": "culture-education-human-development",
+        "silver": "social-work",
+        "gallatin": "individualized-study",
+        "sps": "professional-studies"
+      }
+    }
+  },
+  "detailed_program_descriptions": {
+    "note": "Deep-scraped individual program pages for high-demand programs",
+    "programs": [
+      {
+        "program": "Computer Science (BA)",
+        "school": "College of Arts and Science",
+        "source_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/computer-science-ba/",
+        "department": "Courant Institute of Mathematical Sciences",
+        "total_credits": 128,
+        "major_credits": 48,
+        "description": "Trains students in fundamental principles of computer science as well as many practical aspects of software development.",
+        "core_courses": [
+          "CSCI-UA 2: Introduction to Computer Programming",
+          "CSCI-UA 101: Intro to Computer Science",
+          "CSCI-UA 102: Data Structures",
+          "CSCI-UA 201: Computer Systems Org",
+          "CSCI-UA 202: Operating Systems",
+          "CSCI-UA 310: Basic Algorithms"
+        ],
+        "math_requirements": [
+          "MATH-UA 120: Discrete Mathematics",
+          "MATH-UA 121: Calculus I (or MATH-UA 131)"
+        ],
+        "electives": "Five 400-level CS courses (up to two may be math substitutes)",
+        "honors_gpa": 3.65,
+        "policies": [
+          "Minimum grade of C required in all major courses",
+          "50% of Courant requirements must use CAS courses",
+          "CAS students cannot take CS courses through Tandon"
+        ],
+        "learning_outcomes": [
+          "Write programs and design software systems",
+          "Understand foundational algorithms and data structures",
+          "Knowledge of computer architecture and operating systems",
+          "Deeper expertise in specific CS domains"
+        ]
+      },
+      {
+        "program": "Economics (BA)",
+        "school": "College of Arts and Science",
+        "source_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/economics-ba/",
+        "total_credits": 128,
+        "major_credits": 40,
+        "description": "Prepares students to understand decision-making, market structures, and global economic relationships. Emphasizes excellent student-faculty rapport with faculty engaged in active research.",
+        "concentrations": {
+          "Policy": "For careers in law, public policy, and business. Core: Intro Macro/Micro, Intermediate Micro/Macro, Statistics, International/Urban/Money&Banking, Econometrics. 3 electives (2+ at 300-level).",
+          "Theory": "For PhD Economics or quantitative finance. Core: Intro Macro/Micro, Analytical Statistics, Micro/Macro Analysis, Econometrics. 4 electives (2+ at 300-level)."
+        },
+        "honors_gpa": 3.65,
+        "career_paths": ["Graduate school", "Law", "Medicine", "Business", "Finance", "Government", "Nonprofits", "International organizations"],
+        "policies": [
+          "Grade of C or better required for major courses",
+          "Pass/Fail not permitted for major courses",
+          "Exit exam required before graduation",
+          "Transfer credit limited to half of major requirements"
+        ]
+      },
+      {
+        "program": "Psychology (BA)",
+        "school": "College of Arts and Science",
+        "source_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/psychology-ba/",
+        "total_credits": 128,
+        "major_credits": 40,
+        "description": "Approaches psychology from multiple perspectives including cognitive, social, personality, neuroscience, and developmental frameworks. Emphasizes the scientific basis of psychology.",
+        "requirements": {
+          "foundation_courses": "12 credits (Intro Psych, Statistics, quantitative)",
+          "content_courses": "20 credits (Core A Natural Science, Core B Social Science, Core C Laboratory)",
+          "advanced_electives": "8 credits from abnormal, clinical, I-O, psycholinguistics, etc."
+        },
+        "honors_gpa": 3.65
+      },
+      {
+        "program": "Business (BS)",
+        "school": "Stern School of Business",
+        "source_url": "https://bulletins.nyu.edu/undergraduate/business/programs/business-bs/",
+        "total_credits": 128,
+        "description": "STEM-certified degree integrating business education with liberal arts grounding. Emphasizes global perspectives, social responsibility, and professional ethics.",
+        "stem_certified": true,
+        "concentrations": [
+          "Accounting", "Actuarial Science", "Computing and Data Science",
+          "Business Economics", "Econometrics and Quantitative Economics",
+          "Finance", "Management and Organizations", "Marketing",
+          "Operations", "Real Estate", "Statistics", "Sustainable Business",
+          "Entrepreneurship (co-concentration)"
+        ],
+        "structure": {
+          "general_education": "20 credits",
+          "major_requirements": "68 credits (Social Impact Core 14, Business Core 20, Functional Core 20, Concentration 12+, Global Core 4)",
+          "electives": "40 credits"
+        },
+        "global_requirement": "Classes of 2027+ must complete semester abroad, IBEX, short-term immersion, or approved global program",
+        "accreditation": "AACSB"
+      },
+      {
+        "program": "Film and Television (BFA)",
+        "school": "Tisch School of the Arts",
+        "source_url": "https://bulletins.nyu.edu/undergraduate/arts/programs/film-television-bfa/",
+        "total_credits": 128,
+        "major_credits": "63-66",
+        "description": "The Kanbar Institute of Film and Television has been a major cultural force since 1965.",
+        "notable_alumni": ["Chris Columbus", "Ryan Fleck", "Nia DaCosta", "Rachel Morrison", "Vince Gilligan", "Damon Lindelof"],
+        "structure": {
+          "production_safety": "1 credit",
+          "history_criticism": "9-12 credits (3 courses)",
+          "core_production": "20 credits (4 courses)",
+          "craft": "2 credits",
+          "screenwriting": "12 credits",
+          "general_education": "44-48 credits",
+          "electives": "30 credits"
+        }
+      },
+      {
+        "program": "Computer Science (BS)",
+        "school": "Tandon School of Engineering",
+        "source_url": "https://bulletins.nyu.edu/undergraduate/engineering/programs/computer-science-bs/",
+        "total_credits": 128,
+        "major_credits": 38,
+        "description": "Focuses on designing and building computer systems, from smart phones to complex databases. Offers specialized research labs in cybersecurity, game engineering, and big data analysis.",
+        "core_courses": [
+          "Intro to Programming & Problem Solving",
+          "Data Structures and Algorithms",
+          "Object Oriented Programming",
+          "Introduction to Computer Science",
+          "Computer Architecture and Organization",
+          "Intro to Operating Systems",
+          "Design & Analysis of Algorithms",
+          "Software Engineering",
+          "Design Project"
+        ],
+        "math_requirements": "Calculus I & II, Discrete Mathematics, Probability and Statistics (16 credits)",
+        "electives": "18 CS electives + 26 free electives"
+      },
+      {
+        "program": "Applied Psychology (BS)",
+        "school": "Steinhardt School",
+        "source_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/applied-psychology-bs/",
+        "total_credits": 128,
+        "description": "Interdisciplinary program teaching students to bridge psychological theory, research, and practice to solve everyday problems in a multicultural world.",
+        "stem_opt_eligible": true,
+        "structure": {
+          "general_education": "56 credits",
+          "psychology_core": "28 credits",
+          "research_statistics": "12 credits",
+          "field_experiences": "10 credits",
+          "electives": "22 credits"
+        },
+        "dual_degree_option": "BS/MA in Counseling for Mental Health and Wellness"
+      }
+    ]
+  }
+}
