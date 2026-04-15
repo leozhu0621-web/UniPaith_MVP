@@ -6,17 +6,24 @@ Usage: /Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend/.venv
 """
 import asyncio
 import json
+import os
 import sys
 
 import httpx
 
-API = "https://api.unipaith.co/api/v1"
+API = os.environ.get("UNIPAITH_API_URL", "https://api.unipaith.co/api/v1")
 
 
 async def get_admin_token() -> str:
+    email = os.environ.get("UNIPAITH_ADMIN_EMAIL")
+    password = os.environ.get("UNIPAITH_ADMIN_PASSWORD")
+    if not email or not password:
+        raise RuntimeError(
+            "Set UNIPAITH_ADMIN_EMAIL and UNIPAITH_ADMIN_PASSWORD env vars"
+        )
     async with httpx.AsyncClient(timeout=15) as c:
         resp = await c.post(f"{API}/auth/login", json={
-            "email": "admin@unipaith.co", "password": "Unipaith2026",
+            "email": email, "password": password,
         })
         return resp.json()["access_token"]
 

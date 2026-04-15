@@ -232,6 +232,7 @@ class Settings(BaseSettings):
     ses_region: str = "us-east-1"
     ses_sender_email: str = "noreply@unipaith.co"
     ses_sender_name: str = "UniPaith"
+    ses_unsub_secret: str = ""
     notifications_enabled: bool = False
 
     # Essay Workshop
