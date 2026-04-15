@@ -1,7 +1,7 @@
 """merge alembic heads
 
 Revision ID: c461832c7e39
-Revises: 5690fbaea71f, l2m3n4o5p6q7
+Revises: 5690fbaea71f, 613bd2676617
 Create Date: 2026-04-14 00:58:36.214245
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = 'c461832c7e39'
-down_revision: Union[str, None] = ('5690fbaea71f', 'l2m3n4o5p6q7')
+down_revision: Union[str, None] = ('5690fbaea71f', '613bd2676617')
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
