@@ -61,7 +61,7 @@ class Settings(BaseSettings):
     scheduler_self_driving_interval_minutes: int = 30
 
     # Knowledge engine loop (legacy — replaced by pipeline, kept for backward compat)
-    engine_loop_enabled: bool = True
+    engine_loop_enabled: bool = False
     engine_loop_interval_minutes: int = 5
     engine_loop_default_rpm: int = 10
     engine_bootstrap_enabled: bool = True

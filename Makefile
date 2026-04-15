@@ -1,4 +1,4 @@
-.PHONY: dev dev-db dev-backend dev-frontend test-backend test-frontend lint format reset-db seed install-backend install-frontend
+.PHONY: dev dev-db dev-backend dev-frontend test-backend test-frontend lint format format-check reset-db seed migrate migration install-backend install-frontend help
 
 # ── Local Development ──────────────────────────────────────────────
 
@@ -10,8 +10,8 @@ dev-db:  ## Start PostgreSQL (Docker)
 
 dev-backend: dev-db  ## Start backend (installs deps, runs migrations, starts uvicorn)
 	cd unipaith-backend && \
-		.venv/bin/alembic upgrade head && \
 		export PYTHONPATH=src && \
+		.venv/bin/alembic upgrade head && \
 		.venv/bin/uvicorn unipaith.main:app --reload --host 0.0.0.0 --port 8000
 
 dev-frontend:  ## Start frontend dev server

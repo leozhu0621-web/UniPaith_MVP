@@ -21,7 +21,7 @@ export default function RouteErrorPage() {
         <div className="mt-4 flex gap-2">
           <button
             type="button"
-            onClick={() => navigate('/s/dashboard')}
+            onClick={() => navigate('/s')}
             className="inline-flex rounded-lg bg-brand-slate-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-slate-700"
           >
             Go to dashboard

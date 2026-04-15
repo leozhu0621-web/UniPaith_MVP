@@ -25,7 +25,7 @@ type Tab = 'programs' | 'schools'
 
 const COUNTRY_OPTIONS = ['United States', 'United Kingdom', 'Canada', 'Australia', 'Germany', 'Netherlands', 'France', 'Singapore', 'Japan', 'South Korea']
 const DEGREE_OPTIONS = [{ v: 'masters', l: 'Masters' }, { v: 'phd', l: 'PhD' }, { v: 'bachelors', l: 'Bachelors' }, { v: 'certificate', l: 'Certificate' }]
-const FORMAT_OPTIONS = [{ v: 'on_campus', l: 'On Campus' }, { v: 'hybrid', l: 'Hybrid' }, { v: 'online', l: 'Online' }]
+const FORMAT_OPTIONS = [{ v: 'in_person', l: 'On Campus' }, { v: 'hybrid', l: 'Hybrid' }, { v: 'online', l: 'Online' }]
 const CAMPUS_OPTIONS = [{ v: 'urban', l: 'Urban' }, { v: 'suburban', l: 'Suburban' }, { v: 'rural', l: 'Rural' }]
 const DURATION_OPTIONS = [{ v: '12', l: '≤ 1yr' }, { v: '24', l: '≤ 2yr' }, { v: '36', l: '≤ 3yr' }, { v: '48', l: '≤ 4yr' }]
 const SORT_OPTIONS = [{ v: 'relevance', l: 'Relevance' }, { v: 'tuition_asc', l: 'Tuition: Low→High' }, { v: 'tuition_desc', l: 'Tuition: High→Low' }, { v: 'salary_desc', l: 'Salary: Highest' }, { v: 'employment_desc', l: 'Employment: Highest' }, { v: 'deadline', l: 'Deadline: Soonest' }]
