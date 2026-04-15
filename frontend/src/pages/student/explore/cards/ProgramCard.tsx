@@ -26,7 +26,7 @@ interface Props {
 export default function ProgramCard({ program, saved, match, comparing, onSave, onCompare, onAskCounselor, onView }: Props) {
   const degree = DEGREE_LABELS[program.degree_type] || program.degree_type
   const fit = match ? fitLabel(match.match_tier) : null
-  const imgUrl = program.institution_image_url || program.institution_logo_url
+  const imgUrl = program.media_urls?.[0] || program.institution_image_url || program.institution_logo_url
 
   return (
     <div className="bg-white rounded-xl border border-divider hover:shadow-lg hover:scale-[1.01] hover:-translate-y-0.5 transition-all duration-200 ease-out overflow-hidden flex flex-col">

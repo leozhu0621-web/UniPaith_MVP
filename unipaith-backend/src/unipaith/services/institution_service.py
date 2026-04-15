@@ -1856,6 +1856,8 @@ class InstitutionService:
                 institution_city=inst.city,
                 median_salary=(
                     _outcomes_int(prog, "median_salary")
+                    or _outcomes_int(prog, "earnings_4yr_median")
+                    or _outcomes_int(prog, "earnings_1yr_median")
                     or (inst.ranking_data or {}).get("earnings_10yr_median")
                 ),
                 employment_rate=(
@@ -1966,6 +1968,8 @@ class InstitutionService:
                     institution_city=inst.city if inst else None,
                     median_salary=(
                         _outcomes_int(program, "median_salary")
+                        or _outcomes_int(program, "earnings_4yr_median")
+                        or _outcomes_int(program, "earnings_1yr_median")
                         or rd.get("earnings_10yr_median")
                     ),
                     employment_rate=(
