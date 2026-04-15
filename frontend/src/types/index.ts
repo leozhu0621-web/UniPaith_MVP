@@ -327,8 +327,23 @@ export interface ProgramSummary {
   median_salary: number | null
   employment_rate: number | null
   payback_months: number | null
+  description_text?: string | null
+  media_urls?: string[] | null
+  highlights?: string[] | Record<string, unknown> | null
   institution_logo_url?: string | null
   institution_image_url?: string | null
+  school_id?: string | null
+}
+
+export interface SchoolSummary {
+  id: string
+  institution_id: string
+  name: string
+  description_text?: string | null
+  media_urls?: string[] | null
+  logo_url?: string | null
+  program_count: number
+  program_names: string[]
 }
 
 export interface PaginatedResponse<T> {

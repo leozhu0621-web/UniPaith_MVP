@@ -202,6 +202,20 @@ class ProgramSummaryResponse(BaseModel):
     institution_image_url: str | None = None
 
 
+# --- Schools ---
+
+
+class SchoolSummaryResponse(BaseModel):
+    id: UUID
+    institution_id: UUID
+    name: str
+    description_text: str | None = None
+    media_urls: list | dict | None = None
+    logo_url: str | None = None
+    program_count: int = 0
+    program_names: list[str] = []
+
+
 # --- Target Segments ---
 
 
