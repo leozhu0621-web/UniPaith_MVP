@@ -73,7 +73,12 @@ class KnowledgeDocument(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     # use_alter breaks crawl_frontier <-> knowledge_documents cycle
     # so create_all/drop_all work in tests
     crawl_frontier_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("crawl_frontier.id", ondelete="SET NULL", use_alter=True),
+        ForeignKey(
+            "crawl_frontier.id",
+            ondelete="SET NULL",
+            use_alter=True,
+            name="fk_knowledge_documents_crawl_frontier_id",
+        ),
     )
 
     __table_args__ = (

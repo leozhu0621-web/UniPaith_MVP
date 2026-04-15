@@ -46,7 +46,13 @@ async def setup_db():
             async with test_engine.begin() as conn:
                 await conn.execute(text("DROP SCHEMA public CASCADE"))
                 await conn.execute(text("CREATE SCHEMA public"))
-                await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+                # Extension creation requires superuser.  If the DB user lacks
+                # the privilege the extension likely already exists at the
+                # database level (outside the public schema), so we can proceed.
+                try:
+                    await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+                except Exception:
+                    pass
                 await conn.run_sync(Base.metadata.create_all)
             break
         except Exception:
@@ -61,7 +67,10 @@ async def setup_db():
             await conn.execute(text("DROP SCHEMA public CASCADE"))
             await conn.execute(text("CREATE SCHEMA public"))
             await conn.execute(text("GRANT ALL ON SCHEMA public TO public"))
-            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+            try:
+                await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+            except Exception:
+                pass
     except Exception:
         pass
     await test_engine.dispose()
