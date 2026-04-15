@@ -132,8 +132,24 @@ export default function SchoolDetailPage() {
   const tierInfo = match ? TIER_LABELS[match.match_tier] : null
   const rd: any = p.ranking_data || {}
   const instName = p.institution_name || p.department || ''
-  const instLogo = p.institution_logo_url
-  const mediaImg = p.media_urls?.[0] || p.institution_image_url
+
+  // Local image fallback map
+  const LOCAL_IMGS: Record<string, { campus: string[]; logo: string }> = {
+    'new york university': {
+      campus: ['/school-images/nyu-campus-1.jpg', '/school-images/nyu-campus-2.jpg', '/school-images/nyu-campus-3.jpg'],
+      logo: '/school-images/nyu-logo.jpg',
+    },
+    'stanford university': {
+      campus: ['/school-images/stanford-campus.jpg'],
+      logo: '/school-images/stanford-logo.jpg',
+    },
+  }
+  const localSchool = LOCAL_IMGS[(instName || '').toLowerCase()]
+  const instLogo = localSchool?.logo || p.institution_logo_url
+  const heroHash = (p.program_name || '').split('').reduce((a: number, c: string) => a + c.charCodeAt(0), 0)
+  const mediaImg = localSchool
+    ? localSchool.campus[heroHash % localSchool.campus.length]
+    : (p.media_urls?.[0] || p.institution_image_url)
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -190,50 +206,60 @@ export default function SchoolDetailPage() {
         </div>
       </div>
 
-      {/* Quick stats bar */}
-      <div className="flex flex-wrap gap-3 mb-6">
-        {p.tuition != null && (
-          <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
-            <p className="text-[10px] text-student-text">Tuition</p>
-            <p className="text-sm font-bold text-student-ink">{formatCurrency(p.tuition)}/yr</p>
-          </div>
+      {/* Program info pills */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        <span className="px-3 py-1 text-xs font-semibold rounded-full bg-student-mist text-student border border-student/10">
+          {DEGREE_LABELS[p.degree_type] || p.degree_type}
+        </span>
+        {p.delivery_format && (
+          <span className="px-3 py-1 text-xs font-medium rounded-full bg-slate-100 text-student-ink capitalize">
+            {p.delivery_format.replace(/_/g, ' ')}
+          </span>
         )}
-        {(p.acceptance_rate ?? rd.acceptance_rate) != null && (
-          <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
-            <p className="text-[10px] text-student-text">Acceptance</p>
-            <p className="text-sm font-bold text-student-ink">{formatPercent(p.acceptance_rate ?? rd.acceptance_rate, 1)}</p>
-          </div>
-        )}
-        {rd.earnings_10yr_median && (
-          <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
-            <p className="text-[10px] text-student-text">Avg Salary (10yr)</p>
-            <p className="text-sm font-bold text-student-ink">{formatCurrency(rd.earnings_10yr_median)}</p>
-          </div>
-        )}
-        {rd.graduation_rate && (
-          <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
-            <p className="text-[10px] text-student-text">Grad Rate</p>
-            <p className="text-sm font-bold text-student-ink">{Math.round(rd.graduation_rate * 100)}%</p>
-          </div>
-        )}
-        {rd.sat_avg && (
-          <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
-            <p className="text-[10px] text-student-text">SAT Avg</p>
-            <p className="text-sm font-bold text-student-ink">{rd.sat_avg}</p>
-          </div>
+        {(p.campus_setting || p.institution_campus_setting) && (
+          <span className="px-3 py-1 text-xs font-medium rounded-full bg-slate-100 text-student-ink capitalize">
+            {p.campus_setting || p.institution_campus_setting}
+          </span>
         )}
         {p.duration_months && (
-          <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
-            <p className="text-[10px] text-student-text">Duration</p>
-            <p className="text-sm font-bold text-student-ink">{p.duration_months}mo</p>
-          </div>
+          <span className="px-3 py-1 text-xs font-medium rounded-full bg-slate-100 text-student-ink">
+            {p.duration_months >= 12 ? `${Math.round(p.duration_months / 12)} year${p.duration_months >= 24 ? 's' : ''}` : `${p.duration_months} months`}
+          </span>
         )}
-        {rd.total_cost_attendance && (
-          <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
-            <p className="text-[10px] text-student-text">Total Cost</p>
-            <p className="text-sm font-bold text-student-ink">{formatCurrency(rd.total_cost_attendance)}/yr</p>
-          </div>
+        {!p.duration_months && p.degree_type === 'bachelors' && (
+          <span className="px-3 py-1 text-xs font-medium rounded-full bg-slate-100 text-student-ink">4 years</span>
         )}
+        {!p.duration_months && p.degree_type === 'masters' && (
+          <span className="px-3 py-1 text-xs font-medium rounded-full bg-slate-100 text-student-ink">1–2 years</span>
+        )}
+        {p.application_deadline && (
+          <span className="px-3 py-1 text-xs font-medium rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+            Deadline: {formatDate(p.application_deadline)}
+          </span>
+        )}
+      </div>
+
+      {/* Quick stats bar — expanded */}
+      <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-2 mb-6">
+        {[
+          p.tuition != null && { label: 'Tuition', value: `${formatCurrency(p.tuition)}/yr` },
+          (p.acceptance_rate ?? rd.acceptance_rate) != null && { label: 'Acceptance', value: formatPercent(p.acceptance_rate ?? rd.acceptance_rate, 1) },
+          rd.earnings_10yr_median && { label: 'Avg Salary (10yr)', value: formatCurrency(rd.earnings_10yr_median) },
+          rd.earnings_6yr_median && { label: 'Early Salary (6yr)', value: formatCurrency(rd.earnings_6yr_median) },
+          rd.graduation_rate && { label: 'Grad Rate', value: `${Math.round(rd.graduation_rate * 100)}%` },
+          rd.retention_rate && { label: 'Retention', value: `${Math.round(rd.retention_rate * 100)}%` },
+          rd.sat_avg && { label: 'SAT Avg', value: String(rd.sat_avg) },
+          rd.total_cost_attendance && { label: 'Total Cost', value: `${formatCurrency(rd.total_cost_attendance)}/yr` },
+          rd.avg_net_price && { label: 'Net Price', value: formatCurrency(rd.avg_net_price) },
+          rd.median_debt && { label: 'Median Debt', value: formatCurrency(rd.median_debt) },
+          rd.pell_grant_rate && { label: 'Pell Grant', value: `${Math.round(rd.pell_grant_rate * 100)}%` },
+          p.institution_student_body_size && { label: 'Students', value: p.institution_student_body_size.toLocaleString() },
+        ].filter(Boolean).map((stat: any) => (
+          <div key={stat.label} className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
+            <p className="text-[10px] text-student-text leading-tight">{stat.label}</p>
+            <p className="text-sm font-bold text-student-ink">{stat.value}</p>
+          </div>
+        ))}
       </div>
 
       <Tabs
@@ -253,13 +279,27 @@ export default function SchoolDetailPage() {
       <div className="mt-6">
         {tab === 'overview' && (
           <div className="space-y-5">
-            {/* Description — program or institution fallback */}
-            {(p.description_text || p.institution_description) && (
-              <Card className="p-5">
-                <h3 className="font-semibold text-student-ink mb-2">About This Program</h3>
-                <p className="text-sm text-student-text leading-relaxed">{p.description_text || p.institution_description}</p>
-              </Card>
-            )}
+            {/* Description — with source citation separated */}
+            {(p.description_text || p.institution_description) && (() => {
+              const raw = p.description_text || p.institution_description || ''
+              const sourceMatch = raw.match(/\[Source:\s*(.*?)\]/)
+              const cleanText = raw.replace(/\s*\[Source:.*?\]\s*$/, '').trim()
+              const sourceUrl = sourceMatch?.[1]?.trim()
+              return (
+                <Card className="p-5">
+                  <h3 className="font-semibold text-student-ink mb-2">About This Program</h3>
+                  <p className="text-sm text-student-text leading-relaxed">{cleanText}</p>
+                  {sourceUrl && (
+                    <div className="mt-3 px-3 py-2 bg-slate-50 rounded-lg border border-slate-100 flex items-center gap-2">
+                      <span className="text-[10px] text-student-text/60 font-medium uppercase tracking-wider">Source</span>
+                      <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="text-[11px] text-student hover:underline truncate">
+                        {sourceUrl}
+                      </a>
+                    </div>
+                  )}
+                </Card>
+              )
+            })()}
 
             {/* Key facts — only show fields that have data */}
             <Card className="p-5">
