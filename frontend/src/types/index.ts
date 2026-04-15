@@ -327,6 +327,9 @@ export interface ProgramSummary {
   median_salary: number | null
   employment_rate: number | null
   payback_months: number | null
+  description_text?: string | null
+  media_urls?: string[] | null
+  highlights?: string[] | null
   institution_logo_url?: string | null
   institution_image_url?: string | null
 }

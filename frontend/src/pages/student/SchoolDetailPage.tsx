@@ -514,7 +514,7 @@ export default function SchoolDetailPage() {
                         </div>
                       </div>
                     )}
-                    {salary && totalMid > 0 && (
+                    {salary && totalMid && totalMid > 0 && (
                       <div>
                         <p className="text-gray-500 text-xs">Cost-to-Salary Ratio</p>
                         <p className="font-medium">1:{(salary / totalMid).toFixed(1)}x</p>
