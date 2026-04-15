@@ -115,7 +115,7 @@ async def get_public_program(
     if not resp_dict.get("acceptance_rate") and rd.get("acceptance_rate"):
         resp_dict["acceptance_rate"] = rd["acceptance_rate"]
     if not resp_dict.get("delivery_format") and inst and inst.campus_setting:
-        resp_dict["delivery_format"] = "on_campus"
+        resp_dict["delivery_format"] = "in_person"
     if not resp_dict.get("campus_setting") and inst:
         resp_dict["campus_setting"] = inst.campus_setting
 
