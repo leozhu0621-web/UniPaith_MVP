@@ -967,15 +967,9 @@ async def download_and_upload_images(
                         Body=resp.content,
                         ContentType=ct,
                     )
-                    # Generate long-lived presigned URL (7 days)
-                    s3_url = s3.client.generate_presigned_url(
-                        "get_object",
-                        Params={
-                            "Bucket": s3.bucket,
-                            "Key": key,
-                        },
-                        ExpiresIn=604800,  # 7 days
-                    )
+                    # Use direct public URL for catalog images (bucket policy allows public read on catalog/*)
+                    # This avoids presigned URL length issues and expiration problems
+                    s3_url = f"https://{s3.bucket}.s3.amazonaws.com/{key}"
 
                 results.append({
                     "url": url,
