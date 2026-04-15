@@ -27,7 +27,7 @@ export default function RequireAuth({ role, children }: Props) {
   }
 
   if (user?.role !== role) {
-    const target = user?.role === 'student' ? '/s/dashboard' : '/i/dashboard'
+    const target = user?.role === 'student' ? '/s' : '/i/dashboard'
     return <Navigate to={target} replace />
   }
 

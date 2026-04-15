@@ -91,6 +91,19 @@ variable "backend_max_count" {
   default     = 8
 }
 
+# --- Google OAuth ---
+variable "google_client_id" {
+  description = "Google OAuth client ID for Cognito identity provider"
+  type        = string
+  sensitive   = true
+}
+
+variable "google_client_secret" {
+  description = "Google OAuth client secret for Cognito identity provider"
+  type        = string
+  sensitive   = true
+}
+
 # --- OpenAI ---
 variable "openai_api_key" {
   description = "OpenAI API key for AI features"

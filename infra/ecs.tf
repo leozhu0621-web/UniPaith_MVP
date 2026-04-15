@@ -46,6 +46,7 @@ resource "aws_iam_role_policy" "ecs_execution_secrets" {
       ]
       Resource = [
         aws_secretsmanager_secret.db_password.arn,
+        aws_secretsmanager_secret.database_url.arn,
         aws_secretsmanager_secret.app_secret.arn,
         aws_secretsmanager_secret.openai_api_key.arn,
       ]
@@ -156,7 +157,6 @@ resource "aws_ecs_task_definition" "backend" {
     environment = [
       { name = "ENVIRONMENT", value = "production" },
       { name = "DEBUG", value = "false" },
-      { name = "DATABASE_URL", value = "postgresql+asyncpg://${var.db_username}:${random_password.db_password.result}@${aws_db_instance.main.endpoint}/${var.db_name}?ssl=require" },
       { name = "AWS_REGION", value = var.aws_region },
       { name = "S3_BUCKET_NAME", value = "${var.project}-documents" },
       { name = "S3_LOCAL_MODE", value = "false" },
@@ -172,8 +172,8 @@ resource "aws_ecs_task_definition" "backend" {
 
     secrets = [
       {
-        name      = "DB_PASSWORD"
-        valueFrom = aws_secretsmanager_secret.db_password.arn
+        name      = "DATABASE_URL"
+        valueFrom = aws_secretsmanager_secret.database_url.arn
       },
       {
         name      = "OPENAI_API_KEY"

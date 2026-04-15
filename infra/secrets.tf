@@ -30,6 +30,17 @@ resource "aws_secretsmanager_secret_version" "app_secret" {
   secret_string = random_password.app_secret.result
 }
 
+# --- Database URL (keeps password out of plaintext env vars) ---
+resource "aws_secretsmanager_secret" "database_url" {
+  name                    = "${var.project}/${var.environment}/database-url"
+  recovery_window_in_days = 7
+}
+
+resource "aws_secretsmanager_secret_version" "database_url" {
+  secret_id     = aws_secretsmanager_secret.database_url.id
+  secret_string = "postgresql+asyncpg://${var.db_username}:${random_password.db_password.result}@${aws_db_instance.main.endpoint}/${var.db_name}?ssl=require"
+}
+
 # --- OpenAI API key ---
 resource "aws_secretsmanager_secret" "openai_api_key" {
   name                    = "${var.project}/${var.environment}/openai-api-key"

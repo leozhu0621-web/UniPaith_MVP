@@ -62,6 +62,25 @@ resource "aws_cognito_user_pool" "main" {
   tags = { Name = "${var.project}-user-pool" }
 }
 
+# --- Google Identity Provider ---
+resource "aws_cognito_identity_provider" "google" {
+  user_pool_id  = aws_cognito_user_pool.main.id
+  provider_name = "Google"
+  provider_type = "Google"
+
+  provider_details = {
+    client_id        = var.google_client_id
+    client_secret    = var.google_client_secret
+    authorize_scopes = "openid email profile"
+  }
+
+  attribute_mapping = {
+    email    = "email"
+    username = "sub"
+    name     = "name"
+  }
+}
+
 # --- Cognito App Client ---
 resource "aws_cognito_user_pool_client" "web" {
   name         = "${var.project}-web"
@@ -75,7 +94,7 @@ resource "aws_cognito_user_pool_client" "web" {
     "ALLOW_USER_PASSWORD_AUTH",
   ]
 
-  supported_identity_providers = ["COGNITO"]
+  supported_identity_providers = ["COGNITO", "Google"]
 
   callback_urls = [
     "https://app.${var.domain_name}/auth/callback",
@@ -84,6 +103,8 @@ resource "aws_cognito_user_pool_client" "web" {
   logout_urls = [
     "https://app.${var.domain_name}/login",
   ]
+
+  depends_on = [aws_cognito_identity_provider.google]
 
   access_token_validity  = 1  # hours
   id_token_validity      = 1  # hours
