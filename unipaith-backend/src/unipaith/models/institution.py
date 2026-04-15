@@ -41,7 +41,7 @@ class Institution(Base):
     campus_setting: Mapped[str | None] = mapped_column(String(30))
     student_body_size: Mapped[int | None] = mapped_column(Integer)
     contact_email: Mapped[str | None] = mapped_column(String(255))
-    logo_url: Mapped[str | None] = mapped_column(String(1000))
+    logo_url: Mapped[str | None] = mapped_column(String(2000))
     website_url: Mapped[str | None] = mapped_column(String(1000))
     media_gallery: Mapped[dict | None] = mapped_column(JSONB)
     social_links: Mapped[dict | None] = mapped_column(JSONB)
