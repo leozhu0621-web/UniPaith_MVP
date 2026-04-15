@@ -337,18 +337,23 @@ export default function SchoolDetailPage() {
 
         {tab === 'costs' && (() => {
           const cd = p.cost_data || {}
-          const years = (p.duration_months || 24) / 12
-          const annual = p.tuition || 0
+          const years = (p.duration_months || (p.degree_type === 'bachelors' ? 48 : 24)) / 12
+          const annual = p.tuition ?? rd.tuition_in_state ?? null
+          const hasTuition = annual != null && annual > 0
           const fees = cd.fees || {}
           const feeTotal = Object.values(fees).reduce((s: number, v: any) => s + (Number(v) || 0), 0)
-          const living = cd.estimated_living_cost || 15000
-          const books = cd.book_supplies || 1200
+          const living = cd.estimated_living_cost || rd.room_board || 15000
+          const books = cd.book_supplies || rd.books_supply || 1200
           const intlPremium = cd.international_premium || 0
-          const totalTuitionOnly = annual * years
-          const totalMid = (annual + feeTotal + living + books) * years
-          const totalHigh = Math.round(totalMid * 1.15)
+          const totalTuitionOnly = hasTuition ? (annual as number) * years : null
+          const totalMid = hasTuition ? ((annual as number) + feeTotal + living + books) * years : null
+          const totalHigh = totalMid ? Math.round(totalMid * 1.15) : null
           const od = p.outcomes_data || {}
-          const salary = od.median_salary ? Number(od.median_salary) : null
+          // Support both old field names and Scorecard field names
+          const salary = od.median_salary ? Number(od.median_salary)
+            : od.earnings_1yr_median ? Number(od.earnings_1yr_median)
+            : od.earnings_4yr_median ? Number(od.earnings_4yr_median)
+            : null
           const empRate = od.employment_rate ? Number(od.employment_rate) : null
           const payback = od.payback_months ? Number(od.payback_months) : null
 
@@ -362,7 +367,7 @@ export default function SchoolDetailPage() {
                 <dl className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <dt className="text-gray-500">Annual Tuition</dt>
-                    <dd className="font-medium">{formatCurrency(annual)}</dd>
+                    <dd className="font-medium">{hasTuition ? formatCurrency(annual as number) : <span className="text-gray-400">Contact school</span>}</dd>
                   </div>
                   {Object.entries(fees).map(([k, v]) => (
                     <div key={k} className="flex justify-between">
@@ -390,20 +395,38 @@ export default function SchoolDetailPage() {
                   <GraduationCap size={16} className="text-stone-600" />
                   <h3 className="font-medium text-sm text-stone-700">Estimated Total Cost ({years.toFixed(1)} years)</h3>
                 </div>
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div className="bg-emerald-50 rounded-lg p-3">
-                    <p className="text-xs text-gray-500 mb-1">Tuition Only</p>
-                    <p className="text-lg font-bold text-emerald-700">{formatCurrency(totalTuitionOnly)}</p>
+                {hasTuition ? (
+                  <div className="grid grid-cols-3 gap-3 text-center">
+                    <div className="bg-emerald-50 rounded-lg p-3">
+                      <p className="text-xs text-gray-500 mb-1">Tuition Only</p>
+                      <p className="text-lg font-bold text-emerald-700">{formatCurrency(totalTuitionOnly!)}</p>
+                    </div>
+                    <div className="bg-stone-50 rounded-lg p-3">
+                      <p className="text-xs text-gray-500 mb-1">With Living Costs</p>
+                      <p className="text-lg font-bold text-stone-700">{formatCurrency(totalMid!)}</p>
+                    </div>
+                    <div className="bg-amber-50 rounded-lg p-3">
+                      <p className="text-xs text-gray-500 mb-1">High Estimate</p>
+                      <p className="text-lg font-bold text-amber-700">{formatCurrency(totalHigh!)}</p>
+                    </div>
                   </div>
-                  <div className="bg-stone-50 rounded-lg p-3">
-                    <p className="text-xs text-gray-500 mb-1">With Living Costs</p>
-                    <p className="text-lg font-bold text-stone-700">{formatCurrency(totalMid)}</p>
+                ) : rd.total_cost_attendance ? (
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Estimated Total Cost (per year)</span>
+                      <span className="font-bold">{formatCurrency(rd.total_cost_attendance)}</span>
+                    </div>
+                    {rd.avg_net_price && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Average Net Price (after aid)</span>
+                        <span className="font-bold text-emerald-600">{formatCurrency(rd.avg_net_price)}</span>
+                      </div>
+                    )}
+                    <p className="text-[10px] text-gray-400 mt-1">Source: College Scorecard (institution-level)</p>
                   </div>
-                  <div className="bg-amber-50 rounded-lg p-3">
-                    <p className="text-xs text-gray-500 mb-1">High Estimate</p>
-                    <p className="text-lg font-bold text-amber-700">{formatCurrency(totalHigh)}</p>
-                  </div>
-                </div>
+                ) : (
+                  <p className="text-sm text-gray-400">Cost details not available. Contact the program directly.</p>
+                )}
               </Card>
 
               <Card className="p-4">
@@ -424,6 +447,39 @@ export default function SchoolDetailPage() {
                     {cd.avg_aid_amount && (
                       <p className="text-sm text-gray-600 mt-2">Average aid: {formatCurrency(cd.avg_aid_amount)}</p>
                     )}
+                  </div>
+                ) : (rd.pell_grant_rate || rd.avg_net_price) ? (
+                  <div className="space-y-2 text-sm">
+                    {rd.avg_net_price && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Avg Net Price (after aid)</span>
+                        <span className="font-bold text-emerald-600">{formatCurrency(rd.avg_net_price)}</span>
+                      </div>
+                    )}
+                    {rd.pell_grant_rate && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Pell Grant Recipients</span>
+                        <span className="font-medium">{(rd.pell_grant_rate * 100).toFixed(0)}%</span>
+                      </div>
+                    )}
+                    {rd.median_debt && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Median Graduate Debt</span>
+                        <span className="font-medium">{formatCurrency(rd.median_debt)}</span>
+                      </div>
+                    )}
+                    {rd.net_price_by_income && (
+                      <div className="mt-3">
+                        <p className="text-xs text-gray-500 mb-2">Net Price by Family Income:</p>
+                        {Object.entries(rd.net_price_by_income as Record<string, number>).filter(([, v]) => v != null).slice(0, 5).map(([k, v]) => (
+                          <div key={k} className="flex justify-between text-xs py-0.5">
+                            <span className="text-gray-400">${k.replace(/-/g, ' – $').replace('plus', '+')}</span>
+                            <span className="text-gray-600">{formatCurrency(v)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-[10px] text-gray-400 mt-1">Source: College Scorecard (institution-level)</p>
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500">Contact the program for financial aid details.</p>
@@ -475,7 +531,11 @@ export default function SchoolDetailPage() {
 
         {tab === 'outcomes' && (() => {
           const od = p.outcomes_data || {}
-          const salary = od.median_salary ? Number(od.median_salary) : null
+          // Support Scorecard field names (earnings_1yr_median, earnings_4yr_median) and legacy (median_salary)
+          const earn1yr = od.earnings_1yr_median ? Number(od.earnings_1yr_median) : null
+          const earn4yr = od.earnings_4yr_median ? Number(od.earnings_4yr_median) : null
+          const earn5yr = od.earnings_5yr_median ? Number(od.earnings_5yr_median) : null
+          const salary = od.median_salary ? Number(od.median_salary) : earn1yr
           const salaryLow = od.salary_25th ? Number(od.salary_25th) : (salary ? Math.round(salary * 0.75) : null)
           const salaryHigh = od.salary_75th ? Number(od.salary_75th) : (salary ? Math.round(salary * 1.3) : null)
           const empRate = od.employment_rate ? Number(od.employment_rate) : null
@@ -483,7 +543,10 @@ export default function SchoolDetailPage() {
           const internRate = od.internship_conversion_rate ? Number(od.internship_conversion_rate) : null
           const topEmployers: string[] = od.top_employers || []
           const topIndustries: string[] = od.top_industries || []
-          const hasData = salary || empRate || topEmployers.length > 0
+          const annualGrads = od.annual_graduates ? Number(od.annual_graduates) : null
+          const cipTitle = od.cip_title || null
+          const dataSource = od.source || null
+          const hasData = salary || earn4yr || empRate || topEmployers.length > 0
 
           return (
             <div className="space-y-4">
@@ -532,6 +595,42 @@ export default function SchoolDetailPage() {
                       <p className="text-sm text-gray-500">Salary data not available.</p>
                     )}
                   </Card>
+
+                  {/* Scorecard earnings progression */}
+                  {(earn1yr || earn4yr) && (
+                    <Card className="p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <TrendingUp size={16} className="text-stone-600" />
+                        <h3 className="font-medium text-sm text-stone-700">Earnings Progression</h3>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3 text-center">
+                        {earn1yr && (
+                          <div className="bg-emerald-50 rounded-lg p-3">
+                            <p className="text-xs text-gray-500 mb-1">1 Year After</p>
+                            <p className="text-lg font-bold text-emerald-700">{formatCurrency(earn1yr)}</p>
+                          </div>
+                        )}
+                        {earn4yr && (
+                          <div className="bg-blue-50 rounded-lg p-3">
+                            <p className="text-xs text-gray-500 mb-1">4 Years After</p>
+                            <p className="text-lg font-bold text-blue-700">{formatCurrency(earn4yr)}</p>
+                          </div>
+                        )}
+                        {earn5yr && (
+                          <div className="bg-purple-50 rounded-lg p-3">
+                            <p className="text-xs text-gray-500 mb-1">5 Years After</p>
+                            <p className="text-lg font-bold text-purple-700">{formatCurrency(earn5yr)}</p>
+                          </div>
+                        )}
+                      </div>
+                      {annualGrads && (
+                        <p className="text-[10px] text-gray-400 mt-2">Based on {annualGrads.toLocaleString()} annual graduates{cipTitle ? ` in ${cipTitle}` : ''}</p>
+                      )}
+                      {dataSource && (
+                        <p className="text-[10px] text-gray-400">Source: {dataSource}</p>
+                      )}
+                    </Card>
+                  )}
 
                   <Card className="p-4">
                     <div className="flex items-center gap-2 mb-3">
