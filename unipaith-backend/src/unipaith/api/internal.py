@@ -967,8 +967,9 @@ async def download_and_upload_images(
                         Body=resp.content,
                         ContentType=ct,
                     )
-                    # Use direct public URL for catalog images (bucket policy allows public read on catalog/*)
-                    # This avoids presigned URL length issues and expiration problems
+                    # Use direct public URL for catalog images
+                    # (bucket policy allows public read on catalog/*)
+                    # Avoids presigned URL length/expiration issues
                     s3_url = f"https://{s3.bucket}.s3.amazonaws.com/{key}"
 
                 results.append({
