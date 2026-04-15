@@ -809,6 +809,7 @@ class EnrichInstitutionRequest(BaseModel):
 class EnrichProgramRequest(BaseModel):
     program_name: str
     institution_name: str
+    department: str | None = None
     tuition: int | None = None
     duration_months: int | None = None
     description_text: str | None = None
@@ -865,12 +866,15 @@ async def enrich_data(
             inst = inst_r.scalar_one_or_none()
             if not inst:
                 continue
-            prog_r = await db.execute(
-                select(Program).where(
-                    Program.institution_id == inst.id,
-                    Program.program_name == prog_data.program_name,
-                )
+            prog_stmt = select(Program).where(
+                Program.institution_id == inst.id,
+                Program.program_name == prog_data.program_name,
             )
+            if prog_data.department:
+                prog_stmt = prog_stmt.where(
+                    Program.department == prog_data.department
+                )
+            prog_r = await db.execute(prog_stmt)
             prog = prog_r.scalar_one_or_none()
             if not prog:
                 continue
@@ -882,7 +886,7 @@ async def enrich_data(
             # Set non-null values (skip 0 and "" as they mean "no data")
             for field, value in prog_data.model_dump(
                 exclude_unset=True,
-                exclude={"program_name", "institution_name", "clear_fields"},
+                exclude={"program_name", "institution_name", "department", "clear_fields"},
             ).items():
                 if value is not None:
                     setattr(prog, field, value)
