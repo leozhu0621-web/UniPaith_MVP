@@ -74,28 +74,30 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build, tag, and push image
+        id: build
         working-directory: unipaith-backend
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          # Capture digest from docker push output (no ECR DescribeImages perm needed).
+          # docker push prints: "<tag>: digest: sha256:<hex> size: <n>"
+          DIGEST=$(docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG | tee /dev/stderr | grep -oE 'sha256:[a-f0-9]{64}' | head -1)
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          if [ -z "$DIGEST" ]; then
+            echo "::error::Failed to capture image digest from docker push"
+            exit 1
+          fi
+          echo "Image digest: $DIGEST"
+          echo "DIGEST=$DIGEST" >> $GITHUB_OUTPUT
 
       - name: Register new task definition with pinned digest
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
+          DIGEST: ${{ steps.build.outputs.DIGEST }}
         run: |
-          # Resolve the SHA256 digest of the image we just pushed (NOT :latest, which
-          # ECS doesn't re-resolve on --force-new-deployment).
-          DIGEST=$(aws ecr describe-images \
-            --repository-name $ECR_REPOSITORY \
-            --image-ids imageTag=$IMAGE_TAG \
-            --query 'imageDetails[0].imageDigest' \
-            --output text)
           NEW_IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY@$DIGEST"
           echo "Pinning to $NEW_IMAGE"
 
