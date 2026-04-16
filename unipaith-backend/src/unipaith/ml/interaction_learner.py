@@ -59,6 +59,8 @@ class InteractionLearner:
             )
         )
         for signal in signals_result.scalars().all():
+            if signal.entity_id is None:
+                continue
             reward = REWARD_MAP.get(signal.signal_type, 0.0)
             key = (signal.user_id, signal.entity_id)
             if reward > 0:

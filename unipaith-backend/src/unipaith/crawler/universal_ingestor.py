@@ -79,7 +79,7 @@ class WebAdapter(BaseAdapter):
         meta_desc = ""
         meta_tag = soup.find("meta", attrs={"name": "description"})
         if meta_tag and meta_tag.get("content"):
-            meta_desc = meta_tag["content"]
+            meta_desc = str(meta_tag["content"])
 
         return [
             IngestedContent(
@@ -351,7 +351,7 @@ class SearchAdapter(BaseAdapter):
         soup = BeautifulSoup(html, "lxml")
         links = []
         for result in soup.select(".result__a"):
-            href = result.get("href", "")
+            href = str(result.get("href", ""))
             if href.startswith("http"):
                 links.append(href)
 
