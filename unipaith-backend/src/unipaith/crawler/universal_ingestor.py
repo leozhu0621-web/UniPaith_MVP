@@ -79,7 +79,8 @@ class WebAdapter(BaseAdapter):
         meta_desc = ""
         meta_tag = soup.find("meta", attrs={"name": "description"})
         if meta_tag and meta_tag.get("content"):
-            meta_desc = meta_tag["content"]
+            raw = meta_tag["content"]
+            meta_desc = raw if isinstance(raw, str) else raw[0] if raw else ""
 
         return [
             IngestedContent(

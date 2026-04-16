@@ -55,7 +55,7 @@ class EmbeddingClient:
                 last_error = exc
             if attempt < settings.ai_request_max_retries:
                 await asyncio.sleep(settings.ai_request_backoff_seconds * attempt)
-        raise last_error
+        raise last_error or RuntimeError("Embedding request failed with no retries configured")
 
 
 class AWSEmbeddingClient:
@@ -110,7 +110,7 @@ class AWSEmbeddingClient:
                     await asyncio.sleep(wait)
 
         logger.error("Embedding request failed after %d attempts: %s", self.MAX_RETRIES, last_error)
-        raise last_error
+        raise last_error or RuntimeError("Embedding request failed with no retries configured")
 
 
 class MockEmbeddingClient:
