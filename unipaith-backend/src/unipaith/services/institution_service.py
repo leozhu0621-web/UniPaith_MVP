@@ -89,25 +89,48 @@ def _escape_like(value: str) -> str:
 
 
 def _outcomes_int(prog: Program, key: str) -> int | None:
-    if prog.outcomes_data and isinstance(prog.outcomes_data, dict):
-        val = prog.outcomes_data.get(key)
-        if val is not None:
-            try:
-                return int(val)
-            except (ValueError, TypeError):
-                pass
-    return None
+    """Extract an int from outcomes_data JSONB. Handles dict, JSON string, and None cases."""
+    data = prog.outcomes_data
+    if data is None:
+        return None
+    # JSONB sometimes deserializes as a string — handle that
+    if isinstance(data, str):
+        try:
+            import json as _json
+            data = _json.loads(data)
+        except (ValueError, TypeError):
+            return None
+    if not isinstance(data, dict):
+        return None
+    val = data.get(key)
+    if val is None:
+        return None
+    try:
+        return int(float(val))  # float first so "137804.0" and 137804.0 both work
+    except (ValueError, TypeError):
+        return None
 
 
 def _outcomes_float(prog: Program, key: str) -> float | None:
-    if prog.outcomes_data and isinstance(prog.outcomes_data, dict):
-        val = prog.outcomes_data.get(key)
-        if val is not None:
-            try:
-                return float(val)
-            except (ValueError, TypeError):
-                pass
-    return None
+    """Extract a float from outcomes_data JSONB."""
+    data = prog.outcomes_data
+    if data is None:
+        return None
+    if isinstance(data, str):
+        try:
+            import json as _json
+            data = _json.loads(data)
+        except (ValueError, TypeError):
+            return None
+    if not isinstance(data, dict):
+        return None
+    val = data.get(key)
+    if val is None:
+        return None
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return None
 
 
 class InstitutionService:
@@ -1842,13 +1865,17 @@ class InstitutionService:
                 program_name=prog.program_name,
                 degree_type=prog.degree_type,
                 department=prog.department,
-                tuition=prog.tuition or (inst.ranking_data or {}).get("tuition_out_of_state"),
+                # Program-level fields stay null when unknown — do NOT fall back to
+                # institution-wide tuition/acceptance because those mislead students
+                # (e.g., NYU's 9% university acceptance ≠ Tisch's program-specific rate).
+                # Institution-level values are available via `ranking_data` for context.
+                tuition=prog.tuition,
                 duration_months=prog.duration_months,
                 delivery_format=prog.delivery_format,
                 acceptance_rate=(
                     float(prog.acceptance_rate)
                     if prog.acceptance_rate is not None
-                    else (inst.ranking_data or {}).get("acceptance_rate")
+                    else None
                 ),
                 application_deadline=prog.application_deadline,
                 institution_name=inst.name,

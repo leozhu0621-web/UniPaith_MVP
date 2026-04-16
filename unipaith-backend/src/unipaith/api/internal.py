@@ -820,6 +820,12 @@ class EnrichProgramRequest(BaseModel):
     media_urls: list[str] | None = None
     outcomes_data: dict | None = None
     application_requirements: list[dict] | None = None
+    # Extended program detail fields populated from scraped/structured sources
+    cost_data: dict | None = None
+    intake_rounds: dict | None = None
+    tracks: dict | None = None
+    requirements: dict | None = None
+    faculty_contacts: dict | None = None
     clear_fields: list[str] | None = None
 
 

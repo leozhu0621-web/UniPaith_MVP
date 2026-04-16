@@ -1,3 +1,4 @@
+// Build: 2026-04-16-nyu-data-fixes-v2 — cache-bust to force CI to produce fresh bundle
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -319,17 +320,46 @@ export default function SchoolDetailPage() {
         )}
 
         {tab === 'requirements' && (
-          <div>
-            {p.requirements && Object.keys(p.requirements).length > 0 ? (
-              <dl className="space-y-2 text-sm">
-                {Object.entries(p.requirements).map(([k, v]) => (
-                  <div key={k} className="flex justify-between border-b border-gray-100 pb-2">
-                    <dt className="text-gray-500 capitalize">{k.replace(/_/g, ' ')}</dt>
-                    <dd className="font-medium">{String(v)}</dd>
-                  </div>
-                ))}
-              </dl>
-            ) : (
+          <div className="space-y-4">
+            {/* Application requirements (list of {label, required, note}) */}
+            {Array.isArray(p.application_requirements) && p.application_requirements.length > 0 && (
+              <Card className="p-4">
+                <h3 className="font-medium text-sm text-stone-700 mb-3">Application Checklist</h3>
+                <ul className="space-y-2 text-sm">
+                  {p.application_requirements.map((item: any, idx: number) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className={`inline-block mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0 ${item.required ? 'bg-emerald-500' : 'bg-gray-300'}`} />
+                      <div className="flex-1">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="text-student-ink">{item.label}</span>
+                          <span className={`text-[10px] font-medium uppercase ${item.required ? 'text-emerald-700' : 'text-gray-500'}`}>
+                            {item.required ? 'Required' : 'Optional'}
+                          </span>
+                        </div>
+                        {item.note && <p className="text-xs text-gray-500 mt-0.5">{item.note}</p>}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            )}
+            {/* Structured requirements (dict of key-value: e.g. min GPA, languages) */}
+            {p.requirements && Object.keys(p.requirements).length > 0 && (
+              <Card className="p-4">
+                <h3 className="font-medium text-sm text-stone-700 mb-3">Academic Requirements</h3>
+                <dl className="space-y-2 text-sm">
+                  {Object.entries(p.requirements).map(([k, v]) => (
+                    <div key={k} className="flex justify-between border-b border-gray-100 pb-2">
+                      <dt className="text-gray-500 capitalize">{k.replace(/_/g, ' ')}</dt>
+                      <dd className="font-medium">{String(v)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </Card>
+            )}
+            {/* Fall back to message only if both lists are empty */}
+            {(!Array.isArray(p.application_requirements) || p.application_requirements.length === 0)
+              && (!p.requirements || Object.keys(p.requirements).length === 0) && (
               <p className="text-sm text-gray-500">No specific requirements listed.</p>
             )}
           </div>

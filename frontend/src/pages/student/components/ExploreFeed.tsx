@@ -235,36 +235,53 @@ function ProgramCard({ program, saved, match, comparing, onSave, onCompare, onAs
   const fit = match ? fitLabel(match.match_tier) : null
   const deadlineDate = program.application_deadline ? new Date(program.application_deadline) : null
   const daysLeft = deadlineDate ? Math.ceil((deadlineDate.getTime() - Date.now()) / 86400000) : null
+  // Prefer program-specific image; fall back to institution image
+  const heroImg = (program as any).media_urls?.[0] || (program as any).institution_image_url || null
 
   return (
     <div className="bg-white rounded-xl border border-divider hover:shadow-lg transition-all overflow-hidden group">
       {/* ===== Hero Banner ===== */}
-      <div className={`relative bg-gradient-to-r ${gradient} px-5 pt-5 pb-4 cursor-pointer`} onClick={onView}>
+      <div
+        className={`relative ${heroImg ? '' : `bg-gradient-to-r ${gradient}`} px-5 pt-5 pb-4 cursor-pointer overflow-hidden`}
+        onClick={onView}
+      >
+        {/* Background image with dark overlay for text readability */}
+        {heroImg && (
+          <>
+            <img
+              src={heroImg}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover"
+              onError={e => { e.currentTarget.style.display = 'none' }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/20" />
+          </>
+        )}
         {/* Fit badge */}
         {fit && (
-          <span className={`absolute top-3 right-3 px-2.5 py-1 text-[10px] font-bold rounded-full border ${fit.bg} ${fit.color}`}>
+          <span className={`absolute top-3 right-3 px-2.5 py-1 text-[10px] font-bold rounded-full border ${fit.bg} ${fit.color} z-10`}>
             {fit.text}
           </span>
         )}
 
         {/* Degree pill */}
-        <span className="inline-block px-2.5 py-0.5 text-[10px] font-semibold rounded-full bg-white/20 text-white backdrop-blur-sm mb-3">
+        <span className="relative inline-block px-2.5 py-0.5 text-[10px] font-semibold rounded-full bg-white/20 text-white backdrop-blur-sm mb-3 z-10">
           {degree}
           {program.delivery_format && ` · ${program.delivery_format.replace(/_/g, ' ')}`}
           {program.duration_months && ` · ${program.duration_months}mo`}
         </span>
 
         {/* Program name */}
-        <h3 className="text-lg font-bold text-white leading-tight mb-1">{program.program_name}</h3>
+        <h3 className="relative text-lg font-bold text-white leading-tight mb-1 z-10 drop-shadow">{program.program_name}</h3>
 
         {/* Institution row */}
-        <div className="flex items-center gap-2">
+        <div className="relative flex items-center gap-2 z-10">
           <div className="w-7 h-7 rounded-md bg-white/20 backdrop-blur-sm flex items-center justify-center">
             <GraduationCap size={14} className="text-white" />
           </div>
           <div>
-            <p className="text-sm font-medium text-white/95">{program.institution_name}</p>
-            <p className="text-[10px] text-white/70 flex items-center gap-1">
+            <p className="text-sm font-medium text-white/95 drop-shadow">{program.institution_name}</p>
+            <p className="text-[10px] text-white/80 flex items-center gap-1 drop-shadow">
               <MapPin size={8} />
               {program.institution_city ? `${program.institution_city}, ` : ''}{program.institution_country}
             </p>
