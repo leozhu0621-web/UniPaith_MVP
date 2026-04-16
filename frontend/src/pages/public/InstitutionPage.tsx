@@ -270,9 +270,9 @@ export default function InstitutionPage() {
                         <p className="text-xs text-gray-500">Graduation Rate</p>
                       </div>
                     )}
-                    {inst.ranking_data?.median_earnings != null && (
+                    {inst.ranking_data?.earnings_10yr_median != null && (
                       <div className="text-center p-3 bg-emerald-50 rounded-lg">
-                        <p className="text-2xl font-bold text-emerald-700">${inst.ranking_data.median_earnings.toLocaleString()}</p>
+                        <p className="text-2xl font-bold text-emerald-700">${inst.ranking_data.earnings_10yr_median.toLocaleString()}</p>
                         <p className="text-xs text-gray-500">Median Earnings (10yr)</p>
                       </div>
                     )}

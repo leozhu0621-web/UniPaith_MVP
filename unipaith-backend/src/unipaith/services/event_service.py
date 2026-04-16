@@ -78,8 +78,7 @@ class EventService:
         if event.institution_id != institution_id:
             raise ForbiddenException("Event does not belong to this institution")
         for key, value in kwargs.items():
-            if value is not None:
-                setattr(event, key, value)
+            setattr(event, key, value)
         await self.db.flush()
         await self.db.refresh(event)
         return event
