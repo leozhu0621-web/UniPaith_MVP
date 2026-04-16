@@ -23,6 +23,7 @@ const DEGREE_OPTIONS = [
 
 const DELIVERY_FORMAT_OPTIONS = [
   { value: '', label: 'Not specified' },
+  { value: 'on_campus', label: 'On Campus' },
   { value: 'in_person', label: 'In Person' },
   { value: 'online', label: 'Online' },
   { value: 'hybrid', label: 'Hybrid' },

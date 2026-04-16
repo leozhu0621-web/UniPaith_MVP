@@ -1233,7 +1233,17 @@ async def get_public_intake_rounds(
     """Public — get active intake rounds for a program."""
     from sqlalchemy import select
 
-    from unipaith.models.institution import IntakeRound
+    from unipaith.models.institution import IntakeRound, Program
+
+    # Verify the program belongs to the given institution
+    prog_result = await db.execute(
+        select(Program.id).where(
+            Program.id == program_id,
+            Program.institution_id == institution_id,
+        )
+    )
+    if not prog_result.scalar_one_or_none():
+        return []
 
     result = await db.execute(
         select(IntakeRound).where(

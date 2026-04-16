@@ -1860,10 +1860,7 @@ class InstitutionService:
                     or _outcomes_int(prog, "earnings_1yr_median")
                     or (inst.ranking_data or {}).get("earnings_10yr_median")
                 ),
-                employment_rate=(
-                    _outcomes_float(prog, "employment_rate")
-                    or (inst.ranking_data or {}).get("graduation_rate")
-                ),
+                employment_rate=_outcomes_float(prog, "employment_rate"),
                 payback_months=_outcomes_int(prog, "payback_months"),
                 description_text=prog.description_text,
                 media_urls=prog.media_urls,

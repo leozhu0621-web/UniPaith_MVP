@@ -138,6 +138,7 @@ export const INSTITUTION_TYPES = [
 
 export const DELIVERY_FORMAT_LABELS: Record<string, string> = {
   in_person: 'In Person',
+  on_campus: 'On Campus',
   online: 'Online',
   hybrid: 'Hybrid',
 }
