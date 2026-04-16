@@ -1,7 +1,7 @@
 """widen logo_url to 2000 chars
 
-Revision ID: a1b2c3d4e5f6
-Revises: 
+Revision ID: m3n4o5p6q7r8
+Revises: l2m3n4o5p6q7
 Create Date: 2026-04-15 20:00:00.000000
 
 """
@@ -10,7 +10,7 @@ from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers
-revision: str = 'a1b2c3d4e5f6'
+revision: str = 'm3n4o5p6q7r8'
 down_revision: str = 'l2m3n4o5p6q7'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
