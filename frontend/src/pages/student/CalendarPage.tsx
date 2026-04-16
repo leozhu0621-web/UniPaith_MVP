@@ -71,7 +71,6 @@ export default function CalendarPage() {
   const [workBlocks, setWorkBlocks] = useState<WorkBlock[]>([])
   const [wbForm, setWbForm] = useState({ title: '', date: '', duration: '60', category: 'general' })
   const { deadlines, isLoading, interviews } = useDeadlines()
-  const interviewList: any[] = Array.isArray(interviews) ? interviews : []
 
   const confirmMut = useMutation({
     mutationFn: ({ id, time }: { id: string; time: string }) => confirmInterview(id, time),
@@ -85,13 +84,14 @@ export default function CalendarPage() {
 
   // Build a lookup from interview time to raw interview object for agenda meta
   const interviewMetaLookup = useMemo(() => {
+    const list: any[] = Array.isArray(interviews) ? interviews : []
     const map = new Map<string, any>()
-    interviewList.forEach(iv => {
+    list.forEach(iv => {
       const time = iv.confirmed_time || iv.proposed_times?.[0]
       if (time) map.set(time, iv)
     })
     return map
-  }, [interviewList])
+  }, [interviews])
 
   const allItems: CalendarItem[] = useMemo(() => {
     // deadlines already includes interviews from useDeadlines — enrich with meta

@@ -52,7 +52,10 @@ export default function DecisionComparisonPage() {
     queryFn: () => getMatches(),
   })
 
-  const appList: Application[] = Array.isArray(applications) ? applications : []
+  const appList: Application[] = useMemo(
+    () => Array.isArray(applications) ? applications : [],
+    [applications],
+  )
 
   const matchLookup = useMemo(() => {
     const lookup: Record<string, MatchResult> = {}
