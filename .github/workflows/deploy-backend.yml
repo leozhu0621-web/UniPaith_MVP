@@ -84,11 +84,47 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
+      - name: Register new task definition with pinned digest
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Resolve the SHA256 digest of the image we just pushed (NOT :latest, which
+          # ECS doesn't re-resolve on --force-new-deployment).
+          DIGEST=$(aws ecr describe-images \
+            --repository-name $ECR_REPOSITORY \
+            --image-ids imageTag=$IMAGE_TAG \
+            --query 'imageDetails[0].imageDigest' \
+            --output text)
+          NEW_IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY@$DIGEST"
+          echo "Pinning to $NEW_IMAGE"
+
+          # Pull current task def, swap image, strip read-only fields, register new revision
+          aws ecs describe-task-definition --task-definition $ECS_SERVICE \
+            --query 'taskDefinition' > /tmp/td.json
+
+          python3 -c "
+          import json
+          td = json.load(open('/tmp/td.json'))
+          for k in ['taskDefinitionArn','revision','status','requiresAttributes',
+                    'compatibilities','registeredAt','registeredBy']:
+              td.pop(k, None)
+          td['containerDefinitions'][0]['image'] = '$NEW_IMAGE'
+          json.dump(td, open('/tmp/td-new.json','w'))
+          "
+
+          NEW_TD=$(aws ecs register-task-definition \
+            --cli-input-json file:///tmp/td-new.json \
+            --query 'taskDefinition.taskDefinitionArn' --output text)
+          echo "Registered: $NEW_TD"
+          echo "NEW_TD=$NEW_TD" >> $GITHUB_ENV
+
       - name: Deploy to ECS
         run: |
           aws ecs update-service \
             --cluster $ECS_CLUSTER \
             --service $ECS_SERVICE \
+            --task-definition $NEW_TD \
             --force-new-deployment \
             --region $AWS_REGION
 
