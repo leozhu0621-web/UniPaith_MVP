@@ -1151,8 +1151,8 @@ async def get_completion_map(
         _sec("Test Scores", "test_scores", False),
         _sec("Activities", "activities", False),
         _sec("Preferences", "preferences", True),
-        _sec("Essays", "essays", False),
-        _sec("Documents", "documents", False),
+        _sec("Goals", "goals", False),
+        _sec("Online Presence", "online_presence", False),
     ]
     match_sections = [s for s in sections if s["match_required"]]
     apply_sections = sections
