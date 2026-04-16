@@ -926,7 +926,10 @@ class StudentService:
             if match_count > 0
             else None
         )
-        top_tier = min((m.match_tier for m in matches), default=None)
+        top_tier = min(
+            (m.match_tier for m in matches if m.match_tier is not None),
+            default=None,
+        )
 
         # Application stats
         apps_result = await self.db.execute(
@@ -936,7 +939,8 @@ class StudentService:
         app_by_status: dict[str, int] = {}
         decisions: dict[str, int] = {}
         for a in apps:
-            app_by_status[a.status] = app_by_status.get(a.status, 0) + 1
+            status_key = a.status or "unknown"
+            app_by_status[status_key] = app_by_status.get(status_key, 0) + 1
             if a.decision:
                 decisions[a.decision] = decisions.get(a.decision, 0) + 1
 

@@ -1529,7 +1529,7 @@ class InstitutionService:
         )
         result = await self.db.execute(stmt)
 
-        promos: list[PromotionResponse] = []
+        promos: list[Promotion] = []
         for p in result.scalars().all():
             # Time-box check
             if p.starts_at and p.starts_at > now:

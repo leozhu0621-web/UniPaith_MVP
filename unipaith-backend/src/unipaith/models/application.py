@@ -182,7 +182,7 @@ class Interview(Base):
         UUID(as_uuid=True), ForeignKey("reviewers.id", ondelete="CASCADE"), nullable=False
     )
     interview_type: Mapped[str | None] = mapped_column(String(20))
-    proposed_times: Mapped[dict | None] = mapped_column(JSONB)
+    proposed_times: Mapped[list | None] = mapped_column(JSONB)
     confirmed_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     location_or_link: Mapped[str | None] = mapped_column(String(500))
     status: Mapped[str | None] = mapped_column(String(20))
