@@ -90,7 +90,7 @@ class ApplicationChecklist(Base):
     program_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("programs.id", ondelete="CASCADE"), nullable=False
     )
-    items: Mapped[dict | None] = mapped_column(JSONB)
+    items: Mapped[list | dict | None] = mapped_column(JSONB)
     completion_percentage: Mapped[int] = mapped_column(Integer, default=0)
     auto_generated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
