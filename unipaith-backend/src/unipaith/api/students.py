@@ -102,7 +102,10 @@ async def update_profile(
 ):
     svc = _svc(db)
     profile = await svc.update_profile(user.id, body)
-    return StudentProfileResponse.model_validate(profile)
+    onboarding = await svc.get_onboarding_status(profile.id)
+    resp = StudentProfileResponse.model_validate(profile)
+    resp.onboarding = onboarding
+    return resp
 
 
 # --- Onboarding ---

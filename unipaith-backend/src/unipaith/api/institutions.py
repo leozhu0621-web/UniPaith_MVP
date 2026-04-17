@@ -106,7 +106,10 @@ async def claim_institution(
     """Claim an institution from crawled data, auto-populating profile + programs."""
     svc = _svc(db)
     inst = await svc.claim_institution(user.id, body.extracted_ids)
-    return InstitutionResponse.model_validate(inst)
+    count = await svc.get_program_count(inst.id)
+    resp = InstitutionResponse.model_validate(inst)
+    resp.program_count = count
+    return resp
 
 
 # --- Institution Profile ---
