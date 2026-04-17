@@ -167,13 +167,22 @@ export default function SchoolDetailPage() {
         onViewApplication={existingApp ? () => navigate(`/s/applications/${existingApp.id}`) : undefined}
       />
 
-      {/* ── Hero KPI strip — only the stats that matter most ── */}
+      {/* ── KPI strip — adaptive: picks the 4 most distinctive numbers per program ── */}
       <KeyMetrics
-        acceptanceRate={p.acceptance_rate ?? rd.acceptance_rate}
-        medianSalary={p.outcomes_data?.median_salary ?? rd.earnings_10yr_median}
+        durationMonths={p.duration_months}
         tuition={p.tuition}
+        tracks={p.tracks}
+        applicationRequirements={p.application_requirements}
+        highlights={p.highlights}
+        outcomesMedianSalary={p.outcomes_data?.median_salary}
+        outcomesEmploymentRate={p.outcomes_data?.employment_rate}
+        outcomesInternshipConversion={p.outcomes_data?.internship_conversion_rate}
+        outcomesTopEmployers={p.outcomes_data?.top_employers}
+        outcomesPaybackMonths={p.outcomes_data?.payback_months}
+        earnings6yr={rd.earnings_6yr_median}
+        earnings10yr={rd.earnings_10yr_median}
         graduationRate={rd.graduation_rate}
-        employmentRate={p.outcomes_data?.employment_rate}
+        retentionRate={rd.retention_rate}
       />
 
       {/* ── Tabs ── */}
