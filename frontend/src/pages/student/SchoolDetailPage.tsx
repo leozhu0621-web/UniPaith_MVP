@@ -153,8 +153,8 @@ export default function SchoolDetailPage() {
         highlights={p.highlights}
         tracks={p.tracks}
         description={p.description_text}
-        matchScore={match?.match_score}
         matchTier={match?.match_tier}
+        matchBreakdown={match?.score_breakdown}
         onMatchClick={() => setMatchModalOpen(true)}
         isSaved={isSaved}
         isComparing={compareStore.has(p.id)}

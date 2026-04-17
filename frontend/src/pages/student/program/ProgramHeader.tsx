@@ -5,7 +5,7 @@ import {
   BookOpen, Globe, Award, Briefcase, FlaskConical, Plane, Layers,
   Users, CalendarDays,
 } from 'lucide-react'
-import MatchRing from './MatchRing'
+import MatchSummary from './MatchSummary'
 import { DEGREE_LABELS } from '../../../utils/constants'
 
 /* ── Helpers ─────────────────────────────────────────────────────────── */
@@ -75,15 +75,18 @@ function academicCalendar(highlights?: string[] | null): string {
 /** A pill row item. */
 interface Pill {
   icon: any
-  label: string
+  /** Small uppercase label shown on top of the card (e.g., "DEGREE"). */
+  heading: string
+  /** The actual value shown below (e.g., "B.S."). */
+  value: string
   tone?: 'default' | 'primary' | 'urgent'
   title?: string
 }
 
 const PILL_TONE = {
-  default: 'bg-slate-50 text-student-ink border-slate-200',
-  primary: 'bg-student-mist text-student border-student/15 font-semibold',
-  urgent: 'bg-amber-50 text-amber-700 border-amber-200 font-semibold',
+  default: 'bg-white text-student-ink border-divider',
+  primary: 'bg-student-mist text-student border-student/15',
+  urgent: 'bg-amber-50 text-amber-700 border-amber-200',
 }
 
 /* ── Component ───────────────────────────────────────────────────────── */
@@ -104,9 +107,9 @@ interface Props {
   tracks?: string[] | null
   description?: string | null
 
-  // Match
-  matchScore?: number | null
+  // Match — tier (1/2/3) drives the word label; breakdown drives the reasons
   matchTier?: number | null
+  matchBreakdown?: Record<string, number> | null
   onMatchClick?: () => void
 
   // Actions
@@ -125,7 +128,7 @@ export default function ProgramHeader({
   programName, degreeType, institutionId, institutionName, institutionCity,
   institutionCountry, department,
   durationMonths, deliveryFormat, highlights, tracks, description,
-  matchScore, matchTier, onMatchClick,
+  matchTier, matchBreakdown, onMatchClick,
   isSaved, isComparing, hasApplication,
   onBack, onSave, onCompare, onAskCounselor, onApply, onViewApplication,
 }: Props) {
@@ -137,47 +140,38 @@ export default function ProgramHeader({
   const features = extractAcademicFeatures(highlights, description, degreeType)
   const studyMode = degreeType === 'certificate' ? 'Part-time option' : 'Full-time'
 
-  // Build ~7-10 pills that describe the program's ACADEMIC CHARACTER
-  // (what the program IS, not how you apply to it).
+  // Build ~7–10 two-line info cards describing the program's ACADEMIC CHARACTER.
+  // Each card has a small uppercase heading and a value below — self-explanatory
+  // without having to hover for a tooltip.
   const pills: Pill[] = []
-  // 1. Degree (primary)
-  pills.push({ icon: GraduationCap, label: degreeLabel, tone: 'primary', title: 'Degree awarded' })
-  // 2. Duration
-  if (duration) pills.push({ icon: Clock, label: duration, title: 'Typical length' })
-  // 3. Format
-  if (format) pills.push({ icon: Building2, label: format, title: 'How classes are delivered' })
-  // 4. Credits
-  if (credits) pills.push({ icon: BookOpen, label: credits, title: 'Credits to graduate' })
-  // 5. Study mode
-  pills.push({ icon: Users, label: studyMode, title: 'Study mode' })
-  // 6. Academic calendar
-  pills.push({ icon: CalendarDays, label: calendar, title: 'Academic calendar' })
-  // 7. Language of instruction
-  pills.push({ icon: Globe, label: 'English', title: 'Language of instruction' })
-  // 8. Specializations count
+  pills.push({ icon: GraduationCap, heading: 'Degree',   value: degreeLabel, tone: 'primary' })
+  if (duration) pills.push({ icon: Clock,       heading: 'Duration',  value: duration })
+  if (format)   pills.push({ icon: Building2,   heading: 'Format',    value: format })
+  if (credits)  pills.push({ icon: BookOpen,    heading: 'Credits',   value: credits.replace(/\s*credits?$/i, '') })
+  pills.push({ icon: Users,      heading: 'Study mode', value: studyMode })
+  pills.push({ icon: CalendarDays, heading: 'Calendar',  value: calendar })
+  pills.push({ icon: Globe,      heading: 'Language',  value: 'English' })
   if (tracks && tracks.length > 0) {
-    pills.push({ icon: Layers, label: `${tracks.length} tracks`, title: tracks.slice(0, 3).join(', ') })
+    pills.push({ icon: Layers, heading: 'Tracks', value: `${tracks.length}`, title: tracks.slice(0, 3).join(', ') })
   }
-  // 9. Thesis / capstone
   if (features.hasThesis) {
-    const label = degreeType === 'phd' ? 'Dissertation' : features.hasHonors ? 'Honors thesis' : 'Thesis option'
-    pills.push({ icon: FileText, label, title: 'Culminating work' })
+    pills.push({
+      icon: FileText,
+      heading: degreeType === 'phd' ? 'Dissertation' : 'Thesis',
+      value: degreeType === 'phd' ? 'Required' : features.hasHonors ? 'Honors' : 'Offered',
+    })
   }
-  // 10. Research orientation
   if (features.hasResearch) {
-    pills.push({ icon: FlaskConical, label: 'Research-active', title: 'Research opportunities available' })
+    pills.push({ icon: FlaskConical, heading: 'Research', value: 'Active' })
   }
-  // 11. Internship / field work
   if (features.hasInternship) {
-    pills.push({ icon: Briefcase, label: 'Internships', title: 'Internship or co-op supported' })
+    pills.push({ icon: Briefcase, heading: 'Internships', value: 'Supported' })
   }
-  // 12. Study abroad
   if (features.hasStudyAbroad) {
-    pills.push({ icon: Plane, label: 'Study abroad', title: 'International experience available' })
+    pills.push({ icon: Plane, heading: 'Study abroad', value: 'Available' })
   }
-  // 13. Honors track
-  if (features.hasHonors && !pills.some(p => p.label.includes('Honors'))) {
-    pills.push({ icon: Award, label: 'Honors track', title: 'Honors program available' })
+  if (features.hasHonors && !pills.some(p => p.value === 'Honors')) {
+    pills.push({ icon: Award, heading: 'Honors track', value: 'Available' })
   }
 
   return (
@@ -255,31 +249,51 @@ export default function ProgramHeader({
               )}
             </div>
 
-            {/* Standard basics — ~7–10 pills consistent across all programs */}
-            <div className="flex flex-wrap items-center gap-1.5 mt-4">
+            {/* Standard basics — two-line info cards consistent across all programs */}
+            <div className="flex flex-wrap items-stretch gap-1.5 mt-4">
               {pills.map((p, i) => (
-                <span
+                <div
                   key={i}
                   title={p.title}
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] rounded-md border whitespace-nowrap ${PILL_TONE[p.tone || 'default']}`}
+                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border ${PILL_TONE[p.tone || 'default']}`}
                 >
-                  <p.icon size={11} className={p.tone === 'primary' ? 'text-student' : p.tone === 'urgent' ? 'text-amber-500' : 'text-slate-400'} />
-                  {p.label}
-                </span>
+                  <p.icon
+                    size={14}
+                    className={
+                      p.tone === 'primary' ? 'text-student' :
+                      p.tone === 'urgent' ? 'text-amber-500' :
+                      'text-student-text/50'
+                    }
+                  />
+                  <div className="leading-tight">
+                    <p className={`text-[9px] uppercase tracking-wider font-semibold ${
+                      p.tone === 'primary' ? 'text-student/70' :
+                      p.tone === 'urgent' ? 'text-amber-700/80' :
+                      'text-student-text/60'
+                    }`}>
+                      {p.heading}
+                    </p>
+                    <p className={`text-[13px] font-semibold ${
+                      p.tone === 'primary' ? 'text-student' :
+                      p.tone === 'urgent' ? 'text-amber-800' :
+                      'text-student-ink'
+                    }`}>
+                      {p.value}
+                    </p>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
 
-          {/* Right: match ring + primary action */}
-          <div className="flex-shrink-0 flex flex-col items-end gap-2.5">
-            {matchScore != null && matchTier != null && (
-              <button
+          {/* Right: word-based match summary + primary action */}
+          <div className="flex-shrink-0 flex flex-col items-stretch gap-2.5 w-[220px]">
+            {matchTier != null && (
+              <MatchSummary
+                matchTier={matchTier}
+                scoreBreakdown={matchBreakdown}
                 onClick={onMatchClick}
-                className="hover:opacity-90 transition-opacity"
-                title="See match breakdown"
-              >
-                <MatchRing score={matchScore} tier={matchTier} size={64} />
-              </button>
+              />
             )}
             {hasApplication && onViewApplication ? (
               <button
