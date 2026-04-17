@@ -939,6 +939,12 @@ class SeedProgramReviewsRequest(BaseModel):
     program_name: str
     department: str | None = None
     entries: list[ProgramReviewSeed]
+    # When True, delete all external-sourced reviews for matching programs
+    # before inserting. Use to re-seed after the source list changes so the
+    # DB state matches the script exactly (no stale entries left behind).
+    # First-party reviews (student_id set, external_source null) are never
+    # touched.
+    replace: bool = False
 
 
 @router.post("/seed-program-reviews")
@@ -949,7 +955,11 @@ async def seed_program_reviews(
 ):
     """Admin-only: insert reviews sourced from authoritative external
     publishers (NYU Stories, Niche, bulletin). Idempotent on
-    ``external_source.source_url`` — re-runs update rather than duplicate."""
+    ``external_source.source_url`` - re-runs update rather than duplicate.
+    Pass ``replace=True`` to first wipe external-sourced reviews for the
+    program and re-seed from scratch."""
+    from sqlalchemy import delete
+
     from unipaith.models.institution import StudentProgramReview
 
     inst_r = await db.execute(
@@ -957,7 +967,7 @@ async def seed_program_reviews(
     )
     inst = inst_r.scalar_one_or_none()
     if not inst:
-        return {"inserted": 0, "updated": 0, "skipped": "institution_not_found"}
+        return {"inserted": 0, "updated": 0, "deleted": 0, "skipped": "institution_not_found"}
 
     prog_stmt = select(Program).where(
         Program.institution_id == inst.id,
@@ -968,15 +978,24 @@ async def seed_program_reviews(
     prog_r = await db.execute(prog_stmt)
     programs = prog_r.scalars().all()
     if not programs:
-        return {"inserted": 0, "updated": 0, "skipped": "program_not_found"}
+        return {"inserted": 0, "updated": 0, "deleted": 0, "skipped": "program_not_found"}
 
     inserted = 0
     updated = 0
+    deleted = 0
     for prog in programs:
+        if body.replace:
+            del_stmt = delete(StudentProgramReview).where(
+                StudentProgramReview.program_id == prog.id,
+                StudentProgramReview.external_source.isnot(None),
+            )
+            del_result = await db.execute(del_stmt)
+            deleted += del_result.rowcount or 0
+
         for entry in body.entries:
             source_url = (entry.external_source or {}).get("source_url")
             existing = None
-            if source_url:
+            if source_url and not body.replace:
                 # Match on program_id + source_url for idempotency.
                 ex_stmt = select(StudentProgramReview).where(
                     StudentProgramReview.program_id == prog.id,
@@ -1001,7 +1020,7 @@ async def seed_program_reviews(
                 inserted += 1
 
     await db.commit()
-    return {"inserted": inserted, "updated": updated}
+    return {"inserted": inserted, "updated": updated, "deleted": deleted}
 
 
 class EmployerFeedbackSeed(BaseModel):
@@ -1023,6 +1042,9 @@ class SeedEmployerFeedbackRequest(BaseModel):
     program_name: str
     department: str | None = None
     entries: list[EmployerFeedbackSeed]
+    # When True, delete all existing employer feedback for matching programs
+    # before inserting. Use to re-seed cleanly when the source list changes.
+    replace: bool = False
 
 
 @router.post("/seed-employer-feedback")
@@ -1033,7 +1055,10 @@ async def seed_employer_feedback(
 ):
     """Admin-only: insert employer feedback sourced from institution-published
     outcome reports (e.g., NYU Stern Undergraduate Outcomes). Idempotent on
-    ``(employer_name, feedback_year)`` — re-runs update rather than duplicate."""
+    ``(employer_name, feedback_year)`` - re-runs update rather than duplicate.
+    Pass ``replace=True`` to wipe and reseed."""
+    from sqlalchemy import delete
+
     from unipaith.models.institution import EmployerFeedback
 
     inst_r = await db.execute(
@@ -1041,7 +1066,7 @@ async def seed_employer_feedback(
     )
     inst = inst_r.scalar_one_or_none()
     if not inst:
-        return {"inserted": 0, "updated": 0, "skipped": "institution_not_found"}
+        return {"inserted": 0, "updated": 0, "deleted": 0, "skipped": "institution_not_found"}
 
     prog_stmt = select(Program).where(
         Program.institution_id == inst.id,
@@ -1052,21 +1077,31 @@ async def seed_employer_feedback(
     prog_r = await db.execute(prog_stmt)
     programs = prog_r.scalars().all()
     if not programs:
-        return {"inserted": 0, "updated": 0, "skipped": "program_not_found"}
+        return {"inserted": 0, "updated": 0, "deleted": 0, "skipped": "program_not_found"}
 
     inserted = 0
     updated = 0
+    deleted = 0
     for prog in programs:
-        for entry in body.entries:
-            ex_stmt = select(EmployerFeedback).where(
+        if body.replace:
+            del_stmt = delete(EmployerFeedback).where(
                 EmployerFeedback.program_id == prog.id,
-                EmployerFeedback.employer_name == entry.employer_name,
-                EmployerFeedback.feedback_year.is_(entry.feedback_year)
-                if entry.feedback_year is None
-                else EmployerFeedback.feedback_year == entry.feedback_year,
             )
-            ex_r = await db.execute(ex_stmt)
-            existing = ex_r.scalars().first()
+            del_result = await db.execute(del_stmt)
+            deleted += del_result.rowcount or 0
+
+        for entry in body.entries:
+            existing = None
+            if not body.replace:
+                ex_stmt = select(EmployerFeedback).where(
+                    EmployerFeedback.program_id == prog.id,
+                    EmployerFeedback.employer_name == entry.employer_name,
+                    EmployerFeedback.feedback_year.is_(entry.feedback_year)
+                    if entry.feedback_year is None
+                    else EmployerFeedback.feedback_year == entry.feedback_year,
+                )
+                ex_r = await db.execute(ex_stmt)
+                existing = ex_r.scalars().first()
 
             if existing is not None:
                 for field, value in entry.model_dump(exclude_unset=True).items():
@@ -1081,7 +1116,7 @@ async def seed_employer_feedback(
                 inserted += 1
 
     await db.commit()
-    return {"inserted": inserted, "updated": updated}
+    return {"inserted": inserted, "updated": updated, "deleted": deleted}
 
 
 # --- Image Download & Upload to S3 ---

@@ -116,7 +116,7 @@ ACCOUNTING_REVIEWS = [
         source="NYU Stern Ambassador Profile",
         source_url=(
             "https://www.stern.nyu.edu/programs-admissions/masters-programs/"
-            "ms-accounting/learn-more/contact-student-or-alumni-ambassador"
+            "ms-accounting/learn-more/contact-student-or-alumni-ambassador#quote-1"
         ),
         author_handle="NYU Stern MS Accounting Ambassador",
     ),
@@ -140,7 +140,7 @@ ACCOUNTING_REVIEWS = [
         source="NYU Stern Ambassador Profile",
         source_url=(
             "https://www.stern.nyu.edu/programs-admissions/masters-programs/"
-            "ms-accounting/learn-more/contact-student-or-alumni-ambassador"
+            "ms-accounting/learn-more/contact-student-or-alumni-ambassador#quote-2"
         ),
         author_handle="NYU Stern MS Accounting Ambassador",
     ),
@@ -174,7 +174,7 @@ CS_REVIEWS = [
         source="MEET NYU",
         source_url=(
             "https://meet.nyu.edu/academics/majors-and-programs/"
-            "answering-common-questions-i-get-asked-as-a-computer-science-major/"
+            "answering-common-questions-i-get-asked-as-a-computer-science-major/#quote-1"
         ),
         author_handle="Chris McVey",
     ),
@@ -232,7 +232,7 @@ CS_REVIEWS = [
         source="MEET NYU",
         source_url=(
             "https://meet.nyu.edu/academics/majors-and-programs/"
-            "answering-common-questions-i-get-asked-as-a-computer-science-major/"
+            "answering-common-questions-i-get-asked-as-a-computer-science-major/#quote-2"
         ),
         author_handle="Chris McVey",
     ),
@@ -264,7 +264,7 @@ ACTING_REVIEWS = [
         source="MEET NYU",
         source_url=(
             "https://meet.nyu.edu/academics/"
-            "no-regrets-senior-year-trying-a-whole-new-tisch-drama-studio/"
+            "no-regrets-senior-year-trying-a-whole-new-tisch-drama-studio/#quote-1"
         ),
         author_handle="Jo Reilly",
     ),
@@ -292,7 +292,7 @@ ACTING_REVIEWS = [
         source="MEET NYU",
         source_url=(
             "https://meet.nyu.edu/academics/"
-            "no-regrets-senior-year-trying-a-whole-new-tisch-drama-studio/"
+            "no-regrets-senior-year-trying-a-whole-new-tisch-drama-studio/#quote-2"
         ),
         author_handle="Jo Reilly",
     ),
@@ -455,6 +455,10 @@ async def main() -> None:
                 "program_name": program_name,
                 "department": department,
                 "entries": entries,
+                # Wipe existing external-sourced rows for the program and
+                # re-seed from scratch so DB state matches the script. Does
+                # not touch any first-party (student_id-bound) reviews.
+                "replace": True,
             }
             resp = await client.post(
                 f"{API}/internal/seed-program-reviews",
@@ -467,12 +471,14 @@ async def main() -> None:
             data = resp.json()
             ins = data.get("inserted", 0)
             upd = data.get("updated", 0)
+            delc = data.get("deleted", 0)
             skip = data.get("skipped")
             total_inserted += ins
             total_updated += upd
             print(
                 f"  {program_name} ({department}): "
-                f"inserted={ins} updated={upd} {'skipped=' + skip if skip else ''}"
+                f"inserted={ins} updated={upd} deleted={delc} "
+                f"{'skipped=' + skip if skip else ''}"
             )
 
     print(
