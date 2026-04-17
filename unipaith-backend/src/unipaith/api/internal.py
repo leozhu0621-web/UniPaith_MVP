@@ -917,6 +917,173 @@ async def enrich_data(
     }
 
 
+# --- Seed Program Reviews & Employer Feedback (curated external sources) ---
+
+
+class ProgramReviewSeed(BaseModel):
+    rating_teaching: int | None = None
+    rating_workload: int | None = None
+    rating_career_support: int | None = None
+    rating_roi: int | None = None
+    rating_overall: int | None = None
+    review_text: str | None = None
+    who_thrives_here: str | None = None
+    reviewer_context: dict | None = None
+    external_source: dict
+    is_verified: bool = True
+    is_published: bool = True
+
+
+class SeedProgramReviewsRequest(BaseModel):
+    institution_name: str
+    program_name: str
+    department: str | None = None
+    entries: list[ProgramReviewSeed]
+
+
+@router.post("/seed-program-reviews")
+async def seed_program_reviews(
+    body: SeedProgramReviewsRequest,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Admin-only: insert reviews sourced from authoritative external
+    publishers (NYU Stories, Niche, bulletin). Idempotent on
+    ``external_source.source_url`` — re-runs update rather than duplicate."""
+    from unipaith.models.institution import StudentProgramReview
+
+    inst_r = await db.execute(
+        select(Institution).where(Institution.name == body.institution_name)
+    )
+    inst = inst_r.scalar_one_or_none()
+    if not inst:
+        return {"inserted": 0, "updated": 0, "skipped": "institution_not_found"}
+
+    prog_stmt = select(Program).where(
+        Program.institution_id == inst.id,
+        Program.program_name == body.program_name,
+    )
+    if body.department:
+        prog_stmt = prog_stmt.where(Program.department == body.department)
+    prog_r = await db.execute(prog_stmt)
+    programs = prog_r.scalars().all()
+    if not programs:
+        return {"inserted": 0, "updated": 0, "skipped": "program_not_found"}
+
+    inserted = 0
+    updated = 0
+    for prog in programs:
+        for entry in body.entries:
+            source_url = (entry.external_source or {}).get("source_url")
+            existing = None
+            if source_url:
+                # Match on program_id + source_url for idempotency.
+                ex_stmt = select(StudentProgramReview).where(
+                    StudentProgramReview.program_id == prog.id,
+                    StudentProgramReview.external_source[
+                        "source_url"
+                    ].astext == source_url,
+                )
+                ex_r = await db.execute(ex_stmt)
+                existing = ex_r.scalars().first()
+
+            if existing is not None:
+                for field, value in entry.model_dump(exclude_unset=True).items():
+                    setattr(existing, field, value)
+                updated += 1
+            else:
+                row = StudentProgramReview(
+                    program_id=prog.id,
+                    student_id=None,
+                    **entry.model_dump(exclude_unset=True),
+                )
+                db.add(row)
+                inserted += 1
+
+    await db.commit()
+    return {"inserted": inserted, "updated": updated}
+
+
+class EmployerFeedbackSeed(BaseModel):
+    employer_name: str
+    industry: str | None = None
+    rating_technical: int | None = None
+    rating_practical: int | None = None
+    rating_communication: int | None = None
+    rating_overall: int | None = None
+    job_readiness_sentiment: str | None = None
+    feedback_text: str | None = None
+    hiring_pattern: str | None = None
+    feedback_year: int | None = None
+    is_published: bool = True
+
+
+class SeedEmployerFeedbackRequest(BaseModel):
+    institution_name: str
+    program_name: str
+    department: str | None = None
+    entries: list[EmployerFeedbackSeed]
+
+
+@router.post("/seed-employer-feedback")
+async def seed_employer_feedback(
+    body: SeedEmployerFeedbackRequest,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Admin-only: insert employer feedback sourced from institution-published
+    outcome reports (e.g., NYU Stern Undergraduate Outcomes). Idempotent on
+    ``(employer_name, feedback_year)`` — re-runs update rather than duplicate."""
+    from unipaith.models.institution import EmployerFeedback
+
+    inst_r = await db.execute(
+        select(Institution).where(Institution.name == body.institution_name)
+    )
+    inst = inst_r.scalar_one_or_none()
+    if not inst:
+        return {"inserted": 0, "updated": 0, "skipped": "institution_not_found"}
+
+    prog_stmt = select(Program).where(
+        Program.institution_id == inst.id,
+        Program.program_name == body.program_name,
+    )
+    if body.department:
+        prog_stmt = prog_stmt.where(Program.department == body.department)
+    prog_r = await db.execute(prog_stmt)
+    programs = prog_r.scalars().all()
+    if not programs:
+        return {"inserted": 0, "updated": 0, "skipped": "program_not_found"}
+
+    inserted = 0
+    updated = 0
+    for prog in programs:
+        for entry in body.entries:
+            ex_stmt = select(EmployerFeedback).where(
+                EmployerFeedback.program_id == prog.id,
+                EmployerFeedback.employer_name == entry.employer_name,
+                EmployerFeedback.feedback_year.is_(entry.feedback_year)
+                if entry.feedback_year is None
+                else EmployerFeedback.feedback_year == entry.feedback_year,
+            )
+            ex_r = await db.execute(ex_stmt)
+            existing = ex_r.scalars().first()
+
+            if existing is not None:
+                for field, value in entry.model_dump(exclude_unset=True).items():
+                    setattr(existing, field, value)
+                updated += 1
+            else:
+                row = EmployerFeedback(
+                    program_id=prog.id,
+                    **entry.model_dump(exclude_unset=True),
+                )
+                db.add(row)
+                inserted += 1
+
+    await db.commit()
+    return {"inserted": inserted, "updated": updated}
+
+
 # --- Image Download & Upload to S3 ---
 
 

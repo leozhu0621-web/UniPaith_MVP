@@ -864,6 +864,25 @@ export default function SchoolDetailPage() {
                           <p className="text-xs text-stone-600">{r.who_thrives_here}</p>
                         </div>
                       )}
+                      {r.external_source && (
+                        <p className="text-[10px] text-gray-400 mt-2">
+                          Source:{' '}
+                          {r.external_source.source_url ? (
+                            <a
+                              href={r.external_source.source_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:underline"
+                            >
+                              {r.external_source.source || r.external_source.source_url}
+                            </a>
+                          ) : (
+                            r.external_source.source || 'external'
+                          )}
+                          {r.external_source.author_handle ? ` - ${r.external_source.author_handle}` : ''}
+                          {r.external_source.retrieved_at ? ` (retrieved ${r.external_source.retrieved_at})` : ''}
+                        </p>
+                      )}
                     </Card>
                   ))}
                 </div>
