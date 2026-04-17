@@ -60,15 +60,26 @@ function StatCard({ icon: Icon, label, value, tone }: StatItem) {
   )
 }
 
+/** Grid columns that adapt to the number of stats so we never leave awkward empty gaps. */
+const GRID_BY_COUNT: Record<number, string> = {
+  1: 'grid-cols-1',
+  2: 'grid-cols-2',
+  3: 'grid-cols-2 md:grid-cols-3',
+  4: 'grid-cols-2 md:grid-cols-4',
+  5: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5',
+  6: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-6',
+}
+
 function Category({ title, icon: Icon, stats }: { title: string; icon: any; stats: StatItem[] }) {
   if (stats.length === 0) return null
+  const gridClass = GRID_BY_COUNT[Math.min(stats.length, 6)] || GRID_BY_COUNT[5]
   return (
     <div className="mb-4 last:mb-0">
       <div className="flex items-center gap-1.5 mb-2">
         <Icon size={12} className="text-student-text/70" />
         <h4 className="text-[10px] font-semibold text-student-text/70 uppercase tracking-wider">{title}</h4>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+      <div className={`grid gap-2 ${gridClass}`}>
         {stats.map((s, i) => <StatCard key={i} {...s} />)}
       </div>
     </div>

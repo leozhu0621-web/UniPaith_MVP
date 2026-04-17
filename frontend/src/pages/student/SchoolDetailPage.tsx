@@ -268,56 +268,146 @@ export default function SchoolDetailPage() {
             </>
           )}
 
-          {tab === 'admissions' && (
-            <>
-              <StatGroup
-                acceptanceRate={p.acceptance_rate ?? rd.acceptance_rate}
-                satAvg={rd.sat_avg}
-                actMidpoint={rd.act_midpoint}
-                applicationDeadline={p.application_deadline}
-              />
+          {tab === 'admissions' && (() => {
+            // application_requirements is a list of { label, required, note? }
+            // (the legacy `requirements` freeform dict is usually empty — fall back to it only if the list isn't present)
+            const appReqs: Array<{ label: string; required?: boolean; note?: string }> = Array.isArray(p.application_requirements)
+              ? p.application_requirements
+              : []
+            const legacyReqs = p.requirements && typeof p.requirements === 'object' ? Object.entries(p.requirements) : []
+            const requiredItems = appReqs.filter(r => r.required !== false)
+            const optionalItems = appReqs.filter(r => r.required === false)
 
-              <Card className="p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <GraduationCap size={14} className="text-student" />
-                  <h3 className="font-semibold text-student-ink">Application Requirements</h3>
-                </div>
-                {p.requirements && Object.keys(p.requirements).length > 0 ? (
-                  <dl className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                    {Object.entries(p.requirements).map(([k, v]) => (
-                      <div key={k} className="flex justify-between border-b border-gray-100 pb-2">
-                        <dt className="text-student-text capitalize">{k.replace(/_/g, ' ')}</dt>
-                        <dd className="font-medium text-student-ink">{String(v)}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                ) : (
-                  <p className="text-sm text-student-text">Application requirements not yet listed. Contact the program for details.</p>
-                )}
-              </Card>
+            return (
+              <>
+                <StatGroup
+                  acceptanceRate={p.acceptance_rate ?? rd.acceptance_rate}
+                  satAvg={rd.sat_avg}
+                  actMidpoint={rd.act_midpoint}
+                  applicationDeadline={p.application_deadline}
+                />
 
-              {p.application_deadline && (
+                {/* Application Requirements — structured list */}
                 <Card className="p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <Clock size={14} className="text-amber-600" />
-                    <h3 className="font-semibold text-student-ink">Key Dates</h3>
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-student-text">Application Deadline</span>
-                      <span className="font-medium text-student-ink">{formatDate(p.application_deadline)}</span>
-                    </div>
-                    {p.program_start_date && (
-                      <div className="flex justify-between">
-                        <span className="text-student-text">Program Starts</span>
-                        <span className="font-medium text-student-ink">{formatDate(p.program_start_date)}</span>
-                      </div>
+                    <GraduationCap size={14} className="text-student" />
+                    <h3 className="font-semibold text-student-ink">Application Requirements</h3>
+                    {appReqs.length > 0 && (
+                      <span className="ml-auto text-[11px] text-student-text/60">
+                        {requiredItems.length} required
+                        {optionalItems.length > 0 && ` · ${optionalItems.length} optional`}
+                      </span>
                     )}
                   </div>
+
+                  {appReqs.length > 0 ? (
+                    <div className="space-y-3">
+                      {requiredItems.length > 0 && (
+                        <div>
+                          <p className="text-[10px] font-semibold text-student-text/70 uppercase tracking-wider mb-2">Required</p>
+                          <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {requiredItems.map((r, i) => (
+                              <li key={i} className="flex items-start gap-2 px-3 py-2 rounded-lg bg-slate-50 border border-slate-100">
+                                <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                  <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" clipRule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z" /></svg>
+                                </span>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium text-student-ink leading-tight">{r.label}</p>
+                                  {r.note && <p className="text-[11px] text-student-text/70 mt-0.5">{r.note}</p>}
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {optionalItems.length > 0 && (
+                        <div>
+                          <p className="text-[10px] font-semibold text-student-text/70 uppercase tracking-wider mb-2">Optional / Flexible</p>
+                          <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {optionalItems.map((r, i) => (
+                              <li key={i} className="flex items-start gap-2 px-3 py-2 rounded-lg bg-white border border-slate-200">
+                                <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px]">~</span>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium text-student-ink leading-tight">{r.label}</p>
+                                  {r.note && <p className="text-[11px] text-student-text/70 mt-0.5">{r.note}</p>}
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  ) : legacyReqs.length > 0 ? (
+                    <dl className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                      {legacyReqs.map(([k, v]) => (
+                        <div key={k} className="flex justify-between border-b border-gray-100 pb-2">
+                          <dt className="text-student-text capitalize">{k.replace(/_/g, ' ')}</dt>
+                          <dd className="font-medium text-student-ink">{String(v)}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ) : (
+                    <p className="text-sm text-student-text">Application requirements not yet listed. Contact the program for details.</p>
+                  )}
                 </Card>
-              )}
-            </>
-          )}
+
+                {/* Key dates + admissions insights — 2 columns */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {(p.application_deadline || p.program_start_date) && (
+                    <Card className="p-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Clock size={14} className="text-amber-600" />
+                        <h3 className="font-semibold text-student-ink">Key Dates</h3>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        {p.application_deadline && (
+                          <div className="flex justify-between">
+                            <span className="text-student-text">Application Deadline</span>
+                            <span className="font-medium text-student-ink">{formatDate(p.application_deadline)}</span>
+                          </div>
+                        )}
+                        {p.program_start_date && (
+                          <div className="flex justify-between">
+                            <span className="text-student-text">Program Starts</span>
+                            <span className="font-medium text-student-ink">{formatDate(p.program_start_date)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+                  )}
+
+                  {/* Admissions insights card — derived from acceptance rate + SAT */}
+                  {(p.acceptance_rate ?? rd.acceptance_rate) != null && (
+                    <Card className="p-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Sparkles size={14} className="text-student" />
+                        <h3 className="font-semibold text-student-ink">Admissions Profile</h3>
+                      </div>
+                      <ul className="space-y-2 text-sm">
+                        {(() => {
+                          const ar = p.acceptance_rate ?? rd.acceptance_rate
+                          const pct = ar * 100
+                          const items: string[] = []
+                          if (pct < 10) items.push(`Highly selective — fewer than 1 in 10 applicants admitted`)
+                          else if (pct < 25) items.push(`Very selective — about 1 in ${Math.round(100 / pct)} applicants admitted`)
+                          else if (pct < 50) items.push(`Selective — ${Math.round(pct)}% of applicants admitted`)
+                          else items.push(`Accessible — ${Math.round(pct)}% of applicants admitted`)
+                          if (rd.sat_avg) items.push(`Middle 50% SAT: ~${rd.sat_avg - 40}–${rd.sat_avg + 40}`)
+                          if (rd.act_25_75) items.push(`Middle 50% ACT: ${rd.act_25_75[0]}–${rd.act_25_75[1]}`)
+                          return items.map((t, i) => (
+                            <li key={i} className="flex items-start gap-2 text-student-text">
+                              <span className="w-1 h-1 rounded-full bg-student mt-2 flex-shrink-0" />
+                              {t}
+                            </li>
+                          ))
+                        })()}
+                      </ul>
+                    </Card>
+                  )}
+                </div>
+              </>
+            )
+          })()}
 
           {tab === 'costs' && (() => {
             const cd = p.cost_data || {}
@@ -755,10 +845,87 @@ export default function SchoolDetailPage() {
                     ))}
                   </div>
                 ) : (
-                  <Card className="p-6 text-center">
-                    <Star size={32} className="text-slate-300 mx-auto mb-3" />
-                    <p className="text-sm text-student-text">No reviews yet for this program.</p>
-                  </Card>
+                  <>
+                    {/* Compact empty state with a CTA */}
+                    <Card className="p-5">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
+                          <Star size={18} className="text-amber-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-student-ink">Be the first to review {p.program_name}</p>
+                          <p className="text-xs text-student-text mt-0.5">
+                            Help future students — share what it's like to study here. Reviews stay anonymous unless you opt in.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => navigate(`/s?prefill=${encodeURIComponent(`I'd like to write a review for ${p.program_name} at ${instName}. Help me structure it.`)}`)}
+                          className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold bg-student text-white rounded-lg hover:bg-student-hover transition-colors"
+                        >
+                          Write a review
+                        </button>
+                      </div>
+                    </Card>
+
+                    {/* In the meantime: show outcomes + employer signals as proxy "quality signals" */}
+                    {(p.outcomes_data?.median_salary || p.outcomes_data?.employment_rate || rd.graduation_rate) && (
+                      <Card className="p-5">
+                        <div className="flex items-center gap-2 mb-3">
+                          <BarChart3 size={14} className="text-student" />
+                          <h3 className="font-semibold text-student-ink">Quality Signals</h3>
+                          <span className="text-[11px] text-student-text/60">in lieu of reviews</span>
+                        </div>
+                        <p className="text-xs text-student-text mb-3">
+                          Until students share firsthand, these outcome signals give a sense of the program's track record.
+                        </p>
+                        <ul className="space-y-2 text-sm text-student-text">
+                          {rd.graduation_rate && (
+                            <li className="flex items-start gap-2">
+                              <span className="w-1 h-1 rounded-full bg-student mt-2 flex-shrink-0" />
+                              <span><strong className="text-student-ink">{Math.round(rd.graduation_rate * 100)}%</strong> of students complete their degree — {rd.graduation_rate > 0.85 ? 'well above' : rd.graduation_rate > 0.7 ? 'in line with' : 'below'} the national average.</span>
+                            </li>
+                          )}
+                          {rd.retention_rate && (
+                            <li className="flex items-start gap-2">
+                              <span className="w-1 h-1 rounded-full bg-student mt-2 flex-shrink-0" />
+                              <span><strong className="text-student-ink">{Math.round(rd.retention_rate * 100)}%</strong> first-year retention — students return for sophomore year.</span>
+                            </li>
+                          )}
+                          {rd.earnings_10yr_median && (
+                            <li className="flex items-start gap-2">
+                              <span className="w-1 h-1 rounded-full bg-student mt-2 flex-shrink-0" />
+                              <span>Graduates earn a median <strong className="text-student-ink">{formatCurrency(rd.earnings_10yr_median)}</strong> 10 years after enrollment.</span>
+                            </li>
+                          )}
+                        </ul>
+                      </Card>
+                    )}
+
+                    {/* Similar programs — let students explore alternatives that may have reviews */}
+                    {similar.length > 0 && (
+                      <Card className="p-5">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Sparkles size={14} className="text-gold" />
+                          <h3 className="font-semibold text-student-ink">See reviews for similar programs</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {similar.slice(0, 4).map((sp: any) => (
+                            <button
+                              key={sp.id}
+                              onClick={() => navigate(`/s/programs/${sp.id}`)}
+                              className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border border-divider hover:border-student hover:bg-student-mist transition-colors text-left"
+                            >
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-student-ink truncate">{sp.program_name}</p>
+                                <p className="text-[11px] text-student-text/70 truncate">{sp.institution_name}</p>
+                              </div>
+                              <Star size={12} className="text-student-text/40 flex-shrink-0" />
+                            </button>
+                          ))}
+                        </div>
+                      </Card>
+                    )}
+                  </>
                 )}
               </>
             )
