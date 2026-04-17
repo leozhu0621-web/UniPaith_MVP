@@ -163,6 +163,11 @@ class ReviewResponse(BaseModel):
     review_text: str | None = None
     who_thrives_here: str | None = None
     reviewer_context: dict | None = None
+    # external_source holds {source, source_url, author_handle, retrieved_at}
+    # for reviews ingested from authoritative external publishers (NYU
+    # Stories, Niche, bulletin). Null for first-party reviews tied to a
+    # UniPaith student account.
+    external_source: dict | None = None
     is_verified: bool = False
     created_at: str
 
@@ -235,6 +240,7 @@ async def get_program_reviews(
                 review_text=r.review_text,
                 who_thrives_here=r.who_thrives_here,
                 reviewer_context=r.reviewer_context,
+                external_source=r.external_source,
                 is_verified=r.is_verified,
                 created_at=r.created_at.isoformat(),
             )
