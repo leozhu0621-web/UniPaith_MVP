@@ -225,7 +225,11 @@ export default function SchoolDetailPage() {
         <div className="min-w-0 space-y-4">
           {tab === 'overview' && (
             <>
-              <AboutCard description={p.description_text || p.institution_description || ''} />
+              <AboutCard
+                description={p.description_text || p.institution_description || ''}
+                institutionName={instName}
+                programName={p.program_name}
+              />
 
               {p.who_its_for && (
                 <Card className="p-5">

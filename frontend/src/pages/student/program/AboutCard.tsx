@@ -3,21 +3,50 @@ import Card from '../../../components/ui/Card'
 
 interface Props {
   description: string
+  /** Name of the institution, used to filter out institution name mentions
+   *  from the extracted keyword chips (we don't want "NYU" or
+   *  "Stanford University" to show as a key term for every program there). */
+  institutionName?: string | null
+  /** Name of the program itself, same reason as institutionName. */
+  programName?: string | null
 }
 
-/** Extract likely key terms from a paragraph: capitalized noun phrases, quoted phrases. */
-function extractKeywords(text: string): string[] {
+/** Build a set of stop-phrases we should never pull out as keyword chips.
+ * Generic words ("The", "This"), plus any variation of the institution name
+ * and the program name (so a Columbia program doesn't get "Columbia" as a
+ * chip, and an Anthropology program doesn't get "Anthropology" as a chip). */
+function buildStopPhrases(institutionName?: string | null, programName?: string | null): Set<string> {
+  const stop = new Set<string>(['The', 'This', 'These', 'Those', 'Our'])
+  const addVariants = (s?: string | null) => {
+    if (!s) return
+    stop.add(s)
+    // Each individual word of the name
+    for (const w of s.split(/\s+/)) {
+      if (w.length >= 2) stop.add(w)
+    }
+    // Common US abbreviation pattern: all-caps shortform (e.g., "NYU", "MIT")
+    const caps = s.split(/\s+/).map(w => w[0]).filter(Boolean).join('').toUpperCase()
+    if (caps.length >= 2 && caps.length <= 6) stop.add(caps)
+  }
+  addVariants(institutionName)
+  addVariants(programName)
+  return stop
+}
+
+/** Extract likely key terms from a paragraph: capitalized noun phrases. */
+function extractKeywords(text: string, stopPhrases: Set<string>): string[] {
   if (!text) return []
   const cleaned = text.replace(/\[Source:.*?\]/g, '').trim()
   const candidates = new Set<string>()
 
-  // Match capitalized multi-word phrases (e.g. "Cultural Anthropology")
+  // Capitalized multi-word phrases (e.g., "Cultural Anthropology", "Liberal Arts")
   const caps = cleaned.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\b/g) || []
   for (const c of caps) {
-    // Filter out single common words like "The", "NYU"
-    if (c.length > 4 && !['The', 'This', 'NYU', 'New York', 'New York City'].includes(c)) {
-      candidates.add(c)
-    }
+    if (c.length <= 4) continue
+    if (stopPhrases.has(c)) continue
+    // Skip if the phrase is a single word already in stop phrases
+    if (c.split(/\s+/).every(w => stopPhrases.has(w))) continue
+    candidates.add(c)
   }
   return Array.from(candidates).slice(0, 5)
 }
@@ -36,12 +65,13 @@ function sourceDomain(url: string): string {
   }
 }
 
-export default function AboutCard({ description }: Props) {
+export default function AboutCard({ description, institutionName, programName }: Props) {
   if (!description) return null
 
   const sourceUrl = extractSource(description)
   const cleanText = description.replace(/\s*\[Source:.*?\]\s*/g, '').trim()
-  const keywords = extractKeywords(cleanText)
+  const stopPhrases = buildStopPhrases(institutionName, programName)
+  const keywords = extractKeywords(cleanText, stopPhrases)
 
   return (
     <Card className="p-5">

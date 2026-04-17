@@ -361,13 +361,27 @@ export default function KeyMetrics(props: Props) {
   const subfieldsTile = subfieldsFromDescription(props.descriptionText)
   if (subfieldsTile) candidates.push(subfieldsTile)
 
-  // Specializations from structured tracks field
-  if (props.tracks && props.tracks.length > 0) {
+  // Specializations from structured tracks field. Tracks can be either an
+  // array of names or a dict like { concentrations: [...], note: '...' } — the
+  // DB shape varies per program, so we normalize before using it.
+  const trackNames: string[] = (() => {
+    const t: any = props.tracks
+    if (!t) return []
+    if (Array.isArray(t)) return t.filter((x: any) => typeof x === 'string')
+    if (typeof t === 'object') {
+      for (const key of ['concentrations', 'tracks', 'subfields', 'specializations', 'streams', 'pathways']) {
+        if (Array.isArray(t[key])) return t[key].filter((x: any) => typeof x === 'string')
+      }
+    }
+    return []
+  })()
+
+  if (trackNames.length > 0) {
     candidates.push({
       icon: Sparkles,
       label: 'Specializations',
-      value: String(props.tracks.length),
-      context: props.tracks.slice(0, 2).join(', '),
+      value: String(trackNames.length),
+      context: trackNames.slice(0, 2).join(', '),
       tone: 'violet',
       priority: 64,
     })

@@ -33,20 +33,34 @@ function formatFormat(f?: string | null): string | null {
   return map[f] || f.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
 
-function creditsForDegree(degreeType: string, highlights?: string[] | null): string | null {
-  // Try to extract from highlights first (e.g. "128-credit liberal arts curriculum")
-  if (highlights) {
-    for (const h of highlights) {
-      const m = h.match(/(\d{2,3})[-\s]?credit/i)
-      if (m) return `${m[1]} credits`
+/** Extract credit count from highlights. Returns null if unknown — we don't
+ * fall back to a generic default because that would make all programs look
+ * the same. */
+function creditsForProgram(highlights?: string[] | null): string | null {
+  if (!highlights) return null
+  for (const h of highlights) {
+    const m = h.match(/(\d{2,3})[-\s]?credits?/i)
+    if (m) return `${m[1]} credits`
+  }
+  return null
+}
+
+/** Normalize the tracks field — it arrives in several shapes across programs:
+ *  - array of strings (Anthropology: ["cultural", "archaeology", ...])
+ *  - dict with a named array inside (Accounting: {concentrations: [...], note: ...})
+ *  - null / undefined
+ * Returns a flat array of track names. */
+function tracksArray(tracks: any): string[] {
+  if (!tracks) return []
+  if (Array.isArray(tracks)) return tracks.filter(t => typeof t === 'string')
+  if (typeof tracks === 'object') {
+    for (const key of ['concentrations', 'tracks', 'subfields', 'specializations', 'streams', 'pathways']) {
+      if (Array.isArray(tracks[key])) {
+        return tracks[key].filter((t: any) => typeof t === 'string')
+      }
     }
   }
-  // Sensible defaults so every program has this pill
-  if (degreeType === 'bachelors') return '120 credits'
-  if (degreeType === 'masters') return '30 credits'
-  if (degreeType === 'phd') return '60+ credits'
-  if (degreeType === 'certificate') return '12 credits'
-  return null
+  return []
 }
 
 /** Inspect highlights + description for academic features that describe the
@@ -128,10 +142,11 @@ export default function ProgramHeader({
   const degreeLabel = DEGREE_LABELS[degreeType] || degreeType
   const duration = durationLabel(durationMonths, degreeType)
   const format = formatFormat(deliveryFormat)
-  const credits = creditsForDegree(degreeType, highlights)
+  const credits = creditsForProgram(highlights)
   const calendar = academicCalendar(highlights)
   const features = extractAcademicFeatures(highlights, description, degreeType)
   const studyMode = degreeType === 'certificate' ? 'Part-time option' : 'Full-time'
+  const trackNames = tracksArray(tracks)
 
   // Build ~7–10 two-line info cards describing the program's ACADEMIC CHARACTER.
   // Each card has a small uppercase heading and a value below — self-explanatory
@@ -144,8 +159,8 @@ export default function ProgramHeader({
   pills.push({ icon: Users,      heading: 'Study mode', value: studyMode })
   pills.push({ icon: CalendarDays, heading: 'Calendar',  value: calendar })
   pills.push({ icon: Globe,      heading: 'Language',  value: 'English' })
-  if (tracks && tracks.length > 0) {
-    pills.push({ icon: Layers, heading: 'Tracks', value: `${tracks.length}`, title: tracks.slice(0, 3).join(', ') })
+  if (trackNames.length > 0) {
+    pills.push({ icon: Layers, heading: 'Tracks', value: `${trackNames.length}`, title: trackNames.slice(0, 3).join(', ') })
   }
   if (features.hasThesis) {
     pills.push({
