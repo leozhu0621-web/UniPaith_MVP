@@ -40,7 +40,17 @@ export async function createInstitution(payload: {
 
 export async function updateInstitution(payload: Partial<{
   name: string; type: string; country: string; region: string; city: string;
-  website_url: string; description_text: string; logo_url: string
+  website_url: string; description_text: string; logo_url: string;
+  campus_description: string; campus_setting: 'urban' | 'suburban' | 'rural';
+  student_body_size: number; contact_email: string;
+  media_gallery: string[];
+  // JSONB dicts — see UpdateInstitutionRequest in the backend schema.
+  social_links: Record<string, any>;
+  inquiry_routing: Record<string, any>;
+  support_services: Record<string, any>;
+  policies: Record<string, any>;
+  international_info: Record<string, any>;
+  school_outcomes: Record<string, any>;
 }>): Promise<Institution> {
   const { data } = await apiClient.put('/institutions/me', payload)
   return data
@@ -56,32 +66,29 @@ export async function getInstitutionProgram(programId: string): Promise<Program>
   return data
 }
 
-export async function createProgram(payload: {
-  program_name: string; degree_type: string; department?: string;
-  duration_months?: number; tuition?: number; acceptance_rate?: number;
-  delivery_format?: string; campus_setting?: string;
-  requirements?: Record<string, any>; application_requirements?: Record<string, any>[];
-  description_text?: string; who_its_for?: string;
-  application_deadline?: string; program_start_date?: string;
-  tracks?: string[]; outcomes_data?: Record<string, any>;
-  intake_rounds?: Record<string, any>[]; media_urls?: string[];
-  highlights?: string[]; faculty_contacts?: { name: string; email?: string; role?: string }[]
-}): Promise<Program> {
-  const { data } = await apiClient.post('/institutions/me/programs', payload)
-  return data
-}
-
-export async function updateProgram(programId: string, payload: Partial<{
+type ProgramWritablePayload = {
   program_name: string; degree_type: string; department: string;
   duration_months: number; tuition: number; acceptance_rate: number;
   delivery_format: string; campus_setting: string;
   requirements: Record<string, any>; application_requirements: Record<string, any>[];
   description_text: string; who_its_for: string;
   application_deadline: string; program_start_date: string;
-  tracks: string[]; outcomes_data: Record<string, any>;
-  intake_rounds: Record<string, any>[]; media_urls: string[];
-  highlights: string[]; faculty_contacts: { name: string; email?: string; role?: string }[]
-}>): Promise<Program> {
+  // tracks + intake_rounds are JSONB dicts in the DB (e.g., tracks has
+  // {concentrations, note}; intake_rounds has {fall_YYYY: {...}, source}).
+  tracks: Record<string, any>; outcomes_data: Record<string, any>;
+  intake_rounds: Record<string, any>; media_urls: string[];
+  highlights: string[]; faculty_contacts: { name: string; email?: string; role?: string }[];
+  cost_data: Record<string, any>;
+}
+
+export async function createProgram(payload: Partial<ProgramWritablePayload> & {
+  program_name: string; degree_type: string;
+}): Promise<Program> {
+  const { data } = await apiClient.post('/institutions/me/programs', payload)
+  return data
+}
+
+export async function updateProgram(programId: string, payload: Partial<ProgramWritablePayload>): Promise<Program> {
   const { data } = await apiClient.put(`/institutions/me/programs/${programId}`, payload)
   return data
 }

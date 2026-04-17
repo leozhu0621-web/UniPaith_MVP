@@ -1,4 +1,4 @@
-// Build: 2026-04-16-nyu-data-fixes-v2 — cache-bust to force CI to produce fresh bundle
+// Build: 2026-04-16-nyu-gold-standard-audit — honest institution-wide labeling
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -269,7 +269,7 @@ export default function SchoolDetailPage() {
                 <div><span className="text-student-text">Degree:</span> <span className="font-medium">{DEGREE_LABELS[p.degree_type] || p.degree_type}</span></div>
                 {p.duration_months && <div><span className="text-student-text">Duration:</span> <span className="font-medium">{p.duration_months} months</span></div>}
                 {p.tuition != null && <div><span className="text-student-text">Tuition:</span> <span className="font-medium">{formatCurrency(p.tuition)}/yr</span></div>}
-                {(p.acceptance_rate ?? rd.acceptance_rate) != null && <div><span className="text-student-text">Acceptance Rate:</span> <span className="font-medium">{formatPercent(p.acceptance_rate ?? rd.acceptance_rate, 1)}</span></div>}
+                {p.acceptance_rate != null && <div><span className="text-student-text">Acceptance Rate:</span> <span className="font-medium">{formatPercent(p.acceptance_rate, 1)}</span></div>}
                 {p.delivery_format && <div><span className="text-student-text">Format:</span> <span className="font-medium capitalize">{p.delivery_format.replace(/_/g, ' ')}</span></div>}
                 {(p.campus_setting || p.institution_campus_setting) && <div><span className="text-student-text">Campus:</span> <span className="font-medium capitalize">{p.campus_setting || p.institution_campus_setting}</span></div>}
                 {p.application_deadline && <div><span className="text-student-text">Deadline:</span> <span className="font-medium">{formatDate(p.application_deadline)}</span></div>}
@@ -288,15 +288,20 @@ export default function SchoolDetailPage() {
                 {p.institution_description && (
                   <p className="text-sm text-student-text leading-relaxed mb-3">{p.institution_description}</p>
                 )}
-                {rd.earnings_10yr_median && (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                    {rd.earnings_10yr_median && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Median Earnings (10yr)</p><p className="font-bold text-student-ink">{formatCurrency(rd.earnings_10yr_median)}</p></div>}
-                    {rd.graduation_rate && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Graduation Rate</p><p className="font-bold text-student-ink">{Math.round(rd.graduation_rate * 100)}%</p></div>}
-                    {rd.retention_rate && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Retention Rate</p><p className="font-bold text-student-ink">{Math.round(rd.retention_rate * 100)}%</p></div>}
-                    {rd.median_debt && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Median Debt</p><p className="font-bold text-student-ink">{formatCurrency(rd.median_debt)}</p></div>}
-                    {rd.avg_net_price && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Avg Net Price</p><p className="font-bold text-student-ink">{formatCurrency(rd.avg_net_price)}</p></div>}
-                    {rd.pell_grant_rate && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Pell Grant Rate</p><p className="font-bold text-student-ink">{Math.round(rd.pell_grant_rate * 100)}%</p></div>}
-                  </div>
+                {(rd.earnings_10yr_median || rd.acceptance_rate || rd.tuition_in_state) && (
+                  <>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                      {rd.acceptance_rate != null && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Acceptance Rate (university)</p><p className="font-bold text-student-ink">{formatPercent(rd.acceptance_rate, 1)}</p></div>}
+                      {rd.tuition_in_state != null && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Tuition (university, Scorecard)</p><p className="font-bold text-student-ink">{formatCurrency(rd.tuition_in_state)}/yr</p></div>}
+                      {rd.earnings_10yr_median && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Median Earnings (10yr, university)</p><p className="font-bold text-student-ink">{formatCurrency(rd.earnings_10yr_median)}</p></div>}
+                      {rd.graduation_rate && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Graduation Rate</p><p className="font-bold text-student-ink">{Math.round(rd.graduation_rate * 100)}%</p></div>}
+                      {rd.retention_rate && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Retention Rate</p><p className="font-bold text-student-ink">{Math.round(rd.retention_rate * 100)}%</p></div>}
+                      {rd.median_debt && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Median Debt</p><p className="font-bold text-student-ink">{formatCurrency(rd.median_debt)}</p></div>}
+                      {rd.avg_net_price && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Avg Net Price</p><p className="font-bold text-student-ink">{formatCurrency(rd.avg_net_price)}</p></div>}
+                      {rd.pell_grant_rate && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Pell Grant Rate</p><p className="font-bold text-student-ink">{Math.round(rd.pell_grant_rate * 100)}%</p></div>}
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-2">Source: College Scorecard (institution-wide — not program-specific)</p>
+                  </>
                 )}
               </Card>
             )}
@@ -368,7 +373,13 @@ export default function SchoolDetailPage() {
         {tab === 'costs' && (() => {
           const cd = p.cost_data || {}
           const years = (p.duration_months || (p.degree_type === 'bachelors' ? 48 : 24)) / 12
-          const annual = p.tuition ?? rd.tuition_in_state ?? null
+          // Program-level tuition is preferred; institution-wide tuition is
+          // shown as a clearly-labeled fallback so students know the number
+          // reflects the university average, not a program-specific price.
+          const programAnnual = p.tuition ?? null
+          const institutionAnnual = rd.tuition_in_state ?? rd.tuition_out_of_state ?? null
+          const annual = programAnnual ?? institutionAnnual
+          const isInstitutionTuition = programAnnual == null && institutionAnnual != null
           const hasTuition = annual != null && annual > 0
           const fees = cd.fees || {}
           const feeTotal = Object.values(fees).reduce((s: number, v: any) => s + (Number(v) || 0), 0)
@@ -396,9 +407,14 @@ export default function SchoolDetailPage() {
                 </div>
                 <dl className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <dt className="text-gray-500">Annual Tuition</dt>
+                    <dt className="text-gray-500">
+                      {isInstitutionTuition ? 'Tuition (university-wide)' : 'Annual Tuition'}
+                    </dt>
                     <dd className="font-medium">{hasTuition ? formatCurrency(annual as number) : <span className="text-gray-400">Contact school</span>}</dd>
                   </div>
+                  {isInstitutionTuition && (
+                    <p className="text-[10px] text-gray-400 -mt-1">Source: College Scorecard (this university reports tuition at the institution level, not per program)</p>
+                  )}
                   {Object.entries(fees).map(([k, v]) => (
                     <div key={k} className="flex justify-between">
                       <dt className="text-gray-500 capitalize">{k.replace(/_/g, ' ')}</dt>
