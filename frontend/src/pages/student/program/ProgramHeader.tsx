@@ -5,7 +5,6 @@ import {
   BookOpen, Globe, Award, Briefcase, FlaskConical, Plane, Layers,
   Users, CalendarDays,
 } from 'lucide-react'
-import MatchSummary from './MatchSummary'
 import { DEGREE_LABELS } from '../../../utils/constants'
 
 /* ── Helpers ─────────────────────────────────────────────────────────── */
@@ -107,11 +106,6 @@ interface Props {
   tracks?: string[] | null
   description?: string | null
 
-  // Match — tier (1/2/3) drives the word label; breakdown drives the reasons
-  matchTier?: number | null
-  matchBreakdown?: Record<string, number> | null
-  onMatchClick?: () => void
-
   // Actions
   isSaved: boolean
   isComparing?: boolean
@@ -128,7 +122,6 @@ export default function ProgramHeader({
   programName, degreeType, institutionId, institutionName, institutionCity,
   institutionCountry, department,
   durationMonths, deliveryFormat, highlights, tracks, description,
-  matchTier, matchBreakdown, onMatchClick,
   isSaved, isComparing, hasApplication,
   onBack, onSave, onCompare, onAskCounselor, onApply, onViewApplication,
 }: Props) {
@@ -211,15 +204,6 @@ export default function ProgramHeader({
               Compare
             </button>
           )}
-          {onAskCounselor && (
-            <button
-              onClick={onAskCounselor}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg bg-gold-soft text-gold border border-gold/20 hover:bg-gold hover:text-white transition-colors"
-            >
-              <Sparkles size={12} />
-              Ask AI
-            </button>
-          )}
         </div>
       </div>
 
@@ -286,14 +270,26 @@ export default function ProgramHeader({
             </div>
           </div>
 
-          {/* Right: word-based match summary + primary action */}
+          {/* Right: Ask Counselor CTA + primary action */}
           <div className="flex-shrink-0 flex flex-col items-stretch gap-2.5 w-[220px]">
-            {matchTier != null && (
-              <MatchSummary
-                matchTier={matchTier}
-                scoreBreakdown={matchBreakdown}
-                onClick={onMatchClick}
-              />
+            {onAskCounselor && (
+              <button
+                onClick={onAskCounselor}
+                className="group text-left rounded-xl border border-gold/20 bg-gradient-to-br from-gold-soft to-amber-50 px-4 py-3 hover:border-gold/40 hover:shadow-sm transition-all"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center shadow-sm">
+                    <Sparkles size={13} className="text-gold" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider font-bold text-gold/80">Not sure?</p>
+                    <p className="text-[13px] font-bold text-student-ink leading-tight">Ask your counselor</p>
+                  </div>
+                </div>
+                <p className="text-[11px] text-student-text leading-relaxed mt-1.5 group-hover:text-student-ink transition-colors">
+                  Get a personalized take on whether {programName} fits your goals.
+                </p>
+              </button>
             )}
             {hasApplication && onViewApplication ? (
               <button

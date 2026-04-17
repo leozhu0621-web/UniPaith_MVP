@@ -7,6 +7,7 @@ import { listEvents, rsvpEvent, getMyRsvps } from '../../api/events'
 import { listMyApplications, createApplication } from '../../api/applications'
 import { saveProgram, unsaveProgram, listSaved } from '../../api/saved-lists'
 import { useCompareStore } from '../../stores/compare-store'
+import { useCounselorStore } from '../../stores/counselor-store'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -46,6 +47,7 @@ export default function SchoolDetailPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const compareStore = useCompareStore()
+  const askCounselor = useCounselorStore(s => s.askQuestion)
   const [tab, setTab] = useState<Tab>('overview')
   const [matchModalOpen, setMatchModalOpen] = useState(false)
 
@@ -153,16 +155,15 @@ export default function SchoolDetailPage() {
         highlights={p.highlights}
         tracks={p.tracks}
         description={p.description_text}
-        matchTier={match?.match_tier}
-        matchBreakdown={match?.score_breakdown}
-        onMatchClick={() => setMatchModalOpen(true)}
         isSaved={isSaved}
         isComparing={compareStore.has(p.id)}
         hasApplication={!!existingApp}
         onBack={() => navigate('/s/explore')}
         onSave={() => saveMut.mutate()}
         onCompare={handleCompare}
-        onAskCounselor={() => navigate(`/s?prefill=${encodeURIComponent(`Tell me about ${p.program_name} at ${instName}. Is it a good fit?`)}`)}
+        onAskCounselor={() => askCounselor(
+          `Is ${p.program_name} at ${instName} a good fit for me? Why or why not?`
+        )}
         onApply={() => applyMut.mutate()}
         onViewApplication={existingApp ? () => navigate(`/s/applications/${existingApp.id}`) : undefined}
       />
