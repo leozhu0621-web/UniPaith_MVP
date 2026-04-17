@@ -22,6 +22,7 @@ Rules followed:
 """
 import asyncio
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -31,8 +32,8 @@ import httpx
 API = "https://api.unipaith.co/api/v1"
 DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "nyu"
 
-ADMIN_EMAIL = "admin@unipaith.co"
-ADMIN_PASSWORD = "Unipaith2026"
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@unipaith.co")
+ADMIN_PASSWORD = os.environ["ADMIN_PASSWORD"]
 
 
 async def get_admin_token() -> str:

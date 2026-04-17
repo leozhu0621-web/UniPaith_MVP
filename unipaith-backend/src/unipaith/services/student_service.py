@@ -926,7 +926,7 @@ class StudentService:
             if match_count > 0
             else None
         )
-        top_tier = min((m.match_tier for m in matches), default=None)
+        top_tier = min((m.match_tier for m in matches if m.match_tier is not None), default=None)
 
         # Application stats
         apps_result = await self.db.execute(

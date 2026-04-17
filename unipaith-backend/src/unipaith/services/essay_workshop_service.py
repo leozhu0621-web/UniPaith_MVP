@@ -149,7 +149,7 @@ class EssayWorkshopService:
         student_id: UUID,
         essay_id: UUID,
         feedback_type: str = "full_review",
-    ) -> dict:
+    ) -> StudentEssay:
         """
         Use the LLM to review the essay and return structured feedback.
 
