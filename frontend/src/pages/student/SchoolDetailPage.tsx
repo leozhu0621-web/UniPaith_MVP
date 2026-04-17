@@ -1,4 +1,4 @@
-// Build: 2026-04-16-nyu-data-fixes-v2 — cache-bust to force CI to produce fresh bundle
+// Build: 2026-04-16-nyu-gold-standard-audit — honest institution-wide labeling
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -191,51 +191,74 @@ export default function SchoolDetailPage() {
         </div>
       </div>
 
-      {/* Quick stats bar */}
-      <div className="flex flex-wrap gap-3 mb-6">
-        {p.tuition != null && (
-          <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
-            <p className="text-[10px] text-student-text">Tuition</p>
-            <p className="text-sm font-bold text-student-ink">{formatCurrency(p.tuition)}/yr</p>
+      {/* Quick stats bar. Program-level values are unlabeled; institution
+          (Scorecard) values carry a "(univ)" suffix and a Scorecard footnote
+          so students don't confuse university-wide averages with program-
+          specific metrics. */}
+      {(() => {
+        const hasProgramStats = p.tuition != null || p.acceptance_rate != null || p.duration_months != null
+        const hasInstStats = rd.earnings_10yr_median || rd.graduation_rate || rd.sat_avg || rd.total_cost_attendance
+        if (!hasProgramStats && !hasInstStats) return null
+        return (
+          <div className="mb-6">
+            <div className="flex flex-wrap gap-3">
+              {p.tuition != null && (
+                <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
+                  <p className="text-[10px] text-student-text">Tuition</p>
+                  <p className="text-sm font-bold text-student-ink">{formatCurrency(p.tuition)}/yr</p>
+                </div>
+              )}
+              {p.acceptance_rate != null && (
+                <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
+                  <p className="text-[10px] text-student-text">Acceptance</p>
+                  <p className="text-sm font-bold text-student-ink">{formatPercent(p.acceptance_rate, 1)}</p>
+                </div>
+              )}
+              {p.duration_months && (
+                <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
+                  <p className="text-[10px] text-student-text">Duration</p>
+                  <p className="text-sm font-bold text-student-ink">{p.duration_months}mo</p>
+                </div>
+              )}
+              {rd.acceptance_rate != null && p.acceptance_rate == null && (
+                <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
+                  <p className="text-[10px] text-student-text">Acceptance (univ)</p>
+                  <p className="text-sm font-bold text-student-ink">{formatPercent(rd.acceptance_rate, 1)}</p>
+                </div>
+              )}
+              {rd.earnings_10yr_median && (
+                <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
+                  <p className="text-[10px] text-student-text">Avg Salary 10yr (univ)</p>
+                  <p className="text-sm font-bold text-student-ink">{formatCurrency(rd.earnings_10yr_median)}</p>
+                </div>
+              )}
+              {rd.graduation_rate && (
+                <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
+                  <p className="text-[10px] text-student-text">Grad Rate (univ)</p>
+                  <p className="text-sm font-bold text-student-ink">{Math.round(rd.graduation_rate * 100)}%</p>
+                </div>
+              )}
+              {rd.sat_avg && (
+                <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
+                  <p className="text-[10px] text-student-text">SAT Avg (univ)</p>
+                  <p className="text-sm font-bold text-student-ink">{rd.sat_avg}</p>
+                </div>
+              )}
+              {rd.total_cost_attendance && (
+                <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
+                  <p className="text-[10px] text-student-text">Total Cost (univ)</p>
+                  <p className="text-sm font-bold text-student-ink">{formatCurrency(rd.total_cost_attendance)}/yr</p>
+                </div>
+              )}
+            </div>
+            {hasInstStats && (
+              <p className="text-[10px] text-gray-400 mt-2">
+                (univ) = university-wide value from College Scorecard, not program-specific.
+              </p>
+            )}
           </div>
-        )}
-        {(p.acceptance_rate ?? rd.acceptance_rate) != null && (
-          <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
-            <p className="text-[10px] text-student-text">Acceptance</p>
-            <p className="text-sm font-bold text-student-ink">{formatPercent(p.acceptance_rate ?? rd.acceptance_rate, 1)}</p>
-          </div>
-        )}
-        {rd.earnings_10yr_median && (
-          <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
-            <p className="text-[10px] text-student-text">Avg Salary (10yr)</p>
-            <p className="text-sm font-bold text-student-ink">{formatCurrency(rd.earnings_10yr_median)}</p>
-          </div>
-        )}
-        {rd.graduation_rate && (
-          <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
-            <p className="text-[10px] text-student-text">Grad Rate</p>
-            <p className="text-sm font-bold text-student-ink">{Math.round(rd.graduation_rate * 100)}%</p>
-          </div>
-        )}
-        {rd.sat_avg && (
-          <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
-            <p className="text-[10px] text-student-text">SAT Avg</p>
-            <p className="text-sm font-bold text-student-ink">{rd.sat_avg}</p>
-          </div>
-        )}
-        {p.duration_months && (
-          <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
-            <p className="text-[10px] text-student-text">Duration</p>
-            <p className="text-sm font-bold text-student-ink">{p.duration_months}mo</p>
-          </div>
-        )}
-        {rd.total_cost_attendance && (
-          <div className="px-3 py-2 bg-white border border-divider rounded-lg text-center">
-            <p className="text-[10px] text-student-text">Total Cost</p>
-            <p className="text-sm font-bold text-student-ink">{formatCurrency(rd.total_cost_attendance)}/yr</p>
-          </div>
-        )}
-      </div>
+        )
+      })()}
 
       <Tabs
         tabs={[
@@ -269,7 +292,7 @@ export default function SchoolDetailPage() {
                 <div><span className="text-student-text">Degree:</span> <span className="font-medium">{DEGREE_LABELS[p.degree_type] || p.degree_type}</span></div>
                 {p.duration_months && <div><span className="text-student-text">Duration:</span> <span className="font-medium">{p.duration_months} months</span></div>}
                 {p.tuition != null && <div><span className="text-student-text">Tuition:</span> <span className="font-medium">{formatCurrency(p.tuition)}/yr</span></div>}
-                {(p.acceptance_rate ?? rd.acceptance_rate) != null && <div><span className="text-student-text">Acceptance Rate:</span> <span className="font-medium">{formatPercent(p.acceptance_rate ?? rd.acceptance_rate, 1)}</span></div>}
+                {p.acceptance_rate != null && <div><span className="text-student-text">Acceptance Rate:</span> <span className="font-medium">{formatPercent(p.acceptance_rate, 1)}</span></div>}
                 {p.delivery_format && <div><span className="text-student-text">Format:</span> <span className="font-medium capitalize">{p.delivery_format.replace(/_/g, ' ')}</span></div>}
                 {(p.campus_setting || p.institution_campus_setting) && <div><span className="text-student-text">Campus:</span> <span className="font-medium capitalize">{p.campus_setting || p.institution_campus_setting}</span></div>}
                 {p.application_deadline && <div><span className="text-student-text">Deadline:</span> <span className="font-medium">{formatDate(p.application_deadline)}</span></div>}
@@ -288,15 +311,20 @@ export default function SchoolDetailPage() {
                 {p.institution_description && (
                   <p className="text-sm text-student-text leading-relaxed mb-3">{p.institution_description}</p>
                 )}
-                {rd.earnings_10yr_median && (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                    {rd.earnings_10yr_median && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Median Earnings (10yr)</p><p className="font-bold text-student-ink">{formatCurrency(rd.earnings_10yr_median)}</p></div>}
-                    {rd.graduation_rate && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Graduation Rate</p><p className="font-bold text-student-ink">{Math.round(rd.graduation_rate * 100)}%</p></div>}
-                    {rd.retention_rate && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Retention Rate</p><p className="font-bold text-student-ink">{Math.round(rd.retention_rate * 100)}%</p></div>}
-                    {rd.median_debt && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Median Debt</p><p className="font-bold text-student-ink">{formatCurrency(rd.median_debt)}</p></div>}
-                    {rd.avg_net_price && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Avg Net Price</p><p className="font-bold text-student-ink">{formatCurrency(rd.avg_net_price)}</p></div>}
-                    {rd.pell_grant_rate && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Pell Grant Rate</p><p className="font-bold text-student-ink">{Math.round(rd.pell_grant_rate * 100)}%</p></div>}
-                  </div>
+                {(rd.earnings_10yr_median || rd.acceptance_rate || rd.tuition_in_state) && (
+                  <>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                      {rd.acceptance_rate != null && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Acceptance Rate (university)</p><p className="font-bold text-student-ink">{formatPercent(rd.acceptance_rate, 1)}</p></div>}
+                      {rd.tuition_in_state != null && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Tuition (university, Scorecard)</p><p className="font-bold text-student-ink">{formatCurrency(rd.tuition_in_state)}/yr</p></div>}
+                      {rd.earnings_10yr_median && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Median Earnings (10yr, university)</p><p className="font-bold text-student-ink">{formatCurrency(rd.earnings_10yr_median)}</p></div>}
+                      {rd.graduation_rate && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Graduation Rate</p><p className="font-bold text-student-ink">{Math.round(rd.graduation_rate * 100)}%</p></div>}
+                      {rd.retention_rate && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Retention Rate</p><p className="font-bold text-student-ink">{Math.round(rd.retention_rate * 100)}%</p></div>}
+                      {rd.median_debt && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Median Debt</p><p className="font-bold text-student-ink">{formatCurrency(rd.median_debt)}</p></div>}
+                      {rd.avg_net_price && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Avg Net Price</p><p className="font-bold text-student-ink">{formatCurrency(rd.avg_net_price)}</p></div>}
+                      {rd.pell_grant_rate && <div className="bg-student-mist rounded-lg p-3"><p className="text-[10px] text-student-text">Pell Grant Rate</p><p className="font-bold text-student-ink">{Math.round(rd.pell_grant_rate * 100)}%</p></div>}
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-2">Source: College Scorecard (institution-wide — not program-specific)</p>
+                  </>
                 )}
               </Card>
             )}
@@ -368,7 +396,13 @@ export default function SchoolDetailPage() {
         {tab === 'costs' && (() => {
           const cd = p.cost_data || {}
           const years = (p.duration_months || (p.degree_type === 'bachelors' ? 48 : 24)) / 12
-          const annual = p.tuition ?? rd.tuition_in_state ?? null
+          // Program-level tuition is preferred; institution-wide tuition is
+          // shown as a clearly-labeled fallback so students know the number
+          // reflects the university average, not a program-specific price.
+          const programAnnual = p.tuition ?? null
+          const institutionAnnual = rd.tuition_in_state ?? rd.tuition_out_of_state ?? null
+          const annual = programAnnual ?? institutionAnnual
+          const isInstitutionTuition = programAnnual == null && institutionAnnual != null
           const hasTuition = annual != null && annual > 0
           const fees = cd.fees || {}
           const feeTotal = Object.values(fees).reduce((s: number, v: any) => s + (Number(v) || 0), 0)
@@ -396,9 +430,14 @@ export default function SchoolDetailPage() {
                 </div>
                 <dl className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <dt className="text-gray-500">Annual Tuition</dt>
+                    <dt className="text-gray-500">
+                      {isInstitutionTuition ? 'Tuition (university-wide)' : 'Annual Tuition'}
+                    </dt>
                     <dd className="font-medium">{hasTuition ? formatCurrency(annual as number) : <span className="text-gray-400">Contact school</span>}</dd>
                   </div>
+                  {isInstitutionTuition && (
+                    <p className="text-[10px] text-gray-400 -mt-1">Source: College Scorecard (this university reports tuition at the institution level, not per program)</p>
+                  )}
                   {Object.entries(fees).map(([k, v]) => (
                     <div key={k} className="flex justify-between">
                       <dt className="text-gray-500 capitalize">{k.replace(/_/g, ' ')}</dt>
@@ -662,28 +701,30 @@ export default function SchoolDetailPage() {
                     </Card>
                   )}
 
-                  <Card className="p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Briefcase size={16} className="text-stone-600" />
-                      <h3 className="font-medium text-sm text-stone-700">Employment & Placement</h3>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      {empRate != null && (
-                        <div>
-                          <p className="text-xs text-gray-500">Employment Rate</p>
-                          <p className="text-2xl font-bold text-stone-700">{(empRate * 100).toFixed(0)}%</p>
-                          <p className="text-[10px] text-gray-400">Within {empTimeframe}</p>
-                        </div>
-                      )}
-                      {internRate != null && (
-                        <div>
-                          <p className="text-xs text-gray-500">Internship Conversion</p>
-                          <p className="text-2xl font-bold text-stone-700">{(internRate * 100).toFixed(0)}%</p>
-                          <p className="text-[10px] text-gray-400">Interns receiving full-time offers</p>
-                        </div>
-                      )}
-                    </div>
-                  </Card>
+                  {(empRate != null || internRate != null) && (
+                    <Card className="p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Briefcase size={16} className="text-stone-600" />
+                        <h3 className="font-medium text-sm text-stone-700">Employment & Placement</h3>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        {empRate != null && (
+                          <div>
+                            <p className="text-xs text-gray-500">Employment Rate</p>
+                            <p className="text-2xl font-bold text-stone-700">{(empRate * 100).toFixed(0)}%</p>
+                            <p className="text-[10px] text-gray-400">Within {empTimeframe}</p>
+                          </div>
+                        )}
+                        {internRate != null && (
+                          <div>
+                            <p className="text-xs text-gray-500">Internship Conversion</p>
+                            <p className="text-2xl font-bold text-stone-700">{(internRate * 100).toFixed(0)}%</p>
+                            <p className="text-[10px] text-gray-400">Interns receiving full-time offers</p>
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+                  )}
 
                   {topEmployers.length > 0 && (
                     <Card className="p-4">

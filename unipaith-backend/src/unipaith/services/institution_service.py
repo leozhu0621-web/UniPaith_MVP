@@ -1881,16 +1881,18 @@ class InstitutionService:
                 institution_name=inst.name,
                 institution_country=inst.country,
                 institution_city=inst.city,
+                # Program-level outcomes only — do NOT fall back to institution
+                # earnings_10yr_median or graduation_rate. Institution-wide values
+                # are available via the institution ranking_data for context, but
+                # showing them on program cards misleads students (e.g., NYU's
+                # 82509 institution 10yr median shown uniformly for every program
+                # without Scorecard-by-CIP coverage).
                 median_salary=(
                     _outcomes_int(prog, "median_salary")
                     or _outcomes_int(prog, "earnings_4yr_median")
                     or _outcomes_int(prog, "earnings_1yr_median")
-                    or (inst.ranking_data or {}).get("earnings_10yr_median")
                 ),
-                employment_rate=(
-                    _outcomes_float(prog, "employment_rate")
-                    or (inst.ranking_data or {}).get("graduation_rate")
-                ),
+                employment_rate=_outcomes_float(prog, "employment_rate"),
                 payback_months=_outcomes_int(prog, "payback_months"),
                 description_text=prog.description_text,
                 media_urls=prog.media_urls,

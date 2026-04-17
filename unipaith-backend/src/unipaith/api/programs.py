@@ -111,16 +111,21 @@ async def get_public_program(
     resp_dict["institution_description"] = inst.description_text if inst else None
     resp_dict["institution_website_url"] = inst.website_url if inst else None
 
-    # Fill missing program fields from ranking_data
-    if not resp_dict.get("acceptance_rate") and rd.get("acceptance_rate"):
-        resp_dict["acceptance_rate"] = rd["acceptance_rate"]
-    if not resp_dict.get("delivery_format") and inst and inst.campus_setting:
-        resp_dict["delivery_format"] = "on_campus"
+    # Do NOT fall back program-level `acceptance_rate` or `delivery_format` to
+    # institution values — that misleads students (e.g., NYU's 9.23% university
+    # acceptance rate is not Tisch Drama's ~8% program-specific rate). Keep
+    # these null when unknown. The institution acceptance_rate is available in
+    # resp_dict["ranking_data"] below for students to see as context.
+    # campus_setting is OK to inherit from institution — it's always
+    # institution-wide (urban/suburban/rural) and not program-specific.
     if not resp_dict.get("campus_setting") and inst:
         resp_dict["campus_setting"] = inst.campus_setting
 
-    # Enrich with ranking_data fields that programs don't have
+    # Enrich with ranking_data fields that programs don't have. Include
+    # institution acceptance_rate + tuition here (not as program fallback) so
+    # the student sees them labeled as institution-wide context.
     resp_dict["ranking_data"] = {
+        "acceptance_rate": rd.get("acceptance_rate"),
         "sat_avg": rd.get("sat_avg"),
         "act_midpoint": rd.get("act_midpoint"),
         "graduation_rate": rd.get("graduation_rate"),
@@ -130,9 +135,12 @@ async def get_public_program(
         "median_debt": rd.get("median_debt"),
         "avg_net_price": rd.get("avg_net_price"),
         "total_cost_attendance": rd.get("total_cost_attendance"),
+        "tuition_in_state": rd.get("tuition_in_state"),
+        "tuition_out_of_state": rd.get("tuition_out_of_state"),
         "us_news_2025": rd.get("us_news_2025"),
         "pell_grant_rate": rd.get("pell_grant_rate"),
         "room_board": rd.get("room_board"),
+        "books_supply": rd.get("books_supply"),
         "endowment": rd.get("endowment"),
         "gender": rd.get("gender"),
         "race_ethnicity": rd.get("race_ethnicity"),

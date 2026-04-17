@@ -298,9 +298,12 @@ export interface Program {
   is_published: boolean
   application_deadline: string | null
   program_start_date: string | null
-  tracks: string[] | null
+  // tracks + intake_rounds are JSONB dicts in the DB (e.g., tracks has
+  // {concentrations: [...], note: "..."}). Historical seed data may also
+  // be a simple array — accept both shapes defensively.
+  tracks: Record<string, any> | string[] | null
   outcomes_data: Record<string, any> | null
-  intake_rounds: Record<string, any>[] | null
+  intake_rounds: Record<string, any> | Record<string, any>[] | null
   media_urls: string[] | null
   highlights: string[] | null
   faculty_contacts: Record<string, any>[] | null
@@ -647,6 +650,7 @@ export interface Institution {
   website_url: string | null
   media_gallery: string[] | null
   social_links: Record<string, string> | null
+  inquiry_routing: Record<string, any> | null
   support_services: Record<string, any> | null
   policies: Record<string, any> | null
   international_info: Record<string, any> | null
