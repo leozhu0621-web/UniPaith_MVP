@@ -452,34 +452,142 @@ export default function KeyMetrics(props: Props) {
 
   return (
     <div className="mb-5">
-      <div className={`grid gap-2 grid-cols-2 ${picked.length >= 4 ? 'md:grid-cols-4' : picked.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
-        {picked.map((t, i) => {
-          const tone = TONE[t.tone]
-          return (
-            <div
-              key={i}
-              className={`relative rounded-xl border px-3.5 py-3 ${tone.bg} ${tone.border} transition-all hover:shadow-sm`}
-            >
-              <div className="flex items-start justify-between gap-2 mb-1.5">
-                <div className={`w-7 h-7 rounded-lg bg-white flex items-center justify-center ${tone.icon}`}>
-                  <t.icon size={13} />
-                </div>
-                {t.context && (
-                  <span className={`text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-md ${tone.chip} max-w-[140px] truncate`}>
-                    {t.context}
-                  </span>
-                )}
-              </div>
-              <p className="text-[10px] uppercase tracking-wider font-semibold text-student-text/70">
-                {t.label}
-              </p>
-              <p className={`text-[22px] font-bold leading-tight mt-0.5 ${tone.text} truncate`} title={t.value}>
-                {t.value}
-              </p>
-            </div>
-          )
-        })}
+      <div className={`grid gap-3 grid-cols-2 ${picked.length >= 4 ? 'md:grid-cols-4' : picked.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
+        {picked.map((t, i) => <MetricTile key={i} tile={t} />)}
       </div>
+    </div>
+  )
+}
+
+/* ── Tile render — editorial-style card with left accent + mini viz ──── */
+
+/** Helpers that map tone → specific utility classes. We keep these close to
+ *  the render function because they only matter for presentation. */
+const ACCENT_BG: Record<Tone, string> = {
+  amber: 'bg-amber-500',
+  emerald: 'bg-emerald-500',
+  rose: 'bg-rose-500',
+  blue: 'bg-blue-500',
+  violet: 'bg-violet-500',
+  slate: 'bg-slate-400',
+}
+const ACCENT_GRADIENT: Record<Tone, string> = {
+  amber: 'from-amber-400 to-amber-600',
+  emerald: 'from-emerald-400 to-emerald-600',
+  rose: 'from-rose-400 to-rose-600',
+  blue: 'from-blue-400 to-blue-600',
+  violet: 'from-violet-400 to-violet-600',
+  slate: 'from-slate-300 to-slate-500',
+}
+const ICON_COLOR: Record<Tone, string> = {
+  amber: 'text-amber-600',
+  emerald: 'text-emerald-600',
+  rose: 'text-rose-600',
+  blue: 'text-blue-600',
+  violet: 'text-violet-600',
+  slate: 'text-slate-500',
+}
+const VALUE_COLOR: Record<Tone, string> = {
+  amber: 'text-amber-900',
+  emerald: 'text-emerald-900',
+  rose: 'text-rose-900',
+  blue: 'text-blue-900',
+  violet: 'text-violet-900',
+  slate: 'text-slate-800',
+}
+
+/** A small SVG sparkline for tiles that represent a trajectory (X → Y). */
+function TrajectoryViz({ tone }: { tone: Tone }) {
+  return (
+    <svg viewBox="0 0 100 20" className="w-full h-5 mt-3" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id={`grad-${tone}`} x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0%" className={`${ICON_COLOR[tone]}`} stopColor="currentColor" stopOpacity="0.2" />
+          <stop offset="100%" className={`${ICON_COLOR[tone]}`} stopColor="currentColor" stopOpacity="1" />
+        </linearGradient>
+      </defs>
+      {/* Baseline track */}
+      <line x1="6" y1="12" x2="94" y2="12" className="stroke-slate-200" strokeWidth="1.5" strokeLinecap="round" />
+      {/* Rising curve */}
+      <path
+        d="M 6 14 Q 40 13, 60 9 T 94 4"
+        fill="none"
+        stroke={`url(#grad-${tone})`}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      {/* Start dot */}
+      <circle cx="6" cy="14" r="2" className={`fill-white ${ICON_COLOR[tone]}`} stroke="currentColor" strokeWidth="1.5" />
+      {/* End dot */}
+      <circle cx="94" cy="4" r="3" className={`${ACCENT_BG[tone]} fill-current`} />
+    </svg>
+  )
+}
+
+/** Horizontal gauge bar for tiles whose value is a percentage. */
+function PercentViz({ value, tone }: { value: string; tone: Tone }) {
+  const m = value.match(/^(\d+(?:\.\d+)?)\s*%/)
+  if (!m) return null
+  const pct = Math.min(100, Math.max(0, parseFloat(m[1])))
+  return (
+    <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+      <div className={`h-full rounded-full bg-gradient-to-r ${ACCENT_GRADIENT[tone]}`} style={{ width: `${pct}%` }} />
+    </div>
+  )
+}
+
+/** Comparison bar for tiles that express an advantage over a baseline, e.g. "+$16K". */
+function PremiumViz({ tone }: { tone: Tone }) {
+  return (
+    <div className="mt-3 relative h-1.5 rounded-full bg-slate-100 overflow-hidden">
+      {/* Baseline segment (grey) */}
+      <div className="absolute inset-y-0 left-0 w-[55%] bg-slate-300" />
+      {/* Premium segment (tone) */}
+      <div className={`absolute inset-y-0 left-[55%] w-[38%] rounded-r-full bg-gradient-to-r ${ACCENT_GRADIENT[tone]}`} />
+      {/* Baseline marker */}
+      <div className="absolute top-1/2 left-[55%] -translate-y-1/2 w-0.5 h-3 bg-slate-500" />
+    </div>
+  )
+}
+
+function MetricTile({ tile }: { tile: Tile }) {
+  const isTrajectory = tile.value.includes('→')
+  const isPercent = /^\d+(\.\d+)?\s*%$/.test(tile.value.trim())
+  const isPremium = tile.value.startsWith('+$') || tile.value.startsWith('+ $')
+  const Icon = tile.icon
+
+  return (
+    <div className="group relative rounded-xl bg-white border border-divider pl-4 pr-4 py-4 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:border-slate-300 overflow-hidden">
+      {/* Left accent bar — the only bg color on the tile */}
+      <span className={`absolute left-0 top-0 bottom-0 w-[3px] ${ACCENT_BG[tile.tone]}`} aria-hidden />
+
+      {/* Eyebrow: icon + label */}
+      <div className="flex items-center gap-2 mb-2.5">
+        <Icon size={12} className={ICON_COLOR[tile.tone]} />
+        <span className="text-[10px] uppercase tracking-[0.08em] font-semibold text-slate-500">
+          {tile.label}
+        </span>
+      </div>
+
+      {/* Hero value — bold, tabular, truncates if too wide */}
+      <p
+        className={`text-[26px] font-bold tracking-tight tabular-nums leading-[1.1] ${VALUE_COLOR[tile.tone]} truncate`}
+        title={tile.value}
+      >
+        {tile.value}
+      </p>
+
+      {/* Mini visualization, only for tile types that benefit from one */}
+      {isTrajectory && <TrajectoryViz tone={tile.tone} />}
+      {!isTrajectory && isPercent && <PercentViz value={tile.value} tone={tile.tone} />}
+      {!isTrajectory && !isPercent && isPremium && <PremiumViz tone={tile.tone} />}
+
+      {/* Context — editorial subtitle */}
+      {tile.context && (
+        <p className="text-[11.5px] text-slate-500 mt-3 leading-snug line-clamp-2">
+          {tile.context}
+        </p>
+      )}
     </div>
   )
 }
