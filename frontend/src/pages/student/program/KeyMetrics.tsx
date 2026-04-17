@@ -1,23 +1,22 @@
 import {
-  DollarSign, TrendingUp, GraduationCap, Target, Clock, Wallet,
-  Briefcase, Award, Users, Sparkles, ArrowUpRight,
+  DollarSign, TrendingUp, GraduationCap, Clock, Wallet,
+  Briefcase, Award, Sparkles, ArrowUpRight, BookOpen, MapPin,
+  Microscope, Users, Compass,
 } from 'lucide-react'
 import { formatCurrency } from '../../../utils/format'
 
 /**
- * KeyMetrics — 4 tiles showing what makes THIS program characteristic.
+ * KeyMetrics — 4 tiles that show what's *distinctive* about THIS program.
  *
- * Principle: tiles should highlight what's attractive about the program —
- * outcomes, ROI, structure, opportunities. NOT friction/difficulty metrics
- * like acceptance rate or app requirements count — those belong in the
- * Admissions tab. Every program is different, so we compute every possible
- * positive/characteristic metric and pick the top 4.
- *
- * Priorities (all positive / characteristic, no friction metrics):
- *   1. Program-specific outcomes (employment rate, median salary, hiring partners)
- *   2. ROI signals (payback period, salary growth trajectory)
- *   3. Program character (duration, specializations, highlights count, total investment)
- *   4. Institution outcome rollups (mid-career earnings, grad rate) as fallback
+ * Rules:
+ * - Every tile should answer "what's unusual or advantageous here?"
+ * - Prefer concrete numbers over abstract ratings ("$64K → $82K" > "+28% growth")
+ * - Parse highlights/description text to surface program-specific facts
+ *   (credits, honors, subfields, location advantages)
+ * - Hide tiles that are the same for most programs (standard duration, standard
+ *   credits) — they're noise, not signal
+ * - Friction metrics (acceptance rate, requirement count) never go here; they
+ *   belong in the Admissions tab
  */
 
 type Tone = 'amber' | 'emerald' | 'rose' | 'blue' | 'violet' | 'slate'
@@ -37,6 +36,7 @@ interface Tile {
   value: string
   context?: string
   tone: Tone
+  priority: number // higher = more distinctive, picked first
 }
 
 interface Props {
@@ -47,12 +47,14 @@ interface Props {
   tracks?: string[] | null
   applicationRequirements?: any[] | null
   highlights?: string[] | null
+  descriptionText?: string | null
 
   // Program-specific outcomes (from outcomes_data)
   outcomesMedianSalary?: number | null
   outcomesEmploymentRate?: number | null
   outcomesInternshipConversion?: number | null
   outcomesTopEmployers?: string[] | null
+  outcomesTopIndustries?: string[] | null
   outcomesPaybackMonths?: number | null
 
   // Institution rollups (fallback)
@@ -63,40 +65,169 @@ interface Props {
   retentionRate?: number | null
 }
 
+/* ── Constants ─────────────────────────────────────────────────────────── */
+
 const DEFAULT_DURATION_MONTHS: Record<string, number> = {
-  bachelors: 48,
-  masters: 24,
-  phd: 60,
-  certificate: 12,
-  doctorate: 60,
-  associate: 24,
+  bachelors: 48, masters: 24, phd: 60, certificate: 12, doctorate: 60, associate: 24,
 }
 
-function formatDurationYears(months: number): { value: string; context: string } {
-  if (months < 12) return { value: `${months} mo`, context: months === 1 ? 'Short program' : 'Accelerated' }
+const DEFAULT_CREDITS: Record<string, number> = {
+  bachelors: 120, masters: 30, phd: 60, certificate: 12, associate: 60,
+}
+
+/** 2024 BLS median earnings for bachelor's-degree holders, used as earnings-premium baseline. */
+const US_BACHELORS_MEDIAN = 66600
+
+/* ── Parsers: extract distinctive facts from unstructured text ─────────── */
+
+const WORD_NUMBERS: Record<string, number> = {
+  two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12,
+}
+
+function parseNumberWord(s: string): number | null {
+  const n = parseInt(s, 10)
+  if (!isNaN(n)) return n
+  return WORD_NUMBERS[s.toLowerCase()] ?? null
+}
+
+/**
+ * Parse program highlights for specific facts we can surface as tiles:
+ *   - credit count ("128-credit curriculum")
+ *   - honors option ("Honors track for 3.65+ GPA")
+ *   - location ("Located in Greenwich Village")
+ *   - specific counts ("4 research labs", "6 concentrations")
+ */
+function tilesFromHighlights(highlights: string[], degreeType: string): Tile[] {
+  const tiles: Tile[] = []
+  const seen = new Set<string>() // dedupe by tile label
+
+  for (const raw of highlights) {
+    const h = raw.trim()
+    if (!h) continue
+
+    // Credits: "128-credit" / "128 credit" / "128 credits"
+    const creditMatch = h.match(/(\d{2,3})[-\s]credits?/i)
+    if (creditMatch && !seen.has('credits')) {
+      const n = parseInt(creditMatch[1], 10)
+      const std = DEFAULT_CREDITS[degreeType]
+      // Only show if meaningfully different from standard
+      const isDistinctive = !std || Math.abs(n - std) >= 4
+      if (isDistinctive) {
+        tiles.push({
+          icon: BookOpen,
+          label: 'Credits',
+          value: `${n}`,
+          context: n > (std ?? 120) ? 'Comprehensive' : n < (std ?? 120) ? 'Compact' : 'Standard',
+          tone: 'violet',
+          priority: 55,
+        })
+        seen.add('credits')
+      }
+    }
+
+    // Honors / thesis / research track
+    if (/honors|thesis|research\s+track/i.test(h) && !seen.has('honors')) {
+      const gpaMatch = h.match(/(\d\.\d+)\+?\s*GPA/i)
+      tiles.push({
+        icon: Award,
+        label: /thesis/i.test(h) ? 'Thesis Track' : 'Honors Track',
+        value: 'Available',
+        context: gpaMatch ? `${gpaMatch[1]}+ GPA path` : 'Advanced pathway',
+        tone: 'amber',
+        priority: 62,
+      })
+      seen.add('honors')
+    }
+
+    // Campus location: "Located in Greenwich Village" / "Campus in Palo Alto"
+    const locationMatch = h.match(/(?:located|campus|based)\s+in\s+([A-Z][A-Za-z\s]{3,30}?)(?:\.|,|$|—)/i)
+    if (locationMatch && !seen.has('location')) {
+      const loc = locationMatch[1].trim()
+      tiles.push({
+        icon: MapPin,
+        label: 'Campus',
+        value: loc,
+        context: 'Location advantage',
+        tone: 'blue',
+        priority: 52,
+      })
+      seen.add('location')
+    }
+
+    // Research / labs / partnerships
+    const labsMatch = h.match(/(\d+)\+?\s*(research\s+)?(labs?|laboratories|research\s+centers?)/i)
+    if (labsMatch && !seen.has('labs')) {
+      tiles.push({
+        icon: Microscope,
+        label: 'Research Labs',
+        value: `${labsMatch[1]}+`,
+        context: 'Hands-on opportunities',
+        tone: 'violet',
+        priority: 60,
+      })
+      seen.add('labs')
+    }
+
+    // Study abroad / international
+    if (/study\s+abroad|international\s+exchange/i.test(h) && !seen.has('abroad')) {
+      tiles.push({
+        icon: Compass,
+        label: 'Study Abroad',
+        value: 'Available',
+        context: 'Global programs',
+        tone: 'violet',
+        priority: 50,
+      })
+      seen.add('abroad')
+    }
+  }
+
+  return tiles
+}
+
+/** Parse description text for subfield / concentration counts.
+ *  e.g., "four principal subfields: cultural anthropology, archaeology..." */
+function subfieldsFromDescription(desc?: string | null): Tile | null {
+  if (!desc) return null
+  const m = desc.match(/\b(\d+|two|three|four|five|six|seven|eight|nine|ten)\s+(principal\s+|main\s+|core\s+|primary\s+|major\s+)?(subfields?|concentrations?|tracks?|specializations?|streams?|pathways?|areas?\s+of\s+(?:study|focus))/i)
+  if (!m) return null
+  const n = parseNumberWord(m[1])
+  if (!n) return null
+  const kind = m[3].replace(/s$/, '').replace(/\s+of\s+(study|focus)/, '').trim()
+  return {
+    icon: Sparkles,
+    label: `${kind.charAt(0).toUpperCase()}${kind.slice(1)}s`,
+    value: String(n),
+    context: 'Areas of focus',
+    tone: 'violet',
+    priority: 68,
+  }
+}
+
+/* ── Utility formatters ────────────────────────────────────────────────── */
+
+function shortCurrency(n: number): string {
+  if (n >= 1000) return `$${Math.round(n / 1000)}K`
+  return `$${n}`
+}
+
+function formatDurationYears(months: number): string {
+  if (months < 12) return `${months} mo`
   const years = months / 12
-  const display = Number.isInteger(years) ? `${years}` : years.toFixed(1)
-  const ctx = months <= 12 ? 'Accelerated' : months <= 24 ? 'Graduate track' : months <= 36 ? 'Standard' : 'Full undergrad'
-  return { value: `${display} years`, context: ctx }
+  return Number.isInteger(years) ? `${years} yr${years > 1 ? 's' : ''}` : `${years.toFixed(1)} yrs`
 }
 
-function salaryGrowthContext(pct: number): string {
-  if (pct >= 40) return 'Exceptional growth'
-  if (pct >= 25) return 'Strong growth'
-  if (pct >= 10) return 'Steady growth'
-  return 'Modest growth'
-}
+/* ── Main component ────────────────────────────────────────────────────── */
 
 export default function KeyMetrics(props: Props) {
   const candidates: Tile[] = []
+  const degreeType = props.degreeType ?? 'bachelors'
 
-  // Derive duration from degree type if not explicitly set, so every program
-  // has a duration tile to show.
-  const effectiveDuration = props.durationMonths ?? (props.degreeType ? DEFAULT_DURATION_MONTHS[props.degreeType] : null)
-  // Fall back to institution tuition when program-level tuition isn't set.
+  const effectiveDuration = props.durationMonths ?? DEFAULT_DURATION_MONTHS[degreeType] ?? null
   const effectiveTuition = props.tuition ?? props.institutionTuition ?? null
 
-  // ── Tier 1: Program-specific outcomes (if present) ──
+  /* ── Tier 1: Program-specific outcomes (highest priority) ── */
+
   if (props.outcomesMedianSalary) {
     candidates.push({
       icon: TrendingUp,
@@ -104,8 +235,10 @@ export default function KeyMetrics(props: Props) {
       value: formatCurrency(props.outcomesMedianSalary),
       context: 'Reported by program',
       tone: 'emerald',
+      priority: 95,
     })
   }
+
   if (props.outcomesEmploymentRate != null) {
     candidates.push({
       icon: Briefcase,
@@ -113,8 +246,10 @@ export default function KeyMetrics(props: Props) {
       value: `${Math.round(props.outcomesEmploymentRate * 100)}%`,
       context: 'Within 6 months',
       tone: 'emerald',
+      priority: 90,
     })
   }
+
   if (props.outcomesInternshipConversion != null) {
     candidates.push({
       icon: ArrowUpRight,
@@ -122,29 +257,79 @@ export default function KeyMetrics(props: Props) {
       value: `${Math.round(props.outcomesInternshipConversion * 100)}%`,
       context: 'Conversion rate',
       tone: 'violet',
-    })
-  }
-  if (props.outcomesTopEmployers && props.outcomesTopEmployers.length > 0) {
-    candidates.push({
-      icon: Award,
-      label: 'Hiring Partners',
-      value: `${props.outcomesTopEmployers.length}${props.outcomesTopEmployers.length >= 5 ? '+' : ''}`,
-      context: props.outcomesTopEmployers.slice(0, 2).join(', '),
-      tone: 'violet',
-    })
-  }
-  if (props.outcomesPaybackMonths) {
-    const yrs = (props.outcomesPaybackMonths / 12).toFixed(1)
-    candidates.push({
-      icon: Wallet,
-      label: 'Payback Period',
-      value: `${yrs} yrs`,
-      context: 'To recoup tuition',
-      tone: 'blue',
+      priority: 85,
     })
   }
 
-  // ── Tier 2: Calculated program metrics ──
+  if (props.outcomesTopEmployers && props.outcomesTopEmployers.length > 0) {
+    candidates.push({
+      icon: Award,
+      label: 'Top Employers',
+      value: props.outcomesTopEmployers.slice(0, 1)[0] ?? '',
+      context: props.outcomesTopEmployers.length > 1
+        ? `+ ${props.outcomesTopEmployers.slice(1, 3).join(', ')}`
+        : 'Primary hiring partner',
+      tone: 'violet',
+      priority: 88,
+    })
+  }
+
+  if (props.outcomesTopIndustries && props.outcomesTopIndustries.length > 0) {
+    candidates.push({
+      icon: Users,
+      label: 'Top Industry',
+      value: props.outcomesTopIndustries[0],
+      context: props.outcomesTopIndustries.length > 1
+        ? `+ ${props.outcomesTopIndustries.slice(1, 3).join(', ')}`
+        : 'Where grads go',
+      tone: 'violet',
+      priority: 80,
+    })
+  }
+
+  /* ── Tier 2: Salary trajectory and premium — concrete, not abstract ── */
+
+  // Concrete $→$ range (preferred over abstract growth %)
+  if (props.earnings6yr && props.earnings10yr && props.earnings10yr > props.earnings6yr) {
+    const growth = Math.round(((props.earnings10yr - props.earnings6yr) / props.earnings6yr) * 100)
+    candidates.push({
+      icon: TrendingUp,
+      label: 'Salary: 6yr → 10yr',
+      value: `${shortCurrency(props.earnings6yr)} → ${shortCurrency(props.earnings10yr)}`,
+      context: `+${growth}% over 4 years`,
+      tone: 'emerald',
+      priority: 82,
+    })
+  }
+
+  // Earnings premium vs national bachelors median
+  const midCareer = props.outcomesMedianSalary ?? props.earnings10yr
+  if (midCareer && midCareer > US_BACHELORS_MEDIAN * 1.05) {
+    const premium = midCareer - US_BACHELORS_MEDIAN
+    const pct = Math.round((premium / US_BACHELORS_MEDIAN) * 100)
+    candidates.push({
+      icon: ArrowUpRight,
+      label: 'Earnings Premium',
+      value: `+${shortCurrency(premium)}`,
+      context: `${pct}% above US avg`,
+      tone: 'emerald',
+      priority: 78,
+    })
+  }
+
+  /* ── Tier 3: Calculated program economics ── */
+
+  if (props.outcomesPaybackMonths) {
+    candidates.push({
+      icon: Wallet,
+      label: 'Payback Period',
+      value: `${(props.outcomesPaybackMonths / 12).toFixed(1)} yrs`,
+      context: 'To recoup tuition',
+      tone: 'blue',
+      priority: 75,
+    })
+  }
+
   if (effectiveTuition && effectiveDuration) {
     const years = effectiveDuration / 12
     const total = effectiveTuition * years
@@ -152,8 +337,9 @@ export default function KeyMetrics(props: Props) {
       icon: DollarSign,
       label: 'Total Investment',
       value: formatCurrency(total),
-      context: `${years % 1 === 0 ? years : years.toFixed(1)} yrs × ${formatCurrency(effectiveTuition)}`,
+      context: `${years % 1 === 0 ? years : years.toFixed(1)} yrs × ${shortCurrency(effectiveTuition)}`,
       tone: 'rose',
+      priority: 66,
     })
   } else if (effectiveTuition) {
     candidates.push({
@@ -162,32 +348,20 @@ export default function KeyMetrics(props: Props) {
       value: formatCurrency(effectiveTuition),
       context: 'Per academic year',
       tone: 'rose',
+      priority: 50,
     })
   }
 
-  if (props.earnings6yr && props.earnings10yr && props.earnings10yr > props.earnings6yr) {
-    const growth = ((props.earnings10yr - props.earnings6yr) / props.earnings6yr) * 100
-    candidates.push({
-      icon: TrendingUp,
-      label: 'Salary Growth',
-      value: `+${growth.toFixed(0)}%`,
-      context: salaryGrowthContext(growth),
-      tone: 'emerald',
-    })
+  /* ── Tier 4: Program character — parsed from highlights + description ── */
+
+  if (props.highlights) {
+    candidates.push(...tilesFromHighlights(props.highlights, degreeType))
   }
 
-  // ── Tier 3: Program shape ──
-  if (effectiveDuration) {
-    const d = formatDurationYears(effectiveDuration)
-    candidates.push({
-      icon: Clock,
-      label: 'Duration',
-      value: d.value,
-      context: d.context,
-      tone: 'blue',
-    })
-  }
+  const subfieldsTile = subfieldsFromDescription(props.descriptionText)
+  if (subfieldsTile) candidates.push(subfieldsTile)
 
+  // Specializations from structured tracks field
   if (props.tracks && props.tracks.length > 0) {
     candidates.push({
       icon: Sparkles,
@@ -195,39 +369,40 @@ export default function KeyMetrics(props: Props) {
       value: String(props.tracks.length),
       context: props.tracks.slice(0, 2).join(', '),
       tone: 'violet',
+      priority: 64,
     })
   }
 
-  // application_requirements count intentionally NOT shown here — it reads as a
-  // barrier ("how hard is it to apply?") and belongs in the Admissions tab.
+  /* ── Tier 5: Duration — only when it's actually distinctive ── */
 
-  if (props.highlights && props.highlights.length > 0) {
-    candidates.push({
-      icon: Sparkles,
-      label: 'Program Highlights',
-      value: `${props.highlights.length}`,
-      context: 'Distinctive features',
-      tone: 'violet',
-    })
+  if (effectiveDuration) {
+    const std = DEFAULT_DURATION_MONTHS[degreeType]
+    // Only show duration if it's meaningfully different from the norm for this degree type.
+    // A 4-year Bachelor's isn't interesting; a 3-year accelerated one is.
+    const isDistinctive = !std || Math.abs(effectiveDuration - std) >= 6
+    if (isDistinctive) {
+      const fast = std && effectiveDuration < std
+      candidates.push({
+        icon: Clock,
+        label: 'Duration',
+        value: formatDurationYears(effectiveDuration),
+        context: fast ? 'Accelerated track' : effectiveDuration <= 24 ? 'Graduate track' : 'Extended program',
+        tone: 'blue',
+        priority: 58,
+      })
+    }
   }
 
-  // ── Tier 4: Institution rollups (fallback) ──
-  if (props.earnings10yr && !props.outcomesMedianSalary) {
+  /* ── Tier 6: Institution rollups (last-resort fallback) ── */
+
+  if (props.earnings10yr && !candidates.some(c => /salary|earnings|premium/i.test(c.label))) {
     candidates.push({
       icon: TrendingUp,
       label: 'Mid-Career (10yr)',
       value: formatCurrency(props.earnings10yr),
       context: 'Median graduate earnings',
       tone: 'emerald',
-    })
-  }
-  if (props.earnings6yr && !candidates.some(c => c.label.startsWith('Mid-Career'))) {
-    candidates.push({
-      icon: TrendingUp,
-      label: 'Early Career (6yr)',
-      value: formatCurrency(props.earnings6yr),
-      context: '6 years after enrollment',
-      tone: 'emerald',
+      priority: 70,
     })
   }
 
@@ -236,73 +411,71 @@ export default function KeyMetrics(props: Props) {
       icon: GraduationCap,
       label: 'Grad Rate',
       value: `${Math.round(props.graduationRate * 100)}%`,
-      context: props.graduationRate > 0.85 ? 'Well above average' : props.graduationRate > 0.7 ? 'Above average' : 'Typical',
+      context: props.graduationRate > 0.85 ? 'Well above avg' : props.graduationRate > 0.7 ? 'Above avg' : 'Typical',
       tone: 'blue',
+      priority: 40,
     })
   }
 
-  if (props.retentionRate != null && candidates.length < 8) {
+  if (props.retentionRate != null) {
     candidates.push({
-      icon: Target,
+      icon: Users,
       label: 'Retention',
       value: `${Math.round(props.retentionRate * 100)}%`,
       context: 'First-year return',
       tone: 'blue',
+      priority: 38,
     })
   }
 
-  // ── Pick top 4, deduping salary-family tiles so we don't show 3 salary numbers ──
+  /* ── Pick top 4 by priority, with soft de-duping ── */
+
+  // Sort by priority, highest first
+  candidates.sort((a, b) => b.priority - a.priority)
+
   const picked: Tile[] = []
-  let salaryCount = 0
+  let salaryTiles = 0
+  let violetTiles = 0
+
   for (const c of candidates) {
     if (picked.length >= 4) break
-    const isSalary = /salary|earnings|growth|career/i.test(c.label)
-    if (isSalary && salaryCount >= 2) continue
-    if (isSalary) salaryCount++
+    const isSalaryFamily = /salary|earnings|premium|mid-career|payback/i.test(c.label)
+    if (isSalaryFamily && salaryTiles >= 2) continue
+    if (c.tone === 'violet' && violetTiles >= 2) continue // avoid over-purpling
+    if (isSalaryFamily) salaryTiles++
+    if (c.tone === 'violet') violetTiles++
     picked.push(c)
   }
 
-  // If we still don't have 4, pad with slate placeholders so the grid stays balanced
-  while (picked.length < 4) {
-    picked.push({
-      icon: Users,
-      label: 'Data coming soon',
-      value: '—',
-      context: 'Not reported yet',
-      tone: 'slate',
-    })
-  }
+  // If we genuinely can't find 4 real tiles, show what we have — don't pad.
+  if (picked.length === 0) return null
 
   return (
     <div className="mb-5">
-      <div className="grid gap-2 grid-cols-2 md:grid-cols-4">
+      <div className={`grid gap-2 grid-cols-2 ${picked.length >= 4 ? 'md:grid-cols-4' : picked.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
         {picked.map((t, i) => {
           const tone = TONE[t.tone]
-          const isEmpty = t.value === '—'
           return (
             <div
               key={i}
               className={`relative rounded-xl border px-3.5 py-3 ${tone.bg} ${tone.border} transition-all hover:shadow-sm`}
             >
-              <div className="flex items-start justify-between mb-1.5">
+              <div className="flex items-start justify-between gap-2 mb-1.5">
                 <div className={`w-7 h-7 rounded-lg bg-white flex items-center justify-center ${tone.icon}`}>
                   <t.icon size={13} />
                 </div>
-                {t.context && !isEmpty && (
-                  <span className={`text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-md ${tone.chip} max-w-[130px] truncate`}>
+                {t.context && (
+                  <span className={`text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-md ${tone.chip} max-w-[140px] truncate`}>
                     {t.context}
                   </span>
                 )}
               </div>
-              <p className={`text-[10px] uppercase tracking-wider font-semibold ${isEmpty ? 'text-slate-400' : 'text-student-text/70'}`}>
+              <p className="text-[10px] uppercase tracking-wider font-semibold text-student-text/70">
                 {t.label}
               </p>
-              <p className={`text-[22px] font-bold leading-tight mt-0.5 ${isEmpty ? 'text-slate-300' : tone.text}`}>
+              <p className={`text-[22px] font-bold leading-tight mt-0.5 ${tone.text} truncate`} title={t.value}>
                 {t.value}
               </p>
-              {isEmpty && t.context && (
-                <p className="text-[10px] text-slate-400 italic mt-0.5">{t.context}</p>
-              )}
             </div>
           )
         })}

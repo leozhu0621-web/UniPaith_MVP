@@ -150,11 +150,9 @@ export default function SchoolDetailPage() {
         department={p.department}
         durationMonths={p.duration_months}
         deliveryFormat={p.delivery_format}
-        applicationDeadline={p.application_deadline}
-        programStartDate={p.program_start_date}
-        applicationRequirements={p.application_requirements}
         highlights={p.highlights}
         tracks={p.tracks}
+        description={p.description_text}
         matchScore={match?.match_score}
         matchTier={match?.match_tier}
         onMatchClick={() => setMatchModalOpen(true)}
@@ -169,17 +167,19 @@ export default function SchoolDetailPage() {
         onViewApplication={existingApp ? () => navigate(`/s/applications/${existingApp.id}`) : undefined}
       />
 
-      {/* ── KPI strip — characteristic/attractive numbers only, no friction metrics ── */}
+      {/* ── KPI strip — adaptive: picks the 4 most distinctive numbers per program ── */}
       <KeyMetrics
         degreeType={p.degree_type}
         durationMonths={p.duration_months}
         tuition={p.tuition}
         tracks={p.tracks}
         highlights={p.highlights}
+        descriptionText={p.description_text}
         outcomesMedianSalary={p.outcomes_data?.median_salary}
         outcomesEmploymentRate={p.outcomes_data?.employment_rate}
         outcomesInternshipConversion={p.outcomes_data?.internship_conversion_rate}
         outcomesTopEmployers={p.outcomes_data?.top_employers}
+        outcomesTopIndustries={p.outcomes_data?.top_industries}
         outcomesPaybackMonths={p.outcomes_data?.payback_months}
         institutionTuition={rd.tuition_out_of_state ?? rd.tuition_in_state}
         earnings6yr={rd.earnings_6yr_median}
