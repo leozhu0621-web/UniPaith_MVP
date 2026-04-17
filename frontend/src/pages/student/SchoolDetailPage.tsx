@@ -31,12 +31,6 @@ import AboutCard from './program/AboutCard'
 import NextStepsCard from './program/NextStepsCard'
 import RelatedSidebar from './program/RelatedSidebar'
 
-// Local logos (no campus images on program detail — that content belongs on the university page)
-const LOCAL_LOGOS: Record<string, string> = {
-  'new york university': '/school-images/nyu-logo.jpg',
-  'stanford university': '/school-images/stanford-logo.jpg',
-}
-
 type Tab = 'overview' | 'admissions' | 'costs' | 'outcomes' | 'reviews'
 
 const TABS: { id: Tab; label: string; icon: typeof BookOpen }[] = [
@@ -131,9 +125,6 @@ export default function SchoolDetailPage() {
   const rd: any = p.ranking_data || {}
   const instName = p.institution_name || ''
 
-  // Logo only — no campus image on this page (that belongs on the university page)
-  const instLogo = LOCAL_LOGOS[instName.toLowerCase()] || p.institution_logo_url
-
   const upcomingEvent = eventsList
     .filter((e: any) => new Date(e.event_datetime || e.starts_at || Date.now()) > new Date())
     .sort((a: any, b: any) => new Date(a.event_datetime || a.starts_at).getTime() - new Date(b.event_datetime || b.starts_at).getTime())[0]
@@ -156,9 +147,7 @@ export default function SchoolDetailPage() {
         institutionName={instName}
         institutionCity={p.institution_city}
         institutionCountry={p.institution_country}
-        institutionLogoUrl={instLogo}
         department={p.department}
-        usNewsRank={rd.us_news_2025}
         durationMonths={p.duration_months}
         deliveryFormat={p.delivery_format}
         campusSetting={p.campus_setting || p.institution_campus_setting}

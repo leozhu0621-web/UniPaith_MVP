@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import {
   ArrowLeft, Bookmark, BookmarkCheck, ArrowRightLeft, Sparkles,
-  Send, Award, ChevronRight, GraduationCap, Clock, Building2,
+  Send, ChevronRight, GraduationCap, Clock, Building2,
   MapPin, Users as UsersIcon, Calendar,
 } from 'lucide-react'
 import MatchRing from './MatchRing'
@@ -10,16 +10,15 @@ import { formatDate } from '../../../utils/format'
 import { differenceInDays } from 'date-fns'
 
 /**
- * Visual identity per degree — subtle color accent so the page still feels
- * branded without a large hero image. Color shows up only as left edge,
- * monogram tile background, and a thin top stripe.
+ * Per-degree color shows up only inside the degree monogram tile — the card
+ * itself is neutral so nothing feels like a colored bezel.
  */
-const DEGREE_THEME: Record<string, { monoBg: string; monoText: string; stripe: string; accent: string }> = {
-  bachelors:   { monoBg: 'bg-indigo-50',  monoText: 'text-indigo-700',  stripe: 'bg-gradient-to-r from-blue-500 via-indigo-500 to-indigo-600',   accent: 'border-l-indigo-500'  },
-  masters:     { monoBg: 'bg-purple-50',  monoText: 'text-purple-700',  stripe: 'bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500', accent: 'border-l-purple-500'  },
-  phd:         { monoBg: 'bg-slate-100',  monoText: 'text-slate-800',   stripe: 'bg-gradient-to-r from-slate-700 via-slate-800 to-zinc-900',     accent: 'border-l-slate-700'   },
-  certificate: { monoBg: 'bg-emerald-50', monoText: 'text-emerald-700', stripe: 'bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500',    accent: 'border-l-emerald-500' },
-  doctorate:   { monoBg: 'bg-rose-50',    monoText: 'text-rose-700',    stripe: 'bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600',       accent: 'border-l-rose-500'    },
+const DEGREE_THEME: Record<string, { monoBg: string; monoText: string }> = {
+  bachelors:   { monoBg: 'bg-indigo-50',  monoText: 'text-indigo-700'  },
+  masters:     { monoBg: 'bg-purple-50',  monoText: 'text-purple-700'  },
+  phd:         { monoBg: 'bg-slate-100',  monoText: 'text-slate-800'   },
+  certificate: { monoBg: 'bg-emerald-50', monoText: 'text-emerald-700' },
+  doctorate:   { monoBg: 'bg-rose-50',    monoText: 'text-rose-700'    },
 }
 
 function degreeAbbrev(degree: string): string {
@@ -60,9 +59,7 @@ interface Props {
   institutionName: string
   institutionCity?: string | null
   institutionCountry?: string | null
-  institutionLogoUrl?: string | null
   department?: string | null
-  usNewsRank?: number | null
 
   // Info pills
   durationMonths?: number | null
@@ -90,7 +87,7 @@ interface Props {
 
 export default function ProgramHeader({
   programName, degreeType, institutionId, institutionName, institutionCity,
-  institutionCountry, institutionLogoUrl, department, usNewsRank,
+  institutionCountry, department,
   durationMonths, deliveryFormat, campusSetting, studentBodySize, applicationDeadline,
   matchScore, matchTier, onMatchClick,
   isSaved, isComparing, hasApplication,
@@ -110,10 +107,7 @@ export default function ProgramHeader({
   const deadlineUrgent = deadline && deadline.days >= 0 && deadline.days <= 30
 
   return (
-    <div className={`relative bg-white rounded-2xl border border-divider overflow-hidden mb-5 border-l-4 ${theme.accent}`}>
-      {/* Thin color stripe on top */}
-      <div className={`h-1 w-full ${theme.stripe}`} />
-
+    <div className="relative bg-white rounded-2xl border border-divider overflow-hidden mb-5">
       {/* Top bar: back + secondary actions */}
       <div className="flex items-center justify-between px-5 pt-4">
         <button
@@ -164,22 +158,12 @@ export default function ProgramHeader({
       {/* Main content */}
       <div className="px-5 pt-3 pb-4">
         <div className="flex items-start gap-4">
-          {/* Degree monogram + logo stack */}
-          <div className="flex-shrink-0 flex flex-col items-center gap-2">
-            <div className={`w-16 h-16 rounded-xl ${theme.monoBg} border border-divider flex flex-col items-center justify-center shadow-sm`}>
-              <GraduationCap size={16} className={theme.monoText} />
-              <span className={`text-xs font-black tracking-wide ${theme.monoText} leading-none mt-0.5`}>
-                {abbrev}
-              </span>
-            </div>
-            {institutionLogoUrl && (
-              <img
-                src={institutionLogoUrl}
-                alt=""
-                className="w-8 h-8 rounded-md object-contain bg-white border border-divider p-0.5"
-                onError={e => (e.currentTarget.style.display = 'none')}
-              />
-            )}
+          {/* Degree monogram tile (no image) */}
+          <div className={`flex-shrink-0 w-16 h-16 rounded-xl ${theme.monoBg} border border-divider flex flex-col items-center justify-center shadow-sm`}>
+            <GraduationCap size={16} className={theme.monoText} />
+            <span className={`text-xs font-black tracking-wide ${theme.monoText} leading-none mt-0.5`}>
+              {abbrev}
+            </span>
           </div>
 
           {/* Title block */}
@@ -205,21 +189,12 @@ export default function ProgramHeader({
               )}
             </div>
 
-            {/* Badges row */}
+            {/* Degree badge */}
             <div className="flex flex-wrap items-center gap-1.5 mt-3">
               <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md ${theme.monoBg} ${theme.monoText} border border-divider`}>
                 <GraduationCap size={10} />
                 {degreeLabel}
               </span>
-              {usNewsRank && (
-                <span
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gold-soft text-gold border border-gold/20"
-                  title="US News National University Ranking 2025"
-                >
-                  <Award size={10} />
-                  <span className="text-[10px] font-bold">#{usNewsRank} US News 2025</span>
-                </span>
-              )}
             </div>
 
             {/* Info pills row */}
