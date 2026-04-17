@@ -5,18 +5,19 @@ import {
 import { formatCurrency } from '../../../utils/format'
 
 /**
- * KeyMetrics — 4 tiles showing the most distinctive numbers for THIS program.
+ * KeyMetrics — 4 tiles showing what makes THIS program characteristic.
  *
- * Every program is different: some have rich outcomes data, some are unusually
- * short or long, some have distinctive salary trajectories. We compute every
- * metric we can, then pick the 4 most meaningful ones in a priority order
- * that favors program-specific data over institution-wide rollups.
+ * Principle: tiles should highlight what's attractive about the program —
+ * outcomes, ROI, structure, opportunities. NOT friction/difficulty metrics
+ * like acceptance rate or app requirements count — those belong in the
+ * Admissions tab. Every program is different, so we compute every possible
+ * positive/characteristic metric and pick the top 4.
  *
- * Priorities:
- *   1. Program-specific outcomes (employment rate, median salary, top employers)
- *   2. Calculated program metrics (total tuition, salary growth)
- *   3. Program shape (duration, credits, specializations)
- *   4. Institution rollups (grad rate, 6/10 yr earnings) as fallback
+ * Priorities (all positive / characteristic, no friction metrics):
+ *   1. Program-specific outcomes (employment rate, median salary, hiring partners)
+ *   2. ROI signals (payback period, salary growth trajectory)
+ *   3. Program character (duration, specializations, highlights count, total investment)
+ *   4. Institution outcome rollups (mid-career earnings, grad rate) as fallback
  */
 
 type Tone = 'amber' | 'emerald' | 'rose' | 'blue' | 'violet' | 'slate'
@@ -40,6 +41,7 @@ interface Tile {
 
 interface Props {
   // Program shape
+  degreeType?: string | null
   durationMonths?: number | null
   tuition?: number | null
   tracks?: string[] | null
@@ -54,10 +56,20 @@ interface Props {
   outcomesPaybackMonths?: number | null
 
   // Institution rollups (fallback)
+  institutionTuition?: number | null
   earnings6yr?: number | null
   earnings10yr?: number | null
   graduationRate?: number | null
   retentionRate?: number | null
+}
+
+const DEFAULT_DURATION_MONTHS: Record<string, number> = {
+  bachelors: 48,
+  masters: 24,
+  phd: 60,
+  certificate: 12,
+  doctorate: 60,
+  associate: 24,
 }
 
 function formatDurationYears(months: number): { value: string; context: string } {
@@ -77,6 +89,12 @@ function salaryGrowthContext(pct: number): string {
 
 export default function KeyMetrics(props: Props) {
   const candidates: Tile[] = []
+
+  // Derive duration from degree type if not explicitly set, so every program
+  // has a duration tile to show.
+  const effectiveDuration = props.durationMonths ?? (props.degreeType ? DEFAULT_DURATION_MONTHS[props.degreeType] : null)
+  // Fall back to institution tuition when program-level tuition isn't set.
+  const effectiveTuition = props.tuition ?? props.institutionTuition ?? null
 
   // ── Tier 1: Program-specific outcomes (if present) ──
   if (props.outcomesMedianSalary) {
@@ -127,21 +145,21 @@ export default function KeyMetrics(props: Props) {
   }
 
   // ── Tier 2: Calculated program metrics ──
-  if (props.tuition && props.durationMonths) {
-    const years = props.durationMonths / 12
-    const total = props.tuition * years
+  if (effectiveTuition && effectiveDuration) {
+    const years = effectiveDuration / 12
+    const total = effectiveTuition * years
     candidates.push({
       icon: DollarSign,
-      label: 'Total Tuition',
+      label: 'Total Investment',
       value: formatCurrency(total),
-      context: `${years % 1 === 0 ? years : years.toFixed(1)} yrs × ${formatCurrency(props.tuition)}`,
+      context: `${years % 1 === 0 ? years : years.toFixed(1)} yrs × ${formatCurrency(effectiveTuition)}`,
       tone: 'rose',
     })
-  } else if (props.tuition) {
+  } else if (effectiveTuition) {
     candidates.push({
       icon: DollarSign,
       label: 'Tuition / yr',
-      value: formatCurrency(props.tuition),
+      value: formatCurrency(effectiveTuition),
       context: 'Per academic year',
       tone: 'rose',
     })
@@ -159,8 +177,8 @@ export default function KeyMetrics(props: Props) {
   }
 
   // ── Tier 3: Program shape ──
-  if (props.durationMonths) {
-    const d = formatDurationYears(props.durationMonths)
+  if (effectiveDuration) {
+    const d = formatDurationYears(effectiveDuration)
     candidates.push({
       icon: Clock,
       label: 'Duration',
@@ -180,14 +198,16 @@ export default function KeyMetrics(props: Props) {
     })
   }
 
-  if (props.applicationRequirements && props.applicationRequirements.length > 0) {
-    const required = props.applicationRequirements.filter((r: any) => r.required !== false).length
+  // application_requirements count intentionally NOT shown here — it reads as a
+  // barrier ("how hard is it to apply?") and belongs in the Admissions tab.
+
+  if (props.highlights && props.highlights.length > 0) {
     candidates.push({
-      icon: GraduationCap,
-      label: 'App Items',
-      value: `${required} required`,
-      context: `${props.applicationRequirements.length} total`,
-      tone: 'amber',
+      icon: Sparkles,
+      label: 'Program Highlights',
+      value: `${props.highlights.length}`,
+      context: 'Distinctive features',
+      tone: 'violet',
     })
   }
 

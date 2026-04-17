@@ -165,18 +165,19 @@ export default function SchoolDetailPage() {
         onViewApplication={existingApp ? () => navigate(`/s/applications/${existingApp.id}`) : undefined}
       />
 
-      {/* ── KPI strip — adaptive: picks the 4 most distinctive numbers per program ── */}
+      {/* ── KPI strip — characteristic/attractive numbers only, no friction metrics ── */}
       <KeyMetrics
+        degreeType={p.degree_type}
         durationMonths={p.duration_months}
         tuition={p.tuition}
         tracks={p.tracks}
-        applicationRequirements={p.application_requirements}
         highlights={p.highlights}
         outcomesMedianSalary={p.outcomes_data?.median_salary}
         outcomesEmploymentRate={p.outcomes_data?.employment_rate}
         outcomesInternshipConversion={p.outcomes_data?.internship_conversion_rate}
         outcomesTopEmployers={p.outcomes_data?.top_employers}
         outcomesPaybackMonths={p.outcomes_data?.payback_months}
+        institutionTuition={rd.tuition_out_of_state ?? rd.tuition_in_state}
         earnings6yr={rd.earnings_6yr_median}
         earnings10yr={rd.earnings_10yr_median}
         graduationRate={rd.graduation_rate}
