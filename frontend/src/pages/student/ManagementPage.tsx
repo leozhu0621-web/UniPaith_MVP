@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react'
+import { lazy, Suspense } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { FolderKanban, Calendar, MessageSquare } from 'lucide-react'
 
@@ -19,10 +19,9 @@ export default function ManagementPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const rawTab = searchParams.get('tab') as Tab | null
-  const [tab, setTab] = useState<Tab>(rawTab && TABS.some(t => t.key === rawTab) ? rawTab : 'applications')
+  const tab: Tab = rawTab && TABS.some(t => t.key === rawTab) ? rawTab : 'applications'
 
   const switchTab = (t: Tab) => {
-    setTab(t)
     navigate(t === 'applications' ? '/s/manage' : `/s/manage?tab=${t}`, { replace: true })
   }
 

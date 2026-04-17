@@ -56,8 +56,8 @@ export default function ApplicationDetailPage() {
   const [feedbackResults, setFeedbackResults] = useState<Record<string, any>>({})
 
   const { data: app, isLoading } = useQuery({ queryKey: ['application', appId], queryFn: () => getMyApplication(appId!) })
-  const { data: checklist } = useQuery({ queryKey: ['checklist', appId], queryFn: () => getChecklist(appId!).catch(() => generateChecklist(appId!)) })
-  const { data: essays } = useQuery({ queryKey: ['essays', app?.program_id], queryFn: () => listEssays(app?.program_id), enabled: !!app?.program_id && (tab === 'essays' || tab === 'documents') })
+  const { data: checklist } = useQuery({ queryKey: ['checklist', appId], queryFn: () => getChecklist(appId!).catch((err) => err?.response?.status === 404 ? generateChecklist(appId!) : Promise.reject(err)) })
+  const { data: essays } = useQuery({ queryKey: ['essays', app?.program_id], queryFn: () => listEssays(app?.program_id), enabled: !!app?.program_id && tab === 'essays' })
   const { data: resumes } = useQuery({ queryKey: ['resumes', app?.program_id], queryFn: () => listResumes(app?.program_id), enabled: !!app?.program_id && tab === 'resume' })
   const { data: documents } = useQuery({ queryKey: ['documents'], queryFn: listDocuments, enabled: tab === 'documents' })
   const { data: interviews } = useQuery({ queryKey: ['interviews'], queryFn: getMyInterviews, enabled: tab === 'interviews' })
@@ -168,7 +168,7 @@ export default function ApplicationDetailPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <button onClick={() => navigate('/s/applications')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-brand-slate-600 mb-4">
+      <button onClick={() => navigate('/s/manage')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-brand-slate-600 mb-4">
         <ArrowLeft size={16} /> My Applications
       </button>
 

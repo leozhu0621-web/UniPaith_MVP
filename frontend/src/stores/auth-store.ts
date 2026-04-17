@@ -110,7 +110,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       role,
     })
     const loginUser = data?.user
-    const normalizedUser = loginUser
+    let normalizedUser = loginUser
       ? {
           id: String(loginUser.user_id ?? loginUser.id ?? ''),
           email: String(loginUser.email ?? ''),
@@ -118,6 +118,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           created_at: String(loginUser.created_at ?? new Date().toISOString()),
         }
       : null
+
+    if (!normalizedUser?.id) {
+      const meToken = data?.access_token
+      if (!meToken) throw new Error('Google sign-in succeeded but access token is missing')
+      const { data: me } = await apiClient.get('/auth/me', {
+        headers: { Authorization: `Bearer ${meToken}` },
+      })
+      normalizedUser = {
+        id: String(me.user_id ?? me.id),
+        email: String(me.email ?? ''),
+        role: me.role as User['role'],
+        created_at: String(me.created_at ?? new Date().toISOString()),
+      }
+    }
 
     set({
       accessToken: data.access_token,
@@ -137,7 +151,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const rt = get().refreshToken
     if (!rt) throw new Error('No refresh token')
     const { data } = await apiClient.post('/auth/refresh', { refresh_token: rt })
-    set({ accessToken: data.access_token })
+    const newRefresh = data.refresh_token ?? get().refreshToken
+    set({ accessToken: data.access_token, refreshToken: newRefresh })
+    persistRefreshToken(newRefresh)
     return data.access_token
   },
 
