@@ -262,6 +262,8 @@ async def main() -> None:
                 "program_name": program_name,
                 "department": department,
                 "entries": entries,
+                # Re-seed from scratch each run so DB matches the script.
+                "replace": True,
             }
             resp = await client.post(
                 f"{API}/internal/seed-employer-feedback",
@@ -274,12 +276,14 @@ async def main() -> None:
             data = resp.json()
             ins = data.get("inserted", 0)
             upd = data.get("updated", 0)
+            delc = data.get("deleted", 0)
             skip = data.get("skipped")
             total_inserted += ins
             total_updated += upd
             print(
                 f"  {program_name} ({department}): "
-                f"inserted={ins} updated={upd} {'skipped=' + skip if skip else ''}"
+                f"inserted={ins} updated={upd} deleted={delc} "
+                f"{'skipped=' + skip if skip else ''}"
             )
 
     print(
