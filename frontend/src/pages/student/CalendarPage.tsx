@@ -301,7 +301,7 @@ export default function CalendarPage() {
               icon={<Clock size={48} />}
               title="Nothing scheduled"
               description="Deadlines and events will appear here as you apply."
-              action={{ label: 'Discover Programs', onClick: () => navigate('/s/discover') }}
+              action={{ label: 'Discover Programs', onClick: () => navigate('/s/explore') }}
             />
           ) : (
             <div className="space-y-8">

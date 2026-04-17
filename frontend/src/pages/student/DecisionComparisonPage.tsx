@@ -188,7 +188,7 @@ export default function DecisionComparisonPage() {
           icon={<Scale size={48} />}
           title="No offers to compare yet"
           description="Once you receive admission decisions, they'll appear here for comparison."
-          action={{ label: 'View Applications', onClick: () => navigate('/s/applications') }}
+          action={{ label: 'View Applications', onClick: () => navigate('/s/manage') }}
         />
       ) : (
         <>

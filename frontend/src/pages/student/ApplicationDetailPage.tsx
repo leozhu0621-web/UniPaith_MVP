@@ -168,7 +168,7 @@ export default function ApplicationDetailPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <button onClick={() => navigate('/s/applications')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-brand-slate-600 mb-4">
+      <button onClick={() => navigate('/s/manage')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-brand-slate-600 mb-4">
         <ArrowLeft size={16} /> My Applications
       </button>
 

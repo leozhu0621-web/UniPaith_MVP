@@ -112,7 +112,7 @@ const router = createBrowserRouter([
       { path: 'applications/:appId', element: <ApplicationDetailPage /> },
       // === Redirects (all old routes still work) ===
       { path: 'dashboard', element: <Navigate to="/s" replace /> },
-      { path: 'chat', element: <Navigate to="/s" replace /> },
+      { path: 'chat', element: <CounselorHomePage /> },
       { path: 'discover', element: <Navigate to="/s/explore" replace /> },
       { path: 'match', element: <Navigate to="/s" replace /> },
       { path: 'applications', element: <Navigate to="/s/manage" replace /> },

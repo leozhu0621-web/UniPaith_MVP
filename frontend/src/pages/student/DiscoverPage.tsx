@@ -362,7 +362,7 @@ export default function DiscoverPage({ forceTab }: { forceTab?: string } = {}) {
 
       <div className="flex items-center justify-between mb-6">
         <p className="text-sm text-gray-500">Not sure where to start? Your AI counselor knows your story.</p>
-        <Button size="sm" variant="secondary" onClick={() => navigate('/s/chat')}>
+        <Button size="sm" variant="secondary" onClick={() => navigate('/s')}>
           <MessageSquare size={14} className="mr-1" /> Ask Counselor
         </Button>
       </div>
