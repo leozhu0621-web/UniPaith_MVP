@@ -1131,16 +1131,26 @@ async def get_completion_map(
     db: AsyncSession = Depends(get_db),
 ):
     """Per-section completion with match-ready vs apply-ready."""
+    from unipaith.models.engagement import StudentEssay
+    from unipaith.models.student import StudentDocument
+
     svc = StudentService(db)
     profile = await svc._get_student_profile(user.id)
     onboarding = await svc.get_onboarding_status(profile.id)
     completed = set(onboarding.steps_completed) if onboarding else set()
 
-    def _sec(name: str, key: str, match: bool) -> dict:
+    has_essays = (await db.execute(
+        select(StudentEssay.id).where(StudentEssay.student_id == profile.id).limit(1)
+    )).scalar_one_or_none() is not None
+    has_documents = (await db.execute(
+        select(StudentDocument.id).where(StudentDocument.student_id == profile.id).limit(1)
+    )).scalar_one_or_none() is not None
+
+    def _sec(name: str, key: str, match: bool, done_override: bool | None = None) -> dict:
         return {
             "name": name,
             "key": key,
-            "done": key in completed,
+            "done": done_override if done_override is not None else key in completed,
             "match_required": match,
             "apply_required": True,
         }
@@ -1151,8 +1161,8 @@ async def get_completion_map(
         _sec("Test Scores", "test_scores", False),
         _sec("Activities", "activities", False),
         _sec("Preferences", "preferences", True),
-        _sec("Essays", "essays", False),
-        _sec("Documents", "documents", False),
+        _sec("Essays", "essays", False, has_essays),
+        _sec("Documents", "documents", False, has_documents),
     ]
     match_sections = [s for s in sections if s["match_required"]]
     apply_sections = sections
