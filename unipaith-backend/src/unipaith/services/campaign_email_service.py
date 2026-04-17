@@ -17,14 +17,11 @@ from unipaith.models.user import User
 
 logger = logging.getLogger("unipaith.campaign_email")
 
-# Shared secret for unsubscribe token generation
-_UNSUB_SECRET = "unipaith-campaign-unsub-v1"
-
 
 def _generate_unsubscribe_token(recipient_id: UUID) -> str:
     """Generate an HMAC-based unsubscribe token for a recipient."""
     return hmac.new(
-        _UNSUB_SECRET.encode(),
+        settings.campaign_unsubscribe_secret.encode(),
         str(recipient_id).encode(),
         hashlib.sha256,
     ).hexdigest()[:32]
