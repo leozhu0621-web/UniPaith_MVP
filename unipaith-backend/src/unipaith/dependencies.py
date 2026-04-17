@@ -66,6 +66,9 @@ async def get_current_user(
     if user is None:
         raise ForbiddenException("User not found")
 
+    if not user.is_active:
+        raise ForbiddenException("Account has been deactivated")
+
     return user
 
 
