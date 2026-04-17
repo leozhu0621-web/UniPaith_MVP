@@ -20,7 +20,7 @@ import logging
 import re
 from abc import ABC, abstractmethod
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import quote_plus, urlparse
 
 import aiohttp
 from bs4 import BeautifulSoup
@@ -337,7 +337,7 @@ class SearchAdapter(BaseAdapter):
         if not query:
             return []
 
-        search_url = f"https://html.duckduckgo.com/html/?q={query}"
+        search_url = f"https://html.duckduckgo.com/html/?q={quote_plus(query)}"
         headers = {"User-Agent": "UniPaith-KnowledgeEngine/1.0"}
         async with aiohttp.ClientSession() as session:
             async with session.get(
@@ -353,7 +353,7 @@ class SearchAdapter(BaseAdapter):
         links = []
         for result in soup.select(".result__a"):
             href = result.get("href", "")
-            if href.startswith("http"):
+            if isinstance(href, str) and href.startswith("http"):
                 links.append(href)
 
         return [

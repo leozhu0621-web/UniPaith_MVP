@@ -238,7 +238,7 @@ class CrawlerEngine:
         links: list[str] = []
         for el in elements:
             href = el.get("href")
-            if not href:
+            if not href or not isinstance(href, str):
                 continue
             absolute = urljoin(base_url, href)
             parsed = urlparse(absolute)
