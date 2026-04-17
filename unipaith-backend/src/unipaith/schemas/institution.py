@@ -627,6 +627,7 @@ class PostResponse(BaseModel):
     updated_at: datetime
     author_email: str | None = None
     program_names: list[str] | None = None
+    institution_name: str | None = None
 
 
 class PostMediaUploadResponse(BaseModel):

@@ -445,6 +445,7 @@ class ApplicationService:
                 Application.id == application_id,
                 Program.institution_id == institution_id,
             )
+            .options(selectinload(Application.program))
         )
         app = result.scalar_one_or_none()
         if not app:

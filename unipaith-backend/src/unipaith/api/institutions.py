@@ -827,7 +827,7 @@ async def get_posts_feed(
     out = []
     for p in posts:
         d = PostResponse.model_validate(p)
-        d.institution_name = inst_map.get(p.institution_id, "")  # type: ignore[attr-defined]
+        d.institution_name = inst_map.get(p.institution_id, "")
         out.append(d)
     return out
 

@@ -43,7 +43,7 @@ class Institution(Base):
     contact_email: Mapped[str | None] = mapped_column(String(255))
     logo_url: Mapped[str | None] = mapped_column(String(2000))
     website_url: Mapped[str | None] = mapped_column(String(1000))
-    media_gallery: Mapped[dict | None] = mapped_column(JSONB)
+    media_gallery: Mapped[list | None] = mapped_column(JSONB)
     social_links: Mapped[dict | None] = mapped_column(JSONB)
     inquiry_routing: Mapped[dict | None] = mapped_column(JSONB)
     support_services: Mapped[dict | None] = mapped_column(JSONB)

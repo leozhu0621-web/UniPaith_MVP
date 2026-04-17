@@ -13,8 +13,8 @@ class MatchResultResponse(BaseModel):
     id: UUID
     student_id: UUID
     program_id: UUID
-    match_score: Decimal
-    match_tier: int
+    match_score: Decimal | None
+    match_tier: int | None
     score_breakdown: dict | None
     reasoning_text: str | None
     model_version: str | None
@@ -47,5 +47,5 @@ class EngagementSignalResponse(BaseModel):
     student_id: UUID
     program_id: UUID
     signal_type: str
-    signal_value: int
+    signal_value: int | None
     created_at: datetime
