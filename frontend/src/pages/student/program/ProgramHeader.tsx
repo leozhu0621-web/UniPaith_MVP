@@ -1,33 +1,12 @@
 import { Link } from 'react-router-dom'
 import {
   ArrowLeft, Bookmark, BookmarkCheck, ArrowRightLeft, Sparkles,
-  Send, ChevronRight, GraduationCap, Clock, Building2,
-  MapPin, Users as UsersIcon, Calendar,
+  Send, ChevronRight, GraduationCap, Clock, Building2, Calendar, FileText,
 } from 'lucide-react'
 import MatchRing from './MatchRing'
 import { DEGREE_LABELS } from '../../../utils/constants'
 import { formatDate } from '../../../utils/format'
 import { differenceInDays } from 'date-fns'
-
-/**
- * Per-degree color shows up only inside the degree monogram tile — the card
- * itself is neutral so nothing feels like a colored bezel.
- */
-const DEGREE_THEME: Record<string, { monoBg: string; monoText: string }> = {
-  bachelors:   { monoBg: 'bg-indigo-50',  monoText: 'text-indigo-700'  },
-  masters:     { monoBg: 'bg-purple-50',  monoText: 'text-purple-700'  },
-  phd:         { monoBg: 'bg-slate-100',  monoText: 'text-slate-800'   },
-  certificate: { monoBg: 'bg-emerald-50', monoText: 'text-emerald-700' },
-  doctorate:   { monoBg: 'bg-rose-50',    monoText: 'text-rose-700'    },
-}
-
-function degreeAbbrev(degree: string): string {
-  const map: Record<string, string> = {
-    bachelors: 'BS', masters: 'MS', phd: 'PhD',
-    certificate: 'CERT', doctorate: 'DOC', associate: 'AA',
-  }
-  return map[degree] || degree.slice(0, 3).toUpperCase()
-}
 
 function durationLabel(months?: number | null, degreeType?: string): string | null {
   if (months) {
@@ -37,14 +16,16 @@ function durationLabel(months?: number | null, degreeType?: string): string | nu
     }
     return `${months} mo`
   }
+  // Sensible default so every program has a duration pill
   if (degreeType === 'bachelors') return '4 years'
-  if (degreeType === 'masters') return '1–2 years'
-  if (degreeType === 'phd') return '4–6 years'
+  if (degreeType === 'masters') return '2 years'
+  if (degreeType === 'phd') return '5 years'
+  if (degreeType === 'certificate') return '1 year'
   return null
 }
 
 function formatFormat(f?: string | null): string | null {
-  if (!f) return null
+  if (!f) return 'On Campus' // standard default
   const map: Record<string, string> = {
     on_campus: 'On Campus', online: 'Online',
     hybrid: 'Hybrid', in_person: 'In-Person',
@@ -61,11 +42,9 @@ interface Props {
   institutionCountry?: string | null
   department?: string | null
 
-  // Info pills
+  // Standard program info (every program has these)
   durationMonths?: number | null
   deliveryFormat?: string | null
-  campusSetting?: string | null
-  studentBodySize?: number | null
   applicationDeadline?: string | null
 
   // Match
@@ -88,13 +67,11 @@ interface Props {
 export default function ProgramHeader({
   programName, degreeType, institutionId, institutionName, institutionCity,
   institutionCountry, department,
-  durationMonths, deliveryFormat, campusSetting, studentBodySize, applicationDeadline,
+  durationMonths, deliveryFormat, applicationDeadline,
   matchScore, matchTier, onMatchClick,
   isSaved, isComparing, hasApplication,
   onBack, onSave, onCompare, onAskCounselor, onApply, onViewApplication,
 }: Props) {
-  const theme = DEGREE_THEME[degreeType] || DEGREE_THEME.bachelors
-  const abbrev = degreeAbbrev(degreeType)
   const degreeLabel = DEGREE_LABELS[degreeType] || degreeType
   const duration = durationLabel(durationMonths, degreeType)
   const format = formatFormat(deliveryFormat)
@@ -158,15 +135,7 @@ export default function ProgramHeader({
       {/* Main content */}
       <div className="px-5 pt-3 pb-4">
         <div className="flex items-start gap-4">
-          {/* Degree monogram tile (no image) */}
-          <div className={`flex-shrink-0 w-16 h-16 rounded-xl ${theme.monoBg} border border-divider flex flex-col items-center justify-center shadow-sm`}>
-            <GraduationCap size={16} className={theme.monoText} />
-            <span className={`text-xs font-black tracking-wide ${theme.monoText} leading-none mt-0.5`}>
-              {abbrev}
-            </span>
-          </div>
-
-          {/* Title block */}
+          {/* Title block — no left thumbnail */}
           <div className="flex-1 min-w-0">
             <h1 className="text-[26px] font-bold text-student-ink leading-tight">{programName}</h1>
 
@@ -189,56 +158,41 @@ export default function ProgramHeader({
               )}
             </div>
 
-            {/* Degree badge */}
-            <div className="flex flex-wrap items-center gap-1.5 mt-3">
-              <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md ${theme.monoBg} ${theme.monoText} border border-divider`}>
-                <GraduationCap size={10} />
+            {/* Standard program basics — same 3 pills for every program:
+                degree · duration · delivery format, plus an optional deadline. */}
+            <div className="flex flex-wrap items-center gap-1.5 mt-4">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-md bg-student-mist text-student border border-student/15">
+                <GraduationCap size={11} />
                 {degreeLabel}
               </span>
-            </div>
-
-            {/* Info pills row */}
-            <div className="flex flex-wrap items-center gap-1.5 mt-3">
               {duration && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] rounded-md bg-slate-50 text-student-ink border border-slate-200">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] rounded-md bg-slate-50 text-student-ink border border-slate-200">
                   <Clock size={11} className="text-slate-400" />
                   {duration}
                 </span>
               )}
               {format && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] rounded-md bg-slate-50 text-student-ink border border-slate-200">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] rounded-md bg-slate-50 text-student-ink border border-slate-200">
                   <Building2 size={11} className="text-slate-400" />
                   {format}
                 </span>
               )}
-              {campusSetting && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] rounded-md bg-slate-50 text-student-ink border border-slate-200 capitalize">
-                  <MapPin size={11} className="text-slate-400" />
-                  {campusSetting}
-                </span>
-              )}
-              {studentBodySize ? (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] rounded-md bg-slate-50 text-student-ink border border-slate-200">
-                  <UsersIcon size={11} className="text-slate-400" />
-                  {studentBodySize.toLocaleString()} students
-                </span>
-              ) : null}
               {deadline && deadline.days >= 0 && (
                 <span
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] rounded-md border ${
+                  className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] rounded-md border ${
                     deadlineUrgent
                       ? 'bg-amber-50 text-amber-700 border-amber-200 font-semibold'
                       : 'bg-slate-50 text-student-ink border-slate-200'
                   }`}
                 >
                   <Calendar size={11} className={deadlineUrgent ? 'text-amber-500' : 'text-slate-400'} />
-                  {deadlineUrgent ? `⚡ Deadline in ${deadline.days}d · ${deadline.date}` : `Deadline ${deadline.date}`}
+                  {deadlineUrgent ? `Apply by ${deadline.date} · ${deadline.days}d left` : `Apply by ${deadline.date}`}
                 </span>
               )}
             </div>
           </div>
 
-          {/* Right: match ring + apply */}
+          {/* Right: match ring + primary action */}
           <div className="flex-shrink-0 flex flex-col items-end gap-2.5">
             {matchScore != null && matchTier != null && (
               <button
@@ -254,14 +208,14 @@ export default function ProgramHeader({
                 onClick={onViewApplication}
                 className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-student text-white hover:bg-student-hover transition-colors shadow-sm"
               >
-                View Application
+                <FileText size={12} /> My Application
               </button>
             ) : onApply ? (
               <button
                 onClick={onApply}
                 className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-student text-white hover:bg-student-hover transition-colors shadow-sm"
               >
-                <Send size={12} /> Apply
+                <Send size={12} /> Apply Now
               </button>
             ) : null}
           </div>

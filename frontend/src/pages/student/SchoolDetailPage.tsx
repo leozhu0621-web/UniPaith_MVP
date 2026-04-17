@@ -150,8 +150,6 @@ export default function SchoolDetailPage() {
         department={p.department}
         durationMonths={p.duration_months}
         deliveryFormat={p.delivery_format}
-        campusSetting={p.campus_setting || p.institution_campus_setting}
-        studentBodySize={p.institution_student_body_size}
         applicationDeadline={p.application_deadline}
         matchScore={match?.match_score}
         matchTier={match?.match_tier}
