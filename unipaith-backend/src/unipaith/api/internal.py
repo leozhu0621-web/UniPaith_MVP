@@ -804,6 +804,15 @@ class EnrichInstitutionRequest(BaseModel):
     media_gallery: list[str] | None = None
     website_url: str | None = None
     contact_email: str | None = None
+    # Institution-profile JSONB dicts — previously ignored by the enrich
+    # pipeline, leaving NYU permanently null on these fields despite the
+    # data existing on the model.
+    social_links: dict | None = None
+    inquiry_routing: dict | None = None
+    support_services: dict | None = None
+    policies: dict | None = None
+    international_info: dict | None = None
+    school_outcomes: dict | None = None
 
 
 class EnrichProgramRequest(BaseModel):
