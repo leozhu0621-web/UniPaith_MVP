@@ -151,6 +151,10 @@ export default function SchoolDetailPage() {
         durationMonths={p.duration_months}
         deliveryFormat={p.delivery_format}
         applicationDeadline={p.application_deadline}
+        programStartDate={p.program_start_date}
+        applicationRequirements={p.application_requirements}
+        highlights={p.highlights}
+        tracks={p.tracks}
         matchScore={match?.match_score}
         matchTier={match?.match_tier}
         onMatchClick={() => setMatchModalOpen(true)}
