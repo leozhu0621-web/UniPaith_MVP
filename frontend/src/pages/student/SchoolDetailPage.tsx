@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getProgram, getProgramReviews, getEmployerFeedback, searchPrograms, semanticSearch } from '../../api/programs'
 import { getMatchDetail, logEngagement } from '../../api/matching'
@@ -14,34 +14,27 @@ import Skeleton from '../../components/ui/Skeleton'
 import ProgressBar from '../../components/ui/ProgressBar'
 import Modal from '../../components/ui/Modal'
 import { showToast } from '../../stores/toast-store'
-import { formatCurrency, formatDate, formatPercent, formatScore } from '../../utils/format'
-import { DEGREE_LABELS } from '../../utils/constants'
+import { formatCurrency, formatDate, formatScore } from '../../utils/format'
 import {
   BookOpen, GraduationCap, DollarSign, TrendingUp, MessageSquare,
   Star, Quote, BarChart3, Briefcase, Building2, Users, Clock,
-  FileText, Award, Send, Sparkles, ChevronRight,
+  Sparkles,
 } from 'lucide-react'
 import type { MatchResult, EventItem } from '../../types'
 
 // Redesigned components
-import HeroBanner from './program/HeroBanner'
 import MatchRing from './program/MatchRing'
-import InfoPillRow from './program/InfoPillRow'
+import ProgramHeader from './program/ProgramHeader'
+import KeyMetrics from './program/KeyMetrics'
 import StatGroup from './program/StatGroup'
 import AboutCard from './program/AboutCard'
 import NextStepsCard from './program/NextStepsCard'
 import RelatedSidebar from './program/RelatedSidebar'
 
-// Local school images
-const LOCAL_IMGS: Record<string, { campus: string[]; logo: string }> = {
-  'new york university': {
-    campus: ['/school-images/nyu-campus-1.jpg', '/school-images/nyu-campus-2.jpg', '/school-images/nyu-campus-3.jpg'],
-    logo: '/school-images/nyu-logo.jpg',
-  },
-  'stanford university': {
-    campus: ['/school-images/stanford-campus.jpg'],
-    logo: '/school-images/stanford-logo.jpg',
-  },
+// Local logos (no campus images on program detail — that content belongs on the university page)
+const LOCAL_LOGOS: Record<string, string> = {
+  'new york university': '/school-images/nyu-logo.jpg',
+  'stanford university': '/school-images/stanford-logo.jpg',
 }
 
 type Tab = 'overview' | 'admissions' | 'costs' | 'outcomes' | 'reviews'
@@ -138,10 +131,8 @@ export default function SchoolDetailPage() {
   const rd: any = p.ranking_data || {}
   const instName = p.institution_name || ''
 
-  // Images
-  const localSchool = LOCAL_IMGS[instName.toLowerCase()]
-  const heroImages = localSchool?.campus ?? (p.media_urls?.length ? p.media_urls : (p.institution_image_url ? [p.institution_image_url] : []))
-  const instLogo = localSchool?.logo || p.institution_logo_url
+  // Logo only — no campus image on this page (that belongs on the university page)
+  const instLogo = LOCAL_LOGOS[instName.toLowerCase()] || p.institution_logo_url
 
   const upcomingEvent = eventsList
     .filter((e: any) => new Date(e.event_datetime || e.starts_at || Date.now()) > new Date())
@@ -157,107 +148,43 @@ export default function SchoolDetailPage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      {/* ── Hero ── */}
-      <HeroBanner
-        images={heroImages.length ? heroImages : ['/school-images/nyu-campus-1.jpg']}
+      {/* ── Compact image-less header ── */}
+      <ProgramHeader
         programName={p.program_name}
+        degreeType={p.degree_type}
+        institutionId={p.institution_id}
         institutionName={instName}
+        institutionCity={p.institution_city}
+        institutionCountry={p.institution_country}
+        institutionLogoUrl={instLogo}
+        department={p.department}
+        usNewsRank={rd.us_news_2025}
+        durationMonths={p.duration_months}
+        deliveryFormat={p.delivery_format}
+        campusSetting={p.campus_setting || p.institution_campus_setting}
+        studentBodySize={p.institution_student_body_size}
+        applicationDeadline={p.application_deadline}
+        matchScore={match?.match_score}
+        matchTier={match?.match_tier}
+        onMatchClick={() => setMatchModalOpen(true)}
         isSaved={isSaved}
         isComparing={compareStore.has(p.id)}
+        hasApplication={!!existingApp}
         onBack={() => navigate('/s/explore')}
         onSave={() => saveMut.mutate()}
         onCompare={handleCompare}
         onAskCounselor={() => navigate(`/s?prefill=${encodeURIComponent(`Tell me about ${p.program_name} at ${instName}. Is it a good fit?`)}`)}
+        onApply={() => applyMut.mutate()}
+        onViewApplication={existingApp ? () => navigate(`/s/applications/${existingApp.id}`) : undefined}
       />
 
-      {/* ── Header block: title + breadcrumb + match + ranking + apply ── */}
-      <div className="flex items-start gap-4 mb-4">
-        {instLogo && (
-          <img src={instLogo} alt="" className="w-14 h-14 rounded-xl object-contain bg-white border border-divider p-1.5 flex-shrink-0" onError={e => (e.currentTarget.style.display = 'none')} />
-        )}
-        <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold text-student-ink leading-tight">{p.program_name}</h1>
-          <div className="flex items-center gap-1.5 mt-1 text-xs text-student-text">
-            <Link to={`/s/institutions/${p.institution_id}`} className="text-student hover:underline font-medium">
-              {instName}
-            </Link>
-            {p.department && (
-              <>
-                <ChevronRight size={10} className="text-student-text/40" />
-                <span className="text-student-text">{p.department}</span>
-              </>
-            )}
-            {p.institution_city && (
-              <>
-                <span className="text-student-text/40">·</span>
-                <span>{p.institution_city}, {p.institution_country}</span>
-              </>
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 mt-3">
-            {rd.us_news_2025 && (
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gold-soft text-gold border border-gold/20" title="US News National University Ranking 2025">
-                <Award size={11} />
-                <span className="text-[11px] font-bold">#{rd.us_news_2025} US News 2025</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Match ring (clickable) */}
-        {match && (
-          <button
-            onClick={() => setMatchModalOpen(true)}
-            className="flex-shrink-0 hover:opacity-90 transition-opacity"
-            title="Click to see match analysis"
-          >
-            <MatchRing score={match.match_score} tier={match.match_tier} />
-          </button>
-        )}
-
-        {/* Apply button */}
-        <div className="flex-shrink-0">
-          {existingApp ? (
-            <Button onClick={() => navigate(`/s/applications/${existingApp.id}`)}>View Application</Button>
-          ) : (
-            <Button onClick={() => applyMut.mutate()} loading={applyMut.isPending}>
-              <Send size={14} className="mr-1.5" /> Apply
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* ── Info pills ── */}
-      <InfoPillRow
-        degreeType={p.degree_type}
-        deliveryFormat={p.delivery_format}
-        campusSetting={p.campus_setting || p.institution_campus_setting}
-        durationMonths={p.duration_months}
-        applicationDeadline={p.application_deadline}
-        programStartDate={p.program_start_date}
-        studentBodySize={p.institution_student_body_size}
-      />
-
-      {/* ── Stats grouped ── */}
-      <StatGroup
+      {/* ── Hero KPI strip — only the stats that matter most ── */}
+      <KeyMetrics
         acceptanceRate={p.acceptance_rate ?? rd.acceptance_rate}
-        satAvg={rd.sat_avg}
-        actMidpoint={rd.act_midpoint}
-        applicationDeadline={p.application_deadline}
-        earnings6yr={rd.earnings_6yr_median}
-        earnings10yr={rd.earnings_10yr_median}
-        graduationRate={rd.graduation_rate}
-        retentionRate={rd.retention_rate}
-        employmentRate={p.outcomes_data?.employment_rate}
+        medianSalary={p.outcomes_data?.median_salary ?? rd.earnings_10yr_median}
         tuition={p.tuition}
-        totalCost={rd.total_cost_attendance}
-        netPrice={rd.avg_net_price}
-        medianDebt={rd.median_debt}
-        pellGrantRate={rd.pell_grant_rate}
-        studentBodySize={p.institution_student_body_size}
-        campusSetting={p.campus_setting || p.institution_campus_setting}
-        institutionType={p.institution_type}
+        graduationRate={rd.graduation_rate}
+        employmentRate={p.outcomes_data?.employment_rate}
       />
 
       {/* ── Tabs ── */}
@@ -343,6 +270,13 @@ export default function SchoolDetailPage() {
 
           {tab === 'admissions' && (
             <>
+              <StatGroup
+                acceptanceRate={p.acceptance_rate ?? rd.acceptance_rate}
+                satAvg={rd.sat_avg}
+                actMidpoint={rd.act_midpoint}
+                applicationDeadline={p.application_deadline}
+              />
+
               <Card className="p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <GraduationCap size={14} className="text-student" />
@@ -403,6 +337,14 @@ export default function SchoolDetailPage() {
             const payback = od.payback_months ? Number(od.payback_months) : null
             return (
               <>
+                <StatGroup
+                  tuition={p.tuition}
+                  totalCost={rd.total_cost_attendance}
+                  netPrice={rd.avg_net_price}
+                  medianDebt={rd.median_debt}
+                  pellGrantRate={rd.pell_grant_rate}
+                />
+
                 <Card className="p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <DollarSign size={14} className="text-rose-600" />
@@ -507,6 +449,14 @@ export default function SchoolDetailPage() {
 
             return (
               <>
+                <StatGroup
+                  earnings6yr={rd.earnings_6yr_median}
+                  earnings10yr={rd.earnings_10yr_median}
+                  graduationRate={rd.graduation_rate}
+                  retentionRate={rd.retention_rate}
+                  employmentRate={od.employment_rate}
+                />
+
                 {!hasData && ed.total_feedback === 0 ? (
                   <Card className="p-6 text-center">
                     <BarChart3 size={32} className="text-student-text/30 mx-auto mb-3" />
