@@ -38,9 +38,12 @@ from unipaith.schemas.student import (
     CreateWorkExperienceRequest,
     DataConsentResponse,
     LanguageResponse,
+    LogPlatformEventRequest,
+    MajorReadinessResponse,
     NextStepResponse,
     OnboardingStatusResponse,
     OnlinePresenceResponse,
+    PlatformEventResponse,
     PortfolioItemResponse,
     ResearchResponse,
     SchedulingResponse,
@@ -62,6 +65,7 @@ from unipaith.schemas.student import (
     UpdateWorkExperienceRequest,
     UpsertAccommodationRequest,
     UpsertDataConsentRequest,
+    UpsertMajorReadinessRequest,
     UpsertPreferencesRequest,
     UpsertSchedulingRequest,
     UpsertVisaInfoRequest,
@@ -1323,3 +1327,96 @@ async def get_student_feed(
         "items": items[:limit],
         "followed_count": len(followed_inst_ids),
     }
+
+
+# --- Package A: Major readiness (per-track self-rating blob) -----------
+
+
+@router.get("/me/major-readiness", response_model=list[MajorReadinessResponse])
+async def list_major_readiness(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """List all track-level readiness rows for the logged-in student."""
+    from sqlalchemy import select
+
+    from unipaith.models.student import StudentMajorReadiness
+
+    profile = await _svc(db)._get_student_profile(user.id)
+    result = await db.execute(
+        select(StudentMajorReadiness).where(
+            StudentMajorReadiness.student_id == profile.id
+        )
+    )
+    return [MajorReadinessResponse.model_validate(r) for r in result.scalars().all()]
+
+
+@router.put("/me/major-readiness", response_model=MajorReadinessResponse)
+async def upsert_major_readiness(
+    body: UpsertMajorReadinessRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Upsert a track-level readiness row. Unique on (student_id, track)."""
+    from sqlalchemy import select
+
+    from unipaith.models.student import StudentMajorReadiness
+
+    profile = await _svc(db)._get_student_profile(user.id)
+    result = await db.execute(
+        select(StudentMajorReadiness).where(
+            StudentMajorReadiness.student_id == profile.id,
+            StudentMajorReadiness.track == body.track,
+        )
+    )
+    row = result.scalar_one_or_none()
+    if row is None:
+        row = StudentMajorReadiness(
+            student_id=profile.id,
+            track=body.track,
+            readiness_data=body.readiness_data,
+        )
+        db.add(row)
+    else:
+        row.readiness_data = body.readiness_data
+    await db.commit()
+    await db.refresh(row)
+    return MajorReadinessResponse.model_validate(row)
+
+
+# --- Package A: Platform events (analytics log) -------------------------
+
+
+@router.post(
+    "/me/events",
+    response_model=PlatformEventResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def log_platform_event(
+    body: LogPlatformEventRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Log a broad analytics event (session, search, page view, CTA, etc.).
+
+    Program-scoped engagement signals still go to
+    ``/me/engagement`` which writes to ``student_engagement_signals``.
+    """
+    from unipaith.models.student import StudentPlatformEvent
+
+    profile = await _svc(db)._get_student_profile(user.id)
+    row = StudentPlatformEvent(
+        student_id=profile.id,
+        event_type=body.event_type,
+        event_metadata=body.event_metadata,
+        session_id=body.session_id,
+        device_type=body.device_type,
+        url_path=body.url_path,
+        referral_source=body.referral_source,
+        utm_campaign=body.utm_campaign,
+        ip_country=body.ip_country,
+    )
+    db.add(row)
+    await db.commit()
+    await db.refresh(row)
+    return PlatformEventResponse.model_validate(row)
