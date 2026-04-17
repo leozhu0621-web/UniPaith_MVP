@@ -113,8 +113,8 @@ class ChecklistService:
         toefl_min = reqs.get("toefl_min")
         ielts_min = reqs.get("ielts_min")
 
-        has_gre = any(s.test_type == "gre" for s in profile.test_scores)
-        has_english = any(s.test_type in ("toefl", "ielts") for s in profile.test_scores)
+        has_gre = any(s.test_type.upper() == "GRE" for s in profile.test_scores)
+        has_english = any(s.test_type.upper() in ("TOEFL", "IELTS") for s in profile.test_scores)
 
         if gre_required:
             items.append(

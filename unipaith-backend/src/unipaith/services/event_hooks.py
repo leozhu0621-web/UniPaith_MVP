@@ -175,14 +175,16 @@ async def on_decision_made(
     """Notify a student when a decision has been made on their application."""
     try:
         title_map = {
-            "accepted": "Congratulations! You've Been Accepted",
+            "admitted": "Congratulations! You've Been Accepted",
             "rejected": "Application Decision Update",
             "waitlisted": "Application Waitlisted",
+            "deferred": "Application Deferred",
         }
         body_map = {
-            "accepted": "Great news! Your application has been accepted.",
+            "admitted": "Great news! Your application has been accepted.",
             "rejected": "After careful review, we were unable to offer admission at this time.",
             "waitlisted": "Your application has been placed on the waitlist.",
+            "deferred": "Your application has been deferred to the next review cycle.",
         }
 
         notifications = NotificationService(db)
