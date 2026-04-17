@@ -270,25 +270,15 @@ export default function ProgramHeader({
             </div>
           </div>
 
-          {/* Right: Ask Counselor CTA + primary action */}
-          <div className="flex-shrink-0 flex flex-col items-stretch gap-2.5 w-[220px]">
+          {/* Right: Ask Counselor + primary action */}
+          <div className="flex-shrink-0 flex flex-col items-stretch gap-2">
             {onAskCounselor && (
               <button
                 onClick={onAskCounselor}
-                className="group text-left rounded-xl border border-gold/20 bg-gradient-to-br from-gold-soft to-amber-50 px-4 py-3 hover:border-gold/40 hover:shadow-sm transition-all"
+                className="flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-gold-soft text-gold border border-gold/20 hover:bg-gold hover:text-white transition-colors"
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center shadow-sm">
-                    <Sparkles size={13} className="text-gold" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wider font-bold text-gold/80">Not sure?</p>
-                    <p className="text-[13px] font-bold text-student-ink leading-tight">Ask your counselor</p>
-                  </div>
-                </div>
-                <p className="text-[11px] text-student-text leading-relaxed mt-1.5 group-hover:text-student-ink transition-colors">
-                  Get a personalized take on whether {programName} fits your goals.
-                </p>
+                <Sparkles size={12} />
+                Ask counselor
               </button>
             )}
             {hasApplication && onViewApplication ? (
