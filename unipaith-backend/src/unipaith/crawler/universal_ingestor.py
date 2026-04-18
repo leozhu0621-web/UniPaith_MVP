@@ -79,7 +79,8 @@ class WebAdapter(BaseAdapter):
         meta_desc = ""
         meta_tag = soup.find("meta", attrs={"name": "description"})
         if meta_tag and meta_tag.get("content"):
-            meta_desc = meta_tag["content"]
+            raw = meta_tag["content"]
+            meta_desc = raw if isinstance(raw, str) else raw[0] if raw else ""
 
         return [
             IngestedContent(
@@ -131,8 +132,8 @@ class TranscriptAdapter(BaseAdapter):
         try:
             from youtube_transcript_api import YouTubeTranscriptApi
 
-            transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
-            text = " ".join(entry["text"] for entry in transcript_list)
+            transcript = YouTubeTranscriptApi().fetch(video_id)
+            text = " ".join(snippet.text for snippet in transcript)
         except Exception:
             logger.warning("Could not fetch transcript for %s", url)
             return []

@@ -713,7 +713,8 @@ async def search_institutions(
     stmt = select(Institution)
 
     if q:
-        stmt = stmt.where(Institution.name.ilike(f"%{q}%"))
+        escaped_q = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        stmt = stmt.where(Institution.name.ilike(f"%{escaped_q}%"))
     if country:
         stmt = stmt.where(Institution.country == country)
     if inst_type:

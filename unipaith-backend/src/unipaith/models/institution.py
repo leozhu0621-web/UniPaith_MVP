@@ -41,7 +41,7 @@ class Institution(Base):
     campus_setting: Mapped[str | None] = mapped_column(String(30))
     student_body_size: Mapped[int | None] = mapped_column(Integer)
     contact_email: Mapped[str | None] = mapped_column(String(255))
-    logo_url: Mapped[str | None] = mapped_column(String(1000))
+    logo_url: Mapped[str | None] = mapped_column(String(2000))
     website_url: Mapped[str | None] = mapped_column(String(1000))
     media_gallery: Mapped[dict | None] = mapped_column(JSONB)
     social_links: Mapped[dict | None] = mapped_column(JSONB)
@@ -697,10 +697,13 @@ class StudentProgramReview(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
     )
-    student_id: Mapped[uuid.UUID] = mapped_column(
+    # student_id is nullable because some reviews are ingested from
+    # authoritative external sources (NYU Stories, Niche, bulletin). In that
+    # case external_source holds the provenance and student_id stays null.
+    student_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("student_profiles.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
         index=True,
     )
     program_id: Mapped[uuid.UUID] = mapped_column(
@@ -717,6 +720,7 @@ class StudentProgramReview(Base):
     review_text: Mapped[str | None] = mapped_column(Text)
     who_thrives_here: Mapped[str | None] = mapped_column(Text)
     reviewer_context: Mapped[dict | None] = mapped_column(JSONB)
+    external_source: Mapped[dict | None] = mapped_column(JSONB)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     is_published: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(

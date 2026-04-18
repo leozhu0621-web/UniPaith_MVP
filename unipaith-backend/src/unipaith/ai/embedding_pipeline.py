@@ -32,7 +32,7 @@ class EmbeddingPipeline:
                 f"No features found for student {student_id}. Run feature extraction first."
             )
 
-        text = self._build_student_embedding_text(features.feature_data)
+        text = self._build_student_embedding_text(features.feature_data or {})
         embedding = await self.client.embed_text(text)
         await self._save_embedding("student", student_id, embedding)
         return embedding
@@ -48,7 +48,7 @@ class EmbeddingPipeline:
                 f"No features found for program {program_id}. Run feature extraction first."
             )
 
-        text = self._build_program_embedding_text(features.feature_data)
+        text = self._build_program_embedding_text(features.feature_data or {})
         embedding = await self.client.embed_text(text)
         await self._save_embedding("program", program_id, embedding)
         return embedding
@@ -60,7 +60,7 @@ class EmbeddingPipeline:
 
         count = 0
         for feat in all_features:
-            text = self._build_program_embedding_text(feat.feature_data)
+            text = self._build_program_embedding_text(feat.feature_data or {})
             embedding = await self.client.embed_text(text)
             await self._save_embedding("program", feat.program_id, embedding)
             count += 1

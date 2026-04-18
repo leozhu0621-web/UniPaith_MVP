@@ -1,0 +1,538 @@
+{
+  "Anthropology": {
+    "description": "The Department of Anthropology functions as one of the country's leading graduate and undergraduate centers for cultural anthropology, archaeology, linguistic anthropology, and biological anthropology. The curriculum covers four principal subfields of anthropological study. Faculty expertise spans diverse areas including medieval and prehistoric archaeology, molecular primatology and paleoanthropology, discourse analysis and language socialization, and sociocultural anthropology with geographic focus on North America, Africa, India, China, the Middle East, Russia, the Caribbean, Latin America, Europe, Australia, and the South Pacific. Key theoretical emphases include symbolic representation, gender domains, social organization patterns, medical anthropology, primate evolution, religion, art, science studies, race and ethnicity, and ethnographic representation in film and media. The department maintains extensive film and video collections, teaching and research laboratories for archaeology, linguistic anthropology, and biological anthropology, a departmental colloquium series, and partnerships with museums, zoos, and academic institutions throughout New York City.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/anthropology-ba/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BA",
+    "credits": 128,
+    "major_credits": 36,
+    "department": "College of Arts & Science"
+  },
+  "Biology": {
+    "description": "The Department of Biology offers an education that is rigorous, exciting, and inclusive, exposing students to modern biological concepts and techniques. The program covers the range of modern biology, from microbes to multicellular animals and plants, and from molecular and cellular processes to genetics, development, behavior, and evolution. Students engage with material through classroom instruction, laboratory work, and encouraged participation in research at the university and other New York City institutions. The program uniquely allows science majors to study abroad while continuing their major. The major requires 16 courses (69-70 credits) completed with a grade of C or better. Students choose between the Standard Biology Track (70 credits) and the Ecology Track (69 credits). Both tracks include core biology courses (Principles of Biology I & II; Molecular and Cell Biology), five upper-level biology electives with mandatory skill categories (laboratory, quantitative, reasoning), chemistry sequence (General and Organic Chemistry), physics courses, and mathematics (Calculus). The program emphasizes preparation for careers in research, academia, medicine, dentistry, and related biomedical fields, with a remarkable record of success in acceptance into professional schools.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/biology-ba/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BA",
+    "credits": 128,
+    "major_credits": 70,
+    "department": "College of Arts & Science"
+  },
+  "Chemistry": {
+    "description": "The Chemistry department at NYU has a long-standing tradition dating to before the American Chemical Society's founding at the university in 1876. The program has recently strengthened its faculty and facilities, emphasizing physical, biophysical, bioorganic, biomedical chemistry, as well as chemical biology, nanoscience, and materials sciences. The department encourages qualified undergraduates to participate in research as early as their sophomore year. Students can pursue specializations in organic, biochemical, physical, or theoretical chemistry through carefully selected elective courses. Research opportunities are available alongside graduate students and faculty. The program prepares students for graduate study in chemistry-related fields or professional schools (medicine, dentistry, etc.), and alternative career preparation when paired with minors in Economics, Data Science, or Business Studies. An Honors Program is available to students with 3.65+ GPA in all required major courses, requiring completion of an honors thesis based on independent research.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/chemistry-ba/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BA",
+    "credits": 128,
+    "department": "College of Arts & Science"
+  },
+  "Computer Science (CAS)": {
+    "description": "Computing plays an increasingly important role in almost all fields, and computer science is a very diverse discipline that comprises both theory and applications. The Department of Computer Science is housed within the Courant Institute of Mathematical Sciences, a world-renowned center for the study of mathematics and computer science. The major aims to train students in fundamental principles of computer science as well as many practical aspects of software development. Coursework combines practical programming experience with techniques for analyzing problems and designing computer algorithms. The department offers four major programs: Computer Science major, Joint Computer Science/Data Science major, Joint Economics/Computer Science major, and Joint Mathematics/Computer Science major. Advanced undergraduates may conduct research with faculty, and outstanding undergraduates may pursue a master's degree through an accelerated five-year program. Upon completion, students develop skills in writing programs, understand foundational algorithms and data structures, grasp underlying computer architecture and operating systems, and gain deeper knowledge in specific computer science application areas.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/computer-science-ba/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BA",
+    "credits": 128,
+    "department": "College of Arts & Science"
+  },
+  "Data Science": {
+    "description": "The program develops broad knowledge in foundational theories and emerging methods of computational statistics. It emphasizes teaching enduring fundamentals that remain core across diverse settings while exposing students to cutting-edge data science frontiers. The curriculum stresses the critical examination of the increasing role that data-driven methods play in the world today. The major requires 52 credits in major coursework (13 four-credit courses), with mandatory completion of a CAS minor for single major students. Courses span Computer Science, Mathematics, and the Center for Data Science, with advanced courses taught by experts spanning humanities, social sciences, and natural sciences. Students must earn a C or better in either DS-UA 111 or DS-UA 112 before declaring the major. CAS students cannot enter junior year undeclared and must begin data science coursework no later than spring sophomore year. The program permits double-counting up to two courses between the Data Science major and another major/minor.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/data-science-ba/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BA",
+    "credits": 128,
+    "major_credits": 52,
+    "department": "College of Arts & Science"
+  },
+  "Economics (CAS)": {
+    "description": "The Department of Economics prepares students to understand economic decision-making at individual and group levels, market structures, and global economic relationships. The program emphasizes strong student-faculty connections, with many instructors engaged in active research that students can learn from directly. The major opens diverse career paths: graduates pursue advanced study in economics, business, or public administration, or enter professional schools. The program develops quantitative, qualitative, and analytical thinking skills valued by employers. NYU's urban setting provides particular advantages, with student opportunities on Wall Street, at international organizations, and in corporate, financial, governmental, and nonprofit sectors. The major offers two concentrations: a Policy Concentration for students applying economic analysis to real-world problems and policies (suited for careers in law, public policy, and business), and a Theory Concentration for students mastering formal economic reasoning and analytical tools (designed for those pursuing Ph.D. programs in economics or quantitative fields). Both concentrations require 10 economics courses (40 credits) plus mathematics prerequisites. An Honors Program is available in both concentrations, requiring 12 economics courses (48 credits), a 3.65 GPA, and completion of an honors thesis.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/economics-ba/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BA",
+    "credits": 128,
+    "major_credits": 40,
+    "department": "College of Arts & Science",
+    "concentrations": ["Policy", "Theory"]
+  },
+  "English": {
+    "description": "The program aims to provide training that is central to a liberal arts education and useful in all professions. Students develop critical reading and analytical writing skills while building relationships with literature and culture. Two tracks are available: the Literature Track (10 four-credit courses, 40 credits) and the Creative Writing Track (11 four-credit courses plus 2 two-credit courses, 48 credits). Core requirements include Introduction to the Study of Literature, three courses from the Literatures in English sequence covering different historical periods, one course in critical theories and methods, one course in British literature before 1800, one Senior Seminar, and additional elective courses within the major. The department provides specialized research options through seminars, independent study, and an honors program. Creative Writing track seniors can produce a special creative project in poetry, prose, or a hybrid genre. The program also offers credit-bearing internship seminars at magazines, publishers, and literary agencies.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/english-american-literature-ba/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BA",
+    "credits": 128,
+    "major_credits": 40,
+    "department": "College of Arts & Science",
+    "concentrations": ["Literature", "Creative Writing"]
+  },
+  "Environmental Studies": {
+    "description": "The Department of Environmental Studies aims to provide students with the breadth of understanding and skills necessary for resolving environmental questions and creating a sustainable future on scales ranging from local to global. The program employs integrated, problem-oriented study across multiple disciplines and schools. Students can develop expertise in several focus areas including environmental values, policy, and law; urban environmental challenges; climate change; energy systems; environmental justice; and human relationships with natural and domesticated ecosystems. The major comprises 9 four-credit courses (36 credits) with core courses in Environmental Systems Science, Environment & Society, and Senior Seminar, plus a Methods of Inquiry course, a Governance course, and four major electives selected in consultation with departmental advisers. An honors program is available for students maintaining a 3.65+ GPA.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/environmental-studies-ba/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BA",
+    "credits": 128,
+    "major_credits": 36,
+    "department": "College of Arts & Science"
+  },
+  "History": {
+    "description": "History at NYU is characterized as the study of human experience of all kinds, considered in relation to particular times and places. The discipline emphasizes a distinctive analytical method focused on contextual understanding. Students develop several key competencies: analyzing diverse evidence types (cultural, social, economic, political), synthesizing findings into coherent arguments, and presenting conclusions with clarity through written and oral communication. The department maintains particular strengths in American urban, social, labor, and ethnic history; medieval through modern European history; Latin American history; sub-Saharan African history; Asian history; and women's history, with attention to transnational and global perspectives. Key program components include a Workshop seminar introducing historical methods and practice, and a Capstone Seminar where students research and write original 20-25 page papers. An Honors Program is available for students with 3.65+ GPA, including honors seminar and 40-70 page thesis. Requirements include minimum 36 credits in history courses (grades C or better), maximum 16 credits in introductory courses, minimum 8 credits in pre-1800 courses, and one course from each geographical area: U.S., European, and non-Western.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/history-ba/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BA",
+    "credits": 128,
+    "major_credits": 36,
+    "department": "College of Arts & Science"
+  },
+  "Linguistics": {
+    "description": "The program defines linguistics as the science of human language that seeks to identify what is necessary, possible, and impossible in human language. The field examines both individual language characteristics and universal linguistic properties across syntax, morphology, semantics, phonetics, phonology, historical linguistics, sociolinguistics, psycholinguistics, and neurolinguistics. NYU's Department of Linguistics is described as a top linguistics program in the United States and the world, featuring 18 core faculty members, one Global Distinguished Professor, and multiple research laboratories across subfields including phonetics/phonology, syntax, semantics, sociolinguistics, morphology, neurolinguistics, language acquisition, and computational linguistics. Students must complete nine 4-credit courses (36 credits) including core courses in semantics, phonology, phonological analysis, and grammatical analysis, one elective course from sociolinguistics-related options, and three freely chosen department electives.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/linguistics-ba/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BA",
+    "credits": 128,
+    "major_credits": 36,
+    "department": "College of Arts & Science"
+  },
+  "Mathematics": {
+    "description": "The program offers a wide variety of courses in both pure and applied mathematics, with faculty from the Courant Institute of Mathematical Sciences, which integrates mathematical theory and applications. Students may pursue joint majors combining Mathematics with Computer Science, Data Science, Economics, or Engineering (leads to BS degrees and requires 5 years). Additional opportunities include an accelerated BA/MS Mathematics program (5 years) with the Graduate School of Arts and Science, an MA in Mathematics Education with Steinhardt, and study abroad options at NYU Abu Dhabi, London, Paris, and Shanghai. An Honors Program is available for students with 3.65+ GPA in major and overall, requiring four honors electives and a research project component. The 13 required courses (52 credits) include foundational coursework in discrete mathematics, calculus sequences, linear algebra, analysis, and algebra, plus three advanced electives and three general mathematics electives.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/mathematics-ba/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BA",
+    "credits": 128,
+    "major_credits": 52,
+    "department": "College of Arts & Science"
+  },
+  "Philosophy": {
+    "description": "The program explores fundamental questions about reality, knowledge, reasoning, language, and conduct across areas including metaphysics, epistemology, logic, and ethics. Students examine philosophical questions concerning art, law, medicine, mind, politics, religion, and the sciences. The department aims to enable students to identify, clarify, and assess answers to philosophical questions from both historical and contemporary perspectives. The major prepares students for a more reflective life, for advanced studies in the subject, and for professions that emphasize analytic thinking and argumentation, such as law, business, and programming. Requirements include 10 philosophy courses (40 credits) with specific requirements in logic, ancient philosophy, early modern philosophy, ethics/values/political philosophy, epistemology/metaphysics/philosophy of science, and philosophy of mind/language. An Honors Program is available for majors with 3.65+ GPA, requiring 11 philosophy courses including two honors seminars.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/philosophy-ba/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BA",
+    "credits": 128,
+    "major_credits": 40,
+    "department": "College of Arts & Science"
+  },
+  "Physics": {
+    "description": "The program describes physics as the most basic of the natural sciences, concerned with understanding the world across all scales. The curriculum emphasizes developing fundamental models that quantitatively explain observations and experimental results. The department's research spans multiple fields including astrophysics, biophysics, cosmology, elementary particle physics, gravitation, and condensed matter physics, utilizing both departmental laboratories and major international facilities like CERN's Large Hadron Collider. The educational approach serves diverse student populations: rigorous core training for physics majors with research opportunities, technical courses emphasizing fundamental physical laws that underpin other sciences for science majors, and nontechnical introductions for general students. The major requires 18 courses (53-55 credits) including core Physics I-III sequence with corresponding experimental physics labs, Mathematics foundation (Calculus I-III plus Mathematical Physics), advanced coursework in Quantum Mechanics I, Electricity & Magnetism I, and Thermal & Statistical Physics, plus two advanced electives from specialized physics topics.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/physics-ba/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BA",
+    "credits": 128,
+    "major_credits": 55,
+    "department": "College of Arts & Science"
+  },
+  "Politics": {
+    "description": "The Politics program is housed in the Wilf Family Department of Politics and serves those interested in government and public affairs. The department emphasizes developing analytical skills grounded in logic and evidence through scientific inquiry into politics. The curriculum encompasses five main areas: political theory, quantitative and formal political analysis, American politics, comparative politics, and international politics. Course topics include law, elections, ethnic conflict, justice, economic development, political accountability, war and peacekeeping, public policy, democracy, political economy, strategy, and political attitudes. Faculty expertise covers U.S. politics and global regions including Latin America, Europe, Africa, Russia, India, China, and Japan. Graduates pursue positions in government, non-governmental organizations, think tanks, international finance, multinational corporations, and law firms. Many advance to graduate studies in political science, law, public affairs, and international relations at competitive universities. Requirements include 10 four-credit Politics courses (40 credits) with two required subfield courses, one additional subfield course, and seven politics electives. An American Political Practice and Leadership Track offers study-away at NYU Washington, DC with internship opportunities.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/politics-ba/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BA",
+    "credits": 128,
+    "major_credits": 40,
+    "department": "College of Arts & Science"
+  },
+  "Psychology": {
+    "description": "The Department of Psychology at NYU approaches the study of mind and behavior from multiple perspectives. The program encompasses cognitive psychology focused on perception, memory, attention, language, and thinking; social and personality psychology examining how attitudes and decisions form; cognitive neuroscience studying brain functions related to mental processes; and developmental psychology exploring factors affecting individuals across ages. The curriculum emphasizes psychology's scientific foundations through diverse course offerings. Advanced students gain research experience via faculty-supervised projects and an honors program for qualified sophomores and juniors who complete honors seminars and conduct independent research culminating in a thesis. Graduates are well-prepared for graduate study in psychology or careers in law, business, medicine, and education, with many accepted to top graduate programs nationwide. Requirements include 10 major courses (40 credits minimum grade C), a statistics course, two Core A courses (psychology as natural science), two Core B courses (psychology as social science), one laboratory course from Core C, and two advanced major electives.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/psychology-ba/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BA",
+    "credits": 128,
+    "major_credits": 40,
+    "department": "College of Arts & Science"
+  },
+  "Sociology": {
+    "description": "The sociology major examines how our individual lives are embedded in families, groups and social networks, neighborhoods and schools, and organizations and institutions. The program teaches students to understand how broader social, political, and economic forces influence individual lives at local and global scales. The discipline emphasizes critical thinking about public issues and analyzing evidence about society, helping students see the world differently, and to look beyond individuals to see the ways in which power, inequality, and social hierarchies operate beneath the surface of everyday life. The curriculum combines theory with practical research skills, requiring coursework in sociological theory, research methods, and statistics. Students develop expertise in a particular area of sociological inquiry through a senior capstone or honors research project. Requirements include 9 four-credit sociology courses (36 credits), general education requirements including foreign language through intermediate level, research methods and statistics courses, and a senior capstone or honors research seminar.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/sociology-ba/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BA",
+    "credits": 128,
+    "major_credits": 36,
+    "department": "College of Arts & Science"
+  },
+  "Chemical & Biomolecular Engineering": {
+    "description": "The undergraduate Chemical and Biomolecular Engineering program leads to rewarding, impactful careers in industries that span chemical, pharmaceutical, consumer products, materials, and related fields. The curriculum introduces students to a discipline that applies broad scientific and engineering principles to the understanding and design of processes ranging from molecular to manufacturing scale. Students gain grounding in mathematics and sciences including physics, chemistry, and biology. The program emphasizes transforming raw material and energy resources into valuable products needed by society with emphasis on making such processes sustainable, environmentally friendly, economical, and safe. Key subject areas include thermodynamics, reaction kinetics, fluid mechanics, heat and mass transport, plus instrumentation and manufacturing processes. The program culminates in a capstone design project, and includes a year-long laboratory that introduces students to both classic and modern aspects of chemical engineering operations. The program also provides excellent preparation for graduate studies in engineering, medicine, business, and law. ABET accredited by the Engineering Accreditation Commission.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/engineering/programs/chemical-biomolecular-engineering-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "department": "Tandon School of Engineering"
+  },
+  "Civil Engineering": {
+    "description": "Civil engineers play a vital role in the design, construction, and operation of the built environment around the world, ranging from individual structures (bridges and skyscrapers) to complex infrastructure systems (transportation and water supply networks). What distinguishes this program is its combination of a rigorous, broad-based, traditional curriculum with state-of-the-art computational coursework in big data, artificial intelligence (AI), and smart cities. The NYC location provides students access to major engineering firms, construction companies, public agencies, and emerging tech sectors. The program produces well-rounded graduates who communicate effectively, understand the context of civil engineering projects in a complex world, and are ready to contribute to society right away and advance to positions of responsibility and leadership throughout their professional careers. The stated mission focuses on engaging students and faculty to address the critical challenges to our natural and built environments through interdisciplinary education, systems thinking, and advanced research in a collaborative and inclusive environment. ABET accredited. Students select one of four specialized capstone areas: Structural Engineering, Transportation Engineering, Construction Management, or Environmental Engineering. Students must register for the Fundamentals of Engineering (FE) exam before graduation.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/engineering/programs/civil-engineering-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 129,
+    "department": "Tandon School of Engineering",
+    "concentrations": ["Structural Engineering", "Transportation Engineering", "Construction Management", "Environmental Engineering"]
+  },
+  "Computer Engineering": {
+    "description": "The program offers a comprehensive analysis and design curriculum that provides an outstanding, cutting-edge education in computer systems with emphasis on hardware and software. It integrates traditional disciplines like electronics, communications, control, and programming with contemporary courses such as Cyber Security, Nanoscale Circuit Design, Parallel Computers, Image Processing, Biomedical Instrumentation, Web Search Engines, and Game Development. The program emphasizes strong communication and interpersonal skills developed through humanities courses and team-based design projects. Students benefit from connections to the Center for Advanced Technology in Telecommunications and the Offensive Security Lab, providing industry networking opportunities. Graduates have pursued careers designing microchips and graphics, managing industrial systems, developing embedded systems, or working in manufacturing, research, finance, healthcare, government, and entrepreneurship. ABET accredited through the Engineering Accreditation Commission. Requirements include minimum grade of C- in core CS and ECE courses, at least one Advanced Seminar and one Ethics course, and two Design Projects (6 credits total).",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/engineering/programs/computer-engineering-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "department": "Tandon School of Engineering"
+  },
+  "Computer Science (Tandon)": {
+    "description": "Computer science focuses on how to design, build, and effectively use the computers and systems that we interact with every day from the smart phones in our hands to the complex databases in our banks and hospitals. The field offers significant career opportunities due to technology's role in business, industry, government, and entertainment. The department provides specialized research labs in cybersecurity, game engineering, and big data analysis. Students benefit from close connections to graduate-level programs, creating an intellectually stimulating environment. Beyond the BS degree, the department offers minors in Computer Science, Cybersecurity, and Game Engineering. Graduates will master computer science fundamentals applicable to industry and academic sectors, learn contemporary design and development practices, deepen knowledge through electives, and develop laboratory and software skills for advanced projects and research.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/engineering/programs/computer-science-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "department": "Tandon School of Engineering"
+  },
+  "Electrical Engineering": {
+    "description": "The curriculum emphasizes how electrical engineers drive innovation across modern technology -- from the subway systems beneath our cities to the HD televisions on our walls to the smart phones in our pockets. Students build foundational knowledge in mathematics and science, then progress to analysis and design coursework with hands-on laboratory experiences. The program offers flexibility through elective specializations spanning local area networks to wireless communication and deregulated power systems. Beyond technical training, the program prioritizes communication and interpersonal skills development through required humanities/social sciences courses and team-based design projects. The BS in Electrical Engineering holds accreditation from the Engineering Accreditation Commission of ABET. Graduates pursue diverse careers including electronic design, bioengineering, city planning, and astronautics, along with opportunities in image processing, telemetry, computer design, and patent law. Career trajectories may advance toward system engineering, management, sales, education, or graduate studies.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/engineering/programs/electrical-engineering-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "department": "Tandon School of Engineering"
+  },
+  "Mechanical Engineering": {
+    "description": "Mechanical engineering builds the physical systems and devices that define modern society -- everything from air conditioning to automobiles, robots to power plants, artificial limbs to escalators, and rocket engines to weather satellites. Through hands-on computer and laboratory work in state-of-the-art facilities, students learn fundamental principles and their practical applications. The curriculum develops specialized expertise in areas including solid and fluid mechanics, machine control systems, and robotic devices. ABET accredited through the Engineering Accreditation Commission. Graduates pursue roles in industries such as national defense, aerospace, automotive, and telecommunications. The field also offers opportunities in resource conservation, energy efficiency, renewable energy, biomedical systems, nanotechnology, and mechatronics. A combined BS/Minor in Aerospace Engineering is available, requiring the same 131 total credits with substitutions in electives and the addition of four aerospace engineering courses.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/engineering/programs/mechanical-engineering-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 131,
+    "department": "Tandon School of Engineering"
+  },
+  "Technology Management": {
+    "description": "The BTM program addresses the technological revolution, emphasizing that every leader must become technology proficient in an era of AI, machine learning, IoT, and AR/VR innovations. The initiative fuses business management with technology expertise through an invention, innovation, and entrepreneurship (i2e) focus. The curriculum combines qualitative, quantitative, and innovative aspects of technology and innovation management while prioritizing communication skills across individual, team, and internship settings. Students gain knowledge in technology, innovation, information, design thinking, strategy, operations, supply chains, financial management and entrepreneurship. Students must choose one of two concentrations: Technology Innovation and Strategy (develops skills in strategic analysis covering marketing, logistics, and operations management) or Technology and Innovation in Finance (prepares students in financial theory and strategic decision-making using modern finance). Graduates pursue roles as technology project managers, tech entrepreneurs, venture capitalists, financial analysts, consultants, and business-unit managers.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/engineering/programs/business-technology-management-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "department": "Tandon School of Engineering",
+    "concentrations": ["Technology Innovation and Strategy", "Technology and Innovation in Finance"]
+  },
+  "Biomedical Engineering": {
+    "description": "Biomedical Engineering is not available as a standalone undergraduate bachelor's degree at NYU Tandon School of Engineering. The closest related programs are Chemical and Biomolecular Engineering (BS) and Biomolecular Science (BS). Students interested in biomedical applications may pursue the Chemical and Biomolecular Engineering program or explore biomedical-focused electives within other engineering majors.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/engineering/programs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "N/A",
+    "credits": null,
+    "department": "Tandon School of Engineering",
+    "note": "Not available as standalone bachelor's degree at Tandon"
+  },
+  "Business (Stern)": {
+    "description": "The program integrates an exceptional business education with a grounding in the liberal arts. Students combine business fundamentals coursework with liberal arts foundation to develop the skills, expertise, and intellectual sophistication needed to advance in today's dynamic business environment. The curriculum emphasizes global perspectives, social responsibility, professional ethics, communication, and interpersonal skills. Classes are taught by award-winning faculty and respected business leaders across New York, national, and international settings. Students may pursue minors or second majors across other NYU schools and can participate in cross-school interdisciplinary minors. The program offers comprehensive semester abroad and short-term immersion opportunities. Students must declare one of 11 primary concentrations by end of junior year: Accounting, Actuarial Science, Computing and Data Science, Business Economics, Econometrics and Quantitative Economics, Finance, Management and Organizations, Marketing, Operations, Real Estate, Statistics, or Sustainable Business. Entrepreneurship is available as a co-concentration only, paired with a primary concentration.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/business/programs/business-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "department": "Stern School of Business",
+    "concentrations": ["Accounting", "Actuarial Science", "Computing and Data Science", "Business Economics", "Econometrics and Quantitative Economics", "Finance", "Management and Organizations", "Marketing", "Operations", "Real Estate", "Statistics", "Sustainable Business", "Entrepreneurship (co-concentration)"]
+  },
+  "Accounting (Stern)": {
+    "description": "Accounting is offered as a concentration within the BS in Business at NYU Stern School of Business. The program integrates an exceptional business education with a grounding in the liberal arts, with specialized coursework in accounting principles, financial reporting, auditing, and tax. Students combine business fundamentals with liberal arts foundation to develop the skills, expertise, and intellectual sophistication needed to advance in today's dynamic business environment. The curriculum emphasizes global perspectives, social responsibility, professional ethics, communication, and interpersonal skills.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/business/programs/business-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "department": "Stern School of Business",
+    "note": "Concentration within BS in Business"
+  },
+  "Economics (Stern)": {
+    "description": "Business Economics is offered as a concentration within the BS in Business at NYU Stern School of Business. Students also have the option of pursuing Econometrics and Quantitative Economics as a concentration. The program integrates an exceptional business education with a grounding in the liberal arts, applying economic analysis and quantitative methods to business decision-making. Students combine business fundamentals with liberal arts foundation within an environment emphasizing global perspectives, social responsibility, and professional ethics.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/business/programs/business-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "department": "Stern School of Business",
+    "note": "Business Economics concentration within BS in Business"
+  },
+  "Finance (Stern)": {
+    "description": "Finance is offered as a concentration within the BS in Business at NYU Stern School of Business. The program integrates an exceptional business education with a grounding in the liberal arts, with specialized coursework in corporate finance, investments, financial markets, and valuation. Students benefit from NYU's location in the heart of New York City's financial district, with access to Wall Street firms, investment banks, and financial institutions. The curriculum emphasizes global perspectives, social responsibility, professional ethics, communication, and interpersonal skills.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/business/programs/business-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "department": "Stern School of Business",
+    "note": "Concentration within BS in Business"
+  },
+  "Information Systems (Stern)": {
+    "description": "Information Systems is part of the Computing and Data Science concentration within the BS in Business at NYU Stern School of Business. The program integrates an exceptional business education with a grounding in the liberal arts, with specialized coursework in computing, data science, and information systems management. Students combine technical computing skills with business fundamentals to develop expertise in data-driven decision making and technology management.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/business/programs/business-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "department": "Stern School of Business",
+    "note": "Computing and Data Science concentration within BS in Business"
+  },
+  "Management (Stern)": {
+    "description": "Management is offered as the Management and Organizations concentration within the BS in Business at NYU Stern School of Business. The program integrates an exceptional business education with a grounding in the liberal arts, with specialized coursework in organizational behavior, leadership, human resource management, and strategic management. Students develop skills in managing people, teams, and organizations within an environment emphasizing global perspectives, social responsibility, and professional ethics.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/business/programs/business-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "department": "Stern School of Business",
+    "note": "Management and Organizations concentration within BS in Business"
+  },
+  "Marketing (Stern)": {
+    "description": "Marketing is offered as a concentration within the BS in Business at NYU Stern School of Business. The program integrates an exceptional business education with a grounding in the liberal arts, with specialized coursework in consumer behavior, market research, brand management, digital marketing, and advertising. Students combine business fundamentals with liberal arts foundation within an environment emphasizing global perspectives, social responsibility, professional ethics, communication, and interpersonal skills.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/business/programs/business-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "department": "Stern School of Business",
+    "note": "Concentration within BS in Business"
+  },
+  "Acting (Tisch)": {
+    "description": "The Department of Drama at Tisch School of the Arts offers conservatory-level training combined with liberal arts education. The program has been designed to include all of the traditional components of conservatory training and theatre study while leveraging NYU's academic resources and New York City's cultural opportunities. Students receive professional instruction from renowned and respected New York City studios, that are either housed at or affiliated with NYU, while theatre studies courses are led by faculty scholars and professionals. This combination aims to equip graduates with the skills and background necessary to enter the profession or continue their education at the graduate level. The program seeks artistically talented students who are ready to commit to rigorous professional training and an academically challenging curriculum. Requirements include 48 credits in Professional Training (32 primary studio + 16 additional), 28 credits in Theatre Studies, 32 credits in Liberal Arts (including writing, humanities, sciences), and 20 credits in Electives.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts/programs/theatre-bfa/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BFA",
+    "credits": 128,
+    "department": "Tisch School of the Arts"
+  },
+  "Drama (Tisch)": {
+    "description": "The Department of Drama at Tisch School of the Arts offers conservatory-level training combined with liberal arts education. The program has been designed to include all of the traditional components of conservatory training and theatre study while leveraging NYU's academic resources and New York City's cultural opportunities. Students receive professional instruction from renowned and respected New York City studios, that are either housed at or affiliated with NYU, while theatre studies courses are led by faculty scholars and professionals. This combination aims to equip graduates with the skills and background necessary to enter the profession or continue their education at the graduate level. The program seeks artistically talented students who are ready to commit to rigorous professional training and an academically challenging curriculum.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts/programs/theatre-bfa/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BFA",
+    "credits": 128,
+    "department": "Tisch School of the Arts",
+    "note": "Same program as Acting (Theatre BFA)"
+  },
+  "Cinema Studies": {
+    "description": "The undergraduate program in Cinema Studies offers a liberal arts program that focuses on the study of cinema both as an art form and as a form of mass culture. The curriculum examines film through dual lenses: as an artistic medium concerned with style and narrative form, and as cultural artifact reflecting societal values. While American cinema receives significant emphasis, the cinemas of Europe, Asia, and South America are also a central component of the curriculum. Students must combine their major with either a minor or double major in another discipline. The program positions graduates for dual pathways: as a liberal arts degree akin to English or vocationally as preparation for professional careers. Alumni have pursued diverse fields including archival work, teaching, journalism, multimedia production, television, and filmmaking.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts/programs/cinema-studies-ba/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BA",
+    "credits": 128,
+    "department": "Tisch School of the Arts"
+  },
+  "Dance": {
+    "description": "The program provides a comprehensive, organic approach to dance. Technique classes emphasize alignment principles for efficient body use, with somatics and yoga integrated into weekly schedules. First-year coursework includes dance composition, kinesthetics of anatomy, and music theory. The second year develops these principles further while adding dance history, acting, improvisation, music literature, and advanced composition. The third year, conducted through the Second Avenue Dance Company, emphasizes performance and choreography while integrating prior learning. The intensive three-year plus two-summer curriculum requires 82 credits in major requirements (including two summer residencies), 32 credits in general education, plus technique courses across three levels, creative research, composition, history, music and acting components, and production and improvisation courses.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts/programs/dance-bfa/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BFA",
+    "credits": 128,
+    "major_credits": 82,
+    "department": "Tisch School of the Arts"
+  },
+  "Dramatic Writing": {
+    "description": "The BFA in Dramatic Writing comprises three components: dramatic writing courses (core writing, text analysis, performance/production), general education requirements, and electives. The curriculum as a whole enables students to analyze the dramatic text as it has developed since the time of the ancient Greeks, learn the rudiments of production techniques, explore the world of performance, and develop and refine their writing ability through a series of intensive workshops. During the initial two years, students build a strong liberal arts foundation while developing writing skills. The humanities focus cultivates imagination and intellect -- essential parts of a writer's training. In later semesters, students engage in pre-professional work evaluated by accomplished writers using rigorous professional standards, with exposure to industry professionals including producers, agents, and directors. By the senior year, each student is expected to have developed several full-length works for film, stage, or episodic media.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts/programs/dramatic-writing-bfa/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BFA",
+    "credits": 128,
+    "department": "Tisch School of the Arts"
+  },
+  "Film & Television": {
+    "description": "The Film and Television BFA program, established in 1965, has significantly shaped the cultural and artistic landscape. The program highlights its impact through notable alumni including directors Chris Columbus, Melina Matsoukas, Ryan Fleck, and Karyn Kusama; cinematographers Rachel Morrison and Reed Morano; television writer-producers Vince Gilligan and Damon Lindelof; and documentarians like Nanette Burstein and Morgan Spurlock. The curriculum comprises Production Safety (1 credit), History and Criticism courses (9-12 credits), Core Production courses (20 credits), Craft course (2 credits), Screenwriting/Television Writing courses (12 credits), additional major credits (7 credits), General Education Requirements (44 credits), and Electives (30 credits). A dual degree option exists with the NYU Stern School of Business.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts/programs/film-television-bfa/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BFA",
+    "credits": 128,
+    "department": "Tisch School of the Arts"
+  },
+  "Game Design": {
+    "description": "A four-year interdisciplinary degree that teaches the fundamentals of game design, game development, and critical scholarship using a strong study in the liberal arts as a foundation. Students explore both theoretical and practical aspects, learning about the theory and practice of making games on and off the computer, including the history and scholarship of games, the psychology of player experience, and the mathematics of game rules. The curriculum begins with foundational coursework covering design, technology, and culture. As students advance, they gain flexibility to specialize in areas such as visual design, animation, music, audio design, programming, game design, writing, storytelling, production management, and business strategy. A distinctive feature involves full-year senior projects called Capstones that students complete as individuals or as parts of a group. Requirements include 50 credits in major requirements, 44 credits in general education, and 34 elective credits.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts/programs/game-design-bfa/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BFA",
+    "credits": 128,
+    "major_credits": 50,
+    "department": "Tisch School of the Arts"
+  },
+  "Interactive Media Arts": {
+    "description": "The Interactive Media Arts program, launched by ITP with its inaugural class in fall 2018, is built on the premise that computation -- the ability to code, learn new software, manipulate data, and create physical + digital interactions -- is an essential creative capability. The curriculum provides rigorous training combining digital interactivity fluency with arts and liberal arts education. Students examine relationships between digital tools, physical environments, human interaction, and technology's societal impact while engaging in traditional scholarship. The program asserts that digital expression is an essential skill for all -- artists, writers and designers as well as programmers and engineers. Graduates are prepared for diverse creative careers including developer, designer, artist, educator, entrepreneur, and scholar roles. Core courses include Creative Computing, Communications Lab, and Capstone, with six elective groups (Programming & Data, Physical Computing, Media Arts, Tech & Society, Design & Fabrication, and Project Development & Research), plus general education (36 credits) and liberal arts courses (20 credits minimum).",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts/programs/interactive-media-arts-bfa/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BFA",
+    "credits": 128,
+    "department": "Tisch School of the Arts"
+  },
+  "Photography & Imaging": {
+    "description": "The curriculum combines photography and imaging education with the academic breadth of a major research university, allowing students to customize their studies based on career aspirations. First-year coursework emphasizes foundational technical skills in both analog and digital photography, alongside critical studies in visual culture and imaging history. The program structure progresses through specialized studio offerings at the sophomore level, including multimedia and digital techniques. Students also take critical studies courses such as the Social History of Photography and/or Aesthetic History of Photography. Upper-level students access advanced seminars and specialized courses covering documentary strategies, portraiture, lighting, and emerging media. Distinctive program features include the student-run ISO magazine, teaching assistant opportunities in community programs, and annual scholarships and awards. In the senior year, students take the Senior Directed Projects course in the fall and exhibit the resulting thesis projects in the spring. Requirements include Studio Courses (minimum 40 credits), Critical Studies (minimum 24 credits), Liberal Arts (44 credits), and Electives (20 credits).",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts/programs/photography-imaging-bfa/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BFA",
+    "credits": 128,
+    "department": "Tisch School of the Arts"
+  },
+  "Recorded Music": {
+    "description": "The Clive Davis Institute provides the first and only program of its kind to provide professional business and artistic training toward a BFA in Recorded Music. The program aims to equip students with the necessary skills -- business, creative, and intellectual -- to become visionary creative entrepreneurs in the evolving global music industry. Key emphases include developing innovative musical ideas, envisioning new music business models, collaborative work, and cultivating both intellectual rigor and artistic experimentation. The curriculum encourages students to assume leadership roles in the art and commerce of creating and selling recorded music. Located in Brooklyn at 370 Jay Street, described as NYU's new home for engineers, research scientists, game designers, media artists, and musicians to interact and collaborate. The program serves diverse career paths including prospective record label CEOs, music producers, performing artists, songwriters, publishers, social entrepreneurs, technology innovators, and music journalists. All Recorded Music majors must complete a study abroad requirement during their third year, with an option to participate in the proprietary Future Pop Music Studies program at NYU's Berlin site.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts/programs/recorded-music-bfa/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BFA",
+    "credits": 128,
+    "department": "Tisch School of the Arts"
+  },
+  "Applied Psychology": {
+    "description": "The Applied Psychology program is an interdisciplinary offering designed to help students bridge psychological theory, research, and practice to solve everyday problems in a multicultural world. The curriculum addresses diverse psychology topics including learning and development, cultural considerations, public health, and mental wellness across various populations. The program structure combines liberal arts coursework with specialized psychology requirements spanning counseling and clinical work, developmental psychology, and social/community psychology. Students complete coursework in statistics and research methodology alongside elective specializations. A distinctive two-semester fieldwork sequence provides hands-on professional development: students select between community-based settings (conducting intake interviews, mentoring youth, volunteering in hospitals) or research-focused opportunities (data collection, coding, and analysis). The program culminates in a qualitative research project integrating fieldwork experiences with psychological theory. Requirements include core psychology courses, research skills (Statistics, Research Methods I & II), field experiences, and restricted psychology electives across three content areas.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/applied-psychology-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "department": "Steinhardt School of Culture, Education, and Human Development"
+  },
+  "Communication Sciences & Disorders": {
+    "description": "The program offers a foundation of study in normal communication processes and the application of that knowledge to the identification, treatment, and prevention of communication disorders across the human lifespan. Graduates may pursue specialized graduate work in speech-language pathology or audiology, or transition into education, allied health, or public health careers. Students develop expertise in anatomy and physiology of speech and hearing mechanisms, normal development of speech/language/hearing, and communication disorder identification. The curriculum combines theoretical coursework with practical application through clinical observations and mentored research opportunities. The major allows customization through restricted major electives spanning multiple disciplines. Students can complete pre-health prerequisites and pursue minors in areas such as linguistics, psychology, sociology, public health, nutrition, American Sign Language, or foreign languages. Requirements include liberal arts foundation, nine specialized core courses, eight credits of restricted electives, and twenty-four credits of unrestricted electives.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/communicative-sciences-disorders-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "department": "Steinhardt School of Culture, Education, and Human Development"
+  },
+  "Food Studies": {
+    "description": "Food Studies is available only as a minor at NYU Steinhardt, not as a standalone bachelor's degree. As a concentration within the Nutrition and Food Studies BS program, Food Studies examines cultural, historical, and sociological aspects of food, production, and consumption, employing humanities and social science approaches to analyze the American food system and alternatives.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "Minor only",
+    "credits": null,
+    "department": "Steinhardt School of Culture, Education, and Human Development",
+    "note": "Available as minor only; Food Studies is a concentration within the Nutrition and Food Studies BS"
+  },
+  "Media, Culture & Communication": {
+    "description": "The BS in Media, Culture, and Communication is designed to help students examine media and technology through historical, political, and cultural perspectives. Majors develop the tools to research, analyze, and understand complex media landscapes in local and global contexts. The curriculum includes a strong liberal arts foundation combined with three core media studies courses and upper-level work organized around five areas of study: Global Communication and Media, Visual Culture and Sound Studies, Interaction and Experience, Media Industries and Politics, and Technology and Society. Students may pursue study abroad opportunities including the Global Media Scholars Program and can gain practical experience through professional electives, internships, or the Business Entertainment Media and Technology (BEMT) minor. The program permits double majors with journalism, politics, sociology, or other disciplines, as well as a co-major option in Global Public Health/Media, Culture, and Communication. Core requirements include three foundational courses, three framing courses, four focus courses, and eight credits in professional electives.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/media-culture-communication-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "department": "Steinhardt School of Culture, Education, and Human Development"
+  },
+  "Music (Instrumental Performance)": {
+    "description": "The program offers students intensive study with internationally acclaimed performers and teachers. Private instruction combines with coursework in music theory, history, chamber music, and performance practices. Students may concentrate in one of five areas: Jazz Studies, Brass Studies, Percussion Studies, String Studies, or Woodwind Studies. Performance opportunities include solo repertoire, chamber ensembles, orchestral work, contemporary music, opera/music theater productions, and jazz ensembles, with master classes from renowned faculty and visiting artists. Beyond core performance training, students may pursue music business courses with industry internships, a music technology sequence, and introductory music therapy coursework. All students complete liberal arts requirements alongside specialized music coursework in theory, aural skills, keyboard skills, history, and applied lessons (24 credits for most specializations).",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/instrumental-performance-bm/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BM",
+    "credits": 128,
+    "department": "Steinhardt School of Culture, Education, and Human Development",
+    "concentrations": ["Jazz Studies", "Brass Studies", "Percussion Studies", "String Studies", "Woodwind Studies"]
+  },
+  "Music (Vocal Performance)": {
+    "description": "The program offers intensive performance training within an internationally acclaimed university setting. Students choose from three specializations: Classical Voice (emphasizes opera performance and classical song repertoire with vocal training from NYC professionals, core requirements include music theory, aural comprehension, keyboard skills, and music history, plus acting, dance, foreign language diction, and vocal production; students perform both junior and senior recitals), Contemporary Voice (integrates voice study with live performance, focusing on vocal function, anatomy, and physiology with style-specific voice training, acting and dance, and contemporary vocal workshops), and Music Theatre (combines voice training with music theatre history, repertoire, acting, dance, diction, and audition skills, features fully staged productions with Broadway and regional theatre professionals). All students complete liberal arts requirements, music core courses, and specialization-specific coursework including private vocal lessons (21 credits total).",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/vocal-performance-bm/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BM",
+    "credits": 128,
+    "department": "Steinhardt School of Culture, Education, and Human Development",
+    "concentrations": ["Classical Voice", "Contemporary Voice", "Music Theatre"]
+  },
+  "Music Business": {
+    "description": "The Music Business program prepares students as leaders in the contemporary music marketplace through an interdisciplinary approach. The curriculum emphasizes collaboration across songwriting and music technology disciplines, developing competencies that combine business theory with artistic and aesthetic considerations. Key focus areas include understanding music industry structure, systems, practices, regulations, and historical changes; critical analysis and potential reinvention of industry frameworks; and application of business and administration principles to creative challenges. The program integrates structured coursework with practical experience through internships and participation in Village Records, the program's operational record label. Students are encouraged to engage with extracurricular opportunities including the Program Board and WNYU radio station. Students must study the international music business landscape and have access to several study-abroad options. Requirements include Liberal Arts (44 credits including writing, economics, mathematics, and electives), Music Specialization (33 credits in theory, aural skills, keyboard skills, and music history), Music Business Specialization & Core Business Studies (29 credits), and Unrestricted Electives (20 credits).",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/music-business-bm/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BM",
+    "credits": 128,
+    "department": "Steinhardt School of Culture, Education, and Human Development"
+  },
+  "Music Education": {
+    "description": "Music Education is not listed as an available undergraduate bachelor's degree program in the NYU Steinhardt bulletin. It may be offered at the graduate level only.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "N/A",
+    "credits": null,
+    "department": "Steinhardt School of Culture, Education, and Human Development",
+    "note": "Not available as standalone undergraduate degree at Steinhardt"
+  },
+  "Music Technology": {
+    "description": "The program aims to prepare graduates for careers in sound recording, music production, electronic music, and related fields. It provides a solid foundation in music, music technology, and the liberal arts with opportunities to develop skills through creative experimentation in a suite of state-of-the-art research and studio facilities. Students benefit from faculty interaction and industry connections, with internship opportunities at major recording studios, media companies, and performance venues in New York City. Key career paths include sound recording and engineering, music production, electronic music, sound and music computing, hardware development, game audio, film and video sound post-production, and XR (AR/VR) systems. A dual BM/MM Music Technology option is available for students pursuing advanced study. Music Technology graduates may qualify for the STEM OPT extension, allowing up to 36 months of post-graduation work authorization in the United States.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/music-technology-bm/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BM",
+    "credits": 128,
+    "department": "Steinhardt School of Culture, Education, and Human Development"
+  },
+  "Nutrition & Food Studies": {
+    "description": "The program merges interests in food and nutrition with an interest in health, culture, or business. Students benefit from a robust liberal arts foundation combined with specialized coursework integrating food studies, nutrition science, and management practices. All students complete foundational courses covering nutrition science, food identity, food science, and food production management. The curriculum explores nutrient value of food, eating behaviors, cultural determinants of food intake, food marketing, and personnel management, along with practical training in food preparation and management laboratories. Two concentrations are available: the Nutrition and Dietetics Concentration (focuses on nutrition's role in health and society, meeting accreditation standards for Didactic Programs in Dietetics established by ACEND) and the Food Studies Concentration (examines cultural, historical, and sociological aspects of food, production, and consumption, employing humanities and social science approaches to analyze the American food system and alternatives). Faculty facilitate internship placements across NYC's professional landscape -- hospitals, restaurants, hotels, consulting firms, and food companies.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/nutrition-food-studies-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "department": "Steinhardt School of Culture, Education, and Human Development",
+    "concentrations": ["Nutrition and Dietetics", "Food Studies"]
+  },
+  "Physical Therapy": {
+    "description": "Physical Therapy is not listed as an available undergraduate bachelor's degree program in the NYU Steinhardt bulletin. Physical Therapy at NYU is offered as a Doctor of Physical Therapy (DPT) graduate program only.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "N/A",
+    "credits": null,
+    "department": "Steinhardt School of Culture, Education, and Human Development",
+    "note": "DPT (graduate program) only; not available as bachelor's degree"
+  },
+  "Studio Art": {
+    "description": "The BFA in Studio Art emphasizes studying forms and ideas together through an interdisciplinary approach. The curriculum encompasses painting, drawing, sculpture, installation, photography, video art, digital art, performance, metals, ceramics, design, and theory courses. The first-year Foundation Program provides a focused progression of studio and critical art theory courses that allow students to explore diverse artistic forms and philosophies. Students develop technical skills, analytical abilities, and creative discipline while examining how art relates to society. Junior students are encouraged to study abroad at an NYU-sponsored site. In their senior year, students complete a year-long Senior Studio course designed to foster exhibiting artists, participating in critiques with faculty, visiting artists, and curators while developing a cohesive body of work supported by a written thesis. Seniors may apply for the Senior Honors program to collaborate with professional guest curators on group exhibitions. A dual-degree option combines the BFA with an MA in Teaching Visual Art (fifth year), making graduates eligible for New York State Initial Certification to teach art in public schools. NASAD accredited.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/studio-art-bfa/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BFA",
+    "credits": 128,
+    "department": "Steinhardt School of Culture, Education, and Human Development"
+  },
+  "Individualized Study (Gallatin)": {
+    "description": "The Gallatin School provides a distinctive liberal arts education for a diverse student body with faculty that foster passionate intellectual commitments from learners and prepare them for a world in which managing knowledge is key to success. Self-directed learning is the key goal, with faculty working to cultivate an environment conducive to intellectual exploration across traditional academic disciplines while insisting on active student engagement in developing the direction of their own education. Students develop individualized concentrations under the guidance of the School's advisers, take core courses within Gallatin as well as courses in the other Schools of NYU, expand their knowledge by pursuing global study opportunities, cultivate experiential and self-directed educational opportunities outside of the classroom, engage with civic life both on campus and in greater New York City, and draw together all that they have learned in the senior colloquium, a final oral examination. Core Gallatin courses require 32 credits including First-Year seminars, 20 credits in liberal arts distribution, 12 credits in historical and cultural requirements, 4 credits in Critical Race Studies, and 44-60 additional credits. Capstone elements include an Intellectual Autobiography and Plan for Concentration (IAPC) and Senior Colloquium.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/individualized-study/programs/individualized-major-ba/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BA",
+    "credits": 128,
+    "department": "Gallatin School of Individualized Study"
+  },
+  "Social Work": {
+    "description": "The Social Work BS program aims to develop generalist practice professionals equipped with diverse skills centered on human connections, problem-solving, leadership, advocacy, human rights, interprofessional collaboration, and social and economic justice. Students gain competencies for working across cultural contexts at local, national, and global levels. The curriculum combines required coursework with electives and a mandatory field internship providing supervision, work experience, leadership, and training in the internationally recognized field of social work. The program is structured broadly to prepare graduates for multiple career paths. Due to extensive professional training at the undergraduate level, graduates may pursue a master's degree with only one additional year of study, or enter the workforce immediately upon graduation. The program maintains full accreditation from the Council on Social Work Education. Primary focus areas include generalist social work practice, diversity and cultural competency, social and economic justice, human services and agency work, and field practicum experience (11 credits across two semesters).",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/social-work/programs/bachelor-science/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 129,
+    "department": "Silver School of Social Work"
+  },
+  "Nursing": {
+    "description": "NYU Rory Meyers College of Nursing's 4-year BS program prepares high school graduates to pursue licensure through the National Council Licensure Examination (NCLEX). The curriculum merges a strong core of arts and science courses with a progression of nursing courses that build knowledge and competencies for addressing healthcare needs across the lifespan. The 128-credit structure comprises three main components: 44 credits of liberal arts coursework, 20 credits in prerequisite subjects (nutrition, chemistry, anatomy and physiology, statistics, microbiology, and developmental psychology), and 64 credits of nursing specialization covering individual, family, and community care alongside scientific and professional nursing topics. Students complete nursing coursework beginning in the junior year, which allows sophomores to participate in NYU's study abroad opportunities. Courses are distributed across NYU Meyers, the College of Arts and Sciences, and the Steinhardt School.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/nursing/programs/nursing-traditional-4-year-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "department": "Rory Meyers College of Nursing"
+  },
+  "Hospitality & Tourism Management": {
+    "description": "The BS in Hospitality, Travel and Tourism Management equips students for management positions in one of the largest economic sectors worldwide. The curriculum combines liberal arts study with industry-specific business courses covering hospitality finance, sales and marketing, revenue management, special event planning, destination development, and food and beverage operations. Students learn practical skills including developing new hotel and resort concepts, market tourism destinations, and manage tourism and convention bureaus. The program leverages New York City's resources through frequent site visits, industry events, and guest speakers, while hands-on experience through internships develops students into successful and highly employable industry professionals. Six concentrations are offered: Event Management, Marketing and Analytics, Leadership and Management, Hotel Real Estate Finance and Development, Travel and Tourism Development, and Entrepreneurship.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/professional-studies/programs/hospitality-travel-tourism-management-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "department": "School of Professional Studies",
+    "concentrations": ["Event Management", "Marketing and Analytics", "Leadership and Management", "Hotel Real Estate Finance and Development", "Travel and Tourism Development", "Entrepreneurship"]
+  },
+  "Sports Management": {
+    "description": "The program prepares students for careers in the international sports business sector. Students gain essential industry knowledge and leadership skills in analytics, entrepreneurship, finance, law, marketing and media, and special events, both in and out of the classroom. Key features include practical experience through internships and industry events in New York City and globally, development of professional networks within the sports industry, and focus on creating consumer experiences and identifying new business opportunities. Core major courses (42 credits) include Introduction to Sports Management, Organizations in Sports, Financial Management & Accounting in Sport, Sports Law, Sport Marketing, and a capstone Senior Seminar in Leadership. Additional requirements include Liberal Arts (60 credits across writing, mathematics, social sciences, natural sciences, and humanities) and Free Electives (28 credits). The curriculum emphasizes developing practical expertise in facility management, revenue generation, media strategies, and event operations.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/professional-studies/programs/sport-management-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "major_credits": 42,
+    "department": "School of Professional Studies"
+  },
+  "Real Estate": {
+    "description": "The program prepares students to manage industry change within evolving conceptualizations of the urban landscape. Under guidance from distinguished faculty of prominent real estate professionals, students acquire advanced knowledge of real estate finance, law, market analysis, sales, and leasing while studying development processes, asset and portfolio management, and sustainability's transformation of the industry. The curriculum emphasizes cutting-edge trends built on a solid liberal arts and business foundation. Students select one of three specializations (12 credits each): Real Estate Finance, Real Estate Development, or Real Estate Technology and Entrepreneurship. Core requirements include Writing (8 credits), Quantitative Reasoning (8 credits), Economics (8 credits), Statistics (4 credits), Liberal Arts electives (32 credits), Required Real Estate courses (40 credits), Real Estate electives (4 credits), and a Senior Project (4 credits).",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/professional-studies/programs/real-estate-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "department": "School of Professional Studies",
+    "concentrations": ["Real Estate Finance", "Real Estate Development", "Real Estate Technology and Entrepreneurship"]
+  },
+  "Marketing Analytics": {
+    "description": "Marketing analytics is a growing and dynamic field with a wide spectrum of employment opportunities in both the profit and nonprofit sectors. Corporate marketing departments, media outlets, nonprofit organizations, advertising agencies, and social media companies increasingly depend on data analysis for critical business decisions. The Bachelor of Science in Marketing Analytics is one of the only undergraduate degrees of its kind in the country. It provides foundational knowledge in current topics including data warehousing and data mining, CRM, data visualization, web analytics, social media marketing and analytics, and marketing analytics. The program is taught by industry experts and aims to equip students with skill sets and the knowledge base that will position them for a range of career opportunities. Requirements include six foundation courses (24 credits) including marketing, economics, database design, statistics, and digital technology; ten required marketing analytics courses (40 credits); eight credits of marketing/IT/digital media electives; and a four-credit graduation project. Note: Admission to this program is currently paused for program overhaul.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/professional-studies/programs/marketing-analytics-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "department": "School of Professional Studies",
+    "note": "Admission currently paused for program overhaul"
+  },
+  "Liberal Studies": {
+    "description": "Liberal Studies houses the Liberal Studies Core, a two-year interdisciplinary global curriculum from which students directly transition to 90 majors at NYU to complete their bachelor's degree. The Liberal Studies Core is an interdisciplinary global curriculum that satisfies the core requirements at NYU during a student's first two years of study, offering a comprehensive liberal arts education that provides an excellent foundation for majors across the university. Students continue as juniors in GLS or in any major in the College of Arts and Science, the Gallatin School of Individualized Study, the College of Global Public Health, the Jonathan M. Tisch Center for Hospitality and Tourism, the Rory Meyers College of Nursing, the Schack Institute of Real Estate, the Silver School of Social Work, the Tisch Institute for Global Sport, non-portfolio majors at the Steinhardt School, three programs at Tandon, a special-tracked Film & TV program at Tisch, and the Stern School of Business. Liberal Studies is home to NYU's second-largest population of undergraduates and offers small classes with faculty mentors from the beginning of studies. Requirements include 8 required core courses, 4-8 credits in science and quantitative reasoning, and 24-28 elective credits (64-68 credits total for the two-year core).",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/liberal-studies/programs/global-liberal-studies-core/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BA (transitional two-year program)",
+    "credits": 128,
+    "department": "Liberal Studies",
+    "note": "Two-year core program; students transition to other NYU schools to complete bachelor's degree"
+  },
+  "Global Liberal Studies": {
+    "description": "Global Liberal Studies is an interdisciplinary bachelor's degree exploring a highly interconnected world through examination of texts, ideas, cultural movements, and communication modes. The curriculum draws from philosophy, history, politics, literature, and the arts to examine historical legacies underlying contemporary crises and shifting social imaginaries and geopolitical realities. Students develop intellectual curiosity and agility with the ability to think critically and expansively. The program emphasizes experiential learning and study away opportunities, with six interdisciplinary concentrations available. Junior year includes a semester-long internship or place-based independent study. Most students study abroad at one of nine NYU academic sites. All seniors complete an original research thesis or creative project. Core requirements include Global Writing Seminar, Arts and Cultures courses, Global Works and Society courses, Natural Sciences or Science plus Quantitative Reasoning (8 credits), Foreign Language (8-16 credits), Global Cultures course, City As Text seminar, and Senior Colloquium, Seminar, and Thesis (6 credits).",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/liberal-studies/programs/global-liberal-studies-ba/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BA",
+    "credits": 128,
+    "department": "Liberal Studies"
+  }
+}

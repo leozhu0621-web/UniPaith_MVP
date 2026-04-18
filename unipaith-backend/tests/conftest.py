@@ -38,14 +38,22 @@ test_engine = create_async_engine(TEST_DATABASE_URL, echo=False, poolclass=NullP
 TestSession = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
 
 
+_DROP_ALL_TABLES = text("""
+DO $$ DECLARE r RECORD;
+BEGIN
+    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
+        EXECUTE 'DROP TABLE IF EXISTS public.' || quote_ident(r.tablename) || ' CASCADE';
+    END LOOP;
+END $$;
+""")
+
+
 @pytest.fixture
 async def setup_db():
-    # Retry setup — the first connection can be stale after a previous dispose().
     for _attempt in range(3):
         try:
             async with test_engine.begin() as conn:
-                await conn.execute(text("DROP SCHEMA public CASCADE"))
-                await conn.execute(text("CREATE SCHEMA public"))
+                await conn.execute(_DROP_ALL_TABLES)
                 await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
                 await conn.run_sync(Base.metadata.create_all)
             break
@@ -54,14 +62,9 @@ async def setup_db():
                 raise
             await test_engine.dispose()
     yield
-    # Teardown: best-effort cleanup. Setup already does DROP+CREATE, so if the
-    # connection died mid-test (asyncpg race) we can safely skip cleanup here.
     try:
         async with test_engine.begin() as conn:
-            await conn.execute(text("DROP SCHEMA public CASCADE"))
-            await conn.execute(text("CREATE SCHEMA public"))
-            await conn.execute(text("GRANT ALL ON SCHEMA public TO public"))
-            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+            await conn.execute(_DROP_ALL_TABLES)
     except Exception:
         pass
     await test_engine.dispose()

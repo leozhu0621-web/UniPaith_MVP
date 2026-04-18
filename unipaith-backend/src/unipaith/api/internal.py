@@ -804,6 +804,15 @@ class EnrichInstitutionRequest(BaseModel):
     media_gallery: list[str] | None = None
     website_url: str | None = None
     contact_email: str | None = None
+    # Institution-profile JSONB dicts — previously ignored by the enrich
+    # pipeline, leaving NYU permanently null on these fields despite the
+    # data existing on the model.
+    social_links: dict | None = None
+    inquiry_routing: dict | None = None
+    support_services: dict | None = None
+    policies: dict | None = None
+    international_info: dict | None = None
+    school_outcomes: dict | None = None
 
 
 class EnrichProgramRequest(BaseModel):
@@ -820,6 +829,12 @@ class EnrichProgramRequest(BaseModel):
     media_urls: list[str] | None = None
     outcomes_data: dict | None = None
     application_requirements: list[dict] | None = None
+    # Extended program detail fields populated from scraped/structured sources
+    cost_data: dict | None = None
+    intake_rounds: dict | None = None
+    tracks: dict | None = None
+    requirements: dict | None = None
+    faculty_contacts: dict | None = None
     clear_fields: list[str] | None = None
 
 
@@ -902,6 +917,208 @@ async def enrich_data(
     }
 
 
+# --- Seed Program Reviews & Employer Feedback (curated external sources) ---
+
+
+class ProgramReviewSeed(BaseModel):
+    rating_teaching: int | None = None
+    rating_workload: int | None = None
+    rating_career_support: int | None = None
+    rating_roi: int | None = None
+    rating_overall: int | None = None
+    review_text: str | None = None
+    who_thrives_here: str | None = None
+    reviewer_context: dict | None = None
+    external_source: dict
+    is_verified: bool = True
+    is_published: bool = True
+
+
+class SeedProgramReviewsRequest(BaseModel):
+    institution_name: str
+    program_name: str
+    department: str | None = None
+    entries: list[ProgramReviewSeed]
+    # When True, delete all external-sourced reviews for matching programs
+    # before inserting. Use to re-seed after the source list changes so the
+    # DB state matches the script exactly (no stale entries left behind).
+    # First-party reviews (student_id set, external_source null) are never
+    # touched.
+    replace: bool = False
+
+
+@router.post("/seed-program-reviews")
+async def seed_program_reviews(
+    body: SeedProgramReviewsRequest,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Admin-only: insert reviews sourced from authoritative external
+    publishers (NYU Stories, Niche, bulletin). Idempotent on
+    ``external_source.source_url`` - re-runs update rather than duplicate.
+    Pass ``replace=True`` to first wipe external-sourced reviews for the
+    program and re-seed from scratch."""
+    from sqlalchemy import delete
+
+    from unipaith.models.institution import StudentProgramReview
+
+    inst_r = await db.execute(
+        select(Institution).where(Institution.name == body.institution_name)
+    )
+    inst = inst_r.scalar_one_or_none()
+    if not inst:
+        return {"inserted": 0, "updated": 0, "deleted": 0, "skipped": "institution_not_found"}
+
+    prog_stmt = select(Program).where(
+        Program.institution_id == inst.id,
+        Program.program_name == body.program_name,
+    )
+    if body.department:
+        prog_stmt = prog_stmt.where(Program.department == body.department)
+    prog_r = await db.execute(prog_stmt)
+    programs = prog_r.scalars().all()
+    if not programs:
+        return {"inserted": 0, "updated": 0, "deleted": 0, "skipped": "program_not_found"}
+
+    inserted = 0
+    updated = 0
+    deleted = 0
+    for prog in programs:
+        if body.replace:
+            del_stmt = delete(StudentProgramReview).where(
+                StudentProgramReview.program_id == prog.id,
+                StudentProgramReview.external_source.isnot(None),
+            )
+            del_result = await db.execute(del_stmt)
+            deleted += del_result.rowcount or 0
+
+        for entry in body.entries:
+            source_url = (entry.external_source or {}).get("source_url")
+            existing = None
+            if source_url and not body.replace:
+                # Match on program_id + source_url for idempotency.
+                ex_stmt = select(StudentProgramReview).where(
+                    StudentProgramReview.program_id == prog.id,
+                    StudentProgramReview.external_source[
+                        "source_url"
+                    ].astext == source_url,
+                )
+                ex_r = await db.execute(ex_stmt)
+                existing = ex_r.scalars().first()
+
+            if existing is not None:
+                for field, value in entry.model_dump(exclude_unset=True).items():
+                    setattr(existing, field, value)
+                updated += 1
+            else:
+                row = StudentProgramReview(
+                    program_id=prog.id,
+                    student_id=None,
+                    **entry.model_dump(exclude_unset=True),
+                )
+                db.add(row)
+                inserted += 1
+
+    await db.commit()
+    return {"inserted": inserted, "updated": updated, "deleted": deleted}
+
+
+class EmployerFeedbackSeed(BaseModel):
+    employer_name: str
+    industry: str | None = None
+    rating_technical: int | None = None
+    rating_practical: int | None = None
+    rating_communication: int | None = None
+    rating_overall: int | None = None
+    job_readiness_sentiment: str | None = None
+    feedback_text: str | None = None
+    hiring_pattern: str | None = None
+    feedback_year: int | None = None
+    is_published: bool = True
+
+
+class SeedEmployerFeedbackRequest(BaseModel):
+    institution_name: str
+    program_name: str
+    department: str | None = None
+    entries: list[EmployerFeedbackSeed]
+    # When True, delete all existing employer feedback for matching programs
+    # before inserting. Use to re-seed cleanly when the source list changes.
+    replace: bool = False
+
+
+@router.post("/seed-employer-feedback")
+async def seed_employer_feedback(
+    body: SeedEmployerFeedbackRequest,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Admin-only: insert employer feedback sourced from institution-published
+    outcome reports (e.g., NYU Stern Undergraduate Outcomes). Idempotent on
+    ``(employer_name, feedback_year)`` - re-runs update rather than duplicate.
+    Pass ``replace=True`` to wipe and reseed."""
+    from sqlalchemy import delete
+
+    from unipaith.models.institution import EmployerFeedback
+
+    inst_r = await db.execute(
+        select(Institution).where(Institution.name == body.institution_name)
+    )
+    inst = inst_r.scalar_one_or_none()
+    if not inst:
+        return {"inserted": 0, "updated": 0, "deleted": 0, "skipped": "institution_not_found"}
+
+    prog_stmt = select(Program).where(
+        Program.institution_id == inst.id,
+        Program.program_name == body.program_name,
+    )
+    if body.department:
+        prog_stmt = prog_stmt.where(Program.department == body.department)
+    prog_r = await db.execute(prog_stmt)
+    programs = prog_r.scalars().all()
+    if not programs:
+        return {"inserted": 0, "updated": 0, "deleted": 0, "skipped": "program_not_found"}
+
+    inserted = 0
+    updated = 0
+    deleted = 0
+    for prog in programs:
+        if body.replace:
+            del_stmt = delete(EmployerFeedback).where(
+                EmployerFeedback.program_id == prog.id,
+            )
+            del_result = await db.execute(del_stmt)
+            deleted += del_result.rowcount or 0
+
+        for entry in body.entries:
+            existing = None
+            if not body.replace:
+                ex_stmt = select(EmployerFeedback).where(
+                    EmployerFeedback.program_id == prog.id,
+                    EmployerFeedback.employer_name == entry.employer_name,
+                    EmployerFeedback.feedback_year.is_(entry.feedback_year)
+                    if entry.feedback_year is None
+                    else EmployerFeedback.feedback_year == entry.feedback_year,
+                )
+                ex_r = await db.execute(ex_stmt)
+                existing = ex_r.scalars().first()
+
+            if existing is not None:
+                for field, value in entry.model_dump(exclude_unset=True).items():
+                    setattr(existing, field, value)
+                updated += 1
+            else:
+                row = EmployerFeedback(
+                    program_id=prog.id,
+                    **entry.model_dump(exclude_unset=True),
+                )
+                db.add(row)
+                inserted += 1
+
+    await db.commit()
+    return {"inserted": inserted, "updated": updated, "deleted": deleted}
+
+
 # --- Image Download & Upload to S3 ---
 
 
@@ -967,15 +1184,10 @@ async def download_and_upload_images(
                         Body=resp.content,
                         ContentType=ct,
                     )
-                    # Generate long-lived presigned URL (7 days)
-                    s3_url = s3.client.generate_presigned_url(
-                        "get_object",
-                        Params={
-                            "Bucket": s3.bucket,
-                            "Key": key,
-                        },
-                        ExpiresIn=604800,  # 7 days
-                    )
+                    # Use direct public URL for catalog images
+                    # (bucket policy allows public read on catalog/*)
+                    # Avoids presigned URL length/expiration issues
+                    s3_url = f"https://{s3.bucket}.s3.amazonaws.com/{key}"
 
                 results.append({
                     "url": url,

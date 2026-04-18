@@ -74,21 +74,59 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build, tag, and push image
+        id: build
         working-directory: unipaith-backend
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          # Capture digest from docker push output (no ECR DescribeImages perm needed).
+          # docker push prints: "<tag>: digest: sha256:<hex> size: <n>"
+          DIGEST=$(docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG | tee /dev/stderr | grep -oE 'sha256:[a-f0-9]{64}' | head -1)
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          if [ -z "$DIGEST" ]; then
+            echo "::error::Failed to capture image digest from docker push"
+            exit 1
+          fi
+          echo "Image digest: $DIGEST"
+          echo "DIGEST=$DIGEST" >> $GITHUB_OUTPUT
+
+      - name: Register new task definition with pinned digest
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          DIGEST: ${{ steps.build.outputs.DIGEST }}
+        run: |
+          NEW_IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY@$DIGEST"
+          echo "Pinning to $NEW_IMAGE"
+
+          # Pull current task def, swap image, strip read-only fields, register new revision
+          aws ecs describe-task-definition --task-definition $ECS_SERVICE \
+            --query 'taskDefinition' > /tmp/td.json
+
+          python3 -c "
+          import json
+          td = json.load(open('/tmp/td.json'))
+          for k in ['taskDefinitionArn','revision','status','requiresAttributes',
+                    'compatibilities','registeredAt','registeredBy']:
+              td.pop(k, None)
+          td['containerDefinitions'][0]['image'] = '$NEW_IMAGE'
+          json.dump(td, open('/tmp/td-new.json','w'))
+          "
+
+          NEW_TD=$(aws ecs register-task-definition \
+            --cli-input-json file:///tmp/td-new.json \
+            --query 'taskDefinition.taskDefinitionArn' --output text)
+          echo "Registered: $NEW_TD"
+          echo "NEW_TD=$NEW_TD" >> $GITHUB_ENV
 
       - name: Deploy to ECS
         run: |
           aws ecs update-service \
             --cluster $ECS_CLUSTER \
             --service $ECS_SERVICE \
+            --task-definition $NEW_TD \
             --force-new-deployment \
             --region $AWS_REGION
 

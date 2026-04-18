@@ -1,0 +1,1375 @@
+{
+  "metadata": {
+    "source": "bulletins.nyu.edu",
+    "scraped_at": "2026-04-15",
+    "base_url": "https://bulletins.nyu.edu",
+    "institution": "New York University",
+    "institution_type": "Private Research University",
+    "founded": 1831,
+    "location": "New York City, NY",
+    "global_campuses": ["New York", "Abu Dhabi", "Shanghai"],
+    "enrollment": "65,000+",
+    "research_funding": "$1.27 billion annually",
+    "schools_count": 20,
+    "description": "One of the most prominent and respected research universities in the world. A leader in global education, with more international students and more students studying abroad than any other US university. An engine of social mobility with notable representation of low-income and first-generation students among top US universities."
+  },
+  "images": {
+    "campus_photos": [
+      {
+        "description": "Quantum Institute",
+        "url": "https://www.nyu.edu/about/_jcr_content/root/container-header/nyu_hero/image.coreimg.jpeg/1773449103464/quantuminstitutenewsimage.jpeg"
+      },
+      {
+        "description": "NYU Abu Dhabi Pier",
+        "url": "https://www.nyu.edu/about/_jcr_content/root/container/nyu_tabs/item_1/nyu_fullwidth_promo.coreimg.jpeg/1771867662018/abudhabi-pier.jpeg"
+      },
+      {
+        "description": "NYU Shanghai New Bund Campus",
+        "url": "https://www.nyu.edu/about/_jcr_content/root/container/nyu_tabs/item_2/nyu_fullwidth_promo_.coreimg.jpeg/1771867886254/nyu12001-details-144-catalinakulczar-cropped.jpeg"
+      }
+    ]
+  },
+  "schools": [
+    {
+      "name": "College of Arts and Science (CAS)",
+      "bulletin_url": "/undergraduate/arts-science/",
+      "description": "NYU's founding school, offering a liberal arts education for the 21st century: dynamic, practical, and purposeful. Features over 60 majors and 60 minors centered on critical engagement with ideas, writing, scientific inquiry, and data discovery.",
+      "programs": [
+        {
+          "name": "Biochemistry",
+          "degree": "BA",
+          "category": "Sciences & Mathematics",
+          "url": "/undergraduate/arts-science/programs/biochemistry-ba/"
+        },
+        {
+          "name": "Biology",
+          "degree": "BA",
+          "category": "Sciences & Mathematics",
+          "url": "/undergraduate/arts-science/programs/biology-ba/"
+        },
+        {
+          "name": "Chemistry",
+          "degree": "BA",
+          "category": "Sciences & Mathematics",
+          "url": "/undergraduate/arts-science/programs/chemistry-ba/"
+        },
+        {
+          "name": "Chemistry",
+          "degree": "BS",
+          "category": "Sciences & Mathematics",
+          "url": "/undergraduate/arts-science/programs/chemistry-bs/"
+        },
+        {
+          "name": "Neural Science",
+          "degree": "BS",
+          "category": "Sciences & Mathematics",
+          "url": "/undergraduate/arts-science/programs/neural-science-bs/"
+        },
+        {
+          "name": "Physics",
+          "degree": "BA",
+          "category": "Sciences & Mathematics",
+          "url": "/undergraduate/arts-science/programs/physics-ba/"
+        },
+        {
+          "name": "Physics",
+          "degree": "BS",
+          "category": "Sciences & Mathematics",
+          "url": "/undergraduate/arts-science/programs/physics-bs/"
+        },
+        {
+          "name": "Mathematics",
+          "degree": "BA",
+          "category": "Sciences & Mathematics",
+          "url": "/undergraduate/arts-science/programs/mathematics-ba/"
+        },
+        {
+          "name": "Data Science",
+          "degree": "BA",
+          "category": "Sciences & Mathematics",
+          "url": "/undergraduate/arts-science/programs/data-science-ba/"
+        },
+        {
+          "name": "Computer and Data Science",
+          "degree": "BA",
+          "category": "Sciences & Mathematics",
+          "url": "/undergraduate/arts-science/programs/computer-data-science-ba/"
+        },
+        {
+          "name": "Computer Science",
+          "degree": "BA",
+          "category": "Sciences & Mathematics",
+          "url": "/undergraduate/arts-science/programs/computer-science-ba/",
+          "detailed_description": "Housed within the Courant Institute of Mathematical Sciences. Trains students in fundamental principles of computer science as well as many practical aspects of software development. 128 total credits required, with 48 credits in the major including core CS courses (Intro to CS, Data Structures, Computer Systems Org, Operating Systems, Basic Algorithms) plus 16 credits of 400-level electives. Honors program available for students with 3.65+ GPA.",
+          "total_credits": 128,
+          "major_credits": 48,
+          "learning_outcomes": [
+            "Ability to write programs and design software systems",
+            "Understanding of foundational algorithms and data structures",
+            "Knowledge of computer architecture and operating systems",
+            "Deeper expertise in specific computer science domains"
+          ]
+        },
+        {
+          "name": "English and American Literature",
+          "degree": "BA",
+          "category": "Humanities & Social Sciences",
+          "url": "/undergraduate/arts-science/programs/english-american-literature-ba/"
+        },
+        {
+          "name": "History",
+          "degree": "BA",
+          "category": "Humanities & Social Sciences",
+          "url": "/undergraduate/arts-science/programs/history-ba/"
+        },
+        {
+          "name": "Philosophy",
+          "degree": "BA",
+          "category": "Humanities & Social Sciences",
+          "url": "/undergraduate/arts-science/programs/philosophy-ba/"
+        },
+        {
+          "name": "Psychology",
+          "degree": "BA",
+          "category": "Humanities & Social Sciences",
+          "url": "/undergraduate/arts-science/programs/psychology-ba/",
+          "detailed_description": "Approaches psychology from multiple perspectives including cognitive, social, personality, neuroscience, and developmental frameworks. Emphasizes the scientific basis of psychology and encourages advanced undergraduates to engage in faculty research. 128 total credits required, 40 major credits across foundation courses, content courses (Natural Science and Social Science cores plus laboratory), and advanced electives.",
+          "total_credits": 128,
+          "major_credits": 40,
+          "learning_outcomes": [
+            "Field overview and critical analysis skills",
+            "Scientific communication ability",
+            "Research methodology competency",
+            "Understanding of psychology as theoretical and empirical science"
+          ]
+        },
+        {
+          "name": "Sociology",
+          "degree": "BA",
+          "category": "Humanities & Social Sciences",
+          "url": "/undergraduate/arts-science/programs/sociology-ba/"
+        },
+        {
+          "name": "Anthropology",
+          "degree": "BA",
+          "category": "Humanities & Social Sciences",
+          "url": "/undergraduate/arts-science/programs/anthropology-ba/"
+        },
+        {
+          "name": "Economics",
+          "degree": "BA",
+          "category": "Humanities & Social Sciences",
+          "url": "/undergraduate/arts-science/programs/economics-ba/",
+          "detailed_description": "Prepares students to understand decision-making, market structures, and global economic relationships. Emphasizes excellent student-faculty rapport with faculty engaged in active research. Two concentrations: Policy (for careers in law, public policy, business) and Theory (for PhD Economics or quantitative finance). 128 total credits required, 40 major credits.",
+          "total_credits": 128,
+          "major_credits": 40,
+          "concentrations": ["Policy", "Theory"],
+          "learning_outcomes": [
+            "Substantial microeconomics, macroeconomics, and econometrics knowledge",
+            "Ability to analyze problems using economic frameworks",
+            "Quantitative analysis skills with statistical models",
+            "Comprehension of modern economic research theory"
+          ]
+        },
+        {
+          "name": "Politics",
+          "degree": "BA",
+          "category": "Humanities & Social Sciences",
+          "url": "/undergraduate/arts-science/programs/politics-ba/"
+        },
+        {
+          "name": "International Relations",
+          "degree": "BA",
+          "category": "Humanities & Social Sciences",
+          "url": "/undergraduate/arts-science/programs/international-relations-ba/"
+        },
+        {
+          "name": "Public Policy",
+          "degree": "BA",
+          "category": "Humanities & Social Sciences",
+          "url": "/undergraduate/arts-science/programs/public-policy-ba/"
+        },
+        {
+          "name": "French",
+          "degree": "BA",
+          "category": "Languages & Literatures",
+          "url": "/undergraduate/arts-science/programs/french-ba/"
+        },
+        {
+          "name": "Spanish and Portuguese",
+          "degree": "BA",
+          "category": "Languages & Literatures",
+          "url": "/undergraduate/arts-science/programs/spanish-portuguese-ba/"
+        },
+        {
+          "name": "German",
+          "degree": "BA",
+          "category": "Languages & Literatures",
+          "url": "/undergraduate/arts-science/programs/german-ba/"
+        },
+        {
+          "name": "Italian",
+          "degree": "BA",
+          "category": "Languages & Literatures",
+          "url": "/undergraduate/arts-science/programs/italian-ba/"
+        },
+        {
+          "name": "Linguistics",
+          "degree": "BA",
+          "category": "Languages & Literatures",
+          "url": "/undergraduate/arts-science/programs/linguistics-ba/"
+        },
+        {
+          "name": "Comparative Literature",
+          "degree": "BA",
+          "category": "Languages & Literatures",
+          "url": "/undergraduate/arts-science/programs/comparative-literature-ba/"
+        },
+        {
+          "name": "Language and Mind",
+          "degree": "BA",
+          "category": "Languages & Literatures",
+          "url": "/undergraduate/arts-science/programs/language-mind-ba/"
+        },
+        {
+          "name": "Art History",
+          "degree": "BA",
+          "category": "Arts & Culture",
+          "url": "/undergraduate/arts-science/programs/art-history-ba/"
+        },
+        {
+          "name": "Cinema Studies",
+          "degree": "BA",
+          "category": "Arts & Culture",
+          "url": "/undergraduate/arts-science/programs/cinema-studies-ba/"
+        },
+        {
+          "name": "Music",
+          "degree": "BA",
+          "category": "Arts & Culture",
+          "url": "/undergraduate/arts-science/programs/music-ba/"
+        },
+        {
+          "name": "Journalism",
+          "degree": "BA",
+          "category": "Arts & Culture",
+          "url": "/undergraduate/arts-science/programs/journalism-ba/"
+        },
+        {
+          "name": "Dramatic Literature, Theatre History, and Cinema",
+          "degree": "BA",
+          "category": "Arts & Culture",
+          "url": "/undergraduate/arts-science/programs/dramatic-literature-theatre-history-cinema-ba/"
+        },
+        {
+          "name": "African Studies",
+          "degree": "BA",
+          "category": "Area & Cultural Studies",
+          "url": "/undergraduate/arts-science/programs/africana-studies-ba/"
+        },
+        {
+          "name": "American Studies",
+          "degree": "BA",
+          "category": "Area & Cultural Studies",
+          "url": "/undergraduate/arts-science/programs/american-studies-ba/"
+        },
+        {
+          "name": "Asian/Pacific/American Studies",
+          "degree": "BA",
+          "category": "Area & Cultural Studies",
+          "url": "/undergraduate/arts-science/programs/asian-pacific-american-studies-ba/"
+        },
+        {
+          "name": "East Asian Studies",
+          "degree": "BA",
+          "category": "Area & Cultural Studies",
+          "url": "/undergraduate/arts-science/programs/east-asian-studies-ba/"
+        },
+        {
+          "name": "European and Mediterranean Studies",
+          "degree": "BA",
+          "category": "Area & Cultural Studies",
+          "url": "/undergraduate/arts-science/programs/european-mediterranean-studies-ba/"
+        },
+        {
+          "name": "Latin American and Caribbean Studies",
+          "degree": "BA",
+          "category": "Area & Cultural Studies",
+          "url": "/undergraduate/arts-science/programs/latin-american-caribbean-studies-ba/"
+        },
+        {
+          "name": "Latino Studies",
+          "degree": "BA",
+          "category": "Area & Cultural Studies",
+          "url": "/undergraduate/arts-science/programs/latino-studies-ba/"
+        },
+        {
+          "name": "Middle Eastern Studies",
+          "degree": "BA",
+          "category": "Area & Cultural Studies",
+          "url": "/undergraduate/arts-science/programs/middle-eastern-studies-ba/"
+        },
+        {
+          "name": "Hebrew and Judaic Studies",
+          "degree": "BA",
+          "category": "Area & Cultural Studies",
+          "url": "/undergraduate/arts-science/programs/hebrew-judaic-studies-ba/"
+        },
+        {
+          "name": "Classical Civilization",
+          "degree": "BA",
+          "category": "Area & Cultural Studies",
+          "url": "/undergraduate/arts-science/programs/classical-civilization-ba/"
+        },
+        {
+          "name": "Classics",
+          "degree": "BA",
+          "category": "Area & Cultural Studies",
+          "url": "/undergraduate/arts-science/programs/classics-ba/"
+        },
+        {
+          "name": "Environmental Studies",
+          "degree": "BA",
+          "category": "Interdisciplinary",
+          "url": "/undergraduate/arts-science/programs/environmental-studies-ba/"
+        },
+        {
+          "name": "Metropolitan Studies",
+          "degree": "BA",
+          "category": "Interdisciplinary",
+          "url": "/undergraduate/arts-science/programs/metropolitan-studies-ba/"
+        },
+        {
+          "name": "Urban Design and Architecture Studies",
+          "degree": "BA",
+          "category": "Interdisciplinary",
+          "url": "/undergraduate/arts-science/programs/urban-design-architecture-studies-ba/"
+        },
+        {
+          "name": "Gender and Sexuality Studies",
+          "degree": "BA",
+          "category": "Interdisciplinary",
+          "url": "/undergraduate/arts-science/programs/gender-sexuality-studies-ba/"
+        },
+        {
+          "name": "Social and Cultural Analysis",
+          "degree": "BA",
+          "category": "Interdisciplinary",
+          "url": "/undergraduate/arts-science/programs/social-cultural-analysis-ba/"
+        },
+        {
+          "name": "Medieval and Renaissance Studies",
+          "degree": "BA",
+          "category": "Interdisciplinary",
+          "url": "/undergraduate/arts-science/programs/medieval-renaissance-studies-ba/"
+        },
+        {
+          "name": "Religious Studies",
+          "degree": "BA",
+          "category": "Interdisciplinary",
+          "url": "/undergraduate/arts-science/programs/religious-studies-ba/"
+        },
+        {
+          "name": "Self-Designed Major",
+          "degree": "BA",
+          "category": "Interdisciplinary",
+          "url": "/undergraduate/arts-science/programs/self-designed-major-ba/"
+        },
+        {
+          "name": "Economics and Computer Science",
+          "degree": "BA",
+          "category": "Combined Majors",
+          "url": "/undergraduate/arts-science/programs/economics-computer-science-ba/"
+        },
+        {
+          "name": "Economics and Mathematics",
+          "degree": "BA",
+          "category": "Combined Majors",
+          "url": "/undergraduate/arts-science/programs/economics-mathematics-ba/"
+        },
+        {
+          "name": "Data Science and Mathematics",
+          "degree": "BA",
+          "category": "Combined Majors",
+          "url": "/undergraduate/arts-science/programs/data-science-mathematics-ba/"
+        },
+        {
+          "name": "Mathematics and Computer Science",
+          "degree": "BA",
+          "category": "Combined Majors",
+          "url": "/undergraduate/arts-science/programs/mathematics-computer-science-ba/"
+        },
+        {
+          "name": "French and Linguistics",
+          "degree": "BA",
+          "category": "Combined Majors",
+          "url": "/undergraduate/arts-science/programs/french-linguistics-ba/"
+        },
+        {
+          "name": "German and Linguistics",
+          "degree": "BA",
+          "category": "Combined Majors",
+          "url": "/undergraduate/arts-science/programs/german-linguistics-ba/"
+        },
+        {
+          "name": "Italian and Linguistics",
+          "degree": "BA",
+          "category": "Combined Majors",
+          "url": "/undergraduate/arts-science/programs/italian-linguistics-ba/"
+        },
+        {
+          "name": "Spanish and Linguistics",
+          "degree": "BA",
+          "category": "Combined Majors",
+          "url": "/undergraduate/arts-science/programs/spanish-linguistics-ba/"
+        },
+        {
+          "name": "Anthropology and Classical Civilization",
+          "degree": "BA",
+          "category": "Combined Majors",
+          "url": "/undergraduate/arts-science/programs/anthropology-classical-civilization-ba/"
+        },
+        {
+          "name": "Anthropology and Linguistics",
+          "degree": "BA",
+          "category": "Combined Majors",
+          "url": "/undergraduate/arts-science/programs/anthropology-linguistics-ba/"
+        },
+        {
+          "name": "Classical Civilization and Hellenic Studies",
+          "degree": "BA",
+          "category": "Combined Majors",
+          "url": "/undergraduate/arts-science/programs/classical-civilization-hellenic-studies-ba/"
+        },
+        {
+          "name": "Classics and Art History",
+          "degree": "BA",
+          "category": "Combined Majors",
+          "url": "/undergraduate/arts-science/programs/classics-art-history-ba/"
+        },
+        {
+          "name": "Hellenic Studies",
+          "degree": "BA",
+          "category": "Combined Majors",
+          "url": "/undergraduate/arts-science/programs/hellenic-studies-ba/"
+        },
+        {
+          "name": "Romance Languages",
+          "degree": "BA",
+          "category": "Combined Majors",
+          "url": "/undergraduate/arts-science/programs/romance-languages-ba/"
+        },
+        {
+          "name": "Russian and Slavic Studies",
+          "degree": "BA",
+          "category": "Combined Majors",
+          "url": "/undergraduate/arts-science/programs/russian-slavic-studies-ba/"
+        },
+        {
+          "name": "Global Public Health and Anthropology",
+          "degree": "BA",
+          "category": "Global Public Health Combined",
+          "url": "/undergraduate/arts-science/programs/global-public-health-anthropology-ba/"
+        },
+        {
+          "name": "Global Public Health and History",
+          "degree": "BA",
+          "category": "Global Public Health Combined",
+          "url": "/undergraduate/arts-science/programs/global-public-health-history-ba/"
+        },
+        {
+          "name": "Global Public Health and Science",
+          "degree": "BS",
+          "category": "Global Public Health Combined",
+          "url": "/undergraduate/arts-science/programs/global-public-health-science-bs/"
+        },
+        {
+          "name": "Global Public Health and Sociology",
+          "degree": "BA",
+          "category": "Global Public Health Combined",
+          "url": "/undergraduate/arts-science/programs/global-public-health-sociology-ba/"
+        },
+        {
+          "name": "Urban Studies and Anthropology",
+          "degree": "BA",
+          "category": "Combined Majors",
+          "url": "/undergraduate/arts-science/programs/urban-studies-anthropology-ba/"
+        },
+        {
+          "name": "Urban Studies and History",
+          "degree": "BA",
+          "category": "Combined Majors",
+          "url": "/undergraduate/arts-science/programs/urban-studies-history-ba/"
+        },
+        {
+          "name": "Urban Studies and Social and Cultural Analysis",
+          "degree": "BA",
+          "category": "Combined Majors",
+          "url": "/undergraduate/arts-science/programs/urban-studies-social-cultural-analysis-ba/"
+        },
+        {
+          "name": "Urban Studies and Sociology",
+          "degree": "BA",
+          "category": "Combined Majors",
+          "url": "/undergraduate/arts-science/programs/urban-studies-sociology-ba/"
+        },
+        {
+          "name": "Biology/Dentistry",
+          "degree": "BA/DDS",
+          "category": "Combined/Engineering Programs",
+          "url": "/undergraduate/arts-science/programs/biology-dentistry-ba-dds/"
+        },
+        {
+          "name": "Biology/Chemical and Biomolecular Engineering",
+          "degree": "BS/BS",
+          "category": "Combined/Engineering Programs",
+          "url": "/undergraduate/arts-science/programs/biology-chemical-biomolecular-engineering-bs-bs/"
+        },
+        {
+          "name": "Chemistry/Chemical and Biomolecular Engineering",
+          "degree": "BS/BS",
+          "category": "Combined/Engineering Programs",
+          "url": "/undergraduate/arts-science/programs/chemistry-chemical-biomolecular-engineering-bs-bs/"
+        },
+        {
+          "name": "Computer Science/Computer Engineering",
+          "degree": "BS/BS",
+          "category": "Combined/Engineering Programs",
+          "url": "/undergraduate/arts-science/programs/computer-science-engineering-bs-bs/"
+        },
+        {
+          "name": "Computer Science/Electrical Engineering",
+          "degree": "BS/BS",
+          "category": "Combined/Engineering Programs",
+          "url": "/undergraduate/arts-science/programs/computer-science-electrical-engineering-bs-bs/"
+        },
+        {
+          "name": "Mathematics/Civil Engineering",
+          "degree": "BS/BS",
+          "category": "Combined/Engineering Programs",
+          "url": "/undergraduate/arts-science/programs/mathematics-civil-engineering-bs-bs/"
+        },
+        {
+          "name": "Mathematics/Computer Engineering",
+          "degree": "BS/BS",
+          "category": "Combined/Engineering Programs",
+          "url": "/undergraduate/arts-science/programs/mathematics-computer-engineering-bs-bs/"
+        },
+        {
+          "name": "Mathematics/Electrical Engineering",
+          "degree": "BS/BS",
+          "category": "Combined/Engineering Programs",
+          "url": "/undergraduate/arts-science/programs/mathematics-electrical-engineering-bs-bs/"
+        },
+        {
+          "name": "Mathematics/Mechanical Engineering",
+          "degree": "BS/BS",
+          "category": "Combined/Engineering Programs",
+          "url": "/undergraduate/arts-science/programs/mathematics-mechanical-engineering-bs-bs/"
+        },
+        {
+          "name": "Physics/Civil Engineering",
+          "degree": "BS/BS",
+          "category": "Combined/Engineering Programs",
+          "url": "/undergraduate/arts-science/programs/physics-civil-engineering-bs-bs/"
+        },
+        {
+          "name": "Physics/Computer Engineering",
+          "degree": "BS/BS",
+          "category": "Combined/Engineering Programs",
+          "url": "/undergraduate/arts-science/programs/physics-computer-engineering-bs-bs/"
+        },
+        {
+          "name": "Physics/Electrical Engineering",
+          "degree": "BS/BS",
+          "category": "Combined/Engineering Programs",
+          "url": "/undergraduate/arts-science/programs/physics-electrical-engineering-bs-bs/"
+        },
+        {
+          "name": "Physics/Mechanical Engineering",
+          "degree": "BS/BS",
+          "category": "Combined/Engineering Programs",
+          "url": "/undergraduate/arts-science/programs/physics-mechanical-engineering-bs-bs/"
+        }
+      ]
+    },
+    {
+      "name": "Leonard N. Stern School of Business",
+      "bulletin_url": "/undergraduate/business/",
+      "description": "One of the first business schools in the United States, founded in 1900. Emphasizes a first-rate undergraduate business education grounded in five pillars: academics, social impact, global engagement, professionalism, and community. AACSB accredited. STEM-certified BS degree integrating business with liberal arts.",
+      "programs": [
+        {
+          "name": "Business",
+          "degree": "BS",
+          "url": "/undergraduate/business/programs/business-bs/",
+          "detailed_description": "STEM-certified degree integrating business education with liberal arts grounding. Curriculum emphasizes global perspectives, social responsibility, and professional ethics. 128 total credits. 12 available concentrations: Accounting, Actuarial Science, Computing and Data Science, Business Economics, Econometrics and Quantitative Economics, Finance, Management and Organizations, Marketing, Operations, Real Estate, Statistics, and Sustainable Business. Entrepreneurship available as co-concentration.",
+          "total_credits": 128,
+          "concentrations": [
+            "Accounting",
+            "Actuarial Science",
+            "Computing and Data Science",
+            "Business Economics",
+            "Econometrics and Quantitative Economics",
+            "Finance",
+            "Management and Organizations",
+            "Marketing",
+            "Operations",
+            "Real Estate",
+            "Statistics",
+            "Sustainable Business",
+            "Entrepreneurship (co-concentration)"
+          ]
+        },
+        {
+          "name": "Business/Accounting",
+          "degree": "BS/MS",
+          "url": "/undergraduate/business/programs/accounting-bs-ms/"
+        },
+        {
+          "name": "Business and Political Economy",
+          "degree": "BS",
+          "url": "/undergraduate/business/programs/business-political-economy-bs/"
+        },
+        {
+          "name": "Business, Technology and Entrepreneurship",
+          "degree": "BS",
+          "url": "/undergraduate/business/programs/business-technology-entrepreneurship-bs/"
+        }
+      ]
+    },
+    {
+      "name": "Tisch School of the Arts",
+      "bulletin_url": "/undergraduate/arts/",
+      "description": "Has provided training for artists and scholars for over 50 years, leveraging NYU's resources and New York City's cultural environment. Features state-of-the-art facilities, a collaborative community of award-winning faculty members, and internship opportunities with established professionals.",
+      "programs": [
+        {
+          "name": "Cinema Studies",
+          "degree": "BA",
+          "url": "/undergraduate/arts/programs/cinema-studies-ba/"
+        },
+        {
+          "name": "Collaborative Arts",
+          "degree": "BFA",
+          "url": "/undergraduate/arts/programs/collaborative-arts-bfa/"
+        },
+        {
+          "name": "Dance",
+          "degree": "BFA",
+          "url": "/undergraduate/arts/programs/dance-bfa/"
+        },
+        {
+          "name": "Dramatic Writing",
+          "degree": "BFA",
+          "url": "/undergraduate/arts/programs/dramatic-writing-bfa/"
+        },
+        {
+          "name": "Film and Television",
+          "degree": "BFA",
+          "url": "/undergraduate/arts/programs/film-television-bfa/",
+          "detailed_description": "The Kanbar Institute of Film and Television has been a major cultural force since 1965. Notable graduates include directors Chris Columbus, Ryan Fleck, Nia DaCosta; cinematographer Rachel Morrison; and TV creators Vince Gilligan and Damon Lindelof. 128 total credits required: 63-66 major credits (production safety, history/criticism, core production, craft, screenwriting), 44-48 general education credits, and 30 elective credits.",
+          "total_credits": 128,
+          "major_credits": "63-66"
+        },
+        {
+          "name": "Game Design",
+          "degree": "BFA",
+          "url": "/undergraduate/arts/programs/game-design-bfa/"
+        },
+        {
+          "name": "Interactive Media Arts",
+          "degree": "BFA",
+          "url": "/undergraduate/arts/programs/interactive-media-arts-bfa/"
+        },
+        {
+          "name": "Performance Studies",
+          "degree": "BA",
+          "url": "/undergraduate/arts/programs/performance-studies-ba/"
+        },
+        {
+          "name": "Photography and Imaging",
+          "degree": "BFA",
+          "url": "/undergraduate/arts/programs/photography-imaging-bfa/"
+        },
+        {
+          "name": "Recorded Music",
+          "degree": "BFA",
+          "url": "/undergraduate/arts/programs/recorded-music-bfa/"
+        },
+        {
+          "name": "Theatre",
+          "degree": "BFA",
+          "url": "/undergraduate/arts/programs/theatre-bfa/"
+        }
+      ]
+    },
+    {
+      "name": "Tandon School of Engineering",
+      "bulletin_url": "/undergraduate/engineering/",
+      "description": "Home to a vibrant community of unconventional engineers focused on technology that powers cities, enables worldwide communication, fights climate change. Dates to 1854, located in downtown Brooklyn.",
+      "programs": [
+        {
+          "name": "Applied Physics",
+          "degree": "BS",
+          "category": "Engineering",
+          "url": "/undergraduate/engineering/programs/applied-physics-bs/"
+        },
+        {
+          "name": "Biomolecular Science",
+          "degree": "BS",
+          "category": "Science",
+          "url": "/undergraduate/engineering/programs/biomolecular-science-bs/"
+        },
+        {
+          "name": "Business and Technology Management",
+          "degree": "BS",
+          "category": "Technology Management",
+          "url": "/undergraduate/engineering/programs/business-technology-management-bs/"
+        },
+        {
+          "name": "Chemical and Biomolecular Engineering",
+          "degree": "BS",
+          "category": "Engineering",
+          "url": "/undergraduate/engineering/programs/chemical-biomolecular-engineering-bs/"
+        },
+        {
+          "name": "Civil Engineering",
+          "degree": "BS",
+          "category": "Engineering",
+          "url": "/undergraduate/engineering/programs/civil-engineering-bs/",
+          "accreditation": "ABET"
+        },
+        {
+          "name": "Computer Engineering",
+          "degree": "BS",
+          "category": "Engineering",
+          "url": "/undergraduate/engineering/programs/computer-engineering-bs/",
+          "accreditation": "ABET"
+        },
+        {
+          "name": "Computer Science",
+          "degree": "BS",
+          "category": "Computer Science & Engineering",
+          "url": "/undergraduate/engineering/programs/computer-science-bs/",
+          "detailed_description": "Focuses on designing and building computer systems, from smart phones to complex databases. Offers specialized research labs in cybersecurity, game engineering, and big data analysis. 128 total credits: 38 credits core CS (Intro to Programming, Data Structures and Algorithms, OOP, Computer Architecture, Operating Systems, Design & Analysis of Algorithms, Software Engineering, Design Project), 16 math credits, 13-16 science/engineering credits, 20 humanities/social sciences credits, 51 elective credits.",
+          "total_credits": 128,
+          "major_credits": 38
+        },
+        {
+          "name": "Electrical and Computer Engineering",
+          "degree": "BS",
+          "category": "Engineering",
+          "url": "/undergraduate/engineering/programs/electrical-computer-engineering-bs/"
+        },
+        {
+          "name": "Electrical Engineering",
+          "degree": "BS",
+          "category": "Engineering",
+          "url": "/undergraduate/engineering/programs/electrical-engineering-bs/",
+          "accreditation": "ABET"
+        },
+        {
+          "name": "Integrated Design and Media",
+          "degree": "BS",
+          "category": "Media/Design",
+          "url": "/undergraduate/engineering/programs/integrated-design-media-bs/"
+        },
+        {
+          "name": "Mathematics",
+          "degree": "BS",
+          "category": "Mathematics",
+          "url": "/undergraduate/engineering/programs/mathematics-bs/"
+        },
+        {
+          "name": "Mathematics and Physics",
+          "degree": "BS",
+          "category": "Interdisciplinary",
+          "url": "/undergraduate/engineering/programs/mathematics-physics-bs/"
+        },
+        {
+          "name": "Mechanical Engineering",
+          "degree": "BS",
+          "category": "Engineering",
+          "url": "/undergraduate/engineering/programs/mechanical-engineering-bs/",
+          "accreditation": "ABET"
+        }
+      ]
+    },
+    {
+      "name": "Steinhardt School of Culture, Education, and Human Development",
+      "bulletin_url": "/undergraduate/culture-education-human-development/",
+      "description": "Established in 1890 as the School of Pedagogy. Offers a broad array of degrees and programs, all designed to advance the education, health, and well-being of people and communities around the world.",
+      "programs": [
+        {
+          "name": "Applied Psychology",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/applied-psychology-bs/",
+          "detailed_description": "Interdisciplinary program teaching students to bridge psychological theory, research, and practice to solve everyday problems in a multicultural world. Focuses on learning development, cultural competency, public health, and mental wellness. 128 total credits: 56 general education, 28 psychology core, 12 research/statistics, 10 field experiences, 22 electives. STEM OPT eligible for F-1 students.",
+          "total_credits": 128
+        },
+        {
+          "name": "Childhood Education/Childhood Special Education",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/childhood-education-childhood-special-education-bs/"
+        },
+        {
+          "name": "Communicative Sciences and Disorders",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/communicative-sciences-disorders-bs/"
+        },
+        {
+          "name": "Early Childhood Education/Early Childhood Special Education",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/early-childhood-education-special-bs/"
+        },
+        {
+          "name": "Education Studies",
+          "degree": "BA",
+          "url": "/undergraduate/culture-education-human-development/programs/education-studies-ba/"
+        },
+        {
+          "name": "Educational Theatre",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/educational-theatre-bs/"
+        },
+        {
+          "name": "Global Public Health/Applied Psychology",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/global-public-health-applied-psychology-bs/"
+        },
+        {
+          "name": "Global Public Health/Communicative Sciences and Disorders",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/global-public-health-communicative-sciences-disorders-bs/"
+        },
+        {
+          "name": "Global Public Health/Food Studies",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/global-public-health-food-studies-bs/"
+        },
+        {
+          "name": "Global Public Health/Media, Culture, and Communication",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/global-public-health-media-culture-communication-bs/"
+        },
+        {
+          "name": "Global Public Health/Nutrition and Dietetics",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/global-public-health-nutrition-dietetics-bs/"
+        },
+        {
+          "name": "Instrumental Performance",
+          "degree": "BM",
+          "url": "/undergraduate/culture-education-human-development/programs/instrumental-performance-bm/"
+        },
+        {
+          "name": "Media, Culture, and Communication",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/media-culture-communication-bs/"
+        },
+        {
+          "name": "Music Business",
+          "degree": "BM",
+          "url": "/undergraduate/culture-education-human-development/programs/music-business-bm/"
+        },
+        {
+          "name": "Music Business",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/music-business-bs/"
+        },
+        {
+          "name": "Music Technology",
+          "degree": "BM",
+          "url": "/undergraduate/culture-education-human-development/programs/music-technology-bm/"
+        },
+        {
+          "name": "Music Theory and Composition",
+          "degree": "BM",
+          "url": "/undergraduate/culture-education-human-development/programs/music-theory-composition-bm/"
+        },
+        {
+          "name": "Nutrition and Food Studies",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/nutrition-food-studies-bs/"
+        },
+        {
+          "name": "Piano Performance",
+          "degree": "BM",
+          "url": "/undergraduate/culture-education-human-development/programs/piano-performance-bm/"
+        },
+        {
+          "name": "Professional Studies",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/professional-studies-bs/"
+        },
+        {
+          "name": "Studio Art",
+          "degree": "BFA",
+          "url": "/undergraduate/culture-education-human-development/programs/studio-art-bfa/"
+        },
+        {
+          "name": "Teaching a World Language 7-12: Chinese",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/teaching-world-language-7-12-chinese-bs/"
+        },
+        {
+          "name": "Teaching a World Language 7-12: French",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/teaching-world-language-7-12-french-bs/"
+        },
+        {
+          "name": "Teaching a World Language 7-12: Italian",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/teaching-world-language-7-12-italian-bs/"
+        },
+        {
+          "name": "Teaching a World Language 7-12: Japanese",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/teaching-world-language-7-12-japanese-bs/"
+        },
+        {
+          "name": "Teaching a World Language 7-12: Spanish",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/teaching-world-language-7-12-spanish-bs/"
+        },
+        {
+          "name": "Teaching Biology 7-12",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/teaching-biology-7-12-bs/"
+        },
+        {
+          "name": "Teaching Chemistry 7-12",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/teaching-chemistry-7-12-bs/"
+        },
+        {
+          "name": "Teaching Earth Science 7-12",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/teaching-earth-science-7-12-bs/"
+        },
+        {
+          "name": "Teaching English 7-12",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/teaching-english-712-bs/"
+        },
+        {
+          "name": "Teaching Mathematics 7-12",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/teaching-mathematics-712-bs/"
+        },
+        {
+          "name": "Teaching Physics 7-12",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/teaching-physics-7-12-bs/"
+        },
+        {
+          "name": "Teaching Social Studies 7-12",
+          "degree": "BS",
+          "url": "/undergraduate/culture-education-human-development/programs/teaching-social-studies-712-bs/"
+        },
+        {
+          "name": "Vocal Performance",
+          "degree": "BM",
+          "url": "/undergraduate/culture-education-human-development/programs/vocal-performance-bm/"
+        }
+      ]
+    },
+    {
+      "name": "Silver School of Social Work",
+      "bulletin_url": "/undergraduate/social-work/",
+      "description": "Founded in 1960, a premier locus for research and education of professional social workers. Has trained over 20,000 practitioners. Emphasizes clinical excellence, social justice commitment, and innovative teaching methods focused on complex urban environments.",
+      "programs": [
+        {
+          "name": "Social Work",
+          "degree": "BS",
+          "url": "/undergraduate/social-work/programs/bachelor-science/",
+          "accreditation": "CSWE"
+        },
+        {
+          "name": "Global Public Health and Social Work",
+          "degree": "BS",
+          "url": "/undergraduate/social-work/programs/global-public-health-social-work-bs/"
+        }
+      ]
+    },
+    {
+      "name": "Gallatin School of Individualized Study",
+      "bulletin_url": "/undergraduate/individualized-study/",
+      "description": "Provides a distinctive liberal arts education for a diverse student body emphasizing self-directed, interdisciplinary learning. Founded in 1972 as an experimental program, gained official school status in 1995. Has graduated over 9,800 students. Students create customized majors across traditional academic disciplines with faculty guidance.",
+      "programs": [
+        {
+          "name": "Individualized Major",
+          "degree": "BA",
+          "url": "/undergraduate/individualized-study/programs/individualized-major-ba/"
+        }
+      ]
+    },
+    {
+      "name": "School of Professional Studies (SPS)",
+      "bulletin_url": "/undergraduate/professional-studies/",
+      "description": "An internationally recognized institution that transforms today's students into tomorrow's changemakers and industry leaders. Operating since 1934, emphasizes experiential learning across fields including real estate, hospitality, sports business, and integrated marketing.",
+      "programs": [
+        {
+          "name": "Applied Data Analytics and Visualization",
+          "degree": "BS",
+          "url": "/undergraduate/professional-studies/programs/applied-data-analytics-visualization-bs/"
+        },
+        {
+          "name": "Applied General Studies",
+          "degree": "BA",
+          "url": "/undergraduate/professional-studies/programs/applied-general-studies-ba/"
+        },
+        {
+          "name": "Business",
+          "degree": "AAS",
+          "url": "/undergraduate/professional-studies/programs/business-aas/"
+        },
+        {
+          "name": "Digital Communications and Media",
+          "degree": "BS",
+          "url": "/undergraduate/professional-studies/programs/digital-communications-media-bs/"
+        },
+        {
+          "name": "Health Administration",
+          "degree": "AAS",
+          "url": "/undergraduate/professional-studies/programs/health-administration-aas/"
+        },
+        {
+          "name": "Healthcare Management",
+          "degree": "BS",
+          "url": "/undergraduate/professional-studies/programs/healthcare-management-bs/"
+        },
+        {
+          "name": "Hospitality Management",
+          "degree": "AAS",
+          "url": "/undergraduate/professional-studies/programs/hospitality-management-aas/"
+        },
+        {
+          "name": "Hospitality, Travel and Tourism Management",
+          "degree": "BS",
+          "url": "/undergraduate/professional-studies/programs/hospitality-travel-tourism-management-bs/"
+        },
+        {
+          "name": "Humanities",
+          "degree": "BA",
+          "url": "/undergraduate/professional-studies/programs/humanities-ba/"
+        },
+        {
+          "name": "Information Systems Management",
+          "degree": "AAS",
+          "url": "/undergraduate/professional-studies/programs/information-systems-management-aas/"
+        },
+        {
+          "name": "Information Systems Management",
+          "degree": "BS",
+          "url": "/undergraduate/professional-studies/programs/information-systems-management-bs/"
+        },
+        {
+          "name": "Leadership and Management Studies",
+          "degree": "BS",
+          "url": "/undergraduate/professional-studies/programs/leadership-management-studies-bs/"
+        },
+        {
+          "name": "Liberal Arts",
+          "degree": "AA",
+          "url": "/undergraduate/professional-studies/programs/liberal-arts-aa/"
+        },
+        {
+          "name": "Marketing Analytics",
+          "degree": "BS",
+          "url": "/undergraduate/professional-studies/programs/marketing-analytics-bs/"
+        },
+        {
+          "name": "Real Estate",
+          "degree": "BS",
+          "url": "/undergraduate/professional-studies/programs/real-estate-bs/"
+        },
+        {
+          "name": "Real Estate and Urban Sustainability",
+          "degree": "BS",
+          "url": "/undergraduate/professional-studies/programs/real-estate-urban-sustainability-bs/"
+        },
+        {
+          "name": "Social Sciences",
+          "degree": "BA",
+          "url": "/undergraduate/professional-studies/programs/social-sciences-ba/"
+        },
+        {
+          "name": "Sport Management",
+          "degree": "BS",
+          "url": "/undergraduate/professional-studies/programs/sport-management-bs/"
+        }
+      ]
+    },
+    {
+      "name": "Liberal Studies",
+      "bulletin_url": "/undergraduate/liberal-studies/",
+      "description": "Home to NYU's second-largest population of undergraduates. Founded in 2009, distinguished by small classes and an environment in which faculty and students work closely together to develop a community dedicated to critical inquiry, research, and exploration. A vibrant liberal arts college environment within the framework of a major global research university.",
+      "programs": [
+        {
+          "name": "Global Liberal Studies",
+          "degree": "BA",
+          "url": "/undergraduate/liberal-studies/programs/global-liberal-studies-ba/"
+        },
+        {
+          "name": "Global Public Health/Global Liberal Studies",
+          "degree": "BA",
+          "url": "/undergraduate/liberal-studies/programs/global-liberal-studies-public-health-ba/"
+        },
+        {
+          "name": "Liberal Studies Core",
+          "degree": "Transfer Program",
+          "url": "/undergraduate/liberal-studies/programs/global-liberal-studies-core/",
+          "description": "A two-year interdisciplinary global curriculum from which students directly transition to 90 majors at NYU to complete their bachelor's degree"
+        }
+      ]
+    },
+    {
+      "name": "Rory Meyers College of Nursing",
+      "bulletin_url": "/undergraduate/nursing/",
+      "description": "Founded in 1932, the second-largest private university college of nursing in the US. Generates knowledge through nursing research, educates nursing leaders, and shapes future healthcare policy. Home to the oldest PhD in nursing program in the country.",
+      "programs": [
+        {
+          "name": "Nursing (Traditional 4-Year)",
+          "degree": "BS",
+          "url": "/undergraduate/nursing/programs/nursing-traditional-4-year-bs/"
+        },
+        {
+          "name": "Nursing (Accelerated 15-Month)",
+          "degree": "BS",
+          "url": "/undergraduate/nursing/programs/nursing-accelerated-15-month-bs/"
+        },
+        {
+          "name": "Nursing/Global Public Health",
+          "degree": "BS",
+          "url": "/undergraduate/nursing/programs/global-public-health-nursing-bs/"
+        }
+      ]
+    },
+    {
+      "name": "School of Global Public Health",
+      "bulletin_url": "/undergraduate/global-public-health/",
+      "description": "Offers thirteen innovative combined majors in collaboration with other prestigious schools. All majors require 6 core public health courses (24 credits), 1-3 combined major electives, 90 hours of internship experience, and a semester-long study abroad component at an NYU global site.",
+      "programs": [
+        {
+          "name": "Note: Programs are listed under partner schools (CAS, Steinhardt, Silver, Nursing, Liberal Studies)",
+          "degree": "Combined BS/BA",
+          "description": "13 combined majors pairing Global Public Health with disciplines across NYU schools"
+        }
+      ]
+    },
+    {
+      "name": "NYU Abu Dhabi",
+      "bulletin_url": "/undergraduate/abu-dhabi/",
+      "description": "Abu Dhabi's first American-style, comprehensive, liberal arts and sciences research university. Operates as a force for social and educational progress and intercultural understanding.",
+      "programs": [
+        {
+          "name": "Arab Crossroads Studies",
+          "degree": "BA"
+        },
+        {
+          "name": "Art and Art History",
+          "degree": "BA"
+        },
+        {
+          "name": "Business, Organizations and Society",
+          "degree": "BA"
+        },
+        {
+          "name": "Economics",
+          "degree": "BA"
+        },
+        {
+          "name": "Film and New Media",
+          "degree": "BA"
+        },
+        {
+          "name": "History",
+          "degree": "BA"
+        },
+        {
+          "name": "Interactive Media",
+          "degree": "BA"
+        },
+        {
+          "name": "Legal Studies",
+          "degree": "BA"
+        },
+        {
+          "name": "Literature and Creative Writing",
+          "degree": "BA"
+        },
+        {
+          "name": "Music",
+          "degree": "BA"
+        },
+        {
+          "name": "Philosophy",
+          "degree": "BA"
+        },
+        {
+          "name": "Political Science",
+          "degree": "BA"
+        },
+        {
+          "name": "Psychology",
+          "degree": "BA"
+        },
+        {
+          "name": "Social Research and Public Policy",
+          "degree": "BA"
+        },
+        {
+          "name": "Theater",
+          "degree": "BA"
+        },
+        {
+          "name": "Bioengineering",
+          "degree": "BS"
+        },
+        {
+          "name": "Biology",
+          "degree": "BS"
+        },
+        {
+          "name": "Chemistry",
+          "degree": "BS"
+        },
+        {
+          "name": "Civil Engineering",
+          "degree": "BS"
+        },
+        {
+          "name": "Computer Engineering",
+          "degree": "BS"
+        },
+        {
+          "name": "Computer Science",
+          "degree": "BS"
+        },
+        {
+          "name": "Electrical Engineering",
+          "degree": "BS"
+        },
+        {
+          "name": "General Engineering",
+          "degree": "BS"
+        },
+        {
+          "name": "Mathematics",
+          "degree": "BS"
+        },
+        {
+          "name": "Mechanical Engineering",
+          "degree": "BS"
+        },
+        {
+          "name": "Physics",
+          "degree": "BS"
+        }
+      ]
+    },
+    {
+      "name": "NYU Shanghai",
+      "bulletin_url": "/undergraduate/shanghai/",
+      "description": "China's first Sino-US research university and the third degree-granting campus of the NYU Global Network, established in 2012. Enrolls approximately 2,000 students, with half from China and half from other nations globally.",
+      "programs": [
+        {
+          "name": "Biology",
+          "degree": "BS"
+        },
+        {
+          "name": "Chemistry",
+          "degree": "BS"
+        },
+        {
+          "name": "Computer Science",
+          "degree": "BS"
+        },
+        {
+          "name": "Computer Systems Engineering",
+          "degree": "BS"
+        },
+        {
+          "name": "Data Science",
+          "degree": "BS"
+        },
+        {
+          "name": "Electrical and Systems Engineering",
+          "degree": "BS"
+        },
+        {
+          "name": "Honors Mathematics",
+          "degree": "BS"
+        },
+        {
+          "name": "Mathematics",
+          "degree": "BS"
+        },
+        {
+          "name": "Neural Science",
+          "degree": "BS"
+        },
+        {
+          "name": "Physics",
+          "degree": "BS"
+        },
+        {
+          "name": "Business and Finance",
+          "degree": "BS"
+        },
+        {
+          "name": "Business and Marketing",
+          "degree": "BS"
+        },
+        {
+          "name": "Economics",
+          "degree": "BA"
+        },
+        {
+          "name": "Global China Studies",
+          "degree": "BA"
+        },
+        {
+          "name": "Humanities",
+          "degree": "BA"
+        },
+        {
+          "name": "Interactive Media + Business",
+          "degree": "BS"
+        },
+        {
+          "name": "Interactive Media Arts",
+          "degree": "BS"
+        },
+        {
+          "name": "Self-Designed Honors",
+          "degree": "BA"
+        },
+        {
+          "name": "Social Science",
+          "degree": "BA"
+        }
+      ]
+    }
+  ],
+  "program_count_summary": {
+    "total_unique_undergraduate_majors_all_campuses": 230,
+    "by_school": {
+      "College of Arts and Science": 88,
+      "Stern School of Business": 4,
+      "Tisch School of the Arts": 11,
+      "Tandon School of Engineering": 13,
+      "Steinhardt School": 34,
+      "Silver School of Social Work": 2,
+      "Gallatin School": 1,
+      "School of Professional Studies": 18,
+      "Liberal Studies": 3,
+      "Rory Meyers College of Nursing": 3,
+      "School of Global Public Health": 13,
+      "NYU Abu Dhabi": 26,
+      "NYU Shanghai": 19
+    },
+    "programs_with_detailed_descriptions": 8,
+    "degree_types_found": ["BA", "BS", "BFA", "BM", "BBA", "AAS", "AA", "BA/DDS", "BS/BS", "BS/MS"]
+  }
+}

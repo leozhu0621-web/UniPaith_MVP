@@ -68,6 +68,13 @@ class UpdateInstitutionRequest(BaseModel):
     media_gallery: list[str] | None = None
     social_links: dict | None = None
     inquiry_routing: dict | None = None
+    # Institution-profile JSONB dicts surfaced on the student view and the
+    # admin SettingsPage. Previously missing from UpdateInstitutionRequest,
+    # which made these fields read-only via the API.
+    support_services: dict | None = None
+    policies: dict | None = None
+    international_info: dict | None = None
+    school_outcomes: dict | None = None
 
 
 class InstitutionResponse(BaseModel):
@@ -117,12 +124,16 @@ class CreateProgramRequest(BaseModel):
     who_its_for: str | None = None
     application_deadline: date | None = None
     program_start_date: date | None = None
-    tracks: list[str] | None = None
+    # tracks/intake_rounds stored as JSONB dicts in the DB
+    # (e.g., tracks = {"concentrations": [...], "note": "..."}).
+    # Accept either shape for backwards-compat but the editor writes dicts.
+    tracks: list | dict | None = None
     outcomes_data: dict | None = None
-    intake_rounds: list[dict] | None = None
+    intake_rounds: list | dict | None = None
     media_urls: list[str] | None = None
     highlights: list[str] | None = None
     faculty_contacts: list[dict] | None = None
+    cost_data: dict | None = None
 
 
 class UpdateProgramRequest(BaseModel):
@@ -140,12 +151,14 @@ class UpdateProgramRequest(BaseModel):
     who_its_for: str | None = None
     application_deadline: date | None = None
     program_start_date: date | None = None
-    tracks: list[str] | None = None
+    # See CreateProgramRequest note — tracks/intake_rounds are JSONB dicts.
+    tracks: list | dict | None = None
     outcomes_data: dict | None = None
-    intake_rounds: list[dict] | None = None
+    intake_rounds: list | dict | None = None
     media_urls: list[str] | None = None
     highlights: list[str] | None = None
     faculty_contacts: list[dict] | None = None
+    cost_data: dict | None = None
 
 
 class ProgramResponse(BaseModel):

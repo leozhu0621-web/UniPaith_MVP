@@ -1,0 +1,92 @@
+{
+  "Computer Science": {
+    "description": "Focuses on designing and building computer systems, from smart phones to complex databases. Offers specialized research labs in cybersecurity, game engineering, and big data analysis.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/engineering/programs/computer-science-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "major_credits": 38,
+    "department": "Tandon School of Engineering",
+    "core_courses": [
+      "Intro to Programming & Problem Solving",
+      "Data Structures and Algorithms",
+      "Object Oriented Programming",
+      "Introduction to Computer Science",
+      "Computer Architecture and Organization",
+      "Intro to Operating Systems",
+      "Design & Analysis of Algorithms",
+      "Software Engineering",
+      "Design Project"
+    ],
+    "learning_outcomes": []
+  },
+  "Economics": {
+    "description": "Prepares students to understand decision-making, market structures, and global economic relationships. Emphasizes excellent student-faculty rapport with faculty engaged in active research.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/economics-ba/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BA",
+    "credits": 128,
+    "major_credits": 40,
+    "department": "College of Arts and Science",
+    "core_courses": [],
+    "learning_outcomes": []
+  },
+  "Psychology": {
+    "description": "Approaches psychology from multiple perspectives including cognitive, social, personality, neuroscience, and developmental frameworks. Emphasizes the scientific basis of psychology.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/psychology-ba/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BA",
+    "credits": 128,
+    "major_credits": 40,
+    "department": "College of Arts and Science",
+    "core_courses": [],
+    "learning_outcomes": []
+  },
+  "Business": {
+    "description": "STEM-certified degree integrating business education with liberal arts grounding. Emphasizes global perspectives, social responsibility, and professional ethics.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/business/programs/business-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "major_credits": null,
+    "department": "Stern School of Business",
+    "core_courses": [],
+    "learning_outcomes": []
+  },
+  "Film and Television": {
+    "description": "The Kanbar Institute of Film and Television has been a major cultural force since 1965.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/arts/programs/film-television-bfa/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BFA",
+    "credits": 128,
+    "major_credits": "63-66",
+    "department": "Tisch School of the Arts",
+    "core_courses": [],
+    "learning_outcomes": []
+  },
+  "Applied Psychology": {
+    "description": "Interdisciplinary program teaching students to bridge psychological theory, research, and practice to solve everyday problems in a multicultural world.",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/applied-psychology-bs/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "BS",
+    "credits": 128,
+    "major_credits": null,
+    "department": "Steinhardt School",
+    "core_courses": [],
+    "learning_outcomes": []
+  },
+  "Liberal Studies Core": {
+    "description": "A two-year interdisciplinary global curriculum from which students directly transition to 90 majors at NYU to complete their bachelor's degree",
+    "source_url": "https://bulletins.nyu.edu/undergraduate/liberal-studies/programs/global-liberal-studies-core/",
+    "source": "NYU Official Bulletin",
+    "degree_type": "bachelors",
+    "department": "Liberal Studies"
+  },
+  "Note: Programs are listed under partner schools (CAS, Steinhardt, Silver, Nursing, Liberal Studies)": {
+    "description": "13 combined majors pairing Global Public Health with disciplines across NYU schools",
+    "source_url": "https://bulletins.nyu.edu",
+    "source": "NYU Official Bulletin",
+    "degree_type": "bachelors",
+    "department": "School of Global Public Health"
+  }
+}

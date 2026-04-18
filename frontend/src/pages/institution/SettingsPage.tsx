@@ -20,6 +20,13 @@ import { INSTITUTION_TYPES } from '../../utils/constants'
 import { formatDate } from '../../utils/format'
 import type { Rubric, NotificationPreference } from '../../types'
 
+const CAMPUS_SETTING_OPTIONS = [
+  { value: '', label: 'Not specified' },
+  { value: 'urban', label: 'Urban' },
+  { value: 'suburban', label: 'Suburban' },
+  { value: 'rural', label: 'Rural' },
+]
+
 const profileSchema = z.object({
   name: z.string().min(1, 'Required'),
   type: z.string().min(1, 'Required'),
@@ -27,9 +34,57 @@ const profileSchema = z.object({
   region: z.string().optional(),
   city: z.string().optional(),
   website_url: z.string().url().optional().or(z.literal('')),
+  contact_email: z.string().email().optional().or(z.literal('')),
+  logo_url: z.string().url().optional().or(z.literal('')),
   description_text: z.string().optional(),
+  campus_description: z.string().optional(),
+  campus_setting: z.string().optional(),
+  student_body_size: z.coerce.number().int().nonnegative().optional(),
+  media_gallery_text: z.string().optional(), // newline-separated list of S3 URLs
 })
 type ProfileForm = z.infer<typeof profileSchema>
+
+// JSONB dicts with per-school structure too variable for key-value widgets —
+// edited as JSON text. Shown on the student profile / institution detail page.
+type InstJsonKey = 'social_links' | 'inquiry_routing' | 'support_services' | 'policies' | 'international_info' | 'school_outcomes'
+const INST_JSON_FIELDS: { key: InstJsonKey; label: string; placeholder: string; hint: string }[] = [
+  {
+    key: 'social_links',
+    label: 'Social Links',
+    placeholder: '{\n  "twitter": "https://twitter.com/nyuniversity",\n  "linkedin": "https://linkedin.com/school/new-york-university",\n  "instagram": "https://instagram.com/nyuniversity"\n}',
+    hint: 'JSON dict of platform → URL. Renders on the institution overview.',
+  },
+  {
+    key: 'inquiry_routing',
+    label: 'Inquiry Routing',
+    placeholder: '{\n  "general": "admissions@nyu.edu",\n  "international": "global.admissions@nyu.edu",\n  "financial_aid": "financial.aid@nyu.edu"\n}',
+    hint: 'JSON dict of inquiry type → destination (email / URL). Powers the student contact flow.',
+  },
+  {
+    key: 'support_services',
+    label: 'Support Services',
+    placeholder: '{\n  "disability_services": {"url": "https://www.nyu.edu/students/communities-and-groups/students-with-disabilities.html"},\n  "counseling": {"url": "https://www.nyu.edu/students/health-and-wellness/counseling-services.html"},\n  "first_gen": {"url": "https://www.nyu.edu/students/communities-and-groups/first-generation.html"}\n}',
+    hint: 'JSON dict of service → {url, phone, description}. Shown on the Overview tab under Support.',
+  },
+  {
+    key: 'policies',
+    label: 'Policies',
+    placeholder: '{\n  "transfer_credit": {"url": "https://www.nyu.edu/admissions/undergraduate-admissions/how-to-apply/transfer-students.html"},\n  "code_of_conduct": {"url": "https://www.nyu.edu/about/policies-guidelines-compliance.html"}\n}',
+    hint: 'JSON dict of policy name → {url, summary?}. Appears on the Requirements / Overview tabs.',
+  },
+  {
+    key: 'international_info',
+    label: 'International Student Info',
+    placeholder: '{\n  "toefl_min": 100,\n  "ielts_min": 7.5,\n  "visa_contact": "ogs@nyu.edu",\n  "visa_url": "https://www.nyu.edu/students/student-information-and-resources/international-students.html"\n}',
+    hint: 'JSON dict of international requirements + contacts.',
+  },
+  {
+    key: 'school_outcomes',
+    label: 'Aggregate Outcomes',
+    placeholder: '{\n  "6mo_placement_rate": 0.95,\n  "top_employers": ["Google", "Goldman Sachs"],\n  "grad_school_yield": 0.22,\n  "source": "2024 First Destination Survey"\n}',
+    hint: 'JSON dict for school-wide placement stats (distinct from program-level outcomes_data).',
+  },
+]
 
 export default function SettingsPage() {
   const queryClient = useQueryClient()
@@ -50,11 +105,21 @@ export default function SettingsPage() {
 
   // --- Profile ---
   const instQ = useQuery({ queryKey: ['institution'], queryFn: getInstitution })
-  const profileForm = useForm<ProfileForm>({ resolver: zodResolver(profileSchema) })
+  const profileForm = useForm<ProfileForm>({ resolver: zodResolver(profileSchema) as any })
+
+  const [instJsonText, setInstJsonText] = useState<Record<InstJsonKey, string>>({
+    social_links: '',
+    inquiry_routing: '',
+    support_services: '',
+    policies: '',
+    international_info: '',
+    school_outcomes: '',
+  })
+  const [instJsonErrors, setInstJsonErrors] = useState<Partial<Record<InstJsonKey, string>>>({})
 
   useEffect(() => {
     if (instQ.data) {
-      const inst = instQ.data
+      const inst = instQ.data as any
       profileForm.reset({
         name: inst.name,
         type: inst.type,
@@ -62,7 +127,23 @@ export default function SettingsPage() {
         region: inst.region ?? '',
         city: inst.city ?? '',
         website_url: inst.website_url ?? '',
+        contact_email: inst.contact_email ?? '',
+        logo_url: inst.logo_url ?? '',
         description_text: inst.description_text ?? '',
+        campus_description: inst.campus_description ?? '',
+        campus_setting: inst.campus_setting ?? '',
+        student_body_size: inst.student_body_size ?? undefined,
+        media_gallery_text: Array.isArray(inst.media_gallery)
+          ? inst.media_gallery.join('\n')
+          : '',
+      })
+      setInstJsonText({
+        social_links: inst.social_links ? JSON.stringify(inst.social_links, null, 2) : '',
+        inquiry_routing: inst.inquiry_routing ? JSON.stringify(inst.inquiry_routing, null, 2) : '',
+        support_services: inst.support_services ? JSON.stringify(inst.support_services, null, 2) : '',
+        policies: inst.policies ? JSON.stringify(inst.policies, null, 2) : '',
+        international_info: inst.international_info ? JSON.stringify(inst.international_info, null, 2) : '',
+        school_outcomes: inst.school_outcomes ? JSON.stringify(inst.school_outcomes, null, 2) : '',
       })
     }
   }, [instQ.data, profileForm])
@@ -77,6 +158,30 @@ export default function SettingsPage() {
   })
 
   const onSaveProfile = profileForm.handleSubmit(data => {
+    // Parse JSON fields; abort if any invalid.
+    const parsed: Partial<Record<InstJsonKey, unknown>> = {}
+    const errs: Partial<Record<InstJsonKey, string>> = {}
+    for (const { key } of INST_JSON_FIELDS) {
+      const text = instJsonText[key]
+      if (!text || !text.trim()) continue
+      try {
+        parsed[key] = JSON.parse(text)
+      } catch (e: any) {
+        errs[key] = `Invalid JSON: ${e?.message || 'parse error'}`
+      }
+    }
+    if (Object.keys(errs).length) {
+      setInstJsonErrors(errs)
+      showToast('Please fix JSON errors before saving', 'error')
+      return
+    }
+    setInstJsonErrors({})
+
+    const mediaGallery = (data.media_gallery_text ?? '')
+      .split('\n')
+      .map((s: string) => s.trim())
+      .filter(Boolean)
+
     updateInstMut.mutate({
       name: data.name,
       type: data.type,
@@ -84,7 +189,19 @@ export default function SettingsPage() {
       region: data.region || undefined,
       city: data.city || undefined,
       website_url: data.website_url || undefined,
+      contact_email: data.contact_email || undefined,
+      logo_url: data.logo_url || undefined,
       description_text: data.description_text || undefined,
+      campus_description: data.campus_description || undefined,
+      campus_setting: (data.campus_setting as 'urban' | 'suburban' | 'rural' | '') || undefined,
+      student_body_size: data.student_body_size || undefined,
+      media_gallery: mediaGallery.length ? mediaGallery : undefined,
+      social_links: parsed.social_links as any,
+      inquiry_routing: parsed.inquiry_routing as any,
+      support_services: parsed.support_services as any,
+      policies: parsed.policies as any,
+      international_info: parsed.international_info as any,
+      school_outcomes: parsed.school_outcomes as any,
     })
   })
 
@@ -164,16 +281,60 @@ export default function SettingsPage() {
           {instQ.isLoading ? (
             <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10" />)}</div>
           ) : (
-            <form onSubmit={onSaveProfile} className="space-y-4">
-              <Input label="Institution Name *" {...profileForm.register('name')} error={profileForm.formState.errors.name?.message} />
-              <Select label="Type *" options={INSTITUTION_TYPES} {...profileForm.register('type')} error={profileForm.formState.errors.type?.message} />
-              <Input label="Country *" {...profileForm.register('country')} error={profileForm.formState.errors.country?.message} />
-              <div className="grid grid-cols-2 gap-4">
-                <Input label="Region" {...profileForm.register('region')} />
-                <Input label="City" {...profileForm.register('city')} />
+            <form onSubmit={onSaveProfile} className="space-y-6">
+              <div className="space-y-4">
+                <Input label="Institution Name *" {...profileForm.register('name')} error={profileForm.formState.errors.name?.message} />
+                <Select label="Type *" options={INSTITUTION_TYPES} {...profileForm.register('type')} error={profileForm.formState.errors.type?.message} />
+                <Input label="Country *" {...profileForm.register('country')} error={profileForm.formState.errors.country?.message} />
+                <div className="grid grid-cols-2 gap-4">
+                  <Input label="Region" {...profileForm.register('region')} />
+                  <Input label="City" {...profileForm.register('city')} />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <Input label="Website URL" {...profileForm.register('website_url')} error={profileForm.formState.errors.website_url?.message} />
+                  <Input label="Contact Email" {...profileForm.register('contact_email')} error={profileForm.formState.errors.contact_email?.message} />
+                </div>
+                <Input label="Logo URL (S3)" {...profileForm.register('logo_url')} error={profileForm.formState.errors.logo_url?.message} />
               </div>
-              <Input label="Website URL" {...profileForm.register('website_url')} />
-              <Textarea label="Description" {...profileForm.register('description_text')} rows={3} />
+
+              <div className="border-t pt-4 space-y-4">
+                <h3 className="text-sm font-semibold text-gray-700">Description & Campus</h3>
+                <Textarea label="Short description" {...profileForm.register('description_text')} rows={3} />
+                <Textarea label="Campus description" {...profileForm.register('campus_description')} rows={3} placeholder="How the campus looks and feels, where it's located..." />
+                <div className="grid grid-cols-2 gap-4">
+                  <Select label="Campus setting" options={CAMPUS_SETTING_OPTIONS} {...profileForm.register('campus_setting')} />
+                  <Input label="Student body size" type="number" {...profileForm.register('student_body_size')} />
+                </div>
+              </div>
+
+              <div className="border-t pt-4 space-y-2">
+                <h3 className="text-sm font-semibold text-gray-700">Media Gallery</h3>
+                <p className="text-xs text-gray-500">One S3 URL per line. First entry is the hero image.</p>
+                <textarea
+                  className="w-full rounded border border-gray-300 p-3 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-brand-slate-400"
+                  rows={4}
+                  {...profileForm.register('media_gallery_text')}
+                  placeholder="https://unipaith-documents.s3.amazonaws.com/catalog/nyu/campus-1.jpg&#10;https://unipaith-documents.s3.amazonaws.com/catalog/nyu/campus-2.jpg"
+                />
+              </div>
+
+              {INST_JSON_FIELDS.map(({ key, label, placeholder, hint }) => (
+                <div key={key} className="border-t pt-4 space-y-2">
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700">{label}</h3>
+                    <p className="text-xs text-gray-500">{hint}</p>
+                  </div>
+                  <textarea
+                    className="w-full rounded border border-gray-300 p-3 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-brand-slate-400"
+                    rows={5}
+                    value={instJsonText[key]}
+                    placeholder={placeholder}
+                    onChange={e => setInstJsonText(prev => ({ ...prev, [key]: e.target.value }))}
+                  />
+                  {instJsonErrors[key] && <p className="text-xs text-red-600">{instJsonErrors[key]}</p>}
+                </div>
+              ))}
+
               <div className="flex justify-end">
                 <Button type="submit" disabled={updateInstMut.isPending}>
                   {updateInstMut.isPending ? 'Saving...' : 'Save Changes'}

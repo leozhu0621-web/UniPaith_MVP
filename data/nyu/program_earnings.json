@@ -1,0 +1,479 @@
+{
+  "Computer Science": {
+    "cip_code": "1101",
+    "cip_title": "Computer and Information Sciences, General.",
+    "annual_graduates": 604,
+    "earnings_1yr_median": 87608,
+    "earnings_4yr_median": 142495,
+    "earnings_5yr_median": 149736
+  },
+  "Studio Art": {
+    "cip_code": "1301",
+    "cip_title": "Education, General.",
+    "annual_graduates": 23,
+    "earnings_1yr_median": null,
+    "earnings_4yr_median": null,
+    "earnings_5yr_median": null
+  },
+  "Chemical & Biomolecular Engineering": {
+    "cip_code": "1407",
+    "cip_title": "Chemical Engineering.",
+    "annual_graduates": 40,
+    "earnings_1yr_median": 60392,
+    "earnings_4yr_median": 89744,
+    "earnings_5yr_median": 104085
+  },
+  "Civil Engineering": {
+    "cip_code": "1408",
+    "cip_title": "Civil Engineering.",
+    "annual_graduates": 42,
+    "earnings_1yr_median": 72628,
+    "earnings_4yr_median": 94867,
+    "earnings_5yr_median": 95184
+  },
+  "Computer Engineering": {
+    "cip_code": "1409",
+    "cip_title": "Computer Engineering.",
+    "annual_graduates": 38,
+    "earnings_1yr_median": 82183,
+    "earnings_4yr_median": 127201,
+    "earnings_5yr_median": 108105
+  },
+  "Electrical Engineering": {
+    "cip_code": "1410",
+    "cip_title": "Electrical, Electronics, and Communications Engineering.",
+    "annual_graduates": 42,
+    "earnings_1yr_median": 74220,
+    "earnings_4yr_median": 107348,
+    "earnings_5yr_median": 101841
+  },
+  "Mechanical Engineering": {
+    "cip_code": "1419",
+    "cip_title": "Mechanical Engineering.",
+    "annual_graduates": 104,
+    "earnings_1yr_median": 64687,
+    "earnings_4yr_median": 91821,
+    "earnings_5yr_median": 83656
+  },
+  "Technology Management": {
+    "cip_code": "1515",
+    "cip_title": "Engineering-Related Fields.",
+    "annual_graduates": 69,
+    "earnings_1yr_median": 61240,
+    "earnings_4yr_median": 114572,
+    "earnings_5yr_median": 96956
+  },
+  "Linguistics": {
+    "cip_code": "1601",
+    "cip_title": "Linguistic, Comparative, and Related Language Studies and Services.",
+    "annual_graduates": 17,
+    "earnings_1yr_median": null,
+    "earnings_4yr_median": null,
+    "earnings_5yr_median": null
+  },
+  "English": {
+    "cip_code": "2301",
+    "cip_title": "English Language and Literature, General.",
+    "annual_graduates": 16,
+    "earnings_1yr_median": 29967,
+    "earnings_4yr_median": 66306,
+    "earnings_5yr_median": 63792
+  },
+  "Biology": {
+    "cip_code": "2601",
+    "cip_title": "Biology, General.",
+    "annual_graduates": 96,
+    "earnings_1yr_median": 30913,
+    "earnings_4yr_median": 58513,
+    "earnings_5yr_median": 68813
+  },
+  "Mathematics": {
+    "cip_code": "2701",
+    "cip_title": "Mathematics.",
+    "annual_graduates": 137,
+    "earnings_1yr_median": 58481,
+    "earnings_4yr_median": 91832,
+    "earnings_5yr_median": 121490
+  },
+  "Liberal Studies": {
+    "cip_code": "3001",
+    "cip_title": "Biological and Physical Sciences.",
+    "annual_graduates": 1,
+    "earnings_1yr_median": null,
+    "earnings_4yr_median": null,
+    "earnings_5yr_median": null
+  },
+  "Global Liberal Studies": {
+    "cip_code": "3001",
+    "cip_title": "Biological and Physical Sciences.",
+    "annual_graduates": 1,
+    "earnings_1yr_median": null,
+    "earnings_4yr_median": null,
+    "earnings_5yr_median": null
+  },
+  "Philosophy": {
+    "cip_code": "3801",
+    "cip_title": "Philosophy.",
+    "annual_graduates": 71,
+    "earnings_1yr_median": 40359,
+    "earnings_4yr_median": 52633,
+    "earnings_5yr_median": 76802
+  },
+  "Chemistry": {
+    "cip_code": "4005",
+    "cip_title": "Chemistry.",
+    "annual_graduates": 29,
+    "earnings_1yr_median": 37249,
+    "earnings_4yr_median": 86197,
+    "earnings_5yr_median": 80938
+  },
+  "Applied Psychology": {
+    "cip_code": "4227",
+    "cip_title": "Research and Experimental Psychology.",
+    "annual_graduates": 530,
+    "earnings_1yr_median": 37512,
+    "earnings_4yr_median": 63315,
+    "earnings_5yr_median": null
+  },
+  "Social Work": {
+    "cip_code": "4407",
+    "cip_title": "Social Work.",
+    "annual_graduates": 31,
+    "earnings_1yr_median": 26837,
+    "earnings_4yr_median": 59593,
+    "earnings_5yr_median": 67149
+  },
+  "Anthropology": {
+    "cip_code": "4502",
+    "cip_title": "Anthropology.",
+    "annual_graduates": 37,
+    "earnings_1yr_median": null,
+    "earnings_4yr_median": null,
+    "earnings_5yr_median": 61922
+  },
+  "Economics": {
+    "cip_code": "4506",
+    "cip_title": "Economics.",
+    "annual_graduates": 541,
+    "earnings_1yr_median": 68495,
+    "earnings_4yr_median": 116510,
+    "earnings_5yr_median": 105120
+  },
+  "Politics": {
+    "cip_code": "4510",
+    "cip_title": "Political Science and Government.",
+    "annual_graduates": 191,
+    "earnings_1yr_median": 50783,
+    "earnings_4yr_median": 80957,
+    "earnings_5yr_median": 85250
+  },
+  "Sociology": {
+    "cip_code": "4511",
+    "cip_title": "Sociology.",
+    "annual_graduates": 61,
+    "earnings_1yr_median": 22697,
+    "earnings_4yr_median": 77650,
+    "earnings_5yr_median": 73086
+  },
+  "Dance": {
+    "cip_code": "5003",
+    "cip_title": "Dance.",
+    "annual_graduates": 43,
+    "earnings_1yr_median": null,
+    "earnings_4yr_median": 38571,
+    "earnings_5yr_median": 32847
+  },
+  "Cinema Studies": {
+    "cip_code": "5005",
+    "cip_title": "Drama/Theatre Arts and Stagecraft.",
+    "annual_graduates": 416,
+    "earnings_1yr_median": 20916,
+    "earnings_4yr_median": 42348,
+    "earnings_5yr_median": 31599
+  },
+  "Film & Television": {
+    "cip_code": "5006",
+    "cip_title": "Film/Video and Photographic Arts.",
+    "annual_graduates": 407,
+    "earnings_1yr_median": 23869,
+    "earnings_4yr_median": 58720,
+    "earnings_5yr_median": 56749
+  },
+  "Photography & Imaging": {
+    "cip_code": "5007",
+    "cip_title": "Fine and Studio Arts.",
+    "annual_graduates": 95,
+    "earnings_1yr_median": 25053,
+    "earnings_4yr_median": 49478,
+    "earnings_5yr_median": 62042
+  },
+  "Music": {
+    "cip_code": "5009",
+    "cip_title": "Music.",
+    "annual_graduates": 87,
+    "earnings_1yr_median": 24398,
+    "earnings_4yr_median": 52841,
+    "earnings_5yr_median": 34761
+  },
+  "Music Technology": {
+    "cip_code": "5009",
+    "cip_title": "Music.",
+    "annual_graduates": 87,
+    "earnings_1yr_median": 24398,
+    "earnings_4yr_median": 52841,
+    "earnings_5yr_median": 34761
+  },
+  "Music Business": {
+    "cip_code": "5009",
+    "cip_title": "Music.",
+    "annual_graduates": 87,
+    "earnings_1yr_median": 24398,
+    "earnings_4yr_median": 52841,
+    "earnings_5yr_median": 34761
+  },
+  "Recorded Music": {
+    "cip_code": "5009",
+    "cip_title": "Music.",
+    "annual_graduates": 87,
+    "earnings_1yr_median": 24398,
+    "earnings_4yr_median": 52841,
+    "earnings_5yr_median": 34761
+  },
+  "Music Education": {
+    "cip_code": "5009",
+    "cip_title": "Music.",
+    "annual_graduates": 87,
+    "earnings_1yr_median": 24398,
+    "earnings_4yr_median": 52841,
+    "earnings_5yr_median": 34761
+  },
+  "Nursing": {
+    "cip_code": "5138",
+    "cip_title": "Registered Nursing, Nursing Administration, Nursing Research and Clinical Nursing.",
+    "annual_graduates": 431,
+    "earnings_1yr_median": 111360,
+    "earnings_4yr_median": 118433,
+    "earnings_5yr_median": 119854
+  },
+  "Business": {
+    "cip_code": "5201",
+    "cip_title": "Business/Commerce, General.",
+    "annual_graduates": 395,
+    "earnings_1yr_median": 77828,
+    "earnings_4yr_median": 137804,
+    "earnings_5yr_median": 136918
+  },
+  "Accounting": {
+    "cip_code": "5201",
+    "cip_title": "Business/Commerce, General.",
+    "annual_graduates": 395,
+    "earnings_1yr_median": 77828,
+    "earnings_4yr_median": 137804,
+    "earnings_5yr_median": 136918
+  },
+  "Finance": {
+    "cip_code": "5201",
+    "cip_title": "Business/Commerce, General.",
+    "annual_graduates": 395,
+    "earnings_1yr_median": 77828,
+    "earnings_4yr_median": 137804,
+    "earnings_5yr_median": 136918
+  },
+  "Management": {
+    "cip_code": "5201",
+    "cip_title": "Business/Commerce, General.",
+    "annual_graduates": 395,
+    "earnings_1yr_median": 77828,
+    "earnings_4yr_median": 137804,
+    "earnings_5yr_median": 136918
+  },
+  "Marketing": {
+    "cip_code": "5201",
+    "cip_title": "Business/Commerce, General.",
+    "annual_graduates": 395,
+    "earnings_1yr_median": 77828,
+    "earnings_4yr_median": 137804,
+    "earnings_5yr_median": 136918
+  },
+  "Hospitality & Tourism": {
+    "cip_code": "5209",
+    "cip_title": "Hospitality Administration/Management.",
+    "annual_graduates": 30,
+    "earnings_1yr_median": 40637,
+    "earnings_4yr_median": 84375,
+    "earnings_5yr_median": 67176
+  },
+  "Information Systems": {
+    "cip_code": "5213",
+    "cip_title": "Management Sciences and Quantitative Methods.",
+    "annual_graduates": 255,
+    "earnings_1yr_median": 102572,
+    "earnings_4yr_median": 158559,
+    "earnings_5yr_median": null
+  },
+  "Real Estate": {
+    "cip_code": "5215",
+    "cip_title": "Real Estate.",
+    "annual_graduates": 58,
+    "earnings_1yr_median": 74912,
+    "earnings_4yr_median": 130716,
+    "earnings_5yr_median": null
+  },
+  "History": {
+    "cip_code": "5401",
+    "cip_title": "History.",
+    "annual_graduates": 118,
+    "earnings_1yr_median": 39636,
+    "earnings_4yr_median": 74545,
+    "earnings_5yr_median": 72739
+  },
+  "Physics": {
+    "cip_code": "4008",
+    "cip_title": "Physics.",
+    "annual_graduates": 58,
+    "earnings_1yr_median": 24802,
+    "earnings_4yr_median": 69334,
+    "earnings_5yr_median": null
+  },
+  "Psychology": {
+    "cip_code": "4227",
+    "cip_title": "Research and Experimental Psychology.",
+    "annual_graduates": 530,
+    "earnings_1yr_median": 37512,
+    "earnings_4yr_median": 63315,
+    "earnings_5yr_median": null
+  },
+  "Acting": {
+    "cip_code": "5005",
+    "cip_title": "Drama/Theatre Arts and Stagecraft.",
+    "annual_graduates": 416,
+    "earnings_1yr_median": 20916,
+    "earnings_4yr_median": 42348,
+    "earnings_5yr_median": 31599
+  },
+  "Drama": {
+    "cip_code": "5005",
+    "cip_title": "Drama/Theatre Arts and Stagecraft.",
+    "annual_graduates": 416,
+    "earnings_1yr_median": 20916,
+    "earnings_4yr_median": 42348,
+    "earnings_5yr_median": 31599
+  },
+  "Communication Sciences & Disorders": {
+    "cip_code": "5102",
+    "cip_title": "Communication Disorders Sciences and Services.",
+    "annual_graduates": 16,
+    "earnings_1yr_median": null,
+    "earnings_4yr_median": 75970,
+    "earnings_5yr_median": 76076
+  },
+  "Food Studies": {
+    "cip_code": "1905",
+    "cip_title": "Foods, Nutrition, and Related Services.",
+    "annual_graduates": 7,
+    "earnings_1yr_median": null,
+    "earnings_4yr_median": null,
+    "earnings_5yr_median": 75105
+  },
+  "Media Culture & Communication": {
+    "cip_code": "0907",
+    "cip_title": "Radio, Television, and Digital Communication.",
+    "annual_graduates": 410,
+    "earnings_1yr_median": 47666,
+    "earnings_4yr_median": 77109,
+    "earnings_5yr_median": 69066
+  },
+  "Nutrition": {
+    "cip_code": "3019",
+    "cip_title": "Nutrition Sciences.",
+    "annual_graduates": 48,
+    "earnings_1yr_median": 24084,
+    "earnings_4yr_median": 70508,
+    "earnings_5yr_median": null
+  },
+  "Individualized Study": {
+    "cip_code": "2401",
+    "cip_title": "Liberal Arts and Sciences, General Studies and Humanities.",
+    "annual_graduates": 549,
+    "earnings_1yr_median": 38447,
+    "earnings_4yr_median": 66502,
+    "earnings_5yr_median": 68008
+  },
+  "Marketing Analytics": {
+    "cip_code": "5299",
+    "cip_title": "Business, Management, Marketing, and Related Support Services, Other.",
+    "annual_graduates": 115,
+    "earnings_1yr_median": 41421,
+    "earnings_4yr_median": 87656,
+    "earnings_5yr_median": 89121
+  },
+  "Interactive Media Arts": {
+    "cip_code": "1108",
+    "cip_title": "Computer Software and Media Applications.",
+    "annual_graduates": 79,
+    "earnings_1yr_median": 42891,
+    "earnings_4yr_median": null,
+    "earnings_5yr_median": null
+  },
+  "Game Design": {
+    "cip_code": "5099",
+    "cip_title": "Visual and Performing Arts, Other.",
+    "annual_graduates": 125,
+    "earnings_1yr_median": 28990,
+    "earnings_4yr_median": 45991,
+    "earnings_5yr_median": 65953
+  },
+  "Dramatic Writing": {
+    "cip_code": "5005",
+    "cip_title": "Drama/Theatre Arts and Stagecraft.",
+    "annual_graduates": 416,
+    "earnings_1yr_median": 20916,
+    "earnings_4yr_median": 42348,
+    "earnings_5yr_median": 31599
+  },
+  "Data Science": {
+    "cip_code": null,
+    "cip_title": null,
+    "annual_graduates": null,
+    "earnings_1yr_median": null,
+    "earnings_4yr_median": null,
+    "earnings_5yr_median": null,
+    "note": "No matching CIP code in College Scorecard"
+  },
+  "Environmental Studies": {
+    "cip_code": null,
+    "cip_title": null,
+    "annual_graduates": null,
+    "earnings_1yr_median": null,
+    "earnings_4yr_median": null,
+    "earnings_5yr_median": null,
+    "note": "No matching CIP code in College Scorecard"
+  },
+  "Biomedical Engineering": {
+    "cip_code": null,
+    "cip_title": null,
+    "annual_graduates": null,
+    "earnings_1yr_median": null,
+    "earnings_4yr_median": null,
+    "earnings_5yr_median": null,
+    "note": "No matching CIP code in College Scorecard"
+  },
+  "Sports Management": {
+    "cip_code": null,
+    "cip_title": null,
+    "annual_graduates": null,
+    "earnings_1yr_median": null,
+    "earnings_4yr_median": null,
+    "earnings_5yr_median": null,
+    "note": "No matching CIP code in College Scorecard"
+  },
+  "Physical Therapy": {
+    "cip_code": null,
+    "cip_title": null,
+    "annual_graduates": null,
+    "earnings_1yr_median": null,
+    "earnings_4yr_median": null,
+    "earnings_5yr_median": null,
+    "note": "No matching CIP code in College Scorecard"
+  }
+}

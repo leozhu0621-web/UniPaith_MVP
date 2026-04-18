@@ -46,7 +46,7 @@ class LLMClient:
             max_tokens=settings.llm_feature_max_tokens,
             temperature=settings.llm_feature_temperature,
         )
-        return response.choices[0].message.content
+        return response.choices[0].message.content or ""
 
     async def generate_reasoning(self, system_prompt: str, user_content: str) -> str:
         """Call reasoning model for natural-language explanations."""
@@ -60,7 +60,7 @@ class LLMClient:
             max_tokens=settings.llm_reasoning_max_tokens,
             temperature=settings.llm_reasoning_temperature,
         )
-        return response.choices[0].message.content
+        return response.choices[0].message.content or ""
 
     async def _call_with_resilience(self, client: AsyncOpenAI, **kwargs):
         last_error = None
@@ -92,7 +92,7 @@ class LLMClient:
             if attempt < settings.ai_request_max_retries:
                 await asyncio.sleep(settings.ai_request_backoff_seconds * attempt)
 
-        raise last_error
+        raise last_error or RuntimeError("LLM request failed with no retries configured")
 
 
 class AWSLLMClient:
@@ -131,7 +131,7 @@ class AWSLLMClient:
             max_tokens=settings.llm_feature_max_tokens,
             temperature=settings.llm_feature_temperature,
         )
-        return response.choices[0].message.content
+        return response.choices[0].message.content or ""
 
     async def generate_reasoning(self, system_prompt: str, user_content: str) -> str:
         """Call 70B model on on-demand g5.12xlarge, with auto-start and fallback."""
@@ -161,7 +161,7 @@ class AWSLLMClient:
                 max_tokens=settings.llm_reasoning_max_tokens,
                 temperature=settings.llm_reasoning_temperature,
             )
-            return response.choices[0].message.content
+            return response.choices[0].message.content or ""
         except Exception as e:
             logger.error("70B reasoning call failed: %s, falling back to template", e)
             return self._template_reasoning(user_content)
@@ -185,7 +185,7 @@ class AWSLLMClient:
                 last_error = exc
             if attempt < settings.ai_request_max_retries:
                 await asyncio.sleep(settings.ai_request_backoff_seconds * attempt)
-        raise last_error
+        raise last_error or RuntimeError("LLM request failed with no retries configured")
 
     async def _is_budget_exceeded(self) -> bool:
         """Check if monthly GPU budget is exceeded."""

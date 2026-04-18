@@ -10,10 +10,12 @@ from sqlalchemy import (
     Date,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     Numeric,
     String,
     Text,
+    UniqueConstraint,
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -31,11 +33,38 @@ class StudentProfile(Base):
     )
     first_name: Mapped[str | None] = mapped_column(String(100))
     last_name: Mapped[str | None] = mapped_column(String(100))
+    preferred_name: Mapped[str | None] = mapped_column(String(100))
+    name_in_native_script: Mapped[str | None] = mapped_column(String(255))
+    preferred_pronouns: Mapped[str | None] = mapped_column(String(50))
     date_of_birth: Mapped[date | None] = mapped_column(Date)
+    gender_identity: Mapped[str | None] = mapped_column(String(50))
+    legal_sex: Mapped[str | None] = mapped_column(String(20))
+    place_of_birth: Mapped[str | None] = mapped_column(String(255))
     nationality: Mapped[str | None] = mapped_column(String(100))
+    passport_issuing_country: Mapped[str | None] = mapped_column(String(100))
     country_of_residence: Mapped[str | None] = mapped_column(String(100))
     bio_text: Mapped[str | None] = mapped_column(Text)
     goals_text: Mapped[str | None] = mapped_column(Text)
+    secondary_email: Mapped[str | None] = mapped_column(String(255))
+    secondary_phone: Mapped[str | None] = mapped_column(String(50))
+    preferred_contact_channel: Mapped[str | None] = mapped_column(String(30))
+    preferred_platform_language: Mapped[str | None] = mapped_column(String(30))
+    preferred_writing_language: Mapped[str | None] = mapped_column(String(30))
+    marital_status: Mapped[str | None] = mapped_column(String(30))
+    residency_status_for_tuition: Mapped[str | None] = mapped_column(String(50))
+    domicile_state: Mapped[str | None] = mapped_column(String(50))
+    duration_of_residency_months: Mapped[int | None] = mapped_column(Integer)
+    # Address/contact bundles kept as JSONB - see appendix Identity section.
+    # Shape: {current, permanent, mailing, billing} each {line1, line2, city,
+    # state, postal_code, country}.
+    addresses: Mapped[dict | None] = mapped_column(JSONB)
+    # {name, email, phone, relationship}.
+    emergency_contact: Mapped[dict | None] = mapped_column(JSONB)
+    # {name, email, phone, relationship, custody_status}.
+    guardian: Mapped[dict | None] = mapped_column(JSONB)
+    email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    phone_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    id_verification_status: Mapped[str] = mapped_column(String(20), default="none")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -110,7 +139,7 @@ class AcademicRecord(Base):
     institution_name: Mapped[str] = mapped_column(String(255), nullable=False)
     degree_type: Mapped[str] = mapped_column(String(50), nullable=False)
     field_of_study: Mapped[str | None] = mapped_column(String(255))
-    gpa: Mapped[Decimal | None] = mapped_column(Numeric(4, 2))
+    gpa: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
     gpa_scale: Mapped[str | None] = mapped_column(String(20))
     start_date: Mapped[date | None] = mapped_column(Date)
     end_date: Mapped[date | None] = mapped_column(Date)
@@ -122,6 +151,22 @@ class AcademicRecord(Base):
     credential_evaluation_status: Mapped[str | None] = mapped_column(String(30))
     credential_evaluation_report_url: Mapped[str | None] = mapped_column(String(1000))
     rigor_indicator_count: Mapped[int | None] = mapped_column(Integer)
+    attendance_rate: Mapped[Decimal | None] = mapped_column(Numeric(5, 4))
+    class_rank: Mapped[int | None] = mapped_column(Integer)
+    class_rank_denominator: Mapped[int | None] = mapped_column(Integer)
+    percentile_rank: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
+    weighted_gpa_flag: Mapped[bool | None] = mapped_column(Boolean)
+    leave_of_absence_flag: Mapped[bool | None] = mapped_column(Boolean)
+    withdrawal_incomplete_flag: Mapped[bool | None] = mapped_column(Boolean)
+    grading_scale_type: Mapped[str | None] = mapped_column(String(30))
+    term_system_type: Mapped[str | None] = mapped_column(String(30))
+    transcript_upload_url: Mapped[str | None] = mapped_column(String(1000))
+    translation_provided_flag: Mapped[bool | None] = mapped_column(Boolean)
+    # {ap_count, ib_count, honors_count, college_count}
+    school_reported_rigor: Mapped[dict | None] = mapped_column(JSONB)
+    disruption_details: Mapped[str | None] = mapped_column(Text)
+    normalized_gpa: Mapped[Decimal | None] = mapped_column(Numeric(4, 2))
+    transcript_parse_status: Mapped[str] = mapped_column(String(20), default="not_parsed")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -178,6 +223,15 @@ class TestScore(Base):
     section_scores: Mapped[dict | None] = mapped_column(JSONB)
     test_date: Mapped[date | None] = mapped_column(Date)
     is_official: Mapped[bool] = mapped_column(Boolean, default=False)
+    percentile: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
+    test_attempt_number: Mapped[int | None] = mapped_column(Integer)
+    superscore_preference: Mapped[bool | None] = mapped_column(Boolean)
+    score_expiration_date: Mapped[date | None] = mapped_column(Date)
+    test_waiver_flag: Mapped[bool | None] = mapped_column(Boolean)
+    test_waiver_basis: Mapped[str | None] = mapped_column(String(255))
+    official_score_report_url: Mapped[str | None] = mapped_column(String(1000))
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    score_normalization_status: Mapped[str] = mapped_column(String(20), default="unmapped")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -262,6 +316,27 @@ class StudentPreference(Base):
     values_priorities: Mapped[dict | None] = mapped_column(JSONB)
     dealbreakers: Mapped[list | None] = mapped_column(JSONB)
     goals_text: Mapped[str | None] = mapped_column(Text)
+    career_goal_short_term: Mapped[str | None] = mapped_column(Text)
+    # Appendix "preference weights" - 7 explicit 0-10 scales. Kept as
+    # separate columns (not only the values_priorities JSONB) so matching
+    # can read each dimension by name.
+    weight_cost: Mapped[int | None] = mapped_column(Integer)
+    weight_location: Mapped[int | None] = mapped_column(Integer)
+    weight_outcomes: Mapped[int | None] = mapped_column(Integer)
+    weight_ranking: Mapped[int | None] = mapped_column(Integer)
+    weight_flexibility: Mapped[int | None] = mapped_column(Integer)
+    weight_support: Mapped[int | None] = mapped_column(Integer)
+    weight_time_to_degree: Mapped[int | None] = mapped_column(Integer)
+    application_intensity: Mapped[str | None] = mapped_column(String(30))
+    preferred_learning_style: Mapped[str | None] = mapped_column(String(30))
+    preferred_program_style: Mapped[str | None] = mapped_column(String(30))
+    research_interest_level: Mapped[str | None] = mapped_column(String(20))
+    return_home_intent: Mapped[str | None] = mapped_column(String(20))
+    risk_tolerance: Mapped[str | None] = mapped_column(String(20))
+    stretch_target_safety_mix: Mapped[str | None] = mapped_column(String(50))
+    target_degree_level: Mapped[str | None] = mapped_column(String(30))
+    target_start_term: Mapped[str | None] = mapped_column(String(30))
+    thesis_interest: Mapped[str | None] = mapped_column(String(20))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -563,6 +638,15 @@ class StudentVisaInfo(Base):
     prior_visa_refusals: Mapped[bool] = mapped_column(Boolean, default=False)
     travel_constraints: Mapped[str | None] = mapped_column(Text)
     work_authorization_needed: Mapped[bool] = mapped_column(Boolean, default=False)
+    current_location_city: Mapped[str | None] = mapped_column(String(100))
+    current_location_country: Mapped[str | None] = mapped_column(String(100))
+    dependents_accompanying: Mapped[bool | None] = mapped_column(Boolean)
+    intended_start_term: Mapped[str | None] = mapped_column(String(30))
+    visa_type_current: Mapped[str | None] = mapped_column(String(30))
+    # Explicit citizenship for visa flow when it differs from the broader
+    # `nationality` field on the profile (e.g., dual-citizen applying via a
+    # specific passport).
+    country_of_citizenship: Mapped[str | None] = mapped_column(String(100))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -589,6 +673,27 @@ class StudentDataConsent(Base):
     data_retention_preference: Mapped[str | None] = mapped_column(String(30))
     deletion_requested: Mapped[bool] = mapped_column(Boolean, default=False)
     deletion_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Appendix "Eligibility, compliance, consent" fields. All nullable so
+    # legacy rows remain unaffected.
+    first_generation_status: Mapped[bool | None] = mapped_column(Boolean)
+    first_generation_definition: Mapped[str | None] = mapped_column(String(50))
+    ferpa_release: Mapped[bool | None] = mapped_column(Boolean)
+    honor_code_ack: Mapped[bool | None] = mapped_column(Boolean)
+    background_check_required: Mapped[bool | None] = mapped_column(Boolean)
+    code_of_conduct_ack: Mapped[bool | None] = mapped_column(Boolean)
+    criminal_history_disclosed: Mapped[bool | None] = mapped_column(Boolean)
+    disciplinary_history_disclosed: Mapped[bool | None] = mapped_column(Boolean)
+    immunization_compliance: Mapped[str | None] = mapped_column(String(30))
+    health_insurance_waiver_intent: Mapped[bool | None] = mapped_column(Boolean)
+    military_status: Mapped[str | None] = mapped_column(String(30))
+    veteran_status: Mapped[bool | None] = mapped_column(Boolean)
+    prior_academic_dismissal_flag: Mapped[bool | None] = mapped_column(Boolean)
+    directory_info_release: Mapped[bool | None] = mapped_column(Boolean)
+    third_party_sharing_consent: Mapped[bool | None] = mapped_column(Boolean)
+    # {email: bool, sms: bool, calls: bool}.
+    marketing_channel_consent: Mapped[dict | None] = mapped_column(JSONB)
+    # [{channel, timestamp, version}].
+    consent_revocation_timestamps: Mapped[list | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -597,3 +702,76 @@ class StudentDataConsent(Base):
     )
 
     student: Mapped[StudentProfile] = relationship(back_populates="data_consent")
+
+
+class StudentPlatformEvent(Base):
+    """Broad analytics events (not program-scoped).
+
+    Complements ``student_engagement_signals`` which is scoped to a specific
+    program. This table captures platform-wide events like login, session,
+    search queries, page views, CTA taps, drop-off steps, UTM campaign, device,
+    IP country. Every row is tied to a student (no anonymous events here).
+    Feeds the OUTPUT-side engagement signals (apply propensity, churn risk,
+    drop-off diagnosis, next-best-action) in the inference pipeline.
+    """
+
+    __tablename__ = "student_platform_events"
+    __table_args__ = (
+        Index("ix_platform_events_student_type", "student_id", "event_type"),
+        Index("ix_platform_events_occurred_at", "occurred_at"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    event_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    event_metadata: Mapped[dict | None] = mapped_column(JSONB)
+    session_id: Mapped[str | None] = mapped_column(String(100))
+    device_type: Mapped[str | None] = mapped_column(String(30))
+    url_path: Mapped[str | None] = mapped_column(String(500))
+    referral_source: Mapped[str | None] = mapped_column(String(100))
+    utm_campaign: Mapped[str | None] = mapped_column(String(255))
+    ip_country: Mapped[str | None] = mapped_column(String(100))
+    occurred_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class StudentMajorReadiness(Base):
+    """Track-level self-rating rollup for major-specific appendix fields.
+
+    One row per (student, track) where track is one of:
+    ``cs``, ``engineering``, ``business``, ``health``, ``arts``, ``humanities``.
+
+    ``readiness_data`` is a JSONB blob holding the per-track fields from the
+    appendix (e.g., CS track has ~73 fields: CS fundamentals self-ratings,
+    data/ML readiness, programming languages, tools, etc.). We keep them as
+    JSONB because the field set varies by track and evolves; the blob is the
+    authoritative store, the individual fields are validated at the Pydantic
+    schema layer and scored in the inference pipeline.
+    """
+
+    __tablename__ = "student_major_readiness"
+    __table_args__ = (
+        UniqueConstraint("student_id", "track", name="uq_major_readiness_student_track"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    track: Mapped[str] = mapped_column(String(30), nullable=False)
+    readiness_data: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
