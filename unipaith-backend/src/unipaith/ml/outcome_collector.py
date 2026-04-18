@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 from datetime import UTC, datetime
 from decimal import Decimal
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import and_, select
@@ -326,7 +327,7 @@ class OutcomeCollector:
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def _load_or_raise(self, model_class: type, entity_id: UUID):
+    async def _load_or_raise(self, model_class: type, entity_id: UUID) -> Any:
         """Load an entity by primary key or raise NotFoundException."""
         entity = await self.db.get(model_class, entity_id)
         if entity is None:

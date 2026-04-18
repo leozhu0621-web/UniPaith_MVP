@@ -364,7 +364,8 @@ class InferencePipeline:
 
         grouped: dict[UUID, list[TargetSegment]] = {program_id: [] for program_id in program_ids}
         for segment in segments:
-            grouped.setdefault(segment.program_id, []).append(segment)
+            if segment.program_id is not None:
+                grouped.setdefault(segment.program_id, []).append(segment)
 
         return {
             program_id: self._score_institution_pref_fit(student_features, program_segments)

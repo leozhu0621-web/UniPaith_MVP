@@ -182,6 +182,8 @@ class CollaborativeFilter:
             )
         )
         for signal in signals_result.scalars().all():
+            if signal.entity_id is None:
+                continue
             weight = SIGNAL_WEIGHTS.get(signal.signal_type, 0.1)
             key = (signal.user_id, signal.entity_id)
             interactions[key] += weight

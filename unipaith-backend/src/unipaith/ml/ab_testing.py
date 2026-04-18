@@ -277,7 +277,7 @@ class ABTestManager:
             return version
 
         # Fallback: latest non-active, non-retired model
-        result = await self.db.execute(
+        model_result = await self.db.execute(
             select(ModelRegistry)
             .where(
                 ModelRegistry.is_active.is_(False),
@@ -286,7 +286,7 @@ class ABTestManager:
             .order_by(ModelRegistry.created_at.desc())
             .limit(1)
         )
-        model = result.scalar_one_or_none()
+        model = model_result.scalar_one_or_none()
         if model is not None:
             return model.model_version
 

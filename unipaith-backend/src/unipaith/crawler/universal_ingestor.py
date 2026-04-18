@@ -353,7 +353,7 @@ class SearchAdapter(BaseAdapter):
         links = []
         for result in soup.select(".result__a"):
             href = result.get("href", "")
-            if href.startswith("http"):
+            if isinstance(href, str) and href.startswith("http"):
                 links.append(href)
 
         return [

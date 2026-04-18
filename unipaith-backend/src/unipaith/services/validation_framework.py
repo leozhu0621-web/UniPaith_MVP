@@ -65,14 +65,14 @@ class ValidationFramework:
         if len(outcomes) < 20:
             return {"status": "insufficient_data", "count": len(outcomes)}
 
-        predictions = []
-        actuals = []
+        pred_list = []
+        actual_list = []
         for o in outcomes:
-            predictions.append(float(o.predicted_score))
-            actuals.append(1.0 if o.actual_outcome in ("admitted", "enrolled") else 0.0)
+            pred_list.append(float(o.predicted_score))
+            actual_list.append(1.0 if o.actual_outcome in ("admitted", "enrolled") else 0.0)
 
-        predictions = np.array(predictions)
-        actuals = np.array(actuals)
+        predictions = np.array(pred_list)
+        actuals = np.array(actual_list)
 
         n_bins = 10
         ece = 0.0
