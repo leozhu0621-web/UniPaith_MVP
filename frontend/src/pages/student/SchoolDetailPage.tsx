@@ -244,8 +244,8 @@ export default function SchoolDetailPage() {
               <NextStepsCard
                 applicationDeadline={p.application_deadline}
                 upcomingEvent={upcomingEvent ? {
-                  title: upcomingEvent.title || (upcomingEvent as any).event_name,
-                  event_datetime: (upcomingEvent as any).event_datetime || (upcomingEvent as any).starts_at,
+                  title: (upcomingEvent as any).title || (upcomingEvent as any).event_name,
+                  event_datetime: (upcomingEvent as any).event_datetime || (upcomingEvent as any).starts_at || (upcomingEvent as any).start_time,
                   onClick: () => rsvpMut.mutate(upcomingEvent.id),
                 } : null}
                 hasApplication={!!existingApp}

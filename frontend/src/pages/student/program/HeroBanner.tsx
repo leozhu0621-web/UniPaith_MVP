@@ -36,8 +36,6 @@ export default function HeroBanner({
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [paused, images.length])
 
-  const currentImg = images[idx] || images[0]
-
   return (
     <div
       className="relative w-full h-56 md:h-64 rounded-2xl overflow-hidden bg-student-mist mb-6 group"
