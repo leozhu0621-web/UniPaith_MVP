@@ -2,9 +2,20 @@
 
 Two-sided AI matching platform for higher education admissions. Students find programs; institutions find applicants.
 
+## Session Continuity
+
+- At the start of any session that resumes prior work, ASK the user for context/rules from the previous session before exploring
+- Do not spend more than 2-3 tool calls exploring before confirming the task scope
+
 ## Pre-Work Checklist
 
 Before starting new feature work, always verify the environment is healthy first: DB connections active, Docker/Postgres running, zero build errors, all existing tests passing. Do NOT proceed to feature building until confirmed.
+
+## UI/Design Preferences
+
+- NO decorative images, gradients, or color accents on program detail pages
+- Aesthetic is editorial and program-specific, not generic marketing
+- Always confirm WHICH component is being changed (explore card vs detail page) before editing
 
 ## Project Overview
 
@@ -75,6 +86,13 @@ Key vars:
 - `AI_MOCK_MODE=true` — Skip real OpenAI calls in tests
 - `DEBUG=true` — Enable /docs and /redoc
 
+## Data & Schema Rules
+
+- When adding new model fields, ALWAYS update response schemas in the same change (fields are invisible otherwise)
+- Verify DB field names before reading (e.g., `application_requirements` not `requirements`)
+- When seeding data, use `replace=True` or explicit dedup keys to avoid collision bugs
+- Never present findings without first confirming the underlying data exists
+
 ## Testing
 
 - Backend: `pytest` with `pytest-asyncio`. Fixtures in `tests/conftest.py` provide `db_session`, `client`, role-specific clients
@@ -119,3 +137,10 @@ When asked to review or audit code, go directly to the code files. Do NOT set up
 ## Infrastructure
 
 Infrastructure debugging notes: RDS is in a VPC - ensure new services have correct security groups. ECS task definitions can overwrite env vars on redeploy. S3 frontend bundles can go stale - always invalidate CloudFront after deploy. DB password is managed via AWS Secrets Manager.
+
+## Deployment Checklist (ECS/RDS/S3)
+
+- Verify S3 bundle is current (not stale) before blaming app code
+- Check ECS task definition hasn't been overwritten
+- Confirm DB password matches across Secrets Manager and RDS
+- Verify RDS is in correct VPC and DNS points to current ALB
