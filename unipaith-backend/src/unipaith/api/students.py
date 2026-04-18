@@ -1379,7 +1379,7 @@ async def upsert_major_readiness(
         db.add(row)
     else:
         row.readiness_data = body.readiness_data
-    await db.commit()
+    await db.flush()
     await db.refresh(row)
     return MajorReadinessResponse.model_validate(row)
 
@@ -1417,6 +1417,6 @@ async def log_platform_event(
         ip_country=body.ip_country,
     )
     db.add(row)
-    await db.commit()
+    await db.flush()
     await db.refresh(row)
     return PlatformEventResponse.model_validate(row)
