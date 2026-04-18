@@ -21,15 +21,6 @@ import { formatCurrency } from '../../../utils/format'
 
 type Tone = 'amber' | 'emerald' | 'rose' | 'blue' | 'violet' | 'slate'
 
-const TONE: Record<Tone, { bg: string; border: string; text: string; icon: string; chip: string }> = {
-  amber:   { bg: 'bg-amber-50/70',   border: 'border-amber-200/60',   text: 'text-amber-900',   icon: 'text-amber-600',   chip: 'bg-amber-100 text-amber-700' },
-  emerald: { bg: 'bg-emerald-50/70', border: 'border-emerald-200/60', text: 'text-emerald-900', icon: 'text-emerald-600', chip: 'bg-emerald-100 text-emerald-700' },
-  rose:    { bg: 'bg-rose-50/70',    border: 'border-rose-200/60',    text: 'text-rose-900',    icon: 'text-rose-600',    chip: 'bg-rose-100 text-rose-700' },
-  blue:    { bg: 'bg-blue-50/70',    border: 'border-blue-200/60',    text: 'text-blue-900',    icon: 'text-blue-600',    chip: 'bg-blue-100 text-blue-700' },
-  violet:  { bg: 'bg-violet-50/70',  border: 'border-violet-200/60',  text: 'text-violet-900',  icon: 'text-violet-600',  chip: 'bg-violet-100 text-violet-700' },
-  slate:   { bg: 'bg-slate-50',      border: 'border-slate-200',      text: 'text-slate-800',   icon: 'text-slate-500',   chip: 'bg-slate-200 text-slate-700' },
-}
-
 interface Tile {
   icon: typeof DollarSign
   label: string
