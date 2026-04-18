@@ -100,7 +100,9 @@ from unipaith.models.student import (
     StudentDataConsent,
     StudentDocument,
     StudentLanguage,
+    StudentMajorReadiness,
     StudentOnlinePresence,
+    StudentPlatformEvent,
     StudentPortfolioItem,
     StudentPreference,
     StudentProfile,
@@ -217,4 +219,6 @@ __all__ = [
     "AdvisorPersona",
     "PipelineStageSnapshot",
     "PipelineConfig",
+    "StudentPlatformEvent",
+    "StudentMajorReadiness",
 ]
