@@ -282,12 +282,11 @@ export default function KeyMetrics(props: Props) {
 
   // Concrete $→$ range (preferred over abstract growth %)
   if (props.earnings6yr && props.earnings10yr && props.earnings10yr > props.earnings6yr) {
-    const growth = Math.round(((props.earnings10yr - props.earnings6yr) / props.earnings6yr) * 100)
     candidates.push({
       icon: TrendingUp,
-      label: 'Salary: 6yr → 10yr',
+      label: 'Salary',
       value: `${shortCurrency(props.earnings6yr)} → ${shortCurrency(props.earnings10yr)}`,
-      context: `+${growth}% over 4 years`,
+      context: '6yr → 10yr',
       tone: 'emerald',
       priority: 82,
     })
