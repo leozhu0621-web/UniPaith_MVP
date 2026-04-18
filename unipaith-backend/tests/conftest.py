@@ -38,11 +38,15 @@ test_engine = create_async_engine(TEST_DATABASE_URL, echo=False, poolclass=NullP
 TestSession = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
 
 
-_DROP_ALL_TABLES = text("""
+_RESET_SCHEMA = text("""
 DO $$ DECLARE r RECORD;
 BEGIN
     FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
         EXECUTE 'DROP TABLE IF EXISTS public.' || quote_ident(r.tablename) || ' CASCADE';
+    END LOOP;
+    FOR r IN (SELECT typname FROM pg_type
+              WHERE typnamespace = 'public'::regnamespace AND typtype = 'e') LOOP
+        EXECUTE 'DROP TYPE IF EXISTS public.' || quote_ident(r.typname) || ' CASCADE';
     END LOOP;
 END $$;
 """)
@@ -53,7 +57,7 @@ async def setup_db():
     for _attempt in range(3):
         try:
             async with test_engine.begin() as conn:
-                await conn.execute(_DROP_ALL_TABLES)
+                await conn.execute(_RESET_SCHEMA)
                 await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
                 await conn.run_sync(Base.metadata.create_all)
             break
@@ -64,7 +68,7 @@ async def setup_db():
     yield
     try:
         async with test_engine.begin() as conn:
-            await conn.execute(_DROP_ALL_TABLES)
+            await conn.execute(_RESET_SCHEMA)
     except Exception:
         pass
     await test_engine.dispose()
