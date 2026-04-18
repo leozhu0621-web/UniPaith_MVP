@@ -10,7 +10,7 @@ import { ArrowUp, Sparkles, X, Maximize2 } from 'lucide-react'
 export default function MiniCounselorPanel() {
   const navigate = useNavigate()
   const user = useAuthStore(s => s.user)
-  const { messages, addMessage, isMinimized, setMinimized } = useCounselorStore()
+  const { messages, addMessage, isMinimized, setMinimized, pendingPrompt, clearPendingPrompt } = useCounselorStore()
   const [input, setInput] = useState('')
   const endRef = useRef<HTMLDivElement>(null)
 
@@ -53,6 +53,22 @@ export default function MiniCounselorPanel() {
     sendMut.mutate(trimmed)
     setInput('')
   }
+
+  // Handle pre-filled prompts from in-page "Ask Counselor" CTAs (e.g., the
+  // program detail page). When another component sets pendingPrompt, pick it
+  // up, send as a student message, and clear the store flag.
+  useEffect(() => {
+    if (!pendingPrompt || sendMut.isPending) return
+    const text = pendingPrompt
+    clearPendingPrompt()
+    addMessage({
+      id: `s-${Date.now()}`,
+      sender_type: 'student',
+      message_body: text,
+      sent_at: new Date().toISOString(),
+    })
+    sendMut.mutate(text)
+  }, [pendingPrompt, sendMut, addMessage, clearPendingPrompt])
 
   if (isMinimized) return null
 

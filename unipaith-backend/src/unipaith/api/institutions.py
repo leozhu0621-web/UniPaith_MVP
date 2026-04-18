@@ -729,7 +729,9 @@ async def search_institutions(
     result = await db.execute(stmt)
     institutions = result.scalars().all()
 
-    # Get program counts
+    # Get program counts and school counts
+    from unipaith.models.institution import School as SchoolModel
+
     inst_ids = [i.id for i in institutions]
     if inst_ids:
         pc_result = await db.execute(
@@ -744,8 +746,19 @@ async def search_institutions(
             .group_by(Program.institution_id)
         )
         pc_map = {r[0]: r[1] for r in pc_result.all()}
+
+        sc_result = await db.execute(
+            select(
+                SchoolModel.institution_id,
+                func.count().label("cnt"),
+            )
+            .where(SchoolModel.institution_id.in_(inst_ids))
+            .group_by(SchoolModel.institution_id)
+        )
+        sc_map = {r[0]: r[1] for r in sc_result.all()}
     else:
         pc_map = {}
+        sc_map = {}
 
     items = []
     for inst in institutions:
@@ -765,6 +778,7 @@ async def search_institutions(
                 else None
             ),
             "program_count": pc_map.get(inst.id, 0),
+            "school_count": sc_map.get(inst.id, 0),
             "description_text": (
                 (inst.description_text or "")[:200]
             ),
@@ -796,6 +810,120 @@ async def get_public_institution(
     resp = InstitutionResponse.model_validate(inst)
     resp.program_count = count
     return resp
+
+
+@router.get("/{institution_id}/schools")
+async def get_institution_schools(
+    institution_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Public — returns schools within an institution, each with program count and names."""
+    from sqlalchemy import func, select
+
+    from unipaith.models.institution import Program, School
+
+    result = await db.execute(
+        select(School).where(School.institution_id == institution_id).order_by(School.sort_order, School.name)
+    )
+    schools = result.scalars().all()
+
+    if not schools:
+        return []
+
+    school_ids = [s.id for s in schools]
+    pc_result = await db.execute(
+        select(
+            Program.school_id,
+            func.count().label("cnt"),
+            func.array_agg(Program.program_name).label("names"),
+        )
+        .where(Program.school_id.in_(school_ids), Program.is_published.is_(True))
+        .group_by(Program.school_id)
+    )
+    pc_map = {r[0]: (r[1], r[2]) for r in pc_result.all()}
+
+    return [
+        {
+            "id": str(s.id),
+            "institution_id": str(s.institution_id),
+            "name": s.name,
+            "description_text": s.description_text,
+            "media_urls": s.media_urls,
+            "logo_url": s.logo_url,
+            "program_count": pc_map.get(s.id, (0, []))[0],
+            "program_names": sorted(pc_map.get(s.id, (0, []))[1] or []),
+        }
+        for s in schools
+    ]
+
+
+@router.get("/{institution_id}/schools/{school_id}/programs")
+async def get_school_programs(
+    institution_id: UUID,
+    school_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Public — returns programs within a specific school."""
+    import math
+
+    from sqlalchemy import select
+
+    from unipaith.models.institution import Institution, Program, School
+    from unipaith.schemas.institution import ProgramSummaryResponse
+
+    result = await db.execute(
+        select(Program, Institution)
+        .join(Institution, Program.institution_id == Institution.id)
+        .where(
+            Program.school_id == school_id,
+            Program.institution_id == institution_id,
+            Program.is_published.is_(True),
+        )
+        .order_by(Program.program_name)
+    )
+    rows = result.all()
+
+    def _outcomes_int(prog: Program, key: str) -> int | None:
+        v = (prog.outcomes_data or {}).get(key)
+        return int(v) if v is not None else None
+
+    def _outcomes_float(prog: Program, key: str) -> float | None:
+        v = (prog.outcomes_data or {}).get(key)
+        return float(v) if v is not None else None
+
+    return [
+        {
+            "id": str(prog.id),
+            "institution_id": str(prog.institution_id),
+            "school_id": str(prog.school_id) if prog.school_id else None,
+            "program_name": prog.program_name,
+            "degree_type": prog.degree_type,
+            "department": prog.department,
+            "tuition": prog.tuition or (inst.ranking_data or {}).get("tuition_out_of_state"),
+            "duration_months": prog.duration_months,
+            "delivery_format": prog.delivery_format,
+            "acceptance_rate": (
+                float(prog.acceptance_rate) if prog.acceptance_rate is not None
+                else (inst.ranking_data or {}).get("acceptance_rate")
+            ),
+            "application_deadline": str(prog.application_deadline) if prog.application_deadline else None,
+            "institution_name": inst.name,
+            "institution_country": inst.country,
+            "institution_city": inst.city,
+            "median_salary": (
+                _outcomes_int(prog, "median_salary")
+                or (inst.ranking_data or {}).get("earnings_10yr_median")
+            ),
+            "employment_rate": (
+                _outcomes_float(prog, "employment_rate")
+                or (inst.ranking_data or {}).get("graduation_rate")
+            ),
+            "description_text": prog.description_text,
+            "media_urls": prog.media_urls,
+            "highlights": prog.highlights,
+        }
+        for prog, inst in rows
+    ]
 
 
 @router.get("/posts/feed", response_model=list[PostResponse])

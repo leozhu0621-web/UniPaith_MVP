@@ -18,6 +18,16 @@ export async function getPublicInstitution(institutionId: string): Promise<Insti
   return data
 }
 
+export async function getInstitutionSchools(institutionId: string) {
+  const { data } = await apiClient.get(`/institutions/${institutionId}/schools`)
+  return data
+}
+
+export async function getSchoolPrograms(institutionId: string, schoolId: string) {
+  const { data } = await apiClient.get(`/institutions/${institutionId}/schools/${schoolId}/programs`)
+  return data
+}
+
 // --- Institution Search & Claim ---
 
 export async function searchUnclaimedInstitutions(query: string): Promise<UnclaimedInstitution[]> {

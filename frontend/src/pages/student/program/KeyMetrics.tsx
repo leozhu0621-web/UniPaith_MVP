@@ -1,0 +1,607 @@
+import {
+  DollarSign, TrendingUp, GraduationCap, Clock, Wallet,
+  Briefcase, Award, Sparkles, ArrowUpRight, BookOpen, MapPin,
+  Microscope, Users, Compass,
+} from 'lucide-react'
+import { formatCurrency } from '../../../utils/format'
+
+/**
+ * KeyMetrics — 4 tiles that show what's *distinctive* about THIS program.
+ *
+ * Rules:
+ * - Every tile should answer "what's unusual or advantageous here?"
+ * - Prefer concrete numbers over abstract ratings ("$64K → $82K" > "+28% growth")
+ * - Parse highlights/description text to surface program-specific facts
+ *   (credits, honors, subfields, location advantages)
+ * - Hide tiles that are the same for most programs (standard duration, standard
+ *   credits) — they're noise, not signal
+ * - Friction metrics (acceptance rate, requirement count) never go here; they
+ *   belong in the Admissions tab
+ */
+
+type Tone = 'amber' | 'emerald' | 'rose' | 'blue' | 'violet' | 'slate'
+
+const TONE: Record<Tone, { bg: string; border: string; text: string; icon: string; chip: string }> = {
+  amber:   { bg: 'bg-amber-50/70',   border: 'border-amber-200/60',   text: 'text-amber-900',   icon: 'text-amber-600',   chip: 'bg-amber-100 text-amber-700' },
+  emerald: { bg: 'bg-emerald-50/70', border: 'border-emerald-200/60', text: 'text-emerald-900', icon: 'text-emerald-600', chip: 'bg-emerald-100 text-emerald-700' },
+  rose:    { bg: 'bg-rose-50/70',    border: 'border-rose-200/60',    text: 'text-rose-900',    icon: 'text-rose-600',    chip: 'bg-rose-100 text-rose-700' },
+  blue:    { bg: 'bg-blue-50/70',    border: 'border-blue-200/60',    text: 'text-blue-900',    icon: 'text-blue-600',    chip: 'bg-blue-100 text-blue-700' },
+  violet:  { bg: 'bg-violet-50/70',  border: 'border-violet-200/60',  text: 'text-violet-900',  icon: 'text-violet-600',  chip: 'bg-violet-100 text-violet-700' },
+  slate:   { bg: 'bg-slate-50',      border: 'border-slate-200',      text: 'text-slate-800',   icon: 'text-slate-500',   chip: 'bg-slate-200 text-slate-700' },
+}
+
+interface Tile {
+  icon: typeof DollarSign
+  label: string
+  value: string
+  context?: string
+  tone: Tone
+  priority: number // higher = more distinctive, picked first
+}
+
+interface Props {
+  // Program shape
+  degreeType?: string | null
+  durationMonths?: number | null
+  tuition?: number | null
+  tracks?: string[] | null
+  applicationRequirements?: any[] | null
+  highlights?: string[] | null
+  descriptionText?: string | null
+
+  // Program-specific outcomes (from outcomes_data)
+  outcomesMedianSalary?: number | null
+  outcomesEmploymentRate?: number | null
+  outcomesInternshipConversion?: number | null
+  outcomesTopEmployers?: string[] | null
+  outcomesTopIndustries?: string[] | null
+  outcomesPaybackMonths?: number | null
+
+  // Institution rollups (fallback)
+  institutionTuition?: number | null
+  earnings6yr?: number | null
+  earnings10yr?: number | null
+  graduationRate?: number | null
+  retentionRate?: number | null
+}
+
+/* ── Constants ─────────────────────────────────────────────────────────── */
+
+const DEFAULT_DURATION_MONTHS: Record<string, number> = {
+  bachelors: 48, masters: 24, phd: 60, certificate: 12, doctorate: 60, associate: 24,
+}
+
+const DEFAULT_CREDITS: Record<string, number> = {
+  bachelors: 120, masters: 30, phd: 60, certificate: 12, associate: 60,
+}
+
+/** 2024 BLS median earnings for bachelor's-degree holders, used as earnings-premium baseline. */
+const US_BACHELORS_MEDIAN = 66600
+
+/* ── Parsers: extract distinctive facts from unstructured text ─────────── */
+
+const WORD_NUMBERS: Record<string, number> = {
+  two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12,
+}
+
+function parseNumberWord(s: string): number | null {
+  const n = parseInt(s, 10)
+  if (!isNaN(n)) return n
+  return WORD_NUMBERS[s.toLowerCase()] ?? null
+}
+
+/**
+ * Parse program highlights for specific facts we can surface as tiles:
+ *   - credit count ("128-credit curriculum")
+ *   - honors option ("Honors track for 3.65+ GPA")
+ *   - location ("Located in Greenwich Village")
+ *   - specific counts ("4 research labs", "6 concentrations")
+ */
+function tilesFromHighlights(highlights: string[], degreeType: string): Tile[] {
+  const tiles: Tile[] = []
+  const seen = new Set<string>() // dedupe by tile label
+
+  for (const raw of highlights) {
+    const h = raw.trim()
+    if (!h) continue
+
+    // Credits: "128-credit" / "128 credit" / "128 credits"
+    const creditMatch = h.match(/(\d{2,3})[-\s]credits?/i)
+    if (creditMatch && !seen.has('credits')) {
+      const n = parseInt(creditMatch[1], 10)
+      const std = DEFAULT_CREDITS[degreeType]
+      // Only show if meaningfully different from standard
+      const isDistinctive = !std || Math.abs(n - std) >= 4
+      if (isDistinctive) {
+        tiles.push({
+          icon: BookOpen,
+          label: 'Credits',
+          value: `${n}`,
+          context: n > (std ?? 120) ? 'Comprehensive' : n < (std ?? 120) ? 'Compact' : 'Standard',
+          tone: 'violet',
+          priority: 55,
+        })
+        seen.add('credits')
+      }
+    }
+
+    // Honors / thesis / research track
+    if (/honors|thesis|research\s+track/i.test(h) && !seen.has('honors')) {
+      const gpaMatch = h.match(/(\d\.\d+)\+?\s*GPA/i)
+      tiles.push({
+        icon: Award,
+        label: /thesis/i.test(h) ? 'Thesis Track' : 'Honors Track',
+        value: 'Available',
+        context: gpaMatch ? `${gpaMatch[1]}+ GPA path` : 'Advanced pathway',
+        tone: 'amber',
+        priority: 62,
+      })
+      seen.add('honors')
+    }
+
+    // Campus location: "Located in Greenwich Village" / "Campus in Palo Alto"
+    const locationMatch = h.match(/(?:located|campus|based)\s+in\s+([A-Z][A-Za-z\s]{3,30}?)(?:\.|,|$|—)/i)
+    if (locationMatch && !seen.has('location')) {
+      const loc = locationMatch[1].trim()
+      tiles.push({
+        icon: MapPin,
+        label: 'Campus',
+        value: loc,
+        context: 'Location advantage',
+        tone: 'blue',
+        priority: 52,
+      })
+      seen.add('location')
+    }
+
+    // Research / labs / partnerships
+    const labsMatch = h.match(/(\d+)\+?\s*(research\s+)?(labs?|laboratories|research\s+centers?)/i)
+    if (labsMatch && !seen.has('labs')) {
+      tiles.push({
+        icon: Microscope,
+        label: 'Research Labs',
+        value: `${labsMatch[1]}+`,
+        context: 'Hands-on opportunities',
+        tone: 'violet',
+        priority: 60,
+      })
+      seen.add('labs')
+    }
+
+    // Study abroad / international
+    if (/study\s+abroad|international\s+exchange/i.test(h) && !seen.has('abroad')) {
+      tiles.push({
+        icon: Compass,
+        label: 'Study Abroad',
+        value: 'Available',
+        context: 'Global programs',
+        tone: 'violet',
+        priority: 50,
+      })
+      seen.add('abroad')
+    }
+  }
+
+  return tiles
+}
+
+/** Parse description text for subfield / concentration counts.
+ *  e.g., "four principal subfields: cultural anthropology, archaeology..." */
+function subfieldsFromDescription(desc?: string | null): Tile | null {
+  if (!desc) return null
+  const m = desc.match(/\b(\d+|two|three|four|five|six|seven|eight|nine|ten)\s+(principal\s+|main\s+|core\s+|primary\s+|major\s+)?(subfields?|concentrations?|tracks?|specializations?|streams?|pathways?|areas?\s+of\s+(?:study|focus))/i)
+  if (!m) return null
+  const n = parseNumberWord(m[1])
+  if (!n) return null
+  const kind = m[3].replace(/s$/, '').replace(/\s+of\s+(study|focus)/, '').trim()
+  return {
+    icon: Sparkles,
+    label: `${kind.charAt(0).toUpperCase()}${kind.slice(1)}s`,
+    value: String(n),
+    context: 'Areas of focus',
+    tone: 'violet',
+    priority: 68,
+  }
+}
+
+/* ── Utility formatters ────────────────────────────────────────────────── */
+
+function shortCurrency(n: number): string {
+  if (n >= 1000) return `$${Math.round(n / 1000)}K`
+  return `$${n}`
+}
+
+function formatDurationYears(months: number): string {
+  if (months < 12) return `${months} mo`
+  const years = months / 12
+  return Number.isInteger(years) ? `${years} yr${years > 1 ? 's' : ''}` : `${years.toFixed(1)} yrs`
+}
+
+/* ── Main component ────────────────────────────────────────────────────── */
+
+export default function KeyMetrics(props: Props) {
+  const candidates: Tile[] = []
+  const degreeType = props.degreeType ?? 'bachelors'
+
+  const effectiveDuration = props.durationMonths ?? DEFAULT_DURATION_MONTHS[degreeType] ?? null
+  const effectiveTuition = props.tuition ?? props.institutionTuition ?? null
+
+  /* ── Tier 1: Program-specific outcomes (highest priority) ── */
+
+  if (props.outcomesMedianSalary) {
+    candidates.push({
+      icon: TrendingUp,
+      label: 'Median Salary',
+      value: formatCurrency(props.outcomesMedianSalary),
+      context: 'Reported by program',
+      tone: 'emerald',
+      priority: 95,
+    })
+  }
+
+  if (props.outcomesEmploymentRate != null) {
+    candidates.push({
+      icon: Briefcase,
+      label: 'Employment Rate',
+      value: `${Math.round(props.outcomesEmploymentRate * 100)}%`,
+      context: 'Within 6 months',
+      tone: 'emerald',
+      priority: 90,
+    })
+  }
+
+  if (props.outcomesInternshipConversion != null) {
+    candidates.push({
+      icon: ArrowUpRight,
+      label: 'Intern → Offer',
+      value: `${Math.round(props.outcomesInternshipConversion * 100)}%`,
+      context: 'Conversion rate',
+      tone: 'violet',
+      priority: 85,
+    })
+  }
+
+  if (props.outcomesTopEmployers && props.outcomesTopEmployers.length > 0) {
+    candidates.push({
+      icon: Award,
+      label: 'Top Employers',
+      value: props.outcomesTopEmployers.slice(0, 1)[0] ?? '',
+      context: props.outcomesTopEmployers.length > 1
+        ? `+ ${props.outcomesTopEmployers.slice(1, 3).join(', ')}`
+        : 'Primary hiring partner',
+      tone: 'violet',
+      priority: 88,
+    })
+  }
+
+  if (props.outcomesTopIndustries && props.outcomesTopIndustries.length > 0) {
+    candidates.push({
+      icon: Users,
+      label: 'Top Industry',
+      value: props.outcomesTopIndustries[0],
+      context: props.outcomesTopIndustries.length > 1
+        ? `+ ${props.outcomesTopIndustries.slice(1, 3).join(', ')}`
+        : 'Where grads go',
+      tone: 'violet',
+      priority: 80,
+    })
+  }
+
+  /* ── Tier 2: Salary trajectory and premium — concrete, not abstract ── */
+
+  // Concrete $→$ range (preferred over abstract growth %)
+  if (props.earnings6yr && props.earnings10yr && props.earnings10yr > props.earnings6yr) {
+    const growth = Math.round(((props.earnings10yr - props.earnings6yr) / props.earnings6yr) * 100)
+    candidates.push({
+      icon: TrendingUp,
+      label: 'Salary: 6yr → 10yr',
+      value: `${shortCurrency(props.earnings6yr)} → ${shortCurrency(props.earnings10yr)}`,
+      context: `+${growth}% over 4 years`,
+      tone: 'emerald',
+      priority: 82,
+    })
+  }
+
+  // Earnings premium vs national bachelors median
+  const midCareer = props.outcomesMedianSalary ?? props.earnings10yr
+  if (midCareer && midCareer > US_BACHELORS_MEDIAN * 1.05) {
+    const premium = midCareer - US_BACHELORS_MEDIAN
+    const pct = Math.round((premium / US_BACHELORS_MEDIAN) * 100)
+    candidates.push({
+      icon: ArrowUpRight,
+      label: 'Earnings Premium',
+      value: `+${shortCurrency(premium)}`,
+      context: `${pct}% above US avg`,
+      tone: 'emerald',
+      priority: 78,
+    })
+  }
+
+  /* ── Tier 3: Calculated program economics ── */
+
+  if (props.outcomesPaybackMonths) {
+    candidates.push({
+      icon: Wallet,
+      label: 'Payback Period',
+      value: `${(props.outcomesPaybackMonths / 12).toFixed(1)} yrs`,
+      context: 'To recoup tuition',
+      tone: 'blue',
+      priority: 75,
+    })
+  }
+
+  if (effectiveTuition && effectiveDuration) {
+    const years = effectiveDuration / 12
+    const total = effectiveTuition * years
+    candidates.push({
+      icon: DollarSign,
+      label: 'Total Investment',
+      value: formatCurrency(total),
+      context: `${years % 1 === 0 ? years : years.toFixed(1)} yrs × ${shortCurrency(effectiveTuition)}`,
+      tone: 'rose',
+      priority: 66,
+    })
+  } else if (effectiveTuition) {
+    candidates.push({
+      icon: DollarSign,
+      label: 'Tuition / yr',
+      value: formatCurrency(effectiveTuition),
+      context: 'Per academic year',
+      tone: 'rose',
+      priority: 50,
+    })
+  }
+
+  /* ── Tier 4: Program character — parsed from highlights + description ── */
+
+  if (props.highlights) {
+    candidates.push(...tilesFromHighlights(props.highlights, degreeType))
+  }
+
+  const subfieldsTile = subfieldsFromDescription(props.descriptionText)
+  if (subfieldsTile) candidates.push(subfieldsTile)
+
+  // Specializations from structured tracks field. Tracks can be either an
+  // array of names or a dict like { concentrations: [...], note: '...' } — the
+  // DB shape varies per program, so we normalize before using it.
+  const trackNames: string[] = (() => {
+    const t: any = props.tracks
+    if (!t) return []
+    if (Array.isArray(t)) return t.filter((x: any) => typeof x === 'string')
+    if (typeof t === 'object') {
+      for (const key of ['concentrations', 'tracks', 'subfields', 'specializations', 'streams', 'pathways']) {
+        if (Array.isArray(t[key])) return t[key].filter((x: any) => typeof x === 'string')
+      }
+    }
+    return []
+  })()
+
+  if (trackNames.length > 0) {
+    candidates.push({
+      icon: Sparkles,
+      label: 'Specializations',
+      value: String(trackNames.length),
+      context: trackNames.slice(0, 2).join(', '),
+      tone: 'violet',
+      priority: 64,
+    })
+  }
+
+  /* ── Tier 5: Duration — only when it's actually distinctive ── */
+
+  if (effectiveDuration) {
+    const std = DEFAULT_DURATION_MONTHS[degreeType]
+    // Only show duration if it's meaningfully different from the norm for this degree type.
+    // A 4-year Bachelor's isn't interesting; a 3-year accelerated one is.
+    const isDistinctive = !std || Math.abs(effectiveDuration - std) >= 6
+    if (isDistinctive) {
+      const fast = std && effectiveDuration < std
+      candidates.push({
+        icon: Clock,
+        label: 'Duration',
+        value: formatDurationYears(effectiveDuration),
+        context: fast ? 'Accelerated track' : effectiveDuration <= 24 ? 'Graduate track' : 'Extended program',
+        tone: 'blue',
+        priority: 58,
+      })
+    }
+  }
+
+  /* ── Tier 6: Institution rollups (last-resort fallback) ── */
+
+  if (props.earnings10yr && !candidates.some(c => /salary|earnings|premium/i.test(c.label))) {
+    candidates.push({
+      icon: TrendingUp,
+      label: 'Mid-Career (10yr)',
+      value: formatCurrency(props.earnings10yr),
+      context: 'Median graduate earnings',
+      tone: 'emerald',
+      priority: 70,
+    })
+  }
+
+  if (props.graduationRate != null) {
+    candidates.push({
+      icon: GraduationCap,
+      label: 'Grad Rate',
+      value: `${Math.round(props.graduationRate * 100)}%`,
+      context: props.graduationRate > 0.85 ? 'Well above avg' : props.graduationRate > 0.7 ? 'Above avg' : 'Typical',
+      tone: 'blue',
+      priority: 40,
+    })
+  }
+
+  if (props.retentionRate != null) {
+    candidates.push({
+      icon: Users,
+      label: 'Retention',
+      value: `${Math.round(props.retentionRate * 100)}%`,
+      context: 'First-year return',
+      tone: 'blue',
+      priority: 38,
+    })
+  }
+
+  /* ── Pick top 4 by priority, with soft de-duping ── */
+
+  // Sort by priority, highest first
+  candidates.sort((a, b) => b.priority - a.priority)
+
+  const picked: Tile[] = []
+  let salaryTiles = 0
+  let violetTiles = 0
+
+  for (const c of candidates) {
+    if (picked.length >= 4) break
+    const isSalaryFamily = /salary|earnings|premium|mid-career|payback/i.test(c.label)
+    if (isSalaryFamily && salaryTiles >= 2) continue
+    if (c.tone === 'violet' && violetTiles >= 2) continue // avoid over-purpling
+    if (isSalaryFamily) salaryTiles++
+    if (c.tone === 'violet') violetTiles++
+    picked.push(c)
+  }
+
+  // If we genuinely can't find 4 real tiles, show what we have — don't pad.
+  if (picked.length === 0) return null
+
+  return (
+    <div className="mb-5">
+      <div className={`grid gap-3 grid-cols-2 ${picked.length >= 4 ? 'md:grid-cols-4' : picked.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
+        {picked.map((t, i) => <MetricTile key={i} tile={t} />)}
+      </div>
+    </div>
+  )
+}
+
+/* ── Tile render — editorial-style card with left accent + mini viz ──── */
+
+/** Helpers that map tone → specific utility classes. We keep these close to
+ *  the render function because they only matter for presentation. */
+const ACCENT_BG: Record<Tone, string> = {
+  amber: 'bg-amber-500',
+  emerald: 'bg-emerald-500',
+  rose: 'bg-rose-500',
+  blue: 'bg-blue-500',
+  violet: 'bg-violet-500',
+  slate: 'bg-slate-400',
+}
+const ACCENT_GRADIENT: Record<Tone, string> = {
+  amber: 'from-amber-400 to-amber-600',
+  emerald: 'from-emerald-400 to-emerald-600',
+  rose: 'from-rose-400 to-rose-600',
+  blue: 'from-blue-400 to-blue-600',
+  violet: 'from-violet-400 to-violet-600',
+  slate: 'from-slate-300 to-slate-500',
+}
+const ICON_COLOR: Record<Tone, string> = {
+  amber: 'text-amber-600',
+  emerald: 'text-emerald-600',
+  rose: 'text-rose-600',
+  blue: 'text-blue-600',
+  violet: 'text-violet-600',
+  slate: 'text-slate-500',
+}
+const VALUE_COLOR: Record<Tone, string> = {
+  amber: 'text-amber-900',
+  emerald: 'text-emerald-900',
+  rose: 'text-rose-900',
+  blue: 'text-blue-900',
+  violet: 'text-violet-900',
+  slate: 'text-slate-800',
+}
+
+/** A small SVG sparkline for tiles that represent a trajectory (X → Y). */
+function TrajectoryViz({ tone }: { tone: Tone }) {
+  return (
+    <svg viewBox="0 0 100 20" className="w-full h-5 mt-3" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id={`grad-${tone}`} x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0%" className={`${ICON_COLOR[tone]}`} stopColor="currentColor" stopOpacity="0.2" />
+          <stop offset="100%" className={`${ICON_COLOR[tone]}`} stopColor="currentColor" stopOpacity="1" />
+        </linearGradient>
+      </defs>
+      {/* Baseline track */}
+      <line x1="6" y1="12" x2="94" y2="12" className="stroke-slate-200" strokeWidth="1.5" strokeLinecap="round" />
+      {/* Rising curve */}
+      <path
+        d="M 6 14 Q 40 13, 60 9 T 94 4"
+        fill="none"
+        stroke={`url(#grad-${tone})`}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      {/* Start dot */}
+      <circle cx="6" cy="14" r="2" className={`fill-white ${ICON_COLOR[tone]}`} stroke="currentColor" strokeWidth="1.5" />
+      {/* End dot */}
+      <circle cx="94" cy="4" r="3" className={`${ACCENT_BG[tone]} fill-current`} />
+    </svg>
+  )
+}
+
+/** Horizontal gauge bar for tiles whose value is a percentage. */
+function PercentViz({ value, tone }: { value: string; tone: Tone }) {
+  const m = value.match(/^(\d+(?:\.\d+)?)\s*%/)
+  if (!m) return null
+  const pct = Math.min(100, Math.max(0, parseFloat(m[1])))
+  return (
+    <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+      <div className={`h-full rounded-full bg-gradient-to-r ${ACCENT_GRADIENT[tone]}`} style={{ width: `${pct}%` }} />
+    </div>
+  )
+}
+
+/** Comparison bar for tiles that express an advantage over a baseline, e.g. "+$16K". */
+function PremiumViz({ tone }: { tone: Tone }) {
+  return (
+    <div className="mt-3 relative h-1.5 rounded-full bg-slate-100 overflow-hidden">
+      {/* Baseline segment (grey) */}
+      <div className="absolute inset-y-0 left-0 w-[55%] bg-slate-300" />
+      {/* Premium segment (tone) */}
+      <div className={`absolute inset-y-0 left-[55%] w-[38%] rounded-r-full bg-gradient-to-r ${ACCENT_GRADIENT[tone]}`} />
+      {/* Baseline marker */}
+      <div className="absolute top-1/2 left-[55%] -translate-y-1/2 w-0.5 h-3 bg-slate-500" />
+    </div>
+  )
+}
+
+function MetricTile({ tile }: { tile: Tile }) {
+  const isTrajectory = tile.value.includes('→')
+  const isPercent = /^\d+(\.\d+)?\s*%$/.test(tile.value.trim())
+  const isPremium = tile.value.startsWith('+$') || tile.value.startsWith('+ $')
+  const Icon = tile.icon
+
+  return (
+    <div className="group relative rounded-xl bg-white border border-divider pl-4 pr-4 py-4 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:border-slate-300 overflow-hidden">
+      {/* Left accent bar — the only bg color on the tile */}
+      <span className={`absolute left-0 top-0 bottom-0 w-[3px] ${ACCENT_BG[tile.tone]}`} aria-hidden />
+
+      {/* Eyebrow: icon + label */}
+      <div className="flex items-center gap-2 mb-2.5">
+        <Icon size={12} className={ICON_COLOR[tile.tone]} />
+        <span className="text-[10px] uppercase tracking-[0.08em] font-semibold text-slate-500">
+          {tile.label}
+        </span>
+      </div>
+
+      {/* Hero value — bold, tabular, truncates if too wide */}
+      <p
+        className={`text-[26px] font-bold tracking-tight tabular-nums leading-[1.1] ${VALUE_COLOR[tile.tone]} truncate`}
+        title={tile.value}
+      >
+        {tile.value}
+      </p>
+
+      {/* Mini visualization, only for tile types that benefit from one */}
+      {isTrajectory && <TrajectoryViz tone={tile.tone} />}
+      {!isTrajectory && isPercent && <PercentViz value={tile.value} tone={tile.tone} />}
+      {!isTrajectory && !isPercent && isPremium && <PremiumViz tone={tile.tone} />}
+
+      {/* Context — editorial subtitle */}
+      {tile.context && (
+        <p className="text-[11.5px] text-slate-500 mt-3 leading-snug line-clamp-2">
+          {tile.context}
+        </p>
+      )}
+    </div>
+  )
+}

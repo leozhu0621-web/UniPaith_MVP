@@ -82,6 +82,40 @@ class Institution(Base):
     posts: Mapped[list[InstitutionPost]] = relationship(
         back_populates="institution", cascade="all, delete-orphan"
     )
+    schools: Mapped[list[School]] = relationship(
+        back_populates="institution", cascade="all, delete-orphan"
+    )
+
+
+class School(Base):
+    """A school/college within a university (e.g. Stern School of Business within NYU)."""
+
+    __tablename__ = "schools"
+    __table_args__ = (
+        Index("ix_schools_institution", "institution_id"),
+        UniqueConstraint("institution_id", "name", name="uq_schools_institution_name"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    institution_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("institutions.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description_text: Mapped[str | None] = mapped_column(Text)
+    media_urls: Mapped[dict | None] = mapped_column(JSONB)
+    logo_url: Mapped[str | None] = mapped_column(String(1000))
+    sort_order: Mapped[int | None] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    institution: Mapped[Institution] = relationship(back_populates="schools")
+    programs: Mapped[list[Program]] = relationship(back_populates="school")
 
 
 class Program(Base):
@@ -93,6 +127,12 @@ class Program(Base):
         UUID(as_uuid=True),
         ForeignKey("institutions.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
+    )
+    school_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("schools.id", ondelete="SET NULL"),
+        nullable=True,
         index=True,
     )
     program_name: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -125,6 +165,7 @@ class Program(Base):
     )
 
     institution: Mapped[Institution] = relationship(back_populates="programs")
+    school: Mapped[School | None] = relationship(back_populates="programs")
 
 
 class IntakeRound(Base):
