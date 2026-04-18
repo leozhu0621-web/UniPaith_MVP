@@ -485,14 +485,6 @@ const ACCENT_BG: Record<Tone, string> = {
   violet: 'bg-violet-500',
   slate: 'bg-slate-400',
 }
-const ACCENT_GRADIENT: Record<Tone, string> = {
-  amber: 'from-amber-400 to-amber-600',
-  emerald: 'from-emerald-400 to-emerald-600',
-  rose: 'from-rose-400 to-rose-600',
-  blue: 'from-blue-400 to-blue-600',
-  violet: 'from-violet-400 to-violet-600',
-  slate: 'from-slate-300 to-slate-500',
-}
 const ICON_COLOR: Record<Tone, string> = {
   amber: 'text-amber-600',
   emerald: 'text-emerald-600',
@@ -510,64 +502,7 @@ const VALUE_COLOR: Record<Tone, string> = {
   slate: 'text-slate-800',
 }
 
-/** A small SVG sparkline for tiles that represent a trajectory (X → Y). */
-function TrajectoryViz({ tone }: { tone: Tone }) {
-  return (
-    <svg viewBox="0 0 100 20" className="w-full h-5 mt-3" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id={`grad-${tone}`} x1="0" x2="1" y1="0" y2="0">
-          <stop offset="0%" className={`${ICON_COLOR[tone]}`} stopColor="currentColor" stopOpacity="0.2" />
-          <stop offset="100%" className={`${ICON_COLOR[tone]}`} stopColor="currentColor" stopOpacity="1" />
-        </linearGradient>
-      </defs>
-      {/* Baseline track */}
-      <line x1="6" y1="12" x2="94" y2="12" className="stroke-slate-200" strokeWidth="1.5" strokeLinecap="round" />
-      {/* Rising curve */}
-      <path
-        d="M 6 14 Q 40 13, 60 9 T 94 4"
-        fill="none"
-        stroke={`url(#grad-${tone})`}
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      {/* Start dot */}
-      <circle cx="6" cy="14" r="2" className={`fill-white ${ICON_COLOR[tone]}`} stroke="currentColor" strokeWidth="1.5" />
-      {/* End dot */}
-      <circle cx="94" cy="4" r="3" className={`${ACCENT_BG[tone]} fill-current`} />
-    </svg>
-  )
-}
-
-/** Horizontal gauge bar for tiles whose value is a percentage. */
-function PercentViz({ value, tone }: { value: string; tone: Tone }) {
-  const m = value.match(/^(\d+(?:\.\d+)?)\s*%/)
-  if (!m) return null
-  const pct = Math.min(100, Math.max(0, parseFloat(m[1])))
-  return (
-    <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-      <div className={`h-full rounded-full bg-gradient-to-r ${ACCENT_GRADIENT[tone]}`} style={{ width: `${pct}%` }} />
-    </div>
-  )
-}
-
-/** Comparison bar for tiles that express an advantage over a baseline, e.g. "+$16K". */
-function PremiumViz({ tone }: { tone: Tone }) {
-  return (
-    <div className="mt-3 relative h-1.5 rounded-full bg-slate-100 overflow-hidden">
-      {/* Baseline segment (grey) */}
-      <div className="absolute inset-y-0 left-0 w-[55%] bg-slate-300" />
-      {/* Premium segment (tone) */}
-      <div className={`absolute inset-y-0 left-[55%] w-[38%] rounded-r-full bg-gradient-to-r ${ACCENT_GRADIENT[tone]}`} />
-      {/* Baseline marker */}
-      <div className="absolute top-1/2 left-[55%] -translate-y-1/2 w-0.5 h-3 bg-slate-500" />
-    </div>
-  )
-}
-
 function MetricTile({ tile }: { tile: Tile }) {
-  const isTrajectory = tile.value.includes('→')
-  const isPercent = /^\d+(\.\d+)?\s*%$/.test(tile.value.trim())
-  const isPremium = tile.value.startsWith('+$') || tile.value.startsWith('+ $')
   const Icon = tile.icon
 
   return (
@@ -591,14 +526,9 @@ function MetricTile({ tile }: { tile: Tile }) {
         {tile.value}
       </p>
 
-      {/* Mini visualization, only for tile types that benefit from one */}
-      {isTrajectory && <TrajectoryViz tone={tile.tone} />}
-      {!isTrajectory && isPercent && <PercentViz value={tile.value} tone={tile.tone} />}
-      {!isTrajectory && !isPercent && isPremium && <PremiumViz tone={tile.tone} />}
-
       {/* Context — editorial subtitle */}
       {tile.context && (
-        <p className="text-[11.5px] text-slate-500 mt-3 leading-snug line-clamp-2">
+        <p className="text-[11.5px] text-slate-500 mt-2 leading-snug line-clamp-2">
           {tile.context}
         </p>
       )}

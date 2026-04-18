@@ -8,11 +8,10 @@ import { useCompareStore } from '../../stores/compare-store'
 import UniversityCard from './explore/cards/UniversityCard'
 import SchoolCard from './explore/cards/SchoolCard'
 import ProgramCard from './explore/cards/ProgramCard'
-import InterestPills from './explore/shared/InterestPills'
 import {
   Search, X, Loader2, Sparkles, ChevronRight, Building2, GraduationCap, ChevronLeft,
 } from 'lucide-react'
-import type { ProgramSummary, SchoolSummary, MatchResult } from '../../types'
+import type { ProgramSummary, SchoolSummary } from '../../types'
 
 interface NlpResult {
   filters_applied: Record<string, any>

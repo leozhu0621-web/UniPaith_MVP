@@ -28,7 +28,7 @@ export default function RelatedSidebar({
   rsvpedIds = new Set(),
 }: Props) {
   const upcomingEvents = events
-    .filter(e => new Date((e as any).event_datetime || e.starts_at || Date.now()) > new Date())
+    .filter(e => new Date((e as any).event_datetime || (e as any).starts_at || (e as any).start_time || Date.now()) > new Date())
     .slice(0, 2)
 
   return (

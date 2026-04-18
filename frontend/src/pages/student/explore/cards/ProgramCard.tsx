@@ -3,7 +3,7 @@ import { DEGREE_LABELS } from '../../../../utils/constants'
 import type { ProgramSummary, MatchResult } from '../../../../types'
 import {
   Bookmark, BookmarkCheck, DollarSign, GraduationCap,
-  TrendingUp, Percent, ArrowRightLeft, MessageSquare,
+  TrendingUp, Percent, ArrowRightLeft,
   Clock, Building, Calendar, ArrowRight, Sparkles,
 } from 'lucide-react'
 import { differenceInDays } from 'date-fns'
