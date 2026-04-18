@@ -139,7 +139,7 @@ class AcademicRecord(Base):
     institution_name: Mapped[str] = mapped_column(String(255), nullable=False)
     degree_type: Mapped[str] = mapped_column(String(50), nullable=False)
     field_of_study: Mapped[str | None] = mapped_column(String(255))
-    gpa: Mapped[Decimal | None] = mapped_column(Numeric(4, 2))
+    gpa: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
     gpa_scale: Mapped[str | None] = mapped_column(String(20))
     start_date: Mapped[date | None] = mapped_column(Date)
     end_date: Mapped[date | None] = mapped_column(Date)

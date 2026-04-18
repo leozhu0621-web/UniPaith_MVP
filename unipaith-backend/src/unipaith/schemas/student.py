@@ -76,7 +76,7 @@ class CreateAcademicRecordRequest(BaseModel):
     school_reported_rigor: dict | None = None
     disruption_details: str | None = None
     normalized_gpa: Decimal | None = Field(None, ge=0, le=4)
-    transcript_parse_status: str | None = None
+    transcript_parse_status: str = "not_parsed"
 
 
 class UpdateAcademicRecordRequest(BaseModel):
@@ -213,7 +213,7 @@ class CreateTestScoreRequest(BaseModel):
     test_waiver_basis: str | None = None
     official_score_report_url: str | None = None
     is_verified: bool | None = None
-    score_normalization_status: str | None = None
+    score_normalization_status: str = "unmapped"
 
 
 class UpdateTestScoreRequest(BaseModel):
