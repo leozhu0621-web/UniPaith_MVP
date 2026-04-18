@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import html
 import logging
 from uuid import UUID
 
@@ -136,15 +137,16 @@ class CampaignEmailService:
             variables,
         )
 
-        # Build HTML email
-        body_html = body_text.replace(chr(10), "<br>")
-        unsub_url = variables["unsubscribe_url"]
+        # Build HTML email — escape user-controlled values to prevent injection
+        safe_inst = html.escape(institution_name)
+        body_html = html.escape(body_text).replace(chr(10), "<br>")
+        unsub_url = html.escape(variables["unsubscribe_url"])
         html_body = (
             '<div style="font-family:sans-serif;'
             'max-width:600px;margin:0 auto;padding:20px">'
             '<div style="text-align:center;margin-bottom:24px">'
             f'<h2 style="color:#1a1a1a;margin:0">'
-            f"{institution_name}</h2></div>"
+            f"{safe_inst}</h2></div>"
             '<div style="color:#374151;font-size:14px;'
             f'line-height:1.6">{body_html}</div>'
             '<div style="margin-top:24px;text-align:center">'
@@ -155,7 +157,7 @@ class CampaignEmailService:
             '<div style="margin-top:32px;padding-top:16px;'
             "border-top:1px solid #e5e7eb;text-align:center;"
             'font-size:11px;color:#9ca3af">'
-            f"<p>Sent by {institution_name} via UniPaith</p>"
+            f"<p>Sent by {safe_inst} via UniPaith</p>"
             f'<a href="{unsub_url}" style="color:#9ca3af">'
             "Unsubscribe</a></div></div>"
         )
