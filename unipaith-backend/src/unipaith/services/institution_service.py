@@ -1552,7 +1552,7 @@ class InstitutionService:
         )
         result = await self.db.execute(stmt)
 
-        promos: list[PromotionResponse] = []
+        promos: list[Promotion] = []
         for p in result.scalars().all():
             # Time-box check
             if p.starts_at and p.starts_at > now:
@@ -1975,7 +1975,6 @@ class InstitutionService:
             if not program:
                 continue
             inst = program.institution
-            rd = (inst.ranking_data or {}) if inst else {}
             ordered.append(
                 ProgramSummaryResponse(
                     id=program.id,
@@ -1983,13 +1982,13 @@ class InstitutionService:
                     program_name=program.program_name,
                     degree_type=program.degree_type,
                     department=program.department,
-                    tuition=program.tuition or rd.get("tuition_out_of_state"),
+                    tuition=program.tuition,
                     duration_months=program.duration_months,
                     delivery_format=program.delivery_format,
                     acceptance_rate=(
                         float(program.acceptance_rate)
                         if program.acceptance_rate is not None
-                        else rd.get("acceptance_rate")
+                        else None
                     ),
                     application_deadline=program.application_deadline,
                     institution_name=inst.name if inst else "",
@@ -1999,12 +1998,8 @@ class InstitutionService:
                         _outcomes_int(program, "median_salary")
                         or _outcomes_int(program, "earnings_4yr_median")
                         or _outcomes_int(program, "earnings_1yr_median")
-                        or rd.get("earnings_10yr_median")
                     ),
-                    employment_rate=(
-                        _outcomes_float(program, "employment_rate")
-                        or rd.get("graduation_rate")
-                    ),
+                    employment_rate=_outcomes_float(program, "employment_rate"),
                     payback_months=_outcomes_int(program, "payback_months"),
                     description_text=program.description_text,
                     media_urls=program.media_urls,

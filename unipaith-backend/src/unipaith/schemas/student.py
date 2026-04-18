@@ -212,7 +212,7 @@ class CreateTestScoreRequest(BaseModel):
     test_waiver_flag: bool | None = None
     test_waiver_basis: str | None = None
     official_score_report_url: str | None = None
-    is_verified: bool | None = None
+    is_verified: bool = False
     score_normalization_status: str = "unmapped"
 
 
