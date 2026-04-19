@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { searchPrograms, nlpSearch } from '../../api/programs'
@@ -7,10 +7,13 @@ import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
 import { useCompareStore } from '../../stores/compare-store'
 import UniversityCard from './explore/cards/UniversityCard'
 import ProgramCard from './explore/cards/ProgramCard'
+import ExploreFilters, { EMPTY_FILTERS, applyFilters, type FilterState } from './explore/shared/ExploreFilters'
 import {
   Search, X, Loader2, Sparkles, Building2,
 } from 'lucide-react'
 import type { ProgramSummary } from '../../types'
+import type { InstitutionClassification } from './explore/shared/classifyInstitution'
+import type { SizeBucket } from './explore/shared/classifyInstitution'
 
 interface NlpResult {
   filters_applied: Record<string, any>
@@ -26,9 +29,36 @@ interface NlpResult {
  * to /s/institutions/:id, which exposes a Schools tab that leads to the
  * per-school detail page.
  */
+/** Parse filter state from URL search params. Each filter is a comma-
+ *  separated list on its own param key. */
+function filtersFromURL(params: URLSearchParams): FilterState {
+  const split = (key: string) =>
+    (params.get(key) || '').split(',').map(s => s.trim()).filter(Boolean)
+  return {
+    country: split('country'),
+    setting: split('setting'),
+    size: split('size') as SizeBucket[],
+    type: split('type') as InstitutionClassification[],
+    subjects: split('subjects'),
+    industries: split('industries'),
+  }
+}
+
+/** Serialize filter state into URL search params (preserves `q`). */
+function filtersToURL(base: URLSearchParams, f: FilterState): URLSearchParams {
+  const next = new URLSearchParams(base)
+  const keys: Array<keyof FilterState> = ['country', 'setting', 'size', 'type', 'subjects', 'industries']
+  for (const k of keys) {
+    const v = (f[k] as string[]).join(',')
+    if (v) next.set(k, v)
+    else next.delete(k)
+  }
+  return next
+}
+
 export default function ExplorePage() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
   const compareStore = useCompareStore()
 
@@ -36,6 +66,12 @@ export default function ExplorePage() {
   const [q, setQ] = useState(searchParams.get('q') || '')
   const [isSearching, setIsSearching] = useState(false)
   const [nlpResult, setNlpResult] = useState<NlpResult | null>(null)
+
+  // Filter state lives in the URL so refresh + share + back all work.
+  const filters = useMemo(() => filtersFromURL(searchParams), [searchParams])
+  const setFilters = (next: FilterState) => {
+    setSearchParams(filtersToURL(searchParams, next), { replace: true })
+  }
 
   // ─── Queries ───
 
@@ -93,6 +129,10 @@ export default function ExplorePage() {
   // ─── Data ───
 
   const uniList: any[] = universities?.items ?? []
+  const filteredUniList = useMemo(() => applyFilters(uniList, filters), [uniList, filters])
+  const hasActiveFilters =
+    filters.country.length + filters.setting.length + filters.size.length +
+    filters.type.length + filters.subjects.length + filters.industries.length > 0
   const searchProgramList: ProgramSummary[] = nlpResult
     ? (nlpResult.results?.items ?? [])
     : (searchResults?.items ?? [])
@@ -168,9 +208,17 @@ export default function ExplorePage() {
         </>
       )}
 
-      {/* ── BROWSE MODE: Universities grid ── */}
+      {/* ── BROWSE MODE: Filter bar + Universities grid ── */}
       {!isSearching && (
         <>
+          {uniList.length > 0 && (
+            <ExploreFilters
+              universities={uniList}
+              filters={filters}
+              onChange={setFilters}
+            />
+          )}
+
           {uniLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map(i => <div key={i} className="h-80 bg-white rounded-xl border border-divider animate-pulse" />)}
@@ -181,16 +229,35 @@ export default function ExplorePage() {
               <p className="text-sm text-student-ink font-medium mb-1">No universities yet</p>
               <p className="text-xs text-student-text">Universities will appear here as they join the platform.</p>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {uniList.map((inst: any) => (
-                <UniversityCard
-                  key={inst.id}
-                  institution={inst}
-                  onClick={() => navigate(`/s/institutions/${inst.id}`)}
-                />
-              ))}
+          ) : filteredUniList.length === 0 ? (
+            <div className="text-center py-16 bg-white rounded-xl border border-divider">
+              <Building2 size={32} className="mx-auto text-stone mb-3" />
+              <p className="text-sm text-student-ink font-medium mb-1">No universities match your filters</p>
+              <p className="text-xs text-student-text mb-4">Try removing a filter or broadening your search.</p>
+              <button
+                onClick={() => setFilters(EMPTY_FILTERS)}
+                className="text-xs font-medium text-student hover:text-student-hover"
+              >
+                Clear all filters
+              </button>
             </div>
+          ) : (
+            <>
+              {hasActiveFilters && (
+                <p className="text-[11px] text-student-text/70 mb-3">
+                  Showing <span className="font-semibold text-student-ink">{filteredUniList.length}</span> of {uniList.length} universities
+                </p>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredUniList.map((inst: any) => (
+                  <UniversityCard
+                    key={inst.id}
+                    institution={inst}
+                    onClick={() => navigate(`/s/institutions/${inst.id}`)}
+                  />
+                ))}
+              </div>
+            </>
           )}
         </>
       )}
