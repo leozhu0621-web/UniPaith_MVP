@@ -1290,11 +1290,11 @@ async def get_student_feed(
                 "description": ev.description,
                 "event_type": ev.event_type,
                 "location": ev.location,
-                "start_time": ev.start_time.isoformat(),
-                "end_time": ev.end_time.isoformat(),
+                "start_time": ev.start_time.isoformat() if ev.start_time else None,
+                "end_time": ev.end_time.isoformat() if ev.end_time else None,
                 "capacity": ev.capacity,
                 "rsvp_count": ev.rsvp_count,
-                "date": ev.start_time.isoformat(),
+                "date": ev.start_time.isoformat() if ev.start_time else None,
             })
 
         # 3. Posts from followed institutions

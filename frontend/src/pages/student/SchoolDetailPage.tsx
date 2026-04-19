@@ -128,8 +128,8 @@ export default function SchoolDetailPage() {
   const instName = p.institution_name || ''
 
   const upcomingEvent = eventsList
-    .filter((e: any) => new Date(e.event_datetime || e.starts_at || Date.now()) > new Date())
-    .sort((a: any, b: any) => new Date(a.event_datetime || a.starts_at).getTime() - new Date(b.event_datetime || b.starts_at).getTime())[0]
+    .filter((e: any) => new Date(e.start_time) > new Date())
+    .sort((a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())[0]
 
   const handleCompare = () => {
     if (compareStore.has(p.id)) compareStore.remove(p.id)

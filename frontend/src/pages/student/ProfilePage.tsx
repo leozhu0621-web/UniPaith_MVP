@@ -722,7 +722,7 @@ export default function ProfilePage() {
           <dl className="grid grid-cols-2 gap-2 text-sm">
             <div><dt className="text-gray-500">AI Matching</dt><dd>{dataRights.consent_matching ? 'Allowed' : 'Not allowed'}</dd></div>
             <div><dt className="text-gray-500">School Outreach</dt><dd>{dataRights.consent_outreach ? 'Allowed' : 'Not allowed'}</dd></div>
-            {dataRights.data_retention && <div><dt className="text-gray-500">Data Retention</dt><dd className="capitalize">{dataRights.data_retention.replace(/_/g, ' ')}</dd></div>}
+            {dataRights.data_retention_preference && <div><dt className="text-gray-500">Data Retention</dt><dd className="capitalize">{dataRights.data_retention_preference.replace(/_/g, ' ')}</dd></div>}
             {dataRights.deletion_requested && <div><dt className="text-gray-500">Deletion</dt><dd className="text-red-600">Requested</dd></div>}
           </dl>
         )}
