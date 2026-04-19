@@ -277,9 +277,9 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
           tone="emerald"
           emphasize={program.median_salary != null && program.median_salary > 80000}
         />
-        {/* Grad rate */}
+        {/* Employment rate */}
         <StatTile
-          label="Grad Rate"
+          label="Employment"
           value={gradPct != null ? `${gradPct}%` : '—'}
           icon={GraduationCap}
           tone="blue"
