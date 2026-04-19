@@ -1189,6 +1189,41 @@ async def bulk_add_programs(
     return {"inserted": inserted, "skipped_existing": skipped}
 
 
+# --- One-shot DDL repair (divergent-revision safety net) ---
+#
+# The duplicate m3n4o5p6q7r8 revision in alembic means the entrypoint script
+# stamps head rather than upgrading, so new columns defined after that
+# revision don't land. This endpoint idempotently applies the DDL for the
+# review/employer rating-dimension columns from migration 4c9d6e1a8b3f. It
+# is safe to call repeatedly; ``ADD COLUMN IF NOT EXISTS`` is a no-op when
+# the column already exists.
+
+
+@router.post("/ensure-review-employer-dims")
+async def ensure_review_employer_dims(
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from sqlalchemy import text
+
+    statements = [
+        "ALTER TABLE student_program_reviews "
+        "ADD COLUMN IF NOT EXISTS rating_internship_access INTEGER",
+        "ALTER TABLE student_program_reviews "
+        "ADD COLUMN IF NOT EXISTS rating_community_culture INTEGER",
+        "ALTER TABLE employer_feedback "
+        "ADD COLUMN IF NOT EXISTS rating_teamwork INTEGER",
+        "ALTER TABLE employer_feedback "
+        "ADD COLUMN IF NOT EXISTS rating_reliability INTEGER",
+    ]
+    applied = []
+    for stmt in statements:
+        await db.execute(text(stmt))
+        applied.append(stmt)
+    await db.commit()
+    return {"applied": applied, "count": len(applied)}
+
+
 # --- Image Download & Upload to S3 ---
 
 
