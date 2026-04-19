@@ -1224,6 +1224,39 @@ async def ensure_review_employer_dims(
     return {"applied": applied, "count": len(applied)}
 
 
+class PublishAllProgramsRequest(BaseModel):
+    institution_name: str
+
+
+@router.post("/publish-all-programs")
+async def publish_all_programs(
+    body: PublishAllProgramsRequest,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """One-shot: publish every program for an institution. Used after a bulk
+    add where the seed script's is_published default did not propagate
+    through pydantic model_dump."""
+    from sqlalchemy import text
+
+    inst_r = await db.execute(
+        select(Institution).where(Institution.name == body.institution_name)
+    )
+    inst = inst_r.scalar_one_or_none()
+    if not inst:
+        return {"updated": 0, "skipped": "institution_not_found"}
+
+    result = await db.execute(
+        text(
+            "UPDATE programs SET is_published = true "
+            "WHERE institution_id = :iid AND is_published = false"
+        ),
+        {"iid": str(inst.id)},
+    )
+    await db.commit()
+    return {"updated": result.rowcount or 0, "institution": inst.name}
+
+
 # --- Image Download & Upload to S3 ---
 
 
