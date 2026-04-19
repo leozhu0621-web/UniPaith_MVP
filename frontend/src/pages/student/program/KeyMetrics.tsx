@@ -74,14 +74,44 @@ interface Props {
 }
 
 /**
- * Five fixed sections. Every program renders AT MOST five tiles — one per
- * section — so the strip has a consistent shape across programs and
+ * Five fixed sections. Every program renders EXACTLY five tiles — one per
+ * section — so the strip has a constant shape across programs and
  * cross-program comparison is meaningful. Within each section the highest-
- * priority qualifying candidate wins its slot.
+ * priority qualifying candidate wins its slot; sections with no qualifying
+ * data render a placeholder tile so the five-slot shape is preserved.
  */
 type Section = 'A' | 'B' | 'C' | 'D' | 'E'
 
 const SECTION_ORDER: Section[] = ['A', 'B', 'C', 'D', 'E']
+
+/**
+ * Each section owns a single tone. Tile-level tones are IGNORED during
+ * render — the section's tone is applied instead, so the whole group
+ * reads as one color family regardless of which candidate wins the slot.
+ *   A — emerald   outcomes / earnings (positive signal)
+ *   B — rose      money / cost
+ *   C — violet    program character / distinctive features
+ *   D — blue      structural / time
+ *   E — amber     institution fallback / school reputation
+ */
+const SECTION_TONE: Record<Section, Tone> = {
+  A: 'emerald',
+  B: 'rose',
+  C: 'violet',
+  D: 'blue',
+  E: 'amber',
+}
+
+/** Placeholder tile shown when a section has no qualifying data, so the
+ *  five-slot shape is always preserved. Rendered muted but keeps the
+ *  section tone as the left accent. */
+const SECTION_PLACEHOLDER: Record<Section, { icon: typeof DollarSign; label: string; context: string }> = {
+  A: { icon: TrendingUp,   label: 'Outcomes',        context: 'Not yet reported' },
+  B: { icon: DollarSign,   label: 'Program Cost',    context: 'Not yet reported' },
+  C: { icon: Sparkles,     label: 'Character',       context: 'Not yet reported' },
+  D: { icon: Clock,        label: 'Duration',        context: 'Not yet reported' },
+  E: { icon: GraduationCap, label: 'School Outcomes', context: 'Not yet reported' },
+}
 
 /** Which labels belong to which section. Every Tile produced by this file
  *  MUST have its label in exactly one of these sets, or the picker will
@@ -494,10 +524,12 @@ export default function KeyMetrics(props: Props) {
     })
   }
 
-  /* ── Pick one tile per section (A, B, C, D, E) ──
-   * Within each section, the highest-priority qualifying candidate wins
-   * its slot. If a section has no candidates, its slot is simply omitted
-   * (the strip shrinks, it does not pad with empty states).
+  /* ── Pick exactly one tile per section (A, B, C, D, E) ──
+   * Within each section the highest-priority qualifying candidate wins
+   * its slot. Sections with no qualifying data get a muted placeholder
+   * tile so the five-slot shape is always preserved.
+   * Every tile's tone is overridden to its section's canonical tone so
+   * each column of the strip reads as a single color family.
    */
 
   // Group candidates by their section.
@@ -507,29 +539,34 @@ export default function KeyMetrics(props: Props) {
     if (section) bySection[section].push(c)
   }
 
-  // Pick the highest-priority tile per section, in canonical order A→E.
-  const picked: Tile[] = []
+  // Build exactly 5 tiles, one per section, in canonical order A→E.
+  const picked: (Tile & { isPlaceholder?: boolean })[] = []
   for (const section of SECTION_ORDER) {
+    const tone = SECTION_TONE[section]
     const pool = bySection[section]
-    if (pool.length === 0) continue
-    pool.sort((a, b) => b.priority - a.priority)
-    picked.push(pool[0])
+    if (pool.length > 0) {
+      pool.sort((a, b) => b.priority - a.priority)
+      // Force the section's tone; tile-level tones are ignored here.
+      picked.push({ ...pool[0], tone })
+    } else {
+      // Placeholder so the five-slot shape is preserved.
+      const ph = SECTION_PLACEHOLDER[section]
+      picked.push({
+        icon: ph.icon,
+        label: ph.label,
+        value: '—',
+        context: ph.context,
+        tone,
+        priority: 0,
+        isPlaceholder: true,
+      })
+    }
   }
-
-  // If we genuinely can't find any real tile, render nothing.
-  if (picked.length === 0) return null
-
-  // Grid col count scales to however many sections produced a tile.
-  const colClass =
-    picked.length >= 5 ? 'md:grid-cols-5'
-    : picked.length === 4 ? 'md:grid-cols-4'
-    : picked.length === 3 ? 'md:grid-cols-3'
-    : 'md:grid-cols-2'
 
   return (
     <div className="mb-5">
-      <div className={`grid gap-3 grid-cols-2 ${colClass}`}>
-        {picked.map((t, i) => <MetricTile key={i} tile={t} />)}
+      <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+        {picked.map((t, i) => <MetricTile key={i} tile={t} isPlaceholder={t.isPlaceholder} />)}
       </div>
     </div>
   )
@@ -564,17 +601,24 @@ const VALUE_COLOR: Record<Tone, string> = {
   slate: 'text-slate-800',
 }
 
-function MetricTile({ tile }: { tile: Tile }) {
+function MetricTile({ tile, isPlaceholder }: { tile: Tile; isPlaceholder?: boolean }) {
   const Icon = tile.icon
 
+  // Placeholder tiles keep the section's left-accent color so the strip still
+  // reads as five color families, but the content goes muted to signal "no data".
+  const accentBgClass = isPlaceholder ? 'bg-slate-300' : ACCENT_BG[tile.tone]
+  const iconColorClass = isPlaceholder ? 'text-slate-400' : ICON_COLOR[tile.tone]
+  const valueColorClass = isPlaceholder ? 'text-slate-300' : VALUE_COLOR[tile.tone]
+  const cardBgClass = isPlaceholder ? 'bg-slate-50/60' : 'bg-white'
+
   return (
-    <div className="group relative rounded-xl bg-white border border-divider pl-4 pr-4 py-4 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:border-slate-300 overflow-hidden">
-      {/* Left accent bar — the only bg color on the tile */}
-      <span className={`absolute left-0 top-0 bottom-0 w-[3px] ${ACCENT_BG[tile.tone]}`} aria-hidden />
+    <div className={`group relative rounded-xl ${cardBgClass} border border-divider pl-4 pr-4 py-4 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:border-slate-300 overflow-hidden`}>
+      {/* Left accent bar — section tone for real tiles, subtle grey for placeholders */}
+      <span className={`absolute left-0 top-0 bottom-0 w-[3px] ${accentBgClass}`} aria-hidden />
 
       {/* Eyebrow: icon + label */}
       <div className="flex items-center gap-2 mb-2.5">
-        <Icon size={12} className={ICON_COLOR[tile.tone]} />
+        <Icon size={12} className={iconColorClass} />
         <span className="text-[10px] uppercase tracking-[0.08em] font-semibold text-slate-500">
           {tile.label}
         </span>
@@ -582,7 +626,7 @@ function MetricTile({ tile }: { tile: Tile }) {
 
       {/* Hero value — bold, tabular, truncates if too wide */}
       <p
-        className={`text-[26px] font-bold tracking-tight tabular-nums leading-[1.1] ${VALUE_COLOR[tile.tone]} truncate`}
+        className={`text-[26px] font-bold tracking-tight tabular-nums leading-[1.1] ${valueColorClass} truncate`}
         title={tile.value}
       >
         {tile.value}
@@ -590,9 +634,9 @@ function MetricTile({ tile }: { tile: Tile }) {
 
       {/* Context — editorial subtitle, optionally followed by an (i) source tooltip */}
       {(tile.context || tile.sourceNote) && (
-        <p className="text-[11.5px] text-slate-500 mt-2 leading-snug line-clamp-2">
+        <p className={`text-[11.5px] mt-2 leading-snug line-clamp-2 ${isPlaceholder ? 'text-slate-400 italic' : 'text-slate-500'}`}>
           {tile.context}
-          {tile.sourceNote && (
+          {tile.sourceNote && !isPlaceholder && (
             <span
               className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-slate-100 text-slate-500 text-[9px] font-semibold ml-1 cursor-help select-none hover:bg-slate-200 hover:text-slate-700 transition-colors align-[1px]"
               title={`Source: ${tile.sourceNote}`}
