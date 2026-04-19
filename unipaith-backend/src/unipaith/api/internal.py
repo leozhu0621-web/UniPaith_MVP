@@ -822,6 +822,7 @@ class EnrichProgramRequest(BaseModel):
     tuition: int | None = None
     duration_months: int | None = None
     description_text: str | None = None
+    who_its_for: str | None = None
     acceptance_rate: float | None = None
     delivery_format: str | None = None
     application_deadline: str | None = None
@@ -831,10 +832,12 @@ class EnrichProgramRequest(BaseModel):
     application_requirements: list[dict] | None = None
     # Extended program detail fields populated from scraped/structured sources
     cost_data: dict | None = None
-    intake_rounds: dict | None = None
-    tracks: dict | None = None
+    intake_rounds: list | dict | None = None
+    tracks: list | dict | None = None
     requirements: dict | None = None
-    faculty_contacts: dict | None = None
+    # JSONB column accepts list or dict; per-program crawl emits a list of
+    # {name, email, role, source_url}. Plain dict still accepted for legacy.
+    faculty_contacts: list | dict | None = None
     clear_fields: list[str] | None = None
 
 
