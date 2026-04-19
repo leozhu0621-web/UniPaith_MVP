@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getPublicInstitution, getPublicPosts } from '../../api/institutions'
+import { getPublicInstitution, getPublicPosts, getInstitutionSchools } from '../../api/institutions'
 import { searchPrograms } from '../../api/programs'
 import { listEvents, rsvpEvent, cancelRsvp, getMyRsvps } from '../../api/events'
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
 import { useCompareStore } from '../../stores/compare-store'
 import ProgramCard from './explore/cards/ProgramCard'
+import SchoolCard from './explore/cards/SchoolCard'
 import EventCard from './explore/cards/EventCard'
 import PostCard from './explore/cards/PostCard'
 import Card from '../../components/ui/Card'
@@ -18,10 +19,11 @@ import {
   ArrowLeft, GraduationCap, MapPin, Globe, Users, Building2,
   BookOpen, Mail,
 } from 'lucide-react'
-import type { Institution, ProgramSummary, InstitutionPost } from '../../types'
+import type { Institution, ProgramSummary, InstitutionPost, SchoolSummary } from '../../types'
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
+  { id: 'schools', label: 'Schools' },
   { id: 'programs', label: 'Programs' },
   { id: 'events', label: 'Events' },
   { id: 'updates', label: 'Updates' },
@@ -44,6 +46,12 @@ export default function InstitutionDetailPage() {
     queryKey: ['institution-programs', institutionId],
     queryFn: () => searchPrograms({ institution_id: institutionId, page_size: 50 }),
     enabled: !!institutionId,
+  })
+
+  const { data: schools } = useQuery({
+    queryKey: ['institution-schools', institutionId],
+    queryFn: () => getInstitutionSchools(institutionId!),
+    enabled: !!institutionId && tab === 'schools',
   })
 
   const { data: events } = useQuery({
@@ -79,6 +87,7 @@ export default function InstitutionDetailPage() {
 
   const inst: Institution | undefined = institution
   const programList: ProgramSummary[] = Array.isArray(programs?.items) ? programs.items : []
+  const schoolList: SchoolSummary[] = Array.isArray(schools) ? schools : []
   const eventList: any[] = Array.isArray(events) ? events : []
   const postList: InstitutionPost[] = Array.isArray(posts) ? posts : []
 
@@ -217,6 +226,30 @@ export default function InstitutionDetailPage() {
                   ))}
                 </dl>
               </Card>
+            )}
+          </div>
+        )}
+
+        {/* Schools Tab */}
+        {tab === 'schools' && (
+          <div>
+            {schoolList.length === 0 ? (
+              <div className="text-center py-16 bg-white rounded-xl border border-divider">
+                <GraduationCap size={32} className="mx-auto text-stone mb-3" />
+                <p className="text-sm text-student-ink font-medium mb-1">No schools found</p>
+                <p className="text-xs text-student-text">This university hasn't organized programs into schools yet.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {schoolList.map(school => (
+                  <SchoolCard
+                    key={school.id}
+                    school={school}
+                    institutionName={inst.name}
+                    onClick={() => navigate(`/s/institutions/${inst.id}/schools/${school.id}`)}
+                  />
+                ))}
+              </div>
             )}
           </div>
         )}
