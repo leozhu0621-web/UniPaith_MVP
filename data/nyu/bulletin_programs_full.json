@@ -1,0 +1,4826 @@
+[
+  {
+    "program_name": "Art Media",
+    "degree_type": "masters",
+    "degree_label": "MFA",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/abu-dhabi/programs/art-media-mfa/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Astrophysics Space Systems",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/abu-dhabi/programs/astrophysics-space-systems-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Economics",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/abu-dhabi/programs/economics-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Africana Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/africana-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "American Journalism",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/american-journalism-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "American Studies",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/american-studies-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Ancient World",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/ancient-world-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Animal Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/animal-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Anthropology",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/anthropology-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Applied Economic Analysis",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/applied-economic-analysis-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Archives",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/archives-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Archives Public History",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/archives-public-history-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Atmosphere Ocean Science",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/atmosphere-ocean-science-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Biology",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/biology-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Biology",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/biology-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Biomedical Informatics",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/biomedical-informatics-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Biomedical Sciences",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/biomedical-sciences-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Chemistry",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/chemistry-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Chemistry",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/chemistry-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Cinema Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/cinema-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Cinema Studies",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/cinema-studies-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Classics",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/classics-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Classics",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/classics-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Cognition Perception",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/cognition-perception-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Comparative Approaches Literatures Africa Middle East Global South",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/comparative-approaches-literatures-africa-middle-east-global-south-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Comparative Literature",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/comparative-literature-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Comparative Literature",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/comparative-literature-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Computer Science Courant",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/computer-science-courant-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Computer Science",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/computer-science-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Computing Entrepreneurship Innovation",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/computing-entrepreneurship-innovation-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Conservation Historic Artistic Works History Art Archaeology Ms",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/conservation-historic-artistic-works-history-art-archaeology-ms-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Creative Writing",
+    "degree_type": "masters",
+    "degree_label": "MFA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/creative-writing-mfa/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Creative Writing Spanish",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/creative-writing-spanish-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Creative Writing Spanish",
+    "degree_type": "masters",
+    "degree_label": "MFA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/creative-writing-spanish-mfa/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Culture Media",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/culture-media-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Data Science",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/data-science-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Data Science",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/data-science-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Digital Humanities",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/digital-humanities-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "East Asian Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/east-asian-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "East Asian Studies",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/east-asian-studies-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Economics",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/economics-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Economics",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/economics-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "English",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/english-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "English",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/english-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Environmental Health Science",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/environmental-health-science-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Environmental Health Science",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/environmental-health-science-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Environmental Studies",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/environmental-studies-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "European Mediterranean Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/european-mediterranean-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Experimental Writing",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/experimental-writing-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Financial Mathematics",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/financial-mathematics-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "French Literature",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/french-literature-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "French",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/french-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "French Studies Anthropology",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/french-studies-anthropology-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "French Studies French",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/french-studies-french-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "French Studies History",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/french-studies-history-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "French Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/french-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "German",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/german-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "German Thought Literature",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/german-thought-literature-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Hebrew Judaic Studies History",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/hebrew-judaic-studies-history-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Hebrew Judaic Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/hebrew-judaic-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Hebrew Judaic Studies",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/hebrew-judaic-studies-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Historical Sustainable Architecture",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/historical-sustainable-architecture-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "History Art Archaeology",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/history-art-archaeology-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "History Art Archaeology",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/history-art-archaeology-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "History",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/history-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "History Middle Eastern Studies",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/history-middle-eastern-studies-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "History",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/history-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Human Skeletal Biology",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/human-skeletal-biology-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Industrial Organizational Psychology",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/industrial-organizational-psychology-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Information Systems",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/information-systems-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Interdisciplinary Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/interdisciplinary-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "International Relations",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/international-relations-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Irish American Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/irish-american-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Italian Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/italian-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Italian Studies",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/italian-studies-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Journalism Africana Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/journalism-africana-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Journalism East Asian Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/journalism-east-asian-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Journalism European Mediterranean Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/journalism-european-mediterranean-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Journalism French Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/journalism-french-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Journalism International Relations",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/journalism-international-relations-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Journalism Latin American Caribbean Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/journalism-latin-american-caribbean-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Journalism",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/journalism-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Journalism Near Eastern Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/journalism-near-eastern-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Journalism Russian Slavic Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/journalism-russian-slavic-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Latin American Caribbean Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/latin-american-caribbean-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Linguistics",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/linguistics-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Literary Reportage",
+    "degree_type": "masters",
+    "degree_label": "MFA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/literary-reportage-mfa/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Management Leadership Public Service Organizations",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/management-leadership-public-service-organizations-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Mathematics Finance",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/mathematics-finance-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Mathematics",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/mathematics-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Mathematics",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/mathematics-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Middle Eastern Islamic Studies",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/middle-eastern-islamic-studies-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Museum Studies",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/museum-studies-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Museum Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/museum-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Music",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/music-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Near Eastern Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/near-eastern-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Neural Science",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/neural-science-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Performance Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/performance-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Performance Studies",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/performance-studies-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Philosophy",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/philosophy-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Physics",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/physics-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Physics",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/physics-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Poetics Theory",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/poetics-theory-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Politics",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/politics-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Politics",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/politics-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Psychology",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/psychology-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Public History",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/public-history-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Public Humanities",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/public-humanities-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Quantitative Economics",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/quantitative-economics-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Religious Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/religious-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Russian Slavic Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/russian-slavic-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Scientific Computing",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/scientific-computing-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Social Cultural Analysis",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/social-cultural-analysis-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Social Psychology",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/social-psychology-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Sociology",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/sociology-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Spanish",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts-science/programs/spanish-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Acting",
+    "degree_type": "masters",
+    "degree_label": "MFA",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts/programs/acting-mfa/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Arts Politics",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts/programs/arts-politics-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Dance Interdisciplinary Research",
+    "degree_type": "masters",
+    "degree_label": "MFA",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts/programs/dance-interdisciplinary-research-mfa/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Design Stage Film",
+    "degree_type": "masters",
+    "degree_label": "MFA",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts/programs/design-stage-film-mfa/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Dramatic Writing",
+    "degree_type": "masters",
+    "degree_label": "MFA",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts/programs/dramatic-writing-mfa/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Film Television",
+    "degree_type": "masters",
+    "degree_label": "MFA",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts/programs/film-television-mfa/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Game Design",
+    "degree_type": "masters",
+    "degree_label": "MFA",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts/programs/game-design-mfa/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Interactive Media Arts",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts/programs/interactive-media-arts-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Interactive Telecommunications",
+    "degree_type": "masters",
+    "degree_label": "MPS",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts/programs/interactive-telecommunications-mps/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Media Producing",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts/programs/media-producing-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Moving Image Archiving Preservation",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts/programs/moving-image-archiving-preservation-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Musical Theatre Writing",
+    "degree_type": "masters",
+    "degree_label": "MFA",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts/programs/musical-theatre-writing-mfa/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Virtual Production",
+    "degree_type": "masters",
+    "degree_label": "MPS",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/arts/programs/virtual-production-mps/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Accounting",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/accounting-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Accounting",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/accounting-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Business Analytics AI",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/business-analytics-ai-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Data Analytics Business Computing",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/data-analytics-business-computing-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Economics",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/economics-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Finance",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/finance-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Fintech",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/fintech-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "General Management Executives",
+    "degree_type": "masters",
+    "degree_label": "MBA",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/general-management-executives-mba/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "General Management",
+    "degree_type": "masters",
+    "degree_label": "MBA",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/general-management-mba/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Global Executive",
+    "degree_type": "masters",
+    "degree_label": "MBA",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/global-executive-mba/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Global Finance",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/global-finance-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Information Systems",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/information-systems-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Law Business",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/law-business-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Luxury Retail",
+    "degree_type": "masters",
+    "degree_label": "MBA",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/luxury-retail-mba/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Management Organizational Behavior",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/management-organizational-behavior-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Marketing",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/marketing-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Marketing Retail Science",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/marketing-retail-science-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Operations Management",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/operations-management-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Organization Management Strategy",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/organization-management-strategy-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Quantitative Finance",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/quantitative-finance-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Quantitative Management",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/quantitative-management-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Statistics",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/statistics-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Stern NYU Abu Dhabi",
+    "degree_type": "masters",
+    "degree_label": "MBA",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/stern-nyu-abu-dhabi-mba/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Technology Entrepreneurship",
+    "degree_type": "masters",
+    "degree_label": "MBA",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/business/programs/technology-entrepreneurship-mba/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Advanced Occupational Therapy",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/advanced-occupational-therapy-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Applied Statistics Social Science Research",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/applied-statistics-social-science-research-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Art Education Community Practice",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/art-education-community-practice-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Art Therapy",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/art-therapy-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Bilingual Education",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/bilingual-education-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Bilingual Education Teachers",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/bilingual-education-teachers-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Bilingual Education Teachers",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/bilingual-education-teachers-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Childhood Education Special Education Childhood",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/childhood-education-special-education-childhood-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Childhood Special Education",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/childhood-special-education-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Classical Instrumental Performance Advanced",
+    "degree_type": "diploma",
+    "degree_label": "Diploma",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/classical-instrumental-performance-advanced-diploma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Clinical Counseling Psychology",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/clinical-counseling-psychology-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Communicative Sciences Disorders",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/communicative-sciences-disorders-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Communicative Sciences Disorders",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/communicative-sciences-disorders-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Costume Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/costume-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Counseling Mental Health Wellness",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/counseling-mental-health-wellness-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Developmental Psychology",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/developmental-psychology-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Drama Therapy Alternate Licensure",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/drama-therapy-alternate-licensure-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Drama Therapy",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/drama-therapy-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Early Childhood Education Special",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/early-childhood-education-special-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Educational Communications Technology",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/educational-communications-technology-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Educational Leadership Policy Studies",
+    "degree_type": "phd",
+    "degree_label": "EdD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/educational-leadership-policy-studies-edd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Educational Leadership Policy Studies",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/educational-leadership-policy-studies-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Educational Leadership Politics Advocacy",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/educational-leadership-politics-advocacy-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Educational Theatre All Grades English 712",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/educational-theatre-all-grades-english-712-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Educational Theatre All Grades",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/educational-theatre-all-grades-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Educational Theatre All Grades Social Studies 712",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/educational-theatre-all-grades-social-studies-712-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Educational Theatre Colleges Communities",
+    "degree_type": "phd",
+    "degree_label": "EdD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/educational-theatre-colleges-communities-edd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Educational Theatre Colleges Communities",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/educational-theatre-colleges-communities-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "English Education Secondary College",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/english-education-secondary-college-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Environmental Conservation Education",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/environmental-conservation-education-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Food Studies",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/food-studies-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Food Studies",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/food-studies-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Games Learning",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/games-learning-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Higher Education Administration",
+    "degree_type": "phd",
+    "degree_label": "EdD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/higher-education-administration-edd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Higher Education",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/higher-education-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Higher Education Student Affairs",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/higher-education-student-affairs-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Human Development Research Policy",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/human-development-research-policy-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Inclusive Childhood Teacher Residency",
+    "degree_type": "masters",
+    "degree_label": "MAT",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/inclusive-childhood-teacher-residency-mat/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Instrumental Performance",
+    "degree_type": "masters",
+    "degree_label": "MM",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/instrumental-performance-mm/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "International Education",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/international-education-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "International Education",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/international-education-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Jazz Studies Artist",
+    "degree_type": "diploma",
+    "degree_label": "Diploma",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/jazz-studies-artist-diploma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Leadership Innovation",
+    "degree_type": "phd",
+    "degree_label": "EdD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/leadership-innovation-edd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Learning Technology Experience Design",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/learning-technology-experience-design-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Lgbtq Health Education Social Services",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/lgbtq-health-education-social-services-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Media Culture Communication",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/media-culture-communication-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Media Culture Communication",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/media-culture-communication-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Music Business",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/music-business-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Music Education",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/music-education-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Music Performance Composition",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/music-performance-composition-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Music Performance Piano",
+    "degree_type": "masters",
+    "degree_label": "MM",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/music-performance-piano-mm/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Music Technology",
+    "degree_type": "masters",
+    "degree_label": "MM",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/music-technology-mm/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Music Technology",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/music-technology-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Music Theory Composition",
+    "degree_type": "masters",
+    "degree_label": "MM",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/music-theory-composition-mm/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Music Therapists",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/music-therapists-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Nutrition Dietetics",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/nutrition-dietetics-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Nutrition Dietetics",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/nutrition-dietetics-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Performing Arts Administration",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/performing-arts-administration-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Physical Therapists",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/physical-therapists-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Piano Performance Pedagogy",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/piano-performance-pedagogy-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Post Baccalaureate Study Tesol",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/post-baccalaureate-study-tesol-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Psychology Social Intervention",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/psychology-social-intervention-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Research Occupational Therapy",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/research-occupational-therapy-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Research Physical Therapy",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/research-physical-therapy-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "School Counseling",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/school-counseling-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Sociology Education",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/sociology-education-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Special Education Early Childhood",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/special-education-early-childhood-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Specialized Studies Education",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/specialized-studies-education-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Statistics Computational Social Science",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/statistics-computational-social-science-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Studio Art",
+    "degree_type": "masters",
+    "degree_label": "MFA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/studio-art-mfa/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Teacher Dance All Grades",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/teacher-dance-all-grades-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Teacher Residency",
+    "degree_type": "masters",
+    "degree_label": "MAT",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/teacher-residency-mat/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Teachers English 7 12",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/teachers-english-7-12-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Teachers English Speakers Other Languages College",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/teachers-english-speakers-other-languages-college-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Teachers Mathematics 7 12",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/teachers-mathematics-7-12-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Teaching Art All Grades",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/teaching-art-all-grades-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Teaching Dance All Grades",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/teaching-dance-all-grades-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Teaching Dance All Grades",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/teaching-dance-all-grades-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Teaching Dance Professions",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/teaching-dance-professions-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Teaching English 7 12 5 6 Extension Students Disabilities 7 12 Generalist",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/teaching-english-7-12-5-6-extension-students-disabilities-7-12-generalist-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Teaching English Language Literature College",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/teaching-english-language-literature-college-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Teaching English Speakers Other Languages All Grades",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/teaching-english-speakers-other-languages-all-grades-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Teaching English Speakers Other Languages",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/teaching-english-speakers-other-languages-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Teaching Learning",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/teaching-learning-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Teaching Social Studies 7 12 5 6 Extension Students Disabilities 7 12 Generalist",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/teaching-social-studies-7-12-5-6-extension-students-disabilities-7-12-generalist-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Teaching World Languages 7 12 Tesol All Grades",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/teaching-world-languages-7-12-tesol-all-grades-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Theatre Social Civic Engagement",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/theatre-social-civic-engagement-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Tonmeister Studies",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/tonmeister-studies-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Transformational Teaching Middle High Schools",
+    "degree_type": "masters",
+    "degree_label": "MAT",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/transformational-teaching-middle-high-schools-mat/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Transformational Teaching Students Disabilities Computer Science",
+    "degree_type": "masters",
+    "degree_label": "MAT",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/transformational-teaching-students-disabilities-computer-science-mat/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Visual Arts Administration",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/visual-arts-administration-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Vocal Pedagogy",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/vocal-pedagogy-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Vocal Performance",
+    "degree_type": "masters",
+    "degree_label": "MM",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/vocal-performance-mm/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "World Language Education",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/culture-education-human-development/programs/world-language-education-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Biomaterials Science",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "College of Dentistry",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/dentistry/programs/biomaterials-science-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Clinical Research",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "College of Dentistry",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/dentistry/programs/clinical-research-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Clinical Research",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "College of Dentistry",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/dentistry/programs/clinical-research-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Dentistry",
+    "degree_type": "phd",
+    "degree_label": "DDS",
+    "department": "College of Dentistry",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/dentistry/programs/dentistry-dds/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Endodontics",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "College of Dentistry",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/dentistry/programs/endodontics-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Oral Maxillofacial Surgery",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "College of Dentistry",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/dentistry/programs/oral-maxillofacial-surgery-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Orthodontics Dentofacial Orthopedics",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "College of Dentistry",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/dentistry/programs/orthodontics-dentofacial-orthopedics-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Pediatric Dentistry",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "College of Dentistry",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/dentistry/programs/pediatric-dentistry-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Periodontics",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "College of Dentistry",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/dentistry/programs/periodontics-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Prosthodontics",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "College of Dentistry",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/dentistry/programs/prosthodontics-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Applied Urban Science Informatics",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/applied-urban-science-informatics-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Bioinformatics Online",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/bioinformatics-online-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Biomedical Engineering",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/biomedical-engineering-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Biomedical Engineering",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/biomedical-engineering-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Biotechnology Entrepreneurship",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/biotechnology-entrepreneurship-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Biotechnology",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/biotechnology-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Chemical Engineering",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/chemical-engineering-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Chemical Engineering",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/chemical-engineering-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Civil Engineering",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/civil-engineering-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Civil Engineering",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/civil-engineering-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Computer Engineering",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/computer-engineering-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Computer Science",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/computer-science-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Computer Science Tandon",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/computer-science-tandon-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Construction Management",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/construction-management-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Construction Management",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/construction-management-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Cybersecurity",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/cybersecurity-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Electrical Computer Engineering",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/electrical-computer-engineering-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Electrical Engineering",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/electrical-engineering-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Emerging Technologies",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/emerging-technologies-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Environmental Engineering",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/environmental-engineering-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Environmental Science",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/environmental-science-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Executive Construction Management",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/executive-construction-management-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Financial Engineering",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/financial-engineering-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Human Centered Technology Innovation Design",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/human-centered-technology-innovation-design-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Industrial Engineering",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/industrial-engineering-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Integrated Design Media",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/integrated-design-media-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Management Technology",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/management-technology-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Mathematical Sciences",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/mathematical-sciences-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Mechanical Engineering",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/mechanical-engineering-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Mechanical Engineering",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/mechanical-engineering-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Mechatronics Robotics",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/mechatronics-robotics-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Traffic Engineering",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/traffic-engineering-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Transportation Systems",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/transportation-systems-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Transportation Systems",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/transportation-systems-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Urban Infrastructure Systems",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/urban-infrastructure-systems-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Urban Systems",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/engineering/programs/urban-systems-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Bioethics",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "School of Global Public Health",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/global-public-health/programs/bioethics-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Biostatistics",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Global Public Health",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/global-public-health/programs/biostatistics-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Epidemiology",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Global Public Health",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/global-public-health/programs/epidemiology-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Public Health",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "School of Global Public Health",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/global-public-health/programs/public-health-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Public Health Data Science",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "School of Global Public Health",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/global-public-health/programs/public-health-data-science-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Public Health Disaster Science Policy Practice",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "School of Global Public Health",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/global-public-health/programs/public-health-disaster-science-policy-practice-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Public Health",
+    "degree_type": "masters",
+    "degree_label": "MPH",
+    "department": "School of Global Public Health",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/global-public-health/programs/public-health-mph/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Public Health Nutrition",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "School of Global Public Health",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/global-public-health/programs/public-health-nutrition-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Public Health",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "School of Global Public Health",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/global-public-health/programs/public-health-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Individualized Study",
+    "degree_type": "masters",
+    "degree_label": "MA",
+    "department": "Gallatin School",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/individualized-study/programs/individualized-study-ma/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Competition Innovation Information Law",
+    "degree_type": "masters",
+    "degree_label": "LLM",
+    "department": "School of Law",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/law/programs/competition-innovation-information-law-llm/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Corporate Law",
+    "degree_type": "masters",
+    "degree_label": "LLM",
+    "department": "School of Law",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/law/programs/corporate-law-llm/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Corporate Taxation",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "School of Law",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/law/programs/corporate-taxation-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Cybersecurity Risk Strategy",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Law",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/law/programs/cybersecurity-risk-strategy-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Environmental Energy Law",
+    "degree_type": "masters",
+    "degree_label": "LLM",
+    "department": "School of Law",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/law/programs/environmental-energy-law-llm/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Estate Planning",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "School of Law",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/law/programs/estate-planning-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Health Law Strategy",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Law",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/law/programs/health-law-strategy-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "International Business Regulation Litigation Arbitration",
+    "degree_type": "masters",
+    "degree_label": "LLM",
+    "department": "School of Law",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/law/programs/international-business-regulation-litigation-arbitration-llm/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "International Legal Studies",
+    "degree_type": "masters",
+    "degree_label": "LLM",
+    "department": "School of Law",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/law/programs/international-legal-studies-llm/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "International Taxation",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "School of Law",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/law/programs/international-taxation-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "International Taxation",
+    "degree_type": "masters",
+    "degree_label": "LLM",
+    "department": "School of Law",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/law/programs/international-taxation-llm/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Law",
+    "degree_type": "phd",
+    "degree_label": "JD",
+    "department": "School of Law",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/law/programs/law-jd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Law",
+    "degree_type": "masters",
+    "degree_label": "LLM",
+    "department": "School of Law",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/law/programs/law-llm/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Legal Theory",
+    "degree_type": "masters",
+    "degree_label": "LLM",
+    "department": "School of Law",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/law/programs/legal-theory-llm/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Taxation Executive Program",
+    "degree_type": "masters",
+    "degree_label": "LLM",
+    "department": "School of Law",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/law/programs/taxation-executive-program-llm/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Taxation",
+    "degree_type": "masters",
+    "degree_label": "LLM",
+    "department": "School of Law",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/law/programs/taxation-llm/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Clinical Investigation",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Grossman School of Medicine",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/medicine-grossman/programs/clinical-investigation-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Clinical Translational Investigation",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Grossman School of Medicine",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/medicine-grossman/programs/clinical-translational-investigation-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Comparative Effectiveness Implementation Research Training",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Grossman School of Medicine",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/medicine-grossman/programs/comparative-effectiveness-implementation-research-training-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Genome Health Analysis",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Grossman School of Medicine",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/medicine-grossman/programs/genome-health-analysis-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Health Disparities Equity Research",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Grossman School of Medicine",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/medicine-grossman/programs/health-disparities-equity-research-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Health Innovations Therapeutics",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Grossman School of Medicine",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/medicine-grossman/programs/health-innovations-therapeutics-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Healthcare Delivery Science",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Grossman School of Medicine",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/medicine-grossman/programs/healthcare-delivery-science-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Medicine",
+    "degree_type": "phd",
+    "degree_label": "MD",
+    "department": "Grossman School of Medicine",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/medicine-grossman/programs/medicine-md/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Medicine",
+    "degree_type": "phd",
+    "degree_label": "MD",
+    "department": "Grossman Long Island School of Medicine",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/medicine-long-island/programs/medicine-md/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Adult Gerontology Acute Care Nurse Practitioner",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/adult-gerontology-acute-care-nurse-practitioner-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Adult Gerontology Acute Care Nurse Practitioner",
+    "degree_type": "phd",
+    "degree_label": "DNP",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/adult-gerontology-acute-care-nurse-practitioner-dnp/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Adult Gerontology Acute Care Nurse Practitioner",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/adult-gerontology-acute-care-nurse-practitioner-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Adult Gerontology Primary Care Nurse Practitioner",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/adult-gerontology-primary-care-nurse-practitioner-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Adult Gerontology Primary Care Nurse Practitioner",
+    "degree_type": "phd",
+    "degree_label": "DNP",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/adult-gerontology-primary-care-nurse-practitioner-dnp/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Adult Gerontology Primary Care Nurse Practitioner",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/adult-gerontology-primary-care-nurse-practitioner-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Clinical Research Nursing",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/clinical-research-nursing-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Clinical Research Nursing",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/clinical-research-nursing-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Family Nurse Practitioner",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/family-nurse-practitioner-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Family Nurse Practitioner",
+    "degree_type": "phd",
+    "degree_label": "DNP",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/family-nurse-practitioner-dnp/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Family Nurse Practitioner",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/family-nurse-practitioner-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Nurse Midwifery",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/nurse-midwifery-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Nurse Midwifery",
+    "degree_type": "phd",
+    "degree_label": "DNP",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/nurse-midwifery-dnp/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Nurse Midwifery",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/nurse-midwifery-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Nursing Education",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/nursing-education-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Nursing Education",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/nursing-education-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Nursing Informatics",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/nursing-informatics-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Nursing Informatics",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/nursing-informatics-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Nursing Research Theory Development",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/nursing-research-theory-development-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Palliative Care Nurse Practitioner",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/palliative-care-nurse-practitioner-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Pediatric Nurse Practitioner",
+    "degree_type": "phd",
+    "degree_label": "DNP",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/pediatric-nurse-practitioner-dnp/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Pediatrics Nurse Practitioner Acute Care",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/pediatrics-nurse-practitioner-acute-care-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Pediatrics Nurse Practitioner Primary Care Acute",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/pediatrics-nurse-practitioner-primary-care-acute-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Pediatrics Nurse Practitioner Primary Care",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/pediatrics-nurse-practitioner-primary-care-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Pediatrics Primary Care Nurse Practitioner",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/pediatrics-primary-care-nurse-practitioner-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Psychiatric Mental Health Nurse Practitioner",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/psychiatric-mental-health-nurse-practitioner-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Psychiatric Mental Health Nurse Practitioner",
+    "degree_type": "phd",
+    "degree_label": "DNP",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/psychiatric-mental-health-nurse-practitioner-dnp/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Psychiatric Mental Health Nurse Practitioner",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/nursing/programs/psychiatric-mental-health-nurse-practitioner-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Event Management",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/professional-studies/programs/event-management-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Executive Coaching Organizational Consulting",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/professional-studies/programs/executive-coaching-organizational-consulting-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Financial Planning",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/professional-studies/programs/financial-planning-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Global Affairs",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/professional-studies/programs/global-affairs-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Global Hospitality Management",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/professional-studies/programs/global-hospitality-management-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Global Security Conflict Cyber Crime",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/professional-studies/programs/global-security-conflict-cyber-crime-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Global Sport",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/professional-studies/programs/global-sport-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Human Capital Analytics Technology",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/professional-studies/programs/human-capital-analytics-technology-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Human Capital Management Human Capital Analytics Technology Ms",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/professional-studies/programs/human-capital-management-human-capital-analytics-technology-ms-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Human Capital Management",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/professional-studies/programs/human-capital-management-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Integrated Marketing",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/professional-studies/programs/integrated-marketing-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Management Analytics",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/professional-studies/programs/management-analytics-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Professional Writing",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/professional-studies/programs/professional-writing-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Project Management",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/professional-studies/programs/project-management-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Public Relations Corporate Communication",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/professional-studies/programs/public-relations-corporate-communication-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Publishing",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/professional-studies/programs/publishing-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Real Estate Development",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/professional-studies/programs/real-estate-development-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Real Estate",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/professional-studies/programs/real-estate-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Sports Business",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/professional-studies/programs/sports-business-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Translation Interpreting",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/professional-studies/programs/translation-interpreting-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Travel Tourism Management",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/professional-studies/programs/travel-tourism-management-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Health Policy Clinicians",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Wagner Graduate School of Public Service",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/public-service/programs/health-policy-clinicians-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Health Policy Management Health Policy Analysis",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Wagner Graduate School of Public Service",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/public-service/programs/health-policy-management-health-policy-analysis-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Health Policy Management",
+    "degree_type": "masters",
+    "degree_label": "MPA",
+    "department": "Wagner Graduate School of Public Service",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/public-service/programs/health-policy-management-mpa/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Public Administration",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Wagner Graduate School of Public Service",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/public-service/programs/public-administration-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Public Nonprofit Management Policy",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Wagner Graduate School of Public Service",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/public-service/programs/public-nonprofit-management-policy-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Public Nonprofit Management Policy",
+    "degree_type": "masters",
+    "degree_label": "MPA",
+    "department": "Wagner Graduate School of Public Service",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/public-service/programs/public-nonprofit-management-policy-mpa/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Public Policy",
+    "degree_type": "masters",
+    "degree_label": "MS",
+    "department": "Wagner Graduate School of Public Service",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/public-service/programs/public-policy-ms/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Quantitative Methods Policy Analysis",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Wagner Graduate School of Public Service",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/public-service/programs/quantitative-methods-policy-analysis-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Social Finance",
+    "degree_type": "certificate",
+    "degree_label": "Advanced Certificate",
+    "department": "Wagner Graduate School of Public Service",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/public-service/programs/social-finance-advanced-certificate/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Social Work",
+    "degree_type": "masters",
+    "degree_label": "MSW",
+    "department": "Silver School of Social Work",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/social-work/programs/social-work-msw/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Social Work",
+    "degree_type": "phd",
+    "degree_label": "PhD",
+    "department": "Silver School of Social Work",
+    "bulletin_url": "https://bulletins.nyu.edu/graduate/social-work/programs/social-work-phd/",
+    "bulletin_level": "graduate"
+  },
+  {
+    "program_name": "Arab Crossroads Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/arab-crossroads-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Art History",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/art-history-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Bioengineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/bioengineering-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Biology",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/biology-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Business Organizations Society",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/business-organizations-society-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Chemistry",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/chemistry-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Civil Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/civil-engineering-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Computer Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/computer-engineering-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Computer Science",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/computer-science-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Economics",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/economics-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Electrical Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/electrical-engineering-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Film New Media",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/film-new-media-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "General Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/general-engineering-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "History",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/history-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Interactive Media",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/interactive-media-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Legal Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/legal-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Literature Creative Writing",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/literature-creative-writing-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Mathematics",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/mathematics-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Mechanical Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/mechanical-engineering-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Music",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/music-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Philosophy",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/philosophy-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Physics",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/physics-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Political Science",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/political-science-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Psychology",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/psychology-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Social Research Public Policy",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/social-research-public-policy-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Theater",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "NYU Abu Dhabi",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/abu-dhabi/programs/theater-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Africana Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/africana-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "American Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/american-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Anthropology",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/anthropology-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Anthropology Classical Civilization",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/anthropology-classical-civilization-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Anthropology Linguistics",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/anthropology-linguistics-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Art History",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/art-history-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Asian Pacific American Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/asian-pacific-american-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Biochemistry",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/biochemistry-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Biology",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/biology-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Biology Chemical Biomolecular Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS/BS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/biology-chemical-biomolecular-engineering-bs-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Biology Dentistry Ba",
+    "degree_type": "phd",
+    "degree_label": "DDS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/biology-dentistry-ba-dds/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Chemistry",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/chemistry-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Chemistry",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/chemistry-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Chemistry Chemical Biomolecular Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS/BS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/chemistry-chemical-biomolecular-engineering-bs-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Cinema Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/cinema-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Classical Civilization",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/classical-civilization-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Classical Civilization Hellenic Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/classical-civilization-hellenic-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Classics Art History",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/classics-art-history-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Classics",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/classics-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Comparative Literature",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/comparative-literature-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Computer Data Science",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/computer-data-science-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Computer Science",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/computer-science-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Computer Science Electrical Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS/BS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/computer-science-electrical-engineering-bs-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Computer Science Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS/BS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/computer-science-engineering-bs-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Data Science",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/data-science-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Data Science Mathematics",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/data-science-mathematics-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Dramatic Literature Theatre History Cinema",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/dramatic-literature-theatre-history-cinema-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "East Asian Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/east-asian-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Economics",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/economics-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Economics Computer Science",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/economics-computer-science-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Economics Mathematics",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/economics-mathematics-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "English American Literature",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/english-american-literature-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Environmental Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/environmental-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "European Mediterranean Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/european-mediterranean-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "French",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/french-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "French Linguistics",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/french-linguistics-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Gender Sexuality Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/gender-sexuality-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "German",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/german-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "German Linguistics",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/german-linguistics-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Global Public Health Anthropology",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/global-public-health-anthropology-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Global Public Health History",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/global-public-health-history-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Global Public Health Science",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/global-public-health-science-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Global Public Health Sociology",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/global-public-health-sociology-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Hebrew Judaic Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/hebrew-judaic-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Hellenic Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/hellenic-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "History",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/history-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "International Relations",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/international-relations-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Italian",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/italian-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Italian Linguistics",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/italian-linguistics-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Journalism",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/journalism-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Language Mind",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/language-mind-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Latin American Caribbean Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/latin-american-caribbean-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Latino Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/latino-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Linguistics",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/linguistics-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Mathematics",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/mathematics-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Mathematics Civil Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS/BS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/mathematics-civil-engineering-bs-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Mathematics Computer Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS/BS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/mathematics-computer-engineering-bs-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Mathematics Computer Science",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/mathematics-computer-science-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Mathematics Electrical Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS/BS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/mathematics-electrical-engineering-bs-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Mathematics Mechanical Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS/BS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/mathematics-mechanical-engineering-bs-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Medieval Renaissance Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/medieval-renaissance-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Metropolitan Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/metropolitan-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Middle Eastern Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/middle-eastern-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Music",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/music-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Neural Science",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/neural-science-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Philosophy",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/philosophy-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Physics",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/physics-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Physics",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/physics-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Physics Civil Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS/BS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/physics-civil-engineering-bs-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Physics Computer Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS/BS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/physics-computer-engineering-bs-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Physics Electrical Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS/BS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/physics-electrical-engineering-bs-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Physics Mechanical Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS/BS",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/physics-mechanical-engineering-bs-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Politics",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/politics-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Psychology",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/psychology-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Public Policy",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/public-policy-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Religious Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/religious-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Romance Languages",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/romance-languages-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Russian Slavic Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/russian-slavic-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Self Designed Major",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/self-designed-major-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Social Cultural Analysis",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/social-cultural-analysis-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Sociology",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/sociology-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Spanish Linguistics",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/spanish-linguistics-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Spanish Portuguese",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/spanish-portuguese-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Urban Design Architecture Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/urban-design-architecture-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Urban Studies Anthropology",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/urban-studies-anthropology-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Urban Studies History",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/urban-studies-history-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Urban Studies Social Cultural Analysis",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/urban-studies-social-cultural-analysis-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Urban Studies Sociology",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "College of Arts & Science",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts-science/programs/urban-studies-sociology-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Cinema Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts/programs/cinema-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Collaborative Arts",
+    "degree_type": "bachelors",
+    "degree_label": "BFA",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts/programs/collaborative-arts-bfa/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Dance",
+    "degree_type": "bachelors",
+    "degree_label": "BFA",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts/programs/dance-bfa/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Dramatic Writing",
+    "degree_type": "bachelors",
+    "degree_label": "BFA",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts/programs/dramatic-writing-bfa/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Film Television",
+    "degree_type": "bachelors",
+    "degree_label": "BFA",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts/programs/film-television-bfa/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Game Design",
+    "degree_type": "bachelors",
+    "degree_label": "BFA",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts/programs/game-design-bfa/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Interactive Media Arts",
+    "degree_type": "bachelors",
+    "degree_label": "BFA",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts/programs/interactive-media-arts-bfa/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Performance Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts/programs/performance-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Photography Imaging",
+    "degree_type": "bachelors",
+    "degree_label": "BFA",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts/programs/photography-imaging-bfa/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Recorded Music",
+    "degree_type": "bachelors",
+    "degree_label": "BFA",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts/programs/recorded-music-bfa/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Theatre",
+    "degree_type": "bachelors",
+    "degree_label": "BFA",
+    "department": "Tisch School of the Arts",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/arts/programs/theatre-bfa/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Accounting",
+    "degree_type": "bachelors",
+    "degree_label": "BS/MS",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/business/programs/accounting-bs-ms/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Business",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/business/programs/business-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Business Political Economy",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/business/programs/business-political-economy-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Business Technology Entrepreneurship",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Stern School of Business",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/business/programs/business-technology-entrepreneurship-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Applied Psychology",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/applied-psychology-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Childhood Education Childhood Special Education",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/childhood-education-childhood-special-education-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Communicative Sciences Disorders",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/communicative-sciences-disorders-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Early Childhood Education Special",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/early-childhood-education-special-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Education Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/education-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Educational Theatre",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/educational-theatre-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Global Public Health Applied Psychology",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/global-public-health-applied-psychology-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Global Public Health Communicative Sciences Disorders",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/global-public-health-communicative-sciences-disorders-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Global Public Health Food Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/global-public-health-food-studies-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Global Public Health Media Culture Communication",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/global-public-health-media-culture-communication-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Global Public Health Nutrition Dietetics",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/global-public-health-nutrition-dietetics-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Instrumental Performance",
+    "degree_type": "bachelors",
+    "degree_label": "BM",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/instrumental-performance-bm/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Media Culture Communication",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/media-culture-communication-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Music Business",
+    "degree_type": "bachelors",
+    "degree_label": "BM",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/music-business-bm/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Music Business",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/music-business-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Music Technology",
+    "degree_type": "bachelors",
+    "degree_label": "BM",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/music-technology-bm/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Music Theory Composition",
+    "degree_type": "bachelors",
+    "degree_label": "BM",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/music-theory-composition-bm/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Nutrition Food Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/nutrition-food-studies-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Piano Performance",
+    "degree_type": "bachelors",
+    "degree_label": "BM",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/piano-performance-bm/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Professional Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/professional-studies-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Studio Art",
+    "degree_type": "bachelors",
+    "degree_label": "BFA",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/studio-art-bfa/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Teaching Biology 7 12",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/teaching-biology-7-12-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Teaching Chemistry 7 12",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/teaching-chemistry-7-12-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Teaching Earth Science 7 12",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/teaching-earth-science-7-12-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Teaching English 712",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/teaching-english-712-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Teaching Mathematics 712",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/teaching-mathematics-712-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Teaching Physics 7 12",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/teaching-physics-7-12-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Teaching Social Studies 712",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/teaching-social-studies-712-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Teaching World Language 7 12 Chinese",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/teaching-world-language-7-12-chinese-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Teaching World Language 7 12 French",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/teaching-world-language-7-12-french-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Teaching World Language 7 12 Italian",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/teaching-world-language-7-12-italian-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Teaching World Language 7 12 Japanese",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/teaching-world-language-7-12-japanese-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Teaching World Language 7 12 Spanish",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/teaching-world-language-7-12-spanish-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Vocal Performance",
+    "degree_type": "bachelors",
+    "degree_label": "BM",
+    "department": "Steinhardt School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/culture-education-human-development/programs/vocal-performance-bm/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Applied Physics",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/engineering/programs/applied-physics-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Biomolecular Science",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/engineering/programs/biomolecular-science-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Business Technology Management",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/engineering/programs/business-technology-management-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Chemical Biomolecular Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/engineering/programs/chemical-biomolecular-engineering-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Civil Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/engineering/programs/civil-engineering-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Computer Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/engineering/programs/computer-engineering-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Computer Science",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/engineering/programs/computer-science-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Electrical Computer Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/engineering/programs/electrical-computer-engineering-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Electrical Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/engineering/programs/electrical-engineering-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Integrated Design Media",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/engineering/programs/integrated-design-media-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Mathematics",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/engineering/programs/mathematics-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Mathematics Physics",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/engineering/programs/mathematics-physics-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Mechanical Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Tandon School of Engineering",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/engineering/programs/mechanical-engineering-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Individualized Major",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "Gallatin School",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/individualized-study/programs/individualized-major-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Global Liberal Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "Liberal Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/liberal-studies/programs/global-liberal-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Global Liberal Studies Public Health",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "Liberal Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/liberal-studies/programs/global-liberal-studies-public-health-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Global Public Health Nursing",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/nursing/programs/global-public-health-nursing-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Nursing Accelerated 15 Month",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/nursing/programs/nursing-accelerated-15-month-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Nursing Traditional 4 Year",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Rory Meyers College of Nursing",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/nursing/programs/nursing-traditional-4-year-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Applied Data Analytics Visualization",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/professional-studies/programs/applied-data-analytics-visualization-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Applied General Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/professional-studies/programs/applied-general-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Digital Communications Media",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/professional-studies/programs/digital-communications-media-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Healthcare Management",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/professional-studies/programs/healthcare-management-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Hospitality Travel Tourism Management",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/professional-studies/programs/hospitality-travel-tourism-management-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Humanities",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/professional-studies/programs/humanities-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Information Systems Management",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/professional-studies/programs/information-systems-management-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Leadership Management Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/professional-studies/programs/leadership-management-studies-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Marketing Analytics",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/professional-studies/programs/marketing-analytics-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Real Estate",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/professional-studies/programs/real-estate-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Real Estate Urban Sustainability",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/professional-studies/programs/real-estate-urban-sustainability-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Social Sciences",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/professional-studies/programs/social-sciences-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Sport Management",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "School of Professional Studies",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/professional-studies/programs/sport-management-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Biology",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Shanghai",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/shanghai/programs/biology-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Business Finance",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Shanghai",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/shanghai/programs/business-finance-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Business Marketing",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Shanghai",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/shanghai/programs/business-marketing-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Chemistry",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Shanghai",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/shanghai/programs/chemistry-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Computer Science",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Shanghai",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/shanghai/programs/computer-science-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Computer Systems Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Shanghai",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/shanghai/programs/computer-systems-engineering-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Data Science",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Shanghai",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/shanghai/programs/data-science-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Economics",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "NYU Shanghai",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/shanghai/programs/economics-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Electrical Systems Engineering",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Shanghai",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/shanghai/programs/electrical-systems-engineering-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Global China Studies",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "NYU Shanghai",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/shanghai/programs/global-china-studies-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Honors Mathematics",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Shanghai",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/shanghai/programs/honors-mathematics-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Humanities",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "NYU Shanghai",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/shanghai/programs/humanities-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Interactive Media Arts",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Shanghai",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/shanghai/programs/interactive-media-arts-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Interactive Media Business",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Shanghai",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/shanghai/programs/interactive-media-business-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Mathematics",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Shanghai",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/shanghai/programs/mathematics-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Neural Science",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Shanghai",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/shanghai/programs/neural-science-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Physics",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "NYU Shanghai",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/shanghai/programs/physics-bs/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Self Designed Honors",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "NYU Shanghai",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/shanghai/programs/self-designed-honors-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Social Science",
+    "degree_type": "bachelors",
+    "degree_label": "BA",
+    "department": "NYU Shanghai",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/shanghai/programs/social-science-ba/",
+    "bulletin_level": "undergraduate"
+  },
+  {
+    "program_name": "Global Public Health Social Work",
+    "degree_type": "bachelors",
+    "degree_label": "BS",
+    "department": "Silver School of Social Work",
+    "bulletin_url": "https://bulletins.nyu.edu/undergraduate/social-work/programs/global-public-health-social-work-bs/",
+    "bulletin_level": "undergraduate"
+  }
+]
