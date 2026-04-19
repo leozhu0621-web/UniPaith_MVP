@@ -756,9 +756,30 @@ async def search_institutions(
             .group_by(SchoolModel.institution_id)
         )
         sc_map = {r[0]: r[1] for r in sc_result.all()}
+
+        # Aggregate the distinct set of program names per institution so
+        # the frontend can power a "Subjects offered" filter. We use
+        # program_name (e.g. "Computer Science") rather than department
+        # (which is often a school name like "College of Arts & Science").
+        dep_result = await db.execute(
+            select(Program.institution_id, Program.program_name)
+            .where(
+                Program.institution_id.in_(inst_ids),
+                Program.is_published.is_(True),
+            )
+            .distinct()
+        )
+        subjects_map: dict = {}
+        for inst_id, name in dep_result.all():
+            if name:
+                subjects_map.setdefault(inst_id, []).append(name)
+        # Sort each institution's subjects alphabetically for stable UI
+        for inst_id in subjects_map:
+            subjects_map[inst_id].sort()
     else:
         pc_map = {}
         sc_map = {}
+        subjects_map = {}
 
     items = []
     for inst in institutions:
@@ -787,6 +808,9 @@ async def search_institutions(
             "us_news_rank": rd.get("us_news_2025"),
             "median_earnings": rd.get("earnings_10yr_median"),
             "graduation_rate": rd.get("graduation_rate"),
+            "region": inst.region,
+            "subjects_offered": subjects_map.get(inst.id, []),
+            "top_industries": (inst.school_outcomes or {}).get("top_employer_industries", []),
         })
 
     return {
