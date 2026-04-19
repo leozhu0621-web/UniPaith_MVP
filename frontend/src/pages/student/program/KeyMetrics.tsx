@@ -28,6 +28,8 @@ interface Tile {
   context?: string
   tone: Tone
   priority: number // higher = more distinctive, picked first
+  /** Source attribution (rendered as an (i) tooltip next to the subtitle). */
+  sourceNote?: string
 }
 
 interface Props {
@@ -40,15 +42,24 @@ interface Props {
   highlights?: string[] | null
   descriptionText?: string | null
 
-  // Program-specific outcomes (from outcomes_data)
+  // Program-specific outcomes (from outcomes_data) — Section A of the strip.
+  // All Section A tiles are anchored to canonical timeframes:
+  //   Salary = 4 years after graduation (College Scorecard program-level)
+  //   Employment = 6 months after graduation
+  //   Employers / Industries = past 3 years of graduates
+  /** College Scorecard canonical earnings at 4 years after graduation. */
+  outcomesEarnings4yr?: number | null
+  /** Freeform program-reported median salary (only used if salary_timeframe matches canonical). */
   outcomesMedianSalary?: number | null
   outcomesEmploymentRate?: number | null
   outcomesTopEmployers?: string[] | null
   outcomesTopIndustries?: string[] | null
-  /** When the median-salary snapshot was taken, e.g. "5 years after graduation". */
+  /** When the median-salary snapshot was taken, e.g. "4 years after graduation". */
   outcomesSalaryTimeframe?: string | null
   /** When employment was measured, e.g. "6 months after graduation". */
   outcomesEmploymentTimeframe?: string | null
+  /** Source of the outcomes data, e.g. "College Scorecard" or "School career services". */
+  outcomesSource?: string | null
 
   // Cost breakdown (from cost_data)
   costFees?: Record<string, number> | null
@@ -61,6 +72,14 @@ interface Props {
   graduationRate?: number | null
   retentionRate?: number | null
 }
+
+/** Section A tile labels — used by the picker to enforce "max 1 Section A tile". */
+const SECTION_A_LABELS = new Set([
+  'Median Salary',
+  'Employment Rate',
+  'Top Employers',
+  'Top Industries',
+])
 
 /* ── Constants ─────────────────────────────────────────────────────────── */
 
@@ -220,56 +239,82 @@ export default function KeyMetrics(props: Props) {
   const effectiveDuration = props.durationMonths ?? DEFAULT_DURATION_MONTHS[degreeType] ?? null
   const effectiveTuition = props.tuition ?? props.institutionTuition ?? null
 
-  /* ── Tier 1: Program-specific outcomes (highest priority) ── */
+  /* ── Section A: Program-Reported Outcomes ────────────────────────────────
+   *
+   * Every Section A tile is anchored to a canonical timeframe so cross-program
+   * comparison is meaningful:
+   *   Salary     → 4 years after graduation (College Scorecard)
+   *   Employment → 6 months after graduation
+   *   Employers  → past 3 years of graduates
+   *   Industries → past 3 years of graduates
+   *
+   * All tiles render emerald. Source attribution appears as a small (i) icon
+   * next to the subtitle. The picker enforces "max 1 Section A tile" further
+   * down, so within this group only the highest-priority qualifier makes the
+   * final strip (priority order: Salary > Employment > Employers > Industries).
+   */
 
-  if (props.outcomesMedianSalary) {
+  // Source note shared by every Section A tile when outcomes_data.source is set.
+  const sectionASource = props.outcomesSource || undefined
+
+  // 1. Median Salary — prefer the Scorecard canonical field; accept a freeform
+  //    median_salary only when the reported timeframe explicitly matches 4 yrs.
+  const canonicalSalary = props.outcomesEarnings4yr
+    ?? (props.outcomesMedianSalary != null
+        && /4\s?yr|4\s?years/i.test(props.outcomesSalaryTimeframe || '')
+        ? props.outcomesMedianSalary
+        : null)
+  if (canonicalSalary) {
     candidates.push({
       icon: TrendingUp,
       label: 'Median Salary',
-      value: formatCurrency(props.outcomesMedianSalary),
-      // Subtitle = when the salary was measured, from data when possible.
-      context: props.outcomesSalaryTimeframe || 'After graduation',
+      value: formatCurrency(canonicalSalary),
+      context: '4 yrs after graduation',
       tone: 'emerald',
       priority: 95,
+      sourceNote: sectionASource,
     })
   }
 
-  if (props.outcomesEmploymentRate != null) {
+  // 2. Employment Rate — must be at the canonical 6-month timeframe. We accept
+  //    null/unset timeframe as the canonical default (backwards-compatible).
+  const employmentTimeframeOk = !props.outcomesEmploymentTimeframe
+    || /6\s?mo|6\s?months/i.test(props.outcomesEmploymentTimeframe)
+  if (props.outcomesEmploymentRate != null && employmentTimeframeOk) {
     candidates.push({
       icon: Briefcase,
       label: 'Employment Rate',
       value: `${Math.round(props.outcomesEmploymentRate * 100)}%`,
-      // Subtitle = when employment was measured, from data when possible.
-      context: props.outcomesEmploymentTimeframe || '6 months after graduation',
+      context: '6 mo after graduation',
       tone: 'emerald',
-      priority: 90,
+      priority: 94,
+      sourceNote: sectionASource,
     })
   }
 
+  // 3. Top Employers — show up to 3, emerald tone, canonical "past 3 years".
   if (props.outcomesTopEmployers && props.outcomesTopEmployers.length > 0) {
-    // Show the top 3 employers as the value itself (list-style tile).
     candidates.push({
       icon: Award,
       label: 'Top Employers',
       value: props.outcomesTopEmployers.slice(0, 3).join(', '),
-      context: props.outcomesTopEmployers.length > 3
-        ? `+ ${props.outcomesTopEmployers.length - 3} more`
-        : 'Where grads work',
-      tone: 'violet',
-      priority: 88,
+      context: 'Past 3 years of grads',
+      tone: 'emerald',
+      priority: 93,
+      sourceNote: sectionASource,
     })
   }
 
+  // 4. Top Industries — same treatment.
   if (props.outcomesTopIndustries && props.outcomesTopIndustries.length > 0) {
     candidates.push({
       icon: Users,
       label: 'Top Industries',
       value: props.outcomesTopIndustries.slice(0, 3).join(', '),
-      context: props.outcomesTopIndustries.length > 3
-        ? `+ ${props.outcomesTopIndustries.length - 3} more`
-        : 'Where grads go',
-      tone: 'violet',
-      priority: 80,
+      context: 'Past 3 years of grads',
+      tone: 'emerald',
+      priority: 92,
+      sourceNote: sectionASource,
     })
   }
 
@@ -419,10 +464,14 @@ export default function KeyMetrics(props: Props) {
 
   const picked: Tile[] = []
   let violetTiles = 0
+  let sectionATiles = 0 // enforce "one Section A tile per strip"
 
   for (const c of candidates) {
     if (picked.length >= 4) break
+    const isSectionA = SECTION_A_LABELS.has(c.label)
+    if (isSectionA && sectionATiles >= 1) continue // one Section A slot only
     if (c.tone === 'violet' && violetTiles >= 2) continue // avoid over-purpling
+    if (isSectionA) sectionATiles++
     if (c.tone === 'violet') violetTiles++
     picked.push(c)
   }
@@ -492,10 +541,19 @@ function MetricTile({ tile }: { tile: Tile }) {
         {tile.value}
       </p>
 
-      {/* Context — editorial subtitle */}
-      {tile.context && (
+      {/* Context — editorial subtitle, optionally followed by an (i) source tooltip */}
+      {(tile.context || tile.sourceNote) && (
         <p className="text-[11.5px] text-slate-500 mt-2 leading-snug line-clamp-2">
           {tile.context}
+          {tile.sourceNote && (
+            <span
+              className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-slate-100 text-slate-500 text-[9px] font-semibold ml-1 cursor-help select-none hover:bg-slate-200 hover:text-slate-700 transition-colors align-[1px]"
+              title={`Source: ${tile.sourceNote}`}
+              aria-label={`Source: ${tile.sourceNote}`}
+            >
+              i
+            </span>
+          )}
         </p>
       )}
     </div>

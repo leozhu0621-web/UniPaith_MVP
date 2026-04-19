@@ -176,16 +176,21 @@ export default function SchoolDetailPage() {
         tracks={p.tracks}
         highlights={p.highlights}
         descriptionText={p.description_text}
+        // Section A: canonical outcomes
+        outcomesEarnings4yr={p.outcomes_data?.earnings_4yr_median}
         outcomesMedianSalary={p.outcomes_data?.median_salary}
         outcomesEmploymentRate={p.outcomes_data?.employment_rate}
         outcomesTopEmployers={p.outcomes_data?.top_employers}
         outcomesTopIndustries={p.outcomes_data?.top_industries}
         outcomesSalaryTimeframe={p.outcomes_data?.salary_timeframe}
         outcomesEmploymentTimeframe={p.outcomes_data?.employment_timeframe}
+        outcomesSource={p.outcomes_data?.source}
+        // Cost breakdown
         costFees={p.cost_data?.fees}
         costLiving={p.cost_data?.estimated_living_cost}
         costBooks={p.cost_data?.book_supplies}
         totalCostAttendance={rd.total_cost_attendance}
+        // Institution fallbacks
         institutionTuition={rd.tuition_out_of_state ?? rd.tuition_in_state}
         graduationRate={rd.graduation_rate}
         retentionRate={rd.retention_rate}
