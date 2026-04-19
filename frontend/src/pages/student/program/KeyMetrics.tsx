@@ -73,13 +73,49 @@ interface Props {
   retentionRate?: number | null
 }
 
-/** Section A tile labels — used by the picker to enforce "max 1 Section A tile". */
-const SECTION_A_LABELS = new Set([
-  'Median Salary',
-  'Employment Rate',
-  'Top Employers',
-  'Top Industries',
-])
+/**
+ * Five fixed sections. Every program renders AT MOST five tiles — one per
+ * section — so the strip has a consistent shape across programs and
+ * cross-program comparison is meaningful. Within each section the highest-
+ * priority qualifying candidate wins its slot.
+ */
+type Section = 'A' | 'B' | 'C' | 'D' | 'E'
+
+const SECTION_ORDER: Section[] = ['A', 'B', 'C', 'D', 'E']
+
+/** Which labels belong to which section. Every Tile produced by this file
+ *  MUST have its label in exactly one of these sets, or the picker will
+ *  silently drop it. Keep this map in sync with the candidate blocks below. */
+const LABEL_TO_SECTION: Record<string, Section> = {
+  // A — Program-Reported Outcomes (emerald)
+  'Median Salary': 'A',
+  'Employment Rate': 'A',
+  'Top Employers': 'A',
+  'Top Industries': 'A',
+  // B — Program Economics (rose)
+  'Total Investment': 'B',
+  'Cost / yr': 'B',
+  'Tuition / yr': 'B',
+  // C — Program Character (violet / amber / blue for parsed facts)
+  'Credits': 'C',
+  'Honors Track': 'C',
+  'Thesis Track': 'C',
+  'Campus': 'C',
+  'Research Labs': 'C',
+  'Study Abroad': 'C',
+  'Subfields': 'C',
+  'Concentrations': 'C',
+  'Tracks': 'C',
+  'Specializations': 'C',
+  'Streams': 'C',
+  'Pathways': 'C',
+  'Areas': 'C',
+  // D — Structural (blue)
+  'Duration': 'D',
+  // E — Institution Fallback (blue)
+  'Grad Rate': 'E',
+  'Retention': 'E',
+}
 
 /* ── Constants ─────────────────────────────────────────────────────────── */
 
@@ -413,24 +449,25 @@ export default function KeyMetrics(props: Props) {
     })
   }
 
-  /* ── Tier 5: Duration — only when it's actually distinctive ── */
+  /* ── Section D: Structural — Duration is always shown since every program has one ── */
 
   if (effectiveDuration) {
     const std = DEFAULT_DURATION_MONTHS[degreeType]
-    // Only show duration if it's meaningfully different from the norm for this degree type.
-    // A 4-year Bachelor's isn't interesting; a 3-year accelerated one is.
-    const isDistinctive = !std || Math.abs(effectiveDuration - std) >= 6
-    if (isDistinctive) {
-      const fast = std && effectiveDuration < std
-      candidates.push({
-        icon: Clock,
-        label: 'Duration',
-        value: formatDurationYears(effectiveDuration),
-        context: fast ? 'Accelerated track' : effectiveDuration <= 24 ? 'Graduate track' : 'Extended program',
-        tone: 'blue',
-        priority: 58,
-      })
-    }
+    const fast = std ? effectiveDuration < std - 2 : false
+    const slow = std ? effectiveDuration > std + 2 : false
+    const context = fast
+      ? 'Accelerated track'
+      : slow
+        ? 'Extended program'
+        : effectiveDuration <= 24 ? 'Graduate track' : 'Standard track'
+    candidates.push({
+      icon: Clock,
+      label: 'Duration',
+      value: formatDurationYears(effectiveDuration),
+      context,
+      tone: 'blue',
+      priority: 58,
+    })
   }
 
   /* ── Tier 6: Institution rollups (last-resort fallback) ── */
@@ -457,31 +494,41 @@ export default function KeyMetrics(props: Props) {
     })
   }
 
-  /* ── Pick top 4 by priority, with soft de-duping ── */
+  /* ── Pick one tile per section (A, B, C, D, E) ──
+   * Within each section, the highest-priority qualifying candidate wins
+   * its slot. If a section has no candidates, its slot is simply omitted
+   * (the strip shrinks, it does not pad with empty states).
+   */
 
-  // Sort by priority, highest first
-  candidates.sort((a, b) => b.priority - a.priority)
-
-  const picked: Tile[] = []
-  let violetTiles = 0
-  let sectionATiles = 0 // enforce "one Section A tile per strip"
-
+  // Group candidates by their section.
+  const bySection: Record<Section, Tile[]> = { A: [], B: [], C: [], D: [], E: [] }
   for (const c of candidates) {
-    if (picked.length >= 4) break
-    const isSectionA = SECTION_A_LABELS.has(c.label)
-    if (isSectionA && sectionATiles >= 1) continue // one Section A slot only
-    if (c.tone === 'violet' && violetTiles >= 2) continue // avoid over-purpling
-    if (isSectionA) sectionATiles++
-    if (c.tone === 'violet') violetTiles++
-    picked.push(c)
+    const section = LABEL_TO_SECTION[c.label]
+    if (section) bySection[section].push(c)
   }
 
-  // If we genuinely can't find 4 real tiles, show what we have — don't pad.
+  // Pick the highest-priority tile per section, in canonical order A→E.
+  const picked: Tile[] = []
+  for (const section of SECTION_ORDER) {
+    const pool = bySection[section]
+    if (pool.length === 0) continue
+    pool.sort((a, b) => b.priority - a.priority)
+    picked.push(pool[0])
+  }
+
+  // If we genuinely can't find any real tile, render nothing.
   if (picked.length === 0) return null
+
+  // Grid col count scales to however many sections produced a tile.
+  const colClass =
+    picked.length >= 5 ? 'md:grid-cols-5'
+    : picked.length === 4 ? 'md:grid-cols-4'
+    : picked.length === 3 ? 'md:grid-cols-3'
+    : 'md:grid-cols-2'
 
   return (
     <div className="mb-5">
-      <div className={`grid gap-3 grid-cols-2 ${picked.length >= 4 ? 'md:grid-cols-4' : picked.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
+      <div className={`grid gap-3 grid-cols-2 ${colClass}`}>
         {picked.map((t, i) => <MetricTile key={i} tile={t} />)}
       </div>
     </div>
