@@ -76,13 +76,17 @@ async def _ensure_schools_table(db: AsyncSession) -> None:
             "ALTER TABLE programs ADD COLUMN school_id UUID "
             "REFERENCES schools(id) ON DELETE SET NULL"
         ))
-        await db.execute(text("CREATE INDEX ix_programs_school_id ON programs(school_id)"))
+        await db.execute(text(
+            "CREATE INDEX ix_programs_school_id ON programs(school_id)"
+        ))
 
     # Populate schools from existing department strings
     await db.execute(text("""
         INSERT INTO schools (institution_id, name, sort_order)
         SELECT DISTINCT institution_id, department,
-            ROW_NUMBER() OVER (PARTITION BY institution_id ORDER BY department)
+            ROW_NUMBER() OVER (
+                PARTITION BY institution_id ORDER BY department
+            )
         FROM programs
         WHERE department IS NOT NULL AND department != ''
         ON CONFLICT DO NOTHING
