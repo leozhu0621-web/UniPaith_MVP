@@ -1,6 +1,6 @@
 import {
-  DollarSign, TrendingUp, GraduationCap, Clock, Wallet,
-  Briefcase, Award, Sparkles, ArrowUpRight, BookOpen, MapPin,
+  DollarSign, TrendingUp, GraduationCap, Clock,
+  Briefcase, Award, Sparkles, BookOpen, MapPin,
   Microscope, Users, Compass,
 } from 'lucide-react'
 import { formatCurrency } from '../../../utils/format'
@@ -43,15 +43,21 @@ interface Props {
   // Program-specific outcomes (from outcomes_data)
   outcomesMedianSalary?: number | null
   outcomesEmploymentRate?: number | null
-  outcomesInternshipConversion?: number | null
   outcomesTopEmployers?: string[] | null
   outcomesTopIndustries?: string[] | null
-  outcomesPaybackMonths?: number | null
+  /** When the median-salary snapshot was taken, e.g. "5 years after graduation". */
+  outcomesSalaryTimeframe?: string | null
+  /** When employment was measured, e.g. "6 months after graduation". */
+  outcomesEmploymentTimeframe?: string | null
+
+  // Cost breakdown (from cost_data)
+  costFees?: Record<string, number> | null
+  costLiving?: number | null
+  costBooks?: number | null
+  totalCostAttendance?: number | null
 
   // Institution rollups (fallback)
   institutionTuition?: number | null
-  earnings6yr?: number | null
-  earnings10yr?: number | null
   graduationRate?: number | null
   retentionRate?: number | null
 }
@@ -65,9 +71,6 @@ const DEFAULT_DURATION_MONTHS: Record<string, number> = {
 const DEFAULT_CREDITS: Record<string, number> = {
   bachelors: 120, masters: 30, phd: 60, certificate: 12, associate: 60,
 }
-
-/** 2024 BLS median earnings for bachelor's-degree holders, used as earnings-premium baseline. */
-const US_BACHELORS_MEDIAN = 66600
 
 /* ── Parsers: extract distinctive facts from unstructured text ─────────── */
 
@@ -224,7 +227,8 @@ export default function KeyMetrics(props: Props) {
       icon: TrendingUp,
       label: 'Median Salary',
       value: formatCurrency(props.outcomesMedianSalary),
-      context: 'Reported by program',
+      // Subtitle = when the salary was measured, from data when possible.
+      context: props.outcomesSalaryTimeframe || 'After graduation',
       tone: 'emerald',
       priority: 95,
     })
@@ -235,31 +239,22 @@ export default function KeyMetrics(props: Props) {
       icon: Briefcase,
       label: 'Employment Rate',
       value: `${Math.round(props.outcomesEmploymentRate * 100)}%`,
-      context: 'Within 6 months',
+      // Subtitle = when employment was measured, from data when possible.
+      context: props.outcomesEmploymentTimeframe || '6 months after graduation',
       tone: 'emerald',
       priority: 90,
     })
   }
 
-  if (props.outcomesInternshipConversion != null) {
-    candidates.push({
-      icon: ArrowUpRight,
-      label: 'Intern → Offer',
-      value: `${Math.round(props.outcomesInternshipConversion * 100)}%`,
-      context: 'Conversion rate',
-      tone: 'violet',
-      priority: 85,
-    })
-  }
-
   if (props.outcomesTopEmployers && props.outcomesTopEmployers.length > 0) {
+    // Show the top 3 employers as the value itself (list-style tile).
     candidates.push({
       icon: Award,
       label: 'Top Employers',
-      value: props.outcomesTopEmployers.slice(0, 1)[0] ?? '',
-      context: props.outcomesTopEmployers.length > 1
-        ? `+ ${props.outcomesTopEmployers.slice(1, 3).join(', ')}`
-        : 'Primary hiring partner',
+      value: props.outcomesTopEmployers.slice(0, 3).join(', '),
+      context: props.outcomesTopEmployers.length > 3
+        ? `+ ${props.outcomesTopEmployers.length - 3} more`
+        : 'Where grads work',
       tone: 'violet',
       priority: 88,
     })
@@ -268,79 +263,74 @@ export default function KeyMetrics(props: Props) {
   if (props.outcomesTopIndustries && props.outcomesTopIndustries.length > 0) {
     candidates.push({
       icon: Users,
-      label: 'Top Industry',
-      value: props.outcomesTopIndustries[0],
-      context: props.outcomesTopIndustries.length > 1
-        ? `+ ${props.outcomesTopIndustries.slice(1, 3).join(', ')}`
+      label: 'Top Industries',
+      value: props.outcomesTopIndustries.slice(0, 3).join(', '),
+      context: props.outcomesTopIndustries.length > 3
+        ? `+ ${props.outcomesTopIndustries.length - 3} more`
         : 'Where grads go',
       tone: 'violet',
       priority: 80,
     })
   }
 
-  /* ── Tier 2: Salary trajectory and premium — concrete, not abstract ── */
+  /* ── Tier 2: Program economics — show what the cost consists of ── */
 
-  // Concrete $→$ range (preferred over abstract growth %)
-  if (props.earnings6yr && props.earnings10yr && props.earnings10yr > props.earnings6yr) {
-    const growth = Math.round(((props.earnings10yr - props.earnings6yr) / props.earnings6yr) * 100)
-    candidates.push({
-      icon: TrendingUp,
-      label: 'Salary: 6yr → 10yr',
-      value: `${shortCurrency(props.earnings6yr)} → ${shortCurrency(props.earnings10yr)}`,
-      context: `+${growth}% over 4 years`,
-      tone: 'emerald',
-      priority: 82,
-    })
-  }
-
-  // Earnings premium vs national bachelors median
-  const midCareer = props.outcomesMedianSalary ?? props.earnings10yr
-  if (midCareer && midCareer > US_BACHELORS_MEDIAN * 1.05) {
-    const premium = midCareer - US_BACHELORS_MEDIAN
-    const pct = Math.round((premium / US_BACHELORS_MEDIAN) * 100)
-    candidates.push({
-      icon: ArrowUpRight,
-      label: 'Earnings Premium',
-      value: `+${shortCurrency(premium)}`,
-      context: `${pct}% above US avg`,
-      tone: 'emerald',
-      priority: 78,
-    })
-  }
-
-  /* ── Tier 3: Calculated program economics ── */
-
-  if (props.outcomesPaybackMonths) {
-    candidates.push({
-      icon: Wallet,
-      label: 'Payback Period',
-      value: `${(props.outcomesPaybackMonths / 12).toFixed(1)} yrs`,
-      context: 'To recoup tuition',
-      tone: 'blue',
-      priority: 75,
-    })
-  }
+  // Build an honest breakdown label so students know exactly what's included.
+  const costBreakdown: string[] = ['Tuition']
+  const fees = props.costFees ? Object.values(props.costFees).reduce((s, v) => s + (Number(v) || 0), 0) : 0
+  if (fees > 0) costBreakdown.push('fees')
+  if (props.costLiving) costBreakdown.push('housing')
+  if (props.costBooks) costBreakdown.push('books')
+  const hasComprehensive = fees > 0 || props.costLiving || props.costBooks
+  const annualComprehensive = (effectiveTuition || 0) + fees + (props.costLiving || 0) + (props.costBooks || 0)
 
   if (effectiveTuition && effectiveDuration) {
     const years = effectiveDuration / 12
-    const total = effectiveTuition * years
-    candidates.push({
-      icon: DollarSign,
-      label: 'Total Investment',
-      value: formatCurrency(total),
-      context: `${years % 1 === 0 ? years : years.toFixed(1)} yrs × ${shortCurrency(effectiveTuition)}`,
-      tone: 'rose',
-      priority: 66,
-    })
+    const yearsDisplay = years % 1 === 0 ? years : years.toFixed(1)
+
+    if (hasComprehensive) {
+      // Full cost of attendance when we can compute it
+      const total = annualComprehensive * years
+      candidates.push({
+        icon: DollarSign,
+        label: 'Total Investment',
+        value: formatCurrency(total),
+        context: `${costBreakdown.join(' + ')} · ${yearsDisplay} yrs × ${shortCurrency(annualComprehensive)}/yr`,
+        tone: 'rose',
+        priority: 66,
+      })
+    } else {
+      // Tuition-only fallback — be explicit about what's excluded
+      const total = effectiveTuition * years
+      candidates.push({
+        icon: DollarSign,
+        label: 'Total Investment',
+        value: formatCurrency(total),
+        context: `Tuition only · ${yearsDisplay} yrs × ${shortCurrency(effectiveTuition)}/yr (excl. housing)`,
+        tone: 'rose',
+        priority: 66,
+      })
+    }
   } else if (effectiveTuition) {
-    candidates.push({
-      icon: DollarSign,
-      label: 'Tuition / yr',
-      value: formatCurrency(effectiveTuition),
-      context: 'Per academic year',
-      tone: 'rose',
-      priority: 50,
-    })
+    if (hasComprehensive) {
+      candidates.push({
+        icon: DollarSign,
+        label: 'Cost / yr',
+        value: formatCurrency(annualComprehensive),
+        context: costBreakdown.join(' + '),
+        tone: 'rose',
+        priority: 54,
+      })
+    } else {
+      candidates.push({
+        icon: DollarSign,
+        label: 'Tuition / yr',
+        value: formatCurrency(effectiveTuition),
+        context: 'Tuition only · excl. housing & living',
+        tone: 'rose',
+        priority: 50,
+      })
+    }
   }
 
   /* ── Tier 4: Program character — parsed from highlights + description ── */
@@ -400,17 +390,6 @@ export default function KeyMetrics(props: Props) {
 
   /* ── Tier 6: Institution rollups (last-resort fallback) ── */
 
-  if (props.earnings10yr && !candidates.some(c => /salary|earnings|premium/i.test(c.label))) {
-    candidates.push({
-      icon: TrendingUp,
-      label: 'Mid-Career (10yr)',
-      value: formatCurrency(props.earnings10yr),
-      context: 'Median graduate earnings',
-      tone: 'emerald',
-      priority: 70,
-    })
-  }
-
   if (props.graduationRate != null) {
     candidates.push({
       icon: GraduationCap,
@@ -439,15 +418,11 @@ export default function KeyMetrics(props: Props) {
   candidates.sort((a, b) => b.priority - a.priority)
 
   const picked: Tile[] = []
-  let salaryTiles = 0
   let violetTiles = 0
 
   for (const c of candidates) {
     if (picked.length >= 4) break
-    const isSalaryFamily = /salary|earnings|premium|mid-career|payback/i.test(c.label)
-    if (isSalaryFamily && salaryTiles >= 2) continue
     if (c.tone === 'violet' && violetTiles >= 2) continue // avoid over-purpling
-    if (isSalaryFamily) salaryTiles++
     if (c.tone === 'violet') violetTiles++
     picked.push(c)
   }
