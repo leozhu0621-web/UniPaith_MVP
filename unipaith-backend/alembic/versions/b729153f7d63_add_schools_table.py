@@ -1,7 +1,7 @@
 """add schools table
 
-Revision ID: m3n4o5p6q7r8
-Revises: l2m3n4o5p6q7
+Revision ID: b729153f7d63
+Revises: 4c9d6e1a8b3f
 Create Date: 2026-04-15 16:00:00.000000
 
 """
@@ -9,8 +9,8 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-revision = "m3n4o5p6q7r8"
-down_revision = "l2m3n4o5p6q7"
+revision = "b729153f7d63"
+down_revision = "4c9d6e1a8b3f"
 branch_labels = None
 depends_on = None
 
