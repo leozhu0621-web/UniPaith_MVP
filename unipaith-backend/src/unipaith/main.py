@@ -66,13 +66,13 @@ async def _ensure_schools_table(db: AsyncSession) -> None:
 
     # Add school_id column to programs if not exists
     col_check = await db.execute(text(
-        "SELECT 1 FROM information_schema.columns"
-        " WHERE table_name='programs' AND column_name='school_id'"
+        "SELECT 1 FROM information_schema.columns "
+        "WHERE table_name='programs' AND column_name='school_id'"
     ))
     if not col_check.scalar():
         await db.execute(text(
-            "ALTER TABLE programs ADD COLUMN school_id UUID"
-            " REFERENCES schools(id) ON DELETE SET NULL"
+            "ALTER TABLE programs ADD COLUMN school_id UUID "
+            "REFERENCES schools(id) ON DELETE SET NULL"
         ))
         await db.execute(text("CREATE INDEX ix_programs_school_id ON programs(school_id)"))
 
@@ -80,7 +80,9 @@ async def _ensure_schools_table(db: AsyncSession) -> None:
     await db.execute(text("""
         INSERT INTO schools (institution_id, name, sort_order)
         SELECT DISTINCT institution_id, department,
-               ROW_NUMBER() OVER (PARTITION BY institution_id ORDER BY department)
+            ROW_NUMBER() OVER (
+                PARTITION BY institution_id ORDER BY department
+            )
         FROM programs
         WHERE department IS NOT NULL AND department != ''
         ON CONFLICT DO NOTHING
