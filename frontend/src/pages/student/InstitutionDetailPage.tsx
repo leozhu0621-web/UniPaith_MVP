@@ -21,10 +21,13 @@ import {
 } from 'lucide-react'
 import type { Institution, ProgramSummary, InstitutionPost, SchoolSummary } from '../../types'
 
+// Schools is the headline tab — the primary purpose of the university detail
+// page is to let students drill into a school, then into a program. Overview,
+// Programs, Events, and Updates are supporting context.
 const TABS = [
-  { id: 'overview', label: 'Overview' },
   { id: 'schools', label: 'Schools' },
-  { id: 'programs', label: 'Programs' },
+  { id: 'overview', label: 'About' },
+  { id: 'programs', label: 'All Programs' },
   { id: 'events', label: 'Events' },
   { id: 'updates', label: 'Updates' },
 ]
@@ -34,7 +37,7 @@ export default function InstitutionDetailPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const compareStore = useCompareStore()
-  const [tab, setTab] = useState('overview')
+  const [tab, setTab] = useState('schools')
 
   const { data: institution, isLoading } = useQuery({
     queryKey: ['institution', institutionId],
@@ -48,10 +51,11 @@ export default function InstitutionDetailPage() {
     enabled: !!institutionId,
   })
 
+  // Schools is the landing tab, so fetch eagerly instead of waiting for click.
   const { data: schools } = useQuery({
     queryKey: ['institution-schools', institutionId],
     queryFn: () => getInstitutionSchools(institutionId!),
-    enabled: !!institutionId && tab === 'schools',
+    enabled: !!institutionId,
   })
 
   const { data: events } = useQuery({
@@ -230,26 +234,39 @@ export default function InstitutionDetailPage() {
           </div>
         )}
 
-        {/* Schools Tab */}
+        {/* Schools Tab — the default, headline view */}
         {tab === 'schools' && (
           <div>
             {schoolList.length === 0 ? (
               <div className="text-center py-16 bg-white rounded-xl border border-divider">
                 <GraduationCap size={32} className="mx-auto text-stone mb-3" />
                 <p className="text-sm text-student-ink font-medium mb-1">No schools found</p>
-                <p className="text-xs text-student-text">This university hasn't organized programs into schools yet.</p>
+                <p className="text-xs text-student-text">This university hasn't organized programs into schools yet — try the All Programs tab.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {schoolList.map(school => (
-                  <SchoolCard
-                    key={school.id}
-                    school={school}
-                    institutionName={inst.name}
-                    onClick={() => navigate(`/s/institutions/${inst.id}/schools/${school.id}`)}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="flex items-baseline justify-between mb-3">
+                  <p className="text-[13px] text-student-text">
+                    <span className="font-semibold text-student-ink">{schoolList.length}</span> school{schoolList.length === 1 ? '' : 's'} at {inst.name}. Pick one to see its programs.
+                  </p>
+                  <button
+                    onClick={() => setTab('programs')}
+                    className="text-[12px] text-student hover:underline"
+                  >
+                    Skip schools, show all programs →
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {schoolList.map(school => (
+                    <SchoolCard
+                      key={school.id}
+                      school={school}
+                      institutionName={inst.name}
+                      onClick={() => navigate(`/s/institutions/${inst.id}/schools/${school.id}`)}
+                    />
+                  ))}
+                </div>
+              </>
             )}
           </div>
         )}
