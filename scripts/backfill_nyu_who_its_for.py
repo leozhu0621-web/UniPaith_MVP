@@ -18,10 +18,8 @@ Usage:
 from __future__ import annotations
 
 import asyncio
-import json
 import os
 import sys
-from pathlib import Path
 
 import httpx
 from openai import AsyncOpenAI
@@ -154,16 +152,11 @@ async def main() -> None:
         ]
         print(f"\nNeed who_its_for: {len(candidates)} programs")
 
-        # Generate concurrently.
+        # Generate concurrently (gather preserves submission order).
         tasks = [gen_who_its_for(openai_client, sem, p) for p in candidates]
-        results: list[tuple[dict, str | None]] = []
-        for i, coro in enumerate(asyncio.as_completed(tasks)):
-            text = await coro
-            # Pair back with the corresponding program by completion order
-            # is not safe; we iterate sequentially and keep program ref.
-            results.append((candidates[i], text))
-            if (i + 1) % 50 == 0:
-                print(f"  generated {i + 1}/{len(candidates)}")
+        texts = await asyncio.gather(*tasks)
+        results = list(zip(candidates, texts))
+        print(f"  generated {len(candidates)}/{len(candidates)}")
 
         # Push via /internal/enrich. Use program_name+department key.
         enrichable = [
