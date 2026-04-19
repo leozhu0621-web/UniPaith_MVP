@@ -22,6 +22,36 @@ import { formatCurrency, formatDate, formatPercent } from '../../utils/format'
 import { DEGREE_LABELS, DELIVERY_FORMAT_LABELS, CAMPUS_SETTING_LABELS } from '../../utils/constants'
 import type { Program, Institution, EventItem } from '../../types'
 
+function normalizeTracks(tracks: any): string[] {
+  if (!tracks) return []
+  if (Array.isArray(tracks)) return tracks.filter((t: any) => typeof t === 'string')
+  if (typeof tracks === 'object') {
+    for (const key of ['concentrations', 'tracks', 'subfields', 'specializations', 'streams', 'pathways']) {
+      if (Array.isArray(tracks[key])) return tracks[key].filter((t: any) => typeof t === 'string')
+    }
+  }
+  return []
+}
+
+function normalizeIntakeRounds(rounds: any): Record<string, any>[] {
+  if (!rounds) return []
+  if (Array.isArray(rounds)) return rounds
+  if (typeof rounds === 'object') {
+    const result: Record<string, any>[] = []
+    for (const [key, val] of Object.entries(rounds)) {
+      if (key === 'source' || typeof val !== 'object' || val === null) continue
+      const term = val as Record<string, any>
+      for (const [roundKey, roundVal] of Object.entries(term)) {
+        if (typeof roundVal === 'object' && roundVal !== null) {
+          result.push({ round_name: roundKey.replace(/_/g, ' '), ...roundVal as Record<string, any> })
+        }
+      }
+    }
+    return result
+  }
+  return []
+}
+
 export default function ProgramDetailPage() {
   const { programId } = useParams<{ programId: string }>()
   const [searchParams] = useSearchParams()
@@ -65,11 +95,11 @@ export default function ProgramDetailPage() {
   const inst: Institution | undefined = instQ.data
   const events: EventItem[] = Array.isArray(eventsQ.data) ? eventsQ.data : []
   const gallery: string[] = Array.isArray(p?.media_urls) ? p.media_urls : []
-  const tracks: string[] = Array.isArray(p?.tracks) ? p.tracks : []
+  const tracks: string[] = normalizeTracks(p?.tracks)
   const highlights: string[] = Array.isArray(p?.highlights) ? p.highlights : []
   const faculty: Record<string, any>[] = Array.isArray(p?.faculty_contacts) ? p.faculty_contacts : []
   const appReqs: Record<string, any>[] = Array.isArray(p?.application_requirements) ? p.application_requirements : []
-  const intakeRounds: Record<string, any>[] = Array.isArray(p?.intake_rounds) ? p.intake_rounds : []
+  const intakeRounds: Record<string, any>[] = normalizeIntakeRounds(p?.intake_rounds)
   const outcomes: Record<string, any> = p?.outcomes_data && typeof p.outcomes_data === 'object' ? p.outcomes_data : {}
 
   const tabs = [
