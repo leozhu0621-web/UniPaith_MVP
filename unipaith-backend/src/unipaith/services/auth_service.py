@@ -137,7 +137,9 @@ class AuthService:
             parts = refresh_token.split(":")
             user_id = parts[1] if len(parts) > 1 else None
             if user_id:
-                result = await self.db.execute(select(User).where(User.id == user_id))
+                result = await self.db.execute(
+                    select(User).where(User.id == uuid.UUID(user_id))
+                )
                 user = result.scalar_one_or_none()
                 role = user.role.value if user else "student"
             else:

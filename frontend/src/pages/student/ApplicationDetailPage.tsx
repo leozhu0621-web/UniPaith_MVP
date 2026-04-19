@@ -499,15 +499,15 @@ export default function ApplicationDetailPage() {
                             <div>
                               <p className="text-sm font-medium text-stone-700 capitalize">{(iv.interview_type || 'interview').replace(/_/g, ' ')}</p>
                               <p className="text-xs text-gray-500">
-                                {iv.scheduled_at ? new Date(iv.scheduled_at).toLocaleString() : 'Not yet scheduled'}
+                                {iv.confirmed_time ? new Date(iv.confirmed_time).toLocaleString() : iv.proposed_times?.[0] ? new Date(iv.proposed_times[0]).toLocaleString() : 'Not yet scheduled'}
                               </p>
                             </div>
                           </div>
-                          <Badge variant={iv.status === 'completed' ? 'success' : iv.status === 'scheduled' ? 'info' : 'warning'} size="sm">
+                          <Badge variant={iv.status === 'completed' ? 'success' : iv.status === 'confirmed' ? 'info' : 'warning'} size="sm">
                             {iv.status || 'pending'}
                           </Badge>
                         </div>
-                        {iv.status === 'scheduled' && (
+                        {iv.status === 'confirmed' && (
                           <Card className="mt-3 p-3 bg-stone-50">
                             <p className="text-xs font-medium text-stone-600 mb-1">Prep Checklist</p>
                             <ul className="text-xs text-gray-500 space-y-1">
