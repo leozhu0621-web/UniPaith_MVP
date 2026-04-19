@@ -40,7 +40,7 @@ export default function FinancialAidPage() {
   const [expectedAid, setExpectedAid] = useState<Record<string, string>>({})
   const [sortBy, setSortBy] = useState<'net' | 'tuition'>('net')
 
-  const { data: saved, isLoading: savedLoading } = useQuery({ queryKey: ['saved'], queryFn: listSaved })
+  const { data: saved, isLoading: savedLoading } = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved })
   const { data: applications, isLoading: appsLoading } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
 
   const isLoading = savedLoading || appsLoading
