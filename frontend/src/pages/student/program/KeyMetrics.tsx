@@ -41,6 +41,16 @@ interface Props {
   applicationRequirements?: any[] | null
   highlights?: string[] | null
   descriptionText?: string | null
+  /** Program department, used as a last-resort Section C candidate (Field of Study). */
+  department?: string | null
+  /** Program name, used for first-word distinctive parsing fallbacks in Section C. */
+  programName?: string | null
+  /** Institution-level 10yr earnings, used as a last-resort Section A fallback. */
+  institutionEarnings10yr?: number | null
+  /** Institution name, shown as source when falling back to institution data. */
+  institutionName?: string | null
+  /** Program-level US News ranking (when available). */
+  usNewsRank?: number | null
 
   // Program-specific outcomes (from outcomes_data) — Section A of the strip.
   // All Section A tiles are anchored to canonical timeframes:
@@ -140,11 +150,14 @@ const LABEL_TO_SECTION: Record<string, Section> = {
   'Streams': 'C',
   'Pathways': 'C',
   'Areas': 'C',
+  'Field of Study': 'C',
   // D — Structural (blue)
   'Duration': 'D',
+  'Start Term': 'D',
   // E — Institution Fallback (blue)
   'Grad Rate': 'E',
   'Retention': 'E',
+  'US News Rank': 'E',
 }
 
 /* ── Constants ─────────────────────────────────────────────────────────── */
@@ -384,6 +397,22 @@ export default function KeyMetrics(props: Props) {
     })
   }
 
+  // 5. LAST-RESORT: institution-level 10yr earnings. Not program-specific and
+  //    not at the canonical 4yr timeframe, but better than a placeholder when
+  //    the program simply has no outcomes data yet. Subtitle and tooltip make
+  //    it clear this is an institution average.
+  if (props.institutionEarnings10yr && !candidates.some(c => c.label === 'Median Salary')) {
+    candidates.push({
+      icon: TrendingUp,
+      label: 'Median Salary',
+      value: formatCurrency(props.institutionEarnings10yr),
+      context: '10 yrs after enrollment · institution avg',
+      tone: 'emerald',
+      priority: 70,
+      sourceNote: 'College Scorecard (institution-level)',
+    })
+  }
+
   /* ── Tier 2: Program economics — show what the cost consists of ── */
 
   // Build an honest breakdown label so students know exactly what's included.
@@ -479,6 +508,20 @@ export default function KeyMetrics(props: Props) {
     })
   }
 
+  // Field of Study — last-resort Section C fallback so every program with a
+  // department has something program-specific here. Loses to any richer
+  // candidate (credits, honors, subfields, etc.) because of its low priority.
+  if (props.department) {
+    candidates.push({
+      icon: Compass,
+      label: 'Field of Study',
+      value: props.department,
+      context: 'Primary focus area',
+      tone: 'violet',
+      priority: 20,
+    })
+  }
+
   /* ── Section D: Structural — Duration is always shown since every program has one ── */
 
   if (effectiveDuration) {
@@ -501,6 +544,26 @@ export default function KeyMetrics(props: Props) {
   }
 
   /* ── Tier 6: Institution rollups (last-resort fallback) ── */
+
+  // US News ranking — most visible signal of institutional reputation,
+  // takes Section E when available so the slot isn't just 88% Grad Rate
+  // on every program at the same school.
+  if (props.usNewsRank) {
+    candidates.push({
+      icon: Award,
+      label: 'US News Rank',
+      value: `#${props.usNewsRank}`,
+      context: props.usNewsRank <= 20
+        ? 'Top 20 nationally'
+        : props.usNewsRank <= 50
+          ? 'Top 50 nationally'
+          : props.usNewsRank <= 100
+            ? 'Top 100 nationally'
+            : 'National ranking',
+      tone: 'blue',
+      priority: 45,
+    })
+  }
 
   if (props.graduationRate != null) {
     candidates.push({

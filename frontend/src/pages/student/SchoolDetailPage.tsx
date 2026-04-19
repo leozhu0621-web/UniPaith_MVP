@@ -168,7 +168,7 @@ export default function SchoolDetailPage() {
         onViewApplication={existingApp ? () => navigate(`/s/applications/${existingApp.id}`) : undefined}
       />
 
-      {/* ── KPI strip — adaptive: picks the 4 most distinctive numbers per program ── */}
+      {/* ── KPI strip — 5 fixed sections, one tile per section ── */}
       <KeyMetrics
         degreeType={p.degree_type}
         durationMonths={p.duration_months}
@@ -176,6 +176,9 @@ export default function SchoolDetailPage() {
         tracks={p.tracks}
         highlights={p.highlights}
         descriptionText={p.description_text}
+        department={p.department}
+        programName={p.program_name}
+        institutionName={instName}
         // Section A: canonical outcomes
         outcomesEarnings4yr={p.outcomes_data?.earnings_4yr_median}
         outcomesMedianSalary={p.outcomes_data?.median_salary}
@@ -185,6 +188,7 @@ export default function SchoolDetailPage() {
         outcomesSalaryTimeframe={p.outcomes_data?.salary_timeframe}
         outcomesEmploymentTimeframe={p.outcomes_data?.employment_timeframe}
         outcomesSource={p.outcomes_data?.source}
+        institutionEarnings10yr={rd.earnings_10yr_median}
         // Cost breakdown
         costFees={p.cost_data?.fees}
         costLiving={p.cost_data?.estimated_living_cost}
@@ -194,6 +198,7 @@ export default function SchoolDetailPage() {
         institutionTuition={rd.tuition_out_of_state ?? rd.tuition_in_state}
         graduationRate={rd.graduation_rate}
         retentionRate={rd.retention_rate}
+        usNewsRank={rd.us_news_2025}
       />
 
       {/* ── Tabs ── */}
