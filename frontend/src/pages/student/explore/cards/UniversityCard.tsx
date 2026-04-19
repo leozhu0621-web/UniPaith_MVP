@@ -4,18 +4,6 @@ import {
   Award, Building2, BookOpen, ChevronRight,
 } from 'lucide-react'
 
-// Local school images
-const LOCAL_IMAGES: Record<string, { campus: string[]; logo?: string }> = {
-  'new york university': {
-    campus: ['/school-images/nyu-campus-1.jpg', '/school-images/nyu-campus-2.jpg', '/school-images/nyu-campus-3.jpg'],
-    logo: '/school-images/nyu-logo.jpg',
-  },
-  'stanford university': {
-    campus: ['/school-images/stanford-campus.jpg'],
-    logo: '/school-images/stanford-logo.jpg',
-  },
-}
-
 interface UniversityData {
   id: string
   name: string
@@ -43,9 +31,10 @@ interface Props {
 
 export default function UniversityCard({ institution: inst, onClick }: Props) {
   const [imgFailed, setImgFailed] = useState(false)
-  const local = LOCAL_IMAGES[(inst.name || '').toLowerCase()]
-  const campusImg = local?.campus[0] || inst.image_url
-  const logoImg = local?.logo || inst.logo_url
+  // Only trust what's in the DB — no hardcoded fallbacks. If an institution
+  // doesn't have an image_url, the card shows a clean gradient placeholder.
+  const campusImg = inst.image_url
+  const logoImg = inst.logo_url
 
   const acceptPct = inst.acceptance_rate != null ? Math.round(inst.acceptance_rate * 100) : null
 
@@ -170,7 +159,7 @@ export default function UniversityCard({ institution: inst, onClick }: Props) {
 
       {/* ── Action ── */}
       <div className="flex items-center border-t border-divider mt-auto px-4 py-2.5">
-        <span className="text-xs font-medium text-student flex-1">Explore Schools</span>
+        <span className="text-xs font-medium text-student flex-1">View University</span>
         <ChevronRight size={16} className="text-student group-hover/card:translate-x-0.5 transition-transform" />
       </div>
     </div>
