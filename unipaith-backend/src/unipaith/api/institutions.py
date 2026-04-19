@@ -866,7 +866,6 @@ async def get_school_programs(
     db: AsyncSession = Depends(get_db),
 ):
     """Public — returns programs within a specific school."""
-
     from sqlalchemy import select
 
     from unipaith.models.institution import Institution, Program
