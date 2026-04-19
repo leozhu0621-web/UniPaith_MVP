@@ -20,7 +20,7 @@ export default function PostCard({ post }: Props) {
           <div className="w-8 h-8 rounded-full bg-student-mist flex items-center justify-center">
             <GraduationCap size={14} className="text-student" />
           </div>
-          <span className="text-xs font-semibold text-student-ink">{(post as any).institution_name || 'School'}</span>
+          <span className="text-xs font-semibold text-student-ink">{post.institution_name || 'School'}</span>
         </div>
         <h3 className="text-sm font-medium text-student-ink mb-1">{post.title}</h3>
         <p className="text-xs text-student-text line-clamp-3 leading-relaxed">{post.body}</p>

@@ -268,7 +268,7 @@ export default function InstitutionDetailPage() {
               <p className="text-sm text-student-text text-center py-8">No updates yet.</p>
             ) : (
               postList.map(post => (
-                <PostCard key={post.id} post={{ ...post, institution_name: inst.name } as any} />
+                <PostCard key={post.id} post={{ ...post, institution_name: inst.name }} />
               ))
             )}
           </div>

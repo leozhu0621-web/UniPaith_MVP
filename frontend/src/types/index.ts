@@ -1137,6 +1137,7 @@ export interface InstitutionPost {
   updated_at: string
   author_email?: string
   program_names?: string[]
+  institution_name?: string | null
 }
 
 // ============ PIPELINE KANBAN ============
