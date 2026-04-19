@@ -715,6 +715,10 @@ class StudentProgramReview(Base):
     rating_teaching: Mapped[int | None] = mapped_column(Integer)
     rating_workload: Mapped[int | None] = mapped_column(Integer)
     rating_career_support: Mapped[int | None] = mapped_column(Integer)
+    # Plan spec Insights dimensions (docs/Program Detail Page): we add
+    # internship_access + community_culture to cover the 6-dimension rubric.
+    rating_internship_access: Mapped[int | None] = mapped_column(Integer)
+    rating_community_culture: Mapped[int | None] = mapped_column(Integer)
     rating_roi: Mapped[int | None] = mapped_column(Integer)
     rating_overall: Mapped[int | None] = mapped_column(Integer)
     review_text: Mapped[str | None] = mapped_column(Text)
@@ -745,6 +749,10 @@ class EmployerFeedback(Base):
     rating_technical: Mapped[int | None] = mapped_column(Integer)
     rating_practical: Mapped[int | None] = mapped_column(Integer)
     rating_communication: Mapped[int | None] = mapped_column(Integer)
+    # Plan spec Insights dimensions: add teamwork + reliability to cover the
+    # 5-dimension employer rubric.
+    rating_teamwork: Mapped[int | None] = mapped_column(Integer)
+    rating_reliability: Mapped[int | None] = mapped_column(Integer)
     rating_overall: Mapped[int | None] = mapped_column(Integer)
     job_readiness_sentiment: Mapped[str | None] = mapped_column(
         String(20),
