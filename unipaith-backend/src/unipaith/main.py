@@ -1,6 +1,5 @@
 import logging
 import sys
-from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -37,7 +36,6 @@ def _setup_logging() -> None:
 _setup_logging()
 
 
-@asynccontextmanager
 async def _ensure_schools_table(db: AsyncSession) -> None:
     """Bootstrap the schools table + school_id FK if they don't exist yet."""
     from sqlalchemy import text
