@@ -20,7 +20,7 @@ import { differenceInDays } from 'date-fns'
 import {
   BookOpen, GraduationCap, DollarSign, TrendingUp, MessageSquare,
   Star, Quote, BarChart3, Briefcase, Building2, Users, Clock,
-  Sparkles,
+  Sparkles, Mail,
 } from 'lucide-react'
 import type { MatchResult, EventItem } from '../../types'
 
@@ -325,6 +325,49 @@ export default function SchoolDetailPage() {
                   </div>
                 </Card>
               )}
+
+              {/* Faculty contacts — renders when programs expose dept chair / admissions
+                  liaison / program director contact info. Accepts both dict form (legacy
+                  {name, email, role}) and list form (per-program crawler output). */}
+              {(() => {
+                const fc = p.faculty_contacts
+                let rows: Array<{ name?: string; email?: string; role?: string; source_url?: string }> = []
+                if (Array.isArray(fc)) rows = fc
+                else if (fc && typeof fc === 'object') rows = [fc as any]
+                rows = rows.filter(r => r && (r.name || r.email))
+                if (!rows.length) return null
+                return (
+                  <Card className="p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Mail size={14} className="text-student" />
+                      <h3 className="font-semibold text-student-ink">Program Contacts</h3>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      {rows.map((c, i) => (
+                        <div key={i} className="flex justify-between items-start gap-2 border-b border-gray-100 pb-2">
+                          <div className="flex-1">
+                            {c.name && <div className="font-medium text-student-ink">{c.name}</div>}
+                            {c.role && <div className="text-xs text-student-text">{c.role}</div>}
+                          </div>
+                          {c.email && (
+                            <a href={`mailto:${c.email}`} className="text-xs text-student hover:underline">
+                              {c.email}
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                      {rows[0]?.source_url && (
+                        <p className="text-[10px] text-gray-400 mt-2">
+                          Source:{' '}
+                          <a href={rows[0].source_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                            {rows[0].source_url}
+                          </a>
+                        </p>
+                      )}
+                    </div>
+                  </Card>
+                )
+              })()}
             </>
           )}
 
@@ -439,7 +482,7 @@ export default function SchoolDetailPage() {
                               <div className="flex items-center gap-2">
                                 <p className="text-sm font-semibold text-student-ink">{r.name}</p>
                                 {r.binding && <Badge variant="warning" size="sm">Binding</Badge>}
-                                {isUrgent && <Badge variant="danger" size="sm">⚡ {days}d left</Badge>}
+                                {isUrgent && <Badge variant="danger" size="sm">{days}d left</Badge>}
                                 {isPast && <Badge variant="neutral" size="sm">Closed</Badge>}
                               </div>
                               <p className="text-[11px] text-student-text/70 mt-0.5">
