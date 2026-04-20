@@ -207,9 +207,28 @@ export default function InstitutionDetailPage() {
           const support: any = inst.support_services || {}
           const intlInfo: any = inst.international_info || {}
           const routing: any = (inst as any).inquiry_routing || {}
+          const rd: any = inst.ranking_data || {}
 
           const pctFmt = (v: any) => typeof v === 'number' && v <= 1 ? `${Math.round(v * 100)}%` : String(v)
           const numFmt = (v: any) => typeof v === 'number' ? v.toLocaleString() : String(v)
+
+          // Big-number formatter: "$6.6B", "$250M", "$1.2M"
+          const bigMoney = (n: number): string => {
+            if (n >= 1e9) return `$${(n / 1e9).toFixed(1)}B`
+            if (n >= 1e6) return `$${(n / 1e6).toFixed(0)}M`
+            if (n >= 1e3) return `$${(n / 1e3).toFixed(0)}K`
+            return `$${n}`
+          }
+
+          // Count-based shortener: "500K+" / "27K+" / "1,234"
+          const bigCount = (n: number): string => {
+            if (n >= 1000) return `${Math.round(n / 1000)}K+`
+            return n.toLocaleString()
+          }
+
+          // Title-case ownership type: "private_nonprofit" → "Private Nonprofit"
+          const ownershipLabel = (t?: string) =>
+            t ? t.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : null
 
           return (
             <div className="space-y-5">
@@ -227,10 +246,117 @@ export default function InstitutionDetailPage() {
                 </Card>
               )}
 
+              {/* Quick Facts — institution-level attributes that don't fit elsewhere */}
+              {(rd.endowment || rd.ownership_type || rd.accreditor || rd.transfer_rate != null) && (
+                <Card className="p-5">
+                  <h2 className="font-semibold text-student-ink mb-3">Quick Facts</h2>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {rd.ownership_type && (
+                      <StatBlock label="Ownership" value={ownershipLabel(rd.ownership_type) ?? '—'} />
+                    )}
+                    {rd.endowment != null && (
+                      <StatBlock label="Endowment" value={bigMoney(rd.endowment)} />
+                    )}
+                    {inst.student_body_size != null && (
+                      <StatBlock label="Undergraduate" value={numFmt(inst.student_body_size)} />
+                    )}
+                    {rd.grad_students != null && (
+                      <StatBlock label="Graduate" value={numFmt(rd.grad_students)} />
+                    )}
+                    {rd.transfer_rate != null && (
+                      <StatBlock label="Transfer Rate" value={pctFmt(rd.transfer_rate)} />
+                    )}
+                    {inst.program_count != null && (
+                      <StatBlock label="Programs" value={numFmt(inst.program_count)} />
+                    )}
+                  </div>
+                  {rd.accreditor && (
+                    <p className="text-[11px] text-student-text/70 mt-3 italic">
+                      Accredited by {rd.accreditor}
+                    </p>
+                  )}
+                </Card>
+              )}
+
+              {/* Diversity & Student Body */}
+              {(rd.gender || rd.race_ethnicity || rd.first_generation != null || intlInfo.international_student_count != null) && (
+                <Card className="p-5">
+                  <h2 className="font-semibold text-student-ink mb-3">Diversity & Student Body</h2>
+
+                  {/* Headline stats */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                    {rd.first_generation != null && (
+                      <StatBlock label="First-Gen" value={`${Number(rd.first_generation).toFixed(1)}%`} />
+                    )}
+                    {intlInfo.international_student_count != null && (
+                      <StatBlock label="International" value={bigCount(intlInfo.international_student_count)} />
+                    )}
+                    {rd.pell_grant_rate != null && (
+                      <StatBlock label="Pell Grant" value={pctFmt(rd.pell_grant_rate)} />
+                    )}
+                    {rd.gender && typeof rd.gender === 'object' && rd.gender.female != null && (
+                      <StatBlock label="Female" value={`${Number(rd.gender.female).toFixed(0)}%`} />
+                    )}
+                  </div>
+
+                  {/* Race/ethnicity breakdown — compact horizontal bars */}
+                  {rd.race_ethnicity && typeof rd.race_ethnicity === 'object' && (() => {
+                    const LABELS: Record<string, string> = {
+                      white: 'White',
+                      asian: 'Asian',
+                      hispanic: 'Hispanic / Latino',
+                      black: 'Black',
+                      non_resident_alien: 'International',
+                      two_or_more: 'Two or more races',
+                      aian: 'Native American',
+                      nhpi: 'Pacific Islander',
+                      unknown: 'Not reported',
+                    }
+                    const entries = Object.entries(rd.race_ethnicity)
+                      .filter(([k, v]: any) => !k.endsWith('_non_hispanic') && typeof v === 'number' && v > 0)
+                      .map(([k, v]: any) => ({ label: LABELS[k] ?? formatKey(k), pct: v }))
+                      .sort((a, b) => b.pct - a.pct)
+                    if (entries.length === 0) return null
+                    return (
+                      <div>
+                        <p className="text-[11px] uppercase tracking-wider font-semibold text-student-text/70 mb-2">Race / Ethnicity</p>
+                        <div className="space-y-1.5">
+                          {entries.map((e, i) => (
+                            <div key={i} className="grid grid-cols-[140px_1fr_50px] gap-3 items-center text-sm">
+                              <span className="text-student-text truncate">{e.label}</span>
+                              <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                                <div className="h-full bg-gradient-to-r from-violet-400 to-violet-600 rounded-full" style={{ width: `${Math.min(100, e.pct)}%` }} />
+                              </div>
+                              <span className="text-student-ink font-semibold text-right tabular-nums">{e.pct.toFixed(1)}%</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </Card>
+              )}
+
               {/* Graduate Outcomes — headline metrics + geographic + industries */}
               {Object.keys(outcomes).filter(k => !isInternalKey(k)).length > 0 && (
                 <Card className="p-5">
                   <h2 className="font-semibold text-student-ink mb-3">Graduate Outcomes</h2>
+
+                  {/* Hero signal: placement rate. Pulled from whichever of the three
+                      sibling fields is populated. */}
+                  {(outcomes.employed_or_continuing_ed ?? outcomes.first_destination_placement_rate) != null && (
+                    <div className="px-4 py-3 rounded-lg bg-emerald-50 border border-emerald-200 mb-4">
+                      <p className="text-[11px] uppercase tracking-wider font-semibold text-emerald-700">Placement</p>
+                      <p className="text-3xl font-bold text-emerald-900 mt-0.5">
+                        {pctFmt(outcomes.employed_or_continuing_ed ?? outcomes.first_destination_placement_rate)}
+                      </p>
+                      <p className="text-xs text-emerald-700 mt-1">
+                        employed or continuing education
+                        {outcomes.first_destination_timeframe ? ` · ${outcomes.first_destination_timeframe.toLowerCase()}` : ''}
+                      </p>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                     {outcomes.graduation_rate_6yr != null && (
                       <StatBlock label="6yr Grad Rate" value={pctFmt(outcomes.graduation_rate_6yr)} />
@@ -319,38 +445,82 @@ export default function InstitutionDetailPage() {
               )}
 
               {/* International Students */}
-              {Object.keys(intlInfo).filter(k => !isInternalKey(k)).length > 0 && (
-                <Card className="p-5">
-                  <h2 className="font-semibold text-student-ink mb-3">International Students</h2>
-                  <dl className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+              {Object.keys(intlInfo).filter(k => !isInternalKey(k)).length > 0 && (() => {
+                const ep = intlInfo.english_proficiency && typeof intlInfo.english_proficiency === 'object'
+                  ? intlInfo.english_proficiency
+                  : null
+                // Map proficiency minimum to a pretty row
+                const scoreRows: Array<{ test: string; min: any }> = []
+                if (ep?.toefl_ibt_min != null) scoreRows.push({ test: 'TOEFL iBT', min: ep.toefl_ibt_min })
+                if (ep?.ielts_min != null) scoreRows.push({ test: 'IELTS', min: ep.ielts_min })
+                if (ep?.duolingo_min != null) scoreRows.push({ test: 'Duolingo', min: ep.duolingo_min })
+                if (ep?.pte_min != null) scoreRows.push({ test: 'PTE', min: ep.pte_min })
+
+                return (
+                  <Card className="p-5">
+                    <h2 className="font-semibold text-student-ink mb-3">International Students</h2>
+
+                    {/* Visa office contact */}
                     {intlInfo.visa && typeof intlInfo.visa === 'object' && (
-                      <div className="col-span-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-100">
-                        <dt className="text-[10px] uppercase tracking-wider font-semibold text-student-text/70 mb-1">{intlInfo.visa.office_name || 'Visa Office'}</dt>
-                        {intlInfo.visa.email && <dd className="text-student-ink">{intlInfo.visa.email}</dd>}
-                        {intlInfo.visa.phone && <dd className="text-student-text">{intlInfo.visa.phone}</dd>}
+                      <div className="px-3 py-2 rounded-lg bg-slate-50 border border-slate-100 mb-3">
+                        <p className="text-[10px] uppercase tracking-wider font-semibold text-student-text/70 mb-1">
+                          {intlInfo.visa.office_name || 'Visa Office'}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm">
+                          {intlInfo.visa.email && (
+                            <a href={`mailto:${intlInfo.visa.email}`} className="text-student hover:underline">{intlInfo.visa.email}</a>
+                          )}
+                          {intlInfo.visa.phone && <span className="text-student-text">{intlInfo.visa.phone}</span>}
+                          {intlInfo.visa.url && (
+                            <a href={intlInfo.visa.url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-student hover:underline ml-auto">Visit office ↗</a>
+                          )}
+                        </div>
                       </div>
                     )}
+
+                    {/* Supported visas */}
                     {Array.isArray(intlInfo.supported_visas) && intlInfo.supported_visas.length > 0 && (
-                      <div>
-                        <dt className="text-student-text text-xs">Supported Visas</dt>
-                        <dd className="mt-1 flex flex-wrap gap-1">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-student-text text-xs">Supported visas</span>
+                        <div className="flex flex-wrap gap-1">
                           {intlInfo.supported_visas.map((v: string) => <Badge key={v} variant="info" size="sm">{v}</Badge>)}
-                        </dd>
+                        </div>
                       </div>
                     )}
-                    {intlInfo.english_proficiency && typeof intlInfo.english_proficiency === 'object' && (
-                      <div>
-                        <dt className="text-student-text text-xs">English Proficiency</dt>
-                        <dd className="text-student-ink">
-                          {intlInfo.english_proficiency.url
-                            ? <a href={intlInfo.english_proficiency.url} target="_blank" rel="noopener noreferrer" className="text-student hover:underline">Requirements ↗</a>
-                            : 'Details available'}
-                        </dd>
+
+                    {/* English proficiency minimum scores */}
+                    {scoreRows.length > 0 && (
+                      <div className="mb-3">
+                        <div className="flex items-baseline justify-between mb-2">
+                          <p className="text-[11px] uppercase tracking-wider font-semibold text-student-text/70">Minimum English Scores</p>
+                          {ep?.url && (
+                            <a href={ep.url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-student hover:underline">
+                              Full requirements ↗
+                            </a>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                          {scoreRows.map(r => (
+                            <div key={r.test} className="px-3 py-2 rounded-lg bg-slate-50 border border-slate-100 text-center">
+                              <p className="text-[10px] uppercase tracking-wider font-semibold text-student-text/70">{r.test}</p>
+                              <p className="text-lg font-bold text-student-ink tabular-nums mt-0.5">{r.min}+</p>
+                            </div>
+                          ))}
+                        </div>
+                        {ep?.note && <p className="text-[11px] text-student-text/70 mt-2 italic">{ep.note}</p>}
                       </div>
                     )}
-                  </dl>
-                </Card>
-              )}
+
+                    {/* Scholarship eligibility note */}
+                    {intlInfo.scholarship_eligibility && (
+                      <div className="px-3 py-2 rounded-lg bg-gold-soft/30 border border-gold/20">
+                        <p className="text-[10px] uppercase tracking-wider font-semibold text-gold mb-0.5">Scholarship Eligibility</p>
+                        <p className="text-xs text-student-ink leading-relaxed">{intlInfo.scholarship_eligibility}</p>
+                      </div>
+                    )}
+                  </Card>
+                )
+              })()}
 
               {/* Policies */}
               {Object.keys(policies).filter(k => !isInternalKey(k)).length > 0 && (
