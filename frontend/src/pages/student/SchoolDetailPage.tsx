@@ -653,6 +653,67 @@ export default function SchoolDetailPage() {
                           Source: {cd.source}{cd.source_year ? ` · ${cd.source_year}` : ''}
                         </p>
                       )}
+
+                      {/* Link to the institution's official net-price calculator */}
+                      {rd.price_calculator_url && (
+                        <a
+                          href={rd.price_calculator_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-medium text-student hover:text-student-hover"
+                        >
+                          Estimate your cost with {instName}'s calculator ↗
+                        </a>
+                      )}
+                    </Card>
+                  )
+                })()}
+
+                {/* Debt percentiles — what graduates actually owe after leaving */}
+                {rd.debt_percentiles && typeof rd.debt_percentiles === 'object' && (() => {
+                  const dp: any = rd.debt_percentiles
+                  const order = ['10th', '25th', '75th', '90th']
+                  const rows = order
+                    .filter(k => dp[k] != null)
+                    .map(k => ({ pct: k, value: Number(dp[k]) }))
+                  if (rows.length === 0) return null
+                  const max = Math.max(...rows.map(r => r.value))
+                  return (
+                    <Card className="p-5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <DollarSign size={14} className="text-amber-600" />
+                        <h3 className="font-semibold text-student-ink">Graduate Debt Distribution</h3>
+                      </div>
+                      <p className="text-xs text-student-text mb-3">
+                        How much graduates actually borrow. Most fall between the 25th and 75th percentiles.
+                      </p>
+                      <div className="space-y-2">
+                        {rows.map(r => {
+                          const w = Math.round((r.value / max) * 100)
+                          const isMiddle = r.pct === '25th' || r.pct === '75th'
+                          return (
+                            <div key={r.pct} className="grid grid-cols-[70px_1fr_85px] gap-3 items-center">
+                              <p className={`text-[11px] font-semibold ${isMiddle ? 'text-student-ink' : 'text-student-text'}`}>
+                                {r.pct} %ile
+                              </p>
+                              <div className="relative h-2 rounded-full bg-slate-100 overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full ${isMiddle ? 'bg-gradient-to-r from-amber-400 to-amber-600' : 'bg-amber-200'}`}
+                                  style={{ width: `${w}%` }}
+                                />
+                              </div>
+                              <p className={`text-xs font-bold tabular-nums text-right ${isMiddle ? 'text-student-ink' : 'text-student-text'}`}>
+                                {formatCurrency(r.value)}
+                              </p>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      {rd.median_debt_monthly != null && (
+                        <p className="text-[11px] text-student-text mt-3">
+                          Median monthly payment after graduation: <span className="font-semibold text-student-ink">${Math.round(rd.median_debt_monthly)}</span>
+                        </p>
+                      )}
                     </Card>
                   )
                 })()}
