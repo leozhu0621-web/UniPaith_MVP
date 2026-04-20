@@ -67,7 +67,6 @@ async def setup_db():
             await conn.execute(_DROP_ALL_TABLES)
     except Exception:
         pass
-    await test_engine.dispose()
 
 
 @pytest.fixture
