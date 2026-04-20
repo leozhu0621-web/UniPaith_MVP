@@ -205,7 +205,6 @@ export default function SchoolDetailPage() {
         department={p.department}
         durationMonths={p.duration_months}
         deliveryFormat={p.delivery_format}
-        applicationDeadline={effectiveDeadline}
         highlights={p.highlights}
         tracks={p.tracks}
         description={p.description_text}
