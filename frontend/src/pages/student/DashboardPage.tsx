@@ -122,7 +122,7 @@ export default function DashboardPage() {
   const { deadlines, isError: deadlinesError, applications } = useDeadlines()
 
   const { data: savedList } = useQuery({
-    queryKey: ['saved'],
+    queryKey: ['saved-programs'],
     queryFn: listSaved,
   })
 

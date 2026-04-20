@@ -48,17 +48,17 @@ export default function SavedListPage() {
   const [sortKey, setSortKey] = useState<SortKey>('date_added')
   const [groupByTier, setGroupByTier] = useState(true)
 
-  const { data: saved, isLoading } = useQuery({ queryKey: ['saved'], queryFn: listSaved })
+  const { data: saved, isLoading } = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved })
   const { data: matches } = useQuery({ queryKey: ['matches'], queryFn: () => getMatches() })
   const { data: applications } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
 
   const removeMut = useMutation({
     mutationFn: unsaveProgram,
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['saved'] }); showToast('Removed', 'success') },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['saved-programs'] }); showToast('Removed', 'success') },
   })
   const notesMut = useMutation({
     mutationFn: ({ id, notes }: { id: string; notes: string }) => updateSavedNotes(id, notes),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['saved'] }); setEditingNotes(null); showToast('Notes updated', 'success') },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['saved-programs'] }); setEditingNotes(null); showToast('Notes updated', 'success') },
   })
   const compareMut = useMutation({
     mutationFn: (ids: string[]) => comparePrograms(ids),

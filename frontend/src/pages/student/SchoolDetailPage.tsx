@@ -65,7 +65,7 @@ export default function SchoolDetailPage() {
   const { data: matchResult } = useQuery({ queryKey: ['match', programId], queryFn: () => getMatchDetail(programId!), retry: false })
   const { data: events } = useQuery({ queryKey: ['events', { program_id: programId }], queryFn: () => listEvents({ program_id: programId, limit: 5 }) })
   const { data: rsvps } = useQuery({ queryKey: ['my-rsvps'], queryFn: getMyRsvps, retry: false })
-  const { data: saved } = useQuery({ queryKey: ['saved'], queryFn: listSaved })
+  const { data: saved } = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved })
   const { data: applications } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
   const { data: reviewsData } = useQuery({ queryKey: ['program-reviews', programId], queryFn: () => getProgramReviews(programId!), retry: false })
   const { data: employerData } = useQuery({ queryKey: ['employer-feedback', programId], queryFn: () => getEmployerFeedback(programId!), retry: false })
@@ -100,7 +100,7 @@ export default function SchoolDetailPage() {
 
   const saveMut = useMutation({
     mutationFn: () => isSaved ? unsaveProgram(programId!) : saveProgram(programId!),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['saved'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['saved-programs'] }),
   })
   const applyMut = useMutation({
     mutationFn: () => createApplication(programId!),

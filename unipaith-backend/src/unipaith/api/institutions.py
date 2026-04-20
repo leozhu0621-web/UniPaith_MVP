@@ -870,8 +870,8 @@ async def search_institutions(
             "student_body_size": inst.student_body_size,
             "logo_url": inst.logo_url,
             "image_url": (
-                (inst.media_gallery or [None])[0]
-                if inst.media_gallery
+                inst.media_gallery[0]
+                if isinstance(inst.media_gallery, list) and inst.media_gallery
                 else None
             ),
             "program_count": pc_map.get(inst.id, 0),

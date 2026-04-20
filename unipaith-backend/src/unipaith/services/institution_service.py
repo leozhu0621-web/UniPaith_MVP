@@ -1899,10 +1899,10 @@ class InstitutionService:
                 highlights=prog.highlights,
                 institution_logo_url=inst.logo_url,
                 institution_image_url=(
-                    (prog.media_urls or [None])[0]
-                    if prog.media_urls
-                    else (inst.media_gallery or [None])[0]
-                    if inst.media_gallery
+                    prog.media_urls[0]
+                    if isinstance(prog.media_urls, list) and prog.media_urls
+                    else inst.media_gallery[0]
+                    if isinstance(inst.media_gallery, list) and inst.media_gallery
                     else None
                 ),
             )
@@ -2011,10 +2011,10 @@ class InstitutionService:
                     highlights=program.highlights,
                     institution_logo_url=inst.logo_url if inst else None,
                     institution_image_url=(
-                        (program.media_urls or [None])[0]
-                        if program.media_urls
-                        else (inst.media_gallery or [None])[0]
-                        if inst and inst.media_gallery
+                        program.media_urls[0]
+                        if isinstance(program.media_urls, list) and program.media_urls
+                        else inst.media_gallery[0]
+                        if inst and isinstance(inst.media_gallery, list) and inst.media_gallery
                         else None
                     ),
                 )
