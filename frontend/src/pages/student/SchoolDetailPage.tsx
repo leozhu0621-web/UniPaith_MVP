@@ -19,7 +19,7 @@ import { formatCurrency, formatDate, formatScore } from '../../utils/format'
 import {
   BookOpen, GraduationCap, DollarSign, TrendingUp, MessageSquare,
   Star, Quote, BarChart3, Briefcase, Building2, Users, Clock,
-  Sparkles,
+  Sparkles, Mail,
 } from 'lucide-react'
 import type { MatchResult, EventItem } from '../../types'
 
@@ -271,6 +271,49 @@ export default function SchoolDetailPage() {
                   </div>
                 </Card>
               )}
+
+              {/* Faculty contacts — renders when programs expose dept chair / admissions
+                  liaison / program director contact info. Accepts both dict form (legacy
+                  {name, email, role}) and list form (per-program crawler output). */}
+              {(() => {
+                const fc = p.faculty_contacts
+                let rows: Array<{ name?: string; email?: string; role?: string; source_url?: string }> = []
+                if (Array.isArray(fc)) rows = fc
+                else if (fc && typeof fc === 'object') rows = [fc as any]
+                rows = rows.filter(r => r && (r.name || r.email))
+                if (!rows.length) return null
+                return (
+                  <Card className="p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Mail size={14} className="text-student" />
+                      <h3 className="font-semibold text-student-ink">Program Contacts</h3>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      {rows.map((c, i) => (
+                        <div key={i} className="flex justify-between items-start gap-2 border-b border-gray-100 pb-2">
+                          <div className="flex-1">
+                            {c.name && <div className="font-medium text-student-ink">{c.name}</div>}
+                            {c.role && <div className="text-xs text-student-text">{c.role}</div>}
+                          </div>
+                          {c.email && (
+                            <a href={`mailto:${c.email}`} className="text-xs text-student hover:underline">
+                              {c.email}
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                      {rows[0]?.source_url && (
+                        <p className="text-[10px] text-gray-400 mt-2">
+                          Source:{' '}
+                          <a href={rows[0].source_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                            {rows[0].source_url}
+                          </a>
+                        </p>
+                      )}
+                    </div>
+                  </Card>
+                )
+              })()}
             </>
           )}
 
@@ -356,6 +399,62 @@ export default function SchoolDetailPage() {
                     <p className="text-sm text-student-text">Application requirements not yet listed. Contact the program for details.</p>
                   )}
                 </Card>
+
+                {/* Intake rounds — each admissions round as its own dated entry.
+                    Populated for every NYU program; renders when intake_rounds is a dict
+                    shaped {<term>: {early_decision_1: {deadline, decision_release, binding}, ...}, source}.
+                */}
+                {p.intake_rounds && typeof p.intake_rounds === 'object' && !Array.isArray(p.intake_rounds) && (() => {
+                  const ir: any = p.intake_rounds
+                  const terms = Object.entries(ir).filter(([k, v]) => k !== 'source' && v && typeof v === 'object')
+                  if (!terms.length) return null
+                  return (
+                    <Card className="p-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Clock size={14} className="text-amber-600" />
+                        <h3 className="font-semibold text-student-ink">Admissions Rounds</h3>
+                      </div>
+                      <div className="space-y-4">
+                        {terms.map(([termKey, termVal]) => {
+                          const t: any = termVal
+                          const rounds = Object.entries(t).filter(([k, v]) => v && typeof v === 'object' && k !== 'term')
+                          const termLabel = t.term || termKey.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+                          return (
+                            <div key={termKey}>
+                              <p className="text-xs font-semibold text-student-text uppercase mb-2">{termLabel}</p>
+                              <div className="space-y-2 text-sm">
+                                {rounds.map(([roundKey, roundVal]) => {
+                                  const r: any = roundVal
+                                  const label = roundKey.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+                                  return (
+                                    <div key={roundKey} className="flex justify-between items-start gap-2 border-b border-gray-100 pb-2">
+                                      <div className="flex-1">
+                                        <span className="font-medium text-student-ink">{label}</span>
+                                        {r.binding && <Badge variant="warning" size="sm" className="ml-2">Binding</Badge>}
+                                        {r.note && <p className="text-xs text-student-text mt-0.5">{r.note}</p>}
+                                      </div>
+                                      <div className="text-right text-xs">
+                                        {r.deadline && <div><span className="text-student-text">Apply by: </span><span className="font-medium text-student-ink">{r.deadline}</span></div>}
+                                        {r.decision_release && <div className="text-student-text">Decision: {r.decision_release}</div>}
+                                      </div>
+                                    </div>
+                                  )
+                                })}
+                                {t.enrollment_deadline && (
+                                  <div className="flex justify-between text-xs text-student-text pt-1">
+                                    <span>Enrollment deadline</span>
+                                    <span className="font-medium">{t.enrollment_deadline}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                        {ir.source && <p className="text-[10px] text-gray-400 mt-2">Source: {ir.source}</p>}
+                      </div>
+                    </Card>
+                  )
+                })()}
 
                 {/* Key dates + admissions insights — 2 columns */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
