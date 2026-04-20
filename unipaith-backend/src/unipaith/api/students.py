@@ -936,6 +936,7 @@ async def log_engagement(
     )
     db.add(signal)
     await db.flush()
+    await db.refresh(signal)
     return signal
 
 

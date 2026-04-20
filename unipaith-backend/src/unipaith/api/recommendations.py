@@ -62,6 +62,7 @@ async def create_recommendation(
     )
     db.add(rec)
     await db.flush()
+    await db.refresh(rec)
     return rec
 
 
@@ -114,6 +115,7 @@ async def update_recommendation(
         setattr(rec, key, value)
 
     await db.flush()
+    await db.refresh(rec)
     return rec
 
 
@@ -157,4 +159,5 @@ async def send_recommendation_request(
     rec.status = "requested"
     rec.requested_at = datetime.now(UTC)
     await db.flush()
+    await db.refresh(rec)
     return rec
