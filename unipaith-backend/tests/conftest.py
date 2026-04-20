@@ -50,24 +50,13 @@ END $$;
 
 @pytest.fixture
 async def setup_db():
-    for _attempt in range(3):
-        try:
-            async with test_engine.begin() as conn:
-                await conn.execute(_DROP_ALL_TABLES)
-                await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
-                await conn.run_sync(Base.metadata.create_all)
-            break
-        except Exception:
-            if _attempt == 2:
-                raise
-            await test_engine.dispose()
+    async with test_engine.begin() as conn:
+        await conn.execute(_DROP_ALL_TABLES)
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        await conn.run_sync(Base.metadata.create_all)
     yield
-    try:
-        async with test_engine.begin() as conn:
-            await conn.execute(_DROP_ALL_TABLES)
-    except Exception:
-        pass
-    await test_engine.dispose()
+    async with test_engine.begin() as conn:
+        await conn.execute(_DROP_ALL_TABLES)
 
 
 @pytest.fixture
