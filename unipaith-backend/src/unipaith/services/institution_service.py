@@ -1862,6 +1862,7 @@ class InstitutionService:
             ProgramSummaryResponse(
                 id=prog.id,
                 institution_id=prog.institution_id,
+                school_id=prog.school_id,
                 program_name=prog.program_name,
                 degree_type=prog.degree_type,
                 department=prog.department,
@@ -1980,6 +1981,7 @@ class InstitutionService:
                 ProgramSummaryResponse(
                     id=program.id,
                     institution_id=program.institution_id,
+                    school_id=program.school_id,
                     program_name=program.program_name,
                     degree_type=program.degree_type,
                     department=program.department,
