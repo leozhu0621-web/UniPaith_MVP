@@ -7,13 +7,16 @@ import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
 import { useCompareStore } from '../../stores/compare-store'
 import UniversityCard from './explore/cards/UniversityCard'
 import ProgramCard from './explore/cards/ProgramCard'
-import ExploreFilters, { EMPTY_FILTERS, applyFilters, type FilterState } from './explore/shared/ExploreFilters'
+import ExploreFilters, { EMPTY_FILTERS, applyFilters, countActiveFilters, type FilterState } from './explore/shared/ExploreFilters'
 import {
   Search, X, Loader2, Sparkles, Building2,
 } from 'lucide-react'
 import type { ProgramSummary } from '../../types'
-import type { InstitutionClassification } from './explore/shared/classifyInstitution'
-import type { SizeBucket } from './explore/shared/classifyInstitution'
+import type {
+  InstitutionClassification,
+  SatTier,
+  TuitionTier,
+} from './explore/shared/classifyInstitution'
 
 interface NlpResult {
   filters_applied: Record<string, any>
@@ -29,29 +32,57 @@ interface NlpResult {
  * to /s/institutions/:id, which exposes a Schools tab that leads to the
  * per-school detail page.
  */
-/** Parse filter state from URL search params. Each filter is a comma-
- *  separated list on its own param key. */
+/** Parse filter state from URL search params. List filters are comma-
+ *  separated on their own key; boolean toggles are '1' or absent. */
 function filtersFromURL(params: URLSearchParams): FilterState {
   const split = (key: string) =>
     (params.get(key) || '').split(',').map(s => s.trim()).filter(Boolean)
+  const bool = (key: string) => params.get(key) === '1'
   return {
     country: split('country'),
     setting: split('setting'),
-    size: split('size') as SizeBucket[],
     type: split('type') as InstitutionClassification[],
+    degreeLevel: split('degree'),
+    deliveryFormat: split('format'),
     subjects: split('subjects'),
     industries: split('industries'),
+    satTier: split('sat') as SatTier[],
+    tuitionTier: split('tuition') as TuitionTier[],
+    appOpen: bool('open'),
+    international: bool('intl'),
+    studyAbroad: bool('abroad'),
+    honors: bool('honors'),
   }
 }
 
 /** Serialize filter state into URL search params (preserves `q`). */
 function filtersToURL(base: URLSearchParams, f: FilterState): URLSearchParams {
   const next = new URLSearchParams(base)
-  const keys: Array<keyof FilterState> = ['country', 'setting', 'size', 'type', 'subjects', 'industries']
-  for (const k of keys) {
-    const v = (f[k] as string[]).join(',')
-    if (v) next.set(k, v)
-    else next.delete(k)
+  const listKeys: Array<{ key: keyof FilterState; param: string }> = [
+    { key: 'country', param: 'country' },
+    { key: 'setting', param: 'setting' },
+    { key: 'type', param: 'type' },
+    { key: 'degreeLevel', param: 'degree' },
+    { key: 'deliveryFormat', param: 'format' },
+    { key: 'subjects', param: 'subjects' },
+    { key: 'industries', param: 'industries' },
+    { key: 'satTier', param: 'sat' },
+    { key: 'tuitionTier', param: 'tuition' },
+  ]
+  for (const { key, param } of listKeys) {
+    const v = (f[key] as string[]).join(',')
+    if (v) next.set(param, v)
+    else next.delete(param)
+  }
+  const boolKeys: Array<{ key: keyof FilterState; param: string }> = [
+    { key: 'appOpen', param: 'open' },
+    { key: 'international', param: 'intl' },
+    { key: 'studyAbroad', param: 'abroad' },
+    { key: 'honors', param: 'honors' },
+  ]
+  for (const { key, param } of boolKeys) {
+    if (f[key]) next.set(param, '1')
+    else next.delete(param)
   }
   return next
 }
@@ -130,9 +161,7 @@ export default function ExplorePage() {
 
   const uniList: any[] = universities?.items ?? []
   const filteredUniList = useMemo(() => applyFilters(uniList, filters), [uniList, filters])
-  const hasActiveFilters =
-    filters.country.length + filters.setting.length + filters.size.length +
-    filters.type.length + filters.subjects.length + filters.industries.length > 0
+  const hasActiveFilters = countActiveFilters(filters) > 0
   const searchProgramList: ProgramSummary[] = nlpResult
     ? (nlpResult.results?.items ?? [])
     : (searchResults?.items ?? [])
