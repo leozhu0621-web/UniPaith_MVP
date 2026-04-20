@@ -54,17 +54,9 @@ async def setup_db():
                 raise
             await test_engine.dispose()
     yield
-    # Teardown: best-effort cleanup. Setup already does DROP+CREATE, so if the
-    # connection died mid-test (asyncpg race) we can safely skip cleanup here.
-    try:
-        async with test_engine.begin() as conn:
-            await conn.execute(text("DROP SCHEMA public CASCADE"))
-            await conn.execute(text("CREATE SCHEMA public"))
-            await conn.execute(text("GRANT ALL ON SCHEMA public TO public"))
-            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
-    except Exception:
-        pass
-    await test_engine.dispose()
+    # Teardown: no-op. Setup already does DROP+CREATE at the start of each test,
+    # so we don't need to clean up here. Calling dispose() on NullPool is
+    # unnecessary and can race with the next test's setup on shared engines.
 
 
 @pytest.fixture
