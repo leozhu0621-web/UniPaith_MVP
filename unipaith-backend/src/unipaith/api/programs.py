@@ -158,6 +158,8 @@ class ReviewResponse(BaseModel):
     rating_teaching: int | None = None
     rating_workload: int | None = None
     rating_career_support: int | None = None
+    rating_internship_access: int | None = None
+    rating_community_culture: int | None = None
     rating_roi: int | None = None
     rating_overall: int | None = None
     review_text: str | None = None
@@ -177,6 +179,8 @@ class ReviewSummaryResponse(BaseModel):
     avg_teaching: float | None = None
     avg_workload: float | None = None
     avg_career_support: float | None = None
+    avg_internship_access: float | None = None
+    avg_community_culture: float | None = None
     avg_roi: float | None = None
     avg_overall: float | None = None
     reviews: list[ReviewResponse]
@@ -209,6 +213,8 @@ async def get_program_reviews(
             func.avg(StudentProgramReview.rating_teaching),
             func.avg(StudentProgramReview.rating_workload),
             func.avg(StudentProgramReview.rating_career_support),
+            func.avg(StudentProgramReview.rating_internship_access),
+            func.avg(StudentProgramReview.rating_community_culture),
             func.avg(StudentProgramReview.rating_roi),
             func.avg(StudentProgramReview.rating_overall),
         )
@@ -223,11 +229,11 @@ async def get_program_reviews(
         total_reviews=agg[0] or 0,
         avg_teaching=round(float(agg[1]), 1) if agg[1] else None,
         avg_workload=round(float(agg[2]), 1) if agg[2] else None,
-        avg_career_support=(
-            round(float(agg[3]), 1) if agg[3] else None
-        ),
-        avg_roi=round(float(agg[4]), 1) if agg[4] else None,
-        avg_overall=round(float(agg[5]), 1) if agg[5] else None,
+        avg_career_support=round(float(agg[3]), 1) if agg[3] else None,
+        avg_internship_access=round(float(agg[4]), 1) if agg[4] else None,
+        avg_community_culture=round(float(agg[5]), 1) if agg[5] else None,
+        avg_roi=round(float(agg[6]), 1) if agg[6] else None,
+        avg_overall=round(float(agg[7]), 1) if agg[7] else None,
         reviews=[
             ReviewResponse(
                 id=r.id,
@@ -235,6 +241,8 @@ async def get_program_reviews(
                 rating_teaching=r.rating_teaching,
                 rating_workload=r.rating_workload,
                 rating_career_support=r.rating_career_support,
+                rating_internship_access=r.rating_internship_access,
+                rating_community_culture=r.rating_community_culture,
                 rating_roi=r.rating_roi,
                 rating_overall=r.rating_overall,
                 review_text=r.review_text,
@@ -260,6 +268,8 @@ class EmployerFeedbackResponse(BaseModel):
     rating_technical: int | None = None
     rating_practical: int | None = None
     rating_communication: int | None = None
+    rating_teamwork: int | None = None
+    rating_reliability: int | None = None
     rating_overall: int | None = None
     job_readiness_sentiment: str | None = None
     feedback_text: str | None = None
@@ -273,6 +283,8 @@ class EmployerFeedbackSummaryResponse(BaseModel):
     avg_technical: float | None = None
     avg_practical: float | None = None
     avg_communication: float | None = None
+    avg_teamwork: float | None = None
+    avg_reliability: float | None = None
     avg_overall: float | None = None
     sentiment_counts: dict[str, int]
     feedback: list[EmployerFeedbackResponse]
@@ -304,6 +316,8 @@ async def get_employer_feedback(
             func.avg(EmployerFeedback.rating_technical),
             func.avg(EmployerFeedback.rating_practical),
             func.avg(EmployerFeedback.rating_communication),
+            func.avg(EmployerFeedback.rating_teamwork),
+            func.avg(EmployerFeedback.rating_reliability),
             func.avg(EmployerFeedback.rating_overall),
         )
         .where(
@@ -320,18 +334,12 @@ async def get_employer_feedback(
 
     return EmployerFeedbackSummaryResponse(
         total_feedback=agg[0] or 0,
-        avg_technical=(
-            round(float(agg[1]), 1) if agg[1] else None
-        ),
-        avg_practical=(
-            round(float(agg[2]), 1) if agg[2] else None
-        ),
-        avg_communication=(
-            round(float(agg[3]), 1) if agg[3] else None
-        ),
-        avg_overall=(
-            round(float(agg[4]), 1) if agg[4] else None
-        ),
+        avg_technical=round(float(agg[1]), 1) if agg[1] else None,
+        avg_practical=round(float(agg[2]), 1) if agg[2] else None,
+        avg_communication=round(float(agg[3]), 1) if agg[3] else None,
+        avg_teamwork=round(float(agg[4]), 1) if agg[4] else None,
+        avg_reliability=round(float(agg[5]), 1) if agg[5] else None,
+        avg_overall=round(float(agg[6]), 1) if agg[6] else None,
         sentiment_counts=sentiments,
         feedback=[
             EmployerFeedbackResponse(
@@ -342,6 +350,8 @@ async def get_employer_feedback(
                 rating_technical=fb.rating_technical,
                 rating_practical=fb.rating_practical,
                 rating_communication=fb.rating_communication,
+                rating_teamwork=fb.rating_teamwork,
+                rating_reliability=fb.rating_reliability,
                 rating_overall=fb.rating_overall,
                 job_readiness_sentiment=fb.job_readiness_sentiment,
                 feedback_text=fb.feedback_text,

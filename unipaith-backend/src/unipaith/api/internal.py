@@ -822,6 +822,7 @@ class EnrichProgramRequest(BaseModel):
     tuition: int | None = None
     duration_months: int | None = None
     description_text: str | None = None
+    who_its_for: str | None = None
     acceptance_rate: float | None = None
     delivery_format: str | None = None
     application_deadline: str | None = None
@@ -831,10 +832,12 @@ class EnrichProgramRequest(BaseModel):
     application_requirements: list[dict] | None = None
     # Extended program detail fields populated from scraped/structured sources
     cost_data: dict | None = None
-    intake_rounds: dict | None = None
-    tracks: dict | None = None
+    intake_rounds: list | dict | None = None
+    tracks: list | dict | None = None
     requirements: dict | None = None
-    faculty_contacts: dict | None = None
+    # JSONB column accepts list or dict; per-program crawl emits a list of
+    # {name, email, role, source_url}. Plain dict still accepted for legacy.
+    faculty_contacts: list | dict | None = None
     clear_fields: list[str] | None = None
 
 
@@ -924,6 +927,8 @@ class ProgramReviewSeed(BaseModel):
     rating_teaching: int | None = None
     rating_workload: int | None = None
     rating_career_support: int | None = None
+    rating_internship_access: int | None = None
+    rating_community_culture: int | None = None
     rating_roi: int | None = None
     rating_overall: int | None = None
     review_text: str | None = None
@@ -1029,6 +1034,8 @@ class EmployerFeedbackSeed(BaseModel):
     rating_technical: int | None = None
     rating_practical: int | None = None
     rating_communication: int | None = None
+    rating_teamwork: int | None = None
+    rating_reliability: int | None = None
     rating_overall: int | None = None
     job_readiness_sentiment: str | None = None
     feedback_text: str | None = None
@@ -1117,6 +1124,140 @@ async def seed_employer_feedback(
 
     await db.commit()
     return {"inserted": inserted, "updated": updated, "deleted": deleted}
+
+
+# --- Bulk-add Programs (no full institution seed; just inserts new program rows) ---
+
+
+class BulkProgramSeed(BaseModel):
+    program_name: str
+    degree_type: str  # bachelors / masters / phd / certificate / diploma
+    department: str | None = None
+    description_text: str | None = None
+    is_published: bool = True
+    # Free-form JSONB fields admin can pre-populate via the bulk path.
+    tracks: list | dict | None = None
+    highlights: list[str] | None = None
+    application_requirements: list | dict | None = None
+    intake_rounds: list | dict | None = None
+    cost_data: dict | None = None
+    outcomes_data: dict | None = None
+    media_urls: list[str] | None = None
+
+
+class BulkAddProgramsRequest(BaseModel):
+    institution_name: str
+    programs: list[BulkProgramSeed]
+
+
+@router.post("/bulk-add-programs")
+async def bulk_add_programs(
+    body: BulkAddProgramsRequest,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Admin-only: bulk-insert program rows for an institution. Idempotent on
+    ``(institution_id, program_name, department)`` - re-runs skip duplicates
+    rather than insert. Use to scale an institution's catalog past the
+    initial seed (e.g., add all NYU graduate + PhD + certificate programs)."""
+    inst_r = await db.execute(
+        select(Institution).where(Institution.name == body.institution_name)
+    )
+    inst = inst_r.scalar_one_or_none()
+    if not inst:
+        return {"inserted": 0, "skipped_existing": 0, "skipped_reason": "institution_not_found"}
+
+    inserted = 0
+    skipped = 0
+    for entry in body.programs:
+        # Dedup by (program_name, department) within this institution.
+        existing_stmt = select(Program).where(
+            Program.institution_id == inst.id,
+            Program.program_name == entry.program_name,
+        )
+        if entry.department:
+            existing_stmt = existing_stmt.where(Program.department == entry.department)
+        ex = (await db.execute(existing_stmt)).scalars().first()
+        if ex is not None:
+            skipped += 1
+            continue
+        row = Program(
+            institution_id=inst.id,
+            **entry.model_dump(exclude_unset=True, exclude_defaults=False),
+        )
+        db.add(row)
+        inserted += 1
+
+    await db.commit()
+    return {"inserted": inserted, "skipped_existing": skipped}
+
+
+# --- One-shot DDL repair (divergent-revision safety net) ---
+#
+# The duplicate m3n4o5p6q7r8 revision in alembic means the entrypoint script
+# stamps head rather than upgrading, so new columns defined after that
+# revision don't land. This endpoint idempotently applies the DDL for the
+# review/employer rating-dimension columns from migration 4c9d6e1a8b3f. It
+# is safe to call repeatedly; ``ADD COLUMN IF NOT EXISTS`` is a no-op when
+# the column already exists.
+
+
+@router.post("/ensure-review-employer-dims")
+async def ensure_review_employer_dims(
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from sqlalchemy import text
+
+    statements = [
+        "ALTER TABLE student_program_reviews "
+        "ADD COLUMN IF NOT EXISTS rating_internship_access INTEGER",
+        "ALTER TABLE student_program_reviews "
+        "ADD COLUMN IF NOT EXISTS rating_community_culture INTEGER",
+        "ALTER TABLE employer_feedback "
+        "ADD COLUMN IF NOT EXISTS rating_teamwork INTEGER",
+        "ALTER TABLE employer_feedback "
+        "ADD COLUMN IF NOT EXISTS rating_reliability INTEGER",
+    ]
+    applied = []
+    for stmt in statements:
+        await db.execute(text(stmt))
+        applied.append(stmt)
+    await db.commit()
+    return {"applied": applied, "count": len(applied)}
+
+
+class PublishAllProgramsRequest(BaseModel):
+    institution_name: str
+
+
+@router.post("/publish-all-programs")
+async def publish_all_programs(
+    body: PublishAllProgramsRequest,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """One-shot: publish every program for an institution. Used after a bulk
+    add where the seed script's is_published default did not propagate
+    through pydantic model_dump."""
+    from sqlalchemy import text
+
+    inst_r = await db.execute(
+        select(Institution).where(Institution.name == body.institution_name)
+    )
+    inst = inst_r.scalar_one_or_none()
+    if not inst:
+        return {"updated": 0, "skipped": "institution_not_found"}
+
+    result = await db.execute(
+        text(
+            "UPDATE programs SET is_published = true "
+            "WHERE institution_id = :iid AND is_published = false"
+        ),
+        {"iid": str(inst.id)},
+    )
+    await db.commit()
+    return {"updated": result.rowcount or 0, "institution": inst.name}
 
 
 # --- Image Download & Upload to S3 ---
