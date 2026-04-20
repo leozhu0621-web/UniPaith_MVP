@@ -16,6 +16,7 @@ import ProgressBar from '../../components/ui/ProgressBar'
 import Modal from '../../components/ui/Modal'
 import { showToast } from '../../stores/toast-store'
 import { formatCurrency, formatDate, formatScore } from '../../utils/format'
+import { differenceInDays } from 'date-fns'
 import {
   BookOpen, GraduationCap, DollarSign, TrendingUp, MessageSquare,
   Star, Quote, BarChart3, Briefcase, Building2, Users, Clock,
@@ -125,7 +126,59 @@ export default function SchoolDetailPage() {
   const p: any = program
   const match: MatchResult | null = matchResult ?? null
   const rd: any = p.ranking_data || {}
+  const cd: any = p.cost_data || {}
   const instName = p.institution_name || ''
+
+  /* ── Fallback derivations so the page never shows blanks when data exists
+     elsewhere in the payload (intake_rounds, cost_data, ranking_data). ── */
+
+  // Effective tuition: program tuition → cost_data.tuition_annual_institution →
+  // institution ranking_data tuition.
+  const effectiveTuition: number | null =
+    p.tuition ?? cd.tuition_annual_institution ?? cd.tuition_annual
+    ?? rd.tuition_out_of_state ?? rd.tuition_in_state ?? null
+
+  // Effective primary application deadline: program field → intake_rounds
+  // regular_decision → ED2 → ED1.
+  function pickDeadline(ir: any): string | null {
+    if (!ir || typeof ir !== 'object') return null
+    const pick = (t: any) =>
+      t?.regular_decision?.deadline ?? t?.early_decision_2?.deadline ?? t?.early_decision_1?.deadline ?? null
+    // intake_rounds might be { fall_2026: {...} } or directly a term object
+    for (const [k, v] of Object.entries(ir)) {
+      if (k === 'source') continue
+      const d = pick(v)
+      if (d) return d
+    }
+    return pick(ir)
+  }
+  const effectiveDeadline: string | null = p.application_deadline ?? pickDeadline(p.intake_rounds)
+
+  // Normalize intake_rounds into a timeline { term, rounds[], enrollment_deadline }.
+  function extractTimeline(ir: any): { term: string; rounds: any[]; enrollment_deadline: string | null } | null {
+    if (!ir || typeof ir !== 'object') return null
+    const buildFrom = (term: any, termKey: string) => {
+      if (!term || typeof term !== 'object') return null
+      const rounds: any[] = []
+      if (term.early_decision_1) rounds.push({ name: 'Early Decision 1', ...term.early_decision_1 })
+      if (term.early_decision_2) rounds.push({ name: 'Early Decision 2', ...term.early_decision_2 })
+      if (term.early_action) rounds.push({ name: 'Early Action', ...term.early_action })
+      if (term.regular_decision) rounds.push({ name: 'Regular Decision', ...term.regular_decision })
+      if (term.rolling) rounds.push({ name: 'Rolling Admission', ...term.rolling })
+      if (rounds.length === 0) return null
+      return { term: term.term ?? termKey.replace(/_/g, ' '), rounds, enrollment_deadline: term.enrollment_deadline ?? null }
+    }
+    // ir might be { fall_2026: {...} } or a flat term
+    const direct = buildFrom(ir, 'intake')
+    if (direct) return direct
+    for (const [k, v] of Object.entries(ir)) {
+      if (k === 'source') continue
+      const t = buildFrom(v, k)
+      if (t) return t
+    }
+    return null
+  }
+  const admissionTimeline = extractTimeline(p.intake_rounds)
 
   const upcomingEvent = eventsList
     .filter((e: any) => new Date(e.event_datetime || e.starts_at || Date.now()) > new Date())
@@ -152,6 +205,7 @@ export default function SchoolDetailPage() {
         department={p.department}
         durationMonths={p.duration_months}
         deliveryFormat={p.delivery_format}
+        applicationDeadline={effectiveDeadline}
         highlights={p.highlights}
         tracks={p.tracks}
         description={p.description_text}
@@ -172,7 +226,7 @@ export default function SchoolDetailPage() {
       <KeyMetrics
         degreeType={p.degree_type}
         durationMonths={p.duration_months}
-        tuition={p.tuition}
+        tuition={effectiveTuition}
         tracks={p.tracks}
         highlights={p.highlights}
         descriptionText={p.description_text}
@@ -242,7 +296,7 @@ export default function SchoolDetailPage() {
               )}
 
               <NextStepsCard
-                applicationDeadline={p.application_deadline}
+                applicationDeadline={effectiveDeadline}
                 upcomingEvent={upcomingEvent ? {
                   title: (upcomingEvent as any).title || (upcomingEvent as any).event_name,
                   event_datetime: (upcomingEvent as any).event_datetime || (upcomingEvent as any).starts_at || (upcomingEvent as any).start_time,
@@ -333,7 +387,7 @@ export default function SchoolDetailPage() {
                   acceptanceRate={p.acceptance_rate ?? rd.acceptance_rate}
                   satAvg={rd.sat_avg}
                   actMidpoint={rd.act_midpoint}
-                  applicationDeadline={p.application_deadline}
+                  applicationDeadline={effectiveDeadline}
                 />
 
                 {/* Application Requirements — structured list */}
@@ -400,75 +454,75 @@ export default function SchoolDetailPage() {
                   )}
                 </Card>
 
-                {/* Intake rounds — each admissions round as its own dated entry.
-                    Populated for every NYU program; renders when intake_rounds is a dict
-                    shaped {<term>: {early_decision_1: {deadline, decision_release, binding}, ...}, source}.
-                */}
-                {p.intake_rounds && typeof p.intake_rounds === 'object' && !Array.isArray(p.intake_rounds) && (() => {
-                  const ir: any = p.intake_rounds
-                  const terms = Object.entries(ir).filter(([k, v]) => k !== 'source' && v && typeof v === 'object')
-                  if (!terms.length) return null
-                  return (
-                    <Card className="p-5">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Clock size={14} className="text-amber-600" />
-                        <h3 className="font-semibold text-student-ink">Admissions Rounds</h3>
-                      </div>
-                      <div className="space-y-4">
-                        {terms.map(([termKey, termVal]) => {
-                          const t: any = termVal
-                          const rounds = Object.entries(t).filter(([k, v]) => v && typeof v === 'object' && k !== 'term')
-                          const termLabel = t.term || termKey.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
-                          return (
-                            <div key={termKey}>
-                              <p className="text-xs font-semibold text-student-text uppercase mb-2">{termLabel}</p>
-                              <div className="space-y-2 text-sm">
-                                {rounds.map(([roundKey, roundVal]) => {
-                                  const r: any = roundVal
-                                  const label = roundKey.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
-                                  return (
-                                    <div key={roundKey} className="flex justify-between items-start gap-2 border-b border-gray-100 pb-2">
-                                      <div className="flex-1">
-                                        <span className="font-medium text-student-ink">{label}</span>
-                                        {r.binding && <Badge variant="warning" size="sm" className="ml-2">Binding</Badge>}
-                                        {r.note && <p className="text-xs text-student-text mt-0.5">{r.note}</p>}
-                                      </div>
-                                      <div className="text-right text-xs">
-                                        {r.deadline && <div><span className="text-student-text">Apply by: </span><span className="font-medium text-student-ink">{r.deadline}</span></div>}
-                                        {r.decision_release && <div className="text-student-text">Decision: {r.decision_release}</div>}
-                                      </div>
-                                    </div>
-                                  )
-                                })}
-                                {t.enrollment_deadline && (
-                                  <div className="flex justify-between text-xs text-student-text pt-1">
-                                    <span>Enrollment deadline</span>
-                                    <span className="font-medium">{t.enrollment_deadline}</span>
-                                  </div>
-                                )}
+                {/* Admission Timeline — all decision rounds + enrollment deadline */}
+                {admissionTimeline && (
+                  <Card className="p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Clock size={14} className="text-amber-600" />
+                      <h3 className="font-semibold text-student-ink">Admission Timeline</h3>
+                      <span className="ml-auto text-[11px] text-student-text/60 capitalize">{admissionTimeline.term}</span>
+                    </div>
+                    <div className="space-y-2">
+                      {admissionTimeline.rounds.map((r: any, i: number) => {
+                        const days = differenceInDays(new Date(r.deadline), new Date())
+                        const isPast = days < 0
+                        const isUrgent = !isPast && days <= 30
+                        return (
+                          <div
+                            key={i}
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border ${
+                              isPast
+                                ? 'bg-slate-50 border-slate-100 opacity-60'
+                                : isUrgent
+                                  ? 'bg-amber-50 border-amber-200'
+                                  : 'bg-white border-slate-200'
+                            }`}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-semibold text-student-ink">{r.name}</p>
+                                {r.binding && <Badge variant="warning" size="sm">Binding</Badge>}
+                                {isUrgent && <Badge variant="danger" size="sm">⚡ {days}d left</Badge>}
+                                {isPast && <Badge variant="neutral" size="sm">Closed</Badge>}
                               </div>
+                              <p className="text-[11px] text-student-text/70 mt-0.5">
+                                Apply by <span className="font-medium text-student-ink">{formatDate(r.deadline)}</span>
+                                {r.decision_release && (
+                                  <> · Decision <span className="font-medium text-student-ink">{formatDate(r.decision_release)}</span></>
+                                )}
+                              </p>
                             </div>
-                          )
-                        })}
-                        {ir.source && <p className="text-[10px] text-gray-400 mt-2">Source: {ir.source}</p>}
-                      </div>
-                    </Card>
-                  )
-                })()}
+                          </div>
+                        )
+                      })}
+                      {admissionTimeline.enrollment_deadline && (
+                        <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-student-mist border border-student/15">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-student">Enrollment Deadline</p>
+                            <p className="text-[11px] text-student-text/70 mt-0.5">
+                              Commit by <span className="font-medium text-student-ink">{formatDate(admissionTimeline.enrollment_deadline)}</span>
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                )}
 
-                {/* Key dates + admissions insights — 2 columns */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {(p.application_deadline || p.program_start_date) && (
+                {/* Admissions insights — 2-col layout with the profile card */}
+                <div className={`grid grid-cols-1 ${admissionTimeline ? 'md:grid-cols-1' : 'md:grid-cols-2'} gap-4`}>
+                  {/* Simple Key Dates fallback — only when no structured intake_rounds exist */}
+                  {!admissionTimeline && (effectiveDeadline || p.program_start_date) && (
                     <Card className="p-5">
                       <div className="flex items-center gap-2 mb-3">
                         <Clock size={14} className="text-amber-600" />
                         <h3 className="font-semibold text-student-ink">Key Dates</h3>
                       </div>
                       <div className="space-y-2 text-sm">
-                        {p.application_deadline && (
+                        {effectiveDeadline && (
                           <div className="flex justify-between">
                             <span className="text-student-text">Application Deadline</span>
-                            <span className="font-medium text-student-ink">{formatDate(p.application_deadline)}</span>
+                            <span className="font-medium text-student-ink">{formatDate(effectiveDeadline)}</span>
                           </div>
                         )}
                         {p.program_start_date && (
@@ -515,9 +569,8 @@ export default function SchoolDetailPage() {
           })()}
 
           {tab === 'costs' && (() => {
-            const cd = p.cost_data || {}
             const years = (p.duration_months || (p.degree_type === 'bachelors' ? 48 : 24)) / 12
-            const annual = p.tuition || 0
+            const annual = effectiveTuition || 0
             const fees = cd.fees || {}
             const feeTotal = Object.values(fees).reduce((s: number, v: any) => s + (Number(v) || 0), 0)
             const living = cd.estimated_living_cost || 15000
@@ -526,6 +579,7 @@ export default function SchoolDetailPage() {
             const totalTuitionOnly = annual * years
             const totalMid = (annual + feeTotal + living + books) * years
             const totalHigh = Math.round(totalMid * 1.15)
+            const netPriceByIncome: Record<string, number> = cd.net_price_by_income || {}
             const od = p.outcomes_data || {}
             const salary = od.median_salary ? Number(od.median_salary) : (rd.earnings_10yr_median || null)
             const empRate = od.employment_rate ? Number(od.employment_rate) : (rd.graduation_rate || null)
@@ -533,11 +587,11 @@ export default function SchoolDetailPage() {
             return (
               <>
                 <StatGroup
-                  tuition={p.tuition}
-                  totalCost={rd.total_cost_attendance}
-                  netPrice={rd.avg_net_price}
-                  medianDebt={rd.median_debt}
-                  pellGrantRate={rd.pell_grant_rate}
+                  tuition={effectiveTuition}
+                  totalCost={cd.total_cost_attendance ?? rd.total_cost_attendance}
+                  netPrice={cd.average_net_price ?? rd.avg_net_price}
+                  medianDebt={cd.median_debt ?? rd.median_debt}
+                  pellGrantRate={cd.pell_grant_rate ?? rd.pell_grant_rate}
                 />
 
                 <Card className="p-5">
@@ -591,6 +645,121 @@ export default function SchoolDetailPage() {
                     </div>
                   </div>
                 </Card>
+
+                {/* Net Price by Income — what families actually pay after aid */}
+                {Object.keys(netPriceByIncome).length > 0 && (() => {
+                  // Normalize income buckets to a canonical, non-overlapping set.
+                  const canonical: { key: string; label: string; range: string }[] = [
+                    { key: '0-30000', label: 'Low', range: '$0 – $30K' },
+                    { key: '30001-48000', label: 'Lower-middle', range: '$30K – $48K' },
+                    { key: '48001-75000', label: 'Middle', range: '$48K – $75K' },
+                    { key: '75001-110000', label: 'Upper-middle', range: '$75K – $110K' },
+                    { key: '110001-plus', label: 'High', range: '$110K+' },
+                  ]
+                  const rows = canonical.filter(b => netPriceByIncome[b.key] != null)
+                  if (rows.length === 0) return null
+                  const maxPrice = Math.max(...rows.map(r => netPriceByIncome[r.key]))
+                  return (
+                    <Card className="p-5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <DollarSign size={14} className="text-blue-600" />
+                        <h3 className="font-semibold text-student-ink">Net Price by Household Income</h3>
+                      </div>
+                      <p className="text-xs text-student-text mb-4">
+                        Average price families actually pay after grants & scholarships, by household income band.
+                      </p>
+                      <div className="space-y-2">
+                        {rows.map(r => {
+                          const price = netPriceByIncome[r.key]
+                          const widthPct = Math.round((price / maxPrice) * 100)
+                          return (
+                            <div key={r.key} className="grid grid-cols-[90px_1fr_85px] gap-3 items-center">
+                              <div>
+                                <p className="text-[11px] font-semibold text-student-ink">{r.label}</p>
+                                <p className="text-[10px] text-student-text/60">{r.range}</p>
+                              </div>
+                              <div className="relative h-2 rounded-full bg-slate-100 overflow-hidden">
+                                <div
+                                  className="h-full rounded-full bg-gradient-to-r from-blue-400 to-blue-600"
+                                  style={{ width: `${widthPct}%` }}
+                                />
+                              </div>
+                              <p className="text-xs font-bold text-student-ink text-right tabular-nums">
+                                {formatCurrency(price)}
+                              </p>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      {cd.source && (
+                        <p className="text-[10px] text-student-text/50 mt-3 italic">
+                          Source: {cd.source}{cd.source_year ? ` · ${cd.source_year}` : ''}
+                        </p>
+                      )}
+
+                      {/* Link to the institution's official net-price calculator */}
+                      {rd.price_calculator_url && (
+                        <a
+                          href={rd.price_calculator_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-medium text-student hover:text-student-hover"
+                        >
+                          Estimate your cost with {instName}'s calculator ↗
+                        </a>
+                      )}
+                    </Card>
+                  )
+                })()}
+
+                {/* Debt percentiles — what graduates actually owe after leaving */}
+                {rd.debt_percentiles && typeof rd.debt_percentiles === 'object' && (() => {
+                  const dp: any = rd.debt_percentiles
+                  const order = ['10th', '25th', '75th', '90th']
+                  const rows = order
+                    .filter(k => dp[k] != null)
+                    .map(k => ({ pct: k, value: Number(dp[k]) }))
+                  if (rows.length === 0) return null
+                  const max = Math.max(...rows.map(r => r.value))
+                  return (
+                    <Card className="p-5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <DollarSign size={14} className="text-amber-600" />
+                        <h3 className="font-semibold text-student-ink">Graduate Debt Distribution</h3>
+                      </div>
+                      <p className="text-xs text-student-text mb-3">
+                        How much graduates actually borrow. Most fall between the 25th and 75th percentiles.
+                      </p>
+                      <div className="space-y-2">
+                        {rows.map(r => {
+                          const w = Math.round((r.value / max) * 100)
+                          const isMiddle = r.pct === '25th' || r.pct === '75th'
+                          return (
+                            <div key={r.pct} className="grid grid-cols-[70px_1fr_85px] gap-3 items-center">
+                              <p className={`text-[11px] font-semibold ${isMiddle ? 'text-student-ink' : 'text-student-text'}`}>
+                                {r.pct} %ile
+                              </p>
+                              <div className="relative h-2 rounded-full bg-slate-100 overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full ${isMiddle ? 'bg-gradient-to-r from-amber-400 to-amber-600' : 'bg-amber-200'}`}
+                                  style={{ width: `${w}%` }}
+                                />
+                              </div>
+                              <p className={`text-xs font-bold tabular-nums text-right ${isMiddle ? 'text-student-ink' : 'text-student-text'}`}>
+                                {formatCurrency(r.value)}
+                              </p>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      {rd.median_debt_monthly != null && (
+                        <p className="text-[11px] text-student-text mt-3">
+                          Median monthly payment after graduation: <span className="font-semibold text-student-ink">${Math.round(rd.median_debt_monthly)}</span>
+                        </p>
+                      )}
+                    </Card>
+                  )
+                })()}
 
                 {(salary || empRate || payback) && (
                   <Card className="p-5">

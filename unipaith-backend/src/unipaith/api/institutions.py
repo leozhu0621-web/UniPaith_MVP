@@ -1,3 +1,4 @@
+from datetime import date
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
@@ -756,13 +757,109 @@ async def search_institutions(
             .group_by(SchoolModel.institution_id)
         )
         sc_map = {r[0]: r[1] for r in sc_result.all()}
+
+        # Aggregate the distinct set of program names, degree types, and
+        # delivery formats per institution so the frontend can power
+        # Subjects / Degree level / Delivery format filters without fetching
+        # every program. Also collect intake_rounds + highlights for the
+        # application-open + honors/study-abroad flags.
+        prog_result = await db.execute(
+            select(
+                Program.institution_id,
+                Program.program_name,
+                Program.degree_type,
+                Program.delivery_format,
+                Program.application_deadline,
+                Program.intake_rounds,
+                Program.highlights,
+            )
+            .where(
+                Program.institution_id.in_(inst_ids),
+                Program.is_published.is_(True),
+            )
+        )
+        subjects_map: dict = {}
+        degree_map: dict = {}
+        delivery_map: dict = {}
+        next_deadline_map: dict = {}
+        program_highlights_map: dict = {}
+
+        today = date.today()
+
+        def _collect_program_deadlines(dl, ir):
+            """Yield date objects for every known future deadline for a program."""
+            out = []
+            if dl:
+                try:
+                    out.append(dl if isinstance(dl, date) else date.fromisoformat(str(dl)))
+                except Exception:
+                    pass
+            if isinstance(ir, dict):
+                # intake_rounds is usually { fall_2026: { regular_decision: { deadline }}}
+                for term_val in ir.values():
+                    if not isinstance(term_val, dict):
+                        continue
+                    for round_key in ("regular_decision", "early_decision_1",
+                                      "early_decision_2", "early_action", "rolling"):
+                        r = term_val.get(round_key)
+                        if isinstance(r, dict) and r.get("deadline"):
+                            try:
+                                out.append(date.fromisoformat(str(r["deadline"])))
+                            except Exception:
+                                pass
+            return out
+
+        for inst_id, name, deg, fmt, dl, ir, highlights in prog_result.all():
+            if name:
+                subjects_map.setdefault(inst_id, set()).add(name)
+            if deg:
+                degree_map.setdefault(inst_id, set()).add(deg)
+            if fmt:
+                delivery_map.setdefault(inst_id, set()).add(fmt)
+            if isinstance(highlights, list):
+                program_highlights_map.setdefault(inst_id, []).extend(highlights)
+            # Track the earliest future deadline across all of the institution's programs
+            for d in _collect_program_deadlines(dl, ir):
+                if d >= today:
+                    cur = next_deadline_map.get(inst_id)
+                    if cur is None or d < cur:
+                        next_deadline_map[inst_id] = d
+
+        # Convert sets to sorted lists for stable UI
+        subjects_map = {k: sorted(v) for k, v in subjects_map.items()}
+        degree_map = {k: sorted(v) for k, v in degree_map.items()}
+        delivery_map = {k: sorted(v) for k, v in delivery_map.items()}
     else:
         pc_map = {}
         sc_map = {}
+        subjects_map = {}
+        degree_map = {}
+        delivery_map = {}
+        next_deadline_map = {}
+        program_highlights_map = {}
 
     items = []
+    import re
     for inst in institutions:
         rd = inst.ranking_data or {}
+        intl = inst.international_info or {}
+
+        # "has_honors" / "has_study_abroad" are True when either the institution's
+        # description mentions it or any of its published programs' highlights do.
+        search_blob = (
+            (inst.description_text or "") + " " +
+            (inst.campus_description or "") + " " +
+            " ".join(program_highlights_map.get(inst.id, []) or [])
+        )
+        has_honors = bool(re.search(r"\bhonors?\b|\bthesis\b", search_blob, re.IGNORECASE))
+        has_study_abroad = bool(re.search(r"\bstudy abroad\b|\bexchange program\b|\bglobal campuses?\b", search_blob, re.IGNORECASE))
+
+        # Tuition: in-state and out-of-state are usually the same for privates.
+        # Prefer out-of-state as the universal published price.
+        tuition_annual = rd.get("tuition_out_of_state") or rd.get("tuition_in_state")
+
+        next_dl = next_deadline_map.get(inst.id)
+
         items.append({
             "id": str(inst.id),
             "name": inst.name,
@@ -787,6 +884,17 @@ async def search_institutions(
             "us_news_rank": rd.get("us_news_2025"),
             "median_earnings": rd.get("earnings_10yr_median"),
             "graduation_rate": rd.get("graduation_rate"),
+            "region": inst.region,
+            "subjects_offered": subjects_map.get(inst.id, []),
+            "top_industries": (inst.school_outcomes or {}).get("top_employer_industries", []),
+            # New filter fields:
+            "degree_types_offered": degree_map.get(inst.id, []),
+            "delivery_formats_offered": delivery_map.get(inst.id, []),
+            "next_deadline": next_dl.isoformat() if next_dl else None,
+            "supports_international": bool(intl.get("supported_visas")),
+            "has_study_abroad": has_study_abroad,
+            "has_honors": has_honors,
+            "tuition_annual": tuition_annual,
         })
 
     return {

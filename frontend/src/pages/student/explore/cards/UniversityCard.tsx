@@ -1,26 +1,16 @@
 import { useState } from 'react'
 import {
-  GraduationCap, MapPin, Users, TrendingUp,
-  Award, Building2, BookOpen, ChevronRight,
+  MapPin, Users, Building2, BookOpen, ChevronRight,
+  Sprout, Landmark,
 } from 'lucide-react'
-
-// Local school images
-const LOCAL_IMAGES: Record<string, { campus: string[]; logo?: string }> = {
-  'new york university': {
-    campus: ['/school-images/nyu-campus-1.jpg', '/school-images/nyu-campus-2.jpg', '/school-images/nyu-campus-3.jpg'],
-    logo: '/school-images/nyu-logo.jpg',
-  },
-  'stanford university': {
-    campus: ['/school-images/stanford-campus.jpg'],
-    logo: '/school-images/stanford-logo.jpg',
-  },
-}
+import { classifyInstitution, sizeBucket, formatSetting, SIZE_OPTIONS } from '../shared/classifyInstitution'
 
 interface UniversityData {
   id: string
   name: string
   country: string
   city?: string | null
+  region?: string | null
   type?: string | null
   campus_setting?: string | null
   student_body_size?: number | null
@@ -29,6 +19,9 @@ interface UniversityData {
   program_count?: number
   school_count?: number
   description_text?: string | null
+  subjects_offered?: string[] | null
+  top_industries?: string[] | null
+  // Competitive fields (no longer shown on the card — live on the detail page):
   acceptance_rate?: number | null
   sat_avg?: number | null
   us_news_rank?: number | null
@@ -43,134 +36,117 @@ interface Props {
 
 export default function UniversityCard({ institution: inst, onClick }: Props) {
   const [imgFailed, setImgFailed] = useState(false)
-  const local = LOCAL_IMAGES[(inst.name || '').toLowerCase()]
-  const campusImg = local?.campus[0] || inst.image_url
-  const logoImg = local?.logo || inst.logo_url
 
-  const acceptPct = inst.acceptance_rate != null ? Math.round(inst.acceptance_rate * 100) : null
+  // Trust only what the DB gives us. A missing image still reads as a
+  // proper card because the university name is the visual anchor.
+  const campusImg = inst.image_url
+  const logoImg = inst.logo_url
+
+  const classification = classifyInstitution({
+    description_text: inst.description_text,
+    type: inst.type,
+  })
+  const settingLabel = formatSetting(inst.campus_setting)
+  const size = sizeBucket(inst.student_body_size)
+  const sizeLabel = size ? SIZE_OPTIONS.find(s => s.code === size)?.label ?? null : null
 
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-xl border border-divider hover:shadow-lg hover:scale-[1.005] hover:-translate-y-0.5 transition-all duration-200 ease-out overflow-hidden cursor-pointer flex flex-col group/card"
+      className="bg-white rounded-xl border border-divider hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 ease-out overflow-hidden cursor-pointer flex flex-col group/card"
     >
-      {/* ── Image ── */}
+      {/* ── Image with strong name watermark ── */}
       <div className="relative h-44 bg-student-mist overflow-hidden">
         {campusImg && !imgFailed ? (
           <img
             src={campusImg}
             alt={inst.name}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover/card:scale-105"
+            className="w-full h-full object-cover transition-transform duration-300 group-hover/card:scale-[1.03]"
             onError={() => setImgFailed(true)}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-student-mist to-student/5">
-            <Building2 size={40} className="text-student/15" />
+          <div className="w-full h-full bg-gradient-to-br from-student via-student/80 to-student-hover" />
+        )}
+
+        {/* Strong scrim — keeps the name legible over any photo */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/45 to-black/15 pointer-events-none" />
+
+        {/* Logo chip — top-left, doesn't compete with the name */}
+        {logoImg && (
+          <div className="absolute top-3 left-3 w-9 h-9 rounded-lg bg-white/95 shadow-sm border border-white/50 p-1 flex items-center justify-center">
+            <img
+              src={logoImg}
+              alt=""
+              className="w-full h-full object-contain"
+              onError={e => (e.currentTarget.parentElement!.style.display = 'none')}
+            />
           </div>
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/5 to-transparent pointer-events-none" />
-
-        {/* Ranking */}
-        {inst.us_news_rank && (
-          <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-gold-soft/90 text-gold border border-gold/20 shadow-sm backdrop-blur-sm">
-            <Award size={10} />
-            <span className="text-[10px] font-bold">#{inst.us_news_rank}</span>
-          </div>
-        )}
-
-        {/* Bottom: logo + name */}
-        <div className="absolute bottom-3 left-3 right-3 flex items-end gap-2.5">
-          {logoImg && (
-            <div className="w-12 h-12 rounded-xl bg-white shadow-md border border-white/50 p-1.5 flex-shrink-0">
-              <img src={logoImg} alt="" className="w-full h-full object-contain" onError={e => (e.currentTarget.parentElement!.style.display = 'none')} />
-            </div>
-          )}
-          <div className="min-w-0">
-            <h3 className="text-white text-base font-bold truncate drop-shadow-sm">{inst.name}</h3>
-            <div className="flex items-center gap-1.5 text-white/80 text-[11px]">
-              <MapPin size={9} className="flex-shrink-0" />
-              <span className="truncate">{inst.city ? `${inst.city}, ` : ''}{inst.country}</span>
-              {inst.type && (
-                <>
-                  <span className="text-white/40">·</span>
-                  <span className="capitalize">{inst.type}</span>
-                </>
-              )}
-            </div>
+        {/* Name as the visual anchor — large, centered-left, drop shadow */}
+        <div className="absolute inset-0 flex flex-col justify-end px-4 pb-4 pointer-events-none">
+          <h3
+            className="text-white text-[22px] leading-[1.1] font-bold drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] tracking-tight line-clamp-2"
+            style={{ fontFamily: 'var(--font-display, inherit)' }}
+          >
+            {inst.name}
+          </h3>
+          <div className="flex items-center gap-1.5 mt-1.5 text-white/90 text-[11px] drop-shadow-sm">
+            <MapPin size={10} className="flex-shrink-0" />
+            <span className="truncate">
+              {inst.city ? `${inst.city}, ` : ''}{inst.region ? `${inst.region} · ` : ''}{inst.country}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* ── Content ── */}
-      <div className="flex-1 px-4 pt-3 pb-3">
-        {/* School & program counts */}
-        <div className="flex items-center gap-3 text-xs text-student-text mb-2">
+      {/* ── Body ── */}
+      <div className="flex-1 px-4 pt-3 pb-3 flex flex-col">
+        {/* Welcoming-pill row: Type · Setting · Size · schools · programs */}
+        <div className="flex flex-wrap items-center gap-1.5 mb-3">
+          {classification.code !== 'other' && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-md bg-student-mist text-student border border-student/15">
+              <Landmark size={10} />
+              {classification.label}
+            </span>
+          )}
+          {settingLabel && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-md bg-slate-50 text-student-ink border border-slate-200">
+              <Sprout size={10} className="text-slate-400" />
+              {settingLabel}
+            </span>
+          )}
+          {sizeLabel && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-md bg-slate-50 text-student-ink border border-slate-200">
+              <Users size={10} className="text-slate-400" />
+              {sizeLabel}
+            </span>
+          )}
           {(inst.school_count ?? 0) > 0 && (
-            <span className="flex items-center gap-1">
-              <Building2 size={11} className="text-student" />
-              <span className="font-semibold text-student-ink">{inst.school_count}</span> schools
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-md bg-slate-50 text-student-ink border border-slate-200">
+              <Building2 size={10} className="text-slate-400" />
+              {inst.school_count} schools
             </span>
           )}
           {(inst.program_count ?? 0) > 0 && (
-            <span className="flex items-center gap-1">
-              <BookOpen size={11} className="text-student" />
-              <span className="font-semibold text-student-ink">{inst.program_count}</span> programs
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-md bg-slate-50 text-student-ink border border-slate-200">
+              <BookOpen size={10} className="text-slate-400" />
+              {inst.program_count} programs
             </span>
           )}
         </div>
 
-        {/* Description */}
+        {/* Description — 2 lines max, pushes footer to the bottom */}
         {inst.description_text && (
-          <p className="text-[11px] text-student-text/80 leading-relaxed line-clamp-2 mb-3">
+          <p className="text-[11.5px] text-student-text/80 leading-relaxed line-clamp-2 mb-3 flex-1">
             {inst.description_text}
           </p>
         )}
-
-        {/* Stats grid */}
-        <div className="grid grid-cols-2 gap-1.5">
-          {acceptPct != null && (
-            <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-slate-50">
-              <GraduationCap size={11} className="text-student-text/50 flex-shrink-0" />
-              <div>
-                <p className="text-[10px] text-student-text/60 leading-none">Acceptance</p>
-                <p className="text-xs font-semibold text-student-ink leading-tight">{acceptPct}%</p>
-              </div>
-            </div>
-          )}
-          {inst.median_earnings != null && (
-            <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-slate-50">
-              <TrendingUp size={11} className="text-student-text/50 flex-shrink-0" />
-              <div>
-                <p className="text-[10px] text-student-text/60 leading-none">Avg Salary</p>
-                <p className="text-xs font-semibold text-student-ink leading-tight">${Math.round(inst.median_earnings / 1000)}K</p>
-              </div>
-            </div>
-          )}
-          {inst.student_body_size != null && (
-            <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-slate-50">
-              <Users size={11} className="text-student-text/50 flex-shrink-0" />
-              <div>
-                <p className="text-[10px] text-student-text/60 leading-none">Students</p>
-                <p className="text-xs font-semibold text-student-ink leading-tight">{inst.student_body_size.toLocaleString()}</p>
-              </div>
-            </div>
-          )}
-          {inst.sat_avg != null && (
-            <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-slate-50">
-              <Award size={11} className="text-student-text/50 flex-shrink-0" />
-              <div>
-                <p className="text-[10px] text-student-text/60 leading-none">SAT Avg</p>
-                <p className="text-xs font-semibold text-student-ink leading-tight">{inst.sat_avg}</p>
-              </div>
-            </div>
-          )}
-        </div>
       </div>
 
-      {/* ── Action ── */}
+      {/* ── Footer action ── */}
       <div className="flex items-center border-t border-divider mt-auto px-4 py-2.5">
-        <span className="text-xs font-medium text-student flex-1">Explore Schools</span>
+        <span className="text-xs font-medium text-student flex-1">View University</span>
         <ChevronRight size={16} className="text-student group-hover/card:translate-x-0.5 transition-transform" />
       </div>
     </div>
