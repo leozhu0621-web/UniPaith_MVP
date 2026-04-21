@@ -133,7 +133,7 @@ class NotificationService:
             .values(is_read=True, read_at=datetime.now(UTC))
         )
         await self.db.flush()
-        return result.rowcount  # type: ignore[return-value]
+        return result.rowcount  # type: ignore[union-attr, return-value]
 
     # ========================================================================
     # PREFERENCES

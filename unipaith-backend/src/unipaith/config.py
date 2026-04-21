@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -162,8 +164,8 @@ class Settings(BaseSettings):
     training_fast_cv_folds: int = 3
     training_fast_optuna_trials: int = 12
     training_fast_max_duration_minutes: int = 15
-    training_default_cycle_mode: str = "fast"
-    training_default_manual_mode: str = "full"
+    training_default_cycle_mode: Literal["fast", "full"] = "fast"
+    training_default_manual_mode: Literal["fast", "full"] = "full"
     training_recent_outcome_window_days: int = 365
     training_degraded_mode_failure_rate_threshold: float = 0.5
     training_degraded_mode_min_runs: int = 4

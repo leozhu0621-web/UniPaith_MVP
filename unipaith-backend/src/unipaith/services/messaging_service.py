@@ -222,7 +222,7 @@ class MessagingService:
             .values(read_at=now)
         )
         await self.db.flush()
-        return result.rowcount  # type: ignore[return-value]
+        return result.rowcount  # type: ignore[union-attr, return-value]
 
     # ------------------------------------------------------------------
     # Internal helpers
