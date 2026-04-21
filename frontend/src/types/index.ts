@@ -659,6 +659,7 @@ export interface Institution {
   website_url: string | null
   media_gallery: string[] | null
   social_links: Record<string, string> | null
+  inquiry_routing: Record<string, any> | null
   support_services: Record<string, any> | null
   policies: Record<string, any> | null
   international_info: Record<string, any> | null
