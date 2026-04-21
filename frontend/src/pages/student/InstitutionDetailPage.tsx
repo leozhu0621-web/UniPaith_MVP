@@ -16,7 +16,8 @@ import Tabs from '../../components/ui/Tabs'
 import Skeleton from '../../components/ui/Skeleton'
 import {
   ArrowLeft, GraduationCap, MapPin, Globe, Users, Building2,
-  BookOpen, Mail,
+  BookOpen, Mail, Phone, ExternalLink, Shield, HandHeart,
+  BadgeCheck, Briefcase,
 } from 'lucide-react'
 import type { Institution, ProgramSummary, InstitutionPost } from '../../types'
 
@@ -166,56 +167,217 @@ export default function InstitutionDetailPage() {
               </Card>
             )}
 
-            {inst.support_services && Object.keys(inst.support_services).length > 0 && (
+            {/* Support Services — each value is {name, url, email} */}
+            {inst.support_services && Object.keys(inst.support_services).filter(k => !k.startsWith('_')).length > 0 && (
               <Card className="p-5">
-                <h2 className="font-semibold text-student-ink mb-2">Support Services</h2>
+                <div className="flex items-center gap-2 mb-3">
+                  <HandHeart size={14} className="text-student" />
+                  <h2 className="font-semibold text-student-ink">Support Services</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  {Object.entries(inst.support_services).filter(([k]) => !k.startsWith('_')).map(([key, val]: [string, any]) => {
+                    const label = val?.name || key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+                    return (
+                      <div key={key} className="flex justify-between items-start gap-2 border-b border-gray-100 pb-2">
+                        <div className="flex-1">
+                          <div className="font-medium text-student-ink">{label}</div>
+                          {val?.hours && <div className="text-xs text-student-text">{val.hours}</div>}
+                          {val?.phone && <div className="text-xs text-student-text"><Phone size={10} className="inline mr-1" />{val.phone}</div>}
+                        </div>
+                        {val?.url && (
+                          <a href={val.url} target="_blank" rel="noopener noreferrer" className="text-xs text-student hover:underline flex items-center gap-1">
+                            Visit <ExternalLink size={10} />
+                          </a>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+                {(inst.support_services as any)._source && <p className="text-[10px] text-gray-400 mt-2">Source: {(inst.support_services as any)._source}</p>}
+              </Card>
+            )}
+
+            {/* Policies — each value is {url, summary, name} */}
+            {inst.policies && Object.keys(inst.policies).filter(k => !k.startsWith('_')).length > 0 && (
+              <Card className="p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Shield size={14} className="text-student" />
+                  <h2 className="font-semibold text-student-ink">Policies</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  {Object.entries(inst.policies).filter(([k]) => !k.startsWith('_')).map(([key, val]: [string, any]) => {
+                    const label = val?.name || key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+                    return (
+                      <div key={key} className="border-b border-gray-100 pb-2">
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="font-medium text-student-ink">{label}</div>
+                          {val?.url && (
+                            <a href={val.url} target="_blank" rel="noopener noreferrer" className="text-xs text-student hover:underline flex items-center gap-1 flex-shrink-0">
+                              Read <ExternalLink size={10} />
+                            </a>
+                          )}
+                        </div>
+                        {val?.summary && <div className="text-xs text-student-text mt-1">{val.summary}</div>}
+                      </div>
+                    )
+                  })}
+                </div>
+              </Card>
+            )}
+
+            {/* International student info */}
+            {inst.international_info && Object.keys(inst.international_info).filter(k => !k.startsWith('_')).length > 0 && (() => {
+              const ii: any = inst.international_info
+              const ep = ii.english_proficiency || {}
+              const visa = ii.visa || {}
+              return (
+                <Card className="p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Globe size={14} className="text-student" />
+                    <h2 className="font-semibold text-student-ink">International Students</h2>
+                  </div>
+                  <div className="space-y-3 text-sm">
+                    {(ep.toefl_ibt_min || ep.ielts_min || ep.duolingo_min || ep.pte_min) && (
+                      <div>
+                        <p className="text-xs font-semibold text-student-text uppercase mb-2">English Proficiency Minimums</p>
+                        <div className="flex flex-wrap gap-2">
+                          {ep.toefl_ibt_min && <Badge variant="info">TOEFL iBT ≥ {ep.toefl_ibt_min}</Badge>}
+                          {ep.ielts_min && <Badge variant="info">IELTS ≥ {ep.ielts_min}</Badge>}
+                          {ep.duolingo_min && <Badge variant="info">Duolingo ≥ {ep.duolingo_min}</Badge>}
+                          {ep.pte_min && <Badge variant="info">PTE ≥ {ep.pte_min}</Badge>}
+                        </div>
+                        {ep.note && <p className="text-xs text-student-text mt-1">{ep.note}</p>}
+                      </div>
+                    )}
+                    {Array.isArray(ii.supported_visas) && ii.supported_visas.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-student-text uppercase mb-2">Supported Visa Types</p>
+                        <div className="flex flex-wrap gap-2">
+                          {ii.supported_visas.map((v: string) => <Badge key={v} variant="neutral">{v}</Badge>)}
+                        </div>
+                      </div>
+                    )}
+                    {(visa.office_name || visa.email || visa.phone || visa.url) && (
+                      <div>
+                        <p className="text-xs font-semibold text-student-text uppercase mb-2">Visa Office</p>
+                        {visa.office_name && <div className="font-medium text-student-ink">{visa.office_name}</div>}
+                        {visa.email && <div className="text-xs text-student-text"><Mail size={10} className="inline mr-1" /><a href={`mailto:${visa.email}`} className="hover:underline">{visa.email}</a></div>}
+                        {visa.phone && <div className="text-xs text-student-text"><Phone size={10} className="inline mr-1" />{visa.phone}</div>}
+                        {visa.url && <a href={visa.url} target="_blank" rel="noopener noreferrer" className="text-xs text-student hover:underline flex items-center gap-1 mt-1">Visit office site <ExternalLink size={10} /></a>}
+                      </div>
+                    )}
+                    {ii.international_student_count && (
+                      <p className="text-xs text-student-text">International students on campus: <span className="font-medium text-student-ink">{Number(ii.international_student_count).toLocaleString()}</span></p>
+                    )}
+                    {ii.scholarship_eligibility && (
+                      <p className="text-xs text-student-text">{ii.scholarship_eligibility}</p>
+                    )}
+                  </div>
+                </Card>
+              )
+            })()}
+
+            {/* School-wide outcomes — mix of rates, lists, nested dicts */}
+            {inst.school_outcomes && Object.keys(inst.school_outcomes).filter(k => !k.startsWith('_') && k !== 'source').length > 0 && (() => {
+              const so: any = inst.school_outcomes
+              const fmtPct = (v: any) => typeof v === 'number' && v <= 1 ? `${Math.round(v * 100)}%` : String(v)
+              const scalarPairs = Object.entries(so).filter(([k, v]) =>
+                !k.startsWith('_') && k !== 'source' && (typeof v === 'number' || typeof v === 'string')
+              )
+              const industries: string[] = Array.isArray(so.top_employer_industries) ? so.top_employer_industries : []
+              const geo: any = so.geographic_placement || {}
+              return (
+                <Card className="p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <BadgeCheck size={14} className="text-emerald-600" />
+                    <h2 className="font-semibold text-student-ink">School-Wide Outcomes</h2>
+                  </div>
+                  <div className="space-y-4 text-sm">
+                    {scalarPairs.length > 0 && (
+                      <dl className="grid grid-cols-2 gap-2">
+                        {scalarPairs.map(([key, val]) => (
+                          <div key={key}>
+                            <dt className="text-xs text-student-text capitalize">{key.replace(/_/g, ' ')}</dt>
+                            <dd className="text-student-ink font-medium">{fmtPct(val)}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    )}
+                    {industries.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-student-text uppercase mb-2">Top Employer Industries</p>
+                        <div className="flex flex-wrap gap-2">
+                          {industries.map(ind => <Badge key={ind} variant="info">{ind}</Badge>)}
+                        </div>
+                      </div>
+                    )}
+                    {Object.keys(geo).length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-student-text uppercase mb-2">Geographic Placement</p>
+                        <div className="space-y-1">
+                          {Object.entries(geo).map(([region, share]: [string, any]) => {
+                            const pct = typeof share === 'number' ? Math.round(share * 100) : null
+                            return (
+                              <div key={region} className="flex items-center gap-2 text-xs">
+                                <span className="text-student-text capitalize w-28">{region.replace(/_/g, ' ')}</span>
+                                {pct != null && (
+                                  <>
+                                    <div className="flex-1 h-1.5 bg-gray-100 rounded-full">
+                                      <div className="h-full bg-student rounded-full" style={{ width: `${pct}%` }} />
+                                    </div>
+                                    <span className="font-medium text-student-ink w-10 text-right">{pct}%</span>
+                                  </>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    {so.source && <p className="text-[10px] text-gray-400">Source: {so.source}</p>}
+                  </div>
+                </Card>
+              )
+            })()}
+
+            {/* Social links */}
+            {inst.social_links && Object.keys(inst.social_links).filter(k => !k.startsWith('_')).length > 0 && (
+              <Card className="p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Globe size={14} className="text-student" />
+                  <h2 className="font-semibold text-student-ink">Follow {inst.name}</h2>
+                </div>
                 <div className="flex flex-wrap gap-2">
-                  {Object.entries(inst.support_services).map(([key, val]) => (
-                    <Badge key={key} variant="neutral">{typeof val === 'string' ? val : key.replace(/_/g, ' ')}</Badge>
+                  {Object.entries(inst.social_links).filter(([k]) => !k.startsWith('_')).map(([platform, url]: [string, any]) => (
+                    <a key={platform} href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-full bg-student-mist text-student-ink hover:bg-student/10 transition">
+                      <ExternalLink size={10} />
+                      <span className="capitalize">{platform}</span>
+                    </a>
                   ))}
                 </div>
               </Card>
             )}
 
-            {inst.policies && Object.keys(inst.policies).length > 0 && (
+            {/* Inquiry routing — contact channels for admissions, international, aid, etc. */}
+            {inst.inquiry_routing && Object.keys(inst.inquiry_routing).filter(k => !k.startsWith('_')).length > 0 && (
               <Card className="p-5">
-                <h2 className="font-semibold text-student-ink mb-2">Policies</h2>
-                <dl className="grid grid-cols-2 gap-2 text-sm">
-                  {Object.entries(inst.policies).map(([key, val]) => (
-                    <div key={key}>
-                      <dt className="text-student-text capitalize">{key.replace(/_/g, ' ')}</dt>
-                      <dd className="text-student-ink">{String(val)}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </Card>
-            )}
-
-            {inst.international_info && Object.keys(inst.international_info).length > 0 && (
-              <Card className="p-5">
-                <h2 className="font-semibold text-student-ink mb-2">International Students</h2>
-                <dl className="grid grid-cols-2 gap-2 text-sm">
-                  {Object.entries(inst.international_info).map(([key, val]) => (
-                    <div key={key}>
-                      <dt className="text-student-text capitalize">{key.replace(/_/g, ' ')}</dt>
-                      <dd className="text-student-ink">{String(val)}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </Card>
-            )}
-
-            {inst.school_outcomes && Object.keys(inst.school_outcomes).length > 0 && (
-              <Card className="p-5">
-                <h2 className="font-semibold text-student-ink mb-2">Outcomes</h2>
-                <dl className="grid grid-cols-2 gap-2 text-sm">
-                  {Object.entries(inst.school_outcomes).map(([key, val]) => (
-                    <div key={key}>
-                      <dt className="text-student-text capitalize">{key.replace(/_/g, ' ')}</dt>
-                      <dd className="text-student-ink font-medium">{typeof val === 'number' ? val.toLocaleString() : String(val)}</dd>
-                    </div>
-                  ))}
-                </dl>
+                <div className="flex items-center gap-2 mb-3">
+                  <Briefcase size={14} className="text-student" />
+                  <h2 className="font-semibold text-student-ink">Admissions & Contact</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  {Object.entries(inst.inquiry_routing).filter(([k]) => !k.startsWith('_')).map(([channel, info]: [string, any]) => {
+                    const label = channel.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+                    return (
+                      <div key={channel} className="border-b border-gray-100 pb-2">
+                        <div className="font-medium text-student-ink mb-0.5">{label}</div>
+                        {info?.email && <div className="text-xs text-student-text"><Mail size={10} className="inline mr-1" /><a href={`mailto:${info.email}`} className="hover:underline">{info.email}</a></div>}
+                        {info?.phone && <div className="text-xs text-student-text"><Phone size={10} className="inline mr-1" />{info.phone}</div>}
+                        {info?.url && <a href={info.url} target="_blank" rel="noopener noreferrer" className="text-xs text-student hover:underline flex items-center gap-1">Visit <ExternalLink size={10} /></a>}
+                      </div>
+                    )
+                  })}
+                </div>
               </Card>
             )}
           </div>
