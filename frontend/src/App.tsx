@@ -29,6 +29,7 @@ import ManagementPage from './pages/student/ManagementPage'
 import ProfilePage from './pages/student/ProfilePage'
 import SchoolDetailPage from './pages/student/SchoolDetailPage'
 import InstitutionDetailPage from './pages/student/InstitutionDetailPage'
+import SchoolSubunitPage from './pages/student/SchoolSubunitPage'
 import ApplicationDetailPage from './pages/student/ApplicationDetailPage'
 import SavedListPage from './pages/student/SavedListPage'
 import StudentSettingsPage from './pages/student/SettingsPage'
@@ -109,6 +110,7 @@ const router = createBrowserRouter([
       { path: 'programs/:programId', element: <SchoolDetailPage /> },
       { path: 'schools/:programId', element: <SchoolDetailPage /> },
       { path: 'institutions/:institutionId', element: <InstitutionDetailPage /> },
+      { path: 'institutions/:institutionId/schools/:schoolId', element: <SchoolSubunitPage /> },
       { path: 'applications/:appId', element: <ApplicationDetailPage /> },
       // === Redirects (all old routes still work) ===
       { path: 'dashboard', element: <Navigate to="/s" replace /> },

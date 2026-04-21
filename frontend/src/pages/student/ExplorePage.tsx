@@ -1,17 +1,22 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { searchPrograms, nlpSearch } from '../../api/programs'
-import { searchInstitutions, getInstitutionSchools, getSchoolPrograms } from '../../api/institutions'
+import { searchInstitutions } from '../../api/institutions'
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
 import { useCompareStore } from '../../stores/compare-store'
 import UniversityCard from './explore/cards/UniversityCard'
-import SchoolCard from './explore/cards/SchoolCard'
 import ProgramCard from './explore/cards/ProgramCard'
+import ExploreFilters, { EMPTY_FILTERS, applyFilters, countActiveFilters, type FilterState } from './explore/shared/ExploreFilters'
 import {
-  Search, X, Loader2, Sparkles, ChevronRight, Building2, GraduationCap, ChevronLeft,
+  Search, X, Loader2, Sparkles, Building2,
 } from 'lucide-react'
-import type { ProgramSummary, SchoolSummary } from '../../types'
+import type { ProgramSummary } from '../../types'
+import type {
+  InstitutionClassification,
+  SatTier,
+  TuitionTier,
+} from './explore/shared/classifyInstitution'
 
 interface NlpResult {
   filters_applied: Record<string, any>
@@ -19,48 +24,92 @@ interface NlpResult {
   interpretation: string
 }
 
-// Drill-down state
-type DrillLevel = 0 | 1 | 2 // 0=universities, 1=schools, 2=programs
-interface SelectedUniversity { id: string; name: string }
-interface SelectedSchool { id: string; name: string; institutionId: string; institutionName: string }
+/**
+ * ExplorePage — top-level universities grid plus flat program search.
+ *
+ * Schools and programs each live on their own URL-routed detail page — this
+ * page no longer drills down in-place. Clicking a university card navigates
+ * to /s/institutions/:id, which exposes a Schools tab that leads to the
+ * per-school detail page.
+ */
+/** Parse filter state from URL search params. List filters are comma-
+ *  separated on their own key; boolean toggles are '1' or absent. */
+function filtersFromURL(params: URLSearchParams): FilterState {
+  const split = (key: string) =>
+    (params.get(key) || '').split(',').map(s => s.trim()).filter(Boolean)
+  const bool = (key: string) => params.get(key) === '1'
+  return {
+    country: split('country'),
+    setting: split('setting'),
+    type: split('type') as InstitutionClassification[],
+    degreeLevel: split('degree'),
+    deliveryFormat: split('format'),
+    subjects: split('subjects'),
+    industries: split('industries'),
+    satTier: split('sat') as SatTier[],
+    tuitionTier: split('tuition') as TuitionTier[],
+    appOpen: bool('open'),
+    international: bool('intl'),
+    studyAbroad: bool('abroad'),
+    honors: bool('honors'),
+  }
+}
+
+/** Serialize filter state into URL search params (preserves `q`). */
+function filtersToURL(base: URLSearchParams, f: FilterState): URLSearchParams {
+  const next = new URLSearchParams(base)
+  const listKeys: Array<{ key: keyof FilterState; param: string }> = [
+    { key: 'country', param: 'country' },
+    { key: 'setting', param: 'setting' },
+    { key: 'type', param: 'type' },
+    { key: 'degreeLevel', param: 'degree' },
+    { key: 'deliveryFormat', param: 'format' },
+    { key: 'subjects', param: 'subjects' },
+    { key: 'industries', param: 'industries' },
+    { key: 'satTier', param: 'sat' },
+    { key: 'tuitionTier', param: 'tuition' },
+  ]
+  for (const { key, param } of listKeys) {
+    const v = (f[key] as string[]).join(',')
+    if (v) next.set(param, v)
+    else next.delete(param)
+  }
+  const boolKeys: Array<{ key: keyof FilterState; param: string }> = [
+    { key: 'appOpen', param: 'open' },
+    { key: 'international', param: 'intl' },
+    { key: 'studyAbroad', param: 'abroad' },
+    { key: 'honors', param: 'honors' },
+  ]
+  for (const { key, param } of boolKeys) {
+    if (f[key]) next.set(param, '1')
+    else next.delete(param)
+  }
+  return next
+}
 
 export default function ExplorePage() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
   const compareStore = useCompareStore()
-
-  // Drill-down state
-  const [level, setLevel] = useState<DrillLevel>(0)
-  const [selectedUni, setSelectedUni] = useState<SelectedUniversity | null>(null)
-  const [selectedSchool, setSelectedSchool] = useState<SelectedSchool | null>(null)
 
   // Search state
   const [q, setQ] = useState(searchParams.get('q') || '')
   const [isSearching, setIsSearching] = useState(false)
   const [nlpResult, setNlpResult] = useState<NlpResult | null>(null)
 
+  // Filter state lives in the URL so refresh + share + back all work.
+  const filters = useMemo(() => filtersFromURL(searchParams), [searchParams])
+  const setFilters = (next: FilterState) => {
+    setSearchParams(filtersToURL(searchParams, next), { replace: true })
+  }
+
   // ─── Queries ───
 
-  // Level 0: Universities — keep cached across drill levels
   const { data: universities, isLoading: uniLoading } = useQuery({
     queryKey: ['explore-universities'],
     queryFn: () => searchInstitutions({ page_size: 50 }),
     staleTime: 5 * 60 * 1000,
-  })
-
-  // Level 1: Schools within a university
-  const { data: schools, isLoading: schoolsLoading } = useQuery({
-    queryKey: ['explore-schools', selectedUni?.id],
-    queryFn: () => getInstitutionSchools(selectedUni!.id),
-    enabled: level === 1 && !!selectedUni,
-  })
-
-  // Level 2: Programs within a school
-  const { data: programs, isLoading: programsLoading } = useQuery({
-    queryKey: ['explore-programs', selectedSchool?.institutionId, selectedSchool?.id],
-    queryFn: () => getSchoolPrograms(selectedSchool!.institutionId, selectedSchool!.id),
-    enabled: level === 2 && !!selectedSchool,
   })
 
   // Search mode: flat program search
@@ -89,44 +138,6 @@ export default function ExplorePage() {
     } catch { /* */ }
   }
 
-  // ─── Navigation ───
-
-  // Reset scroll whenever drill level changes
-  useEffect(() => {
-    const t = setTimeout(() => document.querySelector('main')?.scrollTo({ top: 0, behavior: 'instant' }), 50)
-    return () => clearTimeout(t)
-  }, [level])
-
-  const drillToSchools = useCallback((uni: { id: string; name: string }) => {
-    setSelectedUni(uni)
-    setLevel(1)
-    // scroll reset handled by useEffect on level
-  }, [])
-
-  const drillToPrograms = useCallback((school: SchoolSummary) => {
-    setSelectedSchool({
-      id: school.id,
-      name: school.name,
-      institutionId: school.institution_id,
-      institutionName: selectedUni?.name || '',
-    })
-    setLevel(2)
-    // scroll reset handled by useEffect on level
-  }, [selectedUni])
-
-  const goBack = useCallback(() => {
-    if (level === 2) { setLevel(1); setSelectedSchool(null) }
-    else if (level === 1) { setLevel(0); setSelectedUni(null) }
-    // scroll reset handled by useEffect on level
-  }, [level])
-
-  const goToLevel = useCallback((target: DrillLevel) => {
-    setLevel(target)
-    if (target === 0) { setSelectedUni(null); setSelectedSchool(null) }
-    if (target === 1) { setSelectedSchool(null) }
-    // scroll reset handled by useEffect on level
-  }, [])
-
   // Search handling
   const handleSearch = () => {
     if (q.trim().length >= 3) {
@@ -149,8 +160,8 @@ export default function ExplorePage() {
   // ─── Data ───
 
   const uniList: any[] = universities?.items ?? []
-  const schoolList: SchoolSummary[] = Array.isArray(schools) ? schools : []
-  const programList: ProgramSummary[] = Array.isArray(programs) ? programs : []
+  const filteredUniList = useMemo(() => applyFilters(uniList, filters), [uniList, filters])
+  const hasActiveFilters = countActiveFilters(filters) > 0
   const searchProgramList: ProgramSummary[] = nlpResult
     ? (nlpResult.results?.items ?? [])
     : (searchResults?.items ?? [])
@@ -226,153 +237,57 @@ export default function ExplorePage() {
         </>
       )}
 
-      {/* ── BROWSE MODE: Drill-down with slide animation ── */}
+      {/* ── BROWSE MODE: Filter bar + Universities grid ── */}
       {!isSearching && (
         <>
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-1.5 mb-4 text-sm">
-            <button
-              onClick={() => goToLevel(0)}
-              className={`flex items-center gap-1 px-2 py-1 rounded-md transition-colors ${
-                level === 0 ? 'text-student-ink font-semibold' : 'text-student-text hover:text-student-ink hover:bg-student-mist'
-              }`}
-            >
-              <Building2 size={14} />
-              Universities
-            </button>
-            {level >= 1 && selectedUni && (
-              <>
-                <ChevronRight size={14} className="text-student-text/40" />
-                <button
-                  onClick={() => goToLevel(1)}
-                  className={`px-2 py-1 rounded-md transition-colors ${
-                    level === 1 ? 'text-student-ink font-semibold' : 'text-student-text hover:text-student-ink hover:bg-student-mist'
-                  }`}
-                >
-                  {selectedUni.name}
-                </button>
-              </>
-            )}
-            {level >= 2 && selectedSchool && (
-              <>
-                <ChevronRight size={14} className="text-student-text/40" />
-                <span className="text-student-ink font-semibold px-2 py-1">{selectedSchool.name}</span>
-              </>
-            )}
-          </div>
+          {uniList.length > 0 && (
+            <ExploreFilters
+              universities={uniList}
+              filters={filters}
+              onChange={setFilters}
+            />
+          )}
 
-          {/* Slide container */}
-          <div className="overflow-hidden">
-            <div
-              className="flex transition-transform duration-300 ease-in-out"
-              style={{ transform: `translateX(-${level * 100}%)` }}
-            >
-              {/* ─── Level 0: Universities ─── */}
-              <div className="w-full flex-shrink-0 min-h-[200px]">
-                {uniLoading ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {[1, 2, 3].map(i => <div key={i} className="h-80 bg-white rounded-xl border border-divider animate-pulse" />)}
-                  </div>
-                ) : uniList.length === 0 ? (
-                  <div className="text-center py-16 bg-white rounded-xl border border-divider">
-                    <Building2 size={32} className="mx-auto text-stone mb-3" />
-                    <p className="text-sm text-student-ink font-medium mb-1">No universities yet</p>
-                    <p className="text-xs text-student-text">Universities will appear here as they join the platform.</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {uniList.map((inst: any) => (
-                      <UniversityCard
-                        key={inst.id}
-                        institution={inst}
-                        onClick={() => drillToSchools({ id: inst.id, name: inst.name })}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* ─── Level 1: Schools ─── */}
-              <div className="w-full flex-shrink-0 min-h-[200px]">
-                {level >= 1 && (
-                  <>
-                    {/* Back button */}
-                    <button
-                      onClick={goBack}
-                      className="flex items-center gap-1.5 text-sm text-student-text hover:text-student-ink mb-4 transition-colors"
-                    >
-                      <ChevronLeft size={16} />
-                      Back to Universities
-                    </button>
-
-                    {schoolsLoading ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {[1, 2, 3].map(i => <div key={i} className="h-72 bg-white rounded-xl border border-divider animate-pulse" />)}
-                      </div>
-                    ) : schoolList.length === 0 ? (
-                      <div className="text-center py-16 bg-white rounded-xl border border-divider">
-                        <GraduationCap size={32} className="mx-auto text-stone mb-3" />
-                        <p className="text-sm text-student-ink font-medium mb-1">No schools found</p>
-                        <p className="text-xs text-student-text">This university hasn't organized programs into schools yet.</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {schoolList.map((school: SchoolSummary) => (
-                          <SchoolCard
-                            key={school.id}
-                            school={school}
-                            institutionName={selectedUni?.name || ''}
-                            onClick={() => drillToPrograms(school)}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-
-              {/* ─── Level 2: Programs ─── */}
-              <div className="w-full flex-shrink-0 min-h-[200px]">
-                {level >= 2 && (
-                  <>
-                    <button
-                      onClick={goBack}
-                      className="flex items-center gap-1.5 text-sm text-student-text hover:text-student-ink mb-4 transition-colors"
-                    >
-                      <ChevronLeft size={16} />
-                      Back to {selectedUni?.name || 'Schools'}
-                    </button>
-
-                    {programsLoading ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {[1, 2, 3].map(i => <div key={i} className="h-64 bg-white rounded-xl border border-divider animate-pulse" />)}
-                      </div>
-                    ) : programList.length === 0 ? (
-                      <div className="text-center py-16 bg-white rounded-xl border border-divider">
-                        <GraduationCap size={32} className="mx-auto text-stone mb-3" />
-                        <p className="text-sm text-student-ink font-medium mb-1">No programs found</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {programList.map((p: ProgramSummary) => (
-                          <ProgramCard
-                            key={p.id}
-                            program={p}
-                            saved={savedIds.has(p.id)}
-                            comparing={compareStore.has(p.id)}
-                            onSave={() => toggleSave(p.id)}
-                            onCompare={() => compareStore.has(p.id) ? compareStore.remove(p.id) : compareStore.add({ program_id: p.id, program_name: p.program_name, institution_name: p.institution_name, degree_type: p.degree_type })}
-                            onAskCounselor={() => navigate(`/s?prefill=${encodeURIComponent(`Tell me about ${p.program_name} at ${p.institution_name}. Is it a good fit?`)}`)}
-                            onView={() => navigate(`/s/programs/${p.id}`)}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
+          {uniLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3].map(i => <div key={i} className="h-80 bg-white rounded-xl border border-divider animate-pulse" />)}
             </div>
-          </div>
+          ) : uniList.length === 0 ? (
+            <div className="text-center py-16 bg-white rounded-xl border border-divider">
+              <Building2 size={32} className="mx-auto text-stone mb-3" />
+              <p className="text-sm text-student-ink font-medium mb-1">No universities yet</p>
+              <p className="text-xs text-student-text">Universities will appear here as they join the platform.</p>
+            </div>
+          ) : filteredUniList.length === 0 ? (
+            <div className="text-center py-16 bg-white rounded-xl border border-divider">
+              <Building2 size={32} className="mx-auto text-stone mb-3" />
+              <p className="text-sm text-student-ink font-medium mb-1">No universities match your filters</p>
+              <p className="text-xs text-student-text mb-4">Try removing a filter or broadening your search.</p>
+              <button
+                onClick={() => setFilters(EMPTY_FILTERS)}
+                className="text-xs font-medium text-student hover:text-student-hover"
+              >
+                Clear all filters
+              </button>
+            </div>
+          ) : (
+            <>
+              {hasActiveFilters && (
+                <p className="text-[11px] text-student-text/70 mb-3">
+                  Showing <span className="font-semibold text-student-ink">{filteredUniList.length}</span> of {uniList.length} universities
+                </p>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredUniList.map((inst: any) => (
+                  <UniversityCard
+                    key={inst.id}
+                    institution={inst}
+                    onClick={() => navigate(`/s/institutions/${inst.id}`)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </>
       )}
     </div>
