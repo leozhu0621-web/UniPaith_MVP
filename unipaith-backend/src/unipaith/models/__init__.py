@@ -50,10 +50,10 @@ from unipaith.models.institution import (
     InstitutionPost,
     IntakeRound,
     Program,
-    School,
     ProgramChecklistItem,
     Promotion,
     Reviewer,
+    School,
     StudentProgramReview,
     TargetSegment,
 )
