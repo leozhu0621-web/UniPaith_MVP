@@ -5,7 +5,7 @@ grading scales), but the column was Numeric(4,2) which maxes out at 99.99.
 Values of 100.0 would cause a numeric overflow at the DB level.
 
 Revision ID: 4c9e5f3a8b2d
-Revises: 3b8d4e2f7a1c
+Revises: 4c9d6e1a8b3f
 Create Date: 2026-04-21 00:00:00.000000
 
 """
@@ -14,7 +14,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision = "4c9e5f3a8b2d"
-down_revision = "3b8d4e2f7a1c"
+down_revision = "4c9d6e1a8b3f"
 branch_labels = None
 depends_on = None
 
