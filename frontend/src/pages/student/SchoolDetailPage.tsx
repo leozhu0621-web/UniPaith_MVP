@@ -181,8 +181,8 @@ export default function SchoolDetailPage() {
   const admissionTimeline = extractTimeline(p.intake_rounds)
 
   const upcomingEvent = eventsList
-    .filter((e: any) => new Date(e.event_datetime || e.starts_at || Date.now()) > new Date())
-    .sort((a: any, b: any) => new Date(a.event_datetime || a.starts_at).getTime() - new Date(b.event_datetime || b.starts_at).getTime())[0]
+    .filter((e: any) => new Date(e.start_time || Date.now()) > new Date())
+    .sort((a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())[0]
 
   const handleCompare = () => {
     if (compareStore.has(p.id)) compareStore.remove(p.id)
@@ -297,8 +297,8 @@ export default function SchoolDetailPage() {
               <NextStepsCard
                 applicationDeadline={effectiveDeadline}
                 upcomingEvent={upcomingEvent ? {
-                  title: (upcomingEvent as any).title || (upcomingEvent as any).event_name,
-                  event_datetime: (upcomingEvent as any).event_datetime || (upcomingEvent as any).starts_at || (upcomingEvent as any).start_time,
+                  title: (upcomingEvent as any).event_name,
+                  event_datetime: (upcomingEvent as any).start_time,
                   onClick: () => rsvpMut.mutate(upcomingEvent.id),
                 } : null}
                 hasApplication={!!existingApp}
