@@ -649,7 +649,7 @@ export interface Institution {
   country: string
   region: string | null
   city: string | null
-  ranking_data: Record<string, number> | null
+  ranking_data: Record<string, any> | null
   description_text: string | null
   campus_description: string | null
   campus_setting: 'urban' | 'suburban' | 'rural' | null

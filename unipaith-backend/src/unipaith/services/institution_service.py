@@ -111,6 +111,27 @@ def _outcomes_int(prog: Program, key: str) -> int | None:
         return None
 
 
+def _first_image(value: dict | list | None) -> str | None:
+    """Return the first URL string from a JSONB value that may be a list or dict."""
+    if value is None:
+        return None
+    if isinstance(value, list):
+        for item in value:
+            if isinstance(item, str):
+                return item
+            if isinstance(item, dict) and item.get("url"):
+                return item["url"]
+        return None
+    if isinstance(value, dict):
+        for v in value.values():
+            if isinstance(v, str) and v.startswith("http"):
+                return v
+            if isinstance(v, list):
+                return _first_image(v)
+        return None
+    return None
+
+
 def _outcomes_float(prog: Program, key: str) -> float | None:
     """Extract a float from outcomes_data JSONB."""
     data = prog.outcomes_data
@@ -1899,11 +1920,8 @@ class InstitutionService:
                 highlights=prog.highlights,
                 institution_logo_url=inst.logo_url,
                 institution_image_url=(
-                    (prog.media_urls or [None])[0]
-                    if prog.media_urls
-                    else (inst.media_gallery or [None])[0]
-                    if inst.media_gallery
-                    else None
+                    _first_image(prog.media_urls)
+                    or _first_image(inst.media_gallery)
                 ),
             )
             for prog, inst in rows
