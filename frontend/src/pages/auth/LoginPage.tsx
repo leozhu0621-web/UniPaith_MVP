@@ -31,7 +31,7 @@ export default function LoginPage() {
       await login(data.email, data.password)
       const user = useAuthStore.getState().user
       const dest = user?.role === 'admin' ? '/admin'
-        : user?.role === 'student' ? '/s/dashboard'
+        : user?.role === 'student' ? '/s'
         : '/i/dashboard'
       navigate(dest)
     } catch (err: any) {
