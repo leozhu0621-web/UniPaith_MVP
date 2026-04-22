@@ -852,7 +852,9 @@ async def search_institutions(
             " ".join(program_highlights_map.get(inst.id, []) or [])
         )
         has_honors = bool(re.search(r"\bhonors?\b|\bthesis\b", search_blob, re.IGNORECASE))
-        abroad_pat = r"\bstudy abroad\b|\bexchange program\b|\bglobal campuses?\b"
+        abroad_pat = (
+            r"\bstudy abroad\b|\bexchange program\b|\bglobal campuses?\b"
+        )
         has_study_abroad = bool(
             re.search(abroad_pat, search_blob, re.IGNORECASE)
         )
@@ -1019,7 +1021,8 @@ async def get_school_programs(
             ),
             "application_deadline": (
                 str(prog.application_deadline)
-                if prog.application_deadline else None
+                if prog.application_deadline
+                else None
             ),
             "institution_name": inst.name,
             "institution_country": inst.country,

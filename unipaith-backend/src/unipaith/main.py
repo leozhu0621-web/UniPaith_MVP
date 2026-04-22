@@ -69,7 +69,8 @@ async def _ensure_schools_table(db: AsyncSession) -> None:
     # Add school_id column to programs if not exists
     col_check = await db.execute(text(
         "SELECT 1 FROM information_schema.columns "
-        "WHERE table_name='programs' AND column_name='school_id'"
+        "WHERE table_name='programs' "
+        "AND column_name='school_id'"
     ))
     if not col_check.scalar():
         await db.execute(text(
