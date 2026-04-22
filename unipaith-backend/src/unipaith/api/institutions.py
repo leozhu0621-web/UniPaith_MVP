@@ -583,7 +583,7 @@ async def update_dataset(
     return DatasetResponse.model_validate(dataset)
 
 
-@router.delete("/me/datasets/{dataset_id}", status_code=204)
+@router.delete("/me/datasets/{dataset_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_dataset(
     dataset_id: UUID,
     user: User = Depends(require_institution_admin),
