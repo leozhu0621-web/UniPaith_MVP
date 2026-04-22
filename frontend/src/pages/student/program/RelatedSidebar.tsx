@@ -45,7 +45,7 @@ export default function RelatedSidebar({
               <div key={ev.id} className="px-3 py-2.5 rounded-lg border border-divider hover:border-student/30 transition-colors">
                 <p className="text-xs font-semibold text-student-ink line-clamp-2">{ev.title}</p>
                 <p className="text-[10px] text-student-text mt-0.5">
-                  {formatDate(ev.event_datetime || ev.starts_at)}
+                  {formatDate(ev.event_datetime || ev.starts_at || ev.start_time)}
                 </p>
                 {onRsvp && (
                   <button
