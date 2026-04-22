@@ -852,7 +852,8 @@ async def search_institutions(
             " ".join(program_highlights_map.get(inst.id, []) or [])
         )
         has_honors = bool(re.search(r"\bhonors?\b|\bthesis\b", search_blob, re.IGNORECASE))
-        has_study_abroad = bool(re.search(r"\bstudy abroad\b|\bexchange program\b|\bglobal campuses?\b", search_blob, re.IGNORECASE))
+        abroad_pat = r"\bstudy abroad\b|\bexchange program\b|\bglobal campuses?\b"
+        has_study_abroad = bool(re.search(abroad_pat, search_blob, re.IGNORECASE))
 
         # Tuition: in-state and out-of-state are usually the same for privates.
         # Prefer out-of-state as the universal published price.
@@ -931,7 +932,9 @@ async def get_institution_schools(
     from unipaith.models.institution import Program, School
 
     result = await db.execute(
-        select(School).where(School.institution_id == institution_id).order_by(School.sort_order, School.name)
+        select(School)
+        .where(School.institution_id == institution_id)
+        .order_by(School.sort_order, School.name)
     )
     schools = result.scalars().all()
 
@@ -972,12 +975,10 @@ async def get_school_programs(
     db: AsyncSession = Depends(get_db),
 ):
     """Public — returns programs within a specific school."""
-    import math
 
     from sqlalchemy import select
 
-    from unipaith.models.institution import Institution, Program, School
-    from unipaith.schemas.institution import ProgramSummaryResponse
+    from unipaith.models.institution import Institution, Program
 
     result = await db.execute(
         select(Program, Institution)
@@ -1014,7 +1015,9 @@ async def get_school_programs(
                 float(prog.acceptance_rate) if prog.acceptance_rate is not None
                 else (inst.ranking_data or {}).get("acceptance_rate")
             ),
-            "application_deadline": str(prog.application_deadline) if prog.application_deadline else None,
+            "application_deadline": (
+                str(prog.application_deadline) if prog.application_deadline else None
+            ),
             "institution_name": inst.name,
             "institution_country": inst.country,
             "institution_city": inst.city,
