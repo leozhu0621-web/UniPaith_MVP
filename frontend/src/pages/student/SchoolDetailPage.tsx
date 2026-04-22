@@ -181,8 +181,8 @@ export default function SchoolDetailPage() {
   const admissionTimeline = extractTimeline(p.intake_rounds)
 
   const upcomingEvent = eventsList
-    .filter((e: any) => new Date(e.event_datetime || e.starts_at || Date.now()) > new Date())
-    .sort((a: any, b: any) => new Date(a.event_datetime || a.starts_at).getTime() - new Date(b.event_datetime || b.starts_at).getTime())[0]
+    .filter((e: any) => new Date(e.event_datetime || e.starts_at || e.start_time || Date.now()) > new Date())
+    .sort((a: any, b: any) => new Date(a.event_datetime || a.starts_at || a.start_time).getTime() - new Date(b.event_datetime || b.starts_at || b.start_time).getTime())[0]
 
   const handleCompare = () => {
     if (compareStore.has(p.id)) compareStore.remove(p.id)
