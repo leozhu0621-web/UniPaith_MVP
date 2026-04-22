@@ -28,7 +28,7 @@ export default function RelatedSidebar({
   rsvpedIds = new Set(),
 }: Props) {
   const upcomingEvents = events
-    .filter(e => new Date((e as any).event_datetime || (e as any).starts_at || (e as any).start_time || Date.now()) > new Date())
+    .filter(e => new Date(e.start_time) > new Date())
     .slice(0, 2)
 
   return (
@@ -43,9 +43,9 @@ export default function RelatedSidebar({
           <div className="space-y-2">
             {upcomingEvents.map((ev: any) => (
               <div key={ev.id} className="px-3 py-2.5 rounded-lg border border-divider hover:border-student/30 transition-colors">
-                <p className="text-xs font-semibold text-student-ink line-clamp-2">{ev.title}</p>
+                <p className="text-xs font-semibold text-student-ink line-clamp-2">{ev.event_name}</p>
                 <p className="text-[10px] text-student-text mt-0.5">
-                  {formatDate(ev.event_datetime || ev.starts_at)}
+                  {formatDate(ev.start_time)}
                 </p>
                 {onRsvp && (
                   <button
