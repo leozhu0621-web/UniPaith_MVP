@@ -32,11 +32,8 @@ from unipaith.models.user import User, UserRole
 
 TEST_DATABASE_URL = settings.database_url
 
-# NullPool avoids asyncpg "another operation is in progress" when pooled connections
-# are reused across overlapping setup/teardown under pytest-asyncio.
 test_engine = create_async_engine(TEST_DATABASE_URL, echo=False, poolclass=NullPool)
 TestSession = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
-
 
 _DROP_ALL_TABLES = text("""
 DO $$ DECLARE r RECORD;
@@ -47,27 +44,31 @@ BEGIN
 END $$;
 """)
 
+_TRUNCATE_ALL = text("""
+DO $$ DECLARE r RECORD;
+BEGIN
+    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
+        EXECUTE 'TRUNCATE TABLE public.' || quote_ident(r.tablename) || ' CASCADE';
+    END LOOP;
+END $$;
+""")
+
+_tables_created = False
+
 
 @pytest.fixture
 async def setup_db():
-    for _attempt in range(3):
-        try:
-            async with test_engine.begin() as conn:
-                await conn.execute(_DROP_ALL_TABLES)
-                await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
-                await conn.run_sync(Base.metadata.create_all)
-            break
-        except Exception:
-            if _attempt == 2:
-                raise
-            await test_engine.dispose()
-    yield
-    try:
+    global _tables_created
+    if not _tables_created:
         async with test_engine.begin() as conn:
             await conn.execute(_DROP_ALL_TABLES)
-    except Exception:
-        pass
-    await test_engine.dispose()
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+            await conn.run_sync(Base.metadata.create_all)
+        _tables_created = True
+    else:
+        async with test_engine.begin() as conn:
+            await conn.execute(_TRUNCATE_ALL)
+    yield
 
 
 @pytest.fixture
@@ -150,7 +151,7 @@ async def student_client(
 async def institution_client(
     db_session: AsyncSession,
     mock_institution_user: User,
-) -> AsyncGenerator[AsyncClient, None]:
+) -> AsyncGenerator[AsyncSession, None]:
     await _persist_user(db_session, mock_institution_user)
 
     async def _override_db() -> AsyncGenerator[AsyncSession, None]:
