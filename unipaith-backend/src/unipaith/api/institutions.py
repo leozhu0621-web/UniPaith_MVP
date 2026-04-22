@@ -1015,7 +1015,8 @@ async def get_school_programs(
                 else (inst.ranking_data or {}).get("acceptance_rate")
             ),
             "application_deadline": (
-                str(prog.application_deadline) if prog.application_deadline else None
+                str(prog.application_deadline)
+                if prog.application_deadline else None
             ),
             "institution_name": inst.name,
             "institution_country": inst.country,
