@@ -799,6 +799,8 @@ export default function SchoolDetailPage() {
               { key: 'avg_technical', label: 'Technical Skills' },
               { key: 'avg_practical', label: 'Practical Experience' },
               { key: 'avg_communication', label: 'Communication' },
+              { key: 'avg_teamwork', label: 'Teamwork' },
+              { key: 'avg_reliability', label: 'Reliability' },
               { key: 'avg_overall', label: 'Overall Readiness' },
             ]
             const industryOptions = [...new Set(allFeedback.map(f => f.industry).filter(Boolean))]
@@ -1018,6 +1020,8 @@ export default function SchoolDetailPage() {
               { key: 'avg_teaching', label: 'Teaching Quality' },
               { key: 'avg_workload', label: 'Workload' },
               { key: 'avg_career_support', label: 'Career Support' },
+              { key: 'avg_internship_access', label: 'Internship Access' },
+              { key: 'avg_community_culture', label: 'Community & Culture' },
               { key: 'avg_roi', label: 'Return on Investment' },
               { key: 'avg_overall', label: 'Overall' },
             ]
