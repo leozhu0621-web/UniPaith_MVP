@@ -852,8 +852,8 @@ async def search_institutions(
             " ".join(program_highlights_map.get(inst.id, []) or [])
         )
         has_honors = bool(re.search(r"\bhonors?\b|\bthesis\b", search_blob, re.IGNORECASE))
-        study_abroad_pat = r"\bstudy abroad\b|\bexchange program\b|\bglobal campuses?\b"
-        has_study_abroad = bool(re.search(study_abroad_pat, search_blob, re.IGNORECASE))
+        abroad_pat = r"\bstudy abroad\b|\bexchange program\b|\bglobal campuses?\b"
+        has_study_abroad = bool(re.search(abroad_pat, search_blob, re.IGNORECASE))
 
         # Tuition: in-state and out-of-state are usually the same for privates.
         # Prefer out-of-state as the universal published price.
@@ -975,6 +975,8 @@ async def get_school_programs(
     db: AsyncSession = Depends(get_db),
 ):
     """Public — returns programs within a specific school."""
+
+
     from sqlalchemy import select
 
     from unipaith.models.institution import Institution, Program
