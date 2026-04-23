@@ -142,7 +142,7 @@ export default function InstitutionDetailPage() {
         <div className="flex items-start gap-4">
           <div className="w-16 h-16 rounded-xl bg-school-mist flex items-center justify-center flex-shrink-0">
             {inst.logo_url ? (
-              <img src={inst.logo_url} alt="" className="w-12 h-12 object-contain" onError={e => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = '<svg width="24" height="24"><text x="0" y="20" font-size="20">🎓</text></svg>' }} />
+              <img src={inst.logo_url} alt="" className="w-12 h-12 object-contain" onError={e => { e.currentTarget.style.display = 'none'; const p = e.currentTarget.parentElement; if (p) p.innerHTML = '<svg width="24" height="24"><text x="0" y="20" font-size="20">🎓</text></svg>' }} />
             ) : (
               <GraduationCap size={28} className="text-school" />
             )}

@@ -78,7 +78,7 @@ export default function UniversityCard({ institution: inst, onClick }: Props) {
               src={logoImg}
               alt=""
               className="w-full h-full object-contain"
-              onError={e => (e.currentTarget.parentElement!.style.display = 'none')}
+              onError={e => { const p = e.currentTarget.parentElement; if (p) p.style.display = 'none' }}
             />
           </div>
         )}
