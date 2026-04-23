@@ -573,7 +573,9 @@ class ReviewPipelineService:
                     AIPacketSummary.application_id == application_id,
                 )
             )
-            existing = retry_r.scalar_one()
+            existing = retry_r.scalar_one_or_none()
+            if existing is None:
+                raise
             existing.rubric_id = rubric_id
             existing.overall_summary = data.get("overall_summary", "")
             existing.strengths = data.get("strengths")
