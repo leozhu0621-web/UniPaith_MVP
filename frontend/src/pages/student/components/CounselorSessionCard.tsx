@@ -116,7 +116,7 @@ export default function CounselorSessionCard({
           </button>
         ))}
         <button
-          onClick={() => navigate('/s/chat')}
+          onClick={() => navigate('/s')}
           className="ml-auto text-xs text-gray-400 hover:text-gray-600 transition-colors"
         >
           Full conversation &rarr;

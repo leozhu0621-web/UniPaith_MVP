@@ -972,12 +972,9 @@ async def get_school_programs(
     db: AsyncSession = Depends(get_db),
 ):
     """Public — returns programs within a specific school."""
-    import math
-
     from sqlalchemy import select
 
-    from unipaith.models.institution import Institution, Program, School
-    from unipaith.schemas.institution import ProgramSummaryResponse
+    from unipaith.models.institution import Institution, Program
 
     result = await db.execute(
         select(Program, Institution)

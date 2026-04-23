@@ -53,7 +53,7 @@ export default function ApplicationsPage() {
           <CounselorNudge
             message="Your counselor can help you decide which programs to apply to first based on your profile and goals."
             actionLabel="Ask counselor"
-            actionTo="/s/chat?prefill=Which programs should I apply to first based on my profile?"
+            actionTo="/s?prefill=Which programs should I apply to first based on my profile?"
           />
         </div>
       )}
