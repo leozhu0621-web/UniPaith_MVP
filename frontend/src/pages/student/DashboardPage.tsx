@@ -248,7 +248,7 @@ export default function DashboardPage() {
         <CounselorNudge
           message={`You have ${draftCount} application${draftCount > 1 ? 's' : ''} in progress. Let me help you finish strong.`}
           actionLabel="Continue application"
-          actionTo={`/s/applications/${applicationsList.find(a => a.status === 'draft')?.id || ''}`}
+          actionTo={applicationsList.find(a => a.status === 'draft')?.id ? `/s/applications/${applicationsList.find(a => a.status === 'draft')!.id}` : '/s/applications'}
           variant="urgent"
           counselorLink="/s/chat?prefill=Help me with my application in progress"
         />
