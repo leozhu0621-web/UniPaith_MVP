@@ -1239,6 +1239,7 @@ async def portable_export(
 @router.get("/me/feed")
 async def get_student_feed(
     limit: int = Query(30, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     user: User = Depends(require_student),
     db: AsyncSession = Depends(get_db),
 ):
@@ -1278,7 +1279,7 @@ async def get_student_feed(
                 Event.start_time >= datetime.now(UTC),
             )
             .order_by(Event.start_time.asc())
-            .limit(limit)
+            .limit(limit + offset)
         )
         for ev, inst_name in ev_result.all():
             items.append({
@@ -1306,7 +1307,7 @@ async def get_student_feed(
                 InstitutionPost.status == "published",
             )
             .order_by(InstitutionPost.created_at.desc())
-            .limit(limit)
+            .limit(limit + offset)
         )
         for post, inst_name in post_result.all():
             items.append({
@@ -1324,7 +1325,7 @@ async def get_student_feed(
     items.sort(key=lambda x: x.get("date", ""), reverse=True)
 
     return {
-        "items": items[:limit],
+        "items": items[offset:offset + limit],
         "followed_count": len(followed_inst_ids),
     }
 

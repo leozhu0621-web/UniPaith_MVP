@@ -165,6 +165,7 @@ class ProgramResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
     institution_id: UUID
+    school_id: UUID | None = None
     program_name: str
     degree_type: str
     department: str | None

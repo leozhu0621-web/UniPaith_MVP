@@ -80,7 +80,7 @@ export default function CounselorHomePage() {
       addMessage({
         id: `a-${Date.now()}`,
         sender_type: 'assistant',
-        message_body: sendMut.data!.reply,
+        message_body: sendMut.data?.reply ?? '',
         sent_at: new Date().toISOString(),
       })
     }

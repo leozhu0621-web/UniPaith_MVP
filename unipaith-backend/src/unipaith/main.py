@@ -80,7 +80,9 @@ async def _ensure_schools_table(db: AsyncSession) -> None:
     await db.execute(text("""
         INSERT INTO schools (institution_id, name, sort_order)
         SELECT DISTINCT institution_id, department,
-            ROW_NUMBER() OVER (PARTITION BY institution_id ORDER BY department)
+            ROW_NUMBER() OVER (
+                PARTITION BY institution_id ORDER BY department
+            )
         FROM programs
         WHERE department IS NOT NULL AND department != ''
         ON CONFLICT DO NOTHING

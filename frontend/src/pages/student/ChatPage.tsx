@@ -123,7 +123,7 @@ export default function ChatPage() {
       }
       setChatMessages(prev => [...prev, assistantMessage])
     }
-  }, [sendMut.data])
+  }, [sendMut.data, setChatMessages])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
