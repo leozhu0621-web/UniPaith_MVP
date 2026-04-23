@@ -6,6 +6,7 @@ import { searchPrograms } from '../../api/programs'
 import { listEvents, rsvpEvent, cancelRsvp, getMyRsvps } from '../../api/events'
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
 import { useCompareStore } from '../../stores/compare-store'
+import { showToast } from '../../stores/toast-store'
 import ProgramCard from './explore/cards/ProgramCard'
 import SchoolCard from './explore/cards/SchoolCard'
 import EventCard from './explore/cards/EventCard'
@@ -86,7 +87,7 @@ export default function InstitutionDetailPage() {
       if (savedIds.has(programId)) await unsaveProgram(programId)
       else await saveProgram(programId)
       queryClient.invalidateQueries({ queryKey: ['saved-programs'] })
-    } catch { /* */ }
+    } catch { showToast('Could not update saved list', 'error') }
   }
 
   const inst: Institution | undefined = institution
