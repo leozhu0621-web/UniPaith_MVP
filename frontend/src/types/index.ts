@@ -298,11 +298,11 @@ export interface Program {
   is_published: boolean
   application_deadline: string | null
   program_start_date: string | null
-  tracks: string[] | null
+  tracks: Record<string, any> | string[] | null
   outcomes_data: Record<string, any> | null
-  intake_rounds: Record<string, any>[] | null
-  media_urls: string[] | null
-  highlights: string[] | null
+  intake_rounds: Record<string, any> | null
+  media_urls: Record<string, any> | string[] | null
+  highlights: Record<string, any> | string[] | null
   faculty_contacts: Record<string, any>[] | null
   cost_data: Record<string, any> | null
   institution_name?: string | null
