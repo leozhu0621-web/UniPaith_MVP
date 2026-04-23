@@ -170,6 +170,10 @@ export default function SetupPage() {
   )
 
   const onSubmitRubric = () => {
+    if (!createdProgramId) {
+      showToast('Create or claim a program first before adding a rubric', 'warning')
+      return
+    }
     const total = criteria.reduce((s, c) => s + c.weight, 0)
     if (total !== 100) {
       showToast(`Weights must sum to 100 (currently ${total})`, 'warning')
