@@ -288,7 +288,7 @@ export default function ProfilePage() {
           <div className="flex items-center gap-2">
             <h2 className="font-semibold text-student-ink">Basic Info</h2>
             <button
-              onClick={() => navigate(`/s/chat?prefill=${encodeURIComponent(SECTION_COUNSELOR_TIPS.basic_info.prefill)}`)}
+              onClick={() => navigate(`/s?prefill=${encodeURIComponent(SECTION_COUNSELOR_TIPS.basic_info.prefill)}`)}
               className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-brand-slate-600 transition-colors"
             >
               <MessageSquare size={10} /> Ask counselor
@@ -314,7 +314,7 @@ export default function ProfilePage() {
         {(p?.academic_records ?? []).length === 0 ? (
           <>
             <p className="text-sm text-gray-500">No academic records yet</p>
-            <p className="text-xs text-blue-600 mt-1 cursor-pointer hover:underline" onClick={() => navigate(`/s/chat?prefill=${encodeURIComponent(SECTION_COUNSELOR_TIPS.academics.prefill)}`)}>
+            <p className="text-xs text-blue-600 mt-1 cursor-pointer hover:underline" onClick={() => navigate(`/s?prefill=${encodeURIComponent(SECTION_COUNSELOR_TIPS.academics.prefill)}`)}>
               <Sparkles size={10} className="inline mr-1" />{SECTION_COUNSELOR_TIPS.academics.tip}
             </p>
           </>
@@ -345,7 +345,7 @@ export default function ProfilePage() {
         {(p?.test_scores ?? []).length === 0 ? (
           <>
             <p className="text-sm text-gray-500">No test scores yet</p>
-            <p className="text-xs text-blue-600 mt-1 cursor-pointer hover:underline" onClick={() => navigate(`/s/chat?prefill=${encodeURIComponent(SECTION_COUNSELOR_TIPS.test_scores.prefill)}`)}>
+            <p className="text-xs text-blue-600 mt-1 cursor-pointer hover:underline" onClick={() => navigate(`/s?prefill=${encodeURIComponent(SECTION_COUNSELOR_TIPS.test_scores.prefill)}`)}>
               <Sparkles size={10} className="inline mr-1" />{SECTION_COUNSELOR_TIPS.test_scores.tip}
             </p>
           </>
@@ -377,7 +377,7 @@ export default function ProfilePage() {
         {(p?.activities ?? []).length === 0 ? (
           <>
             <p className="text-sm text-gray-500">No activities yet</p>
-            <p className="text-xs text-blue-600 mt-1 cursor-pointer hover:underline" onClick={() => navigate(`/s/chat?prefill=${encodeURIComponent(SECTION_COUNSELOR_TIPS.activities.prefill)}`)}>
+            <p className="text-xs text-blue-600 mt-1 cursor-pointer hover:underline" onClick={() => navigate(`/s?prefill=${encodeURIComponent(SECTION_COUNSELOR_TIPS.activities.prefill)}`)}>
               <Sparkles size={10} className="inline mr-1" />{SECTION_COUNSELOR_TIPS.activities.tip}
             </p>
           </>

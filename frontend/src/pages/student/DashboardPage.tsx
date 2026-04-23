@@ -216,7 +216,7 @@ export default function DashboardPage() {
           message={`Your story is ${completionPct}% complete. A few more details help me find programs where you truly belong.`}
           actionLabel="Continue your story"
           actionTo="/s/profile"
-          counselorLink="/s/chat?prefill=What should I add to my profile next?"
+          counselorLink="/s?prefill=What should I add to my profile next?"
         />
       )}
       {completionPct >= 80 && matchCount === 0 && (
@@ -241,7 +241,7 @@ export default function DashboardPage() {
           actionLabel="Start applying"
           actionTo="/s/applications"
           variant="celebrate"
-          counselorLink="/s/chat?prefill=Which of my saved programs should I apply to first?"
+          counselorLink="/s?prefill=Which of my saved programs should I apply to first?"
         />
       )}
       {draftCount > 0 && (
@@ -250,7 +250,7 @@ export default function DashboardPage() {
           actionLabel="Continue application"
           actionTo={`/s/applications/${applicationsList.find(a => a.status === 'draft')?.id || ''}`}
           variant="urgent"
-          counselorLink="/s/chat?prefill=Help me with my application in progress"
+          counselorLink="/s?prefill=Help me with my application in progress"
         />
       )}
 
@@ -424,7 +424,7 @@ export default function DashboardPage() {
             <span className="text-sm font-medium">Explore programs</span>
           </button>
           <button
-            onClick={() => navigate('/s/chat')}
+            onClick={() => navigate('/s')}
             className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 text-left"
           >
             <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
