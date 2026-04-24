@@ -5,7 +5,6 @@ provide AI-powered program comparison.
 
 from __future__ import annotations
 
-import json
 import logging
 from uuid import UUID
 
@@ -13,7 +12,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from unipaith.ai.llm_client import get_llm_client
 from unipaith.core.exceptions import BadRequestException, ConflictException, NotFoundException
 from unipaith.models.engagement import SavedList, SavedListItem
 from unipaith.models.institution import Institution, Program
@@ -187,19 +185,8 @@ class SavedListService:
                 }
             )
 
-        # Generate AI analysis.
-        llm = get_llm_client()
-        system_prompt = (
-            "You are an expert graduate-school advisor. The user is comparing "
-            "multiple programs. Provide a concise narrative analysis covering: "
-            "key differences, which program best fits the student, trade-offs in "
-            "cost, location, and career outcomes. Be specific and reference the "
-            "data provided."
-        )
-        user_content = json.dumps(comparison_data, indent=2, default=str)
-        ai_analysis = await llm.generate_reasoning(system_prompt, user_content)
-
+        # AI engine is being rebuilt — return data without AI analysis
         return {
             "programs": comparison_data,
-            "ai_analysis": ai_analysis,
+            "ai_analysis": "AI analysis unavailable.",
         }

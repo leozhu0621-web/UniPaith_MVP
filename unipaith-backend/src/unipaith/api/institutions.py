@@ -5,8 +5,6 @@ from fastapi import APIRouter, Depends, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from unipaith.ai.llm_client import get_llm_client
-from unipaith.config import settings
 from unipaith.database import get_db
 from unipaith.dependencies import require_institution_admin, require_student
 from unipaith.models.user import User
@@ -493,12 +491,7 @@ async def institution_assistant_chat(
                 context_program = program
                 break
 
-    system_prompt = (
-        "You are UniPaith's institutional admissions assistant. "
-        "Give practical, concise guidance on applicant triage, pipeline operations, "
-        "and program positioning. Avoid fabricating facts."
-    )
-    user_prompt = (
+    (
         f"Institution: {inst.name}\n"
         f"Country: {inst.country}\n"
         f"Program count: {len(programs)}\n"
@@ -506,9 +499,10 @@ async def institution_assistant_chat(
         f"User message:\n{body.message}"
     )
 
-    llm = get_llm_client()
-    reply = await llm.generate_reasoning(system_prompt=system_prompt, user_content=user_prompt)
-    return InstitutionAssistantChatResponse(reply=reply, model=settings.llm_reasoning_model)
+    return InstitutionAssistantChatResponse(
+        reply="The AI assistant is currently being rebuilt. Please check back soon.",
+        model="unavailable",
+    )
 
 
 # --- Datasets ---
@@ -852,7 +846,8 @@ async def search_institutions(
             " ".join(program_highlights_map.get(inst.id, []) or [])
         )
         has_honors = bool(re.search(r"\bhonors?\b|\bthesis\b", search_blob, re.IGNORECASE))
-        has_study_abroad = bool(re.search(r"\bstudy abroad\b|\bexchange program\b|\bglobal campuses?\b", search_blob, re.IGNORECASE))
+        study_abroad_pat = r"\bstudy abroad\b|\bexchange program\b|\bglobal campuses?\b"
+        has_study_abroad = bool(re.search(study_abroad_pat, search_blob, re.IGNORECASE))
 
         # Tuition: in-state and out-of-state are usually the same for privates.
         # Prefer out-of-state as the universal published price.
@@ -931,7 +926,9 @@ async def get_institution_schools(
     from unipaith.models.institution import Program, School
 
     result = await db.execute(
-        select(School).where(School.institution_id == institution_id).order_by(School.sort_order, School.name)
+        select(School)
+        .where(School.institution_id == institution_id)
+        .order_by(School.sort_order, School.name)
     )
     schools = result.scalars().all()
 
@@ -972,12 +969,10 @@ async def get_school_programs(
     db: AsyncSession = Depends(get_db),
 ):
     """Public — returns programs within a specific school."""
-    import math
 
     from sqlalchemy import select
 
-    from unipaith.models.institution import Institution, Program, School
-    from unipaith.schemas.institution import ProgramSummaryResponse
+    from unipaith.models.institution import Institution, Program
 
     result = await db.execute(
         select(Program, Institution)
@@ -1014,7 +1009,10 @@ async def get_school_programs(
                 float(prog.acceptance_rate) if prog.acceptance_rate is not None
                 else (inst.ranking_data or {}).get("acceptance_rate")
             ),
-            "application_deadline": str(prog.application_deadline) if prog.application_deadline else None,
+            "application_deadline": (
+                str(prog.application_deadline)
+                if prog.application_deadline else None
+            ),
             "institution_name": inst.name,
             "institution_country": inst.country,
             "institution_city": inst.city,
@@ -1746,11 +1744,7 @@ async def institution_narrative_digest(
     db: AsyncSession = Depends(get_db),
 ):
     """Generate a narrative digest of the institution's applicant landscape."""
-    from unipaith.services.institution_intelligence import InstitutionIntelligence
-
-    inst = await _svc(db).get_institution(user.id)
-    intelligence = InstitutionIntelligence(db)
-    return await intelligence.generate_narrative_digest(inst.id)
+    return {"status": "unavailable"}
 
 
 @router.get("/me/intelligence/applicant/{student_id}")
@@ -1760,11 +1754,7 @@ async def institution_applicant_context(
     db: AsyncSession = Depends(get_db),
 ):
     """Generate deep applicant context card for admissions review."""
-    from unipaith.services.institution_intelligence import InstitutionIntelligence
-
-    inst = await _svc(db).get_institution(user.id)
-    intelligence = InstitutionIntelligence(db)
-    return await intelligence.generate_applicant_context(inst.id, student_id)
+    return {"status": "unavailable"}
 
 
 @router.get("/me/intelligence/demand")
@@ -1773,11 +1763,7 @@ async def institution_demand_forecast(
     db: AsyncSession = Depends(get_db),
 ):
     """Forecast application demand based on interest signals."""
-    from unipaith.services.institution_intelligence import InstitutionIntelligence
-
-    inst = await _svc(db).get_institution(user.id)
-    intelligence = InstitutionIntelligence(db)
-    return await intelligence.generate_demand_forecast(inst.id)
+    return {"status": "unavailable"}
 
 
 @router.get("/me/intelligence/yield-risks")
@@ -1786,8 +1772,4 @@ async def institution_yield_risks(
     db: AsyncSession = Depends(get_db),
 ):
     """Identify admitted students showing signals of choosing elsewhere."""
-    from unipaith.services.institution_intelligence import InstitutionIntelligence
-
-    inst = await _svc(db).get_institution(user.id)
-    intelligence = InstitutionIntelligence(db)
-    return await intelligence.generate_yield_risk_alerts(inst.id)
+    return {"status": "unavailable"}

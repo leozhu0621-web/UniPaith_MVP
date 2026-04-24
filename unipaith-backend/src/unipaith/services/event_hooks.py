@@ -16,7 +16,6 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from unipaith.ml.outcome_collector import OutcomeCollector
 from unipaith.services.crm_service import CRMService
 from unipaith.services.notification_service import NotificationService
 
@@ -199,15 +198,7 @@ async def on_decision_made(
                 "decision": decision,
             },
         )
-        # Record outcome for ML loop
-        try:
-            collector = OutcomeCollector(db)
-            await collector.record_application_decision(application_id)
-        except Exception:
-            logger.exception(
-                "Hook on_decision_made: outcome collection failed for application %s",
-                application_id,
-            )
+        # ML outcome collection skipped (engine being rebuilt)
     except Exception:
         logger.exception("Hook on_decision_made failed for application %s", application_id)
 
@@ -218,11 +209,8 @@ async def on_offer_responded(
     offer_id: UUID,
 ) -> None:
     """Record an outcome when a student responds to an offer letter."""
-    try:
-        collector = OutcomeCollector(db)
-        await collector.record_offer_response(offer_id)
-    except Exception:
-        logger.exception("Hook on_offer_responded failed for offer %s", offer_id)
+    # ML outcome collection skipped (engine being rebuilt)
+    logger.debug("Skipping ML outcome collection for offer %s (engine being rebuilt)", offer_id)
 
 
 async def on_enrollment_confirmed(
@@ -230,11 +218,8 @@ async def on_enrollment_confirmed(
     enrollment_id: UUID,
 ) -> None:
     """Record an outcome when an enrollment is confirmed."""
-    try:
-        collector = OutcomeCollector(db)
-        await collector.record_enrollment(enrollment_id)
-    except Exception:
-        logger.exception("Hook on_enrollment_confirmed failed for enrollment %s", enrollment_id)
+    # ML outcome collection skipped (engine being rebuilt)
+    logger.debug("Skipping ML outcome collection for %s", enrollment_id)
 
 
 async def on_offer_sent(

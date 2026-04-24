@@ -8,11 +8,9 @@ import uuid
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import func, select, text
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
-from unipaith.ai.jobs import on_program_updated
 from unipaith.config import settings
 from unipaith.core.exceptions import (
     BadRequestException,
@@ -305,7 +303,7 @@ class InstitutionService:
         )
         self.db.add(program)
         await self.db.flush()
-        await on_program_updated(self.db, program.id)
+        # AI feature extraction skipped (engine being rebuilt)
         await self.db.refresh(program)
         return program
 
@@ -317,7 +315,7 @@ class InstitutionService:
         for key, value in update_data.items():
             setattr(program, key, value)
         await self.db.flush()
-        await on_program_updated(self.db, program.id)
+        # AI feature extraction skipped (engine being rebuilt)
         await self.db.refresh(program)
         return program
 
@@ -336,7 +334,7 @@ class InstitutionService:
             raise BadRequestException(f"Cannot publish: {'; '.join(errors)}")
         program.is_published = True
         await self.db.flush()
-        await on_program_updated(self.db, program.id)
+        # AI feature extraction skipped (engine being rebuilt)
         await self.db.refresh(program)
         return program
 
@@ -344,7 +342,7 @@ class InstitutionService:
         program = await self._verify_program_ownership(institution_id, program_id)
         program.is_published = False
         await self.db.flush()
-        await on_program_updated(self.db, program.id)
+        # AI feature extraction skipped (engine being rebuilt)
         await self.db.refresh(program)
         return program
 
@@ -1940,86 +1938,8 @@ class InstitutionService:
         query: str,
         limit: int = 20,
     ) -> list[ProgramSummaryResponse]:
-        from unipaith.ai.embedding_client import get_embedding_client
-
-        client = get_embedding_client()
-        query_embedding = await client.embed_text(query)
-        vec_str = "[" + ",".join(str(float(v)) for v in query_embedding) + "]"
-
-        vector_query = text(
-            "SELECT e.entity_id, 1 - (e.embedding <=> cast(:query_vec as vector)) as similarity "
-            "FROM embeddings e "
-            "JOIN programs p ON e.entity_id = p.id "
-            "WHERE e.entity_type = 'program' "
-            "AND p.is_published = true "
-            "ORDER BY e.embedding <=> cast(:query_vec as vector) "
-            "LIMIT :limit"
-        )
-        result = await self.db.execute(vector_query, {"query_vec": vec_str, "limit": limit})
-        rows = result.fetchall()
-
-        program_ids = [row[0] for row in rows]
-        if not program_ids:
-            return []
-
-        programs_result = await self.db.execute(
-            select(Program)
-            .where(Program.id.in_(program_ids))
-            .options(selectinload(Program.institution))
-        )
-        programs = {program.id: program for program in programs_result.scalars().all()}
-
-        ordered: list[ProgramSummaryResponse] = []
-        for program_id, _similarity in rows:
-            program = programs.get(program_id)
-            if not program:
-                continue
-            inst = program.institution
-            rd = (inst.ranking_data or {}) if inst else {}
-            ordered.append(
-                ProgramSummaryResponse(
-                    id=program.id,
-                    institution_id=program.institution_id,
-                    program_name=program.program_name,
-                    degree_type=program.degree_type,
-                    department=program.department,
-                    tuition=program.tuition or rd.get("tuition_out_of_state"),
-                    duration_months=program.duration_months,
-                    delivery_format=program.delivery_format,
-                    acceptance_rate=(
-                        float(program.acceptance_rate)
-                        if program.acceptance_rate is not None
-                        else rd.get("acceptance_rate")
-                    ),
-                    application_deadline=program.application_deadline,
-                    institution_name=inst.name if inst else "",
-                    institution_country=inst.country if inst else "",
-                    institution_city=inst.city if inst else None,
-                    median_salary=(
-                        _outcomes_int(program, "median_salary")
-                        or _outcomes_int(program, "earnings_4yr_median")
-                        or _outcomes_int(program, "earnings_1yr_median")
-                        or rd.get("earnings_10yr_median")
-                    ),
-                    employment_rate=(
-                        _outcomes_float(program, "employment_rate")
-                        or rd.get("graduation_rate")
-                    ),
-                    payback_months=_outcomes_int(program, "payback_months"),
-                    description_text=program.description_text,
-                    media_urls=program.media_urls,
-                    highlights=program.highlights,
-                    institution_logo_url=inst.logo_url if inst else None,
-                    institution_image_url=(
-                        (program.media_urls or [None])[0]
-                        if program.media_urls
-                        else (inst.media_gallery or [None])[0]
-                        if inst and inst.media_gallery
-                        else None
-                    ),
-                )
-            )
-        return ordered
+        # AI embedding engine is being rebuilt — return empty results
+        return []
 
     # --- Helpers ---
 
@@ -2282,50 +2202,14 @@ class InstitutionService:
 
     async def _parse_nlp_query(self, query: str) -> dict:
         """Use LLM to extract structured search params from natural language."""
-
-        if settings.ai_mock_mode:
-            return {
-                "parsed_query": query,
-                "country": None,
-                "degree_type": None,
-                "max_tuition": None,
-                "min_tuition": None,
-                "sort_by": None,
-                "interpretation": f"Showing results for: {query}",
-            }
-
-        from unipaith.ai.llm_client import get_llm_client
-
-        system_prompt = (
-            "You are a search query parser for a graduate program search engine. "
-            "Extract structured filters from the user's natural language query.\n\n"
-            "Return ONLY valid JSON with these fields:\n"
-            '- "parsed_query": cleaned keyword search term (string)\n'
-            '- "country": full country name if mentioned, e.g. "UK" -> "United Kingdom", '
-            '"US" -> "United States" (string or null)\n'
-            '- "degree_type": one of MS, MBA, PhD, MA, bachelors, masters, phd, '
-            "certificate, diploma if mentioned (string or null)\n"
-            '- "max_tuition": integer if budget mentioned, e.g. "affordable" -> 30000, '
-            '"under 40k" -> 40000 (integer or null)\n'
-            '- "min_tuition": integer if a tuition floor is mentioned (integer or null)\n'
-            '- "sort_by": one of tuition_asc, tuition_desc, deadline if implied '
-            "(string or null)\n"
-            '- "interpretation": one-sentence human summary of what was understood\n\n'
-            "Return ONLY valid JSON. No markdown, no extra text."
-        )
-
-        try:
-            llm = get_llm_client()
-            raw = await llm.extract_features(system_prompt, query)
-            parsed = _safe_json(raw)
-            if parsed and isinstance(parsed, dict):
-                return parsed
-        except Exception:
-            logger.warning("NLP query parsing failed for: %s", query, exc_info=True)
-
-        # Fallback: pass query through unmodified
+        # AI engine is being rebuilt — always use passthrough mode
         return {
             "parsed_query": query,
+            "country": None,
+            "degree_type": None,
+            "max_tuition": None,
+            "min_tuition": None,
+            "sort_by": None,
             "interpretation": f"Showing results for: {query}",
         }
 

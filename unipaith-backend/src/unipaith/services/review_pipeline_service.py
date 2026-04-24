@@ -16,7 +16,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from unipaith.ai.llm_client import get_llm_client
 from unipaith.config import settings
 from unipaith.core.exceptions import BadRequestException, NotFoundException
 from unipaith.models.application import (
@@ -341,39 +340,20 @@ class ReviewPipelineService:
             "description": program.description_text,
         }
 
-        system_prompt = (
-            "You are an admissions review assistant. Given a student profile "
-            "and program requirements, provide a structured review summary. "
-            "Respond in valid JSON with keys: summary (string), strengths "
-            "(list of strings), concerns (list of strings), "
-            "recommended_score_range (object with min and max, each 0-10), "
-            "comparable_admitted_profiles (string describing the type of "
-            "students typically admitted to similar programs)."
-        )
 
-        user_content = (
+        (
             f"Student Profile:\n{json.dumps(student_summary, indent=2)}\n\n"
             f"Program:\n{json.dumps(program_summary, indent=2)}"
         )
 
-        llm = get_llm_client()
-        raw_response = await llm.generate_reasoning(system_prompt, user_content)
-
-        # Parse LLM response — gracefully handle non-JSON
-        try:
-            review_data = json.loads(raw_response)
-        except (json.JSONDecodeError, TypeError):
-            logger.warning(
-                "AI review response was not valid JSON for application %s",
-                application_id,
-            )
-            review_data = {
-                "summary": raw_response,
-                "strengths": [],
-                "concerns": [],
-                "recommended_score_range": {"min": 0, "max": 10},
-                "comparable_admitted_profiles": "Unable to determine.",
-            }
+        # AI engine is being rebuilt — return placeholder review
+        review_data = {
+            "summary": "AI review is temporarily unavailable (engine being rebuilt).",
+            "strengths": [],
+            "concerns": [],
+            "recommended_score_range": {"min": 0, "max": 10},
+            "comparable_admitted_profiles": "Unable to determine.",
+        }
 
         return review_data
 
@@ -454,62 +434,29 @@ class ReviewPipelineService:
         }
 
         # Build prompt
-        rubric_section = ""
         if rubric_criteria:
-            criteria_list = "\n".join(
+            "\n".join(
                 f"- {c.get('name', 'Unknown')}"
                 f" (weight: {c.get('weight', 1)})"
                 f": {c.get('description', '')}"
                 for c in rubric_criteria
             )
-            rubric_section = (
-                f"\n\nRubric Criteria:\n{criteria_list}\n\n"
-                "For each criterion, provide a score (0-10), "
-                "an assessment, and cite specific evidence "
-                "from the application."
-            )
 
-        system_prompt = (
-            "You are an expert admissions reviewer. Generate a "
-            "comprehensive applicant packet summary. Respond in "
-            "valid JSON with these keys:\n"
-            '- "overall_summary": string (2-3 paragraph narrative)\n'
-            '- "strengths": list of objects with keys "text", '
-            '"evidence" (specific data point), "source_field" '
-            "(which part of the application)\n"
-            '- "concerns": same structure as strengths\n'
-            '- "criterion_assessments": list of objects with keys '
-            '"criterion_name", "score" (0-10), "assessment" '
-            '(string), "evidence" (list of objects with "field", '
-            '"value", "citation")\n'
-            '- "recommended_score": number (0-10)\n'
-            '- "confidence_level": "high" | "medium" | "low"\n\n'
-            "IMPORTANT: Cite specific evidence from the applicant's "
-            "profile for every claim. Reference exact GPA, test "
-            "scores, activity titles, and organization names."
-            f"{rubric_section}"
-        )
 
-        user_content = (
+        (
             f"Student Profile:\n{json.dumps(student_data, indent=2)}"
             f"\n\nProgram:\n{json.dumps(program_data, indent=2)}"
         )
 
-        llm = get_llm_client()
-        raw = await llm.generate_reasoning(system_prompt, user_content)
-
-        # Parse response
-        try:
-            data = json.loads(raw)
-        except (json.JSONDecodeError, TypeError):
-            data = {
-                "overall_summary": raw or "Summary generation failed",
-                "strengths": [],
-                "concerns": [],
-                "criterion_assessments": [],
-                "recommended_score": None,
-                "confidence_level": "low",
-            }
+        # AI engine is being rebuilt — use placeholder data
+        data = {
+            "overall_summary": "AI summary unavailable.",
+            "strengths": [],
+            "concerns": [],
+            "criterion_assessments": [],
+            "recommended_score": None,
+            "confidence_level": "low",
+        }
 
         # Upsert to database
         existing_r = await self.db.execute(
@@ -780,41 +727,7 @@ class ReviewPipelineService:
                 },
             })
 
-        # 5. LLM-powered deeper analysis (if enabled)
-        if not settings.ai_mock_mode:
-            try:
-                student_data = self._build_student_context(profile)
-                system_prompt = (
-                    "You are an admissions integrity analyst. "
-                    "Review the applicant profile for inconsistencies, "
-                    "red flags, or unusual patterns. Respond in JSON: "
-                    '{"flags": [{"type": string, "severity": '
-                    '"high"|"medium"|"low", "title": string, '
-                    '"description": string, "evidence": object}]}'
-                )
-                llm = get_llm_client()
-                raw = await llm.generate_reasoning(
-                    system_prompt,
-                    f"Profile:\n{json.dumps(student_data, indent=2)}",
-                )
-                try:
-                    ai_data = json.loads(raw)
-                    for flag in ai_data.get("flags", []):
-                        signals.append({
-                            "signal_type": flag.get(
-                                "type", "ai_detected",
-                            ),
-                            "severity": flag.get("severity", "medium"),
-                            "title": flag.get("title", "AI-detected"),
-                            "description": flag.get(
-                                "description", "",
-                            ),
-                            "evidence": flag.get("evidence"),
-                        })
-                except (json.JSONDecodeError, TypeError):
-                    pass
-            except Exception:
-                pass  # LLM failure is non-fatal
+        # 5. LLM-powered deeper analysis skipped (AI engine being rebuilt)
 
         # Persist signals
         now = datetime.now(UTC)

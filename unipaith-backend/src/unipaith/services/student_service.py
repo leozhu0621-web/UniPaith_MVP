@@ -7,7 +7,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from unipaith.ai.jobs import on_student_profile_updated
 from unipaith.core.exceptions import ForbiddenException, NotFoundException
 from unipaith.models.application import Application
 from unipaith.models.engagement import StudentEngagementSignal
@@ -1144,4 +1143,4 @@ class StudentService:
         progress.steps_completed = status.steps_completed
         progress.completion_percentage = status.completion_percentage
         await self.db.flush()
-        await on_student_profile_updated(self.db, student_id)
+        # AI feature extraction skipped (engine being rebuilt)

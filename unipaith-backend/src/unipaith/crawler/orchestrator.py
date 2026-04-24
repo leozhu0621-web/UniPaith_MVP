@@ -147,26 +147,9 @@ class CrawlerOrchestrator:
             crawl_job_id,
         )
 
-        # Run feature extraction then embedding generation for each program
-        from unipaith.ai.embedding_pipeline import EmbeddingPipeline
-        from unipaith.ai.feature_extraction import FeatureExtractor
-
-        extractor = FeatureExtractor(self.db)
-        pipeline = EmbeddingPipeline(self.db)
-
+        # AI engine removed — skip feature extraction and embedding
         for program_id in program_ids:
-            try:
-                # Step 1: Extract features (structured + LLM-derived)
-                await extractor.extract_program_features(program_id)
-                # Step 2: Generate embedding from features
-                await pipeline.generate_program_embedding(program_id)
-                logger.info("AI pipeline complete for program %s", program_id)
-            except Exception as exc:
-                logger.warning(
-                    "AI pipeline failed for program %s: %s",
-                    program_id,
-                    exc,
-                )
+            logger.debug("Skipping AI pipeline for %s", program_id)
 
     async def crawl_single_url(
         self,

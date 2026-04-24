@@ -13,7 +13,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from unipaith.ai.llm_client import get_llm_client
 from unipaith.core.exceptions import BadRequestException, NotFoundException
 from unipaith.models.engagement import StudentResume
 from unipaith.models.institution import Program
@@ -240,14 +239,6 @@ class ResumeWorkshopService:
         if not resume.content:
             raise BadRequestException("Resume has no content to review")
 
-        system_prompt = (
-            "You are an expert career advisor reviewing a graduate-school "
-            "resume. Analyse the JSON resume below and return ONLY valid JSON "
-            "(no markdown, no extra text) with:\n"
-            "- overall_score (int 1-100)\n"
-            "- section_scores (object mapping section name to int 1-100)\n"
-            "- suggestions (list of actionable improvement strings)\n"
-        )
 
         user_content = json.dumps(resume.content, indent=2, default=str)
 
@@ -266,25 +257,15 @@ class ResumeWorkshopService:
                     f"{inst_name}\n\n{user_content}"
                 )
 
-        llm = get_llm_client()
-        raw = await llm.generate_reasoning(system_prompt, user_content)
-
-        try:
-            feedback = json.loads(raw)
-        except json.JSONDecodeError:
-            feedback = {
-                "overall_score": 72,
-                "section_scores": {
-                    "education": 85,
-                    "experience": 70,
-                    "activities": 65,
-                },
-                "suggestions": [
-                    "Quantify achievements where possible",
-                    "Add relevant coursework for target program",
-                ],
-                "raw_feedback": raw,
-            }
+        # AI engine is being rebuilt — return placeholder feedback
+        feedback = {
+            "overall_score": None,
+            "section_scores": {},
+            "suggestions": [
+                "AI resume feedback is temporarily unavailable (engine being rebuilt).",
+            ],
+            "raw_feedback": None,
+        }
 
         feedback["feedback_type"] = feedback_type
 
