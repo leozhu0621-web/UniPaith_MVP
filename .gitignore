@@ -42,9 +42,11 @@ node_modules/
 
 # Terraform
 infra/.terraform/
-infra/*.tfstate
-infra/*.tfstate.backup
-infra/tfplan
-infra/.terraform.lock.hcl
-infra/terraform.tfvars
+*.tfstate
+*.tfstate.backup
+*.tfplan
+tfplan
+.terraform.lock.hcl
+*.tfvars
+!*.tfvars.example
 .claude/worktrees/
