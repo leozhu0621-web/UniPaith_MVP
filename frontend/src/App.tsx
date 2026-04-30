@@ -16,7 +16,7 @@ import LoginPage from './pages/auth/LoginPage'
 import SignupPage from './pages/auth/SignupPage'
 import AuthCallbackPage from './pages/auth/AuthCallbackPage'
 
-// Public pages (program browsing — linked from Lovable)
+// Public pages (program browsing — linked from the marketing site at unipaith.co)
 import ProgramBrowsePage from './pages/public/ProgramBrowsePage'
 import InstitutionPage from './pages/public/InstitutionPage'
 import ProgramDetailPage from './pages/public/ProgramDetailPage'
@@ -78,10 +78,10 @@ const queryClient = new QueryClient({
 })
 
 const router = createBrowserRouter([
-  // Root → login (landing pages on Lovable at unipaith.co)
+  // Root → login (marketing site is at unipaith.co; this is the app at app.unipaith.co)
   { path: '/', element: <Navigate to="/login" replace />, errorElement: <RouteErrorPage /> },
 
-  // Public program browsing (linked from Lovable CTAs)
+  // Public program browsing (linked from marketing-site CTAs)
   { path: '/browse', element: <ProgramBrowsePage />, errorElement: <RouteErrorPage /> },
   { path: '/school/:institutionId', element: <InstitutionPage />, errorElement: <RouteErrorPage /> },
   { path: '/program/:programId', element: <ProgramDetailPage />, errorElement: <RouteErrorPage /> },
