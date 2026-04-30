@@ -4,7 +4,7 @@
     {
       "name": "frontend",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "export PATH=/usr/local/bin:$PATH && export VITE_API_URL=https://api.unipaith.co/api/v1 && cd '/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/.claude/worktrees/distracted-panini/frontend' && npx vite --port 5174"],
+      "runtimeArgs": ["-c", "export PATH=/usr/local/bin:$PATH && cd '/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/frontend' && npx vite --port 5174"],
       "port": 5174
     },
     {

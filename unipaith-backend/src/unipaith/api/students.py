@@ -7,7 +7,6 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from unipaith.config import settings
 from unipaith.core.exceptions import NotFoundException
 from unipaith.database import get_db
 from unipaith.dependencies import require_student
@@ -72,7 +71,6 @@ from unipaith.schemas.student import (
     VisaInfoResponse,
     WorkExperienceResponse,
 )
-from unipaith.services.matching_service import MatchingService
 from unipaith.services.student_service import StudentService
 
 router = APIRouter(prefix="/students", tags=["students"])
@@ -888,9 +886,7 @@ async def get_my_matches(
     db: AsyncSession = Depends(get_db),
 ):
     """Get AI-powered program matches. Requires 80% profile completion."""
-    profile = await _svc(db)._get_student_profile(user.id)
-    svc = MatchingService(db)
-    return await svc.get_matches(profile.id, force_refresh=force_refresh)
+    return {"status": "ai_engine_not_available", "message": "AI matching engine is being rebuilt"}
 
 
 @router.get("/me/matches/{program_id}", response_model=MatchResultResponse)
@@ -946,17 +942,9 @@ async def student_assistant_chat(
     db: AsyncSession = Depends(get_db),
 ):
     """AI advisor chat with persistent memory, EQ detection, and persona tuning."""
-    from unipaith.services.student_advisor import StudentAdvisor
-
-    advisor = StudentAdvisor(db)
-    result = await advisor.chat(
-        student_user_id=user.id,
-        message=body.message,
-        context_program_id=body.context_program_id,
-    )
     return StudentAssistantChatResponse(
-        reply=result["reply"],
-        model=settings.llm_reasoning_model,
+        reply="The AI advisor is currently being rebuilt. Please check back soon.",
+        model="unavailable",
     )
 
 
@@ -966,14 +954,7 @@ async def get_student_recommendations(
     db: AsyncSession = Depends(get_db),
 ):
     """Get personalized program recommendations with warm reasoning."""
-    from unipaith.services.recommendation_engine import RecommendationEngine
-
-    engine = RecommendationEngine(db)
-    recommendations = await engine.generate_recommendations(
-        student_user_id=user.id,
-        count=5,
-    )
-    return {"recommendations": recommendations}
+    return {"status": "unavailable", "recommendations": []}
 
 
 # ============ CONVERSATIONAL INTAKE & INTELLIGENCE ============
@@ -997,8 +978,6 @@ async def intake_chat(
     db: AsyncSession = Depends(get_db),
 ):
     """Chat-based onboarding: extract profile fields from free text."""
-    from unipaith.ai.llm_client import get_llm_client
-
     # Get-or-create student profile (new signups may not have one yet)
     result = await db.execute(
         select(StudentProfile).where(StudentProfile.user_id == user.id)
@@ -1009,95 +988,57 @@ async def intake_chat(
         db.add(profile)
         await db.flush()
 
-    llm = get_llm_client()
+    # Smart rule-based extraction (AI engine is being rebuilt)
+    msg_lower = body.message.lower()
+    extracted: dict[str, str] = {}
+    # Try to extract name
+    if "i'm " in msg_lower or "my name is " in msg_lower or "i am " in msg_lower:
+        parts = body.message.split()
+        for i, w in enumerate(parts):
+            if w.lower() in ("i'm", "am") and i + 1 < len(parts):
+                extracted["first_name"] = parts[i + 1].strip(".,!")
+                break
+            if w.lower() == "name" and i + 2 < len(parts) and parts[i + 1].lower() == "is":
+                extracted["first_name"] = parts[i + 2].strip(".,!")
+                break
+    # Try to extract country/location
+    for kw in ("from ", "in ", "living in "):
+        if kw in msg_lower:
+            after = body.message[msg_lower.index(kw) + len(kw):]
+            loc = after.split(".")[0].split(",")[0].strip()
+            if loc and len(loc) < 40:
+                extracted["country_of_residence"] = loc
+                break
+    # Store goals
+    if any(w in msg_lower for w in ("study", "want", "interested", "goal", "dream", "plan")):
+        extracted["goals_text"] = body.message[:200]
 
-    system_prompt = (
-        "You are an onboarding assistant for a college application "
-        "platform called UniPaith. "
-        "You are having a warm, conversational chat with a new "
-        "student to learn about them. "
-        "Extract structured profile fields from the student's "
-        "message AND generate an engaging follow-up question.\n\n"
-        "Fields to extract when mentioned: first_name, last_name, "
-        "nationality, country_of_residence, bio_text, goals_text."
-        "\n\nReturn JSON with:\n"
-        '- "extracted_fields": dict of field_name: value '
-        "(only fields actually mentioned)\n"
-        '- "next_question": a warm, conversational follow-up '
-        "that digs deeper into their story\n\n"
-        "Make your follow-up question feel natural and curious "
-        "— like a good mentor getting to know them. "
-        "Ask about their motivations, dreams, experiences, "
-        "or what excites them about their field.\n"
-        "Return ONLY valid JSON."
-    )
-
-    if settings.ai_mock_mode:
-        # Smart mock: parse common fields from the message
-        msg_lower = body.message.lower()
-        extracted: dict[str, str] = {}
-        # Try to extract name
-        if "i'm " in msg_lower or "my name is " in msg_lower or "i am " in msg_lower:
-            parts = body.message.split()
-            for i, w in enumerate(parts):
-                if w.lower() in ("i'm", "am") and i + 1 < len(parts):
-                    extracted["first_name"] = parts[i + 1].strip(".,!")
-                    break
-                if w.lower() == "name" and i + 2 < len(parts) and parts[i + 1].lower() == "is":
-                    extracted["first_name"] = parts[i + 2].strip(".,!")
-                    break
-        # Try to extract country/location
-        for kw in ("from ", "in ", "living in "):
-            if kw in msg_lower:
-                after = body.message[msg_lower.index(kw) + len(kw):]
-                loc = after.split(".")[0].split(",")[0].strip()
-                if loc and len(loc) < 40:
-                    extracted["country_of_residence"] = loc
-                    break
-        # Store goals
-        if any(w in msg_lower for w in ("study", "want", "interested", "goal", "dream", "plan")):
-            extracted["goals_text"] = body.message[:200]
-
-        # Adaptive follow-up questions based on what we learned
-        name = extracted.get("first_name", "")
-        greeting = f"Nice to meet you, {name}! " if name else "Great to hear that! "
-        if "goals_text" in extracted and "country_of_residence" not in extracted:
-            next_q = (
-                f"{greeting}That sounds like an exciting path. "
-                "Where are you currently based, and what "
-                "sparked your interest in this field?"
-            )
-        elif "country_of_residence" in extracted and "goals_text" not in extracted:
-            next_q = (
-                f"{greeting}What are you hoping to study, "
-                "and what draws you to that area?"
-            )
-        elif extracted:
-            next_q = (
-                f"{greeting}I'd love to learn more about what "
-                "drives you. What experiences or moments "
-                "led you to this path?"
-            )
-        else:
-            next_q = (
-                "That's interesting! Could you tell me a bit "
-                "more about what you're hoping to study "
-                "and what excites you about it?"
-            )
+    # Adaptive follow-up questions based on what we learned
+    name = extracted.get("first_name", "")
+    greeting = f"Nice to meet you, {name}! " if name else "Great to hear that! "
+    if "goals_text" in extracted and "country_of_residence" not in extracted:
+        next_q = (
+            f"{greeting}That sounds like an exciting path. "
+            "Where are you currently based, and what "
+            "sparked your interest in this field?"
+        )
+    elif "country_of_residence" in extracted and "goals_text" not in extracted:
+        next_q = (
+            f"{greeting}What are you hoping to study, "
+            "and what draws you to that area?"
+        )
+    elif extracted:
+        next_q = (
+            f"{greeting}I'd love to learn more about what "
+            "drives you. What experiences or moments "
+            "led you to this path?"
+        )
     else:
-        import json as _json
-
-        raw = await llm.extract_features(system_prompt, body.message)
-        try:
-            parsed = _json.loads(raw)
-            extracted = parsed.get("extracted_fields", {})
-            next_q = parsed.get("next_question", "Tell me more about what excites you.")
-        except Exception:
-            extracted = {}
-            next_q = (
-                "That's really interesting! Could you tell "
-                "me more about what draws you to that field?"
-            )
+        next_q = (
+            "That's interesting! Could you tell me a bit "
+            "more about what you're hoping to study "
+            "and what excites you about it?"
+        )
 
     updated = False
     for field, value in extracted.items():

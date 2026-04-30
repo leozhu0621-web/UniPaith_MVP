@@ -257,31 +257,12 @@ class ContinuousPipeline:
                     await asyncio.sleep(settings.pipeline_ml_check_seconds)
                     continue
 
-                await self._update_stage("ml", "training", extra={
+                # ML orchestrator skipped (engine being rebuilt)
+                await self._update_stage("ml", "paused", extra={
                     "current_outcomes": count,
                     "required_outcomes": threshold,
+                    "reason": "ml_engine_being_rebuilt",
                 })
-                async with async_session() as db:
-                    from unipaith.ml.orchestrator import MLOrchestrator
-                    orch = MLOrchestrator(db)
-                    try:
-                        result = await orch.run_full_cycle(
-                            triggered_by="pipeline_continuous",
-                            preferred_mode=settings.training_default_cycle_mode,
-                        )
-                        await db.commit()
-                        await self._update_stage("ml", "completed", items=1, extra={
-                            "current_outcomes": count,
-                            "required_outcomes": threshold,
-                            "cycle_result": {
-                                k: v for k, v in result.items()
-                                if k in ("evaluation", "training", "promotion", "decision")
-                            },
-                        })
-                    except Exception as exc:
-                        logger.exception("ML cycle failed")
-                        await self._update_stage("ml", "error",
-                                                 last_error=str(exc)[:500])
 
                 await asyncio.sleep(settings.pipeline_ml_cooldown_seconds)
 

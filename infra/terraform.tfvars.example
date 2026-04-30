@@ -1,0 +1,3 @@
+# Copy to terraform.tfvars and fill in real values, OR
+# export TF_VAR_openai_api_key="sk-..." before running terraform.
+openai_api_key = "sk-..."

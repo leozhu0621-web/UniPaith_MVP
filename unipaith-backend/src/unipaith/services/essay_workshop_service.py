@@ -4,7 +4,6 @@ Essay workshop service — create, iterate, and get AI feedback on essays.
 
 from __future__ import annotations
 
-import json
 import logging
 from uuid import UUID
 
@@ -12,7 +11,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from unipaith.ai.llm_client import get_llm_client
 from unipaith.core.exceptions import BadRequestException, NotFoundException
 from unipaith.models.engagement import StudentEssay
 from unipaith.models.institution import Program
@@ -171,15 +169,6 @@ class EssayWorkshopService:
 
         program = await self._load_program(essay.program_id)
 
-        system_prompt = (
-            "You are an expert admissions essay reviewer for graduate programs. "
-            "Analyse the essay below and return ONLY valid JSON (no markdown, no "
-            "extra text) with the following fields:\n"
-            "- overall_score (int 1-100)\n"
-            "- strengths (list of strings)\n"
-            "- improvements (list of strings)\n"
-            "- prompt_alignment_score (int 1-100)\n"
-        )
 
         user_content_parts = [
             f"Program: {program.program_name} at {program.institution.name}",
@@ -187,23 +176,18 @@ class EssayWorkshopService:
         if essay.prompt_text:
             user_content_parts.append(f"Prompt: {essay.prompt_text}")
         user_content_parts.append(f"Essay ({essay.word_count} words):\n{essay.content}")
-        user_content = "\n\n".join(user_content_parts)
+        "\n\n".join(user_content_parts)
 
-        llm = get_llm_client()
-        raw = await llm.generate_reasoning(system_prompt, user_content)
-
-        # Attempt to parse JSON; fall back to a wrapper if the model returns
-        # free-form text (common in mock mode).
-        try:
-            feedback = json.loads(raw)
-        except json.JSONDecodeError:
-            feedback = {
-                "overall_score": 75,
-                "strengths": ["Well-structured argument"],
-                "improvements": ["Could elaborate on career goals"],
-                "prompt_alignment_score": 70,
-                "raw_feedback": raw,
-            }
+        # AI engine is being rebuilt — return placeholder feedback
+        feedback = {
+            "overall_score": None,
+            "strengths": [],
+            "improvements": [
+                "AI essay feedback is temporarily unavailable (engine being rebuilt).",
+            ],
+            "prompt_alignment_score": None,
+            "raw_feedback": None,
+        }
 
         feedback["feedback_type"] = feedback_type
 

@@ -124,55 +124,20 @@ def shutdown_scheduler() -> None:
 
 async def _run_ml_cycle() -> None:
     """Run the unified ML full-cycle pipeline with cadence mode."""
-    from unipaith.database import async_session
-    from unipaith.ml.orchestrator import MLOrchestrator
-
-    global _ml_cycle_tick_count
-    _ml_cycle_tick_count += 1
-    force_full_every = max(1, settings.ml_cycle_force_full_every_n_cycles)
-    preferred_mode = "full" if (_ml_cycle_tick_count % force_full_every == 0) else "fast"
-    trigger = f"scheduled_{preferred_mode}"
-
-    logger.info("Starting scheduled ML full cycle (mode=%s)", preferred_mode)
-    try:
-        async with async_session() as db:
-            orch = MLOrchestrator(db)
-            await orch.run_full_cycle(
-                triggered_by=trigger,
-                preferred_mode=preferred_mode,
-            )
-        logger.info("ML full cycle completed (mode=%s)", preferred_mode)
-    except Exception:
-        logger.exception("ML full cycle failed")
+    # ML orchestrator skipped (engine being rebuilt)
+    logger.info("ML cycle skipped (engine being rebuilt)")
 
 
 async def _run_feature_refresh() -> None:
     """Refresh student and program features."""
-    from unipaith.ai.jobs import daily_feature_refresh
-    from unipaith.database import async_session
-
-    logger.info("Starting daily feature refresh")
-    try:
-        async with async_session() as db:
-            await daily_feature_refresh(db)
-        logger.info("Feature refresh completed")
-    except Exception:
-        logger.exception("Feature refresh failed")
+    # AI feature refresh skipped (engine being rebuilt)
+    logger.info("Feature refresh skipped (engine being rebuilt)")
 
 
 async def _check_gpu_idle() -> None:
     """Check if 70B GPU instance should be shut down due to idleness."""
-    from unipaith.ai.cost_tracker import get_cost_tracker
-    from unipaith.ai.gpu_manager import get_70b_manager
-
-    try:
-        manager = get_70b_manager()
-        stopped = await manager.check_idle_shutdown()
-        if stopped:
-            tracker = get_cost_tracker()
-            tracker.record_stop("70b")
-    except Exception:
-        logger.exception("GPU idle check failed")
+    # GPU manager skipped (engine being rebuilt)
+    logger.debug("GPU idle check skipped (engine being rebuilt)")
 
 
 async def _run_crawler() -> None:
@@ -193,35 +158,11 @@ async def _run_crawler() -> None:
 
 async def _run_knowledge_engine_tick() -> None:
     """Run one tick of the perpetual knowledge engine loop."""
-    from unipaith.database import async_session
-    from unipaith.services.engine_loop import EngineLoop
-
-    logger.info("Starting knowledge engine tick")
-    try:
-        async with async_session() as db:
-            loop = EngineLoop(db)
-            result = await loop.run_tick()
-            await db.commit()
-            logger.info(
-                "Knowledge engine tick: processed=%d, errors=%d, discovered=%d",
-                result.get("processed", 0),
-                result.get("errors", 0),
-                result.get("discovered", 0),
-            )
-    except Exception:
-        logger.exception("Knowledge engine tick failed")
+    # Knowledge engine skipped (engine being rebuilt)
+    logger.info("Knowledge engine tick skipped (engine being rebuilt)")
 
 
 async def _run_self_driving_loop() -> None:
     """Run one autonomous AI control-plane tick."""
-    from unipaith.database import async_session
-    from unipaith.services.ai_control_plane_service import AIControlPlaneService
-
-    logger.info("Starting scheduled self-driving AI loop")
-    try:
-        async with async_session() as db:
-            service = AIControlPlaneService(db)
-            result = await service.run_self_driving_tick(trigger="scheduled")
-            logger.info("Self-driving loop result: %s", result.get("status"))
-    except Exception:
-        logger.exception("Self-driving AI loop failed")
+    # AI control plane skipped (engine being rebuilt)
+    logger.info("Self-driving AI loop skipped (engine being rebuilt)")

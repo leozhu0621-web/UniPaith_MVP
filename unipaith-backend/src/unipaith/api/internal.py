@@ -9,15 +9,11 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from unipaith.core.ai_runtime_metrics import slo_snapshot
 from unipaith.database import get_db
 from unipaith.dependencies import require_admin
 from unipaith.models.institution import Institution, Program
 from unipaith.models.user import User
-from unipaith.services.ai_control_plane_service import AIControlPlaneService
-from unipaith.services.ai_engine_orchestrator import AIEngineOrchestrator
 from unipaith.services.internal_admin_service import InternalAdminService
-from unipaith.services.matching_service import MatchingService
 
 router = APIRouter(prefix="/internal", tags=["internal"])
 
@@ -243,8 +239,7 @@ async def bootstrap_program_features(
     db: AsyncSession = Depends(get_db),
 ):
     """Extract features + generate embeddings for all published programs."""
-    svc = MatchingService(db)
-    return await svc.bootstrap_all_programs()
+    return {"status": "ai_engine_not_available", "message": "AI engine is being rebuilt"}
 
 
 @router.post("/ai/refresh-student/{student_id}")
@@ -254,9 +249,7 @@ async def refresh_student_features(
     db: AsyncSession = Depends(get_db),
 ):
     """Manually trigger feature re-extraction for a student."""
-    svc = MatchingService(db)
-    features = await svc.refresh_student_features(student_id)
-    return {"student_id": str(student_id), "features": features}
+    return {"status": "ai_engine_not_available", "message": "AI engine is being rebuilt"}
 
 
 @router.post("/ai/refresh-program/{program_id}")
@@ -266,9 +259,7 @@ async def refresh_program_features(
     db: AsyncSession = Depends(get_db),
 ):
     """Manually trigger feature re-extraction for a program."""
-    svc = MatchingService(db)
-    features = await svc.refresh_program_features(program_id)
-    return {"program_id": str(program_id), "features": features}
+    return {"status": "ai_engine_not_available", "message": "AI engine is being rebuilt"}
 
 
 # --- GPU / AI Cost Monitoring ---
@@ -326,32 +317,8 @@ async def _run_bootstrap_background():
                 total_extracted,
             )
 
-        # Phase 2: features + embeddings for all programs
-        async with async_session() as db:
-            from unipaith.ai.embedding_pipeline import EmbeddingPipeline
-            from unipaith.ai.feature_extraction import FeatureExtractor
-            from unipaith.models.institution import Program
-
-            result = await db.execute(select(Program.id))
-            program_ids = [row[0] for row in result.all()]
-
-            if program_ids:
-                extractor = FeatureExtractor(db)
-                pipeline = EmbeddingPipeline(db)
-                sem = asyncio.Semaphore(5)
-
-                async def process_program(pid):
-                    async with sem:
-                        try:
-                            await extractor.extract_program_features(pid)
-                            await pipeline.generate_program_embedding(pid)
-                        except Exception as exc:
-                            logger.warning("AI pipeline failed for %s: %s", pid, exc)
-
-                await asyncio.gather(*(process_program(pid) for pid in program_ids))
-                await db.commit()
-
-            logger.info("Bootstrap complete: %d programs processed", len(program_ids))
+        # Phase 2: features + embeddings skipped (AI engine is being rebuilt)
+        logger.info("Bootstrap complete (AI phase skipped)")
     except Exception:
         logger.exception("Bootstrap failed")
 
@@ -472,33 +439,13 @@ async def list_extracted_programs(
 @router.get("/ai-costs")
 async def ai_costs(user: User = Depends(require_admin)):
     """GPU usage and cost tracking for the AI engine."""
-    from unipaith.ai.cost_tracker import get_cost_tracker
-
-    return get_cost_tracker().get_usage_summary()
+    return {"status": "ai_engine_not_available", "message": "AI cost tracker is being rebuilt"}
 
 
 @router.get("/ai-status")
 async def ai_status(user: User = Depends(require_admin)):
     """Current status of all AI engine components."""
-    from unipaith.config import settings as s
-
-    status = {
-        "gpu_mode": s.gpu_mode,
-        "8b_instance": {"configured": bool(s.gpu_8b_instance_id)},
-        "70b_instance": {"configured": bool(s.gpu_70b_instance_id)},
-    }
-
-    if s.gpu_mode == "aws":
-        from unipaith.ai.gpu_manager import get_8b_manager, get_70b_manager
-
-        m8b = get_8b_manager()
-        m70b = get_70b_manager()
-        status["8b_instance"]["state"] = m8b.get_instance_state()
-        status["70b_instance"]["state"] = m70b.get_instance_state()
-        idle = m70b.idle_seconds
-        status["70b_instance"]["idle_seconds"] = round(idle, 1) if idle else None
-
-    return status
+    return {"status": "ai_engine_not_available", "message": "AI engine is being rebuilt"}
 
 
 @router.get("/ai/control/status")
@@ -507,7 +454,7 @@ async def ai_control_status(
     db: AsyncSession = Depends(get_db),
 ):
     """Unified AI control-plane status for admin UI."""
-    return await AIControlPlaneService(db).get_status()
+    return {"status": "ai_engine_not_available", "message": "AI control plane is being rebuilt"}
 
 
 @router.patch("/ai/control/policy")
@@ -517,12 +464,7 @@ async def ai_control_policy(
     db: AsyncSession = Depends(get_db),
 ):
     """Update runtime autonomy policy toggles."""
-    policy = await AIControlPlaneService(db).update_policy(
-        autonomy_enabled=body.autonomy_enabled,
-        auto_fix_enabled=body.auto_fix_enabled,
-        emergency_stop=body.emergency_stop,
-    )
-    return {"policy": policy}
+    return {"status": "ai_engine_not_available", "message": "AI control plane is being rebuilt"}
 
 
 @router.post("/ai/control/run-loop")
@@ -531,8 +473,7 @@ async def ai_control_run_loop(
     db: AsyncSession = Depends(get_db),
 ):
     """Run a single autonomous self-driving tick immediately."""
-    result = await AIControlPlaneService(db).run_self_driving_tick(trigger="manual")
-    return {"result": result}
+    return {"status": "ai_engine_not_available", "message": "AI control plane is being rebuilt"}
 
 
 @router.get("/ai/control/audit")
@@ -542,7 +483,7 @@ async def ai_control_audit(
     db: AsyncSession = Depends(get_db),
 ):
     """List recent autonomous loop audit events."""
-    return {"items": await AIControlPlaneService(db).list_audit_events(limit=limit)}
+    return {"status": "unavailable", "items": []}
 
 
 @router.get("/ai/control/slo")
@@ -550,7 +491,7 @@ async def ai_control_slo(
     user: User = Depends(require_admin),
 ):
     """Current SLO-oriented runtime metrics."""
-    return slo_snapshot()
+    return {"status": "ai_engine_not_available", "message": "AI SLO metrics are being rebuilt"}
 
 
 @router.get("/ai/ops/snapshot")
@@ -559,7 +500,7 @@ async def ai_ops_snapshot(
     db: AsyncSession = Depends(get_db),
 ):
     """Consolidated AI operations payload for the unified admin control center."""
-    return await AIControlPlaneService(db).get_ops_snapshot()
+    return {"status": "ai_engine_not_available", "message": "AI ops snapshot is being rebuilt"}
 
 
 @router.post("/ai/engine/run")
@@ -568,7 +509,7 @@ async def ai_engine_run(
     db: AsyncSession = Depends(get_db),
 ):
     """Run the full ingest->feature/embedding->ML orchestration graph."""
-    return await AIEngineOrchestrator(db).run_full_graph(trigger="manual")
+    return {"status": "unavailable"}
 
 
 @router.get("/ai/engine/state")
@@ -577,7 +518,7 @@ async def ai_engine_state(
     db: AsyncSession = Depends(get_db),
 ):
     """Read runtime state of the unified engine orchestrator."""
-    return AIEngineOrchestrator(db).get_runtime_state()
+    return {"status": "unavailable"}
 
 
 @router.get("/health")

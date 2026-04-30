@@ -16,12 +16,20 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from unipaith.ai.embedding_client import get_embedding_client
-from unipaith.ai.llm_client import get_llm_client
 from unipaith.models.knowledge import (
     KnowledgeDocument,
     KnowledgeLink,
 )
+
+
+def get_embedding_client():
+    """Stub — AI engine removed."""
+    return None
+
+
+def get_llm_client():
+    """Stub — AI engine removed."""
+    return None
 
 logger = logging.getLogger("unipaith.knowledge_extractor")
 

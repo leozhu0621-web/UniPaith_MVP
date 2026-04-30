@@ -131,12 +131,11 @@ class LocalExtractWorker:
         return result.scalar_one_or_none()
 
     async def _extract(self, db: AsyncSession, doc) -> bool:
-        from unipaith.ai.embedding_client import get_embedding_client
         from unipaith.crawler.knowledge_extractor import KnowledgeExtractor
 
         ollama_client = _OllamaLLMClient(self.ollama_url, self.model)
         extractor = KnowledgeExtractor(
-            db, llm=ollama_client, embedding_client=get_embedding_client()
+            db, llm=ollama_client, embedding_client=None,
         )
         try:
             await extractor.extract_knowledge(doc)

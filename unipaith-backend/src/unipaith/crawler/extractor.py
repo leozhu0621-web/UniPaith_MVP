@@ -11,7 +11,6 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from unipaith.ai.llm_client import get_llm_client
 from unipaith.config import settings
 from unipaith.core.exceptions import NotFoundException
 from unipaith.crawler.engine import CrawlerEngine
@@ -19,6 +18,11 @@ from unipaith.models.crawler import CrawlJob, ExtractedProgram
 from unipaith.models.matching import RawIngestedData
 
 logger = logging.getLogger(__name__)
+
+
+def get_llm_client():  # noqa: E302
+    """Stub — AI engine removed."""
+    return None
 
 EXTRACTION_PROMPT = """\
 You are a data extraction assistant. Given the text content of a university web page,

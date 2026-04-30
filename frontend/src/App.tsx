@@ -67,7 +67,7 @@ import AdminLayout from './components/layout/AdminLayout'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
 import AdminUsersPage from './pages/admin/AdminUsersPage'
 import AdminSystemPage from './pages/admin/AdminSystemPage'
-import AdminAICenterPage from './pages/admin/AdminAICenterPage'
+import AdminAICenterStub from './pages/admin/AdminAICenterStub'
 import AdminCrawlerDashboardPage from './pages/admin/AdminCrawlerDashboardPage'
 import RouteErrorPage from './pages/system/RouteErrorPage'
 
@@ -180,7 +180,7 @@ const router = createBrowserRouter([
       { index: true, element: <Navigate to="/admin/overview" replace /> },
       { path: 'overview', element: <AdminDashboardPage /> },
       { path: 'users', element: <AdminUsersPage /> },
-      { path: 'ai', element: <AdminAICenterPage /> },
+      { path: 'ai', element: <AdminAICenterStub /> },
       { path: 'system', element: <AdminSystemPage /> },
       // Legacy redirects — keep bookmarks working
       { path: 'ops', element: <Navigate to="/admin/ai?tab=pipeline" replace /> },
