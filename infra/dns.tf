@@ -87,8 +87,34 @@ resource "aws_route53_record" "app" {
   }
 }
 
-# NOTE: unipaith.co and www.unipaith.co DNS records are managed by Squarespace.
-# Add CNAME or A records manually in Route53 after Squarespace provides them.
+# Apex unipaith.co → ALB (WordPress marketing landing).
+# Replaces the prior Cloudflare/Vercel A record (185.158.133.1).
+# Cutover: applying this PR overwrites the apex record via Route53 UPSERT.
+resource "aws_route53_record" "apex" {
+  zone_id         = data.aws_route53_zone.main.zone_id
+  name            = var.domain_name
+  type            = "A"
+  allow_overwrite = true
+
+  alias {
+    name                   = aws_lb.main.dns_name
+    zone_id                = aws_lb.main.zone_id
+    evaluate_target_health = true
+  }
+}
+
+resource "aws_route53_record" "www" {
+  zone_id         = data.aws_route53_zone.main.zone_id
+  name            = "www.${var.domain_name}"
+  type            = "A"
+  allow_overwrite = true
+
+  alias {
+    name                   = aws_lb.main.dns_name
+    zone_id                = aws_lb.main.zone_id
+    evaluate_target_health = true
+  }
+}
 
 # API subdomain → ALB (for direct API access)
 resource "aws_route53_record" "api" {
