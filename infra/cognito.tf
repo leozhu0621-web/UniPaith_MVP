@@ -62,6 +62,13 @@ resource "aws_cognito_user_pool" "main" {
     }
   }
 
+  # Cognito disallows modifying schema items after pool creation. Lock them
+  # down so Terraform stops trying to "fix" perceived diffs against AWS
+  # defaults that get added at creation time.
+  lifecycle {
+    ignore_changes = [schema]
+  }
+
   tags = { Name = "${var.project}-user-pool" }
 }
 

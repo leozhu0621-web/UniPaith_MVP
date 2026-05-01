@@ -198,10 +198,10 @@ locals {
     # Logs
     exec > >(tee /var/log/wp-bootstrap.log | logger -t wp-bootstrap -s 2>/dev/console) 2>&1
 
-    # Packages
+    # Packages — php-imagick is not packaged in AL2023; skip it.
     dnf update -y
     dnf install -y httpd php php-mysqlnd php-fpm php-json php-mbstring php-xml php-gd \
-                   php-curl php-zip php-intl php-opcache php-imagick mariadb105 \
+                   php-curl php-zip php-intl php-opcache mariadb105 \
                    jq awscli git tar
 
     systemctl enable httpd
