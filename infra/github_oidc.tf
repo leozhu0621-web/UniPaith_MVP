@@ -43,25 +43,15 @@ resource "aws_iam_role" "github_actions" {
   })
 }
 
-# --- Managed policies for Terraform apply (broad but scoped to common services) ---
-locals {
-  github_actions_managed_policies = [
-    "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
-    "arn:aws:iam::aws:policy/AmazonRDSFullAccess",
-    "arn:aws:iam::aws:policy/AmazonRoute53FullAccess",
-    "arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess",
-    "arn:aws:iam::aws:policy/IAMFullAccess",
-    "arn:aws:iam::aws:policy/SecretsManagerReadWrite",
-    "arn:aws:iam::aws:policy/AWSBackupFullAccess",
-    "arn:aws:iam::aws:policy/AmazonSSMFullAccess",
-    "arn:aws:iam::aws:policy/AWSCertificateManagerFullAccess",
-  ]
-}
-
-resource "aws_iam_role_policy_attachment" "github_actions_managed" {
-  for_each   = toset(local.github_actions_managed_policies)
+# --- Managed policies for Terraform apply ---
+# AdministratorAccess is intentional: this role is OIDC-locked to PRs and main
+# pushes from leozhu0621-web/UniPaith_MVP only. Blast radius = your PR review
+# process. Trying to scope individual services led to a long tail of "and one
+# more service Terraform needs to read" — Admin is simpler and fits the trust
+# boundary.
+resource "aws_iam_role_policy_attachment" "github_actions_admin" {
   role       = aws_iam_role.github_actions.name
-  policy_arn = each.value
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
 
 # --- Inline policy for Terraform state (S3 backend + DynamoDB lock) ---
