@@ -1,5 +1,9 @@
 name: Terraform Plan
 
+# PR-time sanity checks for Terraform changes. Runs offline — no AWS auth.
+# The full plan-with-AWS-state runs as part of `terraform-apply.yml` on main.
+# (Avoids a chicken-and-egg with OIDC trust during initial bootstrap.)
+
 on:
   pull_request:
     paths:
@@ -7,20 +11,18 @@ on:
       - '.github/workflows/terraform-*.yml'
 
 permissions:
-  id-token: write
   contents: read
   pull-requests: write
 
 env:
-  AWS_REGION: us-east-1
   TF_VERSION: '1.9.5'
 
 concurrency:
-  group: terraform-${{ github.ref }}
+  group: terraform-plan-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  plan:
+  validate:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -31,62 +33,37 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
-          terraform_wrapper: true
+          terraform_wrapper: false
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.GH_ACTIONS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Terraform fmt
+      - name: Terraform fmt (check)
         id: fmt
         run: terraform fmt -check -recursive
         continue-on-error: true
 
-      - name: Terraform init
+      - name: Terraform init (offline — no backend)
         id: init
-        run: terraform init -no-color
+        run: terraform init -backend=false -no-color
 
       - name: Terraform validate
         id: validate
         run: terraform validate -no-color
 
-      - name: Terraform plan
-        id: plan
-        env:
-          TF_VAR_openai_api_key: ${{ secrets.TF_VAR_OPENAI_API_KEY }}
-        run: terraform plan -no-color -input=false -lock-timeout=300s
-        continue-on-error: true
-
-      - name: Comment plan on PR
+      - name: Comment results on PR
+        if: always()
         uses: actions/github-script@v7
-        env:
-          PLAN_STDOUT: "${{ steps.plan.outputs.stdout }}"
         with:
           script: |
             const fmtOk = '${{ steps.fmt.outcome }}' === 'success';
             const initOk = '${{ steps.init.outcome }}' === 'success';
             const validateOk = '${{ steps.validate.outcome }}' === 'success';
-            const planOk = '${{ steps.plan.outcome }}' === 'success';
-            const plan = (process.env.PLAN_STDOUT || '').slice(0, 60000);
-            const body = `## Terraform Plan
+            const body = `## Terraform Validate
             | step | status |
             |---|---|
             | fmt | ${fmtOk ? '✅' : '⚠️ run \`terraform fmt -recursive\` locally'} |
             | init | ${initOk ? '✅' : '❌'} |
             | validate | ${validateOk ? '✅' : '❌'} |
-            | plan | ${planOk ? '✅' : '❌'} |
 
-            <details><summary>Plan output</summary>
-
-            \`\`\`hcl
-            ${plan}
-            \`\`\`
-
-            </details>
-
-            *On merge to main, \`terraform apply\` runs automatically.*`;
+            *Real plan-with-state runs on merge inside \`terraform-apply.yml\`.*`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -94,6 +71,6 @@ jobs:
               body
             });
 
-      - name: Fail if plan failed
-        if: steps.plan.outcome == 'failure' || steps.init.outcome == 'failure' || steps.validate.outcome == 'failure'
+      - name: Fail if validation failed
+        if: steps.init.outcome == 'failure' || steps.validate.outcome == 'failure'
         run: exit 1
