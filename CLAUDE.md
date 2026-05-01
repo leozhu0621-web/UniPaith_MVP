@@ -21,14 +21,41 @@ Before starting new feature work, always verify the environment is healthy first
 
 This is a TypeScript + Python monorepo (UniPaith MVP). Frontend is TypeScript/React, backend has both TypeScript and Python services. Infrastructure is Terraform/AWS (ECS, RDS, Cognito, SES). Domain: unipaith.co.
 
+## Surface map
+
+| URL | What | Repo / source |
+|---|---|---|
+| `unipaith.co`, `www.unipaith.co` | WordPress marketing landing | [`leozhu0621-web/UniPaith_landingpage`](https://github.com/leozhu0621-web/UniPaith_landingpage) (theme) — runs on EC2 in this VPC |
+| `app.unipaith.co` | React app (this repo) | `frontend/` → S3 + CloudFront |
+| `api.unipaith.co` | FastAPI (this repo) | `unipaith-backend/` → ECS Fargate |
+
 ## Project Structure
 
 ```
 unipaith-backend/    Python 3.12 + FastAPI + SQLAlchemy 2 (async) + PostgreSQL 16 + pgvector
 frontend/            React 19 + TypeScript + Vite + Tailwind + Zustand + TanStack Query
-infra/               Terraform (AWS: VPC, RDS, ECS Fargate, ALB, CloudFront, S3, Cognito)
+infra/               Terraform (AWS: VPC, RDS, ECS Fargate, ALB, CloudFront, S3, Cognito,
+                                  + WordPress EC2 + RDS MySQL for the marketing landing)
 scripts/             Dev utilities (reset DB, seed data, setup Cognito/S3)
 ```
+
+## Marketing landing (WordPress)
+
+The marketing site at `unipaith.co` is WordPress on EC2 (Amazon Linux 2023, Apache + PHP 8.3) with RDS MySQL for the WP DB. Provisioned by `infra/wordpress.tf`. Live in this VPC alongside the app.
+
+- **Theme repo**: `leozhu0621-web/UniPaith_landingpage` — pushes to `main` auto-deploy via SSM in ~30s
+- **wp-admin**: `https://unipaith.co/wp-admin/` — credentials in AWS Secrets Manager `unipaith/production/wp-admin`
+- **Editing content**: log into wp-admin, edit Pages directly. No git involved for copy edits.
+- **Editing theme code**: PR/push to `UniPaith_landingpage`. Workflow runs `git pull` on the EC2 via SSM and reloads Apache.
+
+## Terraform CI/CD
+
+Terraform-managed infra (this repo's `infra/`) auto-applies on push to `main`:
+
+- **PRs** → `terraform-plan.yml`: offline `fmt`/`validate` (no AWS auth — bootstrap-safe)
+- **Push to main** → `terraform-apply.yml`: full `apply -auto-approve` via OIDC role
+- The OIDC role `unipaith-github-actions` has `AdministratorAccess` (locked to PRs/main of this repo only)
+- TF_VAR_OPENAI_API_KEY GH secret feeds `var.openai_api_key` for both workflows
 
 ## Quick Start
 
