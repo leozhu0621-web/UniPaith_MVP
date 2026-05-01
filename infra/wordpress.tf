@@ -36,7 +36,7 @@ data "aws_ami" "amazon_linux_2023" {
 resource "aws_security_group" "wordpress" {
   name_prefix = "${var.project}-wp-"
   vpc_id      = aws_vpc.main.id
-  description = "WordPress EC2 — only ALB can hit port 80"
+  description = "WordPress EC2 - only ALB can hit port 80"
 
   ingress {
     from_port       = 80
@@ -64,7 +64,7 @@ resource "aws_security_group" "wordpress" {
 resource "aws_security_group" "wp_db" {
   name_prefix = "${var.project}-wp-db-"
   vpc_id      = aws_vpc.main.id
-  description = "WordPress MySQL — only WP EC2 can connect"
+  description = "WordPress MySQL - only WP EC2 can connect"
 
   ingress {
     from_port       = 3306
