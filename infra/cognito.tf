@@ -45,11 +45,14 @@ resource "aws_cognito_user_pool" "main" {
     }
   }
 
-  # Use SES for email delivery (instead of Cognito default)
+  # Use SES for email delivery (instead of Cognito default).
+  # Use the domain identity (DKIM-verified) rather than per-address email
+  # identity — sending from any address @unipaith.co works domain-wide and
+  # avoids the unverifiable noreply@ verification email loop.
   email_configuration {
     email_sending_account = "DEVELOPER"
     from_email_address    = "UniPaith <noreply@${var.domain_name}>"
-    source_arn            = aws_ses_email_identity.noreply.arn
+    source_arn            = aws_ses_domain_identity.main.arn
   }
 
   account_recovery_setting {

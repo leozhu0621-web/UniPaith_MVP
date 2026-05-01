@@ -57,7 +57,6 @@ resource "aws_route53_record" "ses_mail_from_spf" {
   records = ["v=spf1 include:amazonses.com ~all"]
 }
 
-# Email identity for noreply@ (used by Cognito)
-resource "aws_ses_email_identity" "noreply" {
-  email = "noreply@${var.domain_name}"
-}
+# Note: Cognito uses the domain identity above (DKIM-verified) rather than a
+# per-address email identity. Sending from any noreply@unipaith.co works via
+# domain identity — no per-address verification dance.
