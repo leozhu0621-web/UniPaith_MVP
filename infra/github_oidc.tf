@@ -32,11 +32,81 @@ resource "aws_iam_role" "github_actions" {
           "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
         }
         StringLike = {
-          # Only the main branch of the repo can assume this role
-          "token.actions.githubusercontent.com:sub" = "repo:${var.github_repo}:ref:refs/heads/main"
+          # main branch (push-to-main → apply) AND any pull_request (plan-only)
+          "token.actions.githubusercontent.com:sub" = [
+            "repo:${var.github_repo}:ref:refs/heads/main",
+            "repo:${var.github_repo}:pull_request",
+          ]
         }
       }
     }]
+  })
+}
+
+# --- Managed policies for Terraform apply (broad but scoped to common services) ---
+locals {
+  github_actions_managed_policies = [
+    "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
+    "arn:aws:iam::aws:policy/AmazonRDSFullAccess",
+    "arn:aws:iam::aws:policy/AmazonRoute53FullAccess",
+    "arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess",
+    "arn:aws:iam::aws:policy/IAMFullAccess",
+    "arn:aws:iam::aws:policy/SecretsManagerReadWrite",
+    "arn:aws:iam::aws:policy/AWSBackupFullAccess",
+    "arn:aws:iam::aws:policy/AmazonSSMFullAccess",
+    "arn:aws:iam::aws:policy/AWSCertificateManagerFullAccess",
+  ]
+}
+
+resource "aws_iam_role_policy_attachment" "github_actions_managed" {
+  for_each   = toset(local.github_actions_managed_policies)
+  role       = aws_iam_role.github_actions.name
+  policy_arn = each.value
+}
+
+# --- Inline policy for Terraform state (S3 backend + DynamoDB lock) ---
+resource "aws_iam_role_policy" "github_actions_tf_state" {
+  name = "terraform-state-access"
+  role = aws_iam_role.github_actions.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "TerraformStateBucket"
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:ListBucket",
+        ]
+        Resource = [
+          aws_s3_bucket.terraform_state.arn,
+          "${aws_s3_bucket.terraform_state.arn}/*",
+        ]
+      },
+      {
+        Sid    = "TerraformStateLock"
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:DescribeTable",
+        ]
+        Resource = [aws_dynamodb_table.terraform_locks.arn]
+      },
+      {
+        Sid    = "KMSForStateEncryption"
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt",
+          "kms:GenerateDataKey",
+        ]
+        Resource = ["*"]
+      },
+    ]
   })
 }
 
@@ -48,9 +118,9 @@ resource "aws_iam_role_policy" "github_actions" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "ECRAuth"
-        Effect = "Allow"
-        Action = ["ecr:GetAuthorizationToken"]
+        Sid      = "ECRAuth"
+        Effect   = "Allow"
+        Action   = ["ecr:GetAuthorizationToken"]
         Resource = ["*"]
       },
       {
@@ -77,9 +147,9 @@ resource "aws_iam_role_policy" "github_actions" {
         Resource = [aws_ecs_service.backend.id]
       },
       {
-        Sid    = "ECSWait"
-        Effect = "Allow"
-        Action = ["ecs:DescribeServices"]
+        Sid      = "ECSWait"
+        Effect   = "Allow"
+        Action   = ["ecs:DescribeServices"]
         Resource = ["*"]
       },
       {
