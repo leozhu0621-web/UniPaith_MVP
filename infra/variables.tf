@@ -33,7 +33,7 @@ variable "vpc_cidr" {
 variable "db_instance_class" {
   description = "RDS instance class"
   type        = string
-  default     = "db.r6g.large"
+  default     = "db.t4g.medium"
 }
 
 variable "db_name" {
@@ -76,13 +76,13 @@ variable "backend_memory" {
 variable "backend_desired_count" {
   description = "Number of backend tasks"
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "backend_min_count" {
   description = "Minimum backend tasks for auto-scaling"
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "backend_max_count" {
