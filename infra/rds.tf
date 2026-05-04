@@ -69,7 +69,7 @@ resource "aws_db_instance" "main" {
   vpc_security_group_ids = [aws_security_group.rds.id]
   parameter_group_name   = aws_db_parameter_group.postgres16.name
 
-  multi_az            = true
+  multi_az            = false
   publicly_accessible = false
 
   backup_retention_period = 7
