@@ -87,33 +87,26 @@ resource "aws_route53_record" "app" {
   }
 }
 
-# Apex unipaith.co → ALB (WordPress marketing landing).
-# Replaces the prior Cloudflare/Vercel A record (185.158.133.1).
-# Cutover: applying this PR overwrites the apex record via Route53 UPSERT.
+# Apex unipaith.co → Vercel anycast (Claude Design landing on Vercel).
+# Replaces the prior ALB → WordPress target. Vercel apex IPs:
+#   https://vercel.com/docs/projects/domains/working-with-domains#apex-domains
 resource "aws_route53_record" "apex" {
   zone_id         = data.aws_route53_zone.main.zone_id
   name            = var.domain_name
   type            = "A"
   allow_overwrite = true
-
-  alias {
-    name                   = aws_lb.main.dns_name
-    zone_id                = aws_lb.main.zone_id
-    evaluate_target_health = true
-  }
+  ttl             = 300
+  records         = ["76.76.21.142", "66.33.60.66"]
 }
 
+# www.unipaith.co → Vercel CNAME (canonical for non-apex)
 resource "aws_route53_record" "www" {
   zone_id         = data.aws_route53_zone.main.zone_id
   name            = "www.${var.domain_name}"
-  type            = "A"
+  type            = "CNAME"
   allow_overwrite = true
-
-  alias {
-    name                   = aws_lb.main.dns_name
-    zone_id                = aws_lb.main.zone_id
-    evaluate_target_health = true
-  }
+  ttl             = 300
+  records         = ["cname.vercel-dns.com"]
 }
 
 # API subdomain → ALB (for direct API access)
