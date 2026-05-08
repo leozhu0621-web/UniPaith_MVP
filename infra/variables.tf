@@ -97,16 +97,3 @@ variable "openai_api_key" {
   type        = string
   sensitive   = true
 }
-
-# --- WordPress ---
-variable "wordpress_instance_type" {
-  description = "EC2 instance type for the WordPress host"
-  type        = string
-  default     = "t3.small"
-}
-
-variable "wp_db_instance_class" {
-  description = "RDS instance class for the WordPress MySQL DB"
-  type        = string
-  default     = "db.t4g.micro"
-}
