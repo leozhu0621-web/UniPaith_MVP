@@ -47,25 +47,3 @@ output "api_direct_url" {
   description = "Direct API URL via ALB"
   value       = "https://api.${var.domain_name}/api/v1"
 }
-
-# --- WordPress outputs ---
-output "wordpress_eip" {
-  description = "Elastic IP of the WordPress EC2 (for SSH/SSM and pre-cutover access)"
-  value       = aws_eip.wordpress.public_ip
-}
-
-output "wordpress_instance_id" {
-  description = "EC2 instance ID for SSM Session Manager"
-  value       = aws_instance.wordpress.id
-}
-
-output "wordpress_admin_url" {
-  description = "WordPress admin URL (post-cutover)"
-  value       = "https://${var.domain_name}/wp-admin/"
-}
-
-output "wp_db_endpoint" {
-  description = "WordPress RDS MySQL endpoint"
-  value       = aws_db_instance.wordpress.endpoint
-  sensitive   = true
-}
