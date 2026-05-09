@@ -133,6 +133,13 @@ class Settings(BaseSettings):
     ai_mock_mode: bool = False
     ai_refresh_cooldown_seconds: int = 300
 
+    # Discovery v2 — Phase A2 LLM pipeline. When False (default), the
+    # discovery service returns the Phase-A stub assistant reply. When True,
+    # the orchestrator + extractor + validator + artifact-writer fire on
+    # every student turn. Internal dogfood gate; flip to True per-environment
+    # in `.env` once Anthropic + Voyage keys are populated.
+    ai_discovery_v2_enabled: bool = False
+
     # GPU infrastructure (cloud-first)
     gpu_mode: str = "openai"  # "openai" | "aws" | "local" | "mock"
     gpu_8b_instance_id: str = ""
