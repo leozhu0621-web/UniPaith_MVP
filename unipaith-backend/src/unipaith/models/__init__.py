@@ -98,6 +98,7 @@ from unipaith.models.pipeline import (
     PipelineConfig,
     PipelineStageSnapshot,
 )
+from unipaith.models.strategy import StudentStrategy
 from unipaith.models.student import (
     AcademicRecord,
     Activity,
@@ -156,7 +157,8 @@ __all__ = [
     "StudentGoal",
     "StudentNeed",
     "StudentIdentity",
-    # LLM-only artifacts (Phase A1 — this PR)
+    "StudentStrategy",
+    # LLM-only artifacts (Phase A1)
     "StudentFeatureVector",
     "AiTurn",
     "Institution",
