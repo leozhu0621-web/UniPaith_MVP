@@ -23,6 +23,7 @@ from unipaith.models.crawler import (
     ExtractedProgram,
     SourceURLPattern,
 )
+from unipaith.models.discovery import DiscoveryMessage, DiscoverySession
 from unipaith.models.engagement import (
     Conversation,
     ConversationSession,
@@ -141,6 +142,8 @@ __all__ = [
     "StudentVisaInfo",
     "StudentWorkExperience",
     "OnboardingProgress",
+    "DiscoverySession",
+    "DiscoveryMessage",
     "Institution",
     "School",
     "Program",
