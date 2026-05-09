@@ -94,6 +94,7 @@ from unipaith.models.pipeline import (
     PipelineConfig,
     PipelineStageSnapshot,
 )
+from unipaith.models.strategy import StudentStrategy
 from unipaith.models.student import (
     AcademicRecord,
     Activity,
@@ -150,6 +151,7 @@ __all__ = [
     "StudentGoal",
     "StudentNeed",
     "StudentIdentity",
+    "StudentStrategy",
     "Institution",
     "School",
     "Program",
