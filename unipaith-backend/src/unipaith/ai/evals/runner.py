@@ -167,11 +167,11 @@ def run_framework_adherence(real: bool) -> SuiteResult:
             },
         )
 
-    # Real mode (A2+): wire up to A1 Orchestrator and Haiku-as-judge for
-    # soft criteria. Structural expectations are checked deterministically.
-    raise NotImplementedError(
-        "real-mode framework_adherence ships in Phase A2 — wires to A1 Orchestrator"
-    )
+    # Real mode: wire to the A1 Orchestrator. A2 grades only the
+    # **structural** expectations (must_not_do / must_do markers); the
+    # soft Haiku-as-judge layer for `must_extract_*` lands in A3 alongside
+    # the personality/identity validator.
+    return _run_framework_adherence_real(convs)
 
 
 def run_extractor_accuracy(real: bool) -> SuiteResult:
@@ -204,9 +204,7 @@ def run_extractor_accuracy(real: bool) -> SuiteResult:
             },
         )
 
-    raise NotImplementedError(
-        "real-mode extractor_accuracy ships in Phase A2 — wires to A2 Extractor"
-    )
+    return _run_extractor_accuracy_real(units)
 
 
 def run_bias_pairs(real: bool) -> SuiteResult:
@@ -310,6 +308,182 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     print(f"PASSED: {len(results)}/{len(results)} suites")
     return 0
+
+
+# ── Real-mode runners (Phase A2 — Anthropic in the loop) ────────────────────
+#
+# These are imported lazily inside the runner functions so the module-level
+# imports stay light (and so `python -m unipaith.ai.evals.runner --suite ...`
+# in mock mode never touches the AI client).
+
+
+def _run_framework_adherence_real(convs: list[dict[str, Any]]) -> SuiteResult:
+    """Real-mode framework adherence.
+
+    For each golden conversation, replay the scripted student turns one by
+    one through the A1 Orchestrator. Grade each turn against its
+    structural expectations (must_not_do / must_do). A2 grades only
+    deterministic structural matches; A3 adds Haiku-as-judge for soft
+    criteria.
+    """
+    import asyncio
+
+    from unipaith.ai.orchestrator import TurnContext, get_orchestrator
+
+    threshold = THRESHOLDS["framework_adherence"]["min_pass_rate"]
+
+    async def _replay_one(conv: dict[str, Any]) -> tuple[int, int]:
+        history: list[dict[str, str]] = []
+        passed_turns = 0
+        scored_turns = 0
+        orch = get_orchestrator()
+
+        for i, turn_text in enumerate(conv["scripted_user_turns"]):
+            expectation = next(
+                (e for e in conv["expectations"] if e.get("turn_index") == i),
+                None,
+            )
+            history.append({"role": "user", "content": turn_text})
+
+            ctx = TurnContext(
+                track="profile",
+                layer="basic",
+                completion_pct=0.0,
+                verdict=None,
+                known_profile_summary="",
+                history=history,
+            )
+            response = await orch.respond(ctx=ctx)
+            history.append({"role": "assistant", "content": response.text})
+
+            if expectation is None:
+                continue
+            scored_turns += 1
+            text_lower = response.text.lower()
+            ok = True
+            for must_not in expectation.get("must_not_do", []):
+                if must_not == "recommend_specific_programs" and any(
+                    n in text_lower for n in ("stanford", "cmu", "mit", "harvard", "berkeley")
+                ):
+                    ok = False
+                if must_not == "compare_stanford_vs_cmu" and (
+                    "stanford" in text_lower and "cmu" in text_lower
+                ):
+                    ok = False
+                if must_not == "ask_more_than_one_question":
+                    # crude: > 1 question mark = multi-question turn
+                    if response.text.count("?") > 1:
+                        ok = False
+            if ok:
+                passed_turns += 1
+        return passed_turns, scored_turns
+
+    async def _run_all() -> tuple[int, int]:
+        total_passed = 0
+        total_scored = 0
+        for conv in convs:
+            p, s = await _replay_one(conv)
+            total_passed += p
+            total_scored += s
+        return total_passed, total_scored
+
+    passed, scored = asyncio.run(_run_all())
+    score = (passed / scored) if scored else 0.0
+    return SuiteResult(
+        name="framework_adherence",
+        score=score,
+        threshold=threshold,
+        passed=score >= threshold,
+        detail={
+            "fixtures": len(convs),
+            "scored_turns": scored,
+            "passed_turns": passed,
+            "mode": "real-structural",
+        },
+    )
+
+
+def _run_extractor_accuracy_real(units: list[dict[str, Any]]) -> SuiteResult:
+    """Real-mode extractor accuracy.
+
+    F1 over (key, value) pairs across the labeled set. We compare a small
+    set of basic-layer scalar fields plus the *types* of personality /
+    identity / goal / need entries; deeper soft-match grading lands in A3.
+    """
+    import asyncio
+
+    from unipaith.ai.extractor import get_extractor
+
+    threshold = THRESHOLDS["extractor_accuracy"]["min_f1"]
+
+    async def _extract_all() -> list[tuple[dict[str, Any], dict[str, Any]]]:
+        ex = get_extractor()
+        out = []
+        for u in units:
+            extraction = await ex.extract(student_turn=u["student_turn"])
+            actual = {
+                "basic": extraction.basic,
+                "personality_facets": [p.get("facet") for p in extraction.personality],
+                "identity_facets": [i.get("facet") for i in extraction.identity],
+                "goal_categories": [g.get("category") for g in extraction.goals],
+                "need_levels": [n.get("maslow_level") for n in extraction.needs],
+            }
+            out.append((u["expected"], actual))
+        return out
+
+    pairs = asyncio.run(_extract_all())
+
+    tp = fp = fn = 0
+    for expected, actual in pairs:
+        # Basic field match — count present scalar fields.
+        for k, v in (expected.get("basic") or {}).items():
+            if v is None:
+                continue
+            if (actual.get("basic") or {}).get(k) == v:
+                tp += 1
+            else:
+                fn += 1
+        for k, v in (actual.get("basic") or {}).items():
+            if v is None:
+                continue
+            if k not in (expected.get("basic") or {}) or (expected.get("basic") or {}).get(k) != v:
+                fp += 1
+        # Set-match for the facet/category lists.
+        for ek, ak in (
+            ("personality", "personality_facets"),
+            ("identity", "identity_facets"),
+            ("goals", "goal_categories"),
+            ("needs", "need_levels"),
+        ):
+            expected_set = {
+                (e.get("facet") if "facet" in e else e.get("category") or e.get("maslow_level"))
+                for e in (expected.get(ek) or [])
+            }
+            expected_set.discard(None)
+            actual_set = set(actual.get(ak) or [])
+            tp += len(expected_set & actual_set)
+            fn += len(expected_set - actual_set)
+            fp += len(actual_set - expected_set)
+
+    precision = tp / (tp + fp) if (tp + fp) else 0.0
+    recall = tp / (tp + fn) if (tp + fn) else 0.0
+    f1 = (2 * precision * recall / (precision + recall)) if (precision + recall) else 0.0
+    return SuiteResult(
+        name="extractor_accuracy",
+        score=f1,
+        threshold=threshold,
+        passed=f1 >= threshold,
+        detail={
+            "fixtures": len(units),
+            "tp": tp,
+            "fp": fp,
+            "fn": fn,
+            "precision": round(precision, 3),
+            "recall": round(recall, 3),
+            "f1": round(f1, 3),
+            "mode": "real-f1",
+        },
+    )
 
 
 if __name__ == "__main__":

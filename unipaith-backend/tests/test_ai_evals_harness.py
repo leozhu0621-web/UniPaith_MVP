@@ -35,13 +35,21 @@ def test_load_golden_conversations_finds_first_gen_engineer() -> None:
 
 def test_load_extractor_units_parses_jsonl_with_comments() -> None:
     units = load_extractor_units()
-    assert len(units) >= 5
+    # Phase A2 grew the labeled set from 5 to 20.
+    assert len(units) >= 20
     # Comment lines starting with `// ` must be stripped, not parsed.
     for u in units:
         assert isinstance(u, dict)
         assert "id" in u
         assert "student_turn" in u
         assert "expected" in u
+
+
+def test_extractor_unit_ids_unique() -> None:
+    """Stable IDs are how we track regressions across runs — must be unique."""
+    units = load_extractor_units()
+    ids = [u["id"] for u in units]
+    assert len(ids) == len(set(ids))
 
 
 def test_framework_adherence_mock_mode_passes() -> None:
