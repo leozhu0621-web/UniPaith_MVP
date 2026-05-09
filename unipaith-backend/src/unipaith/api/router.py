@@ -9,6 +9,7 @@ from unipaith.api.admin_dashboard import router as admin_dashboard_router
 from unipaith.api.applications import router as applications_router
 from unipaith.api.auth import router as auth_router
 from unipaith.api.crawler_admin import router as crawler_admin_router
+from unipaith.api.discovery import router as discovery_router
 from unipaith.api.documents import router as documents_router
 from unipaith.api.events import router as events_router
 from unipaith.api.institutions import router as institutions_router
@@ -31,6 +32,7 @@ api_router = APIRouter()
 
 api_router.include_router(auth_router)
 api_router.include_router(students_router)
+api_router.include_router(discovery_router)
 api_router.include_router(institutions_router)
 api_router.include_router(programs_router)
 api_router.include_router(applications_router)
@@ -60,9 +62,7 @@ async def redirect_campaign_link(
     db: AsyncSession = Depends(get_db),
 ):
     """Public — redirect trackable campaign link and record click."""
-    result = await db.execute(
-        select(CampaignLink).where(CampaignLink.short_code == short_code)
-    )
+    result = await db.execute(select(CampaignLink).where(CampaignLink.short_code == short_code))
     link = result.scalar_one_or_none()
     if not link:
         return RedirectResponse("https://app.unipaith.co", status_code=302)
@@ -82,15 +82,9 @@ async def redirect_campaign_link(
     elif link.destination_type == "institution" and link.destination_id:
         url = f"{base}/school/{link.destination_id}?{cid_param}"
     elif link.destination_type == "event" and link.destination_id:
-        url = (
-            f"{base}/school/{link.institution_id}"
-            f"?tab=events&{cid_param}"
-        )
+        url = f"{base}/school/{link.institution_id}" f"?tab=events&{cid_param}"
     elif link.destination_type == "post" and link.destination_id:
-        url = (
-            f"{base}/school/{link.institution_id}"
-            f"?tab=posts&{cid_param}"
-        )
+        url = f"{base}/school/{link.institution_id}" f"?tab=posts&{cid_param}"
     else:
         url = base
 
