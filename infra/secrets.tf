@@ -30,7 +30,7 @@ resource "aws_secretsmanager_secret_version" "app_secret" {
   secret_string = random_password.app_secret.result
 }
 
-# --- OpenAI API key ---
+# --- OpenAI API key (legacy — used by offline crawler/extractor only) ---
 resource "aws_secretsmanager_secret" "openai_api_key" {
   name                    = "${var.project}/${var.environment}/openai-api-key"
   recovery_window_in_days = 7
@@ -39,4 +39,26 @@ resource "aws_secretsmanager_secret" "openai_api_key" {
 resource "aws_secretsmanager_secret_version" "openai_api_key" {
   secret_id     = aws_secretsmanager_secret.openai_api_key.id
   secret_string = var.openai_api_key
+}
+
+# --- Anthropic API key (primary user-facing LLM — Plan 2) ---
+resource "aws_secretsmanager_secret" "anthropic_api_key" {
+  name                    = "${var.project}/${var.environment}/anthropic-api-key"
+  recovery_window_in_days = 7
+}
+
+resource "aws_secretsmanager_secret_version" "anthropic_api_key" {
+  secret_id     = aws_secretsmanager_secret.anthropic_api_key.id
+  secret_string = var.anthropic_api_key
+}
+
+# --- Voyage embeddings API key (paired with Anthropic for the new feature pipeline) ---
+resource "aws_secretsmanager_secret" "voyage_api_key" {
+  name                    = "${var.project}/${var.environment}/voyage-api-key"
+  recovery_window_in_days = 7
+}
+
+resource "aws_secretsmanager_secret_version" "voyage_api_key" {
+  secret_id     = aws_secretsmanager_secret.voyage_api_key.id
+  secret_string = var.voyage_api_key
 }

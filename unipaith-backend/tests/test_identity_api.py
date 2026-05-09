@@ -10,6 +10,7 @@ from __future__ import annotations
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from unipaith.models.student import StudentProfile
 from unipaith.models.user import User
 from unipaith.services.identity_service import STUB_IDENTITY_SUMMARY

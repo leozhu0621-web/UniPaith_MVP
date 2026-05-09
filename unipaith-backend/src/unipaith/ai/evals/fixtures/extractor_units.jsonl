@@ -1,0 +1,14 @@
+// Phase A1 — initial extractor accuracy fixtures.
+// Format: one JSON object per line. Use `// ` for comments (parser strips).
+// Schema version: 1 (see ai/tools/extractor_schema.py)
+//
+// Each unit:
+//   id              — stable identifier
+//   student_turn    — the verbatim user message to extract from
+//   expected        — partial expected output; absent keys are not graded
+//   notes           — context for the labeler (not graded)
+{"id": "u001", "student_turn": "I'm a senior at SUNY Binghamton, 3.9 GPA, and I'm looking at ML PhD programs.", "expected": {"basic": {"education_level": "bachelors", "gpa": 3.9, "age": null}, "personality": [{"facet": "career_direction", "value": "machine learning research"}], "confidence": {"basic": 0.9, "personality": 0.8}}, "notes": "Clean basic-layer extraction; education_level inferred from 'senior at [4-year]'."}
+{"id": "u002", "student_turn": "I want to be a family-medicine doctor. By when? I want to be in residency by 2031.", "expected": {"goals": [{"category": "academic", "specific": "become a family-medicine doctor", "time_bound": "in residency by 2031", "completeness": 0.6}], "confidence": {"goals": 0.7}}, "notes": "Specific + time_bound present, others null. completeness must be < 1."}
+{"id": "u003", "student_turn": "I think the world is better when more people can build software. That's why I tutor kids on weekends.", "expected": {"identity": [{"facet": "value", "claim": "broadening access to building software", "evidence": "the world is better when more people can build software"}], "confidence": {"identity": 0.85}}, "notes": "Real value claim with concrete behavioral evidence."}
+{"id": "u004", "student_turn": "I like coding I guess.", "expected": {"personality": [{"facet": "interest", "value": "coding"}], "confidence": {"personality": 0.4}}, "notes": "Casual statement — should NOT be promoted to identity claim. Confidence low."}
+{"id": "u005", "student_turn": "California's too far from my parents — I need to stay in the Northeast.", "expected": {"basic": {"location_avoid": ["US-CA"]}, "needs": [{"maslow_level": "social", "signal": "near_family", "severity": 4, "evidence": "California's too far from my parents"}], "confidence": {"basic": 0.85, "needs": 0.85}}, "notes": "Both basic location_avoid and a Maslow social signal. Don't double-extract location_prefs."}
