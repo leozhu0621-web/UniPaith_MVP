@@ -36,6 +36,8 @@ from unipaith.models.engagement import (
     StudentEssay,
     StudentResume,
 )
+from unipaith.models.goals import StudentGoal
+from unipaith.models.identity import StudentIdentity
 from unipaith.models.institution import (
     Campaign,
     CampaignAction,
@@ -87,6 +89,7 @@ from unipaith.models.ml_loop import (
     OutcomeRecord,
     TrainingRun,
 )
+from unipaith.models.needs import StudentNeed
 from unipaith.models.pipeline import (
     PipelineConfig,
     PipelineStageSnapshot,
@@ -144,6 +147,9 @@ __all__ = [
     "OnboardingProgress",
     "DiscoverySession",
     "DiscoveryMessage",
+    "StudentGoal",
+    "StudentNeed",
+    "StudentIdentity",
     "Institution",
     "School",
     "Program",
