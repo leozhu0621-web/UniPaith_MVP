@@ -1,4 +1,8 @@
 from unipaith.models.admin_audit_event import AdminAuditEvent
+from unipaith.models.ai_artifacts import (
+    AiTurn,
+    StudentFeatureVector,
+)
 from unipaith.models.application import (
     AIPacketSummary,
     Application,
@@ -146,12 +150,17 @@ __all__ = [
     "StudentVisaInfo",
     "StudentWorkExperience",
     "OnboardingProgress",
+    # Discovery (Phase A — parallel session, merged in #111)
     "DiscoverySession",
     "DiscoveryMessage",
+    # Discovery artifacts (Phase A — parallel session, merged in #113)
     "StudentGoal",
     "StudentNeed",
     "StudentIdentity",
     "StudentStrategy",
+    # LLM-only artifacts (Phase A1)
+    "StudentFeatureVector",
+    "AiTurn",
     "Institution",
     "School",
     "Program",

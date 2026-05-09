@@ -84,27 +84,38 @@ class Settings(BaseSettings):
     # Logging
     log_level: str = "INFO"
 
-    # OpenAI API key (used when gpu_mode is "openai" or "local" with OpenAI)
+    # OpenAI API key — kept for the offline crawler/extractor pipeline
+    # (`crawler/extractor.py`, `worker/local_extract.py`). User-facing LLM
+    # surfaces use Anthropic via `unipaith.ai.client`. See Plan 2.
     openai_api_key: str = ""
 
-    # LLM - Feature Extraction
-    llm_feature_base_url: str = "https://api.openai.com/v1"
-    llm_feature_model: str = "gpt-4o"
-    llm_feature_api_key: str = ""  # auto-filled from openai_api_key
+    # Anthropic — primary user-facing LLM provider (Plan 2)
+    anthropic_api_key: str = ""
+
+    # Voyage — embedding provider paired with Anthropic
+    voyage_api_key: str = ""
+
+    # LLM - Feature Extraction (Haiku-class — extractor / validator / emitter)
+    llm_feature_base_url: str = "https://api.anthropic.com"
+    llm_feature_model: str = "claude-haiku-4-5"
+    llm_feature_api_key: str = ""  # auto-filled from openai_api_key for legacy paths
     llm_feature_max_tokens: int = 2048
     llm_feature_temperature: float = 0.1
 
-    # LLM - Reasoning
-    llm_reasoning_base_url: str = "https://api.openai.com/v1"
-    llm_reasoning_model: str = "gpt-4o"
-    llm_reasoning_api_key: str = ""  # auto-filled from openai_api_key
+    # LLM - Reasoning (Sonnet-class — orchestrator / rationale / coach)
+    llm_reasoning_base_url: str = "https://api.anthropic.com"
+    llm_reasoning_model: str = "claude-sonnet-4-6"
+    llm_reasoning_api_key: str = ""  # auto-filled from openai_api_key for legacy paths
     llm_reasoning_max_tokens: int = 1024
     llm_reasoning_temperature: float = 0.7
 
-    # Embedding (OpenAI's embedding model)
-    embedding_base_url: str = "https://api.openai.com/v1"
-    embedding_model: str = "text-embedding-3-small"
-    embedding_dimension: int = 1536  # OpenAI text-embedding-3-small outputs 1536
+    # Embedding (Voyage 3-large, paired with Anthropic for the LLM stack.
+    # Note: the existing `student_features` table uses 1536-dim OpenAI vectors
+    # for legacy matching; the new `student_feature_vectors` table uses 1024-dim
+    # voyage-3-large.)
+    embedding_base_url: str = "https://api.voyageai.com/v1"
+    embedding_model: str = "voyage-3-large"
+    embedding_dimension: int = 1024
 
     # Matching
     matching_candidate_count: int = 100
@@ -121,6 +132,13 @@ class Settings(BaseSettings):
     # AI dev mode
     ai_mock_mode: bool = False
     ai_refresh_cooldown_seconds: int = 300
+
+    # Discovery v2 — Phase A2 LLM pipeline. When False (default), the
+    # discovery service returns the Phase-A stub assistant reply. When True,
+    # the orchestrator + extractor + validator + artifact-writer fire on
+    # every student turn. Internal dogfood gate; flip to True per-environment
+    # in `.env` once Anthropic + Voyage keys are populated.
+    ai_discovery_v2_enabled: bool = False
 
     # GPU infrastructure (cloud-first)
     gpu_mode: str = "openai"  # "openai" | "aws" | "local" | "mock"

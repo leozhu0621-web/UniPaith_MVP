@@ -1,0 +1,78 @@
+"""Tool schemas for the orchestrator agent.
+
+The orchestrator can call:
+  - record_artifact(...)         — commit a clear claim mid-turn
+  - request_layer_advance()      — signal that the current layer is complete
+                                    (validator confirms or pushes back)
+
+These are deliberately small surfaces. The orchestrator is *not* allowed to
+write directly to the typed artifact tables; it requests a write and the
+runtime decides whether to honor it (subject to extractor cross-check).
+"""
+
+RECORD_ARTIFACT_TOOL = {
+    "name": "record_artifact",
+    "description": (
+        "Commit a single artifact mid-turn. Use this when the student has "
+        "made an unambiguous, quotable claim. The runtime cross-checks "
+        "against the extractor before persisting; if you call this, the "
+        "claim should be obvious enough that the extractor will agree."
+    ),
+    "input_schema": {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["type", "value", "evidence"],
+        "properties": {
+            "type": {
+                "type": "string",
+                "enum": [
+                    "goal",
+                    "need",
+                    "identity_claim",
+                    "basic_field",
+                    "personality_field",
+                ],
+            },
+            "value": {
+                "type": "object",
+                "description": (
+                    "Structured payload. Shape depends on `type`. The runtime "
+                    "validates against the typed table's columns before commit."
+                ),
+            },
+            "evidence": {
+                "type": "string",
+                "maxLength": 600,
+                "description": (
+                    "Verbatim quote from the student turn that supports the "
+                    "claim. Required even for basic_field."
+                ),
+            },
+        },
+    },
+}
+
+
+REQUEST_LAYER_ADVANCE_TOOL = {
+    "name": "request_layer_advance",
+    "description": (
+        "Signal that the current Discovery layer feels complete to you. The "
+        "runtime's validator will check against framework exit conditions "
+        "and either confirm (advancing the layer) or return a `next_probe` "
+        "for you to ask in the next turn."
+    ),
+    "input_schema": {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "rationale": {
+                "type": "string",
+                "maxLength": 280,
+                "description": (
+                    "One-sentence reason you believe the layer is complete. "
+                    "Cited back to the validator if it pushes back."
+                ),
+            }
+        },
+    },
+}

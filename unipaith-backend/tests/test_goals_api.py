@@ -12,6 +12,7 @@ from decimal import Decimal
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from unipaith.models.student import StudentProfile
 from unipaith.models.user import User
 

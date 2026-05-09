@@ -91,9 +91,25 @@ variable "backend_max_count" {
   default     = 8
 }
 
-# --- OpenAI ---
+# --- OpenAI (legacy — offline crawler/extractor only) ---
 variable "openai_api_key" {
-  description = "OpenAI API key for AI features"
+  description = "OpenAI API key — used by the offline crawler/extractor only. User-facing AI uses Anthropic."
   type        = string
   sensitive   = true
+}
+
+# --- Anthropic (primary user-facing LLM, Plan 2) ---
+variable "anthropic_api_key" {
+  description = "Anthropic API key — Sonnet 4.6 + Haiku 4.5 power the Discovery / Match / Workshop agents."
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+# --- Voyage (embeddings, paired with Anthropic) ---
+variable "voyage_api_key" {
+  description = "Voyage AI API key — voyage-3-large 1024-d embeddings for the new feature-vector pipeline."
+  type        = string
+  sensitive   = true
+  default     = ""
 }

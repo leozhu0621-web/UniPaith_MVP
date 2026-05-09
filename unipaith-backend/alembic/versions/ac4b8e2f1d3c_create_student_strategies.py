@@ -23,7 +23,9 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 revision = "ac4b8e2f1d3c"  # pragma: allowlist secret
-down_revision = "9b3c5d7e8f1a"  # pragma: allowlist secret
+# Merge two heads: this PR's strategy work and the parallel Phase A1 LLM
+# artifacts work (PR #112). Both branched off 9b3c5d7e8f1a.
+down_revision = ("9b3c5d7e8f1a", "9b1a2c3d4e5f")  # pragma: allowlist secret
 branch_labels = None
 depends_on = None
 
