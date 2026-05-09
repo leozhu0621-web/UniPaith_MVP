@@ -1,4 +1,4 @@
-.PHONY: dev dev-db dev-backend dev-frontend test-backend test-frontend lint format reset-db seed install-backend install-frontend
+.PHONY: dev dev-db dev-backend dev-frontend test-backend test-frontend lint format reset-db seed install-backend install-frontend eval-ai eval-ai-real
 
 # ── Local Development ──────────────────────────────────────────────
 
@@ -80,6 +80,20 @@ migrate:  ## Run pending migrations
 
 migration:  ## Generate a new migration (usage: make migration MSG="add foo table")
 	cd unipaith-backend && .venv/bin/alembic revision --autogenerate -m "$(MSG)"
+
+# ── AI Evals ───────────────────────────────────────────────────────
+
+eval-ai:  ## Run the AI eval harness in mock mode (no API costs)
+	cd unipaith-backend && \
+		PYTHONPATH=src \
+		AI_MOCK_MODE=true \
+		.venv/bin/python -m unipaith.ai.evals.runner
+
+eval-ai-real:  ## Run the AI eval harness against real Anthropic + Voyage (~$5/run)
+	cd unipaith-backend && \
+		PYTHONPATH=src \
+		UNIPAITH_EVAL_REAL=1 \
+		.venv/bin/python -m unipaith.ai.evals.runner
 
 # ── Help ───────────────────────────────────────────────────────────
 
