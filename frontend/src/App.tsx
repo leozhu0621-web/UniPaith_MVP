@@ -22,7 +22,10 @@ import InstitutionPage from './pages/public/InstitutionPage'
 import ProgramDetailPage from './pages/public/ProgramDetailPage'
 
 // Student pages — 4 main + profile/saved/settings from avatar
-import CounselorHomePage from './pages/student/CounselorHomePage'
+// Discover (Stage 1) is the new student home — replaces CounselorHomePage
+// per the Phase B Discover-page rebuild. Track-segmented journey + chat
+// + artifact rail.
+import DiscoverHomePage from './pages/student/DiscoverHomePage'
 import StudentPostsPage from './pages/student/PostsPage'
 import ExplorePage from './pages/student/ExplorePage'
 import ManagementPage from './pages/student/ManagementPage'
@@ -98,7 +101,7 @@ const router = createBrowserRouter([
     errorElement: <RouteErrorPage />,
     children: [
       // === 4 Main Pages ===
-      { index: true, element: <CounselorHomePage /> },         // Counselor (home)
+      { index: true, element: <DiscoverHomePage /> },          // Stage 1 — Discovery
       { path: 'posts', element: <StudentPostsPage /> },           // Posts (social feed)
       { path: 'explore', element: <ExplorePage /> },            // Explore (database)
       { path: 'manage', element: <ManagementPage /> },          // Management (apps/cal/msg)
