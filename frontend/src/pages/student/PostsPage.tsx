@@ -6,12 +6,23 @@ import { listSaved } from '../../api/saved-lists'
 import { rsvpEvent, cancelRsvp, getMyRsvps } from '../../api/events'
 import EventCard from './explore/cards/EventCard'
 import PostCard from './explore/cards/PostCard'
-import { Rss, Search, GraduationCap } from 'lucide-react'
+import { Calendar, GraduationCap, Newspaper, Rss, Search, Users } from 'lucide-react'
+
+type ConnectTab = 'updates' | 'events' | 'peers'
+
+const CONNECT_TABS: { key: ConnectTab; label: string; icon: typeof Newspaper }[] = [
+  { key: 'updates', label: 'Updates', icon: Newspaper },
+  { key: 'events', label: 'Events', icon: Calendar },
+  { key: 'peers', label: 'Peers', icon: Users },
+]
 
 export default function PostsPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [selectedSchool, setSelectedSchool] = useState<string | null>(null)
+  // Phase D — institutional Updates lands first per the Connect rebrand;
+  // peer feed is a click away (coming-soon for now).
+  const [tab, setTab] = useState<ConnectTab>('updates')
 
   const { data: feed, isLoading } = useQuery({
     queryKey: ['student-feed'],
@@ -49,10 +60,17 @@ export default function PostsPage() {
     return Array.from(map.values()).sort((a, b) => b.lastDate.localeCompare(a.lastDate))
   })()
 
-  // Filter items by selected school
-  const filteredItems = selectedSchool
-    ? items.filter(i => i.institution_id === selectedSchool)
-    : items
+  // Filter items by selected school + active Connect tab.
+  const filteredItems = (() => {
+    let xs = items
+    if (selectedSchool) xs = xs.filter(i => i.institution_id === selectedSchool)
+    if (tab === 'events') xs = xs.filter(i => i.type === 'event')
+    if (tab === 'updates') {
+      // Updates = posts only (events get their own tab).
+      xs = xs.filter(i => i.type === 'post')
+    }
+    return xs
+  })()
 
   // Loading
   if (isLoading) {
@@ -145,7 +163,45 @@ export default function PostsPage() {
       {/* Right: Feed (flex-1, takes most space) */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-6 py-6 space-y-4">
-          {selectedSchool && (
+          {/* Connect heading + tabs */}
+          <div>
+            <h1 className="text-2xl font-semibold text-student-ink">Connect</h1>
+            <p className="text-sm text-student-text mt-1 mb-3">
+              Stage 3 of three. Updates and events from the schools you follow; peer
+              connections coming.
+            </p>
+            <div className="flex gap-1 border-b border-divider">
+              {CONNECT_TABS.map(t => (
+                <button
+                  key={t.key}
+                  onClick={() => setTab(t.key)}
+                  className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                    tab === t.key
+                      ? 'border-student text-student'
+                      : 'border-transparent text-student-text hover:text-student-ink'
+                  }`}
+                >
+                  <t.icon size={14} />
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {tab === 'peers' && (
+            <div className="text-center py-12">
+              <div className="w-12 h-12 rounded-full bg-student-mist flex items-center justify-center mx-auto mb-3">
+                <Users size={20} className="text-student" />
+              </div>
+              <p className="text-sm font-medium text-student-ink mb-1">Peers — coming soon</p>
+              <p className="text-xs text-student-text max-w-sm mx-auto">
+                A space to connect with applicants targeting overlapping programs. We'll surface
+                this once enough students are onboarded to make introductions useful.
+              </p>
+            </div>
+          )}
+
+          {selectedSchool && tab !== 'peers' && (
             <div className="flex items-center gap-2 pb-3 border-b border-divider">
               <GraduationCap size={14} className="text-school" />
               <span className="text-sm font-medium text-student-ink">
@@ -157,11 +213,13 @@ export default function PostsPage() {
             </div>
           )}
 
-          {filteredItems.length === 0 ? (
+          {tab !== 'peers' && filteredItems.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-sm text-student-text">No updates from this school yet.</p>
+              <p className="text-sm text-student-text">
+                {tab === 'events' ? 'No upcoming events.' : 'No updates yet.'}
+              </p>
             </div>
-          ) : (
+          ) : tab === 'peers' ? null : (
             filteredItems.map((item: any) => {
               if (item.type === 'event') {
                 return <EventCard key={`ev-${item.id}`} event={item} isRsvped={rsvpSet.has(item.id)} onRsvp={() => rsvpMut.mutate(item.id)} />
