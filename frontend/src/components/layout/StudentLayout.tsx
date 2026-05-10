@@ -3,7 +3,7 @@ import { useAuthStore } from '../../stores/auth-store'
 import { useCounselorStore } from '../../stores/counselor-store'
 import MiniCounselorPanel from '../student/MiniCounselorPanel'
 import {
-  Sparkles, Newspaper, Search, FolderKanban,
+  Compass, Target, FolderKanban, Newspaper,
   Bell, LogOut, User, Bookmark, Settings, MessageSquare,
 } from 'lucide-react'
 import Avatar from '../ui/Avatar'
@@ -16,8 +16,8 @@ export default function StudentLayout() {
   const location = useLocation()
   const { isMinimized, setMinimized } = useCounselorStore()
 
-  const isCounselorTab = location.pathname === '/s' || location.pathname === '/s/'
-  const isOtherTab = !isCounselorTab
+  const isDiscoverTab = location.pathname === '/s' || location.pathname === '/s/'
+  const isOtherTab = !isDiscoverTab
   const showMiniCounselor = isOtherTab && !isMinimized
 
   return (
@@ -28,9 +28,11 @@ export default function StudentLayout() {
           <span className="text-student">Uni</span><span className="text-student-ink font-extrabold">Paith</span>
         </NavLink>
 
-        {/* Nav with thin divider after Counselor */}
+        {/* Nav — Stage 1 (Discover) → Stage 2 (Match) → Stage 3 (Apply, Connect).
+            Discover gets a divider after it because it's the home / always-on
+            surface for the student journey. */}
         <nav className="flex items-center">
-          {/* Counselor — separated */}
+          {/* Discover — Stage 1, separated */}
           <NavLink
             to="/s"
             end
@@ -42,8 +44,8 @@ export default function StudentLayout() {
           >
             {({ isActive }) => (
               <>
-                <Sparkles size={19} />
-                <span className="text-[10px] mt-0.5 font-medium">Counselor</span>
+                <Compass size={19} />
+                <span className="text-[10px] mt-0.5 font-medium">Discover</span>
                 {isActive && <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-student rounded-full" />}
               </>
             )}
@@ -52,11 +54,11 @@ export default function StudentLayout() {
           {/* Thin divider line */}
           <div className="w-px h-8 bg-divider mx-1" />
 
-          {/* Other tabs */}
+          {/* Stage 2 → Stage 3 → Connect */}
           {[
-            { to: '/s/posts', icon: Newspaper, label: 'Posts' },
-            { to: '/s/explore', icon: Search, label: 'Explore' },
-            { to: '/s/manage', icon: FolderKanban, label: 'Management' },
+            { to: '/s/explore', icon: Target, label: 'Match' },
+            { to: '/s/manage', icon: FolderKanban, label: 'Apply' },
+            { to: '/s/posts', icon: Newspaper, label: 'Connect' },
           ].map(item => (
             <NavLink
               key={item.to}
