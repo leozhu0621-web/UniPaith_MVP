@@ -384,15 +384,11 @@ class WorkshopFeedbackService:
     async def _try_interview_coach(
         self, student_id: UUID, body: InterviewPracticeRequest
     ) -> tuple[dict, list, list, list] | None:
-        """Run the interview coach. Phase A's request body has no actual
-        student response — the coach expects a response_text to score. When
-        none is provided we return None so the rule-based bank takes over;
-        the eventual full integration will accept response_text and use
-        the coach to score it."""
-        if not getattr(body, "response_text", None):
-            # Phase A schema doesn't carry a response yet; rule-based bank
-            # gives canned questions. Coach activates once the request
-            # schema lifts a response_text field.
+        """Run the interview coach to score `response_text`. When the
+        request body has no response_text, no-ops so the caller falls
+        back to the rule-based bank (the user wants prompts, not
+        coaching)."""
+        if not body.response_text:
             return None
         try:
             from unipaith.ai.coach import InterviewResponse, get_workshop_coach
@@ -402,7 +398,8 @@ class WorkshopFeedbackService:
         try:
             coach = get_workshop_coach()
             resp = InterviewResponse(
-                response_text=body.response_text,  # type: ignore[attr-defined]
+                response_text=body.response_text,
+                question_text=body.question_text or "",
                 program_name="",
                 institution_name="",
                 interview_format=body.interview_type,

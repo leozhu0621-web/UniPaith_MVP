@@ -23,6 +23,13 @@ export interface InterviewPracticeBody {
   target_program_id?: string | null
   interview_type?: 'behavioral' | 'technical' | 'general'
   focus_area?: string | null
+  /**
+   * When set, the workshop coach scores this response rather than
+   * returning canned practice questions. The schema-level no-generation
+   * guard still binds — coach output cannot include a model answer.
+   */
+  response_text?: string | null
+  question_text?: string | null
 }
 
 export type StandardizedTest =

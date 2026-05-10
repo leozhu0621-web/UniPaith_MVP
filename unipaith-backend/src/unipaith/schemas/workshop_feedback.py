@@ -47,6 +47,12 @@ class InterviewPracticeRequest(BaseModel):
     # If set, ask narrower questions framed for this role/program. Free-form
     # so program-specific phrasing can be passed without a schema enum.
     focus_area: str | None = Field(None, max_length=200)
+    # Optional — when present, the workshop coach scores this response
+    # rather than returning canned practice questions. The schema-level
+    # no-generation guard (test_workshop_no_generation_contract.py) still
+    # binds, so coach output cannot include a model answer.
+    response_text: str | None = Field(None, max_length=20_000)
+    question_text: str | None = Field(None, max_length=4000)
 
 
 class TestGuidanceRequest(BaseModel):

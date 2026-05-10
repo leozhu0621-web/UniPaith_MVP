@@ -26,17 +26,24 @@ const TYPES: { key: InterviewType; label: string }[] = [
 export default function InterviewPracticePanel() {
   const [interviewType, setInterviewType] = useState<InterviewType>('general')
   const [focus, setFocus] = useState('')
+  // Optional — when filled in, the backend coaches the response instead
+  // of returning canned practice questions.
+  const [questionText, setQuestionText] = useState('')
+  const [responseText, setResponseText] = useState('')
   const [run, setRun] = useState<WorkshopFeedbackRun | null>(null)
 
+  const hasResponse = responseText.trim().length > 0
   const practiceMut = useMutation({
     mutationFn: () =>
       requestInterviewPractice({
         interview_type: interviewType,
         focus_area: focus.trim() || null,
+        response_text: responseText.trim() || null,
+        question_text: questionText.trim() || null,
       }),
     onSuccess: r => {
       setRun(r)
-      showToast('Practice questions ready.', 'success')
+      showToast(hasResponse ? 'Coaching ready.' : 'Practice questions ready.', 'success')
     },
     onError: (err: unknown) =>
       showToast((err as Error).message ?? 'Could not generate questions.', 'error'),
@@ -75,13 +82,53 @@ export default function InterviewPracticePanel() {
             placeholder="e.g., research fit, leadership in ambiguity, your senior thesis"
           />
         </div>
+        {/* Optional — paste a question + your answer to get coached on
+            your response instead of canned practice questions. */}
+        <details className="text-sm">
+          <summary className="cursor-pointer text-student-text hover:text-student-ink">
+            Or — coach a response you've drafted
+          </summary>
+          <div className="mt-3 space-y-3 pt-1 border-t border-divider">
+            <div>
+              <label className="block text-xs font-medium text-student-ink mb-1">
+                Question
+              </label>
+              <input
+                className="w-full rounded border border-divider px-3 py-2 text-sm"
+                value={questionText}
+                onChange={e => setQuestionText(e.target.value)}
+                maxLength={4000}
+                placeholder="The question you're answering"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-student-ink mb-1">
+                Your response
+              </label>
+              <textarea
+                className="w-full rounded border border-divider px-3 py-2 text-sm font-mono"
+                rows={6}
+                maxLength={20000}
+                value={responseText}
+                onChange={e => setResponseText(e.target.value)}
+                placeholder="Paste your answer. I'll coach delivery / structure / specificity. No rewrite."
+              />
+            </div>
+          </div>
+        </details>
         <div className="text-xs text-student-text">
-          You'll get 5+ questions to practice. <strong>No model answers</strong> — practicing
-          your own response is the point.
+          {hasResponse ? (
+            <>I'll coach your response — <strong>no model answer</strong> in return.</>
+          ) : (
+            <>
+              You'll get 5+ questions to practice. <strong>No model answers</strong> —
+              practicing your own response is the point.
+            </>
+          )}
         </div>
         <div className="flex justify-end">
           <Button onClick={() => practiceMut.mutate()} loading={practiceMut.isPending}>
-            Generate questions
+            {hasResponse ? 'Coach my response' : 'Generate questions'}
           </Button>
         </div>
       </Card>

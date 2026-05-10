@@ -169,6 +169,14 @@ resource "aws_ecs_task_definition" "backend" {
       { name = "COGNITO_DOMAIN", value = "${var.project}.auth.${var.aws_region}.amazoncognito.com" },
       { name = "COGNITO_BYPASS", value = "false" },
       { name = "AI_MOCK_MODE", value = "false" },
+      # Plan 2 LLM stack — each surface falls back to its deterministic
+      # stub on agent failure (see tests/test_plan2_integration.py), so
+      # flipping these on is graceful.
+      { name = "AI_DISCOVERY_V2_ENABLED", value = "true" },
+      { name = "AI_WORKSHOPS_V2_ENABLED", value = "true" },
+      { name = "AI_MATCH_RATIONALE_V2_ENABLED", value = "true" },
+      { name = "AI_STRATEGY_V2_ENABLED", value = "true" },
+      { name = "AI_IDENTITY_V2_ENABLED", value = "true" },
       { name = "CORS_ORIGINS", value = "[\"https://app.${var.domain_name}\"]" },
       { name = "SES_SENDER_EMAIL", value = "noreply@${var.domain_name}" },
       { name = "NOTIFICATIONS_ENABLED", value = "true" },

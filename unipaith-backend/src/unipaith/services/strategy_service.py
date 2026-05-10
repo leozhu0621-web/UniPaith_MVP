@@ -246,16 +246,39 @@ class StrategyService:
         )
 
     async def generate(self, user_id: UUID) -> StudentStrategy:
+        from unipaith.config import settings as _cfg
+
         student_id = await self._student_id(user_id)
-        (
-            career_target,
-            target_degree,
-            academic_path,
-            financial_path,
-            geographic_path,
-            narrative,
-            session_ids,
-        ) = await self._rule_based_generate(student_id)
+
+        # Plan 2 path — try the LLM agent first when the flag is on.
+        # Fall through to the deterministic template on any failure.
+        is_stub = True
+        llm_payload = None
+        if _cfg.ai_strategy_v2_enabled:
+            llm_payload = await self._try_strategy_agent(student_id)
+            if llm_payload is not None:
+                is_stub = False
+
+        if llm_payload is not None:
+            (
+                career_target,
+                target_degree,
+                academic_path,
+                financial_path,
+                geographic_path,
+                narrative,
+                session_ids,
+            ) = llm_payload
+        else:
+            (
+                career_target,
+                target_degree,
+                academic_path,
+                financial_path,
+                geographic_path,
+                narrative,
+                session_ids,
+            ) = await self._rule_based_generate(student_id)
 
         version = await self._next_version(student_id)
         strategy = StudentStrategy(
@@ -269,12 +292,128 @@ class StrategyService:
             geographic_path=geographic_path,
             narrative=narrative,
             generated_from_session_ids=session_ids,
-            is_stub=True,
+            is_stub=is_stub,
         )
         self.db.add(strategy)
         await self.db.flush()
         await self.db.refresh(strategy)
         return strategy
+
+    async def _try_strategy_agent(
+        self, student_id: UUID
+    ) -> tuple[str, str, list, list, list, str, list[UUID]] | None:
+        """Run the LLM strategy agent. Returns the same 7-tuple shape
+        `_rule_based_generate` does on success, None on any failure
+        (no goals, agent malformed output, API error). The caller falls
+        back to the rule-based template."""
+        result = await self.db.execute(
+            select(StudentGoal)
+            .where(
+                StudentGoal.student_id == student_id,
+                StudentGoal.status == "active",
+                StudentGoal.category == "academic",
+            )
+            .order_by(StudentGoal.created_at.desc())
+        )
+        academic_goals = list(result.scalars().all())
+        if not academic_goals:
+            raise BadRequestException(
+                "Cannot generate strategy without at least one active academic goal."
+            )
+
+        result = await self.db.execute(
+            select(StudentGoal).where(
+                StudentGoal.student_id == student_id,
+                StudentGoal.status == "active",
+            )
+        )
+        all_goals = list(result.scalars().all())
+
+        result = await self.db.execute(
+            select(StudentNeed).where(StudentNeed.student_id == student_id)
+        )
+        all_needs = list(result.scalars().all())
+
+        from unipaith.models.student import StudentPreference
+
+        profile_result = await self.db.execute(
+            select(StudentProfile).where(StudentProfile.id == student_id)
+        )
+        profile = profile_result.scalar_one_or_none()
+        pref_result = await self.db.execute(
+            select(StudentPreference).where(StudentPreference.student_id == student_id)
+        )
+        prefs = pref_result.scalar_one_or_none()
+
+        try:
+            from unipaith.ai.strategy import (
+                GoalInput,
+                NeedInput,
+                StrategyInput,
+                get_strategy_agent,
+            )
+        except Exception as e:  # noqa: BLE001
+            import logging
+
+            logging.getLogger(__name__).warning("strategy agent import failed: %s", e)
+            return None
+
+        view = StrategyInput(
+            student_id=student_id,
+            goals=[
+                GoalInput(
+                    category=g.category,
+                    specific=g.specific,
+                    measurable=g.measurable,
+                    relevant_notes=g.relevant_notes,
+                    time_bound=g.time_bound.isoformat() if g.time_bound else None,
+                )
+                for g in all_goals
+            ],
+            needs=[
+                NeedInput(
+                    maslow_level=n.maslow_level,
+                    need_type=n.need_type,
+                    signal=n.signal,
+                    severity=n.severity,
+                )
+                for n in all_needs
+            ],
+            preferred_regions=list(prefs.regions or []) if prefs else [],
+            preferred_majors=list(prefs.majors or []) if prefs else [],
+            bio_text=getattr(profile, "bio_text", None) if profile else None,
+            goals_text=getattr(profile, "goals_text", None) if profile else None,
+        )
+
+        try:
+            agent = get_strategy_agent()
+            agent_result = await agent.generate(input_view=view, db=self.db)
+        except Exception as e:  # noqa: BLE001
+            import logging
+
+            logging.getLogger(__name__).warning("strategy agent call failed: %s", e)
+            return None
+
+        if agent_result is None:
+            return None
+
+        session_ids: set[UUID] = set()
+        for g in all_goals:
+            if g.source_session_id is not None:
+                session_ids.add(g.source_session_id)
+        for n in all_needs:
+            if n.source_session_id is not None:
+                session_ids.add(n.source_session_id)
+
+        return (
+            agent_result.career_target,
+            agent_result.target_degree,
+            agent_result.academic_path,
+            agent_result.financial_path,
+            agent_result.geographic_path,
+            agent_result.narrative,
+            sorted(session_ids),
+        )
 
     async def get_active(self, user_id: UUID) -> StudentStrategy | None:
         student_id = await self._student_id(user_id)
