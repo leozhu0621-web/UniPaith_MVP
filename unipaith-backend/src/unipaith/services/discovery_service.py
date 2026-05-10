@@ -289,9 +289,7 @@ class DiscoveryService:
             # fails; if there's no previous row, the student has no
             # match results until Discovery is re-attempted.
             if verdict is not None and verdict.layer_complete:
-                await self._emit_features_for_completion(
-                    student_id=student_id, snapshot=snapshot
-                )
+                await self._emit_features_for_completion(student_id=student_id, snapshot=snapshot)
 
             # 5. Orchestrate — generate the assistant turn.
             history_msgs = await self._load_message_history(session.id)
@@ -451,9 +449,7 @@ class DiscoveryService:
                 "identity",
             }:
                 if session.layer == "basic":
-                    verdict = default_validator.validate(
-                        layer="basic", snapshot=snapshot
-                    )
+                    verdict = default_validator.validate(layer="basic", snapshot=snapshot)
                 else:
                     verdict, _judge = await default_validator.validate_with_judge(
                         layer=session.layer,  # type: ignore[arg-type]
@@ -520,9 +516,7 @@ class DiscoveryService:
                     await self.db.refresh(assistant)
                     yield ("assistant_message", _msg_dict(assistant))
         except Exception as exc:  # pragma: no cover — degraded path
-            logger.exception(
-                "Discovery stream_message failed for session=%s", session_id
-            )
+            logger.exception("Discovery stream_message failed for session=%s", session_id)
             assistant = DiscoveryMessage(
                 session_id=session.id,
                 role="assistant",
@@ -538,9 +532,7 @@ class DiscoveryService:
             yield ("error", {"message": str(exc)[:240]})
             yield ("assistant_message", _msg_dict(assistant))
 
-    async def _emit_features_for_completion(
-        self, *, student_id: UUID, snapshot
-    ) -> None:
+    async def _emit_features_for_completion(self, *, student_id: UUID, snapshot) -> None:
         """Phase B1 — fire the A4 Feature Emitter when a layer/track
         completes. Best-effort: any error is logged but doesn't propagate.
 
@@ -548,6 +540,10 @@ class DiscoveryService:
         downstream match_rationales cache invalidates whenever the
         student's profile changes. This is cheap (~$0.005/emit on
         Haiku) and keeps recommendations fresh.
+
+        On successful emit we chain into `_recompute_matches_for_student`
+        — without that hook `match_results` stays empty even after
+        Discovery completes, which is the gap §10 closes.
         """
         from unipaith.ai.feature_emitter import (
             get_feature_emitter,
@@ -559,9 +555,8 @@ class DiscoveryService:
                 snapshot=snapshot, student_id=student_id, db=self.db
             )
             if features.is_valid():
-                await persist_features(
-                    db=self.db, student_id=student_id, features=features
-                )
+                await persist_features(db=self.db, student_id=student_id, features=features)
+                await self._recompute_matches_for_student(student_id=student_id)
             else:
                 logger.warning(
                     "FeatureEmitter returned invalid features for student=%s; "
@@ -572,6 +567,56 @@ class DiscoveryService:
             logger.exception(
                 "Feature emission failed for student=%s — recommendations "
                 "will use the previous feature vector.",
+                student_id,
+            )
+
+    async def _recompute_matches_for_student(self, *, student_id: UUID) -> None:
+        """Phase D wiring — re-score the catalog after a feature emit.
+
+        Loads all published Programs, projects each to ProgramRow, and
+        hands off to `MatchService.compute_matches_for_student`. The
+        service handles the rerank + persist; this hook just delivers
+        the catalog.
+
+        Best-effort: if the catalog read or match compute fails, the
+        student keeps whatever stale `match_results` they had. The next
+        Discovery completion (or an explicit refresh) retries.
+
+        Catalog size in production will likely sit in the hundreds, then
+        thousands once partners onboard. Computing a few thousand
+        cosine + soft_align + needs scores is fast (~<1s); the cost
+        center is rationale (lazy, per-click) not matching.
+        """
+        # Local imports — defers institution + matching imports until
+        # discovery is actually running, and avoids a circular load when
+        # MatchService imports back into the AI stack.
+        from unipaith.models.institution import Program
+        from unipaith.services.match_service import MatchService
+        from unipaith.services.program_features import program_row_from_orm
+
+        try:
+            result = await self.db.execute(select(Program).where(Program.is_published.is_(True)))
+            programs = list(result.scalars().all())
+            if not programs:
+                logger.info(
+                    "Match recompute skipped for student=%s: no published programs in catalog.",
+                    student_id,
+                )
+                return
+            program_rows = [program_row_from_orm(p) for p in programs]
+            rows = await MatchService(self.db).compute_matches_for_student(
+                student_id, program_rows=program_rows
+            )
+            logger.info(
+                "Match recompute for student=%s produced %d rows over %d programs.",
+                student_id,
+                len(rows),
+                len(programs),
+            )
+        except Exception:  # pragma: no cover — degraded path
+            logger.exception(
+                "Match recompute failed for student=%s — UI will keep prior "
+                "match_results until next emit.",
                 student_id,
             )
 
@@ -707,8 +752,7 @@ def _summarize_snapshot(snapshot) -> str:  # type: ignore[no-untyped-def]
         for g in snapshot.goals[:6]:
             confirmed = "✓" if g.user_confirmed else "?"
             parts.append(
-                f"- goal.{g.category} [{int(g.completeness * 100)}%{confirmed}]: "
-                f"{g.specific[:100]}"
+                f"- goal.{g.category} [{int(g.completeness * 100)}%{confirmed}]: {g.specific[:100]}"
             )
     if snapshot.needs:
         for n in snapshot.needs[:6]:

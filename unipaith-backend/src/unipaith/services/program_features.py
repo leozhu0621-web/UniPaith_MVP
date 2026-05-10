@@ -134,6 +134,79 @@ def features_from_row(
     )
 
 
+def _safe_loaded(obj: Any, attr: str) -> Any:
+    """Return `obj.attr` only if it's already loaded — never trigger
+    lazy IO. Returns None for both "not loaded" and "loaded but None".
+
+    SQLAlchemy 2 raises MissingGreenlet on lazy access in async code.
+    The projector reads relationships defensively so callers can pass
+    rows whether or not they eager-loaded the join.
+    """
+    try:
+        # SQLAlchemy's instance state knows whether a relationship has
+        # been loaded. `inspect(obj).unloaded` is the set of unloaded
+        # attribute names.
+        from sqlalchemy import inspect as sa_inspect
+
+        state = sa_inspect(obj, raiseerr=False)
+        if state is not None and attr in getattr(state, "unloaded", ()):
+            return None
+    except Exception:  # pragma: no cover — duck-typed inputs
+        return getattr(obj, attr, None)
+    return getattr(obj, attr, None)
+
+
+def program_row_from_orm(program: Any) -> ProgramRow:
+    """Project a `unipaith.models.institution.Program` ORM row into the
+    `ProgramRow` dataclass the matcher / feature builder consumes.
+
+    Stays decoupled from the ORM at the type-hint level (`program: Any`)
+    so this helper can be called from anywhere without dragging the
+    institution model into pure-Python tests. The caller passes a row;
+    we read the documented attributes.
+
+    Soft-feature columns (`interest_themes`, `career_arcs`, `values`,
+    `support_signals`, `social_features`) live on the parallel
+    `feature_vector_sparse` JSONB if present — Phase B2 stretch will
+    populate them via the LLM emitter. Until then they're empty and the
+    matcher falls back to cosine + needs (when the embedding exists)
+    or degrades to soft_align=0 (which the geometric-mean confidence
+    naturally penalizes).
+    """
+    sparse: dict[str, Any] = dict(getattr(program, "feature_vector_sparse", None) or {})
+
+    locations = list(sparse.get("locations") or [])
+    if not locations:
+        # Best-effort fallback: pull through institution.country when
+        # the caller has eager-loaded the relationship. We check the
+        # SQLAlchemy state to avoid triggering a lazy load inside
+        # async code (which raises MissingGreenlet).
+        inst = _safe_loaded(program, "institution")
+        country = getattr(inst, "country", None) if inst is not None else None
+        if country:
+            locations = [country]
+
+    tuition_usd = sparse.get("tuition_usd_per_year")
+    if tuition_usd is None and getattr(program, "tuition", None) is not None:
+        tuition_usd = float(program.tuition)
+
+    return ProgramRow(
+        id=program.id,
+        name=getattr(program, "program_name", "") or "",
+        description=getattr(program, "description_text", "") or "",
+        degree=getattr(program, "degree_type", None),
+        locations=list(locations),
+        tuition_usd_per_year=tuition_usd,
+        tags=list(sparse.get("tags") or []),
+        interest_themes=list(sparse.get("interest_themes") or []),
+        career_arcs=list(sparse.get("career_arcs") or []),
+        values=list(sparse.get("values") or []),
+        social_features=dict(sparse.get("social_features") or {}),
+        support_signals=dict(sparse.get("support_signals") or {}),
+        data_completeness=float(sparse.get("data_completeness", 0.5)),
+    )
+
+
 def estimate_data_completeness(row: ProgramRow) -> float:
     """Cheap heuristic: how complete is this Program row?
 
