@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.api.admin_dashboard import router as admin_dashboard_router
+from unipaith.api.ai_feedback import router as ai_feedback_router
 from unipaith.api.applications import router as applications_router
 from unipaith.api.auth import router as auth_router
 from unipaith.api.crawler_admin import router as crawler_admin_router
@@ -50,6 +51,7 @@ api_router.include_router(internal_router)
 api_router.include_router(saved_lists_router)
 api_router.include_router(workshops_router)
 api_router.include_router(workshop_feedback_router)
+api_router.include_router(ai_feedback_router)
 api_router.include_router(messaging_router)
 api_router.include_router(events_router)
 api_router.include_router(reviews_router)

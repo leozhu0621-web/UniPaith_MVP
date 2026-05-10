@@ -4,6 +4,7 @@ from unipaith.models.ai_artifacts import (
     MatchRationale,
     StudentFeatureVector,
 )
+from unipaith.models.ai_feedback import AiTurnFeedback
 from unipaith.models.application import (
     AIPacketSummary,
     Application,
@@ -165,6 +166,7 @@ __all__ = [
     "StudentFeatureVector",
     "AiTurn",
     "MatchRationale",
+    "AiTurnFeedback",
     "Institution",
     "School",
     "Program",
