@@ -5,7 +5,12 @@ import type { ExplainMatchResponse, MatchResultDual } from '../types'
 export const getMatches = (forceRefresh = false) =>
   apiClient.get('/students/me/matches', { params: { force_refresh: forceRefresh } }).then(r => toArrayData<any>(r.data))
 
-export const getMatchDetail = (programId: string): Promise<MatchResultDual> =>
+// Untyped on purpose — legacy callers (e.g. SchoolDetailPage) consume this
+// against the older `MatchResult` shape with number scores. Phase C will
+// migrate consumers to MatchResultDual; until then the response carries
+// both the legacy `match_score` and the new `fitness_score` /
+// `confidence_score` fields, so consumers can read either.
+export const getMatchDetail = (programId: string) =>
   apiClient.get(`/students/me/matches/${programId}`).then(r => r.data)
 
 /**

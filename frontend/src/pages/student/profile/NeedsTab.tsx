@@ -1,0 +1,348 @@
+/**
+ * Profile → Needs tab.
+ *
+ * Renders the Maslow-keyed needs map. Five tiers, severity badges.
+ * Discovery / inferred sources show provenance + confidence.
+ */
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Pencil, Plus, Sparkles, Trash2 } from 'lucide-react'
+
+import {
+  type CreateNeedBody,
+  type UpdateNeedBody,
+  createNeed,
+  deleteNeed,
+  listNeeds,
+  updateNeed,
+} from '../../../api/needs'
+import Badge from '../../../components/ui/Badge'
+import Button from '../../../components/ui/Button'
+import Card from '../../../components/ui/Card'
+import Modal from '../../../components/ui/Modal'
+import { showToast } from '../../../stores/toast-store'
+import type { MaslowLevel, NeedSeverity, StudentNeed } from '../../../types'
+
+// Maslow's hierarchy — bottom-up. We render top-down (self-actualization
+// first) because the page reads top-to-bottom and the higher tiers carry
+// the differentiating signal (community, scholarship, mental support).
+const MASLOW_TIERS: { key: MaslowLevel; label: string; hint: string }[] = [
+  {
+    key: 'self_actualization',
+    label: 'Self-actualization',
+    hint: 'Events, alums, career support, oversea education.',
+  },
+  {
+    key: 'self_esteem',
+    label: 'Self-esteem',
+    hint: 'Scholarship, peer-stress, environment.',
+  },
+  {
+    key: 'social',
+    label: 'Social',
+    hint: 'Community, culture, diversity, inclusion.',
+  },
+  {
+    key: 'safety',
+    label: 'Safety',
+    hint: 'Healthcare, finance, environment, policy.',
+  },
+  {
+    key: 'physiological',
+    label: 'Physiological',
+    hint: 'Housing, food.',
+  },
+]
+
+const SEVERITY_VARIANTS: Record<NeedSeverity, 'danger' | 'warning' | 'neutral'> = {
+  must_have: 'danger',
+  strong_preference: 'warning',
+  nice_to_have: 'neutral',
+}
+
+const SEVERITY_LABELS: Record<NeedSeverity, string> = {
+  must_have: 'must have',
+  strong_preference: 'strong preference',
+  nice_to_have: 'nice to have',
+}
+
+const EMPTY_FORM: CreateNeedBody = {
+  maslow_level: 'safety',
+  need_type: '',
+  signal: '',
+  severity: 'strong_preference',
+  source: 'manual',
+}
+
+interface NeedFormProps {
+  initial: CreateNeedBody | StudentNeed
+  onCancel: () => void
+  onSubmit: (body: CreateNeedBody | UpdateNeedBody) => void
+  submitting: boolean
+  isEdit: boolean
+}
+
+function NeedForm({ initial, onCancel, onSubmit, submitting, isEdit }: NeedFormProps) {
+  const [form, setForm] = useState({
+    maslow_level: initial.maslow_level as MaslowLevel,
+    need_type: initial.need_type ?? '',
+    signal: initial.signal ?? '',
+    severity: initial.severity as NeedSeverity,
+    source_quote: ('source_quote' in initial ? initial.source_quote : null) ?? '',
+  })
+
+  const handle = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.need_type.trim()) {
+      showToast('Need type is required.', 'error')
+      return
+    }
+    if (!form.signal.trim()) {
+      showToast('Signal is required.', 'error')
+      return
+    }
+    onSubmit({
+      maslow_level: form.maslow_level,
+      need_type: form.need_type.trim(),
+      signal: form.signal.trim(),
+      severity: form.severity,
+      source_quote: form.source_quote.trim() || null,
+    })
+  }
+
+  return (
+    <form onSubmit={handle} className="space-y-4">
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-sm font-medium text-student-ink mb-1">Maslow tier</label>
+          <select
+            className="w-full rounded border border-divider px-3 py-2 text-sm"
+            value={form.maslow_level}
+            onChange={e => setForm(f => ({ ...f, maslow_level: e.target.value as MaslowLevel }))}
+          >
+            {MASLOW_TIERS.map(t => (
+              <option key={t.key} value={t.key}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-student-ink mb-1">Severity</label>
+          <select
+            className="w-full rounded border border-divider px-3 py-2 text-sm"
+            value={form.severity}
+            onChange={e => setForm(f => ({ ...f, severity: e.target.value as NeedSeverity }))}
+          >
+            <option value="must_have">Must have</option>
+            <option value="strong_preference">Strong preference</option>
+            <option value="nice_to_have">Nice to have</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-student-ink mb-1">
+          Need type <span className="text-red-600">*</span>
+        </label>
+        <input
+          className="w-full rounded border border-divider px-3 py-2 text-sm"
+          maxLength={120}
+          value={form.need_type}
+          onChange={e => setForm(f => ({ ...f, need_type: e.target.value }))}
+          placeholder="e.g., on-campus housing, scholarships for first-gen, mental health support"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-student-ink mb-1">
+          Signal <span className="text-red-600">*</span>
+        </label>
+        <textarea
+          className="w-full rounded border border-divider px-3 py-2 text-sm"
+          rows={2}
+          maxLength={4000}
+          value={form.signal}
+          onChange={e => setForm(f => ({ ...f, signal: e.target.value }))}
+          placeholder="What did you say or notice that points to this need?"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-student-ink mb-1">Source quote</label>
+        <input
+          className="w-full rounded border border-divider px-3 py-2 text-sm"
+          value={form.source_quote}
+          onChange={e => setForm(f => ({ ...f, source_quote: e.target.value }))}
+          placeholder="Optional — direct quote from a conversation or note."
+        />
+      </div>
+
+      <div className="flex justify-end gap-2 pt-2">
+        <Button type="button" variant="ghost" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" loading={submitting}>
+          {isEdit ? 'Save' : 'Add need'}
+        </Button>
+      </div>
+    </form>
+  )
+}
+
+export default function NeedsTab() {
+  const qc = useQueryClient()
+  const { data: needs = [], isLoading } = useQuery<StudentNeed[]>({
+    queryKey: ['needs'],
+    queryFn: () => listNeeds(),
+  })
+
+  const [creating, setCreating] = useState(false)
+  const [editing, setEditing] = useState<StudentNeed | null>(null)
+
+  const onSettled = () => qc.invalidateQueries({ queryKey: ['needs'] })
+
+  const createMut = useMutation({
+    mutationFn: (body: CreateNeedBody) => createNeed(body),
+    onSuccess: () => {
+      showToast('Need added.', 'success')
+      setCreating(false)
+    },
+    onError: (err: unknown) => showToast((err as Error).message ?? 'Could not add need.', 'error'),
+    onSettled,
+  })
+  const updateMut = useMutation({
+    mutationFn: ({ id, body }: { id: string; body: UpdateNeedBody }) => updateNeed(id, body),
+    onSuccess: () => {
+      showToast('Need updated.', 'success')
+      setEditing(null)
+    },
+    onError: (err: unknown) =>
+      showToast((err as Error).message ?? 'Could not update need.', 'error'),
+    onSettled,
+  })
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => deleteNeed(id),
+    onSuccess: () => showToast('Need removed.', 'success'),
+    onError: (err: unknown) =>
+      showToast((err as Error).message ?? 'Could not delete need.', 'error'),
+    onSettled,
+  })
+
+  const grouped: Record<MaslowLevel, StudentNeed[]> = {
+    physiological: [],
+    safety: [],
+    social: [],
+    self_esteem: [],
+    self_actualization: [],
+  }
+  for (const n of needs) grouped[n.maslow_level].push(n)
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-student-ink">Needs map</h2>
+          <p className="text-sm text-student-text mt-1">
+            Maslow-keyed. Higher tiers carry the differentiating signal — community, scholarship,
+            mental support. Discovery infers; you can edit anything.
+          </p>
+        </div>
+        <Button onClick={() => setCreating(true)}>
+          <Plus size={16} className="mr-1" /> Add need
+        </Button>
+      </div>
+
+      {isLoading && <div className="text-sm text-student-text">Loading…</div>}
+
+      {!isLoading &&
+        MASLOW_TIERS.map(tier => (
+          <div key={tier.key}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-student-ink">{tier.label}</h3>
+              <span className="text-xs text-student-text">{tier.hint}</span>
+            </div>
+            {grouped[tier.key].length === 0 ? (
+              <Card className="text-sm text-student-text italic">
+                No {tier.label.toLowerCase()} signals yet.
+              </Card>
+            ) : (
+              <div className="space-y-2">
+                {grouped[tier.key].map(n => (
+                  <Card key={n.id} className="space-y-2">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-medium text-student-ink">{n.need_type}</div>
+                        <div className="text-xs text-student-text mt-0.5">{n.signal}</div>
+                        {n.source_quote && (
+                          <div className="text-xs text-student-text mt-1 italic border-l-2 border-divider pl-2">
+                            "{n.source_quote}"
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-1 shrink-0">
+                        <button
+                          aria-label="Edit need"
+                          className="p-1 text-student-text hover:text-student-ink"
+                          onClick={() => setEditing(n)}
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          aria-label="Delete need"
+                          className="p-1 text-red-600 hover:text-red-700"
+                          onClick={() => {
+                            if (confirm('Remove this need?')) deleteMut.mutate(n.id)
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant={SEVERITY_VARIANTS[n.severity]} size="sm">
+                        {SEVERITY_LABELS[n.severity]}
+                      </Badge>
+                      {(n.source === 'discovery' || n.source === 'inferred') && (
+                        <Badge variant="info" size="sm" className="inline-flex items-center gap-1">
+                          <Sparkles size={10} />
+                          {n.source}
+                          {n.confidence ? ` · ${Math.round(Number(n.confidence) * 100)}%` : ''}
+                        </Badge>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+
+      {creating && (
+        <Modal isOpen onClose={() => setCreating(false)} title="Add need">
+          <NeedForm
+            initial={EMPTY_FORM}
+            onCancel={() => setCreating(false)}
+            onSubmit={body => createMut.mutate(body as CreateNeedBody)}
+            submitting={createMut.isPending}
+            isEdit={false}
+          />
+        </Modal>
+      )}
+
+      {editing && (
+        <Modal isOpen onClose={() => setEditing(null)} title="Edit need">
+          <NeedForm
+            initial={editing}
+            onCancel={() => setEditing(null)}
+            onSubmit={body => updateMut.mutate({ id: editing.id, body: body as UpdateNeedBody })}
+            submitting={updateMut.isPending}
+            isEdit
+          />
+        </Modal>
+      )}
+    </div>
+  )
+}

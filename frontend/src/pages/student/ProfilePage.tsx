@@ -23,10 +23,31 @@ const ResumeWorkshopPage = lazy(() => import('./ResumeWorkshopPage'))
 const RecommendationsPage = lazy(() => import('./RecommendationsPage'))
 const FinancialAidPage = lazy(() => import('./FinancialAidPage'))
 
-type ProfileTab = 'overview' | 'essays' | 'recommenders' | 'financial'
+// Phase B PR 2 — Discovery artifact tabs (read-write against the new APIs).
+const IdentityTab = lazy(() => import('./profile/IdentityTab'))
+const GoalsTab = lazy(() => import('./profile/GoalsTab'))
+const NeedsTab = lazy(() => import('./profile/NeedsTab'))
+const StrategyTab = lazy(() => import('./profile/StrategyTab'))
 
+type ProfileTab =
+  | 'overview'
+  | 'identity'
+  | 'goals'
+  | 'needs'
+  | 'strategy'
+  | 'essays'
+  | 'recommenders'
+  | 'financial'
+
+// Order: durable record (Overview) → deepest layer (Identity) → durable
+// artifacts (Goals, Needs) → bridge to Match (Strategy) → existing tabs.
+// Per the Phase D plan, Essays & Resume will move to Apply > Workshops.
 const PROFILE_TABS: { key: ProfileTab; label: string }[] = [
   { key: 'overview', label: 'Overview' },
+  { key: 'identity', label: 'Identity' },
+  { key: 'goals', label: 'Goals' },
+  { key: 'needs', label: 'Needs' },
+  { key: 'strategy', label: 'Strategy' },
   { key: 'essays', label: 'Essays & Resume' },
   { key: 'recommenders', label: 'Recommenders' },
   { key: 'financial', label: 'Financial' },
@@ -210,6 +231,10 @@ export default function ProfilePage() {
         </div>
 
         <Suspense fallback={<div className="py-10 text-center text-student-text">Loading...</div>}>
+          {activeTab === 'identity' && <IdentityTab />}
+          {activeTab === 'goals' && <GoalsTab />}
+          {activeTab === 'needs' && <NeedsTab />}
+          {activeTab === 'strategy' && <StrategyTab />}
           {activeTab === 'essays' && (
             <div className="-mx-6 -mt-2">
               <EssayWorkshopPage />
@@ -883,4 +908,3 @@ export default function ProfilePage() {
     </div>
   )
 }
-
