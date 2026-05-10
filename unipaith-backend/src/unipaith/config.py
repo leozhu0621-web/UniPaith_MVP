@@ -140,6 +140,18 @@ class Settings(BaseSettings):
     # in `.env` once Anthropic + Voyage keys are populated.
     ai_discovery_v2_enabled: bool = False
 
+    # Plan 2 — Workshop coach LLM. When True, WorkshopFeedbackService routes
+    # essay/interview/test feedback through the WorkshopCoach agent (with
+    # two-layer guardrail: schema-blind heuristics + LLM judge). On coach
+    # failure (parse / guardrail trip / API error) the service falls back
+    # to the rule-based stub. Internal dogfood gate; flip per-environment.
+    ai_workshops_v2_enabled: bool = False
+
+    # Plan 2 — Match rationale LLM. When True, /me/matches/{id}/explain
+    # delegates to MatchService.get_match_with_rationale (A5 RationaleAgent
+    # + per-(profile_version, program_version) cache). Off → Phase A stub.
+    ai_match_rationale_v2_enabled: bool = False
+
     # GPU infrastructure (cloud-first)
     gpu_mode: str = "openai"  # "openai" | "aws" | "local" | "mock"
     gpu_8b_instance_id: str = ""

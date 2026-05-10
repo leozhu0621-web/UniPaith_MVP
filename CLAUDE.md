@@ -100,12 +100,19 @@ The student-restructure landed 8 new tables / extended schemas. Quick reference:
 | `workshop_feedback_runs` | feedback-only essay/interview/test runs | rubric_scores / structural_issues / missing_elements / suggested_questions — no generation fields |
 | `student_profiles` (extended) | discovery_completion JSONB + strategy_active_id | denormalized journey summaries kept fresh by service hooks |
 
-Plan 2 (LLM stack) consumes these via the contracts in:
-- `POST /api/v1/students/me/discovery/sessions/{id}/messages` — orchestrator + extractor seam
-- `POST /api/v1/students/me/strategy/generate` — strategy generator (rule-based stub → LLM)
-- `POST /api/v1/students/me/matches/{program_id}/explain` — rationale agent
-- `POST /api/v1/students/me/identity/regenerate-summary` — identity synthesizer
-- `POST /api/v1/students/me/workshops/{essay,interview,test}/{feedback,practice,guidance}` — coach swap-in
+Plan 2 (LLM stack) plugs into these contract endpoints. Each is feature-flagged so the rule-based stub stays the default until the LLM path proves itself per-environment:
+
+| Endpoint | Flag | Status | Notes |
+|---|---|---|---|
+| `POST /me/discovery/sessions/{id}/messages` | `ai_discovery_v2_enabled` | ✅ wired (PR #114, #116, #119) | Orchestrator + extractor + validator + judge |
+| `POST /me/matches/{program_id}/explain` | `ai_match_rationale_v2_enabled` | ✅ wired | Delegates to MatchService.get_match_with_rationale (A5 RationaleAgent + per-(profile_version, program_version) cache); falls back to stub when no feature vector / parse error |
+| `POST /me/workshops/essay/feedback` | `ai_workshops_v2_enabled` | ✅ wired | WorkshopCoach (A6) with two-layer guardrail; graceful fallback to rule-based stub on coach/judge failure |
+| `POST /me/workshops/interview/practice` | `ai_workshops_v2_enabled` | ⏳ partial | Coach exists (C2); current Phase A request shape lacks `response_text` so the rule-based bank still serves question requests. LLM activates when the schema lifts a response field |
+| `POST /me/workshops/test/guidance` | `ai_workshops_v2_enabled` | ✅ wired | TestPrepCoach (C2); fallback to rule-based gap-band heuristic |
+| `POST /me/strategy/generate` | _no flag yet_ | ❌ stub only | StrategyAgent not yet built. `_rule_based_generate` produces template prose. **Plan 2 follow-up scope.** |
+| `POST /me/identity/regenerate-summary` | _no flag yet_ | ❌ stub only | No identity-summary agent. Returns `STUB_IDENTITY_SUMMARY`. **Plan 2 follow-up scope.** |
+
+**Integration-test invariant:** when an LLM agent fails (timeout, parse error, guardrail trip), the service falls back to the rule-based path so the caller never sees a 5xx. See `tests/test_plan2_integration.py`.
 
 ## Backend Conventions
 

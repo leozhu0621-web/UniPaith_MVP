@@ -1,8 +1,16 @@
-"""Phase A — Workshop feedback service (feedback-only).
+"""Workshop feedback service (feedback-only).
 
-Deterministic stub generators for essay / interview / test. Plan 2 will
-replace the generator bodies with LLM calls — but the response shape is
-fixed at the schema layer, so even Plan 2 can't slip in `revised_text`.
+Two paths per domain (essay / interview / test):
+
+  - LLM path:  WorkshopCoach (A6 + C2) when settings.ai_workshops_v2_enabled
+               AND coach output is well-formed AND judge passes
+  - Stub path: deterministic rule-based heuristic when the flag is off OR
+               the coach fails / trips the guardrail
+
+Why fallback rather than fail loud: workshops are coaching, not auth — a
+graceful stub is more useful than a 500. The LLM path is logged via the
+AIClient (cost / latency / cache hit) so eval can compare quality over
+time.
 
 Heuristics used in stubs:
   essay     — length, paragraph count, presence of intro/conclusion words,
@@ -13,12 +21,14 @@ Heuristics used in stubs:
 
 from __future__ import annotations
 
+import logging
 import re
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from unipaith.config import settings
 from unipaith.core.exceptions import NotFoundException
 from unipaith.models.student import StudentProfile
 from unipaith.models.workshops import WorkshopFeedbackRun
@@ -27,6 +37,8 @@ from unipaith.schemas.workshop_feedback import (
     InterviewPracticeRequest,
     TestGuidanceRequest,
 )
+
+logger = logging.getLogger(__name__)
 
 # ── Canned interview question banks (Phase A stubs) ───────────────────────
 
@@ -222,6 +234,30 @@ class WorkshopFeedbackService:
         self, user_id: UUID, body: EssayFeedbackRequest
     ) -> WorkshopFeedbackRun:
         student_id = await self._student_id(user_id)
+
+        # Plan 2 path — try the LLM coach first when the flag is on. Fall
+        # through to the rule-based stub on any failure so the caller
+        # always gets feedback.
+        if settings.ai_workshops_v2_enabled:
+            llm_payload = await self._try_essay_coach(student_id, body)
+            if llm_payload is not None:
+                rubric, issues, missing, questions = llm_payload
+                run = WorkshopFeedbackRun(
+                    student_id=student_id,
+                    domain="essay",
+                    input_artifact_id=str(body.document_id) if body.document_id else None,
+                    prompt_text=body.prompt_text,
+                    rubric_scores=rubric,
+                    structural_issues=issues,
+                    missing_elements=missing,
+                    suggested_questions=questions,
+                    is_stub=False,
+                )
+                self.db.add(run)
+                await self.db.flush()
+                await self.db.refresh(run)
+                return run
+
         rubric, issues, missing = self._score_essay(body.essay_text)
         run = WorkshopFeedbackRun(
             student_id=student_id,
@@ -239,11 +275,82 @@ class WorkshopFeedbackService:
         await self.db.refresh(run)
         return run
 
+    # ── LLM helpers (Plan 2 swap-ins) ────────────────────────────────────
+    async def _try_essay_coach(
+        self, student_id: UUID, body: EssayFeedbackRequest
+    ) -> tuple[dict, list, list, list] | None:
+        """Run the A6 essay coach. Returns (rubric, issues, missing, questions)
+        on success, None on any failure (logged + falls through to stub).
+
+        Maps CoachFeedback (1–5 int rubric, list[str] missing_elements,
+        list[str] questions_for_student) into the WorkshopFeedbackRun shape
+        (float rubric, dict missing_elements, dict suggested_questions)."""
+        try:
+            from unipaith.ai.coach import EssayDraft, get_workshop_coach
+        except Exception as e:  # noqa: BLE001
+            logger.warning("workshop coach import failed; falling back: %s", e)
+            return None
+
+        try:
+            coach = get_workshop_coach()
+            draft = EssayDraft(
+                draft_text=body.essay_text,
+                prompt_text=body.prompt_text or "",
+                word_count=len(body.essay_text.split()),
+            )
+            result = await coach.coach_essay(draft=draft, student_id=student_id, db=self.db)
+        except Exception as e:  # noqa: BLE001
+            logger.warning("essay coach call failed; falling back: %s", e)
+            return None
+
+        if not result.passed:
+            logger.info(
+                "essay coach guardrail failed (judge.score=%s, evidence=%s); falling back",
+                result.verdict.score,
+                result.verdict.evidence[:120],
+            )
+            return None
+
+        fb = result.feedback
+        # 1–5 int → float, structural_issues already dict-shaped (issue/severity/
+        # location_ref) per the coach prompt contract — pass through.
+        rubric = {k: float(v) for k, v in fb.rubric_scores.items()}
+        # Wrap raw strings into the schema's dict shape.
+        missing = [{"element": s, "importance": "should_have"} for s in fb.missing_elements]
+        questions = [
+            {"question": q, "why": fb.prompt_alignment_notes or ""}
+            for q in fb.questions_for_student
+        ]
+        return rubric, fb.structural_issues, missing, questions
+
     # ── Interview ────────────────────────────────────────────────────────
     async def request_interview_practice(
         self, user_id: UUID, body: InterviewPracticeRequest
     ) -> WorkshopFeedbackRun:
         student_id = await self._student_id(user_id)
+
+        if settings.ai_workshops_v2_enabled:
+            llm_payload = await self._try_interview_coach(student_id, body)
+            if llm_payload is not None:
+                rubric, issues, missing, questions = llm_payload
+                run = WorkshopFeedbackRun(
+                    student_id=student_id,
+                    domain="interview",
+                    input_artifact_id=(
+                        str(body.target_program_id) if body.target_program_id else None
+                    ),
+                    prompt_text=body.focus_area,
+                    rubric_scores=rubric,
+                    structural_issues=issues,
+                    missing_elements=missing,
+                    suggested_questions=questions,
+                    is_stub=False,
+                )
+                self.db.add(run)
+                await self.db.flush()
+                await self.db.refresh(run)
+                return run
+
         bank = {
             "behavioral": _BEHAVIORAL_QUESTIONS,
             "technical": _TECHNICAL_QUESTIONS,
@@ -274,6 +381,57 @@ class WorkshopFeedbackService:
         await self.db.refresh(run)
         return run
 
+    async def _try_interview_coach(
+        self, student_id: UUID, body: InterviewPracticeRequest
+    ) -> tuple[dict, list, list, list] | None:
+        """Run the interview coach. Phase A's request body has no actual
+        student response — the coach expects a response_text to score. When
+        none is provided we return None so the rule-based bank takes over;
+        the eventual full integration will accept response_text and use
+        the coach to score it."""
+        if not getattr(body, "response_text", None):
+            # Phase A schema doesn't carry a response yet; rule-based bank
+            # gives canned questions. Coach activates once the request
+            # schema lifts a response_text field.
+            return None
+        try:
+            from unipaith.ai.coach import InterviewResponse, get_workshop_coach
+        except Exception as e:  # noqa: BLE001
+            logger.warning("interview coach import failed; falling back: %s", e)
+            return None
+        try:
+            coach = get_workshop_coach()
+            resp = InterviewResponse(
+                response_text=body.response_text,  # type: ignore[attr-defined]
+                program_name="",
+                institution_name="",
+                interview_format=body.interview_type,
+            )
+            result = await coach.coach_interview(  # type: ignore[attr-defined]
+                response=resp, student_id=student_id, db=self.db
+            )
+        except Exception as e:  # noqa: BLE001
+            logger.warning("interview coach call failed; falling back: %s", e)
+            return None
+
+        if not result.passed:
+            logger.info("interview coach guardrail failed; falling back to rule-based bank")
+            return None
+
+        fb = result.feedback
+        rubric = {k: float(v) for k, v in fb.rubric_scores.items()}
+        missing = [{"element": s, "importance": "should_have"} for s in fb.missing_elements]
+        # clarifying_questions → suggested_questions (Phase A schema). The
+        # delivery_notes carry through as structural_issues with severity
+        # 'minor' since they're polish, not blockers.
+        questions = [
+            {"question": q, "why": "Targeted to your response."} for q in fb.clarifying_questions
+        ]
+        issues = list(fb.response_issues) + [
+            {"issue": n, "severity": "minor", "location_ref": "delivery"} for n in fb.delivery_notes
+        ]
+        return rubric, issues, missing, questions
+
     # ── Test guidance ────────────────────────────────────────────────────
     @staticmethod
     def _gap_band(gap: float) -> str:
@@ -286,6 +444,26 @@ class WorkshopFeedbackService:
         self, user_id: UUID, body: TestGuidanceRequest
     ) -> WorkshopFeedbackRun:
         student_id = await self._student_id(user_id)
+
+        if settings.ai_workshops_v2_enabled:
+            llm_payload = await self._try_test_coach(student_id, body)
+            if llm_payload is not None:
+                rubric, issues, missing, questions = llm_payload
+                run = WorkshopFeedbackRun(
+                    student_id=student_id,
+                    domain="test",
+                    input_artifact_id=body.test_type,
+                    prompt_text=None,
+                    rubric_scores=rubric,
+                    structural_issues=issues,
+                    missing_elements=missing,
+                    suggested_questions=questions,
+                    is_stub=False,
+                )
+                self.db.add(run)
+                await self.db.flush()
+                await self.db.refresh(run)
+                return run
 
         missing: list[dict] = []
         rubric: dict[str, float] = {}
@@ -347,6 +525,60 @@ class WorkshopFeedbackService:
         await self.db.flush()
         await self.db.refresh(run)
         return run
+
+    async def _try_test_coach(
+        self, student_id: UUID, body: TestGuidanceRequest
+    ) -> tuple[dict, list, list, list] | None:
+        """Run the test-prep coach. Maps TestPrepFeedback (with
+        section_diagnosis / priorities / resource_categories / timeline_notes)
+        into the four canonical WorkshopFeedbackRun fields."""
+        try:
+            from unipaith.ai.coach import TestPrepContext, get_workshop_coach
+        except Exception as e:  # noqa: BLE001
+            logger.warning("test coach import failed; falling back: %s", e)
+            return None
+        try:
+            coach = get_workshop_coach()
+            ctx = TestPrepContext(
+                test_type=body.test_type,
+                target_score=str(body.target_score) if body.target_score is not None else "",
+                current_diagnostic=(
+                    {"overall": body.current_score} if body.current_score is not None else {}
+                ),
+            )
+            result = await coach.coach_test_prep(  # type: ignore[attr-defined]
+                context=ctx, student_id=student_id, db=self.db
+            )
+        except Exception as e:  # noqa: BLE001
+            logger.warning("test coach call failed; falling back: %s", e)
+            return None
+
+        if not result.passed:
+            logger.info("test coach guardrail failed; falling back to stub")
+            return None
+
+        fb = result.feedback
+        rubric = {k: float(v) for k, v in fb.rubric_scores.items()}
+        # section_diagnosis is already dict-shaped from the coach prompt;
+        # surface it as structural_issues (severity inferred per item).
+        issues: list[dict] = []
+        for item in fb.section_diagnosis:
+            severity = item.get("severity") or "moderate"
+            issues.append(
+                {
+                    "issue": str(item.get("section") or item.get("issue") or "section"),
+                    "severity": severity,
+                    "location_ref": item.get("location_ref"),
+                }
+            )
+        # priorities → missing_elements (these are the prep moves to make).
+        missing = [{"element": p, "importance": "should_have"} for p in fb.priorities]
+        # resource_categories surface as suggestions (timeline_notes appended
+        # to first if present).
+        questions: list[dict] = []
+        for cat in fb.resource_categories:
+            questions.append({"question": cat, "why": fb.timeline_notes or ""})
+        return rubric, issues, missing, questions
 
     # ── List ──────────────────────────────────────────────────────────────
     async def list_runs(

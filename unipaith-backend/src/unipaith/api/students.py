@@ -937,10 +937,16 @@ async def explain_match(
     db: AsyncSession = Depends(get_db),
 ):
     """Generate (or return cached) rationale for why a program got the
-    fitness/confidence scores it did. Phase A: deterministic synthesis from
-    the breakdown columns. Plan 2: replace with an LLM call that cites
-    profile + program fields explicitly. Cached on `match_results.rationale_text`.
+    fitness/confidence scores it did.
+
+    When `settings.ai_match_rationale_v2_enabled=True`, delegates to
+    MatchService.get_match_with_rationale (A5 RationaleAgent + per-
+    (profile_version, program_version) cache). Falls back to a deterministic
+    stub on missing feature vector / parse failure / etc — always returns
+    something so the popover never renders empty.
     """
+    from unipaith.config import settings as _cfg
+
     profile = await _svc(db)._get_student_profile(user.id)
     result = await db.execute(
         select(MatchResult).where(
@@ -952,9 +958,51 @@ async def explain_match(
     if not match:
         raise NotFoundException("No match found for this program.")
 
-    # Phase A stub: build a 3-line rationale from the breakdown JSON. Plan 2
-    # replaces this block with an LLM call (matching.rationale_explainer)
-    # and flips is_stub to False.
+    # Plan 2 path — try the LLM rationale agent. On any failure (no feature
+    # vector yet, no program features, parse error) fall through to the
+    # stub so the caller always gets a usable response.
+    if _cfg.ai_match_rationale_v2_enabled:
+        try:
+            from unipaith.ai.rationale import ProgramView
+            from unipaith.models.institution import Program
+            from unipaith.services.match_service import MatchService
+
+            program = await db.scalar(select(Program).where(Program.id == program_id))
+            if program is not None:
+                program_view = ProgramView(
+                    name=program.name or "",
+                    description=getattr(program, "description", "") or "",
+                    sparse=getattr(program, "feature_vector_sparse", None) or {},
+                    program_id=program.id,
+                    program_version=int(getattr(program, "feature_version", 1) or 1),
+                )
+                out = await MatchService(db).get_match_with_rationale(
+                    profile.id, program_id, program_view=program_view
+                )
+                if out is not None and out.rationale_text:
+                    # MatchService persists rationale into `match_rationales` cache,
+                    # not match_results.rationale_text. Mirror it back so consumers
+                    # of GET /me/matches/{id} get the inline value too.
+                    match.rationale_text = out.rationale_text
+                    match.rationale_generated_at = func.now()  # type: ignore[assignment]
+                    await db.flush()
+                    await db.refresh(match)
+                    return ExplainMatchResponse(
+                        program_id=program_id,
+                        rationale_text=out.rationale_text,
+                        rationale_generated_at=match.rationale_generated_at,
+                        is_stub=False,
+                    )
+        except Exception as e:  # noqa: BLE001
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "rationale agent failed for match=%s; falling back to stub: %s",
+                program_id,
+                e,
+            )
+
+    # Stub path: 3-line rationale from the breakdown JSON.
     fitness_drivers = list((match.fitness_breakdown or {}).keys())
     confidence_reason = (match.confidence_breakdown or {}).get("reason", "default")
     rationale = (
