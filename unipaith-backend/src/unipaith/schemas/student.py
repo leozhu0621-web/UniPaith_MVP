@@ -54,11 +54,12 @@ class CreateAcademicRecordRequest(BaseModel):
     thesis_title: str | None = None
     country: str | None = None
     transcript_language: str | None = None
-    credential_evaluation_status: (
-        Literal["none", "in_progress", "provided", "verified"] | None
-    ) = None
+    credential_evaluation_status: Literal["none", "in_progress", "provided", "verified"] | None = (
+        None
+    )
     credential_evaluation_report_url: str | None = Field(
-        None, max_length=1000,
+        None,
+        max_length=1000,
     )
     rigor_indicator_count: int | None = None
     attendance_rate: Decimal | None = Field(None, ge=0, le=1)
@@ -94,11 +95,12 @@ class UpdateAcademicRecordRequest(BaseModel):
     thesis_title: str | None = None
     country: str | None = None
     transcript_language: str | None = None
-    credential_evaluation_status: (
-        Literal["none", "in_progress", "provided", "verified"] | None
-    ) = None
+    credential_evaluation_status: Literal["none", "in_progress", "provided", "verified"] | None = (
+        None
+    )
     credential_evaluation_report_url: str | None = Field(
-        None, max_length=1000,
+        None,
+        max_length=1000,
     )
     rigor_indicator_count: int | None = None
     attendance_rate: Decimal | None = Field(None, ge=0, le=1)
@@ -178,7 +180,11 @@ class CreateCourseRequest(BaseModel):
     course_code: str | None = Field(None, max_length=50)
     subject_area: str | None = Field(None, max_length=100)
     course_level: Literal[
-        "regular", "honors", "AP", "IB", "college",
+        "regular",
+        "honors",
+        "AP",
+        "IB",
+        "college",
     ]
     grade: str | None = Field(None, max_length=20)
     credits: Decimal | None = None
@@ -189,9 +195,7 @@ class UpdateCourseRequest(BaseModel):
     course_name: str | None = Field(None, min_length=1, max_length=255)
     course_code: str | None = Field(None, max_length=50)
     subject_area: str | None = Field(None, max_length=100)
-    course_level: (
-        Literal["regular", "honors", "AP", "IB", "college"] | None
-    ) = None
+    course_level: Literal["regular", "honors", "AP", "IB", "college"] | None = None
     grade: str | None = Field(None, max_length=20)
     credits: Decimal | None = None
     term: str | None = Field(None, max_length=50)
@@ -400,8 +404,13 @@ class StudentPreferenceResponse(BaseModel):
 
 class CreateOnlinePresenceRequest(BaseModel):
     platform_type: Literal[
-        "linkedin", "github", "personal_site", "portfolio",
-        "wechat", "twitter", "other",
+        "linkedin",
+        "github",
+        "personal_site",
+        "portfolio",
+        "wechat",
+        "twitter",
+        "other",
     ]
     url: str = Field(min_length=1, max_length=1000)
     display_name: str | None = Field(None, max_length=255)
@@ -410,8 +419,13 @@ class CreateOnlinePresenceRequest(BaseModel):
 class UpdateOnlinePresenceRequest(BaseModel):
     platform_type: (
         Literal[
-            "linkedin", "github", "personal_site", "portfolio",
-            "wechat", "twitter", "other",
+            "linkedin",
+            "github",
+            "personal_site",
+            "portfolio",
+            "wechat",
+            "twitter",
+            "other",
         ]
         | None
     ) = None
@@ -434,8 +448,12 @@ class CreatePortfolioItemRequest(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     description: str | None = None
     item_type: Literal[
-        "project", "writing_sample", "artwork",
-        "presentation", "code", "other",
+        "project",
+        "writing_sample",
+        "artwork",
+        "presentation",
+        "code",
+        "other",
     ]
     url: str | None = Field(None, max_length=1000)
     document_id: UUID | None = None
@@ -447,8 +465,12 @@ class UpdatePortfolioItemRequest(BaseModel):
     description: str | None = None
     item_type: (
         Literal[
-            "project", "writing_sample", "artwork",
-            "presentation", "code", "other",
+            "project",
+            "writing_sample",
+            "artwork",
+            "presentation",
+            "code",
+            "other",
         ]
         | None
     ) = None
@@ -494,9 +516,7 @@ class UpdateResearchRequest(BaseModel):
     advisor_name: str | None = None
     methods_tools: str | None = None
     outcomes: str | None = None
-    outputs: (
-        Literal["paper", "poster", "code", "none"] | None
-    ) = None
+    outputs: Literal["paper", "poster", "code", "none"] | None = None
     publication_link: str | None = Field(None, max_length=1000)
     start_date: date | None = None
     end_date: date | None = None
@@ -526,7 +546,11 @@ class ResearchResponse(BaseModel):
 class CreateLanguageRequest(BaseModel):
     language: str = Field(min_length=1, max_length=100)
     proficiency_level: Literal[
-        "native", "fluent", "advanced", "intermediate", "beginner",
+        "native",
+        "fluent",
+        "advanced",
+        "intermediate",
+        "beginner",
     ]
     certification_type: str | None = Field(None, max_length=100)
     certification_score: str | None = Field(None, max_length=50)
@@ -536,8 +560,7 @@ class CreateLanguageRequest(BaseModel):
 class UpdateLanguageRequest(BaseModel):
     language: str | None = Field(None, min_length=1, max_length=100)
     proficiency_level: (
-        Literal["native", "fluent", "advanced", "intermediate", "beginner"]
-        | None
+        Literal["native", "fluent", "advanced", "intermediate", "beginner"] | None
     ) = None
     certification_type: str | None = Field(None, max_length=100)
     certification_score: str | None = Field(None, max_length=50)
@@ -559,7 +582,10 @@ class LanguageResponse(BaseModel):
 
 class CreateWorkExperienceRequest(BaseModel):
     experience_type: Literal[
-        "employment", "internship", "volunteering", "service",
+        "employment",
+        "internship",
+        "volunteering",
+        "service",
     ]
     organization: str = Field(min_length=1, max_length=255)
     role_title: str = Field(min_length=1, max_length=255)
@@ -568,9 +594,14 @@ class CreateWorkExperienceRequest(BaseModel):
     end_date: date | None = None
     is_current: bool = False
     hours_per_week: int | None = None
-    compensation_type: Literal[
-        "paid", "unpaid", "stipend",
-    ] | None = None
+    compensation_type: (
+        Literal[
+            "paid",
+            "unpaid",
+            "stipend",
+        ]
+        | None
+    ) = None
     key_achievements: str | None = None
     supervisor_name: str | None = None
     organization_country: str | None = None
@@ -578,10 +609,7 @@ class CreateWorkExperienceRequest(BaseModel):
 
 
 class UpdateWorkExperienceRequest(BaseModel):
-    experience_type: (
-        Literal["employment", "internship", "volunteering", "service"]
-        | None
-    ) = None
+    experience_type: Literal["employment", "internship", "volunteering", "service"] | None = None
     organization: str | None = Field(None, min_length=1, max_length=255)
     role_title: str | None = Field(None, min_length=1, max_length=255)
     description: str | None = None
@@ -589,9 +617,7 @@ class UpdateWorkExperienceRequest(BaseModel):
     end_date: date | None = None
     is_current: bool | None = None
     hours_per_week: int | None = None
-    compensation_type: (
-        Literal["paid", "unpaid", "stipend"] | None
-    ) = None
+    compensation_type: Literal["paid", "unpaid", "stipend"] | None = None
     key_achievements: str | None = None
     supervisor_name: str | None = None
     organization_country: str | None = None
@@ -623,7 +649,10 @@ class CreateCompetitionRequest(BaseModel):
     competition_name: str = Field(min_length=1, max_length=255)
     domain: str | None = Field(None, max_length=100)
     level: Literal[
-        "school", "state", "national", "international",
+        "school",
+        "state",
+        "national",
+        "international",
     ]
     role: str | None = Field(None, max_length=50)
     result_placement: str | None = Field(None, max_length=100)
@@ -636,10 +665,7 @@ class CreateCompetitionRequest(BaseModel):
 class UpdateCompetitionRequest(BaseModel):
     competition_name: str | None = Field(None, min_length=1, max_length=255)
     domain: str | None = Field(None, max_length=100)
-    level: (
-        Literal["school", "state", "national", "international"]
-        | None
-    ) = None
+    level: Literal["school", "state", "national", "international"] | None = None
     role: str | None = Field(None, max_length=50)
     result_placement: str | None = Field(None, max_length=100)
     year: int | None = None
@@ -669,14 +695,9 @@ class UpsertAccommodationRequest(BaseModel):
     accommodations_needed: bool = False
     category: str | None = Field(None, max_length=100)
     details_text: str | None = None
-    documentation_status: (
-        Literal["none", "in_progress", "available", "verified"]
-        | None
-    ) = None
+    documentation_status: Literal["none", "in_progress", "available", "verified"] | None = None
     dyslexia_friendly_mode: bool = False
-    font_size_pref: (
-        Literal["default", "large", "extra_large"] | None
-    ) = None
+    font_size_pref: Literal["default", "large", "extra_large"] | None = None
 
 
 class AccommodationResponse(BaseModel):
@@ -696,10 +717,9 @@ class AccommodationResponse(BaseModel):
 class UpsertSchedulingRequest(BaseModel):
     timezone: str | None = Field(None, max_length=50)
     general_availability: dict | None = None
-    preferred_interview_format: (
-        Literal["video", "in_person", "phone", "no_preference"]
-        | None
-    ) = None
+    preferred_interview_format: Literal["video", "in_person", "phone", "no_preference"] | None = (
+        None
+    )
     campus_visit_interest: bool = False
     notes: str | None = None
 
@@ -722,9 +742,7 @@ class UpsertVisaInfoRequest(BaseModel):
     visa_required: bool = False
     target_study_country: str | None = Field(None, max_length=100)
     passport_expiration_date: date | None = None
-    sponsorship_source: (
-        Literal["self", "family", "scholarship", "employer"] | None
-    ) = None
+    sponsorship_source: Literal["self", "family", "scholarship", "employer"] | None = None
     financial_proof_available: bool = False
     financial_proof_amount_band: str | None = Field(None, max_length=50)
     post_study_work_interest: bool = False
@@ -768,9 +786,7 @@ class UpsertDataConsentRequest(BaseModel):
     consent_matching: bool | None = None
     consent_outreach: bool | None = None
     consent_research: bool | None = None
-    data_retention_preference: (
-        Literal["standard", "minimum", "delete_after_cycle"] | None
-    ) = None
+    data_retention_preference: Literal["standard", "minimum", "delete_after_cycle"] | None = None
     deletion_requested: bool | None = None
     first_generation_status: bool | None = None
     first_generation_definition: str | None = None
@@ -867,6 +883,10 @@ class StudentProfileResponse(BaseModel):
     email_verified: bool = False
     phone_verified: bool = False
     id_verification_status: str = "none"
+    # Phase A — denormalized journey summaries kept fresh by service hooks
+    # (DiscoveryService.update_session, StrategyService.activate/update).
+    discovery_completion: dict = Field(default_factory=dict)
+    strategy_active_id: UUID | None = None
     created_at: datetime
     updated_at: datetime
     academic_records: list[AcademicRecordResponse] = []
@@ -931,7 +951,8 @@ class MajorReadinessResponse(BaseModel):
 
 class LogPlatformEventRequest(BaseModel):
     event_type: str = Field(
-        min_length=1, max_length=50,
+        min_length=1,
+        max_length=50,
         description="Short tag e.g. 'login', 'search', 'program_view', 'compare'",
     )
     event_metadata: dict | None = None

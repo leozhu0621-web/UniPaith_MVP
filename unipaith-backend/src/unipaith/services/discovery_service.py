@@ -23,7 +23,7 @@ import logging
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -127,6 +127,7 @@ class DiscoveryService:
         student_id = await self._profile_id_for_user(user_id)
         session = await self._get_session_for_student(session_id, student_id)
 
+        becoming_completed = status == "completed" and session.status != "completed"
         if status is not None:
             session.status = status
             if status == "completed" and session.completed_at is None:
@@ -138,6 +139,13 @@ class DiscoveryService:
 
         await self.db.flush()
         await self.db.refresh(session)
+
+        # When a session crosses into 'completed', refresh the denormalized
+        # discovery_completion summary on student_profiles. Phase B's home
+        # page reads this without joining discovery_sessions per render.
+        if becoming_completed:
+            await self._refresh_profile_completion_summary(student_id)
+
         return session
 
     async def append_message(
@@ -259,9 +267,7 @@ class DiscoveryService:
                 "identity",
             }:
                 if session.layer == "basic":
-                    verdict = default_validator.validate(
-                        layer="basic", snapshot=snapshot
-                    )
+                    verdict = default_validator.validate(layer="basic", snapshot=snapshot)
                 else:
                     verdict, _judge_outcome = await default_validator.validate_with_judge(
                         layer=session.layer,  # type: ignore[arg-type]
@@ -351,14 +357,10 @@ class DiscoveryService:
                 out.append({"role": "assistant", "content": content})
         return out
 
-    async def get_completion_map(self, user_id: UUID) -> dict[str, Decimal]:
-        """Return per-track completion 0–1 plus a separate 'identity'
-        dimension. Per-track value is the max completion_pct across all
-        completed sessions for that track (or 0 if none). Identity is the max
-        completion_pct of completed sessions with track='profile' AND
-        layer='identity'."""
-        student_id = await self._profile_id_for_user(user_id)
-
+    async def _completion_for_student(self, student_id: UUID) -> dict[str, Decimal]:
+        """Inner query — returns the per-track + identity completion dict
+        keyed by student_id directly. Used both by the public API endpoint
+        and by the profile-summary write hook."""
         result = await self.db.execute(
             select(
                 DiscoverySession.track,
@@ -386,6 +388,30 @@ class DiscoveryService:
             if track == "profile" and layer == "identity" and value > out["identity"]:
                 out["identity"] = value
         return out
+
+    async def get_completion_map(self, user_id: UUID) -> dict[str, Decimal]:
+        """Return per-track completion 0–1 plus a separate 'identity'
+        dimension. Per-track value is the max completion_pct across all
+        completed sessions for that track (or 0 if none). Identity is the max
+        completion_pct of completed sessions with track='profile' AND
+        layer='identity'."""
+        student_id = await self._profile_id_for_user(user_id)
+        return await self._completion_for_student(student_id)
+
+    async def _refresh_profile_completion_summary(self, student_id: UUID) -> None:
+        """Recompute discovery_completion and write it to student_profiles.
+        Called from update_session whenever a session reaches `completed`,
+        so the home page can read live progress without joining."""
+        completion = await self._completion_for_student(student_id)
+        # JSON-friendly: floats not Decimals (asyncpg's json codec doesn't
+        # know about Decimal).
+        json_completion = {k: float(v) for k, v in completion.items()}
+        await self.db.execute(
+            update(StudentProfile)
+            .where(StudentProfile.id == student_id)
+            .values(discovery_completion=json_completion)
+        )
+        await self.db.flush()
 
 
 # ── Module helpers (state-header rendering) ────────────────────────────────

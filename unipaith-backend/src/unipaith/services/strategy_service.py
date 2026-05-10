@@ -20,7 +20,7 @@ from __future__ import annotations
 import re
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.core.exceptions import BadRequestException, NotFoundException
@@ -299,6 +299,24 @@ class StrategyService:
         student_id = await self._student_id(user_id)
         return await self._get_strategy(strategy_id, student_id)
 
+    async def _refresh_profile_strategy_active(self, student_id: UUID) -> None:
+        """Recompute student_profiles.strategy_active_id from the current
+        active row (or NULL if none). Called after every status mutation so
+        the home page can read the active strategy id without joining."""
+        result = await self.db.execute(
+            select(StudentStrategy.id).where(
+                StudentStrategy.student_id == student_id,
+                StudentStrategy.status == "active",
+            )
+        )
+        active_id = result.scalar_one_or_none()
+        await self.db.execute(
+            update(StudentProfile)
+            .where(StudentProfile.id == student_id)
+            .values(strategy_active_id=active_id)
+        )
+        await self.db.flush()
+
     async def activate(self, user_id: UUID, strategy_id: UUID) -> StudentStrategy:
         """Archive previous active (if any), set this to active. Same
         transaction so the partial unique index never sees two active rows."""
@@ -329,6 +347,10 @@ class StrategyService:
         target.status = "active"
         await self.db.flush()
         await self.db.refresh(target)
+
+        # Refresh the profile-summary pointer so the home page reads the
+        # active strategy id without joining.
+        await self._refresh_profile_strategy_active(student_id)
         return target
 
     async def update(
@@ -378,4 +400,10 @@ class StrategyService:
         self.db.add(new_draft)
         await self.db.flush()
         await self.db.refresh(new_draft)
+
+        # If the original was the active strategy, archiving it leaves the
+        # student with no active strategy — refresh the pointer so the home
+        # page reflects "no active" until the user explicitly activates the
+        # new draft.
+        await self._refresh_profile_strategy_active(student_id)
         return new_draft
