@@ -68,11 +68,57 @@ class IdentityService:
         return identity
 
     async def regenerate_summary(self, user_id: UUID) -> StudentIdentity:
-        """Phase A stub. Plan 2 replaces with an LLM call that synthesizes a
-        summary from core_values / worldview / self_awareness rows."""
+        """Synthesize a paragraph summarizing the student's identity layer.
+
+        With `settings.ai_identity_v2_enabled=True`, calls Plan 2's
+        IdentitySummaryAgent. On failure (or when the flag is off),
+        falls back to STUB_IDENTITY_SUMMARY — but only if the row has
+        no prior real summary. Once a real summary exists, we don't
+        clobber it with the stub on a flag-off retry.
+        """
+        from unipaith.config import settings as _cfg
+
         student_id = await self._student_id(user_id)
         identity = await self._get_or_create(student_id)
-        identity.identity_summary = STUB_IDENTITY_SUMMARY
+
+        new_summary: str | None = None
+        if _cfg.ai_identity_v2_enabled:
+            new_summary = await self._try_identity_agent(student_id, identity)
+
+        if new_summary is None:
+            if not identity.identity_summary:
+                identity.identity_summary = STUB_IDENTITY_SUMMARY
+        else:
+            identity.identity_summary = new_summary
+
         await self.db.flush()
         await self.db.refresh(identity)
         return identity
+
+    async def _try_identity_agent(self, student_id: UUID, identity: StudentIdentity) -> str | None:
+        try:
+            from unipaith.ai.identity import (
+                IdentityInput,
+                get_identity_summary_agent,
+            )
+        except Exception as e:  # noqa: BLE001
+            import logging
+
+            logging.getLogger(__name__).warning("identity agent import failed: %s", e)
+            return None
+
+        view = IdentityInput(
+            student_id=student_id,
+            core_values=list(identity.core_values or []),
+            worldview=list(identity.worldview or []),
+            self_awareness=list(identity.self_awareness or []),
+        )
+        try:
+            agent = get_identity_summary_agent()
+            result = await agent.synthesize(input_view=view, db=self.db)
+        except Exception as e:  # noqa: BLE001
+            import logging
+
+            logging.getLogger(__name__).warning("identity agent call failed: %s", e)
+            return None
+        return result.summary if result else None

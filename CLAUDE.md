@@ -104,13 +104,15 @@ Plan 2 (LLM stack) plugs into these contract endpoints. Each is feature-flagged 
 
 | Endpoint | Flag | Status | Notes |
 |---|---|---|---|
-| `POST /me/discovery/sessions/{id}/messages` | `ai_discovery_v2_enabled` | ✅ wired (PR #114, #116, #119) | Orchestrator + extractor + validator + judge |
-| `POST /me/matches/{program_id}/explain` | `ai_match_rationale_v2_enabled` | ✅ wired | Delegates to MatchService.get_match_with_rationale (A5 RationaleAgent + per-(profile_version, program_version) cache); falls back to stub when no feature vector / parse error |
-| `POST /me/workshops/essay/feedback` | `ai_workshops_v2_enabled` | ✅ wired | WorkshopCoach (A6) with two-layer guardrail; graceful fallback to rule-based stub on coach/judge failure |
-| `POST /me/workshops/interview/practice` | `ai_workshops_v2_enabled` | ⏳ partial | Coach exists (C2); current Phase A request shape lacks `response_text` so the rule-based bank still serves question requests. LLM activates when the schema lifts a response field |
-| `POST /me/workshops/test/guidance` | `ai_workshops_v2_enabled` | ✅ wired | TestPrepCoach (C2); fallback to rule-based gap-band heuristic |
-| `POST /me/strategy/generate` | _no flag yet_ | ❌ stub only | StrategyAgent not yet built. `_rule_based_generate` produces template prose. **Plan 2 follow-up scope.** |
-| `POST /me/identity/regenerate-summary` | _no flag yet_ | ❌ stub only | No identity-summary agent. Returns `STUB_IDENTITY_SUMMARY`. **Plan 2 follow-up scope.** |
+| `POST /me/discovery/sessions/{id}/messages` | `ai_discovery_v2_enabled` | ✅ wired | Orchestrator + extractor + validator + judge |
+| `POST /me/matches/{program_id}/explain` | `ai_match_rationale_v2_enabled` | ✅ wired | Delegates to MatchService.get_match_with_rationale (A5 RationaleAgent + per-(profile_version, program_version) cache) |
+| `POST /me/workshops/essay/feedback` | `ai_workshops_v2_enabled` | ✅ wired | WorkshopCoach (A6) with two-layer guardrail |
+| `POST /me/workshops/interview/practice` | `ai_workshops_v2_enabled` | ✅ wired | When `response_text` is provided the coach scores it; otherwise the rule-based bank serves canned practice questions |
+| `POST /me/workshops/test/guidance` | `ai_workshops_v2_enabled` | ✅ wired | TestPrepCoach (C2) |
+| `POST /me/strategy/generate` | `ai_strategy_v2_enabled` | ✅ wired | StrategyAgent (Sonnet, forced tool-use); produces career → degree → academic / financial / geographic paths + 4-paragraph narrative |
+| `POST /me/identity/regenerate-summary` | `ai_identity_v2_enabled` | ✅ wired | IdentitySummaryAgent synthesizes a 3–5 sentence paragraph from the structured layer; on failure preserves an existing real summary rather than overwriting with stub |
+
+All five flags are **enabled in production** (see `infra/ecs.tf` env block).
 
 **Integration-test invariant:** when an LLM agent fails (timeout, parse error, guardrail trip), the service falls back to the rule-based path so the caller never sees a 5xx. See `tests/test_plan2_integration.py`.
 

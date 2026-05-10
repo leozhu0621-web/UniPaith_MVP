@@ -185,6 +185,18 @@ class Settings(BaseSettings):
     # + per-(profile_version, program_version) cache). Off → Phase A stub.
     ai_match_rationale_v2_enabled: bool = False
 
+    # Plan 2 — Strategy generator LLM. When True, StrategyService.generate
+    # routes through StrategyAgent (Sonnet, forced tool-use). On any
+    # failure (parse / well-formed check / API error), falls back to the
+    # deterministic rule-based template.
+    ai_strategy_v2_enabled: bool = False
+
+    # Plan 2 — Identity summary LLM. When True,
+    # IdentityService.regenerate_summary calls IdentitySummaryAgent to
+    # synthesize a paragraph from core_values / worldview / self_awareness.
+    # Off → returns the hardcoded STUB_IDENTITY_SUMMARY.
+    ai_identity_v2_enabled: bool = False
+
     # GPU infrastructure (cloud-first)
     gpu_mode: str = "openai"  # "openai" | "aws" | "local" | "mock"
     gpu_8b_instance_id: str = ""
