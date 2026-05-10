@@ -156,3 +156,43 @@ class AiTurn(Base, UUIDPrimaryKeyMixin):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+
+# ── Rationale cache (Phase B2) ──────────────────────────────────────────────
+
+
+class MatchRationale(Base):
+    """Cached A5 Rationale output, keyed by
+    (student, program, profile_version, program_version).
+
+    The match service checks this table before calling the agent. Cache
+    invalidation happens automatically when either version bumps — the
+    composite-key strategy from the Phase A1 migration.
+
+    `cited_student_fields` and `cited_program_fields` are stored so post-
+    hoc audits can re-run the groundedness check against historical
+    rationales without re-calling the LLM.
+    """
+
+    __tablename__ = "match_rationales"
+
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_profiles.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    program_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("programs.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    profile_version: Mapped[int] = mapped_column(Integer, primary_key=True)
+    program_version: Mapped[int] = mapped_column(
+        Integer, primary_key=True, server_default="1"
+    )
+    rationale_text: Mapped[str] = mapped_column(Text, nullable=False)
+    cited_student_fields: Mapped[dict | None] = mapped_column(JSONB)
+    cited_program_fields: Mapped[dict | None] = mapped_column(JSONB)
+    generated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
