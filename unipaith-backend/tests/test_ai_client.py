@@ -163,3 +163,43 @@ def test_reset_client_creates_fresh_instance() -> None:
     reset_client()
     b = get_client()
     assert a is not b
+
+
+# ── Cost-cap gate (no-DB unit tests) ───────────────────────────────────────
+# Integration tests against the ai_turns table live in
+# tests/test_ai_cost_cap.py — these only exercise the gate logic when
+# no db / no student_id is provided (the "skip enforcement" path).
+
+
+def test_message_with_no_db_skips_cap_check() -> None:
+    """No db / no student → no cap check → no warning attached."""
+    client = _make_mock_client()
+    resp = asyncio.run(
+        client.message(
+            agent="orchestrator",
+            model="sonnet",
+            system="x",
+            messages=[{"role": "user", "content": "hi"}],
+            # db=None, student_id=None
+        )
+    )
+    assert resp.cost_cap_warning is None
+
+
+def test_message_with_db_but_no_student_skips_cap_check() -> None:
+    """Eval harness pattern — db provided, student_id None."""
+    client = _make_mock_client()
+    # We can pass a placeholder for db; check_cost_cap returns early on
+    # student_id=None without touching the connection. Use None to keep
+    # the test no-DB.
+    resp = asyncio.run(
+        client.message(
+            agent="extractor",
+            model="haiku",
+            system="x",
+            messages=[{"role": "user", "content": "hi"}],
+            student_id=None,
+            db=None,
+        )
+    )
+    assert resp.cost_cap_warning is None

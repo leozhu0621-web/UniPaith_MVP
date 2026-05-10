@@ -133,6 +133,16 @@ class Settings(BaseSettings):
     ai_mock_mode: bool = False
     ai_refresh_cooldown_seconds: int = 300
 
+    # Per-student LLM spend cap (Plan 2 §10).
+    # Sums `ai_turns.cost_usd` for the last `window_days` and refuses
+    # further calls once the cap is reached. Enforcement mode:
+    #   "off"   — no check (cold-start / dev)
+    #   "warn"  — log warning + set cost_cap_warning on response, allow call
+    #   "block" — raise CostCapExceededError, fail the call
+    ai_per_student_weekly_cost_cap_usd: float = 0.50
+    ai_cost_cap_window_days: int = 7
+    ai_cost_cap_enforcement: str = "warn"
+
     # Discovery v2 — Phase A2 LLM pipeline. When False (default), the
     # discovery service returns the Phase-A stub assistant reply. When True,
     # the orchestrator + extractor + validator + artifact-writer fire on
