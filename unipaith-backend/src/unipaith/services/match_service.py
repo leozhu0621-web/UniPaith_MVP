@@ -47,6 +47,10 @@ from unipaith.models.ai_artifacts import (
     StudentFeatureVector,
 )
 from unipaith.models.matching import MatchResult
+from unipaith.services.confidence_calibrator import (
+    CalibratorState,
+    apply_calibrator,
+)
 from unipaith.services.matching import (
     ProgramFeatures,
     Score,
@@ -54,7 +58,12 @@ from unipaith.services.matching import (
     rank_programs,
     score,
 )
+from unipaith.services.ml_state import (
+    load_calibrator_state,
+    load_reranker_state,
+)
 from unipaith.services.program_features import ProgramRow, features_from_row
+from unipaith.services.reranker import RerankerState, get_reranker
 
 logger = logging.getLogger(__name__)
 
@@ -91,10 +100,29 @@ class MatchWithRationale:
 
 
 class MatchService:
-    """Stateless service — instantiate per-request with the AsyncSession."""
+    """Stateless service — instantiate per-request with the AsyncSession.
+
+    The service caches the loaded calibrator + reranker state on `self`
+    across calls within the same request lifecycle so the model_registry
+    table is hit at most once per request even when the same service is
+    used to read multiple matches.
+    """
 
     def __init__(self, db: AsyncSession):
         self.db = db
+        # Lazy-loaded once per service instance.
+        self._calibrator_state: CalibratorState | None = None
+        self._reranker_state: RerankerState | None = None
+
+    async def _calibrator(self) -> CalibratorState:
+        if self._calibrator_state is None:
+            self._calibrator_state = await load_calibrator_state(self.db)
+        return self._calibrator_state
+
+    async def _reranker_state_cached(self) -> RerankerState:
+        if self._reranker_state is None:
+            self._reranker_state = await load_reranker_state(self.db)
+        return self._reranker_state
 
     # ── Score-and-persist ─────────────────────────────────────────────
 
@@ -132,18 +160,22 @@ class MatchService:
 
         program_embeddings = program_embeddings or {}
         program_features = [
-            features_from_row(row, embedding=program_embeddings.get(row.id))
-            for row in program_rows
+            features_from_row(row, embedding=program_embeddings.get(row.id)) for row in program_rows
         ]
 
         ranked: list[tuple[ProgramFeatures, Score]] = rank_programs(
             sfv, program_features, weights=weights, include_eliminated=False
         )
 
+        # D3: rerank top-K. Cold start = identity, but the breakdowns
+        # are annotated so the rationale agent + admin dashboard can see
+        # the rerank stage ran. When a fitted model is loaded, this
+        # actually reorders.
+        reranker_state = await self._reranker_state_cached()
+        ranked = get_reranker(state=reranker_state).rerank(sfv, ranked)
+
         if replace_existing:
-            await self.db.execute(
-                delete(MatchResult).where(MatchResult.student_id == student_id)
-            )
+            await self.db.execute(delete(MatchResult).where(MatchResult.student_id == student_id))
 
         out: list[MatchRow] = []
         for rank, (program, scored) in enumerate(ranked[:top_n], start=1):
@@ -175,11 +207,16 @@ class MatchService:
 
     # ── Read paths ────────────────────────────────────────────────────
 
-    async def list_matches(
-        self, student_id: UUID, *, limit: int = 20
-    ) -> list[MatchRow]:
+    async def list_matches(self, student_id: UUID, *, limit: int = 20) -> list[MatchRow]:
         """Read previously-computed matches for the student, ordered by
-        fitness desc. No LLM, no scoring — a pure DB read."""
+        fitness desc. No LLM, no scoring — a pure DB read.
+
+        Confidence is calibrated at read time using the active
+        CalibratorState. Cold start (unfitted) → raw confidence flows
+        through unchanged. The breakdown carries `{raw, calibrated,
+        calibrator_fitted}` so admin/rationale tooling can tell the two
+        apart.
+        """
         result = await self.db.execute(
             select(MatchResult)
             .where(MatchResult.student_id == student_id)
@@ -187,17 +224,28 @@ class MatchService:
             .limit(limit)
         )
         rows = list(result.scalars().all())
-        return [
-            MatchRow(
-                program_id=r.program_id,
-                fitness=r.fitness_score,
-                confidence=r.confidence_score,
-                fitness_breakdown=r.fitness_breakdown or {},
-                confidence_breakdown=r.confidence_breakdown or {},
-                rank=i + 1,
-            )
-            for i, r in enumerate(rows)
-        ]
+        calibrator = await self._calibrator()
+        return [self._row_to_match(r, calibrator, rank=i + 1) for i, r in enumerate(rows)]
+
+    @staticmethod
+    def _row_to_match(row: MatchResult, calibrator: CalibratorState, *, rank: int) -> MatchRow:
+        raw_conf = float(row.confidence_score)
+        calibrated = apply_calibrator(calibrator, raw_conf)
+        breakdown = dict(row.confidence_breakdown or {})
+        breakdown["calibration"] = {
+            "raw": round(raw_conf, 4),
+            "calibrated": round(calibrated, 4),
+            "calibrator_fitted": calibrator.fitted,
+            "calibrator_n_samples": calibrator.n_samples,
+        }
+        return MatchRow(
+            program_id=row.program_id,
+            fitness=row.fitness_score,
+            confidence=Decimal(str(round(calibrated, 4))),
+            fitness_breakdown=row.fitness_breakdown or {},
+            confidence_breakdown=breakdown,
+            rank=rank,
+        )
 
     async def get_match_with_rationale(
         self,
@@ -311,18 +359,12 @@ class MatchService:
             extractor_quality=0.85,  # cold-start placeholder
         )
 
-    async def _student_feature_record(
-        self, student_id: UUID
-    ) -> StudentFeatureVector | None:
+    async def _student_feature_record(self, student_id: UUID) -> StudentFeatureVector | None:
         return await self.db.scalar(
-            select(StudentFeatureVector).where(
-                StudentFeatureVector.student_id == student_id
-            )
+            select(StudentFeatureVector).where(StudentFeatureVector.student_id == student_id)
         )
 
-    async def _read_match(
-        self, student_id: UUID, program_id: UUID
-    ) -> MatchRow | None:
+    async def _read_match(self, student_id: UUID, program_id: UUID) -> MatchRow | None:
         m = await self.db.scalar(
             select(MatchResult).where(
                 MatchResult.student_id == student_id,
@@ -331,14 +373,8 @@ class MatchService:
         )
         if m is None:
             return None
-        return MatchRow(
-            program_id=m.program_id,
-            fitness=m.fitness_score,
-            confidence=m.confidence_score,
-            fitness_breakdown=m.fitness_breakdown or {},
-            confidence_breakdown=m.confidence_breakdown or {},
-            rank=0,
-        )
+        calibrator = await self._calibrator()
+        return self._row_to_match(m, calibrator, rank=0)
 
     async def _cached_rationale(
         self,
