@@ -880,12 +880,34 @@ async def upsert_preferences(
 
 @router.get("/me/matches", response_model=list[MatchResultResponse])
 async def get_my_matches(
-    force_refresh: bool = Query(False, description="Force recomputation of matches"),
+    limit: int = Query(20, ge=1, le=100),
     user: User = Depends(require_student),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get AI-powered program matches. Requires 80% profile completion."""
-    return {"status": "ai_engine_not_available", "message": "AI matching engine is being rebuilt"}
+    """List the student's previously-computed matches, ordered by fitness desc.
+
+    Phase B2: real implementation. No LLM in this path — rationale is
+    fetched lazily per-card via `POST /me/matches/{program_id}/rationale`
+    or read inline from `MatchResult.rationale_text` if a previous
+    rationale call already populated it.
+
+    Empty list when Discovery hasn't completed (no feature vector yet).
+    """
+    from unipaith.services.match_service import MatchService
+
+    profile = await _svc(db)._get_student_profile(user.id)
+    matches = await MatchService(db).list_matches(profile.id, limit=limit)
+    if not matches:
+        return []
+    # Hydrate full ORM rows so response_model serializes correctly.
+    program_ids = [m.program_id for m in matches]
+    result = await db.execute(
+        select(MatchResult).where(
+            MatchResult.student_id == profile.id,
+            MatchResult.program_id.in_(program_ids),
+        )
+    )
+    return list(result.scalars().all())
 
 
 @router.get("/me/matches/{program_id}", response_model=MatchResultResponse)
@@ -951,6 +973,70 @@ async def explain_match(
         rationale_text=match.rationale_text,
         rationale_generated_at=match.rationale_generated_at,
         is_stub=True,
+    )
+
+
+# --- Phase B2: LLM rationale (lazy on click) ---
+
+
+class RationaleResponse(BaseModel):
+    program_id: UUID
+    rationale_text: str
+    cited_student_fields: list[str]
+    cited_program_fields: list[str]
+    cache_hit: bool
+    grounded: bool
+
+
+@router.post("/me/matches/{program_id}/rationale", response_model=RationaleResponse)
+async def generate_match_rationale(
+    program_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Phase B2 — LLM-generated rationale (cached, lazy).
+
+    Looks up `match_rationales` keyed by
+    (student_id, program_id, profile_version, program_version). Cache
+    miss → calls A5 Rationale agent and persists. The cache invalidates
+    automatically when feature_vector.profile_version bumps (after a
+    profile change).
+
+    Returns 404 if no MatchResult or no feature vector exists yet
+    (Discovery must complete first).
+    """
+    from unipaith.ai.rationale import ProgramView
+    from unipaith.models.institution import Program
+    from unipaith.services.match_service import MatchService
+
+    profile = await _svc(db)._get_student_profile(user.id)
+
+    program = await db.scalar(select(Program).where(Program.id == program_id))
+    if program is None:
+        raise NotFoundException(f"Program {program_id} not found.")
+
+    program_view = ProgramView(
+        name=program.name or "",
+        description=getattr(program, "description", "") or "",
+        sparse=getattr(program, "feature_vector_sparse", None) or {},
+        program_id=program.id,
+        program_version=int(getattr(program, "feature_version", 1) or 1),
+    )
+
+    out = await MatchService(db).get_match_with_rationale(
+        profile.id, program_id, program_view=program_view
+    )
+    if out is None:
+        raise NotFoundException(
+            "No match found. Complete Discovery and run /me/matches/refresh first."
+        )
+    return RationaleResponse(
+        program_id=program_id,
+        rationale_text=out.rationale_text,
+        cited_student_fields=out.cited_student_fields,
+        cited_program_fields=out.cited_program_fields,
+        cache_hit=out.cache_hit,
+        grounded=out.grounded,
     )
 
 

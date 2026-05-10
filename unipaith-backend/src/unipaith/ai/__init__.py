@@ -48,6 +48,17 @@ from unipaith.ai.orchestrator import (
     get_orchestrator,
     reset_orchestrator,
 )
+from unipaith.ai.rationale import (
+    ProgramView,
+    RationaleAgent,
+    RationaleResult,
+    ScoreView,
+    StudentView,
+    get_rationale_agent,
+    is_grounded,
+    reset_rationale_agent,
+    resolve_path,
+)
 from unipaith.ai.state import LayerVerdict, StudentSnapshot, evaluate_basic_layer
 from unipaith.ai.validator import LayerValidator, default_validator
 
@@ -75,6 +86,16 @@ __all__ = [
     "get_feature_emitter",
     "persist_features",
     "reset_feature_emitter",
+    # rationale (A5 agent — Phase B2)
+    "RationaleAgent",
+    "RationaleResult",
+    "StudentView",
+    "ProgramView",
+    "ScoreView",
+    "get_rationale_agent",
+    "reset_rationale_agent",
+    "is_grounded",
+    "resolve_path",
     # state machine
     "LayerVerdict",
     "StudentSnapshot",

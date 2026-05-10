@@ -1,6 +1,7 @@
 from unipaith.models.admin_audit_event import AdminAuditEvent
 from unipaith.models.ai_artifacts import (
     AiTurn,
+    MatchRationale,
     StudentFeatureVector,
 )
 from unipaith.models.application import (
@@ -163,6 +164,7 @@ __all__ = [
     # LLM-only artifacts (Phase A1)
     "StudentFeatureVector",
     "AiTurn",
+    "MatchRationale",
     "Institution",
     "School",
     "Program",
