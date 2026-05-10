@@ -7,6 +7,7 @@ from decimal import Decimal
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     DateTime,
     ForeignKey,
     Index,
@@ -25,7 +26,17 @@ from unipaith.models.base import Base
 
 class MatchResult(Base):
     __tablename__ = "match_results"
-    __table_args__ = (UniqueConstraint("student_id", "program_id"),)
+    __table_args__ = (
+        UniqueConstraint("student_id", "program_id"),
+        CheckConstraint(
+            "fitness_score >= 0 AND fitness_score <= 1",
+            name="ck_match_results_fitness_score_range",
+        ),
+        CheckConstraint(
+            "confidence_score >= 0 AND confidence_score <= 1",
+            name="ck_match_results_confidence_score_range",
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     student_id: Mapped[uuid.UUID] = mapped_column(
@@ -40,8 +51,11 @@ class MatchResult(Base):
         nullable=False,
         index=True,
     )
+    # DEPRECATED — drop in Phase E. Kept for rollback safety; see migration
+    # bd5c6e3f2a1b. New writes should use fitness_score / confidence_score.
     match_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 4))
     match_tier: Mapped[int | None] = mapped_column(Integer)
+    # DEPRECATED alongside match_score — fitness_breakdown is the new home.
     score_breakdown: Mapped[dict | None] = mapped_column(JSONB)
     reasoning_text: Mapped[str | None] = mapped_column(Text)
     model_version: Mapped[str | None] = mapped_column(String(50))
@@ -49,6 +63,25 @@ class MatchResult(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     is_stale: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    # Phase A — dual scores. Both required (NOT NULL); CHECK constraints
+    # keep them in [0,1]. fitness_score is the raw match strength;
+    # confidence_score is 1 - uncertainty (driven by profile completeness +
+    # data sparseness on the program side).
+    fitness_score: Mapped[Decimal] = mapped_column(Numeric(5, 4), nullable=False)
+    confidence_score: Mapped[Decimal] = mapped_column(Numeric(5, 4), nullable=False)
+    fitness_breakdown: Mapped[dict | None] = mapped_column(JSONB)
+    confidence_breakdown: Mapped[dict | None] = mapped_column(JSONB)
+    rationale_text: Mapped[str | None] = mapped_column(Text)
+    rationale_generated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Which strategy version this match was scored against. Null for
+    # pre-strategy / legacy rows. SET NULL on cascade so retiring an
+    # archived strategy doesn't drop downstream match rows.
+    strategy_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_strategies.id", ondelete="SET NULL"),
+        index=True,
+    )
 
 
 class StudentFeature(Base):
