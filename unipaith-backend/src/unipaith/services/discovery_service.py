@@ -247,10 +247,27 @@ class DiscoveryService:
             history = await self._load_extracted_signals_for_session(session.id)
             snapshot = snapshot_from_extracted_signals_history(history)
 
-            # 4. Validate the current layer (BASIC only in A2).
+            # 4. Validate the current layer.
+            # BASIC: deterministic; cheap, runs every turn.
+            # PERSONALITY / IDENTITY: deterministic gate first; LLM-as-judge
+            # only when the count gate already passes (avoids token spend on
+            # clearly-incomplete layers).
             verdict = None
-            if session.track == "profile" and session.layer == "basic":
-                verdict = default_validator.validate(layer="basic", snapshot=snapshot)
+            if session.track == "profile" and session.layer in {
+                "basic",
+                "personality",
+                "identity",
+            }:
+                if session.layer == "basic":
+                    verdict = default_validator.validate(
+                        layer="basic", snapshot=snapshot
+                    )
+                else:
+                    verdict, _judge_outcome = await default_validator.validate_with_judge(
+                        layer=session.layer,  # type: ignore[arg-type]
+                        snapshot=snapshot,
+                        db=self.db,
+                    )
                 session.completion_pct = verdict.completion_pct
 
             # 5. Orchestrate — generate the assistant turn.
@@ -397,6 +414,14 @@ def _summarize_snapshot(snapshot) -> str:  # type: ignore[no-untyped-def]
         parts.append(f"- income_band: {snapshot.income_band}")
     if snapshot.gender:
         parts.append(f"- gender: {snapshot.gender}")
+    # Personality + identity summaries (truncated — full evidence stays in
+    # the audit trail; the orchestrator only needs gist-level grounding).
+    if snapshot.personality:
+        for p in snapshot.personality[:6]:
+            parts.append(f"- personality.{p.facet}: {p.value}")
+    if snapshot.identity_claims:
+        for c in snapshot.identity_claims[:6]:
+            parts.append(f"- identity.{c.facet}: {c.claim[:120]}")
     return "\n".join(parts) or "(nothing yet)"
 
 

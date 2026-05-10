@@ -123,3 +123,146 @@ def test_evidence_count_reflects_known_fields() -> None:
     v = evaluate_basic_layer(snap)
     # All 5 required fields counted.
     assert sum(v.evidence_count.values()) == len(BASIC_REQUIRED_FIELDS)
+
+
+# ── Phase A3 — PERSONALITY layer ───────────────────────────────────────────
+
+
+def test_personality_empty_zero_completion() -> None:
+    from unipaith.ai.state import evaluate_personality_layer
+
+    v = evaluate_personality_layer(StudentSnapshot())
+    assert v.layer_complete is False
+    assert v.completion_pct == Decimal("0")
+    assert v.next_probe_hint is not None
+
+
+def test_personality_three_facets_below_threshold() -> None:
+    """Below the ≥4 facet bar even with three solid signals."""
+    from unipaith.ai.state import PersonalityEntry, evaluate_personality_layer
+
+    snap = StudentSnapshot(
+        personality=[
+            PersonalityEntry(facet="interest", value="ml", evidence="I love ml"),
+            PersonalityEntry(facet="peer_style", value="small", evidence="small groups"),
+            PersonalityEntry(facet="passion", value="teaching", evidence="i teach"),
+        ]
+    )
+    v = evaluate_personality_layer(snap)
+    assert v.layer_complete is False
+    assert v.completion_pct == Decimal("0.75")
+
+
+def test_personality_four_facets_complete() -> None:
+    from unipaith.ai.state import PersonalityEntry, evaluate_personality_layer
+
+    snap = StudentSnapshot(
+        personality=[
+            PersonalityEntry(facet="interest", value="ml", evidence="ev1"),
+            PersonalityEntry(facet="peer_style", value="small", evidence="ev2"),
+            PersonalityEntry(facet="passion", value="teaching", evidence="ev3"),
+            PersonalityEntry(facet="connection_style", value="mentor", evidence="ev4"),
+        ]
+    )
+    v = evaluate_personality_layer(snap)
+    assert v.layer_complete is True
+    assert v.completion_pct == Decimal("1.000")
+
+
+def test_personality_no_evidence_doesnt_count() -> None:
+    """An entry with no evidence quote doesn't satisfy the framework's
+    requirement (it's the same as not extracting it at all)."""
+    from unipaith.ai.state import PersonalityEntry, evaluate_personality_layer
+
+    snap = StudentSnapshot(
+        personality=[
+            PersonalityEntry(facet="interest", value="ml", evidence="ev1"),
+            PersonalityEntry(facet="peer_style", value="small", evidence=""),
+            PersonalityEntry(facet="passion", value="", evidence="ev3"),
+            PersonalityEntry(facet="connection_style", value="mentor", evidence="ev4"),
+        ]
+    )
+    v = evaluate_personality_layer(snap)
+    # Only 2 valid (interest, connection_style) → not complete.
+    assert v.layer_complete is False
+
+
+# ── Phase A3 — IDENTITY layer ──────────────────────────────────────────────
+
+
+def test_identity_empty_zero_completion() -> None:
+    from unipaith.ai.state import evaluate_identity_layer
+
+    v = evaluate_identity_layer(StudentSnapshot())
+    assert v.layer_complete is False
+    assert v.completion_pct == Decimal("0")
+    # Three independent gates should all be missing.
+    assert len(v.missing_signals) == 3
+
+
+def test_identity_three_value_claims_no_self_awareness_incomplete() -> None:
+    from unipaith.ai.state import IdentityClaim, evaluate_identity_layer
+
+    snap = StudentSnapshot(
+        identity_claims=[
+            IdentityClaim(facet="value", claim="c1", evidence="e1", user_confirmed=True),
+            IdentityClaim(facet="belief", claim="c2", evidence="e2", user_confirmed=True),
+            IdentityClaim(facet="view", claim="c3", evidence="e3"),
+        ]
+    )
+    v = evaluate_identity_layer(snap)
+    # Has 3 value/belief, has 2 confirmed, but no self_awareness moment.
+    assert v.layer_complete is False
+    assert any("self_awareness" in m for m in v.missing_signals)
+
+
+def test_identity_full_complete() -> None:
+    from unipaith.ai.state import IdentityClaim, evaluate_identity_layer
+
+    snap = StudentSnapshot(
+        identity_claims=[
+            IdentityClaim(facet="value", claim="c1", evidence="e1", user_confirmed=True),
+            IdentityClaim(facet="belief", claim="c2", evidence="e2", user_confirmed=True),
+            IdentityClaim(facet="view", claim="c3", evidence="e3"),
+            IdentityClaim(facet="self_awareness", claim="c4", evidence="e4"),
+        ]
+    )
+    v = evaluate_identity_layer(snap)
+    assert v.layer_complete is True
+    assert v.completion_pct == Decimal("1.000")
+
+
+def test_identity_completion_pct_is_min_of_three_gates() -> None:
+    """If one gate is at 33% and others at 100%, layer pct should be 33%."""
+    from unipaith.ai.state import IdentityClaim, evaluate_identity_layer
+
+    snap = StudentSnapshot(
+        identity_claims=[
+            IdentityClaim(facet="value", claim="c1", evidence="e1", user_confirmed=True),
+            IdentityClaim(facet="value", claim="c2", evidence="e2", user_confirmed=True),
+            IdentityClaim(facet="self_awareness", claim="c3", evidence="e3"),
+            # 2/3 value-or-belief, 1/1 self_awareness, 2/2 confirmed
+            # → min(0.667, 1.0, 1.0) = 0.667
+        ]
+    )
+    v = evaluate_identity_layer(snap)
+    assert v.completion_pct == Decimal("0.667")
+    assert v.layer_complete is False
+
+
+def test_identity_dedup_on_claim_evidence_pair() -> None:
+    """Two entries with the same (claim, evidence) count as one — the
+    evaluator de-duplicates so the orchestrator can't game the count by
+    re-recording the same claim under different facets."""
+    from unipaith.ai.state import IdentityClaim, evaluate_identity_layer
+
+    snap = StudentSnapshot(
+        identity_claims=[
+            IdentityClaim(facet="value", claim="same claim", evidence="same ev"),
+            IdentityClaim(facet="belief", claim="same claim", evidence="same ev"),
+            IdentityClaim(facet="value", claim="distinct", evidence="ev2"),
+        ]
+    )
+    v = evaluate_identity_layer(snap)
+    # Only 2 distinct claims → vb_count=2 → 67% (clamped by other gates).
+    assert "value_or_belief (2/3)" in " ".join(v.missing_signals)

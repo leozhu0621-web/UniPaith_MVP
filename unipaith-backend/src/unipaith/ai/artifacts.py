@@ -58,7 +58,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.ai.extractor import ExtractedSignals
-from unipaith.ai.state import StudentSnapshot
+from unipaith.ai.state import IdentityClaim, PersonalityEntry, StudentSnapshot
 from unipaith.models.goals import StudentGoal
 from unipaith.models.identity import StudentIdentity
 from unipaith.models.needs import StudentNeed
@@ -384,5 +384,60 @@ def snapshot_from_extracted_signals_history(
             snap.income_band = str(basic["income_band"])
         if basic.get("gender"):
             snap.gender = str(basic["gender"])
+
+        # PERSONALITY (Phase A3) — append + dedup by (facet, value).
+        for p in raw.get("personality") or []:
+            if not isinstance(p, dict):
+                continue
+            facet = p.get("facet")
+            value = p.get("value")
+            evidence = p.get("evidence") or ""
+            if not facet or not value:
+                continue
+            key = (str(facet), str(value).strip().lower()[:120])
+            if any(
+                (e.facet, e.value.strip().lower()[:120]) == key for e in snap.personality
+            ):
+                continue
+            snap.personality.append(
+                PersonalityEntry(
+                    facet=str(facet),
+                    value=str(value),
+                    evidence=str(evidence),
+                )
+            )
+
+        # IDENTITY (Phase A3) — append + dedup by (facet, claim, evidence prefix).
+        for c in raw.get("identity") or []:
+            if not isinstance(c, dict):
+                continue
+            facet = c.get("facet")
+            claim = c.get("claim")
+            evidence = c.get("evidence") or ""
+            if not facet or not claim:
+                continue
+            key = (
+                str(facet),
+                str(claim).strip().lower()[:120],
+                str(evidence).strip().lower()[:80],
+            )
+            if any(
+                (
+                    e.facet,
+                    e.claim.strip().lower()[:120],
+                    e.evidence.strip().lower()[:80],
+                )
+                == key
+                for e in snap.identity_claims
+            ):
+                continue
+            snap.identity_claims.append(
+                IdentityClaim(
+                    facet=str(facet),
+                    claim=str(claim),
+                    evidence=str(evidence),
+                    user_confirmed=bool(c.get("user_confirmed", False)),
+                )
+            )
 
     return snap

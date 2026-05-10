@@ -1,12 +1,10 @@
-"""Phase A2 — Layer Validator tests.
+"""Layer Validator tests — BASIC layer (Phase A2).
 
-A2 ships only the BASIC pathway (deterministic). PERSONALITY/IDENTITY raise
-NotImplementedError until A3.
+PERSONALITY + IDENTITY tests live in `test_ai_validator_a3.py` since they
+require the A3 evaluators + LLM-as-judge plumbing.
 """
 
 from __future__ import annotations
-
-import pytest
 
 from unipaith.ai.state import StudentSnapshot
 from unipaith.ai.validator import LayerValidator, default_validator
@@ -29,12 +27,7 @@ def test_validate_basic_delegates_to_state_evaluator() -> None:
     assert v.layer_complete is True
 
 
-def test_validate_personality_raises_not_implemented() -> None:
-    """A2 doesn't ship personality validation — it lands in A3."""
-    with pytest.raises(NotImplementedError, match="A2 ships BASIC only"):
-        default_validator.validate(layer="personality", snapshot=StudentSnapshot())
-
-
-def test_validate_identity_raises_not_implemented() -> None:
-    with pytest.raises(NotImplementedError, match="A2 ships BASIC only"):
-        default_validator.validate(layer="identity", snapshot=StudentSnapshot())
+def test_validate_basic_incomplete_returns_missing() -> None:
+    v = default_validator.validate(layer="basic", snapshot=StudentSnapshot())
+    assert v.layer_complete is False
+    assert v.next_probe_hint is not None
