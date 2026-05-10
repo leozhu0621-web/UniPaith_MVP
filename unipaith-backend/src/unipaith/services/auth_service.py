@@ -130,7 +130,34 @@ class AuthService:
         except BadRequestException:
             raise
         except Exception as e:
-            raise BadRequestException(f"Login failed: {e}") from e
+            # Sanitize error responses for the login endpoint. The raw
+            # exception text can include sensitive infrastructure details
+            # (DB usernames, asyncpg password-auth errors, AWS SDK wraps
+            # with API call shapes, etc.) — none of which the user can
+            # act on. Cognito's NotAuthorizedException is the only error
+            # the user CAN act on, so we map it to a clear bad-credentials
+            # message; everything else surfaces as a generic 503-style
+            # message and gets logged server-side.
+            err_class = type(e).__name__
+            err_str = str(e)
+            if "NotAuthorizedException" in err_class or "NotAuthorizedException" in err_str:
+                raise BadRequestException("Incorrect email or password.") from e
+            if "UserNotFoundException" in err_class or "UserNotFoundException" in err_str:
+                raise BadRequestException(
+                    "No account with that email. Please sign up first."
+                ) from e
+            if "UserNotConfirmedException" in err_class or "UserNotConfirmedException" in err_str:
+                raise BadRequestException(
+                    "Your account isn't confirmed yet — check your email for the verification link."
+                ) from e
+            # Anything else: log the real cause server-side, return a
+            # generic message to the client. logger captures the type +
+            # message; full traceback is available in CloudWatch via the
+            # structured exception handler.
+            logger.exception("Login failed for %s with unexpected error", email)
+            raise BadRequestException(
+                "We're having trouble signing you in right now. Please try again in a moment."
+            ) from e
 
     async def refresh_token(self, refresh_token: str) -> dict[str, Any]:
         if settings.cognito_bypass:

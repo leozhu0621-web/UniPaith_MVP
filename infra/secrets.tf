@@ -12,6 +12,12 @@ resource "aws_secretsmanager_secret" "db_password" {
 resource "aws_secretsmanager_secret_version" "db_password" {
   secret_id     = aws_secretsmanager_secret.db_password.id
   secret_string = random_password.db_password.result
+  # Manual rotations (e.g. via the AWS console or `aws rds modify-db-instance`)
+  # write a new value here. Ignore drift so a Terraform apply doesn't
+  # reset the secret back to the bootstrap-time random_password value.
+  lifecycle {
+    ignore_changes = [secret_string]
+  }
 }
 
 # --- Application secrets ---

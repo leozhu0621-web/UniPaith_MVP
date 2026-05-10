@@ -83,6 +83,15 @@ resource "aws_db_instance" "main" {
   performance_insights_enabled = true
 
   tags = { Name = "${var.project}-db" }
+
+  # `random_password.db_password.result` is the BOOTSTRAP value — used
+  # only when this RDS instance is first created. Subsequent rotations
+  # happen out-of-band (AWS console or `aws rds modify-db-instance`)
+  # and the new value is written back to Secrets Manager. Ignore drift
+  # so a Terraform apply doesn't try to reset the master password.
+  lifecycle {
+    ignore_changes = [password]
+  }
 }
 
 # Note: After RDS is created, connect and run:
