@@ -156,7 +156,11 @@ resource "aws_ecs_task_definition" "backend" {
     environment = [
       { name = "ENVIRONMENT", value = "production" },
       { name = "DEBUG", value = "false" },
-      { name = "DATABASE_URL", value = "postgresql+asyncpg://${var.db_username}:${random_password.db_password.result}@${aws_db_instance.main.endpoint}/${var.db_name}?ssl=require" },
+      # No password in the URL — backend's config.py splices it from
+      # the DB_PASSWORD secret at boot. This keeps the URL stable across
+      # password rotations and avoids having two sources of truth for
+      # the password.
+      { name = "DATABASE_URL", value = "postgresql+asyncpg://${var.db_username}@${aws_db_instance.main.endpoint}/${var.db_name}?ssl=require" },
       { name = "AWS_REGION", value = var.aws_region },
       { name = "S3_BUCKET_NAME", value = "${var.project}-documents" },
       { name = "S3_LOCAL_MODE", value = "false" },

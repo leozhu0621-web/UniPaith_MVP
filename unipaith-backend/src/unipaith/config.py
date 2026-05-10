@@ -15,6 +15,36 @@ class Settings(BaseSettings):
                 self.llm_reasoning_api_key = self.openai_api_key
         return self
 
+    @model_validator(mode="after")
+    def _inject_db_password(self) -> "Settings":
+        """Rebuild DATABASE_URL with DB_PASSWORD when the env provides one.
+
+        Production injects DB_PASSWORD from AWS Secrets Manager. Without
+        this hook, the password sits in DATABASE_URL too — which means
+        any rotation requires a coordinated update of two values. With
+        this hook the URL can be `postgresql+asyncpg://user@host:port/db`
+        (no password) and we splice DB_PASSWORD in at boot. If the URL
+        already has a password, we leave it alone (local dev keeps
+        working). If DB_PASSWORD is empty, no-op.
+        """
+        if not self.db_password:
+            return self
+        # Avoid clobbering an explicitly-set password in the URL — that's
+        # the local-dev path. Detect by looking for `:<something>@` between
+        # the scheme and the host.
+        from urllib.parse import urlparse, urlunparse
+
+        parsed = urlparse(self.database_url)
+        if parsed.password:
+            return self  # URL has its own password; respect it
+        if not parsed.username:
+            return self  # malformed; let it fail loudly elsewhere
+        netloc = f"{parsed.username}:{self.db_password}@{parsed.hostname}"
+        if parsed.port:
+            netloc += f":{parsed.port}"
+        self.database_url = urlunparse(parsed._replace(netloc=netloc))
+        return self
+
     # App
     app_name: str = "UniPaith API"
     debug: bool = False
@@ -22,6 +52,9 @@ class Settings(BaseSettings):
 
     # Database
     database_url: str = "postgresql+asyncpg://unipaith:unipaith@localhost:5432/unipaith"
+    # Optional — when set, splice into DATABASE_URL at boot (prod ECS task
+    # uses this via the DB_PASSWORD secret pulled from AWS Secrets Manager).
+    db_password: str = ""
     db_pool_size: int = 30
     db_pool_overflow: int = 20
     db_pool_recycle: int = 1800
