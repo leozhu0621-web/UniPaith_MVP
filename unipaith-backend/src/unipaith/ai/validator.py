@@ -40,8 +40,11 @@ from unipaith.ai.state import (
     Layer,
     LayerVerdict,
     StudentSnapshot,
+    Track,
     evaluate_basic_layer,
+    evaluate_goals_track,
     evaluate_identity_layer,
+    evaluate_needs_track,
     evaluate_personality_layer,
 )
 
@@ -193,6 +196,9 @@ class LayerValidator:
     ) -> LayerVerdict:
         """Synchronous, no-LLM verdict. Use for BASIC, or for personality/
         identity when you only need the deterministic gate.
+
+        For the GOALS / NEEDS *tracks* (which don't have layers), use
+        `validate_track()`.
         """
         if layer == "basic":
             return evaluate_basic_layer(snapshot)
@@ -201,6 +207,27 @@ class LayerValidator:
         if layer == "identity":
             return evaluate_identity_layer(snapshot)
         raise ValueError(f"unknown layer: {layer!r}")
+
+    def validate_track(
+        self,
+        *,
+        track: Track,
+        snapshot: StudentSnapshot,
+    ) -> LayerVerdict:
+        """Track-level deterministic verdict for GOALS and NEEDS.
+
+        Profile-track validation goes through `validate(layer=...)` since
+        each profile layer has its own evaluator. Goals and needs are
+        flat — one evaluator per track.
+        """
+        if track == "goals":
+            return evaluate_goals_track(snapshot)
+        if track == "needs":
+            return evaluate_needs_track(snapshot)
+        raise ValueError(
+            f"validate_track: track={track!r} is not flat — "
+            "use validate(layer=...) for the profile track."
+        )
 
     # ── Async entrypoint with LLM judge for personality/identity ────────
 

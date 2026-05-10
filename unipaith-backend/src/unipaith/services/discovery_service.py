@@ -247,11 +247,12 @@ class DiscoveryService:
             history = await self._load_extracted_signals_for_session(session.id)
             snapshot = snapshot_from_extracted_signals_history(history)
 
-            # 4. Validate the current layer.
-            # BASIC: deterministic; cheap, runs every turn.
-            # PERSONALITY / IDENTITY: deterministic gate first; LLM-as-judge
-            # only when the count gate already passes (avoids token spend on
+            # 4. Validate the current track / layer.
+            # PROFILE.BASIC: deterministic; cheap, every turn.
+            # PROFILE.PERSONALITY / IDENTITY: deterministic gate + LLM-as-judge
+            # (judge only when count gate passes — saves tokens on
             # clearly-incomplete layers).
+            # GOALS / NEEDS: flat tracks, deterministic only.
             verdict = None
             if session.track == "profile" and session.layer in {
                 "basic",
@@ -268,6 +269,12 @@ class DiscoveryService:
                         snapshot=snapshot,
                         db=self.db,
                     )
+                session.completion_pct = verdict.completion_pct
+            elif session.track in {"goals", "needs"}:
+                verdict = default_validator.validate_track(
+                    track=session.track,  # type: ignore[arg-type]
+                    snapshot=snapshot,
+                )
                 session.completion_pct = verdict.completion_pct
 
             # 5. Orchestrate — generate the assistant turn.
@@ -315,6 +322,205 @@ class DiscoveryService:
         await self.db.flush()
         await self.db.refresh(assistant)
         return assistant
+
+    # ── Phase A3.2: SSE streaming variant ──────────────────────────────────
+
+    async def stream_message(
+        self,
+        user_id: UUID,
+        session_id: UUID,
+        *,
+        role: str,
+        content: str,
+        extracted_signals: dict | None = None,
+    ):
+        """Streaming counterpart to append_message.
+
+        Yields (event_name, payload_dict) tuples. The API layer wraps each
+        as an SSE frame. Only role='student' is supported here — assistant
+        / system messages must use the non-streaming endpoint (no LLM
+        round-trip needed for those).
+
+        Order of events:
+          1. student_message      — persisted row dump
+          2. delta (n times)      — token chunks from orchestrator
+          3. tool_use (0+)        — record_artifact / request_layer_advance
+          4. assistant_message    — final persisted assistant row
+          5. error (terminal)     — only if a stage failed; no further events
+        """
+        if role != "student":
+            yield (
+                "error",
+                {
+                    "message": (
+                        "stream_message accepts role='student' only; "
+                        "use append_message for non-student messages."
+                    ),
+                },
+            )
+            return
+
+        if not settings.ai_discovery_v2_enabled:
+            # Flag off — fall through to the stub. We still emit the same
+            # event sequence so the frontend can have one code path.
+            student_msg, assistant_msg = await self.append_message(
+                user_id,
+                session_id,
+                role=role,
+                content=content,
+                extracted_signals=extracted_signals,
+            )
+            yield ("student_message", _msg_dict(student_msg))
+            if assistant_msg is not None:
+                yield ("delta", {"text": assistant_msg.content})
+                yield ("assistant_message", _msg_dict(assistant_msg))
+            return
+
+        student_id = await self._profile_id_for_user(user_id)
+        session = await self._get_session_for_student(session_id, student_id)
+        if session.status != "active":
+            yield (
+                "error",
+                {"message": f"session status='{session.status}' is not active"},
+            )
+            return
+
+        # Persist the student message up front so the client can render it
+        # immediately and we have a turn id for ledger linking.
+        student_msg = DiscoveryMessage(
+            session_id=session.id,
+            role=role,
+            content=content,
+            extracted_signals=extracted_signals,
+        )
+        self.db.add(student_msg)
+        await self.db.flush()
+        await self.db.refresh(student_msg)
+        yield ("student_message", _msg_dict(student_msg))
+
+        # Run the LLM pipeline up to but not including the orchestrator
+        # (extract → persist artifacts → snapshot → validate). These are
+        # silent; the orchestrator stream is the user-visible part.
+        try:
+            from unipaith.ai.artifacts import (
+                persist_extraction,
+                snapshot_from_extracted_signals_history,
+            )
+            from unipaith.ai.extractor import get_extractor
+            from unipaith.ai.orchestrator import TurnContext, get_orchestrator
+            from unipaith.ai.validator import default_validator
+
+            extraction = await get_extractor().extract(
+                student_turn=student_msg.content,
+                student_id=student_id,
+                discovery_message_id=student_msg.id,
+                db=self.db,
+            )
+            if extraction.raw_response is not None:
+                student_msg.extracted_signals = extraction.raw_response
+                await self.db.flush()
+            await persist_extraction(
+                db=self.db,
+                student_id=student_id,
+                session_id=session.id,
+                extraction=extraction,
+            )
+            history = await self._load_extracted_signals_for_session(session.id)
+            snapshot = snapshot_from_extracted_signals_history(history)
+
+            verdict = None
+            if session.track == "profile" and session.layer in {
+                "basic",
+                "personality",
+                "identity",
+            }:
+                if session.layer == "basic":
+                    verdict = default_validator.validate(
+                        layer="basic", snapshot=snapshot
+                    )
+                else:
+                    verdict, _judge = await default_validator.validate_with_judge(
+                        layer=session.layer,  # type: ignore[arg-type]
+                        snapshot=snapshot,
+                        db=self.db,
+                    )
+                session.completion_pct = verdict.completion_pct
+            elif session.track in {"goals", "needs"}:
+                verdict = default_validator.validate_track(
+                    track=session.track,  # type: ignore[arg-type]
+                    snapshot=snapshot,
+                )
+                session.completion_pct = verdict.completion_pct
+
+            history_msgs = await self._load_message_history(session.id)
+            ctx = TurnContext(
+                track=session.track,  # type: ignore[arg-type]
+                layer=session.layer,  # type: ignore[arg-type]
+                completion_pct=float(session.completion_pct or 0),
+                verdict=verdict,
+                known_profile_summary=_summarize_snapshot(snapshot),
+                recent_signals_summary=_summarize_extraction(extraction),
+                history=history_msgs,
+            )
+
+            text_buffer: list[str] = []
+            record_calls: list[dict] = []
+            requested_advance = False
+            advance_rationale: str | None = None
+
+            async for event_type, payload in get_orchestrator().stream(
+                ctx=ctx, student_id=student_id, db=self.db
+            ):
+                if event_type == "text_delta":
+                    text_buffer.append(payload)
+                    yield ("delta", {"text": payload})
+                elif event_type == "tool_use":
+                    yield ("tool_use", payload)
+                    if payload.get("name") == "record_artifact":
+                        record_calls.append(payload.get("input") or {})
+                    elif payload.get("name") == "request_layer_advance":
+                        requested_advance = True
+                        advance_rationale = (payload.get("input") or {}).get("rationale")
+                elif event_type == "done":
+                    # `payload` is an OrchestratorResponse — prefer its
+                    # parsed text (more reliable than our buffer concat).
+                    final_text = payload.text or "".join(text_buffer)
+                    record_calls = payload.record_artifact_calls or record_calls
+                    requested_advance = payload.requested_layer_advance or requested_advance
+                    advance_rationale = payload.advance_rationale or advance_rationale
+                    assistant = DiscoveryMessage(
+                        session_id=session.id,
+                        role="assistant",
+                        content=final_text or "(empty response)",
+                        extracted_signals={
+                            "_phase": "A3_2_stream",
+                            "requested_layer_advance": requested_advance,
+                            "advance_rationale": advance_rationale,
+                            "record_artifact_calls": record_calls,
+                        },
+                    )
+                    self.db.add(assistant)
+                    await self.db.flush()
+                    await self.db.refresh(assistant)
+                    yield ("assistant_message", _msg_dict(assistant))
+        except Exception as exc:  # pragma: no cover — degraded path
+            logger.exception(
+                "Discovery stream_message failed for session=%s", session_id
+            )
+            assistant = DiscoveryMessage(
+                session_id=session.id,
+                role="assistant",
+                content=(
+                    "Sorry — I hit a snag generating that reply. Could you "
+                    "try rephrasing your last message?"
+                ),
+                extracted_signals={"_phase": "A3_2_stream_error", "error": str(exc)[:240]},
+            )
+            self.db.add(assistant)
+            await self.db.flush()
+            await self.db.refresh(assistant)
+            yield ("error", {"message": str(exc)[:240]})
+            yield ("assistant_message", _msg_dict(assistant))
 
     async def _load_extracted_signals_for_session(self, session_id: UUID) -> list[dict | None]:
         """All extracted_signals for a session, in chronological order."""
@@ -422,6 +628,19 @@ def _summarize_snapshot(snapshot) -> str:  # type: ignore[no-untyped-def]
     if snapshot.identity_claims:
         for c in snapshot.identity_claims[:6]:
             parts.append(f"- identity.{c.facet}: {c.claim[:120]}")
+    # Goals + needs (Phase A3.2 — when in those tracks, the orchestrator
+    # needs to see what's already been captured so it doesn't restart).
+    if snapshot.goals:
+        for g in snapshot.goals[:6]:
+            confirmed = "✓" if g.user_confirmed else "?"
+            parts.append(
+                f"- goal.{g.category} [{int(g.completeness * 100)}%{confirmed}]: "
+                f"{g.specific[:100]}"
+            )
+    if snapshot.needs:
+        for n in snapshot.needs[:6]:
+            sev = f"sev={n.severity}" if n.severity else ""
+            parts.append(f"- need.{n.maslow_level} {sev}: {n.signal}")
     return "\n".join(parts) or "(nothing yet)"
 
 
@@ -441,3 +660,15 @@ def _summarize_extraction(extraction) -> str:  # type: ignore[no-untyped-def]
             f"- need[{n.get('maslow_level')}]: {n.get('signal')} (severity={n.get('severity')})"
         )
     return "\n".join(bits) if bits else "(nothing new this turn)"
+
+
+def _msg_dict(msg: DiscoveryMessage) -> dict:
+    """Compact JSON-serializable dict of a DiscoveryMessage for SSE frames."""
+    return {
+        "id": str(msg.id),
+        "session_id": str(msg.session_id),
+        "role": msg.role,
+        "content": msg.content,
+        "extracted_signals": msg.extracted_signals,
+        "created_at": msg.created_at.isoformat() if msg.created_at else None,
+    }

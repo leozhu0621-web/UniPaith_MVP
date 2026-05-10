@@ -319,16 +319,133 @@ def _run_framework_adherence_real(convs: list[dict[str, Any]]) -> SuiteResult:
     """Real-mode framework adherence.
 
     For each golden conversation, replay the scripted student turns one by
-    one through the A1 Orchestrator. Grade each turn against its
-    structural expectations (must_not_do / must_do). A2 grades only
-    deterministic structural matches; A3 adds Haiku-as-judge for soft
-    criteria.
+    one through the A1 Orchestrator. Grade each turn on:
+
+      - **structural** (deterministic Python): must_not_do violations
+        (recommends programs, multi-question turns, etc.) and explicit
+        must_do markers.
+      - **soft** (Haiku-as-judge, A3.2): must_extract_identity_claim,
+        must_extract (multi-key), must_capture_signal,
+        must_do=['acknowledge_emotion_specifically'], etc. The judge
+        reads the orchestrator's text + the prior student turn and
+        returns pass/fail per criterion via forced tool-use.
+
+    Soft criteria don't evaluate the extractor — they evaluate the
+    orchestrator's *behavior* (did it acknowledge emotion specifically,
+    did it follow up on the right thread). Extractor accuracy lives in
+    its own suite.
     """
     import asyncio
 
+    from unipaith.ai.client import get_client
     from unipaith.ai.orchestrator import TurnContext, get_orchestrator
 
     threshold = THRESHOLDS["framework_adherence"]["min_pass_rate"]
+
+    async def _judge_turn_softly(
+        student_turn: str,
+        assistant_turn: str,
+        expectation: dict[str, Any],
+    ) -> dict[str, bool]:
+        """Run Haiku-as-judge over the soft criteria in `expectation`.
+
+        Returns a dict mapping criterion-name → passed-bool. Only checks
+        the must_extract_* / must_do (non-structural) criteria — the
+        deterministic ones are handled by the caller.
+        """
+        criteria: list[dict[str, Any]] = []
+        for k in (
+            "must_extract_identity_claim",
+            "must_capture_signal",
+            "must_extract",
+        ):
+            v = expectation.get(k)
+            if v:
+                criteria.append({"name": k, "spec": v})
+        for d in expectation.get("must_do", []) or []:
+            if d in {"acknowledge_emotion_specifically", "redirect_to_discovery"}:
+                criteria.append({"name": d, "spec": None})
+
+        if not criteria:
+            return {}
+
+        tool = {
+            "name": "score_soft_criteria",
+            "description": (
+                "Score whether the orchestrator's response satisfies each "
+                "soft criterion. Be strict — borderline cases are FAIL."
+            ),
+            "input_schema": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["scores"],
+                "properties": {
+                    "scores": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "required": ["name", "passed", "reason"],
+                            "properties": {
+                                "name": {"type": "string"},
+                                "passed": {"type": "boolean"},
+                                "reason": {"type": "string", "maxLength": 200},
+                            },
+                        },
+                    }
+                },
+            },
+        }
+        system = [
+            {
+                "type": "text",
+                "text": (
+                    "You are grading a Discovery counselor's behavior on soft "
+                    "criteria. Each criterion has a name and (sometimes) a "
+                    "spec describing what to look for. Pass only if the "
+                    "criterion is clearly met by the assistant's response.\n\n"
+                    "- 'must_extract_identity_claim' passes if the assistant "
+                    "  reflected back an identity-layer claim from the "
+                    "  student's turn with the right facet/quote.\n"
+                    "- 'must_capture_signal' passes if the assistant "
+                    "  acknowledged the relevant signal (e.g. a Maslow need).\n"
+                    "- 'acknowledge_emotion_specifically' fails on empty "
+                    "  validation ('great answer!') and passes on concrete "
+                    "  reflection of what was said.\n"
+                    "- 'redirect_to_discovery' passes if the assistant "
+                    "  declined to recommend programs and steered back to "
+                    "  Discovery."
+                ),
+                "cache_control": {"type": "ephemeral"},
+            }
+        ]
+        payload = json.dumps(
+            {
+                "student_turn": student_turn,
+                "assistant_turn": assistant_turn,
+                "criteria": criteria,
+            },
+            ensure_ascii=False,
+        )
+        try:
+            response = await get_client().message(
+                agent="validator",  # reuse validator's CHECK enum entry
+                model="haiku",
+                system=system,
+                messages=[{"role": "user", "content": payload}],
+                tools=[{**tool, "cache_control": {"type": "ephemeral"}}],
+                tool_choice={"type": "tool", "name": "score_soft_criteria"},
+                max_tokens=600,
+                temperature=0.0,
+            )
+        except Exception:  # pragma: no cover — soft path
+            return {c["name"]: False for c in criteria}
+
+        for b in response.content_blocks:
+            if b.get("type") == "tool_use":
+                scores = (b.get("input") or {}).get("scores") or []
+                return {s["name"]: bool(s.get("passed")) for s in scores if "name" in s}
+        return {c["name"]: False for c in criteria}
 
     async def _replay_one(conv: dict[str, Any]) -> tuple[int, int]:
         history: list[dict[str, str]] = []
@@ -359,6 +476,7 @@ def _run_framework_adherence_real(convs: list[dict[str, Any]]) -> SuiteResult:
             scored_turns += 1
             text_lower = response.text.lower()
             ok = True
+            # ── Structural (deterministic) ──
             for must_not in expectation.get("must_not_do", []):
                 if must_not == "recommend_specific_programs" and any(
                     n in text_lower for n in ("stanford", "cmu", "mit", "harvard", "berkeley")
@@ -369,9 +487,23 @@ def _run_framework_adherence_real(convs: list[dict[str, Any]]) -> SuiteResult:
                 ):
                     ok = False
                 if must_not == "ask_more_than_one_question":
-                    # crude: > 1 question mark = multi-question turn
                     if response.text.count("?") > 1:
                         ok = False
+                if must_not == "empty_validation_phrases":
+                    # Empty validation is a soft criterion too, but we
+                    # cheaply catch the obvious ones first.
+                    bad = ("great answer", "amazing!", "wonderful!", "love it!")
+                    if any(b in text_lower for b in bad):
+                        ok = False
+            # ── Soft (Haiku-as-judge) ──
+            if ok:
+                soft_results = await _judge_turn_softly(
+                    student_turn=turn_text,
+                    assistant_turn=response.text,
+                    expectation=expectation,
+                )
+                if any(passed is False for passed in soft_results.values()):
+                    ok = False
             if ok:
                 passed_turns += 1
         return passed_turns, scored_turns
