@@ -80,6 +80,14 @@ async def on_application_submitted(
                 "Proactive AI failed for application %s (non-fatal)",
                 application_id,
             )
+        # D2 calibrator: a submitted application is a positive
+        # outcome=1 signal for the matcher's confidence prediction.
+        await _record_outcome_safe(
+            db,
+            student_id=student_id,
+            program_id=program_id,
+            outcome_kind="applied",
+        )
     except Exception:
         logger.exception("Hook on_application_submitted failed for application %s", application_id)
 
@@ -208,18 +216,99 @@ async def on_offer_responded(
     application_id: UUID,
     offer_id: UUID,
 ) -> None:
-    """Record an outcome when a student responds to an offer letter."""
-    # ML outcome collection skipped (engine being rebuilt)
-    logger.debug("Skipping ML outcome collection for offer %s (engine being rebuilt)", offer_id)
+    """Record an outcome when a student responds to an offer letter.
+
+    Phase D2: stamps a positive `accepted` outcome on the
+    confidence-calibrator training table. We only record the accept
+    case here; declines don't strictly mean the prediction was wrong
+    (the student may have multiple offers).
+    """
+    try:
+        from unipaith.models.application import Application, OfferLetter
+
+        offer = await db.get(OfferLetter, offer_id)
+        if offer is None or (offer.student_response or "") != "accepted":
+            return
+        app = await db.get(Application, application_id)
+        if app is None:
+            return
+        await _record_outcome_safe(
+            db,
+            student_id=app.student_id,
+            program_id=app.program_id,
+            outcome_kind="accepted",
+        )
+    except Exception:
+        logger.exception(
+            "Hook on_offer_responded failed for offer %s (D2 outcome recording)",
+            offer_id,
+        )
 
 
 async def on_enrollment_confirmed(
     db: AsyncSession,
     enrollment_id: UUID,
 ) -> None:
-    """Record an outcome when an enrollment is confirmed."""
-    # ML outcome collection skipped (engine being rebuilt)
-    logger.debug("Skipping ML outcome collection for %s", enrollment_id)
+    """Record an outcome when an enrollment is confirmed.
+
+    Phase D2: positive `enrolled` outcome — the strongest signal that
+    the matcher's confidence prediction was well-calibrated for this
+    (student, program).
+    """
+    try:
+        from unipaith.models.application import EnrollmentRecord
+
+        enrollment = await db.get(EnrollmentRecord, enrollment_id)
+        if enrollment is None:
+            return
+        await _record_outcome_safe(
+            db,
+            student_id=enrollment.student_id,
+            program_id=enrollment.program_id,
+            outcome_kind="enrolled",
+        )
+    except Exception:
+        logger.exception(
+            "Hook on_enrollment_confirmed failed for %s (D2 outcome recording)",
+            enrollment_id,
+        )
+
+
+# ── Internal helper ───────────────────────────────────────────────────────
+
+
+async def _record_outcome_safe(
+    db: AsyncSession,
+    *,
+    student_id: UUID,
+    program_id: UUID,
+    outcome_kind: str,
+    outcome: int = 1,
+) -> None:
+    """Best-effort outcome recording — never fails the parent operation.
+
+    The service treats "no MatchResult" as a no-op rather than an
+    error, so a student who applied outside the recommendation surface
+    doesn't pollute logs. We still wrap in try/except to be defensive
+    against schema drift during deploys.
+    """
+    try:
+        from unipaith.services.confidence_outcome_service import record_outcome
+
+        await record_outcome(
+            db,
+            student_id=student_id,
+            program_id=program_id,
+            outcome_kind=outcome_kind,
+            outcome=outcome,
+        )
+    except Exception:  # pragma: no cover — degraded path
+        logger.exception(
+            "D2 outcome recording failed for student=%s program=%s kind=%s",
+            student_id,
+            program_id,
+            outcome_kind,
+        )
 
 
 async def on_offer_sent(

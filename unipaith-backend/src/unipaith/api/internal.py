@@ -1334,3 +1334,86 @@ async def wipe_institution(
         "institution": body.institution_name,
         "programs_deleted": prog_count,
     }
+
+
+# ── D2 calibrator admin endpoints ──────────────────────────────────────────
+
+
+class RefitCalibratorRequest(BaseModel):
+    """Trigger a manual refit of the confidence calibrator."""
+
+    outcome_kind: str | None = None
+    window_days: int | None = None
+
+
+class BackfillNegativesRequest(BaseModel):
+    """Stamp aged-out match_results as outcome=0 so the calibrator has
+    negative examples."""
+
+    age_days: int = 90
+
+
+@router.post("/calibrator/refit")
+async def refit_calibrator(
+    body: RefitCalibratorRequest,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Refit the D2 confidence calibrator over recent outcome pairs.
+
+    Below MIN_PAIRS_FOR_CALIBRATION the saved state stays unfitted —
+    the matcher already handles that as identity. Returns the fitted
+    state so the operator can confirm n_samples / ECE / max_gap.
+    """
+    from unipaith.services.confidence_outcome_service import (
+        refit_calibrator_from_outcomes,
+    )
+
+    state = await refit_calibrator_from_outcomes(
+        db,
+        outcome_kind=body.outcome_kind,
+        window_days=body.window_days,
+    )
+    await db.commit()
+    return {
+        "fitted": state.fitted,
+        "n_samples": state.n_samples,
+        "breakpoints": state.breakpoints,
+        "reliability": state.reliability,
+    }
+
+
+@router.post("/calibrator/backfill-negatives")
+async def backfill_negative_outcomes(
+    body: BackfillNegativesRequest,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Stamp `outcome=0` (`aged_out`) onto MatchResult rows older than
+    `age_days` that have no positive outcome on record. The calibrator
+    needs both 0s and 1s to fit a meaningful curve."""
+    from unipaith.services.confidence_outcome_service import (
+        backfill_aged_out_negatives,
+    )
+
+    inserted = await backfill_aged_out_negatives(db, age_days=body.age_days)
+    await db.commit()
+    return {"inserted": inserted, "age_days": body.age_days}
+
+
+@router.get("/calibrator/state")
+async def get_calibrator_state(
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Read the currently-active CalibratorState. Useful to confirm
+    that an admin-triggered refit actually persisted."""
+    from unipaith.services.ml_state import load_calibrator_state
+
+    state = await load_calibrator_state(db)
+    return {
+        "fitted": state.fitted,
+        "n_samples": state.n_samples,
+        "breakpoints": state.breakpoints,
+        "reliability": state.reliability,
+    }
