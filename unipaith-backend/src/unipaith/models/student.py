@@ -65,6 +65,15 @@ class StudentProfile(Base):
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     phone_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     id_verification_status: Mapped[str] = mapped_column(String(20), default="none")
+    # Phase A — denormalized summaries kept fresh by service hooks. The home
+    # page reads these without joining discovery_sessions / student_strategies
+    # on every render. Shape of discovery_completion:
+    #   {profile, goals, needs, identity}  each 0..1.
+    discovery_completion: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    strategy_active_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_strategies.id", ondelete="SET NULL"),
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
