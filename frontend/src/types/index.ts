@@ -1429,3 +1429,237 @@ export interface PipelineStatus {
     spent_this_hour: number
   }
 }
+
+// ============ PHASE A — DISCOVERY ============
+
+export type DiscoveryTrack = 'profile' | 'goals' | 'needs'
+export type DiscoveryLayer = 'basic' | 'personality' | 'identity'
+export type DiscoveryStatus = 'active' | 'completed' | 'abandoned'
+export type DiscoveryRole = 'student' | 'assistant' | 'system'
+
+export interface DiscoveryMessage {
+  id: string
+  session_id: string
+  role: DiscoveryRole
+  content: string
+  extracted_signals: Record<string, unknown> | null
+  created_at: string
+}
+
+export interface DiscoverySession {
+  id: string
+  student_id: string
+  track: DiscoveryTrack
+  layer: DiscoveryLayer | null
+  status: DiscoveryStatus
+  completion_pct: string  // numeric(4,3) → string from JSON
+  exit_signal: Record<string, unknown> | null
+  started_at: string
+  completed_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface DiscoverySessionDetail extends DiscoverySession {
+  messages: DiscoveryMessage[]
+}
+
+export interface AppendMessageResponse {
+  student_message: DiscoveryMessage
+  assistant_message: DiscoveryMessage | null
+}
+
+export interface CompletionMap {
+  profile: string
+  goals: string
+  needs: string
+  identity: string
+}
+
+// ============ PHASE A — DISCOVERY ARTIFACTS ============
+
+export type GoalCategory = 'academic' | 'social' | 'personal'
+export type GoalStatus = 'active' | 'met' | 'revised' | 'dropped'
+export type GoalSource = 'discovery' | 'manual'
+
+export interface StudentGoal {
+  id: string
+  student_id: string
+  category: GoalCategory
+  specific: string
+  measurable: string | null
+  achievable_notes: string | null
+  relevant_notes: string | null
+  time_bound: string | null
+  status: GoalStatus
+  source: GoalSource
+  source_session_id: string | null
+  confidence: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type MaslowLevel =
+  | 'physiological'
+  | 'safety'
+  | 'social'
+  | 'self_esteem'
+  | 'self_actualization'
+export type NeedSeverity = 'must_have' | 'strong_preference' | 'nice_to_have'
+export type NeedSource = 'discovery' | 'manual' | 'inferred'
+
+export interface StudentNeed {
+  id: string
+  student_id: string
+  maslow_level: MaslowLevel
+  need_type: string
+  signal: string
+  severity: NeedSeverity
+  source: NeedSource
+  source_session_id: string | null
+  source_quote: string | null
+  confidence: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface CoreValue {
+  value: string
+  evidence: string
+  confidence: string | null
+  source_quote: string | null
+}
+
+export interface WorldviewItem {
+  belief: string
+  context: string
+  confidence: string | null
+  source_quote: string | null
+}
+
+export interface SelfAwarenessItem {
+  insight: string
+  trigger_event: string | null
+  confidence: string | null
+  source_quote: string | null
+}
+
+export interface StudentIdentity {
+  student_id: string
+  core_values: CoreValue[]
+  worldview: WorldviewItem[]
+  self_awareness: SelfAwarenessItem[]
+  identity_summary: string | null
+  last_session_id: string | null
+  updated_at: string
+}
+
+// ============ PHASE A — STRATEGY ============
+
+export type StrategyStatus = 'draft' | 'active' | 'archived'
+
+export interface AcademicPathStep {
+  step: string
+  options: string[]
+  rationale: string
+}
+
+export interface FinancialPathItem {
+  aid_type: string
+  eligibility: string
+  estimated_value: string | null
+}
+
+export interface GeographicPathItem {
+  region: string
+  rationale: string
+  constraints: string[]
+}
+
+export interface StudentStrategy {
+  id: string
+  student_id: string
+  version: number
+  status: StrategyStatus
+  career_target: string | null
+  target_degree: string | null
+  academic_path: AcademicPathStep[]
+  financial_path: FinancialPathItem[]
+  geographic_path: GeographicPathItem[]
+  narrative: string | null
+  generated_at: string
+  generated_from_session_ids: string[]
+  is_stub: boolean
+  created_at: string
+  updated_at: string
+}
+
+// ============ PHASE A — MATCH DUAL SCORES ============
+
+export interface MatchResultDual {
+  id: string
+  student_id: string
+  program_id: string
+  fitness_score: string
+  confidence_score: string
+  fitness_breakdown: Record<string, unknown> | null
+  confidence_breakdown: Record<string, unknown> | null
+  rationale_text: string | null
+  rationale_generated_at: string | null
+  strategy_version_id: string | null
+  // DEPRECATED — drop in Phase E. Kept for backcompat during transition.
+  match_score: string | null
+  score_breakdown: Record<string, unknown> | null
+  match_tier: number | null
+  reasoning_text: string | null
+  model_version: string | null
+  computed_at: string
+  is_stale: boolean
+  program_name?: string | null
+  institution_name?: string | null
+  degree_type?: string | null
+  tuition?: number | null
+}
+
+export interface ExplainMatchResponse {
+  program_id: string
+  rationale_text: string
+  rationale_generated_at: string
+  is_stub: boolean
+}
+
+// ============ PHASE A — WORKSHOP FEEDBACK ============
+
+export type WorkshopDomain = 'essay' | 'interview' | 'test'
+export type IssueSeverity = 'minor' | 'moderate' | 'major'
+export type ElementImportance = 'nice_to_have' | 'should_have' | 'required'
+
+export interface StructuralIssue {
+  issue: string
+  severity: IssueSeverity
+  location_ref: string | null
+}
+
+export interface MissingElement {
+  element: string
+  importance: ElementImportance
+}
+
+export interface SuggestedQuestion {
+  question: string
+  why: string
+}
+
+export interface WorkshopFeedbackRun {
+  id: string
+  student_id: string
+  domain: WorkshopDomain
+  input_artifact_id: string | null
+  prompt_text: string | null
+  rubric_scores: Record<string, number>
+  structural_issues: StructuralIssue[]
+  missing_elements: MissingElement[]
+  suggested_questions: SuggestedQuestion[]
+  is_stub: boolean
+  created_at: string
+}

@@ -1,11 +1,24 @@
 import apiClient from './client'
 import { toArrayData } from './normalize'
+import type { ExplainMatchResponse, MatchResultDual } from '../types'
 
 export const getMatches = (forceRefresh = false) =>
   apiClient.get('/students/me/matches', { params: { force_refresh: forceRefresh } }).then(r => toArrayData<any>(r.data))
 
-export const getMatchDetail = (programId: string) =>
+export const getMatchDetail = (programId: string): Promise<MatchResultDual> =>
   apiClient.get(`/students/me/matches/${programId}`).then(r => r.data)
+
+/**
+ * Phase A — generate (or return cached) rationale for a match's
+ * fitness/confidence scores. Phase A returns a deterministic stub built
+ * from the breakdown columns; Plan 2 will swap in an LLM-written explanation
+ * that cites profile + program fields. Cached on `match_results.rationale_text`,
+ * so subsequent reads via `getMatchDetail` return it inline.
+ */
+export const explainMatch = (programId: string): Promise<ExplainMatchResponse> =>
+  apiClient.post(`/students/me/matches/${programId}/explain`).then(r => r.data)
+
+export type { ExplainMatchResponse, MatchResultDual }
 
 export const logEngagement = (programId: string, signalType: string, signalValue: number) =>
   apiClient.post('/students/me/engagement', { program_id: programId, signal_type: signalType, signal_value: signalValue }).then(r => r.data)
