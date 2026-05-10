@@ -22,6 +22,7 @@ from unipaith.models.application import (
 )
 from unipaith.models.audit import AdmissionsAuditLog
 from unipaith.models.base import Base
+from unipaith.models.confidence_outcome import ConfidenceOutcomePair
 from unipaith.models.crawler import (
     CrawlJob,
     CrawlSchedule,
@@ -167,6 +168,7 @@ __all__ = [
     "AiTurn",
     "MatchRationale",
     "AiTurnFeedback",
+    "ConfidenceOutcomePair",
     "Institution",
     "School",
     "Program",
