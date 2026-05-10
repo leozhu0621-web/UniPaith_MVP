@@ -11,6 +11,7 @@ import ExploreFilters, { EMPTY_FILTERS, applyFilters, countActiveFilters, type F
 import {
   Search, X, Loader2, Sparkles, Building2,
 } from 'lucide-react'
+import StrategyView from './match/StrategyView'
 import type { ProgramSummary } from '../../types'
 import type {
   InstitutionClassification,
@@ -170,6 +171,13 @@ export default function ExplorePage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
+      {/* Phase C — Strategy lands first. Programs/Schools render below
+          unchanged. When a student has no active strategy, this surfaces
+          a CTA pointing back to Discover or to generate one. */}
+      <div className="mb-4">
+        <StrategyView />
+      </div>
+
       {/* Search bar */}
       <div className="relative mb-4">
         <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-student-text" />
