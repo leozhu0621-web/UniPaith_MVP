@@ -126,6 +126,7 @@ from unipaith.models.workflow import (
     NotificationPreference,
     Touchpoint,
 )
+from unipaith.models.workshops import WorkshopFeedbackRun
 
 __all__ = [
     "Base",
@@ -158,6 +159,7 @@ __all__ = [
     "StudentNeed",
     "StudentIdentity",
     "StudentStrategy",
+    "WorkshopFeedbackRun",
     # LLM-only artifacts (Phase A1)
     "StudentFeatureVector",
     "AiTurn",
