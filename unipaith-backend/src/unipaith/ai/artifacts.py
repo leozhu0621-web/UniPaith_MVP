@@ -58,7 +58,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.ai.extractor import ExtractedSignals
-from unipaith.ai.state import IdentityClaim, PersonalityEntry, StudentSnapshot
+from unipaith.ai.state import (
+    GoalEntry,
+    IdentityClaim,
+    NeedEntry,
+    PersonalityEntry,
+    StudentSnapshot,
+)
 from unipaith.models.goals import StudentGoal
 from unipaith.models.identity import StudentIdentity
 from unipaith.models.needs import StudentNeed
@@ -437,6 +443,86 @@ def snapshot_from_extracted_signals_history(
                     claim=str(claim),
                     evidence=str(evidence),
                     user_confirmed=bool(c.get("user_confirmed", False)),
+                )
+            )
+
+        # GOALS (Phase A3.2) — append + dedup by (category, specific prefix).
+        for g in raw.get("goals") or []:
+            if not isinstance(g, dict):
+                continue
+            category = g.get("category")
+            specific = g.get("specific")
+            if category not in {"academic", "social", "personal"} or not specific:
+                continue
+            try:
+                completeness = float(g.get("completeness", 0))
+            except (TypeError, ValueError):
+                completeness = 0.0
+            key = (str(category), str(specific).strip().lower()[:120])
+            existing_idx = next(
+                (
+                    i
+                    for i, e in enumerate(snap.goals)
+                    if (e.category, e.specific.strip().lower()[:120]) == key
+                ),
+                None,
+            )
+            entry = GoalEntry(
+                category=str(category),
+                specific=str(specific),
+                measurable=g.get("measurable") or None,
+                achievable=g.get("achievable") or None,
+                relevant=g.get("relevant") or None,
+                time_bound=g.get("time_bound") or None,
+                completeness=max(0.0, min(1.0, completeness)),
+                user_confirmed=bool(g.get("user_confirmed", False)),
+            )
+            if existing_idx is not None:
+                # Newer turn refines an earlier draft — keep the higher
+                # completeness, OR-merge user_confirmed.
+                prev = snap.goals[existing_idx]
+                if entry.completeness >= prev.completeness:
+                    entry.user_confirmed = entry.user_confirmed or prev.user_confirmed
+                    snap.goals[existing_idx] = entry
+                else:
+                    prev.user_confirmed = prev.user_confirmed or entry.user_confirmed
+            else:
+                snap.goals.append(entry)
+
+        # NEEDS (Phase A3.2) — append + dedup by (maslow_level, signal).
+        for n in raw.get("needs") or []:
+            if not isinstance(n, dict):
+                continue
+            level = n.get("maslow_level")
+            tag = n.get("signal")
+            if level not in {
+                "physiological",
+                "safety",
+                "social",
+                "self_esteem",
+                "self_actualization",
+            }:
+                continue
+            if not tag:
+                continue
+            severity = n.get("severity")
+            try:
+                severity_int = int(severity) if severity is not None else None
+            except (TypeError, ValueError):
+                severity_int = None
+            key = (str(level), str(tag).strip().lower()[:80])
+            if any(
+                (e.maslow_level, e.signal.strip().lower()[:80]) == key for e in snap.needs
+            ):
+                continue
+            snap.needs.append(
+                NeedEntry(
+                    maslow_level=str(level),
+                    signal=str(tag),
+                    free_text=str(n.get("free_text") or ""),
+                    severity=severity_int,
+                    evidence=str(n.get("evidence") or ""),
+                    user_confirmed=bool(n.get("user_confirmed", False)),
                 )
             )
 

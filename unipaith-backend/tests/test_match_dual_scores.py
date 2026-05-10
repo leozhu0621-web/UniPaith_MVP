@@ -19,6 +19,7 @@ from httpx import AsyncClient
 from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from unipaith.models.institution import Institution, Program
 from unipaith.models.matching import MatchResult
 from unipaith.models.strategy import StudentStrategy

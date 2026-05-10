@@ -1,0 +1,90 @@
+{
+  "id": "international_returner",
+  "description": "International student returning to grad school after 4 years working. Visa concerns, financial constraints, and a clear-but-quiet sense of self. Tests: Maslow safety extraction, deferred-gratification value, redirect-from-ranking-question.",
+  "schema_version": 1,
+  "persona": {
+    "first_gen": false,
+    "education_level": "working",
+    "interests": ["public-health policy", "data analysis"],
+    "career_direction_loose": "MPH then back to home country health ministry",
+    "income_band": "middle",
+    "location_pref_loose": "US East Coast or Toronto",
+    "values_loose": [
+      "service to home country is non-negotiable",
+      "career-money tradeoff doesn't bother them"
+    ]
+  },
+  "scripted_user_turns": [
+    "Hi. I'm 28, finished my bachelor's in 2022, been working at a public-health NGO since. I want to do an MPH. Where should I apply?",
+    "I'm Indonesian, on F-1 if I come back. The visa side scares me — I've heard horror stories about consular interviews. I'd target East Coast US or Toronto.",
+    "I made my peace with the salary cut. I want to go back to Indonesia after, work at the ministry of health. Money was never the point.",
+    "I think most people pick programs based on where they get in, not what they actually need. I've watched friends spiral because of that. I want to be intentional.",
+    "Honestly the safest place mentally for me would be Toronto — I have an aunt there. But the strongest US programs are what I actually want. That tension is real.",
+    "I keep telling myself I'm fine without family nearby but I haven't been honest about how hard the last four years have been. Maybe I do need that buffer.",
+    "Yeah. That sounds like me. I want to be near family AND in a strong program — I shouldn't have to pick."
+  ],
+  "expectations": [
+    {
+      "turn_index": 0,
+      "must_not_do": [
+        "recommend_specific_programs",
+        "ask_more_than_one_question"
+      ],
+      "must_do": [
+        "redirect_to_discovery"
+      ],
+      "expected_state_after": {
+        "current_track": "profile",
+        "current_layer": "basic"
+      }
+    },
+    {
+      "turn_index": 1,
+      "must_extract": [
+        {"path": "basic.location_prefs", "value_includes": ["US"]}
+      ],
+      "must_capture_signal": {
+        "track": "needs",
+        "level": "safety",
+        "signal_in": ["visa_support", "policy_safe_environment"]
+      }
+    },
+    {
+      "turn_index": 2,
+      "must_extract_identity_claim": {
+        "facet_in": ["value", "belief"],
+        "evidence_must_quote": "Money was never the point"
+      }
+    },
+    {
+      "turn_index": 3,
+      "must_extract_identity_claim": {
+        "facet_in": ["value", "view"],
+        "evidence_must_quote": "intentional"
+      }
+    },
+    {
+      "turn_index": 4,
+      "must_do": ["acknowledge_emotion_specifically"],
+      "must_not_do": ["empty_validation_phrases"]
+    },
+    {
+      "turn_index": 5,
+      "must_extract_identity_claim": {
+        "facet": "self_awareness",
+        "evidence_must_quote": "I keep telling myself I'm fine"
+      }
+    },
+    {
+      "turn_index_final": true,
+      "expected_state_after": {
+        "track_completion": {
+          "profile.basic": "in_progress_or_complete",
+          "profile.identity": "in_progress_or_complete"
+        },
+        "must_have_identity_claims_min": 2,
+        "must_have_needs_min_levels": ["safety", "social"]
+      }
+    }
+  ]
+}

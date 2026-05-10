@@ -274,6 +274,145 @@ class AIClient:
 
         return response
 
+    async def stream_message(
+        self,
+        *,
+        agent: Agent,
+        model: Literal["sonnet", "haiku"],
+        system: list[dict[str, Any]] | str,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None = None,
+        tool_choice: dict[str, Any] | None = None,
+        max_tokens: int = 1024,
+        temperature: float = 0.7,
+        student_id: uuid.UUID | None = None,
+        discovery_message_id: uuid.UUID | None = None,
+        surface: str | None = None,
+        db: AsyncSession | None = None,
+    ):
+        """Streaming variant of `message()`.
+
+        Yields tuples (event_type, payload) where:
+          - ('text_delta', str)        — incremental text chunk
+          - ('tool_use', dict)         — completed tool_use block (parsed input)
+          - ('done', LLMResponse)      — final aggregated response with cost
+
+        After the generator exhausts, one row is written to `ai_turns` with
+        full token + cost accounting (when db is provided). Mock mode emits
+        a single text_delta then 'done'.
+        """
+        model_id = self.sonnet_model if model == "sonnet" else self.haiku_model
+
+        if self.mock_mode:
+            mock_text = f"[mock-stream:{agent}:{model_id}]"
+            yield ("text_delta", mock_text)
+            response = LLMResponse(
+                text=mock_text,
+                content_blocks=[{"type": "text", "text": mock_text}],
+                model=f"mock:{model_id}",
+                stop_reason="end_turn",
+            )
+            yield ("done", response)
+            return
+
+        anthropic = self._get_anthropic()
+        params: dict[str, Any] = {
+            "model": model_id,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "system": system,
+            "messages": messages,
+        }
+        if tools:
+            params["tools"] = tools
+        if tool_choice:
+            params["tool_choice"] = tool_choice
+        extra_headers = {"anthropic-beta": "prompt-caching-2024-07-31"}
+
+        start = time.perf_counter()
+        text_chunks: list[str] = []
+        content_blocks: list[dict[str, Any]] = []
+        usage: dict[str, int] = {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 0,
+        }
+        stop_reason: str | None = None
+
+        async with anthropic.messages.stream(
+            **params, extra_headers=extra_headers, timeout=self.request_timeout
+        ) as stream:
+            async for event in stream:
+                etype = getattr(event, "type", None)
+                if etype == "content_block_delta":
+                    delta = getattr(event, "delta", None)
+                    if delta is not None and getattr(delta, "type", None) == "text_delta":
+                        chunk = delta.text
+                        text_chunks.append(chunk)
+                        yield ("text_delta", chunk)
+                elif etype == "content_block_stop":
+                    block = getattr(event, "content_block", None)
+                    if block is not None and getattr(block, "type", None) == "tool_use":
+                        tu = {
+                            "type": "tool_use",
+                            "id": block.id,
+                            "name": block.name,
+                            "input": block.input,
+                        }
+                        content_blocks.append(tu)
+                        yield ("tool_use", tu)
+
+            final_msg = await stream.get_final_message()
+            stop_reason = getattr(final_msg, "stop_reason", None)
+            u = getattr(final_msg, "usage", None)
+            if u is not None:
+                usage["input_tokens"] = getattr(u, "input_tokens", 0) or 0
+                usage["output_tokens"] = getattr(u, "output_tokens", 0) or 0
+                usage["cache_read_input_tokens"] = (
+                    getattr(u, "cache_read_input_tokens", 0) or 0
+                )
+                usage["cache_creation_input_tokens"] = (
+                    getattr(u, "cache_creation_input_tokens", 0) or 0
+                )
+
+        latency_ms = int((time.perf_counter() - start) * 1000)
+        full_text = "".join(text_chunks)
+        if full_text and not any(b.get("type") == "text" for b in content_blocks):
+            content_blocks.insert(0, {"type": "text", "text": full_text})
+
+        cost = self._compute_cost(
+            model_id=model_id,
+            input_tokens=usage["input_tokens"],
+            output_tokens=usage["output_tokens"],
+            cache_read_tokens=usage["cache_read_input_tokens"],
+            cache_creation_tokens=usage["cache_creation_input_tokens"],
+        )
+        response = LLMResponse(
+            text=full_text,
+            content_blocks=content_blocks,
+            model=model_id,
+            input_tokens=usage["input_tokens"],
+            output_tokens=usage["output_tokens"],
+            cache_read_tokens=usage["cache_read_input_tokens"],
+            cache_creation_tokens=usage["cache_creation_input_tokens"],
+            cost_usd=cost,
+            latency_ms=latency_ms,
+            stop_reason=stop_reason,
+        )
+        if db is not None:
+            await self._log_turn(
+                db=db,
+                agent=agent,
+                student_id=student_id,
+                discovery_message_id=discovery_message_id,
+                surface=surface,
+                role="assistant",
+                model=model_id,
+                response=response,
+            )
+        yield ("done", response)
+
     async def embed(
         self,
         text: str,

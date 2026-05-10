@@ -149,6 +149,51 @@ class Orchestrator:
 
         return self._parse_response(response)
 
+    async def stream(
+        self,
+        *,
+        ctx: TurnContext,
+        student_id: UUID | None = None,
+        discovery_message_id: UUID | None = None,
+        db: AsyncSession | None = None,
+    ):
+        """Streaming variant. Yields the same event tuples as
+        `AIClient.stream_message`:
+
+          ('text_delta', str)        — incremental prose chunk
+          ('tool_use',   dict)       — completed tool_use block
+          ('done',       OrchestratorResponse)  — final aggregated turn
+
+        Callers (the SSE endpoint) typically forward `text_delta` events
+        directly to the wire and persist the final response on 'done'.
+        """
+        system = self._build_system_blocks(ctx)
+        tools = [
+            {**RECORD_ARTIFACT_TOOL, "cache_control": {"type": "ephemeral"}},
+            {**REQUEST_LAYER_ADVANCE_TOOL},
+        ]
+        messages = self._build_messages(ctx)
+
+        async for event_type, payload in self.client.stream_message(
+            agent=self.AGENT_NAME,
+            model="sonnet",
+            system=system,
+            messages=messages,
+            tools=tools,
+            max_tokens=self.max_tokens,
+            temperature=self.temperature,
+            student_id=student_id,
+            discovery_message_id=discovery_message_id,
+            surface="discovery",
+            db=db,
+        ):
+            if event_type == "done":
+                # `payload` is an LLMResponse — wrap into an
+                # OrchestratorResponse with parsed tool calls.
+                yield ("done", self._parse_response(payload))
+            else:
+                yield (event_type, payload)
+
     # ── Building the request ─────────────────────────────────────────────
 
     def _build_system_blocks(self, ctx: TurnContext) -> list[dict[str, Any]]:

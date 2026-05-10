@@ -2,14 +2,21 @@
 
 Endpoints for the Stage 1 (Discovery) journey. Mounted at
 /api/students/me/discovery via the students router prefix; the LLM contract
-boundary is `POST /sessions/{id}/messages`, which Plan 2 will own.
+boundary is `POST /sessions/{id}/messages`, which Plan 2 owns.
+
+Phase A3.2 adds an SSE streaming variant at
+`/sessions/{id}/messages/stream` so first-token latency lands under the
+1.2s p95 target. The non-streaming endpoint is preserved for backwards
+compat.
 """
 
 from __future__ import annotations
 
+import json
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.database import get_db
@@ -114,6 +121,52 @@ async def append_message(
             if assistant_msg is not None
             else None
         ),
+    )
+
+
+@router.post("/sessions/{session_id}/messages/stream")
+async def append_message_stream(
+    session_id: UUID,
+    body: AppendMessageRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Server-Sent Events variant of `append_message`.
+
+    Each event is `event: <name>\\ndata: <json>\\n\\n`:
+
+      - `student_message`  — the persisted student row (so the client
+                              can correlate without a separate fetch)
+      - `delta`            — incremental text chunk from the orchestrator
+      - `tool_use`         — completed `record_artifact` /
+                              `request_layer_advance` tool call
+      - `assistant_message` — the persisted assistant row, fired once
+                              streaming completes
+      - `error`            — fatal error; stream ends after this
+      - `done`             — terminal sentinel
+
+    The role on the request body must be 'student'; staff/system messages
+    use the non-streaming endpoint.
+    """
+
+    async def _event_stream():
+        async for event_name, payload in _svc(db).stream_message(
+            user.id,
+            session_id,
+            role=body.role,
+            content=body.content,
+            extracted_signals=body.extracted_signals,
+        ):
+            yield f"event: {event_name}\ndata: {json.dumps(payload, default=str)}\n\n"
+        yield "event: done\ndata: {}\n\n"
+
+    return StreamingResponse(
+        _event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "X-Accel-Buffering": "no",  # disables nginx response buffering
+        },
     )
 
 

@@ -22,6 +22,7 @@ exit conditions land in A3, which also adds an LLM-judged validator
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Literal
@@ -72,6 +73,38 @@ class IdentityClaim:
 
 
 @dataclass
+class GoalEntry:
+    """One SMART goal with provenance and completeness tracking.
+
+    `completeness` (0–1) reflects how many of the five SMART fields are
+    populated. Only goals with completeness == 1.0 are committed to
+    `student_goals`; partials live in the audit trail until probed.
+    """
+
+    category: str  # 'academic' | 'social' | 'personal'
+    specific: str
+    measurable: str | None = None
+    achievable: str | None = None
+    relevant: str | None = None
+    time_bound: str | None = None
+    completeness: float = 0.0
+    user_confirmed: bool = False
+
+
+@dataclass
+class NeedEntry:
+    """One Maslow-tagged need signal."""
+
+    # 'physiological' | 'safety' | 'social' | 'self_esteem' | 'self_actualization'
+    maslow_level: str
+    signal: str  # controlled-vocab tag
+    free_text: str = ""
+    severity: int | None = None  # 1–5
+    evidence: str = ""
+    user_confirmed: bool = False
+
+
+@dataclass
 class StudentSnapshot:
     """The known-profile snapshot the validator reasons over.
 
@@ -92,6 +125,9 @@ class StudentSnapshot:
     # PERSONALITY + IDENTITY layers (Phase A3)
     personality: list[PersonalityEntry] = field(default_factory=list)
     identity_claims: list[IdentityClaim] = field(default_factory=list)
+    # GOALS + NEEDS tracks (Phase A3.2)
+    goals: list[GoalEntry] = field(default_factory=list)
+    needs: list[NeedEntry] = field(default_factory=list)
 
     @property
     def has_gpa_or_test_score(self) -> bool:
@@ -118,6 +154,33 @@ class StudentSnapshot:
 
     def confirmed_identity_claims(self) -> int:
         return sum(1 for c in self.identity_claims if c.user_confirmed)
+
+    # GOALS helpers ─────────────────────────────────────────────────────
+    def goals_by_category(self) -> dict[str, list[GoalEntry]]:
+        out: dict[str, list[GoalEntry]] = {}
+        for g in self.goals:
+            out.setdefault(g.category, []).append(g)
+        return out
+
+    def complete_goal_categories(self) -> set[str]:
+        """Categories with at least one fully-completed (SMART-filled),
+        user-confirmed goal."""
+        return {
+            g.category
+            for g in self.goals
+            if g.completeness >= 1.0 and g.user_confirmed and g.specific
+        }
+
+    # NEEDS helpers ──────────────────────────────────────────────────────
+    def needs_by_level(self) -> dict[str, list[NeedEntry]]:
+        out: dict[str, list[NeedEntry]] = {}
+        for n in self.needs:
+            out.setdefault(n.maslow_level, []).append(n)
+        return out
+
+    def covered_maslow_levels(self) -> set[str]:
+        """Maslow levels with ≥1 signal (any severity, any confirmation)."""
+        return {n.maslow_level for n in self.needs if n.signal}
 
 
 @dataclass
@@ -413,3 +476,196 @@ _IDENTITY_PROBES: dict[str, str] = {
         "shifted as we've talked?"
     ),
 }
+
+
+# ── GOALS track evaluator ──────────────────────────────────────────────────
+# Per `frameworks.md`: at least one goal in each of {academic, social,
+# personal}, all five SMART fields filled, user-confirmed. Three independent
+# category gates — completion is the fraction of categories with ≥1
+# qualifying goal.
+
+GOAL_CATEGORIES = {"academic", "social", "personal"}
+
+
+def evaluate_goals_track(snapshot: StudentSnapshot) -> LayerVerdict:
+    """Return whether the GOALS track is complete.
+
+    Required: ≥1 fully-SMART, user-confirmed goal in each of academic /
+    social / personal. Completion = fraction of categories satisfied.
+    """
+    complete_cats = snapshot.complete_goal_categories()
+    missing_cats = sorted(GOAL_CATEGORIES - complete_cats)
+
+    completion = Decimal(str(round(len(complete_cats) / len(GOAL_CATEGORIES), 3)))
+    next_probe = _goals_probe_for_missing(missing_cats, snapshot)
+
+    return LayerVerdict(
+        layer_complete=not missing_cats,
+        completion_pct=completion,
+        missing_signals=[f"goals.{c}" for c in missing_cats],
+        next_probe_hint=next_probe,
+        evidence_count={f"goals.{c}": 1 for c in complete_cats},
+    )
+
+
+def _goals_probe_for_missing(
+    missing_cats: list[str], snapshot: StudentSnapshot
+) -> str | None:
+    """Probe for the first missing category. If a partial goal already
+    exists in that category, ask for the specific missing SMART field
+    rather than restarting."""
+    if not missing_cats:
+        return None
+    first_cat = missing_cats[0]
+    by_cat = snapshot.goals_by_category()
+    drafts = by_cat.get(first_cat, [])
+    if drafts:
+        # Find the most-complete draft and ask for its first missing field.
+        best = max(drafts, key=lambda g: g.completeness)
+        if not best.measurable:
+            return _GOALS_FIELD_PROBES["measurable"](best)
+        if not best.time_bound:
+            return _GOALS_FIELD_PROBES["time_bound"](best)
+        if not best.achievable:
+            return _GOALS_FIELD_PROBES["achievable"](best)
+        if not best.relevant:
+            return _GOALS_FIELD_PROBES["relevant"](best)
+        if not best.user_confirmed:
+            return _GOALS_FIELD_PROBES["confirm"](best)
+    return _GOALS_CATEGORY_OPENERS[first_cat]
+
+
+_GOALS_CATEGORY_OPENERS: dict[str, str] = {
+    "academic": (
+        "Now let's set an academic goal. What's one thing you want to have "
+        "achieved by the end of your program — degree, paper, qualification, "
+        "anything specific?"
+    ),
+    "social": (
+        "What's a social goal — connection, community, networking — that "
+        "would make this whole journey feel worth it to you?"
+    ),
+    "personal": (
+        "Outside academics and people — finance, wellbeing, family, time "
+        "horizon — what's a personal goal you're holding?"
+    ),
+}
+
+def _probe_measurable(g: GoalEntry) -> str:
+    return (
+        f"How would you know you hit '{g.specific[:80]}'? "
+        "What's the measurable signal?"
+    )
+
+
+def _probe_time_bound(g: GoalEntry) -> str:
+    return f"By when do you want '{g.specific[:80]}' done?"
+
+
+def _probe_achievable(g: GoalEntry) -> str:
+    return (
+        f"What makes '{g.specific[:80]}' within reach for you — "
+        "not what makes it easy?"
+    )
+
+
+def _probe_relevant(g: GoalEntry) -> str:
+    return (
+        f"How does '{g.specific[:80]}' connect to who you are or what "
+        "you've already told me you care about?"
+    )
+
+
+def _probe_confirm(g: GoalEntry) -> str:
+    return (
+        f"I have this goal in your stack: '{g.specific[:120]}'. Does that "
+        "still feel right, or has it shifted?"
+    )
+
+
+_GOALS_FIELD_PROBES: dict[str, Callable[[GoalEntry], str]] = {
+    "measurable": _probe_measurable,
+    "time_bound": _probe_time_bound,
+    "achievable": _probe_achievable,
+    "relevant": _probe_relevant,
+    "confirm": _probe_confirm,
+}
+
+
+def goals_track_completion(snapshot: StudentSnapshot) -> Decimal:
+    """Convenience — return just the completion %."""
+    return evaluate_goals_track(snapshot).completion_pct
+
+
+# ── NEEDS track evaluator ──────────────────────────────────────────────────
+# Per `frameworks.md`: at least one signal at EACH of physiological, safety,
+# social, self_esteem, self_actualization — OR an explicit "N/A" with
+# reason. Five independent level gates; completion is fraction covered.
+
+MASLOW_LEVELS = (
+    "physiological",
+    "safety",
+    "social",
+    "self_esteem",
+    "self_actualization",
+)
+
+
+def evaluate_needs_track(snapshot: StudentSnapshot) -> LayerVerdict:
+    """Return whether the NEEDS track is complete.
+
+    Required: ≥1 signal at each of the 5 Maslow levels (or explicit N/A
+    via the `n_a` signal tag).
+    """
+    covered = snapshot.covered_maslow_levels()
+    missing_levels = [lv for lv in MASLOW_LEVELS if lv not in covered]
+
+    completion = Decimal(str(round(len(covered) / len(MASLOW_LEVELS), 3)))
+    next_probe = _needs_probe_for_missing(missing_levels)
+
+    return LayerVerdict(
+        layer_complete=not missing_levels,
+        completion_pct=completion,
+        missing_signals=[f"needs.{lv}" for lv in missing_levels],
+        next_probe_hint=next_probe,
+        evidence_count={f"needs.{lv}": 1 for lv in covered},
+    )
+
+
+def _needs_probe_for_missing(missing: list[str]) -> str | None:
+    if not missing:
+        return None
+    return _NEEDS_PROBES.get(missing[0])
+
+
+_NEEDS_PROBES: dict[str, str] = {
+    "physiological": (
+        "Let's talk about the basics. What's non-negotiable about the "
+        "physical environment of where you study — housing, food, climate, "
+        "anything you can't compromise on?"
+    ),
+    "safety": (
+        "What about safety in the broader sense — healthcare access, "
+        "financial stability, immigration status, the policy environment "
+        "of where you'd live?"
+    ),
+    "social": (
+        "Who do you want to walk into class with? Tell me about the "
+        "community, culture, or peer atmosphere that would matter to you."
+    ),
+    "self_esteem": (
+        "What's the kind of recognition or environment that would make "
+        "you feel seen and valued — scholarships, peer respect, a brand "
+        "your family would understand?"
+    ),
+    "self_actualization": (
+        "Last layer — the highest-level stuff. Events, alumni networks, "
+        "research, study-abroad, mental-health support, the aspirations "
+        "you hold quietly. What's on that list for you?"
+    ),
+}
+
+
+def needs_track_completion(snapshot: StudentSnapshot) -> Decimal:
+    """Convenience — return just the completion %."""
+    return evaluate_needs_track(snapshot).completion_pct
