@@ -1,18 +1,21 @@
 import { useState, lazy, Suspense } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { FolderKanban, Calendar, MessageSquare } from 'lucide-react'
+import { FolderKanban, Calendar, MessageSquare, GraduationCap } from 'lucide-react'
 
 // Lazy-load sub-pages
 const ApplicationsPage = lazy(() => import('./ApplicationsPage'))
 const CalendarPage = lazy(() => import('./CalendarPage'))
 const MessagesPage = lazy(() => import('./MessagesPage'))
+const WorkshopsTab = lazy(() => import('./apply/WorkshopsTab'))
 
-type Tab = 'applications' | 'calendar' | 'messages'
+type Tab = 'applications' | 'calendar' | 'messages' | 'workshops'
 
 const TABS: { key: Tab; label: string; icon: typeof FolderKanban }[] = [
   { key: 'applications', label: 'Applications', icon: FolderKanban },
   { key: 'calendar', label: 'Calendar', icon: Calendar },
   { key: 'messages', label: 'Messages', icon: MessageSquare },
+  // Phase D — Workshops moved here from Profile (feedback-only).
+  { key: 'workshops', label: 'Workshops', icon: GraduationCap },
 ]
 
 export default function ManagementPage() {
@@ -54,6 +57,7 @@ export default function ManagementPage() {
           {tab === 'applications' && <ApplicationsPage />}
           {tab === 'calendar' && <CalendarPage />}
           {tab === 'messages' && <MessagesPage />}
+          {tab === 'workshops' && <WorkshopsTab />}
         </Suspense>
       </div>
     </div>
