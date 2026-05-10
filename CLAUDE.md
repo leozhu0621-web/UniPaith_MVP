@@ -21,6 +21,21 @@ Before starting new feature work, always verify the environment is healthy first
 
 This is a TypeScript + Python monorepo (UniPaith MVP). Frontend is TypeScript/React, backend has both TypeScript and Python services. Infrastructure is Terraform/AWS (ECS, RDS, Cognito, SES). Domain: unipaith.co.
 
+## Student-side IA — 3-stage journey
+
+The student app at `app.unipaith.co/s` is structured around the journey from the business spec, not by tool type. Four top-level surfaces, each tied to a stage:
+
+| URL | Label | Stage | What |
+|---|---|---|---|
+| `/s` | **Discover** | 1. Discovery | LLM-led 3-track journey (Profile / Goals / Needs) with chat + live artifact rail |
+| `/s/explore` | **Match** | 2. Recommendation | Strategy view (top) + Programs/Schools grid; dual scores (fitness + confidence) |
+| `/s/manage` | **Apply** | 3b/3c. Preparation + Application Mgmt | Applications · Calendar · Messages · **Workshops (feedback-only)** |
+| `/s/posts` | **Connect** | 3a. Connection & Outreach | Updates / Events / Peers tabs from followed institutions |
+
+Profile (`/s/profile`) is the durable record across all stages — 7 tabs: Overview, Identity, Goals, Needs, Strategy, Recommenders, Financial. Saved (`/s/saved`) and Settings (`/s/settings`) live under the avatar dropdown.
+
+**Workshops are feedback-only by spec.** The schema mechanically excludes any field that could carry a generated essay / model answer — see `tests/test_workshop_no_generation_contract.py`. Plan 2's LLM swap-in cannot break this without failing CI.
+
 ## Surface map
 
 | URL | What | Repo / source |
@@ -69,6 +84,29 @@ make lint            # ruff (backend) + eslint (frontend)
 make migration MSG="add foo"  # Generate new Alembic migration
 ```
 
+## Phase A schema (Plan 1 foundations)
+
+The student-restructure landed 8 new tables / extended schemas. Quick reference:
+
+| Table | Owns | Notes |
+|---|---|---|
+| `discovery_sessions` | Stage-1 chat sessions per track | track ∈ {profile, goals, needs}; layer ∈ {basic, personality, identity} when track=profile |
+| `discovery_messages` | Append-only message log | extracted_signals JSONB written by Plan 2 extractor |
+| `student_goals` | SMART goal stack | source ∈ {discovery, manual}; provenance enforced via CHECK constraint |
+| `student_needs` | Maslow-keyed needs map | severity ∈ {must_have, strong_preference, nice_to_have}; source includes 'inferred' |
+| `student_identity` | Single row per student; deepest profile layer | core_values / worldview / self_awareness JSONB lists; partial-merge on PUT |
+| `student_strategies` | Versioned broad-strategy artifact | partial unique index for one-active-per-student; edit = clone-and-modify |
+| `match_results` (extended) | fitness_score + confidence_score split | legacy `match_score` kept for one release (drop in Phase E) |
+| `workshop_feedback_runs` | feedback-only essay/interview/test runs | rubric_scores / structural_issues / missing_elements / suggested_questions — no generation fields |
+| `student_profiles` (extended) | discovery_completion JSONB + strategy_active_id | denormalized journey summaries kept fresh by service hooks |
+
+Plan 2 (LLM stack) consumes these via the contracts in:
+- `POST /api/v1/students/me/discovery/sessions/{id}/messages` — orchestrator + extractor seam
+- `POST /api/v1/students/me/strategy/generate` — strategy generator (rule-based stub → LLM)
+- `POST /api/v1/students/me/matches/{program_id}/explain` — rationale agent
+- `POST /api/v1/students/me/identity/regenerate-summary` — identity synthesizer
+- `POST /api/v1/students/me/workshops/{essay,interview,test}/{feedback,practice,guidance}` — coach swap-in
+
 ## Backend Conventions
 
 - **Models:** `src/unipaith/models/` — SQLAlchemy declarative with `UUIDPrimaryKeyMixin` + `TimestampMixin`
@@ -94,6 +132,15 @@ make migration MSG="add foo"  # Generate new Alembic migration
 - **State:** Zustand for auth/global state, TanStack Query for server state
 - **Forms:** React Hook Form + Zod validation
 - **Styling:** Tailwind CSS utility classes
+
+### Student app sub-folders (Phase B IA)
+
+- `pages/student/discover/` — Discover page widgets (TrackSelector, ChatPanel, ArtifactRail, GoalStackWidget, NeedsMapWidget, IdentitySignalsWidget)
+- `pages/student/profile/` — Profile tab content (IdentityTab, GoalsTab, NeedsTab, StrategyTab)
+- `pages/student/match/` — Match page additions (StrategyView, DualRing, RationalePopover)
+- `pages/student/apply/` — Apply page tabs (WorkshopsTab + EssayFeedbackPanel / InterviewPracticePanel / TestGuidancePanel)
+- `pages/student/explore/` — Match (ExplorePage) cards + filters; existing
+- `pages/student/program/` — Program detail components (HeroBanner, MatchRing, etc.); existing
 
 ### Adding a Vertical Feature (Frontend)
 
@@ -160,6 +207,14 @@ COGNITO_BYPASS=true  AI_MOCK_MODE=true  S3_LOCAL_MODE=true
 ## Common Pitfalls
 
 When asked to review or audit code, go directly to the code files. Do NOT set up dev servers, launch.json, or other environment tooling unless explicitly asked.
+
+## Phase E follow-ups (deferred until dual-score / new IA have soaked ≥1 release)
+
+- **Drop `match_results.match_score` and `score_breakdown`** — see migration `bd5c6e3f2a1b`. These are kept for rollback safety and currently dual-written. Safe to drop once: (a) all consumers read `fitness_score` / `confidence_score` directly (currently `SchoolDetailPage` reads legacy), (b) no rollback to pre-Phase-A is anticipated.
+- **Delete the legacy Essays & Resume tab from ProfilePage** — it now redirects to `/s/manage?tab=workshops`. Deletion blocked until no remaining links reference `?tab=essays`.
+- **Delete `unipaith-backend/src/unipaith/services/essay_workshop_service.py` + `resume_workshop_service.py`** — replaced by `workshop_feedback_service.py`. Old endpoints in `api/workshops.py` are deprecated shims; delete after the frontend stops calling them.
+- **Delete `pages/student/EssayWorkshopPage.tsx` + `ResumeWorkshopPage.tsx`** — once no Suspense lazy-import references remain.
+- **Rename `pages/student/DiscoverPage.tsx`** to `DiscoverSearchView.tsx` or similar — the file is the legacy NLP-search engine, misnamed since the rebuild. Used only by `explore/SearchView.tsx`.
 
 ## Infrastructure
 
