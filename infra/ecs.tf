@@ -102,6 +102,11 @@ resource "aws_iam_role_policy" "ecs_task_permissions" {
         Action = [
           "cognito-idp:AdminGetUser",
           "cognito-idp:ListUsers",
+          # Signup flow — AuthService.signup() calls sign_up() (which is
+          # unauthenticated and unaffected) then admin_confirm_sign_up()
+          # so the user can log in immediately without verifying email.
+          # Without this permission, every signup returns AccessDenied.
+          "cognito-idp:AdminConfirmSignUp",
         ]
         Resource = ["*"]
       },
