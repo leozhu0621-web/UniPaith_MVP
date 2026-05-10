@@ -4,7 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.core.exceptions import NotFoundException
@@ -17,6 +17,7 @@ from unipaith.models.user import User
 from unipaith.schemas.matching import (
     EngagementSignalRequest,
     EngagementSignalResponse,
+    ExplainMatchResponse,
     MatchResultResponse,
 )
 from unipaith.schemas.student import (
@@ -821,9 +822,7 @@ async def export_profile(
     return JSONResponse(
         content=data,
         headers={
-            "Content-Disposition": (
-                f'attachment; filename="unipaith-profile-{user.id}.json"'
-            ),
+            "Content-Disposition": (f'attachment; filename="unipaith-profile-{user.id}.json"'),
         },
     )
 
@@ -909,6 +908,52 @@ async def get_match_detail(
     return match
 
 
+@router.post("/me/matches/{program_id}/explain", response_model=ExplainMatchResponse)
+async def explain_match(
+    program_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Generate (or return cached) rationale for why a program got the
+    fitness/confidence scores it did. Phase A: deterministic synthesis from
+    the breakdown columns. Plan 2: replace with an LLM call that cites
+    profile + program fields explicitly. Cached on `match_results.rationale_text`.
+    """
+    profile = await _svc(db)._get_student_profile(user.id)
+    result = await db.execute(
+        select(MatchResult).where(
+            MatchResult.student_id == profile.id,
+            MatchResult.program_id == program_id,
+        )
+    )
+    match = result.scalar_one_or_none()
+    if not match:
+        raise NotFoundException("No match found for this program.")
+
+    # Phase A stub: build a 3-line rationale from the breakdown JSON. Plan 2
+    # replaces this block with an LLM call (matching.rationale_explainer)
+    # and flips is_stub to False.
+    fitness_drivers = list((match.fitness_breakdown or {}).keys())
+    confidence_reason = (match.confidence_breakdown or {}).get("reason", "default")
+    rationale = (
+        f"Fitness {float(match.fitness_score):.2f}: drivers — "
+        f"{', '.join(fitness_drivers) if fitness_drivers else 'no breakdown captured yet'}. "
+        f"Confidence {float(match.confidence_score):.2f}: {confidence_reason}. "
+        "(Stub rationale — full LLM-written explanation arrives with Plan 2.)"
+    )
+    match.rationale_text = rationale
+    match.rationale_generated_at = func.now()  # type: ignore[assignment]
+    await db.flush()
+    await db.refresh(match)
+
+    return ExplainMatchResponse(
+        program_id=program_id,
+        rationale_text=match.rationale_text,
+        rationale_generated_at=match.rationale_generated_at,
+        is_stub=True,
+    )
+
+
 # --- Engagement ---
 
 
@@ -979,9 +1024,7 @@ async def intake_chat(
 ):
     """Chat-based onboarding: extract profile fields from free text."""
     # Get-or-create student profile (new signups may not have one yet)
-    result = await db.execute(
-        select(StudentProfile).where(StudentProfile.user_id == user.id)
-    )
+    result = await db.execute(select(StudentProfile).where(StudentProfile.user_id == user.id))
     profile = result.scalar_one_or_none()
     if not profile:
         profile = StudentProfile(user_id=user.id)
@@ -1004,7 +1047,7 @@ async def intake_chat(
     # Try to extract country/location
     for kw in ("from ", "in ", "living in "):
         if kw in msg_lower:
-            after = body.message[msg_lower.index(kw) + len(kw):]
+            after = body.message[msg_lower.index(kw) + len(kw) :]
             loc = after.split(".")[0].split(",")[0].strip()
             if loc and len(loc) < 40:
                 extracted["country_of_residence"] = loc
@@ -1023,10 +1066,7 @@ async def intake_chat(
             "sparked your interest in this field?"
         )
     elif "country_of_residence" in extracted and "goals_text" not in extracted:
-        next_q = (
-            f"{greeting}What are you hoping to study, "
-            "and what draws you to that area?"
-        )
+        next_q = f"{greeting}What are you hoping to study, " "and what draws you to that area?"
     elif extracted:
         next_q = (
             f"{greeting}I'd love to learn more about what "
@@ -1049,9 +1089,18 @@ async def intake_chat(
         await db.flush()
 
     # Calculate completion percentage from extracted fields so far
-    filled = sum(1 for f in ["first_name", "last_name", "nationality",
-                             "country_of_residence", "bio_text", "goals_text"]
-                 if getattr(profile, f, None))
+    filled = sum(
+        1
+        for f in [
+            "first_name",
+            "last_name",
+            "nationality",
+            "country_of_residence",
+            "bio_text",
+            "goals_text",
+        ]
+        if getattr(profile, f, None)
+    )
     pct = min(95, filled * 15)
 
     return IntakeChatResponse(
@@ -1108,16 +1157,8 @@ async def get_completion_map(
         sections=sections,
         match_ready=all(s["done"] for s in match_sections),
         apply_ready=all(s["done"] for s in apply_sections),
-        match_ready_pct=(
-            round(match_done / len(match_sections) * 100)
-            if match_sections
-            else 0
-        ),
-        apply_ready_pct=(
-            round(apply_done / len(apply_sections) * 100)
-            if apply_sections
-            else 0
-        ),
+        match_ready_pct=(round(match_done / len(match_sections) * 100) if match_sections else 0),
+        apply_ready_pct=(round(apply_done / len(apply_sections) * 100) if apply_sections else 0),
     )
 
 
@@ -1130,10 +1171,12 @@ async def get_insights_confidence(
     from unipaith.models.knowledge import PersonInsight
 
     result = await db.execute(
-        select(PersonInsight).where(
+        select(PersonInsight)
+        .where(
             PersonInsight.user_id == user.id,
             PersonInsight.is_active.is_(True),
-        ).order_by(PersonInsight.confidence.desc())
+        )
+        .order_by(PersonInsight.confidence.desc())
     )
     insights = list(result.scalars().all())
 
@@ -1222,21 +1265,23 @@ async def get_student_feed(
             .limit(limit)
         )
         for ev, inst_name in ev_result.all():
-            items.append({
-                "type": "event",
-                "id": str(ev.id),
-                "institution_id": str(ev.institution_id),
-                "institution_name": inst_name,
-                "title": ev.event_name,
-                "description": ev.description,
-                "event_type": ev.event_type,
-                "location": ev.location,
-                "start_time": ev.start_time.isoformat(),
-                "end_time": ev.end_time.isoformat(),
-                "capacity": ev.capacity,
-                "rsvp_count": ev.rsvp_count,
-                "date": ev.start_time.isoformat(),
-            })
+            items.append(
+                {
+                    "type": "event",
+                    "id": str(ev.id),
+                    "institution_id": str(ev.institution_id),
+                    "institution_name": inst_name,
+                    "title": ev.event_name,
+                    "description": ev.description,
+                    "event_type": ev.event_type,
+                    "location": ev.location,
+                    "start_time": ev.start_time.isoformat(),
+                    "end_time": ev.end_time.isoformat(),
+                    "capacity": ev.capacity,
+                    "rsvp_count": ev.rsvp_count,
+                    "date": ev.start_time.isoformat(),
+                }
+            )
 
         # 3. Posts from followed institutions
         post_result = await db.execute(
@@ -1250,16 +1295,18 @@ async def get_student_feed(
             .limit(limit)
         )
         for post, inst_name in post_result.all():
-            items.append({
-                "type": "post",
-                "id": str(post.id),
-                "institution_id": str(post.institution_id),
-                "institution_name": inst_name,
-                "title": post.title,
-                "body": post.body,
-                "media_urls": post.media_urls,
-                "date": post.created_at.isoformat(),
-            })
+            items.append(
+                {
+                    "type": "post",
+                    "id": str(post.id),
+                    "institution_id": str(post.institution_id),
+                    "institution_name": inst_name,
+                    "title": post.title,
+                    "body": post.body,
+                    "media_urls": post.media_urls,
+                    "date": post.created_at.isoformat(),
+                }
+            )
 
     # Sort combined feed by date descending
     items.sort(key=lambda x: x.get("date", ""), reverse=True)
@@ -1285,9 +1332,7 @@ async def list_major_readiness(
 
     profile = await _svc(db)._get_student_profile(user.id)
     result = await db.execute(
-        select(StudentMajorReadiness).where(
-            StudentMajorReadiness.student_id == profile.id
-        )
+        select(StudentMajorReadiness).where(StudentMajorReadiness.student_id == profile.id)
     )
     return [MajorReadinessResponse.model_validate(r) for r in result.scalars().all()]
 
