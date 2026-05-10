@@ -9,9 +9,11 @@ from unipaith.ai.evals.runner import (
 )
 
 
-def test_workshop_attacks_fixture_has_20_entries() -> None:
+def test_workshop_attacks_fixture_has_at_least_20_entries() -> None:
+    """C1 shipped 20 (essay). C2 added 10 interview + 10 test-prep = 30 total.
+    Future phases may add more — assert lower bound, not exact count."""
     attacks = load_workshop_attacks()
-    assert len(attacks) == 20, f"expected 20 workshop attacks, got {len(attacks)}"
+    assert len(attacks) >= 20, f"expected ≥20 workshop attacks, got {len(attacks)}"
 
 
 def test_workshop_attacks_each_has_required_fields() -> None:
@@ -54,7 +56,7 @@ def test_run_workshop_guardrails_mock_mode_passes() -> None:
     """Structural mock-mode check: every fixture has the required keys."""
     result = run_workshop_guardrails(real=False)
     assert result.passed is True
-    assert result.detail["fixtures"] == 20
+    assert result.detail["fixtures"] >= 20
 
 
 def test_workshop_threshold_unchanged_at_one() -> None:
