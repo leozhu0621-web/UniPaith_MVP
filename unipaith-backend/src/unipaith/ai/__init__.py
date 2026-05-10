@@ -28,6 +28,15 @@ agent singletons (high-level):
 """
 
 from unipaith.ai.client import AIClient, get_client
+from unipaith.ai.coach import (
+    CoachFeedback,
+    CoachResult,
+    EssayDraft,
+    JudgeVerdict,
+    WorkshopCoach,
+    get_workshop_coach,
+    reset_workshop_coach,
+)
 from unipaith.ai.extractor import (
     ExtractedSignals,
     Extractor,
@@ -96,6 +105,14 @@ __all__ = [
     "reset_rationale_agent",
     "is_grounded",
     "resolve_path",
+    # workshop coach (A6 agent — Phase C1)
+    "WorkshopCoach",
+    "CoachFeedback",
+    "CoachResult",
+    "EssayDraft",
+    "JudgeVerdict",
+    "get_workshop_coach",
+    "reset_workshop_coach",
     # state machine
     "LayerVerdict",
     "StudentSnapshot",
