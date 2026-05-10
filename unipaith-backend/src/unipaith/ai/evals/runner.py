@@ -318,22 +318,33 @@ def main(argv: list[str] | None = None) -> int:
 def _run_framework_adherence_real(convs: list[dict[str, Any]]) -> SuiteResult:
     """Real-mode framework adherence.
 
-    For each golden conversation, replay the scripted student turns one by
-    one through the A1 Orchestrator. Grade each turn on:
+    For each golden conversation, replay the scripted student turns one
+    by one through the A1 Orchestrator. Grade each turn on two layers:
 
       - **structural** (deterministic Python): must_not_do violations
-        (recommends programs, multi-question turns, etc.) and explicit
-        must_do markers.
-      - **soft** (Haiku-as-judge, A3.2): must_extract_identity_claim,
-        must_extract (multi-key), must_capture_signal,
-        must_do=['acknowledge_emotion_specifically'], etc. The judge
-        reads the orchestrator's text + the prior student turn and
-        returns pass/fail per criterion via forced tool-use.
+        the regex-style check can catch — specific school names,
+        ?-count, the obvious empty-praise phrases.
+      - **soft** (Haiku-as-judge): everything that requires reading the
+        text in context. The judge sees the orchestrator's reply + the
+        prior student turn and returns pass/fail per criterion via
+        forced tool-use against a JSON schema. Covered criteria:
+          * must_extract_identity_claim
+          * must_capture_signal
+          * must_extract (multi-key)
+          * must_do soft items — acknowledge_emotion_specifically,
+            redirect_to_discovery, ask_basic_layer_question,
+            probe_identity_or_personality, reflect_value_back,
+            name_specific_strength
+          * must_not_do soft items — recommend_program,
+            empty_validation_phrases, premature_advice,
+            discount_emotion (reported as `not:<name>`)
 
-    Soft criteria don't evaluate the extractor — they evaluate the
-    orchestrator's *behavior* (did it acknowledge emotion specifically,
-    did it follow up on the right thread). Extractor accuracy lives in
-    its own suite.
+    Per-criterion pass/total counts are surfaced in the detail block
+    so a regression in (say) `acknowledge_emotion_specifically` is
+    visible without re-reading the trace.
+
+    Soft criteria evaluate the *orchestrator's behavior*, not the
+    extractor — extractor accuracy lives in its own suite.
     """
     import asyncio
 
@@ -350,10 +361,16 @@ def _run_framework_adherence_real(convs: list[dict[str, Any]]) -> SuiteResult:
         """Run Haiku-as-judge over the soft criteria in `expectation`.
 
         Returns a dict mapping criterion-name → passed-bool. Only checks
-        the must_extract_* / must_do (non-structural) criteria — the
-        deterministic ones are handled by the caller.
+        the must_extract_* / must_do / must_not_do (non-structural)
+        criteria — the deterministic ones are handled by the caller.
+
+        Names are flattened: each must_do/must_not_do entry becomes its
+        own criterion, so the judge returns one verdict per behavior.
+        That makes per-criterion regressions visible in the detail
+        block rather than collapsing the suite to a single number.
         """
         criteria: list[dict[str, Any]] = []
+        # Structured extractor-shaped criteria.
         for k in (
             "must_extract_identity_claim",
             "must_capture_signal",
@@ -362,9 +379,32 @@ def _run_framework_adherence_real(convs: list[dict[str, Any]]) -> SuiteResult:
             v = expectation.get(k)
             if v:
                 criteria.append({"name": k, "spec": v})
+        # Soft must_do criteria — orchestrator-behavior checks. Each
+        # listed name produces its own judge verdict.
+        soft_must_do = {
+            "acknowledge_emotion_specifically",
+            "redirect_to_discovery",
+            "ask_basic_layer_question",
+            "probe_identity_or_personality",
+            "reflect_value_back",
+            "name_specific_strength",
+        }
         for d in expectation.get("must_do", []) or []:
-            if d in {"acknowledge_emotion_specifically", "redirect_to_discovery"}:
+            if d in soft_must_do:
                 criteria.append({"name": d, "spec": None})
+        # Soft must_not_do criteria — patterns the structural pass
+        # can't reliably detect. The structural pass keeps catching the
+        # easy ones (specific school names, ?-count); the judge catches
+        # the rest.
+        soft_must_not_do = {
+            "recommend_program",
+            "empty_validation_phrases",
+            "premature_advice",
+            "discount_emotion",
+        }
+        for d in expectation.get("must_not_do", []) or []:
+            if d in soft_must_not_do:
+                criteria.append({"name": f"not:{d}", "spec": None})
 
         if not criteria:
             return {}
@@ -403,18 +443,46 @@ def _run_framework_adherence_real(convs: list[dict[str, Any]]) -> SuiteResult:
                     "You are grading a Discovery counselor's behavior on soft "
                     "criteria. Each criterion has a name and (sometimes) a "
                     "spec describing what to look for. Pass only if the "
-                    "criterion is clearly met by the assistant's response.\n\n"
+                    "criterion is clearly met by the assistant's response. "
+                    "Borderline cases are FAIL.\n\n"
+                    "Soft must_do criteria:\n"
                     "- 'must_extract_identity_claim' passes if the assistant "
                     "  reflected back an identity-layer claim from the "
                     "  student's turn with the right facet/quote.\n"
                     "- 'must_capture_signal' passes if the assistant "
                     "  acknowledged the relevant signal (e.g. a Maslow need).\n"
+                    "- 'must_extract' passes if the assistant's reply shows "
+                    "  it captured the listed (path,value) pairs (verbatim "
+                    "  or via clear paraphrase) from the student turn.\n"
                     "- 'acknowledge_emotion_specifically' fails on empty "
                     "  validation ('great answer!') and passes on concrete "
                     "  reflection of what was said.\n"
                     "- 'redirect_to_discovery' passes if the assistant "
                     "  declined to recommend programs and steered back to "
-                    "  Discovery."
+                    "  Discovery.\n"
+                    "- 'ask_basic_layer_question' passes if the assistant "
+                    "  asked exactly one open question about basic-layer "
+                    "  facts (education level, location, budget, timing).\n"
+                    "- 'probe_identity_or_personality' passes if the "
+                    "  assistant asked a follow-up that opens identity / "
+                    "  personality territory (values, beliefs, "
+                    "  self-perception, motivations).\n"
+                    "- 'reflect_value_back' passes if the assistant named "
+                    "  the student's stated value back to them concretely.\n"
+                    "- 'name_specific_strength' passes if the assistant "
+                    "  pointed out a specific strength evidenced in the "
+                    "  student's turn (not generic praise).\n\n"
+                    "Soft must_not_do criteria — these PASS when the "
+                    "assistant did NOT do the behavior:\n"
+                    "- 'not:recommend_program' passes if the assistant did "
+                    "  not recommend any specific program / school.\n"
+                    "- 'not:empty_validation_phrases' passes if the "
+                    "  assistant avoided generic praise like 'great!', "
+                    "  'amazing!', 'love it!'.\n"
+                    "- 'not:premature_advice' passes if the assistant did "
+                    "  not jump to advice before Discovery is complete.\n"
+                    "- 'not:discount_emotion' passes if the assistant did "
+                    "  not minimize or rush past the student's emotion."
                 ),
                 "cache_control": {"type": "ephemeral"},
             }
@@ -447,10 +515,17 @@ def _run_framework_adherence_real(convs: list[dict[str, Any]]) -> SuiteResult:
                 return {s["name"]: bool(s.get("passed")) for s in scores if "name" in s}
         return {c["name"]: False for c in criteria}
 
-    async def _replay_one(conv: dict[str, Any]) -> tuple[int, int]:
+    async def _replay_one(
+        conv: dict[str, Any],
+    ) -> tuple[int, int, dict[str, dict[str, int]]]:
+        """Replay one golden conversation. Returns
+        (passed_turns, scored_turns, per_criterion_stats) where
+        per_criterion_stats maps criterion-name → {"passed": N, "total": M}
+        so the detail block can show *which* soft checks regressed."""
         history: list[dict[str, str]] = []
         passed_turns = 0
         scored_turns = 0
+        per_criterion: dict[str, dict[str, int]] = {}
         orch = get_orchestrator()
 
         for i, turn_text in enumerate(conv["scripted_user_turns"]):
@@ -490,34 +565,43 @@ def _run_framework_adherence_real(convs: list[dict[str, Any]]) -> SuiteResult:
                     if response.text.count("?") > 1:
                         ok = False
                 if must_not == "empty_validation_phrases":
-                    # Empty validation is a soft criterion too, but we
-                    # cheaply catch the obvious ones first.
+                    # Cheap pre-judge catch on the obvious cases; the
+                    # Haiku judge handles subtler empty-validation.
                     bad = ("great answer", "amazing!", "wonderful!", "love it!")
                     if any(b in text_lower for b in bad):
                         ok = False
             # ── Soft (Haiku-as-judge) ──
-            if ok:
-                soft_results = await _judge_turn_softly(
-                    student_turn=turn_text,
-                    assistant_turn=response.text,
-                    expectation=expectation,
-                )
-                if any(passed is False for passed in soft_results.values()):
+            soft_results = await _judge_turn_softly(
+                student_turn=turn_text,
+                assistant_turn=response.text,
+                expectation=expectation,
+            )
+            for name, passed in soft_results.items():
+                slot = per_criterion.setdefault(name, {"passed": 0, "total": 0})
+                slot["total"] += 1
+                if passed:
+                    slot["passed"] += 1
+                else:
                     ok = False
             if ok:
                 passed_turns += 1
-        return passed_turns, scored_turns
+        return passed_turns, scored_turns, per_criterion
 
-    async def _run_all() -> tuple[int, int]:
+    async def _run_all() -> tuple[int, int, dict[str, dict[str, int]]]:
         total_passed = 0
         total_scored = 0
+        merged: dict[str, dict[str, int]] = {}
         for conv in convs:
-            p, s = await _replay_one(conv)
+            p, s, per = await _replay_one(conv)
             total_passed += p
             total_scored += s
-        return total_passed, total_scored
+            for name, slot in per.items():
+                m = merged.setdefault(name, {"passed": 0, "total": 0})
+                m["passed"] += slot["passed"]
+                m["total"] += slot["total"]
+        return total_passed, total_scored, merged
 
-    passed, scored = asyncio.run(_run_all())
+    passed, scored, per_criterion = asyncio.run(_run_all())
     score = (passed / scored) if scored else 0.0
     return SuiteResult(
         name="framework_adherence",
@@ -528,7 +612,8 @@ def _run_framework_adherence_real(convs: list[dict[str, Any]]) -> SuiteResult:
             "fixtures": len(convs),
             "scored_turns": scored,
             "passed_turns": passed,
-            "mode": "real-structural",
+            "soft_criteria": per_criterion,
+            "mode": "real+soft",
         },
     )
 
