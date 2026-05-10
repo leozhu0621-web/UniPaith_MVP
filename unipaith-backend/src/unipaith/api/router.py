@@ -26,6 +26,7 @@ from unipaith.api.reviews import router as reviews_router
 from unipaith.api.saved_lists import router as saved_lists_router
 from unipaith.api.strategy import router as strategy_router
 from unipaith.api.students import router as students_router
+from unipaith.api.workshop_feedback import router as workshop_feedback_router
 from unipaith.api.workshops import router as workshops_router
 from unipaith.database import get_db
 from unipaith.models.institution import CampaignLink, CampaignRecipient
@@ -48,6 +49,7 @@ api_router.include_router(documents_router)
 api_router.include_router(internal_router)
 api_router.include_router(saved_lists_router)
 api_router.include_router(workshops_router)
+api_router.include_router(workshop_feedback_router)
 api_router.include_router(messaging_router)
 api_router.include_router(events_router)
 api_router.include_router(reviews_router)
