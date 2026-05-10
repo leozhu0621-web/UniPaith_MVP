@@ -32,6 +32,7 @@ What's deliberately NOT here
 from __future__ import annotations
 
 import asyncio
+import datetime as _dt
 import logging
 import time
 import uuid
@@ -39,11 +40,86 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Any, Literal
 
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+# ── Per-student cost cap (Plan 2 §10) ─────────────────────────────────────
+
+
+class CostCapExceededError(RuntimeError):
+    """Raised when a student has exhausted their weekly LLM budget and
+    enforcement is set to `"block"`. Carries the spent amount and the cap
+    so callers can surface a user-facing message ("You've hit your
+    weekly limit — try again Monday")."""
+
+    def __init__(self, *, student_id: uuid.UUID, spent_usd: float, cap_usd: float):
+        self.student_id = student_id
+        self.spent_usd = spent_usd
+        self.cap_usd = cap_usd
+        super().__init__(
+            f"Cost cap exceeded for student={student_id}: ${spent_usd:.4f} > ${cap_usd:.4f}"
+        )
+
+
+async def student_cost_in_window(
+    db: AsyncSession,
+    student_id: uuid.UUID,
+    *,
+    window_days: int,
+) -> float:
+    """Return the sum of `ai_turns.cost_usd` for the student over the last
+    `window_days`. Used by the per-student cap check.
+
+    Returns 0.0 when no turns exist — the very first request for a
+    student. Indexed read via `ix_ai_turns_student_created`.
+    """
+    # Local import — avoids the circular load when this module is imported
+    # from `unipaith.models`.
+    from unipaith.models.ai_artifacts import AiTurn
+
+    since = _dt.datetime.now(_dt.UTC) - _dt.timedelta(days=window_days)
+    total = await db.scalar(
+        select(func.coalesce(func.sum(AiTurn.cost_usd), 0)).where(
+            AiTurn.student_id == student_id,
+            AiTurn.created_at >= since,
+        )
+    )
+    return float(total or 0)
+
+
+async def check_cost_cap(
+    db: AsyncSession | None,
+    student_id: uuid.UUID | None,
+    *,
+    cap_usd: float | None = None,
+    window_days: int | None = None,
+    enforcement: str | None = None,
+) -> tuple[bool, float]:
+    """Check whether a student is over the weekly LLM spend cap.
+
+    Returns (over_cap, spent_usd). When `db` or `student_id` is None,
+    returns (False, 0.0) — anonymous calls (eval harness, tests) skip
+    enforcement.
+
+    Caller is responsible for acting on the result. Used by both
+    `AIClient.message()` and `AIClient.stream_message()` so the gate
+    behaves the same across the two paths.
+    """
+    mode = enforcement if enforcement is not None else settings.ai_cost_cap_enforcement
+    if mode == "off":
+        return False, 0.0
+    if db is None or student_id is None:
+        return False, 0.0
+
+    cap = cap_usd if cap_usd is not None else settings.ai_per_student_weekly_cost_cap_usd
+    window = window_days if window_days is not None else settings.ai_cost_cap_window_days
+    spent = await student_cost_in_window(db, student_id, window_days=window)
+    return spent >= cap, spent
 
 
 # ── Pricing table (USD per million tokens). Update when models/prices change.
@@ -83,6 +159,9 @@ class LLMResponse:
 
     `content_blocks` preserves Anthropic's tool-use blocks alongside text.
     `text` is the concatenation of text blocks for convenience.
+    `cost_cap_warning` is set when the student is at/over the weekly
+    spend cap and enforcement is set to `"warn"` — the call proceeded
+    but the surface should show a soft-warn banner.
     """
 
     text: str
@@ -96,6 +175,7 @@ class LLMResponse:
     latency_ms: int = 0
     stop_reason: str | None = None
     raw: Any | None = None
+    cost_cap_warning: dict[str, Any] | None = None
 
 
 @dataclass
@@ -164,11 +244,21 @@ class AIClient:
 
         If `db` is provided, a row is written to `ai_turns` after the call.
         Callers without an active session (e.g. eval harness) can pass None.
+
+        Per-student weekly cost cap (§10) is enforced when both `db` and
+        `student_id` are provided. Mode is `settings.ai_cost_cap_enforcement`:
+          - `"off"` — skip the check
+          - `"warn"` — log + set `cost_cap_warning` on the response
+          - `"block"` — raise CostCapExceededError
         """
         model_id = self.sonnet_model if model == "sonnet" else self.haiku_model
 
+        cap_warning = await self._enforce_cost_cap(db, student_id, agent=agent)
+
         if self.mock_mode:
-            return self._mock_message(agent=agent, model_id=model_id)
+            resp = self._mock_message(agent=agent, model_id=model_id)
+            resp.cost_cap_warning = cap_warning
+            return resp
 
         anthropic = self._get_anthropic()
 
@@ -258,6 +348,7 @@ class AIClient:
             latency_ms=latency_ms,
             stop_reason=getattr(raw_resp, "stop_reason", None),
             raw=raw_resp,
+            cost_cap_warning=cap_warning,
         )
 
         if db is not None:
@@ -300,8 +391,15 @@ class AIClient:
         After the generator exhausts, one row is written to `ai_turns` with
         full token + cost accounting (when db is provided). Mock mode emits
         a single text_delta then 'done'.
+
+        Per-student weekly cost cap (§10) is enforced before the stream
+        opens. In `"block"` mode the generator raises CostCapExceededError
+        before yielding any chunks, so SSE consumers get a single error
+        rather than a partial answer.
         """
         model_id = self.sonnet_model if model == "sonnet" else self.haiku_model
+
+        cap_warning = await self._enforce_cost_cap(db, student_id, agent=agent)
 
         if self.mock_mode:
             mock_text = f"[mock-stream:{agent}:{model_id}]"
@@ -311,6 +409,7 @@ class AIClient:
                 content_blocks=[{"type": "text", "text": mock_text}],
                 model=f"mock:{model_id}",
                 stop_reason="end_turn",
+                cost_cap_warning=cap_warning,
             )
             yield ("done", response)
             return
@@ -369,9 +468,7 @@ class AIClient:
             if u is not None:
                 usage["input_tokens"] = getattr(u, "input_tokens", 0) or 0
                 usage["output_tokens"] = getattr(u, "output_tokens", 0) or 0
-                usage["cache_read_input_tokens"] = (
-                    getattr(u, "cache_read_input_tokens", 0) or 0
-                )
+                usage["cache_read_input_tokens"] = getattr(u, "cache_read_input_tokens", 0) or 0
                 usage["cache_creation_input_tokens"] = (
                     getattr(u, "cache_creation_input_tokens", 0) or 0
                 )
@@ -399,6 +496,7 @@ class AIClient:
             cost_usd=cost,
             latency_ms=latency_ms,
             stop_reason=stop_reason,
+            cost_cap_warning=cap_warning,
         )
         if db is not None:
             await self._log_turn(
@@ -420,7 +518,13 @@ class AIClient:
         student_id: uuid.UUID | None = None,
         db: AsyncSession | None = None,
     ) -> EmbeddingResponse:
-        """Generate a voyage-3-large embedding for the given text."""
+        """Generate a voyage-3-large embedding for the given text.
+
+        Same cost-cap gate as `message()` — embedding is the cheapest
+        path but should still respect a hard-block cap when set.
+        """
+        await self._enforce_cost_cap(db, student_id, agent="embedding")
+
         if self.mock_mode:
             # Deterministic mock: hash-derived 1024-d vector in [-1, 1].
             import hashlib
@@ -466,6 +570,48 @@ class AIClient:
         return resp
 
     # ── Internals ────────────────────────────────────────────────────────
+
+    @staticmethod
+    async def _enforce_cost_cap(
+        db: AsyncSession | None,
+        student_id: uuid.UUID | None,
+        *,
+        agent: Agent,
+    ) -> dict[str, Any] | None:
+        """Cap-gate at the top of message() / stream_message().
+
+        Returns a `cost_cap_warning` dict to attach to the response when
+        enforcement is `"warn"` and the student is over the cap, None
+        otherwise. Raises CostCapExceededError when enforcement is
+        `"block"` and over.
+        """
+        if db is None or student_id is None:
+            return None
+        mode = settings.ai_cost_cap_enforcement
+        if mode == "off":
+            return None
+        cap = settings.ai_per_student_weekly_cost_cap_usd
+        window = settings.ai_cost_cap_window_days
+        spent = await student_cost_in_window(db, student_id, window_days=window)
+        if spent < cap:
+            return None
+        if mode == "block":
+            raise CostCapExceededError(student_id=student_id, spent_usd=spent, cap_usd=cap)
+        # mode == "warn" or anything else → soft warning.
+        logger.warning(
+            "AI cost cap warning: student=%s agent=%s spent=$%.4f cap=$%.4f window=%dd",
+            student_id,
+            agent,
+            spent,
+            cap,
+            window,
+        )
+        return {
+            "spent_usd": round(spent, 4),
+            "cap_usd": round(cap, 4),
+            "window_days": window,
+            "mode": mode,
+        }
 
     def _get_anthropic(self):
         if self._anthropic is None:
