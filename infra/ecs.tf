@@ -48,6 +48,8 @@ resource "aws_iam_role_policy" "ecs_execution_secrets" {
         aws_secretsmanager_secret.db_password.arn,
         aws_secretsmanager_secret.app_secret.arn,
         aws_secretsmanager_secret.openai_api_key.arn,
+        aws_secretsmanager_secret.anthropic_api_key.arn,
+        aws_secretsmanager_secret.voyage_api_key.arn,
       ]
     }]
   })
@@ -177,6 +179,12 @@ resource "aws_ecs_task_definition" "backend" {
       { name = "AI_MATCH_RATIONALE_V2_ENABLED", value = "true" },
       { name = "AI_STRATEGY_V2_ENABLED", value = "true" },
       { name = "AI_IDENTITY_V2_ENABLED", value = "true" },
+      # Pin Claude model IDs — config.py defaults match, but pinning here
+      # makes the prod surface auditable (and trivial to roll a single
+      # agent class to a different model without a code deploy).
+      { name = "LLM_REASONING_MODEL", value = "claude-sonnet-4-6" },
+      { name = "LLM_FEATURE_MODEL", value = "claude-haiku-4-5" },
+      { name = "EMBEDDING_MODEL", value = "voyage-3-large" },
       { name = "CORS_ORIGINS", value = "[\"https://app.${var.domain_name}\"]" },
       { name = "SES_SENDER_EMAIL", value = "noreply@${var.domain_name}" },
       { name = "NOTIFICATIONS_ENABLED", value = "true" },
@@ -190,6 +198,22 @@ resource "aws_ecs_task_definition" "backend" {
       {
         name      = "OPENAI_API_KEY"
         valueFrom = aws_secretsmanager_secret.openai_api_key.arn
+      },
+      # Claude API — the student-side LLM stack (orchestrator, extractor,
+      # validator, feature emitter, rationale, workshop coach, strategy,
+      # identity summary) routes through the AIClient singleton against
+      # Anthropic. Without this, every agent silently falls through to the
+      # rule-based stub.
+      {
+        name      = "ANTHROPIC_API_KEY"
+        valueFrom = aws_secretsmanager_secret.anthropic_api_key.arn
+      },
+      # Voyage powers the dense applicant_summary embedding consumed by
+      # the ML matcher. Without it, match.cosine collapses to zero and
+      # the dual-score (fitness / confidence) loses one of three signals.
+      {
+        name      = "VOYAGE_API_KEY"
+        valueFrom = aws_secretsmanager_secret.voyage_api_key.arn
       },
     ]
 

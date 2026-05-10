@@ -47,4 +47,6 @@ jobs:
       - name: Terraform apply
         env:
           TF_VAR_openai_api_key: ${{ secrets.TF_VAR_OPENAI_API_KEY }}
+          TF_VAR_anthropic_api_key: ${{ secrets.TF_VAR_ANTHROPIC_API_KEY }}
+          TF_VAR_voyage_api_key: ${{ secrets.TF_VAR_VOYAGE_API_KEY }}
         run: terraform apply -auto-approve -input=false -lock-timeout=300s -no-color
