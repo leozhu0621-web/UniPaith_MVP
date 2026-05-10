@@ -4,12 +4,15 @@ Phase progression
 -----------------
 - A1 (shipped): Anthropic client wrapper, prompt files, extractor schema,
   eval harness, DB foundations.
-- A2 (this phase): Discovery BASIC layer end-to-end —
-  Orchestrator + Extractor + (deterministic BASIC) Validator +
-  artifact-writer wired into the discovery service behind a flag.
-- A3 (next): personality + identity layers, LLM-as-judge validator,
-  bias-pair fixtures, SSE streaming.
-- B+: feature emitter, ML matcher, rationale agent, workshop coaches.
+- A2 (shipped): Discovery BASIC layer end-to-end — Orchestrator +
+  Extractor + (deterministic BASIC) Validator + artifact-writer.
+- A3 (shipped): Personality + Identity layers, LLM-as-judge,
+  bias-pair fixtures.
+- A3.2 (shipped): SSE streaming, GOALS + NEEDS tracks, Haiku judge for
+  soft criteria.
+- B1 (this phase): Feature Emitter (A4) + ML matcher (fitness +
+  confidence + components, with hard-filter rule layer).
+- B+: Rationale agent (A5), workshop coaches (A6).
 
 All LLM calls in the application MUST go through `unipaith.ai.client.AIClient`.
 This is enforced by:
@@ -20,7 +23,8 @@ This is enforced by:
 External code imports either the client singleton (low-level) or one of the
 agent singletons (high-level):
 
-    from unipaith.ai import get_client, get_orchestrator, get_extractor
+    from unipaith.ai import get_client, get_orchestrator, get_extractor,
+                            get_feature_emitter
 """
 
 from unipaith.ai.client import AIClient, get_client
@@ -29,6 +33,13 @@ from unipaith.ai.extractor import (
     Extractor,
     get_extractor,
     reset_extractor,
+)
+from unipaith.ai.feature_emitter import (
+    EmittedFeatures,
+    FeatureEmitter,
+    get_feature_emitter,
+    persist_features,
+    reset_feature_emitter,
 )
 from unipaith.ai.orchestrator import (
     Orchestrator,
@@ -55,9 +66,15 @@ __all__ = [
     "Extractor",
     "get_extractor",
     "reset_extractor",
-    # validator (A3 agent — A2 ships BASIC pathway only)
+    # validator (A3 agent)
     "LayerValidator",
     "default_validator",
+    # feature emitter (A4 agent — Phase B1)
+    "EmittedFeatures",
+    "FeatureEmitter",
+    "get_feature_emitter",
+    "persist_features",
+    "reset_feature_emitter",
     # state machine
     "LayerVerdict",
     "StudentSnapshot",

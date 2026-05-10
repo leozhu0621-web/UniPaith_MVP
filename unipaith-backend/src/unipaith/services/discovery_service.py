@@ -283,6 +283,16 @@ class DiscoveryService:
                 )
                 session.completion_pct = verdict.completion_pct
 
+            # 4b. Phase B1 — fire the feature emitter on completion.
+            # Best-effort: errors here never fail the turn. The matcher
+            # falls back to the previous feature_vector row if emission
+            # fails; if there's no previous row, the student has no
+            # match results until Discovery is re-attempted.
+            if verdict is not None and verdict.layer_complete:
+                await self._emit_features_for_completion(
+                    student_id=student_id, snapshot=snapshot
+                )
+
             # 5. Orchestrate — generate the assistant turn.
             history_msgs = await self._load_message_history(session.id)
             ctx = TurnContext(
@@ -527,6 +537,43 @@ class DiscoveryService:
             await self.db.refresh(assistant)
             yield ("error", {"message": str(exc)[:240]})
             yield ("assistant_message", _msg_dict(assistant))
+
+    async def _emit_features_for_completion(
+        self, *, student_id: UUID, snapshot
+    ) -> None:
+        """Phase B1 — fire the A4 Feature Emitter when a layer/track
+        completes. Best-effort: any error is logged but doesn't propagate.
+
+        We re-emit on every completion (bump_version=True) so the
+        downstream match_rationales cache invalidates whenever the
+        student's profile changes. This is cheap (~$0.005/emit on
+        Haiku) and keeps recommendations fresh.
+        """
+        from unipaith.ai.feature_emitter import (
+            get_feature_emitter,
+            persist_features,
+        )
+
+        try:
+            features = await get_feature_emitter().emit(
+                snapshot=snapshot, student_id=student_id, db=self.db
+            )
+            if features.is_valid():
+                await persist_features(
+                    db=self.db, student_id=student_id, features=features
+                )
+            else:
+                logger.warning(
+                    "FeatureEmitter returned invalid features for student=%s; "
+                    "skipping persist (this turn keeps the previous vector).",
+                    student_id,
+                )
+        except Exception:  # pragma: no cover — degraded path
+            logger.exception(
+                "Feature emission failed for student=%s — recommendations "
+                "will use the previous feature vector.",
+                student_id,
+            )
 
     async def _load_extracted_signals_for_session(self, session_id: UUID) -> list[dict | None]:
         """All extracted_signals for a session, in chronological order."""
