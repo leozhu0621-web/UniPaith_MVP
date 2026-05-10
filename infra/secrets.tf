@@ -54,8 +54,15 @@ resource "aws_secretsmanager_secret" "anthropic_api_key" {
 }
 
 resource "aws_secretsmanager_secret_version" "anthropic_api_key" {
-  secret_id     = aws_secretsmanager_secret.anthropic_api_key.id
-  secret_string = var.anthropic_api_key
+  secret_id = aws_secretsmanager_secret.anthropic_api_key.id
+  # Bootstrap with the var if provided, otherwise a placeholder so the
+  # apply doesn't fail when the GH Actions secret isn't set. Real value
+  # is rotated in via the AWS console / `aws secretsmanager put-secret-value`
+  # and ignore_changes prevents Terraform from clobbering it on next apply.
+  secret_string = coalesce(var.anthropic_api_key, "REPLACE_ME_VIA_AWS_CONSOLE")
+  lifecycle {
+    ignore_changes = [secret_string]
+  }
 }
 
 # --- Voyage embeddings API key (paired with Anthropic for the new feature pipeline) ---
@@ -66,5 +73,8 @@ resource "aws_secretsmanager_secret" "voyage_api_key" {
 
 resource "aws_secretsmanager_secret_version" "voyage_api_key" {
   secret_id     = aws_secretsmanager_secret.voyage_api_key.id
-  secret_string = var.voyage_api_key
+  secret_string = coalesce(var.voyage_api_key, "REPLACE_ME_VIA_AWS_CONSOLE")
+  lifecycle {
+    ignore_changes = [secret_string]
+  }
 }
