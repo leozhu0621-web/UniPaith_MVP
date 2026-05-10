@@ -127,8 +127,9 @@ const router = createBrowserRouter([
       { path: 'messages/:convId', element: <Navigate to="/s/manage?tab=messages" replace /> },
       { path: 'financial-aid', element: <Navigate to="/s/profile?tab=financial" replace /> },
       { path: 'recommendations', element: <Navigate to="/s/profile?tab=recommenders" replace /> },
-      { path: 'resume-workshop', element: <Navigate to="/s/profile?tab=essays" replace /> },
-      { path: 'essay-workshop', element: <Navigate to="/s/profile?tab=essays" replace /> },
+      // Phase D — Workshops moved from Profile to Apply > Workshops (feedback-only).
+      { path: 'resume-workshop', element: <Navigate to="/s/manage?tab=workshops" replace /> },
+      { path: 'essay-workshop', element: <Navigate to="/s/manage?tab=workshops" replace /> },
       { path: 'test-scores', element: <Navigate to="/s/profile" replace /> },
       { path: 'decisions', element: <Navigate to="/s/manage" replace /> },
       { path: 'intake', element: <Navigate to="/s" replace /> },
