@@ -144,5 +144,174 @@ SCORE_GENERATION_LEAK_TOOL = {
 }
 
 
+# ── A6 Coach: interview feedback (Phase C2) ────────────────────────────────
+
+
+SUBMIT_INTERVIEW_FEEDBACK_TOOL = {
+    "name": "submit_interview_feedback",
+    "description": (
+        "Return structured feedback on a student's interview-prep response. "
+        "Feedback ONLY — no rewrites, no sample answers, no suggested "
+        "phrasings."
+    ),
+    "input_schema": {
+        "type": "object",
+        "additionalProperties": False,
+        "required": [
+            "rubric_scores",
+            "response_issues",
+            "missing_elements",
+            "clarifying_questions",
+            "delivery_notes",
+        ],
+        "properties": {
+            "rubric_scores": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": [
+                    "directness",
+                    "specificity",
+                    "structure",
+                    "evidence",
+                    "delivery",
+                ],
+                "properties": {
+                    "directness": {"type": "integer", "minimum": 1, "maximum": 5},
+                    "specificity": {"type": "integer", "minimum": 1, "maximum": 5},
+                    "structure": {"type": "integer", "minimum": 1, "maximum": 5},
+                    "evidence": {"type": "integer", "minimum": 1, "maximum": 5},
+                    "delivery": {"type": "integer", "minimum": 1, "maximum": 5},
+                },
+            },
+            "response_issues": {
+                "type": "array",
+                "maxItems": 6,
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": ["issue", "why_it_matters"],
+                    "properties": {
+                        "issue": {"type": "string", "maxLength": 240},
+                        "why_it_matters": {"type": "string", "maxLength": 240},
+                    },
+                },
+            },
+            "missing_elements": {
+                "type": "array",
+                "maxItems": 4,
+                "items": {"type": "string", "maxLength": 200},
+            },
+            "clarifying_questions": {
+                "type": "array",
+                "maxItems": 4,
+                "items": {"type": "string", "maxLength": 240},
+            },
+            "delivery_notes": {
+                "type": "array",
+                "maxItems": 3,
+                "items": {"type": "string", "maxLength": 200},
+            },
+        },
+    },
+}
+
+
+# ── A6 Coach: test prep guidance (Phase C2) ────────────────────────────────
+
+
+SUBMIT_TEST_PREP_GUIDANCE_TOOL = {
+    "name": "submit_test_prep_guidance",
+    "description": (
+        "Return diagnostic + study-plan guidance for standardized-test "
+        "prep. Guidance ONLY — no practice problems, no sample essays, "
+        "no vocabulary lists, no formula sheets, no specific product "
+        "names, no specific score predictions."
+    ),
+    "input_schema": {
+        "type": "object",
+        "additionalProperties": False,
+        "required": [
+            "rubric_scores",
+            "section_diagnosis",
+            "priorities",
+            "resource_categories",
+            "timeline_notes",
+        ],
+        "properties": {
+            "rubric_scores": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": [
+                    "diagnostic_clarity",
+                    "timeline_realism",
+                    "resource_diversity",
+                    "weakness_focus",
+                    "review_discipline",
+                ],
+                "properties": {
+                    "diagnostic_clarity": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5,
+                    },
+                    "timeline_realism": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5,
+                    },
+                    "resource_diversity": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5,
+                    },
+                    "weakness_focus": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5,
+                    },
+                    "review_discipline": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5,
+                    },
+                },
+            },
+            "section_diagnosis": {
+                "type": "array",
+                "maxItems": 4,
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "required": ["section", "observation"],
+                    "properties": {
+                        "section": {"type": "string", "maxLength": 60},
+                        "observation": {"type": "string", "maxLength": 280},
+                    },
+                },
+            },
+            "priorities": {
+                "type": "array",
+                "maxItems": 4,
+                "items": {"type": "string", "maxLength": 280},
+            },
+            "resource_categories": {
+                "type": "array",
+                "maxItems": 6,
+                "items": {"type": "string", "maxLength": 120},
+            },
+            "timeline_notes": {
+                "type": "string",
+                "maxLength": 500,
+                "description": (
+                    "1–2 sentences on whether the target is realistic. "
+                    "NO specific score predictions. NO product names."
+                ),
+            },
+        },
+    },
+}
+
+
 # ── Changelog ──────────────────────────────────────────────────────────────
-# v1 (2026-05-10): initial schemas for Phase C1.
+# v1   (2026-05-10): initial schemas for Phase C1 (essay + judge).
+# v1.1 (2026-05-10): added interview + test_prep schemas for Phase C2.
