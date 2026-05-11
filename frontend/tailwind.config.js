@@ -12,37 +12,49 @@ export default {
     },
     extend: {
       colors: {
-        // ── Student — Soft Slate Blue ──
+        // ── Authoritative brand palette (Brand Materials/colors_and_type.css) ──
+        // Light theme: Sunlit Gold + Cobalt on warm Paper.
+        // Existing student-*/school-*/gold-*/offwhite/charcoal tokens are
+        // remapped to brand values so the ~100 component files using them
+        // pick up the brand without a global search-and-replace.
+        paper: '#FCFAF2',       // canonical warm-paper background
+        ink: '#0A1428',         // canonical deep-ink for dark surfaces
+        cobalt: {
+          DEFAULT: '#2A6BD4',   // links, eyebrows, secondary accents
+          dark: '#6FA0E8',      // lifted cobalt for ink backgrounds
+        },
+        cream: '#F5F1E8',       // dark-theme text, lowercase on dark wordmark
+        // ── Student namespace (now Sunlit Gold = brand primary) ──
         student: {
-          DEFAULT: '#4A6FA5',   // Primary — Soft Slate Blue
-          hover: '#3D5F8F',     // Primary Hover — Deeper Slate
-          mist: '#F0F4F8',     // Soft Background — Light Blue-Gray
-          moss: '#E8EEF4',     // Section Background — Mist Blue
-          ink: '#1A2B3D',       // Headings — Deep Navy
-          text: '#5A6B7D',      // Body Text — Muted Slate
+          DEFAULT: '#FFD60A',   // sunlit gold — primary CTA
+          hover: '#E5C000',     // darker gold for hover
+          mist: '#F2EEE0',      // warm muted layer (replaces light-blue-gray)
+          moss: '#F5F1E8',      // soft cream section background
+          ink: '#0A1428',       // editorial deep-ink for headings
+          text: '#4A4640',      // soft warm-gray body
         },
-        // ── School — Sapphire Blue ──
+        // ── School namespace (Cobalt = brand secondary) ──
         school: {
-          DEFAULT: '#1F4E79',   // Primary — Sapphire Blue
-          hover: '#183C5D',     // Primary Hover — Deep Sapphire
-          mist: '#EFF5FA',     // Soft Background — Ice Blue
-          moss: '#E4EDF5',     // Section Background — Mist Blue
-          ink: '#162535',       // Headings — Midnight Blue
-          text: '#5D6B78',      // Body Text — Steel Slate
+          DEFAULT: '#2A6BD4',   // cobalt — secondary
+          hover: '#1F58B5',     // deeper cobalt
+          mist: '#F2EEE0',
+          moss: '#F5F1E8',
+          ink: '#0A1428',
+          text: '#4A4640',
         },
-        // ── Shared gold accent ──
+        // ── Gold accent (now matches primary Sunlit Gold) ──
         gold: {
-          DEFAULT: '#C89A3D',   // Brand Accent — Warm Gold
-          hover: '#AE8433',     // Hover Accent — Burnished Gold
-          soft: '#F8F1E2',      // Soft Accent Bg — Cream Gold
-          pale: '#F3E6C7',     // Accent Soft — Pale Gold
+          DEFAULT: '#FFD60A',   // sunlit gold
+          hover: '#E5C000',     // pressed gold
+          soft: '#FFF1B0',      // pale gold tint for backgrounds
+          pale: '#FFE680',      // accent soft
         },
-        // ── Shared neutrals ──
-        offwhite: '#F7F8FA',    // Main Background — Cool Light Gray
-        charcoal: '#202529',    // Dark Text — Charcoal Ink
-        slate: '#667085',       // Secondary Text — Muted Slate
-        stone: '#D9E1DC',       // Border — Soft Stone
-        divider: '#E9EEEB',     // Light Divider — Mist Gray
+        // ── Shared neutrals (warm-paper system) ──
+        offwhite: '#FCFAF2',    // canvas — warm paper (was cool gray)
+        charcoal: '#2A2724',    // soft ink text (was charcoal ink)
+        slate: '#4A4640',       // muted body text (warm gray)
+        stone: '#C9C2A8',       // warm border (was cool stone)
+        divider: '#F2EEE0',     // warm divider tint
         // ── Legacy brand scales (product dashboards — migrate separately) ──
         brand: {
           slate: {
@@ -70,9 +82,14 @@ export default {
         card: { DEFAULT: "hsl(var(--card))", foreground: "hsl(var(--card-foreground))" },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        heading: ['Lora', 'serif'],
-        body: ['Inter', 'sans-serif'],
+        // Body / UI: System UI sans (native, neutral) per brand spec.
+        sans: ['system-ui', '-apple-system', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+        // Display / headings: EB Garamond serif (editorial).
+        heading: ['"EB Garamond"', 'Garamond', '"Times New Roman"', 'serif'],
+        body: ['system-ui', '-apple-system', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        // Handwriting accents: Caveat (hero highlights) + Kalam (marginalia).
+        hwDisplay: ['"Caveat"', 'cursive'],
+        hwNote: ['"Kalam"', 'cursive'],
       },
       // Note: bg-student and bg-school come from colors.student and colors.school
       // Old backgroundColor overrides for '#FAFAF8' and '#F8FAFC' removed — use bg-offwhite instead

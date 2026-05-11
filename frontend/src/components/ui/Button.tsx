@@ -14,12 +14,17 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || loading}
         className={clsx(
-          'inline-flex items-center justify-center rounded font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+          'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 ease-out disabled:opacity-50 disabled:cursor-not-allowed',
           {
-            'bg-brand-slate-600 text-white hover:bg-brand-slate-700': variant === 'primary',
-            'border border-brand-slate-200 bg-white text-brand-slate-700 hover:bg-brand-slate-50': variant === 'secondary',
-            'text-brand-slate-700 hover:bg-brand-slate-50': variant === 'ghost',
-            'bg-rose-600 text-white hover:bg-rose-700': variant === 'danger',
+            // Primary = Sunlit Gold #FFD60A with soft-ink text + gold glow on hover.
+            // Brand spec: --primary / --on-primary / --shadow-glow.
+            'bg-gold text-charcoal hover:bg-gold-hover hover:shadow-[0_0_24px_rgba(255,214,10,0.45)]': variant === 'primary',
+            // Secondary = Cobalt outline on Paper.
+            'border border-cobalt bg-white text-cobalt hover:bg-cobalt hover:text-paper': variant === 'secondary',
+            // Ghost = unframed cobalt link, warm-muted bg on hover.
+            'text-cobalt hover:bg-student-mist': variant === 'ghost',
+            // Danger = editorial brick (#B5321F), not bright rose.
+            'bg-[#B5321F] text-paper hover:bg-[#9C2A1A]': variant === 'danger',
             'px-2.5 py-1 text-xs': size === 'sm',
             'px-3.5 py-2 text-sm': size === 'md',
             'px-5 py-2.5 text-base': size === 'lg',

@@ -2,16 +2,21 @@
 
 Translates `ExtractedSignals` (the LLM's structured output) into rows in:
 
-  - student_goals (#113)
-  - student_needs (#113)
-  - student_identity (#113)  — single-row JSONB upsert
-  - discovery_messages.extracted_signals — audit trail (the *full* extractor
-    JSON, including basic-layer fields A2 keeps un-typed for now)
+  - student_profiles                              — basic-layer fields
+  - academic_records (one is_current=True row)    — gpa + education_level
+  - student_goals                                 — committed SMART goals
+  - student_needs                                 — Maslow signals
+  - student_identity                              — single-row JSONB upsert
+  - discovery_messages.extracted_signals          — full audit trail
 
 Basic-layer fields (age, education_level, gpa, test_scores, location_prefs,
-first_gen) intentionally stay in the JSONB audit trail in A2. A future
-"finalize discovery" action will write them to StudentProfile + AcademicRecord
-once the student confirms.
+first_gen, gender) are persisted onto StudentProfile + AcademicRecord
+immediately after each turn, *only when* the existing column is empty
+(idempotent: a later turn won't overwrite confirmed data). This is what
+lets the Discover-rail show "GPA 3.8 · Senior · California · CS" as soon
+as the student volunteers them — the prior behavior (keep JSONB-only,
+wait for "finalize discovery") left the rail empty and broke the
+"the system sees me" feel.
 
 Mappings between LLM JSON and DB rows
 -------------------------------------
@@ -68,6 +73,7 @@ from unipaith.ai.state import (
 from unipaith.models.goals import StudentGoal
 from unipaith.models.identity import StudentIdentity
 from unipaith.models.needs import StudentNeed
+from unipaith.models.student import AcademicRecord, StudentProfile
 
 # ── Mapping helpers ─────────────────────────────────────────────────────────
 
@@ -147,6 +153,144 @@ class WriteResult:
     identity_self_awareness_added: int = 0
     skipped_partial_goals: int = 0
     skipped_low_confidence: int = 0
+    basic_fields_written: int = 0
+    academic_record_touched: bool = False
+
+
+# Mapping from the extractor's education_level enum to the AcademicRecord
+# degree_type column. The set on the right is intentionally permissive; the
+# matcher cares only about the broad category, not the exact term.
+_EDUCATION_TO_DEGREE_TYPE = {
+    "high_school": "high_school",
+    "bachelors": "bachelors",
+    "masters": "masters",
+    "gap_year": "high_school",  # gap-year students are post-HS pre-college
+    "working": "bachelors",  # working professionals usually have a degree
+}
+
+
+async def _persist_basic_layer(
+    *,
+    db: AsyncSession,
+    student_id: UUID,
+    basic: dict[str, Any],
+    result: WriteResult,
+) -> None:
+    """Idempotently write basic-layer extractor fields onto StudentProfile
+    and one current AcademicRecord row.
+
+    Rules:
+    - Only fills columns that are currently NULL (don't overwrite).
+    - GPA goes onto an `is_current=True` AcademicRecord; if none exists,
+      create a placeholder one keyed on `education_level`.
+    - first_gen / income_band / test_scores are intentionally left for a
+      later expansion (they need separate tables: student_data_consent,
+      test_scores). Keeping scope tight on the rail-visible fields.
+    """
+    if not basic:
+        return
+
+    # ─── StudentProfile column-level fills ───────────────────────────────
+    profile_row = (
+        await db.execute(select(StudentProfile).where(StudentProfile.id == student_id))
+    ).scalar_one_or_none()
+    if profile_row is None:
+        return
+
+    fields_changed = False
+
+    # gender_identity — only when extractor saw an explicit signal
+    gender = basic.get("gender")
+    if gender and not profile_row.gender_identity:
+        profile_row.gender_identity = {"f": "Female", "m": "Male", "nb": "Non-binary"}.get(
+            gender, gender
+        )
+        fields_changed = True
+        result.basic_fields_written += 1
+
+    # country_of_residence — derive from the first location preference, but
+    # only when student hasn't already set it. ISO-3166 codes look like
+    # "US-CA"; the lead before the hyphen is the country.
+    if not profile_row.country_of_residence:
+        prefs = basic.get("location_prefs") or []
+        if prefs:
+            lead = prefs[0]
+            country_code = lead.split("-", 1)[0] if isinstance(lead, str) else None
+            country_map = {"US": "United States", "UK": "United Kingdom", "CA": "Canada"}
+            if country_code:
+                profile_row.country_of_residence = country_map.get(country_code, country_code)
+                fields_changed = True
+                result.basic_fields_written += 1
+
+    # domicile_state — sub-region inside the country of residence.
+    if not profile_row.domicile_state:
+        prefs = basic.get("location_prefs") or []
+        for p in prefs:
+            if isinstance(p, str) and "-" in p:
+                state = p.split("-", 1)[1]
+                profile_row.domicile_state = state
+                fields_changed = True
+                result.basic_fields_written += 1
+                break
+
+    if fields_changed:
+        await db.flush()
+
+    # ─── AcademicRecord (one current row per student) ────────────────────
+    gpa_raw = basic.get("gpa")
+    edu = basic.get("education_level")
+    if gpa_raw is None and edu is None:
+        return
+
+    record = (
+        (
+            await db.execute(
+                select(AcademicRecord).where(
+                    AcademicRecord.student_id == student_id,
+                    AcademicRecord.is_current.is_(True),
+                )
+            )
+        )
+        .scalars()
+        .first()
+    )
+
+    if record is None:
+        # Create a placeholder current record. institution_name + degree_type
+        # are NOT NULL on the model; institution stays generic until the
+        # student tells us where they are.
+        degree_type = _EDUCATION_TO_DEGREE_TYPE.get(str(edu), "high_school")
+        try:
+            gpa_decimal = Decimal(str(gpa_raw)) if gpa_raw is not None else None
+        except Exception:
+            gpa_decimal = None
+        record = AcademicRecord(
+            student_id=student_id,
+            institution_name="Current institution",
+            degree_type=degree_type,
+            gpa=gpa_decimal,
+            is_current=True,
+        )
+        db.add(record)
+        result.academic_record_touched = True
+        if gpa_decimal is not None:
+            result.basic_fields_written += 1
+    else:
+        # Idempotent fills only — don't overwrite a confirmed value.
+        if record.gpa is None and gpa_raw is not None:
+            try:
+                record.gpa = Decimal(str(gpa_raw))
+                result.basic_fields_written += 1
+                result.academic_record_touched = True
+            except Exception:
+                pass
+        if (not record.degree_type or record.degree_type == "high_school") and edu:
+            mapped = _EDUCATION_TO_DEGREE_TYPE.get(str(edu))
+            if mapped:
+                record.degree_type = mapped
+                result.academic_record_touched = True
+
+    await db.flush()
 
 
 async def persist_extraction(
@@ -163,6 +307,17 @@ async def persist_extraction(
     service drives commit.
     """
     result = WriteResult()
+
+    # Basic-layer — write age / GPA / location / education to typed columns
+    # so the Discover rail can read them on the next render. Idempotent —
+    # only fills NULL columns.
+    if extraction.basic:
+        await _persist_basic_layer(
+            db=db,
+            student_id=student_id,
+            basic=extraction.basic,
+            result=result,
+        )
 
     # Goals — only commit completeness == 1.0; partials stay in the audit
     # trail until the student fills them in via follow-up turns.
@@ -401,9 +556,7 @@ def snapshot_from_extracted_signals_history(
             if not facet or not value:
                 continue
             key = (str(facet), str(value).strip().lower()[:120])
-            if any(
-                (e.facet, e.value.strip().lower()[:120]) == key for e in snap.personality
-            ):
+            if any((e.facet, e.value.strip().lower()[:120]) == key for e in snap.personality):
                 continue
             snap.personality.append(
                 PersonalityEntry(
@@ -511,9 +664,7 @@ def snapshot_from_extracted_signals_history(
             except (TypeError, ValueError):
                 severity_int = None
             key = (str(level), str(tag).strip().lower()[:80])
-            if any(
-                (e.maslow_level, e.signal.strip().lower()[:80]) == key for e in snap.needs
-            ):
+            if any((e.maslow_level, e.signal.strip().lower()[:80]) == key for e in snap.needs):
                 continue
             snap.needs.append(
                 NeedEntry(

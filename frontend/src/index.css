@@ -3,36 +3,73 @@
 @tailwind utilities;
 
 @layer base {
+  /* ----------------------------------------------------------------
+     Brand tokens — Editorial Gold + Cobalt on Paper (light default).
+     Source of truth: /Brand Materials/colors_and_type.css.
+     HSL values are pre-computed from the canonical hex codes; shadcn
+     primitives consume these via hsl(var(--x)) in tailwind.config.js.
+     ---------------------------------------------------------------- */
   :root {
-    --background: 80 11% 98%;
-    --foreground: 210 10% 15%;
+    --background: 48 60% 97%;        /* #FCFAF2 paper */
+    --foreground: 30 10% 16%;        /* #2A2724 soft ink text */
 
-    --card: 0 0% 100%;
-    --card-foreground: 210 10% 15%;
+    --card: 0 0% 100%;               /* #FFFFFF surface */
+    --card-foreground: 30 10% 16%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 10% 15%;
+    --popover-foreground: 30 10% 16%;
 
-    --primary: 160 33% 27%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 49 100% 52%;          /* #FFD60A sunlit gold */
+    --primary-foreground: 30 10% 16%; /* ink reads on gold */
 
-    --secondary: 150 8% 85%;
-    --secondary-foreground: 210 10% 15%;
+    --secondary: 216 67% 50%;        /* #2A6BD4 cobalt */
+    --secondary-foreground: 48 60% 97%; /* paper reads on cobalt */
 
-    --accent: 38 54% 51%;
-    --accent-foreground: 210 10% 15%;
+    --accent: 216 67% 50%;           /* cobalt — links, eyebrows */
+    --accent-foreground: 48 60% 97%;
 
-    --muted: 140 8% 92%;
-    --muted-foreground: 218 6% 46%;
+    --muted: 48 38% 91%;             /* #F2EEE0 warm muted */
+    --muted-foreground: 30 5% 28%;   /* #4A4640 muted body */
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 9 56% 41%;        /* #B5321F editorial brick */
+    --destructive-foreground: 48 60% 97%;
 
-    --border: 150 8% 85%;
-    --input: 150 8% 85%;
-    --ring: 160 33% 27%;
+    --border: 46 27% 72%;            /* #C9C2A8 warm beige */
+    --input: 46 27% 72%;
+    --ring: 49 100% 52%;             /* gold focus ring */
 
-    --radius: 0.75rem;
+    --radius: 0.75rem;               /* 12px default per brand spec */
+  }
+
+  /* Dark theme — Ink canvas, lifted gold + cobalt accents. */
+  .dark, [data-theme="dark"] {
+    --background: 221 67% 10%;       /* #0A1428 deep ink */
+    --foreground: 39 38% 93%;        /* #F5F1E8 paper-warm cream */
+
+    --card: 220 51% 15%;             /* #122039 dark surface */
+    --card-foreground: 39 38% 93%;
+
+    --popover: 220 51% 15%;
+    --popover-foreground: 39 38% 93%;
+
+    --primary: 51 100% 47%;          /* #F2C800 desaturated gold */
+    --primary-foreground: 221 67% 10%;
+
+    --secondary: 215 73% 67%;        /* #6FA0E8 lifted cobalt */
+    --secondary-foreground: 221 67% 10%;
+
+    --accent: 215 73% 67%;
+    --accent-foreground: 221 67% 10%;
+
+    --muted: 222 49% 20%;            /* #1A2C4D */
+    --muted-foreground: 220 23% 79%;
+
+    --destructive: 9 100% 72%;       /* #FF8470 */
+    --destructive-foreground: 221 67% 10%;
+
+    --border: 218 32% 37%;           /* #3F567C */
+    --input: 218 32% 37%;
+    --ring: 51 100% 47%;
   }
 
   * {
@@ -41,10 +78,56 @@
 
   body {
     @apply bg-background text-foreground font-body antialiased;
+    text-rendering: optimizeLegibility;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Lora', serif;
+    font-family: 'EB Garamond', Garamond, 'Times New Roman', serif;
+    color: hsl(var(--foreground));
+    font-weight: 700;
+    margin: 0;
+  }
+  h1 { letter-spacing: -0.015em; line-height: 1.10; }
+  h2 { letter-spacing: 0; line-height: 1.15; }
+  h3 { letter-spacing: 0; line-height: 1.25; }
+}
+
+/* ----------------------------------------------------------------
+   Editorial helper classes — port of brand CSS "up-*" utilities
+   so existing components can opt in without re-implementing.
+   ---------------------------------------------------------------- */
+@layer components {
+  .up-display {
+    font-family: 'EB Garamond', Garamond, serif;
+    font-size: clamp(3rem, 6vw + 1rem, 4.5rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    font-weight: 600;
+  }
+  .up-eyebrow {
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+    line-height: 1.40;
+    color: hsl(var(--accent));
+  }
+  .up-stat {
+    font-family: 'EB Garamond', Garamond, serif;
+    font-weight: 700;
+    font-size: clamp(2.25rem, 2vw + 1rem, 3rem);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .up-hw-display {
+    font-family: 'Caveat', cursive;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+  }
+  .up-hw-note {
+    font-family: 'Kalam', cursive;
+    font-weight: 400;
   }
 }
 

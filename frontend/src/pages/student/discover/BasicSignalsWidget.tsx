@@ -1,0 +1,101 @@
+/**
+ * Discover → Basic-layer signals rail widget.
+ *
+ * Shows captured Basic Layer Required Signals (GPA, education level,
+ * country/state preference, gender if shared) the moment the extractor
+ * persists them onto StudentProfile + AcademicRecord. This is what
+ * makes "the system sees me" feel real — the rail used to only show
+ * Identity signals, so the student volunteered four facts and the
+ * panel stayed empty.
+ */
+import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
+import { ExternalLink, GraduationCap } from 'lucide-react'
+
+import { getProfile, listAcademics } from '../../../api/students'
+import Card from '../../../components/ui/Card'
+
+interface Row {
+  label: string
+  value: string
+}
+
+export default function BasicSignalsWidget() {
+  const { data: profile } = useQuery<any>({
+    queryKey: ['profile'],
+    queryFn: () => getProfile(),
+  })
+  const { data: academics } = useQuery<any[]>({
+    queryKey: ['academics'],
+    queryFn: () => listAcademics(),
+  })
+
+  const current = (academics ?? []).find((a) => a.is_current) ?? academics?.[0]
+
+  const rows: Row[] = []
+  if (current?.gpa != null) {
+    rows.push({ label: 'GPA', value: String(current.gpa) })
+  }
+  if (current?.degree_type) {
+    rows.push({
+      label: 'Stage',
+      value: DEGREE_LABEL[current.degree_type] ?? current.degree_type,
+    })
+  }
+  if (profile?.country_of_residence) {
+    const region = profile.domicile_state
+      ? `${profile.domicile_state}, ${profile.country_of_residence}`
+      : profile.country_of_residence
+    rows.push({ label: 'Location', value: region })
+  }
+  if (profile?.gender_identity) {
+    rows.push({ label: 'Identity', value: profile.gender_identity })
+  }
+
+  if (rows.length === 0) {
+    return (
+      <Card className="text-sm text-student-text space-y-2">
+        <div className="flex items-center gap-2 text-student-ink font-medium">
+          <GraduationCap size={14} className="text-cobalt" />
+          Basic signals
+        </div>
+        <p className="italic">
+          As you share GPA, location, and education stage, I'll capture them here.
+        </p>
+      </Card>
+    )
+  }
+
+  return (
+    <Card className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-student-ink font-medium text-sm">
+          <GraduationCap size={14} className="text-cobalt" />
+          Basic signals
+        </div>
+        <Link
+          to="/s/profile?tab=overview"
+          className="text-xs text-cobalt inline-flex items-center gap-1 hover:underline"
+        >
+          Manage <ExternalLink size={11} />
+        </Link>
+      </div>
+      <dl className="space-y-1.5 text-sm">
+        {rows.map((r) => (
+          <div key={r.label} className="flex justify-between gap-2">
+            <dt className="text-student-text/80">{r.label}</dt>
+            <dd className="font-medium text-student-ink text-right">{r.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </Card>
+  )
+}
+
+const DEGREE_LABEL: Record<string, string> = {
+  high_school: 'High school',
+  bachelors: 'Undergraduate',
+  masters: 'Graduate',
+  phd: 'Doctoral',
+  certificate: 'Certificate',
+}

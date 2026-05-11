@@ -170,9 +170,9 @@ export default function DiscoverHomePage() {
             <Compass size={18} className="text-gold" />
             <h1 className="text-2xl font-semibold text-student-ink">Discover</h1>
           </div>
-          <p className="text-sm text-student-text">
-            Stage 1 of three. Talk through who you are, what you want, and what you need — I'll
-            build out your profile as we go.
+          <p className="text-sm text-student-text max-w-2xl">
+            Stage 1 of three. Talk through who you are, what you want, and what you need —
+            I'll build out your profile as we go.
           </p>
         </div>
         {track === 'profile' && <LayerProgress active={layer} />}
@@ -190,7 +190,7 @@ export default function DiscoverHomePage() {
             session={activeSession}
           />
         </Card>
-        <ArtifactRail track={track} />
+        <ArtifactRail track={track} layer={track === 'profile' ? layer : undefined} />
       </div>
     </div>
   )
