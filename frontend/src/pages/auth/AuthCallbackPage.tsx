@@ -31,8 +31,7 @@ export default function AuthCallbackPage() {
         // New students go to onboarding; returning students go to dashboard
         const isNewStudent = user?.role === 'student' &&
           new Date(user.created_at).getTime() > Date.now() - 60_000 // created within last minute
-        const dest = user?.role === 'admin' ? '/admin'
-          : isNewStudent ? '/onboarding'
+        const dest = isNewStudent ? '/onboarding'
           : user?.role === 'student' ? '/s'
           : '/i/dashboard'
         navigate(dest, { replace: true })

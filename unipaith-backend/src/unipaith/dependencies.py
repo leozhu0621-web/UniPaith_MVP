@@ -79,9 +79,3 @@ async def require_institution_admin(user: User = Depends(get_current_user)) -> U
     if user.role != UserRole.institution_admin:
         raise ForbiddenException("Institution admin access required")
     return user
-
-
-async def require_admin(user: User = Depends(get_current_user)) -> User:
-    if user.role != UserRole.admin:
-        raise ForbiddenException("Admin access required")
-    return user

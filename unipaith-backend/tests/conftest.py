@@ -1,3 +1,4 @@
+# ruff: noqa: E402 — env vars are set below before importing app modules
 from __future__ import annotations
 
 import os
@@ -110,11 +111,6 @@ def mock_institution_user() -> User:
     return _make_user("institution_admin")
 
 
-@pytest.fixture
-def mock_admin_user() -> User:
-    return _make_user("admin")
-
-
 async def _persist_user(db_session: AsyncSession, user: User) -> User:
     """Persist a mock user to the DB so FK constraints and server defaults work."""
     db_session.add(user)
@@ -158,29 +154,6 @@ async def institution_client(
 
     async def _override_user() -> User:
         return mock_institution_user
-
-    app.dependency_overrides[get_db] = _override_db
-    app.dependency_overrides[get_current_user] = _override_user
-
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
-
-    app.dependency_overrides.clear()
-
-
-@pytest.fixture
-async def admin_client(
-    db_session: AsyncSession,
-    mock_admin_user: User,
-) -> AsyncGenerator[AsyncClient, None]:
-    await _persist_user(db_session, mock_admin_user)
-
-    async def _override_db() -> AsyncGenerator[AsyncSession, None]:
-        yield db_session
-
-    async def _override_user() -> User:
-        return mock_admin_user
 
     app.dependency_overrides[get_db] = _override_db
     app.dependency_overrides[get_current_user] = _override_user

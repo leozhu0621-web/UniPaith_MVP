@@ -23,13 +23,6 @@ from unipaith.models.application import (
 from unipaith.models.audit import AdmissionsAuditLog
 from unipaith.models.base import Base
 from unipaith.models.confidence_outcome import ConfidenceOutcomePair
-from unipaith.models.crawler import (
-    CrawlJob,
-    CrawlSchedule,
-    EnrichmentRecord,
-    ExtractedProgram,
-    SourceURLPattern,
-)
 from unipaith.models.discovery import DiscoveryMessage, DiscoverySession
 from unipaith.models.engagement import (
     Conversation,
@@ -230,11 +223,6 @@ __all__ = [
     "ABTestAssignment",
     "DriftSnapshot",
     "FairnessReport",
-    "CrawlJob",
-    "ExtractedProgram",
-    "CrawlSchedule",
-    "SourceURLPattern",
-    "EnrichmentRecord",
     "AdminAuditEvent",
     "AdmissionsAuditLog",
     "KnowledgeDocument",

@@ -117,9 +117,8 @@ class Settings(BaseSettings):
     # Logging
     log_level: str = "INFO"
 
-    # OpenAI API key — kept for the offline crawler/extractor pipeline
-    # (`crawler/extractor.py`, `worker/local_extract.py`). User-facing LLM
-    # surfaces use Anthropic via `unipaith.ai.client`. See Plan 2.
+    # OpenAI API key — optional. User-facing LLM surfaces use Anthropic via
+    # `unipaith.ai.client` (see Plan 2); this is retained only for opt-in use.
     openai_api_key: str = ""
 
     # Anthropic — primary user-facing LLM provider (Plan 2)

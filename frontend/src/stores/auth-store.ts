@@ -30,7 +30,7 @@ function persistRefreshToken(token: string | null) {
 interface User {
   id: string
   email: string
-  role: 'student' | 'institution_admin' | 'admin'
+  role: 'student' | 'institution_admin'
 
   created_at: string
 }

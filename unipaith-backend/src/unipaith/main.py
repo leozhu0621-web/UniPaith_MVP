@@ -1,10 +1,8 @@
 import logging
 import sys
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastapi import FastAPI
-from fastapi.responses import FileResponse
 from pythonjsonlogger.json import JsonFormatter
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -41,16 +39,17 @@ async def _ensure_schools_table(db: AsyncSession) -> None:
     """Bootstrap the schools table + school_id FK if they don't exist yet."""
     from sqlalchemy import text
 
-    row = await db.execute(text(
-        "SELECT 1 FROM information_schema.tables WHERE table_name = 'schools'"
-    ))
+    row = await db.execute(
+        text("SELECT 1 FROM information_schema.tables WHERE table_name = 'schools'")
+    )
     if row.scalar():
         return  # Already exists
 
     log = logging.getLogger("unipaith.startup")
     log.info("Creating schools table and populating from department strings...")
 
-    await db.execute(text("""
+    await db.execute(
+        text("""
         CREATE TABLE schools (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             institution_id UUID NOT NULL REFERENCES institutions(id) ON DELETE CASCADE,
@@ -63,25 +62,29 @@ async def _ensure_schools_table(db: AsyncSession) -> None:
             updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
             UNIQUE(institution_id, name)
         )
-    """))
+    """)
+    )
     await db.execute(text("CREATE INDEX ix_schools_institution ON schools(institution_id)"))
 
     # Add school_id column to programs if not exists
-    col_check = await db.execute(text(
-        "SELECT 1 FROM information_schema.columns "
-        "WHERE table_name='programs' AND column_name='school_id'"
-    ))
+    col_check = await db.execute(
+        text(
+            "SELECT 1 FROM information_schema.columns "
+            "WHERE table_name='programs' AND column_name='school_id'"
+        )
+    )
     if not col_check.scalar():
-        await db.execute(text(
-            "ALTER TABLE programs ADD COLUMN school_id UUID "
-            "REFERENCES schools(id) ON DELETE SET NULL"
-        ))
-        await db.execute(text(
-            "CREATE INDEX ix_programs_school_id ON programs(school_id)"
-        ))
+        await db.execute(
+            text(
+                "ALTER TABLE programs ADD COLUMN school_id UUID "
+                "REFERENCES schools(id) ON DELETE SET NULL"
+            )
+        )
+        await db.execute(text("CREATE INDEX ix_programs_school_id ON programs(school_id)"))
 
     # Populate schools from existing department strings
-    await db.execute(text("""
+    await db.execute(
+        text("""
         INSERT INTO schools (institution_id, name, sort_order)
         SELECT DISTINCT institution_id, department,
             ROW_NUMBER() OVER (
@@ -90,30 +93,29 @@ async def _ensure_schools_table(db: AsyncSession) -> None:
         FROM programs
         WHERE department IS NOT NULL AND department != ''
         ON CONFLICT DO NOTHING
-    """))
+    """)
+    )
 
     # Link programs to their schools
-    await db.execute(text("""
+    await db.execute(
+        text("""
         UPDATE programs p SET school_id = s.id
         FROM schools s
         WHERE p.institution_id = s.institution_id AND p.department = s.name AND p.school_id IS NULL
-    """))
+    """)
+    )
 
     await db.commit()
     log.info("Schools table created and populated successfully.")
 
 
 async def lifespan(app: FastAPI):  # noqa: ARG001
-    from unipaith.services.pipeline import get_pipeline
-
     # Ensure schools table exists (bypasses broken Alembic chain)
     try:
         async with async_session() as db:
             await _ensure_schools_table(db)
     except Exception:
-        logging.getLogger("unipaith.startup").exception(
-            "Schools table bootstrap failed"
-        )
+        logging.getLogger("unipaith.startup").exception("Schools table bootstrap failed")
 
     if settings.environment.lower() in {"production", "staging"}:
         try:
@@ -124,13 +126,8 @@ async def lifespan(app: FastAPI):  # noqa: ARG001
                 "Core account coverage check failed on startup"
             )
 
-    pipeline = get_pipeline()
-    if settings.pipeline_enabled:
-        await pipeline.start()
-
     setup_scheduler()
     yield
-    await pipeline.stop()
     shutdown_scheduler()
 
 
@@ -146,11 +143,3 @@ app = FastAPI(
 setup_middleware(app)
 
 app.include_router(api_router, prefix="/api/v1")
-
-# Admin dashboard
-STATIC_DIR = Path(__file__).parent / "static"
-
-
-@app.get("/admin")
-async def admin_dashboard():
-    return FileResponse(STATIC_DIR / "admin.html")

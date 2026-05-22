@@ -65,13 +65,6 @@ import AdmissionsPage from './pages/institution/AdmissionsPage'
 import OutreachPage from './pages/institution/OutreachPage'
 import CommunicationsPage from './pages/institution/CommunicationsPage'
 
-// Admin pages
-import AdminLayout from './components/layout/AdminLayout'
-import AdminDashboardPage from './pages/admin/AdminDashboardPage'
-import AdminUsersPage from './pages/admin/AdminUsersPage'
-import AdminSystemPage from './pages/admin/AdminSystemPage'
-import AdminAICenterStub from './pages/admin/AdminAICenterStub'
-import AdminCrawlerDashboardPage from './pages/admin/AdminCrawlerDashboardPage'
 import RouteErrorPage from './pages/system/RouteErrorPage'
 
 const queryClient = new QueryClient({
@@ -172,25 +165,6 @@ const router = createBrowserRouter([
       { path: 'analytics', element: <AnalyticsPage /> },
       { path: 'data', element: <DataUploadPage /> },
       { path: 'settings', element: <InstitutionSettingsPage /> },
-    ],
-  },
-
-  // Admin routes
-  {
-    path: '/admin',
-    element: <RequireAuth role="admin"><AdminLayout /></RequireAuth>,
-    errorElement: <RouteErrorPage />,
-    children: [
-      { index: true, element: <Navigate to="/admin/overview" replace /> },
-      { path: 'overview', element: <AdminDashboardPage /> },
-      { path: 'users', element: <AdminUsersPage /> },
-      { path: 'ai', element: <AdminAICenterStub /> },
-      { path: 'system', element: <AdminSystemPage /> },
-      // Legacy redirects — keep bookmarks working
-      { path: 'ops', element: <Navigate to="/admin/ai?tab=pipeline" replace /> },
-      { path: 'crawler', element: <AdminCrawlerDashboardPage /> },
-      { path: 'ml', element: <Navigate to="/admin/ai?tab=learning" replace /> },
-      { path: 'knowledge', element: <Navigate to="/admin/ai?tab=knowledge" replace /> },
     ],
   },
 

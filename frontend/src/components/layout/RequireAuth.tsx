@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom'
 import { useAuthStore } from '../../stores/auth-store'
 
 interface Props {
-  role: 'student' | 'institution_admin' | 'admin'
+  role: 'student' | 'institution_admin'
   children: React.ReactNode
 }
 
@@ -19,11 +19,6 @@ export default function RequireAuth({ role, children }: Props) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
-  }
-
-  // Admin can access everything
-  if (user?.role === 'admin') {
-    return <>{children}</>
   }
 
   if (user?.role !== role) {

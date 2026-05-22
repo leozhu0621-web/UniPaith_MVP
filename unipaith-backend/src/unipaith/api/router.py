@@ -5,18 +5,15 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from unipaith.api.admin_dashboard import router as admin_dashboard_router
 from unipaith.api.ai_feedback import router as ai_feedback_router
 from unipaith.api.applications import router as applications_router
 from unipaith.api.auth import router as auth_router
-from unipaith.api.crawler_admin import router as crawler_admin_router
 from unipaith.api.discovery import router as discovery_router
 from unipaith.api.documents import router as documents_router
 from unipaith.api.events import router as events_router
 from unipaith.api.goals import router as goals_router
 from unipaith.api.identity import router as identity_router
 from unipaith.api.institutions import router as institutions_router
-from unipaith.api.internal import router as internal_router
 from unipaith.api.interviews import router as interviews_router
 from unipaith.api.messaging import router as messaging_router
 from unipaith.api.needs import router as needs_router
@@ -47,7 +44,6 @@ api_router.include_router(institutions_router)
 api_router.include_router(programs_router)
 api_router.include_router(applications_router)
 api_router.include_router(documents_router)
-api_router.include_router(internal_router)
 api_router.include_router(saved_lists_router)
 api_router.include_router(workshops_router)
 api_router.include_router(workshop_feedback_router)
@@ -58,8 +54,6 @@ api_router.include_router(reviews_router)
 api_router.include_router(interviews_router)
 api_router.include_router(notifications_router)
 api_router.include_router(recommendations_router)
-api_router.include_router(crawler_admin_router)
-api_router.include_router(admin_dashboard_router)
 
 
 @api_router.get("/health", tags=["health"])

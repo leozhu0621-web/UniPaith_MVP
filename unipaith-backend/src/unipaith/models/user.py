@@ -14,7 +14,6 @@ from unipaith.models.base import Base
 class UserRole(enum.StrEnum):
     student = "student"
     institution_admin = "institution_admin"
-    admin = "admin"
 
 
 class User(Base):

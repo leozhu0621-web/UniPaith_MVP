@@ -28,7 +28,6 @@ from unipaith.schemas.institution import (
     CampaignLinkResponse,
     CampaignMetricsResponse,
     CampaignResponse,
-    ClaimInstitutionRequest,
     CreateCampaignLinkRequest,
     CreateCampaignRequest,
     CreateDatasetRequest,
@@ -81,31 +80,6 @@ class InstitutionAssistantChatResponse(BaseModel):
 
 def _svc(db: AsyncSession) -> InstitutionService:
     return InstitutionService(db)
-
-
-# --- Institution Search & Claim ---
-
-
-@router.get("/search-unclaimed")
-async def search_unclaimed_institutions(
-    q: str = Query("", min_length=2),
-    db: AsyncSession = Depends(get_db),
-):
-    """Public — search crawled institutions available to claim."""
-    svc = _svc(db)
-    return await svc.search_unclaimed_institutions(q)
-
-
-@router.post("/me/claim", response_model=InstitutionResponse)
-async def claim_institution(
-    body: ClaimInstitutionRequest,
-    user: User = Depends(require_institution_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    """Claim an institution from crawled data, auto-populating profile + programs."""
-    svc = _svc(db)
-    inst = await svc.claim_institution(user.id, body.extracted_ids)
-    return InstitutionResponse.model_validate(inst)
 
 
 # --- Institution Profile ---
@@ -718,9 +692,7 @@ async def search_institutions(
     count_stmt = select(func.count()).select_from(stmt.subquery())
     total = (await db.execute(count_stmt)).scalar_one()
 
-    stmt = stmt.order_by(Institution.name).offset(
-        (page - 1) * page_size
-    ).limit(page_size)
+    stmt = stmt.order_by(Institution.name).offset((page - 1) * page_size).limit(page_size)
     result = await db.execute(stmt)
     institutions = result.scalars().all()
 
@@ -766,8 +738,7 @@ async def search_institutions(
                 Program.application_deadline,
                 Program.intake_rounds,
                 Program.highlights,
-            )
-            .where(
+            ).where(
                 Program.institution_id.in_(inst_ids),
                 Program.is_published.is_(True),
             )
@@ -793,8 +764,13 @@ async def search_institutions(
                 for term_val in ir.values():
                     if not isinstance(term_val, dict):
                         continue
-                    for round_key in ("regular_decision", "early_decision_1",
-                                      "early_decision_2", "early_action", "rolling"):
+                    for round_key in (
+                        "regular_decision",
+                        "early_decision_1",
+                        "early_decision_2",
+                        "early_action",
+                        "rolling",
+                    ):
                         r = term_val.get(round_key)
                         if isinstance(r, dict) and r.get("deadline"):
                             try:
@@ -834,6 +810,7 @@ async def search_institutions(
 
     items = []
     import re
+
     for inst in institutions:
         rd = inst.ranking_data or {}
         intl = inst.international_info or {}
@@ -841,9 +818,11 @@ async def search_institutions(
         # "has_honors" / "has_study_abroad" are True when either the institution's
         # description mentions it or any of its published programs' highlights do.
         search_blob = (
-            (inst.description_text or "") + " " +
-            (inst.campus_description or "") + " " +
-            " ".join(program_highlights_map.get(inst.id, []) or [])
+            (inst.description_text or "")
+            + " "
+            + (inst.campus_description or "")
+            + " "
+            + " ".join(program_highlights_map.get(inst.id, []) or [])
         )
         has_honors = bool(re.search(r"\bhonors?\b|\bthesis\b", search_blob, re.IGNORECASE))
         study_abroad_pat = r"\bstudy abroad\b|\bexchange program\b|\bglobal campuses?\b"
@@ -855,42 +834,38 @@ async def search_institutions(
 
         next_dl = next_deadline_map.get(inst.id)
 
-        items.append({
-            "id": str(inst.id),
-            "name": inst.name,
-            "country": inst.country,
-            "city": inst.city,
-            "type": inst.type,
-            "campus_setting": inst.campus_setting,
-            "student_body_size": inst.student_body_size,
-            "logo_url": inst.logo_url,
-            "image_url": (
-                (inst.media_gallery or [None])[0]
-                if inst.media_gallery
-                else None
-            ),
-            "program_count": pc_map.get(inst.id, 0),
-            "school_count": sc_map.get(inst.id, 0),
-            "description_text": (
-                (inst.description_text or "")[:200]
-            ),
-            "acceptance_rate": rd.get("acceptance_rate"),
-            "sat_avg": rd.get("sat_avg"),
-            "us_news_rank": rd.get("us_news_2025"),
-            "median_earnings": rd.get("earnings_10yr_median"),
-            "graduation_rate": rd.get("graduation_rate"),
-            "region": inst.region,
-            "subjects_offered": subjects_map.get(inst.id, []),
-            "top_industries": (inst.school_outcomes or {}).get("top_employer_industries", []),
-            # New filter fields:
-            "degree_types_offered": degree_map.get(inst.id, []),
-            "delivery_formats_offered": delivery_map.get(inst.id, []),
-            "next_deadline": next_dl.isoformat() if next_dl else None,
-            "supports_international": bool(intl.get("supported_visas")),
-            "has_study_abroad": has_study_abroad,
-            "has_honors": has_honors,
-            "tuition_annual": tuition_annual,
-        })
+        items.append(
+            {
+                "id": str(inst.id),
+                "name": inst.name,
+                "country": inst.country,
+                "city": inst.city,
+                "type": inst.type,
+                "campus_setting": inst.campus_setting,
+                "student_body_size": inst.student_body_size,
+                "logo_url": inst.logo_url,
+                "image_url": ((inst.media_gallery or [None])[0] if inst.media_gallery else None),
+                "program_count": pc_map.get(inst.id, 0),
+                "school_count": sc_map.get(inst.id, 0),
+                "description_text": ((inst.description_text or "")[:200]),
+                "acceptance_rate": rd.get("acceptance_rate"),
+                "sat_avg": rd.get("sat_avg"),
+                "us_news_rank": rd.get("us_news_2025"),
+                "median_earnings": rd.get("earnings_10yr_median"),
+                "graduation_rate": rd.get("graduation_rate"),
+                "region": inst.region,
+                "subjects_offered": subjects_map.get(inst.id, []),
+                "top_industries": (inst.school_outcomes or {}).get("top_employer_industries", []),
+                # New filter fields:
+                "degree_types_offered": degree_map.get(inst.id, []),
+                "delivery_formats_offered": delivery_map.get(inst.id, []),
+                "next_deadline": next_dl.isoformat() if next_dl else None,
+                "supports_international": bool(intl.get("supported_visas")),
+                "has_study_abroad": has_study_abroad,
+                "has_honors": has_honors,
+                "tuition_annual": tuition_annual,
+            }
+        )
 
     return {
         "items": items,
@@ -1006,12 +981,12 @@ async def get_school_programs(
             "duration_months": prog.duration_months,
             "delivery_format": prog.delivery_format,
             "acceptance_rate": (
-                float(prog.acceptance_rate) if prog.acceptance_rate is not None
+                float(prog.acceptance_rate)
+                if prog.acceptance_rate is not None
                 else (inst.ranking_data or {}).get("acceptance_rate")
             ),
             "application_deadline": (
-                str(prog.application_deadline)
-                if prog.application_deadline else None
+                str(prog.application_deadline) if prog.application_deadline else None
             ),
             "institution_name": inst.name,
             "institution_country": inst.country,
@@ -1052,9 +1027,7 @@ async def get_posts_feed(
     # Eagerly load institution names
     inst_ids = {p.institution_id for p in posts}
     if inst_ids:
-        inst_result = await db.execute(
-            select(Institution).where(Institution.id.in_(inst_ids))
-        )
+        inst_result = await db.execute(select(Institution).where(Institution.id.in_(inst_ids)))
         inst_map = {i.id: i.name for i in inst_result.scalars().all()}
     else:
         inst_map = {}
@@ -1090,16 +1063,17 @@ async def record_campaign_action(
 
     from unipaith.models.student import StudentProfile
 
-    r = await db.execute(
-        sel(StudentProfile.id).where(StudentProfile.user_id == user.id)
-    )
+    r = await db.execute(sel(StudentProfile.id).where(StudentProfile.user_id == user.id))
     student_id = r.scalar_one_or_none()
     if not student_id:
         return
 
     svc = _svc(db)
     await svc.record_campaign_action(
-        body.campaign_id, student_id, body.action_type, body.target_id,
+        body.campaign_id,
+        student_id,
+        body.action_type,
+        body.target_id,
     )
 
 
@@ -1117,9 +1091,7 @@ async def submit_inquiry(
 
     from unipaith.models.student import StudentProfile
 
-    r = await db.execute(
-        sel(StudentProfile).where(StudentProfile.user_id == user.id)
-    )
+    r = await db.execute(sel(StudentProfile).where(StudentProfile.user_id == user.id))
     profile = r.scalar_one_or_none()
 
     student_name = user.email
@@ -1470,10 +1442,12 @@ async def get_public_intake_rounds(
     from unipaith.models.institution import IntakeRound
 
     result = await db.execute(
-        select(IntakeRound).where(
+        select(IntakeRound)
+        .where(
             IntakeRound.program_id == program_id,
             IntakeRound.is_active.is_(True),
-        ).order_by(IntakeRound.sort_order, IntakeRound.application_deadline)
+        )
+        .order_by(IntakeRound.sort_order, IntakeRound.application_deadline)
     )
     return [_enrich_intake(r) for r in result.scalars().all()]
 
@@ -1545,7 +1519,9 @@ async def update_template(
 
     inst = await _svc(db).get_institution(user.id)
     return await CommunicationService(db).update_template(
-        inst.id, template_id, body,
+        inst.id,
+        template_id,
+        body,
     )
 
 
@@ -1578,7 +1554,10 @@ async def send_from_template(
 
     inst = await _svc(db).get_institution(user.id)
     return await CommunicationService(db).send_from_template(
-        inst.id, user.id, template_id, body.application_ids,
+        inst.id,
+        user.id,
+        template_id,
+        body.application_ids,
         body.variable_overrides,
     )
 
@@ -1597,7 +1576,9 @@ async def preview_template(
 
     inst = await _svc(db).get_institution(user.id)
     return await CommunicationService(db).preview_template(
-        inst.id, template_id, application_id,
+        inst.id,
+        template_id,
+        application_id,
     )
 
 
@@ -1614,7 +1595,10 @@ async def generate_ai_communication_draft(
 
     inst = await _svc(db).get_institution(user.id)
     return await CommunicationService(db).generate_ai_draft(
-        inst.id, application_id, message_type, context_notes,
+        inst.id,
+        application_id,
+        message_type,
+        context_notes,
     )
 
 
@@ -1652,21 +1636,23 @@ async def get_audit_log(
         actor_email = None
         if entry.actor_user and hasattr(entry.actor_user, "email"):
             actor_email = entry.actor_user.email
-        items.append(AuditLogResponse(
-            id=entry.id,
-            institution_id=entry.institution_id,
-            application_id=entry.application_id,
-            actor_user_id=entry.actor_user_id,
-            action=entry.action,
-            entity_type=entry.entity_type,
-            entity_id=entry.entity_id,
-            description=entry.description,
-            old_value=entry.old_value,
-            new_value=entry.new_value,
-            metadata_json=entry.metadata_json,
-            created_at=entry.created_at,
-            actor_email=actor_email,
-        ))
+        items.append(
+            AuditLogResponse(
+                id=entry.id,
+                institution_id=entry.institution_id,
+                application_id=entry.application_id,
+                actor_user_id=entry.actor_user_id,
+                action=entry.action,
+                entity_type=entry.entity_type,
+                entity_id=entry.entity_id,
+                description=entry.description,
+                old_value=entry.old_value,
+                new_value=entry.new_value,
+                metadata_json=entry.metadata_json,
+                created_at=entry.created_at,
+                actor_email=actor_email,
+            )
+        )
     return AuditLogListResponse(items=items, total=total)
 
 

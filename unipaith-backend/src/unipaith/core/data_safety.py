@@ -11,7 +11,6 @@ from unipaith.models.user import User, UserRole
 CORE_ROLES: tuple[UserRole, ...] = (
     UserRole.student,
     UserRole.institution_admin,
-    UserRole.admin,
 )
 
 
@@ -20,7 +19,7 @@ async def assert_core_role_coverage(db: AsyncSession) -> None:
     Ensure the system still has at least one active account per core role.
 
     This protects the minimum account foundation required by the product:
-    student, institution admin, and platform admin.
+    student and institution admin.
     """
     for role in CORE_ROLES:
         result = await db.execute(

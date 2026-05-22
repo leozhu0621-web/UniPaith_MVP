@@ -38,9 +38,7 @@ export default function SignupPage() {
     try {
       await signup(data.email, data.password, role)
       const user = useAuthStore.getState().user
-      const dest = user?.role === 'admin' ? '/admin'
-        : user?.role === 'student' ? '/onboarding'
-        : '/i/dashboard'
+      const dest = user?.role === 'student' ? '/onboarding' : '/i/dashboard'
       navigate(dest)
     } catch (err: any) {
       setError(err.message || 'Signup failed')

@@ -264,7 +264,7 @@ class ArchitectureStageStatus(BaseModel):
 
 class ArchitectureRunTrace(BaseModel):
     run_id: str
-    run_type: Literal["engine", "training", "evaluation", "crawler", "promotion", "outcome"]
+    run_type: Literal["engine", "training", "evaluation", "promotion", "outcome"]
     status: Literal["ok", "warning", "error", "idle", "degraded"]
     started_at: datetime | None = None
     completed_at: datetime | None = None
