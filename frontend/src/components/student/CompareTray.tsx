@@ -72,7 +72,7 @@ export default function CompareTray() {
         </div>
       )}
 
-      <div className="bg-stone-800 text-white shadow-lg">
+      <div className="bg-ink text-white shadow-lg">
         <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center gap-3">
           <ArrowRightLeft size={16} className="text-stone-400 flex-shrink-0" />
           <span className="text-xs text-stone-400 flex-shrink-0">Compare</span>
@@ -81,7 +81,7 @@ export default function CompareTray() {
             {items.map(item => (
               <span
                 key={item.program_id}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-stone-700 rounded-full text-xs whitespace-nowrap flex-shrink-0"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 rounded-full text-xs whitespace-nowrap flex-shrink-0"
               >
                 <GraduationCap size={12} className="text-stone-400" />
                 <span className="max-w-[140px] truncate">{item.program_name}</span>
@@ -109,7 +109,7 @@ export default function CompareTray() {
               onClick={() => compareMut.mutate()}
               disabled={items.length < 2 || compareMut.isPending}
               loading={compareMut.isPending}
-              className="bg-white text-stone-800 hover:bg-gray-100"
+              className="bg-white text-ink hover:bg-gray-100"
             >
               Compare ({items.length})
             </Button>

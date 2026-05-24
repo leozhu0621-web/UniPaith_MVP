@@ -119,7 +119,7 @@ export default function OnboardingPage() {
 
   if (!started) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-stone-800 via-stone-900 to-stone-950 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-ink flex items-center justify-center p-6">
         <div className="max-w-lg text-center">
           <div className="w-20 h-20 rounded-full bg-amber-500/20 flex items-center justify-center mx-auto mb-6">
             <Sparkles size={36} className="text-amber-400" />
@@ -135,7 +135,7 @@ export default function OnboardingPage() {
             Everything you share helps me find programs where you'll truly thrive.
           </p>
           <div className="space-y-3">
-            <Button onClick={handleStart} className="w-full bg-amber-500 hover:bg-amber-600 text-stone-900 font-semibold py-3">
+            <Button onClick={handleStart} className="w-full bg-amber-500 hover:bg-amber-600 text-ink font-semibold py-3">
               <Sparkles size={18} className="mr-2" />
               Start My Journey
             </Button>
@@ -152,7 +152,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-800 via-stone-900 to-stone-950 flex flex-col">
+    <div className="min-h-screen bg-ink flex flex-col">
       {/* Header with understanding meter */}
       <div className="px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -182,7 +182,7 @@ export default function OnboardingPage() {
                 <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
                   isAi
                     ? 'bg-white/10 text-white/90 rounded-bl-md'
-                    : 'bg-amber-500/90 text-stone-900 rounded-br-md'
+                    : 'bg-amber-500/90 text-ink rounded-br-md'
                 }`}>
                   {msg.text}
                 </div>
@@ -249,7 +249,7 @@ export default function OnboardingPage() {
             <button
               onClick={handleSend}
               disabled={!input.trim() || chatMut.isPending}
-              className="p-3 bg-amber-500 text-stone-900 rounded-xl hover:bg-amber-400 disabled:opacity-30 transition-colors"
+              className="p-3 bg-amber-500 text-ink rounded-xl hover:bg-amber-400 disabled:opacity-30 transition-colors"
             >
               <ArrowUp size={18} />
             </button>

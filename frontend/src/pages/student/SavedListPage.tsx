@@ -307,7 +307,7 @@ export default function SavedListPage() {
                   onClick={() => setFilterPriority(p)}
                   className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
                     filterPriority === p
-                      ? 'bg-stone-800 text-white'
+                      ? 'bg-ink text-white'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
@@ -333,7 +333,7 @@ export default function SavedListPage() {
               <button
                 onClick={() => setGroupByTier(!groupByTier)}
                 className={`text-xs px-2.5 py-1 rounded font-medium transition-colors ${
-                  groupByTier ? 'bg-stone-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  groupByTier ? 'bg-ink text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
                 Group by Tier

@@ -554,7 +554,7 @@ export default function ApplicationDetailPage() {
                         onClick={() => setIntentReason(reason)}
                         className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
                           intentReason === reason
-                            ? 'bg-stone-700 text-white border-stone-700'
+                            ? 'bg-ink text-white border-ink'
                             : 'bg-white text-stone-600 border-gray-300 hover:bg-stone-50'
                         }`}
                       >

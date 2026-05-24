@@ -37,7 +37,7 @@ export default class AppErrorBoundary extends Component<Props, State> {
             <button
               type="button"
               onClick={this.handleReload}
-              className="mt-4 inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+              className="mt-4 inline-flex rounded-lg bg-ink px-4 py-2 text-sm font-medium text-white hover:bg-ink/90"
             >
               Reload
             </button>
