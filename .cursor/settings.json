@@ -5,6 +5,33 @@
     },
     "agent-compatibility": {
       "enabled": true
+    },
+    "aws-amplify": {
+      "enabled": true
+    },
+    "deploy-on-aws": {
+      "enabled": true
+    },
+    "amazon-location-service": {
+      "enabled": true
+    },
+    "create-plugin": {
+      "enabled": true
+    },
+    "databases-on-aws": {
+      "enabled": true
+    },
+    "merge-agent-handler": {
+      "enabled": true
+    },
+    "sagemaker-ai": {
+      "enabled": true
+    },
+    "pr-review-canvas": {
+      "enabled": true
+    },
+    "docs-canvas": {
+      "enabled": true
     }
   }
 }

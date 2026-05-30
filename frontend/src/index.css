@@ -5,7 +5,7 @@
 @layer base {
   /* ----------------------------------------------------------------
      Brand tokens — Editorial Gold + Cobalt on Paper (light default).
-     Source of truth: /Brand Materials/colors_and_type.css.
+     Source of truth: Spec/01-brand-tokens.md §11 (colors_and_type.css).
      HSL values are pre-computed from the canonical hex codes; shadcn
      primitives consume these via hsl(var(--x)) in tailwind.config.js.
      ---------------------------------------------------------------- */
@@ -39,6 +39,14 @@
     --ring: 49 100% 52%;             /* gold focus ring */
 
     --radius: 0.75rem;               /* 12px default per brand spec */
+
+    /* Status colors (Spec/01-brand-tokens.md §2.3). Solid + soft tints. */
+    --success: 137 56% 27%;          /* #1F6B2E */
+    --success-soft: 96 26% 88%;      /* #DCE8DA */
+    --warning: 33 82% 42%;           /* #B8741D */
+    --warning-soft: 41 64% 88%;      /* #F5E6CC */
+    --error: 9 56% 41%;              /* #B5321F */
+    --error-soft: 14 53% 89%;        /* #F2D7D0 */
   }
 
   /* Dark theme — Ink canvas, lifted gold + cobalt accents. */
@@ -70,6 +78,14 @@
     --border: 218 32% 37%;           /* #3F567C */
     --input: 218 32% 37%;
     --ring: 51 100% 47%;
+
+    /* Status colors brighten on dark to hold contrast (Spec §2.3 dark column). */
+    --success: 142 48% 62%;          /* #6FCB95 */
+    --success-soft: 144 32% 17%;     /* #1E3A2A */
+    --warning: 38 82% 67%;           /* #F0B964 */
+    --warning-soft: 33 43% 17%;      /* #3D2E18 */
+    --error: 9 100% 72%;             /* #FF8470 */
+    --error-soft: 9 39% 17%;         /* #3D1E1A */
   }
 
   * {
@@ -81,53 +97,46 @@
     text-rendering: optimizeLegibility;
   }
 
+  /* One font — Europa. Headings get weight + tracking, never a second typeface
+     (Spec/01-brand-tokens.md §3). */
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'EB Garamond', Garamond, 'Times New Roman', serif;
+    font-family: 'europa', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     color: hsl(var(--foreground));
     font-weight: 700;
     margin: 0;
   }
-  h1 { letter-spacing: -0.015em; line-height: 1.10; }
-  h2 { letter-spacing: 0; line-height: 1.15; }
-  h3 { letter-spacing: 0; line-height: 1.25; }
+  h1 { letter-spacing: -0.015em; line-height: 1.08; }
+  h2 { letter-spacing: 0; line-height: 1.20; }
+  h3 { letter-spacing: 0; line-height: 1.30; }
 }
 
 /* ----------------------------------------------------------------
-   Editorial helper classes — port of brand CSS "up-*" utilities
-   so existing components can opt in without re-implementing.
+   Editorial helper classes — Europa-only, bound to brand tokens.
+   (Spec/01-brand-tokens.md §11 ships .u-* equivalents.)
    ---------------------------------------------------------------- */
 @layer components {
   .up-display {
-    font-family: 'EB Garamond', Garamond, serif;
+    font-family: 'europa', system-ui, -apple-system, sans-serif;
     font-size: clamp(3rem, 6vw + 1rem, 4.5rem);
     line-height: 1.05;
     letter-spacing: -0.02em;
-    font-weight: 600;
+    font-weight: 700;
   }
   .up-eyebrow {
-    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-    font-size: 0.875rem;
-    font-weight: 600;
+    font-family: 'europa', system-ui, -apple-system, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.10em;
-    line-height: 1.40;
+    letter-spacing: 0.22em;
+    line-height: 1.20;
     color: hsl(var(--accent));
   }
   .up-stat {
-    font-family: 'EB Garamond', Garamond, serif;
+    font-family: 'europa', system-ui, -apple-system, sans-serif;
     font-weight: 700;
     font-size: clamp(2.25rem, 2vw + 1rem, 3rem);
     line-height: 1;
     letter-spacing: -0.02em;
-  }
-  .up-hw-display {
-    font-family: 'Caveat', cursive;
-    letter-spacing: 0.04em;
-    font-weight: 600;
-  }
-  .up-hw-note {
-    font-family: 'Kalam', cursive;
-    font-weight: 400;
   }
 }
 

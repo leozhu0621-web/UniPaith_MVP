@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <title>UniPaith favicon — blue UP on yellow</title>
+  <desc>Primary favicon. Blue "UP" monogram on brand-yellow rounded tile. Use as the website favicon, app icon, social profile avatar — the most brand-forward, attention-getting variant.</desc>
+  <rect x="0" y="0" width="64" height="64" rx="14" fill="#FFD60A"/>
+  <text x="32" y="46" text-anchor="middle" font-family="Europa, 'Helvetica Neue', Inter, system-ui, sans-serif" font-weight="700" font-size="34" fill="#2A6BD4" letter-spacing="-1.6">UP</text>
+</svg>

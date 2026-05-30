@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <title>UniPaith favicon — dark · yellow UP on navy</title>
+  <desc>Dark variant. Yellow "UP" on deep navy rounded tile. Use when the favicon needs to sit on a dark surface or you want the lower-key alternate.</desc>
+  <rect x="0" y="0" width="64" height="64" rx="14" fill="#0A1428"/>
+  <text x="32" y="46" text-anchor="middle" font-family="Europa, 'Helvetica Neue', Inter, system-ui, sans-serif" font-weight="700" font-size="34" fill="#FFD60A" letter-spacing="-1.6">UP</text>
+</svg>

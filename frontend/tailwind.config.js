@@ -49,6 +49,10 @@ export default {
           soft: '#FFF1B0',      // pale gold tint for backgrounds
           pale: '#FFE680',      // accent soft
         },
+        // ── Status colors (Spec/01-brand-tokens.md §2.3 / §8) ──
+        success: { DEFAULT: '#1F6B2E', soft: '#DCE8DA', dark: '#6FCB95', 'dark-soft': '#1E3A2A' },
+        warning: { DEFAULT: '#B8741D', soft: '#F5E6CC', dark: '#F0B964', 'dark-soft': '#3D2E18' },
+        error:   { DEFAULT: '#B5321F', soft: '#F2D7D0', dark: '#FF8470', 'dark-soft': '#3D1E1A' },
         // ── Shared neutrals (warm-paper system) ──
         offwhite: '#FCFAF2',    // canvas — warm paper (was cool gray)
         charcoal: '#2A2724',    // soft ink text (was charcoal ink)
@@ -82,14 +86,29 @@ export default {
         card: { DEFAULT: "hsl(var(--card))", foreground: "hsl(var(--card-foreground))" },
       },
       fontFamily: {
-        // Body / UI: System UI sans (native, neutral) per brand spec.
-        sans: ['system-ui', '-apple-system', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
-        // Display / headings: EB Garamond serif (editorial).
-        heading: ['"EB Garamond"', 'Garamond', '"Times New Roman"', 'serif'],
-        body: ['system-ui', '-apple-system', '"Segoe UI"', 'Roboto', 'sans-serif'],
-        // Handwriting accents: Caveat (hero highlights) + Kalam (marginalia).
-        hwDisplay: ['"Caveat"', 'cursive'],
-        hwNote: ['"Kalam"', 'cursive'],
+        // One font — Europa (Adobe Typekit kit spe3ioy, lowercase family name).
+        // Hierarchy comes from size/weight/tracking, never a second typeface.
+        // `heading` is aliased to the same stack so any legacy `font-heading`
+        // class renders Europa rather than a serif. (Spec/01-brand-tokens.md §3.)
+        sans: ['europa', 'system-ui', '-apple-system', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+        body: ['europa', 'system-ui', '-apple-system', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        heading: ['europa', 'system-ui', '-apple-system', '"Segoe UI"', 'Roboto', 'sans-serif'],
+      },
+      fontWeight: {
+        // Typekit kit ships 300/400/700 only — no 600 cut. Semibold aliases to 700.
+        light: '300',
+        normal: '400',
+        semibold: '700',
+        bold: '700',
+      },
+      fontSize: {
+        // Brand type scale (Spec/01-brand-tokens.md §3.3 / §8). Additive utilities.
+        display:  ['4.5rem',   { lineHeight: '1.05', letterSpacing: '-0.02em',  fontWeight: '700' }],
+        h1:       ['3rem',     { lineHeight: '1.08', letterSpacing: '-0.015em', fontWeight: '700' }],
+        h2:       ['1.75rem',  { lineHeight: '1.20', letterSpacing: '0',        fontWeight: '700' }],
+        h3:       ['1.25rem',  { lineHeight: '1.30', letterSpacing: '0',        fontWeight: '700' }],
+        eyebrow:  ['0.75rem',  { lineHeight: '1.20', letterSpacing: '0.22em',   fontWeight: '700' }],
+        label:    ['0.8125rem',{ lineHeight: '1.20',                            fontWeight: '700' }],
       },
       // Note: bg-student and bg-school come from colors.student and colors.school
       // Old backgroundColor overrides for '#FAFAF8' and '#F8FAFC' removed — use bg-offwhite instead
@@ -97,6 +116,7 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        pill: "9999px",
       },
       keyframes: {
         "accordion-down": {
