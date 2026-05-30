@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 80" width="260" height="80">
+  <title>UniPaith wordmark — light theme · transparent</title>
+  <desc>Yellow caps + blue lowercase, no background. Use on cream (#FCFAF2) or white surfaces — drop directly into documents, websites, layouts that already have a light background.</desc>
+  <text x="17" y="58" font-family="Europa, system-ui, sans-serif" font-weight="400" font-size="56" letter-spacing="-1.2">
+    <tspan fill="#FFD60A">U</tspan><tspan fill="#2A6BD4">ni</tspan><tspan fill="#FFD60A">P</tspan><tspan fill="#2A6BD4">aith</tspan>
+  </text>
+</svg>

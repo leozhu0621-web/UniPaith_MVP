@@ -359,14 +359,35 @@ export interface MatchResult {
   id: string
   student_id: string
   program_id: string
+  // Legacy match scoring — Phase E drop targets. Some endpoints still emit
+  // these; cards should prefer the dual-score fields below when present.
   match_score: number
   match_tier: number
   score_breakdown: Record<string, number> | null
   reasoning_text: string | null
+  // Phase A dual-score fields. Optional because the legacy endpoint shape
+  // pre-dates the split; new endpoints + the migrated /matches return both.
+  fitness_score?: number | string | null
+  confidence_score?: number | string | null
+  fitness_breakdown?: Record<string, unknown> | null
+  confidence_breakdown?: Record<string, unknown> | null
+  rationale_text?: string | null
   model_version: string | null
   computed_at: string
   is_stale: boolean
   program?: Program
+}
+
+/**
+ * Parse a score that the API may send as a number, a Decimal string, or null.
+ * Returns null when no usable value is present. Used by card + detail surfaces
+ * that need to render fitness/confidence without caring about the wire format.
+ */
+export function parseScore(v: number | string | null | undefined): number | null {
+  if (v == null) return null
+  const n = typeof v === 'number' ? v : Number(v)
+  if (!Number.isFinite(n)) return null
+  return n
 }
 
 export interface EngagementSignal {
@@ -526,11 +547,14 @@ export interface Resume {
 }
 
 // ============ SAVED LISTS ============
+export type SavedPriority = 'considering' | 'planning' | 'applied' | 'dropped'
+
 export interface SavedProgram {
   id: string
   student_id: string
   program_id: string
   notes: string | null
+  priority?: SavedPriority
   added_at: string
   program_name?: string | null
   institution_name?: string | null

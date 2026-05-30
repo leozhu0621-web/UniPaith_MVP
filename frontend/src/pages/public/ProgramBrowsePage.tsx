@@ -35,27 +35,35 @@ export default function ProgramBrowsePage() {
   const featuredProgramIds = new Set(featured.filter(f => f.program_id).map(f => f.program_id!))
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-        <Link to="/" className="text-lg font-bold">UniPaith</Link>
-        <div className="flex gap-3">
-          <Link to="/login" className="text-sm text-gray-600 hover:text-gray-900">Log in</Link>
-          <Link to="/signup" className="text-sm bg-gray-900 text-white px-3 py-1 rounded hover:bg-gray-800">Sign up</Link>
+    <div className="min-h-screen bg-paper">
+      <header className="bg-white border-b border-stone/60 px-6 py-4 flex items-center justify-between">
+        <Link to="/" className="leading-none">
+          <img src="/wordmark.svg" alt="UniPaith" className="h-7 w-auto" />
+        </Link>
+        <div className="flex items-center gap-3">
+          <Link to="/login" className="text-sm text-slate hover:text-charcoal">Log in</Link>
+          <Link
+            to="/signup"
+            className="text-sm font-bold bg-gold hover:bg-gold-hover text-charcoal px-4 py-1.5 rounded-md transition-colors"
+          >
+            Get started
+          </Link>
         </div>
       </header>
 
       <div className="max-w-6xl mx-auto px-6 py-8">
-        <h1 className="text-2xl font-bold mb-6">Browse Programs</h1>
+        <p className="up-eyebrow">Browse</p>
+        <h1 className="text-h1 mt-1 mb-6">Browse Programs</h1>
 
         <div className="flex gap-3 mb-6">
           <div className="relative flex-1">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate" />
             <input
               type="text"
               value={q}
               onChange={e => { setQ(e.target.value); setPage(1) }}
-              placeholder="Search programs..."
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
+              placeholder="Search programs…"
+              className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-stone/60 rounded-md focus:outline-none focus:ring-2 focus:ring-cobalt/40"
             />
           </div>
           <input
@@ -63,12 +71,12 @@ export default function ProgramBrowsePage() {
             value={country}
             onChange={e => { setCountry(e.target.value); setPage(1) }}
             placeholder="Country"
-            className="w-40 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
+            className="w-40 px-3 py-2 text-sm bg-white border border-stone/60 rounded-md focus:outline-none focus:ring-2 focus:ring-cobalt/40"
           />
           <select
             value={degreeType}
             onChange={e => { setDegreeType(e.target.value); setPage(1) }}
-            className="w-40 px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+            className="w-40 px-3 py-2 text-sm bg-white border border-stone/60 rounded-md focus:outline-none focus:ring-2 focus:ring-cobalt/40"
           >
             <option value="">All Degrees</option>
             {Object.entries(DEGREE_LABELS).map(([v, l]) => (

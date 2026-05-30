@@ -27,3 +27,21 @@ export const generateChecklist = (appId: string) =>
 
 export const getReadiness = (appId: string) =>
   apiClient.get(`/students/me/applications/${appId}/readiness`).then(r => r.data)
+
+export interface GuardrailScanResult {
+  level: 'green' | 'amber' | 'red'
+  fit_score_band: 'strong' | 'good' | 'stretch' | 'reach'
+  recommended_action: string
+  blockers: string[]
+  message: string
+  points: string[]
+}
+
+export const runGuardrailScan = (
+  appId: string,
+  intent_reason?: string | null,
+  intent_rationale?: string | null,
+): Promise<GuardrailScanResult> =>
+  apiClient
+    .post(`/applications/me/${appId}/guardrail-scan`, { intent_reason, intent_rationale })
+    .then(r => r.data)

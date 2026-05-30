@@ -25,7 +25,8 @@ import {
 import type { MatchResult, EventItem } from '../../types'
 
 // Redesigned components
-import MatchRing from './program/MatchRing'
+import DualRing from './match/DualRing'
+import { parseScore } from '../../types'
 import ProgramHeader from './program/ProgramHeader'
 import KeyMetrics from './program/KeyMetrics'
 import StatGroup from './program/StatGroup'
@@ -1218,33 +1219,45 @@ export default function SchoolDetailPage() {
       </div>
 
       {/* ── Match modal ── */}
-      {match && matchModalOpen && (
+      {match && matchModalOpen && (() => {
+        const fitness = parseScore(match.fitness_score) ?? parseScore(match.match_score) ?? 0
+        const confidence = parseScore(match.confidence_score) ?? 0.6
+        const breakdown = (match.fitness_breakdown && Object.keys(match.fitness_breakdown).length > 0)
+          ? (match.fitness_breakdown as Record<string, unknown>)
+          : (match.score_breakdown as unknown as Record<string, unknown> | null)
+        const rationale = match.rationale_text || match.reasoning_text
+        return (
         <Modal isOpen={matchModalOpen} onClose={() => setMatchModalOpen(false)} title="Match Analysis">
           <div className="space-y-4">
-            <MatchRing score={match.match_score} tier={match.match_tier} size={100} />
-            {match.score_breakdown && Object.entries(match.score_breakdown).map(([k, v]) => (
-              <div key={k}>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="capitalize text-student-ink">{k.replace(/_/g, ' ')}</span>
-                  <span className="font-medium">{formatScore(v as number)}</span>
+            <DualRing fitness={fitness} confidence={confidence} size={100} />
+            {breakdown && Object.entries(breakdown).map(([k, v]) => {
+              const num = typeof v === 'number' ? v : Number(v)
+              if (!Number.isFinite(num)) return null
+              return (
+                <div key={k}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="capitalize text-charcoal">{k.replace(/_/g, ' ')}</span>
+                    <span className="font-bold">{formatScore(num)}</span>
+                  </div>
+                  <ProgressBar value={num * 100} />
                 </div>
-                <ProgressBar value={(v as number) * 100} />
-              </div>
-            ))}
-            {match.reasoning_text && (
+              )
+            })}
+            {rationale && (
               <div>
-                <h3 className="font-medium text-sm mb-2">Why this match?</h3>
-                <p className="text-sm text-student-text whitespace-pre-wrap">{match.reasoning_text}</p>
+                <h3 className="font-bold text-sm mb-2">Why this match?</h3>
+                <p className="text-sm text-slate whitespace-pre-wrap">{rationale}</p>
               </div>
             )}
-            <div className="border-t pt-3 flex justify-end">
+            <div className="border-t border-stone/40 pt-3 flex justify-end">
               <Button size="sm" variant="secondary" onClick={() => { setMatchModalOpen(false); navigate('/s?prefill=' + encodeURIComponent(`Help me understand my match with ${p.program_name}`)) }}>
                 <MessageSquare size={14} className="mr-1" /> Ask Counselor
               </Button>
             </div>
           </div>
         </Modal>
-      )}
+        )
+      })()}
     </div>
   )
 }

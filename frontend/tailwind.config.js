@@ -15,46 +15,77 @@ export default {
         // ── Authoritative brand palette (Brand Materials/colors_and_type.css) ──
         // Light theme: Sunlit Gold + Cobalt on warm Paper.
         // Existing student-*/school-*/gold-*/offwhite/charcoal tokens are
-        // remapped to brand values so the ~100 component files using them
-        // pick up the brand without a global search-and-replace.
+        // remapped to brand values so legacy class names still resolve.
         paper: '#FCFAF2',       // canonical warm-paper background
-        ink: '#0A1428',         // canonical deep-ink for dark surfaces
+        ink: {
+          DEFAULT: '#2A2724',   // soft-ink (body text on light)
+          deep: '#0A1428',      // deep-ink (dark canvas)
+          soft: '#2A2724',      // alias
+        },
         cobalt: {
           DEFAULT: '#2A6BD4',   // links, eyebrows, secondary accents
-          dark: '#6FA0E8',      // lifted cobalt for ink backgrounds
+          dark: '#6FA0E8',      // lifted cobalt on dark
+          hover: '#1F58B5',     // pressed cobalt
         },
-        cream: '#F5F1E8',       // dark-theme text, lowercase on dark wordmark
+        cream: {
+          DEFAULT: '#F5F1E8',   // dark-theme text + lowercase on dark wordmark
+          warm: '#F5F1E8',
+        },
         // ── Student namespace (now Sunlit Gold = brand primary) ──
         student: {
-          DEFAULT: '#FFD60A',   // sunlit gold — primary CTA
-          hover: '#E5C000',     // darker gold for hover
-          mist: '#F2EEE0',      // warm muted layer (replaces light-blue-gray)
-          moss: '#F5F1E8',      // soft cream section background
+          DEFAULT: '#FFD60A',   // sunlit-gold — primary CTA
+          hover: '#E5C000',     // pressed gold
+          mist: '#F2EEE0',      // warm-muted layer
+          moss: '#F5F1E8',      // soft cream section bg
           ink: '#0A1428',       // editorial deep-ink for headings
-          text: '#4A4640',      // soft warm-gray body
+          text: '#4A4640',      // muted warm-gray body
         },
         // ── School namespace (Cobalt = brand secondary) ──
         school: {
-          DEFAULT: '#2A6BD4',   // cobalt — secondary
-          hover: '#1F58B5',     // deeper cobalt
+          DEFAULT: '#2A6BD4',
+          hover: '#1F58B5',
           mist: '#F2EEE0',
           moss: '#F5F1E8',
           ink: '#0A1428',
           text: '#4A4640',
         },
-        // ── Gold accent (now matches primary Sunlit Gold) ──
+        // ── Gold accent (matches primary Sunlit Gold) ──
         gold: {
-          DEFAULT: '#FFD60A',   // sunlit gold
-          hover: '#E5C000',     // pressed gold
-          soft: '#FFF1B0',      // pale gold tint for backgrounds
-          pale: '#FFE680',      // accent soft
+          DEFAULT: '#FFD60A',
+          hover: '#E5C000',
+          soft: '#FFF1B0',
+          pale: '#FFE680',
+          dark: '#F2C800',      // dark-theme gold
         },
         // ── Shared neutrals (warm-paper system) ──
-        offwhite: '#FCFAF2',    // canvas — warm paper (was cool gray)
-        charcoal: '#2A2724',    // soft ink text (was charcoal ink)
-        slate: '#4A4640',       // muted body text (warm gray)
-        stone: '#C9C2A8',       // warm border (was cool stone)
-        divider: '#F2EEE0',     // warm divider tint
+        offwhite: '#FCFAF2',
+        charcoal: '#2A2724',
+        slate: '#4A4640',
+        stone: '#C9C2A8',
+        divider: '#F2EEE0',
+        // ── Semantic status (canonical from colors_and_type.css §State) ──
+        success: {
+          DEFAULT: '#2E7D5B',
+          soft:    '#DCE8DA',
+          dark:    '#6FCB95',
+          'dark-soft': '#1E3A2A',
+        },
+        warning: {
+          DEFAULT: '#C58A12',
+          soft:    '#F5E6CC',
+          dark:    '#F0B964',
+          'dark-soft': '#3D2E18',
+        },
+        error: {
+          DEFAULT: '#B8412B',
+          soft:    '#F2D7D0',
+          dark:    '#FF8470',
+          'dark-soft': '#3D1E1A',
+        },
+        info: {
+          DEFAULT: '#2A6BD4',   // same as cobalt
+          dark:    '#6FA0E8',
+        },
         // ── Legacy brand scales (product dashboards — migrate separately) ──
         brand: {
           slate: {
@@ -82,21 +113,58 @@ export default {
         card: { DEFAULT: "hsl(var(--card))", foreground: "hsl(var(--card-foreground))" },
       },
       fontFamily: {
-        // Body / UI: System UI sans (native, neutral) per brand spec.
-        sans: ['system-ui', '-apple-system', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
-        // Display / headings: EB Garamond serif (editorial).
-        heading: ['"EB Garamond"', 'Garamond', '"Times New Roman"', 'serif'],
-        body: ['system-ui', '-apple-system', '"Segoe UI"', 'Roboto', 'sans-serif'],
-        // Handwriting accents: Caveat (hero highlights) + Kalam (marginalia).
-        hwDisplay: ['"Caveat"', 'cursive'],
-        hwNote: ['"Kalam"', 'cursive'],
+        // Europa loads via Adobe Typekit kit spe3ioy; family name lowercase 'europa'.
+        // Kit ships 300/400/700 (+italics) only — no 600 cut, see fontWeight below.
+        sans: ['europa', 'system-ui', '-apple-system', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+        body: ['europa', 'system-ui', '-apple-system', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        // Backwards-compat aliases so legacy classes still resolve to Europa
+        // until grep+replace lands. Heading is Europa, NOT EB Garamond.
+        heading: ['europa', 'system-ui', '-apple-system', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        hwDisplay: ['europa', 'system-ui', 'sans-serif'],
+        hwNote: ['europa', 'system-ui', 'sans-serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'SF Mono', 'Menlo', 'Consolas', 'monospace'],
       },
-      // Note: bg-student and bg-school come from colors.student and colors.school
-      // Old backgroundColor overrides for '#FAFAF8' and '#F8FAFC' removed — use bg-offwhite instead
+      fontWeight: {
+        light: '300',
+        normal: '400',
+        // Kit has no 600 cut — semibold aliased to bold to prevent
+        // browser-synthesized fake weights.
+        semibold: '700',
+        bold: '700',
+      },
+      fontSize: {
+        // Brand type scale per Spec/01 §3.3.
+        display:  ['4.5rem',   { lineHeight: '1.05', letterSpacing: '-0.02em',  fontWeight: '700' }],
+        h1:       ['3rem',     { lineHeight: '1.08', letterSpacing: '-0.015em', fontWeight: '700' }],
+        h2:       ['1.75rem',  { lineHeight: '1.20', letterSpacing: '0',        fontWeight: '700' }],
+        h3:       ['1.25rem',  { lineHeight: '1.30', letterSpacing: '0',        fontWeight: '700' }],
+        body:     ['1rem',     { lineHeight: '1.60' }],
+        small:    ['0.875rem', { lineHeight: '1.50' }],
+        eyebrow:  ['0.75rem',  { lineHeight: '1.20', letterSpacing: '0.22em',   fontWeight: '700' }],
+        label:    ['0.8125rem',{ lineHeight: '1.20',                            fontWeight: '700' }],
+      },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        xs:    '4px',
+        sm:    '6px',
+        md:    '10px',
+        DEFAULT:'14px',
+        lg:    'var(--radius)',
+        xl:    '22px',
+        pill:  '9999px',
+      },
+      boxShadow: {
+        subtle: '0 1px 2px rgba(10,20,40,.06), 0 1px 1px rgba(10,20,40,.04)',
+        raised: '0 6px 16px -4px rgba(10,20,40,.12), 0 2px 4px rgba(10,20,40,.06)',
+        glow:   '0 0 0 4px rgba(255,214,10,.18), 0 10px 30px -8px rgba(255,214,10,.45)',
+      },
+      transitionTimingFunction: {
+        'brand-out':    'cubic-bezier(0.2, 0.7, 0.2, 1)',
+        'brand-in-out': 'cubic-bezier(0.65, 0.05, 0.36, 1)',
+      },
+      transitionDuration: {
+        fast: '120ms',
+        base: '200ms',
+        slow: '360ms',
       },
       keyframes: {
         "accordion-down": {

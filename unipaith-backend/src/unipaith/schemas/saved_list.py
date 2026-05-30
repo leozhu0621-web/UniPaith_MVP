@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
+
+SavedPriority = Literal["considering", "planning", "applied", "dropped"]
 
 
 class SaveProgramRequest(BaseModel):
@@ -13,6 +16,10 @@ class SaveProgramRequest(BaseModel):
 
 class UpdateSavedNotesRequest(BaseModel):
     notes: str
+
+
+class UpdateSavedPriorityRequest(BaseModel):
+    priority: SavedPriority
 
 
 class CompareProgramsRequest(BaseModel):
@@ -26,6 +33,7 @@ class SavedProgramResponse(BaseModel):
     list_id: UUID
     program_id: UUID
     notes: str | None = None
+    priority: SavedPriority = "considering"
     added_at: datetime | None = None
     program_name: str | None = None
     institution_name: str | None = None

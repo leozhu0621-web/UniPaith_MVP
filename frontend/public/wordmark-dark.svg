@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 80" width="260" height="80">
+  <title>UniPaith wordmark — dark theme · transparent</title>
+  <desc>Yellow caps + cream lowercase, no background. Use on dark navy (#0A1428) or any dark surface — drop directly into dark-mode UI, video, photography overlays, presentation dark moments.</desc>
+  <text x="17" y="58" font-family="Europa, system-ui, sans-serif" font-weight="400" font-size="56" letter-spacing="-1.2">
+    <tspan fill="#FFD60A">U</tspan><tspan fill="#F5F1E8">ni</tspan><tspan fill="#FFD60A">P</tspan><tspan fill="#F5F1E8">aith</tspan>
+  </text>
+</svg>

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { listSaved, unsaveProgram, updateSavedNotes, comparePrograms } from '../../api/saved-lists'
+import { listSaved, unsaveProgram, updateSavedNotes, updateSavedPriority, comparePrograms } from '../../api/saved-lists'
 import { listMyApplications, createApplication } from '../../api/applications'
 import { getMatches } from '../../api/matching'
 import Card from '../../components/ui/Card'
@@ -15,6 +15,25 @@ import { formatCurrency, formatDate, formatPercent, formatScore } from '../../ut
 import { DEGREE_LABELS, TIER_LABELS, STATUS_COLORS } from '../../utils/constants'
 import { Heart, Trash2, Pencil, BarChart3, ArrowUp, ArrowDown, Minus, ArrowUpDown, Filter, FileText, ChevronDown, GraduationCap, MapPin } from 'lucide-react'
 import type { SavedProgram, ComparisonResponse, MatchResult, Application } from '../../types'
+import { parseScore } from '../../types'
+
+/** Prefer the dual-score fitness, fall back to legacy match_score. */
+function matchFitness(m?: MatchResult): number | null {
+  if (!m) return null
+  return parseScore(m.fitness_score) ?? parseScore(m.match_score)
+}
+function matchConfidence(m?: MatchResult): number | null {
+  if (!m) return null
+  return parseScore(m.confidence_score)
+}
+/** Derive a 1/2/3 band from fitness for reach/target/safer grouping when the
+ *  legacy match_tier is missing. */
+function bandFromFitness(f: number | null): number {
+  if (f == null) return 0
+  if (f >= 0.75) return 3   // safer
+  if (f >= 0.55) return 2   // target
+  return 1                  // reach
+}
 
 type Priority = 'considering' | 'planning' | 'applied' | 'dropped'
 
@@ -43,7 +62,6 @@ export default function SavedListPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [editingNotes, setEditingNotes] = useState<{ id: string; notes: string } | null>(null)
   const [comparison, setComparison] = useState<ComparisonResponse | null>(null)
-  const [priorities, setPriorities] = useState<Record<string, Priority>>({})
   const [filterPriority, setFilterPriority] = useState<Priority | 'all'>('all')
   const [sortKey, setSortKey] = useState<SortKey>('date_added')
   const [groupByTier, setGroupByTier] = useState(true)
@@ -63,6 +81,11 @@ export default function SavedListPage() {
   const compareMut = useMutation({
     mutationFn: (ids: string[]) => comparePrograms(ids),
     onSuccess: (data) => setComparison(data),
+  })
+  const priorityMut = useMutation({
+    mutationFn: ({ programId, priority }: { programId: string; priority: Priority }) =>
+      updateSavedPriority(programId, priority),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['saved'] }) },
   })
   const applyMut = useMutation({
     mutationFn: createApplication,
@@ -89,8 +112,16 @@ export default function SavedListPage() {
 
   const programs: SavedProgram[] = useMemo(() => Array.isArray(saved) ? saved : [], [saved])
 
-  const getPriority = (programId: string): Priority => priorities[programId] ?? 'considering'
-  const setProgramPriority = (programId: string, p: Priority) => setPriorities(prev => ({ ...prev, [programId]: p }))
+  // Priority lives on the SavedListItem row server-side (G-S5 wired). Read
+  // straight off the API response; falls back to "considering" for legacy
+  // rows that pre-date the column.
+  const getPriority = (programId: string): Priority => {
+    const sp = programs.find(p => p.program_id === programId)
+    return (sp?.priority as Priority) ?? 'considering'
+  }
+  const setProgramPriority = (programId: string, p: Priority) => {
+    priorityMut.mutate({ programId, priority: p })
+  }
 
   const filtered = useMemo(() => {
     let list = programs
@@ -99,8 +130,8 @@ export default function SavedListPage() {
     }
     return [...list].sort((a, b) => {
       if (sortKey === 'match_score') {
-        const sa = matchLookup[a.program_id]?.match_score ?? -1
-        const sb = matchLookup[b.program_id]?.match_score ?? -1
+        const sa = matchFitness(matchLookup[a.program_id]) ?? -1
+        const sb = matchFitness(matchLookup[b.program_id]) ?? -1
         return sb - sa
       }
       if (sortKey === 'deadline') {
@@ -111,13 +142,14 @@ export default function SavedListPage() {
       return new Date(b.added_at).getTime() - new Date(a.added_at).getTime()
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [programs, filterPriority, sortKey, matchLookup, priorities])
+  }, [programs, filterPriority, sortKey, matchLookup])
 
   const grouped = useMemo(() => {
     if (!groupByTier) return null
     const groups: Record<number, SavedProgram[]> = { 1: [], 2: [], 3: [], 0: [] }
     filtered.forEach(sp => {
-      const tier = matchLookup[sp.program_id]?.match_tier ?? 0
+      const m = matchLookup[sp.program_id]
+      const tier = m?.match_tier ?? bandFromFitness(matchFitness(m))
       groups[tier].push(sp)
     })
     return groups
@@ -129,7 +161,7 @@ export default function SavedListPage() {
     programs.forEach(sp => { counts[getPriority(sp.program_id)]++ })
     return counts
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [programs, priorities])
+  }, [programs])
 
   // Derive saved schools from unique institutions
   const savedSchools = useMemo(() => {
@@ -169,7 +201,10 @@ export default function SavedListPage() {
 
   const renderCard = (sp: SavedProgram) => {
     const matchInfo = matchLookup[sp.program_id]
-    const tierInfo = matchInfo ? TIER_LABELS[matchInfo.match_tier] : null
+    const fitness = matchFitness(matchInfo)
+    const confidence = matchConfidence(matchInfo)
+    const tierKey = matchInfo?.match_tier ?? bandFromFitness(fitness)
+    const tierInfo = tierKey > 0 ? TIER_LABELS[tierKey] : null
     const app = appLookup[sp.program_id]
     const priority = getPriority(sp.program_id)
     const isDropped = priority === 'dropped'
@@ -192,10 +227,17 @@ export default function SavedListPage() {
                 <p className="text-xs text-gray-500">{sp.institution_name || sp.program?.institution_name}</p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                {matchInfo && tierInfo && (
+                {fitness != null && (
                   <>
-                    <span className="text-sm font-bold">{formatScore(matchInfo.match_score)}</span>
-                    <Badge variant={tierInfo.color as any} size="sm">{tierInfo.label}</Badge>
+                    <div className="flex flex-col items-end leading-none">
+                      <span className="text-sm font-bold">{formatScore(fitness)}</span>
+                      {confidence != null && (
+                        <span className="text-[10px] text-slate mt-0.5">
+                          conf · {formatScore(confidence)}
+                        </span>
+                      )}
+                    </div>
+                    {tierInfo && <Badge variant={tierInfo.color as any} size="sm">{tierInfo.label}</Badge>}
                   </>
                 )}
               </div>
@@ -418,21 +460,47 @@ export default function SavedListPage() {
                   ))}
                 </tr>
                 {(() => {
-                  const scores = comparison.programs.map(p => matchLookup[p.id]?.match_score)
-                  const best = bestValue(scores, true)
+                  const fitnessScores = comparison.programs.map(p => matchFitness(matchLookup[p.id]))
+                  const bestFit = bestValue(fitnessScores, true)
                   return (
                     <tr className="border-b bg-gray-50">
-                      <td className="py-2 px-2 text-gray-500 font-medium">Match Score</td>
+                      <td className="py-2 px-2 text-gray-500 font-medium">Fitness</td>
                       {comparison.programs.map((p, i) => {
                         const m = matchLookup[p.id]
-                        const ti = m ? TIER_LABELS[m.match_tier] : null
+                        const fit = fitnessScores[i]
+                        const tierKey = m?.match_tier ?? bandFromFitness(fit ?? null)
+                        const ti = tierKey > 0 ? TIER_LABELS[tierKey] : null
                         return (
                           <td key={p.id} className="py-2 px-2">
-                            {m ? (
+                            {fit != null ? (
                               <div className="flex items-center gap-2">
-                                <span className="font-bold">{formatScore(m.match_score)}</span>
+                                <span className="font-bold">{formatScore(fit)}</span>
                                 {ti && <Badge variant={ti.color as any} size="sm">{ti.label}</Badge>}
-                                <ValueIndicator value={scores[i]} best={best} />
+                                <ValueIndicator value={fit} best={bestFit} />
+                              </div>
+                            ) : '\u2014'}
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  )
+                })()}
+                {(() => {
+                  const confidenceScores = comparison.programs.map(p => matchConfidence(matchLookup[p.id]))
+                  const bestConf = bestValue(confidenceScores, true)
+                  const anyConfidence = confidenceScores.some(c => c != null)
+                  if (!anyConfidence) return null
+                  return (
+                    <tr className="border-b">
+                      <td className="py-2 px-2 text-gray-500">Confidence</td>
+                      {comparison.programs.map((p, i) => {
+                        const conf = confidenceScores[i]
+                        return (
+                          <td key={p.id} className="py-2 px-2">
+                            {conf != null ? (
+                              <div className="flex items-center gap-2">
+                                <span>{formatScore(conf)}</span>
+                                <ValueIndicator value={conf} best={bestConf} />
                               </div>
                             ) : '\u2014'}
                           </td>

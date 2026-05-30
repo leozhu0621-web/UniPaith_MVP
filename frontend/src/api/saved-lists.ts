@@ -1,6 +1,8 @@
 import apiClient from './client'
 import { toArrayData } from './normalize'
 
+export type SavedPriority = 'considering' | 'planning' | 'applied' | 'dropped'
+
 export const listSaved = () =>
   apiClient.get('/students/me/saved').then(r => toArrayData<any>(r.data))
 
@@ -12,6 +14,9 @@ export const unsaveProgram = (programId: string) =>
 
 export const updateSavedNotes = (programId: string, notes: string) =>
   apiClient.put(`/students/me/saved/${programId}/notes`, { notes }).then(r => r.data)
+
+export const updateSavedPriority = (programId: string, priority: SavedPriority) =>
+  apiClient.patch(`/students/me/saved/${programId}`, { priority }).then(r => r.data)
 
 export const comparePrograms = (programIds: string[]) =>
   apiClient.post('/students/me/saved/compare', { program_ids: programIds }).then(r => r.data)

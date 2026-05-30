@@ -16,6 +16,7 @@ from unipaith.schemas.saved_list import (
     SavedProgramResponse,
     SaveProgramRequest,
     UpdateSavedNotesRequest,
+    UpdateSavedPriorityRequest,
 )
 from unipaith.services.saved_list_service import SavedListService
 from unipaith.services.student_service import StudentService
@@ -54,15 +55,18 @@ async def list_saved_programs(
     enriched = []
     for item in items:
         prog = prog_map.get(item.program_id)
-        enriched.append(SavedProgramResponse(
-            id=item.id,
-            list_id=item.list_id,
-            program_id=item.program_id,
-            notes=item.notes,
-            added_at=item.added_at,
-            program_name=prog.program_name if prog else None,
-            institution_name=prog.institution_name if prog else None,
-        ))
+        enriched.append(
+            SavedProgramResponse(
+                id=item.id,
+                list_id=item.list_id,
+                program_id=item.program_id,
+                notes=item.notes,
+                priority=item.priority,  # type: ignore[arg-type]
+                added_at=item.added_at,
+                program_name=prog.program_name if prog else None,
+                institution_name=prog.institution_name if prog else None,
+            )
+        )
     return enriched
 
 
@@ -98,6 +102,23 @@ async def update_notes(
     profile = await StudentService(db)._get_student_profile(user.id)
     svc = SavedListService(db)
     return await svc.update_notes(profile.id, program_id, body.notes)
+
+
+@router.patch("/{program_id}", response_model=SavedProgramResponse)
+async def update_saved_priority(
+    program_id: UUID,
+    body: UpdateSavedPriorityRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update shortlist priority (considering/planning/applied/dropped).
+
+    Fixes G-S5 — priority used to live in frontend useState only, wiping
+    on refresh.
+    """
+    profile = await StudentService(db)._get_student_profile(user.id)
+    svc = SavedListService(db)
+    return await svc.update_priority(profile.id, program_id, body.priority)
 
 
 @router.post("/compare", response_model=ComparisonResponse)

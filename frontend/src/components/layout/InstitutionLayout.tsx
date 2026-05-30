@@ -173,9 +173,10 @@ export default function InstitutionLayout() {
       <aside className={`${sidebarWidth} flex flex-col border-r border-gray-200 bg-white transition-all duration-200`}>
         <div className="flex items-center justify-between h-14 px-4 border-b border-gray-100">
           {!sidebarCollapsed && (
-            <span className="text-lg font-bold">
-              <span className="text-brand-slate-600">Uni</span><span className="text-brand-slate-800 font-extrabold">Paith</span>
-            </span>
+            <img src="/wordmark.svg" alt="UniPaith" className="h-6 w-auto" />
+          )}
+          {sidebarCollapsed && (
+            <img src="/favicon.svg" alt="UniPaith" className="h-6 w-6 rounded" />
           )}
           <button onClick={toggleSidebar} className="p-1 rounded hover:bg-gray-100">
             {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}

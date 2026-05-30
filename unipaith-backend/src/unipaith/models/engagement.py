@@ -62,6 +62,9 @@ class SavedList(Base):
     )
 
 
+SAVED_PRIORITY_VALUES = ("considering", "planning", "applied", "dropped")
+
+
 class SavedListItem(Base):
     __tablename__ = "saved_list_items"
     __table_args__ = (UniqueConstraint("list_id", "program_id"),)
@@ -77,6 +80,12 @@ class SavedListItem(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     notes: Mapped[str | None] = mapped_column(Text)
+    # Student-assigned shortlist priority. Defaults to "considering" so legacy
+    # rows that pre-date the column read sensibly. Enum guard in DB via the
+    # migration's check constraint; service enforces too.
+    priority: Mapped[str] = mapped_column(
+        String(20), nullable=False, server_default="considering", default="considering"
+    )
 
     saved_list: Mapped[SavedList] = relationship(back_populates="items")
 

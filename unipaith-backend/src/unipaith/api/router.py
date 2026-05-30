@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from unipaith.api.account import router as account_router
 from unipaith.api.ai_feedback import router as ai_feedback_router
 from unipaith.api.applications import router as applications_router
 from unipaith.api.auth import router as auth_router
@@ -34,6 +35,7 @@ from unipaith.services.institution_service import InstitutionService
 api_router = APIRouter()
 
 api_router.include_router(auth_router)
+api_router.include_router(account_router)
 api_router.include_router(students_router)
 api_router.include_router(discovery_router)
 api_router.include_router(goals_router)

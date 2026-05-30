@@ -1,14 +1,11 @@
 /**
- * Phase C — Dual ring (fitness + confidence).
+ * Dual ring (fitness + confidence) — brand-aligned.
  *
- * Concentric SVG rings: outer = fitness (match strength), inner =
- * confidence (1 - uncertainty, driven by profile completeness + program
- * data sparseness). Spec calls for both first-class — one number
- * collapses both signals and confuses users.
- *
- * The component is opt-in: existing single-ring consumers keep working
- * with `MatchRing`. Phase C wires this into program detail; card-level
- * retrofit follows.
+ * Outer ring = fitness (match strength); inner ring = confidence
+ * (1 - uncertainty from profile completeness + program data sparseness).
+ * Spec calls for both first-class — one number collapses both signals
+ * and confuses users. Colors use the canonical status palette so
+ * fitness reads correctly across light + dark themes.
  */
 import clsx from 'clsx'
 
@@ -24,16 +21,19 @@ export interface DualRingProps {
   onClick?: () => void
 }
 
-const FITNESS_COLOR = (v: number) => {
-  if (v >= 0.85) return 'stroke-emerald-500'
-  if (v >= 0.7) return 'stroke-blue-500'
-  if (v >= 0.5) return 'stroke-amber-500'
-  return 'stroke-red-400'
+// Brand status palette — success/cobalt/warning/error tones.
+const FITNESS_STROKE = (v: number) => {
+  if (v >= 0.85) return 'stroke-success'
+  if (v >= 0.7) return 'stroke-cobalt'
+  if (v >= 0.5) return 'stroke-warning'
+  return 'stroke-error'
 }
-const CONFIDENCE_COLOR = (v: number) => {
-  if (v >= 0.7) return 'stroke-slate-600'
-  if (v >= 0.4) return 'stroke-slate-400'
-  return 'stroke-slate-300'
+
+// Inner ring stays neutral so it reads as a qualifier, not competing data.
+const CONFIDENCE_STROKE = (v: number) => {
+  if (v >= 0.7) return 'stroke-charcoal'
+  if (v >= 0.4) return 'stroke-slate'
+  return 'stroke-stone'
 }
 
 export default function DualRing({
@@ -44,17 +44,16 @@ export default function DualRing({
   className,
   onClick,
 }: DualRingProps) {
-  const fitnessPct = Math.round(fitness * 100)
-  const confidencePct = Math.round(confidence * 100)
+  const fitnessPct = Math.round(clamp01(fitness) * 100)
+  const confidencePct = Math.round(clamp01(confidence) * 100)
   const stroke = 5
 
-  // Outer ring: full radius - stroke. Inner ring: radius - stroke - gap.
   const outerR = (size - stroke) / 2
   const innerR = outerR - stroke - 3
   const outerC = 2 * Math.PI * outerR
   const innerC = 2 * Math.PI * innerR
-  const outerOffset = outerC * (1 - fitness)
-  const innerOffset = innerC * (1 - confidence)
+  const outerOffset = outerC * (1 - clamp01(fitness))
+  const innerOffset = innerC * (1 - clamp01(confidence))
 
   const interactive = !!onClick
 
@@ -84,10 +83,7 @@ export default function DualRing({
           : `Match — fitness ${fitnessPct}%, confidence ${confidencePct}%.`
       }
     >
-      <div
-        className="relative"
-        style={{ width: size, height: size }}
-      >
+      <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} className="-rotate-90">
           {/* Tracks */}
           <circle
@@ -97,7 +93,7 @@ export default function DualRing({
             fill="none"
             stroke="currentColor"
             strokeWidth={stroke}
-            className="text-slate-100"
+            className="text-divider"
           />
           <circle
             cx={size / 2}
@@ -106,7 +102,7 @@ export default function DualRing({
             fill="none"
             stroke="currentColor"
             strokeWidth={stroke}
-            className="text-slate-100"
+            className="text-divider"
           />
           {/* Fitness — outer */}
           <circle
@@ -119,7 +115,7 @@ export default function DualRing({
             strokeLinecap="round"
             strokeDasharray={outerC}
             strokeDashoffset={outerOffset}
-            className={FITNESS_COLOR(fitness)}
+            className={FITNESS_STROKE(fitness)}
             style={{ transition: 'stroke-dashoffset 0.8s ease-out' }}
           />
           {/* Confidence — inner */}
@@ -133,25 +129,30 @@ export default function DualRing({
             strokeLinecap="round"
             strokeDasharray={innerC}
             strokeDashoffset={innerOffset}
-            className={CONFIDENCE_COLOR(confidence)}
+            className={CONFIDENCE_STROKE(confidence)}
             style={{ transition: 'stroke-dashoffset 0.8s ease-out' }}
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
-          <span className="text-base font-bold text-student-ink">{fitnessPct}</span>
-          <span className="text-[9px] uppercase tracking-wide text-student-text mt-0.5">
+          <span className="text-base font-bold text-charcoal">{fitnessPct}</span>
+          <span className="text-[9px] uppercase tracking-wider text-slate mt-0.5">
             fit
           </span>
         </div>
       </div>
       {!compact && (
         <div className="text-xs">
-          <div className="text-student-ink font-medium">Fitness · {fitnessPct}%</div>
-          <div className="text-student-text">
-            Confidence · {confidencePct}%
-          </div>
+          <div className="text-charcoal font-bold">Fitness · {fitnessPct}%</div>
+          <div className="text-slate">Confidence · {confidencePct}%</div>
         </div>
       )}
     </div>
   )
+}
+
+function clamp01(n: number): number {
+  if (!Number.isFinite(n)) return 0
+  if (n < 0) return 0
+  if (n > 1) return 1
+  return n
 }

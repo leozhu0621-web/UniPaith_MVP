@@ -26,6 +26,14 @@ class User(Base):
     )
     role: Mapped[UserRole] = mapped_column(Enum(UserRole, name="user_role"), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    # Account preferences — Spec/1D §locale.
+    locale: Mapped[str | None] = mapped_column(String(10))
+    timezone: Mapped[str | None] = mapped_column(String(64))
+    # Deletion request lifecycle — Spec/1D §deletion. Soft-delete with a
+    # 30-day grace window before the row is removed by a sweeper job.
+    deletion_requested_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

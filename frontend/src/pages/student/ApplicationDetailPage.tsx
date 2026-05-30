@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getMyApplication, submitApplication, getChecklist, generateChecklist, respondToOffer, getReadiness } from '../../api/applications'
+import { getMyApplication, submitApplication, getChecklist, generateChecklist, respondToOffer, getReadiness, runGuardrailScan } from '../../api/applications'
+import type { GuardrailScanResult } from '../../api/applications'
 import { listEssays, createEssay, updateEssay, requestEssayFeedback } from '../../api/essays'
 import { listResumes, generateResume } from '../../api/resumes'
 import { requestUpload, uploadToS3, confirmUpload, listDocuments } from '../../api/documents'
@@ -62,10 +63,26 @@ export default function ApplicationDetailPage() {
   const { data: documents } = useQuery({ queryKey: ['documents'], queryFn: listDocuments, enabled: tab === 'documents' })
   const { data: interviews } = useQuery({ queryKey: ['interviews'], queryFn: getMyInterviews, enabled: tab === 'interviews' })
 
-  const [guardrailResult, setGuardrailResult] = useState<any>(null)
-  void setGuardrailResult
+  const [guardrailResult, setGuardrailResult] = useState<GuardrailScanResult | null>(null)
   const [intentReason, setIntentReason] = useState('')
   const [rationale, setRationale] = useState('')
+
+  // Hydrate picker + rationale from the persisted application once it loads
+  // so refresh / re-entry preserves the student's prior input (G-S4).
+  useEffect(() => {
+    if (!app) return
+    if (app.intent_reason) setIntentReason(prev => prev || app.intent_reason!)
+    if (app.intent_rationale) setRationale(prev => prev || app.intent_rationale!)
+  }, [app])
+
+  const guardrailMut = useMutation({
+    mutationFn: () => runGuardrailScan(appId!, intentReason || null, rationale || null),
+    onSuccess: (data) => {
+      setGuardrailResult(data)
+      queryClient.invalidateQueries({ queryKey: ['application', appId] })
+    },
+    onError: () => showToast('Guardrail scan failed — try again', 'error'),
+  })
 
   const submitMut = useMutation({ mutationFn: () => submitApplication(appId!), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['application', appId] }); showToast('Application submitted!', 'success') } })
   const essayMut = useMutation({ mutationFn: (data: any) => createEssay(data), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['essays'] }); setShowEssayModal(false); setEssayContent(''); setEssayPrompt(''); showToast('Essay created', 'success') } })
@@ -533,29 +550,32 @@ export default function ApplicationDetailPage() {
             {tab === 'guardrails' && (
               <div className="space-y-4">
                 {application.match_score != null && application.match_score < 0.3 && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
-                    <AlertTriangle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="bg-warning-soft border border-warning/30 rounded-lg p-4 flex items-start gap-3">
+                    <AlertTriangle size={18} className="text-warning flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-amber-800">Low Fit Warning</p>
-                      <p className="text-xs text-amber-700 mt-0.5">This program's match score is below 30%. Review the Match Analysis tab to understand why.</p>
+                      <p className="text-sm font-bold text-charcoal">Low Fit Warning</p>
+                      <p className="text-xs text-slate mt-0.5">
+                        This program's match score is below 30%. Review the Match Analysis tab to
+                        understand why, and capture a rationale below before submitting.
+                      </p>
                     </div>
                   </div>
                 )}
 
                 <Card className="p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <ShieldCheck size={16} className="text-stone-600" />
-                    <h3 className="text-sm font-medium text-stone-700">Why are you applying?</h3>
+                    <ShieldCheck size={16} className="text-cobalt" />
+                    <h3 className="text-sm font-bold text-charcoal">Why are you applying?</h3>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {['Dream school', 'Safety option', 'Recommended', 'Exploring', 'Location fit', 'Program fit'].map(reason => (
                       <button
                         key={reason}
                         onClick={() => setIntentReason(reason)}
-                        className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+                        className={`px-3 py-1.5 text-xs rounded-pill border transition-colors ${
                           intentReason === reason
-                            ? 'bg-ink text-white border-ink'
-                            : 'bg-white text-stone-600 border-gray-300 hover:bg-stone-50'
+                            ? 'bg-charcoal text-paper border-charcoal'
+                            : 'bg-white text-slate border-stone/60 hover:bg-paper'
                         }`}
                       >
                         {reason}
@@ -564,29 +584,81 @@ export default function ApplicationDetailPage() {
                   </div>
                 </Card>
 
-                {guardrailResult && (
-                  <Card className={`p-4 ${guardrailResult.level === 'green' ? 'bg-emerald-50' : guardrailResult.level === 'red' ? 'bg-red-50' : 'bg-amber-50'}`}>
-                    <p className={`text-sm font-medium ${guardrailResult.level === 'green' ? 'text-emerald-700' : guardrailResult.level === 'red' ? 'text-red-700' : 'text-amber-700'}`}>
-                      {guardrailResult.message || 'AI analysis complete'}
-                    </p>
-                    {guardrailResult.points && (
-                      <ul className="mt-2 space-y-1">
-                        {guardrailResult.points.map((pt: string, i: number) => (
-                          <li key={i} className="text-xs text-gray-600 flex items-start gap-1">
-                            <span>-</span> {pt}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </Card>
-                )}
+                <Card className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-bold text-charcoal">Rationale</h3>
+                    <span className="text-[10px] uppercase tracking-wider text-slate">
+                      Saved with the scan
+                    </span>
+                  </div>
+                  <Textarea
+                    value={rationale}
+                    onChange={e => setRationale(e.target.value)}
+                    placeholder="I'm applying because…"
+                    rows={4}
+                  />
+                </Card>
 
-                {(guardrailResult?.level === 'red' || (application.match_score != null && application.match_score < 0.3)) && (
-                  <Card className="p-4">
-                    <p className="text-xs text-gray-500 mb-2">Please explain your rationale for proceeding:</p>
-                    <Textarea value={rationale} onChange={e => setRationale(e.target.value)} placeholder="I'm applying because..." />
-                  </Card>
-                )}
+                <div className="flex items-center gap-3">
+                  <Button
+                    onClick={() => guardrailMut.mutate()}
+                    loading={guardrailMut.isPending}
+                  >
+                    <ShieldCheck size={14} className="mr-1" />
+                    Run guardrail scan
+                  </Button>
+                  <span className="text-xs text-slate">
+                    Saves your reason + rationale and surfaces blockers before submit.
+                  </span>
+                </div>
+
+                {guardrailResult && (() => {
+                  const tone = guardrailResult.level
+                  const surface = tone === 'green'
+                    ? 'bg-success-soft border-success/30'
+                    : tone === 'red'
+                      ? 'bg-error-soft border-error/30'
+                      : 'bg-warning-soft border-warning/30'
+                  const textTone = tone === 'green'
+                    ? 'text-success'
+                    : tone === 'red'
+                      ? 'text-error'
+                      : 'text-warning'
+                  return (
+                    <Card className={`p-4 border ${surface}`}>
+                      <div className="flex items-start justify-between gap-3">
+                        <p className={`text-sm font-bold ${textTone}`}>{guardrailResult.message}</p>
+                        <Badge size="sm" variant={tone === 'green' ? 'success' : tone === 'red' ? 'danger' : 'warning'}>
+                          {guardrailResult.fit_score_band}
+                        </Badge>
+                      </div>
+                      {guardrailResult.blockers.length > 0 && (
+                        <div className="mt-3">
+                          <p className="text-xs uppercase tracking-wider text-charcoal font-bold mb-1">
+                            Blockers
+                          </p>
+                          <ul className="space-y-1">
+                            {guardrailResult.blockers.map((b, i) => (
+                              <li key={i} className="text-xs text-charcoal flex items-start gap-1.5">
+                                <AlertCircle size={12} className="text-error mt-0.5 flex-shrink-0" />
+                                <span>{b}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {guardrailResult.points.length > 0 && (
+                        <ul className="mt-3 space-y-1">
+                          {guardrailResult.points.map((pt, i) => (
+                            <li key={i} className="text-xs text-slate flex items-start gap-1.5">
+                              <span className="text-slate">·</span> {pt}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </Card>
+                  )
+                })()}
               </div>
             )}
 

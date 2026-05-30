@@ -22,7 +22,21 @@ from unipaith.models.application import (
 )
 from unipaith.models.engagement import StudentEssay, StudentResume
 from unipaith.models.institution import Program
+from unipaith.models.matching import MatchResult
 from unipaith.models.student import StudentProfile
+
+
+def _band(fitness: float | None) -> str:
+    """Map a 0..1 fitness score to a four-band label."""
+    if fitness is None:
+        return "stretch"
+    if fitness >= 0.85:
+        return "strong"
+    if fitness >= 0.70:
+        return "good"
+    if fitness >= 0.50:
+        return "stretch"
+    return "reach"
 
 
 class ApplicationService:
@@ -94,6 +108,104 @@ class ApplicationService:
             raise BadRequestException("Cannot withdraw application in current state")
         await self.db.delete(app)
         await self.db.flush()
+
+    async def run_guardrail_scan(
+        self,
+        student_id: UUID,
+        application_id: UUID,
+        intent_reason: str | None = None,
+        intent_rationale: str | None = None,
+    ) -> dict:
+        """
+        Score an application's likelihood-to-succeed and surface a
+        recommendation. Uses the dual-score match record (or legacy
+        match_score) to derive a fit band, then checks for blocker
+        conditions: missing checklist items, missing essays, low fit
+        without a written rationale, etc.
+
+        Persists the student's intent + rationale in the same call so the
+        Apply > Guardrails tab can save in one round trip.
+
+        See gap-audit G-S4 and Spec/17 §guardrails.
+        """
+        app = await self._get_application_for_student(student_id, application_id)
+
+        if intent_reason is not None:
+            app.intent_reason = intent_reason or None
+        if intent_rationale is not None:
+            app.intent_rationale = intent_rationale or None
+
+        # Pull the latest match record so we can compute a fit band.
+        match_row = (
+            await self.db.execute(
+                select(MatchResult).where(
+                    MatchResult.student_id == student_id,
+                    MatchResult.program_id == app.program_id,
+                )
+            )
+        ).scalar_one_or_none()
+
+        fitness: float | None = None
+        if match_row is not None:
+            raw = getattr(match_row, "fitness_score", None)
+            if raw is None:
+                raw = getattr(match_row, "match_score", None)
+            if raw is not None:
+                try:
+                    fitness = float(raw)
+                except (TypeError, ValueError):
+                    fitness = None
+
+        # Fall back to legacy field on the application itself.
+        if fitness is None and app.match_score is not None:
+            try:
+                fitness = float(app.match_score)
+            except (TypeError, ValueError):
+                fitness = None
+
+        band = _band(fitness)
+        blockers: list[str] = []
+        points: list[str] = []
+
+        # Missing-items blocker.
+        if isinstance(app.missing_items, dict) and app.missing_items:
+            for k, v in app.missing_items.items():
+                if v:
+                    blockers.append(f"Missing: {k.replace('_', ' ')}")
+
+        # Low-fit blocker — student must capture a rationale before submitting.
+        if band == "reach":
+            points.append("Match score is low for this program.")
+            if not (app.intent_rationale and app.intent_rationale.strip()):
+                blockers.append("Add a rationale for proceeding with a low-fit program.")
+
+        if not app.intent_reason:
+            points.append("Pick a reason for applying so reviewers can read your intent.")
+
+        # Decide the surface level.
+        if blockers:
+            level = "red"
+            message = "Resolve the blockers below before submitting."
+            recommended = "fix-blockers"
+        elif band in ("stretch", "reach"):
+            level = "amber"
+            message = "Submission is allowed, but consider strengthening your application."
+            recommended = "review-before-submit"
+        else:
+            level = "green"
+            message = "You're ready to submit."
+            recommended = "submit"
+
+        await self.db.flush()
+
+        return {
+            "level": level,
+            "fit_score_band": band,
+            "recommended_action": recommended,
+            "blockers": blockers,
+            "message": message,
+            "points": points,
+        }
 
     # --- Institution-facing ---
 

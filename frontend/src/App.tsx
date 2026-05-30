@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Navigate, useParams } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useAuthStore } from './stores/auth-store'
@@ -73,6 +73,22 @@ const queryClient = new QueryClient({
   },
 })
 
+// Carry the conversation id through legacy /s/messages/:convId links into the
+// Apply > Messages tab so deep-links from emails/audit-log still land on the
+// right thread. Fixes gap-audit G-A6.
+function MessagesThreadRedirect() {
+  const { convId } = useParams<{ convId: string }>()
+  const target = convId ? `/s/manage?tab=messages&thread=${convId}` : '/s/manage?tab=messages'
+  return <Navigate to={target} replace />
+}
+
+// Legacy /s/schools/:programId routes the same id as a program. Carry the id
+// through into the canonical /s/programs route.
+function SchoolsAliasRedirect() {
+  const { programId } = useParams<{ programId: string }>()
+  return <Navigate to={`/s/programs/${programId}`} replace />
+}
+
 const router = createBrowserRouter([
   // Root → login (marketing site is at unipaith.co; this is the app at app.unipaith.co)
   { path: '/', element: <Navigate to="/login" replace />, errorElement: <RouteErrorPage /> },
@@ -104,7 +120,8 @@ const router = createBrowserRouter([
       { path: 'settings', element: <StudentSettingsPage /> },
       // === Drill-down pages ===
       { path: 'programs/:programId', element: <SchoolDetailPage /> },
-      { path: 'schools/:programId', element: <SchoolDetailPage /> },
+      // Legacy alias kept until Phase E rename of SchoolDetailPage → ProgramDetailPage.
+      { path: 'schools/:programId', element: <SchoolsAliasRedirect /> },
       { path: 'institutions/:institutionId', element: <InstitutionDetailPage /> },
       { path: 'institutions/:institutionId/schools/:schoolId', element: <SchoolSubunitPage /> },
       { path: 'applications/:appId', element: <ApplicationDetailPage /> },
@@ -117,7 +134,7 @@ const router = createBrowserRouter([
       { path: 'calendar', element: <Navigate to="/s/manage?tab=calendar" replace /> },
       { path: 'deadlines', element: <Navigate to="/s/manage?tab=calendar" replace /> },
       { path: 'messages', element: <Navigate to="/s/manage?tab=messages" replace /> },
-      { path: 'messages/:convId', element: <Navigate to="/s/manage?tab=messages" replace /> },
+      { path: 'messages/:convId', element: <MessagesThreadRedirect /> },
       { path: 'financial-aid', element: <Navigate to="/s/profile?tab=financial" replace /> },
       { path: 'recommendations', element: <Navigate to="/s/profile?tab=recommenders" replace /> },
       // Phase D — Workshops moved from Profile to Apply > Workshops (feedback-only).

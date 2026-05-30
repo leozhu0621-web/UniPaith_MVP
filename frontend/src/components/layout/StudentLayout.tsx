@@ -25,17 +25,10 @@ export default function StudentLayout() {
       {/* Top bar */}
       <header className="h-14 flex items-center justify-between px-6 bg-white border-b border-divider flex-shrink-0 z-30">
         <NavLink to="/s" className="leading-none">
-          {/* Canonical wordmark — Brand Materials/wordmark-light.svg.
-              Per-character split: U gold + ni cobalt + P gold + aith cobalt.
-              Europa Regular 400, −1.2px tracking, 56px source @ 28px rendered. */}
-          <svg viewBox="0 0 260 80" className="h-7 w-auto" aria-label="UniPaith" role="img">
-            <text x="17" y="58" fontFamily="Europa, 'EB Garamond', system-ui, sans-serif" fontWeight="500" fontSize="56" letterSpacing="-1.2">
-              <tspan fill="#FFD60A">U</tspan>
-              <tspan fill="#2A6BD4">ni</tspan>
-              <tspan fill="#FFD60A">P</tspan>
-              <tspan fill="#2A6BD4">aith</tspan>
-            </text>
-          </svg>
+          {/* Canonical wordmark — frontend/public/wordmark.svg.
+              U + P gold caps, lowercase cobalt. Europa Regular 400. */}
+          <img src="/wordmark.svg" alt="UniPaith" className="h-7 w-auto" />
+
         </NavLink>
 
         {/* Nav — Stage 1 (Discover) → Stage 2 (Match) → Stage 3 (Apply, Connect).

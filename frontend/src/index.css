@@ -4,47 +4,55 @@
 
 @layer base {
   /* ----------------------------------------------------------------
-     Brand tokens — Editorial Gold + Cobalt on Paper (light default).
-     Source of truth: /Brand Materials/colors_and_type.css.
-     HSL values are pre-computed from the canonical hex codes; shadcn
-     primitives consume these via hsl(var(--x)) in tailwind.config.js.
+     Brand tokens — Europa on Sunlit-Gold + Cobalt + Paper.
+     Source: Spec/01-brand-tokens.md (canonical: colors_and_type.css).
+     HSL values pre-computed from the canonical hex; shadcn primitives
+     consume these via hsl(var(--x)) in tailwind.config.js.
      ---------------------------------------------------------------- */
   :root {
-    --background: 48 60% 97%;        /* #FCFAF2 paper */
-    --foreground: 30 10% 16%;        /* #2A2724 soft ink text */
+    --background: 48 60% 97%;        /* #FCFAF2 paper-cream */
+    --foreground: 30 10% 16%;        /* #2A2724 soft-ink */
 
-    --card: 0 0% 100%;               /* #FFFFFF surface */
+    --card: 0 0% 100%;               /* #FFFFFF raised surface */
     --card-foreground: 30 10% 16%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 30 10% 16%;
 
-    --primary: 49 100% 52%;          /* #FFD60A sunlit gold */
+    --primary: 49 100% 52%;          /* #FFD60A sunlit-gold */
     --primary-foreground: 30 10% 16%; /* ink reads on gold */
 
     --secondary: 216 67% 50%;        /* #2A6BD4 cobalt */
-    --secondary-foreground: 48 60% 97%; /* paper reads on cobalt */
+    --secondary-foreground: 48 60% 97%; /* paper on cobalt */
 
-    --accent: 216 67% 50%;           /* cobalt — links, eyebrows */
+    --accent: 216 67% 50%;           /* cobalt — links + eyebrows */
     --accent-foreground: 48 60% 97%;
 
-    --muted: 48 38% 91%;             /* #F2EEE0 warm muted */
+    --muted: 48 38% 91%;             /* #F2EEE0 warm-muted */
     --muted-foreground: 30 5% 28%;   /* #4A4640 muted body */
 
     --destructive: 9 56% 41%;        /* #B5321F editorial brick */
     --destructive-foreground: 48 60% 97%;
 
-    --border: 46 27% 72%;            /* #C9C2A8 warm beige */
+    --border: 46 27% 72%;            /* #C9C2A8 warm hairline */
     --input: 46 27% 72%;
     --ring: 49 100% 52%;             /* gold focus ring */
 
-    --radius: 0.75rem;               /* 12px default per brand spec */
+    --radius: 0.875rem;              /* 14px — canonical favicon-corner radius */
+
+    /* Status surfaces (canonical from colors_and_type.css §State) */
+    --success: 152 46% 33%;          /* #2E7D5B */
+    --success-soft: 90 22% 88%;      /* #DCE8DA */
+    --warning: 38 84% 42%;           /* #C58A12 */
+    --warning-soft: 40 65% 87%;      /* #F5E6CC */
+    --error: 11 63% 45%;             /* #B8412B */
+    --error-soft: 14 56% 88%;        /* #F2D7D0 */
   }
 
-  /* Dark theme — Ink canvas, lifted gold + cobalt accents. */
+  /* Dark theme — Deep-Ink canvas, lifted gold + cobalt. */
   .dark, [data-theme="dark"] {
-    --background: 221 67% 10%;       /* #0A1428 deep ink */
-    --foreground: 39 38% 93%;        /* #F5F1E8 paper-warm cream */
+    --background: 221 67% 10%;       /* #0A1428 deep-ink */
+    --foreground: 39 38% 93%;        /* #F5F1E8 warm-cream */
 
     --card: 220 51% 15%;             /* #122039 dark surface */
     --card-foreground: 39 38% 93%;
@@ -70,69 +78,80 @@
     --border: 218 32% 37%;           /* #3F567C */
     --input: 218 32% 37%;
     --ring: 51 100% 47%;
+
+    --success: 142 45% 62%;          /* #6FCB95 */
+    --success-soft: 142 32% 18%;     /* #1E3A2A */
+    --warning: 36 81% 67%;           /* #F0B964 */
+    --warning-soft: 30 41% 17%;      /* #3D2E18 */
+    --error: 9 100% 72%;             /* #FF8470 */
+    --error-soft: 11 36% 17%;        /* #3D1E1A */
   }
 
   * {
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground font-body antialiased;
-    text-rendering: optimizeLegibility;
+  html {
+    scroll-behavior: smooth;
   }
 
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Europa carries everything — hierarchy from size/weight/tracking. */
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'EB Garamond', Garamond, 'Times New Roman', serif;
+    font-family: 'europa', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     color: hsl(var(--foreground));
-    font-weight: 700;
     margin: 0;
   }
-  h1 { letter-spacing: -0.015em; line-height: 1.10; }
-  h2 { letter-spacing: 0; line-height: 1.15; }
-  h3 { letter-spacing: 0; line-height: 1.25; }
+  h1 { font-size: 3rem;     line-height: 1.08; letter-spacing: -0.015em; font-weight: 700; }
+  h2 { font-size: 1.75rem;  line-height: 1.20; letter-spacing: 0;        font-weight: 700; }
+  h3 { font-size: 1.25rem;  line-height: 1.30; letter-spacing: 0;        font-weight: 700; }
+  h4 { font-size: 1.125rem; line-height: 1.30; letter-spacing: 0;        font-weight: 700; }
+  h5 { font-size: 1rem;     line-height: 1.40; letter-spacing: 0;        font-weight: 700; }
+  h6 { font-size: 0.875rem; line-height: 1.40; letter-spacing: 0;        font-weight: 700; }
+
+  ::selection { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
 }
 
 /* ----------------------------------------------------------------
-   Editorial helper classes — port of brand CSS "up-*" utilities
-   so existing components can opt in without re-implementing.
+   Editorial helper classes — Europa-only typographic system.
+   "up-*" utilities mirror Spec/01 §3.3 type scale.
    ---------------------------------------------------------------- */
 @layer components {
   .up-display {
-    font-family: 'EB Garamond', Garamond, serif;
+    font-family: 'europa', system-ui, sans-serif;
     font-size: clamp(3rem, 6vw + 1rem, 4.5rem);
     line-height: 1.05;
     letter-spacing: -0.02em;
-    font-weight: 600;
+    font-weight: 700;
   }
   .up-eyebrow {
-    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-    font-size: 0.875rem;
-    font-weight: 600;
+    font-family: 'europa', system-ui, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.10em;
-    line-height: 1.40;
+    letter-spacing: 0.22em;
+    line-height: 1.20;
     color: hsl(var(--accent));
   }
   .up-stat {
-    font-family: 'EB Garamond', Garamond, serif;
+    font-family: 'europa', system-ui, sans-serif;
     font-weight: 700;
     font-size: clamp(2.25rem, 2vw + 1rem, 3rem);
     line-height: 1;
     letter-spacing: -0.02em;
   }
-  .up-hw-display {
-    font-family: 'Caveat', cursive;
-    letter-spacing: 0.04em;
-    font-weight: 600;
+  .up-label {
+    font-family: 'europa', system-ui, sans-serif;
+    font-size: 0.8125rem;
+    line-height: 1.20;
+    font-weight: 700;
   }
-  .up-hw-note {
-    font-family: 'Kalam', cursive;
-    font-weight: 400;
-  }
-}
-
-html {
-  scroll-behavior: smooth;
 }
 
 @layer utilities {
@@ -148,10 +167,10 @@ html {
   }
 
   .hover-lift {
-    @apply transition-all duration-300 ease-out;
+    @apply transition-all duration-200 ease-out;
   }
   .hover-lift:hover {
-    @apply -translate-y-1;
-    box-shadow: 0 8px 25px -5px hsl(var(--foreground) / 0.1);
+    @apply -translate-y-0.5;
+    box-shadow: 0 8px 24px -8px hsl(var(--foreground) / 0.12);
   }
 }

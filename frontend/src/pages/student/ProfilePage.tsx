@@ -28,6 +28,7 @@ const IdentityTab = lazy(() => import('./profile/IdentityTab'))
 const GoalsTab = lazy(() => import('./profile/GoalsTab'))
 const NeedsTab = lazy(() => import('./profile/NeedsTab'))
 const StrategyTab = lazy(() => import('./profile/StrategyTab'))
+const AnalyticsTab = lazy(() => import('./profile/AnalyticsTab'))
 
 type ProfileTab =
   | 'overview'
@@ -35,22 +36,25 @@ type ProfileTab =
   | 'goals'
   | 'needs'
   | 'strategy'
-  | 'essays'
   | 'recommenders'
   | 'financial'
+  | 'analytics'
+  | 'essays'
 
 // Order: durable record (Overview) → deepest layer (Identity) → durable
-// artifacts (Goals, Needs) → bridge to Match (Strategy) → existing tabs.
-// Per the Phase D plan, Essays & Resume will move to Apply > Workshops.
+// artifacts (Goals, Needs) → bridge to Match (Strategy) → preparation
+// (Recommenders, Financial) → Analytics (the 19th section). The legacy
+// Essays & Resume tab is hidden from the bar but kept as a redirect target
+// for old links (Phase E follow-up).
 const PROFILE_TABS: { key: ProfileTab; label: string }[] = [
   { key: 'overview', label: 'Overview' },
   { key: 'identity', label: 'Identity' },
   { key: 'goals', label: 'Goals' },
   { key: 'needs', label: 'Needs' },
   { key: 'strategy', label: 'Strategy' },
-  { key: 'essays', label: 'Essays & Resume' },
   { key: 'recommenders', label: 'Recommenders' },
   { key: 'financial', label: 'Financial' },
+  { key: 'analytics', label: 'Analytics' },
 ]
 
 // --- Profile Strength Ring ---
@@ -245,6 +249,7 @@ export default function ProfilePage() {
           )}
           {activeTab === 'recommenders' && <div className="-mx-6 -mt-2"><RecommendationsPage /></div>}
           {activeTab === 'financial' && <div className="-mx-6 -mt-2"><FinancialAidPage /></div>}
+          {activeTab === 'analytics' && <AnalyticsTab />}
         </Suspense>
       </div>
     )

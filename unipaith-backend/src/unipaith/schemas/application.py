@@ -31,6 +31,7 @@ class DecisionRequest(BaseModel):
 
 class ProgramBrief(BaseModel):
     """Minimal program info embedded in application responses."""
+
     model_config = ConfigDict(from_attributes=True)
     id: UUID
     program_name: str
@@ -53,6 +54,8 @@ class ApplicationResponse(BaseModel):
     decision_at: datetime | None
     completeness_status: str | None
     missing_items: dict | None
+    intent_reason: str | None = None
+    intent_rationale: str | None = None
     created_at: datetime
     updated_at: datetime
     program: ProgramBrief | None = None
@@ -61,6 +64,34 @@ class ApplicationResponse(BaseModel):
 class ApplicationDetailResponse(ApplicationResponse):
     decision_notes: str | None = None
     decision_by: UUID | None = None
+
+
+# --- Guardrails (gap-audit G-S4) -----------------------------------------
+
+GuardrailLevel = Literal["green", "amber", "red"]
+
+
+class GuardrailScanRequest(BaseModel):
+    """Optional client-side context for a guardrail scan.
+
+    The scan is server-derived from the application + match record; clients
+    can additionally pass the latest picker selection so it's persisted in
+    the same request and reflected in the scan response.
+    """
+
+    intent_reason: str | None = None
+    intent_rationale: str | None = None
+
+
+class GuardrailScanResponse(BaseModel):
+    """Result of a guardrail scan — see Spec/17 §guardrails."""
+
+    level: GuardrailLevel
+    fit_score_band: Literal["strong", "good", "stretch", "reach"]
+    recommended_action: str
+    blockers: list[str]
+    message: str
+    points: list[str]
 
 
 class CreateOfferRequest(BaseModel):

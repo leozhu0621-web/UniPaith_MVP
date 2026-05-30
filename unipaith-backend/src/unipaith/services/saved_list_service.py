@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from unipaith.core.exceptions import BadRequestException, ConflictException, NotFoundException
-from unipaith.models.engagement import SavedList, SavedListItem
+from unipaith.models.engagement import SAVED_PRIORITY_VALUES, SavedList, SavedListItem
 from unipaith.models.institution import Institution, Program
 from unipaith.models.matching import MatchResult
 
@@ -120,6 +120,18 @@ class SavedListService:
         saved_list = await self._get_or_create_default_list(student_id)
         item = await self._get_item(saved_list, program_id)
         item.notes = notes
+        await self.db.flush()
+        return item
+
+    async def update_priority(
+        self, student_id: UUID, program_id: UUID, priority: str
+    ) -> SavedListItem:
+        """Update the shortlist priority for a saved program."""
+        if priority not in SAVED_PRIORITY_VALUES:
+            raise BadRequestException(f"priority must be one of {SAVED_PRIORITY_VALUES}")
+        saved_list = await self._get_or_create_default_list(student_id)
+        item = await self._get_item(saved_list, program_id)
+        item.priority = priority
         await self.db.flush()
         return item
 

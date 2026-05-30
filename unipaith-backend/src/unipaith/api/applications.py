@@ -12,6 +12,8 @@ from unipaith.schemas.application import (
     CreateApplicationRequest,
     CreateOfferRequest,
     DecisionRequest,
+    GuardrailScanRequest,
+    GuardrailScanResponse,
     OfferLetterResponse,
     OfferRespondRequest,
     UpdateApplicationRequest,
@@ -75,6 +77,28 @@ async def submit_application(
     return await svc.submit_application(profile.id, application_id)
 
 
+@router.post("/me/{application_id}/guardrail-scan", response_model=GuardrailScanResponse)
+async def run_guardrail_scan(
+    application_id: UUID,
+    body: GuardrailScanRequest | None = None,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Run the Guardrails tab's pre-submit fit + blocker scan (G-S4).
+
+    Also persists the student's intent + rationale when present so the
+    tab can save in one round-trip.
+    """
+    profile = await StudentService(db)._get_student_profile(user.id)
+    svc = ApplicationService(db)
+    return await svc.run_guardrail_scan(
+        profile.id,
+        application_id,
+        intent_reason=body.intent_reason if body else None,
+        intent_rationale=body.intent_rationale if body else None,
+    )
+
+
 @router.delete("/me/{application_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def withdraw_application(
     application_id: UUID,
@@ -134,12 +158,17 @@ async def update_application_status(
     result = await svc.update_status(inst.id, application_id, body.status)
     # Audit log
     from unipaith.services.audit_service import AuditService
+
     await AuditService(db).log(
-        institution_id=inst.id, actor_user_id=user.id,
-        action="status_change", entity_type="application",
-        entity_id=str(application_id), application_id=application_id,
+        institution_id=inst.id,
+        actor_user_id=user.id,
+        action="status_change",
+        entity_type="application",
+        entity_id=str(application_id),
+        application_id=application_id,
         description=f"Status changed from {old.status} to {body.status}",
-        old_value={"status": old.status}, new_value={"status": body.status},
+        old_value={"status": old.status},
+        new_value={"status": body.status},
     )
     return result
 
@@ -169,10 +198,14 @@ async def make_decision(
     svc = ApplicationService(db)
     result = await svc.make_decision(inst.id, application_id, body.decision, body.decision_notes)
     from unipaith.services.audit_service import AuditService
+
     await AuditService(db).log(
-        institution_id=inst.id, actor_user_id=user.id,
-        action="decision_release", entity_type="application",
-        entity_id=str(application_id), application_id=application_id,
+        institution_id=inst.id,
+        actor_user_id=user.id,
+        action="decision_release",
+        entity_type="application",
+        entity_id=str(application_id),
+        application_id=application_id,
         description=f"Decision: {body.decision}",
         new_value={"decision": body.decision, "notes": body.decision_notes},
     )
@@ -220,13 +253,13 @@ async def batch_request_missing_items(
 
     await InstitutionService(db).get_institution(user.id)  # auth check
     result = BatchOperationResult(
-        success_count=0, failed_ids=[], errors=[],
+        success_count=0,
+        failed_ids=[],
+        errors=[],
     )
     for app_id in body.application_ids:
         try:
-            r = await db.execute(
-                select(Application).where(Application.id == app_id)
-            )
+            r = await db.execute(select(Application).where(Application.id == app_id))
             app = r.scalar_one_or_none()
             if not app:
                 result.failed_ids.append(app_id)
@@ -251,7 +284,9 @@ async def batch_update_status(
     inst = await InstitutionService(db).get_institution(user.id)
     svc = ApplicationService(db)
     result = BatchOperationResult(
-        success_count=0, failed_ids=[], errors=[],
+        success_count=0,
+        failed_ids=[],
+        errors=[],
     )
     for app_id in body.application_ids:
         try:
@@ -272,12 +307,17 @@ async def batch_release_decision(
     inst = await InstitutionService(db).get_institution(user.id)
     svc = ApplicationService(db)
     result = BatchOperationResult(
-        success_count=0, failed_ids=[], errors=[],
+        success_count=0,
+        failed_ids=[],
+        errors=[],
     )
     for app_id in body.application_ids:
         try:
             await svc.make_decision(
-                inst.id, app_id, body.decision, body.decision_notes,
+                inst.id,
+                app_id,
+                body.decision,
+                body.decision_notes,
             )
             result.success_count += 1
         except Exception as e:
