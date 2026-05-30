@@ -21,12 +21,17 @@ export default function Dropdown({ trigger, items, align = 'right' }: DropdownPr
   useEffect(() => {
     if (!open) return
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
     }
     document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', handler)
+      document.removeEventListener('keydown', onKey)
+    }
   }, [open])
 
   return (
@@ -34,20 +39,22 @@ export default function Dropdown({ trigger, items, align = 'right' }: DropdownPr
       <div onClick={() => setOpen(o => !o)}>{trigger}</div>
       {open && (
         <div
+          role="menu"
           className={clsx(
-            'absolute top-full mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50',
+            'absolute top-[calc(100%+4px)] w-48 bg-card border border-border rounded-lg elev-raised py-1 z-50 animate-slide-up-fade',
             align === 'right' ? 'right-0' : 'left-0'
           )}
         >
           {items.map((item, i) => (
             <button
               key={i}
+              role="menuitem"
               onClick={() => { item.onClick(); setOpen(false) }}
               className={clsx(
-                'w-full text-left px-4 py-2 text-sm flex items-center gap-2',
+                'w-full text-left px-4 py-2 text-sm flex items-center gap-2 transition-colors',
                 item.variant === 'danger'
-                  ? 'text-red-600 hover:bg-red-50'
-                  : 'text-gray-700 hover:bg-gray-50'
+                  ? 'text-error hover:bg-error-soft/50'
+                  : 'text-foreground hover:bg-muted'
               )}
             >
               {item.icon}

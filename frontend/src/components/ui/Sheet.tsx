@@ -2,30 +2,34 @@ import { useEffect, useRef } from 'react'
 import clsx from 'clsx'
 import { X } from 'lucide-react'
 
-// Modal — Spec/02-design-system.md §6 + Spec/02b §6.
-// Ink-tinted backdrop; focus trap; ESC closes; first focusable receives focus;
-// focus restored on close. On mobile (< sm) it docks as a bottom sheet.
+// Sheet — Spec/02-design-system.md §6 + Spec/02b §6.
+// `right` (default): edits a record in context; 480px desktop, full-width mobile.
+// `bottom`: the mobile default for filters, artifact rail, compare, day agenda —
+// has a peek handle and slides up from the bottom.
 
-interface ModalProps {
+interface SheetProps {
   isOpen: boolean
   onClose: () => void
   title?: string
   children: React.ReactNode
-  /** narrow (640) confirmations · default (720) forms · wide (960) editors. */
-  size?: 'sm' | 'md' | 'lg'
+  side?: 'right' | 'bottom'
   footer?: React.ReactNode
-}
-
-const SIZE_MAP = {
-  sm: 'sm:max-w-[640px]',
-  md: 'sm:max-w-[720px]',
-  lg: 'sm:max-w-[960px]',
+  /** Width for right sheets. */
+  widthClass?: string
 }
 
 const FOCUSABLE =
   'a[href],button:not([disabled]),textarea,input,select,[tabindex]:not([tabindex="-1"])'
 
-export default function Modal({ isOpen, onClose, title, children, size = 'md', footer }: ModalProps) {
+export default function Sheet({
+  isOpen,
+  onClose,
+  title,
+  children,
+  side = 'right',
+  footer,
+  widthClass = 'sm:max-w-[480px]',
+}: SheetProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const previouslyFocused = useRef<HTMLElement | null>(null)
 
@@ -33,24 +37,17 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md', f
     if (!isOpen) return
     previouslyFocused.current = document.activeElement as HTMLElement
     document.body.style.overflow = 'hidden'
-
-    // Prefer the first form field (command palettes / forms expect this),
-    // else the first focusable, else the panel itself.
     const panel = panelRef.current
-    const firstField = panel?.querySelector<HTMLElement>('input,textarea,select')
-    const firstFocusable = panel?.querySelector<HTMLElement>(FOCUSABLE)
-    ;(firstField ?? firstFocusable ?? panel)?.focus()
+    const first = panel?.querySelector<HTMLElement>(FOCUSABLE)
+    ;(first ?? panel)?.focus()
 
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose()
-        return
-      }
+      if (e.key === 'Escape') return onClose()
       if (e.key === 'Tab' && panel) {
         const items = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
           el => el.offsetParent !== null
         )
-        if (items.length === 0) return
+        if (!items.length) return
         const firstEl = items[0]
         const lastEl = items[items.length - 1]
         if (e.shiftKey && document.activeElement === firstEl) {
@@ -72,29 +69,31 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md', f
 
   if (!isOpen) return null
 
+  const isBottom = side === 'bottom'
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4"
+      className={clsx('fixed inset-0 z-50 flex', isBottom ? 'items-end' : 'justify-end')}
       role="dialog"
       aria-modal="true"
       aria-label={title}
     >
-      <div
-        className="fixed inset-0"
-        style={{ background: 'rgba(10, 20, 40, 0.45)' }}
-        onClick={onClose}
-      />
+      <div className="fixed inset-0" style={{ background: 'rgba(10, 20, 40, 0.45)' }} onClick={onClose} />
       <div
         ref={panelRef}
         tabIndex={-1}
         className={clsx(
-          'relative bg-card text-foreground w-full elev-raised outline-none',
-          'rounded-t-2xl sm:rounded-xl',
-          'max-h-[92vh] sm:max-h-[88vh] flex flex-col',
-          'animate-slide-up-fade sm:animate-scale-in',
-          SIZE_MAP[size]
+          'relative bg-card text-foreground elev-raised outline-none flex flex-col',
+          isBottom
+            ? 'w-full max-h-[85vh] rounded-t-2xl animate-slide-up-fade pb-safe'
+            : clsx('h-full w-full border-l border-border animate-slide-in-right', widthClass),
         )}
       >
+        {isBottom && (
+          <div className="flex justify-center pt-3 pb-1 shrink-0">
+            <span className="h-1.5 w-10 rounded-full bg-border" />
+          </div>
+        )}
         {title && (
           <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-border shrink-0">
             <h2 className="text-h3 text-foreground">{title}</h2>
@@ -107,7 +106,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md', f
             </button>
           </div>
         )}
-        <div className="px-6 py-4 overflow-y-auto pb-safe">{children}</div>
+        <div className="px-6 py-4 overflow-y-auto flex-1">{children}</div>
         {footer && (
           <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border shrink-0 pb-safe">
             {footer}

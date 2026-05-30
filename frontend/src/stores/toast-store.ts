@@ -16,15 +16,27 @@ interface ToastState {
 
 let nextId = 0
 
+// Per-variant auto-dismiss (Spec/02 §11): 5s success/info, 8s warning,
+// sticky for error (manual close only).
+const DISMISS_MS: Record<ToastType, number | null> = {
+  success: 5000,
+  info: 5000,
+  warning: 8000,
+  error: null,
+}
+
 export const useToastStore = create<ToastState>((set) => ({
   toasts: [],
 
   addToast: (message, type = 'info') => {
     const id = String(++nextId)
     set(s => ({ toasts: [...s.toasts, { id, message, type }] }))
-    setTimeout(() => {
-      set(s => ({ toasts: s.toasts.filter(t => t.id !== id) }))
-    }, 4000)
+    const ms = DISMISS_MS[type]
+    if (ms != null) {
+      setTimeout(() => {
+        set(s => ({ toasts: s.toasts.filter(t => t.id !== id) }))
+      }, ms)
+    }
   },
 
   removeToast: (id) => {

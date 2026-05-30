@@ -1,44 +1,56 @@
 import { forwardRef } from 'react'
 import clsx from 'clsx'
+import { fieldBaseClasses, fieldStateClasses, FieldLabel } from './Input'
 
+// Textarea — Spec/02-design-system.md §4. Multi-line; auto-grows up to ~8 rows.
 interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string
   error?: string
+  success?: string
   helperText?: string
   showCount?: boolean
+  required?: boolean
 }
 
 const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ label, error, helperText, showCount, maxLength, className, value, id, ...props }, ref) => {
+  ({ label, error, success, helperText, showCount, maxLength, className, value, id, required, ...props }, ref) => {
     const inputId = id || label?.toLowerCase().replace(/\s+/g, '-')
+    const helperId = inputId ? `${inputId}-help` : undefined
     const charCount = typeof value === 'string' ? value.length : 0
 
     return (
       <div className="w-full">
-        {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 mb-1">
-            {label}
-          </label>
-        )}
+        {label && <FieldLabel htmlFor={inputId} required={required}>{label}</FieldLabel>}
         <textarea
           ref={ref}
           id={inputId}
           value={value}
           maxLength={maxLength}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={helperId}
+          aria-required={required || undefined}
           className={clsx(
-            'w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-slate-600 focus:border-transparent resize-y min-h-[80px]',
-            error ? 'border-red-500' : 'border-gray-300',
+            fieldBaseClasses,
+            fieldStateClasses(error, success),
+            'px-3 py-2 text-sm resize-y min-h-[80px] leading-relaxed',
             className
           )}
           {...props}
         />
-        <div className="flex justify-between mt-1">
+        <div id={helperId} className="flex justify-between gap-2 min-h-[18px] mt-1">
           <div>
-            {error && <p className="text-xs text-red-600">{error}</p>}
-            {helperText && !error && <p className="text-xs text-gray-500">{helperText}</p>}
+            {error ? (
+              <p className="text-xs text-error">{error}</p>
+            ) : success ? (
+              <p className="text-xs text-success">{success}</p>
+            ) : helperText ? (
+              <p className="text-xs text-muted-foreground">{helperText}</p>
+            ) : null}
           </div>
           {showCount && maxLength && (
-            <p className="text-xs text-gray-400">{charCount}/{maxLength}</p>
+            <p className={clsx('text-xs shrink-0', charCount >= maxLength ? 'text-error' : 'text-muted-foreground')}>
+              {charCount}/{maxLength}
+            </p>
           )}
         </div>
       </div>

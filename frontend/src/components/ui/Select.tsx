@@ -1,39 +1,61 @@
 import { forwardRef } from 'react'
 import clsx from 'clsx'
+import { ChevronDown } from 'lucide-react'
+import { fieldBaseClasses, fieldStateClasses, FieldLabel, FieldHelp } from './Input'
 
-interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+// Select — Spec/02-design-system.md §4. Native select for ≤7 options.
+type FieldSize = 'sm' | 'md' | 'lg'
+
+interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
   label?: string
   error?: string
+  success?: string
+  helperText?: string
   options: { value: string; label: string }[]
   placeholder?: string
+  uiSize?: FieldSize
+  required?: boolean
+}
+
+const SIZE_CLASSES: Record<FieldSize, string> = {
+  sm: 'h-8 text-[13px]',
+  md: 'h-10 text-sm',
+  lg: 'h-12 text-base',
 }
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ label, error, options, placeholder, className, id, ...props }, ref) => {
+  ({ label, error, success, helperText, options, placeholder, uiSize = 'md', className, id, required, ...props }, ref) => {
     const inputId = id || label?.toLowerCase().replace(/\s+/g, '-')
+    const helperId = inputId ? `${inputId}-help` : undefined
     return (
       <div className="w-full">
-        {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 mb-1">
-            {label}
-          </label>
-        )}
-        <select
-          ref={ref}
-          id={inputId}
-          className={clsx(
-            'w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-slate-600 focus:border-transparent bg-white',
-            error ? 'border-red-500' : 'border-gray-300',
-            className
-          )}
-          {...props}
-        >
-          {placeholder && <option value="">{placeholder}</option>}
-          {options.map(o => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
-        {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+        {label && <FieldLabel htmlFor={inputId} required={required}>{label}</FieldLabel>}
+        <div className="relative">
+          <select
+            ref={ref}
+            id={inputId}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={helperId}
+            aria-required={required || undefined}
+            className={clsx(
+              fieldBaseClasses,
+              fieldStateClasses(error, success),
+              SIZE_CLASSES[uiSize],
+              'appearance-none pl-3 pr-9 cursor-pointer',
+              className
+            )}
+            {...props}
+          >
+            {placeholder && <option value="">{placeholder}</option>}
+            {options.map(o => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+          <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+        </div>
+        <div id={helperId}>
+          <FieldHelp error={error} success={success} helperText={helperText} />
+        </div>
       </div>
     )
   }

@@ -163,4 +163,57 @@ html {
     @apply -translate-y-1;
     box-shadow: 0 8px 25px -5px hsl(var(--foreground) / 0.1);
   }
+
+  /* ----------------------------------------------------------------
+     Elevation — the only three documented shadows (Spec/01 §5).
+     Ink-tinted, never gray. elev-glow is the rare gold accent moment.
+     ---------------------------------------------------------------- */
+  .elev-subtle { box-shadow: 0 1px 2px hsl(220 30% 10% / 0.06), 0 1px 1px hsl(220 30% 10% / 0.04); }
+  .elev-raised { box-shadow: 0 8px 24px -8px hsl(220 30% 10% / 0.12), 0 2px 4px hsl(220 30% 10% / 0.06); }
+  .elev-glow   { box-shadow: 0 0 0 2px hsl(var(--primary)), 0 8px 24px -8px hsl(45 100% 50% / 0.25); }
+
+  [data-theme="dark"] .elev-subtle, .dark .elev-subtle { box-shadow: 0 1px 2px hsl(0 0% 0% / 0.25); }
+  [data-theme="dark"] .elev-raised, .dark .elev-raised { box-shadow: 0 8px 24px -8px hsl(0 0% 0% / 0.40); }
+
+  /* Safe-area padding for the mobile bottom tab bar (Spec/02b §3.1). */
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+  .h-safe-bottom { height: calc(56px + env(safe-area-inset-bottom)); }
+  .mb-safe-bottom { margin-bottom: calc(56px + env(safe-area-inset-bottom)); }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+/* Skeleton shimmer — 1.2s sweep on muted base (Spec/02 §13). */
+@keyframes up-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.up-skeleton {
+  background-image: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--muted-foreground) / 0.12) 37%, hsl(var(--muted)) 63%);
+  background-size: 200% 100%;
+  animation: up-shimmer 1.2s ease-in-out infinite;
+}
+
+/* ----------------------------------------------------------------
+   Accessibility — honor prefers-reduced-motion (Spec/02b §9).
+   Disable the artifact-rail pulse, sheet springs, and decorative loops.
+   ---------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .up-skeleton { animation: none; }
+}
+
+/* Touch ergonomics — 44px minimum target on touch devices (Spec/02b §4,
+   WCAG 2.5.5). Scoped to interactive chrome so desktop density is preserved. */
+@media (pointer: coarse) {
+  .ui-btn:not(.link),
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }

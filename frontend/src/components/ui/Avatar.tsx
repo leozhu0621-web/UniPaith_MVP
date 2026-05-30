@@ -13,14 +13,13 @@ const SIZE_MAP = {
   lg: 'w-12 h-12 text-base',
 }
 
+// On-brand, restrained tint set (duotone-derived) instead of a rainbow palette.
 const COLORS = [
-  'bg-brand-slate-100 text-brand-slate-700',
-  'bg-emerald-100 text-emerald-700',
-  'bg-brand-amber-100 text-brand-amber-700',
-  'bg-rose-100 text-rose-700',
-  'bg-cyan-100 text-cyan-700',
-  'bg-purple-100 text-purple-700',
-  'bg-orange-100 text-orange-700',
+  'bg-cobalt/15 text-cobalt',
+  'bg-success-soft text-success',
+  'bg-warning-soft text-warning',
+  'bg-muted text-foreground',
+  'bg-secondary text-secondary-foreground',
 ]
 
 function hashColor(name: string): string {
@@ -55,7 +54,7 @@ export default function Avatar({ name, src, size = 'md', className }: AvatarProp
   return (
     <div
       className={clsx(
-        'rounded-full flex items-center justify-center font-medium',
+        'rounded-full flex items-center justify-center font-semibold',
         SIZE_MAP[size],
         hashColor(name),
         className

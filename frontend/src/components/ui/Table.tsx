@@ -1,10 +1,14 @@
 import clsx from 'clsx'
 import Skeleton from './Skeleton'
 
+// Table — Spec/02-design-system.md §8. Muted sticky header with eyebrow labels;
+// alternating rows; muted hover; 12y/16x cell padding.
 interface Column {
   key: string
   label: string
   render?: (row: any) => React.ReactNode
+  align?: 'left' | 'right'
+  numeric?: boolean
 }
 
 interface TableProps {
@@ -15,7 +19,7 @@ interface TableProps {
   emptyMessage?: string
 }
 
-export default function Table({ columns, data, onRowClick, isLoading, emptyMessage = 'No data' }: TableProps) {
+export default function Table({ columns, data, onRowClick, isLoading, emptyMessage = 'No records match' }: TableProps) {
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -27,18 +31,22 @@ export default function Table({ columns, data, onRowClick, isLoading, emptyMessa
   }
 
   if (data.length === 0) {
-    return (
-      <div className="text-center py-12 text-sm text-gray-500">{emptyMessage}</div>
-    )
+    return <div className="text-center py-12 text-sm text-muted-foreground">{emptyMessage}</div>
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-lg border border-border">
       <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-gray-200">
+        <thead className="sticky top-0 z-10">
+          <tr className="bg-muted">
             {columns.map(col => (
-              <th key={col.key} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+              <th
+                key={col.key}
+                className={clsx(
+                  'px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground',
+                  col.align === 'right' || col.numeric ? 'text-right' : 'text-left'
+                )}
+              >
                 {col.label}
               </th>
             ))}
@@ -50,13 +58,19 @@ export default function Table({ columns, data, onRowClick, isLoading, emptyMessa
               key={row.id || i}
               onClick={() => onRowClick?.(row)}
               className={clsx(
-                'border-b border-gray-100',
-                i % 2 === 1 && 'bg-gray-50/50',
-                onRowClick && 'cursor-pointer hover:bg-gray-100'
+                'border-t border-border',
+                i % 2 === 1 && 'bg-muted/30',
+                onRowClick && 'cursor-pointer hover:bg-muted transition-colors'
               )}
             >
               {columns.map(col => (
-                <td key={col.key} className="px-4 py-3 text-gray-700">
+                <td
+                  key={col.key}
+                  className={clsx(
+                    'px-4 py-3 text-foreground',
+                    (col.align === 'right' || col.numeric) && 'text-right tabular-nums'
+                  )}
+                >
                   {col.render ? col.render(row) : row[col.key]}
                 </td>
               ))}
