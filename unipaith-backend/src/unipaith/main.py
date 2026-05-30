@@ -34,7 +34,6 @@ def _setup_logging() -> None:
 _setup_logging()
 
 
-@asynccontextmanager
 async def _ensure_schools_table(db: AsyncSession) -> None:
     """Bootstrap the schools table + school_id FK if they don't exist yet."""
     from sqlalchemy import text
@@ -109,6 +108,7 @@ async def _ensure_schools_table(db: AsyncSession) -> None:
     log.info("Schools table created and populated successfully.")
 
 
+@asynccontextmanager
 async def lifespan(app: FastAPI):  # noqa: ARG001
     # Ensure schools table exists (bypasses broken Alembic chain)
     try:
