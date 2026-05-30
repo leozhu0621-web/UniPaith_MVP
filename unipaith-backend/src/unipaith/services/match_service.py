@@ -384,12 +384,18 @@ class MatchService:
         profile_version: int,
         program_version: int,
     ) -> MatchRationale | None:
+        # Spec 03 §12 — prompt_version is part of the cache key so a
+        # prompt iteration forces re-derivation. The constant lives in
+        # `unipaith.ai.cache_invalidation`.
+        from unipaith.ai.cache_invalidation import RATIONALE_PROMPT_VERSION
+
         return await self.db.scalar(
             select(MatchRationale).where(
                 MatchRationale.student_id == student_id,
                 MatchRationale.program_id == program_id,
                 MatchRationale.profile_version == profile_version,
                 MatchRationale.program_version == program_version,
+                MatchRationale.prompt_version == RATIONALE_PROMPT_VERSION,
             )
         )
 
@@ -402,11 +408,14 @@ class MatchService:
         program_version: int,
         result: RationaleResult,
     ) -> None:
+        from unipaith.ai.cache_invalidation import RATIONALE_PROMPT_VERSION
+
         row = MatchRationale(
             student_id=student_id,
             program_id=program_id,
             profile_version=profile_version,
             program_version=program_version,
+            prompt_version=RATIONALE_PROMPT_VERSION,
             rationale_text=result.joined_text(),
             cited_student_fields=list(result.cited_student_fields),
             cited_program_fields=list(result.cited_program_fields),

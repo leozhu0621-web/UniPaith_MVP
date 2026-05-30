@@ -988,6 +988,12 @@ class StudentService:
         record = result.scalar_one_or_none()
         update_data = data.model_dump(exclude_unset=True)
 
+        # Spec 03 §12 — when consent_matching flips, cached rationales
+        # are stale derivative data the student no longer consents to
+        # keep. Compare BEFORE applying the patch so we only invalidate
+        # on a real change.
+        prior_matching = bool(record.consent_matching) if record is not None else True
+
         if record is None:
             record = StudentDataConsent(student_id=student_id, **update_data)
             self.db.add(record)
@@ -1002,6 +1008,17 @@ class StudentService:
             record.deletion_requested_at = None
 
         await self.db.flush()
+
+        # After flush, invalidate downstream caches when consent.matching
+        # changed in either direction. Opt-out drops them so the student
+        # never sees a rationale they didn't consent to; opt-back-in
+        # drops them so the next read regenerates under the new mask
+        # (recording the new consent_mask on the audit ledger row).
+        if bool(record.consent_matching) != prior_matching:
+            from unipaith.ai.cache_invalidation import invalidate_for_consent_change
+
+            await invalidate_for_consent_change(self.db, student_id)
+
         return record
 
     # --- Peer Comparison ---
