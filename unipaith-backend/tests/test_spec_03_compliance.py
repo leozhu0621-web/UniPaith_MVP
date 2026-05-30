@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 
 import pytest
+
 from unipaith.ai.cache_invalidation import (
     RATIONALE_PROMPT_VERSION,
 )
@@ -357,3 +358,81 @@ def test_provider_protocol_runtime_checkable():
     """The Protocol is @runtime_checkable so registry can isinstance-check."""
     p = _AlwaysFailsProvider(exception=RuntimeError("boom"))
     assert isinstance(p, AIProvider)
+
+
+# ── Spec 03 §3/§14 — prompt-cache TTL layout (system 1h, tail uncached) ──
+
+
+def test_prompt_cache_markers_match_spec_3():
+    """CACHE_1H is the 1-hour system breakpoint; CACHE_5MIN is the default
+    ephemeral persona marker (no ttl == 5 minutes)."""
+    from unipaith.ai.prompt_cache import CACHE_1H, CACHE_5MIN
+
+    assert CACHE_1H == {"type": "ephemeral", "ttl": "1h"}
+    assert CACHE_5MIN == {"type": "ephemeral"}
+
+
+def test_orchestrator_caches_system_block_at_1h():
+    """Spec 03 §3/§14: the long system prompt is the highest-leverage
+    breakpoint and must be cached at 1h; the per-turn state header is the
+    uncached tail."""
+    from unipaith.ai.orchestrator import Orchestrator, TurnContext
+
+    orch = Orchestrator(system_prompt="SYSTEM PROMPT TEXT")
+    ctx = TurnContext(
+        track="profile",
+        layer=None,
+        completion_pct=0.0,
+        verdict=None,
+        known_profile_summary="",
+    )
+    blocks = orch._build_system_blocks(ctx)
+    # Block 0 = system prompt, cached at 1h.
+    assert blocks[0]["cache_control"] == {"type": "ephemeral", "ttl": "1h"}
+    # Block 1 = volatile per-turn state header, uncached (the tail).
+    assert "cache_control" not in blocks[1]
+
+
+def test_no_production_agent_caches_system_at_5min():
+    """Guard against regression: every production agent module marks its
+    cacheable system/tool blocks with the named CACHE_1H constant, never a
+    bare 5-minute ephemeral dict. The eval harness is exempt (its criteria
+    vary per case, so 5min is correct there)."""
+    import pathlib
+
+    ai_dir = pathlib.Path(__file__).resolve().parent.parent / "src" / "unipaith" / "ai"
+    production_agents = [
+        "orchestrator.py",
+        "extractor.py",
+        "validator.py",
+        "feature_emitter.py",
+        "rationale.py",
+        "coach.py",
+        "strategy.py",
+        "identity.py",
+    ]
+    offenders = []
+    for name in production_agents:
+        text = (ai_dir / name).read_text(encoding="utf-8")
+        if '"cache_control": {"type": "ephemeral"}' in text:
+            offenders.append(name)
+    assert not offenders, f"Agents still use a bare 5-min cache marker: {offenders}"
+
+
+# ── Spec 03 §8/§13 — migration chain integrity (single head for deploys) ─
+
+
+def test_alembic_has_single_head():
+    """`alembic upgrade head` is unambiguous only with one head. A second
+    head silently breaks deploys, so pin it here."""
+    import pathlib
+
+    from alembic.config import Config
+    from alembic.script import ScriptDirectory
+
+    backend_root = pathlib.Path(__file__).resolve().parent.parent
+    cfg = Config(str(backend_root / "alembic.ini"))
+    cfg.set_main_option("script_location", str(backend_root / "alembic"))
+    script = ScriptDirectory.from_config(cfg)
+    heads = script.get_heads()
+    assert len(heads) == 1, f"Expected exactly one alembic head, found {len(heads)}: {heads}"

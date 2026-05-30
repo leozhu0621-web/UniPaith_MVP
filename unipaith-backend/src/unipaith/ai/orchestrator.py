@@ -38,6 +38,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.ai.client import AIClient, get_client
+from unipaith.ai.prompt_cache import CACHE_1H
 from unipaith.ai.state import Layer, LayerVerdict, Track
 from unipaith.ai.tools import RECORD_ARTIFACT_TOOL, REQUEST_LAYER_ADVANCE_TOOL
 
@@ -128,7 +129,7 @@ class Orchestrator:
         """Generate a single counselor turn. Records to `ai_turns` ledger."""
         system = self._build_system_blocks(ctx)
         tools = [
-            {**RECORD_ARTIFACT_TOOL, "cache_control": {"type": "ephemeral"}},
+            {**RECORD_ARTIFACT_TOOL, "cache_control": CACHE_1H},
             {**REQUEST_LAYER_ADVANCE_TOOL},
         ]
         messages = self._build_messages(ctx)
@@ -169,7 +170,7 @@ class Orchestrator:
         """
         system = self._build_system_blocks(ctx)
         tools = [
-            {**RECORD_ARTIFACT_TOOL, "cache_control": {"type": "ephemeral"}},
+            {**RECORD_ARTIFACT_TOOL, "cache_control": CACHE_1H},
             {**REQUEST_LAYER_ADVANCE_TOOL},
         ]
         messages = self._build_messages(ctx)
@@ -200,13 +201,16 @@ class Orchestrator:
         """Three system blocks for the cache layout described above."""
         state_header = self._render_state_header(ctx)
         return [
-            # Block 1: the long system prompt + frameworks. Cached.
+            # Block 1: the long system prompt + frameworks. Cached at 1h
+            # (spec 03 §3) — identical across every turn for every user, so
+            # it's the highest-leverage breakpoint.
             {
                 "type": "text",
                 "text": self.system_prompt,
-                "cache_control": {"type": "ephemeral"},
+                "cache_control": CACHE_1H,
             },
-            # Block 2: per-turn state header. Not cached — changes every turn.
+            # Block 2: per-turn state header. Not cached — changes every turn
+            # (volatile validator state), so it's the uncached tail.
             {
                 "type": "text",
                 "text": state_header,

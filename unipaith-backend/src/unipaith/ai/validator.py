@@ -36,6 +36,7 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.ai.client import AIClient, get_client
+from unipaith.ai.prompt_cache import CACHE_1H
 from unipaith.ai.state import (
     Layer,
     LayerVerdict,
@@ -343,10 +344,8 @@ class LayerValidator:
                 mean_score=0.0, threshold=threshold, passed=False, per_entry=[]
             )
 
-        system = [
-            {"type": "text", "text": system_prompt, "cache_control": {"type": "ephemeral"}}
-        ]
-        tools = [{**tool, "cache_control": {"type": "ephemeral"}}]
+        system = [{"type": "text", "text": system_prompt, "cache_control": CACHE_1H}]
+        tools = [{**tool, "cache_control": CACHE_1H}]
         payload = json.dumps({"entries": entries}, ensure_ascii=False)
 
         try:

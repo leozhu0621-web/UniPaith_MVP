@@ -31,6 +31,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.ai.client import AIClient, get_client
+from unipaith.ai.prompt_cache import CACHE_1H
 from unipaith.ai.state import DEFAULT_FIELD_CONFIDENCE_THRESHOLD
 from unipaith.ai.tools import EXTRACT_SIGNALS_TOOL
 
@@ -111,10 +112,10 @@ class Extractor:
             {
                 "type": "text",
                 "text": self.system_prompt,
-                "cache_control": {"type": "ephemeral"},
+                "cache_control": CACHE_1H,
             }
         ]
-        tools = [{**EXTRACT_SIGNALS_TOOL, "cache_control": {"type": "ephemeral"}}]
+        tools = [{**EXTRACT_SIGNALS_TOOL, "cache_control": CACHE_1H}]
 
         response = await self.client.message(
             agent=self.AGENT_NAME,

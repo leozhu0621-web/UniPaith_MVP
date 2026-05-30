@@ -45,6 +45,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.ai.client import AIClient, get_client
+from unipaith.ai.prompt_cache import CACHE_1H
 from unipaith.ai.tools.workshop_schema import (
     SCHEMA_VERSION,
     SCORE_GENERATION_LEAK_TOOL,
@@ -325,11 +326,11 @@ class WorkshopCoach:
             {
                 "type": "text",
                 "text": self.coach_prompt,
-                "cache_control": {"type": "ephemeral"},
+                "cache_control": CACHE_1H,
             }
         ]
         tools = [
-            {**SUBMIT_ESSAY_FEEDBACK_TOOL, "cache_control": {"type": "ephemeral"}}
+            {**SUBMIT_ESSAY_FEEDBACK_TOOL, "cache_control": CACHE_1H}
         ]
         payload = self._coach_payload(draft)
         response = await self.client.message(
@@ -396,11 +397,11 @@ class WorkshopCoach:
             {
                 "type": "text",
                 "text": self.judge_prompt,
-                "cache_control": {"type": "ephemeral"},
+                "cache_control": CACHE_1H,
             }
         ]
         tools = [
-            {**SCORE_GENERATION_LEAK_TOOL, "cache_control": {"type": "ephemeral"}}
+            {**SCORE_GENERATION_LEAK_TOOL, "cache_control": CACHE_1H}
         ]
         payload = json.dumps(
             {
@@ -608,8 +609,8 @@ async def _coach_interview_impl(
 ) -> InterviewCoachResult:
     """Coach an interview-prep response. Same two-layer guardrail as essay."""
     prompt_text = interview_prompt or _load_prompt("workshop_interview.md")
-    system = [{"type": "text", "text": prompt_text, "cache_control": {"type": "ephemeral"}}]
-    tools = [{**SUBMIT_INTERVIEW_FEEDBACK_TOOL, "cache_control": {"type": "ephemeral"}}]
+    system = [{"type": "text", "text": prompt_text, "cache_control": CACHE_1H}]
+    tools = [{**SUBMIT_INTERVIEW_FEEDBACK_TOOL, "cache_control": CACHE_1H}]
     payload = json.dumps(
         {
             "program_name": response.program_name,
@@ -686,8 +687,8 @@ async def _coach_test_prep_impl(
 ) -> TestPrepCoachResult:
     """Coach a test-prep situation. Same two-layer guardrail."""
     prompt_text = test_prep_prompt or _load_prompt("workshop_test.md")
-    system = [{"type": "text", "text": prompt_text, "cache_control": {"type": "ephemeral"}}]
-    tools = [{**SUBMIT_TEST_PREP_GUIDANCE_TOOL, "cache_control": {"type": "ephemeral"}}]
+    system = [{"type": "text", "text": prompt_text, "cache_control": CACHE_1H}]
+    tools = [{**SUBMIT_TEST_PREP_GUIDANCE_TOOL, "cache_control": CACHE_1H}]
     payload = json.dumps(
         {
             "test_type": context.test_type,
@@ -781,10 +782,10 @@ async def _run_generic_judge_impl(
         {
             "type": "text",
             "text": self.judge_prompt,
-            "cache_control": {"type": "ephemeral"},
+            "cache_control": CACHE_1H,
         }
     ]
-    tools = [{**SCORE_GENERATION_LEAK_TOOL, "cache_control": {"type": "ephemeral"}}]
+    tools = [{**SCORE_GENERATION_LEAK_TOOL, "cache_control": CACHE_1H}]
     payload = json.dumps(
         {"original_text": original_text, "coach_output": coach_output},
         ensure_ascii=False,

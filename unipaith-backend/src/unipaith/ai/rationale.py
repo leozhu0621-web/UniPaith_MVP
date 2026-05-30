@@ -33,6 +33,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.ai.client import AIClient, get_client
+from unipaith.ai.prompt_cache import CACHE_1H
 from unipaith.ai.tools.rationale_schema import SUBMIT_RATIONALE_TOOL
 
 logger = logging.getLogger(__name__)
@@ -244,12 +245,12 @@ class RationaleAgent:
                     {
                         "type": "text",
                         "text": self.system_prompt,
-                        "cache_control": {"type": "ephemeral"},
+                        "cache_control": CACHE_1H,
                     }
                 ],
                 messages=[{"role": "user", "content": payload}],
                 tools=[
-                    {**SUBMIT_RATIONALE_TOOL, "cache_control": {"type": "ephemeral"}}
+                    {**SUBMIT_RATIONALE_TOOL, "cache_control": CACHE_1H}
                 ],
                 tool_choice={"type": "tool", "name": "submit_rationale"},
                 max_tokens=self.max_tokens,
