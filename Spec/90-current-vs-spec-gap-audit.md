@@ -162,7 +162,7 @@ Heuristic completion %, no `discovery_sessions` seeding, no track structure. Con
 
 Spec calls Stage 3a "Connection & Outreach" — Peers is core to it.
 
-**Action:** Define peer model (opt-in profile sharing per program), API, and tab UI in a new spec doc `27-peers-connect.md`. Defer until institution-side relationships are clearer.
+**Action:** Define peer model (opt-in profile sharing per program), API, and tab UI in a new spec doc `1C-connect.md`. Defer until institution-side relationships are clearer.
 
 ### G-S8 · Student SettingsPage missing locale/MFA/password/account-delete
 **Severity:** `major` · **Type:** `extend` · **Owner:** `04` §10 · **Effort:** 3 days

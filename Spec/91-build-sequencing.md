@@ -293,7 +293,7 @@ Constraint: Phase 2 and Phase 4 should both complete before Phase 8 (Application
 
 **Goal:** Build Peers feature.
 
-**Specs:** new `27-peers-connect.md`.
+**Specs:** new `1C-connect.md`.
 **Gap items:** G-S7, G-D3.
 **Effort:** 5 days.
 
