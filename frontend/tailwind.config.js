@@ -174,6 +174,10 @@ export default {
         "shimmer": {
           "100%": { transform: "translateX(100%)" },
         },
+        "page-loader-sweep": {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(400%)" },
+        },
         "sheet-in": {
           "0%": { transform: "translateY(100%)" },
           "100%": { transform: "translateY(0)" },
@@ -200,6 +204,7 @@ export default {
         "shimmer": "shimmer 1.2s ease-out infinite",
         "sheet-in": "sheet-in 360ms cubic-bezier(0.2, 0.7, 0.2, 1)",
         "sheet-side-in": "sheet-side-in 200ms cubic-bezier(0.2, 0.7, 0.2, 1)",
+        "page-loader-sweep": "page-loader-sweep 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) infinite",
       },
     },
   },

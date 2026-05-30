@@ -194,7 +194,7 @@ export default function InstitutionLayout() {
         )}
       >
         <div className="flex items-center justify-between h-14 px-4 border-b border-gray-100">
-          {!sidebarCollapsed && <Wordmark className="h-6 w-auto" />}
+          {!sidebarCollapsed && <Wordmark className="h-7 w-auto" />}
           <button onClick={toggleSidebar} className="p-1 rounded hover:bg-gray-100">
             {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
           </button>
@@ -275,7 +275,7 @@ export default function InstitutionLayout() {
         aria-label="Institution navigation"
       >
         <div className="flex items-center justify-between h-14 px-4 border-b border-border">
-          <Wordmark className="h-6 w-auto" />
+          <Wordmark className="h-7 w-auto" />
           <button
             onClick={() => setMobileNavOpen(false)}
             aria-label="Close navigation"
@@ -316,7 +316,7 @@ export default function InstitutionLayout() {
 
       {/* Main content area */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-10 flex items-center justify-between h-14 px-4 lg:px-6 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/90">
+        <header className="sticky top-0 z-10 flex items-center justify-between h-16 px-4 lg:px-6 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/90">
           <div className="flex items-center gap-3">
             {/* Mobile hamburger */}
             <button
@@ -328,7 +328,7 @@ export default function InstitutionLayout() {
               <Menu size={20} />
             </button>
             <div className="lg:hidden">
-              <Wordmark className="h-6 w-auto" />
+              <Wordmark className="h-7 w-auto" />
             </div>
             <div className="hidden md:flex items-center gap-2">
               <span className="px-2 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide bg-muted text-foreground">

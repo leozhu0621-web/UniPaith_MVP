@@ -38,7 +38,7 @@ export default function StudentLayout() {
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Top bar — full chrome on desktop; compact wordmark on mobile. */}
-      <header className="h-14 flex items-center justify-between px-4 lg:px-6 bg-card border-b border-border flex-shrink-0 z-30">
+      <header className="h-16 flex items-center justify-between px-4 lg:px-6 bg-card border-b border-border flex-shrink-0 z-30">
         <NavLink to="/s" className="leading-none" aria-label="UniPaith home">
           <Wordmark className="h-7 w-auto" />
         </NavLink>
