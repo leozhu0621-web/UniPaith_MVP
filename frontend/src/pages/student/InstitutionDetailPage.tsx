@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import Breadcrumb from '../../components/layout/Breadcrumb'
 import { getPublicInstitution, getPublicPosts, getInstitutionSchools } from '../../api/institutions'
 import { searchPrograms } from '../../api/programs'
 import { listEvents, rsvpEvent, cancelRsvp, getMyRsvps } from '../../api/events'
@@ -116,6 +117,14 @@ export default function InstitutionDetailPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
+      {/* Drill-down breadcrumb (Spec/04 §7.5) */}
+      <Breadcrumb
+        className="mb-3"
+        items={[
+          { label: 'Match', to: '/s/explore' },
+          { label: inst.name },
+        ]}
+      />
       {/* Back button */}
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-student-text hover:text-student-ink mb-4">
         <ArrowLeft size={14} /> Back

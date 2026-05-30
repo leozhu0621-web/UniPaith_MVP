@@ -1,4 +1,4 @@
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   getInstitutionSchools, getSchoolPrograms, getPublicInstitution,
@@ -9,8 +9,9 @@ import ProgramCard from './explore/cards/ProgramCard'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Skeleton from '../../components/ui/Skeleton'
+import Breadcrumb from '../../components/layout/Breadcrumb'
 import {
-  ArrowLeft, Building2, BookOpen, ChevronRight, GraduationCap,
+  ArrowLeft, Building2, BookOpen, GraduationCap,
 } from 'lucide-react'
 import type { SchoolSummary, ProgramSummary } from '../../types'
 
@@ -123,14 +124,15 @@ export default function SchoolSubunitPage() {
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-bold text-student-ink leading-tight">{school.name}</h1>
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-1 mt-1.5 text-[13px] text-student-text flex-wrap">
-              <Link to={`/s/institutions/${institutionId}`} className="text-student hover:underline font-medium">
-                {institution?.name || 'University'}
-              </Link>
-              <ChevronRight size={11} className="text-student-text/40" />
-              <span>{school.name}</span>
-            </div>
+            {/* Drill-down breadcrumb (Spec/04 §7.5) */}
+            <Breadcrumb
+              className="mt-1.5"
+              items={[
+                { label: 'Match', to: '/s/explore' },
+                { label: institution?.name || 'University', to: `/s/institutions/${institutionId}` },
+                { label: school.name },
+              ]}
+            />
             <div className="flex items-center gap-3 mt-3 text-xs text-student-text">
               <span className="flex items-center gap-1">
                 <BookOpen size={11} className="text-student" />

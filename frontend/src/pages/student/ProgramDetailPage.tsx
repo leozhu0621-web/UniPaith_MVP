@@ -27,6 +27,7 @@ import type { MatchResult, EventItem } from '../../types'
 // Redesigned components
 import MatchRing from './program/MatchRing'
 import ProgramHeader from './program/ProgramHeader'
+import Breadcrumb from '../../components/layout/Breadcrumb'
 import KeyMetrics from './program/KeyMetrics'
 import StatGroup from './program/StatGroup'
 import AboutCard from './program/AboutCard'
@@ -194,6 +195,15 @@ export default function ProgramDetailPage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
+      {/* Drill-down breadcrumb (Spec/04 §7.5) */}
+      <Breadcrumb
+        className="mb-3"
+        items={[
+          { label: 'Match', to: '/s/explore' },
+          instName ? { label: instName, to: `/s/institutions/${p.institution_id}` } : null,
+          { label: p.program_name },
+        ]}
+      />
       {/* ── Compact image-less header ── */}
       <ProgramHeader
         programName={p.program_name}

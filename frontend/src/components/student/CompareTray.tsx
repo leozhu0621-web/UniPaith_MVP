@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { useCompareStore } from '../../stores/compare-store'
 import { comparePrograms } from '../../api/saved-lists'
@@ -19,6 +20,15 @@ export default function CompareTray() {
       setExpanded(true)
     },
   })
+
+  // Spec/04 §8: /s/explore?compare=open opens the comparison in-place.
+  const [searchParams] = useSearchParams()
+  useEffect(() => {
+    if (searchParams.get('compare') === 'open' && items.length >= 2 && !comparisonResult && !compareMut.isPending) {
+      compareMut.mutate()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, items.length])
 
   if (items.length === 0) return null
 

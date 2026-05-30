@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { searchPrograms, nlpSearch } from '../../api/programs'
@@ -93,6 +93,14 @@ export default function ExplorePage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
   const compareStore = useCompareStore()
+  const strategyRef = useRef<HTMLDivElement>(null)
+
+  // Spec/04 §8: /s/explore?showStrategy=open brings the strategy view into focus.
+  useEffect(() => {
+    if (searchParams.get('showStrategy') === 'open') {
+      strategyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [searchParams])
 
   // Search state
   const [q, setQ] = useState(searchParams.get('q') || '')
@@ -174,7 +182,7 @@ export default function ExplorePage() {
       {/* Phase C — Strategy lands first. Programs/Schools render below
           unchanged. When a student has no active strategy, this surfaces
           a CTA pointing back to Discover or to generate one. */}
-      <div className="mb-4">
+      <div ref={strategyRef} className="mb-4">
         <StrategyView />
       </div>
 

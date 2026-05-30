@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import Breadcrumb from '../../components/layout/Breadcrumb'
 import { User, Star, Brain, ClipboardCheck, Calendar, Award, FileText, RefreshCw, Shield } from 'lucide-react'
 import { reviewApplication, makeDecision, createOffer } from '../../api/applications-admin'
 import { chatInstitutionAssistant, generateAIDraft } from '../../api/institutions'
@@ -173,6 +174,14 @@ export default function StudentDetailPage() {
 
   return (
     <div className="p-6">
+      {/* Drill-down breadcrumb (Spec/04 §7.5) */}
+      <Breadcrumb
+        className="mb-4"
+        items={[
+          { label: 'Admissions', to: '/i/admissions' },
+          { label: app.program?.program_name ? `Applicant · ${app.program.program_name}` : 'Applicant review' },
+        ]}
+      />
       <div className="grid grid-cols-3 gap-6">
         {/* Left: Snapshot */}
         <div className="col-span-1 space-y-4">

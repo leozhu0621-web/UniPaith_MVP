@@ -4,12 +4,13 @@ import { useCounselorStore } from '../../stores/counselor-store'
 import MiniCounselorPanel from '../student/MiniCounselorPanel'
 import {
   Compass, Target, FolderKanban, Newspaper,
-  Bell, LogOut, User, Bookmark, Settings, MessageSquare,
+  Bell, LogOut, User, Bookmark, Settings, MessageSquare, Menu,
 } from 'lucide-react'
 import Avatar from '../ui/Avatar'
 import Dropdown from '../ui/Dropdown'
 import Wordmark from '../ui/Wordmark'
 import CompareTray from '../student/CompareTray'
+import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 
 export default function StudentLayout() {
   const { user, logout } = useAuthStore()
@@ -21,18 +22,33 @@ export default function StudentLayout() {
   const isOtherTab = !isDiscoverTab
   const showMiniCounselor = isOtherTab && !isMinimized
 
+  // Per-route page title (Spec/04 §15).
+  const p = location.pathname
+  useDocumentTitle(
+    p.startsWith('/s/explore') ? 'Match'
+    : p.startsWith('/s/manage') ? 'Apply'
+    : p.startsWith('/s/posts') ? 'Connect'
+    : p.startsWith('/s/profile') ? 'Profile'
+    : p.startsWith('/s/saved') ? 'Saved'
+    : p.startsWith('/s/settings') ? 'Settings'
+    : p.startsWith('/s/programs') ? 'Program'
+    : p.startsWith('/s/institutions') ? 'Institution'
+    : p.startsWith('/s/applications') ? 'Application'
+    : 'Discover',
+  )
+
   return (
     <div className="flex flex-col h-screen bg-offwhite">
-      {/* Top bar */}
-      <header className="h-14 flex items-center justify-between px-6 bg-white border-b border-divider flex-shrink-0 z-30">
-        <NavLink to="/s" className="leading-none">
+      {/* Top bar — 64px, the four journey stages (Spec/04 §7.1). */}
+      <header className="h-16 flex items-center justify-between px-6 bg-white border-b border-divider flex-shrink-0 z-30">
+        <NavLink to="/s" className="leading-none" aria-label="UniPaith — Discover home">
           <Wordmark className="h-7 w-auto" />
         </NavLink>
 
         {/* Nav — Stage 1 (Discover) → Stage 2 (Match) → Stage 3 (Apply, Connect).
             Discover gets a divider after it because it's the home / always-on
-            surface for the student journey. */}
-        <nav className="flex items-center">
+            surface for the student journey. Collapses to a hamburger < sm (§14). */}
+        <nav className="hidden sm:flex items-center">
           {/* Discover — Stage 1, separated */}
           <NavLink
             to="/s"
@@ -46,7 +62,7 @@ export default function StudentLayout() {
             {({ isActive }) => (
               <>
                 <Compass size={19} />
-                <span className="text-[10px] mt-0.5 font-medium">Discover</span>
+                <span className={`text-[10px] mt-0.5 ${isActive ? 'font-semibold' : 'font-medium'}`}>Discover</span>
                 {isActive && <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-student rounded-full" />}
               </>
             )}
@@ -73,7 +89,7 @@ export default function StudentLayout() {
               {({ isActive }) => (
                 <>
                   <item.icon size={19} />
-                  <span className="text-[10px] mt-0.5 font-medium">{item.label}</span>
+                  <span className={`text-[10px] mt-0.5 ${isActive ? 'font-semibold' : 'font-medium'}`}>{item.label}</span>
                   {isActive && <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-student rounded-full" />}
                 </>
               )}
@@ -82,21 +98,41 @@ export default function StudentLayout() {
         </nav>
 
         <div className="flex items-center gap-2">
+          {/* Mobile hamburger — the four stages collapse here < sm (§14). */}
+          <div className="sm:hidden">
+            <Dropdown
+              align="right"
+              trigger={
+                <button className="p-2 rounded-lg hover:bg-student-mist text-slate hover:text-student-ink transition-colors" aria-label="Open navigation">
+                  <Menu size={19} />
+                </button>
+              }
+              items={[
+                { label: 'Discover', onClick: () => navigate('/s'), icon: <Compass size={14} /> },
+                { label: 'Match', onClick: () => navigate('/s/explore'), icon: <Target size={14} /> },
+                { label: 'Apply', onClick: () => navigate('/s/manage'), icon: <FolderKanban size={14} /> },
+                { label: 'Connect', onClick: () => navigate('/s/posts'), icon: <Newspaper size={14} /> },
+              ]}
+            />
+          </div>
+
           <button
             onClick={() => navigate('/s/manage?tab=messages')}
             className="relative p-2 rounded-lg hover:bg-student-mist text-slate hover:text-student-ink transition-colors"
+            aria-label="Messages"
           >
             <Bell size={19} />
           </button>
 
           <Dropdown
+            align="right"
             trigger={
-              <button className="p-1 rounded-lg hover:bg-student-mist transition-colors">
+              <button className="p-1 rounded-lg hover:bg-student-mist transition-colors" aria-label="Account menu">
                 <Avatar name={user?.email || '?'} size="sm" />
               </button>
             }
             items={[
-              { label: 'My Profile', onClick: () => navigate('/s/profile'), icon: <User size={14} /> },
+              { label: 'Profile', onClick: () => navigate('/s/profile'), icon: <User size={14} /> },
               { label: 'Saved', onClick: () => navigate('/s/saved'), icon: <Bookmark size={14} /> },
               { label: 'Settings', onClick: () => navigate('/s/settings'), icon: <Settings size={14} /> },
               { label: 'Sign out', onClick: logout, icon: <LogOut size={14} />, variant: 'danger' },

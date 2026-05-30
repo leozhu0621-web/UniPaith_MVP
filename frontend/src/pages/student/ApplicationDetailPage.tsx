@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import Breadcrumb from '../../components/layout/Breadcrumb'
 import { getMyApplication, submitApplication, getChecklist, generateChecklist, respondToOffer, getReadiness } from '../../api/applications'
 import { listEssays, createEssay, updateEssay, requestEssayFeedback } from '../../api/essays'
 import { listResumes, generateResume } from '../../api/resumes'
@@ -168,7 +169,15 @@ export default function ApplicationDetailPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <button onClick={() => navigate('/s/applications')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-brand-slate-600 mb-4">
+      {/* Drill-down breadcrumb (Spec/04 §7.5) */}
+      <Breadcrumb
+        className="mb-3"
+        items={[
+          { label: 'Apply', to: '/s/manage' },
+          { label: application.program?.program_name || 'Application' },
+        ]}
+      />
+      <button onClick={() => navigate('/s/manage')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-brand-slate-600 mb-4">
         <ArrowLeft size={16} /> My Applications
       </button>
 

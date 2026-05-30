@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, createOnlinePresence, updateOnlinePresence, deleteOnlinePresence, createPortfolioItem, updatePortfolioItem, deletePortfolioItem, createResearch, updateResearch, deleteResearch, createLanguage, updateLanguage, deleteLanguage, upsertPreferences, getNextStep, listWorkExperiences, createWorkExperience, updateWorkExperience, deleteWorkExperience, listCompetitions, createCompetition, updateCompetition, deleteCompetition, getAccommodations, upsertAccommodations, getScheduling, upsertScheduling, getPeerComparison, getTimeline, getDataRights, upsertDataRights } from '../../api/students'
@@ -17,9 +17,8 @@ import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalL
 import { BasicInfoForm, AcademicForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm, ResearchForm, LanguageForm, WorkExperienceForm, CompetitionForm, AccommodationForm, SchedulingForm, DataRightsForm } from './components/ProfileForms'
 import type { StudentProfile } from '../../types'
 
-// Lazy-load absorbed pages as tabs
-const EssayWorkshopPage = lazy(() => import('./EssayWorkshopPage'))
-const ResumeWorkshopPage = lazy(() => import('./ResumeWorkshopPage'))
+// Lazy-load absorbed pages as tabs. Essays & Resume moved to Apply > Workshops
+// (feedback-only) per Spec/04 §4.6 — the ?tab=essays link now redirects there.
 const RecommendationsPage = lazy(() => import('./RecommendationsPage'))
 const FinancialAidPage = lazy(() => import('./FinancialAidPage'))
 
@@ -29,29 +28,42 @@ const GoalsTab = lazy(() => import('./profile/GoalsTab'))
 const NeedsTab = lazy(() => import('./profile/NeedsTab'))
 const StrategyTab = lazy(() => import('./profile/StrategyTab'))
 
+// 13-tab structure per Spec/04 §4.6 — covers all 19 Universal-Profile sections.
+// (Notifications live in Settings; Personal lives in the Overview header block.)
 type ProfileTab =
   | 'overview'
   | 'identity'
+  | 'academics'
+  | 'experience'
   | 'goals'
   | 'needs'
   | 'strategy'
-  | 'essays'
-  | 'recommenders'
+  | 'preparation'
+  | 'preferences'
   | 'financial'
+  | 'timeline'
+  | 'analytics'
+  | 'data'
 
-// Order: durable record (Overview) → deepest layer (Identity) → durable
-// artifacts (Goals, Needs) → bridge to Match (Strategy) → existing tabs.
-// Per the Phase D plan, Essays & Resume will move to Apply > Workshops.
 const PROFILE_TABS: { key: ProfileTab; label: string }[] = [
   { key: 'overview', label: 'Overview' },
   { key: 'identity', label: 'Identity' },
+  { key: 'academics', label: 'Academics' },
+  { key: 'experience', label: 'Experience' },
   { key: 'goals', label: 'Goals' },
   { key: 'needs', label: 'Needs' },
   { key: 'strategy', label: 'Strategy' },
-  { key: 'essays', label: 'Essays & Resume' },
-  { key: 'recommenders', label: 'Recommenders' },
+  { key: 'preparation', label: 'Preparation' },
+  { key: 'preferences', label: 'Preferences' },
   { key: 'financial', label: 'Financial' },
+  { key: 'timeline', label: 'Timeline' },
+  { key: 'analytics', label: 'Analytics' },
+  { key: 'data', label: 'Data' },
 ]
+
+// Tabs whose body is a full lazy sub-page (rendered alone); the rest are
+// composed from section cards in the main return (hidden unless active).
+const LAZY_TABS: ProfileTab[] = ['identity', 'goals', 'needs', 'strategy', 'financial']
 
 // --- Profile Strength Ring ---
 function StrengthRing({ value }: { value: number }) {
@@ -112,7 +124,26 @@ export default function ProfilePage() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const activeTab = (searchParams.get('tab') as ProfileTab) || 'overview'
+  const rawTab = searchParams.get('tab')
+  const activeTab = (rawTab as ProfileTab) || 'overview'
+  const section = searchParams.get('section')
+
+  // Legacy tab redirects (Spec/04 §4.6): Essays & Resume → Apply > Workshops;
+  // Recommenders is now a section inside Preparation.
+  useEffect(() => {
+    if (rawTab === 'essays') navigate('/s/manage?tab=workshops', { replace: true })
+    else if (rawTab === 'recommenders') navigate('/s/profile?tab=preparation&section=recommenders', { replace: true })
+  }, [rawTab, navigate])
+
+  // Deep-link to a section within a tab (Spec/04 §8): scroll it into view.
+  useEffect(() => {
+    if (!section) return
+    const el = document.getElementById(`section-${section}`)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [section, activeTab])
+
+  // Section cards live in one scroll; non-active tabs are hidden (Spec/04 §4.6).
+  const tabCls = (tab: ProfileTab) => (activeTab === tab ? 'p-5' : 'hidden')
   const [editModal, setEditModal] = useState<string | null>(null)
   const [editItem, setEditItem] = useState<any>(null)
 
@@ -203,8 +234,8 @@ export default function ProfilePage() {
     }
   }
 
-  // Tab content for non-overview tabs
-  if (activeTab !== 'overview') {
+  // Lazy sub-page tabs render alone (Identity / Goals / Needs / Strategy / Financial).
+  if (LAZY_TABS.includes(activeTab)) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
         <div className="flex items-center gap-2 mb-1">
@@ -214,12 +245,12 @@ export default function ProfilePage() {
         <p className="text-sm text-gray-500 mb-4">Everything about you in one place.</p>
 
         {/* Tab bar */}
-        <div className="flex gap-1 mb-6 border-b border-divider">
+        <div className="flex gap-1 mb-6 border-b border-divider overflow-x-auto">
           {PROFILE_TABS.map(tab => (
             <button
               key={tab.key}
               onClick={() => setSearchParams(tab.key === 'overview' ? {} : { tab: tab.key })}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors shrink-0 whitespace-nowrap ${
                 activeTab === tab.key
                   ? 'border-student text-student'
                   : 'border-transparent text-student-text hover:text-student-ink'
@@ -235,15 +266,6 @@ export default function ProfilePage() {
           {activeTab === 'goals' && <GoalsTab />}
           {activeTab === 'needs' && <NeedsTab />}
           {activeTab === 'strategy' && <StrategyTab />}
-          {activeTab === 'essays' && (
-            <div className="-mx-6 -mt-2">
-              <EssayWorkshopPage />
-              <div className="border-t border-divider mt-8 pt-4">
-                <ResumeWorkshopPage />
-              </div>
-            </div>
-          )}
-          {activeTab === 'recommenders' && <div className="-mx-6 -mt-2"><RecommendationsPage /></div>}
           {activeTab === 'financial' && <div className="-mx-6 -mt-2"><FinancialAidPage /></div>}
         </Suspense>
       </div>
@@ -251,7 +273,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
+    <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div>
         <div className="flex items-center gap-2 mb-1">
           <Sparkles size={18} className="text-gold" />
@@ -260,12 +282,12 @@ export default function ProfilePage() {
         <p className="text-sm text-gray-500 mb-4">Everything about you in one place.</p>
 
         {/* Tab bar */}
-        <div className="flex gap-1 border-b border-divider">
+        <div className="flex gap-1 border-b border-divider overflow-x-auto">
           {PROFILE_TABS.map(tab => (
             <button
               key={tab.key}
               onClick={() => setSearchParams(tab.key === 'overview' ? {} : { tab: tab.key })}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors shrink-0 whitespace-nowrap ${
                 activeTab === tab.key
                   ? 'border-student text-student'
                   : 'border-transparent text-student-text hover:text-student-ink'
@@ -278,7 +300,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Self-Discovery Progress */}
-      <Card className="p-5">
+      <Card className={tabCls('overview')}>
         <div className="flex items-center gap-6">
           <StrengthRing value={completionPct} />
           <div className="flex-1 min-w-0">
@@ -308,7 +330,7 @@ export default function ProfilePage() {
       </Card>
 
       {/* Basic Info */}
-      <Card className="p-5">
+      <Card className={tabCls('overview')}>
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-2">
             <h2 className="font-semibold text-student-ink">Basic Info</h2>
@@ -331,7 +353,7 @@ export default function ProfilePage() {
       </Card>
 
       {/* Academic Records */}
-      <Card className="p-5">
+      <Card className={tabCls('academics')}>
         <div className="flex justify-between items-start mb-3">
           <h2 className="font-semibold text-student-ink">Academic Records</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('academic') }}><Plus size={14} /></Button>
@@ -362,7 +384,7 @@ export default function ProfilePage() {
       </Card>
 
       {/* Test Scores */}
-      <Card className="p-5">
+      <Card className={tabCls('academics')}>
         <div className="flex justify-between items-start mb-3">
           <h2 className="font-semibold text-student-ink">Test Scores</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('test') }}><Plus size={14} /></Button>
@@ -394,7 +416,7 @@ export default function ProfilePage() {
       </Card>
 
       {/* Activities */}
-      <Card className="p-5">
+      <Card className={tabCls('experience')}>
         <div className="flex justify-between items-start mb-3">
           <h2 className="font-semibold text-student-ink">Activities</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('activity') }}><Plus size={14} /></Button>
@@ -425,7 +447,7 @@ export default function ProfilePage() {
       </Card>
 
       {/* Online Presence */}
-      <Card className="p-5">
+      <Card className={tabCls('experience')}>
         <div className="flex justify-between items-start mb-3">
           <h2 className="font-semibold text-student-ink">Online Presence</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('online_presence') }}><Plus size={14} /></Button>
@@ -454,7 +476,7 @@ export default function ProfilePage() {
       </Card>
 
       {/* Portfolio */}
-      <Card className="p-5">
+      <Card className={tabCls('experience')}>
         <div className="flex justify-between items-start mb-3">
           <h2 className="font-semibold text-student-ink">Portfolio</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('portfolio') }}><Plus size={14} /></Button>
@@ -485,7 +507,7 @@ export default function ProfilePage() {
       </Card>
 
       {/* Research */}
-      <Card className="p-5">
+      <Card className={tabCls('academics')}>
         <div className="flex justify-between items-start mb-3">
           <h2 className="font-semibold text-student-ink">Research</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('research') }}><Plus size={14} /></Button>
@@ -519,7 +541,7 @@ export default function ProfilePage() {
       </Card>
 
       {/* Languages */}
-      <Card className="p-5">
+      <Card className={tabCls('academics')}>
         <div className="flex justify-between items-start mb-3">
           <h2 className="font-semibold text-student-ink">Languages</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(null); setEditModal('language') }}><Plus size={14} /></Button>
@@ -549,7 +571,7 @@ export default function ProfilePage() {
       </Card>
 
       {/* Preferences */}
-      <Card className="p-5">
+      <Card className={tabCls('preferences')}>
         <div className="flex justify-between items-start mb-3">
           <h2 className="font-semibold text-student-ink">Preferences</h2>
           <Button size="sm" variant="ghost" onClick={() => { setEditItem(p?.preferences); setEditModal('preferences') }}><Pencil size={14} /></Button>
@@ -567,7 +589,7 @@ export default function ProfilePage() {
       </Card>
 
       {/* Documents */}
-      <Card className="p-5">
+      <Card className={tabCls('preparation')}>
         <div className="flex justify-between items-start mb-3">
           <h2 className="font-semibold text-student-ink">Documents</h2>
           <Button size="sm" variant="ghost" onClick={() => setEditModal('upload')}><Upload size={14} /></Button>
@@ -587,7 +609,7 @@ export default function ProfilePage() {
       </Card>
 
       {/* Work & Service */}
-      <Card className="p-5">
+      <Card className={tabCls('experience')}>
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-2">
             <Briefcase size={16} className="text-student" />
@@ -617,7 +639,7 @@ export default function ProfilePage() {
       </Card>
 
       {/* Competitions */}
-      <Card className="p-5">
+      <Card className={tabCls('experience')}>
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-2">
             <Trophy size={16} className="text-gold" />
@@ -650,7 +672,7 @@ export default function ProfilePage() {
       </Card>
 
       {/* Accommodations */}
-      <Card className="p-5">
+      <Card className={tabCls('preparation')}>
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-2">
             <Accessibility size={16} className="text-student" />
@@ -670,7 +692,7 @@ export default function ProfilePage() {
       </Card>
 
       {/* Scheduling */}
-      <Card className="p-5">
+      <Card className={tabCls('preparation')}>
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-2">
             <Clock size={16} className="text-student" />
@@ -690,9 +712,34 @@ export default function ProfilePage() {
         )}
       </Card>
 
+      {/* Recommenders (Preparation) */}
+      {activeTab === 'preparation' && (
+        <Suspense fallback={<div className="py-6 text-center text-student-text">Loading...</div>}>
+          <div id="section-recommenders" className="-mx-6"><RecommendationsPage /></div>
+        </Suspense>
+      )}
+
+      {/* Analytics — completeness summary */}
+      {activeTab === 'analytics' && (
+        <Card className="p-5">
+          <div className="flex items-center gap-6">
+            <StrengthRing value={completionPct} />
+            <div>
+              <h2 className="font-semibold text-student-ink mb-1">Profile completeness</h2>
+              <p className="text-sm text-student-text">
+                Your profile is {completionPct}% complete.{' '}
+                {peerMetrics.length === 0
+                  ? 'Peer comparison unlocks as you and similar applicants add more data.'
+                  : 'See how you compare to similar applicants below.'}
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Peer Comparison */}
       {peerMetrics.length > 0 && (
-        <Card className="p-5">
+        <Card className={tabCls('analytics')}>
           <div className="flex items-center gap-2 mb-3">
             <BarChart3 size={16} className="text-student" />
             <h2 className="font-semibold text-student-ink">Peer Comparison</h2>
@@ -709,10 +756,9 @@ export default function ProfilePage() {
         </Card>
       )}
 
-      {/* Export */}
       {/* Timeline */}
       {timelineItems.length > 0 && (
-        <Card className="p-5">
+        <Card className={tabCls('timeline')}>
           <div className="flex items-center gap-2 mb-3">
             <Milestone size={16} className="text-student" />
             <h2 className="font-semibold text-student-ink">Timeline</h2>
@@ -732,8 +778,15 @@ export default function ProfilePage() {
         </Card>
       )}
 
+      {/* Timeline empty state */}
+      {activeTab === 'timeline' && timelineItems.length === 0 && (
+        <Card className="p-5 text-center text-sm text-student-text">
+          Your profile timeline will appear here as you add records and reach milestones.
+        </Card>
+      )}
+
       {/* Data Rights */}
-      <Card className="p-5">
+      <Card className={tabCls('data')}>
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-2">
             <ShieldCheck size={16} className="text-student" />
@@ -753,7 +806,7 @@ export default function ProfilePage() {
         )}
       </Card>
 
-      <Card className="p-5">
+      <Card className={tabCls('data')}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Download size={16} className="text-student" />

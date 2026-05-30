@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useAuthStore } from '../../stores/auth-store'
+import { safeNextPath } from '../../utils/redirect'
 import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
 import clsx from 'clsx'
@@ -38,8 +39,11 @@ export default function SignupPage() {
     try {
       await signup(data.email, data.password, role)
       const user = useAuthStore.getState().user
-      const dest = user?.role === 'student' ? '/onboarding' : '/i/dashboard'
-      navigate(dest)
+      // New students start in onboarding; institutions go to their dashboard.
+      // A safe ?next= (e.g. carried from a guarded deep link) wins. Spec/04 §9, §11.
+      const roleDefault = user?.role === 'student' ? '/onboarding' : '/i/dashboard'
+      const next = safeNextPath(searchParams.get('next'))
+      navigate(next ?? roleDefault, { replace: true })
     } catch (err: any) {
       setError(err.message || 'Signup failed')
     } finally {

@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import Tabs from '../../components/ui/Tabs'
 import PipelinePage from './PipelinePage'
@@ -6,23 +5,29 @@ import InterviewsPage from './InterviewsPage'
 import InquiriesPage from './InquiriesPage'
 import CohortComparisonPage from './CohortComparisonPage'
 
-type AdmissionsTab = 'pipeline' | 'interviews' | 'inquiries' | 'cohort'
+// Unified Admissions workspace — Spec/04 §5.1 (?tab=pipeline|interviews|inquiries|cohort-compare).
+type AdmissionsTab = 'pipeline' | 'interviews' | 'inquiries' | 'cohort-compare'
 
 const tabs = [
   { id: 'pipeline', label: 'Pipeline' },
   { id: 'interviews', label: 'Interviews' },
   { id: 'inquiries', label: 'Inquiries' },
-  { id: 'cohort', label: 'Cohort Compare' },
+  { id: 'cohort-compare', label: 'Cohort Compare' },
 ]
 
 export default function AdmissionsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const initialTab = (searchParams.get('tab') as AdmissionsTab) || 'pipeline'
-  const [activeTab, setActiveTab] = useState<AdmissionsTab>(initialTab)
+  // Tab is driven by the URL so deep links + back/forward work (Spec/04 §13).
+  const param = searchParams.get('tab')
+  const activeTab: AdmissionsTab = tabs.some(t => t.id === param) ? (param as AdmissionsTab) : 'pipeline'
 
   const handleTabChange = (tab: string) => {
-    setActiveTab(tab as AdmissionsTab)
-    setSearchParams({ tab })
+    // Preserve other params (e.g. ?focus=) — only swap the tab (Spec/04 §8).
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.set('tab', tab)
+      return next
+    }, { replace: true })
   }
 
   return (
@@ -31,7 +36,7 @@ export default function AdmissionsPage() {
       {activeTab === 'pipeline' && <PipelinePage />}
       {activeTab === 'interviews' && <InterviewsPage />}
       {activeTab === 'inquiries' && <InquiriesPage />}
-      {activeTab === 'cohort' && <CohortComparisonPage />}
+      {activeTab === 'cohort-compare' && <CohortComparisonPage />}
     </div>
   )
 }

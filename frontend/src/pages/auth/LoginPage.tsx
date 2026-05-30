@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useAuthStore } from '../../stores/auth-store'
+import { safeNextPath } from '../../utils/redirect'
 import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
 
@@ -16,6 +17,7 @@ type FormData = z.infer<typeof schema>
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const login = useAuthStore(s => s.login)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -30,8 +32,11 @@ export default function LoginPage() {
     try {
       await login(data.email, data.password)
       const user = useAuthStore.getState().user
-      const dest = user?.role === 'student' ? '/s/dashboard' : '/i/dashboard'
-      navigate(dest)
+      // Honor a guarded ?next= if it's a safe in-app path; else role default
+      // (student → Discover home, institution → dashboard). Spec/04 §9.
+      const roleDefault = user?.role === 'student' ? '/s' : '/i/dashboard'
+      const next = safeNextPath(searchParams.get('next'))
+      navigate(next ?? roleDefault, { replace: true })
     } catch (err: any) {
       setError(err.message || 'Login failed')
     } finally {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getConversations, getMessages, sendMessage } from '../../api/messaging'
 import { listDocuments } from '../../api/documents'
@@ -41,8 +41,12 @@ function isSystemThread(conv: Conversation): boolean {
 export default function MessagesPage() {
   const { convId } = useParams<{ convId: string }>()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  // Open thread comes from the route param (legacy /s/messages/:id) or the
+  // ?thread= query param when rendered inside /s/manage (Spec/04 §13, G-A6).
+  const threadParam = convId || searchParams.get('thread') || null
   const queryClient = useQueryClient()
-  const [selectedConv, setSelectedConv] = useState<string | null>(convId || null)
+  const [selectedConv, setSelectedConv] = useState<string | null>(threadParam)
   const [newMessage, setNewMessage] = useState('')
   const [msgFilter, setMsgFilter] = useState<MsgFilter>('all')
   const [showAttachments, setShowAttachments] = useState(false)
@@ -72,8 +76,8 @@ export default function MessagesPage() {
   }, [messages])
 
   useEffect(() => {
-    if (convId && convId !== selectedConv) setSelectedConv(convId)
-  }, [convId, selectedConv])
+    if (threadParam && threadParam !== selectedConv) setSelectedConv(threadParam)
+  }, [threadParam, selectedConv])
 
   const sendMut = useMutation({
     mutationFn: (content: string) => sendMessage(selectedConv!, content),
@@ -139,7 +143,7 @@ export default function MessagesPage() {
               return (
                 <button
                   key={c.id}
-                  onClick={() => { setSelectedConv(c.id); navigate(`/s/messages/${c.id}`) }}
+                  onClick={() => { setSelectedConv(c.id); setSearchParams(prev => { const n = new URLSearchParams(prev); n.set('thread', c.id); return n }, { replace: true }) }}
                   className={`w-full text-left px-3 py-3 border-b border-gray-50 hover:bg-gray-50 ${selectedConv === c.id ? 'bg-gray-100' : ''} ${isSys ? 'bg-gray-50/50' : ''}`}
                 >
                   <div className="flex items-center justify-between">

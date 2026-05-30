@@ -12,6 +12,7 @@ import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import Modal from '../../components/ui/Modal'
+import PublicNav from '../../components/layout/PublicNav'
 import Input from '../../components/ui/Input'
 import Textarea from '../../components/ui/Textarea'
 import Tabs from '../../components/ui/Tabs'
@@ -445,14 +446,5 @@ export default function ProgramDetailPage() {
 }
 
 function Header() {
-  return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-      <Link to="/" className="text-lg font-bold">UniPaith</Link>
-      <div className="flex gap-3">
-        <Link to="/browse" className="text-sm text-gray-600 hover:text-gray-900">Browse</Link>
-        <Link to="/login" className="text-sm text-gray-600 hover:text-gray-900">Log in</Link>
-        <Link to="/signup" className="text-sm bg-gray-900 text-white px-3 py-1 rounded hover:bg-gray-800">Sign up</Link>
-      </div>
-    </header>
-  )
+  return <PublicNav />
 }

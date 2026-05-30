@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import Breadcrumb from '../../components/layout/Breadcrumb'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -307,6 +308,13 @@ export default function ProgramEditorPage() {
 
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-6">
+      {/* Drill-down breadcrumb (Spec/04 §7.5) */}
+      <Breadcrumb
+        items={[
+          { label: 'Programs', to: '/i/programs' },
+          { label: isEdit ? 'Edit program' : 'New program' },
+        ]}
+      />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">{isEdit ? 'Edit Program' : 'New Program'}</h1>
         <div className="flex gap-2">

@@ -1,5 +1,5 @@
-import { useState, lazy, Suspense } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { FolderKanban, Calendar, MessageSquare, GraduationCap } from 'lucide-react'
 
 // Lazy-load sub-pages
@@ -19,14 +19,20 @@ const TABS: { key: Tab; label: string; icon: typeof FolderKanban }[] = [
 ]
 
 export default function ManagementPage() {
-  const [searchParams] = useSearchParams()
-  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const rawTab = searchParams.get('tab') as Tab | null
-  const [tab, setTab] = useState<Tab>(rawTab && TABS.some(t => t.key === rawTab) ? rawTab : 'applications')
+  // Tab is driven by the URL so deep links / redirects (e.g. ?tab=messages&thread=)
+  // land on the right sub-tab (Spec/04 §13).
+  const tab: Tab = rawTab && TABS.some(t => t.key === rawTab) ? rawTab : 'applications'
 
   const switchTab = (t: Tab) => {
-    setTab(t)
-    navigate(t === 'applications' ? '/s/manage' : `/s/manage?tab=${t}`, { replace: true })
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      if (t === 'applications') next.delete('tab')
+      else next.set('tab', t)
+      if (t !== 'messages') next.delete('thread') // drop thread context when leaving Messages
+      return next
+    }, { replace: true })
   }
 
   return (

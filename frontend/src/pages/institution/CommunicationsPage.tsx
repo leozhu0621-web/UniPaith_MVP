@@ -1,10 +1,10 @@
-import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import Tabs from '../../components/ui/Tabs'
 import TemplatesPage from './TemplatesPage'
 import SegmentsPage from './SegmentsPage'
 import MessagingPage from './MessagingPage'
 
+// Unified Communications workspace — Spec/04 §5.1 (?tab=templates|segments|inbox).
 type CommsTab = 'templates' | 'segments' | 'inbox'
 
 const tabs = [
@@ -15,12 +15,15 @@ const tabs = [
 
 export default function CommunicationsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const initialTab = (searchParams.get('tab') as CommsTab) || 'templates'
-  const [activeTab, setActiveTab] = useState<CommsTab>(initialTab)
+  const param = searchParams.get('tab')
+  const activeTab: CommsTab = tabs.some(t => t.id === param) ? (param as CommsTab) : 'templates'
 
   const handleTabChange = (tab: string) => {
-    setActiveTab(tab as CommsTab)
-    setSearchParams({ tab })
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.set('tab', tab)
+      return next
+    }, { replace: true })
   }
 
   return (
