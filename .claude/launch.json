@@ -4,13 +4,13 @@
     {
       "name": "frontend",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "export PATH=/usr/local/bin:$PATH && cd '/Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/frontend' && npx vite --port 5174"],
+      "runtimeArgs": ["-c", "export PATH=/usr/local/bin:$PATH && cd '/Users/leozhu/Desktop/工作/UniPAith/App_MVP/frontend' && npx vite --port 5174"],
       "port": 5174
     },
     {
       "name": "backend",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "cd /Users/leozhu/Desktop/工作/Platform/UniPaith_MVP/unipaith-backend && PIPELINE_ENABLED=false /Users/leozhu/opt/anaconda3/envs/py312/bin/uvicorn unipaith.main:app --reload --port 8000 --app-dir src"],
+      "runtimeArgs": ["-c", "cd /Users/leozhu/Desktop/工作/UniPAith/App_MVP/unipaith-backend && PIPELINE_ENABLED=false /Users/leozhu/opt/anaconda3/envs/py312/bin/uvicorn unipaith.main:app --reload --port 8000 --app-dir src"],
       "port": 8000
     }
   ]
