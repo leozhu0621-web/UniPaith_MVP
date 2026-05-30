@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getConversations, getMessages, sendMessage } from '../../api/messaging'
 import { listDocuments } from '../../api/documents'
@@ -38,11 +38,10 @@ function isSystemThread(conv: Conversation): boolean {
     subject.includes('reminder') || subject.includes('update')
 }
 
-export default function MessagesPage() {
-  const { convId } = useParams<{ convId: string }>()
+export default function MessagesPage({ initialThreadId }: { initialThreadId?: string | null }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const [selectedConv, setSelectedConv] = useState<string | null>(convId || null)
+  const [selectedConv, setSelectedConv] = useState<string | null>(initialThreadId || null)
   const [newMessage, setNewMessage] = useState('')
   const [msgFilter, setMsgFilter] = useState<MsgFilter>('all')
   const [showAttachments, setShowAttachments] = useState(false)
@@ -72,8 +71,13 @@ export default function MessagesPage() {
   }, [messages])
 
   useEffect(() => {
-    if (convId && convId !== selectedConv) setSelectedConv(convId)
-  }, [convId, selectedConv])
+    if (initialThreadId && initialThreadId !== selectedConv) setSelectedConv(initialThreadId)
+  }, [initialThreadId, selectedConv])
+
+  const openThread = (id: string) => {
+    setSelectedConv(id)
+    navigate(`/s/manage?tab=messages&thread=${id}`, { replace: true })
+  }
 
   const sendMut = useMutation({
     mutationFn: (content: string) => sendMessage(selectedConv!, content),
@@ -140,7 +144,7 @@ export default function MessagesPage() {
               return (
                 <button
                   key={c.id}
-                  onClick={() => { setSelectedConv(c.id); navigate(`/s/messages/${c.id}`) }}
+                  onClick={() => openThread(c.id)}
                   className={`w-full text-left px-3 py-3 border-b border-divider hover:bg-muted ${selectedConv === c.id ? 'bg-muted' : ''} ${isSys ? 'bg-muted/40' : ''}`}
                 >
                   <div className="flex items-center justify-between">

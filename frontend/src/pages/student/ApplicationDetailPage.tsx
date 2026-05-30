@@ -18,6 +18,8 @@ import { showToast } from '../../stores/toast-store'
 import { STATUS_COLORS } from '../../utils/constants'
 import { getMyInterviews } from '../../api/interviews'
 import { ArrowLeft, Check, Circle, Upload, Sparkles, AlertCircle, FileCheck, ListChecks, Video, Phone, Users, AlertTriangle, ShieldCheck } from 'lucide-react'
+import Breadcrumbs from '../../components/ui/Breadcrumbs'
+import usePageTitle from '../../hooks/usePageTitle'
 import type { Application, Essay, Resume } from '../../types'
 
 const STATUS_STEPS = ['draft', 'submitted', 'under_review', 'interview', 'decision_made']
@@ -166,13 +168,24 @@ export default function ApplicationDetailPage() {
     ...(application.decision === 'admitted' ? [{ id: 'offer', label: 'Offer' }] : []),
   ]
 
+  const programName = application.program?.program_name || 'Application'
+  usePageTitle(programName)
+
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <button onClick={() => navigate('/s/applications')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-brand-slate-600 mb-4">
-        <ArrowLeft size={16} /> My Applications
+      <Breadcrumbs
+        className="mb-4"
+        items={[
+          { label: 'Apply', to: '/s/manage' },
+          { label: 'Applications', to: '/s/manage' },
+          { label: programName },
+        ]}
+      />
+      <button onClick={() => navigate('/s/manage')} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+        <ArrowLeft size={16} /> Back to Apply
       </button>
 
-      <h1 className="text-xl font-bold mb-1">{application.program?.program_name || 'Application'}</h1>
+      <h1 className="text-xl font-bold mb-1">{programName}</h1>
       <p className="text-sm text-gray-500">Take one section at a time. You can check readiness anytime before submitting.</p>
 
       {/* Status timeline */}

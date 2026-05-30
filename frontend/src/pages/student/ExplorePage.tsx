@@ -175,7 +175,7 @@ export default function ExplorePage() {
           unchanged. When a student has no active strategy, this surfaces
           a CTA pointing back to Discover or to generate one. */}
       <div className="mb-4">
-        <StrategyView />
+        <StrategyView forceExpanded={searchParams.get('showStrategy') === 'open'} />
       </div>
 
       {/* Search bar */}

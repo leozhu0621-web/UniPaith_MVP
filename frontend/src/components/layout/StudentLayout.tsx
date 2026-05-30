@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '../../stores/auth-store'
 import { useCounselorStore } from '../../stores/counselor-store'
 import MiniCounselorPanel from '../student/MiniCounselorPanel'
@@ -25,6 +25,7 @@ export default function StudentLayout() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const { isMinimized, setMinimized } = useCounselorStore()
   const [accountSheetOpen, setAccountSheetOpen] = useState(false)
 
@@ -199,7 +200,10 @@ export default function StudentLayout() {
         </div>
       </Sheet>
 
-      <CompareTray />
+      <CompareTray
+        initialExpanded={location.pathname === '/s/explore' && searchParams.get('compare') === 'open'}
+        syncUrl={location.pathname === '/s/explore'}
+      />
     </div>
   )
 }
