@@ -354,7 +354,7 @@ function FilterDropdown({ label, active, options, selected, onToggle }: Dropdown
         onClick={() => setOpen(o => !o)}
         className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded-full border transition-colors ${
           hasActive
-            ? 'bg-student text-white border-student'
+            ? 'bg-cobalt text-white border-cobalt'
             : 'bg-white text-student-ink border-divider hover:border-student hover:text-student'
         }`}
       >
@@ -417,7 +417,7 @@ function TogglePill({ label, active, onClick }: { label: string; active: boolean
       onClick={onClick}
       className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded-full border transition-colors ${
         active
-          ? 'bg-student text-white border-student'
+          ? 'bg-cobalt text-white border-cobalt'
           : 'bg-white text-student-ink border-divider hover:border-student hover:text-student'
       }`}
     >

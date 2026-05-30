@@ -80,7 +80,7 @@ function MessageBubble({ message }: { message: DiscoveryMessage }) {
         className={clsx(
           'rounded-2xl px-3.5 py-2 text-sm max-w-[80%] whitespace-pre-wrap break-words',
           isStudent
-            ? 'bg-student text-white rounded-br-sm'
+            ? 'bg-cobalt text-white rounded-br-sm'
             : isStub
               ? 'bg-amber-50 border border-amber-200 text-amber-900 rounded-bl-sm'
               : 'bg-student-bg-surface border border-divider text-student-ink rounded-bl-sm',

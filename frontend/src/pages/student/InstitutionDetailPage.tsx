@@ -324,8 +324,8 @@ export default function InstitutionDetailPage() {
                           {entries.map((e, i) => (
                             <div key={i} className="grid grid-cols-[140px_1fr_50px] gap-3 items-center text-sm">
                               <span className="text-student-text truncate">{e.label}</span>
-                              <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                                <div className="h-full bg-gradient-to-r from-violet-400 to-violet-600 rounded-full" style={{ width: `${Math.min(100, e.pct)}%` }} />
+                              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                                <div className="h-full bg-cobalt rounded-full" style={{ width: `${Math.min(100, e.pct)}%` }} />
                               </div>
                               <span className="text-student-ink font-semibold text-right tabular-nums">{e.pct.toFixed(1)}%</span>
                             </div>
@@ -345,12 +345,12 @@ export default function InstitutionDetailPage() {
                   {/* Hero signal: placement rate. Pulled from whichever of the three
                       sibling fields is populated. */}
                   {(outcomes.employed_or_continuing_ed ?? outcomes.first_destination_placement_rate) != null && (
-                    <div className="px-4 py-3 rounded-lg bg-emerald-50 border border-emerald-200 mb-4">
-                      <p className="text-[11px] uppercase tracking-wider font-semibold text-emerald-700">Placement</p>
-                      <p className="text-3xl font-bold text-emerald-900 mt-0.5">
+                    <div className="px-4 py-3 rounded-lg bg-success-soft border border-success/30 mb-4">
+                      <p className="text-[11px] uppercase tracking-wider font-semibold text-success">Placement</p>
+                      <p className="text-3xl font-bold text-charcoal mt-0.5">
                         {pctFmt(outcomes.employed_or_continuing_ed ?? outcomes.first_destination_placement_rate)}
                       </p>
-                      <p className="text-xs text-emerald-700 mt-1">
+                      <p className="text-xs text-success mt-1">
                         employed or continuing education
                         {outcomes.first_destination_timeframe ? ` · ${outcomes.first_destination_timeframe.toLowerCase()}` : ''}
                       </p>
@@ -390,8 +390,8 @@ export default function InstitutionDetailPage() {
                           .map(([region, pct]: any) => (
                             <div key={region} className="grid grid-cols-[140px_1fr_50px] gap-3 items-center text-sm">
                               <span className="text-student-text capitalize">{formatKey(region)}</span>
-                              <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                                <div className="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full" style={{ width: `${pct * 100}%` }} />
+                              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                                <div className="h-full bg-cobalt rounded-full" style={{ width: `${pct * 100}%` }} />
                               </div>
                               <span className="text-student-ink font-semibold text-right tabular-nums">{pctFmt(pct)}</span>
                             </div>
@@ -406,7 +406,7 @@ export default function InstitutionDetailPage() {
                       <p className="text-[11px] uppercase tracking-wider font-semibold text-student-text/70 mb-2">Top Employer Industries</p>
                       <div className="flex flex-wrap gap-1.5">
                         {outcomes.top_employer_industries.map((ind: string, i: number) => (
-                          <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] rounded-md bg-cobalt/10 text-cobalt border border-cobalt/20">
                             {ind}
                           </span>
                         ))}

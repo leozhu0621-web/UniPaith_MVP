@@ -195,7 +195,7 @@ export default function ExplorePage() {
           <button
             onClick={handleSearch}
             disabled={q.trim().length < 3 || nlpMut.isPending}
-            className="px-3 py-1.5 bg-student text-white text-xs font-medium rounded-lg hover:bg-student-hover disabled:opacity-40 transition-colors"
+            className="px-3 py-1.5 bg-cobalt text-white text-xs font-medium rounded-lg hover:bg-cobalt-dark disabled:opacity-40 transition-colors"
           >
             {nlpMut.isPending ? <Loader2 size={12} className="animate-spin" /> : 'Search'}
           </button>

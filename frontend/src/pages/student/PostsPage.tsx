@@ -102,7 +102,7 @@ export default function PostsPage() {
           </p>
           <button
             onClick={() => navigate('/s/explore')}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-student text-white text-sm font-medium rounded-xl hover:bg-student-hover transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-cobalt text-white text-sm font-medium rounded-lg hover:bg-cobalt-dark transition-colors"
           >
             <Search size={16} /> Explore Programs
           </button>

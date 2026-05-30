@@ -16,18 +16,18 @@ export default function EventCard({ event, isRsvped, onRsvp }: Props) {
   return (
     <div className="bg-white rounded-xl border border-divider hover:shadow-md transition-shadow overflow-hidden">
       <div className="flex items-center gap-2 px-4 pt-3 pb-1">
-        <Calendar size={12} className="text-student" />
-        <span className="text-[10px] font-semibold text-student uppercase tracking-wider">Event</span>
+        <Calendar size={12} className="text-cobalt" />
+        <span className="text-[10px] font-semibold text-cobalt uppercase tracking-wider">Event</span>
         {event.event_type && (
-          <span className="px-2 py-0.5 text-[10px] rounded-full bg-gold-soft text-gold">
+          <span className="px-2 py-0.5 text-[10px] rounded-full bg-cobalt/10 text-cobalt capitalize">
             {event.event_type.replace(/_/g, ' ')}
           </span>
         )}
       </div>
       <div className="flex gap-4 px-4 pb-4">
-        <div className="w-14 h-16 bg-student-mist rounded-lg flex flex-col items-center justify-center flex-shrink-0">
-          <span className="text-[10px] font-semibold text-student uppercase">{month}</span>
-          <span className="text-xl font-bold text-student-ink">{day}</span>
+        <div className="w-14 h-16 bg-muted border border-stone/50 rounded-lg flex flex-col items-center justify-center flex-shrink-0">
+          <span className="text-[10px] font-semibold text-cobalt uppercase">{month}</span>
+          <span className="text-xl font-bold text-charcoal">{day}</span>
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-semibold text-student-ink mb-0.5">{event.event_name || event.title}</h3>
@@ -42,11 +42,11 @@ export default function EventCard({ event, isRsvped, onRsvp }: Props) {
           onClick={onRsvp}
           className={`self-center px-4 py-1.5 text-xs font-medium rounded-lg transition-colors flex-shrink-0 ${
             isRsvped
-              ? 'bg-student-mist text-student border border-student'
-              : 'bg-student text-white hover:bg-student-hover'
+              ? 'bg-student text-charcoal border border-student'
+              : 'bg-cobalt text-white hover:bg-cobalt-dark'
           }`}
         >
-          {isRsvped ? 'Going' : 'RSVP'}
+          {isRsvped ? '\u2713 Going' : 'RSVP'}
         </button>
       </div>
     </div>
