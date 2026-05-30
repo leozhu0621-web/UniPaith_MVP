@@ -17,6 +17,7 @@ import Textarea from '../../components/ui/Textarea'
 import Tabs from '../../components/ui/Tabs'
 import Skeleton from '../../components/ui/Skeleton'
 import EmptyState from '../../components/ui/EmptyState'
+import PublicHeader from '../../components/layout/PublicHeader'
 import { showToast } from '../../stores/toast-store'
 import { formatCurrency, formatDate, formatPercent } from '../../utils/format'
 import { DEGREE_LABELS, DELIVERY_FORMAT_LABELS, CAMPUS_SETTING_LABELS } from '../../utils/constants'
@@ -83,7 +84,7 @@ export default function ProgramDetailPage() {
   // --- Loading ---
   if (programQ.isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Header />
         <div className="max-w-5xl mx-auto px-6 py-10 space-y-6">
           <Skeleton className="h-10 w-96" />
@@ -97,7 +98,7 @@ export default function ProgramDetailPage() {
   // --- Not found ---
   if (!p) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Header />
         <div className="max-w-5xl mx-auto px-6 py-16 text-center">
           <GraduationCap size={48} className="mx-auto text-gray-300 mb-4" />
@@ -110,7 +111,7 @@ export default function ProgramDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Header />
 
       <div className="max-w-5xl mx-auto px-6 py-8">
@@ -445,14 +446,5 @@ export default function ProgramDetailPage() {
 }
 
 function Header() {
-  return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-      <Link to="/" className="text-lg font-bold">UniPaith</Link>
-      <div className="flex gap-3">
-        <Link to="/browse" className="text-sm text-gray-600 hover:text-gray-900">Browse</Link>
-        <Link to="/login" className="text-sm text-gray-600 hover:text-gray-900">Log in</Link>
-        <Link to="/signup" className="text-sm bg-gray-900 text-white px-3 py-1 rounded hover:bg-gray-800">Sign up</Link>
-      </div>
-    </header>
-  )
+  return <PublicHeader />
 }

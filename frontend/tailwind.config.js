@@ -171,6 +171,17 @@ export default {
           "0%": { opacity: "0", transform: "translateY(4px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        "shimmer": {
+          "100%": { transform: "translateX(100%)" },
+        },
+        "sheet-in": {
+          "0%": { transform: "translateY(100%)" },
+          "100%": { transform: "translateY(0)" },
+        },
+        "sheet-side-in": {
+          "0%": { transform: "translateX(100%)" },
+          "100%": { transform: "translateX(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -186,6 +197,9 @@ export default {
         "slide-in-left": "slide-in-left 0.2s ease-out",
         "scale-in": "scale-in 0.15s ease-out",
         "slide-up-fade": "slide-up-fade 0.2s ease-out",
+        "shimmer": "shimmer 1.2s ease-out infinite",
+        "sheet-in": "sheet-in 360ms cubic-bezier(0.2, 0.7, 0.2, 1)",
+        "sheet-side-in": "sheet-side-in 200ms cubic-bezier(0.2, 0.7, 0.2, 1)",
       },
     },
   },

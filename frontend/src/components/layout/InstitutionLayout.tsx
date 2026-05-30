@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
+import clsx from 'clsx'
 import { useAuthStore } from '../../stores/auth-store'
 import { useUIStore } from '../../stores/ui-store'
 import {
   LayoutDashboard, GraduationCap, Kanban, Megaphone, MessageSquare,
   BarChart3, Settings, ChevronLeft, ChevronRight, Bell, Search, LogOut,
-  Rocket, Command, ChevronDown,
+  Rocket, Command, ChevronDown, Menu, X,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { getUnreadCount } from '../../api/notifications'
@@ -55,6 +56,10 @@ export default function InstitutionLayout() {
   const [showNotificationsMenu, setShowNotificationsMenu] = useState(false)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [commandQuery, setCommandQuery] = useState('')
+  // Mobile nav sheet (<lg). Per Spec/02b §3.2 institution uses hamburger.
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  // Close the mobile nav whenever the route changes.
+  useEffect(() => { setMobileNavOpen(false) }, [location.pathname])
   const shortcutPrefixAtRef = useRef<number | null>(null)
   const notificationsMenuRef = useRef<HTMLDivElement | null>(null)
   const userMenuRef = useRef<HTMLDivElement | null>(null)
@@ -169,9 +174,25 @@ export default function InstitutionLayout() {
   }, [])
 
   return (
-    <div className="flex h-screen bg-institution">
-      {/* Sidebar */}
-      <aside className={`${sidebarWidth} flex flex-col border-r border-gray-200 bg-white transition-all duration-200`}>
+    <div className="flex h-screen bg-background">
+      {/* Mobile nav backdrop */}
+      {mobileNavOpen && (
+        <div
+          className="fixed inset-0 z-40 lg:hidden animate-fade-in"
+          style={{ background: 'rgba(10, 20, 40, 0.45)' }}
+          onClick={() => setMobileNavOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+      {/* Sidebar — desktop docked; mobile slides in. */}
+      <aside
+        className={clsx(
+          'flex flex-col border-r border-border bg-card motion-base transition-all',
+          // Desktop: collapsed/expanded width inline.
+          'hidden lg:flex',
+          sidebarWidth,
+        )}
+      >
         <div className="flex items-center justify-between h-14 px-4 border-b border-gray-100">
           {!sidebarCollapsed && <Wordmark className="h-6 w-auto" />}
           <button onClick={toggleSidebar} className="p-1 rounded hover:bg-gray-100">
@@ -243,15 +264,77 @@ export default function InstitutionLayout() {
         </nav>
       </aside>
 
+      {/* Mobile sidebar drawer — slides in from the left below lg. */}
+      <aside
+        className={clsx(
+          'fixed inset-y-0 left-0 z-50 w-64 max-w-[85vw] bg-card border-r border-border elev-raised',
+          'flex flex-col motion-base transition-transform lg:hidden pt-safe pb-safe',
+          mobileNavOpen ? 'translate-x-0' : '-translate-x-full',
+        )}
+        aria-hidden={!mobileNavOpen}
+        aria-label="Institution navigation"
+      >
+        <div className="flex items-center justify-between h-14 px-4 border-b border-border">
+          <Wordmark className="h-6 w-auto" />
+          <button
+            onClick={() => setMobileNavOpen(false)}
+            aria-label="Close navigation"
+            className="p-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD60A]"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <nav className="flex-1 overflow-y-auto py-3">
+          {navSections.map(section => (
+            <div key={section.label || 'root'} className={section.label ? 'mb-3' : 'mb-1'}>
+              {section.label && (
+                <div className="px-4 mb-1 up-eyebrow" style={{ color: 'hsl(var(--muted-foreground))' }}>
+                  {section.label}
+                </div>
+              )}
+              {section.items.map(item => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) =>
+                    clsx(
+                      'flex items-center gap-3 px-4 py-2.5 mx-2 rounded-md text-base motion-fast transition-colors min-h-[44px]',
+                      isActive
+                        ? 'bg-muted text-foreground font-bold'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                    )
+                  }
+                >
+                  <item.icon size={18} />
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+            </div>
+          ))}
+        </nav>
+      </aside>
+
       {/* Main content area */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-10 flex items-center justify-between h-14 px-6 border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/90">
-          <div className="flex items-center gap-4">
+        <header className="sticky top-0 z-10 flex items-center justify-between h-14 px-4 lg:px-6 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/90">
+          <div className="flex items-center gap-3">
+            {/* Mobile hamburger */}
+            <button
+              type="button"
+              onClick={() => setMobileNavOpen(true)}
+              aria-label="Open navigation"
+              className="lg:hidden p-2 -ml-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD60A]"
+            >
+              <Menu size={20} />
+            </button>
+            <div className="lg:hidden">
+              <Wordmark className="h-6 w-auto" />
+            </div>
             <div className="hidden md:flex items-center gap-2">
-              <span className="px-2 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wide bg-brand-slate-50 text-brand-slate-700">
+              <span className="px-2 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide bg-muted text-foreground">
                 {currentSection}
               </span>
-              <span className="text-sm font-medium text-gray-700">{currentArea}</span>
+              <span className="text-base font-bold text-foreground">{currentArea}</span>
             </div>
             <div className="relative">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />

@@ -6,6 +6,7 @@ import { getFeaturedPromotions } from '../../api/institutions'
 import { Search, Star } from 'lucide-react'
 import Badge from '../../components/ui/Badge'
 import Skeleton from '../../components/ui/Skeleton'
+import PublicHeader from '../../components/layout/PublicHeader'
 import { formatCurrency, formatDate } from '../../utils/format'
 import { DEGREE_LABELS } from '../../utils/constants'
 import type { ProgramSummary, PaginatedResponse, Promotion } from '../../types'
@@ -35,14 +36,8 @@ export default function ProgramBrowsePage() {
   const featuredProgramIds = new Set(featured.filter(f => f.program_id).map(f => f.program_id!))
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-        <Link to="/" className="text-lg font-bold">UniPaith</Link>
-        <div className="flex gap-3">
-          <Link to="/login" className="text-sm text-gray-600 hover:text-gray-900">Log in</Link>
-          <Link to="/signup" className="text-sm bg-gray-900 text-white px-3 py-1 rounded hover:bg-gray-800">Sign up</Link>
-        </div>
-      </header>
+    <div className="min-h-screen bg-background">
+      <PublicHeader />
 
       <div className="max-w-6xl mx-auto px-6 py-8">
         <h1 className="text-2xl font-bold mb-6">Browse Programs</h1>

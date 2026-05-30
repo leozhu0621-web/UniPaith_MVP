@@ -47,6 +47,13 @@
     --warning-soft: 41 64% 88%;      /* #F5E6CC */
     --error: 9 56% 41%;              /* #B5321F */
     --error-soft: 14 53% 89%;        /* #F2D7D0 */
+
+    /* Motion tokens (Spec/01-brand-tokens.md §4.4) */
+    --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+    --ease-in-out: cubic-bezier(0.65, 0.05, 0.36, 1);
+    --dur-fast: 120ms;
+    --dur-base: 200ms;
+    --dur-slow: 360ms;
   }
 
   /* Dark theme — Ink canvas, lifted gold + cobalt accents. */
@@ -108,6 +115,25 @@
   h1 { letter-spacing: -0.015em; line-height: 1.08; }
   h2 { letter-spacing: 0; line-height: 1.20; }
   h3 { letter-spacing: 0; line-height: 1.30; }
+
+  /* Accessible focus: visible ring, no outline blur (Spec/02 §2 States). */
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px hsl(var(--ring));
+    border-radius: var(--radius);
+  }
+
+  /* Honor user's reduced-motion preference (Spec/02b §9). */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 /* ----------------------------------------------------------------
@@ -138,6 +164,33 @@
     line-height: 1;
     letter-spacing: -0.02em;
   }
+
+  /* Elevation tiers — exactly three, anything else is off-brand.
+     Spec/01-brand-tokens.md §5 / Spec/02-design-system.md §5. */
+  .elev-subtle {
+    box-shadow: 0 1px 2px hsl(220 30% 10% / 0.06), 0 1px 1px hsl(220 30% 10% / 0.04);
+  }
+  .elev-raised {
+    box-shadow: 0 8px 24px -8px hsl(220 30% 10% / 0.12), 0 2px 4px hsl(220 30% 10% / 0.06);
+  }
+  .elev-glow {
+    box-shadow:
+      0 0 0 2px hsl(var(--primary)),
+      0 8px 24px -8px hsl(49 100% 50% / 0.35);
+  }
+  [data-theme="dark"] .elev-subtle,
+  .dark .elev-subtle {
+    box-shadow: 0 1px 2px hsl(0 0% 0% / 0.5);
+  }
+  [data-theme="dark"] .elev-raised,
+  .dark .elev-raised {
+    box-shadow: 0 8px 20px -4px hsl(0 0% 0% / 0.55);
+  }
+
+  /* Standard transitions — keep timing predictable across surfaces. */
+  .motion-fast { transition-duration: var(--dur-fast); transition-timing-function: var(--ease-out); }
+  .motion-base { transition-duration: var(--dur-base); transition-timing-function: var(--ease-out); }
+  .motion-slow { transition-duration: var(--dur-slow); transition-timing-function: var(--ease-out); }
 }
 
 html {
@@ -163,4 +216,16 @@ html {
     @apply -translate-y-1;
     box-shadow: 0 8px 25px -5px hsl(var(--foreground) / 0.1);
   }
+
+  /* Safe-area helpers for mobile (notch/home-indicator).
+     Spec/02b §3.1 bottom tab bar / §6 sheets. */
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+  .pt-safe { padding-top: env(safe-area-inset-top); }
+  .pl-safe { padding-left: env(safe-area-inset-left); }
+  .pr-safe { padding-right: env(safe-area-inset-right); }
+
+  /* Hide scrollbars in horizontal segmented controls (mobile sub-tabs).
+     Spec/02b §3.3. */
+  .scrollbar-none::-webkit-scrollbar { display: none; }
+  .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
 }
