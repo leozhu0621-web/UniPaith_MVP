@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 
 import pytest
+
 from unipaith.ai.cache_invalidation import (
     RATIONALE_PROMPT_VERSION,
 )

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from unipaith.core.data_safety import (
     assert_core_role_coverage,
     ensure_can_deactivate_user,
