@@ -20,13 +20,13 @@ interface Props {
 function pillStyle(variant: 'academic' | 'logistics' | 'time' | 'deadline') {
   switch (variant) {
     case 'academic':
-      return 'bg-student-mist text-student border border-student/15'
+      return 'bg-cobalt/10 text-cobalt border border-cobalt/20'
     case 'logistics':
-      return 'bg-slate-100 text-student-ink border border-slate-200/60'
+      return 'bg-muted text-charcoal border border-stone/60'
     case 'time':
-      return 'bg-slate-100 text-student-ink border border-slate-200/60'
+      return 'bg-muted text-charcoal border border-stone/60'
     case 'deadline':
-      return 'bg-amber-50 text-amber-700 border border-amber-200'
+      return 'bg-warning-soft text-warning border border-warning/40'
   }
 }
 

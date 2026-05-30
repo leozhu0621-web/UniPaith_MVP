@@ -52,8 +52,8 @@ export default function RelatedSidebar({
                     onClick={() => onRsvp(ev.id)}
                     className={`mt-2 text-[11px] font-medium px-2 py-1 rounded-md transition-colors ${
                       rsvpedIds.has(ev.id)
-                        ? 'bg-emerald-50 text-emerald-700'
-                        : 'bg-student text-white hover:bg-student-hover'
+                        ? 'bg-success-soft text-success'
+                        : 'bg-cobalt text-white hover:bg-cobalt-dark'
                     }`}
                   >
                     {rsvpedIds.has(ev.id) ? '✓ Going' : 'RSVP'}
@@ -69,7 +69,7 @@ export default function RelatedSidebar({
       {sameSchoolPrograms.length > 0 && (
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-3">
-            <GraduationCap size={14} className="text-student" />
+            <GraduationCap size={14} className="text-cobalt" />
             <h3 className="text-sm font-semibold text-student-ink">Other at this school</h3>
           </div>
           <div className="space-y-1">
@@ -99,7 +99,7 @@ export default function RelatedSidebar({
       {similarPrograms.length > 0 && (
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-3">
-            <Sparkles size={14} className="text-gold" />
+            <Sparkles size={14} className="text-cobalt" />
             <h3 className="text-sm font-semibold text-student-ink">Similar programs</h3>
           </div>
           <div className="space-y-1">

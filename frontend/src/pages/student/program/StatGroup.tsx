@@ -41,16 +41,16 @@ type StatItem = {
 
 function StatCard({ icon: Icon, label, value, tone }: StatItem) {
   const toneClasses: Record<NonNullable<StatItem['tone']>, string> = {
-    emerald: 'text-emerald-700',
-    blue: 'text-blue-700',
-    amber: 'text-amber-700',
-    rose: 'text-rose-700',
+    emerald: 'text-success',
+    blue: 'text-cobalt',
+    amber: 'text-warning',
+    rose: 'text-cobalt',
   }
   const toneClass = tone ? toneClasses[tone] : undefined
 
   return (
-    <div className="flex items-center gap-2.5 px-3 py-2.5 bg-white border border-divider rounded-lg hover:border-student/30 transition-colors">
-      <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center flex-shrink-0">
+    <div className="flex items-center gap-2.5 px-3 py-2.5 bg-white border border-divider rounded-lg hover:border-cobalt/30 transition-colors">
+      <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
         <Icon size={14} className={toneClass || 'text-student-text'} />
       </div>
       <div className="min-w-0">

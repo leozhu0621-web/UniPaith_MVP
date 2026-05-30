@@ -83,7 +83,7 @@ export default function AboutCard({ description, institutionName, programName }:
       {keywords.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-3">
           {keywords.map(k => (
-            <span key={k} className="px-2 py-0.5 text-[10px] rounded-md bg-student-mist text-student font-medium">
+            <span key={k} className="px-2 py-0.5 text-[10px] rounded-md bg-muted text-charcoal border border-stone/60 font-medium">
               {k}
             </span>
           ))}

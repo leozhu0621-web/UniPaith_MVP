@@ -24,17 +24,10 @@ export interface DualRingProps {
   onClick?: () => void
 }
 
-const FITNESS_COLOR = (v: number) => {
-  if (v >= 0.85) return 'stroke-emerald-500'
-  if (v >= 0.7) return 'stroke-blue-500'
-  if (v >= 0.5) return 'stroke-amber-500'
-  return 'stroke-red-400'
-}
-const CONFIDENCE_COLOR = (v: number) => {
-  if (v >= 0.7) return 'stroke-slate-600'
-  if (v >= 0.4) return 'stroke-slate-400'
-  return 'stroke-slate-300'
-}
+// Duotone per Spec/11 §10: fitness ring = sunlit gold (--primary),
+// confidence ring = cobalt (--secondary). No status-color rainbow.
+const FITNESS_COLOR = (_v: number) => 'stroke-student'
+const CONFIDENCE_COLOR = (_v: number) => 'stroke-cobalt'
 
 export default function DualRing({
   fitness,

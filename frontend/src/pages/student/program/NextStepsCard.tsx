@@ -26,9 +26,9 @@ interface Props {
 }
 
 const TONE_STYLES = {
-  urgent: 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-700',
-  primary: 'bg-student text-white hover:bg-student-hover border-transparent',
-  info: 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-student-ink',
+  urgent: 'bg-warning-soft hover:bg-warning-soft/70 border-warning/40 text-warning',
+  primary: 'bg-cobalt text-white hover:bg-cobalt-dark border-transparent',
+  info: 'bg-muted/60 hover:bg-muted border-stone/50 text-charcoal',
 }
 
 export default function NextStepsCard({

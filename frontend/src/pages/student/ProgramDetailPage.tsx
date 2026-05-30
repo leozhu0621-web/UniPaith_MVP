@@ -43,7 +43,7 @@ const TABS: { id: Tab; label: string; icon: typeof BookOpen }[] = [
   { id: 'reviews', label: 'Reviews', icon: Star },
 ]
 
-export default function SchoolDetailPage() {
+export default function ProgramDetailPage() {
   const { programId } = useParams<{ programId: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -255,7 +255,7 @@ export default function SchoolDetailPage() {
                 onClick={() => setTab(t.id)}
                 className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                   isActive
-                    ? 'border-student text-student'
+                    ? 'border-cobalt text-cobalt'
                     : 'border-transparent text-student-text hover:text-student-ink'
                 }`}
               >
@@ -263,7 +263,7 @@ export default function SchoolDetailPage() {
                 {t.label}
                 {badge && (
                   <span className={`px-1.5 py-0.5 text-[10px] rounded-full ${
-                    isActive ? 'bg-student-mist text-student' : 'bg-slate-100 text-student-text'
+                    isActive ? 'bg-student-mist text-cobalt' : 'bg-slate-100 text-student-text'
                   }`}>{badge}</span>
                 )}
               </button>
@@ -287,7 +287,7 @@ export default function SchoolDetailPage() {
               {p.who_its_for && (
                 <Card className="p-5">
                   <div className="flex items-center gap-2 mb-2">
-                    <Users size={14} className="text-student" />
+                    <Users size={14} className="text-cobalt" />
                     <h3 className="font-semibold text-student-ink">Who It's For</h3>
                   </div>
                   <p className="text-sm text-student-text leading-relaxed">{p.who_its_for}</p>
@@ -311,13 +311,13 @@ export default function SchoolDetailPage() {
               {Array.isArray(p.highlights) && p.highlights.length > 0 && (
                 <Card className="p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <Sparkles size={14} className="text-gold" />
+                    <Sparkles size={14} className="text-cobalt" />
                     <h3 className="font-semibold text-student-ink">Program Highlights</h3>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {p.highlights.map((h: string, i: number) => (
-                      <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-gold-soft/50 text-student-ink border border-gold/20">
-                        <Sparkles size={11} className="text-gold" />
+                      <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-cobalt/10 text-student-ink border border-cobalt/20">
+                        <Sparkles size={11} className="text-cobalt" />
                         {h}
                       </span>
                     ))}
@@ -338,7 +338,7 @@ export default function SchoolDetailPage() {
                 return (
                   <Card className="p-5">
                     <div className="flex items-center gap-2 mb-3">
-                      <Mail size={14} className="text-student" />
+                      <Mail size={14} className="text-cobalt" />
                       <h3 className="font-semibold text-student-ink">Program Contacts</h3>
                     </div>
                     <div className="space-y-2 text-sm">
@@ -349,7 +349,7 @@ export default function SchoolDetailPage() {
                             {c.role && <div className="text-xs text-student-text">{c.role}</div>}
                           </div>
                           {c.email && (
-                            <a href={`mailto:${c.email}`} className="text-xs text-student hover:underline">
+                            <a href={`mailto:${c.email}`} className="text-xs text-cobalt hover:underline">
                               {c.email}
                             </a>
                           )}
@@ -392,7 +392,7 @@ export default function SchoolDetailPage() {
                 {/* Application Requirements — structured list */}
                 <Card className="p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <GraduationCap size={14} className="text-student" />
+                    <GraduationCap size={14} className="text-cobalt" />
                     <h3 className="font-semibold text-student-ink">Application Requirements</h3>
                     {appReqs.length > 0 && (
                       <span className="ml-auto text-[11px] text-student-text/60">
@@ -410,7 +410,7 @@ export default function SchoolDetailPage() {
                           <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
                             {requiredItems.map((r, i) => (
                               <li key={i} className="flex items-start gap-2 px-3 py-2 rounded-lg bg-slate-50 border border-slate-100">
-                                <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <span className="w-5 h-5 rounded-full bg-emerald-100 text-success flex items-center justify-center flex-shrink-0 mt-0.5">
                                   <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" clipRule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z" /></svg>
                                 </span>
                                 <div className="min-w-0">
@@ -495,9 +495,9 @@ export default function SchoolDetailPage() {
                         )
                       })}
                       {admissionTimeline.enrollment_deadline && (
-                        <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-student-mist border border-student/15">
+                        <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-student-mist border border-cobalt/15">
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-student">Enrollment Deadline</p>
+                            <p className="text-sm font-semibold text-cobalt">Enrollment Deadline</p>
                             <p className="text-[11px] text-student-text/70 mt-0.5">
                               Commit by <span className="font-medium text-student-ink">{formatDate(admissionTimeline.enrollment_deadline)}</span>
                             </p>
@@ -538,7 +538,7 @@ export default function SchoolDetailPage() {
                   {(p.acceptance_rate ?? rd.acceptance_rate) != null && (
                     <Card className="p-5">
                       <div className="flex items-center gap-2 mb-3">
-                        <Sparkles size={14} className="text-student" />
+                        <Sparkles size={14} className="text-cobalt" />
                         <h3 className="font-semibold text-student-ink">Admissions Profile</h3>
                       </div>
                       <ul className="space-y-2 text-sm">
@@ -554,7 +554,7 @@ export default function SchoolDetailPage() {
                           if (rd.act_25_75) items.push(`Middle 50% ACT: ${rd.act_25_75[0]}–${rd.act_25_75[1]}`)
                           return items.map((t, i) => (
                             <li key={i} className="flex items-start gap-2 text-student-text">
-                              <span className="w-1 h-1 rounded-full bg-student mt-2 flex-shrink-0" />
+                              <span className="w-1 h-1 rounded-full bg-cobalt mt-2 flex-shrink-0" />
                               {t}
                             </li>
                           ))
@@ -626,13 +626,13 @@ export default function SchoolDetailPage() {
 
                 <Card className="p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <GraduationCap size={14} className="text-student" />
+                    <GraduationCap size={14} className="text-cobalt" />
                     <h3 className="font-semibold text-student-ink">Estimated Total Cost ({years.toFixed(1)} years)</h3>
                   </div>
                   <div className="grid grid-cols-3 gap-3 text-center">
                     <div className="bg-emerald-50 rounded-lg p-3">
                       <p className="text-xs text-student-text mb-1">Tuition Only</p>
-                      <p className="text-lg font-bold text-emerald-700">{formatCurrency(totalTuitionOnly)}</p>
+                      <p className="text-lg font-bold text-success">{formatCurrency(totalTuitionOnly)}</p>
                     </div>
                     <div className="bg-slate-50 rounded-lg p-3">
                       <p className="text-xs text-student-text mb-1">With Living Costs</p>
@@ -702,7 +702,7 @@ export default function SchoolDetailPage() {
                           href={rd.price_calculator_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-medium text-student hover:text-student-hover"
+                          className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-medium text-cobalt hover:text-cobalt-dark"
                         >
                           Estimate your cost with {instName}'s calculator ↗
                         </a>
@@ -767,7 +767,7 @@ export default function SchoolDetailPage() {
                       <h3 className="font-semibold text-student-ink">ROI Snapshot</h3>
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-sm">
-                      {salary && <div><p className="text-student-text text-xs">Median Salary</p><p className="font-bold text-emerald-700 text-lg">{formatCurrency(salary)}</p></div>}
+                      {salary && <div><p className="text-student-text text-xs">Median Salary</p><p className="font-bold text-success text-lg">{formatCurrency(salary)}</p></div>}
                       {empRate && <div><p className="text-student-text text-xs">Grad/Employment Rate</p><p className="font-bold text-student-ink text-lg">{(empRate * 100).toFixed(0)}%</p></div>}
                       {payback && <div><p className="text-student-text text-xs">Payback Period</p><p className="font-medium">{payback} months</p></div>}
                       {salary && totalMid > 0 && <div><p className="text-student-text text-xs">Salary-to-Cost</p><p className="font-medium">1:{(salary / totalMid).toFixed(1)}x</p></div>}
@@ -841,7 +841,7 @@ export default function SchoolDetailPage() {
                           </div>
                           <div className="text-center flex-1">
                             <p className="text-xs text-student-text/60">Median</p>
-                            <p className="text-2xl font-bold text-emerald-700">{formatCurrency(salary)}</p>
+                            <p className="text-2xl font-bold text-success">{formatCurrency(salary)}</p>
                           </div>
                           <div className="text-center flex-1">
                             <p className="text-xs text-student-text/60">75th %ile</p>
@@ -858,7 +858,7 @@ export default function SchoolDetailPage() {
                     {(empRate || internRate) && (
                       <Card className="p-5">
                         <div className="flex items-center gap-2 mb-3">
-                          <Briefcase size={14} className="text-student" />
+                          <Briefcase size={14} className="text-cobalt" />
                           <h3 className="font-semibold text-student-ink">Employment & Placement</h3>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -883,7 +883,7 @@ export default function SchoolDetailPage() {
                     {topEmployers.length > 0 && (
                       <Card className="p-5">
                         <div className="flex items-center gap-2 mb-3">
-                          <Building2 size={14} className="text-student" />
+                          <Building2 size={14} className="text-cobalt" />
                           <h3 className="font-semibold text-student-ink">Top Employers</h3>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -895,7 +895,7 @@ export default function SchoolDetailPage() {
                     {topIndustries.length > 0 && (
                       <Card className="p-5">
                         <div className="flex items-center gap-2 mb-3">
-                          <Users size={14} className="text-student" />
+                          <Users size={14} className="text-cobalt" />
                           <h3 className="font-semibold text-student-ink">Industry Placement</h3>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -930,7 +930,7 @@ export default function SchoolDetailPage() {
                         {totalSent > 0 && (
                           <Card className="p-5">
                             <div className="flex items-center gap-2 mb-3">
-                              <TrendingUp size={14} className="text-student" />
+                              <TrendingUp size={14} className="text-cobalt" />
                               <h3 className="font-semibold text-student-ink">Job Readiness Sentiment</h3>
                             </div>
                             <div className="flex gap-3">
@@ -954,7 +954,7 @@ export default function SchoolDetailPage() {
 
                         <Card className="p-5">
                           <div className="flex items-center gap-2 mb-3">
-                            <BarChart3 size={14} className="text-student" />
+                            <BarChart3 size={14} className="text-cobalt" />
                             <h3 className="font-semibold text-student-ink">Skills Assessment</h3>
                           </div>
                           <div className="space-y-2">
@@ -965,7 +965,7 @@ export default function SchoolDetailPage() {
                                 <div key={d.key} className="flex items-center gap-3">
                                   <span className="text-xs text-student-text w-32">{d.label}</span>
                                   <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                                    <div className="h-full bg-student rounded-full" style={{ width: `${(val / 5) * 100}%` }} />
+                                    <div className="h-full bg-cobalt rounded-full" style={{ width: `${(val / 5) * 100}%` }} />
                                   </div>
                                   <span className="text-xs font-medium text-student-ink w-8 text-right">{val.toFixed(1)}</span>
                                 </div>
@@ -996,7 +996,7 @@ export default function SchoolDetailPage() {
                               </div>
                               {fb.feedback_text && <p className="text-sm text-student-text mt-2">{fb.feedback_text}</p>}
                               {fb.hiring_pattern && (
-                                <p className="text-xs text-student/70 mt-2 bg-student-mist rounded px-2 py-1">
+                                <p className="text-xs text-cobalt/70 mt-2 bg-student-mist rounded px-2 py-1">
                                   <Briefcase size={10} className="inline mr-1" />{fb.hiring_pattern}
                                 </p>
                               )}
@@ -1108,8 +1108,8 @@ export default function SchoolDetailPage() {
                         {r.who_thrives_here && (
                           <div className="bg-student-mist rounded-lg p-3 mt-2">
                             <div className="flex items-center gap-1.5 mb-1">
-                              <Quote size={12} className="text-student" />
-                              <span className="text-xs font-medium text-student">Who thrives here</span>
+                              <Quote size={12} className="text-cobalt" />
+                              <span className="text-xs font-medium text-cobalt">Who thrives here</span>
                             </div>
                             <p className="text-xs text-student-text">{r.who_thrives_here}</p>
                           </div>
@@ -1133,7 +1133,7 @@ export default function SchoolDetailPage() {
                         </div>
                         <button
                           onClick={() => navigate(`/s?prefill=${encodeURIComponent(`I'd like to write a review for ${p.program_name} at ${instName}. Help me structure it.`)}`)}
-                          className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold bg-student text-white rounded-lg hover:bg-student-hover transition-colors"
+                          className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold bg-cobalt text-white rounded-lg hover:bg-cobalt-dark transition-colors"
                         >
                           Write a review
                         </button>
@@ -1144,7 +1144,7 @@ export default function SchoolDetailPage() {
                     {(p.outcomes_data?.median_salary || p.outcomes_data?.employment_rate || rd.graduation_rate) && (
                       <Card className="p-5">
                         <div className="flex items-center gap-2 mb-3">
-                          <BarChart3 size={14} className="text-student" />
+                          <BarChart3 size={14} className="text-cobalt" />
                           <h3 className="font-semibold text-student-ink">Quality Signals</h3>
                           <span className="text-[11px] text-student-text/60">in lieu of reviews</span>
                         </div>
@@ -1154,19 +1154,19 @@ export default function SchoolDetailPage() {
                         <ul className="space-y-2 text-sm text-student-text">
                           {rd.graduation_rate && (
                             <li className="flex items-start gap-2">
-                              <span className="w-1 h-1 rounded-full bg-student mt-2 flex-shrink-0" />
+                              <span className="w-1 h-1 rounded-full bg-cobalt mt-2 flex-shrink-0" />
                               <span><strong className="text-student-ink">{Math.round(rd.graduation_rate * 100)}%</strong> of students complete their degree — {rd.graduation_rate > 0.85 ? 'well above' : rd.graduation_rate > 0.7 ? 'in line with' : 'below'} the national average.</span>
                             </li>
                           )}
                           {rd.retention_rate && (
                             <li className="flex items-start gap-2">
-                              <span className="w-1 h-1 rounded-full bg-student mt-2 flex-shrink-0" />
+                              <span className="w-1 h-1 rounded-full bg-cobalt mt-2 flex-shrink-0" />
                               <span><strong className="text-student-ink">{Math.round(rd.retention_rate * 100)}%</strong> first-year retention — students return for sophomore year.</span>
                             </li>
                           )}
                           {rd.earnings_10yr_median && (
                             <li className="flex items-start gap-2">
-                              <span className="w-1 h-1 rounded-full bg-student mt-2 flex-shrink-0" />
+                              <span className="w-1 h-1 rounded-full bg-cobalt mt-2 flex-shrink-0" />
                               <span>Graduates earn a median <strong className="text-student-ink">{formatCurrency(rd.earnings_10yr_median)}</strong> 10 years after enrollment.</span>
                             </li>
                           )}
@@ -1178,7 +1178,7 @@ export default function SchoolDetailPage() {
                     {similar.length > 0 && (
                       <Card className="p-5">
                         <div className="flex items-center gap-2 mb-3">
-                          <Sparkles size={14} className="text-gold" />
+                          <Sparkles size={14} className="text-cobalt" />
                           <h3 className="font-semibold text-student-ink">See reviews for similar programs</h3>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -1186,7 +1186,7 @@ export default function SchoolDetailPage() {
                             <button
                               key={sp.id}
                               onClick={() => navigate(`/s/programs/${sp.id}`)}
-                              className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border border-divider hover:border-student hover:bg-student-mist transition-colors text-left"
+                              className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border border-divider hover:border-cobalt hover:bg-student-mist transition-colors text-left"
                             >
                               <div className="min-w-0">
                                 <p className="text-sm font-medium text-student-ink truncate">{sp.program_name}</p>

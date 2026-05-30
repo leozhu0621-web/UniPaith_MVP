@@ -468,29 +468,31 @@ export default function KeyMetrics(props: Props) {
 
 /** Helpers that map tone → specific utility classes. We keep these close to
  *  the render function because they only matter for presentation. */
+// Duotone — map the legacy tone palette onto brand tokens. Cost/data are not
+// errors, so rose/blue/violet collapse to cobalt; values render as ink.
 const ACCENT_BG: Record<Tone, string> = {
-  amber: 'bg-amber-500',
-  emerald: 'bg-emerald-500',
-  rose: 'bg-rose-500',
-  blue: 'bg-blue-500',
-  violet: 'bg-violet-500',
-  slate: 'bg-slate-400',
+  amber: 'bg-warning',
+  emerald: 'bg-success',
+  rose: 'bg-cobalt',
+  blue: 'bg-cobalt',
+  violet: 'bg-cobalt',
+  slate: 'bg-stone',
 }
 const ICON_COLOR: Record<Tone, string> = {
-  amber: 'text-amber-600',
-  emerald: 'text-emerald-600',
-  rose: 'text-rose-600',
-  blue: 'text-blue-600',
-  violet: 'text-violet-600',
-  slate: 'text-slate-500',
+  amber: 'text-warning',
+  emerald: 'text-success',
+  rose: 'text-cobalt',
+  blue: 'text-cobalt',
+  violet: 'text-cobalt',
+  slate: 'text-slate',
 }
 const VALUE_COLOR: Record<Tone, string> = {
-  amber: 'text-amber-900',
-  emerald: 'text-emerald-900',
-  rose: 'text-rose-900',
-  blue: 'text-blue-900',
-  violet: 'text-violet-900',
-  slate: 'text-slate-800',
+  amber: 'text-charcoal',
+  emerald: 'text-charcoal',
+  rose: 'text-charcoal',
+  blue: 'text-charcoal',
+  violet: 'text-charcoal',
+  slate: 'text-charcoal',
 }
 
 function MetricTile({ tile }: { tile: Tile }) {

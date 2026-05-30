@@ -1,7 +1,6 @@
-import { useState } from 'react'
+import type { ComponentType } from 'react'
 import {
-  MapPin, Users, Building2, BookOpen, ChevronRight,
-  Sprout, Landmark,
+  MapPin, Users, Building2, BookOpen, ChevronRight, Sprout,
 } from 'lucide-react'
 import { classifyInstitution, sizeBucket, formatSetting, SIZE_OPTIONS } from '../shared/classifyInstitution'
 
@@ -21,7 +20,6 @@ interface UniversityData {
   description_text?: string | null
   subjects_offered?: string[] | null
   top_industries?: string[] | null
-  // Competitive fields (no longer shown on the card — live on the detail page):
   acceptance_rate?: number | null
   sat_avg?: number | null
   us_news_rank?: number | null
@@ -34,14 +32,9 @@ interface Props {
   onClick: () => void
 }
 
+// Editorial, text-driven school card (Spec/02 §5, /14). No campus imagery, no
+// gradient banner — the school name is the anchor; gold/cobalt only as accents.
 export default function UniversityCard({ institution: inst, onClick }: Props) {
-  const [imgFailed, setImgFailed] = useState(false)
-
-  // Trust only what the DB gives us. A missing image still reads as a
-  // proper card because the university name is the visual anchor.
-  const campusImg = inst.image_url
-  const logoImg = inst.logo_url
-
   const classification = classifyInstitution({
     description_text: inst.description_text,
     type: inst.type,
@@ -49,106 +42,57 @@ export default function UniversityCard({ institution: inst, onClick }: Props) {
   const settingLabel = formatSetting(inst.campus_setting)
   const size = sizeBucket(inst.student_body_size)
   const sizeLabel = size ? SIZE_OPTIONS.find(s => s.code === size)?.label ?? null : null
+  const locationStr = `${inst.city ? inst.city + ', ' : ''}${inst.region ? inst.region + ' · ' : ''}${inst.country}`
 
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-xl border border-divider hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 ease-out overflow-hidden cursor-pointer flex flex-col group/card"
+      className="bg-white rounded-lg border border-stone hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ease-out overflow-hidden cursor-pointer flex flex-col group/card"
     >
-      {/* ── Image with strong name watermark ── */}
-      <div className="relative h-44 bg-student-mist overflow-hidden">
-        {campusImg && !imgFailed ? (
-          <img
-            src={campusImg}
-            alt={inst.name}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover/card:scale-[1.03]"
-            onError={() => setImgFailed(true)}
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-student via-student/80 to-student-hover" />
+      {/* Header — text only (brand: no decorative imagery, no gradients). */}
+      <div className="px-5 pt-5 pb-3 border-b border-divider">
+        {classification.code !== 'other' && (
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cobalt mb-1.5">
+            {classification.label}
+          </p>
         )}
-
-        {/* Strong scrim — keeps the name legible over any photo */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/45 to-black/15 pointer-events-none" />
-
-        {/* Logo chip — top-left, doesn't compete with the name */}
-        {logoImg && (
-          <div className="absolute top-3 left-3 w-9 h-9 rounded-lg bg-white/95 shadow-sm border border-white/50 p-1 flex items-center justify-center">
-            <img
-              src={logoImg}
-              alt=""
-              className="w-full h-full object-contain"
-              onError={e => (e.currentTarget.parentElement!.style.display = 'none')}
-            />
-          </div>
-        )}
-
-        {/* Name as the visual anchor — large, centered-left, drop shadow */}
-        <div className="absolute inset-0 flex flex-col justify-end px-4 pb-4 pointer-events-none">
-          <h3
-            className="text-white text-[22px] leading-[1.1] font-bold drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] tracking-tight line-clamp-2"
-            style={{ fontFamily: 'var(--font-display, inherit)' }}
-          >
-            {inst.name}
-          </h3>
-          <div className="flex items-center gap-1.5 mt-1.5 text-white/90 text-[11px] drop-shadow-sm">
-            <MapPin size={10} className="flex-shrink-0" />
-            <span className="truncate">
-              {inst.city ? `${inst.city}, ` : ''}{inst.region ? `${inst.region} · ` : ''}{inst.country}
-            </span>
-          </div>
+        <h3 className="text-lg leading-tight font-bold text-charcoal line-clamp-2">{inst.name}</h3>
+        <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate">
+          <MapPin size={12} className="flex-shrink-0" />
+          <span className="truncate">{locationStr}</span>
         </div>
       </div>
 
-      {/* ── Body ── */}
-      <div className="flex-1 px-4 pt-3 pb-3 flex flex-col">
-        {/* Welcoming-pill row: Type · Setting · Size · schools · programs */}
+      {/* Body — facts + description. */}
+      <div className="flex-1 px-5 pt-3 pb-4 flex flex-col">
         <div className="flex flex-wrap items-center gap-1.5 mb-3">
-          {classification.code !== 'other' && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-md bg-student-mist text-student border border-student/15">
-              <Landmark size={10} />
-              {classification.label}
-            </span>
-          )}
-          {settingLabel && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-md bg-slate-50 text-student-ink border border-slate-200">
-              <Sprout size={10} className="text-slate-400" />
-              {settingLabel}
-            </span>
-          )}
-          {sizeLabel && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-md bg-slate-50 text-student-ink border border-slate-200">
-              <Users size={10} className="text-slate-400" />
-              {sizeLabel}
-            </span>
-          )}
-          {(inst.school_count ?? 0) > 0 && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-md bg-slate-50 text-student-ink border border-slate-200">
-              <Building2 size={10} className="text-slate-400" />
-              {inst.school_count} schools
-            </span>
-          )}
-          {(inst.program_count ?? 0) > 0 && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-md bg-slate-50 text-student-ink border border-slate-200">
-              <BookOpen size={10} className="text-slate-400" />
-              {inst.program_count} programs
-            </span>
-          )}
+          {settingLabel && <FactPill icon={Sprout}>{settingLabel}</FactPill>}
+          {sizeLabel && <FactPill icon={Users}>{sizeLabel}</FactPill>}
+          {(inst.school_count ?? 0) > 0 && <FactPill icon={Building2}>{inst.school_count} schools</FactPill>}
+          {(inst.program_count ?? 0) > 0 && <FactPill icon={BookOpen}>{inst.program_count} programs</FactPill>}
         </div>
 
-        {/* Description — 2 lines max, pushes footer to the bottom */}
         {inst.description_text && (
-          <p className="text-[11.5px] text-student-text/80 leading-relaxed line-clamp-2 mb-3 flex-1">
+          <p className="text-[13px] text-slate leading-relaxed line-clamp-2">
             {inst.description_text}
           </p>
         )}
       </div>
 
-      {/* ── Footer action ── */}
-      <div className="flex items-center border-t border-divider mt-auto px-4 py-2.5">
-        <span className="text-xs font-medium text-student flex-1">View University</span>
-        <ChevronRight size={16} className="text-student group-hover/card:translate-x-0.5 transition-transform" />
+      {/* Footer action. */}
+      <div className="flex items-center border-t border-divider mt-auto px-5 py-2.5">
+        <span className="text-xs font-semibold text-cobalt flex-1">View university</span>
+        <ChevronRight size={16} className="text-cobalt group-hover/card:translate-x-0.5 transition-transform" />
       </div>
     </div>
+  )
+}
+
+function FactPill({ icon: Icon, children }: { icon: ComponentType<{ size?: number; className?: string }>; children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] rounded-md bg-muted text-charcoal border border-stone/60">
+      <Icon size={11} className="text-slate" />
+      {children}
+    </span>
   )
 }

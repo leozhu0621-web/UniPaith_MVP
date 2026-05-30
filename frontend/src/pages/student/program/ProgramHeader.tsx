@@ -97,9 +97,9 @@ interface Pill {
 }
 
 const PILL_TONE = {
-  default: 'bg-white text-student-ink border-divider',
-  primary: 'bg-student-mist text-student border-student/15',
-  urgent: 'bg-amber-50 text-amber-700 border-amber-200',
+  default: 'bg-white text-charcoal border-stone/60',
+  primary: 'bg-cobalt/10 text-cobalt border-cobalt/20',
+  urgent: 'bg-warning-soft text-warning border-warning/40',
 }
 
 /* ── Component ───────────────────────────────────────────────────────── */
@@ -183,7 +183,7 @@ export default function ProgramHeader({
   }
 
   return (
-    <div className="relative bg-white rounded-2xl border border-divider overflow-hidden mb-5">
+    <div className="relative bg-white rounded-lg border border-divider overflow-hidden mb-5">
       {/* Top bar: back + secondary actions */}
       <div className="flex items-center justify-between px-5 pt-4">
         <button
@@ -198,8 +198,8 @@ export default function ProgramHeader({
             onClick={onSave}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
               isSaved
-                ? 'bg-student text-white border-student'
-                : 'bg-white text-student-text border-divider hover:border-student hover:text-student'
+                ? 'bg-cobalt text-white border-cobalt'
+                : 'bg-white text-slate border-divider hover:border-cobalt hover:text-cobalt'
             }`}
             aria-label={isSaved ? 'Saved' : 'Save'}
           >
@@ -211,8 +211,8 @@ export default function ProgramHeader({
               onClick={onCompare}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
                 isComparing
-                  ? 'bg-student text-white border-student'
-                  : 'bg-white text-student-text border-divider hover:border-student hover:text-student'
+                  ? 'bg-cobalt text-white border-cobalt'
+                  : 'bg-white text-slate border-divider hover:border-cobalt hover:text-cobalt'
               }`}
             >
               <ArrowRightLeft size={12} />
@@ -231,7 +231,7 @@ export default function ProgramHeader({
 
             {/* Breadcrumb */}
             <div className="flex items-center gap-1 mt-1.5 text-[13px] text-student-text flex-wrap">
-              <Link to={`/s/institutions/${institutionId}`} className="text-student hover:underline font-medium">
+              <Link to={`/s/institutions/${institutionId}`} className="text-cobalt hover:underline font-medium">
                 {institutionName}
               </Link>
               {department && (
@@ -259,23 +259,23 @@ export default function ProgramHeader({
                   <p.icon
                     size={14}
                     className={
-                      p.tone === 'primary' ? 'text-student' :
-                      p.tone === 'urgent' ? 'text-amber-500' :
-                      'text-student-text/50'
+                      p.tone === 'primary' ? 'text-cobalt' :
+                      p.tone === 'urgent' ? 'text-warning' :
+                      'text-slate/60'
                     }
                   />
                   <div className="leading-tight">
                     <p className={`text-[9px] uppercase tracking-wider font-semibold ${
-                      p.tone === 'primary' ? 'text-student/70' :
-                      p.tone === 'urgent' ? 'text-amber-700/80' :
-                      'text-student-text/60'
+                      p.tone === 'primary' ? 'text-cobalt/70' :
+                      p.tone === 'urgent' ? 'text-warning/80' :
+                      'text-slate/60'
                     }`}>
                       {p.heading}
                     </p>
                     <p className={`text-[13px] font-semibold ${
-                      p.tone === 'primary' ? 'text-student' :
-                      p.tone === 'urgent' ? 'text-amber-800' :
-                      'text-student-ink'
+                      p.tone === 'primary' ? 'text-cobalt' :
+                      p.tone === 'urgent' ? 'text-warning' :
+                      'text-charcoal'
                     }`}>
                       {p.value}
                     </p>
@@ -290,7 +290,7 @@ export default function ProgramHeader({
             {onAskCounselor && (
               <button
                 onClick={onAskCounselor}
-                className="flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-gold-soft text-gold border border-gold/20 hover:bg-gold hover:text-white transition-colors"
+                className="flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-cobalt/5 text-cobalt border border-cobalt/30 hover:bg-cobalt/10 transition-colors"
               >
                 <Sparkles size={12} />
                 Ask counselor
@@ -299,16 +299,16 @@ export default function ProgramHeader({
             {hasApplication && onViewApplication ? (
               <button
                 onClick={onViewApplication}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-student text-white hover:bg-student-hover transition-colors shadow-sm"
+                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-cobalt text-white hover:bg-cobalt-dark transition-colors shadow-sm"
               >
-                <FileText size={12} /> My Application
+                <FileText size={12} /> My application
               </button>
             ) : onApply ? (
               <button
                 onClick={onApply}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-student text-white hover:bg-student-hover transition-colors shadow-sm"
+                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-cobalt text-white hover:bg-cobalt-dark transition-colors shadow-sm"
               >
-                <Send size={12} /> Apply Now
+                <Send size={12} /> Start application
               </button>
             ) : null}
           </div>

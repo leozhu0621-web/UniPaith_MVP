@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Navigate, useParams } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useAuthStore } from './stores/auth-store'
@@ -30,7 +30,7 @@ import StudentPostsPage from './pages/student/PostsPage'
 import ExplorePage from './pages/student/ExplorePage'
 import ManagementPage from './pages/student/ManagementPage'
 import ProfilePage from './pages/student/ProfilePage'
-import SchoolDetailPage from './pages/student/SchoolDetailPage'
+import StudentProgramDetailPage from './pages/student/ProgramDetailPage'
 import InstitutionDetailPage from './pages/student/InstitutionDetailPage'
 import SchoolSubunitPage from './pages/student/SchoolSubunitPage'
 import ApplicationDetailPage from './pages/student/ApplicationDetailPage'
@@ -73,6 +73,17 @@ const queryClient = new QueryClient({
   },
 })
 
+// Legacy redirects that must preserve the route param (Spec/04 §4.4, /90 G-A1/G-A6).
+function LegacySchoolRedirect() {
+  const { programId } = useParams()
+  return <Navigate to={`/s/programs/${programId}`} replace />
+}
+
+function LegacyMessageRedirect() {
+  const { convId } = useParams()
+  return <Navigate to={`/s/manage?tab=messages&thread=${convId}`} replace />
+}
+
 const router = createBrowserRouter([
   // Root → login (marketing site is at unipaith.co; this is the app at app.unipaith.co)
   { path: '/', element: <Navigate to="/login" replace />, errorElement: <RouteErrorPage /> },
@@ -103,8 +114,10 @@ const router = createBrowserRouter([
       { path: 'saved', element: <SavedListPage /> },
       { path: 'settings', element: <StudentSettingsPage /> },
       // === Drill-down pages ===
-      { path: 'programs/:programId', element: <SchoolDetailPage /> },
-      { path: 'schools/:programId', element: <SchoolDetailPage /> },
+      { path: 'programs/:programId', element: <StudentProgramDetailPage /> },
+      // Legacy alias — /s/schools/:id was the same page; redirect to the canonical
+      // program route (Spec/90 G-A1).
+      { path: 'schools/:programId', element: <LegacySchoolRedirect /> },
       { path: 'institutions/:institutionId', element: <InstitutionDetailPage /> },
       { path: 'institutions/:institutionId/schools/:schoolId', element: <SchoolSubunitPage /> },
       { path: 'applications/:appId', element: <ApplicationDetailPage /> },
@@ -117,7 +130,7 @@ const router = createBrowserRouter([
       { path: 'calendar', element: <Navigate to="/s/manage?tab=calendar" replace /> },
       { path: 'deadlines', element: <Navigate to="/s/manage?tab=calendar" replace /> },
       { path: 'messages', element: <Navigate to="/s/manage?tab=messages" replace /> },
-      { path: 'messages/:convId', element: <Navigate to="/s/manage?tab=messages" replace /> },
+      { path: 'messages/:convId', element: <LegacyMessageRedirect /> },
       { path: 'financial-aid', element: <Navigate to="/s/profile?tab=financial" replace /> },
       { path: 'recommendations', element: <Navigate to="/s/profile?tab=recommenders" replace /> },
       // Phase D — Workshops moved from Profile to Apply > Workshops (feedback-only).
