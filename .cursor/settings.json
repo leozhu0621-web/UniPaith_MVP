@@ -32,6 +32,24 @@
     },
     "docs-canvas": {
       "enabled": true
+    },
+    "cli-for-agent": {
+      "enabled": true
+    },
+    "cursor-sdk": {
+      "enabled": true
+    },
+    "pstack": {
+      "enabled": true
+    },
+    "thermos": {
+      "enabled": true
+    },
+    "continual-learning": {
+      "enabled": true
+    },
+    "cursor-team-kit": {
+      "enabled": true
     }
   }
 }
