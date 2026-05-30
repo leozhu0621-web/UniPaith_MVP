@@ -19,10 +19,10 @@ import type { SavedProgram, ComparisonResponse, MatchResult, Application } from 
 type Priority = 'considering' | 'planning' | 'applied' | 'dropped'
 
 const PRIORITY_CONFIG: Record<Priority, { label: string; color: string }> = {
-  considering: { label: 'Considering', color: 'bg-gray-100 text-gray-700' },
-  planning: { label: 'Planning', color: 'bg-sky-100 text-sky-800' },
-  applied: { label: 'Applied', color: 'bg-emerald-100 text-emerald-800' },
-  dropped: { label: 'Dropped', color: 'bg-rose-100 text-rose-800' },
+  considering: { label: 'Considering', color: 'bg-muted text-charcoal' },
+  planning: { label: 'Planning', color: 'bg-cobalt/10 text-cobalt' },
+  applied: { label: 'Applied', color: 'bg-success-soft text-success' },
+  dropped: { label: 'Dropped', color: 'bg-error-soft text-error' },
 }
 const PRIORITY_ORDER: Priority[] = ['considering', 'planning', 'applied', 'dropped']
 
@@ -36,6 +36,20 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
 const TIER_GROUP_LABELS: Record<number, string> = { 1: 'Reach', 2: 'Target', 3: 'Safer' }
 const TIER_GROUP_ORDER = [1, 2, 3, 0] // 0 = unmatched
 
+// Persist priority locally so it survives refresh. Server-side persistence
+// (saved_lists.priority + PATCH) is the spec target (Spec/15 §4.2, G-S5) — it
+// is blocked here by a divergent alembic state on the dev DB; local storage is
+// the interim so the label isn't wiped on reload.
+const PRIORITY_STORAGE_KEY = 'unipaith-saved-priorities'
+function loadPriorities(): Record<string, Priority> {
+  try {
+    const raw = localStorage.getItem(PRIORITY_STORAGE_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return {}
+  }
+}
+
 export default function SavedListPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -43,7 +57,7 @@ export default function SavedListPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [editingNotes, setEditingNotes] = useState<{ id: string; notes: string } | null>(null)
   const [comparison, setComparison] = useState<ComparisonResponse | null>(null)
-  const [priorities, setPriorities] = useState<Record<string, Priority>>({})
+  const [priorities, setPriorities] = useState<Record<string, Priority>>(loadPriorities)
   const [filterPriority, setFilterPriority] = useState<Priority | 'all'>('all')
   const [sortKey, setSortKey] = useState<SortKey>('date_added')
   const [groupByTier, setGroupByTier] = useState(true)
@@ -90,7 +104,11 @@ export default function SavedListPage() {
   const programs: SavedProgram[] = useMemo(() => Array.isArray(saved) ? saved : [], [saved])
 
   const getPriority = (programId: string): Priority => priorities[programId] ?? 'considering'
-  const setProgramPriority = (programId: string, p: Priority) => setPriorities(prev => ({ ...prev, [programId]: p }))
+  const setProgramPriority = (programId: string, p: Priority) => setPriorities(prev => {
+    const next = { ...prev, [programId]: p }
+    try { localStorage.setItem(PRIORITY_STORAGE_KEY, JSON.stringify(next)) } catch { /* ignore */ }
+    return next
+  })
 
   const filtered = useMemo(() => {
     let list = programs
@@ -160,9 +178,9 @@ export default function SavedListPage() {
     return higher ? Math.max(...nums) : Math.min(...nums)
   }
   const ValueIndicator = ({ value, best }: { value: number | null | undefined; best: number | null }) => {
-    if (value == null || best == null) return <Minus size={12} className="text-gray-300" />
-    if (value === best) return <ArrowUp size={12} className="text-green-500" />
-    return <ArrowDown size={12} className="text-red-500" />
+    if (value == null || best == null) return <Minus size={12} className="text-slate/40" />
+    if (value === best) return <ArrowUp size={12} className="text-success" />
+    return <ArrowDown size={12} className="text-error" />
   }
 
   if (isLoading) return <div className="p-6 space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
@@ -186,10 +204,10 @@ export default function SavedListPage() {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className={`font-semibold text-sm cursor-pointer hover:underline ${isDropped ? 'line-through text-gray-400' : ''}`} onClick={() => navigate(`/s/programs/${sp.program_id}`)}>
+                <p className={`font-semibold text-sm cursor-pointer hover:underline ${isDropped ? 'line-through text-slate/60' : ''}`} onClick={() => navigate(`/s/programs/${sp.program_id}`)}>
                   {sp.program_name || sp.program?.program_name || 'Program'}
                 </p>
-                <p className="text-xs text-gray-500">{sp.institution_name || sp.program?.institution_name}</p>
+                <p className="text-xs text-slate">{sp.institution_name || sp.program?.institution_name}</p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 {matchInfo && tierInfo && (
@@ -201,7 +219,7 @@ export default function SavedListPage() {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-gray-400">
+            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-slate/60">
               {sp.program?.tuition != null && <span>Tuition: {formatCurrency(sp.program.tuition)}</span>}
               {sp.program?.application_deadline && <span>Deadline: {formatDate(sp.program.application_deadline)}</span>}
             </div>
@@ -217,7 +235,7 @@ export default function SavedListPage() {
                     <option key={p} value={p}>{PRIORITY_CONFIG[p].label}</option>
                   ))}
                 </select>
-                <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400" />
+                <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate/60" />
               </div>
 
               {app && (
@@ -240,7 +258,7 @@ export default function SavedListPage() {
               )}
             </div>
 
-            {sp.notes && <p className="text-xs text-gray-600 mt-1 italic">"{sp.notes}"</p>}
+            {sp.notes && <p className="text-xs text-slate mt-1 italic">"{sp.notes}"</p>}
           </div>
 
           <div className="flex gap-1 flex-shrink-0">
@@ -300,7 +318,7 @@ export default function SavedListPage() {
         <>
           <div className="flex flex-wrap items-center gap-3 mb-4">
             <div className="flex items-center gap-1">
-              <Filter size={14} className="text-gray-400 mr-1" />
+              <Filter size={14} className="text-slate/60 mr-1" />
               {(['all', ...PRIORITY_ORDER] as const).map(p => (
                 <button
                   key={p}
@@ -308,7 +326,7 @@ export default function SavedListPage() {
                   className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
                     filterPriority === p
                       ? 'bg-ink text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-muted text-slate hover:bg-stone/40'
                   }`}
                 >
                   {p === 'all' ? 'All' : PRIORITY_CONFIG[p].label} ({priorityCounts[p] ?? 0})
@@ -317,12 +335,12 @@ export default function SavedListPage() {
             </div>
 
             <div className="flex items-center gap-2 ml-auto">
-              <div className="flex items-center gap-1 text-xs text-gray-500">
+              <div className="flex items-center gap-1 text-xs text-slate">
                 <ArrowUpDown size={12} />
                 <select
                   value={sortKey}
                   onChange={e => setSortKey(e.target.value as SortKey)}
-                  className="text-xs border-0 bg-transparent cursor-pointer text-gray-600 font-medium"
+                  className="text-xs border-0 bg-transparent cursor-pointer text-slate font-medium"
                 >
                   {SORT_OPTIONS.map(o => (
                     <option key={o.value} value={o.value}>{o.label}</option>
@@ -333,7 +351,7 @@ export default function SavedListPage() {
               <button
                 onClick={() => setGroupByTier(!groupByTier)}
                 className={`text-xs px-2.5 py-1 rounded font-medium transition-colors ${
-                  groupByTier ? 'bg-ink text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  groupByTier ? 'bg-ink text-white' : 'bg-muted text-slate hover:bg-stone/40'
                 }`}
               >
                 Group by Tier
@@ -350,8 +368,8 @@ export default function SavedListPage() {
                 return (
                   <div key={tier}>
                     <div className="flex items-center gap-2 mb-2">
-                      <h2 className="text-sm font-semibold text-gray-700">{label}</h2>
-                      <span className="text-xs text-gray-400">({items.length})</span>
+                      <h2 className="text-sm font-semibold text-charcoal">{label}</h2>
+                      <span className="text-xs text-slate/60">({items.length})</span>
                     </div>
                     <div className="space-y-3">
                       {items.map(renderCard)}
@@ -390,7 +408,7 @@ export default function SavedListPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-2 px-2 text-gray-500 font-medium">Feature</th>
+                  <th className="text-left py-2 px-2 text-slate font-medium">Feature</th>
                   {comparison.programs.map(p => (
                     <th key={p.id} className="text-left py-2 px-2 font-semibold">{p.program_name}</th>
                   ))}
@@ -398,19 +416,19 @@ export default function SavedListPage() {
               </thead>
               <tbody>
                 <tr className="border-b">
-                  <td className="py-2 px-2 text-gray-500">Institution</td>
+                  <td className="py-2 px-2 text-slate">Institution</td>
                   {comparison.programs.map(p => (
                     <td key={p.id} className="py-2 px-2">{p.institution_name}</td>
                   ))}
                 </tr>
                 <tr className="border-b">
-                  <td className="py-2 px-2 text-gray-500">Country</td>
+                  <td className="py-2 px-2 text-slate">Country</td>
                   {comparison.programs.map(p => (
                     <td key={p.id} className="py-2 px-2">{p.institution_country}</td>
                   ))}
                 </tr>
                 <tr className="border-b">
-                  <td className="py-2 px-2 text-gray-500">Degree</td>
+                  <td className="py-2 px-2 text-slate">Degree</td>
                   {comparison.programs.map(p => (
                     <td key={p.id} className="py-2 px-2">
                       <Badge variant="info" size="sm">{DEGREE_LABELS[p.degree_type] || p.degree_type}</Badge>
@@ -421,8 +439,8 @@ export default function SavedListPage() {
                   const scores = comparison.programs.map(p => matchLookup[p.id]?.match_score)
                   const best = bestValue(scores, true)
                   return (
-                    <tr className="border-b bg-gray-50">
-                      <td className="py-2 px-2 text-gray-500 font-medium">Match Score</td>
+                    <tr className="border-b bg-muted/50">
+                      <td className="py-2 px-2 text-slate font-medium">Match Score</td>
                       {comparison.programs.map((p, i) => {
                         const m = matchLookup[p.id]
                         const ti = m ? TIER_LABELS[m.match_tier] : null
@@ -446,7 +464,7 @@ export default function SavedListPage() {
                   const best = bestValue(tuitions, false)
                   return (
                     <tr className="border-b">
-                      <td className="py-2 px-2 text-gray-500">Tuition</td>
+                      <td className="py-2 px-2 text-slate">Tuition</td>
                       {comparison.programs.map((p, i) => (
                         <td key={p.id} className="py-2 px-2">
                           <div className="flex items-center gap-2">
@@ -463,7 +481,7 @@ export default function SavedListPage() {
                   const best = bestValue(rates, true)
                   return (
                     <tr className="border-b">
-                      <td className="py-2 px-2 text-gray-500">Acceptance Rate</td>
+                      <td className="py-2 px-2 text-slate">Acceptance Rate</td>
                       {comparison.programs.map((p, i) => (
                         <td key={p.id} className="py-2 px-2">
                           <div className="flex items-center gap-2">
@@ -476,13 +494,13 @@ export default function SavedListPage() {
                   )
                 })()}
                 <tr className="border-b">
-                  <td className="py-2 px-2 text-gray-500">Deadline</td>
+                  <td className="py-2 px-2 text-slate">Deadline</td>
                   {comparison.programs.map(p => (
                     <td key={p.id} className="py-2 px-2">{formatDate(p.application_deadline)}</td>
                   ))}
                 </tr>
                 <tr className="border-b">
-                  <td className="py-2 px-2 text-gray-500">Duration</td>
+                  <td className="py-2 px-2 text-slate">Duration</td>
                   {comparison.programs.map(p => (
                     <td key={p.id} className="py-2 px-2">{(p as any).duration_months ? `${(p as any).duration_months} months` : '\u2014'}</td>
                   ))}
