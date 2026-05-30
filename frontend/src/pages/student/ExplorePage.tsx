@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { searchPrograms, nlpSearch } from '../../api/programs'
 import { searchInstitutions } from '../../api/institutions'
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
+import { getMatches } from '../../api/matching'
 import { useCompareStore } from '../../stores/compare-store'
 import UniversityCard from './explore/cards/UniversityCard'
 import ProgramCard from './explore/cards/ProgramCard'
@@ -12,7 +13,7 @@ import {
   Search, X, Loader2, Sparkles, Building2,
 } from 'lucide-react'
 import StrategyView from './match/StrategyView'
-import type { ProgramSummary } from '../../types'
+import type { ProgramSummary, MatchResult } from '../../types'
 import type {
   InstitutionClassification,
   SatTier,
@@ -125,6 +126,15 @@ export default function ExplorePage() {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   useEffect(() => { if (savedData) setSavedIds(new Set(savedData.map((s: any) => String(s.program_id)))) }, [savedData])
 
+  // Match results — feeds the DualRing (fitness + confidence) on each
+  // ProgramCard so the Explore grid matches the program detail page (G-S2).
+  const { data: matches } = useQuery({ queryKey: ['matches'], queryFn: () => getMatches(), retry: false })
+  const matchById = useMemo(() => {
+    const m = new Map<string, MatchResult>()
+    for (const r of (matches ?? [])) m.set(String(r.program_id), r)
+    return m
+  }, [matches])
+
   const nlpMut = useMutation({
     mutationFn: nlpSearch,
     onSuccess: (data: NlpResult) => setNlpResult(data),
@@ -232,6 +242,7 @@ export default function ExplorePage() {
                 <ProgramCard
                   key={p.id}
                   program={p}
+                  match={matchById.get(p.id)}
                   saved={savedIds.has(p.id)}
                   comparing={compareStore.has(p.id)}
                   onSave={() => toggleSave(p.id)}
