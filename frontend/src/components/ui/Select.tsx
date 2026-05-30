@@ -34,6 +34,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           <select
             ref={ref}
             id={inputId}
+            required={required}
             aria-invalid={error ? true : undefined}
             aria-describedby={helperId}
             aria-required={required || undefined}

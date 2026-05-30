@@ -26,6 +26,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           id={inputId}
           value={value}
           maxLength={maxLength}
+          required={required}
           aria-invalid={error ? true : undefined}
           aria-describedby={helperId}
           aria-required={required || undefined}

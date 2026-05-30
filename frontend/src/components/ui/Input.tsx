@@ -74,6 +74,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           <input
             ref={ref}
             id={inputId}
+            required={required}
             aria-invalid={error ? true : undefined}
             aria-describedby={helperId}
             aria-required={required || undefined}
