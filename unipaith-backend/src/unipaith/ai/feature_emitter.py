@@ -185,9 +185,7 @@ class FeatureEmitter:
         embedding: list[float] | None = None
         if summary:
             try:
-                embed_resp = await self.client.embed(
-                    summary, student_id=student_id, db=db
-                )
+                embed_resp = await self.client.embed(summary, student_id=student_id, db=db)
                 embedding = embed_resp.embedding
             except Exception as exc:  # pragma: no cover — degraded path
                 logger.warning(

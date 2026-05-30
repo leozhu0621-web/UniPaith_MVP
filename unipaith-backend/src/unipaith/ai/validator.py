@@ -273,9 +273,7 @@ class LayerValidator:
                 + [f"{layer}.judge_score ({outcome.mean_score:.2f}/{outcome.threshold:.2f})"]
             ),
             next_probe_hint=(
-                deterministic.next_probe_hint
-                if gated_complete
-                else _judge_followup_probe(layer)
+                deterministic.next_probe_hint if gated_complete else _judge_followup_probe(layer)
             ),
             evidence_count={
                 **deterministic.evidence_count,
@@ -340,9 +338,7 @@ class LayerValidator:
             # Defensive: deterministic gate should have caught this; if we
             # got here with no entries, fail closed (judge cannot pass on
             # no evidence).
-            return JudgeOutcome(
-                mean_score=0.0, threshold=threshold, passed=False, per_entry=[]
-            )
+            return JudgeOutcome(mean_score=0.0, threshold=threshold, passed=False, per_entry=[])
 
         system = [{"type": "text", "text": system_prompt, "cache_control": CACHE_1H}]
         tools = [{**tool, "cache_control": CACHE_1H}]

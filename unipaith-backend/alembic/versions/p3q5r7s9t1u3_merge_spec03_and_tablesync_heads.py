@@ -19,7 +19,10 @@ from collections.abc import Sequence
 
 # revision identifiers, used by Alembic.
 revision: str = "p3q5r7s9t1u3"
-down_revision: str | Sequence[str] | None = ("n9p2q4r6s8t0", "f1a9c0d2e3b4")
+down_revision: str | Sequence[str] | None = (
+    "n9p2q4r6s8t0",
+    "f1a9c0d2e3b4",  # pragma: allowlist secret
+)
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
