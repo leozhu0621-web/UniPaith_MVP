@@ -18,18 +18,19 @@ Revision ID: n9p2q4r6s8t0
 Revises: ac252aa411c3, 1499ba1b4c8a
 Create Date: 2026-05-30 10:00:00.000000
 """
-from typing import Sequence, Union
+
+from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects.postgresql import JSONB
 
+from alembic import op
 
 # revision identifiers
 revision: str = "n9p2q4r6s8t0"
-down_revision: Union[str, Sequence[str], None] = ("ac252aa411c3", "1499ba1b4c8a")
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | Sequence[str] | None = ("ac252aa411c3", "1499ba1b4c8a")
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -57,15 +58,11 @@ def upgrade() -> None:
     )
     op.add_column(
         "ai_turns",
-        sa.Column(
-            "request_started_at", sa.DateTime(timezone=True), nullable=True
-        ),
+        sa.Column("request_started_at", sa.DateTime(timezone=True), nullable=True),
     )
     op.add_column(
         "ai_turns",
-        sa.Column(
-            "request_completed_at", sa.DateTime(timezone=True), nullable=True
-        ),
+        sa.Column("request_completed_at", sa.DateTime(timezone=True), nullable=True),
     )
 
     # Provider check constraint: anthropic | openai | bedrock | rule_based

@@ -101,9 +101,7 @@ def list_failover_order(agent: str) -> list[AIProvider]:
     failover list's lead element.
     """
     preferred = get_provider_for_agent(agent)
-    failover_names = [
-        n.strip() for n in settings.ai_provider_failover_csv.split(",") if n.strip()
-    ]
+    failover_names = [n.strip() for n in settings.ai_provider_failover_csv.split(",") if n.strip()]
     ordered: list[AIProvider] = [preferred]
     for name in failover_names:
         if name == "rule_based":

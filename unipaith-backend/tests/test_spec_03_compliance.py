@@ -12,7 +12,6 @@ from __future__ import annotations
 import json
 
 import pytest
-
 from unipaith.ai.cache_invalidation import (
     RATIONALE_PROMPT_VERSION,
 )
@@ -189,9 +188,7 @@ def test_ai_turn_model_has_spec_03_fields():
 def test_ai_turn_provider_check_constraint_exists():
     from unipaith.models.ai_artifacts import AiTurn
 
-    check_names = {
-        c.name for c in AiTurn.__table__.constraints if hasattr(c, "name") and c.name
-    }
+    check_names = {c.name for c in AiTurn.__table__.constraints if hasattr(c, "name") and c.name}
     assert "ck_ai_turns_provider" in check_names
     assert "ck_ai_turns_failure_reason" in check_names
 
@@ -209,9 +206,7 @@ def test_all_providers_failed_error_carries_attempts():
 
 
 def test_failover_csv_parses_to_ordered_providers(monkeypatch):
-    monkeypatch.setattr(
-        settings, "ai_provider_failover_csv", "anthropic,openai"
-    )
+    monkeypatch.setattr(settings, "ai_provider_failover_csv", "anthropic,openai")
     reset_registry()
     order = list_failover_order(agent="rationale")
     names = [p.name for p in order]
@@ -224,9 +219,7 @@ def test_failover_csv_parses_to_ordered_providers(monkeypatch):
 
 
 def test_failover_skips_unknown_providers(monkeypatch):
-    monkeypatch.setattr(
-        settings, "ai_provider_failover_csv", "anthropic,not_a_provider,openai"
-    )
+    monkeypatch.setattr(settings, "ai_provider_failover_csv", "anthropic,not_a_provider,openai")
     reset_registry()
     order = list_failover_order(agent="rationale")
     names = [p.name for p in order]

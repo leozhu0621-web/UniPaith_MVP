@@ -75,9 +75,7 @@ class ConsentDeniedError(RuntimeError):
     def __init__(self, *, agent: str, denied_mask_key: str):
         self.agent = agent
         self.denied_mask_key = denied_mask_key
-        super().__init__(
-            f"Call denied by consent mask: agent={agent} needed={denied_mask_key}"
-        )
+        super().__init__(f"Call denied by consent mask: agent={agent} needed={denied_mask_key}")
 
 
 # Spec 03 §9 — raised after every configured provider has failed. The
@@ -309,9 +307,7 @@ class AIClient:
         self.haiku_model = haiku_model
         # Spec 03 §2 — Opus tier for "single defining moment" calls.
         self.flagship_model = (
-            flagship_model
-            if flagship_model is not None
-            else settings.anthropic_default_flagship
+            flagship_model if flagship_model is not None else settings.anthropic_default_flagship
         )
         self.embedding_model = embedding_model
         self.mock_mode = mock_mode
@@ -416,9 +412,7 @@ class AIClient:
             except ProviderError as e:
                 completed_at = _utcnow()
                 last_err = e
-                logger.warning(
-                    "provider=%s agent=%s failed: %s", provider.name, agent, e
-                )
+                logger.warning("provider=%s agent=%s failed: %s", provider.name, agent, e)
                 # Spec 03 §9 — every attempt gets a ledger row, including
                 # failed ones, so cost dashboards can compute reliability.
                 if db is not None:
@@ -471,9 +465,7 @@ class AIClient:
             return response
 
         # All providers exhausted — caller runs rule-based fallback.
-        raise AllProvidersFailedError(
-            agent=agent, attempts=len(providers)
-        ) from last_err
+        raise AllProvidersFailedError(agent=agent, attempts=len(providers)) from last_err
 
     async def stream_message(
         self,
@@ -663,9 +655,7 @@ class AIClient:
                     surface=None,
                     consent_mask=consent_mask,
                 )
-            raise ConsentDeniedError(
-                agent="embedding", denied_mask_key="matching"
-            )
+            raise ConsentDeniedError(agent="embedding", denied_mask_key="matching")
 
         await self._enforce_cost_cap(db, student_id, agent="embedding")
 

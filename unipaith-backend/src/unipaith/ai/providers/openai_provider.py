@@ -88,16 +88,12 @@ class OpenAIProvider(AIProvider):
         else:
             for block in request.system:
                 if block.get("type") == "text":
-                    flat_messages.append(
-                        {"role": "system", "content": block["text"]}
-                    )
+                    flat_messages.append({"role": "system", "content": block["text"]})
         for m in request.messages:
             role = m.get("role", "user")
             content = m.get("content", "")
             if isinstance(content, list):
-                text = "\n".join(
-                    b.get("text", "") for b in content if b.get("type") == "text"
-                )
+                text = "\n".join(b.get("text", "") for b in content if b.get("type") == "text")
                 flat_messages.append({"role": role, "content": text})
             else:
                 flat_messages.append({"role": role, "content": content})
@@ -117,9 +113,7 @@ class OpenAIProvider(AIProvider):
                 )
                 break
             except TimeoutError as e:
-                raise ProviderTimeoutError(
-                    f"openai timeout after {request.timeout_ms}ms"
-                ) from e
+                raise ProviderTimeoutError(f"openai timeout after {request.timeout_ms}ms") from e
             except Exception as e:  # pragma: no cover — retry path
                 last_err = e
                 logger.warning(
@@ -169,13 +163,11 @@ class OpenAIProvider(AIProvider):
         return self._sdk
 
     @staticmethod
-    def _compute_cost(
-        *, model_id: str, input_tokens: int, output_tokens: int
-    ) -> Decimal:
+    def _compute_cost(*, model_id: str, input_tokens: int, output_tokens: int) -> Decimal:
         prices = _OPENAI_PRICES.get(model_id)
         if prices is None:
             return Decimal("0")
-        cost = (input_tokens / 1_000_000) * prices["input"] + (
-            output_tokens / 1_000_000
-        ) * prices["output"]
+        cost = (input_tokens / 1_000_000) * prices["input"] + (output_tokens / 1_000_000) * prices[
+            "output"
+        ]
         return Decimal(str(round(cost, 6)))

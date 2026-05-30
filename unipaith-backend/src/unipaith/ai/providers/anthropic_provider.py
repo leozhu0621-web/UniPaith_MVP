@@ -70,14 +70,10 @@ class AnthropicProvider(AIProvider):
     ):
         self.api_key = api_key if api_key is not None else settings.anthropic_api_key
         self.flagship_model = (
-            flagship_model
-            if flagship_model is not None
-            else settings.anthropic_default_flagship
+            flagship_model if flagship_model is not None else settings.anthropic_default_flagship
         )
         self.workhorse_model = (
-            workhorse_model
-            if workhorse_model is not None
-            else settings.anthropic_default_workhorse
+            workhorse_model if workhorse_model is not None else settings.anthropic_default_workhorse
         )
         self.batch_model = (
             batch_model if batch_model is not None else settings.anthropic_default_batch
@@ -137,9 +133,7 @@ class AnthropicProvider(AIProvider):
                 )
                 break
             except TimeoutError as e:
-                raise ProviderTimeoutError(
-                    f"anthropic timeout after {request.timeout_ms}ms"
-                ) from e
+                raise ProviderTimeoutError(f"anthropic timeout after {request.timeout_ms}ms") from e
             except Exception as e:  # pragma: no cover — retry path
                 last_err = e
                 logger.warning(
@@ -158,9 +152,7 @@ class AnthropicProvider(AIProvider):
         input_tokens = getattr(usage, "input_tokens", 0) if usage else 0
         output_tokens = getattr(usage, "output_tokens", 0) if usage else 0
         cache_read = getattr(usage, "cache_read_input_tokens", 0) if usage else 0
-        cache_create = (
-            getattr(usage, "cache_creation_input_tokens", 0) if usage else 0
-        )
+        cache_create = getattr(usage, "cache_creation_input_tokens", 0) if usage else 0
 
         text_chunks: list[str] = []
         content_blocks: list[dict[str, Any]] = []

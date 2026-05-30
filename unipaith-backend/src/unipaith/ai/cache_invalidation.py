@@ -45,9 +45,7 @@ logger = logging.getLogger(__name__)
 RATIONALE_PROMPT_VERSION: int = 1
 
 
-async def invalidate_for_consent_change(
-    db: AsyncSession, student_id: uuid.UUID
-) -> int:
+async def invalidate_for_consent_change(db: AsyncSession, student_id: uuid.UUID) -> int:
     """Delete every cached rationale for a student after their consent
     mask changed.
 
@@ -63,9 +61,7 @@ async def invalidate_for_consent_change(
     # module is imported by the consent endpoint.
     from unipaith.models.ai_artifacts import MatchRationale
 
-    result = await db.execute(
-        delete(MatchRationale).where(MatchRationale.student_id == student_id)
-    )
+    result = await db.execute(delete(MatchRationale).where(MatchRationale.student_id == student_id))
     count = result.rowcount or 0
     if count > 0:
         logger.info(
@@ -87,15 +83,12 @@ async def invalidate_for_prompt_change(db: AsyncSession) -> int:
     from unipaith.models.ai_artifacts import MatchRationale
 
     result = await db.execute(
-        delete(MatchRationale).where(
-            MatchRationale.prompt_version < RATIONALE_PROMPT_VERSION
-        )
+        delete(MatchRationale).where(MatchRationale.prompt_version < RATIONALE_PROMPT_VERSION)
     )
     count = result.rowcount or 0
     if count > 0:
         logger.info(
-            "Cache invalidation: removed %d stale-prompt match_rationale rows "
-            "(below v%d)",
+            "Cache invalidation: removed %d stale-prompt match_rationale rows " "(below v%d)",
             count,
             RATIONALE_PROMPT_VERSION,
         )

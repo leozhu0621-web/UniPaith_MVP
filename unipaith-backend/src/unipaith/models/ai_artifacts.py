@@ -196,12 +196,8 @@ class AiTurn(Base, UUIDPrimaryKeyMixin):
     consent_mask: Mapped[dict | None] = mapped_column(JSONB)
     # Spec 03 §8 — explicit start/end so latency_ms remains derivable and
     # the audit row pins exactly when the provider was hit.
-    request_started_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True)
-    )
-    request_completed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True)
-    )
+    request_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    request_completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -239,9 +235,7 @@ class MatchRationale(Base):
         primary_key=True,
     )
     profile_version: Mapped[int] = mapped_column(Integer, primary_key=True)
-    program_version: Mapped[int] = mapped_column(
-        Integer, primary_key=True, server_default="1"
-    )
+    program_version: Mapped[int] = mapped_column(Integer, primary_key=True, server_default="1")
     # Spec 03 §12 — bumping this constant in the rationale agent module
     # invalidates every cached rationale on next read. Default 1 so legacy
     # rows roll forward.

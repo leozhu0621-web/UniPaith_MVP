@@ -86,9 +86,7 @@ async def get_consent_mask(
     if db is None or student_id is None:
         return dict(DEFAULT_MASK)
     row = await db.scalar(
-        select(StudentDataConsent).where(
-            StudentDataConsent.student_id == student_id
-        )
+        select(StudentDataConsent).where(StudentDataConsent.student_id == student_id)
     )
     if row is None:
         return dict(DEFAULT_MASK)
