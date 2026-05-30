@@ -12,8 +12,6 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-import sqlalchemy as sa
-
 from alembic import op
 
 revision: str = "r9s0t1u2v3w4"
@@ -22,16 +20,20 @@ branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 
+# Idempotent: the e4a5b6c7d8e9 column-sync migration may have already added
+# these from the model on a fresh DB. ADD COLUMN IF NOT EXISTS converges the
+# fresh and incremental (production) paths.
+
+
 def upgrade() -> None:
-    op.add_column("users", sa.Column("locale", sa.String(length=10), nullable=True))
-    op.add_column("users", sa.Column("timezone", sa.String(length=64), nullable=True))
-    op.add_column(
-        "users",
-        sa.Column("deletion_requested_at", sa.DateTime(timezone=True), nullable=True),
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS locale VARCHAR(10)")
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS timezone VARCHAR(64)")
+    op.execute(
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS deletion_requested_at TIMESTAMP WITH TIME ZONE"
     )
 
 
 def downgrade() -> None:
-    op.drop_column("users", "deletion_requested_at")
-    op.drop_column("users", "timezone")
-    op.drop_column("users", "locale")
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS deletion_requested_at")
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS timezone")
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS locale")

@@ -13,8 +13,6 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-import sqlalchemy as sa
-
 from alembic import op
 
 revision: str = "q8r9s0t1u2v3"
@@ -23,11 +21,16 @@ branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 
+# Idempotent: the e4a5b6c7d8e9 column-sync migration may have already added
+# these from the model on a fresh DB. ADD COLUMN IF NOT EXISTS converges the
+# fresh and incremental (production) paths.
+
+
 def upgrade() -> None:
-    op.add_column("applications", sa.Column("intent_reason", sa.String(length=64), nullable=True))
-    op.add_column("applications", sa.Column("intent_rationale", sa.Text(), nullable=True))
+    op.execute("ALTER TABLE applications ADD COLUMN IF NOT EXISTS intent_reason VARCHAR(64)")
+    op.execute("ALTER TABLE applications ADD COLUMN IF NOT EXISTS intent_rationale TEXT")
 
 
 def downgrade() -> None:
-    op.drop_column("applications", "intent_rationale")
-    op.drop_column("applications", "intent_reason")
+    op.execute("ALTER TABLE applications DROP COLUMN IF EXISTS intent_rationale")
+    op.execute("ALTER TABLE applications DROP COLUMN IF EXISTS intent_reason")
