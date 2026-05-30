@@ -55,25 +55,31 @@ export default function UniversityCard({ institution: inst, onClick }: Props) {
       onClick={onClick}
       className="bg-white rounded-xl border border-divider hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 ease-out overflow-hidden cursor-pointer flex flex-col group/card"
     >
-      {/* ── Image with strong name watermark ── */}
-      <div className="relative h-44 bg-student-mist overflow-hidden">
+      {/* ── Header — campus photo when present, else an editorial ink panel.
+           No gold/technicolor gradient fill (Spec/01 §1 — "yellow is
+           punctuation, not fill"; "restraint over decoration"). ── */}
+      <div className="relative h-44 bg-ink-deep overflow-hidden">
         {campusImg && !imgFailed ? (
-          <img
-            src={campusImg}
-            alt={inst.name}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover/card:scale-[1.03]"
-            onError={() => setImgFailed(true)}
-          />
+          <>
+            <img
+              src={campusImg}
+              alt={inst.name}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover/card:scale-[1.03]"
+              onError={() => setImgFailed(true)}
+            />
+            {/* Ink scrim — functional legibility for the name over a photo */}
+            <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-ink-deep via-ink-deep/55 to-transparent pointer-events-none" />
+          </>
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-student via-student/80 to-student-hover" />
+          /* Editorial ink panel — a faint gold landmark is the only accent */
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Landmark size={64} strokeWidth={1.5} className="text-gold/15" />
+          </div>
         )}
-
-        {/* Strong scrim — keeps the name legible over any photo */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/45 to-black/15 pointer-events-none" />
 
         {/* Logo chip — top-left, doesn't compete with the name */}
         {logoImg && (
-          <div className="absolute top-3 left-3 w-9 h-9 rounded-lg bg-white/95 shadow-sm border border-white/50 p-1 flex items-center justify-center">
+          <div className="absolute top-3 left-3 w-9 h-9 rounded-md bg-white/95 shadow-sm border border-white/50 p-1 flex items-center justify-center">
             <img
               src={logoImg}
               alt=""
@@ -83,15 +89,12 @@ export default function UniversityCard({ institution: inst, onClick }: Props) {
           </div>
         )}
 
-        {/* Name as the visual anchor — large, centered-left, drop shadow */}
+        {/* Name anchor — cream-on-ink, editorial */}
         <div className="absolute inset-0 flex flex-col justify-end px-4 pb-4 pointer-events-none">
-          <h3
-            className="text-white text-[22px] leading-[1.1] font-bold drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] tracking-tight line-clamp-2"
-            style={{ fontFamily: 'var(--font-display, inherit)' }}
-          >
+          <h3 className="text-white text-[22px] leading-[1.1] font-bold tracking-tight line-clamp-2">
             {inst.name}
           </h3>
-          <div className="flex items-center gap-1.5 mt-1.5 text-white/90 text-[11px] drop-shadow-sm">
+          <div className="flex items-center gap-1.5 mt-1.5 text-cream/85 text-[11px]">
             <MapPin size={10} className="flex-shrink-0" />
             <span className="truncate">
               {inst.city ? `${inst.city}, ` : ''}{inst.region ? `${inst.region} · ` : ''}{inst.country}
