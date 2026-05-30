@@ -31,6 +31,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -40,6 +41,9 @@ from sqlalchemy import (
     String,
     Text,
     func,
+)
+from sqlalchemy import (
+    true as sa_true,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -118,8 +122,27 @@ class AiTurn(Base, UUIDPrimaryKeyMixin):
             "'rationale','workshop_coach','workshop_judge','embedding')",
             name="ck_ai_turns_agent",
         ),
+        # Spec 03 §8: provider tracked per call so the cost ledger splits
+        # spend across anthropic / openai / bedrock / rule_based and the
+        # compliance audit can verify provider routing.
+        CheckConstraint(
+            "provider IN ('anthropic','openai','bedrock','rule_based')",
+            name="ck_ai_turns_provider",
+        ),
+        CheckConstraint(
+            "failure_reason IS NULL OR failure_reason IN ("
+            "'parse_error','timeout','guardrail_trip','provider_5xx',"
+            "'rule_based_fallback','consent_denied','cost_cap','unknown')",
+            name="ck_ai_turns_failure_reason",
+        ),
         Index("ix_ai_turns_student_created", "student_id", "created_at"),
         Index("ix_ai_turns_agent_created", "agent", "created_at"),
+        Index(
+            "ix_ai_turns_provider_agent_created",
+            "provider",
+            "agent",
+            "created_at",
+        ),
     )
 
     student_id: Mapped[uuid.UUID | None] = mapped_column(
@@ -136,6 +159,12 @@ class AiTurn(Base, UUIDPrimaryKeyMixin):
     surface: Mapped[str | None] = mapped_column(String(40))
     role: Mapped[str] = mapped_column(String(20), nullable=False)
     model: Mapped[str] = mapped_column(String(60), nullable=False)
+    # Spec 03 §8 — which provider actually fielded this request. Lets the
+    # cost dashboard split spend by provider and lets compliance audits
+    # verify provider routing matches the configured default.
+    provider: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="anthropic", server_default="anthropic"
+    )
     input_tokens: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, server_default="0"
     )
@@ -153,6 +182,22 @@ class AiTurn(Base, UUIDPrimaryKeyMixin):
     )
     latency_ms: Mapped[int | None] = mapped_column(Integer)
     error: Mapped[str | None] = mapped_column(Text)
+    # Spec 03 §8 outcome columns. `success` is the boolean the cost
+    # dashboard uses to compute reliability per provider+agent;
+    # `failure_reason` is the typed enum so per-mode trending is possible.
+    success: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default=sa_true()
+    )
+    failure_reason: Mapped[str | None] = mapped_column(String(40))
+    # Spec 03 §11 — consent mask in effect at request time. Snapshot, not a
+    # reference, because consent_mask itself can change between request and
+    # audit. Stored as JSONB so all four masks (matching/outreach/analytics/
+    # training) are queryable.
+    consent_mask: Mapped[dict | None] = mapped_column(JSONB)
+    # Spec 03 §8 — explicit start/end so latency_ms remains derivable and
+    # the audit row pins exactly when the provider was hit.
+    request_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    request_completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -163,11 +208,14 @@ class AiTurn(Base, UUIDPrimaryKeyMixin):
 
 class MatchRationale(Base):
     """Cached A5 Rationale output, keyed by
-    (student, program, profile_version, program_version).
+    (student, program, profile_version, program_version, prompt_version).
 
     The match service checks this table before calling the agent. Cache
-    invalidation happens automatically when either version bumps — the
-    composite-key strategy from the Phase A1 migration.
+    invalidation happens automatically when any version bumps — the
+    composite-key strategy from the Phase A1 migration, extended in
+    spec 03 §12 with `prompt_version` so a prompt iteration also forces
+    re-derivation. Consent-mask changes are routed through a separate
+    invalidation hook (see `unipaith.ai.cache_invalidation`).
 
     `cited_student_fields` and `cited_program_fields` are stored so post-
     hoc audits can re-run the groundedness check against historical
@@ -187,8 +235,12 @@ class MatchRationale(Base):
         primary_key=True,
     )
     profile_version: Mapped[int] = mapped_column(Integer, primary_key=True)
-    program_version: Mapped[int] = mapped_column(
-        Integer, primary_key=True, server_default="1"
+    program_version: Mapped[int] = mapped_column(Integer, primary_key=True, server_default="1")
+    # Spec 03 §12 — bumping this constant in the rationale agent module
+    # invalidates every cached rationale on next read. Default 1 so legacy
+    # rows roll forward.
+    prompt_version: Mapped[int] = mapped_column(
+        Integer, primary_key=True, default=1, server_default="1"
     )
     rationale_text: Mapped[str] = mapped_column(Text, nullable=False)
     cited_student_fields: Mapped[dict | None] = mapped_column(JSONB)

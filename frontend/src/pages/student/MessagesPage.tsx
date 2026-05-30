@@ -9,7 +9,7 @@ import Skeleton from '../../components/ui/Skeleton'
 import { formatRelative } from '../../utils/format'
 import {
   Send, Paperclip, Building2, FileText, AlertCircle, CheckCircle2,
-  Clock, MessageSquare, Bell, ExternalLink,
+  Clock, MessageSquare, Bell, ExternalLink, ChevronLeft,
 } from 'lucide-react'
 import type { Conversation, Message } from '../../types'
 
@@ -109,16 +109,17 @@ export default function MessagesPage() {
 
   return (
     <div className="flex h-full">
-      {/* Left: conversation list */}
-      <div className="w-80 border-r border-gray-200 bg-white flex flex-col">
-        <div className="p-3 border-b border-gray-100">
+      {/* Left: conversation list. Mobile (Spec/02b §5): list and thread are
+          separate full screens — show the list only when no thread is open. */}
+      <div className={`${selectedConv ? 'hidden lg:flex' : 'flex'} w-full lg:w-80 border-r border-border bg-card flex-col`}>
+        <div className="p-3 border-b border-border">
           <h2 className="font-semibold text-sm mb-2">Messages</h2>
           <div className="flex gap-1">
             {([['all', 'All'], ['human', 'Human'], ['system', 'System']] as [MsgFilter, string][]).map(([key, label]) => (
               <button
                 key={key}
                 onClick={() => setMsgFilter(key)}
-                className={`px-2.5 py-1 text-xs rounded-full transition-colors ${msgFilter === key ? 'bg-stone-700 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                className={`px-2.5 py-1 text-xs rounded-full transition-colors ${msgFilter === key ? 'bg-cobalt text-white' : 'bg-muted text-muted-foreground hover:brightness-95'}`}
               >
                 {key === 'system' && <Bell size={10} className="inline mr-1" />}
                 {key === 'human' && <MessageSquare size={10} className="inline mr-1" />}
@@ -131,7 +132,7 @@ export default function MessagesPage() {
           {convsLoading ? (
             <div className="p-3 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-14" />)}</div>
           ) : filteredConvs.length === 0 ? (
-            <p className="p-4 text-sm text-gray-500">No conversations</p>
+            <p className="p-4 text-sm text-muted-foreground">No conversations</p>
           ) : (
             filteredConvs.map(c => {
               const action = deriveActionState(c)
@@ -140,19 +141,19 @@ export default function MessagesPage() {
                 <button
                   key={c.id}
                   onClick={() => { setSelectedConv(c.id); navigate(`/s/messages/${c.id}`) }}
-                  className={`w-full text-left px-3 py-3 border-b border-gray-50 hover:bg-gray-50 ${selectedConv === c.id ? 'bg-gray-100' : ''} ${isSys ? 'bg-gray-50/50' : ''}`}
+                  className={`w-full text-left px-3 py-3 border-b border-divider hover:bg-muted ${selectedConv === c.id ? 'bg-muted' : ''} ${isSys ? 'bg-muted/40' : ''}`}
                 >
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium truncate flex-1">{c.subject || 'Conversation'}</p>
                     {c.unread_count ? (
-                      <span className="ml-2 w-5 h-5 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="ml-2 w-5 h-5 bg-error text-white text-[10px] rounded-full flex items-center justify-center flex-shrink-0">
                         {c.unread_count}
                       </span>
                     ) : null}
                   </div>
                   <div className="flex items-center gap-2 mt-1">
                     {c.program_id && (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] text-purple-600">
+                      <span className="inline-flex items-center gap-0.5 text-[10px] text-cobalt">
                         <Building2 size={9} /> Program
                       </span>
                     )}
@@ -163,7 +164,7 @@ export default function MessagesPage() {
                       </Badge>
                     )}
                   </div>
-                  <p className="text-[10px] text-gray-400 mt-0.5">{formatRelative(c.last_message_at)}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{formatRelative(c.last_message_at)}</p>
                 </button>
               )
             })
@@ -171,24 +172,31 @@ export default function MessagesPage() {
         </div>
       </div>
 
-      {/* Right: messages */}
-      <div className="flex-1 flex flex-col">
+      {/* Right: messages. Mobile: full screen when a thread is selected. */}
+      <div className={`${selectedConv ? 'flex' : 'hidden lg:flex'} flex-1 flex-col`}>
         {!selectedConv ? (
-          <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
+          <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
             Select a conversation
           </div>
         ) : (
           <>
             {/* Thread header */}
             {selectedConvObj && (
-              <div className="px-4 py-2.5 border-b border-gray-200 bg-white flex items-center justify-between">
-                <div className="min-w-0">
+              <div className="px-4 py-2.5 border-b border-border bg-card flex items-center justify-between gap-2">
+                <button
+                  onClick={() => { setSelectedConv(null); navigate('/s/manage?tab=messages') }}
+                  className="lg:hidden p-1 -ml-1 rounded-md text-muted-foreground hover:bg-muted shrink-0"
+                  aria-label="Back to messages"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium truncate">{selectedConvObj.subject || 'Conversation'}</p>
                   <div className="flex items-center gap-2 mt-0.5">
                     {selectedConvObj.program_id && (
                       <button
                         onClick={() => navigate(`/s/programs/${selectedConvObj.program_id}`)}
-                        className="inline-flex items-center gap-1 text-[10px] text-purple-600 hover:underline"
+                        className="inline-flex items-center gap-1 text-[10px] text-cobalt hover:underline"
                       >
                         <Building2 size={10} /> View Program <ExternalLink size={8} />
                       </button>
@@ -196,7 +204,7 @@ export default function MessagesPage() {
                     {(selectedConvObj as any).application_id && (
                       <button
                         onClick={() => navigate(`/s/applications/${(selectedConvObj as any).application_id}`)}
-                        className="inline-flex items-center gap-1 text-[10px] text-student hover:underline"
+                        className="inline-flex items-center gap-1 text-[10px] text-cobalt hover:underline"
                       >
                         <ExternalLink size={8} /> View Application
                       </button>
@@ -225,13 +233,13 @@ export default function MessagesPage() {
                   <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[70%] px-4 py-2 rounded-2xl text-sm ${
                       isOwn
-                        ? 'bg-stone-700 text-white rounded-br-md'
+                        ? 'bg-cobalt text-white rounded-br-md'
                         : isSysMsg
-                          ? 'bg-gray-50 text-gray-500 rounded-bl-md border border-gray-200'
-                          : 'bg-gray-100 text-stone-700 rounded-bl-md'
+                          ? 'bg-muted text-muted-foreground rounded-bl-md border border-border'
+                          : 'bg-muted text-charcoal rounded-bl-md'
                     }`}>
                       {msg.message_body}
-                      <p className={`text-[10px] mt-1 ${isOwn ? 'text-white/60' : 'text-gray-400'}`}>
+                      <p className={`text-[10px] mt-1 ${isOwn ? 'text-white/60' : 'text-muted-foreground'}`}>
                         {formatRelative(msg.sent_at)}
                       </p>
                     </div>
@@ -242,28 +250,28 @@ export default function MessagesPage() {
             </div>
 
             {/* Input */}
-            <div className="px-4 py-3 border-t border-gray-200 bg-white">
+            <div className="px-4 py-3 border-t border-border bg-card">
               {showAttachments && (
-                <div className="mb-2 p-2 bg-gray-50 rounded-lg border max-h-32 overflow-y-auto">
-                  <p className="text-xs text-gray-500 mb-1">Attach from your materials:</p>
+                <div className="mb-2 p-2 bg-muted rounded-lg border max-h-32 overflow-y-auto">
+                  <p className="text-xs text-muted-foreground mb-1">Attach from your materials:</p>
                   {docList.length > 0 ? docList.slice(0, 10).map((doc: any) => (
                     <button
                       key={doc.id}
                       onClick={() => handleAttach(doc.file_name || doc.name || 'Document')}
-                      className="block w-full text-left text-xs text-stone-700 hover:bg-gray-100 px-2 py-1 rounded"
+                      className="block w-full text-left text-xs text-charcoal hover:bg-muted px-2 py-1 rounded"
                     >
                       <FileText size={10} className="inline mr-1" />
                       {doc.file_name || doc.name || 'Document'}
                     </button>
                   )) : (
-                    <p className="text-xs text-gray-400">No documents uploaded yet</p>
+                    <p className="text-xs text-muted-foreground">No documents uploaded yet</p>
                   )}
                 </div>
               )}
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowAttachments(!showAttachments)}
-                  className={`p-2 rounded-lg transition-colors ${showAttachments ? 'bg-stone-100 text-stone-700' : 'text-gray-400 hover:text-stone-600'}`}
+                  className={`p-2 rounded-lg transition-colors ${showAttachments ? 'bg-muted text-charcoal' : 'text-muted-foreground hover:text-charcoal'}`}
                 >
                   <Paperclip size={16} />
                 </button>
@@ -272,9 +280,9 @@ export default function MessagesPage() {
                   onChange={e => setNewMessage(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
                   placeholder="Type a message..."
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-stone-700"
+                  className="flex-1 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
-                <button onClick={handleSend} disabled={!newMessage.trim()} className="p-2 bg-stone-700 text-white rounded-lg hover:bg-stone-600 disabled:opacity-50">
+                <button onClick={handleSend} disabled={!newMessage.trim()} className="p-2 bg-cobalt text-white rounded-lg hover:bg-cobalt-dark disabled:opacity-50">
                   <Send size={16} />
                 </button>
               </div>

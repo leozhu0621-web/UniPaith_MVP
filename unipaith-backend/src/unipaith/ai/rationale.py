@@ -33,6 +33,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.ai.client import AIClient, get_client
+from unipaith.ai.prompt_cache import CACHE_1H
 from unipaith.ai.tools.rationale_schema import SUBMIT_RATIONALE_TOOL
 
 logger = logging.getLogger(__name__)
@@ -107,9 +108,7 @@ class RationaleResult:
         `match_results.rationale_text` / `match_rationales.rationale_text`.
         """
         return "\n\n".join(
-            p
-            for p in (self.para_fit, self.para_tradeoffs, self.para_confidence)
-            if p
+            p for p in (self.para_fit, self.para_tradeoffs, self.para_confidence) if p
         ).strip()
 
 
@@ -186,9 +185,9 @@ def _is_nonempty(value: Any) -> bool:
         return False
     if isinstance(value, str):
         return bool(value.strip())
-    if isinstance(value, (list, dict, tuple, set)):
+    if isinstance(value, list | dict | tuple | set):
         return len(value) > 0
-    if isinstance(value, (int, float)):
+    if isinstance(value, int | float):
         return True
     return bool(value)
 
@@ -244,13 +243,11 @@ class RationaleAgent:
                     {
                         "type": "text",
                         "text": self.system_prompt,
-                        "cache_control": {"type": "ephemeral"},
+                        "cache_control": CACHE_1H,
                     }
                 ],
                 messages=[{"role": "user", "content": payload}],
-                tools=[
-                    {**SUBMIT_RATIONALE_TOOL, "cache_control": {"type": "ephemeral"}}
-                ],
+                tools=[{**SUBMIT_RATIONALE_TOOL, "cache_control": CACHE_1H}],
                 tool_choice={"type": "tool", "name": "submit_rationale"},
                 max_tokens=self.max_tokens,
                 temperature=self.temperature,

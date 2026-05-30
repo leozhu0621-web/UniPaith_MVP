@@ -35,6 +35,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.ai.client import AIClient, get_client
+from unipaith.ai.prompt_cache import CACHE_1H
 from unipaith.ai.state import StudentSnapshot
 from unipaith.ai.tools.feature_schema import (
     CAREER_ARCS,
@@ -158,10 +159,10 @@ class FeatureEmitter:
             {
                 "type": "text",
                 "text": self.system_prompt,
-                "cache_control": {"type": "ephemeral"},
+                "cache_control": CACHE_1H,
             }
         ]
-        tools = [{**EMIT_FEATURES_TOOL, "cache_control": {"type": "ephemeral"}}]
+        tools = [{**EMIT_FEATURES_TOOL, "cache_control": CACHE_1H}]
 
         response = await self.client.message(
             agent=self.AGENT_NAME,
@@ -184,9 +185,7 @@ class FeatureEmitter:
         embedding: list[float] | None = None
         if summary:
             try:
-                embed_resp = await self.client.embed(
-                    summary, student_id=student_id, db=db
-                )
+                embed_resp = await self.client.embed(summary, student_id=student_id, db=db)
                 embedding = embed_resp.embedding
             except Exception as exc:  # pragma: no cover — degraded path
                 logger.warning(

@@ -189,6 +189,20 @@ resource "aws_ecs_task_definition" "backend" {
       # agent class to a different model without a code deploy).
       { name = "LLM_REASONING_MODEL", value = "claude-sonnet-4-6" },
       { name = "LLM_FEATURE_MODEL", value = "claude-haiku-4-5" },
+      # Spec 03 §2 + §6 — three-tier model map. Updating any of these
+      # rolls forward the whole agent class without a code deploy
+      # (matches the spec's "Secret update + task restart" model).
+      { name = "ANTHROPIC_DEFAULT_FLAGSHIP", value = "claude-opus-4-8" },
+      { name = "ANTHROPIC_DEFAULT_WORKHORSE", value = "claude-sonnet-4-6" },
+      { name = "ANTHROPIC_DEFAULT_BATCH", value = "claude-haiku-4-5-20251001" },
+      # Spec 03 §5/§6 — provider abstraction. anthropic is the default
+      # for every agent. Per-agent overrides go in AI_PROVIDER_PER_AGENT_JSON.
+      { name = "AI_PROVIDER_DEFAULT", value = "anthropic" },
+      { name = "AI_PROVIDER_PER_AGENT_JSON", value = "" },
+      # Spec 03 §9 — failover order. Try anthropic → openai → rule_based.
+      # Per-attempt timeout for the LLM round trip.
+      { name = "AI_PROVIDER_FAILOVER_CSV", value = "anthropic,openai" },
+      { name = "AI_PROVIDER_FAILOVER_TIMEOUT_MS", value = "30000" },
       { name = "EMBEDDING_MODEL", value = "voyage-3-large" },
       { name = "CORS_ORIGINS", value = "[\"https://app.${var.domain_name}\"]" },
       { name = "SES_SENDER_EMAIL", value = "noreply@${var.domain_name}" },

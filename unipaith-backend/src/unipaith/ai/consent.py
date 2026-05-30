@@ -1,0 +1,116 @@
+"""Spec 03 §11 — consent enforcement at the LLM call site.
+
+Every AIClient.message()/stream_message()/embed() call resolves the
+student's consent mask BEFORE the request. The mask is recorded on the
+audit ledger row (§8) so a compliance audit can verify every call
+respected the active consent state at request time.
+
+Mask shape
+----------
+The mask is a JSONB dict with four boolean keys (spec 03 §11):
+- matching: program/school matching + the rationale agent
+- outreach: any outbound LLM-drafted communication (inbox suggester)
+- analytics: aggregate analytics + cohort metrics
+- training: include in any retrieval-augmented fine-tuning corpus
+
+The DB columns are `consent_matching`, `consent_outreach`,
+`consent_research` (legacy name; mapped to `analytics`). `training` is
+inferred from the absence of `consent_research=False` plus is implicit
+in Anthropic's no-training default (spec 03 §11 caveat).
+
+Agent → required-consent map
+----------------------------
+Each agent declares which mask key it needs. If the student denied that
+key, the call short-circuits to the agent's rule-based fallback with
+`failure_reason='consent_denied'` and a `consent_mask` recorded on the
+ledger row.
+"""
+
+from __future__ import annotations
+
+import logging
+import uuid
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from unipaith.models.student import StudentDataConsent
+
+logger = logging.getLogger(__name__)
+
+
+# Default mask used when:
+# - student_id is None (eval harness / system jobs)
+# - no StudentDataConsent row exists (older accounts pre-Appendix-A)
+# Per spec 03 §11, the default is permissive — the consent UI is the
+# enforceable surface, not a missing row. Updating this default is a
+# governance decision, not a code edit; track in `43-data-rights-privacy.md`.
+DEFAULT_MASK: dict[str, bool] = {
+    "matching": True,
+    "outreach": True,
+    "analytics": True,
+    "training": True,
+}
+
+
+# Spec 03 §11 — agents declare which consent gate they sit behind. The
+# AIClient consults this map to decide whether a denied mask short-
+# circuits the call. Workshop coaches are user-initiated artifact work
+# and don't fall under any of the four mask categories — they always
+# run (the student opening the workshop IS the consent signal).
+AGENT_REQUIRES: dict[str, str | None] = {
+    "orchestrator": None,  # discovery is consent-prerequisite at sign-up
+    "extractor": "analytics",
+    "validator": "analytics",
+    "feature_emitter": "matching",
+    "rationale": "matching",
+    "workshop_coach": None,
+    "workshop_judge": None,
+    "embedding": "matching",  # used by the match pipeline
+}
+
+
+async def get_consent_mask(
+    db: AsyncSession | None, student_id: uuid.UUID | None
+) -> dict[str, bool]:
+    """Return the active consent mask for a student.
+
+    Falls back to `DEFAULT_MASK` when:
+    - `db` or `student_id` is None (eval harness, batch system jobs)
+    - the student has no StudentDataConsent row yet
+
+    This is a hot-path call (runs before every LLM request). It uses a
+    single indexed read and returns a plain dict — no SQLAlchemy
+    relationship loading.
+    """
+    if db is None or student_id is None:
+        return dict(DEFAULT_MASK)
+    row = await db.scalar(
+        select(StudentDataConsent).where(StudentDataConsent.student_id == student_id)
+    )
+    if row is None:
+        return dict(DEFAULT_MASK)
+    return {
+        "matching": bool(row.consent_matching),
+        "outreach": bool(row.consent_outreach),
+        # DB legacy: `consent_research` is the analytics consent.
+        "analytics": bool(row.consent_research),
+        # Anthropic doesn't train on customer data by default. The
+        # explicit gate covers the retrieval-augmented finetune corpus
+        # we may build later. Defaults to True so absence-of-flag means
+        # opted-in for the existing default-permissive behavior.
+        "training": True,
+    }
+
+
+def is_call_permitted(agent: str, mask: dict[str, bool]) -> bool:
+    """Check whether a given agent may run under the given mask.
+
+    Returns True for agents with no consent requirement
+    (`AGENT_REQUIRES[agent] is None`) — those gates live elsewhere
+    (sign-up flow, workshop entry).
+    """
+    needed = AGENT_REQUIRES.get(agent)
+    if needed is None:
+        return True
+    return bool(mask.get(needed, True))

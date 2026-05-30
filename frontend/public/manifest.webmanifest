@@ -1,0 +1,19 @@
+{
+  "name": "UniPaith",
+  "short_name": "UniPaith",
+  "description": "Your path, simplified. Find programs, build a portable profile, and apply once.",
+  "start_url": "/s",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#FCFAF2",
+  "theme_color": "#FCFAF2",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

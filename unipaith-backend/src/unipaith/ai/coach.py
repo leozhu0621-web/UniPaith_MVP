@@ -45,6 +45,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.ai.client import AIClient, get_client
+from unipaith.ai.prompt_cache import CACHE_1H
 from unipaith.ai.tools.workshop_schema import (
     SCHEMA_VERSION,
     SCORE_GENERATION_LEAK_TOOL,
@@ -287,9 +288,7 @@ class WorkshopCoach:
         and don't persist the bad feedback as the canonical
         StudentEssay.ai_feedback.
         """
-        feedback = await self._run_coach(
-            draft=draft, student_id=student_id, db=db
-        )
+        feedback = await self._run_coach(draft=draft, student_id=student_id, db=db)
 
         # Pre-flight heuristic — cheaper than the judge.
         h_score, h_evidence = _heuristic_leak_score(feedback, draft.draft_text)
@@ -325,12 +324,10 @@ class WorkshopCoach:
             {
                 "type": "text",
                 "text": self.coach_prompt,
-                "cache_control": {"type": "ephemeral"},
+                "cache_control": CACHE_1H,
             }
         ]
-        tools = [
-            {**SUBMIT_ESSAY_FEEDBACK_TOOL, "cache_control": {"type": "ephemeral"}}
-        ]
+        tools = [{**SUBMIT_ESSAY_FEEDBACK_TOOL, "cache_control": CACHE_1H}]
         payload = self._coach_payload(draft)
         response = await self.client.message(
             agent=self.AGENT_NAME,
@@ -364,10 +361,7 @@ class WorkshopCoach:
     @staticmethod
     def _parse_coach_response(response) -> CoachFeedback:  # type: ignore[no-untyped-def]
         for b in response.content_blocks:
-            if (
-                b.get("type") == "tool_use"
-                and b.get("name") == "submit_essay_feedback"
-            ):
+            if b.get("type") == "tool_use" and b.get("name") == "submit_essay_feedback":
                 inp = b.get("input") or {}
                 return CoachFeedback(
                     rubric_scores=dict(inp.get("rubric_scores") or {}),
@@ -396,12 +390,10 @@ class WorkshopCoach:
             {
                 "type": "text",
                 "text": self.judge_prompt,
-                "cache_control": {"type": "ephemeral"},
+                "cache_control": CACHE_1H,
             }
         ]
-        tools = [
-            {**SCORE_GENERATION_LEAK_TOOL, "cache_control": {"type": "ephemeral"}}
-        ]
+        tools = [{**SCORE_GENERATION_LEAK_TOOL, "cache_control": CACHE_1H}]
         payload = json.dumps(
             {
                 "draft": draft.draft_text,
@@ -433,10 +425,7 @@ class WorkshopCoach:
     @staticmethod
     def _parse_judge_response(response) -> JudgeVerdict:  # type: ignore[no-untyped-def]
         for b in response.content_blocks:
-            if (
-                b.get("type") == "tool_use"
-                and b.get("name") == "score_generation_leak"
-            ):
+            if b.get("type") == "tool_use" and b.get("name") == "score_generation_leak":
                 inp = b.get("input") or {}
                 score = int(inp.get("score", 5))
                 # Force the passed bit to match the score band — a coach
@@ -608,8 +597,8 @@ async def _coach_interview_impl(
 ) -> InterviewCoachResult:
     """Coach an interview-prep response. Same two-layer guardrail as essay."""
     prompt_text = interview_prompt or _load_prompt("workshop_interview.md")
-    system = [{"type": "text", "text": prompt_text, "cache_control": {"type": "ephemeral"}}]
-    tools = [{**SUBMIT_INTERVIEW_FEEDBACK_TOOL, "cache_control": {"type": "ephemeral"}}]
+    system = [{"type": "text", "text": prompt_text, "cache_control": CACHE_1H}]
+    tools = [{**SUBMIT_INTERVIEW_FEEDBACK_TOOL, "cache_control": CACHE_1H}]
     payload = json.dumps(
         {
             "program_name": response.program_name,
@@ -649,9 +638,7 @@ async def _coach_interview_impl(
             feedback.raw = inp
             break
 
-    h_score, h_evidence = _heuristic_leak_score_interview(
-        feedback, response.response_text
-    )
+    h_score, h_evidence = _heuristic_leak_score_interview(feedback, response.response_text)
     if h_score >= 2:
         return InterviewCoachResult(
             feedback=feedback,
@@ -659,9 +646,7 @@ async def _coach_interview_impl(
         )
 
     if not self.run_judge:
-        return InterviewCoachResult(
-            feedback=feedback, verdict=JudgeVerdict(score=0, passed=True)
-        )
+        return InterviewCoachResult(feedback=feedback, verdict=JudgeVerdict(score=0, passed=True))
 
     # Judge takes the raw coach output JSON; same prompt as essay because
     # the judge contract is "is this generation in disguise?" — schema-
@@ -686,8 +671,8 @@ async def _coach_test_prep_impl(
 ) -> TestPrepCoachResult:
     """Coach a test-prep situation. Same two-layer guardrail."""
     prompt_text = test_prep_prompt or _load_prompt("workshop_test.md")
-    system = [{"type": "text", "text": prompt_text, "cache_control": {"type": "ephemeral"}}]
-    tools = [{**SUBMIT_TEST_PREP_GUIDANCE_TOOL, "cache_control": {"type": "ephemeral"}}]
+    system = [{"type": "text", "text": prompt_text, "cache_control": CACHE_1H}]
+    tools = [{**SUBMIT_TEST_PREP_GUIDANCE_TOOL, "cache_control": CACHE_1H}]
     payload = json.dumps(
         {
             "test_type": context.test_type,
@@ -736,9 +721,7 @@ async def _coach_test_prep_impl(
         )
 
     if not self.run_judge:
-        return TestPrepCoachResult(
-            feedback=feedback, verdict=JudgeVerdict(score=0, passed=True)
-        )
+        return TestPrepCoachResult(feedback=feedback, verdict=JudgeVerdict(score=0, passed=True))
 
     # Combine all challenges + diagnostic into the "original text" the
     # judge gets — keeps the verbatim-quote check meaningful.
@@ -781,10 +764,10 @@ async def _run_generic_judge_impl(
         {
             "type": "text",
             "text": self.judge_prompt,
-            "cache_control": {"type": "ephemeral"},
+            "cache_control": CACHE_1H,
         }
     ]
-    tools = [{**SCORE_GENERATION_LEAK_TOOL, "cache_control": {"type": "ephemeral"}}]
+    tools = [{**SCORE_GENERATION_LEAK_TOOL, "cache_control": CACHE_1H}]
     payload = json.dumps(
         {"original_text": original_text, "coach_output": coach_output},
         ensure_ascii=False,

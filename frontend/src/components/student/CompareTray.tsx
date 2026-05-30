@@ -23,29 +23,30 @@ export default function CompareTray() {
   if (items.length === 0) return null
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40">
+    // Sits above the mobile bottom tab bar (Spec/02b §3.1, §5); flush on desktop.
+    <div className="fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom))] lg:bottom-0 z-40">
       {expanded && comparisonResult && (
-        <div className="bg-white border-t border-gray-200 shadow-lg max-h-[60vh] overflow-y-auto">
-          <div className="max-w-5xl mx-auto p-6">
+        <div className="bg-card border-t border-border elev-raised max-h-[60vh] overflow-y-auto">
+          <div className="max-w-5xl mx-auto p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-stone-700">Side-by-Side Comparison</h3>
-              <button onClick={() => setExpanded(false)} className="text-gray-400 hover:text-gray-600">
+              <h3 className="text-h3 text-foreground">Side-by-side comparison</h3>
+              <button onClick={() => setExpanded(false)} aria-label="Collapse" className="text-muted-foreground hover:text-foreground">
                 <X size={18} />
               </button>
             </div>
             {comparisonResult.ai_analysis && (
-              <Card className="p-4 mb-4 bg-stone-50">
-                <p className="text-sm text-stone-700">{comparisonResult.ai_analysis}</p>
+              <Card variant="card-flush" className="p-4 mb-4 bg-muted">
+                <p className="text-sm text-foreground">{comparisonResult.ai_analysis}</p>
               </Card>
             )}
             {comparisonResult.comparison_data && (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto rounded-lg border border-border">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-2 px-3 text-xs text-gray-500 font-medium">Field</th>
+                    <tr className="bg-muted">
+                      <th className="sticky left-0 z-10 bg-muted text-left py-2 px-3 text-xs text-muted-foreground font-semibold">Field</th>
                       {items.map(item => (
-                        <th key={item.program_id} className="text-left py-2 px-3 text-xs text-stone-700 font-semibold">
+                        <th key={item.program_id} className="text-left py-2 px-3 text-xs text-foreground font-semibold whitespace-nowrap">
                           {item.program_name}
                         </th>
                       ))}
@@ -53,12 +54,12 @@ export default function CompareTray() {
                   </thead>
                   <tbody>
                     {Object.entries(comparisonResult.comparison_data as Record<string, Record<string, string>>).map(([field, values]) => (
-                      <tr key={field} className="border-b border-gray-100">
-                        <td className="py-2 px-3 text-xs text-gray-500 font-medium capitalize">
+                      <tr key={field} className="border-t border-border">
+                        <td className="sticky left-0 z-10 bg-card py-2 px-3 text-xs text-muted-foreground font-medium capitalize">
                           {field.replace(/_/g, ' ')}
                         </td>
                         {items.map(item => (
-                          <td key={item.program_id} className="py-2 px-3 text-xs text-stone-700">
+                          <td key={item.program_id} className="py-2 px-3 text-xs text-foreground">
                             {String(values[item.program_id] ?? '—')}
                           </td>
                         ))}
@@ -72,32 +73,29 @@ export default function CompareTray() {
         </div>
       )}
 
-      <div className="bg-ink text-white shadow-lg">
+      <div className="bg-ink text-white elev-raised">
         <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center gap-3">
-          <ArrowRightLeft size={16} className="text-stone-400 flex-shrink-0" />
-          <span className="text-xs text-stone-400 flex-shrink-0">Compare</span>
+          <ArrowRightLeft size={16} className="text-cream/60 flex-shrink-0" />
+          <span className="hidden sm:inline text-xs text-cream/60 flex-shrink-0">Compare</span>
 
-          <div className="flex items-center gap-2 flex-1 overflow-x-auto">
+          <div className="flex items-center gap-2 flex-1 overflow-x-auto no-scrollbar">
             {items.map(item => (
               <span
                 key={item.program_id}
                 className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 rounded-full text-xs whitespace-nowrap flex-shrink-0"
               >
-                <GraduationCap size={12} className="text-stone-400" />
+                <GraduationCap size={12} className="text-cream/60" />
                 <span className="max-w-[140px] truncate">{item.program_name}</span>
                 {item.degree_type && (
                   <Badge variant="info" size="sm">{item.degree_type}</Badge>
                 )}
-                <button
-                  onClick={() => remove(item.program_id)}
-                  className="text-stone-500 hover:text-white"
-                >
+                <button onClick={() => remove(item.program_id)} aria-label="Remove" className="text-cream/50 hover:text-white">
                   <X size={12} />
                 </button>
               </span>
             ))}
             {items.length < 5 && (
-              <span className="text-[10px] text-stone-500 flex-shrink-0">
+              <span className="hidden sm:inline text-[10px] text-cream/50 flex-shrink-0">
                 {5 - items.length} more slots
               </span>
             )}
@@ -109,19 +107,20 @@ export default function CompareTray() {
               onClick={() => compareMut.mutate()}
               disabled={items.length < 2 || compareMut.isPending}
               loading={compareMut.isPending}
-              className="bg-white text-ink hover:bg-gray-100"
+              className="!bg-primary !text-primary-foreground hover:brightness-95"
             >
               Compare ({items.length})
             </Button>
             {comparisonResult && (
               <button
                 onClick={() => setExpanded(!expanded)}
-                className="p-1 text-stone-400 hover:text-white"
+                aria-label={expanded ? 'Collapse' : 'Expand'}
+                className="p-1 text-cream/60 hover:text-white"
               >
                 {expanded ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
               </button>
             )}
-            <button onClick={clear} className="text-stone-500 hover:text-white text-xs">
+            <button onClick={clear} className="text-cream/60 hover:text-white text-xs">
               Clear
             </button>
           </div>

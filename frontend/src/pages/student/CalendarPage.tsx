@@ -62,7 +62,11 @@ export default function CalendarPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
-  const initialView = (searchParams.get('view') as ViewMode) || 'month'
+  // Spec/02b §5: default to the agenda/list view on mobile (the month grid is
+  // unusable small); desktop keeps month. An explicit ?view= always wins.
+  const viewParam = searchParams.get('view') as ViewMode | null
+  const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches
+  const initialView: ViewMode = viewParam ?? (isMobile ? 'agenda' : 'month')
   const [view, setView] = useState<ViewMode>(initialView)
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [currentWeek, setCurrentWeek] = useState(new Date())
@@ -80,7 +84,9 @@ export default function CalendarPage() {
 
   const switchView = (v: ViewMode) => {
     setView(v)
-    setSearchParams(v === 'month' ? {} : { view: v })
+    // Always write ?view= so the choice is deep-linkable and survives reload —
+    // important on mobile where the default is agenda, not month.
+    setSearchParams({ view: v })
   }
 
   // Build a lookup from interview time to raw interview object for agenda meta
