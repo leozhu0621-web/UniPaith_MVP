@@ -141,6 +141,29 @@ class Settings(BaseSettings):
     llm_reasoning_max_tokens: int = 1024
     llm_reasoning_temperature: float = 0.7
 
+    # LLM - Flagship (Opus-class — strategy first-pass, packet summary,
+    # cohort review summary). Spec 03 §2: used only for "the single
+    # defining moment" of a session. Default Opus 4.8.
+    anthropic_default_flagship: str = "claude-opus-4-8"
+    anthropic_default_workhorse: str = "claude-sonnet-4-6"
+    anthropic_default_batch: str = "claude-haiku-4-5-20251001"
+
+    # Spec 03 §5/§6 — provider abstraction. Default provider for all
+    # agents unless a per-agent override is set in
+    # `ai_provider_per_agent`. Hot-swappable via env.
+    ai_provider_default: str = "anthropic"
+    # Per-agent overrides. JSON-encoded string in env, e.g.
+    # AI_PROVIDER_PER_AGENT='{"match_rationale":"openai"}'. Empty by
+    # default — every agent uses `ai_provider_default`.
+    ai_provider_per_agent_json: str = ""
+
+    # Spec 03 §9 — failover order. The agent tries providers in this list
+    # left-to-right; if all fail, the rule-based fallback runs. Each
+    # attempt writes its own audit ledger row. Failover between LLM
+    # providers is invisible to the end user.
+    ai_provider_failover_csv: str = "anthropic,openai"
+    ai_provider_failover_timeout_ms: int = 30000
+
     # Embedding (Voyage 3-large, paired with Anthropic for the LLM stack.
     # Note: the existing `student_features` table uses 1536-dim OpenAI vectors
     # for legacy matching; the new `student_feature_vectors` table uses 1024-dim

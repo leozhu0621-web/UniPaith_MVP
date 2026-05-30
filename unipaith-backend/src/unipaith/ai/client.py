@@ -1,8 +1,22 @@
-"""Anthropic + Voyage client wrapper with cost tracking, retries, and caching.
+"""LLM client wrapper — provider-routed, cost-tracked, consent-gated.
 
-This is the only sanctioned path for LLM calls in the codebase. Direct use of
-the Anthropic SDK outside this module is a bug — bypasses the cost ledger and
-the per-student cap.
+This is the only sanctioned path for LLM calls in the codebase. Direct
+use of the Anthropic or OpenAI SDK outside this module is a bug —
+bypasses the cost ledger, the per-student cap, the consent gate, and
+the spec-03 failover policy.
+
+Spec 03 changes (May 2026)
+--------------------------
+- Three tiers: flagship (Opus 4.8) / workhorse (Sonnet 4.6) / batch
+  (Haiku 4.5). Existing callers use `model="sonnet"|"haiku"` and keep
+  working — those literals map to workhorse/batch internally.
+- Provider abstraction: every call resolves the agent's preferred
+  provider via `providers/registry.py`, with a failover list per §9.
+- Consent gate: every call resolves the student's consent_mask via
+  `ai/consent.py` BEFORE the request. Denial → ConsentDeniedError +
+  ledger row with failure_reason='consent_denied'.
+- Audit ledger expansion: every row carries provider, success,
+  failure_reason, consent_mask, request_started_at, request_completed_at.
 
 Design
 ------
@@ -43,9 +57,37 @@ from typing import Any, Literal
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from unipaith.ai.consent import get_consent_mask, is_call_permitted
+from unipaith.ai.providers import (
+    ChatRequest,
+    ProviderError,
+    list_failover_order,
+)
 from unipaith.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+# Spec 03 §11 — raised when a call is blocked by the student's consent
+# mask. AIClient writes a `consent_denied` ledger row and re-raises so
+# the calling service can route to its rule-based fallback.
+class ConsentDeniedError(RuntimeError):
+    def __init__(self, *, agent: str, denied_mask_key: str):
+        self.agent = agent
+        self.denied_mask_key = denied_mask_key
+        super().__init__(f"Call denied by consent mask: agent={agent} needed={denied_mask_key}")
+
+
+# Spec 03 §9 — raised after every configured provider has failed. The
+# caller's rule-based fallback runs from here.
+class AllProvidersFailedError(RuntimeError):
+    def __init__(self, *, agent: str, attempts: int):
+        self.agent = agent
+        self.attempts = attempts
+        super().__init__(
+            f"All {attempts} providers failed for agent={agent}; "
+            f"caller should run rule-based fallback"
+        )
 
 
 # ── Per-student cost cap (Plan 2 §10) ─────────────────────────────────────
@@ -124,13 +166,20 @@ async def check_cost_cap(
 
 # ── Pricing table (USD per million tokens). Update when models/prices change.
 # Cache reads bill at 0.1× input rate; cache writes (creation) at 1.25× input.
+# Spec 03 §10 is the source of truth — keep in sync.
 MODEL_PRICES: dict[str, dict[str, float]] = {
     # Anthropic (May 2026 prices, in $/MTok)
+    "claude-opus-4-8": {"input": 15.00, "output": 75.00},
+    "claude-opus-4-7": {"input": 15.00, "output": 75.00},
     "claude-sonnet-4-6": {"input": 3.00, "output": 15.00},
     "claude-haiku-4-5": {"input": 0.80, "output": 4.00},
+    "claude-haiku-4-5-20251001": {"input": 0.80, "output": 4.00},
     # Backwards compat aliases — Anthropic's current GA models
     "claude-3-5-sonnet-latest": {"input": 3.00, "output": 15.00},
     "claude-3-5-haiku-latest": {"input": 0.80, "output": 4.00},
+    # OpenAI failover (spec 03 §9). Conservative GPT-4o family prices.
+    "gpt-4o": {"input": 2.50, "output": 10.00},
+    "gpt-4o-mini": {"input": 0.15, "output": 0.60},
     # Voyage embeddings ($/MTok input)
     "voyage-3-large": {"input": 0.18, "output": 0.0},
     "voyage-3": {"input": 0.06, "output": 0.0},
@@ -151,6 +200,53 @@ Agent = Literal[
     "workshop_judge",
     "embedding",
 ]
+
+
+# Legacy "sonnet"|"haiku" model labels (callers passed before the
+# three-tier rollout) map to provider Protocol tier names.
+_LEGACY_TIER_MAP: dict[str, str] = {
+    "flagship": "flagship",
+    "sonnet": "workhorse",
+    "workhorse": "workhorse",
+    "haiku": "batch",
+    "batch": "batch",
+}
+
+
+def _tier_from_legacy(model: str) -> str:
+    """Translate the legacy `model` literal to a provider Tier name.
+    Keeps existing agent code (extractor, orchestrator, etc.) working
+    without touching every call site."""
+    return _LEGACY_TIER_MAP.get(model, "workhorse")
+
+
+def _required_consent_key(agent: str) -> str:
+    """Pretty-name the consent mask key blocking an agent. Used only
+    for the ConsentDeniedError message + log line — the actual check
+    is in `ai/consent.py`."""
+    from unipaith.ai.consent import AGENT_REQUIRES
+
+    return AGENT_REQUIRES.get(agent) or "unknown"
+
+
+def _classify_failure(err: Exception) -> str:
+    """Map a provider exception to a `failure_reason` enum value the
+    audit ledger CHECK constraint accepts. Spec 03 §8."""
+    from unipaith.ai.providers import ProviderTimeoutError
+
+    if isinstance(err, ProviderTimeoutError):
+        return "timeout"
+    msg = str(err).lower()
+    if "5" in msg and "0" in msg and ("server" in msg or "internal" in msg):
+        return "provider_5xx"
+    if "parse" in msg or "json" in msg:
+        return "parse_error"
+    return "unknown"
+
+
+def _utcnow() -> _dt.datetime:
+    """Wall-clock now in UTC. Wrapped so tests can swap it out."""
+    return _dt.datetime.now(_dt.UTC)
 
 
 @dataclass
@@ -203,11 +299,16 @@ class AIClient:
         mock_mode: bool = False,
         max_retries: int = 3,
         request_timeout: int = 45,
+        flagship_model: str | None = None,
     ):
         self.anthropic_api_key = anthropic_api_key
         self.voyage_api_key = voyage_api_key
         self.sonnet_model = sonnet_model
         self.haiku_model = haiku_model
+        # Spec 03 §2 — Opus tier for "single defining moment" calls.
+        self.flagship_model = (
+            flagship_model if flagship_model is not None else settings.anthropic_default_flagship
+        )
         self.embedding_model = embedding_model
         self.mock_mode = mock_mode
         self.max_retries = max_retries
@@ -224,7 +325,7 @@ class AIClient:
         self,
         *,
         agent: Agent,
-        model: Literal["sonnet", "haiku"],
+        model: Literal["sonnet", "haiku", "flagship"],
         system: list[dict[str, Any]] | str,
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None = None,
@@ -236,140 +337,141 @@ class AIClient:
         surface: str | None = None,
         db: AsyncSession | None = None,
     ) -> LLMResponse:
-        """Send a single Anthropic Messages API request.
+        """Send one provider-routed Messages request.
+
+        Provider routing (spec 03 §5/§9):
+          - resolves the agent's preferred provider via the registry
+          - on timeout / 5xx, fails over to the next provider in
+            `AI_PROVIDER_FAILOVER_CSV`
+          - after all providers fail, raises AllProvidersFailedError so
+            the caller's rule-based fallback runs (§7)
+          - each attempt writes its own audit ledger row
+
+        Consent gate (spec 03 §11):
+          - resolves the student's consent_mask BEFORE the request
+          - mask snapshot is written to the ledger row
+          - denial raises ConsentDeniedError + writes a `rule_based`
+            row with failure_reason='consent_denied'
 
         Caller is responsible for placing `cache_control` markers on
         cacheable blocks of `system` / `tools` / `messages` per the cache
-        layout in §5 of the plan.
+        layout in spec 03 §3.
 
-        If `db` is provided, a row is written to `ai_turns` after the call.
-        Callers without an active session (e.g. eval harness) can pass None.
+        Per-student weekly cost cap is enforced when both `db` and
+        `student_id` are provided; mode is `settings.ai_cost_cap_enforcement`.
 
-        Per-student weekly cost cap (§10) is enforced when both `db` and
-        `student_id` are provided. Mode is `settings.ai_cost_cap_enforcement`:
-          - `"off"` — skip the check
-          - `"warn"` — log + set `cost_cap_warning` on the response
-          - `"block"` — raise CostCapExceededError
+        Tier literal: `sonnet`|`haiku`|`flagship` map to
+        workhorse|batch|flagship in provider Protocol terms. The two
+        legacy names are kept so existing agent code (orchestrator,
+        extractor, etc.) compiles unchanged.
         """
-        model_id = self.sonnet_model if model == "sonnet" else self.haiku_model
+        tier = _tier_from_legacy(model)
+
+        # Spec 03 §11 — consent gate.
+        consent_mask = await get_consent_mask(db, student_id)
+        if not is_call_permitted(agent, consent_mask):
+            denied_key = _required_consent_key(agent)
+            if db is not None:
+                await self._log_consent_denied(
+                    db=db,
+                    agent=agent,
+                    student_id=student_id,
+                    discovery_message_id=discovery_message_id,
+                    surface=surface,
+                    consent_mask=consent_mask,
+                )
+            raise ConsentDeniedError(agent=agent, denied_mask_key=denied_key)
 
         cap_warning = await self._enforce_cost_cap(db, student_id, agent=agent)
 
         if self.mock_mode:
-            resp = self._mock_message(agent=agent, model_id=model_id)
+            resp = self._mock_message(agent=agent, tier=tier)
             resp.cost_cap_warning = cap_warning
             return resp
 
-        anthropic = self._get_anthropic()
+        providers = list_failover_order(agent)
+        if not providers:
+            raise AllProvidersFailedError(agent=agent, attempts=0)
 
-        params: dict[str, Any] = {
-            "model": model_id,
-            "max_tokens": max_tokens,
-            "temperature": temperature,
-            "system": system,
-            "messages": messages,
-        }
-        if tools:
-            params["tools"] = tools
-        if tool_choice:
-            params["tool_choice"] = tool_choice
+        request = ChatRequest(
+            tier=tier,
+            system=system,
+            messages=messages,
+            tools=tools,
+            tool_choice=tool_choice,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            timeout_ms=int(settings.ai_provider_failover_timeout_ms),
+        )
 
-        # Prompt caching is opt-in via cache_control markers placed by the
-        # caller. The header below tells Anthropic the request may carry them.
-        extra_headers = {"anthropic-beta": "prompt-caching-2024-07-31"}
-
-        start = time.perf_counter()
         last_err: Exception | None = None
-        raw_resp = None
-        for attempt in range(self.max_retries):
+        for provider in providers:
+            started_at = _utcnow()
             try:
-                raw_resp = await anthropic.messages.create(
-                    **params,
-                    extra_headers=extra_headers,
-                    timeout=self.request_timeout,
-                )
-                break
-            except Exception as e:  # pragma: no cover — retry path
+                chat_resp = await provider.chat(request)
+            except ProviderError as e:
+                completed_at = _utcnow()
                 last_err = e
-                logger.warning(
-                    "anthropic.messages.create attempt %d failed: %s",
-                    attempt + 1,
-                    e,
-                )
-                if attempt + 1 == self.max_retries:
-                    raise
-                await asyncio.sleep(2**attempt)
-        latency_ms = int((time.perf_counter() - start) * 1000)
+                logger.warning("provider=%s agent=%s failed: %s", provider.name, agent, e)
+                # Spec 03 §9 — every attempt gets a ledger row, including
+                # failed ones, so cost dashboards can compute reliability.
+                if db is not None:
+                    await self._log_failed_turn(
+                        db=db,
+                        agent=agent,
+                        student_id=student_id,
+                        discovery_message_id=discovery_message_id,
+                        surface=surface,
+                        provider_name=provider.name,
+                        model_id=provider.model_id(tier),
+                        consent_mask=consent_mask,
+                        failure_reason=_classify_failure(e),
+                        started_at=started_at,
+                        completed_at=completed_at,
+                        error_msg=str(e),
+                    )
+                continue
+            completed_at = _utcnow()
 
-        assert raw_resp is not None, last_err  # for mypy
-
-        usage = getattr(raw_resp, "usage", None)
-        input_tokens = getattr(usage, "input_tokens", 0) if usage else 0
-        output_tokens = getattr(usage, "output_tokens", 0) if usage else 0
-        cache_read = getattr(usage, "cache_read_input_tokens", 0) if usage else 0
-        cache_create = getattr(usage, "cache_creation_input_tokens", 0) if usage else 0
-
-        text_chunks: list[str] = []
-        content_blocks: list[dict[str, Any]] = []
-        for block in raw_resp.content:
-            block_type = getattr(block, "type", None)
-            if block_type == "text":
-                text_chunks.append(block.text)
-                content_blocks.append({"type": "text", "text": block.text})
-            elif block_type == "tool_use":
-                content_blocks.append(
-                    {
-                        "type": "tool_use",
-                        "id": block.id,
-                        "name": block.name,
-                        "input": block.input,
-                    }
-                )
-            else:
-                content_blocks.append({"type": block_type, "raw": str(block)})
-
-        cost = self._compute_cost(
-            model_id=model_id,
-            input_tokens=input_tokens,
-            output_tokens=output_tokens,
-            cache_read_tokens=cache_read,
-            cache_creation_tokens=cache_create,
-        )
-
-        response = LLMResponse(
-            text="".join(text_chunks),
-            content_blocks=content_blocks,
-            model=model_id,
-            input_tokens=input_tokens,
-            output_tokens=output_tokens,
-            cache_read_tokens=cache_read,
-            cache_creation_tokens=cache_create,
-            cost_usd=cost,
-            latency_ms=latency_ms,
-            stop_reason=getattr(raw_resp, "stop_reason", None),
-            raw=raw_resp,
-            cost_cap_warning=cap_warning,
-        )
-
-        if db is not None:
-            await self._log_turn(
-                db=db,
-                agent=agent,
-                student_id=student_id,
-                discovery_message_id=discovery_message_id,
-                surface=surface,
-                role="assistant",
-                model=model_id,
-                response=response,
+            response = LLMResponse(
+                text=chat_resp.text,
+                content_blocks=chat_resp.content_blocks,
+                model=chat_resp.model,
+                input_tokens=chat_resp.input_tokens,
+                output_tokens=chat_resp.output_tokens,
+                cache_read_tokens=chat_resp.cache_read_tokens,
+                cache_creation_tokens=chat_resp.cache_creation_tokens,
+                cost_usd=chat_resp.cost_usd,
+                latency_ms=chat_resp.latency_ms,
+                stop_reason=chat_resp.stop_reason,
+                raw=chat_resp.raw,
+                cost_cap_warning=cap_warning,
             )
 
-        return response
+            if db is not None:
+                await self._log_turn(
+                    db=db,
+                    agent=agent,
+                    student_id=student_id,
+                    discovery_message_id=discovery_message_id,
+                    surface=surface,
+                    role="assistant",
+                    provider_name=chat_resp.provider,
+                    consent_mask=consent_mask,
+                    started_at=started_at,
+                    completed_at=completed_at,
+                    response=response,
+                )
+            return response
+
+        # All providers exhausted — caller runs rule-based fallback.
+        raise AllProvidersFailedError(agent=agent, attempts=len(providers)) from last_err
 
     async def stream_message(
         self,
         *,
         agent: Agent,
-        model: Literal["sonnet", "haiku"],
+        model: Literal["sonnet", "haiku", "flagship"],
         system: list[dict[str, Any]] | str,
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None = None,
@@ -381,23 +483,36 @@ class AIClient:
         surface: str | None = None,
         db: AsyncSession | None = None,
     ):
-        """Streaming variant of `message()`.
+        """Streaming variant of `message()` (Anthropic-only).
 
-        Yields tuples (event_type, payload) where:
-          - ('text_delta', str)        — incremental text chunk
-          - ('tool_use', dict)         — completed tool_use block (parsed input)
-          - ('done', LLMResponse)      — final aggregated response with cost
+        Spec 03 §15 — streaming on the failover provider is deferred;
+        the only streaming consumer today is the Discovery orchestrator
+        and SSE there is Anthropic-native. On Anthropic failure we
+        DON'T fail over to OpenAI for the stream (that would change the
+        UX shape mid-message); we raise AllProvidersFailedError and the
+        caller serves a rule-based message.
 
-        After the generator exhausts, one row is written to `ai_turns` with
-        full token + cost accounting (when db is provided). Mock mode emits
-        a single text_delta then 'done'.
-
-        Per-student weekly cost cap (§10) is enforced before the stream
-        opens. In `"block"` mode the generator raises CostCapExceededError
-        before yielding any chunks, so SSE consumers get a single error
-        rather than a partial answer.
+        Consent gate + cost cap + ledger fields match `message()` —
+        provider on the row is always 'anthropic' for the streaming
+        path.
         """
-        model_id = self.sonnet_model if model == "sonnet" else self.haiku_model
+        tier = _tier_from_legacy(model)
+        model_id = self._tier_to_anthropic_model_id(tier)
+
+        # Spec 03 §11 — consent gate (same as message()).
+        consent_mask = await get_consent_mask(db, student_id)
+        if not is_call_permitted(agent, consent_mask):
+            denied_key = _required_consent_key(agent)
+            if db is not None:
+                await self._log_consent_denied(
+                    db=db,
+                    agent=agent,
+                    student_id=student_id,
+                    discovery_message_id=discovery_message_id,
+                    surface=surface,
+                    consent_mask=consent_mask,
+                )
+            raise ConsentDeniedError(agent=agent, denied_mask_key=denied_key)
 
         cap_warning = await self._enforce_cost_cap(db, student_id, agent=agent)
 
@@ -429,6 +544,7 @@ class AIClient:
         extra_headers = {"anthropic-beta": "prompt-caching-2024-07-31"}
 
         start = time.perf_counter()
+        started_at = _utcnow()
         text_chunks: list[str] = []
         content_blocks: list[dict[str, Any]] = []
         usage: dict[str, int] = {
@@ -506,7 +622,10 @@ class AIClient:
                 discovery_message_id=discovery_message_id,
                 surface=surface,
                 role="assistant",
-                model=model_id,
+                provider_name="anthropic",
+                consent_mask=consent_mask,
+                started_at=started_at,
+                completed_at=_utcnow(),
                 response=response,
             )
         yield ("done", response)
@@ -520,9 +639,24 @@ class AIClient:
     ) -> EmbeddingResponse:
         """Generate a voyage-3-large embedding for the given text.
 
-        Same cost-cap gate as `message()` — embedding is the cheapest
-        path but should still respect a hard-block cap when set.
+        Same cost-cap + consent gate as `message()`. Embedding is the
+        cheapest path but matching-related, so consent.matching=false
+        short-circuits to ConsentDeniedError (caller falls back to the
+        rule-based feature pipeline).
         """
+        consent_mask = await get_consent_mask(db, student_id)
+        if not is_call_permitted("embedding", consent_mask):
+            if db is not None:
+                await self._log_consent_denied(
+                    db=db,
+                    agent="embedding",
+                    student_id=student_id,
+                    discovery_message_id=None,
+                    surface=None,
+                    consent_mask=consent_mask,
+                )
+            raise ConsentDeniedError(agent="embedding", denied_mask_key="matching")
+
         await self._enforce_cost_cap(db, student_id, agent="embedding")
 
         if self.mock_mode:
@@ -539,6 +673,7 @@ class AIClient:
             return EmbeddingResponse(embedding=vec, model=f"mock:{self.embedding_model}")
 
         voyage = self._get_voyage()
+        started_at = _utcnow()
         start = time.perf_counter()
         result = await asyncio.to_thread(
             voyage.embed,
@@ -547,6 +682,7 @@ class AIClient:
             input_type="document",
         )
         latency_ms = int((time.perf_counter() - start) * 1000)
+        completed_at = _utcnow()
         embedding = result.embeddings[0]
         # Voyage SDK returns total_tokens on the response object.
         tokens = getattr(result, "total_tokens", 0)
@@ -566,7 +702,14 @@ class AIClient:
             latency_ms=latency_ms,
         )
         if db is not None:
-            await self._log_embedding_turn(db=db, student_id=student_id, response=resp)
+            await self._log_embedding_turn(
+                db=db,
+                student_id=student_id,
+                response=resp,
+                consent_mask=consent_mask,
+                started_at=started_at,
+                completed_at=completed_at,
+            )
         return resp
 
     # ── Internals ────────────────────────────────────────────────────────
@@ -658,7 +801,10 @@ class AIClient:
         discovery_message_id: uuid.UUID | None,
         surface: str | None,
         role: str,
-        model: str,
+        provider_name: str,
+        consent_mask: dict[str, bool] | None,
+        started_at: _dt.datetime,
+        completed_at: _dt.datetime,
         response: LLMResponse,
     ) -> None:
         # Local import — avoids circular import on package load.
@@ -670,13 +816,102 @@ class AIClient:
             agent=agent,
             surface=surface,
             role=role,
-            model=model,
+            model=response.model,
+            provider=provider_name,
             input_tokens=response.input_tokens,
             output_tokens=response.output_tokens,
             cache_read_tokens=response.cache_read_tokens,
             cache_creation_tokens=response.cache_creation_tokens,
             cost_usd=response.cost_usd,
             latency_ms=response.latency_ms,
+            success=True,
+            failure_reason=None,
+            consent_mask=consent_mask,
+            request_started_at=started_at,
+            request_completed_at=completed_at,
+        )
+        db.add(turn)
+        await db.flush()
+
+    @staticmethod
+    async def _log_failed_turn(
+        *,
+        db: AsyncSession,
+        agent: Agent,
+        student_id: uuid.UUID | None,
+        discovery_message_id: uuid.UUID | None,
+        surface: str | None,
+        provider_name: str,
+        model_id: str,
+        consent_mask: dict[str, bool] | None,
+        failure_reason: str,
+        started_at: _dt.datetime,
+        completed_at: _dt.datetime,
+        error_msg: str,
+    ) -> None:
+        """Spec 03 §9 — one ledger row per failed provider attempt.
+
+        Lets the cost dashboard compute reliability per provider+agent.
+        Zero tokens / zero cost because the provider didn't return a
+        usable response.
+        """
+        from unipaith.models.ai_artifacts import AiTurn
+
+        turn = AiTurn(
+            student_id=student_id,
+            discovery_message_id=discovery_message_id,
+            agent=agent,
+            surface=surface,
+            role="assistant",
+            model=model_id,
+            provider=provider_name,
+            input_tokens=0,
+            output_tokens=0,
+            cost_usd=Decimal("0"),
+            latency_ms=int((completed_at - started_at).total_seconds() * 1000),
+            error=error_msg[:1000],
+            success=False,
+            failure_reason=failure_reason,
+            consent_mask=consent_mask,
+            request_started_at=started_at,
+            request_completed_at=completed_at,
+        )
+        db.add(turn)
+        await db.flush()
+
+    @staticmethod
+    async def _log_consent_denied(
+        *,
+        db: AsyncSession,
+        agent: Agent,
+        student_id: uuid.UUID | None,
+        discovery_message_id: uuid.UUID | None,
+        surface: str | None,
+        consent_mask: dict[str, bool],
+    ) -> None:
+        """Spec 03 §11 — record a denied call. provider='rule_based'
+        because the caller will run the deterministic path; the row
+        documents the denial for the compliance audit."""
+        from unipaith.models.ai_artifacts import AiTurn
+
+        now = _utcnow()
+        turn = AiTurn(
+            student_id=student_id,
+            discovery_message_id=discovery_message_id,
+            agent=agent,
+            surface=surface,
+            role="assistant",
+            model="rule_based",
+            provider="rule_based",
+            input_tokens=0,
+            output_tokens=0,
+            cost_usd=Decimal("0"),
+            latency_ms=0,
+            success=False,
+            failure_reason="consent_denied",
+            consent_mask=consent_mask,
+            request_started_at=now,
+            request_completed_at=now,
         )
         db.add(turn)
         await db.flush()
@@ -687,6 +922,9 @@ class AIClient:
         db: AsyncSession,
         student_id: uuid.UUID | None,
         response: EmbeddingResponse,
+        consent_mask: dict[str, bool] | None = None,
+        started_at: _dt.datetime | None = None,
+        completed_at: _dt.datetime | None = None,
     ) -> None:
         from unipaith.models.ai_artifacts import AiTurn
 
@@ -695,15 +933,28 @@ class AIClient:
             agent="embedding",
             role="tool",
             model=response.model,
+            provider="anthropic",  # Voyage rides under the Anthropic stack
             input_tokens=response.input_tokens,
             cost_usd=response.cost_usd,
             latency_ms=response.latency_ms,
+            success=True,
+            failure_reason=None,
+            consent_mask=consent_mask,
+            request_started_at=started_at,
+            request_completed_at=completed_at,
         )
         db.add(turn)
         await db.flush()
 
-    @staticmethod
-    def _mock_message(*, agent: Agent, model_id: str) -> LLMResponse:
+    def _tier_to_anthropic_model_id(self, tier) -> str:
+        if tier == "flagship":
+            return self.flagship_model
+        if tier == "batch":
+            return self.haiku_model
+        return self.sonnet_model
+
+    def _mock_message(self, *, agent: Agent, tier) -> LLMResponse:
+        model_id = self._tier_to_anthropic_model_id(tier)
         return LLMResponse(
             text=f"[mock:{agent}:{model_id}]",
             content_blocks=[{"type": "text", "text": f"[mock:{agent}:{model_id}]"}],

@@ -12,7 +12,7 @@
  */
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { CheckCircle2, ChevronRight, Pencil, Sparkles } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, ChevronRight, Pencil, Sparkles } from 'lucide-react'
 
 import {
   type UpdateStrategyBody,
@@ -300,6 +300,26 @@ export default function StrategyTab() {
       </div>
 
       {isLoading && <div className="text-sm text-student-text">Loading…</div>}
+
+      {/* Spec 03 §7 — on regenerate failure, preserve the existing active
+          strategy and surface an inline brand-aligned banner. The toast
+          (kept for accessibility) tells the user *something* changed; this
+          banner tells them WHAT to expect on the page below it. */}
+      {generateMut.isError && active && (
+        <div
+          role="status"
+          className="flex items-start gap-2 rounded border border-divider bg-student-surface-elevated px-3 py-2 text-sm text-student-ink"
+          style={{ borderLeft: '3px solid #FFD60A' }}
+        >
+          <AlertTriangle size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
+          <div>
+            <div className="font-medium">Couldn't regenerate your strategy.</div>
+            <div className="text-student-text">
+              Showing your current active strategy. Try again in a few moments.
+            </div>
+          </div>
+        </div>
+      )}
 
       {!isLoading && !active && drafts.length === 0 && versions.length === 0 && (
         <Card className="text-sm text-student-text">
