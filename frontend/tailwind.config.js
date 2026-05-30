@@ -144,13 +144,24 @@ export default {
         label:    ['0.8125rem',{ lineHeight: '1.20',                            fontWeight: '700' }],
       },
       borderRadius: {
-        xs:    '4px',
-        sm:    '6px',
-        md:    '10px',
-        DEFAULT:'14px',
-        lg:    'var(--radius)',
-        xl:    '22px',
+        // Brand scale (Spec/01 §4.3) layered onto Tailwind's defaults WITHOUT
+        // regressing existing components. Only `lg` intentionally shifts
+        // (12px→14px = canonical card/favicon-tile radius). `DEFAULT` and `xl`
+        // stay at Tailwind's originals so the 147 bare-`rounded`/`rounded-xl`
+        // usages render exactly as authored. Brand's 22px hero radius is
+        // available as `rounded-hero` for explicit opt-in.
+        none:  '0px',
+        xs:    '4px',           // brand --radius-xs (chips, inline code)
+        sm:    '6px',           // brand --radius-sm (small chips/badges)
+        DEFAULT:'4px',          // Tailwind default — 109 bare `rounded` usages
+        md:    '10px',          // brand --radius-md (controls)
+        lg:    'var(--radius)', // 14px — brand --radius-lg (cards/buttons/modals)
+        xl:    '12px',          // Tailwind default — 38 `rounded-xl` usages
+        '2xl': '16px',          // Tailwind default
+        '3xl': '24px',          // Tailwind default
+        hero:  '22px',          // brand --radius-xl (hero cards, large surfaces)
         pill:  '9999px',
+        full:  '9999px',
       },
       boxShadow: {
         subtle: '0 1px 2px rgba(10,20,40,.06), 0 1px 1px rgba(10,20,40,.04)',
