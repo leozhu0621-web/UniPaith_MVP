@@ -12,6 +12,7 @@ import Dropdown from '../ui/Dropdown'
 import Wordmark from '../ui/Wordmark'
 import Sheet from '../ui/Sheet'
 import CompareTray from '../student/CompareTray'
+import TrialBanner from '../student/TrialBanner'
 
 // Stage-ordered navigation (Spec/02 §7): Discover · Match · Apply · Connect.
 const NAV_ITEMS = [
@@ -108,6 +109,9 @@ export default function StudentLayout() {
           <Bell size={20} />
         </button>
       </header>
+
+      {/* Spec 07 — trial / paywall touchpoint across the student shell. */}
+      <TrialBanner />
 
       {/* Body with sliding panels */}
       <div className="flex-1 flex overflow-hidden relative">

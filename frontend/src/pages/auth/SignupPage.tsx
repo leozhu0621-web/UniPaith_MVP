@@ -112,6 +112,12 @@ export default function SignupPage() {
           Log in
         </Link>
       </p>
+
+      <p className="text-center text-sm text-gray-400">
+        <Link to="/pricing" className="hover:underline">
+          View plans and pricing
+        </Link>
+      </p>
     </div>
   )
 }
