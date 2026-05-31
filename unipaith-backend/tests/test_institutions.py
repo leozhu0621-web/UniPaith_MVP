@@ -86,6 +86,65 @@ async def test_student_cannot_access_institutions(student_client: AsyncClient):
     assert resp.status_code == 403
 
 
+@pytest.mark.asyncio
+async def test_update_institution_profile_jsonb_roundtrip(
+    institution_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_institution_user: User,
+):
+    """Spec 22 §3 / G-I1 — the six profile JSONB dicts the guided editor writes
+    persist and round-trip exactly through PUT + GET /institutions/me."""
+    await _ensure_institution(db_session, mock_institution_user)
+    payload = {
+        "social_links": {"twitter": "https://x.com/foo"},
+        "inquiry_routing": {"general": "admissions@foo.edu", "financial_aid": "finaid@foo.edu"},
+        "support_services": {"tutoring": {"name": "Tutoring", "url": "https://foo.edu/tutoring"}},
+        "policies": {
+            "transfer_credit": {"summary": "Up to 60 credits.", "url": "https://foo.edu/transfer"}
+        },
+        "international_info": {"toefl_min": 100, "supported_visas": ["F-1", "J-1"]},
+        "school_outcomes": {"employed_or_continuing_ed": 0.94, "top_employers": ["Google"]},
+    }
+    resp = await institution_client.put("/api/v1/institutions/me", json=payload)
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    for key, value in payload.items():
+        assert body[key] == value, key
+
+    # Persisted — a fresh GET returns the same nested shapes.
+    got = (await institution_client.get("/api/v1/institutions/me")).json()
+    assert got["support_services"]["tutoring"]["url"] == "https://foo.edu/tutoring"
+    assert got["international_info"]["supported_visas"] == ["F-1", "J-1"]
+    assert got["school_outcomes"]["employed_or_continuing_ed"] == 0.94
+
+
+@pytest.mark.asyncio
+async def test_student_submits_institution_level_inquiry(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_institution_user: User,
+):
+    """Spec 22 §7 — the public/auth "Request info" CTA submits an institution-level
+    inquiry (no program_id) via POST /institutions/inquiries."""
+    db_session.add(mock_institution_user)
+    inst = await _ensure_institution(db_session, mock_institution_user)
+
+    resp = await student_client.post(
+        "/api/v1/institutions/inquiries",
+        json={
+            "institution_id": str(inst.id),
+            "subject": "Tell me more",
+            "message": "Is there financial aid?",
+            "inquiry_type": "general",
+        },
+    )
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["program_id"] is None
+    assert body["inquiry_type"] == "general"
+    assert body["subject"] == "Tell me more"
+
+
 # --- Programs ---
 
 
