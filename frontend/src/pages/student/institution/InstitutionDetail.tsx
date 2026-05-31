@@ -761,12 +761,14 @@ function monogram(name: string): string {
 
 function classifyType(inst: Institution): string | null {
   const rd: any = inst.ranking_data || {}
+  // Ownership (Private / Public / …) qualifies the noun; the noun itself comes
+  // from inst.type (authoritative) — never both fall back to "University", which
+  // produced the "University University" doubling when ownership_type was absent.
   const ownership = ownershipLabel(rd.ownership_type)
-  const base = ownership ?? (inst.type ? titleCase(inst.type) : null)
-  if (!base) return null
   const research = rd.carnegie_classification && /research/i.test(String(rd.carnegie_classification))
-  const noun = /college/i.test(inst.name) && !/univ/i.test(inst.name) ? 'College' : 'University'
-  return `${base}${research ? ' Research' : ''} ${noun}`
+  const noun = inst.type ? titleCase(inst.type) : 'University'
+  const parts = [ownership, research ? 'Research' : null, noun].filter(Boolean)
+  return parts.length ? parts.join(' ') : null
 }
 
 function ownershipLabel(t?: string): string | null {
