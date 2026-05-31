@@ -98,6 +98,7 @@ from unipaith.models.pipeline import (
     PipelineConfig,
     PipelineStageSnapshot,
 )
+from unipaith.models.settings import InstitutionTeamInvite, UserSettings
 from unipaith.models.strategy import StudentStrategy
 from unipaith.models.student import (
     AcademicRecord,
@@ -224,6 +225,9 @@ __all__ = [
     "Notification",
     "NotificationPreference",
     "Touchpoint",
+    # Settings (Spec 21)
+    "UserSettings",
+    "InstitutionTeamInvite",
     "OutcomeRecord",
     "EvaluationRun",
     "TrainingRun",

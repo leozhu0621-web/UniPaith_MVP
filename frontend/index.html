@@ -26,8 +26,29 @@
     <meta property="og:type" content="website" />
     <meta property="og:image" content="/og/og-default.png" />
     <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- No-FOUC theme + accessibility init (Spec 21 §2.3). Applies the saved
+         theme/font-size/dyslexia/reduced-motion before first paint so there is
+         no light→dark flash. Kept in sync by src/stores/theme-store.ts. -->
+    <script>
+      (function () {
+        try {
+          var root = document.documentElement
+          var t = localStorage.getItem('unipaith_theme') || 'system'
+          var dark =
+            t === 'dark' ||
+            (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          if (dark) root.classList.add('dark')
+          root.setAttribute('data-font-size', localStorage.getItem('unipaith_font_size') || 'md')
+          if (localStorage.getItem('unipaith_dyslexia') === '1')
+            root.setAttribute('data-dyslexia', '')
+          if (localStorage.getItem('unipaith_reduce_motion') === '1')
+            root.setAttribute('data-reduce-motion', '')
+        } catch (e) {}
+      })()
+    </script>
   </head>
-  <body class="font-body antialiased bg-paper text-charcoal">
+  <body class="font-body antialiased bg-background text-foreground">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

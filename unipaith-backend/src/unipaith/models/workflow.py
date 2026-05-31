@@ -68,7 +68,13 @@ class NotificationPreference(Base):
         unique=True,
     )
     email_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Per-channel × per-type matrix (Spec 21 §2.4): {type: {email,sms,in_app,push}}.
+    # Legacy rows hold a flat {type: bool} map — normalised on read by the service.
     preferences: Mapped[dict | None] = mapped_column(JSONB, default=dict)
+    # all | weekly | important | none  (Spec 21 §2.4 / 42 §3.1)
+    email_frequency: Mapped[str] = mapped_column(
+        String(20), default="all", server_default="all", nullable=False
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

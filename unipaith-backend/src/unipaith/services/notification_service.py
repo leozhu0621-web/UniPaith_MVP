@@ -20,6 +20,68 @@ from unipaith.models.workflow import Notification, NotificationPreference
 
 logger = logging.getLogger(__name__)
 
+# Canonical notification types × the channels each can fire on (Spec 21 §2.4).
+# `essential` types are transactional/active-application messages: they can be
+# down-ranked but never fully silenced — in-app stays on (safety, Spec 29 §6).
+CHANNELS = ("email", "sms", "in_app", "push")
+NOTIFICATION_TYPES: list[dict] = [
+    {"key": "match_updates", "label": "Match updates", "essential": False},
+    {"key": "application_missing_item", "label": "Application missing items", "essential": True},
+    {"key": "interview_invites", "label": "Interview invites", "essential": True},
+    {"key": "deadline_reminders", "label": "Deadline reminders", "essential": True},
+    {"key": "decisions", "label": "Admission decisions", "essential": True},
+    {"key": "institution_posts", "label": "Posts from saved programs", "essential": False},
+    {"key": "messages", "label": "Messages", "essential": False},
+]
+_DEFAULT_CHANNELS = {"email": True, "sms": False, "in_app": True, "push": True}
+
+
+def _coerce_channels(raw: object, essential: bool) -> dict[str, bool]:
+    """Coerce a stored entry (dict matrix OR legacy flat bool) into the full channel map."""
+    channels = dict(_DEFAULT_CHANNELS)
+    if isinstance(raw, dict):
+        for ch in CHANNELS:
+            if ch in raw:
+                channels[ch] = bool(raw[ch])
+    elif isinstance(raw, bool):
+        # Legacy {type: bool} — the bool governed email; keep in-app/push on.
+        channels["email"] = raw
+    if essential:
+        channels["in_app"] = True  # safety: cannot silence in-app for transactional types
+    return channels
+
+
+def normalize_matrix(preferences: dict | None) -> list[dict]:
+    """Return the full canonical per-type × per-channel matrix, defaults filled in."""
+    stored = preferences or {}
+    out: list[dict] = []
+    for t in NOTIFICATION_TYPES:
+        out.append(
+            {
+                "type": t["key"],
+                "label": t["label"],
+                "essential": t["essential"],
+                "channels": _coerce_channels(stored.get(t["key"]), t["essential"]),
+            }
+        )
+    return out
+
+
+def matrix_to_storage(matrix: dict | list | None) -> dict:
+    """Coerce an incoming matrix (dict or list of {type,channels}) into {type: {channels}}."""
+    essential = {t["key"]: t["essential"] for t in NOTIFICATION_TYPES}
+    items: dict[str, object] = {}
+    if isinstance(matrix, list):
+        for row in matrix:
+            if isinstance(row, dict) and "type" in row:
+                items[str(row["type"])] = row.get("channels", {})
+    elif isinstance(matrix, dict):
+        items = dict(matrix)
+    return {
+        key: _coerce_channels(items.get(key), essential[key])
+        for key in (t["key"] for t in NOTIFICATION_TYPES)
+    }
+
 
 class NotificationService:
     def __init__(self, db: AsyncSession):
@@ -63,8 +125,14 @@ class NotificationService:
         # Optionally send email
         if settings.notifications_enabled:
             prefs = await self.get_preferences(user_id)
-            type_prefs = (prefs.preferences or {}).get(notification_type, {})
-            should_email = prefs.email_enabled and type_prefs.get("email", True)
+            raw = (prefs.preferences or {}).get(notification_type)
+            if isinstance(raw, dict):
+                type_email = bool(raw.get("email", True))
+            elif isinstance(raw, bool):  # legacy flat {type: bool}
+                type_email = raw
+            else:
+                type_email = True
+            should_email = prefs.email_enabled and type_email and prefs.email_frequency != "none"
 
             if should_email:
                 email_sent = await self._send_email(user_id, title, body)
@@ -153,21 +221,31 @@ class NotificationService:
             )
             self.db.add(prefs)
             await self.db.flush()
+            # Populate server-generated columns (updated_at) within the async
+            # context so later sync attribute access doesn't trigger lazy IO.
+            await self.db.refresh(prefs)
         return prefs
 
     async def update_preferences(
         self,
         user_id: UUID,
         email_enabled: bool | None = None,
-        preferences: dict | None = None,
+        preferences: dict | list | None = None,
+        email_frequency: str | None = None,
     ) -> NotificationPreference:
-        """Update notification preferences."""
+        """Update notification preferences (per-channel × per-type matrix + frequency)."""
         prefs = await self.get_preferences(user_id)
         if email_enabled is not None:
             prefs.email_enabled = email_enabled
         if preferences is not None:
-            prefs.preferences = preferences
+            # Normalise to the canonical matrix; essential types keep in-app on.
+            prefs.preferences = matrix_to_storage(preferences)
+        if email_frequency is not None:
+            if email_frequency not in {"all", "weekly", "important", "none"}:
+                raise ValueError("Invalid email_frequency")
+            prefs.email_frequency = email_frequency
         await self.db.flush()
+        await self.db.refresh(prefs)  # populate server-generated updated_at
         return prefs
 
     # ========================================================================

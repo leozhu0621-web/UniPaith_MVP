@@ -7,7 +7,7 @@ import { Settings, Plus, Trash2, CreditCard, Users } from 'lucide-react'
 import { getInstitution, updateInstitution } from '../../api/institutions'
 import { getRubrics, createRubric } from '../../api/reviews'
 import { getInstitutionBilling } from '../../api/billing'
-import { getNotificationPrefs, updateNotificationPrefs } from '../../api/notifications'
+import { getInstitutionSettings, updateInstitutionSettings, type UpdateInstitutionSettingsPayload } from '../../api/settings'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -17,9 +17,15 @@ import Textarea from '../../components/ui/Textarea'
 import Tabs from '../../components/ui/Tabs'
 import Skeleton from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
+import { useAuthStore } from '../../stores/auth-store'
 import { INSTITUTION_TYPES } from '../../utils/constants'
 import { formatDate } from '../../utils/format'
-import type { Rubric, NotificationPreference } from '../../types'
+import type { Rubric } from '../../types'
+import SecurityCard from '../student/settings/SecurityCard'
+import PreferencesCard from '../student/settings/PreferencesCard'
+import NotificationsCard from '../student/settings/NotificationsCard'
+import TeamCard from './settings/TeamCard'
+import IntegrationsCard from './settings/IntegrationsCard'
 
 const CAMPUS_SETTING_OPTIONS = [
   { value: '', label: 'Not specified' },
@@ -42,88 +48,50 @@ const profileSchema = z.object({
   campus_setting: z.string().optional(),
   student_body_size: z.coerce.number().int().nonnegative().optional(),
   founded_year: z.coerce.number().int().nonnegative().optional(),
-  media_gallery_text: z.string().optional(), // newline-separated list of S3 URLs
+  media_gallery_text: z.string().optional(),
 })
 type ProfileForm = z.infer<typeof profileSchema>
 
-// JSONB dicts with per-school structure too variable for key-value widgets —
-// edited as JSON text. Shown on the student profile / institution detail page.
 type InstJsonKey = 'social_links' | 'inquiry_routing' | 'support_services' | 'policies' | 'international_info' | 'school_outcomes'
 const INST_JSON_FIELDS: { key: InstJsonKey; label: string; placeholder: string; hint: string }[] = [
-  {
-    key: 'social_links',
-    label: 'Social Links',
-    placeholder: '{\n  "twitter": "https://twitter.com/nyuniversity",\n  "linkedin": "https://linkedin.com/school/new-york-university",\n  "instagram": "https://instagram.com/nyuniversity"\n}',
-    hint: 'JSON dict of platform → URL. Renders on the institution overview.',
-  },
-  {
-    key: 'inquiry_routing',
-    label: 'Inquiry Routing',
-    placeholder: '{\n  "general": "admissions@nyu.edu",\n  "international": "global.admissions@nyu.edu",\n  "financial_aid": "financial.aid@nyu.edu"\n}',
-    hint: 'JSON dict of inquiry type → destination (email / URL). Powers the student contact flow.',
-  },
-  {
-    key: 'support_services',
-    label: 'Support Services',
-    placeholder: '{\n  "disability_services": {"url": "https://www.nyu.edu/students/communities-and-groups/students-with-disabilities.html"},\n  "counseling": {"url": "https://www.nyu.edu/students/health-and-wellness/counseling-services.html"},\n  "first_gen": {"url": "https://www.nyu.edu/students/communities-and-groups/first-generation.html"}\n}',
-    hint: 'JSON dict of service → {url, phone, description}. Shown on the Overview tab under Support.',
-  },
-  {
-    key: 'policies',
-    label: 'Policies',
-    placeholder: '{\n  "transfer_credit": {"url": "https://www.nyu.edu/admissions/undergraduate-admissions/how-to-apply/transfer-students.html"},\n  "code_of_conduct": {"url": "https://www.nyu.edu/about/policies-guidelines-compliance.html"}\n}',
-    hint: 'JSON dict of policy name → {url, summary?}. Appears on the Requirements / Overview tabs.',
-  },
-  {
-    key: 'international_info',
-    label: 'International Student Info',
-    placeholder: '{\n  "toefl_min": 100,\n  "ielts_min": 7.5,\n  "visa_contact": "ogs@nyu.edu",\n  "visa_url": "https://www.nyu.edu/students/student-information-and-resources/international-students.html"\n}',
-    hint: 'JSON dict of international requirements + contacts.',
-  },
-  {
-    key: 'school_outcomes',
-    label: 'Aggregate Outcomes',
-    placeholder: '{\n  "6mo_placement_rate": 0.95,\n  "top_employers": ["Google", "Goldman Sachs"],\n  "grad_school_yield": 0.22,\n  "source": "2024 First Destination Survey"\n}',
-    hint: 'JSON dict for school-wide placement stats (distinct from program-level outcomes_data).',
-  },
+  { key: 'social_links', label: 'Social Links', placeholder: '{\n  "twitter": "https://twitter.com/school"\n}', hint: 'JSON dict of platform → URL. Renders on the institution overview.' },
+  { key: 'inquiry_routing', label: 'Inquiry Routing', placeholder: '{\n  "general": "admissions@school.edu"\n}', hint: 'JSON dict of inquiry type → destination. Powers the student contact flow.' },
+  { key: 'support_services', label: 'Support Services', placeholder: '{\n  "counseling": {"url": "https://…"}\n}', hint: 'JSON dict of service → {url, phone, description}.' },
+  { key: 'policies', label: 'Policies', placeholder: '{\n  "transfer_credit": {"url": "https://…"}\n}', hint: 'JSON dict of policy name → {url, summary?}.' },
+  { key: 'international_info', label: 'International Student Info', placeholder: '{\n  "toefl_min": 100\n}', hint: 'JSON dict of international requirements + contacts.' },
+  { key: 'school_outcomes', label: 'Aggregate Outcomes', placeholder: '{\n  "6mo_placement_rate": 0.95\n}', hint: 'JSON dict for school-wide placement stats.' },
 ]
 
 export default function SettingsPage() {
   const queryClient = useQueryClient()
+  const authUser = useAuthStore(s => s.user)
   const [activeTab, setActiveTab] = useState('profile')
-
-  // Rubric state
-  const [showRubricForm, setShowRubricForm] = useState(false)
-  const [rubricName, setRubricName] = useState('')
-  const [criteria, setCriteria] = useState<{ name: string; weight: number }[]>([
-    { name: '', weight: 0 },
-  ])
 
   const tabs = [
     { id: 'profile', label: 'Profile' },
-    { id: 'rubrics', label: 'Rubrics' },
-    { id: 'billing', label: 'Billing' },
+    { id: 'team', label: 'Team' },
+    { id: 'review', label: 'Review' },
+    { id: 'integrations', label: 'Integrations' },
     { id: 'notifications', label: 'Notifications' },
+    { id: 'billing', label: 'Billing' },
+    { id: 'account', label: 'My account' },
   ]
 
-  // --- Billing (Spec 07 §4.2 / 21 §3.6) ---
-  const billingQ = useQuery({
-    queryKey: ['institution-billing'],
-    queryFn: getInstitutionBilling,
-    enabled: activeTab === 'billing',
+  // Shared per-user settings (security / preferences / notifications / account).
+  const settingsQ = useQuery({ queryKey: ['institution-settings'], queryFn: getInstitutionSettings })
+  const refetchSettings = () => queryClient.invalidateQueries({ queryKey: ['institution-settings'] })
+
+  const updatePrefsMut = useMutation({
+    mutationFn: (p: UpdateInstitutionSettingsPayload) => updateInstitutionSettings(p),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['institution-settings'] }),
+    onError: e => showToast(e instanceof Error ? e.message : 'Could not save', 'error'),
   })
 
-  // --- Profile ---
+  // ── Profile (existing editor, rebranded) ──
   const instQ = useQuery({ queryKey: ['institution'], queryFn: getInstitution })
   const profileForm = useForm<ProfileForm>({ resolver: zodResolver(profileSchema) as any })
-
   const [instJsonText, setInstJsonText] = useState<Record<InstJsonKey, string>>({
-    social_links: '',
-    inquiry_routing: '',
-    support_services: '',
-    policies: '',
-    international_info: '',
-    school_outcomes: '',
+    social_links: '', inquiry_routing: '', support_services: '', policies: '', international_info: '', school_outcomes: '',
   })
   const [instJsonErrors, setInstJsonErrors] = useState<Partial<Record<InstJsonKey, string>>>({})
 
@@ -131,22 +99,13 @@ export default function SettingsPage() {
     if (instQ.data) {
       const inst = instQ.data as any
       profileForm.reset({
-        name: inst.name,
-        type: inst.type,
-        country: inst.country,
-        region: inst.region ?? '',
-        city: inst.city ?? '',
-        website_url: inst.website_url ?? '',
-        contact_email: inst.contact_email ?? '',
-        logo_url: inst.logo_url ?? '',
-        description_text: inst.description_text ?? '',
-        campus_description: inst.campus_description ?? '',
-        campus_setting: inst.campus_setting ?? '',
-        student_body_size: inst.student_body_size ?? undefined,
-        founded_year: inst.founded_year ?? undefined,
-        media_gallery_text: Array.isArray(inst.media_gallery)
-          ? inst.media_gallery.join('\n')
-          : '',
+        name: inst.name, type: inst.type, country: inst.country,
+        region: inst.region ?? '', city: inst.city ?? '',
+        website_url: inst.website_url ?? '', contact_email: inst.contact_email ?? '',
+        logo_url: inst.logo_url ?? '', description_text: inst.description_text ?? '',
+        campus_description: inst.campus_description ?? '', campus_setting: inst.campus_setting ?? '',
+        student_body_size: inst.student_body_size ?? undefined, founded_year: inst.founded_year ?? undefined,
+        media_gallery_text: Array.isArray(inst.media_gallery) ? inst.media_gallery.join('\n') : '',
       })
       setInstJsonText({
         social_links: inst.social_links ? JSON.stringify(inst.social_links, null, 2) : '',
@@ -169,135 +128,79 @@ export default function SettingsPage() {
   })
 
   const onSaveProfile = profileForm.handleSubmit(data => {
-    // Parse JSON fields; abort if any invalid.
     const parsed: Partial<Record<InstJsonKey, unknown>> = {}
     const errs: Partial<Record<InstJsonKey, string>> = {}
     for (const { key } of INST_JSON_FIELDS) {
       const text = instJsonText[key]
       if (!text || !text.trim()) continue
-      try {
-        parsed[key] = JSON.parse(text)
-      } catch (e: any) {
-        errs[key] = `Invalid JSON: ${e?.message || 'parse error'}`
-      }
+      try { parsed[key] = JSON.parse(text) } catch (e: any) { errs[key] = `Invalid JSON: ${e?.message || 'parse error'}` }
     }
-    if (Object.keys(errs).length) {
-      setInstJsonErrors(errs)
-      showToast('Please fix JSON errors before saving', 'error')
-      return
-    }
+    if (Object.keys(errs).length) { setInstJsonErrors(errs); showToast('Please fix JSON errors before saving', 'error'); return }
     setInstJsonErrors({})
-
-    const mediaGallery = (data.media_gallery_text ?? '')
-      .split('\n')
-      .map((s: string) => s.trim())
-      .filter(Boolean)
-
+    const mediaGallery = (data.media_gallery_text ?? '').split('\n').map(s => s.trim()).filter(Boolean)
     updateInstMut.mutate({
-      name: data.name,
-      type: data.type,
-      country: data.country,
-      region: data.region || undefined,
-      city: data.city || undefined,
-      website_url: data.website_url || undefined,
-      contact_email: data.contact_email || undefined,
-      logo_url: data.logo_url || undefined,
-      description_text: data.description_text || undefined,
+      name: data.name, type: data.type, country: data.country,
+      region: data.region || undefined, city: data.city || undefined,
+      website_url: data.website_url || undefined, contact_email: data.contact_email || undefined,
+      logo_url: data.logo_url || undefined, description_text: data.description_text || undefined,
       campus_description: data.campus_description || undefined,
       campus_setting: (data.campus_setting as 'urban' | 'suburban' | 'rural' | '') || undefined,
-      student_body_size: data.student_body_size || undefined,
-      founded_year: data.founded_year || undefined,
+      student_body_size: data.student_body_size || undefined, founded_year: data.founded_year || undefined,
       media_gallery: mediaGallery.length ? mediaGallery : undefined,
-      social_links: parsed.social_links as any,
-      inquiry_routing: parsed.inquiry_routing as any,
-      support_services: parsed.support_services as any,
-      policies: parsed.policies as any,
-      international_info: parsed.international_info as any,
-      school_outcomes: parsed.school_outcomes as any,
+      social_links: parsed.social_links as any, inquiry_routing: parsed.inquiry_routing as any,
+      support_services: parsed.support_services as any, policies: parsed.policies as any,
+      international_info: parsed.international_info as any, school_outcomes: parsed.school_outcomes as any,
     })
   })
 
-  // --- Rubrics ---
-  const rubricsQ = useQuery({ queryKey: ['rubrics'], queryFn: () => getRubrics() })
+  // ── Review (rubrics) ──
+  const [showRubricForm, setShowRubricForm] = useState(false)
+  const [rubricName, setRubricName] = useState('')
+  const [criteria, setCriteria] = useState<{ name: string; weight: number }[]>([{ name: '', weight: 0 }])
+  const rubricsQ = useQuery({ queryKey: ['rubrics'], queryFn: () => getRubrics(), enabled: activeTab === 'review' })
   const rubrics: Rubric[] = Array.isArray(rubricsQ.data) ? rubricsQ.data : []
-
   const createRubricMut = useMutation({
     mutationFn: createRubric,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rubrics'] })
       showToast('Rubric created', 'success')
-      setShowRubricForm(false)
-      setRubricName('')
-      setCriteria([{ name: '', weight: 0 }])
+      setShowRubricForm(false); setRubricName(''); setCriteria([{ name: '', weight: 0 }])
     },
     onError: () => showToast('Failed to create rubric', 'error'),
   })
-
   const handleCreateRubric = () => {
     if (!rubricName.trim()) { showToast('Name is required', 'warning'); return }
     const total = criteria.reduce((s, c) => s + c.weight, 0)
     if (total !== 100) { showToast(`Weights must sum to 100 (currently ${total})`, 'warning'); return }
-    const validCriteria = criteria.filter(c => c.name.trim())
-    if (validCriteria.length === 0) { showToast('Add at least one criterion', 'warning'); return }
-    createRubricMut.mutate({ rubric_name: rubricName, criteria: validCriteria })
+    const valid = criteria.filter(c => c.name.trim())
+    if (valid.length === 0) { showToast('Add at least one criterion', 'warning'); return }
+    createRubricMut.mutate({ rubric_name: rubricName, criteria: valid })
   }
-
-  const addCriterion = () => setCriteria([...criteria, { name: '', weight: 0 }])
-  const removeCriterion = (i: number) => setCriteria(criteria.filter((_, idx) => idx !== i))
-  const updateCriterion = (i: number, field: 'name' | 'weight', value: string | number) => {
-    setCriteria(criteria.map((c, idx) => idx === i ? { ...c, [field]: value } : c))
-  }
-
-  // --- Notifications ---
-  const notifsQ = useQuery({ queryKey: ['notification-prefs'], queryFn: getNotificationPrefs })
-  const notifPrefs: NotificationPreference | undefined = notifsQ.data
-  const [emailEnabled, setEmailEnabled] = useState(true)
-  const [prefs, setPrefs] = useState<Record<string, boolean>>({})
-
-  useEffect(() => {
-    if (notifPrefs) {
-      setEmailEnabled(notifPrefs.email_enabled)
-      setPrefs(notifPrefs.preferences)
-    }
-  }, [notifPrefs])
-
-  const updateNotifMut = useMutation({
-    mutationFn: updateNotificationPrefs,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notification-prefs'] })
-      showToast('Notification preferences updated', 'success')
-    },
-    onError: () => showToast('Failed to update preferences', 'error'),
-  })
-
-  const handleSaveNotifs = () => {
-    updateNotifMut.mutate({ email_enabled: emailEnabled, preferences: prefs })
-  }
-
-  const togglePref = (key: string) => setPrefs({ ...prefs, [key]: !prefs[key] })
-
   const weightSum = criteria.reduce((s, c) => s + c.weight, 0)
 
+  // ── Billing ──
+  const billingQ = useQuery({ queryKey: ['institution-billing'], queryFn: getInstitutionBilling, enabled: activeTab === 'billing' })
+
   return (
-    <div className="p-6 space-y-4 max-w-3xl">
-      <div className="flex items-center gap-2">
-        <Settings size={24} className="text-brand-slate-600" />
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-      </div>
+    <div className="px-4 sm:px-6 py-6 space-y-5 max-w-3xl mx-auto w-full">
+      <header className="flex items-center gap-2">
+        <Settings size={22} className="text-secondary" />
+        <h1 className="text-2xl font-bold text-foreground">Settings</h1>
+      </header>
 
       <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
-      {/* Profile Tab */}
+      {/* Profile */}
       {activeTab === 'profile' && (
-        <Card className="p-6">
+        <Card className="p-5 sm:p-6">
           {instQ.isLoading ? (
             <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10" />)}</div>
           ) : (
             <form onSubmit={onSaveProfile} className="space-y-6">
               <div className="space-y-4">
-                <Input label="Institution Name *" {...profileForm.register('name')} error={profileForm.formState.errors.name?.message} />
-                <Select label="Type *" options={INSTITUTION_TYPES} {...profileForm.register('type')} error={profileForm.formState.errors.type?.message} />
-                <Input label="Country *" {...profileForm.register('country')} error={profileForm.formState.errors.country?.message} />
+                <Input label="Institution Name" required {...profileForm.register('name')} error={profileForm.formState.errors.name?.message} />
+                <Select label="Type" required options={INSTITUTION_TYPES} {...profileForm.register('type')} error={profileForm.formState.errors.type?.message} />
+                <Input label="Country" required {...profileForm.register('country')} error={profileForm.formState.errors.country?.message} />
                 <div className="grid grid-cols-2 gap-4">
                   <Input label="Region" {...profileForm.register('region')} />
                   <Input label="City" {...profileForm.register('city')} />
@@ -309,10 +212,10 @@ export default function SettingsPage() {
                 <Input label="Logo URL (S3)" {...profileForm.register('logo_url')} error={profileForm.formState.errors.logo_url?.message} />
               </div>
 
-              <div className="border-t pt-4 space-y-4">
-                <h3 className="text-sm font-semibold text-gray-700">Description & Campus</h3>
+              <div className="border-t border-border pt-4 space-y-4">
+                <h3 className="text-sm font-semibold text-foreground">Description &amp; Campus</h3>
                 <Textarea label="Short description" {...profileForm.register('description_text')} rows={3} />
-                <Textarea label="Campus description" {...profileForm.register('campus_description')} rows={3} placeholder="How the campus looks and feels, where it's located..." />
+                <Textarea label="Campus description" {...profileForm.register('campus_description')} rows={3} />
                 <div className="grid grid-cols-3 gap-4">
                   <Select label="Campus setting" options={CAMPUS_SETTING_OPTIONS} {...profileForm.register('campus_setting')} />
                   <Input label="Student body size" type="number" {...profileForm.register('student_body_size')} />
@@ -320,101 +223,91 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="border-t pt-4 space-y-2">
-                <h3 className="text-sm font-semibold text-gray-700">Media Gallery</h3>
-                <p className="text-xs text-gray-500">One S3 URL per line. First entry is the hero image.</p>
+              <div className="border-t border-border pt-4 space-y-2">
+                <h3 className="text-sm font-semibold text-foreground">Media Gallery</h3>
+                <p className="text-xs text-muted-foreground">One S3 URL per line. First entry is the hero image.</p>
                 <textarea
-                  className="w-full rounded border border-gray-300 p-3 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-brand-slate-400"
+                  className="w-full rounded-md border border-border bg-card text-foreground p-3 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-ring"
                   rows={4}
                   {...profileForm.register('media_gallery_text')}
-                  placeholder="https://unipaith-documents.s3.amazonaws.com/catalog/nyu/campus-1.jpg&#10;https://unipaith-documents.s3.amazonaws.com/catalog/nyu/campus-2.jpg"
                 />
               </div>
 
               {INST_JSON_FIELDS.map(({ key, label, placeholder, hint }) => (
-                <div key={key} className="border-t pt-4 space-y-2">
+                <div key={key} className="border-t border-border pt-4 space-y-2">
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-700">{label}</h3>
-                    <p className="text-xs text-gray-500">{hint}</p>
+                    <h3 className="text-sm font-semibold text-foreground">{label}</h3>
+                    <p className="text-xs text-muted-foreground">{hint}</p>
                   </div>
                   <textarea
-                    className="w-full rounded border border-gray-300 p-3 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-brand-slate-400"
+                    className="w-full rounded-md border border-border bg-card text-foreground p-3 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-ring"
                     rows={5}
                     value={instJsonText[key]}
                     placeholder={placeholder}
                     onChange={e => setInstJsonText(prev => ({ ...prev, [key]: e.target.value }))}
                   />
-                  {instJsonErrors[key] && <p className="text-xs text-red-600">{instJsonErrors[key]}</p>}
+                  {instJsonErrors[key] && <p className="text-xs text-error">{instJsonErrors[key]}</p>}
                 </div>
               ))}
 
               <div className="flex justify-end">
-                <Button type="submit" disabled={updateInstMut.isPending}>
-                  {updateInstMut.isPending ? 'Saving...' : 'Save Changes'}
-                </Button>
+                <Button type="submit" variant="secondary" loading={updateInstMut.isPending}>Save Changes</Button>
               </div>
             </form>
           )}
         </Card>
       )}
 
-      {/* Rubrics Tab */}
-      {activeTab === 'rubrics' && (
+      {/* Team */}
+      {activeTab === 'team' && <TeamCard />}
+
+      {/* Review (rubrics) */}
+      {activeTab === 'review' && (
         <div className="space-y-4">
           <div className="flex justify-end">
-            <Button onClick={() => setShowRubricForm(!showRubricForm)} className="flex items-center gap-2">
+            <Button variant="secondary" onClick={() => setShowRubricForm(!showRubricForm)}>
               <Plus size={16} /> New Rubric
             </Button>
           </div>
-
           {showRubricForm && (
             <Card className="p-5 space-y-4">
-              <h3 className="font-semibold text-gray-900">Create Rubric</h3>
-              <Input label="Rubric Name *" value={rubricName} onChange={e => setRubricName(e.target.value)} />
+              <h3 className="font-semibold text-foreground">Create Rubric</h3>
+              <Input label="Rubric Name" required value={rubricName} onChange={e => setRubricName(e.target.value)} />
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-gray-700">Criteria</label>
-                  <span className={`text-xs font-medium ${weightSum === 100 ? 'text-green-600' : 'text-red-600'}`}>
-                    Total: {weightSum}/100
-                  </span>
+                  <label className="text-sm font-medium text-foreground">Criteria</label>
+                  <span className={`text-xs font-medium ${weightSum === 100 ? 'text-success' : 'text-error'}`}>Total: {weightSum}/100</span>
                 </div>
                 {criteria.map((c, i) => (
                   <div key={i} className="flex items-center gap-2 mb-2">
-                    <Input className="flex-1" placeholder="Criterion name" value={c.name} onChange={e => updateCriterion(i, 'name', e.target.value)} />
-                    <Input className="w-20" type="number" value={c.weight} onChange={e => updateCriterion(i, 'weight', Number(e.target.value))} />
-                    <button onClick={() => removeCriterion(i)} className="p-1 text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
+                    <Input className="flex-1" placeholder="Criterion name" value={c.name} onChange={e => setCriteria(criteria.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x))} />
+                    <Input className="w-20" type="number" value={c.weight} onChange={e => setCriteria(criteria.map((x, idx) => idx === i ? { ...x, weight: Number(e.target.value) } : x))} />
+                    <button onClick={() => setCriteria(criteria.filter((_, idx) => idx !== i))} className="ui-btn p-1.5 text-muted-foreground hover:text-error"><Trash2 size={16} /></button>
                   </div>
                 ))}
-                <Button variant="ghost" size="sm" onClick={addCriterion} className="flex items-center gap-1">
-                  <Plus size={14} /> Add Criterion
-                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setCriteria([...criteria, { name: '', weight: 0 }])}><Plus size={14} /> Add Criterion</Button>
               </div>
               <div className="flex justify-end gap-2">
-                <Button variant="ghost" onClick={() => setShowRubricForm(false)}>Cancel</Button>
-                <Button onClick={handleCreateRubric} disabled={createRubricMut.isPending}>
-                  {createRubricMut.isPending ? 'Creating...' : 'Create'}
-                </Button>
+                <Button variant="tertiary" onClick={() => setShowRubricForm(false)}>Cancel</Button>
+                <Button variant="secondary" onClick={handleCreateRubric} loading={createRubricMut.isPending}>Create</Button>
               </div>
             </Card>
           )}
-
           {rubricsQ.isLoading ? (
             <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>
           ) : rubrics.length === 0 ? (
-            <Card className="p-6 text-center text-sm text-gray-500">No rubrics yet. Create one to start scoring applications.</Card>
+            <Card className="p-6 text-center text-sm text-muted-foreground">No rubrics yet. Create one to start scoring applications.</Card>
           ) : (
             rubrics.map(r => (
               <Card key={r.id} className="p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-gray-900">{r.rubric_name}</h3>
+                  <h3 className="font-semibold text-foreground">{r.rubric_name}</h3>
                   <Badge variant={r.is_active ? 'success' : 'neutral'}>{r.is_active ? 'Active' : 'Inactive'}</Badge>
                 </div>
-                <p className="text-xs text-gray-400 mb-2">Created {formatDate(r.created_at)}</p>
+                <p className="text-xs text-muted-foreground mb-2">Created {formatDate(r.created_at)}</p>
                 {r.criteria && (
-                  <div className="grid grid-cols-2 gap-1 text-xs text-gray-600">
-                    {r.criteria.map(c => (
-                      <span key={c.name}>{c.name}: {c.weight}%</span>
-                    ))}
+                  <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
+                    {r.criteria.map(c => <span key={c.name}>{c.name}: {c.weight}%</span>)}
                   </div>
                 )}
               </Card>
@@ -423,62 +316,68 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Billing Tab — usage-based ($15/unique applicant), Spec 07 §4.2 */}
+      {/* Integrations */}
+      {activeTab === 'integrations' && (
+        <IntegrationsCard primaryDomain={settingsQ.data?.account.primary_domain ?? null} />
+      )}
+
+      {/* Notifications */}
+      {activeTab === 'notifications' && (
+        settingsQ.isLoading || !settingsQ.data ? (
+          <Card className="p-6"><Skeleton className="h-40" /></Card>
+        ) : (
+          <NotificationsCard
+            notifications={settingsQ.data.notifications}
+            emailEnabled={settingsQ.data.email_enabled}
+            emailFrequency={settingsQ.data.email_frequency}
+            onChanged={refetchSettings}
+          />
+        )
+      )}
+
+      {/* Billing */}
       {activeTab === 'billing' && (
         <div className="space-y-4">
           {billingQ.isLoading || !billingQ.data ? (
             <Card className="p-6"><Skeleton className="h-28" /></Card>
           ) : (
             <>
-              <Card className="p-6">
+              <Card className="p-5 sm:p-6">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-gray-500 font-semibold">Current cycle · {billingQ.data.cycle_label}</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-1">
-                      ${billingQ.data.current_charge_usd.toLocaleString()}
-                    </p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {billingQ.data.applicants_processed} unique applicant{billingQ.data.applicants_processed === 1 ? '' : 's'} processed
-                      {' '}× ${billingQ.data.per_applicant_usd}
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Current cycle · {billingQ.data.cycle_label}</p>
+                    <p className="text-3xl font-bold text-foreground mt-1">${billingQ.data.current_charge_usd.toLocaleString()}</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {billingQ.data.applicants_processed} unique applicant{billingQ.data.applicants_processed === 1 ? '' : 's'} processed × ${billingQ.data.per_applicant_usd}
                     </p>
                   </div>
-                  <div className="h-14 w-14 rounded-xl bg-cobalt/10 flex items-center justify-center">
-                    <Users size={26} className="text-cobalt" />
+                  <div className="h-14 w-14 rounded-xl bg-secondary/10 flex items-center justify-center">
+                    <Users size={26} className="text-secondary" />
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-4 border-t pt-3">
-                  Usage-based pricing: <span className="font-medium text-gray-700">${billingQ.data.per_applicant_usd} per unique applicant processed</span>.
-                  No per-seat fees. You’re only billed for applicants who submit to your programs.
+                <p className="text-xs text-muted-foreground mt-4 border-t border-border pt-3">
+                  Usage-based pricing: <span className="font-medium text-foreground">${billingQ.data.per_applicant_usd} per unique applicant processed</span>. No per-seat fees.
                 </p>
               </Card>
-
-              <Card className="p-6">
-                <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2 mb-3">
-                  <CreditCard size={16} className="text-cobalt" /> Payment method
-                </h3>
+              <Card className="p-5 sm:p-6">
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3"><CreditCard size={16} className="text-secondary" /> Payment method</h3>
                 {billingQ.data.has_payment_method ? (
-                  <p className="text-sm text-gray-700">{billingQ.data.payment_method_brand} •••• {billingQ.data.payment_method_last4}</p>
+                  <p className="text-sm text-foreground">{billingQ.data.payment_method_brand} •••• {billingQ.data.payment_method_last4}</p>
                 ) : (
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm text-gray-500">No payment method on file. Add one to enable automatic billing at cycle close.</p>
-                    <a
-                      href="mailto:billing@unipaith.co?subject=Set%20up%20institution%20billing"
-                      className="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg border border-cobalt text-cobalt hover:bg-cobalt/5 transition-colors whitespace-nowrap"
-                    >
-                      Set up billing
-                    </a>
+                    <p className="text-sm text-muted-foreground">No payment method on file. Add one to enable automatic billing at cycle close.</p>
+                    <a href="mailto:billing@unipaith.co?subject=Set%20up%20institution%20billing" className="inline-flex items-center px-3 h-9 text-sm font-medium rounded-lg border border-secondary text-secondary hover:bg-secondary/5 transition-colors whitespace-nowrap">Set up billing</a>
                   </div>
                 )}
               </Card>
-
               {billingQ.data.invoices.length > 0 && (
-                <Card className="p-6">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Invoices</h3>
-                  <div className="divide-y">
+                <Card className="p-5 sm:p-6">
+                  <h3 className="text-sm font-semibold text-foreground mb-3">Invoices</h3>
+                  <div className="divide-y divide-border">
                     {billingQ.data.invoices.map(inv => (
                       <div key={inv.id} className="flex items-center justify-between py-2 text-sm">
-                        <span className="text-gray-700">{inv.description}</span>
-                        <span className="text-gray-900 font-medium">${inv.amount_usd}</span>
+                        <span className="text-muted-foreground">{inv.description}</span>
+                        <span className="text-foreground font-medium">${inv.amount_usd}</span>
                       </div>
                     ))}
                   </div>
@@ -489,48 +388,22 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Notifications Tab */}
-      {activeTab === 'notifications' && (
-        <Card className="p-6 space-y-4">
-          {notifsQ.isLoading ? (
-            <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-8" />)}</div>
-          ) : (
-            <>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Email Notifications</p>
-                  <p className="text-xs text-gray-500">Receive notifications via email</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" checked={emailEnabled} onChange={() => setEmailEnabled(!emailEnabled)} className="sr-only peer" />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-brand-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-slate-600"></div>
-                </label>
-              </div>
-
-              <hr />
-
-              {Object.entries(prefs).length > 0 ? (
-                Object.entries(prefs).map(([key, enabled]) => (
-                  <div key={key} className="flex items-center justify-between">
-                    <p className="text-sm text-gray-700 capitalize">{key.replace(/_/g, ' ')}</p>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" checked={enabled} onChange={() => togglePref(key)} className="sr-only peer" />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-brand-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-slate-600"></div>
-                    </label>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-gray-500">No notification preferences configured yet.</p>
-              )}
-
-              <div className="flex justify-end">
-                <Button onClick={handleSaveNotifs} disabled={updateNotifMut.isPending}>
-                  {updateNotifMut.isPending ? 'Saving...' : 'Save Preferences'}
-                </Button>
-              </div>
-            </>
-          )}
-        </Card>
+      {/* My account — preferences + security (personal) */}
+      {activeTab === 'account' && (
+        settingsQ.isLoading || !settingsQ.data ? (
+          <div className="space-y-4">{Array.from({ length: 2 }).map((_, i) => <Card key={i} className="p-6"><Skeleton className="h-40" /></Card>)}</div>
+        ) : (
+          <div className="space-y-5">
+            <PreferencesCard preferences={settingsQ.data.preferences} onSave={p => updatePrefsMut.mutate(p)} saving={updatePrefsMut.isPending} />
+            <SecurityCard
+              mfaEnabled={settingsQ.data.security.mfa_enabled}
+              mfaMethod={settingsQ.data.security.mfa_method}
+              email={authUser?.email ?? ''}
+              pendingEmail={null}
+              onChanged={refetchSettings}
+            />
+          </div>
+        )
       )}
     </div>
   )

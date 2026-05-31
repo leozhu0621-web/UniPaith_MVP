@@ -13,9 +13,22 @@ from unipaith.schemas.notification import (
     NotificationResponse,
     UpdateNotificationPrefsRequest,
 )
-from unipaith.services.notification_service import NotificationService
+from unipaith.services.notification_service import NotificationService, normalize_matrix
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
+
+
+def _prefs_response(prefs) -> dict:  # type: ignore[no-untyped-def]
+    """Shape a NotificationPreference row into the matrix-aware response."""
+    return {
+        "id": prefs.id,
+        "user_id": prefs.user_id,
+        "email_enabled": prefs.email_enabled,
+        "preferences": prefs.preferences,
+        "email_frequency": prefs.email_frequency,
+        "matrix": normalize_matrix(prefs.preferences),
+        "updated_at": prefs.updated_at,
+    }
 
 
 @router.get("", response_model=list[NotificationResponse])
@@ -70,7 +83,8 @@ async def get_preferences(
     db: AsyncSession = Depends(get_db),
 ):
     svc = NotificationService(db)
-    return await svc.get_preferences(user.id)
+    prefs = await svc.get_preferences(user.id)
+    return _prefs_response(prefs)
 
 
 @router.put("/preferences", response_model=NotificationPreferenceResponse)
@@ -80,4 +94,10 @@ async def update_preferences(
     db: AsyncSession = Depends(get_db),
 ):
     svc = NotificationService(db)
-    return await svc.update_preferences(user.id, body)
+    prefs = await svc.update_preferences(
+        user.id,
+        email_enabled=body.email_enabled,
+        preferences=body.preferences,
+        email_frequency=body.email_frequency,
+    )
+    return _prefs_response(prefs)

@@ -26,6 +26,7 @@ from unipaith.api.recommendations import router as recommendations_router
 from unipaith.api.reviews import router as reviews_router
 from unipaith.api.saved_lists import router as saved_lists_router
 from unipaith.api.search import router as search_router
+from unipaith.api.settings import router as settings_router
 from unipaith.api.strategy import router as strategy_router
 from unipaith.api.students import router as students_router
 from unipaith.api.workshop_feedback import router as workshop_feedback_router
@@ -39,6 +40,9 @@ api_router = APIRouter()
 
 api_router.include_router(auth_router)
 api_router.include_router(billing_router)
+# Settings before students/institutions so literal `/institutions/settings` and
+# `/students/me/settings` win over param routes like `/institutions/{id}`.
+api_router.include_router(settings_router)
 api_router.include_router(students_router)
 api_router.include_router(discovery_router)
 api_router.include_router(goals_router)
