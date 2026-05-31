@@ -298,7 +298,7 @@ export function VisaInfoForm({ defaultValues, onSubmit, loading }: FormProps) {
 }
 
 export function DataRightsForm({ defaultValues, onSubmit, loading }: FormProps) {
-  const { register, handleSubmit } = useForm({ defaultValues: { consent_matching: defaultValues?.consent_matching ?? true, consent_outreach: defaultValues?.consent_outreach ?? true, consent_research: defaultValues?.consent_research ?? true, data_retention_preference: defaultValues?.data_retention_preference || 'standard', deletion_requested: defaultValues?.deletion_requested || false } })
+  const { register, handleSubmit } = useForm({ defaultValues: { consent_matching: defaultValues?.consent_matching ?? true, consent_outreach: defaultValues?.consent_outreach ?? true, consent_research: defaultValues?.consent_research ?? true, consent_training: defaultValues?.consent_training ?? false, data_retention_preference: defaultValues?.data_retention_preference || 'standard', deletion_requested: defaultValues?.deletion_requested || false } })
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
@@ -308,6 +308,10 @@ export function DataRightsForm({ defaultValues, onSubmit, loading }: FormProps) 
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('consent_outreach')} /> Allow use for outreach and marketing</label>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('consent_research')} /> Allow use for research and analytics</label>
         </div>
+      </div>
+      <div className="rounded-lg bg-secondary/5 border border-border p-3">
+        <label className="flex items-start gap-2 text-sm"><input type="checkbox" className="mt-0.5" {...register('consent_training')} /> <span><span className="font-medium text-charcoal">Contribute to model training</span> <span className="text-slate">— help improve UniPaith for everyone.</span></span></label>
+        <p className="text-xs text-muted-foreground mt-1.5">Partnership, not extraction: we exchange value for data and never sell it. Opt-in, and you can turn this off at any time.</p>
       </div>
       <Select label="Data Retention" options={DATA_RETENTION_OPTIONS} {...register('data_retention_preference')} />
       <div className="border-t border-gray-100 pt-3">

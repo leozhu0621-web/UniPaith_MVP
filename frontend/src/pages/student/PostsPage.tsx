@@ -6,6 +6,7 @@ import { listSaved } from '../../api/saved-lists'
 import { rsvpEvent, cancelRsvp, getMyRsvps } from '../../api/events'
 import EventCard from './explore/cards/EventCard'
 import PostCard from './explore/cards/PostCard'
+import AdSlot from '../../components/student/AdSlot'
 import { Calendar, GraduationCap, Newspaper, Rss, Search, Users } from 'lucide-react'
 
 type ConnectTab = 'updates' | 'events' | 'peers'
@@ -187,6 +188,8 @@ export default function PostsPage() {
               ))}
             </div>
           </div>
+
+          {tab !== 'peers' && <AdSlot />}
 
           {tab === 'peers' && (
             <div className="text-center py-12">

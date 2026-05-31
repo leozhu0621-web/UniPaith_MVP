@@ -12,6 +12,7 @@
  */
 import { lazy, Suspense, useState } from 'react'
 import { FileText, MessageCircleQuestion, ScrollText } from 'lucide-react'
+import LockedFeature from '../../../components/student/LockedFeature'
 
 const EssayFeedbackPanel = lazy(() => import('./EssayFeedbackPanel'))
 const InterviewPracticePanel = lazy(() => import('./InterviewPracticePanel'))
@@ -39,28 +40,34 @@ export default function WorkshopsTab() {
         </p>
       </header>
 
-      <div className="flex gap-1 mb-4 border-b border-divider">
-        {SUB_TABS.map(t => (
-          <button
-            key={t.key}
-            onClick={() => setSub(t.key)}
-            className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-              sub === t.key
-                ? 'border-student text-student'
-                : 'border-transparent text-student-text hover:text-student-ink'
-            }`}
-          >
-            <t.icon size={14} />
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <LockedFeature
+        feature="workshops"
+        title="Workshops are a Plus feature"
+        description="Essay, interview, and test-prep coaching is included with UniPaith Plus and during your free trial."
+      >
+        <div className="flex gap-1 mb-4 border-b border-divider">
+          {SUB_TABS.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setSub(t.key)}
+              className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                sub === t.key
+                  ? 'border-student text-student'
+                  : 'border-transparent text-student-text hover:text-student-ink'
+              }`}
+            >
+              <t.icon size={14} />
+              {t.label}
+            </button>
+          ))}
+        </div>
 
-      <Suspense fallback={<div className="text-sm text-student-text py-6">Loading…</div>}>
-        {sub === 'essay' && <EssayFeedbackPanel />}
-        {sub === 'interview' && <InterviewPracticePanel />}
-        {sub === 'test' && <TestGuidancePanel />}
-      </Suspense>
+        <Suspense fallback={<div className="text-sm text-student-text py-6">Loading…</div>}>
+          {sub === 'essay' && <EssayFeedbackPanel />}
+          {sub === 'interview' && <InterviewPracticePanel />}
+          {sub === 'test' && <TestGuidancePanel />}
+        </Suspense>
+      </LockedFeature>
     </div>
   )
 }

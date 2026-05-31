@@ -786,6 +786,9 @@ class UpsertDataConsentRequest(BaseModel):
     consent_matching: bool | None = None
     consent_outreach: bool | None = None
     consent_research: bool | None = None
+    # 4th lever (Spec 43 §2 / 06 §4.3 value-for-data). Opt-in to a future
+    # UniPaith-tuned training corpus; default False, never sold either way.
+    consent_training: bool | None = None
     data_retention_preference: Literal["standard", "minimum", "delete_after_cycle"] | None = None
     deletion_requested: bool | None = None
     first_generation_status: bool | None = None
@@ -814,6 +817,7 @@ class DataConsentResponse(BaseModel):
     consent_matching: bool
     consent_outreach: bool
     consent_research: bool
+    consent_training: bool = False
     data_retention_preference: str | None
     deletion_requested: bool
     deletion_requested_at: datetime | None

@@ -679,6 +679,11 @@ class StudentDataConsent(Base):
     consent_matching: Mapped[bool] = mapped_column(Boolean, default=True)
     consent_outreach: Mapped[bool] = mapped_column(Boolean, default=True)
     consent_research: Mapped[bool] = mapped_column(Boolean, default=True)
+    # 4th consent lever (Spec 43 §2 / 06 §4.3 value-for-data). Whether the
+    # student's data may enter a future UniPaith-tuned training corpus. Opt-in:
+    # defaults False. This is the "partnership, not extraction" lever — the
+    # basis of the value-for-data exchange; raw data is never sold regardless.
+    consent_training: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     data_retention_preference: Mapped[str | None] = mapped_column(String(30))
     deletion_requested: Mapped[bool] = mapped_column(Boolean, default=False)
     deletion_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

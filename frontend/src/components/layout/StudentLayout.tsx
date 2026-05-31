@@ -5,13 +5,14 @@ import { useCounselorStore } from '../../stores/counselor-store'
 import MiniCounselorPanel from '../student/MiniCounselorPanel'
 import {
   Compass, Target, FolderKanban, Newspaper,
-  Bell, LogOut, User, Bookmark, Settings, MessageSquare,
+  Bell, LogOut, User, Bookmark, Settings, MessageSquare, CreditCard,
 } from 'lucide-react'
 import Avatar from '../ui/Avatar'
 import Dropdown from '../ui/Dropdown'
 import Wordmark from '../ui/Wordmark'
 import Sheet from '../ui/Sheet'
 import CompareTray from '../student/CompareTray'
+import TrialBanner from '../student/TrialBanner'
 
 // Stage-ordered navigation (Spec/02 §7): Discover · Match · Apply · Connect.
 const NAV_ITEMS = [
@@ -35,6 +36,7 @@ export default function StudentLayout() {
   const accountItems = [
     { label: 'My Profile', to: '/s/profile', icon: <User size={16} /> },
     { label: 'Saved', to: '/s/saved', icon: <Bookmark size={16} /> },
+    { label: 'Plan & billing', to: '/s/billing', icon: <CreditCard size={16} /> },
     { label: 'Settings', to: '/s/settings', icon: <Settings size={16} /> },
   ]
 
@@ -87,6 +89,7 @@ export default function StudentLayout() {
             items={[
               { label: 'My Profile', onClick: () => navigate('/s/profile'), icon: <User size={14} /> },
               { label: 'Saved', onClick: () => navigate('/s/saved'), icon: <Bookmark size={14} /> },
+              { label: 'Plan & billing', onClick: () => navigate('/s/billing'), icon: <CreditCard size={14} /> },
               { label: 'Settings', onClick: () => navigate('/s/settings'), icon: <Settings size={14} /> },
               { label: 'Sign out', onClick: logout, icon: <LogOut size={14} />, variant: 'danger' },
             ]}
@@ -107,6 +110,9 @@ export default function StudentLayout() {
           <Bell size={20} />
         </button>
       </header>
+
+      {/* Trial / paywall status bar (Spec 06 §4.1). Hidden for Plus + billing-off. */}
+      <TrialBanner />
 
       {/* Body with sliding panels */}
       <div className="flex-1 flex overflow-hidden relative">

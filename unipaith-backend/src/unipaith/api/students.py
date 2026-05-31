@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from unipaith.api.billing import require_entitlement
 from unipaith.core.exceptions import NotFoundException
 from unipaith.database import get_db
 from unipaith.dependencies import require_student
@@ -72,9 +73,15 @@ from unipaith.schemas.student import (
     VisaInfoResponse,
     WorkExperienceResponse,
 )
+from unipaith.services.entitlements import Feature
 from unipaith.services.student_service import StudentService
 
 router = APIRouter(prefix="/students", tags=["students"])
+
+# Match rationale / "explain" is part of expanded matching — a paid feature
+# (Spec 06 §4.1). Free students get limited matching without the rationale;
+# the guard 402s them (no-op when billing is disabled, pass for trial/Plus).
+_EXPANDED_MATCH_GUARD = Depends(require_entitlement(Feature.EXPANDED_MATCH))
 
 
 def _svc(db: AsyncSession) -> StudentService:
@@ -930,7 +937,11 @@ async def get_match_detail(
     return match
 
 
-@router.post("/me/matches/{program_id}/explain", response_model=ExplainMatchResponse)
+@router.post(
+    "/me/matches/{program_id}/explain",
+    response_model=ExplainMatchResponse,
+    dependencies=[_EXPANDED_MATCH_GUARD],
+)
 async def explain_match(
     program_id: UUID,
     user: User = Depends(require_student),
@@ -1036,7 +1047,11 @@ class RationaleResponse(BaseModel):
     grounded: bool
 
 
-@router.post("/me/matches/{program_id}/rationale", response_model=RationaleResponse)
+@router.post(
+    "/me/matches/{program_id}/rationale",
+    response_model=RationaleResponse,
+    dependencies=[_EXPANDED_MATCH_GUARD],
+)
 async def generate_match_rationale(
     program_id: UUID,
     user: User = Depends(require_student),
@@ -1200,7 +1215,7 @@ async def intake_chat(
             "sparked your interest in this field?"
         )
     elif "country_of_residence" in extracted and "goals_text" not in extracted:
-        next_q = f"{greeting}What are you hoping to study, " "and what draws you to that area?"
+        next_q = f"{greeting}What are you hoping to study, and what draws you to that area?"
     elif extracted:
         next_q = (
             f"{greeting}I'd love to learn more about what "

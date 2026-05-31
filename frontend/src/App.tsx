@@ -36,6 +36,7 @@ import SchoolSubunitPage from './pages/student/SchoolSubunitPage'
 import ApplicationDetailPage from './pages/student/ApplicationDetailPage'
 import SavedListPage from './pages/student/SavedListPage'
 import StudentSettingsPage from './pages/student/SettingsPage'
+import BillingPage from './pages/student/BillingPage'
 import OnboardingPage from './pages/student/OnboardingPage'
 
 // Institution pages
@@ -113,6 +114,7 @@ const router = createBrowserRouter([
       { path: 'profile', element: <ProfilePage /> },
       { path: 'saved', element: <SavedListPage /> },
       { path: 'settings', element: <StudentSettingsPage /> },
+      { path: 'billing', element: <BillingPage /> },          // Plan & billing (Spec 06 §4)
       // === Drill-down pages ===
       { path: 'programs/:programId', element: <StudentProgramDetailPage /> },
       // Legacy alias — /s/schools/:id was the same page; redirect to the canonical
