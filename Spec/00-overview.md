@@ -5,7 +5,7 @@
 - **Version:** v2.0 · 2026-05-30 (renumbered contiguous 00–49)
 - **Owner:** Leo Zhu — leozjc@unipaith.co
 - **Audience:** anyone building the MVP — human engineers, designers, or coding agents.
-- **Count:** 53 numbered specs (`00`–`52`) + `ASSETS.md` = 54 docs. Numbering is contiguous — no gaps. (`50`–`52` are build-integration docs derived from the live code.)
+- **Count:** 63 numbered specs (`00`–`63`) + `ASSETS.md` = 64 docs. Numbering runs `00`–`63` with `59` reserved (build/production ↔ AI/knowledge block boundary). (`50`–`52` build-integration from live code; `53`–`58` production-parity vs Handshake/LinkedIn; `60` crawler/knowledge engine; `61` chatbot training/eval; `62` shared eval harness; `63` ML core — Qwen backend + Claude agent.)
 
 ---
 
@@ -113,6 +113,21 @@ Naming convention: `NN-slug.md`. Two-digit prefix, **contiguous 00–49** (no ga
 - `50-api-contract.md` — the front↔back handshake: envelope, auth, errors, pagination + the authoritative router map (26 routers / 276 routes) from real code; OpenAPI at `/docs` is machine truth.
 - `51-data-model.md` — consolidated table map (28 live tables) with key columns, FKs, JSONB blobs, and an explicit "spec'd-but-not-built-yet" list.
 - `52-mvp-acceptance-runbook.md` — the "ready to use, front+back" gate: two end-to-end critical-path journeys, per-surface DoD, integration gates, launch blockers, seed data, run/deploy verify.
+
+### Production parity (53–58) — market-grade bar vs Handshake / LinkedIn
+- `53-ux-benchmark-interaction-standards.md` — per-surface benchmark vs LinkedIn/Handshake + interaction standards (optimistic UI, skeletons, motion, autosave, infinite scroll, typeahead, completeness, saved-search alerts).
+- `54-frontend-engineering-standards.md` — production FE architecture: state layering, TanStack patterns, code-split, error boundaries, Core Web Vitals budgets, realtime client, testing.
+- `55-backend-production-readiness.md` — observability, Redis caching, task queue + jobs, rate limiting, idempotency, circuit breakers, DB indexing/pooling/migration safety, health probes, SLOs.
+- `56-search-feed-recommendations.md` — FTS/trgm→hybrid semantic search, faceted filters, ranked Connect feed, recommendations, saved searches + alerts, relevance experimentation.
+- `57-realtime-notifications.md` — SSE + WebSocket, notification service + fan-out, multi-channel delivery, notification center, digest/batching, delivery reliability.
+- `58-security-trust-compliance.md` — OWASP, authn/authz hardening, PII encryption, upload safety, trust & safety / moderation, FERPA/GDPR, supply chain, incident response.
+- `59` — *(reserved — boundary between the 50s build/production block and the 60s AI/knowledge block)*
+
+### Knowledge & AI-quality engine (60–63)
+- `60-data-crawler-enrichment.md` — perpetual knowledge engine: proactively gathers public reference data across the full Prompt-Library graph + monitors news/changes + autonomous discovery, routing changes to affected students; provenance/freshness/confidence; adds `scholarships` + `change_events` + reference tables.
+- `61-chatbot-training-evaluation.md` — continuous + proactive eval-driven training for the Claude student advisor + faculty assistant: behavior constitution, performance rubric, safety/crisis escalation, golden-set loop, synthetic/red-team.
+- `62-eval-harness.md` — shared golden-set + LLM-judge + regression-gate + A/B + drift infra that both `61` and `60` §13B plug into via adapters; reuses `ml_loop` tables.
+- `63-ml-core-and-knowledge-processing.md` — **hard boundary: Qwen = self-hosted/tuned ML backend (embeddings, crawler extraction, normalization, ML scoring, synthesis of presented info), never interacts with a human; Claude = the chatbot + all human-facing advisory agents.** Qwen computes, Claude communicates.
 
 ---
 
