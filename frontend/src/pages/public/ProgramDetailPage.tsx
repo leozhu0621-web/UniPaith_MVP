@@ -64,7 +64,6 @@ export default function ProgramDetailPage() {
 
   const inst: Institution | undefined = instQ.data
   const events: EventItem[] = Array.isArray(eventsQ.data) ? eventsQ.data : []
-  const gallery: string[] = Array.isArray(p?.media_urls) ? p.media_urls : []
   const tracks: string[] = Array.isArray(p?.tracks) ? p.tracks : []
   const highlights: string[] = Array.isArray(p?.highlights) ? p.highlights : []
   const faculty: Record<string, any>[] = Array.isArray(p?.faculty_contacts) ? p.faculty_contacts : []
@@ -77,19 +76,15 @@ export default function ProgramDetailPage() {
     { id: 'admissions', label: 'Admissions' },
     { id: 'cost', label: 'Cost & Outcomes' },
     ...(events.length > 0 ? [{ id: 'events', label: `Events (${events.length})` }] : []),
-    ...(gallery.length > 0 ? [{ id: 'gallery', label: 'Gallery' }] : []),
   ]
 
   // --- Loading ---
   if (programQ.isLoading) {
     return (
-      <div className="min-h-screen bg-paper">
-        <Header />
-        <div className="max-w-5xl mx-auto px-6 py-10 space-y-6">
-          <Skeleton className="h-10 w-96" />
-          <Skeleton className="h-6 w-64" />
-          <div className="grid grid-cols-3 gap-4">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>
-        </div>
+      <div className="max-w-5xl mx-auto px-6 py-10 space-y-6">
+        <Skeleton className="h-10 w-96" />
+        <Skeleton className="h-6 w-64" />
+        <div className="grid grid-cols-3 gap-4">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>
       </div>
     )
   }
@@ -97,39 +92,34 @@ export default function ProgramDetailPage() {
   // --- Not found ---
   if (!p) {
     return (
-      <div className="min-h-screen bg-paper">
-        <Header />
-        <div className="max-w-5xl mx-auto px-6 py-16 text-center">
-          <GraduationCap size={48} className="mx-auto text-gray-300 mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Program not found</h2>
-          <p className="text-gray-500 mb-6">This program may not be published or the link is incorrect.</p>
-          <Link to="/browse" className="text-cobalt hover:underline">Browse programs</Link>
-        </div>
+      <div className="max-w-5xl mx-auto px-6 py-16 text-center">
+        <GraduationCap size={48} className="mx-auto text-student-text/30 mb-4" />
+        <h2 className="text-xl font-semibold text-student-ink mb-2">Program not found</h2>
+        <p className="text-student-text/70 mb-6">This program may not be published or the link is incorrect.</p>
+        <Link to="/browse" className="text-cobalt hover:underline">Browse programs</Link>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-paper">
-      <Header />
-
+    <>
       <div className="max-w-5xl mx-auto px-6 py-8">
         {/* Back link */}
         {inst && (
-          <Link to={`/school/${p.institution_id}`} className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-4">
+          <Link to={`/school/${p.institution_id}`} className="inline-flex items-center gap-1 text-sm text-student-text/70 hover:text-student-ink mb-4">
             <ArrowLeft size={14} /> {inst.name}
           </Link>
         )}
 
         {/* Hero */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+        <div className="bg-white rounded-lg border border-divider p-6 mb-6">
           <div className="flex items-start justify-between gap-6">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-2xl font-bold text-gray-900">{p.program_name}</h1>
+                <h1 className="text-2xl font-bold text-student-ink">{p.program_name}</h1>
                 <Badge variant="info">{DEGREE_LABELS[p.degree_type] || p.degree_type}</Badge>
               </div>
-              {p.department && <p className="text-gray-500 mb-1">{p.department}</p>}
+              {p.department && <p className="text-student-text/70 mb-1">{p.department}</p>}
               {inst && (
                 <Link to={`/school/${p.institution_id}`} className="text-sm text-cobalt hover:underline">
                   {inst.name}
@@ -137,7 +127,7 @@ export default function ProgramDetailPage() {
               )}
 
               {/* Quick stats */}
-              <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-600">
+              <div className="flex flex-wrap gap-4 mt-4 text-sm text-student-text">
                 {p.tuition != null && (
                   <span className="flex items-center gap-1.5"><DollarSign size={14} /> {formatCurrency(p.tuition)}</span>
                 )}
@@ -203,21 +193,21 @@ export default function ProgramDetailPage() {
             <div className="space-y-6">
               {p.description_text && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-2">About this program</h3>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{p.description_text}</p>
+                  <h3 className="text-sm font-semibold text-student-ink mb-2">About this program</h3>
+                  <p className="text-sm text-student-text whitespace-pre-wrap">{p.description_text}</p>
                 </Card>
               )}
 
               {p.who_its_for && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-2">Who it's for</h3>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{p.who_its_for}</p>
+                  <h3 className="text-sm font-semibold text-student-ink mb-2">Who it's for</h3>
+                  <p className="text-sm text-student-text whitespace-pre-wrap">{p.who_its_for}</p>
                 </Card>
               )}
 
               {tracks.length > 0 && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Tracks & Concentrations</h3>
+                  <h3 className="text-sm font-semibold text-student-ink mb-3">Tracks & Concentrations</h3>
                   <div className="flex flex-wrap gap-2">
                     {tracks.map((t, i) => (
                       <Badge key={i} variant="info">{t}</Badge>
@@ -228,10 +218,10 @@ export default function ProgramDetailPage() {
 
               {highlights.length > 0 && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Highlights</h3>
+                  <h3 className="text-sm font-semibold text-student-ink mb-3">Highlights</h3>
                   <ul className="space-y-2">
                     {highlights.map((h, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                      <li key={i} className="flex items-start gap-2 text-sm text-student-text">
                         <CheckCircle2 size={16} className="text-cobalt mt-0.5 shrink-0" />
                         {h}
                       </li>
@@ -242,7 +232,7 @@ export default function ProgramDetailPage() {
 
               {faculty.length > 0 && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Faculty Contacts</h3>
+                  <h3 className="text-sm font-semibold text-student-ink mb-3">Faculty Contacts</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {faculty.map((f, i) => (
                       <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-student-mist/50">
@@ -250,9 +240,9 @@ export default function ProgramDetailPage() {
                           {(f.name || '?')[0].toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{f.name}</p>
-                          {f.role && <p className="text-xs text-gray-500">{f.role}</p>}
-                          {f.email && <p className="text-xs text-gray-400">{f.email}</p>}
+                          <p className="text-sm font-medium text-student-ink truncate">{f.name}</p>
+                          {f.role && <p className="text-xs text-student-text/70">{f.role}</p>}
+                          {f.email && <p className="text-xs text-student-text/50">{f.email}</p>}
                         </div>
                       </div>
                     ))}
@@ -262,14 +252,14 @@ export default function ProgramDetailPage() {
 
               {/* Quick facts */}
               <Card className="p-5">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Quick Facts</h3>
+                <h3 className="text-sm font-semibold text-student-ink mb-3">Quick Facts</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                  <div><span className="text-gray-500">Degree:</span> <span className="font-medium">{DEGREE_LABELS[p.degree_type] || p.degree_type}</span></div>
-                  {p.duration_months && <div><span className="text-gray-500">Duration:</span> <span className="font-medium">{p.duration_months} months</span></div>}
-                  {p.delivery_format && <div><span className="text-gray-500">Format:</span> <span className="font-medium">{DELIVERY_FORMAT_LABELS[p.delivery_format] ?? p.delivery_format}</span></div>}
-                  {p.campus_setting && <div><span className="text-gray-500">Setting:</span> <span className="font-medium">{CAMPUS_SETTING_LABELS[p.campus_setting] ?? p.campus_setting}</span></div>}
-                  {p.program_start_date && <div><span className="text-gray-500">Start Date:</span> <span className="font-medium">{formatDate(p.program_start_date)}</span></div>}
-                  {p.application_deadline && <div><span className="text-gray-500">Deadline:</span> <span className="font-medium">{formatDate(p.application_deadline)}</span></div>}
+                  <div><span className="text-student-text/70">Degree:</span> <span className="font-medium">{DEGREE_LABELS[p.degree_type] || p.degree_type}</span></div>
+                  {p.duration_months && <div><span className="text-student-text/70">Duration:</span> <span className="font-medium">{p.duration_months} months</span></div>}
+                  {p.delivery_format && <div><span className="text-student-text/70">Format:</span> <span className="font-medium">{DELIVERY_FORMAT_LABELS[p.delivery_format] ?? p.delivery_format}</span></div>}
+                  {p.campus_setting && <div><span className="text-student-text/70">Setting:</span> <span className="font-medium">{CAMPUS_SETTING_LABELS[p.campus_setting] ?? p.campus_setting}</span></div>}
+                  {p.program_start_date && <div><span className="text-student-text/70">Start Date:</span> <span className="font-medium">{formatDate(p.program_start_date)}</span></div>}
+                  {p.application_deadline && <div><span className="text-student-text/70">Deadline:</span> <span className="font-medium">{formatDate(p.application_deadline)}</span></div>}
                 </div>
               </Card>
             </div>
@@ -280,18 +270,18 @@ export default function ProgramDetailPage() {
             <div className="space-y-6">
               {/* Deadline + start date */}
               <Card className="p-5">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Key Dates</h3>
+                <h3 className="text-sm font-semibold text-student-ink mb-3">Key Dates</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   {p.application_deadline && (
                     <div className="flex items-center gap-2">
                       <CalendarDays size={16} className="text-warning" />
-                      <div><span className="text-gray-500">Deadline:</span> <span className="font-medium">{formatDate(p.application_deadline)}</span></div>
+                      <div><span className="text-student-text/70">Deadline:</span> <span className="font-medium">{formatDate(p.application_deadline)}</span></div>
                     </div>
                   )}
                   {p.program_start_date && (
                     <div className="flex items-center gap-2">
                       <CalendarDays size={16} className="text-cobalt" />
-                      <div><span className="text-gray-500">Start Date:</span> <span className="font-medium">{formatDate(p.program_start_date)}</span></div>
+                      <div><span className="text-student-text/70">Start Date:</span> <span className="font-medium">{formatDate(p.program_start_date)}</span></div>
                     </div>
                   )}
                 </div>
@@ -300,12 +290,12 @@ export default function ProgramDetailPage() {
               {/* Requirements */}
               {p.requirements && Object.keys(p.requirements).length > 0 && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Requirements</h3>
+                  <h3 className="text-sm font-semibold text-student-ink mb-3">Requirements</h3>
                   <dl className="space-y-2 text-sm">
                     {Object.entries(p.requirements).map(([k, v]) => (
-                      <div key={k} className="flex justify-between border-b border-gray-100 pb-2">
-                        <dt className="text-gray-500 capitalize">{k.replace(/_/g, ' ')}</dt>
-                        <dd className="font-medium text-gray-900">{String(v)}</dd>
+                      <div key={k} className="flex justify-between border-b border-divider pb-2">
+                        <dt className="text-student-text/70 capitalize">{k.replace(/_/g, ' ')}</dt>
+                        <dd className="font-medium text-student-ink">{String(v)}</dd>
                       </div>
                     ))}
                   </dl>
@@ -315,15 +305,15 @@ export default function ProgramDetailPage() {
               {/* Application requirements checklist */}
               {appReqs.length > 0 && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Application Materials</h3>
+                  <h3 className="text-sm font-semibold text-student-ink mb-3">Application Materials</h3>
                   <ul className="space-y-2">
                     {appReqs.map((req, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm">
-                        <CheckCircle2 size={16} className={`mt-0.5 shrink-0 ${req.required ? 'text-warning' : 'text-gray-300'}`} />
+                        <CheckCircle2 size={16} className={`mt-0.5 shrink-0 ${req.required ? 'text-warning' : 'text-student-text/30'}`} />
                         <div>
-                          <span className="text-gray-900">{req.item || req.name || JSON.stringify(req)}</span>
+                          <span className="text-student-ink">{req.item || req.name || JSON.stringify(req)}</span>
                           {req.required && <Badge variant="warning" className="ml-2 text-[10px]">Required</Badge>}
-                          {req.format && <span className="text-xs text-gray-400 ml-2">{req.format}</span>}
+                          {req.format && <span className="text-xs text-student-text/50 ml-2">{req.format}</span>}
                         </div>
                       </li>
                     ))}
@@ -334,13 +324,13 @@ export default function ProgramDetailPage() {
               {/* Intake rounds */}
               {intakeRounds.length > 0 && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Intake Rounds</h3>
+                  <h3 className="text-sm font-semibold text-student-ink mb-3">Intake Rounds</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {intakeRounds.map((round, i) => (
-                      <div key={i} className="p-3 rounded-lg bg-student-mist/50 border border-gray-100">
-                        <p className="text-sm font-medium text-gray-900">{round.round_name || `Round ${i + 1}`}</p>
-                        {round.deadline && <p className="text-xs text-gray-500 mt-1">Deadline: {formatDate(round.deadline)}</p>}
-                        {round.capacity && <p className="text-xs text-gray-400">Capacity: {round.capacity}</p>}
+                      <div key={i} className="p-3 rounded-lg bg-student-mist/50 border border-divider">
+                        <p className="text-sm font-medium text-student-ink">{round.round_name || `Round ${i + 1}`}</p>
+                        {round.deadline && <p className="text-xs text-student-text/70 mt-1">Deadline: {formatDate(round.deadline)}</p>}
+                        {round.capacity && <p className="text-xs text-student-text/50">Capacity: {round.capacity}</p>}
                       </div>
                     ))}
                   </div>
@@ -358,34 +348,34 @@ export default function ProgramDetailPage() {
           {tab === 'cost' && (
             <div className="space-y-6">
               <Card className="p-5">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Cost</h3>
+                <h3 className="text-sm font-semibold text-student-ink mb-3">Cost</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-gray-500">Tuition</p>
-                    <p className="text-2xl font-semibold text-gray-900 mt-1">{p.tuition != null ? formatCurrency(p.tuition) : 'Not published'}</p>
+                    <p className="text-student-text/70">Tuition</p>
+                    <p className="text-2xl font-semibold text-student-ink mt-1">{p.tuition != null ? formatCurrency(p.tuition) : 'Not published'}</p>
                   </div>
                   <div>
-                    <p className="text-gray-500">Acceptance Rate</p>
-                    <p className="text-2xl font-semibold text-gray-900 mt-1">{p.acceptance_rate != null ? formatPercent(p.acceptance_rate, 1) : 'Not published'}</p>
+                    <p className="text-student-text/70">Acceptance Rate</p>
+                    <p className="text-2xl font-semibold text-student-ink mt-1">{p.acceptance_rate != null ? formatPercent(p.acceptance_rate, 1) : 'Not published'}</p>
                   </div>
                 </div>
               </Card>
 
               {Object.keys(outcomes).length > 0 ? (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Outcomes</h3>
+                  <h3 className="text-sm font-semibold text-student-ink mb-3">Outcomes</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {Object.entries(outcomes).map(([key, value]) => (
                       <div key={key} className="p-3 rounded-lg bg-student-mist/50">
-                        <p className="text-xs text-gray-500 capitalize">{key.replace(/_/g, ' ')}</p>
-                        <p className="text-lg font-semibold text-gray-900 mt-1">{typeof value === 'number' && value < 1 ? formatPercent(value, 0) : String(value)}</p>
+                        <p className="text-xs text-student-text/70 capitalize">{key.replace(/_/g, ' ')}</p>
+                        <p className="text-lg font-semibold text-student-ink mt-1">{typeof value === 'number' && value < 1 ? formatPercent(value, 0) : String(value)}</p>
                       </div>
                     ))}
                   </div>
                 </Card>
               ) : (
                 <Card className="p-5 text-center">
-                  <p className="text-sm text-gray-500">Outcomes data has not been published for this program yet.</p>
+                  <p className="text-sm text-student-text/70">Outcomes data has not been published for this program yet.</p>
                 </Card>
               )}
             </div>
@@ -400,12 +390,12 @@ export default function ProgramDetailPage() {
                 events.map(e => (
                   <Card key={e.id} className="p-4 flex items-center justify-between">
                     <div>
-                      <h4 className="font-medium text-gray-900">{e.event_name}</h4>
-                      <p className="text-sm text-gray-500">{formatDate(e.start_time)}{e.location ? ` \u00B7 ${e.location}` : ''}</p>
+                      <h4 className="font-medium text-student-ink">{e.event_name}</h4>
+                      <p className="text-sm text-student-text/70">{formatDate(e.start_time)}{e.location ? ` \u00B7 ${e.location}` : ''}</p>
                       {e.event_type && <Badge variant="neutral" className="mt-1">{e.event_type}</Badge>}
                     </div>
                     {e.capacity != null && (
-                      <span className="text-xs text-gray-400">{e.rsvp_count}/{e.capacity} spots</span>
+                      <span className="text-xs text-student-text/50">{e.rsvp_count}/{e.capacity} spots</span>
                     )}
                   </Card>
                 ))
@@ -413,16 +403,6 @@ export default function ProgramDetailPage() {
             </div>
           )}
 
-          {/* ===== GALLERY ===== */}
-          {tab === 'gallery' && gallery.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {gallery.map((url, i) => (
-                <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="rounded-lg overflow-hidden border hover:shadow-md transition-shadow">
-                  <img src={url} alt={`${p.program_name} gallery ${i + 1}`} className="w-full h-48 object-cover" />
-                </a>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
@@ -448,19 +428,6 @@ export default function ProgramDetailPage() {
           </div>
         </div>
       </Modal>
-    </div>
-  )
-}
-
-function Header() {
-  return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-      <Link to="/" className="text-lg font-bold">UniPaith</Link>
-      <div className="flex gap-3">
-        <Link to="/browse" className="text-sm text-gray-600 hover:text-gray-900">Browse</Link>
-        <Link to="/login" className="text-sm text-gray-600 hover:text-gray-900">Log in</Link>
-        <Link to="/signup" className="text-sm bg-gray-900 text-white px-3 py-1 rounded hover:bg-gray-800">Sign up</Link>
-      </div>
-    </header>
+    </>
   )
 }
