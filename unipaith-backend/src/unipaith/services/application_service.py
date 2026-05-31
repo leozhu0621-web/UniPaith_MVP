@@ -467,6 +467,7 @@ class ApplicationService:
         app.decision_notes = decision_notes
         app.decision_by = reviewer_id
         await self.db.flush()
+        await self.db.refresh(app)
         return app
 
     async def create_offer(
@@ -495,18 +496,26 @@ class ApplicationService:
             application_id=application_id,
             offer_type=offer_type,
             tuition_amount=tuition_amount,
+            tuition_estimate=tuition_amount,
             scholarship_amount=scholarship_amount,
             assistantship_details=assistantship_details,
             financial_package_total=financial_package_total,
+            total_cost_estimate=financial_package_total,
             conditions=conditions,
             response_deadline=response_deadline,
-            status="draft",
+            decision_date=datetime.now(UTC).date(),
+            status="sent",
         )
         self.db.add(offer)
         await self.db.flush()
         program = await self.db.get(Program, app.program_id)
         offer.plain_language_brief = await self.generate_offer_brief(offer, program)
+        offer.brief = (offer.plain_language_brief or {}).get("summary") or self._build_offer_brief(
+            offer, program
+        )
         await self.db.flush()
+        await self.db.refresh(offer)
+        await self._notify_offer(app, offer)
         return offer
 
     # --- Student offer response ---
@@ -545,6 +554,12 @@ class ApplicationService:
 
         await self.db.flush()
         await self.db.refresh(offer)
+        try:
+            from unipaith.services.event_hooks import on_offer_responded
+
+            await on_offer_responded(self.db, application_id=app.id, offer_id=offer.id)
+        except Exception:  # noqa: BLE001 — hook must not block accept/decline
+            pass
         return offer
 
     async def respond_to_offer_with_context(

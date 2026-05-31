@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -84,6 +84,11 @@ export default function ApplicationDetailPage() {
   const [intentReason, setIntentReason] = useState('')
   const [rationale, setRationale] = useState('')
   const [scanning, setScanning] = useState(false)
+
+  useEffect(() => {
+    const qTab = searchParams.get('tab')
+    if (qTab) setTab(qTab)
+  }, [searchParams])
 
   const { data: app, isLoading } = useQuery({ queryKey: ['application', appId], queryFn: () => getMyApplication(appId!) })
   const { data: checklist } = useQuery({ queryKey: ['checklist', appId], queryFn: () => getChecklist(appId!).catch(() => generateChecklist(appId!)) })

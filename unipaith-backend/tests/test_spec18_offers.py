@@ -1,6 +1,8 @@
 """Spec 18 · Decisions & Offers — offer capture, decision states, comparison,
 post-acceptance workflow, and the OutcomeBrief fallback invariant."""
 
+from datetime import UTC, datetime
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
@@ -235,3 +237,49 @@ async def test_outcome_brief_agent_failure_falls_back_no_5xx(
     app_id = await _create_app(student_client, progs[0].id)
     offer = await _record_offer(student_client, app_id, scholarship_amount=5000)
     assert offer["plain_language_brief"]["source"] == "rule_based"
+
+
+@pytest.mark.asyncio
+async def test_institution_offer_created_as_sent(
+    institution_client,
+    db_session,
+    mock_student_user,
+    mock_institution_user,
+):
+    """Institution-created offers must land as ``sent`` with a brief (§3/§11)."""
+    profile, progs = await _setup(
+        db_session, mock_student_user, mock_institution_user, n_programs=1
+    )
+    from unipaith.models.application import Application
+
+    app = Application(
+        student_id=profile.id,
+        program_id=progs[0].id,
+        status="submitted",
+        submission_mode="external",
+        submitted_at=datetime.now(UTC),
+    )
+    db_session.add(app)
+    await db_session.commit()
+    await db_session.refresh(app)
+    app_id = str(app.id)
+
+    dec = await institution_client.post(
+        f"/api/v1/applications/review/{app_id}/decision",
+        json={"decision": "admitted"},
+    )
+    assert dec.status_code == 200, dec.text
+
+    offer_r = await institution_client.post(
+        f"/api/v1/applications/review/{app_id}/offer",
+        json={
+            "offer_type": "full_admission",
+            "scholarship_amount": 5000,
+            "response_deadline": "2027-04-15",
+        },
+    )
+    assert offer_r.status_code == 201, offer_r.text
+    offer_body = offer_r.json()
+    assert offer_body["status"] == "sent"
+    assert offer_body["plain_language_brief"] is not None
+    assert offer_body["plain_language_brief"]["summary"]
