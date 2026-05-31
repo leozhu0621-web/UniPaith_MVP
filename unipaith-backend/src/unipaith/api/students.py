@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
@@ -1688,6 +1689,104 @@ async def portable_export(
     return resp.model_dump(mode="json")
 
 
+# ---------- Institution Follows (Spec 12 §10 — "Save school" / Connect feed) ----------
+
+
+class FollowedInstitutionResponse(BaseModel):
+    institution_id: UUID
+    name: str
+    followed_at: datetime | None = None
+
+
+@router.get("/me/follows", response_model=list[FollowedInstitutionResponse])
+async def list_follows(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Institutions the student explicitly follows (drives the Connect feed)."""
+    from unipaith.models.follow import InstitutionFollow
+    from unipaith.models.institution import Institution
+
+    profile = await StudentService(db)._get_student_profile(user.id)
+    result = await db.execute(
+        select(InstitutionFollow.institution_id, Institution.name, InstitutionFollow.created_at)
+        .join(Institution, Institution.id == InstitutionFollow.institution_id)
+        .where(InstitutionFollow.student_id == profile.id)
+        .order_by(InstitutionFollow.created_at.desc())
+    )
+    return [
+        FollowedInstitutionResponse(institution_id=row[0], name=row[1], followed_at=row[2])
+        for row in result.all()
+    ]
+
+
+# Alias: "Save school" is institution-level; in the saved-list IA it reads as a
+# saved institution but is backed by the same follow row (Spec 12 §13 / Spec 13).
+@router.get("/me/saved-institutions", response_model=list[FollowedInstitutionResponse])
+async def list_saved_institutions(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    return await list_follows(user=user, db=db)
+
+
+@router.post("/me/follows/{institution_id}", status_code=status.HTTP_201_CREATED)
+async def follow_institution(
+    institution_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Follow an institution. Idempotent — following twice is a no-op."""
+    from sqlalchemy import func as sa_func
+
+    from unipaith.models.follow import InstitutionFollow
+    from unipaith.models.institution import Institution
+
+    profile = await StudentService(db)._get_student_profile(user.id)
+
+    inst = await db.get(Institution, institution_id)
+    if inst is None:
+        raise NotFoundException("Institution not found")
+
+    existing = await db.execute(
+        select(InstitutionFollow).where(
+            InstitutionFollow.student_id == profile.id,
+            InstitutionFollow.institution_id == institution_id,
+        )
+    )
+    if existing.scalar_one_or_none() is None:
+        db.add(InstitutionFollow(student_id=profile.id, institution_id=institution_id))
+        await db.commit()
+
+    count = await db.scalar(
+        select(sa_func.count())
+        .select_from(InstitutionFollow)
+        .where(InstitutionFollow.student_id == profile.id)
+    )
+    return {"institution_id": str(institution_id), "following": True, "followed_count": count or 0}
+
+
+@router.delete("/me/follows/{institution_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def unfollow_institution(
+    institution_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Unfollow an institution. Idempotent — unfollowing when not following is a no-op."""
+    from sqlalchemy import delete as sa_delete
+
+    from unipaith.models.follow import InstitutionFollow
+
+    profile = await StudentService(db)._get_student_profile(user.id)
+    await db.execute(
+        sa_delete(InstitutionFollow).where(
+            InstitutionFollow.student_id == profile.id,
+            InstitutionFollow.institution_id == institution_id,
+        )
+    )
+    await db.commit()
+
+
 # ---------- Student Feed (Steam-style: updates from followed schools) ----------
 
 
@@ -1697,10 +1796,16 @@ async def get_student_feed(
     user: User = Depends(require_student),
     db: AsyncSession = Depends(get_db),
 ):
-    """Combined feed of events + posts from schools the student follows (via saved programs)."""
+    """Combined feed of events + posts from schools the student follows.
+
+    Sources are unioned: institutions explicitly followed (Spec 12 §10) plus the
+    institutions of saved programs (back-compat — saving a program implies
+    interest in its school).
+    """
     from datetime import UTC, datetime
 
     from unipaith.models.engagement import SavedList, SavedListItem
+    from unipaith.models.follow import InstitutionFollow
     from unipaith.models.institution import (
         Event,
         Institution,
@@ -1711,7 +1816,7 @@ async def get_student_feed(
     svc = StudentService(db)
     profile = await svc._get_student_profile(user.id)
 
-    # 1. Get institution_ids from saved programs
+    # 1. Institution ids: explicit follows ∪ institutions of saved programs
     saved_result = await db.execute(
         select(Program.institution_id)
         .join(SavedListItem, SavedListItem.program_id == Program.id)
@@ -1719,7 +1824,14 @@ async def get_student_feed(
         .where(SavedList.student_id == profile.id)
         .distinct()
     )
-    followed_inst_ids = [row[0] for row in saved_result.all()]
+    follow_result = await db.execute(
+        select(InstitutionFollow.institution_id).where(
+            InstitutionFollow.student_id == profile.id
+        )
+    )
+    followed_inst_ids = list(
+        {row[0] for row in saved_result.all()} | {row[0] for row in follow_result.all()}
+    )
 
     items: list[dict] = []
 

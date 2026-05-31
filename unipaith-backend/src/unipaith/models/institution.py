@@ -40,6 +40,7 @@ class Institution(Base):
     campus_description: Mapped[str | None] = mapped_column(Text)
     campus_setting: Mapped[str | None] = mapped_column(String(30))
     student_body_size: Mapped[int | None] = mapped_column(Integer)
+    founded_year: Mapped[int | None] = mapped_column(Integer)
     contact_email: Mapped[str | None] = mapped_column(String(255))
     logo_url: Mapped[str | None] = mapped_column(String(2000))
     website_url: Mapped[str | None] = mapped_column(String(1000))

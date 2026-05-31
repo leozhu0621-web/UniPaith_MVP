@@ -21,6 +21,7 @@ from unipaith.models.institution import (
     Institution,
     Program,
     Reviewer,
+    School,
     TargetSegment,
 )
 from unipaith.models.student import (
@@ -235,84 +236,188 @@ async def seed(db: AsyncSession) -> None:
     print("  Created academics, test scores, activities, preferences, onboarding")
 
     # ---- Institutions ----
+    # Structured fields (campus_setting, founded_year, support_services, policies,
+    # international_info, school_outcomes) populate the Spec-12 School Detail page
+    # Overview + About tabs with real editorial content.
     institutions = [
         Institution(admin_user_id=admin_users[0].id, name="Massachusetts Institute of Technology", type="university",
                     country="United States", region="Northeast", city="Cambridge",
-                    ranking_data={"qs": 1, "times_he": 5, "us_news": 2},
+                    campus_setting="urban", student_body_size=11858, founded_year=1861,
+                    contact_email="admissions@mit.edu",
+                    ranking_data={"qs": 1, "times_he": 5, "us_news": 2,
+                                  "ownership_type": "private_nonprofit", "accreditor": "NECHE",
+                                  "median_earnings": 124200, "graduation_rate": 0.96, "retention_rate": 0.99,
+                                  "carnegie_classification": "Doctoral Universities: Very High Research Activity"},
                     description_text="MIT is a world-renowned research university known for innovation in science, engineering, and technology.",
+                    campus_description="An urban campus along the Charles River in Cambridge, steps from Boston. Dense, walkable, and built around maker spaces, research labs, and a culture of hands-on problem solving.",
+                    support_services={
+                        "tutoring": {"name": "Tutoring & academic support", "url": "https://uaap.mit.edu"},
+                        "career": {"name": "Career Advising & Professional Development", "url": "https://capd.mit.edu"},
+                        "counseling": {"name": "Student Mental Health & Counseling"},
+                        "disability": {"name": "Disability & Access Services"},
+                    },
+                    policies={
+                        "transfer_credit": {"summary": "Transfer credit evaluated by department; AP and prior college coursework considered."},
+                        "test_optional": {"summary": "Standardized tests required for first-year applicants."},
+                    },
+                    international_info={
+                        "supported_visas": ["F-1", "J-1"],
+                        "english_proficiency": {"summary": "TOEFL or IELTS required for non-native English speakers; minimum TOEFL iBT 100."},
+                        "international_student_count": 3900,
+                    },
+                    school_outcomes={
+                        "employed_or_continuing_ed": 0.94, "graduation_rate_6yr": 0.96,
+                        "top_employer_industries": ["Technology", "Finance", "Consulting", "Research"]},
                     website_url="https://www.mit.edu", is_verified=True),
         Institution(admin_user_id=admin_users[1].id, name="University of Illinois Urbana-Champaign", type="university",
                     country="United States", region="Midwest", city="Champaign",
-                    ranking_data={"qs": 64, "times_he": 48, "us_news": 35},
+                    campus_setting="suburban", student_body_size=56607, founded_year=1867,
+                    contact_email="admissions@illinois.edu",
+                    ranking_data={"qs": 64, "times_he": 48, "us_news": 35,
+                                  "ownership_type": "public", "accreditor": "HLC",
+                                  "median_earnings": 78600, "graduation_rate": 0.85, "retention_rate": 0.93},
                     description_text="UIUC is a leading public research university with world-class engineering and computer science programs.",
+                    campus_description="A classic Big Ten college town spanning the twin cities of Urbana and Champaign — large, green, and self-contained, with a quad at its heart.",
+                    support_services={
+                        "tutoring": {"name": "Academic Resources & Tutoring"},
+                        "career": {"name": "The Career Center", "url": "https://careercenter.illinois.edu"},
+                        "counseling": {"name": "Counseling Center"},
+                        "financial_literacy": {"name": "Student Money Management Center"},
+                    },
+                    policies={
+                        "transfer_credit": {"summary": "Generous transfer credit for accredited coursework and approved AP/IB scores."},
+                        "test_optional": {"summary": "Test-optional for most first-year applicants."},
+                    },
+                    international_info={
+                        "supported_visas": ["F-1", "J-1"],
+                        "english_proficiency": {"summary": "TOEFL iBT 79+ or IELTS 6.5+ for graduate admission."},
+                        "international_student_count": 10800,
+                    },
+                    school_outcomes={
+                        "employed_or_continuing_ed": 0.91, "graduation_rate_6yr": 0.85,
+                        "top_employer_industries": ["Engineering", "Technology", "Agriculture", "Finance"]},
                     website_url="https://www.illinois.edu", is_verified=True),
         Institution(admin_user_id=admin_users[2].id, name="Northeastern University", type="university",
                     country="United States", region="Northeast", city="Boston",
-                    ranking_data={"qs": 375, "times_he": 201, "us_news": 53},
+                    campus_setting="urban", student_body_size=30013, founded_year=1898,
+                    contact_email="admissions@northeastern.edu",
+                    ranking_data={"qs": 375, "times_he": 201, "us_news": 53,
+                                  "ownership_type": "private_nonprofit", "accreditor": "NECHE",
+                                  "median_earnings": 84300, "graduation_rate": 0.89, "retention_rate": 0.97},
                     description_text="Northeastern is known for its co-op program, integrating professional experience with academic study.",
+                    campus_description="An urban campus in Boston's Fenway neighborhood, built around experiential learning and a signature co-op program that places students with employers worldwide.",
+                    support_services={
+                        "tutoring": {"name": "Peer Tutoring & Writing Center"},
+                        "career": {"name": "Co-op & Career Design", "url": "https://careers.northeastern.edu"},
+                        "counseling": {"name": "University Health & Counseling Services"},
+                        "disability": {"name": "Disability Resource Center"},
+                    },
+                    policies={
+                        "transfer_credit": {"summary": "Transfer credit and co-op experience recognized toward degree progress."},
+                        "test_optional": {"summary": "Test-optional admissions policy."},
+                    },
+                    international_info={
+                        "supported_visas": ["F-1", "J-1"],
+                        "english_proficiency": {"summary": "TOEFL iBT 92+ or IELTS 6.5+; conditional pathways available."},
+                        "international_student_count": 9400,
+                        "scholarship_eligibility": "International students are considered for merit scholarships at the time of admission.",
+                    },
+                    school_outcomes={
+                        "employed_or_continuing_ed": 0.93, "graduation_rate_6yr": 0.89,
+                        "top_employer_industries": ["Technology", "Healthcare", "Finance", "Consulting"]},
                     website_url="https://www.northeastern.edu", is_verified=True),
     ]
     db.add_all(institutions)
     await db.flush()
     print(f"  Created {len(institutions)} institutions")
 
-    # ---- Programs ----
-    programs = [
+    # ---- Schools (within-institution units) ----
+    # Gives the Spec-12 Schools tab (the default tab) real content to drill into.
+    schools = [
         # MIT
-        Program(institution_id=institutions[0].id, program_name="MS in Data Science", degree_type="masters",
-                department="Institute for Data, Systems, and Society", duration_months=12, tuition=58000,
+        School(institution_id=institutions[0].id, name="Schwarzman College of Computing",
+               description_text="MIT's hub for computer science, artificial intelligence, and data systems, connecting computing with every discipline.",
+               sort_order=1),
+        School(institution_id=institutions[0].id, name="Sloan School of Management",
+               description_text="MIT's business school, pairing analytical rigor with entrepreneurship and innovation.",
+               sort_order=2),
+        # UIUC
+        School(institution_id=institutions[1].id, name="Grainger College of Engineering",
+               description_text="One of the top engineering colleges in the U.S., home to nationally ranked computer science and bioengineering programs.",
+               sort_order=1),
+        # Northeastern
+        School(institution_id=institutions[2].id, name="Khoury College of Computer Sciences",
+               description_text="The first college of computer science in the U.S., known for its co-op-integrated graduate programs.",
+               sort_order=1),
+        School(institution_id=institutions[2].id, name="School of Public Policy and Urban Affairs",
+               description_text="Policy education grounded in experiential learning across government, nonprofits, and industry.",
+               sort_order=2),
+    ]
+    db.add_all(schools)
+    await db.flush()
+    print(f"  Created {len(schools)} schools")
+
+    # ---- Programs ----
+    # school_id links each program to its within-institution School so the
+    # Spec-12 Schools tab and school sub-page render the right program lists.
+    programs = [
+        # MIT — Schwarzman College of Computing
+        Program(institution_id=institutions[0].id, school_id=schools[0].id, program_name="MS in Data Science", degree_type="masters",
+                department="Institute for Data, Systems, and Society", duration_months=12, tuition=58000, delivery_format="in_person",
                 acceptance_rate=Decimal("0.0800"), is_published=True, application_deadline=date(2026, 12, 15),
                 description_text="Interdisciplinary program combining statistics, machine learning, and domain expertise.",
                 who_its_for="Looking for strong quantitative backgrounds with research experience.",
                 highlights=["Top-ranked data science program", "Access to MIT research labs", "Strong industry connections"],
                 requirements={"min_gpa": 3.5, "gre_required": True, "toefl_min": 100}),
-        Program(institution_id=institutions[0].id, program_name="PhD in Computer Science", degree_type="phd",
-                department="CSAIL", duration_months=60, tuition=0,
+        Program(institution_id=institutions[0].id, school_id=schools[0].id, program_name="PhD in Computer Science", degree_type="phd",
+                department="CSAIL", duration_months=60, tuition=0, delivery_format="in_person",
                 acceptance_rate=Decimal("0.0500"), is_published=True, application_deadline=date(2026, 12, 1),
                 description_text="Fully funded PhD in one of the world's top computer science research labs.",
                 who_its_for="Seeking exceptional researchers in AI, systems, and theory.",
                 highlights=["Full funding", "World-leading AI research", "Small cohort"],
                 requirements={"min_gpa": 3.7, "gre_required": False, "publications_preferred": True}),
-        Program(institution_id=institutions[0].id, program_name="MBA", degree_type="masters",
-                department="Sloan School of Management", duration_months=24, tuition=82000,
+        # MIT — Sloan School of Management
+        Program(institution_id=institutions[0].id, school_id=schools[1].id, program_name="MBA", degree_type="masters",
+                department="Sloan School of Management", duration_months=24, tuition=82000, delivery_format="in_person",
                 acceptance_rate=Decimal("0.1200"), is_published=True, application_deadline=date(2027, 1, 15),
                 description_text="MIT Sloan MBA combines analytical rigor with entrepreneurial action.",
                 highlights=["Innovation-focused", "Strong tech network", "Action learning"],
                 requirements={"gmat_min": 700, "work_experience_years": 2}),
-        # UIUC
-        Program(institution_id=institutions[1].id, program_name="MS in Computer Science", degree_type="masters",
-                department="Department of Computer Science", duration_months=24, tuition=38000,
+        # UIUC — Grainger College of Engineering
+        Program(institution_id=institutions[1].id, school_id=schools[2].id, program_name="MS in Computer Science", degree_type="masters",
+                department="Department of Computer Science", duration_months=24, tuition=38000, delivery_format="in_person",
                 acceptance_rate=Decimal("0.1500"), is_published=True, application_deadline=date(2026, 12, 15),
                 description_text="Flexible MS program with options for thesis or coursework.",
                 highlights=["Top-5 CS department", "Research opportunities", "Affordable tuition"],
                 requirements={"min_gpa": 3.2, "gre_required": True, "toefl_min": 96}),
-        Program(institution_id=institutions[1].id, program_name="MS in Data Science", degree_type="masters",
-                department="Department of Statistics", duration_months=18, tuition=32000,
+        Program(institution_id=institutions[1].id, school_id=schools[2].id, program_name="MS in Data Science", degree_type="masters",
+                department="Department of Statistics", duration_months=18, tuition=32000, delivery_format="hybrid",
                 acceptance_rate=Decimal("0.2000"), is_published=True, application_deadline=date(2027, 1, 15),
                 description_text="Applied data science program with industry partnerships.",
                 highlights=["Industry capstone projects", "Growing alumni network", "Competitive tuition"],
                 requirements={"min_gpa": 3.0, "gre_required": False}),
-        Program(institution_id=institutions[1].id, program_name="PhD in Bioengineering", degree_type="phd",
-                department="Department of Bioengineering", duration_months=60, tuition=0,
+        Program(institution_id=institutions[1].id, school_id=schools[2].id, program_name="PhD in Bioengineering", degree_type="phd",
+                department="Department of Bioengineering", duration_months=60, tuition=0, delivery_format="in_person",
                 acceptance_rate=Decimal("0.1000"), is_published=True, application_deadline=date(2026, 12, 1),
                 description_text="Interdisciplinary PhD at the intersection of biology and engineering.",
                 highlights=["Full funding", "State-of-the-art facilities", "Collaborative culture"],
                 requirements={"min_gpa": 3.5, "gre_required": True, "research_required": True}),
-        # Northeastern
-        Program(institution_id=institutions[2].id, program_name="MS in Data Science (Co-op)", degree_type="masters",
-                department="Khoury College of Computer Sciences", duration_months=24, tuition=55000,
+        # Northeastern — Khoury College of Computer Sciences
+        Program(institution_id=institutions[2].id, school_id=schools[3].id, program_name="MS in Data Science (Co-op)", degree_type="masters",
+                department="Khoury College of Computer Sciences", duration_months=24, tuition=55000, delivery_format="in_person",
                 acceptance_rate=Decimal("0.2500"), is_published=True, application_deadline=date(2027, 2, 1),
                 description_text="Data science MS with integrated co-op work experience at top companies.",
                 highlights=["6-month co-op included", "Boston location", "Industry-ready curriculum"],
                 requirements={"min_gpa": 3.0, "toefl_min": 90}),
-        Program(institution_id=institutions[2].id, program_name="MS in Computer Science (Co-op)", degree_type="masters",
-                department="Khoury College of Computer Sciences", duration_months=24, tuition=55000,
+        Program(institution_id=institutions[2].id, school_id=schools[3].id, program_name="MS in Computer Science (Co-op)", degree_type="masters",
+                department="Khoury College of Computer Sciences", duration_months=24, tuition=55000, delivery_format="in_person",
                 acceptance_rate=Decimal("0.2200"), is_published=True, application_deadline=date(2027, 2, 1),
                 description_text="CS masters with co-op giving real industry experience.",
                 highlights=["Co-op at Amazon, Google, Microsoft", "Flexible specializations"],
                 requirements={"min_gpa": 3.0, "toefl_min": 90}),
-        Program(institution_id=institutions[2].id, program_name="MS in Public Policy", degree_type="masters",
-                department="School of Public Policy and Urban Affairs", duration_months=24, tuition=48000,
+        # Northeastern — School of Public Policy and Urban Affairs
+        Program(institution_id=institutions[2].id, school_id=schools[4].id, program_name="MS in Public Policy", degree_type="masters",
+                department="School of Public Policy and Urban Affairs", duration_months=24, tuition=48000, delivery_format="hybrid",
                 acceptance_rate=Decimal("0.3500"), is_published=True, application_deadline=date(2027, 3, 1),
                 description_text="Policy program with experiential learning in government and nonprofits.",
                 highlights=["DC semester option", "Policy co-op", "Diverse cohort"],
