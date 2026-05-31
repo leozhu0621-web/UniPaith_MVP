@@ -1,0 +1,30 @@
+
+##### 45-ai-agents-claude.md (537 lines) #####
+  H2/H3: ## 1. Common agent contract | ## 2. DiscoveryOrchestrator | ## 3. DiscoveryExtractor | ## 4. DiscoveryValidator | ## 5. DiscoveryJudge | ## 6. MatchRationaleAgent (A5) | ## 7. WorkshopCoach (Essay variant) | ## 8. WorkshopCoach (Interview variant) | ## 9. WorkshopCoach (Test variant) | ## 10. StrategyAgent (A6) | ## 11. IdentitySummaryAgent | ## 12. DiscoveryQueryInterpreter (NEW) | ## 13. InboxReplyDrafter (NEW) | ## 14. DraftSummarizerForReview (NEW, Opus) | ## 15. OutcomeBriefForOfferLetter (NEW) | ## 16. CampaignAudienceCopySuggester (NEW) | ## 17. SegmentBuilderNLBridge (NEW) | ## 18. AuthenticityRiskScorer (NEW, Haiku) | ## 19. DocumentParseTriage (NEW, Haiku) | ## 20. Agent registry / config table | ## 21. Prompt versioning | ## 22. Output schema validation | ## 23. Tool use vs JSON mode | ## 24. Cache breakpoints — concrete mapping | ## 25. Streaming | ## 26. Fallback decision fl
+  [persona @2] > The full agent inventory: existing + planned, with per-agent system prompts, persona blocks, tool schemas, cache strategy, fallback behavi
+  [tone @266] **Output:** `{summary: str (3-5 sentences), tone: enum}`.
+  [behavior @0] # 45 · AI Agents — Per-Agent Prompts & Behavior
+  [guardrail @524] Guardrail trip (e.g., Workshop tries to generate)?
+  [fallback @2] > The full agent inventory: existing + planned, with per-agent system prompts, persona blocks, tool schemas, cache strategy, fallback behavi
+  [system prompt @2] > The full agent inventory: existing + planned, with per-agent system prompts, persona blocks, tool schemas, cache strategy, fallback behavi
+  [institution @323] **Purpose:** Per-application packet summary for institution reviewers.
+
+##### 46-data-rights-privacy.md (296 lines) #####
+  H2/H3: ## 1. Brand commitments (verbatim from Landing_MVP — these are contractual) | ## 2. Consent — the 4 levers | ## 3. The "we don't sell raw student data — ever" stance | ## 4. Regulatory regimes | ## 5. Data retention | ## 6. Fairness — the auto-halt commitment (verbatim from Landing_MVP) | ### 6.1 Definitions | ### 6.2 Auto-halt mechanism | ### 6.3 Override workflow | ### 6.4 Dashboard surface | ### 6.5 Data model | ### 6.6 Test (G-T3) | ## 7. The audit ledger as compliance backbone | ## 8. Student rights — what they can do | ## 9. Institution rights — what they can configure | ## 10. Sub-processor list | ## 11. Disclosure UX — privacy nudges | ## 12. Compliance checklist (cross-cutting) | ## 13. Open questions / known gaps
+  [fairness @0] # 46 · Data Rights, Privacy, and Fairness Governance
+  [escalat @15] 4. **Bias-avoidance is a practice.** "It's not a checkbox. Every cohort is audited; flags escalate to humans; decisions are never fully auto
+  [human @15] 4. **Bias-avoidance is a practice.** "It's not a checkbox. Every cohort is audited; flags escalate to humans; decisions are never fully auto
+
+##### 19-discovery-stage-conversation.md (231 lines) #####
+  H2/H3: ## 1. Purpose | ## 2. Three tracks | ### 2.1 Profile track | ### 2.2 Goals track | ### 2.3 Needs track | ## 3. Visual layout | ## 4. Per-track flow | ### 4.1 Profile track flow | ### 4.2 Goals track flow | ### 4.3 Needs track flow | ## 5. Chat semantics | ## 6. Artifact rail | ## 7. Handoff to Stage 2 | ## 8. Data shape | ## 9. States | ## 10. AI integration | ## 11. Brand compliance | ## 12. Gaps (from `47`) | ## 13. Tests | ## 14. Copy | ## 15. Open questions
+  [persona @2] > Stage 1 — Discovery. The chat-first onboarding-and-beyond surface at `/s` (the student app's home). Three tracks (Profile / Goals / Needs)
+31-review-workspace.md MISSING
+
+##### 37-ai-extensibility.md (116 lines) #####
+  H2/H3: ## 1. The principle (verbatim from Master Paper) | ## 2. Where AI plugs in | ### 2.1 Drafts | ### 2.2 Operational suggestions | ### 2.3 Integrity / triage | ## 3. Capture of human ↔ AI edit diff | ## 4. AI assistant chat per applicant | ## 5. Configuration | ## 6. Brand compliance (cross-cutting) | ## 7. Gaps (from `47`) | ## 8. Tests | ## 9. Open questions
+  [assistant @60] ## 4. AI assistant chat per applicant
+  [chat @60] ## 4. AI assistant chat per applicant
+
+##### advisor_personas (real) #####
+  name, is_active, warmth, directness, formality, challenge_level, data_reference_frequency, humor, proactivity, empathy_depth, custom_instructions, base_persona_prompt
+ml_loop tables: outcome_records, evaluation_runs, training_runs, ab_test_assignments, drift_snapshots, fairness_reports
