@@ -53,6 +53,7 @@ function loadPriorities(): Record<string, Priority> {
 }
 
 export default function SavedListPage() {
+  usePageTitle('Saved')
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
@@ -271,8 +272,6 @@ export default function SavedListPage() {
       </Card>
     )
   }
-
-  usePageTitle('Saved')
 
   return (
     <div className="p-6 max-w-3xl mx-auto">

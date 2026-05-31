@@ -4,6 +4,7 @@ import { useAuthStore } from '../../stores/auth-store'
 import { getNotificationPrefs, updateNotificationPrefs } from '../../api/notifications'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
+import BillingSection from '../../components/billing/BillingSection'
 import { showToast } from '../../stores/toast-store'
 import { useState, useEffect } from 'react'
 import { formatDate } from '../../utils/format'
@@ -58,6 +59,9 @@ export default function SettingsPage() {
           <Row label="Member since" value={formatDate(user?.created_at)} />
         </dl>
       </Card>
+
+      {/* Plan & billing — Spec 07 (Product Context §4) */}
+      <BillingSection />
 
       {/* Notifications */}
       <Card className="p-5">
