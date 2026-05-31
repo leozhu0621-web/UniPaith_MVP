@@ -289,9 +289,74 @@ export interface OnboardingStatus {
 }
 
 // ============ PROGRAMS ============
+// --- Spec 23 §3 — typed structured blobs the program editor writes ---
+
+export type TestStance = 'required' | 'recommended' | 'test_optional' | 'test_blind'
+
+export interface ProgramRequirementItem {
+  name: string
+  required: boolean
+  note?: string
+}
+
+export interface ProgramApplicationRequirements {
+  materials: ProgramRequirementItem[]
+  prerequisites: { name: string; required: boolean; allowed_substitutes: string[] }[]
+  test_policy: {
+    stance: TestStance
+    required: string[]
+    optional: string[]
+    accepted_tests: string[]
+    superscore_enabled: boolean
+    waived_rules: string
+    typical_ranges: { test: string; low: number; high: number }[]
+  }
+  recommendations: { required_count: number; types: ('academic' | 'professional' | 'other')[] }
+}
+
+// Spec 23 §3 — one intake round (camel of the IntakeRound shape used by the editor).
+export interface IntakeRoundForm {
+  id: string
+  name: string
+  term: { season: string; year: number }
+  open_date: string | null
+  deadline: string | null
+  decision_date: string | null
+  start_date: string | null
+  capacity: number | null
+}
+
+export interface ProgramCostData {
+  tuition_amount: number | null
+  tuition_currency: string
+  tuition_period: 'per_year' | 'per_credit' | 'total_program'
+  fees: { name: string; amount: number; required: boolean }[]
+  estimated_total_cost_band: { min: number | null; max: number | null; currency: string }
+  funding_signals: {
+    ta_funded: boolean
+    ra_funded: boolean
+    merit_scholarship_available: boolean
+    need_based_available: boolean
+  }
+  [key: string]: any // back-compat: legacy seeds carry extra keys (tuition_annual, source, …)
+}
+
+export interface ProgramOutcomesData {
+  placement_rate_pct: number | null
+  median_starting_salary: number | null
+  salary_distribution_bands: { band_label: string; percent: number }[]
+  common_roles: string[]
+  top_employers: string[]
+  internship_to_offer_pct: number | null
+  time_to_placement_months: number | null
+  outcome_reporting_window: string
+  [key: string]: any // back-compat: legacy seeds carry median_salary, employment_rate, …
+}
+
 export interface Program {
   id: string
   institution_id: string
+  school_id?: string | null
   program_name: string
   degree_type: 'bachelors' | 'masters' | 'phd' | 'certificate' | 'diploma'
   department: string | null
@@ -301,19 +366,25 @@ export interface Program {
   delivery_format: 'in_person' | 'online' | 'hybrid' | null
   campus_setting: 'urban' | 'suburban' | 'rural' | null
   requirements: Record<string, any> | null
-  application_requirements: Record<string, any>[] | null
+  application_requirements: ProgramApplicationRequirements | Record<string, any>[] | null
   description_text: string | null
   who_its_for: string | null
   is_published: boolean
+  // Spec 23 §5 — derived status + optimistic-lock version, surfaced by the API.
+  status?: 'draft' | 'published'
+  version?: number
+  feature_version?: number
+  applications_count?: number
   application_deadline: string | null
   program_start_date: string | null
-  tracks: string[] | null
-  outcomes_data: Record<string, any> | null
-  intake_rounds: Record<string, any>[] | null
+  tracks: string[] | Record<string, any> | null
+  outcomes_data: ProgramOutcomesData | Record<string, any> | null
+  intake_rounds: IntakeRoundForm[] | Record<string, any>[] | Record<string, any> | null
   media_urls: string[] | null
   highlights: string[] | null
   faculty_contacts: Record<string, any>[] | null
-  cost_data: Record<string, any> | null
+  cost_data: ProgramCostData | Record<string, any> | null
+  promotion_categories?: string[] | null
   institution_name?: string | null
   created_at: string
   updated_at: string
