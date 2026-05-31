@@ -41,6 +41,7 @@ const profileSchema = z.object({
   campus_description: z.string().optional(),
   campus_setting: z.string().optional(),
   student_body_size: z.coerce.number().int().nonnegative().optional(),
+  founded_year: z.coerce.number().int().nonnegative().optional(),
   media_gallery_text: z.string().optional(), // newline-separated list of S3 URLs
 })
 type ProfileForm = z.infer<typeof profileSchema>
@@ -142,6 +143,7 @@ export default function SettingsPage() {
         campus_description: inst.campus_description ?? '',
         campus_setting: inst.campus_setting ?? '',
         student_body_size: inst.student_body_size ?? undefined,
+        founded_year: inst.founded_year ?? undefined,
         media_gallery_text: Array.isArray(inst.media_gallery)
           ? inst.media_gallery.join('\n')
           : '',
@@ -204,6 +206,7 @@ export default function SettingsPage() {
       campus_description: data.campus_description || undefined,
       campus_setting: (data.campus_setting as 'urban' | 'suburban' | 'rural' | '') || undefined,
       student_body_size: data.student_body_size || undefined,
+      founded_year: data.founded_year || undefined,
       media_gallery: mediaGallery.length ? mediaGallery : undefined,
       social_links: parsed.social_links as any,
       inquiry_routing: parsed.inquiry_routing as any,
@@ -310,9 +313,10 @@ export default function SettingsPage() {
                 <h3 className="text-sm font-semibold text-gray-700">Description & Campus</h3>
                 <Textarea label="Short description" {...profileForm.register('description_text')} rows={3} />
                 <Textarea label="Campus description" {...profileForm.register('campus_description')} rows={3} placeholder="How the campus looks and feels, where it's located..." />
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <Select label="Campus setting" options={CAMPUS_SETTING_OPTIONS} {...profileForm.register('campus_setting')} />
                   <Input label="Student body size" type="number" {...profileForm.register('student_body_size')} />
+                  <Input label="Founded year" type="number" placeholder="e.g. 1831" {...profileForm.register('founded_year')} error={profileForm.formState.errors.founded_year?.message} />
                 </div>
               </div>
 
