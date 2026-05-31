@@ -121,6 +121,14 @@ class StudentCompareItem(Base):
 
 
 class StudentCalendar(Base):
+    """Spec 16 — student-CREATED calendar entries (reminders + work blocks).
+
+    Admissions items (deadlines, interviews, events, offers) are NOT stored
+    here; they are aggregated live from their source tables by
+    ``CalendarService``. This table owns only the items the student adds
+    themselves, plus the fields Spec 16 §6 requires on a ``CalendarItem``.
+    """
+
     __tablename__ = "student_calendar"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -130,6 +138,7 @@ class StudentCalendar(Base):
         nullable=False,
         index=True,
     )
+    # 'reminder' | 'work_block' (Spec 16 §4 student-created types).
     entry_type: Mapped[str | None] = mapped_column(String(20))
     reference_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     title: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -137,8 +146,49 @@ class StudentCalendar(Base):
     start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     reminder_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Spec 16 §6 CalendarItem fields ---------------------------------------
+    status: Mapped[str] = mapped_column(String(20), default="scheduled", nullable=False)
+    category: Mapped[str | None] = mapped_column(String(30))
+    location: Mapped[str | None] = mapped_column(String(500))
+    meeting_link: Mapped[str | None] = mapped_column(String(1000))
+    application_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("applications.id", ondelete="SET NULL")
+    )
+    reminder_settings: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class CalendarItemState(Base):
+    """Spec 16 §5 — per-student overlay on a DERIVED calendar item.
+
+    Lets a student mark a deadline complete, add notes, or attach an
+    off-platform confirmation without mutating the source domain table
+    (application / interview / offer / event). Keyed by the calendar item's
+    stable composite id, e.g. ``submission_deadline:<application_id>``.
+    """
+
+    __tablename__ = "calendar_item_states"
+    __table_args__ = (UniqueConstraint("student_id", "item_key", name="uq_calendar_state_item"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    item_key: Mapped[str] = mapped_column(String(120), nullable=False)
+    status: Mapped[str | None] = mapped_column(String(20))
+    notes: Mapped[str | None] = mapped_column(Text)
+    confirmation_url: Mapped[str | None] = mapped_column(String(1000))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
 

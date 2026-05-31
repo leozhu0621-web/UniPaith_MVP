@@ -1,8 +1,19 @@
 import { useState, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useDeadlines } from '../../hooks/useDeadlines'
-import { confirmInterview } from '../../api/interviews'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval,
+  format, addMonths, subMonths, addWeeks, subWeeks, isSameDay, isToday, parseISO,
+} from 'date-fns'
+import {
+  ChevronLeft, ChevronRight, Clock, FileText, Mic, Video,
+  AlertTriangle, Plus, MapPin, Check, RotateCcw, Bell, Users, Wallet,
+  Palette, Mail, ExternalLink, X as XIcon, CalendarClock,
+} from 'lucide-react'
+import {
+  getCalendar, createReminder, createWorkBlock, patchCalendarItem,
+  type CalendarItem, type CalendarItemType,
+} from '../../api/calendar'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -11,376 +22,600 @@ import Input from '../../components/ui/Input'
 import Select from '../../components/ui/Select'
 import EmptyState from '../../components/ui/EmptyState'
 import { SkeletonCard } from '../../components/ui/Skeleton'
-import { formatDate, formatDateTime } from '../../utils/format'
-import {
-  startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval,
-  format, addMonths, subMonths, addWeeks, subWeeks,
-  isSameDay, isToday, differenceInDays,
-} from 'date-fns'
-import {
-  ChevronLeft, ChevronRight, Clock, FileText, CalendarDays, Mic,
-  AlertTriangle, Plus, Video, Phone, MapPin, Check, X as XIcon,
-} from 'lucide-react'
 
 type ViewMode = 'month' | 'week' | 'agenda'
-type ItemType = 'all' | 'event' | 'application' | 'interview' | 'work_block'
+type TypeBucket = 'all' | 'interviews' | 'deadlines' | 'events' | 'reminders' | 'work_blocks'
+type DotColor = 'cobalt' | 'warning' | 'error' | 'slate'
 
-interface CalendarItem {
-  date: Date
-  label: string
-  sublabel?: string
-  type: string
-  link: string
-  meta?: any
+// Spec 16 §4 + §9 — type → label / brand color / icon / filter bucket.
+// Colors: cobalt (live interview, visits, info), warning (recorded/portfolio/
+// audition windows), error (all deadlines), slate=text-mut (student-created).
+// No gold on calendar items (§9: gold is the brand mark, not for time).
+const TYPE_META: Record<CalendarItemType, { label: string; color: DotColor; icon: typeof Clock; bucket: TypeBucket }> = {
+  interview_live: { label: 'Live interview', color: 'cobalt', icon: Video, bucket: 'interviews' },
+  interview_recorded_window: { label: 'Recorded interview window', color: 'warning', icon: Mic, bucket: 'interviews' },
+  interview_submission_deadline: { label: 'Interview submission due', color: 'warning', icon: Mic, bucket: 'interviews' },
+  portfolio_review: { label: 'Portfolio review', color: 'warning', icon: Palette, bucket: 'interviews' },
+  audition: { label: 'Audition', color: 'warning', icon: Mic, bucket: 'interviews' },
+  campus_visit: { label: 'Campus visit', color: 'cobalt', icon: MapPin, bucket: 'events' },
+  info_session: { label: 'Info session', color: 'cobalt', icon: Users, bucket: 'events' },
+  submission_deadline: { label: 'Submission deadline', color: 'error', icon: FileText, bucket: 'deadlines' },
+  document_deadline: { label: 'Document deadline', color: 'error', icon: FileText, bucket: 'deadlines' },
+  recommendation_deadline: { label: 'Recommendation deadline', color: 'error', icon: Mail, bucket: 'deadlines' },
+  deposit_deadline: { label: 'Deposit deadline', color: 'error', icon: Wallet, bucket: 'deadlines' },
+  reminder: { label: 'Reminder', color: 'slate', icon: Bell, bucket: 'reminders' },
+  work_block: { label: 'Work block', color: 'slate', icon: Clock, bucket: 'work_blocks' },
 }
 
-interface WorkBlock {
-  id: string
-  title: string
-  date: Date
-  duration_minutes: number
-  linked_app_id?: string
-  category: 'essay_draft' | 'interview_prep' | 'general' | 'research'
+const DOT_BG: Record<DotColor, string> = {
+  cobalt: 'bg-cobalt', warning: 'bg-warning', error: 'bg-error', slate: 'bg-slate',
+}
+const ICON_TEXT: Record<DotColor, string> = {
+  cobalt: 'text-cobalt', warning: 'text-warning', error: 'text-error', slate: 'text-slate',
+}
+const ICON_SOFT_BG: Record<DotColor, string> = {
+  cobalt: 'bg-cobalt/10', warning: 'bg-warning-soft', error: 'bg-error-soft', slate: 'bg-divider',
 }
 
-const TYPE_OPTIONS: { value: ItemType; label: string }[] = [
-  { value: 'all', label: 'All Types' },
-  { value: 'event', label: 'Events' },
-  { value: 'application', label: 'Deadlines' },
-  { value: 'interview', label: 'Interviews' },
-  { value: 'work_block', label: 'Work Blocks' },
+const TYPE_BUCKETS: { value: TypeBucket; label: string }[] = [
+  { value: 'all', label: 'All item types' },
+  { value: 'interviews', label: 'Interviews' },
+  { value: 'deadlines', label: 'Deadlines' },
+  { value: 'events', label: 'Events' },
+  { value: 'reminders', label: 'Reminders' },
+  { value: 'work_blocks', label: 'Work blocks' },
 ]
 
 const WORK_CATEGORIES = [
-  { value: 'essay_draft', label: 'Essay Drafting' },
-  { value: 'interview_prep', label: 'Interview Prep' },
-  { value: 'research', label: 'Program Research' },
-  { value: 'general', label: 'General Prep' },
+  { value: 'essay_draft', label: 'Essay drafting' },
+  { value: 'interview_prep', label: 'Interview prep' },
+  { value: 'research', label: 'Program research' },
+  { value: 'general', label: 'General prep' },
 ]
+
+const isOverdue = (i: CalendarItem) => i.status === 'overdue'
+const isDone = (i: CalendarItem) => i.status === 'completed' || i.status === 'cancelled'
+// A deadline-like item the student can mark complete (Spec 16 §5).
+const completable = (i: CalendarItem) =>
+  ['submission_deadline', 'document_deadline', 'recommendation_deadline',
+   'interview_submission_deadline', 'deposit_deadline', 'reminder', 'work_block'].includes(i.type)
+
+// datetime-local <-> ISO (UTC). Spec 16 §13: store UTC, render local.
+const toISO = (local: string) => (local ? new Date(local).toISOString() : '')
 
 export default function CalendarPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
-  // Spec/02b §5: default to the agenda/list view on mobile (the month grid is
-  // unusable small); desktop keeps month. An explicit ?view= always wins.
+
   const viewParam = searchParams.get('view') as ViewMode | null
   const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches
-  const initialView: ViewMode = viewParam ?? (isMobile ? 'agenda' : 'month')
-  const [view, setView] = useState<ViewMode>(initialView)
+  const [view, setView] = useState<ViewMode>(viewParam ?? (isMobile ? 'agenda' : 'month'))
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [currentWeek, setCurrentWeek] = useState(new Date())
-  const [typeFilter, setTypeFilter] = useState<ItemType>('all')
-  const [showWorkBlockModal, setShowWorkBlockModal] = useState(false)
-  const [workBlocks, setWorkBlocks] = useState<WorkBlock[]>([])
-  const [wbForm, setWbForm] = useState({ title: '', date: '', duration: '60', category: 'general' })
-  const { deadlines, isLoading, interviews } = useDeadlines()
-  const interviewList: any[] = Array.isArray(interviews) ? interviews : []
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null)
+  const [appFilter, setAppFilter] = useState<string>('all')
+  const [typeFilter, setTypeFilter] = useState<TypeBucket>('all')
+  const [showReminder, setShowReminder] = useState(false)
+  const [showWorkBlock, setShowWorkBlock] = useState(false)
+  const [detailItem, setDetailItem] = useState<CalendarItem | null>(null)
 
-  const confirmMut = useMutation({
-    mutationFn: ({ id, time }: { id: string; time: string }) => confirmInterview(id, time),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['my-interviews'] }),
+  // Fetch a wide window once; navigate/filter client-side (smooth, no refetch).
+  const range = useMemo(() => {
+    const from = subMonths(new Date(), 6)
+    const to = addMonths(new Date(), 18)
+    return { from: from.toISOString(), to: to.toISOString() }
+  }, [])
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['calendar', range.from, range.to],
+    queryFn: () => getCalendar(range),
   })
+  const items: CalendarItem[] = useMemo(() => data ?? [], [data])
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['calendar'] })
+
+  const patchMut = useMutation({
+    mutationFn: ({ id, body }: { id: string; body: Parameters<typeof patchCalendarItem>[1] }) =>
+      patchCalendarItem(id, body),
+    onSuccess: updated => {
+      invalidate()
+      setDetailItem(prev => (prev && prev.id === updated.id ? updated : prev))
+    },
+  })
+
+  // Applications present in the timeline → filter options.
+  const appOptions = useMemo(() => {
+    const map = new Map<string, string>()
+    items.forEach(i => {
+      if (i.application_id) map.set(i.application_id, i.institution_name || i.subtitle || 'Application')
+    })
+    return [{ value: 'all', label: 'All applications' },
+      ...Array.from(map, ([value, label]) => ({ value, label }))]
+  }, [items])
 
   const switchView = (v: ViewMode) => {
     setView(v)
-    // Always write ?view= so the choice is deep-linkable and survives reload —
-    // important on mobile where the default is agenda, not month.
+    setSelectedDay(null)
     setSearchParams({ view: v })
   }
 
-  // Build a lookup from interview time to raw interview object for agenda meta
-  const interviewMetaLookup = useMemo(() => {
-    const map = new Map<string, any>()
-    interviewList.forEach(iv => {
-      const time = iv.confirmed_time || iv.proposed_times?.[0]
-      if (time) map.set(time, iv)
-    })
-    return map
-  }, [interviewList])
+  const filtered = useMemo(() => items.filter(i => {
+    if (appFilter !== 'all' && i.application_id !== appFilter) return false
+    if (typeFilter !== 'all' && TYPE_META[i.type].bucket !== typeFilter) return false
+    return true
+  }), [items, appFilter, typeFilter])
 
-  const allItems: CalendarItem[] = useMemo(() => {
-    // deadlines already includes interviews from useDeadlines — enrich with meta
-    const items: CalendarItem[] = deadlines.map(d => {
-      if (d.type === 'interview') {
-        // Find the matching raw interview for confirm/decline actions
-        const meta = interviewMetaLookup.get(d.date.toISOString()) ?? null
-        return { ...d, meta }
-      }
-      return d
-    })
-    workBlocks.forEach(wb => {
-      items.push({
-        date: wb.date,
-        label: wb.title,
-        sublabel: `${wb.duration_minutes} min — ${wb.category.replace(/_/g, ' ')}`,
-        type: 'work_block' as const,
-        link: wb.linked_app_id ? `/s/applications/${wb.linked_app_id}` : '/s/calendar',
-      })
-    })
-    items.sort((a, b) => a.date.getTime() - b.date.getTime())
-    return items
-  }, [deadlines, interviewMetaLookup, workBlocks])
+  const overdueCount = filtered.filter(isOverdue).length
+  const hasActiveFilter = appFilter !== 'all' || typeFilter !== 'all'
+  const clearFilters = () => { setAppFilter('all'); setTypeFilter('all') }
 
-  const filtered = typeFilter === 'all' ? allItems : allItems.filter(i => i.type === typeFilter)
-
-  const typeColor: Record<string, string> = {
-    event: 'bg-blue-400', application: 'bg-red-400',
-    interview: 'bg-purple-400', work_block: 'bg-emerald-400',
-  }
-  const typeConfig: Record<string, { icon: typeof FileText; color: string; bg: string }> = {
-    application: { icon: FileText, color: 'text-blue-600', bg: 'bg-blue-100' },
-    event: { icon: CalendarDays, color: 'text-purple-600', bg: 'bg-purple-100' },
-    interview: { icon: Mic, color: 'text-amber-600', bg: 'bg-amber-100' },
-    work_block: { icon: Clock, color: 'text-emerald-600', bg: 'bg-emerald-100' },
+  // ── Loading ──
+  if (isLoading) {
+    return (
+      <div className="p-6 max-w-6xl mx-auto space-y-4">
+        {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
+      </div>
+    )
   }
 
-  const urgencyBadge = (date: Date) => {
-    const d = differenceInDays(date, new Date())
-    if (d < 0) return <Badge variant="danger">Past</Badge>
-    if (d === 0) return <Badge variant="warning">Today</Badge>
-    if (d <= 7) return <Badge variant="warning">{d}d</Badge>
-    if (d <= 30) return <Badge variant="info">This month</Badge>
-    return <Badge variant="neutral">Upcoming</Badge>
-  }
+  // Month grid scaffold
+  const monthStart = startOfMonth(currentMonth)
+  const days = eachDayOfInterval({ start: monthStart, end: endOfMonth(currentMonth) })
+  const startDow = monthStart.getDay()
+  const padDays = startDow === 0 ? 6 : startDow - 1
 
-  const handleAddWorkBlock = () => {
-    if (!wbForm.title || !wbForm.date) return
-    const wb: WorkBlock = {
-      id: `wb-${Date.now()}`,
-      title: wbForm.title,
-      date: new Date(wbForm.date),
-      duration_minutes: Number(wbForm.duration) || 60,
-      category: wbForm.category as WorkBlock['category'],
-    }
-    setWorkBlocks(prev => [...prev, wb])
-    setShowWorkBlockModal(false)
-    setWbForm({ title: '', date: '', duration: '60', category: 'general' })
-  }
-
-  // Week view data
+  // Week scaffold
   const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 })
   const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 })
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd })
 
-  // Month view data
-  const monthStart = startOfMonth(currentMonth)
-  const monthEnd = endOfMonth(currentMonth)
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd })
-  const startDay = monthStart.getDay()
-  const padDays = startDay === 0 ? 6 : startDay - 1
-
-  // Agenda grouped
-  const grouped = useMemo(() => {
-    const groups: Record<string, CalendarItem[]> = {}
-    filtered.forEach(d => {
-      const key = format(d.date, 'MMMM yyyy')
-      if (!groups[key]) groups[key] = []
-      groups[key].push(d)
-    })
-    return groups
-  }, [filtered])
-
-  if (isLoading) return <div className="p-6 max-w-4xl mx-auto space-y-4">{Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}</div>
+  const itemsOn = (day: Date) => filtered.filter(i => isSameDay(parseISO(i.start_at), day))
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
+    <div className="p-6 max-w-6xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
         <div>
-          <h1 className="text-2xl font-semibold">Calendar</h1>
-          <p className="text-sm text-gray-500 mt-1">{filtered.length} item{filtered.length !== 1 ? 's' : ''}</p>
+          <h1 className="text-h1 text-charcoal">Calendar</h1>
+          <p className="text-sm text-slate mt-1">Your admissions timeline</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="secondary" onClick={() => setShowWorkBlockModal(true)}>
-            <Plus size={14} className="mr-1" /> Work Block
+          <Button size="sm" variant="secondary" onClick={() => setShowReminder(true)}>
+            <Plus size={14} className="mr-1" /> Add reminder
           </Button>
-          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
-            {(['month', 'week', 'agenda'] as ViewMode[]).map(v => (
-              <button
-                key={v}
-                onClick={() => switchView(v)}
-                className={`px-3 py-1.5 text-sm rounded-md transition-colors capitalize ${view === v ? 'bg-white text-stone-700 shadow-sm' : 'text-gray-500 hover:text-stone-600'}`}
-              >
-                {v}
-              </button>
-            ))}
+          <Button size="sm" variant="secondary" onClick={() => setShowWorkBlock(true)}>
+            <Plus size={14} className="mr-1" /> Add work block
+          </Button>
+        </div>
+      </div>
+
+      {/* Controls: view switcher + filters */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div className="inline-flex items-center gap-1 bg-divider rounded-lg p-0.5">
+          {(['month', 'week', 'agenda'] as ViewMode[]).map(v => (
+            <button
+              key={v}
+              onClick={() => switchView(v)}
+              className={`px-3 py-1.5 text-sm rounded-md transition-colors capitalize ${
+                view === v ? 'bg-white text-charcoal shadow-sm font-semibold' : 'text-slate hover:text-charcoal'
+              }`}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-44">
+            <Select value={appFilter} onChange={e => setAppFilter(e.target.value)} options={appOptions} />
+          </div>
+          <div className="w-40">
+            <Select value={typeFilter} onChange={e => setTypeFilter(e.target.value as TypeBucket)} options={TYPE_BUCKETS} />
           </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-2 mb-4">
-        {TYPE_OPTIONS.map(opt => (
-          <button
-            key={opt.value}
-            onClick={() => setTypeFilter(opt.value)}
-            className={`px-3 py-1 text-xs rounded-full transition-colors ${typeFilter === opt.value ? 'bg-stone-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Focus banner */}
-      {filtered.length > 0 && differenceInDays(filtered[0].date, new Date()) >= 0 && differenceInDays(filtered[0].date, new Date()) <= 3 && (
-        <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4">
-          <AlertTriangle size={18} className="text-amber-600 mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="text-sm font-medium text-amber-800">Coming up</p>
-            <p className="text-sm text-amber-700">{filtered[0].label} — {formatDate(filtered[0].date.toISOString())}</p>
-          </div>
+      {/* Overdue banner (Spec 16 §7 — highlight in red across all views) */}
+      {overdueCount > 0 && (
+        <div className="flex items-center gap-2.5 bg-error-soft rounded-lg px-4 py-2.5 mb-4">
+          <AlertTriangle size={16} className="text-error flex-shrink-0" />
+          <p className="text-sm text-error font-medium">
+            {overdueCount} item{overdueCount !== 1 ? 's' : ''} overdue
+          </p>
         </div>
       )}
 
-      {/* Month View */}
+      {/* ── MONTH ── */}
       {view === 'month' && (
         <>
           <div className="flex items-center justify-end gap-3 mb-4">
-            <button onClick={() => setCurrentMonth(m => subMonths(m, 1))} className="p-1 hover:bg-gray-100 rounded"><ChevronLeft size={18} /></button>
-            <span className="text-sm font-medium w-32 text-center">{format(currentMonth, 'MMMM yyyy')}</span>
-            <button onClick={() => setCurrentMonth(m => addMonths(m, 1))} className="p-1 hover:bg-gray-100 rounded"><ChevronRight size={18} /></button>
+            <button onClick={() => setCurrentMonth(m => subMonths(m, 1))} className="p-1.5 hover:bg-divider rounded transition-colors" aria-label="Previous month"><ChevronLeft size={18} /></button>
+            <span className="text-sm font-semibold w-36 text-center text-charcoal">{format(currentMonth, 'MMMM yyyy')}</span>
+            <button onClick={() => setCurrentMonth(m => addMonths(m, 1))} className="p-1.5 hover:bg-divider rounded transition-colors" aria-label="Next month"><ChevronRight size={18} /></button>
           </div>
-          <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden mb-6">
+          <div className="grid grid-cols-7 gap-px bg-divider rounded-lg overflow-hidden border border-divider">
             {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => (
-              <div key={d} className="bg-gray-50 py-2 text-center text-xs font-medium text-gray-500">{d}</div>
+              <div key={d} className="bg-paper py-2 text-center text-xs font-semibold text-slate">{d}</div>
             ))}
-            {Array.from({ length: padDays }).map((_, i) => <div key={`pad-${i}`} className="bg-white min-h-[80px]" />)}
+            {Array.from({ length: padDays }).map((_, i) => <div key={`pad-${i}`} className="bg-white min-h-[92px]" />)}
             {days.map(day => {
-              const dayEvents = filtered.filter(e => isSameDay(e.date, day))
+              const dayItems = itemsOn(day)
+              const today = isToday(day)
+              const selected = selectedDay && isSameDay(selectedDay, day)
               return (
-                <div key={day.toISOString()} className={`bg-white min-h-[80px] p-1 ${isToday(day) ? 'ring-2 ring-inset ring-stone-700' : ''}`}>
-                  <span className={`text-xs ${isToday(day) ? 'font-bold' : 'text-gray-600'}`}>{format(day, 'd')}</span>
+                <button
+                  key={day.toISOString()}
+                  onClick={() => setSelectedDay(day)}
+                  className={`bg-white min-h-[92px] p-1.5 text-left align-top hover:bg-paper transition-colors ${selected ? 'ring-2 ring-inset ring-cobalt' : ''}`}
+                >
+                  <span className={`inline-block text-xs ${today ? 'font-bold text-cobalt border-b-2 border-cobalt' : 'text-slate'}`}>
+                    {format(day, 'd')}
+                  </span>
                   <div className="mt-1 space-y-0.5">
-                    {dayEvents.slice(0, 2).map((e, i) => (
-                      <div key={i} className={`text-[10px] px-1 py-0.5 rounded truncate text-white ${typeColor[e.type]}`}>{e.label}</div>
-                    ))}
-                    {dayEvents.length > 2 && <div className="text-[10px] text-gray-400">+{dayEvents.length - 2}</div>}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </>
-      )}
-
-      {/* Week View */}
-      {view === 'week' && (
-        <>
-          <div className="flex items-center justify-end gap-3 mb-4">
-            <button onClick={() => setCurrentWeek(w => subWeeks(w, 1))} className="p-1 hover:bg-gray-100 rounded"><ChevronLeft size={18} /></button>
-            <span className="text-sm font-medium text-center">{format(weekStart, 'MMM d')} — {format(weekEnd, 'MMM d, yyyy')}</span>
-            <button onClick={() => setCurrentWeek(w => addWeeks(w, 1))} className="p-1 hover:bg-gray-100 rounded"><ChevronRight size={18} /></button>
-          </div>
-          <div className="grid grid-cols-7 gap-3 mb-6">
-            {weekDays.map(day => {
-              const dayEvents = filtered.filter(e => isSameDay(e.date, day))
-              return (
-                <div key={day.toISOString()} className={`rounded-lg border p-2 min-h-[200px] ${isToday(day) ? 'border-stone-700 bg-stone-50' : 'border-gray-200'}`}>
-                  <p className={`text-xs font-medium mb-2 ${isToday(day) ? 'text-stone-700' : 'text-gray-500'}`}>
-                    {format(day, 'EEE d')}
-                  </p>
-                  <div className="space-y-1.5">
-                    {dayEvents.map((e, i) => {
-                      const cfg = typeConfig[e.type] || typeConfig.application
+                    {dayItems.slice(0, 3).map(i => {
+                      const c = isOverdue(i) ? 'error' : TYPE_META[i.type].color
                       return (
-                        <div key={i} onClick={() => navigate(e.link)} className="cursor-pointer">
-                          <div className={`${cfg.bg} rounded p-1.5`}>
-                            <p className="text-[10px] font-medium text-stone-700 truncate">{e.label}</p>
-                            {e.sublabel && <p className="text-[9px] text-gray-500 truncate">{e.sublabel}</p>}
-                          </div>
+                        <div key={i.id} className={`flex items-center gap-1 ${isDone(i) ? 'opacity-50' : ''}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${DOT_BG[c]}`} />
+                          <span className={`text-[10px] truncate ${isDone(i) ? 'line-through text-slate' : 'text-charcoal'}`}>{i.title}</span>
                         </div>
                       )
                     })}
+                    {dayItems.length > 3 && <div className="text-[10px] text-slate pl-2.5">+{dayItems.length - 3} more</div>}
                   </div>
-                </div>
+                </button>
               )
             })}
           </div>
-        </>
-      )}
-
-      {/* Agenda View */}
-      {view === 'agenda' && (
-        <>
-          {filtered.length === 0 ? (
-            <EmptyState
-              icon={<Clock size={48} />}
-              title="Nothing scheduled"
-              description="Deadlines and events will appear here as you apply."
-              action={{ label: 'Discover Programs', onClick: () => navigate('/s/explore') }}
-            />
-          ) : (
-            <div className="space-y-8">
-              {Object.entries(grouped).map(([month, items]) => (
-                <div key={month}>
-                  <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">{month}</h2>
-                  <div className="relative">
-                    <div className="absolute left-5 top-0 bottom-0 w-px bg-gray-200" />
-                    <div className="space-y-4">
-                      {items.map((item, i) => {
-                        const config = typeConfig[item.type] || typeConfig.application
-                        const Icon = config.icon
-                        const isInterview = item.type === 'interview' && item.meta
-                        return (
-                          <div key={i} className="flex items-start gap-4 group">
-                            <div className={`w-10 h-10 rounded-full ${config.bg} flex items-center justify-center flex-shrink-0 z-10`}>
-                              <Icon size={18} className={config.color} />
-                            </div>
-                            <Card className="flex-1 p-4 group-hover:bg-gray-50">
-                              <div className="flex items-start justify-between">
-                                <div className="min-w-0 cursor-pointer" onClick={() => navigate(item.link)}>
-                                  <p className="text-sm font-medium">{item.label}</p>
-                                  {item.sublabel && <p className="text-xs text-gray-500 mt-0.5">{item.sublabel}</p>}
-                                  <p className="text-xs text-gray-400 mt-1">{formatDateTime(item.date.toISOString())}</p>
-                                </div>
-                                <div className="flex-shrink-0 ml-3">{urgencyBadge(item.date)}</div>
-                              </div>
-                              {isInterview && (
-                                <div className="mt-3 pt-3 border-t border-gray-100">
-                                  <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
-                                    {item.meta.interview_type === 'video' && <span className="flex items-center gap-1"><Video size={12} /> Video</span>}
-                                    {item.meta.interview_type === 'phone' && <span className="flex items-center gap-1"><Phone size={12} /> Phone</span>}
-                                    {item.meta.interview_type === 'in_person' && <span className="flex items-center gap-1"><MapPin size={12} /> In Person</span>}
-                                    {item.meta.location_or_link && <span>{item.meta.location_or_link}</span>}
-                                  </div>
-                                  {item.meta.status === 'invited' && (
-                                    <div className="flex gap-2">
-                                      <Button size="sm" onClick={() => confirmMut.mutate({ id: item.meta.id, time: item.meta.proposed_times?.[0] ?? '' })}>
-                                        <Check size={12} className="mr-1" /> Accept
-                                      </Button>
-                                      <Button size="sm" variant="secondary">Tentative</Button>
-                                      <Button size="sm" variant="danger"><XIcon size={12} className="mr-1" /> Decline</Button>
-                                    </div>
-                                  )}
-                                  {item.meta.status === 'confirmed' && <Badge variant="success">Confirmed</Badge>}
-                                </div>
-                              )}
-                            </Card>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                </div>
-              ))}
+          {/* Day detail panel (Spec 16 §3 — click date → day detail) */}
+          {selectedDay && (
+            <div className="mt-5">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-h3 text-charcoal">{format(selectedDay, 'EEEE, MMMM d')}</h2>
+                <button onClick={() => setSelectedDay(null)} className="text-slate hover:text-charcoal p-1" aria-label="Close day"><XIcon size={16} /></button>
+              </div>
+              <DayList items={itemsOn(selectedDay)} onOpen={setDetailItem} />
             </div>
           )}
         </>
       )}
 
-      {/* Work Block Modal */}
-      <Modal isOpen={showWorkBlockModal} onClose={() => setShowWorkBlockModal(false)} title="Add Work Block">
-        <div className="space-y-3">
-          <Input label="Title" value={wbForm.title} onChange={e => setWbForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Draft MIT essay" />
-          <Input label="Date & Time" type="datetime-local" value={wbForm.date} onChange={e => setWbForm(f => ({ ...f, date: e.target.value }))} />
-          <Input label="Duration (minutes)" type="number" value={wbForm.duration} onChange={e => setWbForm(f => ({ ...f, duration: e.target.value }))} />
-          <Select label="Category" options={WORK_CATEGORIES} value={wbForm.category} onChange={e => setWbForm(f => ({ ...f, category: e.target.value }))} />
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={() => setShowWorkBlockModal(false)}>Cancel</Button>
-            <Button onClick={handleAddWorkBlock} disabled={!wbForm.title || !wbForm.date}>Add Block</Button>
+      {/* ── WEEK ── */}
+      {view === 'week' && (
+        <>
+          <div className="flex items-center justify-end gap-3 mb-4">
+            <button onClick={() => setCurrentWeek(w => subWeeks(w, 1))} className="p-1.5 hover:bg-divider rounded transition-colors" aria-label="Previous week"><ChevronLeft size={18} /></button>
+            <span className="text-sm font-semibold text-center text-charcoal">{format(weekStart, 'MMM d')} — {format(weekEnd, 'MMM d, yyyy')}</span>
+            <button onClick={() => setCurrentWeek(w => addWeeks(w, 1))} className="p-1.5 hover:bg-divider rounded transition-colors" aria-label="Next week"><ChevronRight size={18} /></button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-7 gap-3">
+            {weekDays.map(day => {
+              const dayItems = itemsOn(day).sort((a, b) => +parseISO(a.start_at) - +parseISO(b.start_at))
+              const today = isToday(day)
+              return (
+                <div key={day.toISOString()} className={`rounded-lg border p-2 min-h-[180px] ${today ? 'border-cobalt bg-cobalt/5' : 'border-divider bg-white'}`}>
+                  <p className={`text-xs font-semibold mb-2 ${today ? 'text-cobalt border-b-2 border-cobalt inline-block' : 'text-slate'}`}>{format(day, 'EEE d')}</p>
+                  <div className="space-y-1.5">
+                    {dayItems.map(i => {
+                      const c = isOverdue(i) ? 'error' : TYPE_META[i.type].color
+                      return (
+                        <button key={i.id} onClick={() => setDetailItem(i)} className={`w-full text-left rounded p-1.5 transition-colors hover:brightness-95 ${ICON_SOFT_BG[c]} ${isDone(i) ? 'opacity-50' : ''}`}>
+                          <p className={`text-[11px] font-medium truncate ${isDone(i) ? 'line-through' : ''} text-charcoal`}>{i.title}</p>
+                          <p className="text-[10px] text-slate truncate">{format(parseISO(i.start_at), 'h:mm a')}{i.subtitle ? ` · ${i.subtitle}` : ''}</p>
+                        </button>
+                      )
+                    })}
+                    {dayItems.length === 0 && <p className="text-[10px] text-slate/60">—</p>}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
+
+      {/* ── AGENDA ── */}
+      {view === 'agenda' && (
+        <AgendaView items={filtered} hasActiveFilter={hasActiveFilter} onClearFilters={clearFilters} onOpen={setDetailItem} onDiscover={() => navigate('/s/explore')} />
+      )}
+
+      {/* Item detail + actions */}
+      <ItemDetailModal
+        item={detailItem}
+        onClose={() => setDetailItem(null)}
+        onNavigate={link => { setDetailItem(null); navigate(link) }}
+        onPatch={(id, body) => patchMut.mutate({ id, body })}
+        patching={patchMut.isPending}
+      />
+
+      <ReminderModal
+        open={showReminder}
+        apps={appOptions}
+        onClose={() => setShowReminder(false)}
+        onCreated={() => { setShowReminder(false); invalidate() }}
+      />
+      <WorkBlockModal
+        open={showWorkBlock}
+        apps={appOptions}
+        onClose={() => setShowWorkBlock(false)}
+        onCreated={() => { setShowWorkBlock(false); invalidate() }}
+      />
+    </div>
+  )
+}
+
+// ── Agenda view ──────────────────────────────────────────────────────────
+function AgendaView({ items, hasActiveFilter, onClearFilters, onOpen, onDiscover }: {
+  items: CalendarItem[]
+  hasActiveFilter: boolean
+  onClearFilters: () => void
+  onOpen: (i: CalendarItem) => void
+  onDiscover: () => void
+}) {
+  const upcoming = items.filter(i => !isDone(i))
+  const grouped = useMemo(() => {
+    const g: Record<string, CalendarItem[]> = {}
+    items.forEach(i => {
+      const key = format(parseISO(i.start_at), 'EEEE, MMMM d, yyyy')
+      ;(g[key] ||= []).push(i)
+    })
+    return g
+  }, [items])
+
+  if (items.length === 0) {
+    return hasActiveFilter ? (
+      <EmptyState
+        icon={<CalendarClock size={48} />}
+        title="No items match"
+        description="No calendar items match the current filters."
+        action={{ label: 'Clear filters?', onClick: onClearFilters }}
+      />
+    ) : (
+      <EmptyState
+        icon={<CalendarClock size={48} />}
+        title="Your calendar is clear"
+        description="Set a work block or RSVP to an event to get started."
+        action={{ label: 'Discover programs', onClick: onDiscover }}
+      />
+    )
+  }
+
+  return (
+    <div className="space-y-7">
+      {Object.entries(grouped).map(([day, dayItems]) => (
+        <div key={day}>
+          <h2 className="text-xs font-semibold text-slate uppercase tracking-wide mb-2.5">{day}</h2>
+          <div className="space-y-2">
+            {dayItems.map(i => <AgendaRow key={i.id} item={i} onOpen={onOpen} />)}
           </div>
         </div>
-      </Modal>
+      ))}
+      <p className="text-xs text-slate pt-2">{upcoming.length} upcoming item{upcoming.length !== 1 ? 's' : ''}</p>
     </div>
+  )
+}
+
+function AgendaRow({ item, onOpen }: { item: CalendarItem; onOpen: (i: CalendarItem) => void }) {
+  const meta = TYPE_META[item.type]
+  const c = isOverdue(item) ? 'error' : meta.color
+  const Icon = meta.icon
+  return (
+    <button onClick={() => onOpen(item)} className="w-full text-left group">
+      <Card className="flex items-start gap-3 p-3.5 group-hover:shadow-raised transition-shadow">
+        <div className={`w-9 h-9 rounded-full ${ICON_SOFT_BG[c]} flex items-center justify-center flex-shrink-0`}>
+          <Icon size={17} className={ICON_TEXT[c]} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <p className={`text-sm font-medium text-charcoal ${isDone(item) ? 'line-through opacity-60' : ''}`}>{item.title}</p>
+            <StatusBadge item={item} />
+          </div>
+          <p className="text-xs text-slate mt-0.5">
+            {format(parseISO(item.start_at), 'h:mm a')}
+            {item.end_at ? ` – ${format(parseISO(item.end_at), 'h:mm a')}` : ''}
+            {' · '}{meta.label}
+          </p>
+          {(item.subtitle || item.location || item.meeting_link) && (
+            <p className="text-xs text-slate/80 mt-0.5 truncate flex items-center gap-1">
+              {item.meeting_link && <Video size={11} />}
+              {item.location && <MapPin size={11} />}
+              {item.subtitle || item.location || item.meeting_link}
+            </p>
+          )}
+        </div>
+      </Card>
+    </button>
+  )
+}
+
+// Day list (month-view day panel) — compact rows.
+function DayList({ items, onOpen }: { items: CalendarItem[]; onOpen: (i: CalendarItem) => void }) {
+  if (items.length === 0) return <p className="text-sm text-slate py-4">Nothing scheduled this day.</p>
+  return (
+    <div className="space-y-2">
+      {items.sort((a, b) => +parseISO(a.start_at) - +parseISO(b.start_at)).map(i => <AgendaRow key={i.id} item={i} onOpen={onOpen} />)}
+    </div>
+  )
+}
+
+function StatusBadge({ item }: { item: CalendarItem }) {
+  if (item.status === 'overdue') return <Badge variant="danger"><AlertTriangle size={11} /> Overdue</Badge>
+  if (item.status === 'completed') return <Badge variant="success"><Check size={11} /> Done</Badge>
+  if (item.status === 'cancelled') return <Badge variant="neutral">Cancelled</Badge>
+  return null
+}
+
+// ── Item detail + actions modal (Spec 16 §5) ──────────────────────────────
+function ItemDetailModal({ item, onClose, onNavigate, onPatch, patching }: {
+  item: CalendarItem | null
+  onClose: () => void
+  onNavigate: (link: string) => void
+  onPatch: (id: string, body: Parameters<typeof patchCalendarItem>[1]) => void
+  patching: boolean
+}) {
+  const [confirmUrl, setConfirmUrl] = useState('')
+  if (!item) return null
+  const meta = TYPE_META[item.type]
+  const c = isOverdue(item) ? 'error' : meta.color
+  const Icon = meta.icon
+
+  return (
+    <Modal isOpen={!!item} onClose={onClose} title={item.title}>
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className={`w-9 h-9 rounded-full ${ICON_SOFT_BG[c]} flex items-center justify-center flex-shrink-0`}>
+            <Icon size={18} className={ICON_TEXT[c]} />
+          </div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate">{meta.label}</p>
+          <div className="ml-auto"><StatusBadge item={item} /></div>
+        </div>
+
+        <dl className="space-y-1.5 text-sm">
+          <Row label="When">
+            {format(parseISO(item.start_at), 'EEE, MMM d · h:mm a')}
+            {item.end_at ? ` – ${format(parseISO(item.end_at), 'h:mm a')}` : ''}
+          </Row>
+          {item.subtitle && <Row label="Where">{item.subtitle}</Row>}
+          {item.location && <Row label="Location">{item.location}</Row>}
+          {item.meeting_link && (
+            <Row label="Link">
+              <a href={item.meeting_link} target="_blank" rel="noreferrer" className="text-cobalt hover:underline inline-flex items-center gap-1">
+                Join <ExternalLink size={12} />
+              </a>
+            </Row>
+          )}
+          {item.recommender_name && <Row label="Recommender">{item.recommender_name}</Row>}
+          {item.notes && <Row label="Notes">{item.notes}</Row>}
+          {item.confirmation_url && (
+            <Row label="Confirmation">
+              <a href={item.confirmation_url} target="_blank" rel="noreferrer" className="text-cobalt hover:underline inline-flex items-center gap-1">
+                View <ExternalLink size={12} />
+              </a>
+            </Row>
+          )}
+        </dl>
+
+        {/* Attach off-platform confirmation (Spec 16 §5) */}
+        {!item.confirmation_url && completable(item) && (
+          <div className="flex items-end gap-2">
+            <div className="flex-1">
+              <Input
+                label="Attach confirmation (link)"
+                placeholder="https://…"
+                value={confirmUrl}
+                onChange={e => setConfirmUrl(e.target.value)}
+              />
+            </div>
+            <Button size="sm" variant="secondary" disabled={!confirmUrl || patching}
+              onClick={() => { onPatch(item.id, { confirmation_url: confirmUrl }); setConfirmUrl('') }}>
+              Attach
+            </Button>
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex flex-wrap gap-2 pt-1">
+          {item.link && (
+            <Button size="sm" onClick={() => onNavigate(item.link!)}>
+              <ExternalLink size={13} className="mr-1" /> Open application
+            </Button>
+          )}
+          {completable(item) && !isDone(item) && (
+            <Button size="sm" variant="secondary" disabled={patching}
+              onClick={() => onPatch(item.id, { status: 'completed' })}>
+              <Check size={13} className="mr-1" /> Mark complete
+            </Button>
+          )}
+          {item.status === 'completed' && (
+            <Button size="sm" variant="ghost" disabled={patching}
+              onClick={() => onPatch(item.id, { status: 'scheduled' })}>
+              <RotateCcw size={13} className="mr-1" /> Reopen
+            </Button>
+          )}
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex gap-3">
+      <dt className="text-slate w-24 flex-shrink-0">{label}</dt>
+      <dd className="text-charcoal min-w-0">{children}</dd>
+    </div>
+  )
+}
+
+// ── Create modals ──────────────────────────────────────────────────────────
+function ReminderModal({ open, apps, onClose, onCreated }: {
+  open: boolean
+  apps: { value: string; label: string }[]
+  onClose: () => void
+  onCreated: () => void
+}) {
+  const [form, setForm] = useState({ title: '', start: '', notes: '', app: 'all' })
+  const mut = useMutation({
+    mutationFn: () => createReminder({
+      title: form.title,
+      start_at: toISO(form.start),
+      notes: form.notes || null,
+      application_id: form.app !== 'all' ? form.app : null,
+    }),
+    onSuccess: () => { setForm({ title: '', start: '', notes: '', app: 'all' }); onCreated() },
+  })
+  return (
+    <Modal isOpen={open} onClose={onClose} title="Add reminder">
+      <div className="space-y-3">
+        <Input label="Title" placeholder="e.g. Email recommender" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
+        <Input label="Date & time" type="datetime-local" value={form.start} onChange={e => setForm(f => ({ ...f, start: e.target.value }))} />
+        <Select label="Link to application (optional)" value={form.app} onChange={e => setForm(f => ({ ...f, app: e.target.value }))} options={apps} />
+        <Input label="Notes (optional)" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
+        {mut.isError && <p className="text-xs text-error">Couldn’t save. Check the fields and try again.</p>}
+        <div className="flex justify-end gap-2 pt-1">
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button onClick={() => mut.mutate()} disabled={!form.title || !form.start || mut.isPending}>
+            {mut.isPending ? 'Saving…' : 'Add reminder'}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+function WorkBlockModal({ open, apps, onClose, onCreated }: {
+  open: boolean
+  apps: { value: string; label: string }[]
+  onClose: () => void
+  onCreated: () => void
+}) {
+  const [form, setForm] = useState({ title: '', start: '', duration: '60', category: 'general', app: 'all' })
+  const mut = useMutation({
+    mutationFn: () => createWorkBlock({
+      title: form.title,
+      start_at: toISO(form.start),
+      duration_minutes: Number(form.duration) || 60,
+      category: form.category,
+      application_id: form.app !== 'all' ? form.app : null,
+    }),
+    onSuccess: () => { setForm({ title: '', start: '', duration: '60', category: 'general', app: 'all' }); onCreated() },
+  })
+  return (
+    <Modal isOpen={open} onClose={onClose} title="Add work block">
+      <div className="space-y-3">
+        <Input label="Title" placeholder="e.g. Draft Stanford essay" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
+        <Input label="Date & time" type="datetime-local" value={form.start} onChange={e => setForm(f => ({ ...f, start: e.target.value }))} />
+        <Input label="Duration (minutes)" type="number" value={form.duration} onChange={e => setForm(f => ({ ...f, duration: e.target.value }))} />
+        <Select label="Category" value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} options={WORK_CATEGORIES} />
+        <Select label="Link to application (optional)" value={form.app} onChange={e => setForm(f => ({ ...f, app: e.target.value }))} options={apps} />
+        {mut.isError && <p className="text-xs text-error">Couldn’t save. Check the fields and try again.</p>}
+        <div className="flex justify-end gap-2 pt-1">
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button onClick={() => mut.mutate()} disabled={!form.title || !form.start || mut.isPending}>
+            {mut.isPending ? 'Saving…' : 'Add work block'}
+          </Button>
+        </div>
+      </div>
+    </Modal>
   )
 }

@@ -26,6 +26,7 @@ from unipaith.models.billing import StudentSubscription
 from unipaith.models.confidence_outcome import ConfidenceOutcomePair
 from unipaith.models.discovery import DiscoveryMessage, DiscoverySession
 from unipaith.models.engagement import (
+    CalendarItemState,
     Conversation,
     ConversationSession,
     CRMRecord,
@@ -204,6 +205,7 @@ __all__ = [
     "SavedListItem",
     "StudentCompareItem",
     "StudentCalendar",
+    "CalendarItemState",
     "CRMRecord",
     "Conversation",
     "ConversationSession",
