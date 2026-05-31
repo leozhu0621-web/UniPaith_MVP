@@ -1113,6 +1113,65 @@ async def get_match_detail(
     )
 
 
+# --- Net Price Estimator (Spec 11 §3.3a / output schema 42 §4.12) ---
+
+
+class NetPriceRangeResponse(BaseModel):
+    """A {min, expected, max} money range — always a range, never a point."""
+
+    min: float
+    expected: float
+    max: float
+
+
+class NetPriceGapResponse(BaseModel):
+    student_annual_budget: float | None = None
+    shortfall_annual: float | None = None
+    band: str  # affordable | stretch | out_of_reach | unknown
+
+
+class NetPriceEstimateResponse(BaseModel):
+    """Personalized net-price estimate for one student at one program.
+
+    `available=False` (with `reason`) when the program lacks the cost data to
+    estimate honestly — the UI then hides the block rather than show a fake
+    number. Always framed as an estimate, never an aid commitment (`disclaimer`).
+    """
+
+    program_id: UUID
+    available: bool
+    reason: str | None = None
+    currency: str = "USD"
+    cost_of_attendance_annual: float | None = None
+    net_cost_scenario_range: NetPriceRangeResponse | None = None
+    net_cost_scenario_range_total: NetPriceRangeResponse | None = None
+    years: float | None = None
+    affordability_band: str  # affordable | stretch | out_of_reach | unknown
+    aid_scholarship_likelihood_band: str  # low | moderate | high | unknown
+    gap: NetPriceGapResponse
+    drivers: list[str] = []
+    disclaimer: str
+
+
+@router.get("/me/programs/{program_id}/net-price", response_model=NetPriceEstimateResponse)
+async def get_program_net_price(
+    program_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 11 §3.3a — a personalized **net price** (not sticker) for this
+    student at this program: estimated cost of attendance minus estimated aid,
+    as a {min, expected, max} range, plus a gap analysis vs the student's budget.
+
+    Deterministic / rule-based (no LLM). Honesty guardrail: always a range,
+    framed as an estimate, never implies an aid commitment.
+    """
+    from unipaith.services.net_price_service import NetPriceService
+
+    data = await NetPriceService(db).estimate_for_student(user_id=user.id, program_id=program_id)
+    return NetPriceEstimateResponse(program_id=program_id, **data)
+
+
 class ProbabilityBandsResponse(BaseModel):
     """Spec 09 §4A — admit / scholarship / waitlist ranges + drivers for one
     program. `probability_bands` is null when there isn't enough signal; `reason`

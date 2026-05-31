@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom'
-import { Calendar, GraduationCap, Sparkles, ChevronRight } from 'lucide-react'
+import { Calendar, GraduationCap, Sparkles, ChevronRight, Compass } from 'lucide-react'
 import Card from '../../../components/ui/Card'
 import { formatDate } from '../../../utils/format'
 import { DEGREE_LABELS } from '../../../utils/constants'
-import type { EventItem } from '../../../types'
+import type { EventItem, NetPriceEstimate } from '../../../types'
+import NetPriceEstimator from './NetPriceEstimator'
 
 interface ProgramLink {
   id: string
@@ -18,6 +19,10 @@ interface Props {
   similarPrograms?: ProgramLink[]
   onRsvp?: (eventId: string) => void
   rsvpedIds?: Set<string>
+  /** Spec 11 §4 — net-price headline echo in the sidebar. */
+  netPrice?: NetPriceEstimate | null
+  /** Spec 11 §4 — back to Discovery with this program's attributes pre-applied. */
+  discoveryBackHref?: string
 }
 
 export default function RelatedSidebar({
@@ -26,6 +31,8 @@ export default function RelatedSidebar({
   similarPrograms = [],
   onRsvp,
   rsvpedIds = new Set(),
+  netPrice,
+  discoveryBackHref,
 }: Props) {
   const upcomingEvents = events
     .filter(e => new Date((e as any).event_datetime || (e as any).starts_at || (e as any).start_time || Date.now()) > new Date())
@@ -33,6 +40,9 @@ export default function RelatedSidebar({
 
   return (
     <aside className="space-y-4">
+      {/* Net-price headline echo (§4) */}
+      {netPrice && <NetPriceEstimator estimate={netPrice} compact />}
+
       {/* Upcoming events */}
       {upcomingEvents.length > 0 && (
         <Card className="p-4">
@@ -120,6 +130,22 @@ export default function RelatedSidebar({
             ))}
           </div>
         </Card>
+      )}
+
+      {/* Back to Discovery with these attributes pre-applied (§4) */}
+      {discoveryBackHref && (
+        <Link
+          to={discoveryBackHref}
+          className="flex items-center justify-between gap-2 px-3 py-3 rounded-lg border border-divider hover:border-cobalt hover:bg-student-mist transition-colors group"
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <Compass size={14} className="text-cobalt flex-shrink-0" />
+            <span className="text-xs font-medium text-student-ink">
+              Find more like this in Discovery
+            </span>
+          </div>
+          <ChevronRight size={12} className="text-student-text/40 group-hover:text-cobalt flex-shrink-0" />
+        </Link>
       )}
     </aside>
   )
