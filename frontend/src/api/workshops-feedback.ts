@@ -46,6 +46,7 @@ export interface TestGuidanceBody {
   test_type: StandardizedTest
   current_score?: number | null
   target_score?: number | null
+  target_program_id?: string | null
 }
 
 export const requestEssayFeedback = (
