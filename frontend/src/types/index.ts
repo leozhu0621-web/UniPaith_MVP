@@ -535,15 +535,31 @@ export interface Resume {
 }
 
 // ============ SAVED LISTS ============
+export type SavedPriority = 'considering' | 'planning_to_apply' | 'applied' | 'dropped'
+export type SavedStatus =
+  | 'considering'
+  | 'application_started'
+  | 'submitted'
+  | 'accepted'
+  | 'rejected'
+  | 'waitlisted'
+  | 'dropped'
+
 export interface SavedProgram {
   id: string
-  student_id: string
+  list_id?: string
   program_id: string
   notes: string | null
   added_at: string
+  priority: SavedPriority
+  status: SavedStatus
+  tags: string[]
   program_name?: string | null
   institution_name?: string | null
   program?: ProgramSummary
+  fitness_score?: number | null
+  confidence_score?: number | null
+  band_label?: 'reach' | 'target' | 'safer' | null
 }
 
 export interface ComparisonResponse {
@@ -1782,8 +1798,10 @@ export interface InstitutionMatchRationale {
 // ============ PHASE A — WORKSHOP FEEDBACK ============
 
 export type WorkshopDomain = 'essay' | 'interview' | 'test'
+export type WorkshopMode = 'general' | 'program_specific'
 export type IssueSeverity = 'minor' | 'moderate' | 'major'
 export type ElementImportance = 'nice_to_have' | 'should_have' | 'required'
+export type PrepPriority = 'low' | 'med' | 'high'
 
 export interface StructuralIssue {
   issue: string
@@ -1801,16 +1819,35 @@ export interface SuggestedQuestion {
   why: string
 }
 
+export interface GapAnalysisItem {
+  topic: string
+  recommendation: string
+}
+
+export interface PrepRecommendation {
+  action: string
+  time_commitment: string
+  priority: PrepPriority
+}
+
 export interface WorkshopFeedbackRun {
   id: string
   student_id: string
   domain: WorkshopDomain
+  mode?: WorkshopMode
+  target_program_id?: string | null
+  input_text?: string | null
   input_artifact_id: string | null
   prompt_text: string | null
   rubric_scores: Record<string, number>
   structural_issues: StructuralIssue[]
   missing_elements: MissingElement[]
   suggested_questions: SuggestedQuestion[]
+  current_band?: string | null
+  target_band?: string | null
+  gap_analysis?: GapAnalysisItem[]
+  prep_recommendations?: PrepRecommendation[]
+  readiness_summary?: string | null
   is_stub: boolean
   created_at: string
 }

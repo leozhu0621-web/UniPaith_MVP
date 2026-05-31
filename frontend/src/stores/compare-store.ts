@@ -19,12 +19,15 @@ interface CompareState {
   hydrated: boolean
   /** True briefly after an add was rejected because the set is full. */
   rejectedFull: boolean
+  /** Incremented to ask CompareTray to run compare (Spec 13 saved-page CTA). */
+  compareRunTick: number
   hydrate: () => Promise<void>
   add: (item: CompareItem) => void
   remove: (programId: string) => void
   clear: () => void
   has: (programId: string) => boolean
   isFull: () => boolean
+  requestCompareRun: () => void
 }
 
 const fromDTO = (i: CompareItemDTO): CompareItem => ({
@@ -38,6 +41,7 @@ export const useCompareStore = create<CompareState>((set, get) => ({
   items: [],
   hydrated: false,
   rejectedFull: false,
+  compareRunTick: 0,
 
   hydrate: async () => {
     try {
@@ -82,4 +86,5 @@ export const useCompareStore = create<CompareState>((set, get) => ({
 
   has: (programId) => get().items.some(i => i.program_id === programId),
   isFull: () => get().items.length >= MAX_COMPARE,
+  requestCompareRun: () => set(s => ({ compareRunTick: s.compareRunTick + 1 })),
 }))

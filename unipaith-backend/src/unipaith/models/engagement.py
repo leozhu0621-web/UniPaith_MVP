@@ -77,6 +77,13 @@ class SavedListItem(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     notes: Mapped[str | None] = mapped_column(Text)
+    priority: Mapped[str] = mapped_column(
+        String(30), nullable=False, default="considering", server_default="considering"
+    )
+    status: Mapped[str] = mapped_column(
+        String(30), nullable=False, default="considering", server_default="considering"
+    )
+    tags: Mapped[list] = mapped_column(JSONB, nullable=False, server_default="[]")
 
     saved_list: Mapped[SavedList] = relationship(back_populates="items")
 

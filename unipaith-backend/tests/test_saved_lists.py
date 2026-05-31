@@ -183,3 +183,78 @@ async def test_compare_programs_returns_spec10_dimensions(
     assert ds["median_salary"] == 88000
     assert ds["employment_rate"] == 0.9
     assert ds["campus_setting"] == "urban"
+
+
+@pytest.mark.asyncio
+async def test_patch_priority_persists(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    _, _, program = await _seed_student_and_program(
+        db_session, mock_student_user, mock_institution_user
+    )
+    await student_client.post("/api/v1/students/me/saved", json={"program_id": str(program.id)})
+    resp = await student_client.patch(
+        f"/api/v1/students/me/saved/{program.id}",
+        json={"priority": "planning_to_apply"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["priority"] == "planning_to_apply"
+
+    listed = await student_client.get("/api/v1/students/me/saved")
+    assert listed.json()[0]["priority"] == "planning_to_apply"
+
+
+@pytest.mark.asyncio
+async def test_start_application_from_saved(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    _, _, program = await _seed_student_and_program(
+        db_session, mock_student_user, mock_institution_user
+    )
+    await student_client.post("/api/v1/students/me/saved", json={"program_id": str(program.id)})
+    resp = await student_client.post(
+        f"/api/v1/students/me/saved/{program.id}/start-application",
+    )
+    assert resp.status_code == 201
+    app_id = resp.json()["app_id"]
+
+    listed = await student_client.get("/api/v1/students/me/saved")
+    assert listed.json()[0]["status"] == "application_started"
+
+    apps = await student_client.get("/api/v1/applications/me")
+    assert any(a["id"] == app_id for a in apps.json())
+
+
+@pytest.mark.asyncio
+async def test_compare_rejects_more_than_four(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    _, institution, program1 = await _seed_student_and_program(
+        db_session, mock_student_user, mock_institution_user
+    )
+    ids = [program1.id]
+    for i in range(4):
+        p = Program(
+            institution_id=institution.id,
+            program_name=f"Prog {i}",
+            degree_type="masters",
+            is_published=True,
+        )
+        db_session.add(p)
+        ids.append(p.id)
+    await db_session.commit()
+
+    resp = await student_client.post(
+        "/api/v1/students/me/saved/compare",
+        json={"program_ids": [str(x) for x in ids[:5]]},
+    )
+    assert resp.status_code == 422

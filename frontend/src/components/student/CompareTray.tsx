@@ -14,7 +14,7 @@ interface CompareTrayProps {
 }
 
 export default function CompareTray({ initialExpanded = false, syncUrl = false }: CompareTrayProps) {
-  const { items, remove, clear, hydrate, hydrated } = useCompareStore()
+  const { items, remove, clear, hydrate, hydrated, compareRunTick } = useCompareStore()
   const location = useLocation()
   const navigate = useNavigate()
   const [expanded, setExpanded] = useState(initialExpanded)
@@ -50,6 +50,13 @@ export default function CompareTray({ initialExpanded = false, syncUrl = false }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialExpanded, items.length])
+
+  useEffect(() => {
+    if (compareRunTick > 0 && items.length >= 2 && !compareMut.isPending) {
+      compareMut.mutate()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [compareRunTick])
 
   if (items.length === 0) return null
 
@@ -144,8 +151,8 @@ export default function CompareTray({ initialExpanded = false, syncUrl = false }
             ))}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Button size="sm" onClick={() => compareMut.mutate()} disabled={items.length < 2 || compareMut.isPending} loading={compareMut.isPending} className="!bg-primary !text-primary-foreground hover:brightness-95">
-              Compare ({items.length})
+            <Button size="sm" variant="secondary" onClick={() => compareMut.mutate()} disabled={items.length < 2 || compareMut.isPending} loading={compareMut.isPending}>
+              Compare selected ({items.length}) →
             </Button>
             {comparisonResult && (
               <button onClick={() => setExpanded(!expanded)} aria-label={expanded ? 'Collapse' : 'Expand'} className="p-1 text-cream/60 hover:text-white">

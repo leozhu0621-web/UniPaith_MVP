@@ -163,6 +163,34 @@ async def _ensure_follow_schema(db) -> None:
     await db.commit()
 
 
+async def _ensure_saved_list_schema(db) -> None:
+    """Spec 13 — priority/tags/status on saved_list_items (Alembic bypass)."""
+    from sqlalchemy import text
+
+    log = logging.getLogger("unipaith.startup")
+    tbl = await db.execute(
+        text("SELECT 1 FROM information_schema.tables WHERE table_name='saved_list_items'")
+    )
+    if not tbl.scalar():
+        return
+    for column, ddl in (
+        ("priority", "VARCHAR(30) NOT NULL DEFAULT 'considering'"),
+        ("status", "VARCHAR(30) NOT NULL DEFAULT 'considering'"),
+        ("tags", "JSONB NOT NULL DEFAULT '[]'::jsonb"),
+    ):
+        exists = await db.execute(
+            text(
+                "SELECT 1 FROM information_schema.columns "
+                "WHERE table_name='saved_list_items' AND column_name=:col"
+            ),
+            {"col": column},
+        )
+        if not exists.scalar():
+            log.info("Adding saved_list_items.%s (Spec 13 bypass)...", column)
+            await db.execute(text(f"ALTER TABLE saved_list_items ADD COLUMN {column} {ddl}"))
+    await db.commit()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):  # noqa: ARG001
     # Ensure schools table exists (bypasses broken Alembic chain)
@@ -178,6 +206,13 @@ async def lifespan(app: FastAPI):  # noqa: ARG001
             await _ensure_follow_schema(db)
     except Exception:
         logging.getLogger("unipaith.startup").exception("Follow schema bootstrap failed")
+
+    # Spec 13 — saved list priority/tags/status columns
+    try:
+        async with async_session() as db:
+            await _ensure_saved_list_schema(db)
+    except Exception:
+        logging.getLogger("unipaith.startup").exception("Saved list schema bootstrap failed")
 
     # Spec 06 §5.4 — cache-invalidation trigger for prompt/model rolls. After a
     # deploy that bumped RATIONALE_PROMPT_VERSION (also the documented hook for

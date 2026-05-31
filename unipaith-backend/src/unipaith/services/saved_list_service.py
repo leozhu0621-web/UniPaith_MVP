@@ -1,6 +1,6 @@
 """
 Saved-list service — manage a student's saved/bookmarked programs and
-provide AI-powered program comparison.
+provide program comparison (Spec 13).
 """
 
 from __future__ import annotations
@@ -13,25 +13,89 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from unipaith.core.exceptions import BadRequestException, ConflictException, NotFoundException
+from unipaith.models.application import Application
 from unipaith.models.engagement import SavedList, SavedListItem
 from unipaith.models.institution import Institution, Program
 from unipaith.models.matching import MatchResult
+from unipaith.models.student import StudentPreference
+from unipaith.schemas.saved_list import SavedProgramCard, SavedProgramResponse, SavedStatus
+from unipaith.services.application_service import ApplicationService
+from unipaith.services.match_banding import band_for_acceptance
 
 logger = logging.getLogger(__name__)
 
+VALID_PRIORITIES = frozenset({"considering", "planning_to_apply", "applied", "dropped"})
+VALID_STATUSES = frozenset(
+    {
+        "considering",
+        "application_started",
+        "submitted",
+        "accepted",
+        "rejected",
+        "waitlisted",
+        "dropped",
+    }
+)
+
+_APP_TO_SAVED_STATUS: dict[str, SavedStatus] = {
+    "draft": "application_started",
+    "submitted": "submitted",
+    "under_review": "submitted",
+    "interview": "submitted",
+    "decision_made": "submitted",
+    "accepted": "accepted",
+    "rejected": "rejected",
+    "waitlisted": "waitlisted",
+    "withdrawn": "dropped",
+}
+
+
+def _status_from_application(app_status: str | None) -> SavedStatus | None:
+    if not app_status:
+        return None
+    return _APP_TO_SAVED_STATUS.get(app_status)
+
+
+def _program_card(prog: Program, inst: Institution | None) -> SavedProgramCard:
+    outcomes = prog.outcomes_data or {}
+    salary = next(
+        (
+            outcomes[k]
+            for k in ("median_salary", "earnings_4yr_median", "earnings_1yr_median")
+            if isinstance(outcomes.get(k), (int, float))
+        ),
+        None,
+    )
+    employment = outcomes.get("employment_rate")
+    employment = float(employment) if isinstance(employment, (int, float)) else None
+    acceptance = float(prog.acceptance_rate) if prog.acceptance_rate is not None else None
+    return SavedProgramCard(
+        id=prog.id,
+        institution_id=prog.institution_id,
+        program_name=prog.program_name,
+        degree_type=prog.degree_type,
+        department=prog.department,
+        tuition=prog.tuition,
+        duration_months=prog.duration_months,
+        delivery_format=prog.delivery_format,
+        acceptance_rate=acceptance,
+        application_deadline=prog.application_deadline,
+        institution_name=inst.name if inst else None,
+        institution_country=inst.country if inst else None,
+        institution_city=inst.city if inst else None,
+        median_salary=int(salary) if salary is not None else None,
+        employment_rate=employment,
+        description_text=prog.description_text,
+    )
+
 
 class SavedListService:
-    """CRUD for saved-program lists plus AI comparison."""
+    """CRUD for saved-program lists plus comparison."""
 
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    # ------------------------------------------------------------------
-    # Helpers
-    # ------------------------------------------------------------------
-
     async def _get_or_create_default_list(self, student_id: UUID) -> SavedList:
-        """Return the student's default saved list, creating one if needed."""
         result = await self.db.execute(
             select(SavedList)
             .where(SavedList.student_id == student_id)
@@ -45,7 +109,6 @@ class SavedListService:
         return saved_list
 
     async def _get_item(self, saved_list: SavedList, program_id: UUID) -> SavedListItem:
-        """Fetch a single item from the list or raise 404."""
         result = await self.db.execute(
             select(SavedListItem).where(
                 SavedListItem.list_id == saved_list.id,
@@ -57,20 +120,102 @@ class SavedListService:
             raise NotFoundException("Program is not in the saved list")
         return item
 
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
+    async def _weight_ranking(self, student_id: UUID) -> int | None:
+        result = await self.db.execute(
+            select(StudentPreference.weight_ranking).where(
+                StudentPreference.student_id == student_id
+            )
+        )
+        row = result.scalar_one_or_none()
+        return row
 
-    async def list_saved(self, student_id: UUID) -> list[SavedListItem]:
-        """Return all saved programs with eagerly-loaded program + institution."""
+    async def list_saved_enriched(self, student_id: UUID) -> list[SavedProgramResponse]:
         saved_list = await self._get_or_create_default_list(student_id)
         result = await self.db.execute(
             select(SavedListItem)
             .where(SavedListItem.list_id == saved_list.id)
-            .join(Program, SavedListItem.program_id == Program.id)
-            .options(
-                selectinload(SavedListItem.saved_list),
+            .order_by(SavedListItem.added_at.desc())
+        )
+        items = list(result.scalars().all())
+        if not items:
+            return []
+
+        program_ids = [i.program_id for i in items]
+        prog_result = await self.db.execute(
+            select(Program)
+            .where(Program.id.in_(program_ids))
+            .options(selectinload(Program.institution))
+        )
+        prog_map = {p.id: p for p in prog_result.scalars().all()}
+
+        match_result = await self.db.execute(
+            select(MatchResult).where(
+                MatchResult.student_id == student_id,
+                MatchResult.program_id.in_(program_ids),
             )
+        )
+        match_map = {m.program_id: m for m in match_result.scalars().all()}
+
+        app_result = await self.db.execute(
+            select(Application).where(
+                Application.student_id == student_id,
+                Application.program_id.in_(program_ids),
+            )
+        )
+        app_map = {a.program_id: a for a in app_result.scalars().all()}
+
+        weight_ranking = await self._weight_ranking(student_id)
+        out: list[SavedProgramResponse] = []
+        for item in items:
+            prog = prog_map.get(item.program_id)
+            inst = prog.institution if prog else None
+            match = match_map.get(item.program_id)
+            app = app_map.get(item.program_id)
+
+            fitness = float(match.fitness_score) if match else None
+            confidence = float(match.confidence_score) if match else None
+            band: str | None = None
+            if fitness is not None and prog:
+                band = band_for_acceptance(
+                    fitness=fitness,
+                    acceptance_rate=float(prog.acceptance_rate)
+                    if prog.acceptance_rate is not None
+                    else None,
+                    weight_ranking=weight_ranking,
+                )
+
+            derived = _status_from_application(app.status if app else None)
+            row_status = item.status if item.status in VALID_STATUSES else "considering"
+            status: SavedStatus = derived or row_status  # type: ignore[assignment]
+
+            tags = item.tags if isinstance(item.tags, list) else []
+            priority = item.priority if item.priority in VALID_PRIORITIES else "considering"
+
+            out.append(
+                SavedProgramResponse(
+                    id=item.id,
+                    list_id=item.list_id,
+                    program_id=item.program_id,
+                    notes=item.notes,
+                    added_at=item.added_at,
+                    priority=priority,  # type: ignore[arg-type]
+                    status=status,
+                    tags=[str(t) for t in tags],
+                    program_name=prog.program_name if prog else None,
+                    institution_name=inst.name if inst else None,
+                    program=_program_card(prog, inst) if prog else None,
+                    fitness_score=fitness,
+                    confidence_score=confidence,
+                    band_label=band,  # type: ignore[arg-type]
+                )
+            )
+        return out
+
+    async def list_saved(self, student_id: UUID) -> list[SavedListItem]:
+        saved_list = await self._get_or_create_default_list(student_id)
+        result = await self.db.execute(
+            select(SavedListItem)
+            .where(SavedListItem.list_id == saved_list.id)
             .order_by(SavedListItem.added_at.desc())
         )
         return list(result.scalars().all())
@@ -81,15 +226,12 @@ class SavedListService:
         program_id: UUID,
         notes: str | None = None,
     ) -> SavedListItem:
-        """Add a program to the student's saved list."""
-        # Ensure the program exists.
         prog = await self.db.execute(select(Program).where(Program.id == program_id))
         if prog.scalar_one_or_none() is None:
             raise NotFoundException("Program not found")
 
         saved_list = await self._get_or_create_default_list(student_id)
 
-        # Check for duplicates.
         existing = await self.db.execute(
             select(SavedListItem).where(
                 SavedListItem.list_id == saved_list.id,
@@ -103,37 +245,72 @@ class SavedListService:
             list_id=saved_list.id,
             program_id=program_id,
             notes=notes,
+            priority="considering",
+            status="considering",
+            tags=[],
         )
         self.db.add(item)
         await self.db.flush()
         return item
 
     async def unsave_program(self, student_id: UUID, program_id: UUID) -> None:
-        """Remove a program from the saved list."""
         saved_list = await self._get_or_create_default_list(student_id)
         item = await self._get_item(saved_list, program_id)
         await self.db.delete(item)
         await self.db.flush()
 
     async def update_notes(self, student_id: UUID, program_id: UUID, notes: str) -> SavedListItem:
-        """Update the notes attached to a saved program."""
         saved_list = await self._get_or_create_default_list(student_id)
         item = await self._get_item(saved_list, program_id)
         item.notes = notes
         await self.db.flush()
         return item
 
+    async def patch_saved(
+        self,
+        student_id: UUID,
+        program_id: UUID,
+        *,
+        priority: str | None = None,
+        notes: str | None = None,
+        tags: list[str] | None = None,
+    ) -> SavedListItem:
+        if priority is not None and priority not in VALID_PRIORITIES:
+            raise BadRequestException(f"Invalid priority: {priority}")
+        saved_list = await self._get_or_create_default_list(student_id)
+        item = await self._get_item(saved_list, program_id)
+        if priority is not None:
+            item.priority = priority
+        if notes is not None:
+            item.notes = notes
+        if tags is not None:
+            item.tags = [t.strip() for t in tags if t and t.strip()]
+        await self.db.flush()
+        return item
+
+    async def start_application(self, student_id: UUID, program_id: UUID) -> UUID:
+        saved_list = await self._get_or_create_default_list(student_id)
+        item = await self._get_item(saved_list, program_id)
+        app_svc = ApplicationService(self.db)
+        existing = await self.db.execute(
+            select(Application).where(
+                Application.student_id == student_id,
+                Application.program_id == program_id,
+            )
+        )
+        app = existing.scalar_one_or_none()
+        if app is None:
+            app = await app_svc.create_application(student_id, program_id)
+        item.status = "application_started"
+        if item.priority == "considering":
+            item.priority = "planning_to_apply"
+        await self.db.flush()
+        return app.id
+
     async def compare_programs(self, student_id: UUID, program_ids: list[UUID]) -> dict:
-        """
-        Build a comparison matrix for 2-5 saved programs and generate an
-        AI narrative analysis.
+        if len(program_ids) < 2 or len(program_ids) > 4:
+            raise BadRequestException("Provide between 2 and 4 programs for comparison")
 
-        Returns ``{"comparison_data": [...], "ai_analysis": str}``.
-        """
-        if len(program_ids) < 2 or len(program_ids) > 5:
-            raise BadRequestException("Provide between 2 and 5 programs for comparison")
-
-        # Load programs with their institutions.
         result = await self.db.execute(
             select(Program)
             .where(Program.id.in_(program_ids))
@@ -143,7 +320,6 @@ class SavedListService:
         if len(programs) != len(program_ids):
             raise NotFoundException("One or more programs not found")
 
-        # Load match results for the student + each program.
         match_result = await self.db.execute(
             select(MatchResult).where(
                 MatchResult.student_id == student_id,
@@ -152,13 +328,10 @@ class SavedListService:
         )
         match_map: dict[UUID, MatchResult] = {m.program_id: m for m in match_result.scalars().all()}
 
-        # Build structured comparison data.
         comparison_data: list[dict] = []
         for prog in programs:
             inst: Institution = prog.institution
             match = match_map.get(prog.id)
-            # Spec 10 §8 — program-level outcomes feed the "outcomes + employer
-            # signals" comparison dimension. Match displayed salary coalescing.
             outcomes = prog.outcomes_data or {}
             salary = next(
                 (
@@ -196,7 +369,6 @@ class SavedListService:
                     "median_salary": salary,
                     "employment_rate": employment,
                     "payback_months": payback,
-                    # Dual-score (Spec 09 §4 / G-S2) — preferred over legacy match_score.
                     "fitness_score": float(match.fitness_score)
                     if match and match.fitness_score is not None
                     else None,
@@ -211,8 +383,22 @@ class SavedListService:
                 }
             )
 
-        # AI engine is being rebuilt — return data without AI analysis
         return {
             "programs": comparison_data,
             "ai_analysis": "AI analysis unavailable.",
         }
+
+    async def collect_tag_suggestions(self, student_id: UUID) -> list[str]:
+        saved_list = await self._get_or_create_default_list(student_id)
+        result = await self.db.execute(
+            select(SavedListItem.tags).where(SavedListItem.list_id == saved_list.id)
+        )
+        counts: dict[str, int] = {}
+        for (tags,) in result.all():
+            if not isinstance(tags, list):
+                continue
+            for t in tags:
+                s = str(t).strip()
+                if s:
+                    counts[s] = counts.get(s, 0) + 1
+        return [k for k, _ in sorted(counts.items(), key=lambda x: (-x[1], x[0]))]
