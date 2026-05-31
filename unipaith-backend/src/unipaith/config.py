@@ -229,6 +229,14 @@ class Settings(BaseSettings):
     # Off → returns the hardcoded STUB_IDENTITY_SUMMARY.
     ai_identity_v2_enabled: bool = False
 
+    # Spec 18 §9 / 45 §15 — OutcomeBriefForOfferLetter LLM. When True,
+    # ApplicationService routes offer-brief generation through the
+    # OutcomeBriefAgent (Sonnet, forced tool-use) at offer-create/record time
+    # and caches the structured brief on offer_letters.plain_language_brief.
+    # On any failure (parse / API error / mock mode) it falls back to the
+    # rule-based _build_structured_brief — the offer flow never 5xxes.
+    ai_outcome_brief_v2_enabled: bool = False
+
     # Spec 10 §3 / 45 §12 — Discovery type-first search query interpreter. When
     # True, SearchService.interpret routes a free-text query through the
     # DiscoveryQueryInterpreter agent (Sonnet, forced tool-use) to produce

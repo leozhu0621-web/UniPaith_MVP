@@ -111,8 +111,9 @@ Plan 2 (LLM stack) plugs into these contract endpoints. Each is feature-flagged 
 | `POST /me/workshops/test/guidance` | `ai_workshops_v2_enabled` | ✅ wired | TestPrepCoach (C2) |
 | `POST /me/strategy/generate` | `ai_strategy_v2_enabled` | ✅ wired | StrategyAgent (Sonnet, forced tool-use); produces career → degree → academic / financial / geographic paths + 4-paragraph narrative |
 | `POST /me/identity/regenerate-summary` | `ai_identity_v2_enabled` | ✅ wired | IdentitySummaryAgent synthesizes a 3–5 sentence paragraph from the structured layer; on failure preserves an existing real summary rather than overwriting with stub |
+| `POST /me/applications/:id/offers` + offer create | `ai_outcome_brief_v2_enabled` | ✅ wired | OutcomeBriefForOfferLetter (Spec 18 / 45 §15): Sonnet forced tool-use turns an offer into a plain-language brief {key_terms, deadlines, next_steps, summary}, cached on `offer_letters.plain_language_brief`; falls back to rule-based `_build_structured_brief` |
 
-All five flags are **enabled in production** (see `infra/ecs.tf` env block).
+All flags are **enabled in production** (see `infra/ecs.tf` env block).
 
 **Integration-test invariant:** when an LLM agent fails (timeout, parse error, guardrail trip), the service falls back to the rule-based path so the caller never sees a 5xx. See `tests/test_plan2_integration.py`.
 

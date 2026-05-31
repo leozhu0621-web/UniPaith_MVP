@@ -9,15 +9,20 @@ from unipaith.models.user import User
 from unipaith.schemas.application import (
     ApplicationDetailResponse,
     ApplicationResponse,
+    BulkWithdrawRequest,
     ChecklistToggleRequest,
     CreateApplicationRequest,
     CreateOfferRequest,
     DecisionRequest,
     GuardrailScanResponse,
+    OfferDecisionResponse,
     OfferLetterResponse,
     OfferRespondRequest,
+    OffersComparisonResponse,
     PatchApplicationRequest,
+    RecordOfferRequest,
     UpdateApplicationRequest,
+    WithdrawResult,
 )
 from unipaith.schemas.batch import (
     BatchDecisionRequest,
@@ -99,11 +104,88 @@ async def respond_to_offer(
     user: User = Depends(require_student),
     db: AsyncSession = Depends(get_db),
 ):
+    """Back-compat shim — accept/decline an offer (spec 18 §4)."""
     profile = await StudentService(db)._get_student_profile(user.id)
     svc = ApplicationService(db)
     return await svc.respond_to_offer(
         profile.id, application_id, body.response, body.decline_reason
     )
+
+
+# --- Spec 18 · Decisions & Offers (student) ---
+
+
+@router.get("/me/offers/comparison", response_model=OffersComparisonResponse)
+async def offers_comparison(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Side-by-side comparison of all current offers (spec 18 §5)."""
+    profile = await StudentService(db)._get_student_profile(user.id)
+    return await ApplicationService(db).get_offers_comparison(profile.id)
+
+
+@router.post(
+    "/me/{application_id}/offers",
+    response_model=OfferLetterResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def record_offer(
+    application_id: UUID,
+    body: RecordOfferRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Record an offer received off-platform (spec 18 §3/§14)."""
+    profile = await StudentService(db)._get_student_profile(user.id)
+    svc = ApplicationService(db)
+    return await svc.record_external_offer(profile.id, application_id, body.model_dump())
+
+
+@router.patch(
+    "/me/{application_id}/offers/{offer_id}",
+    response_model=OfferDecisionResponse,
+)
+async def respond_offer(
+    application_id: UUID,
+    offer_id: UUID,
+    body: OfferRespondRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Accept/decline an offer; returns the other pending apps now
+    withdrawable in bulk (spec 18 §4/§6)."""
+    profile = await StudentService(db)._get_student_profile(user.id)
+    svc = ApplicationService(db)
+    result = await svc.respond_to_offer_with_context(
+        profile.id, application_id, body.response, body.decline_reason
+    )
+    return OfferDecisionResponse(
+        offer=result["offer"], withdrawable_apps=result["withdrawable_apps"]
+    )
+
+
+@router.post("/me/{application_id}/withdraw", response_model=ApplicationResponse)
+async def withdraw_decision(
+    application_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Status-preserving withdraw — keeps the row as `withdrawn` (spec 18 §2)."""
+    profile = await StudentService(db)._get_student_profile(user.id)
+    return await ApplicationService(db).withdraw_from_decisions(profile.id, application_id)
+
+
+@router.post("/me/withdraw-bulk", response_model=WithdrawResult)
+async def withdraw_bulk(
+    body: BulkWithdrawRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Withdraw the other pending apps after accepting elsewhere (spec 18 §6)."""
+    profile = await StudentService(db)._get_student_profile(user.id)
+    n = await ApplicationService(db).bulk_withdraw(profile.id, body.application_ids)
+    return WithdrawResult(withdrawn_count=n)
 
 
 @router.patch("/me/{application_id}", response_model=ApplicationResponse)
