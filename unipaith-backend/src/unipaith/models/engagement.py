@@ -236,13 +236,15 @@ class Conversation(Base):
     program_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("programs.id", ondelete="SET NULL")
     )
+    # Spec 17 — application-threaded inbox metadata (nullable for legacy threads).
     application_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("applications.id", ondelete="SET NULL"), nullable=True
     )
-    thread_type: Mapped[str] = mapped_column(String(20), default="human", nullable=False)
+    # 'human' | 'system' (alerts, status updates, AI-run notices).
+    thread_type: Mapped[str] = mapped_column(String(20), server_default="human", nullable=False)
     action_label: Mapped[str | None] = mapped_column(String(40))
     due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    waiting_on: Mapped[str] = mapped_column(String(20), default="none", nullable=False)
+    waiting_on: Mapped[str] = mapped_column(String(20), server_default="none", nullable=False)
     linked_checklist_item_category: Mapped[str | None] = mapped_column(String(50))
     subject: Mapped[str | None] = mapped_column(String(500))
     status: Mapped[str | None] = mapped_column(String(20))
@@ -250,25 +252,6 @@ class Conversation(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     last_message_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-
-    # ── Spec 17 (Inbox) — application-threaded conversation metadata ──
-    # All nullable / server-defaulted so institution messaging (Spec 29),
-    # which shares this table, is unaffected.
-    application_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("applications.id", ondelete="SET NULL"), index=True
-    )
-    # 'human' (admissions officer / coordinator) | 'system' (alerts, status
-    # updates, AI-run notices). System threads have institution_id = NULL.
-    thread_type: Mapped[str] = mapped_column(String(20), server_default="human", nullable=False)
-    # needs_reply | document_requested | clarification_required |
-    # interview_invite | status_update_only | completed
-    action_label: Mapped[str | None] = mapped_column(String(40))
-    due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    # who the thread is waiting on: 'student' | 'school' | 'none'
-    waiting_on: Mapped[str] = mapped_column(String(20), server_default="none", nullable=False)
-    # category of the checklist item this thread's request maps to (Spec 15);
-    # mark-complete writes application_checklists.manual_overrides[category].
-    linked_checklist_item_category: Mapped[str | None] = mapped_column(String(50))
 
     messages: Mapped[list[Message]] = relationship(
         back_populates="conversation", cascade="all, delete-orphan"
