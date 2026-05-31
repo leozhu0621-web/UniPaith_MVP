@@ -955,9 +955,108 @@ export interface Notification {
   created_at: string
 }
 
+export type NotificationChannelKey = 'email' | 'sms' | 'in_app' | 'push'
+export type NotificationChannels = Record<NotificationChannelKey, boolean>
+export type EmailFrequency = 'all' | 'weekly' | 'important' | 'none'
+
+export interface NotificationTypePref {
+  type: string
+  label: string
+  essential: boolean
+  channels: NotificationChannels
+}
+
 export interface NotificationPreference {
   email_enabled: boolean
-  preferences: Record<string, boolean>
+  email_frequency: EmailFrequency
+  preferences: Record<string, NotificationChannels> | null
+  matrix: NotificationTypePref[]
+}
+
+// ============ SETTINGS (Spec 21) ============
+export type ThemePref = 'light' | 'dark' | 'system'
+export type FontSizePref = 'sm' | 'md' | 'lg' | 'xl'
+
+export interface AccessibilityPrefs {
+  dyslexia_mode: boolean
+  font_size: FontSizePref
+  reduced_motion: boolean
+}
+
+export interface SettingsPreferences {
+  locale: string | null
+  timezone: string | null
+  theme: ThemePref
+  accessibility: AccessibilityPrefs
+}
+
+export interface DeletionInfo {
+  scheduled_at: string
+  purge_at: string
+}
+
+export interface UserSettings {
+  account: {
+    email: string
+    role: string
+    member_since: string | null
+    display_name: string | null
+    photo_url: string | null
+    pending_email: string | null
+  }
+  security: { mfa_enabled: boolean; mfa_method: string | null }
+  preferences: SettingsPreferences
+  notifications: NotificationTypePref[]
+  email_enabled: boolean
+  email_frequency: EmailFrequency
+  deletion: DeletionInfo | null
+}
+
+export interface MfaEnrollResponse {
+  secret: string
+  otpauth_uri: string
+  recovery_codes: string[]
+}
+
+export interface SessionInfo {
+  id: string
+  device: string
+  current: boolean
+  last_active: string | null
+  location: string | null
+}
+
+export interface LoginEvent {
+  at: string
+  device: string | null
+  location: string | null
+  risk: string | null
+}
+
+export interface TeamMember {
+  id: string
+  email: string
+  role: string
+  status: string
+  invited_at: string | null
+}
+
+export interface InstitutionSettings {
+  account: {
+    institution_id: string | null
+    name: string | null
+    contact_email: string | null
+    website_url: string | null
+    primary_domain: string | null
+    member_since: string | null
+  }
+  security: { mfa_enabled: boolean; mfa_method: string | null }
+  preferences: SettingsPreferences
+  notifications: NotificationTypePref[]
+  email_enabled: boolean
+  email_frequency: EmailFrequency
+  team: TeamMember[]
+  deletion: DeletionInfo | null
 }
 
 // ============ RECOMMENDATIONS ============

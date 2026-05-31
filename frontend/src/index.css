@@ -208,6 +208,38 @@ html {
   .up-skeleton { animation: none; }
 }
 
+/* ----------------------------------------------------------------
+   Spec 21 — Settings · Accessibility preferences (user-toggled).
+   Applied via data-* attributes on <html> by the theme store, mirrored
+   by the no-FOUC init script in index.html. (Spec 21 §2.3, 03 §9.)
+   ---------------------------------------------------------------- */
+
+/* Font size scales the rem base, so all rem-based type scales with it. */
+html[data-font-size="sm"] { font-size: 14px; }
+html[data-font-size="md"] { font-size: 16px; }
+html[data-font-size="lg"] { font-size: 18px; }
+html[data-font-size="xl"] { font-size: 20px; }
+
+/* Dyslexia-friendly: a high-legibility stack + roomier tracking/leading. */
+html[data-dyslexia] body,
+html[data-dyslexia] body :not(.up-display):not(.up-stat) {
+  font-family: 'Atkinson Hyperlegible', 'Verdana', 'Tahoma', system-ui, sans-serif;
+  letter-spacing: 0.01em;
+  word-spacing: 0.06em;
+  line-height: 1.65;
+}
+
+/* User-toggled reduced motion (independent of the OS media query above). */
+html[data-reduce-motion] *,
+html[data-reduce-motion] *::before,
+html[data-reduce-motion] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+html[data-reduce-motion] .up-skeleton { animation: none; }
+
 /* Touch ergonomics — 44px minimum target on touch devices (Spec/02b §4,
    WCAG 2.5.5). Scoped to interactive chrome so desktop density is preserved. */
 @media (pointer: coarse) {
