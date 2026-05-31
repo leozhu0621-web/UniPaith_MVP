@@ -73,6 +73,15 @@ async def test_submit_application(
         student_client, db_session, profile.id, program.id
     )
 
+    # Mark every required checklist item complete to satisfy the gate (spec 15 §7).
+    cl = (await student_client.get(f"/api/v1/students/me/applications/{app.id}/checklist")).json()
+    for item in cl["items"]:
+        if item.get("required"):
+            await student_client.patch(
+                f"/api/v1/applications/me/{app.id}/checklist",
+                json={"item_key": item["key"], "completed": True},
+            )
+
     # Submit the application: POST /api/v1/applications/me/{application_id}/submit
     resp = await student_client.post(f"/api/v1/applications/me/{app.id}/submit")
     assert resp.status_code == 200
@@ -87,11 +96,11 @@ async def test_submit_blocks_incomplete(
     mock_student_user: User,
     mock_institution_user: User,
 ):
-    """Submitting without required items or a non-existent application should fail."""
+    """Spec 15 §14 — internal submit is blocked while readiness < 100%."""
     profile, _, program = await _seed_student_and_program(
         db_session, mock_student_user, mock_institution_user
     )
-    # Create application without checklist — no documents prepared
+    # Draft application with nothing completed.
     app = Application(
         student_id=profile.id,
         program_id=program.id,
@@ -101,6 +110,6 @@ async def test_submit_blocks_incomplete(
     await db_session.commit()
 
     resp = await student_client.post(f"/api/v1/applications/me/{app.id}/submit")
-    # Simple submit succeeds for any draft application
-    assert resp.status_code == 200
-    assert resp.json()["status"] == "submitted"
+    # The readiness gate must block an incomplete internal submission.
+    assert resp.status_code == 400
+    assert "not ready" in resp.json()["detail"].lower()

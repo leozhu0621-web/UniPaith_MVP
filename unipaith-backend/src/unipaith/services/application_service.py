@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import random
 import string
-import uuid
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -21,8 +20,10 @@ from unipaith.models.application import (
     OfferLetter,
 )
 from unipaith.models.engagement import StudentEssay, StudentResume
-from unipaith.models.institution import Program
+from unipaith.models.institution import Institution, Program
+from unipaith.models.matching import MatchResult
 from unipaith.models.student import StudentProfile
+from unipaith.services.guardrail_service import validate_intent
 
 
 class ApplicationService:
@@ -47,11 +48,29 @@ class ApplicationService:
         if existing.scalar_one_or_none():
             raise ConflictException("Application already exists for this program")
 
+        # Seed the match score/rationale from the latest match result so the
+        # dashboard and guardrails have fit context for a newly-created app
+        # (spec 15 §14 — "create from saved → expected fields populated").
+        match = (
+            await self.db.execute(
+                select(MatchResult).where(
+                    MatchResult.student_id == student_id,
+                    MatchResult.program_id == program_id,
+                )
+            )
+        ).scalar_one_or_none()
+
         app = Application(
             student_id=student_id,
             program_id=program_id,
             status="draft",
+            submission_mode="internal",
             completeness_status="incomplete",
+            readiness_pct=0,
+            match_score=(match.fitness_score if match else None),
+            match_reasoning_text=(
+                (match.rationale_text or match.reasoning_text) if match else None
+            ),
         )
         self.db.add(app)
         await self.db.flush()
@@ -62,11 +81,86 @@ class ApplicationService:
             select(Application)
             .where(Application.student_id == student_id)
             .options(selectinload(Application.program))
+            .order_by(Application.created_at.desc())
         )
-        return list(result.scalars().all())
+        apps = list(result.scalars().all())
+        await self._attach_institution_names(apps)
+        return apps
 
     async def get_student_application(self, student_id: UUID, application_id: UUID) -> Application:
-        return await self._get_application_for_student(student_id, application_id)
+        app = await self._get_application_for_student(student_id, application_id)
+        await self._attach_institution_names([app])
+        await self._attach_offer(app)
+        return app
+
+    async def _attach_institution_names(self, apps: list[Application]) -> None:
+        """Set a transient ``institution_name`` on each app's program brief so
+        the dashboard can filter/group by institution (spec 15 §2)."""
+        inst_ids = {
+            a.program.institution_id
+            for a in apps
+            if a.program is not None and a.program.institution_id is not None
+        }
+        if not inst_ids:
+            return
+        rows = await self.db.execute(
+            select(Institution.id, Institution.name).where(Institution.id.in_(inst_ids))
+        )
+        name_by_id = {row.id: row.name for row in rows.all()}
+        for a in apps:
+            if a.program is not None:
+                a.program.institution_name = name_by_id.get(a.program.institution_id)
+
+    async def _attach_offer(self, app: Application) -> None:
+        """Embed the offer + a plain-language brief on the application (spec 15 §6.6)."""
+        result = await self.db.execute(
+            select(OfferLetter).where(OfferLetter.application_id == app.id)
+        )
+        offer = result.scalar_one_or_none()
+        if offer is not None:
+            offer.brief = self._build_offer_brief(offer, app.program)
+        app.offer = offer
+
+    @staticmethod
+    def _build_offer_brief(offer: OfferLetter, program: Program | None) -> str:
+        """Rule-based OutcomeBrief (spec 15 §6.6 / §11). A future
+        ``OutcomeBriefForOfferLetter`` LLM agent can swap in behind a flag."""
+        prog_name = program.program_name if program else "the program"
+        otype = (offer.offer_type or "offer").replace("_", " ")
+        parts = [f"You've received a {otype} from {prog_name}."]
+        if offer.scholarship_amount:
+            parts.append(f"Scholarship: ${offer.scholarship_amount:,}.")
+        if offer.tuition_amount:
+            parts.append(f"Tuition: ${offer.tuition_amount:,}.")
+        if offer.financial_package_total:
+            parts.append(f"Total package: ${offer.financial_package_total:,}.")
+        if offer.response_deadline:
+            parts.append(f"Respond by {offer.response_deadline.isoformat()}.")
+        return " ".join(parts)
+
+    async def patch_application(
+        self, student_id: UUID, application_id: UUID, updates: dict
+    ) -> Application:
+        """Student partial update: submission_mode + guardrail intent/rationale."""
+        app = await self._get_application_for_student(student_id, application_id)
+
+        if updates.get("submission_mode") is not None:
+            mode = updates["submission_mode"]
+            if mode not in ("internal", "external"):
+                raise BadRequestException("submission_mode must be 'internal' or 'external'")
+            app.submission_mode = mode
+
+        if "intent_picker" in updates or "intent_rationale" in updates:
+            new_intent = updates.get("intent_picker", app.intent_picker)
+            new_rationale = updates.get("intent_rationale", app.intent_rationale)
+            validate_intent(new_intent, new_rationale)
+            if "intent_picker" in updates:
+                app.intent_picker = updates["intent_picker"]
+            if "intent_rationale" in updates:
+                app.intent_rationale = updates["intent_rationale"]
+
+        await self.db.flush()
+        return await self.get_student_application(student_id, application_id)
 
     async def submit_application(self, student_id: UUID, application_id: UUID) -> Application:
         app = await self._get_application_for_student(student_id, application_id)
@@ -74,19 +168,19 @@ class ApplicationService:
         if app.status != "draft":
             raise BadRequestException("Only draft applications can be submitted")
 
-        app.status = "submitted"
-        app.submitted_at = datetime.now(UTC)
+        # External: the student submits on the institution's own portal; we
+        # record the platform side without invoking institution-receive (§7).
+        if app.submission_mode == "external":
+            now = datetime.now(UTC)
+            app.status = "submitted"
+            app.submitted_at = now
+            app.completeness_status = "complete"
+            await self.db.flush()
+            await self.db.refresh(app)
+            return app
 
-        confirmation = f"UNI-{uuid.uuid4().hex[:8].upper()}"
-        submission = ApplicationSubmission(
-            application_id=app.id,
-            submitted_at=app.submitted_at,
-            confirmation_number=confirmation,
-        )
-        self.db.add(submission)
-        await self.db.flush()
-        await self.db.refresh(app)
-        return app
+        # Internal: enforce the readiness gate + freeze a submission snapshot.
+        return await self.submit_application_with_guardrails(student_id, application_id)
 
     async def withdraw_application(self, student_id: UUID, application_id: UUID) -> None:
         app = await self._get_application_for_student(student_id, application_id)
@@ -210,6 +304,7 @@ class ApplicationService:
             offer.status = "declined"
 
         await self.db.flush()
+        await self.db.refresh(offer)
         return offer
 
     async def update_status(

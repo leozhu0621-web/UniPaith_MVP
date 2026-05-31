@@ -9,11 +9,14 @@ from unipaith.models.user import User
 from unipaith.schemas.application import (
     ApplicationDetailResponse,
     ApplicationResponse,
+    ChecklistToggleRequest,
     CreateApplicationRequest,
     CreateOfferRequest,
     DecisionRequest,
+    GuardrailScanResponse,
     OfferLetterResponse,
     OfferRespondRequest,
+    PatchApplicationRequest,
     UpdateApplicationRequest,
 )
 from unipaith.schemas.batch import (
@@ -22,7 +25,10 @@ from unipaith.schemas.batch import (
     BatchRequestItemsRequest,
     BatchStatusRequest,
 )
+from unipaith.schemas.checklist import ApplicationChecklistResponse, ReadinessCheckResponse
 from unipaith.services.application_service import ApplicationService
+from unipaith.services.checklist_service import ChecklistService
+from unipaith.services.guardrail_service import GuardrailService
 from unipaith.services.institution_service import InstitutionService
 from unipaith.services.student_service import StudentService
 
@@ -100,6 +106,57 @@ async def respond_to_offer(
     )
 
 
+@router.patch("/me/{application_id}", response_model=ApplicationResponse)
+async def patch_application(
+    application_id: UUID,
+    body: PatchApplicationRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Partial update: submission_mode + guardrail intent/rationale (spec 15 §9)."""
+    profile = await StudentService(db)._get_student_profile(user.id)
+    svc = ApplicationService(db)
+    return await svc.patch_application(
+        profile.id, application_id, body.model_dump(exclude_unset=True)
+    )
+
+
+@router.post("/me/{application_id}/guardrail-scan", response_model=GuardrailScanResponse)
+async def guardrail_scan(
+    application_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return fit band + recommended action + blockers (spec 15 §6.5, G-S4)."""
+    profile = await StudentService(db)._get_student_profile(user.id)
+    return await GuardrailService(db).scan(profile.id, application_id)
+
+
+@router.post("/me/{application_id}/check-readiness", response_model=ReadinessCheckResponse)
+async def check_readiness(
+    application_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Re-evaluate readiness per the Adaptive Intake apply-ready check (spec 15 §5)."""
+    profile = await StudentService(db)._get_student_profile(user.id)
+    return await ChecklistService(db).readiness_check(profile.id, application_id)
+
+
+@router.patch("/me/{application_id}/checklist", response_model=ApplicationChecklistResponse)
+async def toggle_checklist_item(
+    application_id: UUID,
+    body: ChecklistToggleRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Manually mark a checklist item complete/incomplete (external mode, spec 15 §7)."""
+    profile = await StudentService(db)._get_student_profile(user.id)
+    return await ChecklistService(db).toggle_item(
+        profile.id, application_id, body.item_key, body.completed
+    )
+
+
 # --- Institution-facing ---
 
 
@@ -134,12 +191,17 @@ async def update_application_status(
     result = await svc.update_status(inst.id, application_id, body.status)
     # Audit log
     from unipaith.services.audit_service import AuditService
+
     await AuditService(db).log(
-        institution_id=inst.id, actor_user_id=user.id,
-        action="status_change", entity_type="application",
-        entity_id=str(application_id), application_id=application_id,
+        institution_id=inst.id,
+        actor_user_id=user.id,
+        action="status_change",
+        entity_type="application",
+        entity_id=str(application_id),
+        application_id=application_id,
         description=f"Status changed from {old.status} to {body.status}",
-        old_value={"status": old.status}, new_value={"status": body.status},
+        old_value={"status": old.status},
+        new_value={"status": body.status},
     )
     return result
 
@@ -169,10 +231,14 @@ async def make_decision(
     svc = ApplicationService(db)
     result = await svc.make_decision(inst.id, application_id, body.decision, body.decision_notes)
     from unipaith.services.audit_service import AuditService
+
     await AuditService(db).log(
-        institution_id=inst.id, actor_user_id=user.id,
-        action="decision_release", entity_type="application",
-        entity_id=str(application_id), application_id=application_id,
+        institution_id=inst.id,
+        actor_user_id=user.id,
+        action="decision_release",
+        entity_type="application",
+        entity_id=str(application_id),
+        application_id=application_id,
         description=f"Decision: {body.decision}",
         new_value={"decision": body.decision, "notes": body.decision_notes},
     )
@@ -220,13 +286,13 @@ async def batch_request_missing_items(
 
     await InstitutionService(db).get_institution(user.id)  # auth check
     result = BatchOperationResult(
-        success_count=0, failed_ids=[], errors=[],
+        success_count=0,
+        failed_ids=[],
+        errors=[],
     )
     for app_id in body.application_ids:
         try:
-            r = await db.execute(
-                select(Application).where(Application.id == app_id)
-            )
+            r = await db.execute(select(Application).where(Application.id == app_id))
             app = r.scalar_one_or_none()
             if not app:
                 result.failed_ids.append(app_id)
@@ -251,7 +317,9 @@ async def batch_update_status(
     inst = await InstitutionService(db).get_institution(user.id)
     svc = ApplicationService(db)
     result = BatchOperationResult(
-        success_count=0, failed_ids=[], errors=[],
+        success_count=0,
+        failed_ids=[],
+        errors=[],
     )
     for app_id in body.application_ids:
         try:
@@ -272,12 +340,17 @@ async def batch_release_decision(
     inst = await InstitutionService(db).get_institution(user.id)
     svc = ApplicationService(db)
     result = BatchOperationResult(
-        success_count=0, failed_ids=[], errors=[],
+        success_count=0,
+        failed_ids=[],
+        errors=[],
     )
     for app_id in body.application_ids:
         try:
             await svc.make_decision(
-                inst.id, app_id, body.decision, body.decision_notes,
+                inst.id,
+                app_id,
+                body.decision,
+                body.decision_notes,
             )
             result.success_count += 1
         except Exception as e:
