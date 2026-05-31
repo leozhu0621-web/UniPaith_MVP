@@ -131,3 +131,55 @@ async def test_save_duplicate(
         "/api/v1/students/me/saved", json={"program_id": str(program.id)}
     )
     assert resp2.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_compare_programs_returns_spec10_dimensions(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    """Spec 10 §8 — compare returns the fields backing the five dimensions."""
+    _, institution, program1 = await _seed_student_and_program(
+        db_session, mock_student_user, mock_institution_user
+    )
+    program2 = Program(
+        institution_id=institution.id,
+        program_name="Data Science PhD",
+        degree_type="phd",
+        is_published=True,
+        tuition=60000,
+        campus_setting="urban",
+        delivery_format="on_campus",
+        acceptance_rate=0.2,
+        outcomes_data={"median_salary": 88000, "employment_rate": 0.9, "payback_months": 20},
+    )
+    db_session.add(program2)
+    await db_session.commit()
+
+    resp = await student_client.post(
+        "/api/v1/students/me/saved/compare",
+        json={"program_ids": [str(program1.id), str(program2.id)]},
+    )
+    assert resp.status_code == 200
+    progs = resp.json()["programs"]
+    assert len(progs) == 2
+    keys = set(progs[0].keys())
+    for k in (
+        "campus_setting",
+        "median_salary",
+        "employment_rate",
+        "payback_months",
+        "fitness_score",
+        "confidence_score",
+        "tuition",
+        "delivery_format",
+        "acceptance_rate",
+    ):
+        assert k in keys, f"compare row missing {k}"
+
+    ds = next(p for p in progs if p["program_name"] == "Data Science PhD")
+    assert ds["median_salary"] == 88000
+    assert ds["employment_rate"] == 0.9
+    assert ds["campus_setting"] == "urban"

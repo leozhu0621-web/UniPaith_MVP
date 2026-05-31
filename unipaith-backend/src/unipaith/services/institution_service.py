@@ -1722,6 +1722,10 @@ class InstitutionService:
         max_acceptance_rate: float | None = None,
         start_year: int | None = None,
         program_name: str | None = None,
+        # Spec 10 §5 — featured / outcome filters (program-level outcomes_data).
+        min_median_salary: int | None = None,
+        min_employment_rate: float | None = None,
+        max_payback_months: int | None = None,
         sort_by: str | None = None,
         page: int = 1,
         page_size: int = 20,
@@ -1803,6 +1807,24 @@ class InstitutionService:
             )
         if program_name:
             stmt = stmt.where(Program.program_name.ilike(f"%{_escape_like(program_name)}%"))
+        # Spec 10 §5 — outcome filters over program-level outcomes_data. Programs
+        # missing the metric are excluded (NULL JSON access → NULL → fails the
+        # comparison), so these only ever narrow the set when applied.
+        if min_median_salary is not None:
+            salary_expr = func.coalesce(
+                Program.outcomes_data["median_salary"].as_integer(),
+                Program.outcomes_data["earnings_4yr_median"].as_integer(),
+                Program.outcomes_data["earnings_1yr_median"].as_integer(),
+            )
+            stmt = stmt.where(salary_expr >= min_median_salary)
+        if min_employment_rate is not None:
+            stmt = stmt.where(
+                Program.outcomes_data["employment_rate"].as_float() >= min_employment_rate
+            )
+        if max_payback_months is not None:
+            stmt = stmt.where(
+                Program.outcomes_data["payback_months"].as_integer() <= max_payback_months
+            )
 
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total = (await self.db.execute(count_stmt)).scalar_one()
