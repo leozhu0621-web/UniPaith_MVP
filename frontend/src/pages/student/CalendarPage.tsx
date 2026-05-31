@@ -186,8 +186,8 @@ export default function CalendarPage() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
         <div>
-          <h1 className="text-h1 text-charcoal">Calendar</h1>
-          <p className="text-sm text-slate mt-1">Your admissions timeline</p>
+          <h1 className="text-h1 text-charcoal">Your admissions timeline</h1>
+          <p className="text-sm text-slate mt-1">{filtered.length} item{filtered.length !== 1 ? 's' : ''}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="secondary" onClick={() => setShowReminder(true)}>

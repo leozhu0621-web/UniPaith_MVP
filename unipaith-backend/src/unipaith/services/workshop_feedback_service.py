@@ -29,13 +29,16 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.config import settings
-from unipaith.core.exceptions import NotFoundException
+from unipaith.core.exceptions import BadRequestException, NotFoundException
 from unipaith.models.student import StudentProfile
 from unipaith.models.workshops import WorkshopFeedbackRun
 from unipaith.schemas.workshop_feedback import (
     EssayFeedbackRequest,
+    GapAnalysisItem,
     InterviewPracticeRequest,
+    PrepRecommendation,
     TestGuidanceRequest,
+    WorkshopFeedbackResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -588,3 +591,81 @@ class WorkshopFeedbackService:
         stmt = stmt.order_by(WorkshopFeedbackRun.created_at.desc())
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
+
+    async def get_run(self, user_id: UUID, run_id: UUID) -> WorkshopFeedbackRun:
+        student_id = await self._student_id(user_id)
+        result = await self.db.execute(
+            select(WorkshopFeedbackRun).where(
+                WorkshopFeedbackRun.id == run_id,
+                WorkshopFeedbackRun.student_id == student_id,
+            )
+        )
+        run = result.scalar_one_or_none()
+        if run is None:
+            raise NotFoundException("Workshop run not found")
+        return run
+
+    async def request_interview_feedback(
+        self, user_id: UUID, body: InterviewPracticeRequest
+    ) -> WorkshopFeedbackRun:
+        if not body.response_text or len(body.response_text.strip()) < 20:
+            raise BadRequestException("response_text must be at least 20 characters")
+        return await self.request_interview_practice(user_id, body)
+
+    @staticmethod
+    def _test_bands(test_type: str, current: float | None, target: float | None) -> tuple[str, str]:
+        if current is None:
+            return "unknown", str(target) if target is not None else "unknown"
+        if test_type in {"GRE", "GMAT", "SAT", "ACT", "MCAT", "LSAT"}:
+            cur = (
+                "competitive" if current >= 320 else "mid-range" if current >= 300 else "developing"
+            )
+            tgt = (
+                "competitive"
+                if (target or 0) >= 320
+                else "mid-range"
+                if (target or 0) >= 300
+                else "developing"
+            )
+            return f"{int(current)} ({cur})", f"{int(target)} ({tgt})" if target else "not set"
+        cur = "proficient" if current >= 100 else "developing"
+        tgt = "proficient" if (target or 0) >= 100 else "developing"
+        return f"{int(current)} ({cur})", f"{int(target)} ({tgt})" if target else "not set"
+
+    def to_response(self, run: WorkshopFeedbackRun) -> WorkshopFeedbackResponse:
+        resp = WorkshopFeedbackResponse.model_validate(run)
+        if run.domain != "test":
+            return resp
+        current = run.rubric_scores.get("current_score")
+        target = run.rubric_scores.get("target_score")
+        gap = run.rubric_scores.get("gap")
+        test_type = run.input_artifact_id or "GRE"
+        resp.current_band, resp.target_band = self._test_bands(
+            test_type,
+            float(current) if current is not None else None,
+            float(target) if target is not None else None,
+        )
+        resp.gap_analysis = [
+            GapAnalysisItem(
+                topic=str(i.get("issue", "section")),
+                recommendation=str(i.get("location_ref") or "Review in practice."),
+            )
+            for i in run.structural_issues
+        ]
+        pri = "high" if gap and float(gap) > 150 else "med" if gap and float(gap) > 50 else "low"
+        tc = "8+ weeks" if pri == "high" else "4-8 weeks" if pri == "med" else "1-3 weeks"
+        resp.prep_recommendations = [
+            PrepRecommendation(
+                action=str(m.get("element", "")),
+                time_commitment=tc,
+                priority=(
+                    "high"
+                    if m.get("importance") == "required"
+                    else "med"
+                    if m.get("importance") == "should_have"
+                    else "low"
+                ),
+            )
+            for m in run.missing_elements
+        ]
+        return resp
