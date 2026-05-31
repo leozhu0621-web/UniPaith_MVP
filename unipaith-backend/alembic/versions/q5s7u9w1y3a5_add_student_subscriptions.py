@@ -4,7 +4,7 @@ Spec 07 (Product Context §4) — per-student monetization: 7-day trial → $15/
 Pro, optional +$5/mo ad-free, mock card-on-file. One row per student.
 
 Revision ID: q5s7u9w1y3a5
-Revises: p3q5r7s9t1u3
+Revises: a6c1f0d2e3b4
 Create Date: 2026-05-30 21:00:00.000000
 
 """
@@ -15,7 +15,7 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 revision = "q5s7u9w1y3a5"
-down_revision = "p3q5r7s9t1u3"
+down_revision = "a6c1f0d2e3b4"  # pragma: allowlist secret
 branch_labels = None
 depends_on = None
 
