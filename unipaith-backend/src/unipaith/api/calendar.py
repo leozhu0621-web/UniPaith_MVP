@@ -47,7 +47,9 @@ async def create_reminder(
     db: AsyncSession = Depends(get_db),
 ):
     profile = await StudentService(db)._get_student_profile(user.id)
-    return await CalendarService(db).create_reminder(profile.id, body)
+    item = await CalendarService(db).create_reminder(profile.id, body)
+    await db.commit()
+    return item
 
 
 @router.post("/work-blocks", response_model=CalendarItem, status_code=status.HTTP_201_CREATED)
@@ -57,7 +59,9 @@ async def create_work_block(
     db: AsyncSession = Depends(get_db),
 ):
     profile = await StudentService(db)._get_student_profile(user.id)
-    return await CalendarService(db).create_work_block(profile.id, body)
+    item = await CalendarService(db).create_work_block(profile.id, body)
+    await db.commit()
+    return item
 
 
 @router.patch("/{item_id}", response_model=CalendarItem)
@@ -71,4 +75,5 @@ async def patch_calendar_item(
     item = await CalendarService(db).patch_item(profile.id, item_id, body)
     if item is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Calendar item not found")
+    await db.commit()
     return item

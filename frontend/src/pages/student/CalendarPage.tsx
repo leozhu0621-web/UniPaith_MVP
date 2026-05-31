@@ -14,6 +14,7 @@ import {
   getCalendar, createReminder, createWorkBlock, patchCalendarItem,
   type CalendarItem, type CalendarItemType,
 } from '../../api/calendar'
+import { declineInterview } from '../../api/interviews'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -121,6 +122,14 @@ export default function CalendarPage() {
     onSuccess: updated => {
       invalidate()
       setDetailItem(prev => (prev && prev.id === updated.id ? updated : prev))
+    },
+  })
+
+  const declineMut = useMutation({
+    mutationFn: (interviewId: string) => declineInterview(interviewId),
+    onSuccess: () => {
+      invalidate()
+      setDetailItem(null)
     },
   })
 
@@ -325,7 +334,8 @@ export default function CalendarPage() {
         onClose={() => setDetailItem(null)}
         onNavigate={link => { setDetailItem(null); navigate(link) }}
         onPatch={(id, body) => patchMut.mutate({ id, body })}
-        patching={patchMut.isPending}
+        onDecline={id => declineMut.mutate(id)}
+        patching={patchMut.isPending || declineMut.isPending}
       />
 
       <ReminderModal
@@ -446,11 +456,12 @@ function StatusBadge({ item }: { item: CalendarItem }) {
 }
 
 // ── Item detail + actions modal (Spec 16 §5) ──────────────────────────────
-function ItemDetailModal({ item, onClose, onNavigate, onPatch, patching }: {
+function ItemDetailModal({ item, onClose, onNavigate, onPatch, onDecline, patching }: {
   item: CalendarItem | null
   onClose: () => void
   onNavigate: (link: string) => void
   onPatch: (id: string, body: Parameters<typeof patchCalendarItem>[1]) => void
+  onDecline: (interviewId: string) => void
   patching: boolean
 }) {
   const [confirmUrl, setConfirmUrl] = useState('')
@@ -524,6 +535,12 @@ function ItemDetailModal({ item, onClose, onNavigate, onPatch, patching }: {
             <Button size="sm" variant="secondary" disabled={patching}
               onClick={() => onPatch(item.id, { status: 'completed' })}>
               <Check size={13} className="mr-1" /> Mark complete
+            </Button>
+          )}
+          {item.can_decline && item.interview_id && !isDone(item) && (
+            <Button size="sm" variant="danger" disabled={patching}
+              onClick={() => onDecline(item.interview_id!)}>
+              <XIcon size={13} className="mr-1" /> Decline
             </Button>
           )}
           {item.status === 'completed' && (

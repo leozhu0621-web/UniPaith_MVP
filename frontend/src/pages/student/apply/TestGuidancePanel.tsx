@@ -45,13 +45,14 @@ export default function TestGuidancePanel() {
         test_type: testType,
         current_score: current ? Number(current) : null,
         target_score: target ? Number(target) : null,
+        target_program_id: mode === 'program_specific' ? program?.programId ?? null : null,
       }),
     onSuccess: r => {
       setRun(r)
-      showToast('Guidance ready.', 'success')
+      showToast('Feedback ready.', 'success')
     },
     onError: (err: unknown) =>
-      showToast((err as Error).message ?? 'Could not get guidance.', 'error'),
+      showToast((err as Error).message ?? 'Could not get feedback.', 'error'),
   })
 
   const stats = run ? Object.entries(run.rubric_scores ?? {}) : []
