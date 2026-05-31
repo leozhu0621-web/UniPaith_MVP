@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -20,6 +20,9 @@ import { showToast } from '../../stores/toast-store'
 import { INSTITUTION_TYPES } from '../../utils/constants'
 import { formatDate } from '../../utils/format'
 import type { Rubric, NotificationPreference } from '../../types'
+import {
+  PairRowsEditor, LinkRowsEditor, MetricRowsEditor, StringListEditor,
+} from './settings/ProfileJsonEditors'
 
 const CAMPUS_SETTING_OPTIONS = [
   { value: '', label: 'Not specified' },
@@ -42,51 +45,46 @@ const profileSchema = z.object({
   campus_setting: z.string().optional(),
   student_body_size: z.coerce.number().int().nonnegative().optional(),
   founded_year: z.coerce.number().int().nonnegative().optional(),
-  media_gallery_text: z.string().optional(), // newline-separated list of S3 URLs
 })
 type ProfileForm = z.infer<typeof profileSchema>
 
-// JSONB dicts with per-school structure too variable for key-value widgets —
-// edited as JSON text. Shown on the student profile / institution detail page.
-type InstJsonKey = 'social_links' | 'inquiry_routing' | 'support_services' | 'policies' | 'international_info' | 'school_outcomes'
-const INST_JSON_FIELDS: { key: InstJsonKey; label: string; placeholder: string; hint: string }[] = [
-  {
-    key: 'social_links',
-    label: 'Social Links',
-    placeholder: '{\n  "twitter": "https://twitter.com/nyuniversity",\n  "linkedin": "https://linkedin.com/school/new-york-university",\n  "instagram": "https://instagram.com/nyuniversity"\n}',
-    hint: 'JSON dict of platform → URL. Renders on the institution overview.',
-  },
-  {
-    key: 'inquiry_routing',
-    label: 'Inquiry Routing',
-    placeholder: '{\n  "general": "admissions@nyu.edu",\n  "international": "global.admissions@nyu.edu",\n  "financial_aid": "financial.aid@nyu.edu"\n}',
-    hint: 'JSON dict of inquiry type → destination (email / URL). Powers the student contact flow.',
-  },
-  {
-    key: 'support_services',
-    label: 'Support Services',
-    placeholder: '{\n  "disability_services": {"url": "https://www.nyu.edu/students/communities-and-groups/students-with-disabilities.html"},\n  "counseling": {"url": "https://www.nyu.edu/students/health-and-wellness/counseling-services.html"},\n  "first_gen": {"url": "https://www.nyu.edu/students/communities-and-groups/first-generation.html"}\n}',
-    hint: 'JSON dict of service → {url, phone, description}. Shown on the Overview tab under Support.',
-  },
-  {
-    key: 'policies',
-    label: 'Policies',
-    placeholder: '{\n  "transfer_credit": {"url": "https://www.nyu.edu/admissions/undergraduate-admissions/how-to-apply/transfer-students.html"},\n  "code_of_conduct": {"url": "https://www.nyu.edu/about/policies-guidelines-compliance.html"}\n}',
-    hint: 'JSON dict of policy name → {url, summary?}. Appears on the Requirements / Overview tabs.',
-  },
-  {
-    key: 'international_info',
-    label: 'International Student Info',
-    placeholder: '{\n  "toefl_min": 100,\n  "ielts_min": 7.5,\n  "visa_contact": "ogs@nyu.edu",\n  "visa_url": "https://www.nyu.edu/students/student-information-and-resources/international-students.html"\n}',
-    hint: 'JSON dict of international requirements + contacts.',
-  },
-  {
-    key: 'school_outcomes',
-    label: 'Aggregate Outcomes',
-    placeholder: '{\n  "6mo_placement_rate": 0.95,\n  "top_employers": ["Google", "Goldman Sachs"],\n  "grad_school_yield": 0.22,\n  "source": "2024 First Destination Survey"\n}',
-    hint: 'JSON dict for school-wide placement stats (distinct from program-level outcomes_data).',
-  },
-]
+// Datalist suggestions for the guided JSONB editors (Spec 22 §3 / gap G-I1).
+// The metric keys below mirror what student/institution/InstitutionDetail.tsx
+// reads on the Overview/About tabs, so a guided entry feeds the rendered cards.
+const SOCIAL_SUGGESTIONS = ['twitter', 'linkedin', 'instagram', 'youtube', 'facebook', 'tiktok']
+const INQUIRY_TYPE_SUGGESTIONS = ['general', 'international', 'financial_aid', 'undergraduate', 'graduate', 'transfer']
+const SUPPORT_SUGGESTIONS = ['Tutoring', 'Career services', 'Counseling', 'Disability services', 'First-gen support', 'Financial literacy']
+const POLICY_SUGGESTIONS = ['Transfer credit', 'Code of conduct', 'Admissions policy', 'Test policy', 'Refund policy']
+const INTL_SUGGESTIONS = ['toefl_min', 'ielts_min', 'duolingo_min', 'visa_contact', 'visa_url', 'supported_visas', 'application_fee']
+const OUTCOME_SUGGESTIONS = ['employed_or_continuing_ed', 'graduation_rate_6yr', 'first_destination_placement_rate', 'median_starting_salary', 'top_employers', 'top_employer_industries', 'source']
+
+type Dict = Record<string, unknown>
+
+/** Section wrapper for the Profile form — matches the existing settings idiom. */
+function Section({ title, hint, children, divider = true }: { title: string; hint?: string; children: ReactNode; divider?: boolean }) {
+  return (
+    <section className={divider ? 'border-t pt-4 space-y-4' : 'space-y-4'}>
+      <div>
+        <h3 className="text-sm font-semibold text-gray-700">{title}</h3>
+        {hint && <p className="text-xs text-gray-500">{hint}</p>}
+      </div>
+      {children}
+    </section>
+  )
+}
+
+/** Labelled wrapper for a guided editor inside a section. */
+function Field({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
+  return (
+    <div className="space-y-2">
+      <div>
+        <h4 className="text-[13px] font-semibold text-gray-700">{title}</h4>
+        {hint && <p className="text-xs text-gray-500">{hint}</p>}
+      </div>
+      {children}
+    </div>
+  )
+}
 
 export default function SettingsPage() {
   const queryClient = useQueryClient()
@@ -117,15 +115,16 @@ export default function SettingsPage() {
   const instQ = useQuery({ queryKey: ['institution'], queryFn: getInstitution })
   const profileForm = useForm<ProfileForm>({ resolver: zodResolver(profileSchema) as any })
 
-  const [instJsonText, setInstJsonText] = useState<Record<InstJsonKey, string>>({
-    social_links: '',
-    inquiry_routing: '',
-    support_services: '',
-    policies: '',
-    international_info: '',
-    school_outcomes: '',
-  })
-  const [instJsonErrors, setInstJsonErrors] = useState<Partial<Record<InstJsonKey, string>>>({})
+  // The six institution-profile JSONB dicts (Spec 22 §3) + media gallery are
+  // edited through guided row editors, not raw JSON. Held here as parsed values
+  // and seeded from the loaded institution; editors re-seed on `inst.updated_at`.
+  const [socialLinks, setSocialLinks] = useState<Dict>({})
+  const [inquiryRouting, setInquiryRouting] = useState<Dict>({})
+  const [supportServices, setSupportServices] = useState<Dict>({})
+  const [policies, setPolicies] = useState<Dict>({})
+  const [internationalInfo, setInternationalInfo] = useState<Dict>({})
+  const [schoolOutcomes, setSchoolOutcomes] = useState<Dict>({})
+  const [mediaGallery, setMediaGallery] = useState<string[]>([])
 
   useEffect(() => {
     if (instQ.data) {
@@ -144,18 +143,14 @@ export default function SettingsPage() {
         campus_setting: inst.campus_setting ?? '',
         student_body_size: inst.student_body_size ?? undefined,
         founded_year: inst.founded_year ?? undefined,
-        media_gallery_text: Array.isArray(inst.media_gallery)
-          ? inst.media_gallery.join('\n')
-          : '',
       })
-      setInstJsonText({
-        social_links: inst.social_links ? JSON.stringify(inst.social_links, null, 2) : '',
-        inquiry_routing: inst.inquiry_routing ? JSON.stringify(inst.inquiry_routing, null, 2) : '',
-        support_services: inst.support_services ? JSON.stringify(inst.support_services, null, 2) : '',
-        policies: inst.policies ? JSON.stringify(inst.policies, null, 2) : '',
-        international_info: inst.international_info ? JSON.stringify(inst.international_info, null, 2) : '',
-        school_outcomes: inst.school_outcomes ? JSON.stringify(inst.school_outcomes, null, 2) : '',
-      })
+      setSocialLinks(inst.social_links ?? {})
+      setInquiryRouting(inst.inquiry_routing ?? {})
+      setSupportServices(inst.support_services ?? {})
+      setPolicies(inst.policies ?? {})
+      setInternationalInfo(inst.international_info ?? {})
+      setSchoolOutcomes(inst.school_outcomes ?? {})
+      setMediaGallery(Array.isArray(inst.media_gallery) ? inst.media_gallery : [])
     }
   }, [instQ.data, profileForm])
 
@@ -168,31 +163,7 @@ export default function SettingsPage() {
     onError: () => showToast('Failed to update profile', 'error'),
   })
 
-  const onSaveProfile = profileForm.handleSubmit(data => {
-    // Parse JSON fields; abort if any invalid.
-    const parsed: Partial<Record<InstJsonKey, unknown>> = {}
-    const errs: Partial<Record<InstJsonKey, string>> = {}
-    for (const { key } of INST_JSON_FIELDS) {
-      const text = instJsonText[key]
-      if (!text || !text.trim()) continue
-      try {
-        parsed[key] = JSON.parse(text)
-      } catch (e: any) {
-        errs[key] = `Invalid JSON: ${e?.message || 'parse error'}`
-      }
-    }
-    if (Object.keys(errs).length) {
-      setInstJsonErrors(errs)
-      showToast('Please fix JSON errors before saving', 'error')
-      return
-    }
-    setInstJsonErrors({})
-
-    const mediaGallery = (data.media_gallery_text ?? '')
-      .split('\n')
-      .map((s: string) => s.trim())
-      .filter(Boolean)
-
+  const onSaveProfile = profileForm.handleSubmit((data) => {
     updateInstMut.mutate({
       name: data.name,
       type: data.type,
@@ -207,13 +178,13 @@ export default function SettingsPage() {
       campus_setting: (data.campus_setting as 'urban' | 'suburban' | 'rural' | '') || undefined,
       student_body_size: data.student_body_size || undefined,
       founded_year: data.founded_year || undefined,
-      media_gallery: mediaGallery.length ? mediaGallery : undefined,
-      social_links: parsed.social_links as any,
-      inquiry_routing: parsed.inquiry_routing as any,
-      support_services: parsed.support_services as any,
-      policies: parsed.policies as any,
-      international_info: parsed.international_info as any,
-      school_outcomes: parsed.school_outcomes as any,
+      media_gallery: mediaGallery,
+      social_links: socialLinks,
+      inquiry_routing: inquiryRouting,
+      support_services: supportServices,
+      policies,
+      international_info: internationalInfo,
+      school_outcomes: schoolOutcomes,
     })
   })
 
@@ -278,6 +249,11 @@ export default function SettingsPage() {
 
   const weightSum = criteria.reduce((s, c) => s + c.weight, 0)
 
+  const inst = instQ.data as any
+  // Re-seed the guided editors whenever fresh server data arrives (incl. after a
+  // save), but stay stable across keystrokes so editing is smooth.
+  const seedKey = inst?.updated_at ?? 'init'
+
   return (
     <div className="p-6 space-y-4 max-w-3xl">
       <div className="flex items-center gap-2">
@@ -290,63 +266,83 @@ export default function SettingsPage() {
       {/* Profile Tab */}
       {activeTab === 'profile' && (
         <Card className="p-6">
-          {instQ.isLoading ? (
+          {instQ.isLoading || !inst ? (
             <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10" />)}</div>
           ) : (
             <form onSubmit={onSaveProfile} className="space-y-6">
-              <div className="space-y-4">
+              {/* Identity (Spec 22 §3) */}
+              <Section title="Identity" hint="Core facts shown on your public profile card and header." divider={false}>
                 <Input label="Institution Name *" {...profileForm.register('name')} error={profileForm.formState.errors.name?.message} />
                 <Select label="Type *" options={INSTITUTION_TYPES} {...profileForm.register('type')} error={profileForm.formState.errors.type?.message} />
-                <Input label="Country *" {...profileForm.register('country')} error={profileForm.formState.errors.country?.message} />
+                <div className="grid grid-cols-2 gap-4">
+                  <Input label="Country *" {...profileForm.register('country')} error={profileForm.formState.errors.country?.message} />
+                  <Input label="Founded year" type="number" placeholder="e.g. 1831" {...profileForm.register('founded_year')} error={profileForm.formState.errors.founded_year?.message} />
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <Input label="Region" {...profileForm.register('region')} />
                   <Input label="City" {...profileForm.register('city')} />
                 </div>
+              </Section>
+
+              {/* Campus */}
+              <Section title="Campus" hint="The environment and scale of your campus.">
+                <div className="grid grid-cols-2 gap-4">
+                  <Select label="Campus setting" options={CAMPUS_SETTING_OPTIONS} {...profileForm.register('campus_setting')} />
+                  <Input label="Student body size" type="number" {...profileForm.register('student_body_size')} />
+                </div>
+                <Textarea label="Campus description" {...profileForm.register('campus_description')} rows={3} placeholder="How the campus looks and feels, where it's located..." />
+                <Field title="Media gallery" hint="Text-only per brand — S3 image URLs, one per row. The first is the hero.">
+                  <StringListEditor key={`mg-${seedKey}`} initial={Array.isArray(inst.media_gallery) ? inst.media_gallery : []} onChange={setMediaGallery} placeholder="https://…/campus.jpg" addLabel="Add image URL" />
+                </Field>
+              </Section>
+
+              {/* Web presence */}
+              <Section title="Web presence" hint="Where students reach you online.">
                 <div className="grid grid-cols-2 gap-4">
                   <Input label="Website URL" {...profileForm.register('website_url')} error={profileForm.formState.errors.website_url?.message} />
                   <Input label="Contact Email" {...profileForm.register('contact_email')} error={profileForm.formState.errors.contact_email?.message} />
                 </div>
                 <Input label="Logo URL (S3)" {...profileForm.register('logo_url')} error={profileForm.formState.errors.logo_url?.message} />
-              </div>
+                <Field title="Social links" hint="Platform → profile URL. Shown in your public header.">
+                  <PairRowsEditor key={`sl-${seedKey}`} initial={inst.social_links} onChange={setSocialLinks}
+                    keyLabel="Platform" valueLabel="Profile URL" keySuggestions={SOCIAL_SUGGESTIONS}
+                    valuePlaceholder="https://…" valueType="url" addLabel="Add social link" />
+                </Field>
+              </Section>
 
-              <div className="border-t pt-4 space-y-4">
-                <h3 className="text-sm font-semibold text-gray-700">Description & Campus</h3>
+              {/* Story & support */}
+              <Section title="Story & support" hint="Your description and the support services students care about.">
                 <Textarea label="Short description" {...profileForm.register('description_text')} rows={3} />
-                <Textarea label="Campus description" {...profileForm.register('campus_description')} rows={3} placeholder="How the campus looks and feels, where it's located..." />
-                <div className="grid grid-cols-3 gap-4">
-                  <Select label="Campus setting" options={CAMPUS_SETTING_OPTIONS} {...profileForm.register('campus_setting')} />
-                  <Input label="Student body size" type="number" {...profileForm.register('student_body_size')} />
-                  <Input label="Founded year" type="number" placeholder="e.g. 1831" {...profileForm.register('founded_year')} error={profileForm.formState.errors.founded_year?.message} />
-                </div>
-              </div>
+                <Field title="Support services" hint="Shown on the public About tab (tutoring, career, counseling, …).">
+                  <LinkRowsEditor key={`ss-${seedKey}`} initial={inst.support_services} onChange={setSupportServices}
+                    withSummary={false} nameLabel="Service name" nameSuggestions={SUPPORT_SUGGESTIONS} addLabel="Add support service" />
+                </Field>
+              </Section>
 
-              <div className="border-t pt-4 space-y-2">
-                <h3 className="text-sm font-semibold text-gray-700">Media Gallery</h3>
-                <p className="text-xs text-gray-500">One S3 URL per line. First entry is the hero image.</p>
-                <textarea
-                  className="w-full rounded border border-gray-300 p-3 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-brand-slate-400"
-                  rows={4}
-                  {...profileForm.register('media_gallery_text')}
-                  placeholder="https://unipaith-documents.s3.amazonaws.com/catalog/nyu/campus-1.jpg&#10;https://unipaith-documents.s3.amazonaws.com/catalog/nyu/campus-2.jpg"
-                />
-              </div>
+              {/* Policies & international */}
+              <Section title="Policies & international" hint="Admissions, transfer and international guidance.">
+                <Field title="Policies" hint="Each shows its name, an optional summary and a link on the About tab.">
+                  <LinkRowsEditor key={`pol-${seedKey}`} initial={inst.policies} onChange={setPolicies}
+                    withSummary nameLabel="Policy name" nameSuggestions={POLICY_SUGGESTIONS} addLabel="Add policy" />
+                </Field>
+                <Field title="International student info" hint="Test minimums, visa contacts, supported visas, etc.">
+                  <MetricRowsEditor key={`intl-${seedKey}`} initial={inst.international_info} onChange={setInternationalInfo}
+                    keySuggestions={INTL_SUGGESTIONS} addLabel="Add international detail" />
+                </Field>
+              </Section>
 
-              {INST_JSON_FIELDS.map(({ key, label, placeholder, hint }) => (
-                <div key={key} className="border-t pt-4 space-y-2">
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-700">{label}</h3>
-                    <p className="text-xs text-gray-500">{hint}</p>
-                  </div>
-                  <textarea
-                    className="w-full rounded border border-gray-300 p-3 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-brand-slate-400"
-                    rows={5}
-                    value={instJsonText[key]}
-                    placeholder={placeholder}
-                    onChange={e => setInstJsonText(prev => ({ ...prev, [key]: e.target.value }))}
-                  />
-                  {instJsonErrors[key] && <p className="text-xs text-red-600">{instJsonErrors[key]}</p>}
-                </div>
-              ))}
+              {/* Outcomes */}
+              <Section title="Outcomes" hint="Institution-wide stats, distinct from program outcomes. A number 0–1 renders as a percentage on the Overview tab.">
+                <MetricRowsEditor key={`out-${seedKey}`} initial={inst.school_outcomes} onChange={setSchoolOutcomes}
+                  keySuggestions={OUTCOME_SUGGESTIONS} addLabel="Add outcome metric" />
+              </Section>
+
+              {/* Inquiry routing */}
+              <Section title="Inquiry routing" hint="Where ‘Request info’ inquiries from your page should go, by type (email or URL).">
+                <PairRowsEditor key={`ir-${seedKey}`} initial={inst.inquiry_routing} onChange={setInquiryRouting}
+                  keyLabel="Inquiry type" valueLabel="Destination" keySuggestions={INQUIRY_TYPE_SUGGESTIONS}
+                  valuePlaceholder="admissions@example.edu" addLabel="Add routing rule" />
+              </Section>
 
               <div className="flex justify-end">
                 <Button type="submit" disabled={updateInstMut.isPending}>

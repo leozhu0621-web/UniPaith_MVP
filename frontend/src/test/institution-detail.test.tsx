@@ -19,6 +19,8 @@ const INSTITUTION = {
   support_services: { tutoring: { name: 'Tutoring' } },
   international_info: { supported_visas: ['F-1'] },
   school_outcomes: { employed_or_continuing_ed: 0.94 },
+  social_links: { twitter: 'https://x.com/foo' },
+  inquiry_routing: { general: 'admissions@foo.edu', financial_aid: 'finaid@foo.edu' },
 }
 
 const SCHOOLS = [
@@ -46,6 +48,7 @@ function mockApis() {
   vi.spyOn(eventsApi, 'getMyRsvps').mockResolvedValue([] as any)
   vi.spyOn(eventsApi, 'getMyFollows').mockResolvedValue([] as any)
   vi.spyOn(savedApi, 'listSaved').mockResolvedValue([] as any)
+  vi.spyOn(institutionsApi, 'submitInquiry').mockResolvedValue({} as any)
 }
 
 function renderDetail(isAuthenticated = true) {
@@ -130,5 +133,41 @@ describe('InstitutionDetail (Spec 12)', () => {
     clickTab(/about/i)
     expect(await screen.findByText('Support services')).toBeInTheDocument()
     expect(screen.getByText('International students')).toBeInTheDocument()
+  })
+
+  // Spec 22 §3 — social links surface on the header (text links, no logos).
+  it('renders social links in the header', async () => {
+    renderDetail(true)
+    await screen.findByRole('heading', { name: 'University of Foo' })
+    const twitter = screen.getByRole('link', { name: /twitter/i })
+    expect(twitter).toHaveAttribute('href', 'https://x.com/foo')
+  })
+
+  // Spec 22 §7 / §15 — Request info routes through submit_inquiry when authed.
+  it('authenticated: Request info opens a modal and submits an institution-level inquiry', async () => {
+    renderDetail(true)
+    await screen.findByRole('heading', { name: 'University of Foo' })
+
+    fireEvent.click(screen.getByRole('button', { name: /request info/i }))
+    expect(await screen.findByText('Request info from University of Foo')).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Subject'), { target: { value: 'Tell me more' } })
+    fireEvent.change(screen.getByLabelText('Message'), { target: { value: 'Is there aid?' } })
+    fireEvent.click(screen.getByRole('button', { name: /send request/i }))
+
+    await waitFor(() => expect(institutionsApi.submitInquiry).toHaveBeenCalledWith({
+      institution_id: 'inst-1',
+      subject: 'Tell me more',
+      message: 'Is there aid?',
+      inquiry_type: 'general',
+    }))
+  })
+
+  // Spec 22 §8 — public surface swaps the action for a sign-in CTA.
+  it('public: Request info becomes "Sign in to ask"', async () => {
+    renderDetail(false)
+    await screen.findByRole('heading', { name: 'University of Foo' })
+    expect(screen.getByRole('button', { name: /sign in to ask/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^request info$/i })).not.toBeInTheDocument()
   })
 })

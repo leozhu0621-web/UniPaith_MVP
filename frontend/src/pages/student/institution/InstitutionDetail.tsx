@@ -2,7 +2,7 @@ import { useMemo, useState, type ComponentType } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  getPublicInstitution, getPublicPosts, getInstitutionSchools,
+  getPublicInstitution, getPublicPosts, getInstitutionSchools, submitInquiry,
 } from '../../../api/institutions'
 import { searchPrograms } from '../../../api/programs'
 import {
@@ -18,10 +18,14 @@ import PostCard from '../explore/cards/PostCard'
 import Card from '../../../components/ui/Card'
 import Button from '../../../components/ui/Button'
 import Skeleton from '../../../components/ui/Skeleton'
+import Modal from '../../../components/ui/Modal'
+import Input from '../../../components/ui/Input'
+import Select from '../../../components/ui/Select'
+import Textarea from '../../../components/ui/Textarea'
 import {
   Bookmark, BookmarkCheck, MapPin, Globe, Users, Building2, BookOpen,
   Mail, CalendarPlus, Check, ChevronDown, X, Search, GraduationCap,
-  Filter, ArrowRight, Calendar,
+  Filter, ArrowRight, Calendar, Send, Link2,
 } from 'lucide-react'
 import type { Institution, ProgramSummary, InstitutionPost, SchoolSummary } from '../../../types'
 
@@ -144,6 +148,31 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
     } catch { showToast('Couldn’t save that program. Try again.', 'error') }
   }
 
+  // ── Request info (Spec 22 §7) — opens an inquiry routed per inquiry_routing ─
+  const [inquiryOpen, setInquiryOpen] = useState(false)
+  const [inquiryType, setInquiryType] = useState('general')
+  const [inquirySubject, setInquirySubject] = useState('')
+  const [inquiryMessage, setInquiryMessage] = useState('')
+  const inquiryMut = useMutation({
+    mutationFn: () => submitInquiry({
+      institution_id: institutionId,
+      subject: inquirySubject.trim(),
+      message: inquiryMessage.trim(),
+      inquiry_type: inquiryType,
+    }),
+    onSuccess: () => {
+      setInquiryOpen(false)
+      setInquirySubject('')
+      setInquiryMessage('')
+      showToast('Request sent. The school will be in touch.', 'success')
+    },
+    onError: () => showToast('Couldn’t send your request. Try again.', 'error'),
+  })
+  const onRequestInfo = () => {
+    if (!isAuthenticated) { navigate('/login'); return }
+    setInquiryOpen(true)
+  }
+
   // ── Link builders (auth vs public surfaces) ─────────────────────────────
   const programHref = (id: string) => (isAuthenticated ? `/s/programs/${id}` : `/program/${id}`)
   const schoolHref = (sid: string) =>
@@ -183,6 +212,10 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
     { id: 'events', label: 'Events' },
     { id: 'updates', label: 'Updates' },
   ]
+
+  // Inquiry types offered in the Request-info modal — the institution's
+  // configured routing keys, with a generic "general" always available.
+  const inquiryTypes = ['general', ...Object.keys((inst.inquiry_routing as Record<string, unknown>) ?? {}).filter(k => k !== 'general')]
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
@@ -225,9 +258,9 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
               {inst.student_body_size != null && <span className="inline-flex items-center gap-1"><Users size={13} /> {inst.student_body_size.toLocaleString()} students</span>}
             </div>
 
-            {/* Secondary links */}
-            {(inst.website_url || inst.contact_email) && (
-              <div className="flex items-center gap-4 mt-2.5 text-[12px]">
+            {/* Secondary links (Spec 22 §3 — Web presence) */}
+            {(inst.website_url || inst.contact_email || hasSocialLinks(inst.social_links)) && (
+              <div className="flex items-center gap-4 mt-2.5 text-[12px] flex-wrap">
                 {inst.website_url && (
                   <a href={inst.website_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-cobalt hover:underline">
                     <Globe size={12} /> Website
@@ -238,6 +271,7 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
                     <Mail size={12} /> Contact
                   </a>
                 )}
+                <SocialLinks links={inst.social_links} />
               </div>
             )}
           </div>
@@ -254,6 +288,10 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
           >
             {isSaved ? <BookmarkCheck size={14} className="mr-1.5" /> : <Bookmark size={14} className="mr-1.5" />}
             {isAuthenticated ? (isSaved ? 'Saved' : 'Save school') : 'Sign in to save'}
+          </Button>
+          <Button size="sm" variant="tertiary" onClick={onRequestInfo}>
+            <Send size={14} className="mr-1.5" />
+            {isAuthenticated ? 'Request info' : 'Sign in to ask'}
           </Button>
           {schoolList.length > 0 ? (
             <Button size="sm" variant="ghost" onClick={() => setTab('schools')}>
@@ -310,7 +348,68 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
         )}
         {tab === 'updates' && <UpdatesTab posts={postList} institutionName={inst.name} />}
       </div>
+
+      {/* Request info (Spec 22 §7 / §15) — authenticated only; public surfaces
+          route to sign-in before reaching here. */}
+      <Modal
+        isOpen={inquiryOpen}
+        onClose={() => setInquiryOpen(false)}
+        title={`Request info from ${inst.name}`}
+        size="md"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setInquiryOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => inquiryMut.mutate()}
+              disabled={inquiryMut.isPending || !inquirySubject.trim() || !inquiryMessage.trim()}
+            >
+              {inquiryMut.isPending ? 'Sending…' : <><Send size={14} className="mr-1.5" /> Send request</>}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-3">
+          <p className="text-[13px] text-slate">Ask {inst.name} about admissions, programs, financial aid, or anything else. They’ll reply to your account email.</p>
+          {inquiryTypes.length > 1 && (
+            <Select
+              label="Topic"
+              options={inquiryTypes.map(t => ({ value: t, label: titleCase(t.replace(/_/g, ' ')) }))}
+              value={inquiryType}
+              onChange={e => setInquiryType(e.target.value)}
+            />
+          )}
+          <Input label="Subject" value={inquirySubject} onChange={e => setInquirySubject(e.target.value)} placeholder="What would you like to know?" />
+          <Textarea label="Message" value={inquiryMessage} onChange={e => setInquiryMessage(e.target.value)} rows={4} placeholder="Tell them about your interests and questions…" />
+        </div>
+      </Modal>
     </div>
+  )
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Social links — Spec 22 §3 Web presence. Text links only (brand rule: no logos).
+   ────────────────────────────────────────────────────────────────────────── */
+function hasSocialLinks(links: Record<string, string> | null | undefined): boolean {
+  return !!links && Object.values(links).some(v => typeof v === 'string' && v.trim().length > 0)
+}
+
+function SocialLinks({ links }: { links: Record<string, string> | null | undefined }) {
+  const entries = Object.entries(links ?? {}).filter(([, url]) => typeof url === 'string' && url.trim())
+  if (!entries.length) return null
+  return (
+    <>
+      {entries.map(([platform, url]) => (
+        <a
+          key={platform}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-cobalt hover:underline capitalize"
+        >
+          <Link2 size={12} /> {platform}
+        </a>
+      ))}
+    </>
   )
 }
 
