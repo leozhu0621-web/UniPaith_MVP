@@ -194,6 +194,48 @@ async def test_list_runs_filters_by_domain(
     assert len(essays) == 1 and essays[0]["domain"] == "essay"
 
 
+@pytest.mark.asyncio
+async def test_get_run_by_id(
+    student_client: AsyncClient, db_session: AsyncSession, mock_student_user: User
+):
+    await _ensure_profile(db_session, mock_student_user)
+    created = await student_client.post(
+        f"{WORKSHOPS}/essay/feedback",
+        json={"essay_text": "short essay text I want feedback on. " * 5},
+    )
+    run_id = created.json()["id"]
+    resp = await student_client.get(f"{WORKSHOPS}/runs/{run_id}")
+    assert resp.status_code == 200
+    assert resp.json()["id"] == run_id
+
+
+@pytest.mark.asyncio
+async def test_interview_feedback_requires_response(
+    student_client: AsyncClient, db_session: AsyncSession, mock_student_user: User
+):
+    await _ensure_profile(db_session, mock_student_user)
+    resp = await student_client.post(
+        f"{WORKSHOPS}/interview/feedback",
+        json={"interview_type": "behavioral", "response_text": "too short"},
+    )
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_test_guidance_returns_bands(
+    student_client: AsyncClient, db_session: AsyncSession, mock_student_user: User
+):
+    await _ensure_profile(db_session, mock_student_user)
+    resp = await student_client.post(
+        f"{WORKSHOPS}/test/guidance",
+        json={"test_type": "GRE", "current_score": 305, "target_score": 320},
+    )
+    data = resp.json()
+    assert data["current_band"]
+    assert data["target_band"]
+    assert data["prep_recommendations"]
+
+
 # ── Auth ──────────────────────────────────────────────────────────────────
 
 

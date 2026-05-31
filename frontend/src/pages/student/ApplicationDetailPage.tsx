@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  getMyApplication, submitApplication, getChecklist, generateChecklist, respondToOffer,
+  getMyApplication, submitApplication, getChecklist, generateChecklist,
   getReadiness, patchApplication, guardrailScan, toggleChecklistItem,
 } from '../../api/applications'
 import { listEssays, createEssay, updateEssay, requestEssayFeedback } from '../../api/essays'
@@ -27,6 +27,7 @@ import {
 } from 'lucide-react'
 import Breadcrumbs from '../../components/ui/Breadcrumbs'
 import usePageTitle from '../../hooks/usePageTitle'
+import OfferPanel from './apply/offer/OfferPanel'
 import type { Application, Essay, Resume, ChecklistItem } from '../../types'
 
 const STATUS_STEPS = ['draft', 'submitted', 'under_review', 'interview', 'decision_made']
@@ -52,15 +53,16 @@ const RATIONALE_REQUIRED = ['back_up', 'other']
 export default function ApplicationDetailPage() {
   const { appId } = useParams<{ appId: string }>()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const checklistFocus = searchParams.get('checklist')
   const queryClient = useQueryClient()
-  const [tab, setTab] = useState('checklist')
+  // Honor /s/applications/:id?tab=offer deep links (spec 18 §5).
+  const [tab, setTab] = useState(searchParams.get('tab') || 'checklist')
   const [showEssayModal, setShowEssayModal] = useState(false)
   const [editingEssay, setEditingEssay] = useState<Essay | null>(null)
   const [essayContent, setEssayContent] = useState('')
   const [essayPrompt, setEssayPrompt] = useState('')
   const [essayType, setEssayType] = useState('personal_statement')
-  const [offerResponse, setOfferResponse] = useState('')
-  const [declineReason, setDeclineReason] = useState('')
 
   // Upload state
   const [uploading, setUploading] = useState(false)
@@ -111,7 +113,6 @@ export default function ApplicationDetailPage() {
   const essayMut = useMutation({ mutationFn: (data: any) => createEssay(data), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['essays'] }); queryClient.invalidateQueries({ queryKey: ['checklist', appId] }); setShowEssayModal(false); setEssayContent(''); setEssayPrompt(''); showToast('Essay created', 'success') } })
   const essayUpdateMut = useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => updateEssay(id, data), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['essays'] }); setEditingEssay(null); showToast('Essay updated', 'success') } })
   const resumeGenMut = useMutation({ mutationFn: () => generateResume({ format_type: 'standard', target_program_id: app?.program_id }), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['resumes'] }); queryClient.invalidateQueries({ queryKey: ['checklist', appId] }); showToast('Resume generated', 'success') } })
-  const offerMut = useMutation({ mutationFn: (response: string) => respondToOffer(appId!, response, response === 'declined' ? declineReason || undefined : undefined), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['application', appId] }); showToast('Response submitted', 'success') } })
   const modeMut = useMutation({
     mutationFn: (mode: 'internal' | 'external') => patchApplication(appId!, { submission_mode: mode }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['application', appId] }); showToast('Submission mode updated', 'success') },
@@ -232,7 +233,8 @@ export default function ApplicationDetailPage() {
     { id: 'recommenders', label: 'Recommenders' },
     { id: 'interviews', label: 'Interviews' },
     { id: 'guardrails', label: 'Guardrails' },
-    ...(application.decision === 'admitted' || application.offer ? [{ id: 'offer', label: 'Offer' }] : []),
+    // Spec 18 — Offer tab once submitted (record/await an offer) or whenever one exists.
+    ...(application.status !== 'draft' || application.offer ? [{ id: 'offer', label: 'Offer' }] : []),
   ]
 
   const programName = application.program?.program_name || 'Application'
@@ -305,7 +307,14 @@ export default function ApplicationDetailPage() {
             <h3 className="font-medium text-sm text-student-ink mb-3">Checklist</h3>
             <div className="space-y-2 mb-3">
               {checklistItems.map((item, i) => (
-                <div key={item.key || i} className="flex items-center gap-2 text-sm">
+                <div
+                  key={item.key || i}
+                  className={`flex items-center gap-2 rounded-md px-1 py-0.5 text-sm ${
+                    checklistFocus && item.category === checklistFocus
+                      ? 'bg-warning-soft ring-1 ring-warning/40'
+                      : ''
+                  }`}
+                >
                   {item.status === 'completed' ? (
                     <Check size={14} className="text-success flex-shrink-0" />
                   ) : item.status === 'blocked' || item.mismatch ? (
@@ -632,33 +641,7 @@ export default function ApplicationDetailPage() {
               </div>
             )}
 
-            {tab === 'offer' && (
-              <Card className="p-4">
-                <div className="flex items-center gap-2 mb-3"><Award size={16} className="text-student" /><h3 className="font-medium text-student-ink">Your offer</h3></div>
-                {application.offer?.brief && (
-                  <p className="text-sm text-student-ink bg-student-mist rounded-lg p-3 mb-3">{application.offer.brief}</p>
-                )}
-                <p className="text-sm text-student-text">Decision: <Badge variant="success">{application.decision}</Badge></p>
-                {application.offer?.response_deadline && (
-                  <p className="text-sm text-student-text mt-2">Respond by {new Date(application.offer.response_deadline).toLocaleDateString()}</p>
-                )}
-                {application.decision_notes && <p className="text-sm text-student-text mt-2">{application.decision_notes}</p>}
-                {application.offer?.student_response ? (
-                  <p className="text-sm mt-4 text-success font-medium">You {application.offer.student_response} this offer.</p>
-                ) : (
-                  <div className="flex gap-3 mt-4">
-                    <Button onClick={() => offerMut.mutate('accepted')} loading={offerMut.isPending}>Accept</Button>
-                    <Button variant="danger" onClick={() => setOfferResponse('declined')}>Decline</Button>
-                  </div>
-                )}
-                {offerResponse === 'declined' && !application.offer?.student_response && (
-                  <div className="mt-3 space-y-2">
-                    <Textarea label="Reason (optional)" value={declineReason} onChange={e => setDeclineReason(e.target.value)} />
-                    <Button variant="danger" onClick={() => offerMut.mutate('declined')} loading={offerMut.isPending}>Confirm decline</Button>
-                  </div>
-                )}
-              </Card>
-            )}
+            {tab === 'offer' && <OfferPanel application={application} />}
           </div>
         </div>
       </div>

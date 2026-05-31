@@ -66,6 +66,13 @@ AGENT_REQUIRES: dict[str, str | None] = {
     "rationale": "matching",
     "workshop_coach": None,
     "workshop_judge": None,
+    # Spec 17 §7 — the Inbox reply drafter produces outbound communication,
+    # so it sits behind the `outreach` lever (this module's documented home
+    # for "the inbox suggester"). Spec 17 §7's literal "matching" is
+    # reconciled to `outreach` here. MANDATORY: `is_call_permitted` silently
+    # allows agents missing from this map, so omitting this line would let
+    # the drafter run even when the student denied outreach consent.
+    "inbox_reply_drafter": "outreach",
     "embedding": "matching",  # used by the match pipeline
     # Spec 06 §2 / §5.2.
     "review_summarizer": "matching",  # institution review summary (45 §14)

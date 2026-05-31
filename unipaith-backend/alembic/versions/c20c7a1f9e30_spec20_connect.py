@@ -29,7 +29,9 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "c20c7a1f9e30"  # pragma: allowlist secret
-down_revision = "b7c1d9e2f3a4"  # pragma: allowlist secret
+# Rebased onto the post-Spec-18/inbox head so the chain stays linear (this
+# migration also rewrites ck_ai_turns_agent, which Spec 17 last touched).
+down_revision = "d0e1f2a3b4c5"  # pragma: allowlist secret
 branch_labels = None
 depends_on = None
 
@@ -60,12 +62,15 @@ _NEW_AGENT_CHECK = (
     "agent IN ('orchestrator','extractor','validator','feature_emitter',"
     "'rationale','workshop_coach','workshop_judge','embedding',"
     "'review_summarizer','authenticity_risk','matcher','query_interpreter',"
-    "'connect_ranker','event_recommender')"
+    "'inbox_reply_drafter','connect_ranker','event_recommender')"
 )
+# Pre-this-migration state (parent head d0e1f2a3b4c5 already has inbox_reply_drafter
+# from Spec 17), so downgrade restores that — not the older pre-inbox list.
 _OLD_AGENT_CHECK = (
     "agent IN ('orchestrator','extractor','validator','feature_emitter',"
     "'rationale','workshop_coach','workshop_judge','embedding',"
-    "'review_summarizer','authenticity_risk','matcher','query_interpreter')"
+    "'review_summarizer','authenticity_risk','matcher','query_interpreter',"
+    "'inbox_reply_drafter')"
 )
 
 

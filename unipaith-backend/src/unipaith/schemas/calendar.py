@@ -63,6 +63,9 @@ class CalendarItem(BaseModel):
     recommender_name: str | None = None
     confirmation_url: str | None = None
     editable: bool = False
+    interview_id: UUID | None = None
+    can_decline: bool = False
+    can_reschedule: bool = False
 
 
 class ReminderCreate(BaseModel):

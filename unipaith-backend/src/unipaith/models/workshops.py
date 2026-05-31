@@ -1,10 +1,4 @@
-"""Phase A — Workshop feedback model.
-
-Replaces the generation-style essay/resume workshops. The output schema has
-NO field that could carry prose generation back to the student — see
-WorkshopFeedbackResponse and test_workshop_no_generation_contract.py for the
-mechanical guarantee.
-"""
+"""Phase A — Workshop feedback model."""
 
 from __future__ import annotations
 
@@ -34,6 +28,10 @@ class WorkshopFeedbackRun(Base):
             "domain IN ('essay','interview','test')",
             name="ck_workshop_feedback_runs_domain",
         ),
+        CheckConstraint(
+            "mode IN ('general','program_specific')",
+            name="ck_workshop_feedback_runs_mode",
+        ),
         Index(
             "ix_workshop_feedback_runs_student_domain",
             "student_id",
@@ -49,8 +47,16 @@ class WorkshopFeedbackRun(Base):
         nullable=False,
     )
     domain: Mapped[str] = mapped_column(String(20), nullable=False)
+    mode: Mapped[str] = mapped_column(String(20), nullable=False, default="general")
+    target_program_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("programs.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    input_text: Mapped[str | None] = mapped_column(Text)
     input_artifact_id: Mapped[str | None] = mapped_column(String(120))
     prompt_text: Mapped[str | None] = mapped_column(Text)
+    readiness_summary: Mapped[str | None] = mapped_column(Text)
     rubric_scores: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     structural_issues: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
     missing_elements: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)

@@ -139,10 +139,16 @@ export default function StudentLayout() {
         )}
 
         {/* Main content — bottom padding on mobile to clear the tab bar. */}
-        <main className="flex-1 overflow-y-auto transition-all duration-300 ease-in-out">
+        <main
+          className={`flex min-h-0 flex-1 flex-col transition-all duration-300 ease-in-out ${
+            location.pathname.startsWith('/s/manage') ? 'overflow-hidden' : 'overflow-y-auto'
+          }`}
+        >
           <div
             key={location.pathname}
-            className="animate-page-in min-h-full pb-[calc(64px+env(safe-area-inset-bottom))] lg:pb-0"
+            className={`animate-page-in flex min-h-0 flex-1 flex-col pb-[calc(64px+env(safe-area-inset-bottom))] lg:pb-0 ${
+              location.pathname.startsWith('/s/manage') ? '' : 'min-h-full'
+            }`}
           >
             <Outlet />
           </div>

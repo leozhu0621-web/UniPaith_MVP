@@ -440,6 +440,39 @@ export interface ShortlistUnlock {
 }
 
 // ============ APPLICATIONS ============
+// --- Spec 18 · Decisions & Offers ---
+export interface OfferKeyTerm {
+  label: string
+  value: string
+  explanation?: string
+}
+export interface OfferDeadline {
+  label: string
+  date: string
+  days_remaining?: number
+}
+export interface OfferNextStep {
+  action: string
+  by_date?: string | null
+}
+export interface PlainLanguageBrief {
+  key_terms: OfferKeyTerm[]
+  deadlines: OfferDeadline[]
+  next_steps: OfferNextStep[]
+  summary: string
+  source?: string
+}
+
+export type DecisionState =
+  | 'pending'
+  | 'accepted'
+  | 'rejected'
+  | 'waitlisted'
+  | 'deferred'
+  | 'accepted_by_student'
+  | 'declined_by_student'
+  | 'withdrawn'
+
 export interface ApplicationOffer {
   id: string
   application_id: string
@@ -453,6 +486,59 @@ export interface ApplicationOffer {
   student_response: string | null
   response_at: string | null
   brief: string | null
+  // Spec 18
+  received_externally?: boolean
+  decision_date?: string | null
+  scholarship_currency?: string | null
+  tuition_estimate?: number | null
+  total_cost_estimate?: number | null
+  start_term_season?: string | null
+  start_term_year?: number | null
+  next_step_actions?: OfferNextStep[] | null
+  plain_language_brief?: PlainLanguageBrief | null
+}
+
+export interface OfferComparisonItem {
+  application_id: string
+  offer_id: string
+  program_name: string | null
+  institution_name: string | null
+  degree_type: string | null
+  decision_state: string | null
+  cost: {
+    tuition: number | null
+    scholarship: number
+    currency: string
+    net_cost: number | null
+  }
+  fit: { fitness: number | null; confidence: number | null }
+  outcomes: { median_salary: number | null; placement_rate: number | null }
+  location: string | null
+  response_deadline: string | null
+  conditions: Record<string, unknown> | null
+}
+
+export interface OffersComparison {
+  offers: OfferComparisonItem[]
+  indicators: {
+    best_value: string | null
+    best_fit: string | null
+    most_affordable: string | null
+  }
+  must_have_constraints: { need: string; signal: string }[]
+  count: number
+}
+
+export interface WithdrawableApp {
+  id: string
+  program_name: string | null
+  institution_name: string | null
+  decision_state: string | null
+}
+
+export interface OfferDecisionResult {
+  offer: ApplicationOffer
+  withdrawable_apps: WithdrawableApp[]
 }
 
 export interface Application {
@@ -466,6 +552,9 @@ export interface Application {
   decision: 'admitted' | 'rejected' | 'waitlisted' | 'deferred' | null
   decision_at: string | null
   decision_notes: string | null
+  // Spec 18 §2 — student-side action + unified derived state
+  student_decision?: 'accepted_by_student' | 'declined_by_student' | 'withdrawn' | null
+  decision_state?: DecisionState | null
   completeness_status: string | null
   missing_items: string[] | null
   // --- Spec 15 workspace ---
@@ -672,6 +761,73 @@ export interface Message {
   message_body: string
   sent_at: string
   read_at: string | null
+}
+
+// ============ INBOX (Spec 17) ============
+export type ActionLabel =
+  | 'needs_reply'
+  | 'document_requested'
+  | 'clarification_required'
+  | 'interview_invite'
+  | 'status_update_only'
+  | 'completed'
+
+export type WaitingOn = 'student' | 'school' | 'none'
+
+export interface InboxAttachment {
+  id?: string
+  name: string
+  kind?: 'document' | 'link'
+  url?: string | null
+}
+
+export interface InboxThreadApplication {
+  program_name: string | null
+  institution_name: string | null
+}
+
+export interface InboxParticipant {
+  id: string
+  role: 'student' | 'admissions_officer' | 'system'
+  name: string
+}
+
+export interface InboxMessage {
+  id: string
+  thread_id: string
+  sender: 'student' | 'admissions_officer' | 'system'
+  body: string
+  attachments: InboxAttachment[]
+  sent_at: string
+  read_at: string | null
+  status: 'sent' | 'delivered' | 'read'
+}
+
+export interface InboxThreadSummary {
+  id: string
+  application_id: string | null
+  application: InboxThreadApplication
+  type: 'human' | 'system'
+  subject: string | null
+  action_label: ActionLabel | null
+  due_date: string | null
+  waiting_on: WaitingOn
+  unread: boolean
+  last_message_at: string | null
+  linked_checklist_item_category: string | null
+  linked_calendar_item_id: string | null
+}
+
+export interface InboxThread extends InboxThreadSummary {
+  participants: InboxParticipant[]
+  messages: InboxMessage[]
+}
+
+export interface SuggestedReply {
+  draft: string
+  tone: string
+  length: string
+  alternate_drafts: string[]
 }
 
 // ============ EVENTS ============

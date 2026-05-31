@@ -81,6 +81,16 @@ class OfferLetterResponse(BaseModel):
     student_response: str | None
     response_at: datetime | None
     brief: str | None = None
+    # --- Spec 18 · Decisions & Offers ---
+    received_externally: bool = False
+    decision_date: date | None = None
+    scholarship_currency: str | None = None
+    tuition_estimate: int | None = None
+    total_cost_estimate: int | None = None
+    start_term_season: str | None = None
+    start_term_year: int | None = None
+    next_step_actions: list | None = None
+    plain_language_brief: dict | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -96,6 +106,9 @@ class ApplicationResponse(BaseModel):
     submitted_at: datetime | None
     decision: str | None
     decision_at: datetime | None
+    # Spec 18 §2 — student-side decision + the unified derived decision state.
+    student_decision: str | None = None
+    decision_state: str | None = None
     completeness_status: str | None
     missing_items: dict | None
     # --- Spec 15 workspace fields ---
@@ -129,3 +142,71 @@ class CreateOfferRequest(BaseModel):
 class OfferRespondRequest(BaseModel):
     response: Literal["accepted", "declined"]
     decline_reason: str | None = None
+
+
+# --- Spec 18 · Decisions & Offers ---
+
+
+class StartTerm(BaseModel):
+    season: str | None = None
+    year: int | None = None
+
+
+class RecordOfferRequest(BaseModel):
+    """Student records an offer received off-platform (spec 18 §3/§14)."""
+
+    offer_type: Literal[
+        "full_admission",
+        "conditional",
+        "waitlist_to_admit",
+        "partial",
+        "transfer_credit_offer",
+    ] = "full_admission"
+    decision_date: date | None = None
+    response_deadline: date | None = None
+    scholarship_amount: int | None = None
+    scholarship_currency: str | None = "USD"
+    tuition_amount: int | None = None
+    tuition_estimate: int | None = None
+    total_cost_estimate: int | None = None
+    financial_package_total: int | None = None
+    conditions: dict | None = None
+    start_term: StartTerm | None = None
+    next_step_actions: list[dict] | None = None
+
+
+class OfferDecisionResponse(BaseModel):
+    """Accept/decline result + the other pending apps now withdrawable (§6)."""
+
+    offer: OfferLetterResponse
+    withdrawable_apps: list[dict] = []
+
+
+class BulkWithdrawRequest(BaseModel):
+    application_ids: list[UUID]
+
+
+class WithdrawResult(BaseModel):
+    withdrawn_count: int
+
+
+class OfferComparisonItem(BaseModel):
+    application_id: str
+    offer_id: str
+    program_name: str | None = None
+    institution_name: str | None = None
+    degree_type: str | None = None
+    decision_state: str | None = None
+    cost: dict
+    fit: dict
+    outcomes: dict
+    location: str | None = None
+    response_deadline: str | None = None
+    conditions: dict | None = None
+
+
+class OffersComparisonResponse(BaseModel):
+    offers: list[OfferComparisonItem]
+    indicators: dict
+    must_have_constraints: list[dict]
+    count: int

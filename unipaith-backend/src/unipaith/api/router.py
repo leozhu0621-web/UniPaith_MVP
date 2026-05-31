@@ -16,6 +16,7 @@ from unipaith.api.documents import router as documents_router
 from unipaith.api.events import router as events_router
 from unipaith.api.goals import router as goals_router
 from unipaith.api.identity import router as identity_router
+from unipaith.api.inbox import router as inbox_router
 from unipaith.api.institutions import router as institutions_router
 from unipaith.api.interviews import router as interviews_router
 from unipaith.api.messaging import router as messaging_router
@@ -55,6 +56,7 @@ api_router.include_router(workshops_router)
 api_router.include_router(workshop_feedback_router)
 api_router.include_router(ai_feedback_router)
 api_router.include_router(messaging_router)
+api_router.include_router(inbox_router)
 api_router.include_router(events_router)
 api_router.include_router(reviews_router)
 api_router.include_router(interviews_router)
