@@ -1,10 +1,10 @@
 /**
  * Phase A — Discovery API client.
  *
- * Backs Stage 1 (Discovery) journey. Plan 2's LLM stack is the producer of
- * `assistant`-role messages and `extracted_signals`; the Phase B Discover
- * page wires the chat UI through `appendMessage` and reads progress through
- * `getCompletionMap`.
+ * Backs Stage 1 (Discovery) journey. The LLM stack is the producer of
+ * `assistant`-role messages and `extracted_signals`; the Discover page wires
+ * the chat UI through `appendMessage` and reads progress through
+ * `getCompletionMap`. Spec 19 adds personality signals + the handoff verdict.
  */
 import apiClient from './client'
 import type {
@@ -17,6 +17,8 @@ import type {
   DiscoverySessionDetail,
   DiscoveryStatus,
   DiscoveryTrack,
+  HandoffVerdict,
+  PersonalitySignal,
 } from '../types'
 
 const BASE = '/students/me/discovery'
@@ -59,6 +61,14 @@ export const appendMessage = (
 export const getCompletionMap = (): Promise<CompletionMap> =>
   apiClient.get(`${BASE}/completion`).then(r => r.data)
 
+// Spec 19 §6 — personality-layer facets for the Discover rail.
+export const getPersonalitySignals = (): Promise<PersonalitySignal[]> =>
+  apiClient.get(`${BASE}/personality-signals`).then(r => r.data)
+
+// Spec 19 §7/§10 — deterministic match-ready verdict.
+export const getHandoffVerdict = (): Promise<HandoffVerdict> =>
+  apiClient.get(`${BASE}/handoff`).then(r => r.data)
+
 // Re-export types so importers don't have to dig into the types barrel.
 export type {
   AppendMessageResponse,
@@ -70,4 +80,6 @@ export type {
   DiscoverySessionDetail,
   DiscoveryStatus,
   DiscoveryTrack,
+  HandoffVerdict,
+  PersonalitySignal,
 }

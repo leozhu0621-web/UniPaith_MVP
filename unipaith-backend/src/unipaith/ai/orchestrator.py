@@ -40,7 +40,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from unipaith.ai.client import AIClient, get_client
 from unipaith.ai.prompt_cache import CACHE_1H
 from unipaith.ai.state import Layer, LayerVerdict, Track
-from unipaith.ai.tools import RECORD_ARTIFACT_TOOL, REQUEST_LAYER_ADVANCE_TOOL
+from unipaith.ai.tools import (
+    RECORD_ARTIFACT_TOOL,
+    REQUEST_LAYER_ADVANCE_TOOL,
+    SUGGEST_REPLIES_TOOL,
+)
 
 PROMPTS_DIR = Path(__file__).parent / "prompts"
 
@@ -82,6 +86,10 @@ class TurnContext:
     verdict: LayerVerdict | None  # None on the very first turn
     known_profile_summary: str  # short text, used to anchor the LLM
     recent_signals_summary: str = ""
+    # Spec 19 §15 — one-line-per-track completion summary of the OTHER tracks,
+    # so the orchestrator stays coherent across Profile/Goals/Needs and doesn't
+    # re-ask what another track already covered. Empty on the first turn.
+    cross_track_summary: str = ""
     history: list[dict[str, str]] = field(default_factory=list)  # [{role, content}]
 
 
@@ -93,6 +101,9 @@ class OrchestratorResponse:
     record_artifact_calls: list[dict[str, Any]] = field(default_factory=list)
     requested_layer_advance: bool = False
     advance_rationale: str | None = None
+    # Spec 19 §3/§5 — short tappable replies rendered as cobalt chips. Empty
+    # when the orchestrator declined to call `suggest_replies` this turn.
+    suggested_options: list[str] = field(default_factory=list)
     cost_usd: float = 0.0
     latency_ms: int = 0
     raw_blocks: list[dict[str, Any]] = field(default_factory=list)
@@ -128,9 +139,14 @@ class Orchestrator:
     ) -> OrchestratorResponse:
         """Generate a single counselor turn. Records to `ai_turns` ledger."""
         system = self._build_system_blocks(ctx)
+        # Tool order is fixed (record_artifact → request_layer_advance →
+        # suggest_replies) so the tool block is byte-stable across turns and
+        # the 1h cache breakpoint on the first tool keeps hitting. Adding a
+        # tool invalidates the cache exactly once, then it's stable again.
         tools = [
             {**RECORD_ARTIFACT_TOOL, "cache_control": CACHE_1H},
             {**REQUEST_LAYER_ADVANCE_TOOL},
+            {**SUGGEST_REPLIES_TOOL},
         ]
         messages = self._build_messages(ctx)
 
@@ -169,9 +185,14 @@ class Orchestrator:
         directly to the wire and persist the final response on 'done'.
         """
         system = self._build_system_blocks(ctx)
+        # Tool order is fixed (record_artifact → request_layer_advance →
+        # suggest_replies) so the tool block is byte-stable across turns and
+        # the 1h cache breakpoint on the first tool keeps hitting. Adding a
+        # tool invalidates the cache exactly once, then it's stable again.
         tools = [
             {**RECORD_ARTIFACT_TOOL, "cache_control": CACHE_1H},
             {**REQUEST_LAYER_ADVANCE_TOOL},
+            {**SUGGEST_REPLIES_TOOL},
         ]
         messages = self._build_messages(ctx)
 
@@ -226,6 +247,7 @@ class Orchestrator:
             else "(none — pick the next probe yourself per the framework)"
         )
         missing = ", ".join(verdict.missing_signals) if verdict and verdict.missing_signals else "—"
+        cross_track = ctx.cross_track_summary or "(no other tracks started yet)"
         return (
             f"## Current state\n\n"
             f"- Track: {ctx.track}\n"
@@ -236,7 +258,9 @@ class Orchestrator:
             f"## What we already know about this student\n\n"
             f"{ctx.known_profile_summary or '(nothing yet)'}\n\n"
             f"## Recently captured signals (this session)\n\n"
-            f"{ctx.recent_signals_summary or '(none yet)'}"
+            f"{ctx.recent_signals_summary or '(none yet)'}\n\n"
+            f"## Progress on the other tracks\n\n"
+            f"{cross_track}"
         )
 
     @staticmethod
@@ -256,6 +280,7 @@ class Orchestrator:
         record_calls: list[dict[str, Any]] = []
         advance = False
         advance_rationale: str | None = None
+        suggested_options: list[str] = []
 
         for block in response.content_blocks:
             btype = block.get("type")
@@ -268,12 +293,20 @@ class Orchestrator:
                 elif tname == "request_layer_advance":
                     advance = True
                     advance_rationale = (block.get("input") or {}).get("rationale")
+                elif tname == "suggest_replies":
+                    raw = (block.get("input") or {}).get("options") or []
+                    # Defensive: keep only non-empty strings, cap at 4 (the
+                    # schema bounds this, but a degraded provider might not).
+                    suggested_options = [
+                        s.strip() for s in raw if isinstance(s, str) and s.strip()
+                    ][:4]
 
         return OrchestratorResponse(
             text="".join(text_chunks).strip(),
             record_artifact_calls=record_calls,
             requested_layer_advance=advance,
             advance_rationale=advance_rationale,
+            suggested_options=suggested_options,
             cost_usd=float(response.cost_usd),
             latency_ms=response.latency_ms,
             raw_blocks=response.content_blocks,

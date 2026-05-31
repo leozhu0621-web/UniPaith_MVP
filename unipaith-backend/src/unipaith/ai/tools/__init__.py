@@ -10,10 +10,12 @@ from unipaith.ai.tools.extractor_schema import EXTRACT_SIGNALS_TOOL
 from unipaith.ai.tools.orchestrator_tools import (
     RECORD_ARTIFACT_TOOL,
     REQUEST_LAYER_ADVANCE_TOOL,
+    SUGGEST_REPLIES_TOOL,
 )
 
 __all__ = [
     "EXTRACT_SIGNALS_TOOL",
     "RECORD_ARTIFACT_TOOL",
     "REQUEST_LAYER_ADVANCE_TOOL",
+    "SUGGEST_REPLIES_TOOL",
 ]

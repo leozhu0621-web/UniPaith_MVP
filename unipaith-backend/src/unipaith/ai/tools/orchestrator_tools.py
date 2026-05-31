@@ -76,3 +76,38 @@ REQUEST_LAYER_ADVANCE_TOOL = {
         },
     },
 }
+
+
+SUGGEST_REPLIES_TOOL = {
+    "name": "suggest_replies",
+    "description": (
+        "Offer 2-4 short, tappable example replies the student could give to "
+        "the question you just asked. These render as chips below the chat "
+        "input (spec 19 §3/§5). Use them to lower the activation energy of "
+        "answering — phrase each as something the STUDENT would say in the "
+        "first person, not as instructions. Optional: skip the tool when an "
+        "open-ended question has no natural short answers. Never include "
+        "'I don't know yet' or 'Skip this' — the UI always shows those."
+    ),
+    "input_schema": {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["options"],
+        "properties": {
+            "options": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 4,
+                "items": {
+                    "type": "string",
+                    "maxLength": 80,
+                    "description": (
+                        "A short first-person reply the student could tap, "
+                        "e.g. 'I loved my algorithms class' or 'Cost is my "
+                        "biggest worry'."
+                    ),
+                },
+            },
+        },
+    },
+}

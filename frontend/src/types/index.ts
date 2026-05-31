@@ -1742,6 +1742,34 @@ export interface CompletionMap {
   identity: string
 }
 
+// Signals the orchestrator may stamp onto an assistant message's
+// `extracted_signals` (spec 19). All optional — the rule-based / stub paths
+// omit most of them.
+export interface AssistantTurnSignals {
+  _phase?: string
+  _mode?: 'rule_based' | string
+  suggested_options?: string[]
+  requested_layer_advance?: boolean
+  advance_rationale?: string | null
+  [key: string]: unknown
+}
+
+// Spec 19 §6 — personality-layer facet for the Discover artifact rail.
+export interface PersonalitySignal {
+  facet: string
+  value: string
+  evidence: string | null
+  confidence: number | null
+}
+
+// Spec 19 §7/§10 — deterministic DiscoveryJudge verdict.
+export interface HandoffVerdict {
+  should_handoff: boolean
+  handoff_target: 'recommendation' | null
+  reason: string
+  completion: Record<string, number>
+}
+
 // ============ PHASE A — DISCOVERY ARTIFACTS ============
 
 export type GoalCategory = 'academic' | 'social' | 'personal'

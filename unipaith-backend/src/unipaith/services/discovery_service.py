@@ -39,6 +39,15 @@ logger = logging.getLogger(__name__)
 STUB_ASSISTANT_CONTENT = "[stub — discovery LLM not yet wired]"
 STUB_PHASE_MARKER = {"_phase": "A_stub"}
 
+# Profile-track depth order. The orchestrator advances basic→personality→
+# identity as each layer's exit conditions are met (spec 19 §2.1/§4.1).
+PROFILE_LAYER_ORDER: tuple[str, ...] = ("basic", "personality", "identity")
+
+# Threshold (0–1) at which all three tracks are considered match-ready and the
+# DiscoveryJudge recommends handoff to Stage 2 (spec 19 §7). Mirrors the
+# frontend HANDOFF_THRESHOLD on DiscoverHomePage.
+HANDOFF_THRESHOLD = Decimal("0.5")
+
 
 class DiscoveryService:
     def __init__(self, db: AsyncSession):
@@ -229,6 +238,9 @@ class DiscoveryService:
         from unipaith.ai.orchestrator import TurnContext, get_orchestrator
         from unipaith.ai.validator import default_validator
 
+        # Hoisted so the post-turn layer-advance and the rule-based fallback
+        # prompt can both read it after the try/except.
+        verdict = None
         try:
             # 1. Extract from the just-arrived student turn.
             extraction = await get_extractor().extract(
@@ -293,6 +305,9 @@ class DiscoveryService:
 
             # 5. Orchestrate — generate the assistant turn.
             history_msgs = await self._load_message_history(session.id)
+            cross_track = await self._cross_track_summary(
+                student_id=student_id, current_track=session.track
+            )
             ctx = TurnContext(
                 track=session.track,  # type: ignore[arg-type]
                 layer=session.layer,  # type: ignore[arg-type]
@@ -300,6 +315,7 @@ class DiscoveryService:
                 verdict=verdict,
                 known_profile_summary=_summarize_snapshot(snapshot),
                 recent_signals_summary=_summarize_extraction(extraction),
+                cross_track_summary=cross_track,
                 history=history_msgs,
             )
             orch_response = await get_orchestrator().respond(
@@ -314,17 +330,28 @@ class DiscoveryService:
                 "requested_layer_advance": orch_response.requested_layer_advance,
                 "advance_rationale": orch_response.advance_rationale,
                 "record_artifact_calls": orch_response.record_artifact_calls,
+                # Spec 19 §3/§5 — tappable reply chips surfaced to the UI.
+                "suggested_options": orch_response.suggested_options,
             }
         except Exception as exc:  # pragma: no cover — degraded path
             logger.exception(
-                "Discovery v2 turn failed for session=%s; falling back to soft stub",
+                "Discovery v2 turn failed for session=%s; serving rule-based prompt",
                 session.id,
             )
+            # Spec 19 §9: on agent failure serve a rule-based next prompt
+            # (not an apology) so the conversation keeps moving; the UI shows
+            # the "Limited mode active — your replies are still saved" banner
+            # off the `_mode: rule_based` marker.
             assistant_text = (
-                "Sorry — I hit a snag generating that reply. Could you try "
-                "rephrasing your last message?"
+                verdict.next_probe_hint
+                if verdict is not None and verdict.next_probe_hint
+                else _rule_based_opener(session.track, session.layer)
             )
-            assistant_signals = {"_phase": "A2_error", "error": str(exc)[:240]}
+            assistant_signals = {
+                "_phase": "A2_error",
+                "_mode": "rule_based",
+                "error": str(exc)[:240],
+            }
 
         assistant = DiscoveryMessage(
             session_id=session.id,
@@ -335,7 +362,123 @@ class DiscoveryService:
         self.db.add(assistant)
         await self.db.flush()
         await self.db.refresh(assistant)
+
+        # Spec 19 §2.1/§4.1 — auto-advance the profile layer once this layer's
+        # exit conditions are met (basic→personality→identity). No-op for
+        # goals/needs and for incomplete layers.
+        await self._maybe_advance_profile_layer(session=session, verdict=verdict)
         return assistant
+
+    async def _maybe_advance_profile_layer(
+        self,
+        *,
+        session: DiscoverySession,
+        verdict,  # LayerVerdict | None — typed loosely to avoid an import
+    ) -> None:
+        """Advance the profile track to its next layer once the current
+        layer's exit conditions are met (spec 19 §2.1/§4.1).
+
+        Strategy: complete the current layer's session (it keeps its high
+        completion_pct, so the per-track max in the completion map stays put
+        and never regresses) and spawn a fresh active session for the next
+        layer. Identity is the deepest layer — it completes terminally with no
+        successor. No-op for goals/needs and whenever the verdict is not
+        layer-complete.
+        """
+        if session.track != "profile" or session.status != "active":
+            return
+        if verdict is None or not verdict.layer_complete:
+            return
+        if session.layer not in PROFILE_LAYER_ORDER:
+            return
+
+        idx = PROFILE_LAYER_ORDER.index(session.layer)
+        next_layer = PROFILE_LAYER_ORDER[idx + 1] if idx + 1 < len(PROFILE_LAYER_ORDER) else None
+
+        session.status = "completed"
+        if session.completed_at is None:
+            session.completed_at = func.now()  # type: ignore[assignment]
+
+        if next_layer is not None:
+            self.db.add(
+                DiscoverySession(
+                    student_id=session.student_id,
+                    track="profile",
+                    layer=next_layer,
+                    status="active",
+                    completion_pct=Decimal("0"),
+                )
+            )
+        await self.db.flush()
+        # Keep the denormalized journey summary on student_profiles fresh.
+        await self._refresh_profile_completion_summary(session.student_id)
+
+    async def get_personality_signals(self, user_id: UUID) -> list[dict[str, object]]:
+        """Spec 19 §6 — personality-layer signals for the artifact rail.
+
+        Personality facets aren't persisted to a typed table (the extractor
+        writes goals / needs / identity only), so we reconstruct them from the
+        student's profile-session message extractions. De-duplicated by facet,
+        newest wins, each with a 0–100 confidence so the widget can show dots.
+        """
+        student_id = await self._profile_id_for_user(user_id)
+
+        # All extracted_signals across the student's profile-track sessions,
+        # chronological. We parse the raw dicts directly (rather than via the
+        # snapshot) because the snapshot's PersonalityEntry drops the
+        # extractor's per-facet confidence, which the rail widget needs.
+        result = await self.db.execute(
+            select(DiscoveryMessage.extracted_signals)
+            .join(DiscoverySession, DiscoveryMessage.session_id == DiscoverySession.id)
+            .where(
+                DiscoverySession.student_id == student_id,
+                DiscoverySession.track == "profile",
+            )
+            .order_by(DiscoveryMessage.created_at)
+        )
+
+        # De-dup by facet, last write wins (history is chronological).
+        by_facet: dict[str, dict[str, object]] = {}
+        for (signals,) in result.all():
+            if not isinstance(signals, dict):
+                continue
+            for p in signals.get("personality") or []:
+                if not isinstance(p, dict):
+                    continue
+                facet = p.get("facet")
+                value = p.get("value")
+                if not facet or not value:
+                    continue
+                by_facet[facet] = {
+                    "facet": facet,
+                    "value": value,
+                    "evidence": p.get("evidence"),
+                    "confidence": _normalize_confidence(p.get("confidence")),
+                }
+        return list(by_facet.values())
+
+    async def evaluate_handoff(self, user_id: UUID) -> dict[str, object]:
+        """Deterministic DiscoveryJudge (spec 19 §7/§10).
+
+        Returns whether the student is match-ready — all three tracks at or
+        above the handoff threshold — plus a short reason. The LLM judge is a
+        documented follow-up; this rule covers the spec's testable behavior
+        and backs the "Generate strategy" handoff nudge.
+        """
+        completion = await self.get_completion_map(user_id)
+        per_track = {k: completion.get(k, Decimal("0")) for k in ("profile", "goals", "needs")}
+        ready = all(v >= HANDOFF_THRESHOLD for v in per_track.values())
+        if ready:
+            reason = "All three tracks are far enough along to generate a strategy."
+        else:
+            behind = [k for k, v in per_track.items() if v < HANDOFF_THRESHOLD]
+            reason = "Keep going on: " + ", ".join(behind)
+        return {
+            "should_handoff": ready,
+            "handoff_target": "recommendation" if ready else None,
+            "reason": reason,
+            "completion": {k: float(v) for k, v in completion.items()},
+        }
 
     # ── Phase A3.2: SSE streaming variant ──────────────────────────────────
 
@@ -465,6 +608,9 @@ class DiscoveryService:
                 session.completion_pct = verdict.completion_pct
 
             history_msgs = await self._load_message_history(session.id)
+            cross_track = await self._cross_track_summary(
+                student_id=student_id, current_track=session.track
+            )
             ctx = TurnContext(
                 track=session.track,  # type: ignore[arg-type]
                 layer=session.layer,  # type: ignore[arg-type]
@@ -472,6 +618,7 @@ class DiscoveryService:
                 verdict=verdict,
                 known_profile_summary=_summarize_snapshot(snapshot),
                 recent_signals_summary=_summarize_extraction(extraction),
+                cross_track_summary=cross_track,
                 history=history_msgs,
             )
 
@@ -509,11 +656,14 @@ class DiscoveryService:
                             "requested_layer_advance": requested_advance,
                             "advance_rationale": advance_rationale,
                             "record_artifact_calls": record_calls,
+                            "suggested_options": payload.suggested_options,
                         },
                     )
                     self.db.add(assistant)
                     await self.db.flush()
                     await self.db.refresh(assistant)
+                    # Auto-advance the profile layer on the streaming path too.
+                    await self._maybe_advance_profile_layer(session=session, verdict=verdict)
                     yield ("assistant_message", _msg_dict(assistant))
         except Exception as exc:  # pragma: no cover — degraded path
             logger.exception("Discovery stream_message failed for session=%s", session_id)
@@ -620,6 +770,24 @@ class DiscoveryService:
                 student_id,
             )
 
+    async def _cross_track_summary(self, *, student_id: UUID, current_track: str) -> str:
+        """Spec 19 §15 — one line per OTHER track's completion, so the
+        orchestrator stays coherent across Profile / Goals / Needs and won't
+        re-ask what another track already covered."""
+        completion = await self._completion_for_student(student_id)
+        labels = {
+            "profile": "Profile",
+            "goals": "Goals",
+            "needs": "Needs",
+        }
+        lines: list[str] = []
+        for key, label in labels.items():
+            if key == current_track:
+                continue
+            pct = int(round(float(completion.get(key, 0)) * 100))
+            lines.append(f"- {label}: {pct}% complete")
+        return "\n".join(lines)
+
     async def _load_extracted_signals_for_session(self, session_id: UUID) -> list[dict | None]:
         """All extracted_signals for a session, in chronological order."""
         result = await self.db.execute(
@@ -658,7 +826,16 @@ class DiscoveryService:
     async def _completion_for_student(self, student_id: UUID) -> dict[str, Decimal]:
         """Inner query — returns the per-track + identity completion dict
         keyed by student_id directly. Used both by the public API endpoint
-        and by the profile-summary write hook."""
+        and by the profile-summary write hook.
+
+        Counts both ACTIVE and completed sessions (everything except
+        'abandoned'). The live conversation writes `completion_pct` onto the
+        active session each turn, so the Discover progress bars + the
+        Generate-strategy gate (spec 19 §3/§7) must see active progress, not
+        only finished sessions. Per-track value is the max completion across
+        the student's sessions for that track; this stays monotonic across
+        profile layer auto-advance because each completed layer keeps its
+        high `completion_pct` while the next layer starts a fresh row."""
         result = await self.db.execute(
             select(
                 DiscoverySession.track,
@@ -667,7 +844,7 @@ class DiscoveryService:
             )
             .where(
                 DiscoverySession.student_id == student_id,
-                DiscoverySession.status == "completed",
+                DiscoverySession.status != "abandoned",
             )
             .group_by(DiscoverySession.track, DiscoverySession.layer)
         )
@@ -689,10 +866,10 @@ class DiscoveryService:
 
     async def get_completion_map(self, user_id: UUID) -> dict[str, Decimal]:
         """Return per-track completion 0–1 plus a separate 'identity'
-        dimension. Per-track value is the max completion_pct across all
-        completed sessions for that track (or 0 if none). Identity is the max
-        completion_pct of completed sessions with track='profile' AND
-        layer='identity'."""
+        dimension. Per-track value is the max completion_pct across the
+        student's active + completed sessions for that track (or 0 if none).
+        Identity is the max completion_pct of sessions with track='profile'
+        AND layer='identity'."""
         student_id = await self._profile_id_for_user(user_id)
         return await self._completion_for_student(student_id)
 
@@ -713,6 +890,44 @@ class DiscoveryService:
 
 
 # ── Module helpers (state-header rendering) ────────────────────────────────
+
+
+# Spec 19 §9/§14 — deterministic next prompts served when the LLM orchestrator
+# fails. Keyed (track, layer); the basic opener matches the spec copy verbatim.
+_RULE_BASED_OPENERS: dict[tuple[str, str | None], str] = {
+    ("profile", "basic"): "Tell me about a course you actually enjoyed this year.",
+    ("profile", "personality"): "What's something your friends rely on you for?",
+    ("profile", "identity"): "What's a value of yours that's been tested recently?",
+    ("goals", None): "What does success look like a year after you finish?",
+    ("needs", None): "What's one thing you can't do without in a school environment?",
+}
+
+
+def _rule_based_opener(track: str, layer: str | None) -> str:
+    """A safe, on-topic next question for the degraded (rule-based) path."""
+    return (
+        _RULE_BASED_OPENERS.get((track, layer))
+        or _RULE_BASED_OPENERS.get((track, None))
+        or "Tell me a bit more about what you're looking for."
+    )
+
+
+def _normalize_confidence(raw: object) -> int | None:
+    """Normalize an extractor confidence to a 0–100 int for the UI.
+
+    The codebase is mixed on scale (state-machine thresholds use 0–1; the
+    agent specs describe 0–100), so accept either: a value <= 1 is treated as
+    a 0–1 fraction and scaled up; anything larger is treated as already 0–100.
+    Clamped to [0, 100]; None/garbage → None."""
+    if raw is None:
+        return None
+    try:
+        v = float(raw)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None
+    if v <= 1.0:
+        v *= 100.0
+    return max(0, min(100, int(round(v))))
 
 
 def _summarize_snapshot(snapshot) -> str:  # type: ignore[no-untyped-def]
