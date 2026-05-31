@@ -290,8 +290,12 @@ export default function ExplorePage() {
         <div className="mb-4 flex items-center gap-2 flex-wrap">
           {chips.length > 0 ? (
             <ConstraintChips chips={chips} onRemove={removeChip} onEdit={editChip} />
-          ) : (
+          ) : refinedResults === null ? (
+            // Initial interpretation (before any chip edit/removal).
             <span className="text-xs text-slate">{nlpResult.interpretation}</span>
+          ) : (
+            // After all chips were removed — never show the stale interpretation.
+            <span className="text-xs text-slate">{keyword ? `Results for “${keyword}”` : 'All programs'}</span>
           )}
           <button onClick={exitSearch} className="ml-auto text-xs text-cobalt hover:underline">
             Back to browse
