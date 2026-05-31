@@ -440,6 +440,21 @@ export interface ShortlistUnlock {
 }
 
 // ============ APPLICATIONS ============
+export interface ApplicationOffer {
+  id: string
+  application_id: string
+  offer_type: string | null
+  tuition_amount: number | null
+  scholarship_amount: number
+  financial_package_total: number | null
+  conditions: Record<string, unknown> | null
+  response_deadline: string | null
+  status: string | null
+  student_response: string | null
+  response_at: string | null
+  brief: string | null
+}
+
 export interface Application {
   id: string
   student_id: string
@@ -453,22 +468,47 @@ export interface Application {
   decision_notes: string | null
   completeness_status: string | null
   missing_items: string[] | null
+  // --- Spec 15 workspace ---
+  submission_mode: 'internal' | 'external'
+  readiness_pct: number | null
+  intent_picker: string | null
+  intent_rationale: string | null
+  fit_band: 'low' | 'medium' | 'high' | null
+  guardrail_blockers: string[] | null
+  offer: ApplicationOffer | null
   created_at: string
   updated_at: string
-  program?: Program
+  program?: Program & { institution_name?: string | null }
+}
+
+export interface ChecklistItem {
+  key?: string
+  name: string
+  item_name?: string
+  category?: string
+  item_type?: string
+  owner?: 'student' | 'recommender' | 'institution' | 'system'
+  required?: boolean
+  requirement_level?: string
+  expected_format?: string | null
+  status?: 'completed' | 'not_started' | 'in_progress' | 'blocked'
+  completed?: boolean
+  manual_complete?: boolean
+  mismatch?: boolean
+  description?: string | null
 }
 
 export interface ApplicationChecklist {
   id: string
   student_id: string
   program_id: string
-  items: { name: string; status: string; required: boolean }[]
+  items: ChecklistItem[]
   completion_percentage: number
   auto_generated_at: string | null
 }
 
 export interface ReadinessCheck {
-  ready: boolean
+  is_ready: boolean
   completion_percentage: number
   missing_items: string[]
   warnings: string[]
@@ -535,6 +575,7 @@ export interface Resume {
 }
 
 // ============ SAVED LISTS ============
+// Spec 13 §4.2 — persisted priority. Spec 13 §4.4 — derived status.
 export type SavedPriority = 'considering' | 'planning_to_apply' | 'applied' | 'dropped'
 export type SavedStatus =
   | 'considering'
@@ -551,20 +592,63 @@ export interface SavedProgram {
   program_id: string
   notes: string | null
   added_at: string
+  // Spec 13 §4.2 / §4.3 — persisted curation.
   priority: SavedPriority
-  status: SavedStatus
   tags: string[]
-  program_name?: string | null
-  institution_name?: string | null
-  program?: ProgramSummary
+  // Spec 13 §4.4 — derived from application existence.
+  status: SavedStatus
+  // Spec 13 §7 — reach/target/safer + dual scores (from the match row).
+  band_label?: MatchBand | null
   fitness_score?: number | null
   confidence_score?: number | null
-  band_label?: 'reach' | 'target' | 'safer' | null
+  // Program / institution detail (flattened) + nested for back-compat.
+  program_name?: string | null
+  institution_id?: string | null
+  institution_name?: string | null
+  institution_country?: string | null
+  institution_city?: string | null
+  degree_type?: string | null
+  tuition?: number | null
+  application_deadline?: string | null
+  acceptance_rate?: number | null
+  duration_months?: number | null
+  program?: ProgramSummary
+}
+
+// Spec 13 §5 — compare row carries dual fitness/confidence scores + band.
+export interface ComparisonProgram {
+  id: string
+  institution_id: string
+  program_name: string
+  institution_name?: string | null
+  institution_country?: string | null
+  institution_city?: string | null
+  degree_type?: string | null
+  department?: string | null
+  duration_months?: number | null
+  tuition?: number | null
+  delivery_format?: string | null
+  acceptance_rate?: number | null
+  application_deadline?: string | null
+  requirements?: unknown
+  fitness_score?: number | null
+  confidence_score?: number | null
+  band_label?: MatchBand | null
+  // Legacy — drop in Phase E.
+  match_score?: number | null
+  match_tier?: number | null
 }
 
 export interface ComparisonResponse {
-  programs: ProgramSummary[]
+  programs: ComparisonProgram[]
   ai_analysis: string | null
+}
+
+export interface StartApplicationResponse {
+  app_id: string
+  program_id: string
+  status: SavedStatus
+  created: boolean
 }
 
 // ============ MESSAGING ============
@@ -590,6 +674,7 @@ export interface Message {
   read_at: string | null
 }
 
+// ============ INBOX (Spec 17) ============
 export type ActionLabel =
   | 'needs_reply'
   | 'document_requested'
@@ -1864,10 +1949,8 @@ export interface InstitutionMatchRationale {
 // ============ PHASE A — WORKSHOP FEEDBACK ============
 
 export type WorkshopDomain = 'essay' | 'interview' | 'test'
-export type WorkshopMode = 'general' | 'program_specific'
 export type IssueSeverity = 'minor' | 'moderate' | 'major'
 export type ElementImportance = 'nice_to_have' | 'should_have' | 'required'
-export type PrepPriority = 'low' | 'med' | 'high'
 
 export interface StructuralIssue {
   issue: string
@@ -1885,35 +1968,16 @@ export interface SuggestedQuestion {
   why: string
 }
 
-export interface GapAnalysisItem {
-  topic: string
-  recommendation: string
-}
-
-export interface PrepRecommendation {
-  action: string
-  time_commitment: string
-  priority: PrepPriority
-}
-
 export interface WorkshopFeedbackRun {
   id: string
   student_id: string
   domain: WorkshopDomain
-  mode?: WorkshopMode
-  target_program_id?: string | null
-  input_text?: string | null
   input_artifact_id: string | null
   prompt_text: string | null
   rubric_scores: Record<string, number>
   structural_issues: StructuralIssue[]
   missing_elements: MissingElement[]
   suggested_questions: SuggestedQuestion[]
-  current_band?: string | null
-  target_band?: string | null
-  gap_analysis?: GapAnalysisItem[]
-  prep_recommendations?: PrepRecommendation[]
-  readiness_summary?: string | null
   is_stub: boolean
   created_at: string
 }
