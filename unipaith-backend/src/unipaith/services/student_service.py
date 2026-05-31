@@ -1093,6 +1093,10 @@ class StudentService:
 
             await invalidate_for_consent_change(self.db, student_id)
 
+        # Load server-default columns (created_at / updated_at) so response
+        # serialization doesn't trigger a lazy IO outside the async greenlet
+        # (a freshly-created consent row would otherwise raise MissingGreenlet).
+        await self.db.refresh(record)
         return record
 
     # --- Peer Comparison ---

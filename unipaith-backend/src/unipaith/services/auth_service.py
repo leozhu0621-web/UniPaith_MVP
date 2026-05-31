@@ -69,6 +69,15 @@ class AuthService:
             profile = StudentProfile(user_id=user.id)
             self.db.add(profile)
             await self.db.flush()
+            # Spec 06 §4.1 — every student starts a 7-day full-access trial.
+            # Guarded by `billing_enabled` and wrapped so a billing hiccup can
+            # never fail account creation.
+            try:
+                from unipaith.services.billing_service import BillingService
+
+                await BillingService(self.db).start_trial(user)
+            except Exception:  # noqa: BLE001 — signup must never 500 on billing
+                logger.exception("start_trial failed during signup for %s", user.email)
         return {"user_id": user.id, "email": user.email, "role": user.role.value}
 
     async def login(self, email: str, password: str) -> dict[str, Any]:

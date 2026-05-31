@@ -229,6 +229,36 @@ class Settings(BaseSettings):
     # Off → returns the hardcoded STUB_IDENTITY_SUMMARY.
     ai_identity_v2_enabled: bool = False
 
+    # --- Billing / Monetization (Spec 06 §4) ---
+    # Master Paper model: students get a 7-day full-access trial (card-on-file
+    # auto-convert) then $15/mo, with an optional $5/mo ad-free upgrade;
+    # institutions pay $15 per unique applicant processed. All gated behind
+    # `billing_enabled` so the platform is unchanged until flipped per-env
+    # (same dogfood pattern as the AI v2 flags). When False, every entitlement
+    # check passes and no trial/charge rows are created — existing flows untouched.
+    billing_enabled: bool = False
+    # When True (default), the MockBillingProvider services payments in-process
+    # (deterministic, no network) — dev/test/demo. Set False + provider="stripe"
+    # to route real cards (Spec 43 §10 lists Stripe as planned sub-processor).
+    billing_mock_mode: bool = True
+    billing_provider: str = "mock"  # "mock" | "stripe"
+    # Prices in integer cents (avoid float money).
+    billing_student_plan_price_cents: int = 1500  # $15/mo "UniPaith Plus"
+    billing_student_adfree_price_cents: int = 500  # $5/mo ad-free upgrade
+    billing_institution_per_applicant_cents: int = 1500  # $15 / unique applicant
+    billing_trial_days: int = 7
+    billing_currency: str = "usd"
+    # Stripe credentials (only read when provider="stripe"). Empty in dev.
+    stripe_secret_key: str = ""
+    stripe_publishable_key: str = ""
+    stripe_webhook_secret: str = ""
+    # Recurring Price ids created in the Stripe dashboard (or by
+    # scripts/setup_stripe_products.py). If stripe_price_id is empty the
+    # provider falls back to an inline price_data using the cents config above.
+    stripe_price_id: str = ""  # $15/mo Plus
+    stripe_adfree_price_id: str = ""  # $5/mo ad-free add-on
+    stripe_api_version: str = "2024-06-20"
+
     # GPU infrastructure (cloud-first)
     gpu_mode: str = "openai"  # "openai" | "aws" | "local" | "mock"
     gpu_8b_instance_id: str = ""

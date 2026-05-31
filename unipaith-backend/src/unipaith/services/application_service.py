@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import random
 import string
 import uuid
@@ -23,6 +24,8 @@ from unipaith.models.application import (
 from unipaith.models.engagement import StudentEssay, StudentResume
 from unipaith.models.institution import Program
 from unipaith.models.student import StudentProfile
+
+logger = logging.getLogger(__name__)
 
 
 class ApplicationService:
@@ -86,6 +89,7 @@ class ApplicationService:
         self.db.add(submission)
         await self.db.flush()
         await self.db.refresh(app)
+        await self._record_applicant_billing(app)
         return app
 
     async def withdraw_application(self, student_id: UUID, application_id: UUID) -> None:
@@ -295,7 +299,20 @@ class ApplicationService:
         self.db.add(submission)
         await self.db.flush()
         await self.db.refresh(app)
+        await self._record_applicant_billing(app)
         return app
+
+    async def _record_applicant_billing(self, app: Application) -> None:
+        """Bill the institution the per-unique-applicant fee on submission
+        (Spec 06 §4.2). The billing service is itself fully defensive and a
+        no-op when ``billing_enabled`` is False; this wrapper adds a final
+        guard so a billing fault can never break application submission."""
+        try:
+            from unipaith.services.billing_service import BillingService
+
+            await BillingService(self.db).record_applicant_charge(app)
+        except Exception:  # noqa: BLE001 — submission must never fail on billing
+            logger.exception("applicant billing hook failed for app %s", app.id)
 
     async def _build_submission_snapshot(
         self, student_id: UUID, application_id: UUID, program_id: UUID

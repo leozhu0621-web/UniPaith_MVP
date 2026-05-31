@@ -13,6 +13,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from unipaith.api.billing import require_entitlement
 from unipaith.database import get_db
 from unipaith.dependencies import require_student
 from unipaith.models.user import User
@@ -22,7 +23,13 @@ from unipaith.schemas.workshop_feedback import (
     TestGuidanceRequest,
     WorkshopFeedbackResponse,
 )
+from unipaith.services.entitlements import Feature
 from unipaith.services.workshop_feedback_service import WorkshopFeedbackService
+
+# Workshops (structured writing workflows) are a paid feature (Spec 06 §4.1).
+# The guard 402s post-trial free students; trial + Plus pass; no-op when
+# billing is disabled.
+_WORKSHOPS_GUARD = Depends(require_entitlement(Feature.WORKSHOPS))
 
 router = APIRouter(prefix="/students/me/workshops", tags=["workshops-feedback"])
 
@@ -35,6 +42,7 @@ def _svc(db: AsyncSession) -> WorkshopFeedbackService:
     "/essay/feedback",
     response_model=WorkshopFeedbackResponse,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[_WORKSHOPS_GUARD],
 )
 async def request_essay_feedback(
     body: EssayFeedbackRequest,
@@ -51,6 +59,7 @@ async def request_essay_feedback(
     "/interview/practice",
     response_model=WorkshopFeedbackResponse,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[_WORKSHOPS_GUARD],
 )
 async def request_interview_practice(
     body: InterviewPracticeRequest,
@@ -67,6 +76,7 @@ async def request_interview_practice(
     "/test/guidance",
     response_model=WorkshopFeedbackResponse,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[_WORKSHOPS_GUARD],
 )
 async def request_test_guidance(
     body: TestGuidanceRequest,

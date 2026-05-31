@@ -12,6 +12,7 @@ import {
   Search, X, Loader2, Sparkles, Building2,
 } from 'lucide-react'
 import StrategyView from './match/StrategyView'
+import MatchUpgradeNudge from '../../components/student/MatchUpgradeNudge'
 import type { ProgramSummary } from '../../types'
 import type {
   InstitutionClassification,
@@ -177,6 +178,8 @@ export default function ExplorePage() {
       <div className="mb-4">
         <StrategyView />
       </div>
+
+      <MatchUpgradeNudge />
 
       {/* Search bar */}
       <div className="relative mb-4">

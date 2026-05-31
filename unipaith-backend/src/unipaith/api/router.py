@@ -8,6 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from unipaith.api.ai_feedback import router as ai_feedback_router
 from unipaith.api.applications import router as applications_router
 from unipaith.api.auth import router as auth_router
+from unipaith.api.billing import institution_router as billing_institution_router
+from unipaith.api.billing import router as billing_router
+from unipaith.api.billing import webhook_router as billing_webhook_router
 from unipaith.api.discovery import router as discovery_router
 from unipaith.api.documents import router as documents_router
 from unipaith.api.events import router as events_router
@@ -34,6 +37,9 @@ from unipaith.services.institution_service import InstitutionService
 api_router = APIRouter()
 
 api_router.include_router(auth_router)
+api_router.include_router(billing_router)
+api_router.include_router(billing_institution_router)
+api_router.include_router(billing_webhook_router)
 api_router.include_router(students_router)
 api_router.include_router(discovery_router)
 api_router.include_router(goals_router)

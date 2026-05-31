@@ -22,6 +22,12 @@ from unipaith.models.application import (
 )
 from unipaith.models.audit import AdmissionsAuditLog
 from unipaith.models.base import Base
+from unipaith.models.billing import (
+    BillingEvent,
+    InstitutionApplicantCharge,
+    PaymentMethod,
+    Subscription,
+)
 from unipaith.models.confidence_outcome import ConfidenceOutcomePair
 from unipaith.models.discovery import DiscoveryMessage, DiscoverySession
 from unipaith.models.engagement import (
@@ -156,6 +162,11 @@ __all__ = [
     "StudentIdentity",
     "StudentStrategy",
     "WorkshopFeedbackRun",
+    # Billing / monetization (Spec 06 §4)
+    "Subscription",
+    "PaymentMethod",
+    "BillingEvent",
+    "InstitutionApplicantCharge",
     # LLM-only artifacts (Phase A1)
     "StudentFeatureVector",
     "AiTurn",

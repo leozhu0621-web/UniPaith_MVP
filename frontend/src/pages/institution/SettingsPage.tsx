@@ -7,6 +7,8 @@ import { Settings, Plus, Trash2 } from 'lucide-react'
 import { getInstitution, updateInstitution } from '../../api/institutions'
 import { getRubrics, createRubric } from '../../api/reviews'
 import { getNotificationPrefs, updateNotificationPrefs } from '../../api/notifications'
+import { getInstitutionUsage } from '../../api/billing'
+import { formatCents } from '../../types/billing'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -101,7 +103,11 @@ export default function SettingsPage() {
     { id: 'profile', label: 'Profile' },
     { id: 'rubrics', label: 'Rubrics' },
     { id: 'notifications', label: 'Notifications' },
+    { id: 'billing', label: 'Billing & usage' },
   ]
+
+  // --- Billing & usage (Spec 06 §4.2 — $15 per unique applicant) ---
+  const usageQ = useQuery({ queryKey: ['institution-usage'], queryFn: getInstitutionUsage })
 
   // --- Profile ---
   const instQ = useQuery({ queryKey: ['institution'], queryFn: getInstitution })
@@ -450,6 +456,58 @@ export default function SettingsPage() {
                 </Button>
               </div>
             </>
+          )}
+        </Card>
+      )}
+
+      {/* Billing & usage Tab — usage-based pricing (Spec 06 §4.2) */}
+      {activeTab === 'billing' && (
+        <Card className="p-6 space-y-5">
+          {usageQ.isLoading ? (
+            <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10" />)}</div>
+          ) : usageQ.data && !usageQ.data.enabled ? (
+            <p className="text-sm text-gray-500">
+              Billing is not enabled in this environment.
+            </p>
+          ) : usageQ.data ? (
+            <>
+              <div>
+                <p className="text-sm text-gray-500">
+                  You're billed <span className="font-medium text-gray-900">{formatCents(usageQ.data.per_applicant_cents)}</span> per unique
+                  applicant processed — no per-seat fees.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-lg border border-border p-4">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Unique applicants</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{usageQ.data.billable_applicants}</p>
+                </div>
+                <div className="rounded-lg border border-border p-4">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Amount due</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{formatCents(usageQ.data.total_cents)}</p>
+                </div>
+              </div>
+              {usageQ.data.charges.length > 0 ? (
+                <div>
+                  <p className="text-sm font-medium text-gray-900 mb-2">Recent activity</p>
+                  <ul className="divide-y divide-border border border-border rounded-lg">
+                    {usageQ.data.charges.slice(0, 10).map(c => (
+                      <li key={c.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
+                        <span className="text-gray-700">
+                          Applicant processed
+                          <span className="text-gray-400 ml-2">{formatDate(c.charged_at || c.created_at)}</span>
+                        </span>
+                        <span className="text-gray-900 font-medium">{formatCents(c.amount_cents, c.currency)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">No applicants processed yet this cycle.</p>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-gray-500">Usage is unavailable right now.</p>
           )}
         </Card>
       )}
