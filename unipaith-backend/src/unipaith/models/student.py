@@ -346,6 +346,8 @@ class StudentPreference(Base):
     target_degree_level: Mapped[str | None] = mapped_column(String(30))
     target_start_term: Mapped[str | None] = mapped_column(String(30))
     thesis_interest: Mapped[str | None] = mapped_column(String(20))
+    # Spec 20 §2 — when false, saving a program does not auto-follow its institution.
+    auto_follow_on_save: Mapped[bool] = mapped_column(default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

@@ -1067,6 +1067,7 @@ class StudentService:
         # keep. Compare BEFORE applying the patch so we only invalidate
         # on a real change.
         prior_matching = bool(record.consent_matching) if record is not None else True
+        prior_peer = bool(record.consent_peer_connect) if record is not None else False
 
         if record is None:
             record = StudentDataConsent(student_id=student_id, **update_data)
@@ -1092,6 +1093,12 @@ class StudentService:
             from unipaith.ai.cache_invalidation import invalidate_for_consent_change
 
             await invalidate_for_consent_change(self.db, student_id)
+
+        # Spec 20 §6.1 — opt-in via Data tab seeds the peer visibility profile.
+        if bool(record.consent_peer_connect) and not prior_peer:
+            from unipaith.services.peer_service import PeerService
+
+            await PeerService(self.db).get_my_profile(student_id)
 
         # Load server-side defaults (created_at/updated_at) within the async
         # context so response serialization never triggers a sync lazy-load

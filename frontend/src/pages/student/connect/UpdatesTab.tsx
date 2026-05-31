@@ -28,6 +28,9 @@ export default function UpdatesTab() {
   })
 
   const onViewProgram = (programId: string) => navigate(`/s/programs/${programId}`)
+  const onStartApplication = (programId: string) => navigate(`/s/programs/${programId}?apply=1`)
+  const onRsvpEvent = () => navigate('/s/posts?tab=events')
+  const onRequestInfo = (programId: string) => navigate(`/s/manage?tab=messages&program=${programId}`)
 
   const onAddToCalendar = async (item: ConnectFeedItem) => {
     if (!item.deadline) return
@@ -104,6 +107,9 @@ export default function UpdatesTab() {
               item={item}
               onViewProgram={onViewProgram}
               onAddToCalendar={onAddToCalendar}
+              onStartApplication={onStartApplication}
+              onRsvpEvent={onRsvpEvent}
+              onRequestInfo={onRequestInfo}
               onMute={item.kind === 'post' ? (id => muteMut.mutate(id)) : undefined}
             />
           ))}

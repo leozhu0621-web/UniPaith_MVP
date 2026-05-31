@@ -134,3 +134,31 @@ async def test_explicit_follow_then_unfollow(
 
     u = await student_client.delete(f"/api/v1/connect/follows/{institution.id}")
     assert u.status_code == 204
+
+
+@pytest.mark.asyncio
+async def test_auto_follow_disabled_on_save(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    """Spec 20 §2 — Settings toggle disables auto-follow on save."""
+    _, institution, program = await _seed(db_session, mock_student_user, mock_institution_user)
+
+    disabled = await student_client.put(
+        "/api/v1/students/me/preferences", json={"auto_follow_on_save": False}
+    )
+    assert disabled.status_code == 200
+
+    await student_client.post("/api/v1/students/me/saved", json={"program_id": str(program.id)})
+
+    follows = (await student_client.get("/api/v1/connect/follows")).json()
+    assert follows == []
+
+    feed = (await student_client.get("/api/v1/connect/feed")).json()
+    assert feed["followed_count"] == 0
+
+    # Explicit follow still works when auto-follow is off.
+    await student_client.post(f"/api/v1/connect/follows/{institution.id}")
+    assert len((await student_client.get("/api/v1/connect/follows")).json()) == 1
