@@ -9,7 +9,7 @@ import Wordmark from '../ui/Wordmark'
 import Dropdown from '../ui/Dropdown'
 import Sheet from '../ui/Sheet'
 import {
-  Bell, LogOut, Settings, Menu, ChevronDown, BarChart3, LayoutDashboard, Rocket,
+  Bell, LogOut, Settings, Menu, ChevronDown,
 } from 'lucide-react'
 
 const TOP_NAV = [

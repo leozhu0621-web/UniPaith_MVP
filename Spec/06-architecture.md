@@ -163,18 +163,20 @@ Two hard commitments on this engine (per `46-data-rights-privacy.md`):
 
 ### How LLM (Claude) and ML divide labor
 
-| Task | Layer | Tech |
-|---|---|---|
-| Extract signals from chat | L2 | Claude Haiku (DiscoveryExtractor) |
-| Normalize free text → enum/range | L2 | Claude Haiku |
-| Generate match rationale | L2 | Claude Sonnet (MatchRationaleAgent) |
-| Compute fitness/confidence scores | L3 | Vector similarity + calibrated classifier |
-| Collaborative filtering (students like you applied to…) | L3 | ML (matrix factorization / embeddings) |
-| Rank programs for a student | L3 | ML re-ranker + L2 personalization weight |
-| Detect fraud / anomaly | L3 | Classical ML + rules |
-| Essay authenticity (AI-pattern) | L2 | Claude Haiku (AuthenticityRiskScorer) |
-| Strategy narrative | L2 | Claude Sonnet (StrategyAgent) |
-| Institution review summary | L2 | Claude Opus (DraftSummarizerForReview) |
+| Task | Layer | Tech | Code (class) |
+|---|---|---|---|
+| Extract signals from chat | L2 | Claude Haiku | `Extractor` (`ai/extractor.py`) |
+| Normalize free text → enum/range | L2 | Claude Haiku | `Extractor` tool schema |
+| Generate match rationale | L2 | Claude Sonnet | `RationaleAgent` (`ai/rationale.py`) |
+| Compute fitness/confidence scores | L3 | Vector similarity + calibrated classifier | `services/matching.py` (`matcher` ledger agent) |
+| Collaborative filtering (students like you applied to…) | L3 | ML (matrix factorization / embeddings) | `reranker.py` (cold-start identity) |
+| Rank programs for a student | L3 | ML re-ranker + L2 personalization weight | `reranker.py` |
+| Detect fraud / anomaly | L3 | Classical ML + rules | `review_pipeline_service.scan_integrity` |
+| Essay authenticity (AI-pattern) | L2 | Claude Haiku | `AuthenticityRiskScorer` (`ai/authenticity.py`) ✅ |
+| Strategy narrative | L2 | Claude Sonnet | `StrategyAgent` (`ai/strategy.py`) |
+| Institution review summary | L2 | **Claude Opus** | `DraftSummarizerForReview` (`ai/review_summarizer.py`) ✅ |
+
+> **Realization note (spec-06 build):** all ten rows are wired. `review_summarizer` is the one true **flagship/Opus** caller (`model="flagship"` → `claude-opus-4-8`); `authenticity_risk` (Haiku) flags essays into `IntegritySignal`s for human review (spec 32 §7); the L3 ML scorer (`matcher`) is consent-gated and writes its own audit-ledger row. The canonical agent→tier map is `ai/agent_registry.py` (`45` §20). The two ✅ rows were previously missing/stubbed (the review summary returned "engine being rebuilt" and recorded Sonnet, never Opus).
 
 The Master Paper line: *"the LLMs will convert the user's context into prompts and feature vectors. The ML engine will convert those prompts and feature vectors into matching recommendations… LLMs will eventually present ML's outcomes back to the platform with adequate reasoning."*
 
@@ -292,17 +294,29 @@ Notes:
 | Layer | Backend location (current) |
 |---|---|
 | L1 capture | `api/discovery.py`, `api/students.py`, `api/documents.py`, `api/institutions.py` |
-| L2 LLM | `services/discovery_service.py`, `match_service.py`, `strategy_service.py`, `workshop_feedback_service.py`, `identity_service.py`, + new `services/ai/providers/` (`04`) |
-| L3 ML | `services/matching.py`, `reranker.py`, `confidence_calibrator.py`, `confidence_outcome_service.py`, `ml_state.py`, `program_features.py` |
-| Output store | `models/ai_artifacts.py`, `models/matching.py` (extended per `42` §4) |
-| Audit | `models/audit.py`, `models/admin_audit_event.py`, + extended `ai_artifacts` (`04` §8) |
+| L2 LLM agents | `ai/extractor.py`, `ai/rationale.py`, `ai/strategy.py`, `ai/identity.py`, `ai/coach.py`, `ai/review_summarizer.py` (Opus), `ai/authenticity.py` (Haiku); orchestrated by `services/discovery_service.py`, `match_service.py`, `strategy_service.py`, `workshop_feedback_service.py`, `identity_service.py`, `review_pipeline_service.py` |
+| L2 provider abstraction | `ai/providers/` (`base.py`, `anthropic_provider.py`, `openai_provider.py` w/ tool-translation failover, `registry.py`), `ai/client.py`, `ai/consent.py`, `ai/agent_registry.py` (`04`) |
+| L3 ML | `services/matching.py`, `reranker.py`, `confidence_calibrator.py`, `confidence_outcome_service.py`, `ml_state.py`, `program_features.py` (consent-gated + audited via `MatchService`) |
+| Asymmetric rationale | `ai/rationale_redaction.py` (`project_for_student` / `project_for_institution`) — the §3 redaction map |
+| Output store | `models/ai_artifacts.py` (`AiTurn`, `MatchRationale`, `StudentFeatureVector`), `models/matching.py`, `models/application.py` (`AIPacketSummary`, `IntegritySignal`) |
+| Audit | `AiTurn` (the AI cost+consent ledger, written by `ai/client.py` for L2 and `MatchService` for L3), `models/audit.py` (admissions trail), `models/admin_audit_event.py` (admin actions) |
+
+> The provider abstraction lives at **`ai/providers/`** (not `services/ai/providers/` — corrected here). On an Anthropic→OpenAI failover, `openai_provider.py` now translates the Anthropic tool schema + `tool_choice` into OpenAI function-calling and the tool-call response back into Anthropic `tool_use` blocks, so forced-tool agents keep producing structured output across providers.
 
 ---
 
 ## 7. Open questions / known gaps
 
+### Resolved in the spec-06 build (2026-05-30)
+
+- ✅ **Asymmetric rationale enforcement** — the field-level redaction map is now `ai/rationale_redaction.py`, documented in `11` §7.1 + `32` §6.1, proven by `tests/test_rationale_redaction.py`. Student endpoints serve `project_for_student` (redacted); `GET /reviews/applications/{id}/match-rationale` serves `project_for_institution` (full). The previous inversion (student got the full citations) is fixed.
+- ✅ **Engine completeness (§2)** — `DraftSummarizerForReview` (Opus) and `AuthenticityRiskScorer` (Haiku) are implemented and wired; Opus is actually requested (was dead plumbing).
+- ✅ **Invariants (§5)** — L3 scoring + reads are consent-gated; every L3 scoring event writes an `AiTurn` row (provider=`rule_based`); profile/goals/needs/identity edits invalidate derived artifacts; `programs.feature_version` exists and bumps on edit (program-version trigger was a dead no-op); prompt-version cleanup runs on startup; OpenAI failover preserves tool-use.
+
+### Still open
+
 - **L3 ML maturity.** The current ML layer is rule-heavy with calibration. The Master Paper's "collaborative filtering + pattern recognition" implies a learned model trained on partner data — which needs (a) enough partner data, (b) the fairness harness from `46` §6 wired BEFORE training on real cohorts. Sequence: rules → calibrated → learned, gated on data volume.
-- **Asymmetric rationale enforcement.** The redaction logic (what the student sees vs the institution) is not yet specified field-by-field. Action: define a redaction map (which matching signals are institution-only) in `11` + `32`.
+- **Permissive consent default.** `ai/consent.py` `DEFAULT_MASK` is opt-out (absent row → consented); flipping to opt-in is a governance decision tracked in `46`, not a code gap.
 - **Dedicated vector store.** pgvector suffices < ~1M program-student pairs; beyond that consider a dedicated store. Series-A.
 - **ML service extraction.** In-process ML limits independent scaling. Extract when matching latency P95 exceeds budget.
 - **Real-time vs batch inference.** Match scores: cached + recomputed on profile change. Engagement-derived scores (apply propensity): nightly. Fairness: real-time. Confirm the cadence per output family.

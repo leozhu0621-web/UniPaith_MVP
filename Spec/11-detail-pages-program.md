@@ -171,8 +171,23 @@ Endpoints:
 
 ## 7. AI integration
 
-- `MatchRationaleAgent` (`45` §6) — Why-this-match popover from the DualRing.
+- `MatchRationaleAgent` (`45` §6, code: `RationaleAgent`) — Why-this-match popover from the DualRing.
 - (Future) `InsightsSummarizer` agent — distills review themes; defer to Phase 2.
+
+### 7.1 Asymmetric rationale — the STUDENT (redacted) view (`06` §3 / §5.5)
+
+The rationale agent produces **one** grounded artifact per (student, program): three prose paragraphs + `cited_student_fields` + `cited_program_fields` + the score breakdowns. The student sees the **redacted projection** of it; the institution reviewer sees the full view (`32` §6.1). The single source of truth for the split is `ai/rationale_redaction.py` (`project_for_student`).
+
+**Redaction map — institution-only signals withheld from the student popover:**
+
+| Class | Examples (substring-matched) | Why student-hidden |
+|---|---|---|
+| Cohort / peer comparison | `cohort_percentile`, `peer_comparison`, `rank_vs`, `applicant_pool`, `relative_to` | How the applicant ranks vs others is the reviewer's lens, not the student's. |
+| Institution competitiveness / scarcity | `selectivity*`, `admit_rate`, `acceptance_rate`, `yield`, `seat`, `capacity`, `scarcity`, `competitiveness`, `demand` | Operational/seat-planning signals. |
+| Confidence-calibration internals | `calibrat*`, `raw_weight`, `weight_vector`, `model_internal` | Model plumbing; meaningless and misleading to a student. |
+| Fairness / integrity internals | `disparate*`, `fairness_flag`, `integrity_internal` | Reviewer + audit only (`46` §6). |
+
+**Student-safe (always shown):** the plain-language prose, citations to the student's **own** profile signals (`cited_student_fields`), public program facts (`program.outcomes`, `program.curriculum`, …), and the redacted fitness/confidence drivers. Endpoints `POST /me/matches/{id}/explain` and `/rationale` both return this redacted projection (`redacted=true`). A contract test (`tests/test_rationale_redaction.py`) asserts no institution-only key can leak to the student.
 
 ---
 

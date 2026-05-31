@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AIPacketSummary, BatchOperationResult, CohortComparisonData, IntegritySignal, PrioritizedApplication, Rubric, ApplicationScore, ReviewAssignment, AIReviewSummary, PipelineData } from '../types'
+import type { AIPacketSummary, BatchOperationResult, CohortComparisonData, IntegritySignal, InstitutionMatchRationale, PrioritizedApplication, Rubric, ApplicationScore, ReviewAssignment, AIReviewSummary, PipelineData } from '../types'
 
 export async function getRubrics(programId?: string): Promise<Rubric[]> {
   const params = programId ? { program_id: programId } : {}
@@ -56,6 +56,13 @@ export async function getAIPacketSummary(applicationId: string, rubricId?: strin
 export async function regenerateAIPacketSummary(applicationId: string, rubricId?: string): Promise<AIPacketSummary> {
   const params = rubricId ? { rubric_id: rubricId } : undefined
   const { data } = await apiClient.post(`/reviews/applications/${applicationId}/ai-packet/regenerate`, null, { params })
+  return data
+}
+
+// --- Asymmetric match rationale (institution full view, spec 06 §3/§5.5) ---
+
+export async function getMatchRationaleFull(applicationId: string): Promise<InstitutionMatchRationale> {
+  const { data } = await apiClient.get(`/reviews/applications/${applicationId}/match-rationale`)
   return data
 }
 

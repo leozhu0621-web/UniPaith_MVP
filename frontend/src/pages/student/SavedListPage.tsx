@@ -67,6 +67,8 @@ export default function SavedListPage() {
   const { data: saved, isLoading } = useQuery({ queryKey: ['saved'], queryFn: listSaved })
   const { data: matches } = useQuery({ queryKey: ['matches'], queryFn: () => getMatches() })
   const { data: applications } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
+  // Hooks must run before any early return (react-hooks/rules-of-hooks).
+  usePageTitle('Saved')
 
   const removeMut = useMutation({
     mutationFn: unsaveProgram,
@@ -271,8 +273,6 @@ export default function SavedListPage() {
       </Card>
     )
   }
-
-  usePageTitle('Saved')
 
   return (
     <div className="p-6 max-w-3xl mx-auto">

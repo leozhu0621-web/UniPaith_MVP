@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { User, Star, Brain, ClipboardCheck, Calendar, Award, FileText, RefreshCw, Shield } from 'lucide-react'
 import { reviewApplication, makeDecision, createOffer } from '../../api/applications-admin'
 import { chatInstitutionAssistant, generateAIDraft } from '../../api/institutions'
-import { getScores, assignReviewer, scoreApplication, getRubrics, getAIPacketSummary, regenerateAIPacketSummary, getAIPrefill, scanIntegrity, getIntegritySignals, resolveIntegritySignal } from '../../api/reviews'
+import { getScores, assignReviewer, scoreApplication, getRubrics, getAIPacketSummary, regenerateAIPacketSummary, getAIPrefill, scanIntegrity, getIntegritySignals, resolveIntegritySignal, getMatchRationaleFull } from '../../api/reviews'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -80,6 +80,15 @@ export default function StudentDetailPage() {
       showToast('AI summary regenerated', 'success')
     },
   })
+
+  // Spec 06 §3/§5.5 — the FULL (evidence-linked) match rationale; the student
+  // sees a redacted projection of this same artifact.
+  const matchRationaleQ = useQuery({
+    queryKey: ['match-rationale-full', applicationId],
+    queryFn: () => getMatchRationaleFull(applicationId!),
+    enabled: !!applicationId && activeTab === 'ai',
+  })
+  const matchRationale = matchRationaleQ.data
 
   const integrityQ = useQuery({
     queryKey: ['integrity-signals', applicationId],
@@ -313,6 +322,7 @@ export default function StudentDetailPage() {
             )}
 
             {activeTab === 'ai' && (
+              <>
               <Card className="p-5 space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -437,6 +447,47 @@ export default function StudentDetailPage() {
                   )}
                 </div>
               </Card>
+
+              {/* Spec 06 §3/§5.5 — FULL match rationale (reviewer-only). The
+                  student sees a redacted projection of this same artifact. */}
+              <Card className="p-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Brain size={20} className="text-brand-slate-600" />
+                  <h3 className="font-semibold text-gray-900">Match Rationale — full evidence view</h3>
+                  <Badge variant="info"><Shield size={10} className="mr-1" />Reviewer-only</Badge>
+                </div>
+                <p className="text-xs text-gray-500">
+                  The applicant sees a redacted version of this. Comparative and internal
+                  matching signals shown here are withheld from the student (Spec 06 §3).
+                </p>
+                {matchRationaleQ.isLoading ? (
+                  <Skeleton className="h-24" />
+                ) : !matchRationale?.available ? (
+                  <p className="text-sm text-gray-500">
+                    No match rationale yet — the applicant hasn’t completed Discovery / matching.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{matchRationale.rationale_text}</p>
+                    <div className="flex flex-wrap gap-4 text-sm">
+                      {matchRationale.fitness_score != null && (
+                        <span className="text-gray-600">Fitness: <b className="text-brand-slate-700">{pctScore(matchRationale.fitness_score)}</b></span>
+                      )}
+                      {matchRationale.confidence_score != null && (
+                        <span className="text-gray-600">Confidence: <b className="text-brand-slate-700">{pctScore(matchRationale.confidence_score)}</b></span>
+                      )}
+                      {!matchRationale.grounded && <Badge variant="warning">Ungrounded — verify before relying</Badge>}
+                    </div>
+                    {matchRationale.cited_student_fields.length > 0 && (
+                      <CitationChips title="Cited student signals" items={matchRationale.cited_student_fields} tone="green" />
+                    )}
+                    {matchRationale.cited_program_fields.length > 0 && (
+                      <CitationChips title="Cited program signals (incl. comparative)" items={matchRationale.cited_program_fields} tone="slate" />
+                    )}
+                  </div>
+                )}
+              </Card>
+              </>
             )}
           </div>
         </div>
@@ -685,6 +736,37 @@ export default function StudentDetailPage() {
           </div>
         </div>
       </Modal>
+    </div>
+  )
+}
+
+// Match scores arrive 0..1 from the matcher (or 0..100); render as a percent.
+function pctScore(v: number): number {
+  const n = v > 1 ? v : v * 100
+  return Math.round(Math.max(0, Math.min(100, n)))
+}
+
+// "sparse.research_experience" → "Research experience"
+function prettyField(path: string): string {
+  const last = path.split('.').pop() ?? path
+  const words = last.replace(/_/g, ' ').trim()
+  return words.charAt(0).toUpperCase() + words.slice(1)
+}
+
+function CitationChips({ title, items, tone }: { title: string; items: string[]; tone: 'green' | 'slate' }) {
+  const cls = tone === 'green'
+    ? 'border-green-300 bg-green-50 text-green-800'
+    : 'border-brand-slate-300 bg-brand-slate-50 text-brand-slate-700'
+  return (
+    <div>
+      <div className="text-xs font-medium text-gray-500 mb-1.5">{title}</div>
+      <div className="flex flex-wrap gap-1.5">
+        {items.map(path => (
+          <span key={path} className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs ${cls}`} title={path}>
+            {prettyField(path)}
+          </span>
+        ))}
+      </div>
     </div>
   )
 }

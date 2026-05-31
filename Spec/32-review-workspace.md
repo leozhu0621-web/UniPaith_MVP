@@ -84,6 +84,15 @@ Used by admissions committees to make rolling decisions.
 
 **Rule:** humans keep final action. AI generates drafts. Status changes, communications, decisions all require explicit human action.
 
+### 6.1 Asymmetric rationale — the INSTITUTION (full) view (`06` §3 / §5.5)
+
+The reviewer sees the **full, evidence-linked** projection of the *same* match-rationale artifact the student sees redacted (`11` §7.1). Nothing is withheld: every `cited_student_fields` + `cited_program_fields` entry (including comparative/internal signals), the full fitness + confidence breakdowns, and the grounded flag.
+
+- Endpoint: `GET /reviews/applications/{id}/match-rationale` → `InstitutionMatchRationaleResponse` (`redacted=false`), behind `require_institution_admin` + a tenant guard (the application's program must belong to the reviewer's institution).
+- Surfaced in the review workspace **AI Insights** tab as "Match Rationale — full evidence view" with a *Reviewer-only* badge, and copy that states the student sees a redacted version.
+- Projection split is the single source of truth `ai/rationale_redaction.py` (`project_for_institution`); `tests/test_rationale_redaction.py` proves the institution view is loss-less while the student view withholds every institution-only signal. This is the field-level realization of the `06` §7 action item ("define a redaction map — which matching signals are institution-only").
+- A stronger profile of this same principle is **blind review mode** (§7A.1), which redacts identity-revealing fields during scoring.
+
 ---
 
 ## 7. Per-applicant integrity tab
@@ -177,7 +186,7 @@ Endpoints:
 
 ## 11. Gaps (from `47`)
 
-- G-AI5 (major): DraftSummarizerForReview on Opus needs explicit wiring per `45` §14 (currently uses Sonnet).
+- ✅ G-AI5 (resolved, spec-06 build): `DraftSummarizerForReview` now runs on **Opus** (`ai/review_summarizer.py`, `model="flagship"`) with a rule-based fallback; the packet records the flagship model id when the LLM path ran, `rule_based` otherwise. The prior stub returned "engine being rebuilt" and recorded Sonnet.
 - Side-by-side variance highlighting + synthesis is partial.
 
 ---

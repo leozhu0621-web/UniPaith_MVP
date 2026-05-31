@@ -22,10 +22,12 @@ import {
   Star, Quote, BarChart3, Briefcase, Building2, Users, Clock,
   Sparkles, Mail,
 } from 'lucide-react'
-import type { MatchResult, EventItem } from '../../types'
+import type { EventItem } from '../../types'
 
 // Redesigned components
 import MatchRing from './program/MatchRing'
+import DualRing from './match/DualRing'
+import RationalePopover from './match/RationalePopover'
 import ProgramHeader from './program/ProgramHeader'
 import KeyMetrics from './program/KeyMetrics'
 import StatGroup from './program/StatGroup'
@@ -43,6 +45,15 @@ const TABS: { id: Tab; label: string; icon: typeof BookOpen }[] = [
   { id: 'reviews', label: 'Reviews', icon: Star },
 ]
 
+// Match scores arrive as Decimal/number in either 0..1 or 0..100; the rings
+// want 0..1. Coerce defensively so the UI is robust to either convention.
+function toUnit(v: number | string | null | undefined): number {
+  const n = typeof v === 'string' ? parseFloat(v) : (v ?? 0)
+  if (!Number.isFinite(n)) return 0
+  const unit = n > 1 ? n / 100 : n
+  return Math.max(0, Math.min(1, unit))
+}
+
 export default function ProgramDetailPage() {
   const { programId } = useParams<{ programId: string }>()
   const navigate = useNavigate()
@@ -51,6 +62,8 @@ export default function ProgramDetailPage() {
   const askCounselor = useCounselorStore(s => s.askQuestion)
   const [tab, setTab] = useState<Tab>('overview')
   const [matchModalOpen, setMatchModalOpen] = useState(false)
+  // Spec 06 §3/§5.5 — student (redacted) "why this match" popover.
+  const [rationaleOpen, setRationaleOpen] = useState(false)
 
   // Review/employer filters
   const [reviewDegree, setReviewDegree] = useState('')
@@ -124,7 +137,9 @@ export default function ProgramDetailPage() {
   }
 
   const p: any = program
-  const match: MatchResult | null = matchResult ?? null
+  // Untyped (dual-score `MatchResultDual` ∪ legacy `MatchResult`) — getMatchDetail
+  // returns `any` and this page reads both shapes; matches the `p: any` style.
+  const match: any = matchResult ?? null
   const rd: any = p.ranking_data || {}
   const cd: any = p.cost_data || {}
   const instName = p.institution_name || ''
@@ -241,6 +256,30 @@ export default function ProgramDetailPage() {
         graduationRate={rd.graduation_rate}
         retentionRate={rd.retention_rate}
       />
+
+      {/* ── Your match — dual ring + redacted "why this match" (Spec 06 §3/§5.5) ── */}
+      {match && (match.fitness_score != null || match.match_score != null) && (
+        <Card className="mb-5 p-4 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-4">
+            <DualRing
+              fitness={toUnit(match.fitness_score ?? match.match_score)}
+              confidence={toUnit(match.confidence_score ?? match.match_score)}
+              size={84}
+              onClick={() => setRationaleOpen(true)}
+            />
+            <div>
+              <div className="text-eyebrow text-student-text">Your match</div>
+              <p className="text-sm text-student-ink max-w-md">
+                Fitness is how well this program matches your strategy; confidence is how sure
+                we are given your profile depth.
+              </p>
+            </div>
+          </div>
+          <Button size="sm" variant="secondary" onClick={() => setRationaleOpen(true)}>
+            <Sparkles size={14} className="mr-1.5" /> Why this match?
+          </Button>
+        </Card>
+      )}
 
       {/* ── Tabs ── */}
       <div className="border-b border-divider mb-5">
@@ -1244,6 +1283,17 @@ export default function ProgramDetailPage() {
             </div>
           </div>
         </Modal>
+      )}
+
+      {/* ── Redacted "why this match" popover (Spec 06 §3/§5.5) ── */}
+      {match && rationaleOpen && programId && (
+        <RationalePopover
+          programId={programId}
+          fitnessBreakdown={(match.fitness_breakdown as Record<string, unknown> | null) ?? null}
+          confidenceBreakdown={(match.confidence_breakdown as Record<string, unknown> | null) ?? null}
+          cachedRationale={match.rationale_text ?? null}
+          onClose={() => setRationaleOpen(false)}
+        />
       )}
     </div>
   )

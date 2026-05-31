@@ -147,6 +147,9 @@ export default function ApplicationDetailPage() {
   // Word count helper
   const wordCount = (text: string) => text.trim() ? text.trim().split(/\s+/).length : 0
 
+  // Hooks must run before any early return (react-hooks/rules-of-hooks).
+  usePageTitle(app?.program?.program_name || 'Application')
+
   if (isLoading) return <div className="p-6"><Skeleton className="h-64" /></div>
   if (!app) return <div className="p-6 text-center text-gray-500">Application not found.</div>
 
@@ -169,7 +172,6 @@ export default function ApplicationDetailPage() {
   ]
 
   const programName = application.program?.program_name || 'Application'
-  usePageTitle(programName)
 
   return (
     <div className="p-6 max-w-4xl mx-auto">

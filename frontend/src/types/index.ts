@@ -1626,6 +1626,32 @@ export interface ExplainMatchResponse {
   rationale_text: string
   rationale_generated_at: string
   is_stub: boolean
+  // Spec 06 §5.5 — student (redacted) projection. Institution-only
+  // comparative signals are stripped server-side before reaching here.
+  fitness_breakdown?: Record<string, unknown> | null
+  confidence_breakdown?: Record<string, unknown> | null
+  cited_student_fields?: string[]
+  cited_program_fields?: string[]
+  redacted?: boolean
+}
+
+// Spec 06 §3 / §5.5 — the FULL, evidence-linked rationale an institution
+// reviewer sees (the asymmetric counterpart of ExplainMatchResponse).
+export interface InstitutionMatchRationale {
+  application_id: string
+  student_id: string
+  program_id: string
+  available: boolean
+  rationale_text: string
+  cited_student_fields: string[]
+  cited_program_fields: string[]
+  fitness_breakdown: Record<string, unknown>
+  confidence_breakdown: Record<string, unknown>
+  fitness_score: number | null
+  confidence_score: number | null
+  grounded: boolean
+  redacted: boolean
+  is_stub: boolean
 }
 
 // ============ PHASE A — WORKSHOP FEEDBACK ============
