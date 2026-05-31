@@ -90,11 +90,9 @@ export default function FinancialTab() {
       </section>
 
       <section>
-        <SectionHeader title="Financial aid" description="Your aid intent and scholarship plans." />
+        <SectionHeader title="Cost comparison" description="Estimate and compare net cost across your saved and applied programs." />
         <Suspense fallback={<SkeletonCard />}>
-          <div className="-mx-6 -mt-2">
-            <FinancialAidPage />
-          </div>
+          <FinancialAidPage />
         </Suspense>
       </section>
     </div>

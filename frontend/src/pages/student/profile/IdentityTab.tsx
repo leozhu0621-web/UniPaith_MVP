@@ -10,6 +10,7 @@
  * localStorage so we don't surface it on every visit.
  */
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Pencil, Plus, ShieldCheck, Sparkles, Trash2 } from 'lucide-react'
 
@@ -216,6 +217,7 @@ function ItemFooter({ onCancel, submitting }: { onCancel: () => void; submitting
 
 export default function IdentityTab() {
   const qc = useQueryClient()
+  const navigate = useNavigate()
   const { data: identity, isLoading } = useQuery<StudentIdentity>({
     queryKey: ['identity'],
     queryFn: () => getIdentity(),
@@ -294,9 +296,12 @@ export default function IdentityTab() {
           <div className="text-sm text-foreground">
             Identity is the deepest layer of your profile. We use this to personalize matches and
             rationales — nothing here goes to institutions until you choose to share it. Manage in{' '}
-            <a href="/s/profile?tab=data" className="font-semibold text-secondary hover:underline">
+            <button
+              onClick={() => navigate('/s/profile?tab=data')}
+              className="font-semibold text-secondary hover:underline"
+            >
               Data Rights →
-            </a>
+            </button>
             <button
               className="ml-2 font-semibold text-secondary hover:underline"
               onClick={() => {
@@ -455,6 +460,11 @@ export default function IdentityTab() {
         ) : (
           <p className="text-sm text-muted-foreground">
             Once you've added a few values and beliefs, we'll synthesize a short summary of who you are.
+          </p>
+        )}
+        {regenMut.isError && (
+          <p className="text-xs text-warning mt-2">
+            We couldn't reach the AI service. Showing your last summary.
           </p>
         )}
         {identity.updated_at && (
