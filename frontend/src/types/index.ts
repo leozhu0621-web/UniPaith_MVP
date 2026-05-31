@@ -590,6 +590,72 @@ export interface Message {
   read_at: string | null
 }
 
+export type ActionLabel =
+  | 'needs_reply'
+  | 'document_requested'
+  | 'clarification_required'
+  | 'interview_invite'
+  | 'status_update_only'
+  | 'completed'
+
+export type WaitingOn = 'student' | 'school' | 'none'
+
+export interface InboxAttachment {
+  id?: string
+  name: string
+  kind?: 'document' | 'link'
+  url?: string | null
+}
+
+export interface InboxThreadApplication {
+  program_name: string | null
+  institution_name: string | null
+}
+
+export interface InboxParticipant {
+  id: string
+  role: 'student' | 'admissions_officer' | 'system'
+  name: string
+}
+
+export interface InboxMessage {
+  id: string
+  thread_id: string
+  sender: 'student' | 'admissions_officer' | 'system'
+  body: string
+  attachments: InboxAttachment[]
+  sent_at: string
+  read_at: string | null
+  status: 'sent' | 'delivered' | 'read'
+}
+
+export interface InboxThreadSummary {
+  id: string
+  application_id: string | null
+  application: InboxThreadApplication
+  type: 'human' | 'system'
+  subject: string | null
+  action_label: ActionLabel | null
+  due_date: string | null
+  waiting_on: WaitingOn
+  unread: boolean
+  last_message_at: string | null
+  linked_checklist_item_category: string | null
+  linked_calendar_item_id: string | null
+}
+
+export interface InboxThread extends InboxThreadSummary {
+  participants: InboxParticipant[]
+  messages: InboxMessage[]
+}
+
+export interface SuggestedReply {
+  draft: string
+  tone: string
+  length: string
+  alternate_drafts: string[]
+}
+
 // ============ EVENTS ============
 export interface EventItem {
   id: string
