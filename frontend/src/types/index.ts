@@ -575,20 +575,80 @@ export interface Resume {
 }
 
 // ============ SAVED LISTS ============
+// Spec 13 §4.2 — persisted priority. Spec 13 §4.4 — derived status.
+export type SavedPriority = 'considering' | 'planning_to_apply' | 'applied' | 'dropped'
+export type SavedStatus =
+  | 'considering'
+  | 'application_started'
+  | 'submitted'
+  | 'accepted'
+  | 'rejected'
+  | 'waitlisted'
+  | 'dropped'
+
 export interface SavedProgram {
   id: string
-  student_id: string
+  list_id?: string
   program_id: string
   notes: string | null
   added_at: string
+  // Spec 13 §4.2 / §4.3 — persisted curation.
+  priority: SavedPriority
+  tags: string[]
+  // Spec 13 §4.4 — derived from application existence.
+  status: SavedStatus
+  // Spec 13 §7 — reach/target/safer + dual scores (from the match row).
+  band_label?: MatchBand | null
+  fitness_score?: number | null
+  confidence_score?: number | null
+  // Program / institution detail (flattened) + nested for back-compat.
   program_name?: string | null
+  institution_id?: string | null
   institution_name?: string | null
+  institution_country?: string | null
+  institution_city?: string | null
+  degree_type?: string | null
+  tuition?: number | null
+  application_deadline?: string | null
+  acceptance_rate?: number | null
+  duration_months?: number | null
   program?: ProgramSummary
 }
 
+// Spec 13 §5 — compare row carries dual fitness/confidence scores + band.
+export interface ComparisonProgram {
+  id: string
+  institution_id: string
+  program_name: string
+  institution_name?: string | null
+  institution_country?: string | null
+  institution_city?: string | null
+  degree_type?: string | null
+  department?: string | null
+  duration_months?: number | null
+  tuition?: number | null
+  delivery_format?: string | null
+  acceptance_rate?: number | null
+  application_deadline?: string | null
+  requirements?: unknown
+  fitness_score?: number | null
+  confidence_score?: number | null
+  band_label?: MatchBand | null
+  // Legacy — drop in Phase E.
+  match_score?: number | null
+  match_tier?: number | null
+}
+
 export interface ComparisonResponse {
-  programs: ProgramSummary[]
+  programs: ComparisonProgram[]
   ai_analysis: string | null
+}
+
+export interface StartApplicationResponse {
+  app_id: string
+  program_id: string
+  status: SavedStatus
+  created: boolean
 }
 
 // ============ MESSAGING ============
