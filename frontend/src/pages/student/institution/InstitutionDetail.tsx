@@ -21,7 +21,7 @@ import Skeleton from '../../../components/ui/Skeleton'
 import {
   Bookmark, BookmarkCheck, MapPin, Globe, Users, Building2, BookOpen,
   Mail, CalendarPlus, Check, ChevronDown, X, Search, GraduationCap,
-  Filter, ArrowRight,
+  Filter, ArrowRight, Calendar,
 } from 'lucide-react'
 import type { Institution, ProgramSummary, InstitutionPost, SchoolSummary } from '../../../types'
 
@@ -220,6 +220,7 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
             <h1 className="text-2xl font-bold text-charcoal leading-tight">{inst.name}</h1>
             <div className="flex items-center gap-x-3 gap-y-1 mt-1.5 text-[13px] text-slate flex-wrap">
               {location && <span className="inline-flex items-center gap-1"><MapPin size={13} /> {location}</span>}
+              {inst.founded_year != null && <span className="inline-flex items-center gap-1"><Calendar size={13} /> Founded {inst.founded_year}</span>}
               {inst.campus_setting && <span className="inline-flex items-center gap-1"><Building2 size={13} /> {SETTING_LABELS[inst.campus_setting] ?? inst.campus_setting}</span>}
               {inst.student_body_size != null && <span className="inline-flex items-center gap-1"><Users size={13} /> {inst.student_body_size.toLocaleString()} students</span>}
             </div>
@@ -364,6 +365,7 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
           <Fact label="Type" value={ownershipLabel(rd.ownership_type) ?? titleCase(inst.type)} />
           {inst.campus_setting && <Fact label="Campus setting" value={SETTING_LABELS[inst.campus_setting] ?? titleCase(inst.campus_setting)} />}
           {sizeBand && <Fact label="Size" value={sizeBand} />}
+          {inst.founded_year != null && <Fact label="Founded" value={String(inst.founded_year)} />}
           {inst.student_body_size != null && <Fact label="Students" value={inst.student_body_size.toLocaleString()} />}
           <Fact label="Schools" value={String(schoolCount)} />
           <Fact label="Programs" value={String(programCount)} />
