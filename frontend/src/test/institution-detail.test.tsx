@@ -71,6 +71,10 @@ describe('InstitutionDetail (Spec 12)', () => {
     // Breadcrumb: Match · Search · University of Foo
     expect(screen.getByRole('button', { name: 'Match' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Search' })).toBeInTheDocument()
+    // Eyebrow must not double the noun (regression: "University University" when
+    // ownership_type is absent). type='university' + no ownership → "University".
+    expect(screen.getByText('University')).toBeInTheDocument()
+    expect(screen.queryByText(/University University/i)).not.toBeInTheDocument()
     // Default tab = Schools → the sub-school card shows
     await waitFor(() => expect(screen.getByText('School of Engineering')).toBeInTheDocument())
   })
