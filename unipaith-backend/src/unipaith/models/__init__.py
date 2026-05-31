@@ -22,6 +22,7 @@ from unipaith.models.application import (
 )
 from unipaith.models.audit import AdmissionsAuditLog
 from unipaith.models.base import Base
+from unipaith.models.billing import StudentSubscription
 from unipaith.models.confidence_outcome import ConfidenceOutcomePair
 from unipaith.models.discovery import DiscoveryMessage, DiscoverySession
 from unipaith.models.engagement import (
@@ -235,4 +236,5 @@ __all__ = [
     "AdvisorPersona",
     "PipelineStageSnapshot",
     "PipelineConfig",
+    "StudentSubscription",
 ]

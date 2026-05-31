@@ -3,9 +3,10 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Settings, Plus, Trash2 } from 'lucide-react'
+import { Settings, Plus, Trash2, CreditCard, Users } from 'lucide-react'
 import { getInstitution, updateInstitution } from '../../api/institutions'
 import { getRubrics, createRubric } from '../../api/reviews'
+import { getInstitutionBilling } from '../../api/billing'
 import { getNotificationPrefs, updateNotificationPrefs } from '../../api/notifications'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -100,8 +101,16 @@ export default function SettingsPage() {
   const tabs = [
     { id: 'profile', label: 'Profile' },
     { id: 'rubrics', label: 'Rubrics' },
+    { id: 'billing', label: 'Billing' },
     { id: 'notifications', label: 'Notifications' },
   ]
+
+  // --- Billing (Spec 07 §4.2 / 21 §3.6) ---
+  const billingQ = useQuery({
+    queryKey: ['institution-billing'],
+    queryFn: getInstitutionBilling,
+    enabled: activeTab === 'billing',
+  })
 
   // --- Profile ---
   const instQ = useQuery({ queryKey: ['institution'], queryFn: getInstitution })
@@ -406,6 +415,72 @@ export default function SettingsPage() {
                 )}
               </Card>
             ))
+          )}
+        </div>
+      )}
+
+      {/* Billing Tab — usage-based ($15/unique applicant), Spec 07 §4.2 */}
+      {activeTab === 'billing' && (
+        <div className="space-y-4">
+          {billingQ.isLoading || !billingQ.data ? (
+            <Card className="p-6"><Skeleton className="h-28" /></Card>
+          ) : (
+            <>
+              <Card className="p-6">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-gray-500 font-semibold">Current cycle · {billingQ.data.cycle_label}</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-1">
+                      ${billingQ.data.current_charge_usd.toLocaleString()}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {billingQ.data.applicants_processed} unique applicant{billingQ.data.applicants_processed === 1 ? '' : 's'} processed
+                      {' '}× ${billingQ.data.per_applicant_usd}
+                    </p>
+                  </div>
+                  <div className="h-14 w-14 rounded-xl bg-cobalt/10 flex items-center justify-center">
+                    <Users size={26} className="text-cobalt" />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-4 border-t pt-3">
+                  Usage-based pricing: <span className="font-medium text-gray-700">${billingQ.data.per_applicant_usd} per unique applicant processed</span>.
+                  No per-seat fees. You’re only billed for applicants who submit to your programs.
+                </p>
+              </Card>
+
+              <Card className="p-6">
+                <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2 mb-3">
+                  <CreditCard size={16} className="text-cobalt" /> Payment method
+                </h3>
+                {billingQ.data.has_payment_method ? (
+                  <p className="text-sm text-gray-700">{billingQ.data.payment_method_brand} •••• {billingQ.data.payment_method_last4}</p>
+                ) : (
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm text-gray-500">No payment method on file. Add one to enable automatic billing at cycle close.</p>
+                    <a
+                      href="mailto:billing@unipaith.co?subject=Set%20up%20institution%20billing"
+                      className="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg border border-cobalt text-cobalt hover:bg-cobalt/5 transition-colors whitespace-nowrap"
+                    >
+                      Set up billing
+                    </a>
+                  </div>
+                )}
+              </Card>
+
+              {billingQ.data.invoices.length > 0 && (
+                <Card className="p-6">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Invoices</h3>
+                  <div className="divide-y">
+                    {billingQ.data.invoices.map(inv => (
+                      <div key={inv.id} className="flex items-center justify-between py-2 text-sm">
+                        <span className="text-gray-700">{inv.description}</span>
+                        <span className="text-gray-900 font-medium">${inv.amount_usd}</span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+            </>
           )}
         </div>
       )}

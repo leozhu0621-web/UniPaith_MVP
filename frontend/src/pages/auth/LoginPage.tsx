@@ -44,10 +44,10 @@ export default function LoginPage() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-center mb-2">Log in</h2>
+      <h2 className="text-xl font-semibold text-center text-charcoal mb-2">Welcome back</h2>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-2 rounded">
+        <div className="bg-error-soft border border-error/30 text-error text-sm px-4 py-2 rounded-lg">
           {error}
         </div>
       )}
@@ -71,9 +71,9 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-gray-500">
+      <p className="text-center text-sm text-slate">
         Don't have an account?{' '}
-        <Link to="/signup" className="text-brand-slate-600 font-medium hover:underline">
+        <Link to="/signup" className="text-cobalt font-semibold hover:underline">
           Sign up
         </Link>
       </p>

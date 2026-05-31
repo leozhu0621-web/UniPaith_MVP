@@ -171,6 +171,13 @@ export default function ExplorePage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
+      {/* Brand framing — "Fit, not fame" + "Explain everything" (Spec 07 §2/§6). */}
+      <div className="mb-5">
+        <p className="text-eyebrow uppercase text-cobalt font-semibold">Match</p>
+        <h1 className="text-2xl font-bold text-charcoal mt-1">Programs where you’ll thrive</h1>
+        <p className="text-sm text-slate mt-0.5">Ranked for fit, not fame — and every score explains itself.</p>
+      </div>
+
       {/* Phase C — Strategy lands first. Programs/Schools render below
           unchanged. When a student has no active strategy, this surfaces
           a CTA pointing back to Discover or to generate one. */}

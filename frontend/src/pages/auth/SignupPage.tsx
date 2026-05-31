@@ -49,18 +49,18 @@ export default function SignupPage() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-center mb-2">Create Account</h2>
+      <h2 className="text-xl font-semibold text-center text-charcoal mb-2">Create your account</h2>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-2 rounded">
+        <div className="bg-error-soft border border-error/30 text-error text-sm px-4 py-2 rounded-lg">
           {error}
         </div>
       )}
 
       <div className="flex gap-3">
         {[
-          { value: 'student', label: 'Student', icon: GraduationCap, sub: "I'm looking for programs" },
-          { value: 'institution_admin', label: 'Institution', icon: Building2, sub: "I'm recruiting students" },
+          { value: 'student', label: 'Student', icon: GraduationCap, sub: 'Everyone’s private college counselor' },
+          { value: 'institution_admin', label: 'Institution', icon: Building2, sub: 'The admission operating system' },
         ].map(opt => (
           <button
             key={opt.value}
@@ -69,13 +69,13 @@ export default function SignupPage() {
             className={clsx(
               'flex-1 p-3 rounded-lg border text-center transition-colors',
               role === opt.value
-                ? 'border-brand-slate-600 bg-brand-slate-50'
-                : 'border-gray-200 hover:border-gray-300'
+                ? 'border-cobalt bg-cobalt/5'
+                : 'border-stone hover:border-cobalt/40'
             )}
           >
-            <opt.icon size={20} className="mx-auto mb-1 text-gray-600" />
-            <div className="text-sm font-medium">{opt.label}</div>
-            <div className="text-xs text-gray-500">{opt.sub}</div>
+            <opt.icon size={20} className={clsx('mx-auto mb-1', role === opt.value ? 'text-cobalt' : 'text-slate')} />
+            <div className="text-sm font-semibold text-charcoal">{opt.label}</div>
+            <div className="text-xs text-slate">{opt.sub}</div>
           </button>
         ))}
       </div>
@@ -106,9 +106,13 @@ export default function SignupPage() {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-gray-500">
+      {role === 'student' && (
+        <p className="text-center text-xs text-slate">7 days free, then $15/mo. Cancel anytime.</p>
+      )}
+
+      <p className="text-center text-sm text-slate">
         Already have an account?{' '}
-        <Link to="/login" className="text-brand-slate-600 font-medium hover:underline">
+        <Link to="/login" className="text-cobalt font-semibold hover:underline">
           Log in
         </Link>
       </p>

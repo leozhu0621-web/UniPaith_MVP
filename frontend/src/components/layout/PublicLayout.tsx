@@ -43,6 +43,10 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         </nav>
       </header>
       <main className="flex-1">{children}</main>
+      <footer className="border-t border-border px-4 sm:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-1 text-xs text-muted-foreground">
+        <span>Apply once, go anywhere.</span>
+        <span>Bias-avoidance is a practice, not a checkbox.</span>
+      </footer>
     </div>
   )
 }

@@ -13,6 +13,9 @@ export default function AuthLayout({ children }: Props) {
         <div className="bg-card rounded-lg shadow-sm border border-border p-6">
           {children}
         </div>
+        <p className="text-center text-xs text-muted-foreground mt-5">
+          Bias-avoidance is a practice, not a checkbox.
+        </p>
       </div>
     </div>
   )

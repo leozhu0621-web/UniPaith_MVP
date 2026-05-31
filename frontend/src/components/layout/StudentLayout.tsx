@@ -12,6 +12,8 @@ import Dropdown from '../ui/Dropdown'
 import Wordmark from '../ui/Wordmark'
 import Sheet from '../ui/Sheet'
 import CompareTray from '../student/CompareTray'
+import TrialBanner from '../student/TrialBanner'
+import Paywall from '../student/Paywall'
 
 // Stage-ordered navigation (Spec/02 §7): Discover · Match · Apply · Connect.
 const NAV_ITEMS = [
@@ -109,6 +111,9 @@ export default function StudentLayout() {
         </button>
       </header>
 
+      {/* Trial / plan nudge (Spec 05 §9, 07 §4.1) */}
+      <TrialBanner />
+
       {/* Body with sliding panels */}
       <div className="flex-1 flex overflow-hidden relative">
         {/* Mini counselor — docked on lg+ only; on mobile, Discover tab is the chat. */}
@@ -204,6 +209,9 @@ export default function StudentLayout() {
         initialExpanded={location.pathname === '/s/explore' && searchParams.get('compare') === 'open'}
         syncUrl={location.pathname === '/s/explore'}
       />
+
+      {/* Trial→paywall gate (Spec 05 §9) — only blocks when enforced + lapsed. */}
+      <Paywall />
     </div>
   )
 }

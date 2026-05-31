@@ -2,12 +2,21 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../../stores/auth-store'
 import { getNotificationPrefs, updateNotificationPrefs } from '../../api/notifications'
+import {
+  cancelStudentBilling,
+  resumeStudentBilling,
+  setAdFree,
+  upgradeStudentBilling,
+  type StudentBilling,
+} from '../../api/billing'
+import { useStudentBilling } from '../../hooks/useBilling'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
+import Badge from '../../components/ui/Badge'
 import { showToast } from '../../stores/toast-store'
 import { useState, useEffect } from 'react'
 import { formatDate } from '../../utils/format'
-import { ShieldCheck, Bell, User, Database, LogOut, ChevronRight } from 'lucide-react'
+import { ShieldCheck, Bell, User, Database, LogOut, ChevronRight, CreditCard, Sparkles, Check } from 'lucide-react'
 
 const NOTIF_TYPES = [
   { key: 'application_updates', label: 'Application updates' },
@@ -58,6 +67,9 @@ export default function SettingsPage() {
           <Row label="Member since" value={formatDate(user?.created_at)} />
         </dl>
       </Card>
+
+      {/* Billing — Spec 07 §4.1 / 21 §2.7 */}
+      <BillingSection />
 
       {/* Notifications */}
       <Card className="p-5">
@@ -112,6 +124,155 @@ export default function SettingsPage() {
         </div>
       </Card>
     </div>
+  )
+}
+
+function BillingSection() {
+  const queryClient = useQueryClient()
+  const { data: billing, isLoading } = useStudentBilling()
+
+  const refresh = (next: StudentBilling) => {
+    queryClient.setQueryData(['student-billing'], next)
+    queryClient.invalidateQueries({ queryKey: ['student-billing'] })
+  }
+
+  const upgradeMut = useMutation({
+    mutationFn: upgradeStudentBilling,
+    onSuccess: d => { refresh(d); showToast('You’re on UniPaith Plus', 'success') },
+    onError: () => showToast('Could not update your plan', 'error'),
+  })
+  const adFreeMut = useMutation({
+    mutationFn: (enabled: boolean) => setAdFree(enabled),
+    onSuccess: refresh,
+    onError: () => showToast('Could not update ad-free', 'error'),
+  })
+  const cancelMut = useMutation({
+    mutationFn: cancelStudentBilling,
+    onSuccess: d => { refresh(d); showToast('Plan will cancel at period end', 'success') },
+    onError: () => showToast('Could not cancel', 'error'),
+  })
+  const resumeMut = useMutation({
+    mutationFn: resumeStudentBilling,
+    onSuccess: d => { refresh(d); showToast('Plan resumed', 'success') },
+    onError: () => showToast('Could not resume', 'error'),
+  })
+
+  const busy = upgradeMut.isPending || cancelMut.isPending || resumeMut.isPending
+
+  return (
+    <Card className="p-5">
+      <SectionHeader icon={CreditCard} title="Billing & plan" />
+      {isLoading || !billing ? (
+        <div className="h-16 animate-pulse rounded-lg bg-muted" />
+      ) : (
+        <div className="space-y-4">
+          {/* Plan status row */}
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-charcoal">UniPaith Plus</span>
+                <PlanBadge billing={billing} />
+              </div>
+              <p className="text-sm text-slate mt-0.5">{planDescription(billing)}</p>
+            </div>
+            <div className="text-right shrink-0">
+              <div className="text-lg font-bold text-charcoal">${billing.monthly_total_usd}<span className="text-xs font-normal text-slate">/mo</span></div>
+              {billing.ad_free && <div className="text-xs text-slate">incl. ad-free</div>}
+            </div>
+          </div>
+
+          {/* Card on file */}
+          {billing.has_payment_method && (
+            <div className="flex items-center gap-2 text-sm text-slate">
+              <CreditCard size={14} className="text-cobalt" />
+              {billing.payment_method_brand} •••• {billing.payment_method_last4}
+            </div>
+          )}
+
+          {/* Ad-free upgrade toggle (Spec 07 §4.1 — +$5/mo) */}
+          <div className="flex items-center justify-between rounded-lg border border-stone/60 bg-student-moss/40 px-3 py-2.5">
+            <div>
+              <p className="text-sm font-medium text-charcoal flex items-center gap-1.5">
+                <Sparkles size={14} className="text-cobalt" /> Ad-free experience
+              </p>
+              <p className="text-xs text-slate">Remove ads across UniPaith · +${billing.ad_free_addon_usd}/mo</p>
+            </div>
+            <Toggle
+              checked={billing.ad_free}
+              disabled={adFreeMut.isPending}
+              onChange={v => adFreeMut.mutate(v)}
+              label="Ad-free"
+            />
+          </div>
+
+          {/* Upcoming invoice */}
+          {billing.invoices.length > 0 && (
+            <div className="text-sm text-slate">
+              Next charge: <span className="text-charcoal font-medium">${billing.invoices[0].amount_usd}</span> on {formatDate(billing.invoices[0].date)}
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            {(billing.status === 'trialing' || billing.status === 'expired') && (
+              <Button size="sm" onClick={() => upgradeMut.mutate()} loading={upgradeMut.isPending}>
+                {billing.status === 'expired' ? 'Reactivate — $15/mo' : 'Upgrade to Plus — $15/mo'}
+              </Button>
+            )}
+            {billing.status === 'active' && (
+              <Button size="sm" variant="ghost" onClick={() => cancelMut.mutate()} loading={cancelMut.isPending} disabled={busy}>
+                Cancel plan
+              </Button>
+            )}
+            {billing.status === 'canceled' && (
+              <Button size="sm" onClick={() => resumeMut.mutate()} loading={resumeMut.isPending} disabled={busy}>
+                Resume plan
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+    </Card>
+  )
+}
+
+function PlanBadge({ billing }: { billing: StudentBilling }) {
+  if (billing.status === 'trialing') {
+    return <Badge variant="info">Free trial · {billing.trial_days_left}d left</Badge>
+  }
+  if (billing.status === 'active') return <Badge variant="success">Active</Badge>
+  if (billing.status === 'canceled') return <Badge variant="warning">Ends soon</Badge>
+  return <Badge variant="neutral">Trial ended</Badge>
+}
+
+function planDescription(billing: StudentBilling): string {
+  switch (billing.status) {
+    case 'trialing':
+      return `Your free trial ends ${formatDate(billing.trial_ends_at)}. Add a card to keep full access.`
+    case 'active':
+      return `Renews ${formatDate(billing.current_period_end)}.`
+    case 'canceled':
+      return `Access continues until ${formatDate(billing.current_period_end)}, then your plan ends.`
+    default:
+      return 'Your trial has ended. Reactivate to regain full access.'
+  }
+}
+
+function Toggle({ checked, onChange, disabled, label }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean; label: string }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-pill transition-colors disabled:opacity-50 ${checked ? 'bg-cobalt' : 'bg-stone'}`}
+    >
+      <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-5' : 'translate-x-0.5'}`}>
+        {checked && <Check size={12} className="text-cobalt" />}
+      </span>
+    </button>
   )
 }
 

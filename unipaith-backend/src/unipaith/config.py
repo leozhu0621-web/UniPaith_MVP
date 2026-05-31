@@ -368,6 +368,20 @@ class Settings(BaseSettings):
     # Notifications
     notification_retention_days: int = 90
 
+    # --- Billing / monetization (Spec 07 §4, 21 §2.7/§3.6) ---
+    # Student subscription: $15/mo after a 7-day full-access trial
+    # (card-on-file auto-convert), + optional $5/mo ad-free upgrade.
+    student_plan_price_usd: int = 15
+    student_ad_free_addon_usd: int = 5
+    student_trial_days: int = 7
+    # Institution usage-based billing: $15 per unique applicant processed.
+    institution_per_applicant_usd: int = 15
+    # When True, the trial→paywall gate (Spec 05 §9) hard-blocks premium
+    # surfaces after the trial lapses without a payment method. Default off so
+    # the soft trial banner + upsell ship without locking existing sessions;
+    # flip per-environment once Stripe is wired (Spec 39, Phase-2).
+    paywall_enforced: bool = False
+
 
 settings = Settings()
 
