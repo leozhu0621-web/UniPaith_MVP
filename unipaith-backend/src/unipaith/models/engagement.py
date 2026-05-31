@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
     ForeignKey,
     Index,
@@ -196,6 +197,7 @@ class CRMRecord(Base):
 
 class Conversation(Base):
     __tablename__ = "conversations"
+    __table_args__ = (Index("ix_conversations_application_id", "application_id"),)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     student_id: Mapped[uuid.UUID] = mapped_column(
@@ -207,6 +209,14 @@ class Conversation(Base):
     program_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("programs.id", ondelete="SET NULL")
     )
+    application_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("applications.id", ondelete="SET NULL"), nullable=True
+    )
+    thread_type: Mapped[str] = mapped_column(String(20), default="human", nullable=False)
+    action_label: Mapped[str | None] = mapped_column(String(40))
+    due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    waiting_on: Mapped[str] = mapped_column(String(20), default="none", nullable=False)
+    linked_checklist_item_category: Mapped[str | None] = mapped_column(String(50))
     subject: Mapped[str | None] = mapped_column(String(500))
     status: Mapped[str | None] = mapped_column(String(20))
     started_at: Mapped[datetime] = mapped_column(
@@ -230,10 +240,13 @@ class Message(Base):
         index=True,
     )
     sender_type: Mapped[str | None] = mapped_column(String(20))
-    sender_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    sender_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=True
     )
     message_body: Mapped[str] = mapped_column(Text, nullable=False)
+    attachments: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="sent", nullable=False)
+    ai_draft_used: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     sent_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
