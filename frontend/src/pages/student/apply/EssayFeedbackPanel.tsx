@@ -1,8 +1,10 @@
 /**
  * Workshops → Essay feedback (FEEDBACK-ONLY).
  *
- * Student pastes their essay; backend returns rubric + structural issues +
- * missing-element prompts. There is no "rewrite my essay" button by design.
+ * The student pastes an essay they wrote; the backend returns a rubric +
+ * structural issues + missing-element prompts. There is, by design, no
+ * "rewrite my essay" path — the response schema mechanically excludes it and
+ * a CI test (test_workshop_no_generation_contract.py) enforces it.
  */
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
@@ -12,17 +14,21 @@ import Badge from '../../../components/ui/Badge'
 import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
 import { showToast } from '../../../stores/toast-store'
-import type { IssueSeverity, WorkshopFeedbackRun } from '../../../types'
+import type { WorkshopFeedbackRun } from '../../../types'
 
-const SEVERITY_VARIANT: Record<IssueSeverity, 'danger' | 'warning' | 'neutral'> = {
-  major: 'danger',
-  moderate: 'warning',
-  minor: 'neutral',
-}
+import { RubricScores } from './RubricDots'
+import { EmptyHint, ErrorNote, ReadinessCard, StubNote } from './WorkshopShared'
+import WorkshopProgramPicker, {
+  type ProgramOption,
+  type WorkshopMode,
+} from './WorkshopProgramPicker'
+import { IMPORTANCE_VARIANT, SEVERITY_VARIANT, readinessSummary } from './workshopReadiness'
 
 export default function EssayFeedbackPanel() {
   const [essay, setEssay] = useState('')
   const [prompt, setPrompt] = useState('')
+  const [mode, setMode] = useState<WorkshopMode>('general')
+  const [program, setProgram] = useState<ProgramOption | null>(null)
   const [run, setRun] = useState<WorkshopFeedbackRun | null>(null)
 
   const feedbackMut = useMutation({
@@ -30,79 +36,97 @@ export default function EssayFeedbackPanel() {
       requestEssayFeedback({
         essay_text: essay,
         prompt_text: prompt.trim() || null,
+        target_program_id: mode === 'program_specific' ? program?.programId ?? null : null,
       }),
     onSuccess: r => {
       setRun(r)
       showToast('Feedback ready.', 'success')
     },
     onError: (err: unknown) =>
-      showToast((err as Error).message ?? 'Could not generate feedback.', 'error'),
+      showToast((err as Error).message ?? 'Could not get feedback.', 'error'),
   })
 
   const wordCount = essay.trim().split(/\s+/).filter(Boolean).length
+  const tooShort = essay.trim().length < 20
+  const readiness =
+    run && mode === 'program_specific' && program
+      ? readinessSummary(run, program.programName)
+      : null
 
   return (
     <div className="space-y-4">
       <Card className="space-y-3">
+        <WorkshopProgramPicker
+          mode={mode}
+          onModeChange={setMode}
+          program={program}
+          onProgramChange={setProgram}
+        />
+
         <div>
-          <label className="block text-sm font-medium text-student-ink mb-1">
-            Prompt (optional)
-          </label>
+          <label className="mb-1 block text-sm font-medium text-student-ink">Prompt (optional)</label>
           <input
-            className="w-full rounded border border-divider px-3 py-2 text-sm"
+            className="w-full rounded-md border border-divider px-3 py-2 text-sm"
             value={prompt}
             onChange={e => setPrompt(e.target.value)}
             maxLength={4000}
-            placeholder="e.g., Why this program?"
+            placeholder="e.g., Tell us about a time you led a team"
           />
         </div>
+
         <div>
-          <label className="block text-sm font-medium text-student-ink mb-1">
-            Your essay <span className="text-red-600">*</span>
+          <label className="mb-1 block text-sm font-medium text-student-ink">
+            Your essay <span className="text-error">*</span>
           </label>
           <textarea
-            className="w-full rounded border border-divider px-3 py-2 text-sm font-mono"
+            className="w-full rounded-md border border-divider px-3 py-2 font-mono text-sm"
             rows={14}
             maxLength={20000}
             value={essay}
             onChange={e => setEssay(e.target.value)}
-            placeholder="Paste your draft. Min 20 characters."
+            placeholder="Paste your draft. Minimum 20 characters."
           />
-          <div className="flex items-center justify-between mt-1 text-xs text-student-text">
+          <div className="mt-1 flex items-center justify-between text-xs text-student-text">
             <span>{wordCount} words</span>
-            <span>I'll critique structure + flag missing elements. I won't rewrite it.</span>
+            <span>I'll critique structure and flag missing elements. I won't rewrite it.</span>
           </div>
         </div>
+
         <div className="flex justify-end">
           <Button
+            variant="secondary"
             onClick={() => feedbackMut.mutate()}
             loading={feedbackMut.isPending}
-            disabled={essay.trim().length < 20}
+            disabled={tooShort}
           >
             Get feedback
           </Button>
         </div>
       </Card>
 
+      {!run && !feedbackMut.isPending && !feedbackMut.isError && (
+        <EmptyHint>Drop in an essay draft to get structured feedback.</EmptyHint>
+      )}
+
+      {feedbackMut.isError && !run && <ErrorNote onRetry={() => feedbackMut.mutate()} />}
+
       {run && (
         <>
+          {readiness && program && (
+            <ReadinessCard programName={program.programName} summary={readiness} />
+          )}
+
           <Card>
-            <div className="text-xs uppercase tracking-wide text-student-text mb-2">Rubric</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {Object.entries(run.rubric_scores).map(([k, v]) => (
-                <div key={k} className="flex items-center justify-between text-sm">
-                  <span className="text-student-ink capitalize">{k.replace(/_/g, ' ')}</span>
-                  <span className="font-medium text-student-ink">
-                    {Number(v).toFixed(1)} / 5
-                  </span>
-                </div>
-              ))}
+            <div className="mb-3 flex items-center justify-between">
+              <div className="text-eyebrow uppercase text-student-text">Rubric scores</div>
+              {run.is_stub && <StubNote />}
             </div>
+            <RubricScores scores={run.rubric_scores} />
           </Card>
 
           {run.structural_issues.length > 0 && (
             <Card>
-              <div className="text-xs uppercase tracking-wide text-student-text mb-2">
+              <div className="mb-2 text-eyebrow uppercase text-student-text">
                 Structural issues · {run.structural_issues.length}
               </div>
               <ul className="space-y-2">
@@ -114,9 +138,7 @@ export default function EssayFeedbackPanel() {
                     <div className="flex-1">
                       <div className="text-student-ink">{iss.issue}</div>
                       {iss.location_ref && (
-                        <div className="text-xs text-student-text mt-0.5">
-                          {iss.location_ref}
-                        </div>
+                        <div className="mt-0.5 text-xs text-student-text">{iss.location_ref}</div>
                       )}
                     </div>
                   </li>
@@ -127,25 +149,16 @@ export default function EssayFeedbackPanel() {
 
           {run.missing_elements.length > 0 && (
             <Card>
-              <div className="text-xs uppercase tracking-wide text-student-text mb-2">
+              <div className="mb-2 text-eyebrow uppercase text-student-text">
                 Missing elements · {run.missing_elements.length}
               </div>
               <ul className="space-y-2">
                 {run.missing_elements.map((m, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm">
-                    <Badge
-                      variant={
-                        m.importance === 'required'
-                          ? 'danger'
-                          : m.importance === 'should_have'
-                            ? 'warning'
-                            : 'neutral'
-                      }
-                      size="sm"
-                    >
+                    <Badge variant={IMPORTANCE_VARIANT[m.importance]} size="sm">
                       {m.importance.replace(/_/g, ' ')}
                     </Badge>
-                    <span className="text-student-ink flex-1">{m.element}</span>
+                    <span className="flex-1 text-student-ink">{m.element}</span>
                   </li>
                 ))}
               </ul>
