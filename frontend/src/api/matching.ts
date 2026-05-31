@@ -1,9 +1,24 @@
 import apiClient from './client'
 import { toArrayData } from './normalize'
-import type { ExplainMatchResponse, MatchResultDual } from '../types'
+import type { ExplainMatchResponse, MatchResultDual, ProbabilityBandsResponse } from '../types'
 
-export const getMatches = (forceRefresh = false) =>
-  apiClient.get('/students/me/matches', { params: { force_refresh: forceRefresh } }).then(r => toArrayData<any>(r.data))
+// Spec 09 §7 — ranked matches, enriched server-side with band_label +
+// probability_bands + program display fields. `refresh` recomputes the
+// catalog first (applying the student's priority weights, §5.2).
+export const getMatches = (refresh = false): Promise<MatchResultDual[]> =>
+  apiClient
+    .get('/students/me/matches', { params: { refresh } })
+    .then(r => toArrayData<MatchResultDual>(r.data))
+
+// Spec 09 §5.2 / §8 — recompute matches over the catalog, then return top-N.
+export const refreshMatches = (): Promise<MatchResultDual[]> =>
+  apiClient
+    .post('/students/me/matches/refresh', {}, { timeout: 120_000 })
+    .then(r => toArrayData<MatchResultDual>(r.data))
+
+// Spec 09 §4A — probability bands for one program (card expand / detail load).
+export const getMatchProbability = (programId: string): Promise<ProbabilityBandsResponse> =>
+  apiClient.get(`/students/me/matches/${programId}/probability`).then(r => r.data)
 
 // Untyped on purpose — legacy callers (e.g. SchoolDetailPage) consume this
 // against the older `MatchResult` shape with number scores. Phase C will
@@ -23,7 +38,7 @@ export const getMatchDetail = (programId: string) =>
 export const explainMatch = (programId: string): Promise<ExplainMatchResponse> =>
   apiClient.post(`/students/me/matches/${programId}/explain`).then(r => r.data)
 
-export type { ExplainMatchResponse, MatchResultDual }
+export type { ExplainMatchResponse, MatchResultDual, ProbabilityBandsResponse }
 
 export const logEngagement = (programId: string, signalType: string, signalValue: number) =>
   apiClient.post('/students/me/engagement', { program_id: programId, signal_type: signalType, signal_value: signalValue }).then(r => r.data)

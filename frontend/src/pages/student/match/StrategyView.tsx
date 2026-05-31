@@ -13,10 +13,13 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  AlertCircle,
+  ArrowRight,
   ChevronDown,
   ChevronRight,
   Compass,
   Pencil,
+  RefreshCw,
   Sparkles,
   Target,
 } from 'lucide-react'
@@ -127,7 +130,11 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
     )
   }
 
-  // State 3 — active strategy.
+  // State 3 — active strategy (Spec 09 §3 + §2 five-line layout).
+  const academic = summarizePath(strategy.academic_path.map(s => s.step))
+  const financial = summarizePath(strategy.financial_path.map(f => f.aid_type))
+  const geographic = summarizePath(strategy.geographic_path.map(g => g.region))
+
   return (
     <Card>
       <div className="flex items-start justify-between gap-3">
@@ -157,70 +164,79 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
             </div>
           </div>
         </button>
-        <div className="flex items-center gap-2 shrink-0">
-          {strategy.is_stub && (
-            <Badge variant="warning" size="sm" className="inline-flex items-center gap-1">
-              <Sparkles size={10} />
-              preview
-            </Badge>
-          )}
-          <Link to="/s/profile?tab=strategy">
-            <Button size="sm" variant="ghost">
-              <Pencil size={13} className="mr-1" />
-              Edit
-            </Button>
-          </Link>
-        </div>
+        {strategy.is_stub && (
+          <Badge variant="warning" size="sm" className="inline-flex items-center gap-1 shrink-0">
+            <Sparkles size={10} />
+            preview
+          </Badge>
+        )}
       </div>
 
-      {!collapsed && (
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <PathCol
-            title="Academic"
-            count={strategy.academic_path.length}
-            items={strategy.academic_path.map(s => s.step)}
-          />
-          <PathCol
-            title="Financial"
-            count={strategy.financial_path.length}
-            items={strategy.financial_path.map(f => f.aid_type)}
-          />
-          <PathCol
-            title="Geographic"
-            count={strategy.geographic_path.length}
-            items={strategy.geographic_path.map(g => g.region)}
-          />
+      {/* Spec 09 §3 — on regenerate failure, preserve the existing strategy
+          and surface an inline banner (never blank the card). */}
+      {generateMut.isError && (
+        <div className="mt-3 flex items-start gap-2 rounded-lg border border-warning/30 bg-warning-soft px-3 py-2 text-xs text-student-ink">
+          <AlertCircle size={13} className="mt-0.5 shrink-0 text-warning" />
+          Couldn&apos;t regenerate your strategy. Showing your current one.
         </div>
+      )}
+
+      {!collapsed && (
+        <>
+          <div className="mt-4 space-y-2">
+            <StrategyLine label="Career path" value={strategy.career_target} />
+            <StrategyLine label="Degree path" value={strategy.target_degree} />
+            <StrategyLine label="Academic" value={academic} />
+            <StrategyLine label="Financial" value={financial} />
+            <StrategyLine label="Geographic" value={geographic} />
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant="tertiary"
+              onClick={() => generateMut.mutate()}
+              loading={generateMut.isPending}
+            >
+              <RefreshCw size={13} className="mr-1.5" />
+              Regenerate strategy
+            </Button>
+            <Link to="/s/profile?tab=strategy">
+              <Button size="sm" variant="ghost">
+                <Pencil size={13} className="mr-1.5" />
+                Edit (creates a draft)
+              </Button>
+            </Link>
+            <Link
+              to="/s/profile?tab=strategy"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-cobalt hover:underline ml-auto"
+            >
+              Open full strategy
+              <ArrowRight size={12} />
+            </Link>
+          </div>
+        </>
       )}
     </Card>
   )
 }
 
-function PathCol({
-  title,
-  count,
-  items,
-}: {
-  title: string
-  count: number
-  items: string[]
-}) {
+/** One labeled line of the active-strategy summary (Spec 09 §2 ASCII). */
+function StrategyLine({ label, value }: { label: string; value: string | null }) {
   return (
-    <div>
-      <div className="text-[10px] uppercase tracking-wide text-student-text mb-1.5">
-        {title} · {count}
-      </div>
-      <ul className="space-y-1">
-        {items.slice(0, 4).map((s, i) => (
-          <li key={i} className="text-xs text-student-ink flex items-start gap-1.5">
-            <span className="text-student-text mt-0.5">•</span>
-            <span className="line-clamp-2">{s}</span>
-          </li>
-        ))}
-        {items.length > 4 && (
-          <li className="text-xs text-student-text">+{items.length - 4} more</li>
-        )}
-      </ul>
+    <div className="flex items-baseline gap-3">
+      <span className="w-24 shrink-0 text-[11px] uppercase tracking-wide text-student-text">
+        {label}
+      </span>
+      <span className="text-sm text-student-ink min-w-0">{value?.trim() || '—'}</span>
     </div>
   )
+}
+
+/** Collapse a path list into a one-line summary: first item + "+N more". */
+function summarizePath(items: string[]): string | null {
+  const clean = items.map(s => s?.trim()).filter(Boolean)
+  if (clean.length === 0) return null
+  if (clean.length === 1) return clean[0]
+  return `${clean[0]} · +${clean.length - 1} more`
 }

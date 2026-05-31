@@ -16,7 +16,27 @@ import { DEGREE_LABELS, TIER_LABELS, STATUS_COLORS } from '../../utils/constants
 import { Heart, Trash2, Pencil, BarChart3, ArrowUp, ArrowDown, Minus, ArrowUpDown, Filter, FileText, ChevronDown, GraduationCap, MapPin } from 'lucide-react'
 import Breadcrumbs from '../../components/ui/Breadcrumbs'
 import usePageTitle from '../../hooks/usePageTitle'
-import type { SavedProgram, ComparisonResponse, MatchResult, Application } from '../../types'
+import type { SavedProgram, ComparisonResponse, MatchResultDual, MatchBand, Application } from '../../types'
+
+// Match rows now carry dual scores (fitness/confidence) + band_label; the
+// legacy match_score/match_tier are deprecated (Phase E). Read defensively so
+// the saved list works against either shape.
+const BAND_TO_TIER: Record<MatchBand, number> = { reach: 1, target: 2, safer: 3 }
+function matchScoreOf(m?: MatchResultDual): number | null {
+  if (!m) return null
+  const raw = m.fitness_score ?? m.match_score
+  if (raw == null) return null
+  const n = parseFloat(String(raw))
+  return Number.isFinite(n) ? n : null
+}
+function matchTierOf(m?: MatchResultDual): number {
+  if (!m) return 0
+  if (m.match_tier != null) return m.match_tier
+  if (m.band_label) return BAND_TO_TIER[m.band_label] ?? 0
+  const s = matchScoreOf(m)
+  if (s == null) return 0
+  return s >= 0.75 ? 3 : s >= 0.6 ? 2 : 1
+}
 
 type Priority = 'considering' | 'planning' | 'applied' | 'dropped'
 
@@ -92,8 +112,8 @@ export default function SavedListPage() {
   })
 
   const matchLookup = useMemo(() => {
-    const map: Record<string, MatchResult> = {}
-    const list: MatchResult[] = Array.isArray(matches) ? matches : []
+    const map: Record<string, MatchResultDual> = {}
+    const list: MatchResultDual[] = Array.isArray(matches) ? matches : []
     list.forEach(m => { map[m.program_id] = m })
     return map
   }, [matches])
@@ -121,8 +141,8 @@ export default function SavedListPage() {
     }
     return [...list].sort((a, b) => {
       if (sortKey === 'match_score') {
-        const sa = matchLookup[a.program_id]?.match_score ?? -1
-        const sb = matchLookup[b.program_id]?.match_score ?? -1
+        const sa = matchScoreOf(matchLookup[a.program_id]) ?? -1
+        const sb = matchScoreOf(matchLookup[b.program_id]) ?? -1
         return sb - sa
       }
       if (sortKey === 'deadline') {
@@ -139,7 +159,7 @@ export default function SavedListPage() {
     if (!groupByTier) return null
     const groups: Record<number, SavedProgram[]> = { 1: [], 2: [], 3: [], 0: [] }
     filtered.forEach(sp => {
-      const tier = matchLookup[sp.program_id]?.match_tier ?? 0
+      const tier = matchTierOf(matchLookup[sp.program_id])
       groups[tier].push(sp)
     })
     return groups
@@ -191,7 +211,7 @@ export default function SavedListPage() {
 
   const renderCard = (sp: SavedProgram) => {
     const matchInfo = matchLookup[sp.program_id]
-    const tierInfo = matchInfo ? TIER_LABELS[matchInfo.match_tier] : null
+    const tierInfo = matchInfo ? TIER_LABELS[matchTierOf(matchInfo)] : null
     const app = appLookup[sp.program_id]
     const priority = getPriority(sp.program_id)
     const isDropped = priority === 'dropped'
@@ -216,7 +236,7 @@ export default function SavedListPage() {
               <div className="flex items-center gap-2 flex-shrink-0">
                 {matchInfo && tierInfo && (
                   <>
-                    <span className="text-sm font-bold">{formatScore(matchInfo.match_score)}</span>
+                    <span className="text-sm font-bold">{formatScore(matchScoreOf(matchInfo))}</span>
                     <Badge variant={tierInfo.color as any} size="sm">{tierInfo.label}</Badge>
                   </>
                 )}
@@ -441,19 +461,19 @@ export default function SavedListPage() {
                   ))}
                 </tr>
                 {(() => {
-                  const scores = comparison.programs.map(p => matchLookup[p.id]?.match_score)
+                  const scores = comparison.programs.map(p => matchScoreOf(matchLookup[p.id]))
                   const best = bestValue(scores, true)
                   return (
                     <tr className="border-b bg-muted/50">
                       <td className="py-2 px-2 text-slate font-medium">Match Score</td>
                       {comparison.programs.map((p, i) => {
                         const m = matchLookup[p.id]
-                        const ti = m ? TIER_LABELS[m.match_tier] : null
+                        const ti = m ? TIER_LABELS[matchTierOf(m)] : null
                         return (
                           <td key={p.id} className="py-2 px-2">
                             {m ? (
                               <div className="flex items-center gap-2">
-                                <span className="font-bold">{formatScore(m.match_score)}</span>
+                                <span className="font-bold">{formatScore(matchScoreOf(m))}</span>
                                 {ti && <Badge variant={ti.color as any} size="sm">{ti.label}</Badge>}
                                 <ValueIndicator value={scores[i]} best={best} />
                               </div>

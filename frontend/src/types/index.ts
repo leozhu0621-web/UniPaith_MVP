@@ -269,6 +269,15 @@ export interface StudentPreference {
   values_priorities: Record<string, number> | null
   dealbreakers: string[] | null
   goals_text: string | null
+  // Spec 09 §5.2 — priority weights (0–10). Drive the matcher re-rank.
+  weight_cost: number | null
+  weight_location: number | null
+  weight_outcomes: number | null
+  weight_ranking: number | null
+  weight_flexibility: number | null
+  weight_support: number | null
+  weight_time_to_degree: number | null
+  stretch_target_safety_mix: string | null
   created_at: string
   updated_at: string
 }
@@ -1596,6 +1605,18 @@ export interface StudentStrategy {
 
 // ============ PHASE A — MATCH DUAL SCORES ============
 
+// Spec 09 §4A — probability bands (admit / scholarship / waitlist + drivers).
+export type AdmitLabel = 'likely' | 'target' | 'reach' | 'unlikely'
+
+export interface ProbabilityBands {
+  admit: { low: number; high: number; label: AdmitLabel }
+  scholarship: { low: number; high: number } | null
+  waitlist: { approx: number } | null
+  drivers: Array<{ signal: string; direction: 'up' | 'down' }>
+}
+
+export type MatchBand = 'reach' | 'target' | 'safer'
+
 export interface MatchResultDual {
   id: string
   student_id: string
@@ -1619,6 +1640,18 @@ export interface MatchResultDual {
   institution_name?: string | null
   degree_type?: string | null
   tuition?: number | null
+  acceptance_rate?: number | null
+  // Spec 09 §6 / §4A — derived on the server and carried on every match.
+  band_label?: MatchBand | null
+  probability_bands?: ProbabilityBands | null
+}
+
+// Spec 09 §4A — GET /me/matches/:id/probability response.
+export interface ProbabilityBandsResponse {
+  program_id: string
+  probability_bands: ProbabilityBands | null
+  match_ready: boolean
+  reason: string | null // "no_history" | "not_match_ready" | "disabled" | null
 }
 
 export interface ExplainMatchResponse {

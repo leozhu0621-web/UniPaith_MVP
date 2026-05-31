@@ -135,19 +135,33 @@ function prettyField(path: string): string {
   return words.charAt(0).toUpperCase() + words.slice(1)
 }
 
+// Format a breakdown value for display; returns null for nested objects/arrays
+// (e.g. the matcher's internal `weights` map) so we never render "[object Object]".
+function formatBreakdownValue(v: unknown): string | null {
+  if (v == null) return null
+  if (typeof v === 'number') return Number.isInteger(v) ? String(v) : v.toFixed(2)
+  if (typeof v === 'boolean') return v ? 'yes' : 'no'
+  if (typeof v === 'string') return v
+  return null
+}
+
 function BreakdownBlock({ title, data }: { title: string; data: Record<string, unknown> }) {
+  const entries = Object.entries(data)
+    .map(([k, v]) => [k, formatBreakdownValue(v)] as const)
+    .filter((e): e is readonly [string, string] => e[1] !== null)
+  if (entries.length === 0) return null
   return (
     <div className="border-t border-border pt-3">
       <div className="text-eyebrow text-muted-foreground mb-2">{title}</div>
       <div className="flex flex-wrap gap-1.5">
-        {Object.entries(data).map(([k, v]) => (
+        {entries.map(([k, v]) => (
           <span
             key={k}
             className="inline-flex items-center gap-1 rounded-pill border border-cobalt px-2 py-0.5 text-xs text-cobalt"
           >
-            <span className="font-semibold">{k}</span>
+            <span className="font-semibold">{prettyField(k)}</span>
             <span className="text-cobalt/60">·</span>
-            <span>{String(v)}</span>
+            <span>{v}</span>
           </span>
         ))}
       </div>

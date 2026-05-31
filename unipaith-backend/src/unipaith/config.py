@@ -229,6 +229,13 @@ class Settings(BaseSettings):
     # Off → returns the hardcoded STUB_IDENTITY_SUMMARY.
     ai_identity_v2_enabled: bool = False
 
+    # Spec 09 §4A — probability bands (admit / scholarship / waitlist) on the
+    # Match surface + program detail. Rule-based + calibrated heuristic
+    # (unipaith.ai.probability); honest ranges, "not enough data yet" when a
+    # program lacks historical admit signal or the student isn't match-ready.
+    # On by default — pure-Python, no LLM cost, degrades gracefully to null.
+    ai_probability_bands_enabled: bool = True
+
     # GPU infrastructure (cloud-first)
     gpu_mode: str = "openai"  # "openai" | "aws" | "local" | "mock"
     gpu_8b_instance_id: str = ""

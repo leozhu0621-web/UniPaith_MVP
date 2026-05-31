@@ -12,6 +12,7 @@ import {
   Search, X, Loader2, Sparkles, Building2,
 } from 'lucide-react'
 import StrategyView from './match/StrategyView'
+import MatchesSection from './match/MatchesSection'
 import type { ProgramSummary } from '../../types'
 import type {
   InstitutionClassification,
@@ -171,19 +172,26 @@ export default function ExplorePage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      {/* Brand framing — "Fit, not fame" + "Explain everything" (Spec 07 §2/§6). */}
+      {/* Spec 09 §13 H1 + brand framing ("Fit, not fame", Spec 07 §2/§6). */}
       <div className="mb-5">
         <p className="text-eyebrow uppercase text-cobalt font-semibold">Match</p>
-        <h1 className="text-2xl font-bold text-charcoal mt-1">Programs where you’ll thrive</h1>
+        <h1 className="text-2xl font-bold text-charcoal mt-1">Your strategy and your matches</h1>
         <p className="text-sm text-slate mt-0.5">Ranked for fit, not fame — and every score explains itself.</p>
       </div>
 
-      {/* Phase C — Strategy lands first. Programs/Schools render below
-          unchanged. When a student has no active strategy, this surfaces
-          a CTA pointing back to Discover or to generate one. */}
+      {/* Spec 09 §2 — Strategy lands first, then the ranked matches, then the
+          search/browse region. When a student has no active strategy, the
+          StrategyView surfaces a CTA back to Discover or to generate one. */}
       <div className="mb-4">
         <StrategyView forceExpanded={searchParams.get('showStrategy') === 'open'} />
       </div>
+
+      {/* Spec 09 §4/§6 — ranked program matches with dual scores, banding,
+          rationale, and probability bands. Hidden while actively searching so
+          the search results region (below) owns the screen. */}
+      {!isSearching && (
+        <MatchesSection savedIds={savedIds} onToggleSave={toggleSave} />
+      )}
 
       {/* Search bar */}
       <div className="relative mb-4">
