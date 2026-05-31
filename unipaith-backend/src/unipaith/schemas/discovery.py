@@ -90,3 +90,24 @@ class AppendMessageResponse(BaseModel):
 
     student_message: DiscoveryMessageResponse
     assistant_message: DiscoveryMessageResponse | None = None
+
+
+class PersonalitySignalResponse(BaseModel):
+    """One personality-layer facet for the Discover artifact rail (spec 19 §6).
+    Reconstructed from profile-session extractions; confidence 0–100 drives the
+    widget's confidence dots."""
+
+    facet: str
+    value: str
+    evidence: str | None = None
+    confidence: int | None = Field(None, ge=0, le=100)
+
+
+class HandoffJudgeResponse(BaseModel):
+    """Deterministic DiscoveryJudge verdict (spec 19 §7/§10) — whether the
+    student is match-ready across all three tracks."""
+
+    should_handoff: bool
+    handoff_target: Literal["recommendation"] | None = None
+    reason: str
+    completion: dict[str, float]

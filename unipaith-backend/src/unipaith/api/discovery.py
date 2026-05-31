@@ -32,6 +32,8 @@ from unipaith.schemas.discovery import (
     DiscoverySessionResponse,
     DiscoveryStatus,
     DiscoveryTrack,
+    HandoffJudgeResponse,
+    PersonalitySignalResponse,
     StartSessionRequest,
     UpdateSessionRequest,
 )
@@ -177,6 +179,27 @@ async def get_completion_map(
 ):
     completion = await _svc(db).get_completion_map(user.id)
     return CompletionMapResponse(**completion)
+
+
+@router.get("/personality-signals", response_model=list[PersonalitySignalResponse])
+async def get_personality_signals(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 19 §6 — personality-layer facets for the Discover artifact rail."""
+    signals = await _svc(db).get_personality_signals(user.id)
+    return [PersonalitySignalResponse.model_validate(s) for s in signals]
+
+
+@router.get("/handoff", response_model=HandoffJudgeResponse)
+async def get_handoff_verdict(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 19 §7/§10 — deterministic DiscoveryJudge: is the student
+    match-ready across all three tracks?"""
+    verdict = await _svc(db).evaluate_handoff(user.id)
+    return HandoffJudgeResponse(**verdict)
 
 
 # Re-export types so importers don't need to dig into schemas; harmless
