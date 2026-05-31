@@ -90,7 +90,7 @@ export default function DualRing({
             fill="none"
             stroke="currentColor"
             strokeWidth={stroke}
-            className="text-slate-100"
+            className="text-border"
           />
           <circle
             cx={size / 2}
@@ -99,7 +99,7 @@ export default function DualRing({
             fill="none"
             stroke="currentColor"
             strokeWidth={stroke}
-            className="text-slate-100"
+            className="text-border"
           />
           {/* Fitness — outer */}
           <circle

@@ -2195,17 +2195,141 @@ class InstitutionService:
         )
 
     async def _parse_nlp_query(self, query: str) -> dict:
-        """Use LLM to extract structured search params from natural language."""
-        # AI engine is being rebuilt — always use passthrough mode
-        return {
-            "parsed_query": query,
-            "country": None,
-            "degree_type": None,
-            "max_tuition": None,
-            "min_tuition": None,
-            "sort_by": None,
-            "interpretation": f"Showing results for: {query}",
-        }
+        """Interpret a natural-language query into structured search constraints.
+
+        Spec 10 §3 / Spec 45 §12 — the ``DiscoveryQueryInterpreter``. This is the
+        deterministic, offline rule-based default (AI_MOCK_MODE-safe and the
+        fallback the spec mandates): it extracts degree level, delivery format,
+        location, and budget so each surfaces as an individually editable /
+        removable chip (Spec 09 §5.1, Spec 10 §4). The LLM interpreter can swap
+        in behind this exact output shape with no caller change.
+        """
+        return interpret_search_query(query)
+
+
+# ── Rule-based query interpreter (Spec 10 §3 / Spec 45 §12) ─────────────────
+# Deterministic + offline so it works in AI_MOCK_MODE and as the spec-mandated
+# default before the LLM DiscoveryQueryInterpreter is wired in. The output shape
+# matches what the LLM path returns, so swapping the implementation needs no
+# caller change. Pure function (no DB / no I/O) → trivially unit-testable.
+
+# Order matters: PhD and MBA are checked before the generic master's rule.
+_DEGREE_RULES: list[tuple[str, str]] = [
+    (r"\bph\.?\s*d\b|\bdoctoral\b|\bdoctorate\b", "phd"),
+    (r"\bm\.?b\.?a\b", "masters"),
+    (r"\bmaster'?s?\b|\bmsc?\b|\bm\.s\.?\b|\bgraduate\b|\bgrad\b", "masters"),
+    (r"\bbachelor'?s?\b|\bb\.?s\b|\bb\.?a\b|\bundergraduate\b|\bundergrad\b", "bachelor"),
+    (r"\bcertificate\b|\bcertification\b", "certificate"),
+]
+_FORMAT_RULES: list[tuple[str, str]] = [
+    (r"\bonline\b", "online"),
+    (r"\bhybrid\b", "hybrid"),
+    (r"\bin[\s-]?person\b|\bon[\s-]?campus\b", "in_person"),
+]
+_COUNTRY_RULES: list[tuple[str, str]] = [
+    (r"\bunited states\b|\bu\.?s\.?a\b|\bu\.?s\b|\bamerica\b", "United States"),
+    (r"\bunited kingdom\b|\bu\.?k\b|\bengland\b|\bbritain\b", "United Kingdom"),
+    (r"\bcanada\b", "Canada"),
+    (r"\baustralia\b", "Australia"),
+    (r"\bgermany\b", "Germany"),
+    (r"\bsingapore\b", "Singapore"),
+]
+_DEGREE_LABELS = {
+    "phd": "PhD",
+    "masters": "Master's",
+    "bachelor": "Bachelor's",
+    "certificate": "Certificate",
+}
+_FORMAT_LABELS = {"online": "Online", "hybrid": "Hybrid", "in_person": "In person"}
+_NOISE_WORDS = re.compile(
+    r"\b(programs?|degrees?|courses?|schools?|universit(?:y|ies)|find|show|me|looking|"
+    r"want|in|for|the|a|an|with|near|around|that|are|is)\b",
+    re.IGNORECASE,
+)
+_BUDGET_TRIGGER = re.compile(
+    r"(?:under|below|less than|cheaper than|<=?|≤|max(?:imum)?|up to|within|"
+    r"budget(?:\s+of)?|no more than)\s*\$?\s*(\d[\d,]*)\s*(k|thousand)?",
+    re.IGNORECASE,
+)
+_BUDGET_DOLLAR = re.compile(r"\$\s*(\d[\d,]*)\s*(k|thousand)?", re.IGNORECASE)
+
+
+def _money_label(amount: int) -> str:
+    return f"${amount // 1000}k" if amount % 1000 == 0 else f"${amount:,}"
+
+
+def interpret_search_query(raw: str) -> dict:
+    """Extract structured search constraints from a natural-language query.
+
+    Returns the param dict consumed by ``search_programs`` plus a human-readable
+    ``interpretation``. Unmatched text becomes ``parsed_query`` (the keyword for
+    full-text search). All keys are always present (None when not detected).
+    """
+    text = (raw or "").strip()
+    low = text.lower()
+    out: dict = {
+        "parsed_query": None,
+        "country": None,
+        "city": None,
+        "degree_type": None,
+        "max_tuition": None,
+        "min_tuition": None,
+        "delivery_format": None,
+        "sort_by": None,
+    }
+    residual = text
+    parts: list[str] = []
+
+    def _consume(pattern: str) -> None:
+        nonlocal residual
+        residual = re.sub(pattern, " ", residual, flags=re.IGNORECASE)
+
+    for pattern, value in _DEGREE_RULES:
+        if re.search(pattern, low):
+            out["degree_type"] = value
+            _consume(pattern)
+            parts.append(_DEGREE_LABELS[value])
+            break
+
+    for pattern, value in _FORMAT_RULES:
+        if re.search(pattern, low):
+            out["delivery_format"] = value
+            _consume(pattern)
+            parts.append(_FORMAT_LABELS[value])
+            break
+
+    for pattern, value in _COUNTRY_RULES:
+        if re.search(pattern, low):
+            out["country"] = value
+            _consume(pattern)
+            parts.append(value)
+            break
+
+    budget = _BUDGET_TRIGGER.search(low) or _BUDGET_DOLLAR.search(low)
+    if budget is not None:
+        amount = int(budget.group(1).replace(",", ""))
+        if (budget.group(2) or "").lower() in {"k", "thousand"}:
+            amount *= 1000
+        out["max_tuition"] = amount
+        _consume(re.escape(budget.group(0)))
+        parts.append(f"under {_money_label(amount)}")
+
+    # Clean the keyword residual: drop noise words + leftover symbols.
+    residual = _NOISE_WORDS.sub(" ", residual)
+    residual = re.sub(r"[$<>≤=,]", " ", residual)
+    residual = re.sub(r"\s+", " ", residual).strip(" -·,")
+    if residual:
+        out["parsed_query"] = residual
+
+    if residual and parts:
+        out["interpretation"] = residual + " · " + " · ".join(parts)
+    elif residual:
+        out["interpretation"] = residual
+    elif parts:
+        out["interpretation"] = " · ".join(parts)
+    else:
+        out["interpretation"] = f"Showing results for: {text}" if text else "All programs"
+    return out
 
 
 def _safe_json(text: str):

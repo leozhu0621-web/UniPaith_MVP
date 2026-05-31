@@ -111,15 +111,10 @@ export default function FinancialAidPage() {
     ? Math.round(programCosts.reduce((sum, p) => sum + p.netCost, 0) / programCosts.length)
     : 0
 
-  if (isLoading) return <div className="p-6 max-w-4xl mx-auto space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
+  if (isLoading) return <div className="space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">Financial Aid Calculator</h1>
-        <p className="text-sm text-gray-500 mt-1">Estimate and compare costs across your saved and applied programs.</p>
-      </div>
-
+    <div>
       {allPrograms.length === 0 ? (
         <EmptyState
           icon={<DollarSign size={48} />}
@@ -132,40 +127,40 @@ export default function FinancialAidPage() {
           {/* Summary Cards */}
           <div className="grid grid-cols-3 gap-4 mb-6">
             <Card className="p-4 text-center">
-              <TrendingDown size={20} className="mx-auto text-green-600 mb-1" />
-              <p className="text-xs text-gray-500">Lowest Net Cost</p>
-              <p className="text-lg font-bold">{cheapest ? formatCurrency(cheapest.netCost) : '—'}</p>
-              {cheapest && <p className="text-xs text-gray-400 truncate">{cheapest.name}</p>}
+              <TrendingDown size={20} className="mx-auto text-success mb-1" />
+              <p className="text-xs text-muted-foreground">Lowest net cost</p>
+              <p className="text-lg font-bold text-foreground">{cheapest ? formatCurrency(cheapest.netCost) : '—'}</p>
+              {cheapest && <p className="text-xs text-muted-foreground truncate">{cheapest.name}</p>}
             </Card>
             <Card className="p-4 text-center">
-              <ArrowUpDown size={20} className="mx-auto text-blue-600 mb-1" />
-              <p className="text-xs text-gray-500">Average Net Cost</p>
-              <p className="text-lg font-bold">{formatCurrency(avgNet)}</p>
-              <p className="text-xs text-gray-400">{programCosts.length} programs</p>
+              <ArrowUpDown size={20} className="mx-auto text-secondary mb-1" />
+              <p className="text-xs text-muted-foreground">Average net cost</p>
+              <p className="text-lg font-bold text-foreground">{formatCurrency(avgNet)}</p>
+              <p className="text-xs text-muted-foreground">{programCosts.length} programs</p>
             </Card>
             <Card className="p-4 text-center">
-              <TrendingUp size={20} className="mx-auto text-red-600 mb-1" />
-              <p className="text-xs text-gray-500">Highest Net Cost</p>
-              <p className="text-lg font-bold">{mostExpensive ? formatCurrency(mostExpensive.netCost) : '—'}</p>
-              {mostExpensive && <p className="text-xs text-gray-400 truncate">{mostExpensive.name}</p>}
+              <TrendingUp size={20} className="mx-auto text-error mb-1" />
+              <p className="text-xs text-muted-foreground">Highest net cost</p>
+              <p className="text-lg font-bold text-foreground">{mostExpensive ? formatCurrency(mostExpensive.netCost) : '—'}</p>
+              {mostExpensive && <p className="text-xs text-muted-foreground truncate">{mostExpensive.name}</p>}
             </Card>
           </div>
 
           {/* Sort toggle */}
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-medium">Cost Breakdown</h2>
+            <h3 className="text-h3 text-foreground">Cost breakdown</h3>
             <div className="flex gap-2">
               <button
                 onClick={() => setSortBy('net')}
-                className={`px-3 py-1 text-xs rounded-full ${sortBy === 'net' ? 'bg-brand-slate-700 text-white' : 'bg-gray-100 text-gray-600'}`}
+                className={`px-3 py-1 text-xs font-semibold rounded-pill ${sortBy === 'net' ? 'bg-secondary text-secondary-foreground' : 'bg-muted text-muted-foreground'}`}
               >
-                Sort by Net Cost
+                Sort by net cost
               </button>
               <button
                 onClick={() => setSortBy('tuition')}
-                className={`px-3 py-1 text-xs rounded-full ${sortBy === 'tuition' ? 'bg-brand-slate-700 text-white' : 'bg-gray-100 text-gray-600'}`}
+                className={`px-3 py-1 text-xs font-semibold rounded-pill ${sortBy === 'tuition' ? 'bg-secondary text-secondary-foreground' : 'bg-muted text-muted-foreground'}`}
               >
-                Sort by Tuition
+                Sort by tuition
               </button>
             </div>
           </div>
@@ -176,63 +171,63 @@ export default function FinancialAidPage() {
               <Card key={pc.id} className="p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <p className="font-semibold text-sm cursor-pointer hover:underline" onClick={() => navigate(`/s/programs/${pc.id}`)}>
+                    <p className="font-semibold text-sm text-foreground cursor-pointer hover:underline" onClick={() => navigate(`/s/programs/${pc.id}`)}>
                       {pc.name}
                     </p>
-                    <p className="text-xs text-gray-500">{pc.institution} — {pc.country}</p>
+                    <p className="text-xs text-muted-foreground">{pc.institution} — {pc.country}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg font-bold">{formatCurrency(pc.netCost)}</p>
-                    <p className="text-xs text-gray-500">Net annual cost</p>
+                    <p className="text-lg font-bold text-foreground">{formatCurrency(pc.netCost)}</p>
+                    <p className="text-xs text-muted-foreground">Net annual cost</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-4 gap-3 text-sm">
                   <div>
-                    <p className="text-xs text-gray-500">Tuition</p>
-                    <p className="font-medium">{formatCurrency(pc.tuition)}</p>
+                    <p className="text-xs text-muted-foreground">Tuition</p>
+                    <p className="font-medium text-foreground">{formatCurrency(pc.tuition)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Living Cost</p>
-                    <p className="font-medium">{formatCurrency(pc.livingCost)}</p>
+                    <p className="text-xs text-muted-foreground">Living cost</p>
+                    <p className="font-medium text-foreground">{formatCurrency(pc.livingCost)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Expected Aid</p>
+                    <p className="text-xs text-muted-foreground">Expected aid</p>
                     <div className="flex items-center gap-1">
-                      <span className="text-gray-400">$</span>
+                      <span className="text-muted-foreground">$</span>
                       <input
                         type="number"
                         value={expectedAid[pc.id] || ''}
                         onChange={e => setExpectedAid(prev => ({ ...prev, [pc.id]: e.target.value }))}
                         placeholder="0"
-                        className="w-24 text-sm border-b border-gray-300 focus:border-brand-slate-700 focus:outline-none py-0.5"
+                        className="w-24 text-sm bg-transparent border-b border-border focus:border-secondary focus:outline-none py-0.5"
                       />
                     </div>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Net Cost</p>
-                    <p className="font-bold text-green-700">{formatCurrency(pc.netCost)}</p>
+                    <p className="text-xs text-muted-foreground">Net cost</p>
+                    <p className="font-bold text-success">{formatCurrency(pc.netCost)}</p>
                   </div>
                 </div>
 
-                {/* Visual bar */}
-                <div className="mt-3 flex h-2 rounded-full overflow-hidden bg-gray-100">
+                {/* Visual bar — cobalt tuition + gold living (Spec 02 §14 palette) */}
+                <div className="mt-3 flex h-2 rounded-pill overflow-hidden bg-muted">
                   {pc.tuition != null && pc.tuition > 0 && (
                     <div
-                      className="bg-blue-400 h-full"
+                      className="bg-secondary h-full"
                       style={{ width: `${((pc.tuition ?? 0) / ((pc.tuition ?? 0) + pc.livingCost)) * 100}%` }}
                       title="Tuition"
                     />
                   )}
                   <div
-                    className="bg-purple-400 h-full"
+                    className="bg-primary h-full"
                     style={{ width: `${(pc.livingCost / ((pc.tuition ?? 0) + pc.livingCost)) * 100}%` }}
                     title="Living"
                   />
                 </div>
-                <div className="flex gap-4 mt-1 text-[10px] text-gray-400">
-                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400" /> Tuition</span>
-                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-400" /> Living</span>
+                <div className="flex gap-4 mt-1 text-[10px] text-muted-foreground">
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-secondary" /> Tuition</span>
+                  <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-primary" /> Living</span>
                 </div>
               </Card>
             ))}

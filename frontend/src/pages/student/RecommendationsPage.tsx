@@ -57,19 +57,16 @@ export default function RecommendationsPage() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['recommendations'] }); showToast('Request sent', 'success') },
   })
 
-  if (isLoading) return <div className="p-6 max-w-3xl mx-auto space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
+  if (isLoading) return <div className="space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
   if (isError) {
-    const message = error instanceof Error ? error.message : 'Failed to load recommendation requests.'
+    const message = error instanceof Error ? error.message : "We couldn't load your recommendation requests."
     return (
-      <div className="p-6 max-w-3xl mx-auto">
-        <Card className="p-5">
-          <h1 className="text-xl font-semibold mb-2">Recommendation Letters</h1>
-          <p className="text-sm text-red-600">{message}</p>
-          <Button size="sm" className="mt-4" onClick={() => queryClient.invalidateQueries({ queryKey: ['recommendations'] })}>
-            Retry
-          </Button>
-        </Card>
-      </div>
+      <Card className="p-5">
+        <p className="text-sm text-error">{message}</p>
+        <Button size="sm" className="mt-4" onClick={() => queryClient.invalidateQueries({ queryKey: ['recommendations'] })}>
+          Retry
+        </Button>
+      </Card>
     )
   }
 
@@ -88,14 +85,10 @@ export default function RecommendationsPage() {
   })
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold">Recommendation Letters</h1>
-          <p className="text-sm text-gray-500 mt-1">Track recommendation requests from your recommenders.</p>
-        </div>
+    <div>
+      <div className="flex justify-end mb-4">
         <Button size="sm" onClick={() => { setEditItem(null); setShowModal(true) }}>
-          <Plus size={14} className="mr-1" /> New Request
+          <Plus size={14} className="mr-1" /> New request
         </Button>
       </div>
 
@@ -106,7 +99,7 @@ export default function RecommendationsPage() {
             if (items.length === 0) return null
             const config = STATUS_CONFIG[status]
             return (
-              <div key={status} className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg">
+              <div key={status} className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-lg">
                 <Badge variant={config.variant as any} size="sm">{config.label}</Badge>
                 <span className="text-sm font-medium">{items.length}</span>
               </div>
@@ -130,27 +123,27 @@ export default function RecommendationsPage() {
               <Card key={rec.id} className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                      <UserCheck size={18} className="text-gray-500" />
+                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                      <UserCheck size={18} className="text-muted-foreground" />
                     </div>
                     <div>
                       <p className="font-semibold text-sm">{rec.recommender_name}</p>
                       {rec.recommender_title && (
-                        <p className="text-xs text-gray-500">{rec.recommender_title}{rec.recommender_institution ? ` at ${rec.recommender_institution}` : ''}</p>
+                        <p className="text-xs text-muted-foreground">{rec.recommender_title}{rec.recommender_institution ? ` at ${rec.recommender_institution}` : ''}</p>
                       )}
                       <div className="flex items-center gap-2 mt-1">
                         <Badge variant={config.variant as any} size="sm">{config.label}</Badge>
-                        {rec.relationship && <span className="text-xs text-gray-400">{rec.relationship}</span>}
+                        {rec.relationship && <span className="text-xs text-muted-foreground">{rec.relationship}</span>}
                       </div>
                       {rec.recommender_email && (
-                        <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                           <Mail size={10} /> {rec.recommender_email}
                         </p>
                       )}
                       {rec.due_date && (
-                        <p className="text-xs text-gray-400 mt-0.5">Due: {formatDate(rec.due_date)}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Due: {formatDate(rec.due_date)}</p>
                       )}
-                      {rec.notes && <p className="text-xs text-gray-500 mt-1 italic">"{rec.notes}"</p>}
+                      {rec.notes && <p className="text-xs text-muted-foreground mt-1 italic">"{rec.notes}"</p>}
                     </div>
                   </div>
                   <div className="flex gap-1">
@@ -212,8 +205,8 @@ function RecommendationForm({ defaultValues, onSubmit, loading }: { defaultValue
       <Input label="Title / Position" {...register('recommender_title')} />
       <Input label="Institution / Organization" {...register('recommender_institution')} />
       <div>
-        <label className="text-sm text-brand-slate-600 mb-1 block">Relationship</label>
-        <select {...register('relationship')} className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-slate-700">
+        <label className="text-[13px] font-semibold text-muted-foreground mb-1.5 block">Relationship</label>
+        <select {...register('relationship')} className="w-full text-sm border border-border rounded-md px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary">
           <option value="">Select...</option>
           {RELATIONSHIP_OPTIONS.map(r => (
             <option key={r} value={r}>{r}</option>

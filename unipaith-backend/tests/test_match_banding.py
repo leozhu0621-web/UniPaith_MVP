@@ -127,3 +127,42 @@ def test_support_emphasis_boosts_needs_weight():
     assert w is not None
     assert w["needs_match"] > w["cosine"]
     assert w["needs_match"] > w["soft_align"]
+
+
+def test_time_to_degree_emphasis_boosts_soft_align():
+    """Spec 09 §5.2 / §12 — the Time-to-degree slider must measurably re-rank.
+
+    Regression guard: the mapping previously read ``weight_support`` and ignored
+    ``weight_time_to_degree`` entirely, so the UI's 6th slider was dead.
+    """
+    base = dict(
+        weight_cost=5,
+        weight_outcomes=5,
+        weight_ranking=5,
+        weight_location=5,
+        weight_flexibility=5,
+        weight_support=5,
+    )
+    fast = SimpleNamespace(**base, weight_time_to_degree=10)
+    slow = SimpleNamespace(**base, weight_time_to_degree=0)
+    wf = weights_from_preferences(fast)
+    ws = weights_from_preferences(slow)
+    assert wf is not None and ws is not None
+    # Higher time-to-degree importance tilts toward lifestyle/throughput fit.
+    assert wf["soft_align"] > ws["soft_align"]
+
+
+def test_only_time_to_degree_set_still_maps():
+    """A single set slider (time-to-degree) must trigger a non-None mapping."""
+    pref = SimpleNamespace(
+        weight_cost=None,
+        weight_outcomes=None,
+        weight_ranking=None,
+        weight_location=None,
+        weight_flexibility=None,
+        weight_support=None,
+        weight_time_to_degree=8,
+    )
+    w = weights_from_preferences(pref)
+    assert w is not None
+    assert set(w) == {"cosine", "soft_align", "needs_match"}

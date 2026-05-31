@@ -11,10 +11,12 @@ import Badge from '../../../components/ui/Badge'
 import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
 import Modal from '../../../components/ui/Modal'
+import Select from '../../../components/ui/Select'
 import { getAccommodations, getScheduling, upsertAccommodations, upsertScheduling } from '../../../api/students'
 import { deleteDocument, listDocuments } from '../../../api/documents'
 import { showToast } from '../../../stores/toast-store'
 import { formatFileSize } from '../../../utils/format'
+import { DOCUMENT_TYPES } from '../../../utils/constants'
 import { AccommodationForm, SchedulingForm } from '../components/ProfileForms'
 import { SectionHeader } from './shared'
 import FileDropzone from './FileDropzone'
@@ -29,6 +31,7 @@ export default function PreparationTab() {
   const { data: accommodations } = useQuery({ queryKey: ['accommodations'], queryFn: getAccommodations, retry: false })
   const { data: scheduling } = useQuery({ queryKey: ['scheduling'], queryFn: getScheduling, retry: false })
   const [modal, setModal] = useState<null | 'accommodations' | 'scheduling'>(null)
+  const [docType, setDocType] = useState('transcript')
 
   useEffect(() => {
     if (searchParams.get('section') === 'recommenders') {
@@ -57,8 +60,22 @@ export default function PreparationTab() {
     <div className="space-y-10">
       {/* Documents */}
       <section>
-        <SectionHeader title="Documents" description="Transcripts, certificates, and other uploads." />
-        <FileDropzone documentType="transcript" label="Upload a document" onUploaded={() => qc.invalidateQueries({ queryKey: ['documents'] })} />
+        <SectionHeader
+          title="Documents"
+          description="Transcripts, certificates, and other uploads."
+          action={
+            <div className="w-44">
+              <Select
+                uiSize="sm"
+                options={DOCUMENT_TYPES}
+                value={docType}
+                onChange={e => setDocType(e.target.value)}
+                aria-label="Document type"
+              />
+            </div>
+          }
+        />
+        <FileDropzone documentType={docType} label={`Upload a ${DOCUMENT_TYPES.find(d => d.value === docType)?.label.toLowerCase() ?? 'document'}`} onUploaded={() => qc.invalidateQueries({ queryKey: ['documents'] })} />
         {documentsList.length > 0 && (
           <div className="mt-3 space-y-2">
             {documentsList.map((doc: any) => (

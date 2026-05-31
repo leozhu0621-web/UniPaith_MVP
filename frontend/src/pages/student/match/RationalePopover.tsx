@@ -13,6 +13,7 @@ import { Sparkles, X, RefreshCw } from 'lucide-react'
 
 import { explainMatch } from '../../../api/matching'
 import { AIBadge } from '../../../components/ui/AIRationalePopover'
+import ConfidenceDots from '../../../components/ui/ConfidenceDots'
 import { showToast } from '../../../stores/toast-store'
 import type { ExplainMatchResponse } from '../../../types'
 
@@ -20,6 +21,8 @@ export interface RationalePopoverProps {
   programId: string
   fitnessBreakdown?: Record<string, unknown> | null
   confidenceBreakdown?: Record<string, unknown> | null
+  /** 0–1 model confidence in the fitness number — renders the §6 5-dot meter. */
+  confidenceScore?: number
   cachedRationale?: string | null
   onClose: () => void
 }
@@ -28,6 +31,7 @@ export default function RationalePopover({
   programId,
   fitnessBreakdown,
   confidenceBreakdown,
+  confidenceScore,
   cachedRationale,
   onClose,
 }: RationalePopoverProps) {
@@ -85,6 +89,14 @@ export default function RationalePopover({
             <div className="text-sm text-muted-foreground">Analyzing the match…</div>
           ) : (
             rationale && <p className="text-sm leading-relaxed text-foreground whitespace-pre-line">{rationale}</p>
+          )}
+
+          {/* Spec 02 §6 / 09 §4 — inline 5-dot confidence meter for the score. */}
+          {typeof confidenceScore === 'number' && (
+            <div className="flex items-center gap-2 border-t border-border pt-3">
+              <span className="text-xs font-semibold text-muted-foreground">Confidence</span>
+              <ConfidenceDots value={Math.round(confidenceScore * 100)} />
+            </div>
           )}
 
           {studentCitations.length > 0 && (

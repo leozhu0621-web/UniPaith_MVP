@@ -161,6 +161,7 @@ export default function MatchCard({
           programId={match.program_id}
           fitnessBreakdown={match.fitness_breakdown}
           confidenceBreakdown={match.confidence_breakdown}
+          confidenceScore={confidence}
           cachedRationale={match.rationale_text}
           onClose={() => setRationaleOpen(false)}
         />

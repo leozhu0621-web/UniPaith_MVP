@@ -125,6 +125,9 @@ function StrategyCard({
             <span className="text-xs uppercase tracking-wide text-muted-foreground">
               Version {strategy.version}
             </span>
+            <span className="inline-flex items-center gap-1 rounded-pill border border-accent px-2 py-0.5 text-[11px] font-semibold text-accent">
+              <Sparkles size={10} /> AI
+            </span>
             <Badge variant={STATUS_VARIANTS[strategy.status]} size="sm">
               {strategy.status}
             </Badge>
