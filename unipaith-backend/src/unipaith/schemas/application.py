@@ -20,6 +20,16 @@ class UpdateApplicationRequest(BaseModel):
     missing_items: list[str] | None = None
 
 
+class PatchApplicationRequest(BaseModel):
+    """Student partial update (spec 15 §9) — submission mode + guardrail intent."""
+
+    submission_mode: Literal["internal", "external"] | None = None
+    intent_picker: (
+        Literal["career_fit", "back_up", "dream", "cultural_fit", "family_input", "other"] | None
+    ) = None
+    intent_rationale: str | None = None
+
+
 class SubmitApplicationRequest(BaseModel):
     pass
 
@@ -29,15 +39,50 @@ class DecisionRequest(BaseModel):
     decision_notes: str | None = None
 
 
+class ChecklistToggleRequest(BaseModel):
+    """Manually mark a checklist item complete/incomplete (spec 15 §7)."""
+
+    item_key: str
+    completed: bool
+
+
+class GuardrailScanResponse(BaseModel):
+    fit_band: Literal["low", "medium", "high"]
+    fitness_score: float | None = None
+    recommended_action: Literal["proceed", "review", "reconsider"]
+    blockers: list[str]
+    is_rule_based: bool = True
+
+
 class ProgramBrief(BaseModel):
     """Minimal program info embedded in application responses."""
+
     model_config = ConfigDict(from_attributes=True)
     id: UUID
     program_name: str
     degree_type: str
+    institution_name: str | None = None
     tuition: int | None = None
     duration_months: int | None = None
     application_deadline: date | None = None
+
+
+class OfferLetterResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    application_id: UUID
+    offer_type: str | None
+    tuition_amount: int | None
+    scholarship_amount: int
+    financial_package_total: int | None
+    conditions: dict | None
+    response_deadline: date | None
+    status: str | None
+    student_response: str | None
+    response_at: datetime | None
+    brief: str | None = None
+    created_at: datetime
+    updated_at: datetime
 
 
 class ApplicationResponse(BaseModel):
@@ -53,6 +98,14 @@ class ApplicationResponse(BaseModel):
     decision_at: datetime | None
     completeness_status: str | None
     missing_items: dict | None
+    # --- Spec 15 workspace fields ---
+    submission_mode: str = "internal"
+    readiness_pct: int | None = None
+    intent_picker: str | None = None
+    intent_rationale: str | None = None
+    fit_band: str | None = None
+    guardrail_blockers: list | None = None
+    offer: OfferLetterResponse | None = None
     created_at: datetime
     updated_at: datetime
     program: ProgramBrief | None = None
@@ -71,23 +124,6 @@ class CreateOfferRequest(BaseModel):
     financial_package_total: int | None = None
     conditions: dict | None = None
     response_deadline: date | None = None
-
-
-class OfferLetterResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    id: UUID
-    application_id: UUID
-    offer_type: str | None
-    tuition_amount: int | None
-    scholarship_amount: int
-    financial_package_total: int | None
-    conditions: dict | None
-    response_deadline: date | None
-    status: str | None
-    student_response: str | None
-    response_at: datetime | None
-    created_at: datetime
-    updated_at: datetime
 
 
 class OfferRespondRequest(BaseModel):

@@ -38,6 +38,7 @@ export const DEGREE_OPTIONS: { value: string; label: string }[] = [
   { value: 'doctorate', label: 'Doctorate' },
   { value: 'certificate', label: 'Certificate' },
   { value: 'associate', label: 'Associate' },
+  { value: 'professional', label: 'Professional' },
 ]
 
 export const FORMAT_OPTIONS: { value: string; label: string }[] = [

@@ -1,10 +1,14 @@
 import { useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getMyApplication, submitApplication, getChecklist, generateChecklist, respondToOffer, getReadiness } from '../../api/applications'
+import {
+  getMyApplication, submitApplication, getChecklist, generateChecklist, respondToOffer,
+  getReadiness, patchApplication, guardrailScan, toggleChecklistItem,
+} from '../../api/applications'
 import { listEssays, createEssay, updateEssay, requestEssayFeedback } from '../../api/essays'
 import { listResumes, generateResume } from '../../api/resumes'
 import { requestUpload, uploadToS3, confirmUpload, listDocuments } from '../../api/documents'
+import { listRecommendations, sendRecommendationRequest } from '../../api/recommendations'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -17,25 +21,39 @@ import Skeleton from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { STATUS_COLORS } from '../../utils/constants'
 import { getMyInterviews } from '../../api/interviews'
-import { ArrowLeft, Check, Circle, Upload, Sparkles, AlertCircle, FileCheck, ListChecks, Video, Phone, Users, AlertTriangle, ShieldCheck } from 'lucide-react'
+import {
+  ArrowLeft, Check, Circle, Upload, Sparkles, AlertCircle, FileCheck, ListChecks, Video, Phone,
+  Users, AlertTriangle, ShieldCheck, Award, Send, Building2,
+} from 'lucide-react'
 import Breadcrumbs from '../../components/ui/Breadcrumbs'
 import usePageTitle from '../../hooks/usePageTitle'
-import type { Application, Essay, Resume } from '../../types'
+import type { Application, Essay, Resume, ChecklistItem } from '../../types'
 
 const STATUS_STEPS = ['draft', 'submitted', 'under_review', 'interview', 'decision_made']
 const STATUS_STEP_LABELS: Record<string, string> = {
-  draft: 'Drafting',
+  draft: 'Draft',
   submitted: 'Submitted',
   under_review: 'Under review',
-  interview: 'Interview stage',
+  interview: 'Interview',
   decision_made: 'Decision',
 }
+
+// Spec 15 §6.5 intent enum → friendly labels.
+const INTENT_OPTIONS: { value: string; label: string }[] = [
+  { value: 'career_fit', label: 'Career fit' },
+  { value: 'dream', label: 'Dream school' },
+  { value: 'back_up', label: 'Back-up option' },
+  { value: 'cultural_fit', label: 'Cultural fit' },
+  { value: 'family_input', label: 'Family input' },
+  { value: 'other', label: 'Other' },
+]
+const RATIONALE_REQUIRED = ['back_up', 'other']
 
 export default function ApplicationDetailPage() {
   const { appId } = useParams<{ appId: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const [tab, setTab] = useState('documents')
+  const [tab, setTab] = useState('checklist')
   const [showEssayModal, setShowEssayModal] = useState(false)
   const [editingEssay, setEditingEssay] = useState<Essay | null>(null)
   const [essayContent, setEssayContent] = useState('')
@@ -49,58 +67,87 @@ export default function ApplicationDetailPage() {
   const [uploadProgress, setUploadProgress] = useState(0)
   const [dragOver, setDragOver] = useState(false)
 
-  // Readiness state
+  // Readiness + submit gate state
   const [readiness, setReadiness] = useState<any>(null)
   const [showReadiness, setShowReadiness] = useState(false)
+  const [markedReady, setMarkedReady] = useState(false)
+  const [submitBlockers, setSubmitBlockers] = useState<string[] | null>(null)
 
   // Essay feedback state
   const [feedbackLoading, setFeedbackLoading] = useState<string | null>(null)
   const [feedbackResults, setFeedbackResults] = useState<Record<string, any>>({})
 
+  // Guardrails state (G-S4)
+  const [guardrailResult, setGuardrailResult] = useState<any>(null)
+  const [intentReason, setIntentReason] = useState('')
+  const [rationale, setRationale] = useState('')
+  const [scanning, setScanning] = useState(false)
+
   const { data: app, isLoading } = useQuery({ queryKey: ['application', appId], queryFn: () => getMyApplication(appId!) })
   const { data: checklist } = useQuery({ queryKey: ['checklist', appId], queryFn: () => getChecklist(appId!).catch(() => generateChecklist(appId!)) })
   const { data: essays } = useQuery({ queryKey: ['essays', app?.program_id], queryFn: () => listEssays(app?.program_id), enabled: !!app?.program_id && (tab === 'essays' || tab === 'documents') })
-  const { data: resumes } = useQuery({ queryKey: ['resumes', app?.program_id], queryFn: () => listResumes(app?.program_id), enabled: !!app?.program_id && tab === 'resume' })
+  const { data: resumes } = useQuery({ queryKey: ['resumes', app?.program_id], queryFn: () => listResumes(app?.program_id), enabled: !!app?.program_id && tab === 'documents' })
   const { data: documents } = useQuery({ queryKey: ['documents'], queryFn: listDocuments, enabled: tab === 'documents' })
   const { data: interviews } = useQuery({ queryKey: ['interviews'], queryFn: getMyInterviews, enabled: tab === 'interviews' })
+  const { data: recommenders } = useQuery({ queryKey: ['recommendations'], queryFn: listRecommendations, enabled: tab === 'recommenders' })
 
-  const [guardrailResult, setGuardrailResult] = useState<any>(null)
-  void setGuardrailResult
-  const [intentReason, setIntentReason] = useState('')
-  const [rationale, setRationale] = useState('')
-
-  const submitMut = useMutation({ mutationFn: () => submitApplication(appId!), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['application', appId] }); showToast('Application submitted!', 'success') } })
-  const essayMut = useMutation({ mutationFn: (data: any) => createEssay(data), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['essays'] }); setShowEssayModal(false); setEssayContent(''); setEssayPrompt(''); showToast('Essay created', 'success') } })
+  const submitMut = useMutation({
+    mutationFn: () => submitApplication(appId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['application', appId] })
+      queryClient.invalidateQueries({ queryKey: ['my-applications'] })
+      showToast('Application submitted!', 'success')
+    },
+    onError: (err: any) => {
+      const detail: string = err?.response?.data?.detail || ''
+      if (detail.toLowerCase().includes('not ready') || detail.toLowerCase().includes('missing')) {
+        const after = detail.split('Missing:')[1] || detail
+        setSubmitBlockers(after.split(',').map(s => s.trim()).filter(Boolean))
+      } else {
+        showToast(detail || 'Could not submit', 'error')
+      }
+    },
+  })
+  const essayMut = useMutation({ mutationFn: (data: any) => createEssay(data), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['essays'] }); queryClient.invalidateQueries({ queryKey: ['checklist', appId] }); setShowEssayModal(false); setEssayContent(''); setEssayPrompt(''); showToast('Essay created', 'success') } })
   const essayUpdateMut = useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => updateEssay(id, data), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['essays'] }); setEditingEssay(null); showToast('Essay updated', 'success') } })
-  const resumeGenMut = useMutation({ mutationFn: () => generateResume({ format_type: 'standard', target_program_id: app?.program_id }), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['resumes'] }); showToast('Resume generated', 'success') } })
+  const resumeGenMut = useMutation({ mutationFn: () => generateResume({ format_type: 'standard', target_program_id: app?.program_id }), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['resumes'] }); queryClient.invalidateQueries({ queryKey: ['checklist', appId] }); showToast('Resume generated', 'success') } })
   const offerMut = useMutation({ mutationFn: (response: string) => respondToOffer(appId!, response, response === 'declined' ? declineReason || undefined : undefined), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['application', appId] }); showToast('Response submitted', 'success') } })
+  const modeMut = useMutation({
+    mutationFn: (mode: 'internal' | 'external') => patchApplication(appId!, { submission_mode: mode }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['application', appId] }); showToast('Submission mode updated', 'success') },
+  })
+  const intentMut = useMutation({
+    mutationFn: () => patchApplication(appId!, { intent_picker: intentReason, intent_rationale: rationale || null }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['application', appId] }); showToast('Intent saved', 'success') },
+    onError: (err: any) => showToast(err?.response?.data?.detail || 'Could not save intent', 'error'),
+  })
+  const toggleMut = useMutation({
+    mutationFn: ({ key, completed }: { key: string; completed: boolean }) => toggleChecklistItem(appId!, key, completed),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['checklist', appId] })
+      queryClient.invalidateQueries({ queryKey: ['application', appId] })
+    },
+  })
 
   // File upload handler
   const handleFileUpload = useCallback(async (files: FileList | File[]) => {
     const fileArray = Array.from(files)
     if (fileArray.length === 0) return
-
     setUploading(true)
     setUploadProgress(0)
-
     try {
       for (const file of fileArray) {
         const docType = file.name.toLowerCase().includes('transcript') ? 'transcript'
           : file.name.toLowerCase().includes('resume') || file.name.toLowerCase().includes('cv') ? 'resume'
           : file.name.toLowerCase().includes('essay') ? 'essay'
           : 'certificate'
-
         const { upload_url, document_id } = await requestUpload({
-          document_type: docType,
-          file_name: file.name,
-          content_type: file.type || 'application/octet-stream',
-          file_size_bytes: file.size,
+          document_type: docType, file_name: file.name,
+          content_type: file.type || 'application/octet-stream', file_size_bytes: file.size,
         })
-
         await uploadToS3(upload_url, file, (pct) => setUploadProgress(pct))
         await confirmUpload(document_id)
       }
-
       queryClient.invalidateQueries({ queryKey: ['documents'] })
       queryClient.invalidateQueries({ queryKey: ['checklist', appId] })
       showToast(`${fileArray.length} file(s) uploaded`, 'success')
@@ -115,13 +162,10 @@ export default function ApplicationDetailPage() {
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setDragOver(false)
-    if (e.dataTransfer.files.length > 0) {
-      handleFileUpload(e.dataTransfer.files)
-    }
+    if (e.dataTransfer.files.length > 0) handleFileUpload(e.dataTransfer.files)
   }, [handleFileUpload])
 
-  // Readiness check
-  const checkReadiness = async () => {
+  const checkReadinessFn = async () => {
     try {
       const result = await getReadiness(appId!)
       setReadiness(result)
@@ -131,7 +175,19 @@ export default function ApplicationDetailPage() {
     }
   }
 
-  // Essay feedback
+  const runGuardrailScan = async () => {
+    setScanning(true)
+    try {
+      const result = await guardrailScan(appId!)
+      setGuardrailResult(result)
+      queryClient.invalidateQueries({ queryKey: ['application', appId] })
+    } catch {
+      showToast('Could not run scan', 'error')
+    } finally {
+      setScanning(false)
+    }
+  }
+
   const handleEssayFeedback = async (essayId: string) => {
     setFeedbackLoading(essayId)
     try {
@@ -144,31 +200,39 @@ export default function ApplicationDetailPage() {
     }
   }
 
-  // Word count helper
   const wordCount = (text: string) => text.trim() ? text.trim().split(/\s+/).length : 0
 
-  // Hooks must run before any early return (react-hooks/rules-of-hooks).
   usePageTitle(app?.program?.program_name || 'Application')
 
   if (isLoading) return <div className="p-6"><Skeleton className="h-64" /></div>
-  if (!app) return <div className="p-6 text-center text-gray-500">Application not found.</div>
+  if (!app) return <div className="p-6 text-center text-student-text">Application not found.</div>
 
   const application: Application = app
   const currentStepIdx = STATUS_STEPS.indexOf(application.status)
-  const checklistItems = checklist?.items ?? []
-  const completionPct = checklist?.completion_percentage ?? 0
+  const checklistItems: ChecklistItem[] = checklist?.items ?? []
+  const completionPct = checklist?.completion_percentage ?? application.readiness_pct ?? 0
   const documentsList: any[] = Array.isArray(documents) ? documents : []
   const essaysList: Essay[] = Array.isArray(essays) ? essays : []
   const resumesList: Resume[] = Array.isArray(resumes) ? resumes : []
+  const recommendersList: any[] = Array.isArray(recommenders) ? recommenders : []
+  const isExternal = application.submission_mode === 'external'
+  // Fitness on a 0-100 scale (match_score stored 0-1). Spec 15 §6.5 low-fit ≤ 30.
+  const fitnessPct = application.match_score != null ? Math.round(Number(application.match_score) * 100) : null
+  const isLowFit = application.fit_band === 'low' || guardrailResult?.fit_band === 'low' || (fitnessPct != null && fitnessPct <= 30)
+
+  const requiredItems = checklistItems.filter(i => i.required !== false)
+  const incompleteRequired = requiredItems.filter(i => i.status !== 'completed')
+  const allComplete = application.status === 'draft' && incompleteRequired.length === 0 && checklistItems.length > 0
+  const canSubmit = application.status === 'draft' && (allComplete && (markedReady || isExternal))
 
   const tabs = [
+    { id: 'checklist', label: `Checklist ${completionPct}%` },
     { id: 'documents', label: 'Documents' },
     { id: 'essays', label: 'Essays' },
-    { id: 'resume', label: 'Resume' },
-    { id: 'checklist', label: 'Checklist' },
+    { id: 'recommenders', label: 'Recommenders' },
     { id: 'interviews', label: 'Interviews' },
     { id: 'guardrails', label: 'Guardrails' },
-    ...(application.decision === 'admitted' ? [{ id: 'offer', label: 'Offer' }] : []),
+    ...(application.decision === 'admitted' || application.offer ? [{ id: 'offer', label: 'Offer' }] : []),
   ]
 
   const programName = application.program?.program_name || 'Application'
@@ -177,39 +241,57 @@ export default function ApplicationDetailPage() {
     <div className="p-6 max-w-4xl mx-auto">
       <Breadcrumbs
         className="mb-4"
-        items={[
-          { label: 'Apply', to: '/s/manage' },
-          { label: 'Applications', to: '/s/manage' },
-          { label: programName },
-        ]}
+        items={[{ label: 'Apply', to: '/s/manage' }, { label: 'Applications', to: '/s/manage' }, { label: programName }]}
       />
-      <button onClick={() => navigate('/s/manage')} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+      <button onClick={() => navigate('/s/manage')} className="flex items-center gap-1 text-sm text-student-text hover:text-student-ink mb-4">
         <ArrowLeft size={16} /> Back to Apply
       </button>
 
-      <h1 className="text-xl font-bold mb-1">{programName}</h1>
-      <p className="text-sm text-gray-500">Take one section at a time. You can check readiness anytime before submitting.</p>
-
-      {/* Status timeline */}
-      <div className="my-4">
-        <div className="flex items-center gap-1">
-          {STATUS_STEPS.map((step, i) => (
-            <div key={step} className="flex items-center">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${i <= currentStepIdx ? 'bg-brand-slate-700 text-white' : 'bg-gray-200 text-gray-400'}`}>
-                {i < currentStepIdx ? <Check size={12} /> : <Circle size={12} />}
-              </div>
-              {i < STATUS_STEPS.length - 1 && <div className={`w-12 h-0.5 ${i < currentStepIdx ? 'bg-brand-slate-700' : 'bg-gray-200'}`} />}
-            </div>
-          ))}
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-xl font-bold text-student-ink mb-1">{programName}</h1>
+          {application.program?.institution_name && (
+            <p className="text-sm text-student-text flex items-center gap-1"><Building2 size={13} /> {application.program.institution_name}</p>
+          )}
         </div>
-        <div className="flex items-center gap-2 mt-2">
-          {STATUS_STEPS.map(step => (
-            <span
-              key={step}
-              className={`text-[11px] px-2 py-0.5 rounded-full ${
-                step === application.status ? 'bg-brand-slate-700 text-white' : 'bg-gray-100 text-gray-500'
-              }`}
-            >
+      </div>
+
+      {/* Decision banner (§10) */}
+      {application.status === 'decision_made' && application.decision && (
+        <div className={`mt-4 rounded-lg px-4 py-3 flex items-center gap-3 ${
+          application.decision === 'admitted' ? 'bg-success-soft' : application.decision === 'rejected' ? 'bg-destructive/10' : 'bg-warning-soft'
+        }`}>
+          <Award size={18} className={application.decision === 'admitted' ? 'text-success' : application.decision === 'rejected' ? 'text-destructive' : 'text-warning'} />
+          <div>
+            <p className="text-sm font-medium text-student-ink">Decision received: {application.decision}</p>
+            {application.decision === 'admitted' && <p className="text-xs text-student-text">Review your offer in the Offer tab.</p>}
+          </div>
+        </div>
+      )}
+
+      {/* Status timeline (§4 / §12) */}
+      <div className="my-5">
+        <div className="flex items-center">
+          {STATUS_STEPS.map((step, i) => {
+            const done = i < currentStepIdx
+            const current = i === currentStepIdx
+            return (
+              <div key={step} className="flex items-center flex-1 last:flex-none">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0 ${
+                  done ? 'bg-success text-white' : current ? 'bg-cobalt text-white' : 'bg-muted text-muted-foreground'
+                }`}>
+                  {done ? <Check size={12} /> : <Circle size={12} />}
+                </div>
+                {i < STATUS_STEPS.length - 1 && (
+                  <div className={`h-0.5 flex-1 mx-1 ${i < currentStepIdx ? 'bg-success' : 'bg-muted'}`} />
+                )}
+              </div>
+            )
+          })}
+        </div>
+        <div className="flex items-center justify-between mt-1.5">
+          {STATUS_STEPS.map((step, i) => (
+            <span key={step} className={`text-[11px] ${i === currentStepIdx ? 'text-cobalt font-medium' : 'text-muted-foreground'}`}>
               {STATUS_STEP_LABELS[step]}
             </span>
           ))}
@@ -217,195 +299,195 @@ export default function ApplicationDetailPage() {
       </div>
 
       <div className="flex gap-6">
-        {/* Sidebar: Checklist */}
-        <div className="w-56 flex-shrink-0">
+        {/* Sidebar */}
+        <div className="w-60 flex-shrink-0 space-y-4">
           <Card className="p-4">
-            <h3 className="font-medium text-sm mb-3">Checklist</h3>
+            <h3 className="font-medium text-sm text-student-ink mb-3">Checklist</h3>
             <div className="space-y-2 mb-3">
-              {checklistItems.map((item: any, i: number) => (
-                <div key={i} className="flex items-center gap-2 text-sm">
-                  <div className={`w-4 h-4 rounded border flex items-center justify-center ${item.status === 'completed' ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'}`}>
-                    {item.status === 'completed' && <Check size={10} />}
-                  </div>
-                  <span className={item.status === 'completed' ? 'text-gray-500 line-through' : ''}>{item.name}</span>
+              {checklistItems.map((item, i) => (
+                <div key={item.key || i} className="flex items-center gap-2 text-sm">
+                  {item.status === 'completed' ? (
+                    <Check size={14} className="text-success flex-shrink-0" />
+                  ) : item.status === 'blocked' || item.mismatch ? (
+                    <AlertTriangle size={14} className="text-warning flex-shrink-0" />
+                  ) : (
+                    <Circle size={12} className="text-muted-foreground flex-shrink-0" />
+                  )}
+                  <span className={item.status === 'completed' ? 'text-muted-foreground line-through' : 'text-student-ink'}>
+                    {item.name}
+                  </span>
                 </div>
               ))}
+              {checklistItems.length === 0 && <p className="text-xs text-student-text">Generating checklist…</p>}
             </div>
-            <ProgressBar value={completionPct} label="Completion" />
+            <ProgressBar value={completionPct} label="Readiness" />
 
-            {/* Readiness Check Button */}
-            <Button
-              className="w-full mt-3"
-              size="sm"
-              variant="secondary"
-              onClick={checkReadiness}
-            >
-              <FileCheck size={14} className="mr-1" /> Check Readiness
+            <Button className="w-full mt-3" size="sm" variant="tertiary" onClick={checkReadinessFn}>
+              <FileCheck size={14} className="mr-1" /> Check readiness
             </Button>
 
-            {(() => {
-              const requiredItems = checklistItems.filter((i: any) => i.required !== false)
-              const incompleteRequired = requiredItems.filter((i: any) => i.status !== 'completed')
-              const canSubmit = application.status === 'draft' && incompleteRequired.length === 0
-              return (
-                <>
-                  <Button
-                    className="w-full mt-2"
-                    disabled={!canSubmit}
-                    onClick={() => submitMut.mutate()}
-                    loading={submitMut.isPending}
-                    size="sm"
-                  >
-                    {canSubmit ? 'Submit Application' : `${incompleteRequired.length} Required Item${incompleteRequired.length !== 1 ? 's' : ''} Missing`}
-                  </Button>
-                  {application.status === 'draft' && incompleteRequired.length > 0 && (
-                    <div className="mt-2 text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
-                      <p className="font-medium mb-1">Complete these before submitting:</p>
-                      <ul className="space-y-0.5">
-                        {incompleteRequired.slice(0, 5).map((item: any, i: number) => (
-                          <li key={i} className="flex items-center gap-1">
-                            <AlertCircle size={9} /> {item.item_name || item.name}
-                          </li>
-                        ))}
-                        {incompleteRequired.length > 5 && (
-                          <li className="text-amber-600">...and {incompleteRequired.length - 5} more</li>
-                        )}
-                      </ul>
-                    </div>
-                  )}
-                  {application.status === 'draft' && incompleteRequired.length === 0 && checklistItems.length > 0 && (
-                    <p className="text-xs text-emerald-600 mt-2 flex items-center gap-1">
-                      <Check size={10} /> All required items complete — ready to submit
-                    </p>
-                  )}
-                </>
-              )
-            })()}
+            {/* Ready gate (§12) — gold is the earned moment */}
+            {application.status === 'draft' && allComplete && !markedReady && !isExternal && (
+              <Button className="w-full mt-2" size="sm" variant="primary" onClick={() => setMarkedReady(true)}>
+                <Check size={14} className="mr-1" /> Mark as ready to submit
+              </Button>
+            )}
+
+            {application.status === 'draft' && (
+              <Button
+                className="w-full mt-2"
+                variant="secondary"
+                size="sm"
+                disabled={!canSubmit}
+                loading={submitMut.isPending}
+                onClick={() => submitMut.mutate()}
+              >
+                <Send size={14} className="mr-1" />
+                {canSubmit ? 'Submit application' : allComplete ? 'Confirm ready first' : `${incompleteRequired.length} item${incompleteRequired.length !== 1 ? 's' : ''} left`}
+              </Button>
+            )}
+
+            {application.status === 'draft' && incompleteRequired.length > 0 && (
+              <div className="mt-2 text-xs text-warning bg-warning-soft rounded-lg px-3 py-2">
+                <p className="font-medium mb-1">Complete these before submitting:</p>
+                <ul className="space-y-0.5">
+                  {incompleteRequired.slice(0, 5).map((item, i) => (
+                    <li key={i} className="flex items-center gap-1"><AlertCircle size={9} /> {item.name}</li>
+                  ))}
+                  {incompleteRequired.length > 5 && <li>…and {incompleteRequired.length - 5} more</li>}
+                </ul>
+              </div>
+            )}
+            {application.status === 'draft' && allComplete && (
+              <p className="text-xs text-success mt-2 flex items-center gap-1"><Check size={10} /> All required items complete</p>
+            )}
           </Card>
+
+          {/* Submission mode (§7) */}
+          {application.status === 'draft' && (
+            <Card className="p-4">
+              <h3 className="font-medium text-sm text-student-ink mb-2">How will you submit?</h3>
+              <div className="flex rounded-lg border border-divider overflow-hidden text-xs">
+                <button
+                  onClick={() => !isExternal || modeMut.mutate('internal')}
+                  className={`flex-1 px-2 py-1.5 ${!isExternal ? 'bg-cobalt text-white' : 'text-student-text hover:bg-student-mist'}`}
+                >
+                  Through UniPaith
+                </button>
+                <button
+                  onClick={() => isExternal || modeMut.mutate('external')}
+                  className={`flex-1 px-2 py-1.5 ${isExternal ? 'bg-cobalt text-white' : 'text-student-text hover:bg-student-mist'}`}
+                >
+                  Their portal
+                </button>
+              </div>
+              <p className="text-[11px] text-student-text mt-2">
+                {isExternal
+                  ? 'You\'ll submit on the institution\'s portal. Mark items complete here and attach confirmation evidence.'
+                  : 'Submit directly through UniPaith once every required item is complete.'}
+              </p>
+            </Card>
+          )}
         </div>
 
         {/* Main content */}
         <div className="flex-1 min-w-0">
           <Tabs tabs={tabs} activeTab={tab} onChange={setTab} />
           <div className="mt-4">
+            {tab === 'checklist' && (
+              <ChecklistTab
+                items={checklistItems}
+                completionPct={completionPct}
+                isExternal={isExternal}
+                canToggle={application.status === 'draft'}
+                onToggle={(key, completed) => toggleMut.mutate({ key, completed })}
+              />
+            )}
+
             {tab === 'documents' && (
               <div className="space-y-4">
-                {/* Drag & Drop Upload Zone */}
                 <div
                   onDragOver={e => { e.preventDefault(); setDragOver(true) }}
                   onDragLeave={() => setDragOver(false)}
                   onDrop={handleDrop}
-                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                    dragOver ? 'border-brand-slate-700 bg-gray-50' : 'border-gray-300 hover:border-gray-400'
-                  }`}
+                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${dragOver ? 'border-cobalt bg-student-mist' : 'border-divider hover:border-cobalt/40'}`}
                 >
-                  <Upload size={24} className="mx-auto text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-600 mb-1">Drag & drop files here, or</p>
+                  <Upload size={24} className="mx-auto text-student-text mb-2" />
+                  <p className="text-sm text-student-text mb-1">Drag & drop files here, or</p>
                   <label className="inline-block">
-                    <input
-                      type="file"
-                      multiple
-                      className="hidden"
-                      onChange={e => e.target.files && handleFileUpload(e.target.files)}
-                    />
-                    <span className="text-sm font-medium text-brand-slate-700 underline cursor-pointer">browse files</span>
+                    <input type="file" multiple className="hidden" onChange={e => e.target.files && handleFileUpload(e.target.files)} />
+                    <span className="text-sm font-medium text-cobalt underline cursor-pointer">browse files</span>
                   </label>
-                  <p className="text-xs text-gray-400 mt-1">PDF, DOC, DOCX up to 10MB</p>
+                  <p className="text-xs text-muted-foreground mt-1">PDF, DOC, DOCX up to 10MB</p>
                 </div>
 
                 {uploading && (
                   <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-gray-500">
-                      <span>Uploading...</span>
-                      <span>{uploadProgress}%</span>
-                    </div>
+                    <div className="flex justify-between text-xs text-student-text"><span>Uploading…</span><span>{uploadProgress}%</span></div>
                     <ProgressBar value={uploadProgress} />
                   </div>
                 )}
 
-                {/* Existing documents */}
                 {documentsList.length > 0 && (
                   <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-brand-slate-600">Uploaded Documents</h3>
+                    <h3 className="text-sm font-medium text-student-ink">Uploaded documents</h3>
                     {documentsList.map((doc: any) => (
-                      <div key={doc.id} className="flex justify-between items-center p-3 rounded-lg border border-gray-100 text-sm">
-                        <div className="flex items-center gap-2">
-                          <FileCheck size={16} className="text-green-500" />
-                          <span>{doc.file_name}</span>
-                        </div>
+                      <div key={doc.id} className="flex justify-between items-center p-3 rounded-lg border border-divider text-sm">
+                        <div className="flex items-center gap-2"><FileCheck size={16} className="text-success" /><span className="text-student-ink">{doc.file_name}</span></div>
                         <Badge variant="neutral">{doc.document_type}</Badge>
                       </div>
                     ))}
                   </div>
                 )}
 
+                {/* Resume (a document) */}
+                <div className="flex items-center justify-between p-3 rounded-lg border border-divider">
+                  <div className="text-sm text-student-ink">
+                    Resume / CV {resumesList.length > 0 && <Badge variant="success">v{resumesList[0].resume_version}</Badge>}
+                  </div>
+                  {resumesList.length === 0 && (
+                    <Button size="sm" variant="tertiary" onClick={() => resumeGenMut.mutate()} loading={resumeGenMut.isPending}>Generate</Button>
+                  )}
+                </div>
+
                 {documentsList.length === 0 && !uploading && (
-                  <p className="text-sm text-gray-500">No documents uploaded yet. Upload transcripts, recommendations, and other required documents above.</p>
+                  <p className="text-sm text-student-text">Upload transcripts, recommendations, and other required documents above.</p>
                 )}
               </div>
             )}
 
             {tab === 'essays' && (
               <div className="space-y-4">
-                <Button size="sm" onClick={() => setShowEssayModal(true)}>+ New Essay</Button>
+                <Button size="sm" onClick={() => setShowEssayModal(true)}>+ New essay</Button>
                 {essaysList.length === 0 ? (
-                  <p className="text-sm text-gray-500 mt-2">No essays yet for this application.</p>
+                  <p className="text-sm text-student-text mt-2">No essays yet for this application.</p>
                 ) : (
                   essaysList.map((e: Essay) => (
                     <Card key={e.id} className="p-4">
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <p className="font-medium text-sm">{e.prompt_text || 'Essay'}</p>
+                          <p className="font-medium text-sm text-student-ink">{e.prompt_text || 'Essay'}</p>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-gray-500">{e.word_count ?? wordCount(e.content)} words</span>
-                            <Badge variant={(STATUS_COLORS[e.status] || 'neutral') as any} size="sm">{e.status}</Badge>
+                            <span className="text-xs text-student-text">{e.word_count ?? wordCount(e.content)} words</span>
+                            <Badge variant={(STATUS_COLORS[e.status] || 'neutral') as never}>{e.status}</Badge>
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => handleEssayFeedback(e.id)}
-                            loading={feedbackLoading === e.id}
-                          >
-                            <Sparkles size={12} className="mr-1" /> AI Feedback
+                          <Button size="sm" variant="tertiary" onClick={() => handleEssayFeedback(e.id)} loading={feedbackLoading === e.id}>
+                            <Sparkles size={12} className="mr-1" /> Get feedback
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setEditingEssay(e)
-                              setEssayContent(e.content)
-                              setEssayPrompt(e.prompt_text || '')
-                            }}
-                          >
-                            Edit
-                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => { setEditingEssay(e); setEssayContent(e.content); setEssayPrompt(e.prompt_text || '') }}>Edit</Button>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-600 line-clamp-3">{e.content}</p>
-
-                      {/* AI Feedback Display */}
+                      <p className="text-sm text-student-text line-clamp-3">{e.content}</p>
                       {feedbackResults[e.id] && (
-                        <div className="mt-3 bg-blue-50 rounded-lg p-3">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Sparkles size={14} className="text-blue-600" />
-                            <span className="text-sm font-medium text-blue-800">AI Feedback</span>
-                          </div>
-                          {feedbackResults[e.id].feedback && (
-                            <p className="text-sm text-blue-700 whitespace-pre-wrap">{feedbackResults[e.id].feedback}</p>
-                          )}
+                        <div className="mt-3 bg-student-mist rounded-lg p-3">
+                          <div className="flex items-center gap-2 mb-2"><Sparkles size={14} className="text-cobalt" /><span className="text-sm font-medium text-student-ink">Feedback</span></div>
+                          {feedbackResults[e.id].feedback && <p className="text-sm text-student-text whitespace-pre-wrap">{feedbackResults[e.id].feedback}</p>}
                           {feedbackResults[e.id].suggestions && (
-                            <ul className="text-sm text-blue-700 list-disc list-inside mt-2 space-y-1">
-                              {feedbackResults[e.id].suggestions.map((s: string, i: number) => (
-                                <li key={i}>{s}</li>
-                              ))}
+                            <ul className="text-sm text-student-text list-disc list-inside mt-2 space-y-1">
+                              {feedbackResults[e.id].suggestions.map((s: string, i: number) => <li key={i}>{s}</li>)}
                             </ul>
-                          )}
-                          {feedbackResults[e.id].score != null && (
-                            <div className="mt-2">
-                              <span className="text-xs text-blue-600">Score: {feedbackResults[e.id].score}/10</span>
-                            </div>
                           )}
                         </div>
                       )}
@@ -415,91 +497,17 @@ export default function ApplicationDetailPage() {
               </div>
             )}
 
-            {tab === 'resume' && (
-              <div className="space-y-3">
-                {resumesList.length === 0 ? (
-                  <div>
-                    <p className="text-sm text-gray-500 mb-3">No resume targeting this program yet.</p>
-                    <Button size="sm" onClick={() => resumeGenMut.mutate()} loading={resumeGenMut.isPending}>Generate Resume</Button>
-                  </div>
-                ) : (
-                  resumesList.map((r: Resume) => (
-                    <Card key={r.id} className="p-4">
-                      <p className="font-medium text-sm">Resume v{r.resume_version}</p>
-                      <Badge variant={(STATUS_COLORS[r.status] || 'neutral') as any} size="sm">{r.status}</Badge>
-                    </Card>
-                  ))
-                )}
-              </div>
+            {tab === 'recommenders' && (
+              <RecommendersTab
+                recommenders={recommendersList}
+                programId={application.program_id}
+                onNudge={async (id) => { await sendRecommendationRequest(id); queryClient.invalidateQueries({ queryKey: ['recommendations'] }); showToast('Reminder sent', 'success') }}
+              />
             )}
-
-            {tab === 'checklist' && (() => {
-              const items: any[] = Array.isArray(checklist?.items) ? checklist.items : []
-              const completed = items.filter((i: any) => i.status === 'completed').length
-              const required = items.filter((i: any) => i.required !== false).length
-              const pct = required > 0 ? Math.round((completed / required) * 100) : 0
-              const OWNER_COLORS: Record<string, string> = { student: 'info', recommender: 'warning', institution: 'neutral' }
-              const grouped = items.reduce<Record<string, any[]>>((acc, item) => {
-                const cat = item.category || 'general'
-                if (!acc[cat]) acc[cat] = []
-                acc[cat].push(item)
-                return acc
-              }, {})
-
-              return (
-                <div className="space-y-4">
-                  <Card className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <ListChecks size={16} className="text-stone-600" />
-                        <span className="text-sm font-medium text-stone-700">Readiness: {pct}%</span>
-                      </div>
-                      {pct >= 100 && <Badge variant="success">Ready to Submit</Badge>}
-                    </div>
-                    <ProgressBar value={pct} />
-                  </Card>
-                  {Object.entries(grouped).map(([cat, catItems]) => (
-                    <div key={cat}>
-                      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">{cat.replace(/_/g, ' ')}</p>
-                      <div className="space-y-2">
-                        {catItems.map((item: any, idx: number) => (
-                          <Card key={idx} className="p-3 flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-3 min-w-0">
-                              <input
-                                type="checkbox"
-                                checked={item.status === 'completed'}
-                                onChange={() => {}}
-                                className="rounded border-gray-300"
-                              />
-                              <div className="min-w-0">
-                                <p className="text-sm text-stone-700">{item.item_name || item.name}</p>
-                                {item.expected_format && <p className="text-xs text-gray-400">Format: {item.expected_format}</p>}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              {item.owner && <Badge variant={(OWNER_COLORS[item.owner] || 'neutral') as any} size="sm">{item.owner}</Badge>}
-                              {item.required !== false && <Badge variant="danger" size="sm">Required</Badge>}
-                              {item.mismatch && <AlertTriangle size={14} className="text-amber-500" />}
-                            </div>
-                          </Card>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                  {items.length === 0 && (
-                    <Card className="p-6 text-center">
-                      <ListChecks size={32} className="text-gray-300 mx-auto mb-3" />
-                      <p className="text-sm text-gray-500">No checklist items yet.</p>
-                    </Card>
-                  )}
-                </div>
-              )
-            })()}
 
             {tab === 'interviews' && (() => {
               const interviewList: any[] = Array.isArray(interviews) ? interviews.filter((i: any) => i.application_id === appId) : []
               const TYPE_ICONS: Record<string, typeof Video> = { video: Video, phone: Phone, in_person: Users }
-
               return (
                 <div className="space-y-4">
                   {interviewList.length > 0 ? interviewList.map((iv: any) => {
@@ -508,24 +516,18 @@ export default function ApplicationDetailPage() {
                       <Card key={iv.id} className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center">
-                              <Icon size={18} className="text-stone-600" />
-                            </div>
+                            <div className="w-10 h-10 rounded-full bg-student-mist flex items-center justify-center"><Icon size={18} className="text-cobalt" /></div>
                             <div>
-                              <p className="text-sm font-medium text-stone-700 capitalize">{(iv.interview_type || 'interview').replace(/_/g, ' ')}</p>
-                              <p className="text-xs text-gray-500">
-                                {iv.scheduled_at ? new Date(iv.scheduled_at).toLocaleString() : 'Not yet scheduled'}
-                              </p>
+                              <p className="text-sm font-medium text-student-ink capitalize">{(iv.interview_type || 'interview').replace(/_/g, ' ')}</p>
+                              <p className="text-xs text-student-text">{iv.scheduled_at ? new Date(iv.scheduled_at).toLocaleString() : 'Not yet scheduled'}</p>
                             </div>
                           </div>
-                          <Badge variant={iv.status === 'completed' ? 'success' : iv.status === 'scheduled' ? 'info' : 'warning'} size="sm">
-                            {iv.status || 'pending'}
-                          </Badge>
+                          <Badge variant={iv.status === 'completed' ? 'success' : iv.status === 'scheduled' ? 'info' : 'warning'}>{iv.status || 'pending'}</Badge>
                         </div>
                         {iv.status === 'scheduled' && (
-                          <Card className="mt-3 p-3 bg-stone-50">
-                            <p className="text-xs font-medium text-stone-600 mb-1">Prep Checklist</p>
-                            <ul className="text-xs text-gray-500 space-y-1">
+                          <Card className="mt-3 p-3 bg-student-mist">
+                            <p className="text-xs font-medium text-student-ink mb-1">Prep checklist</p>
+                            <ul className="text-xs text-student-text space-y-1">
                               <li className="flex items-center gap-1"><Check size={10} /> Research the program</li>
                               <li className="flex items-center gap-1"><Check size={10} /> Prepare key talking points</li>
                               <li className="flex items-center gap-1"><Check size={10} /> {iv.interview_type === 'video' ? 'Test camera & microphone' : 'Plan arrival logistics'}</li>
@@ -536,9 +538,9 @@ export default function ApplicationDetailPage() {
                     )
                   }) : (
                     <Card className="p-6 text-center">
-                      <Users size={32} className="text-gray-300 mx-auto mb-3" />
-                      <p className="text-sm text-gray-500">No interviews scheduled yet.</p>
-                      <p className="text-xs text-gray-400 mt-1">You'll be notified when an interview is requested.</p>
+                      <Users size={32} className="text-muted-foreground mx-auto mb-3" />
+                      <p className="text-sm text-student-text">No interviews scheduled yet.</p>
+                      <p className="text-xs text-muted-foreground mt-1">You'll be notified when an interview is requested.</p>
                     </Card>
                   )}
                 </div>
@@ -547,77 +549,112 @@ export default function ApplicationDetailPage() {
 
             {tab === 'guardrails' && (
               <div className="space-y-4">
-                {application.match_score != null && application.match_score < 0.3 && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
-                    <AlertTriangle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                {isLowFit && (
+                  <div className="bg-warning-soft border border-warning/30 rounded-lg p-4 flex items-start gap-3">
+                    <AlertTriangle size={18} className="text-warning flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-amber-800">Low Fit Warning</p>
-                      <p className="text-xs text-amber-700 mt-0.5">This program's match score is below 30%. Review the Match Analysis tab to understand why.</p>
+                      <p className="text-sm font-medium text-student-ink">Low-fit warning</p>
+                      <p className="text-xs text-student-text mt-0.5">
+                        {fitnessPct != null ? `This program's fitness is ${fitnessPct}%.` : 'This program may be a low-fit option.'} Review your Match analysis before committing effort here.
+                      </p>
                     </div>
                   </div>
                 )}
 
                 <Card className="p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <ShieldCheck size={16} className="text-stone-600" />
-                    <h3 className="text-sm font-medium text-stone-700">Why are you applying?</h3>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {['Dream school', 'Safety option', 'Recommended', 'Exploring', 'Location fit', 'Program fit'].map(reason => (
+                  <div className="flex items-center gap-2 mb-3"><ShieldCheck size={16} className="text-cobalt" /><h3 className="text-sm font-medium text-student-ink">Why are you applying?</h3></div>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {INTENT_OPTIONS.map(opt => (
                       <button
-                        key={reason}
-                        onClick={() => setIntentReason(reason)}
+                        key={opt.value}
+                        onClick={() => setIntentReason(opt.value)}
                         className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
-                          intentReason === reason
-                            ? 'bg-ink text-white border-ink'
-                            : 'bg-white text-stone-600 border-gray-300 hover:bg-stone-50'
+                          (intentReason || application.intent_picker) === opt.value
+                            ? 'bg-ink text-white border-ink' : 'bg-white text-student-text border-divider hover:bg-student-mist'
                         }`}
                       >
-                        {reason}
+                        {opt.label}
                       </button>
                     ))}
                   </div>
+                  {RATIONALE_REQUIRED.includes(intentReason || application.intent_picker || '') && (
+                    <div className="mb-3">
+                      <Textarea
+                        label="Your rationale (required, at least 80 characters)"
+                        value={rationale || application.intent_rationale || ''}
+                        onChange={e => setRationale(e.target.value)}
+                        placeholder="Explain why this application is worth your effort…"
+                      />
+                      <p className="text-[11px] text-student-text mt-1 text-right">{(rationale || application.intent_rationale || '').length}/80</p>
+                    </div>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="tertiary"
+                    disabled={!intentReason && !application.intent_picker}
+                    loading={intentMut.isPending}
+                    onClick={() => intentMut.mutate()}
+                  >
+                    Save intent
+                  </Button>
                 </Card>
 
-                {guardrailResult && (
-                  <Card className={`p-4 ${guardrailResult.level === 'green' ? 'bg-emerald-50' : guardrailResult.level === 'red' ? 'bg-red-50' : 'bg-amber-50'}`}>
-                    <p className={`text-sm font-medium ${guardrailResult.level === 'green' ? 'text-emerald-700' : guardrailResult.level === 'red' ? 'text-red-700' : 'text-amber-700'}`}>
-                      {guardrailResult.message || 'AI analysis complete'}
-                    </p>
-                    {guardrailResult.points && (
-                      <ul className="mt-2 space-y-1">
-                        {guardrailResult.points.map((pt: string, i: number) => (
-                          <li key={i} className="text-xs text-gray-600 flex items-start gap-1">
-                            <span>-</span> {pt}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </Card>
-                )}
-
-                {(guardrailResult?.level === 'red' || (application.match_score != null && application.match_score < 0.3)) && (
-                  <Card className="p-4">
-                    <p className="text-xs text-gray-500 mb-2">Please explain your rationale for proceeding:</p>
-                    <Textarea value={rationale} onChange={e => setRationale(e.target.value)} placeholder="I'm applying because..." />
-                  </Card>
-                )}
+                <Card className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-medium text-student-ink">Guardrail scan</h3>
+                    <Button size="sm" onClick={runGuardrailScan} loading={scanning}>Run scan</Button>
+                  </div>
+                  <p className="text-xs text-student-text mb-3">Checks fit and flags anything to reconsider before you apply.</p>
+                  {(guardrailResult || application.fit_band) && (
+                    <div className={`rounded-lg p-3 ${
+                      (guardrailResult?.fit_band || application.fit_band) === 'high' ? 'bg-success-soft'
+                        : (guardrailResult?.fit_band || application.fit_band) === 'low' ? 'bg-warning-soft' : 'bg-student-mist'
+                    }`}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant={(guardrailResult?.fit_band || application.fit_band) === 'high' ? 'success' : (guardrailResult?.fit_band || application.fit_band) === 'low' ? 'warning' : 'info'}>
+                          {(guardrailResult?.fit_band || application.fit_band)} fit
+                        </Badge>
+                        {guardrailResult?.recommended_action && <span className="text-xs text-student-text">Recommended: {guardrailResult.recommended_action}</span>}
+                        {guardrailResult?.is_rule_based && <span className="text-[10px] text-muted-foreground">Showing rule-based result</span>}
+                      </div>
+                      {(guardrailResult?.blockers || application.guardrail_blockers || []).length > 0 ? (
+                        <ul className="mt-2 space-y-1">
+                          {(guardrailResult?.blockers || application.guardrail_blockers || []).map((b: string, i: number) => (
+                            <li key={i} className="text-xs text-student-text flex items-start gap-1"><AlertCircle size={11} className="mt-0.5 flex-shrink-0" /> {b}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-xs text-student-text mt-1">No blockers — you're clear to proceed.</p>
+                      )}
+                    </div>
+                  )}
+                </Card>
               </div>
             )}
 
             {tab === 'offer' && (
               <Card className="p-4">
-                <h3 className="font-medium mb-3">Offer Details</h3>
-                <p className="text-sm text-gray-600">Decision: <Badge variant="success">{application.decision}</Badge></p>
-                {application.decision_notes && <p className="text-sm text-gray-600 mt-2">{application.decision_notes}</p>}
-                <div className="flex gap-3 mt-4">
-                  <Button onClick={() => offerMut.mutate('accepted')} loading={offerMut.isPending}>Accept</Button>
-                  <Button variant="danger" onClick={() => setOfferResponse('declined')}>Decline</Button>
-                </div>
-                {offerResponse === 'declined' && (
+                <div className="flex items-center gap-2 mb-3"><Award size={16} className="text-student" /><h3 className="font-medium text-student-ink">Your offer</h3></div>
+                {application.offer?.brief && (
+                  <p className="text-sm text-student-ink bg-student-mist rounded-lg p-3 mb-3">{application.offer.brief}</p>
+                )}
+                <p className="text-sm text-student-text">Decision: <Badge variant="success">{application.decision}</Badge></p>
+                {application.offer?.response_deadline && (
+                  <p className="text-sm text-student-text mt-2">Respond by {new Date(application.offer.response_deadline).toLocaleDateString()}</p>
+                )}
+                {application.decision_notes && <p className="text-sm text-student-text mt-2">{application.decision_notes}</p>}
+                {application.offer?.student_response ? (
+                  <p className="text-sm mt-4 text-success font-medium">You {application.offer.student_response} this offer.</p>
+                ) : (
+                  <div className="flex gap-3 mt-4">
+                    <Button onClick={() => offerMut.mutate('accepted')} loading={offerMut.isPending}>Accept</Button>
+                    <Button variant="danger" onClick={() => setOfferResponse('declined')}>Decline</Button>
+                  </div>
+                )}
+                {offerResponse === 'declined' && !application.offer?.student_response && (
                   <div className="mt-3 space-y-2">
                     <Textarea label="Reason (optional)" value={declineReason} onChange={e => setDeclineReason(e.target.value)} />
-                    <Button variant="danger" onClick={() => offerMut.mutate('declined')} loading={offerMut.isPending}>Confirm Decline</Button>
+                    <Button variant="danger" onClick={() => offerMut.mutate('declined')} loading={offerMut.isPending}>Confirm decline</Button>
                   </div>
                 )}
               </Card>
@@ -627,7 +664,7 @@ export default function ApplicationDetailPage() {
       </div>
 
       {/* New Essay Modal */}
-      <Modal isOpen={showEssayModal} onClose={() => setShowEssayModal(false)} title="New Essay">
+      <Modal isOpen={showEssayModal} onClose={() => setShowEssayModal(false)} title="New essay">
         <div className="space-y-3">
           <Select label="Type" options={[
             { value: 'personal_statement', label: 'Personal Statement' },
@@ -635,80 +672,59 @@ export default function ApplicationDetailPage() {
             { value: 'why_school', label: 'Why This School' },
             { value: 'research', label: 'Research Statement' },
           ]} value={essayType} onChange={e => setEssayType(e.target.value)} />
-          <Textarea label="Prompt" value={essayPrompt} onChange={e => setEssayPrompt(e.target.value)} placeholder="The essay question..." />
+          <Textarea label="Prompt" value={essayPrompt} onChange={e => setEssayPrompt(e.target.value)} placeholder="The essay question…" />
           <div>
-            <Textarea label="Content" value={essayContent} onChange={e => setEssayContent(e.target.value)} placeholder="Write your essay..." />
-            <p className="text-xs text-gray-400 mt-1 text-right">{wordCount(essayContent)} words</p>
+            <Textarea label="Content" value={essayContent} onChange={e => setEssayContent(e.target.value)} placeholder="Write your essay…" />
+            <p className="text-xs text-muted-foreground mt-1 text-right">{wordCount(essayContent)} words</p>
           </div>
-          <Button onClick={() => essayMut.mutate({ program_id: application.program_id, essay_type: essayType, content: essayContent, prompt_text: essayPrompt })} loading={essayMut.isPending} className="w-full">Save Essay</Button>
+          <Button onClick={() => essayMut.mutate({ program_id: application.program_id, essay_type: essayType, content: essayContent, prompt_text: essayPrompt })} loading={essayMut.isPending} className="w-full">Save essay</Button>
         </div>
       </Modal>
 
       {/* Edit Essay Modal */}
-      <Modal isOpen={!!editingEssay} onClose={() => setEditingEssay(null)} title="Edit Essay" size="lg">
+      <Modal isOpen={!!editingEssay} onClose={() => setEditingEssay(null)} title="Edit essay" size="lg">
         {editingEssay && (
           <div className="space-y-3">
             <Textarea label="Prompt" value={essayPrompt} onChange={e => setEssayPrompt(e.target.value)} />
             <div>
               <Textarea label="Content" value={essayContent} onChange={e => setEssayContent(e.target.value)} />
-              <p className="text-xs text-gray-400 mt-1 text-right">{wordCount(essayContent)} words</p>
+              <p className="text-xs text-muted-foreground mt-1 text-right">{wordCount(essayContent)} words</p>
             </div>
-            <Button
-              onClick={() => essayUpdateMut.mutate({ id: editingEssay.id, data: { content: essayContent, prompt_text: essayPrompt } })}
-              loading={essayUpdateMut.isPending}
-              className="w-full"
-            >
-              Save Changes
-            </Button>
+            <Button onClick={() => essayUpdateMut.mutate({ id: editingEssay.id, data: { content: essayContent, prompt_text: essayPrompt } })} loading={essayUpdateMut.isPending} className="w-full">Save changes</Button>
           </div>
         )}
       </Modal>
 
       {/* Readiness Check Modal */}
-      <Modal isOpen={showReadiness} onClose={() => setShowReadiness(false)} title="Application Readiness">
+      <Modal isOpen={showReadiness} onClose={() => setShowReadiness(false)} title="Application readiness">
         {readiness && (
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              {readiness.ready ? (
-                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-                  <Check size={24} className="text-green-600" />
-                </div>
-              ) : (
-                <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
-                  <AlertCircle size={24} className="text-amber-600" />
-                </div>
-              )}
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${readiness.is_ready ? 'bg-success-soft' : 'bg-warning-soft'}`}>
+                {readiness.is_ready ? <Check size={24} className="text-success" /> : <AlertCircle size={24} className="text-warning" />}
+              </div>
               <div>
-                <p className="font-medium">{readiness.ready ? 'Ready to submit!' : 'You are close to ready'}</p>
-                <p className="text-sm text-gray-500">{readiness.completion_percentage}% complete</p>
+                <p className="font-medium text-student-ink">{readiness.is_ready ? 'Ready to submit!' : 'Almost there'}</p>
+                <p className="text-sm text-student-text">{readiness.completion_percentage}% complete</p>
               </div>
             </div>
-
             <ProgressBar value={readiness.completion_percentage} />
-
             {readiness.missing_items?.length > 0 && (
               <div>
-                <h4 className="text-sm font-medium mb-2">Missing items:</h4>
+                <h4 className="text-sm font-medium text-student-ink mb-2">Missing items:</h4>
                 <ul className="space-y-1">
                   {readiness.missing_items.map((item: string, i: number) => (
-                    <li key={i} className="flex items-center gap-2 text-sm text-gray-600">
-                      <Circle size={8} className="text-red-400 flex-shrink-0" />
-                      {item}
-                    </li>
+                    <li key={i} className="flex items-center gap-2 text-sm text-student-text"><Circle size={8} className="text-destructive flex-shrink-0" /> {item}</li>
                   ))}
                 </ul>
               </div>
             )}
-
             {readiness.warnings?.length > 0 && (
               <div>
-                <h4 className="text-sm font-medium mb-2">Warnings:</h4>
+                <h4 className="text-sm font-medium text-student-ink mb-2">Warnings:</h4>
                 <ul className="space-y-1">
                   {readiness.warnings.map((w: string, i: number) => (
-                    <li key={i} className="flex items-center gap-2 text-sm text-amber-700">
-                      <AlertCircle size={12} className="flex-shrink-0" />
-                      {w}
-                    </li>
+                    <li key={i} className="flex items-center gap-2 text-sm text-warning"><AlertCircle size={12} className="flex-shrink-0" /> {w}</li>
                   ))}
                 </ul>
               </div>
@@ -716,6 +732,118 @@ export default function ApplicationDetailPage() {
           </div>
         )}
       </Modal>
+
+      {/* Submit blocked modal (§10) */}
+      <Modal isOpen={!!submitBlockers} onClose={() => setSubmitBlockers(null)} title="Submit blocked. Resolve these items first:">
+        <ul className="space-y-2">
+          {(submitBlockers || []).map((b, i) => (
+            <li key={i} className="flex items-center gap-2 text-sm text-student-ink"><AlertCircle size={14} className="text-warning flex-shrink-0" /> {b}</li>
+          ))}
+        </ul>
+        <Button className="w-full mt-4" variant="tertiary" onClick={() => setSubmitBlockers(null)}>Got it</Button>
+      </Modal>
+    </div>
+  )
+}
+
+// --- Checklist tab (spec 15 §5) ---
+function ChecklistTab({ items, completionPct, isExternal, canToggle, onToggle }: {
+  items: ChecklistItem[]
+  completionPct: number
+  isExternal: boolean
+  canToggle: boolean
+  onToggle: (key: string, completed: boolean) => void
+}) {
+  const OWNER_COLORS: Record<string, 'info' | 'warning' | 'neutral'> = { student: 'info', recommender: 'warning', institution: 'neutral' }
+  const grouped = items.reduce<Record<string, ChecklistItem[]>>((acc, item) => {
+    const cat = item.category || 'general'
+    ;(acc[cat] ||= []).push(item)
+    return acc
+  }, {})
+
+  return (
+    <div className="space-y-4">
+      <Card className="p-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2"><ListChecks size={16} className="text-cobalt" /><span className="text-sm font-medium text-student-ink">Readiness: {completionPct}%</span></div>
+          {completionPct >= 100 && <Badge variant="success">Ready to submit</Badge>}
+        </div>
+        <ProgressBar value={completionPct} />
+        {isExternal && <p className="text-xs text-student-text mt-2">External submission — check items off as you complete them on the institution's portal.</p>}
+      </Card>
+      {Object.entries(grouped).map(([cat, catItems]) => (
+        <div key={cat}>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">{cat.replace(/_/g, ' ')}</p>
+          <div className="space-y-2">
+            {catItems.map((item, idx) => (
+              <Card key={item.key || idx} className="p-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <input
+                    type="checkbox"
+                    checked={item.status === 'completed'}
+                    disabled={!canToggle || (!isExternal && item.owner === 'recommender')}
+                    onChange={e => item.key && onToggle(item.key, e.target.checked)}
+                    className="rounded border-divider text-cobalt focus:ring-cobalt"
+                  />
+                  <div className="min-w-0">
+                    <p className="text-sm text-student-ink">{item.name}</p>
+                    {item.expected_format && <p className="text-xs text-muted-foreground">{item.expected_format}</p>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {item.item_type && <Badge variant="neutral">{item.item_type}</Badge>}
+                  {item.owner && <Badge variant={OWNER_COLORS[item.owner] || 'neutral'}>{item.owner}</Badge>}
+                  {item.required !== false && <Badge variant="danger">Required</Badge>}
+                  {item.mismatch && <AlertTriangle size={14} className="text-warning" />}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      ))}
+      {items.length === 0 && (
+        <Card className="p-6 text-center"><ListChecks size={32} className="text-muted-foreground mx-auto mb-3" /><p className="text-sm text-student-text">No checklist items yet.</p></Card>
+      )}
+    </div>
+  )
+}
+
+// --- Recommenders tab (spec 15 §6.3) ---
+function RecommendersTab({ recommenders, programId, onNudge }: {
+  recommenders: any[]
+  programId: string
+  onNudge: (id: string) => void
+}) {
+  const relevant = recommenders.filter(r => !r.target_program_id || r.target_program_id === programId)
+  const REC_STATUS: Record<string, 'neutral' | 'info' | 'warning' | 'success' | 'danger'> = {
+    draft: 'neutral', requested: 'info', in_progress: 'warning', sent: 'info', submitted: 'success', received: 'success', overdue: 'danger',
+  }
+  if (relevant.length === 0)
+    return (
+      <Card className="p-6 text-center">
+        <Users size={32} className="text-muted-foreground mx-auto mb-3" />
+        <p className="text-sm text-student-text">No recommenders yet.</p>
+        <p className="text-xs text-muted-foreground mt-1">Add recommenders from your Profile to request letters for this program.</p>
+      </Card>
+    )
+  return (
+    <div className="space-y-3">
+      {relevant.map(r => (
+        <Card key={r.id} className="p-4 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-student-ink">{r.recommender_name}</p>
+            <p className="text-xs text-student-text">{r.recommender_title || r.relationship || r.recommender_institution || 'Recommender'}</p>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Badge variant={REC_STATUS[r.status] || 'neutral'}>{(r.status || 'draft').replace(/_/g, ' ')}</Badge>
+            {['draft', 'requested', 'in_progress', 'sent', 'overdue'].includes(r.status) && (
+              <Button size="sm" variant="tertiary" onClick={() => onNudge(r.id)}>
+                <Send size={12} className="mr-1" /> Nudge
+              </Button>
+            )}
+          </div>
+        </Card>
+      ))}
     </div>
   )
 }
