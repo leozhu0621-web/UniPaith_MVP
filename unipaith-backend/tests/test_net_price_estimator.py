@@ -123,6 +123,44 @@ def test_scholarship_likelihood_moderate_for_strong_student_at_selective_program
     assert est["aid_scholarship_likelihood_band"] == "moderate"
 
 
+def test_funding_requirement_full_scholarship_raises_aid_likelihood():
+    # A strong student at a selective program is "moderate" with no need signal…
+    base = compute_net_price_estimate(program=_basic_program(acceptance_rate=0.08), student_gpa=3.9)
+    assert base["aid_scholarship_likelihood_band"] == "moderate"
+    # …but a stored `funding_requirement` of full_scholarship is a demonstrated-
+    # need signal and bumps the band up. Regression: the stored enum
+    # (full_scholarship | partial | self_funded | flexible) was never matched.
+    with_need = compute_net_price_estimate(
+        program=_basic_program(acceptance_rate=0.08),
+        student_gpa=3.9,
+        funding_requirement="full_scholarship",
+    )
+    assert with_need["aid_scholarship_likelihood_band"] == "high"
+
+
+def test_funding_requirement_partial_is_a_need_signal():
+    with_need = compute_net_price_estimate(
+        program=_basic_program(acceptance_rate=0.08),
+        student_gpa=3.9,
+        funding_requirement="partial",
+    )
+    assert with_need["aid_scholarship_likelihood_band"] == "high"
+
+
+def test_funding_requirement_self_funded_is_not_a_need_signal():
+    base = compute_net_price_estimate(program=_basic_program(acceptance_rate=0.08), student_gpa=3.9)
+    self_funded = compute_net_price_estimate(
+        program=_basic_program(acceptance_rate=0.08),
+        student_gpa=3.9,
+        funding_requirement="self_funded",
+    )
+    assert (
+        self_funded["aid_scholarship_likelihood_band"]
+        == base["aid_scholarship_likelihood_band"]
+        == "moderate"
+    )
+
+
 def test_high_aid_discount_never_drives_net_negative():
     # School publishes a very low average net price → large discount; combined
     # with a high-likelihood merit bump the floor must still clamp at >= 0.

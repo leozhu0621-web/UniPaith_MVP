@@ -290,6 +290,44 @@ export default function ProgramDetailPage() {
         )}
         onApply={() => applyMut.mutate()}
         onViewApplication={existingApp ? () => navigate(`/s/applications/${existingApp.id}`) : undefined}
+        matchSlot={
+          hasMatch ? (
+            <div
+              className="flex items-center gap-2.5"
+              title="Fitness is how well this program matches your strategy; confidence is how sure we are given your profile depth."
+            >
+              <DualRing
+                fitness={toUnit(match.fitness_score ?? match.match_score)}
+                confidence={toUnit(match.confidence_score ?? match.match_score)}
+                size={64}
+                onClick={() => setRationaleOpen(true)}
+              />
+              <div className="flex flex-col items-start gap-1">
+                {match.band_label && <BandBadge band={match.band_label} />}
+                <button
+                  onClick={() => setRationaleOpen(true)}
+                  className="inline-flex items-center gap-1 text-[11px] font-medium text-cobalt hover:underline"
+                >
+                  <Sparkles size={11} /> Why this match?
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => navigate('/s/explore')}
+              className="flex items-center gap-2 text-left"
+              title="We haven't computed your match for this program yet."
+            >
+              <div className="w-11 h-11 rounded-full bg-student-mist flex items-center justify-center flex-shrink-0">
+                <Sparkles size={16} className="text-cobalt" />
+              </div>
+              <div className="leading-tight">
+                <p className="text-[9px] uppercase tracking-wider font-semibold text-slate/60">Your match</p>
+                <p className="text-[12px] font-medium text-cobalt hover:underline">See my matches</p>
+              </div>
+            </button>
+          )
+        }
       />
 
       {/* ── KPI strip — adaptive: picks the 4 most distinctive numbers per program ── */}
@@ -313,52 +351,8 @@ export default function ProgramDetailPage() {
         retentionRate={rd.retention_rate}
       />
 
-      {/* ── Your match — dual ring + redacted "why this match" (Spec 06 §3/§5.5) ── */}
-      {hasMatch ? (
-        <Card className="mb-5 p-4 flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-4">
-            <DualRing
-              fitness={toUnit(match.fitness_score ?? match.match_score)}
-              confidence={toUnit(match.confidence_score ?? match.match_score)}
-              size={84}
-              onClick={() => setRationaleOpen(true)}
-            />
-            <div>
-              <div className="flex items-center gap-2">
-                <div className="text-eyebrow text-student-text">Your match</div>
-                {match.band_label && <BandBadge band={match.band_label} />}
-              </div>
-              <p className="text-sm text-student-ink max-w-md mt-0.5">
-                Fitness is how well this program matches your strategy; confidence is how sure
-                we are given your profile depth.
-              </p>
-            </div>
-          </div>
-          <Button size="sm" variant="secondary" onClick={() => setRationaleOpen(true)}>
-            <Sparkles size={14} className="mr-1.5" /> Why this match?
-          </Button>
-        </Card>
-      ) : (
-        /* Match not computed — gentle prompt (the public page shows a sign-in CTA). */
-        <Card className="mb-5 p-4 flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-student-mist flex items-center justify-center">
-              <Sparkles size={20} className="text-cobalt" />
-            </div>
-            <div>
-              <div className="text-eyebrow text-student-text">Your match</div>
-              <p className="text-sm text-student-ink mt-0.5">
-                We haven't computed your match for this program yet.
-              </p>
-            </div>
-          </div>
-          <Button size="sm" variant="secondary" onClick={() => navigate('/s/explore')}>
-            See my matches
-          </Button>
-        </Card>
-      )}
-
-      {/* ── Your realistic shot — probability bands (Spec 09 §4A) ── */}
+      {/* ── Your realistic shot — probability bands (Spec 09 §4A).
+            The DualRing + redacted "why this match" now lead the fact strip (§2). ── */}
       {hasMatch && (
         <Card className="mb-5 p-4">
           <ProbabilityBands
