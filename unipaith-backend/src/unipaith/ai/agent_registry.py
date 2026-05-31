@@ -37,6 +37,8 @@ AGENT_TIERS: dict[str, str] = {
     "authenticity_risk": "batch",  # AuthenticityRiskScorer — Haiku
     # ── L3 ML scorer (not an LLM; labels the audit-ledger row) ──
     "matcher": "rule_based",
+    # ── Discovery type-first program search (spec 10 §3 / 45 §12) ──
+    "query_interpreter": "workhorse",
 }
 
 

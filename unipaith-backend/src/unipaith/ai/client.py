@@ -204,6 +204,8 @@ Agent = Literal[
     "review_summarizer",
     "authenticity_risk",
     "matcher",
+    # Spec 10 §3 / 45 §12 — type-first program search query interpreter.
+    "query_interpreter",
 ]
 
 

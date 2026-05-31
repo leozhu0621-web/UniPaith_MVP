@@ -81,6 +81,34 @@ class SavedListItem(Base):
     saved_list: Mapped[SavedList] = relationship(back_populates="items")
 
 
+class StudentCompareItem(Base):
+    """Spec 10 §8 — a program in the student's global compare tray.
+
+    Server-persisted so the compare set accumulates across sessions and
+    devices. Capped at 4 programs in the service layer (spec 10 §8).
+    """
+
+    __tablename__ = "student_compare_lists"
+    __table_args__ = (UniqueConstraint("student_id", "program_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    program_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("programs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
 class StudentCalendar(Base):
     __tablename__ = "student_calendar"
 

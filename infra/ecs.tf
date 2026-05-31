@@ -184,6 +184,7 @@ resource "aws_ecs_task_definition" "backend" {
       { name = "AI_MATCH_RATIONALE_V2_ENABLED", value = "true" },
       { name = "AI_STRATEGY_V2_ENABLED", value = "true" },
       { name = "AI_IDENTITY_V2_ENABLED", value = "true" },
+      { name = "AI_DISCOVERY_QUERY_V2_ENABLED", value = "true" },
       # Pin Claude model IDs — config.py defaults match, but pinning here
       # makes the prod surface auditable (and trivial to roll a single
       # agent class to a different model without a code deploy).
