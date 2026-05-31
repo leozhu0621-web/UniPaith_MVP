@@ -320,20 +320,21 @@ async def test_mark_complete_updates_checklist_and_calendar(
     assert r.status_code == 200
     assert r.json()["action_label"] == "completed"
 
-    # Checklist item now complete + override recorded.
+    # Checklist item now complete via the Spec-15 manual_complete flag.
     await db_session.refresh(checklist)
-    assert checklist.manual_overrides.get("recommendation_letters") is True
     rec = next(i for i in checklist.items if i["category"] == "recommendation_letters")
     assert rec["completed"] is True
+    assert rec["manual_complete"] is True
 
-    # Calendar deadline marked done.
+    # Calendar deadline marked done (Spec-16 status).
     await db_session.refresh(cal)
-    assert cal.completed_at is not None
+    assert cal.status == "completed"
 
-    # Durability: regenerating the checklist must NOT revert the completion.
+    # Durability: regenerating the checklist must NOT revert the completion
+    # (manual_complete is re-applied by _load_manual_keys).
     regenerated = await ChecklistService(db_session).generate_checklist(profile.id, app.id)
     rec = next(i for i in regenerated.items if i["category"] == "recommendation_letters")
-    assert rec["completed"] is True, "manual override must survive regeneration"
+    assert rec["completed"] is True, "manual completion must survive regeneration"
 
 
 # ── AI suggested reply ──────────────────────────────────────────────────────

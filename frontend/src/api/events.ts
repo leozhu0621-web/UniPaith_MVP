@@ -5,6 +5,12 @@ export interface FollowedInstitution {
   institution_id: string
   name: string
   followed_at?: string | null
+  // Spec 13 §3.2 — enriched so the Saved → Schools card renders without a refetch.
+  country?: string | null
+  city?: string | null
+  logo_url?: string | null
+  type?: string | null
+  program_count?: number
 }
 
 // ── Events ───────────────────────────────────────────────────────────────

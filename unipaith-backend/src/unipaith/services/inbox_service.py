@@ -422,58 +422,55 @@ class InboxService:
         return await self.get_thread(user_id, thread_id)
 
     async def _complete_linked_checklist(self, student_id: UUID, conv: Conversation) -> None:
+        """Mark the linked checklist item complete via the Spec 15
+        ``manual_complete`` flag — durable across ``generate_checklist``
+        (``_load_manual_keys`` re-applies it by item key)."""
         category = conv.linked_checklist_item_category
         if not category or conv.application_id is None:
             return
-        app = await self.db.scalar(
-            select(Application).where(
-                Application.id == conv.application_id,
-                Application.student_id == student_id,
-            )
-        )
-        if app is None:
-            return
         checklist = await self.db.scalar(
-            select(ApplicationChecklist).where(
+            select(ApplicationChecklist)
+            .join(Application, Application.program_id == ApplicationChecklist.program_id)
+            .where(
+                Application.id == conv.application_id,
                 ApplicationChecklist.student_id == student_id,
-                ApplicationChecklist.program_id == app.program_id,
             )
         )
         if checklist is None:
-            # No checklist yet — persist the override so a later
-            # generate_checklist honors it.
-            self.db.add(
-                ApplicationChecklist(
-                    student_id=student_id,
-                    program_id=app.program_id,
-                    items=[],
-                    manual_overrides={category: True},
-                    completion_percentage=0,
+            # Generate one so there's a real (keyed) item to mark complete.
+            try:
+                checklist = await ChecklistService(self.db).generate_checklist(
+                    student_id, conv.application_id
                 )
-            )
+            except Exception:  # noqa: BLE001 — best-effort; calendar still updates
+                return
+        if not checklist.items:
             return
 
-        # Reassign new dict/list so the ORM flags the columns dirty.
-        overrides = dict(checklist.manual_overrides or {})
-        overrides[category] = True
-        checklist.manual_overrides = overrides
-
-        if checklist.items:
-            items = [dict(it) for it in checklist.items]
-            for it in items:
-                if it.get("category") == category:
-                    it["completed"] = True
+        # Match by item key or category; reassigning the list triggers the
+        # ORM JSONB change detection (no flag_modified needed).
+        items = [dict(it) for it in checklist.items]
+        changed = False
+        for it in items:
+            if it.get("key") == category or it.get("category") == category:
+                it["manual_complete"] = True
+                it["status"] = "completed"
+                it["completed"] = True
+                changed = True
+        if changed:
             checklist.items = items
             checklist.completion_percentage = ChecklistService._compute_completion(items)
 
     async def _complete_linked_calendar(self, thread_id: UUID) -> None:
+        """Mark the linked calendar deadline done via the Spec 16
+        ``status`` column (linkage by reference_id = thread id)."""
         await self.db.execute(
             update(StudentCalendar)
             .where(
                 StudentCalendar.reference_id == thread_id,
-                StudentCalendar.completed_at.is_(None),
+                StudentCalendar.status != "completed",
             )
-            .values(completed_at=datetime.now(UTC))
+            .values(status="completed")
         )
 
     async def suggested_reply(

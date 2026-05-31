@@ -27,3 +27,25 @@ export const generateChecklist = (appId: string) =>
 
 export const getReadiness = (appId: string) =>
   apiClient.get(`/students/me/applications/${appId}/readiness`).then(r => r.data)
+
+// --- Spec 15 workspace ---
+
+export const patchApplication = (
+  appId: string,
+  data: {
+    submission_mode?: 'internal' | 'external'
+    intent_picker?: string | null
+    intent_rationale?: string | null
+  },
+) => apiClient.patch(`/applications/me/${appId}`, data).then(r => r.data)
+
+export const guardrailScan = (appId: string) =>
+  apiClient.post(`/applications/me/${appId}/guardrail-scan`).then(r => r.data)
+
+export const checkReadiness = (appId: string) =>
+  apiClient.post(`/applications/me/${appId}/check-readiness`).then(r => r.data)
+
+export const toggleChecklistItem = (appId: string, itemKey: string, completed: boolean) =>
+  apiClient
+    .patch(`/applications/me/${appId}/checklist`, { item_key: itemKey, completed })
+    .then(r => r.data)

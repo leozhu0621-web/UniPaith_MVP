@@ -1,19 +1,30 @@
 /**
- * Workshops → Interview practice (NO MODEL ANSWERS).
+ * Workshops → Interview (NO MODEL ANSWERS).
  *
- * Returns suggested questions only. Each question item is exactly
- * `{question, why}` — there is no `model_answer` / `sample_response` /
- * `revised_text` field. The schema test (test_workshop_no_generation_contract.py)
- * enforces this on every commit.
+ * Two sub-modes (Spec/14-workshops.md §4):
+ *  - Practice questions: returns questions to rehearse. Generating the
+ *    *questions* is allowed — they're coach prompts, not student answers.
+ *  - Score a response: paste a question + your answer and get a rubric +
+ *    structural issues + missing elements + follow-up questions. No model
+ *    answer is ever returned — the response schema forbids it.
  */
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 
 import { requestInterviewPractice } from '../../../api/workshops-feedback'
+import Badge from '../../../components/ui/Badge'
 import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
 import { showToast } from '../../../stores/toast-store'
 import type { WorkshopFeedbackRun } from '../../../types'
+
+import { RubricScores } from './RubricDots'
+import { EmptyHint, ErrorNote, ReadinessCard, StubNote } from './WorkshopShared'
+import WorkshopProgramPicker, {
+  type ProgramOption,
+  type WorkshopMode,
+} from './WorkshopProgramPicker'
+import { IMPORTANCE_VARIANT, SEVERITY_VARIANT, readinessSummary } from './workshopReadiness'
 
 type InterviewType = 'behavioral' | 'technical' | 'general'
 
@@ -26,13 +37,14 @@ const TYPES: { key: InterviewType; label: string }[] = [
 export default function InterviewPracticePanel() {
   const [interviewType, setInterviewType] = useState<InterviewType>('general')
   const [focus, setFocus] = useState('')
-  // Optional — when filled in, the backend coaches the response instead
-  // of returning canned practice questions.
   const [questionText, setQuestionText] = useState('')
   const [responseText, setResponseText] = useState('')
+  const [mode, setMode] = useState<WorkshopMode>('general')
+  const [program, setProgram] = useState<ProgramOption | null>(null)
   const [run, setRun] = useState<WorkshopFeedbackRun | null>(null)
 
   const hasResponse = responseText.trim().length > 0
+
   const practiceMut = useMutation({
     mutationFn: () =>
       requestInterviewPractice({
@@ -40,26 +52,43 @@ export default function InterviewPracticePanel() {
         focus_area: focus.trim() || null,
         response_text: responseText.trim() || null,
         question_text: questionText.trim() || null,
+        target_program_id: mode === 'program_specific' ? program?.programId ?? null : null,
       }),
     onSuccess: r => {
       setRun(r)
       showToast(hasResponse ? 'Coaching ready.' : 'Practice questions ready.', 'success')
     },
     onError: (err: unknown) =>
-      showToast((err as Error).message ?? 'Could not generate questions.', 'error'),
+      showToast((err as Error).message ?? 'Could not get feedback.', 'error'),
   })
+
+  // Score mode produces a non-zero rubric; practice mode returns an all-zero
+  // placeholder rubric (we hide that).
+  const scored = run ? Object.values(run.rubric_scores ?? {}).some(v => Number(v) > 0) : false
+  const readiness =
+    run && mode === 'program_specific' && program
+      ? readinessSummary(run, program.programName)
+      : null
 
   return (
     <div className="space-y-4">
       <Card className="space-y-3">
+        <WorkshopProgramPicker
+          mode={mode}
+          onModeChange={setMode}
+          program={program}
+          onProgramChange={setProgram}
+        />
+
         <div>
-          <label className="block text-sm font-medium text-student-ink mb-1">Type</label>
+          <label className="mb-1 block text-sm font-medium text-student-ink">Type</label>
           <div className="flex gap-1">
             {TYPES.map(t => (
               <button
                 key={t.key}
+                type="button"
                 onClick={() => setInterviewType(t.key)}
-                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
                   interviewType === t.key
                     ? 'border-student bg-student/5 text-student-ink'
                     : 'border-divider text-student-text hover:border-student-text'
@@ -70,31 +99,29 @@ export default function InterviewPracticePanel() {
             ))}
           </div>
         </div>
+
         <div>
-          <label className="block text-sm font-medium text-student-ink mb-1">
+          <label className="mb-1 block text-sm font-medium text-student-ink">
             Focus area (optional)
           </label>
           <input
-            className="w-full rounded border border-divider px-3 py-2 text-sm"
+            className="w-full rounded-md border border-divider px-3 py-2 text-sm"
             value={focus}
             onChange={e => setFocus(e.target.value)}
             maxLength={200}
             placeholder="e.g., research fit, leadership in ambiguity, your senior thesis"
           />
         </div>
-        {/* Optional — paste a question + your answer to get coached on
-            your response instead of canned practice questions. */}
+
         <details className="text-sm">
           <summary className="cursor-pointer text-student-text hover:text-student-ink">
             Or — coach a response you've drafted
           </summary>
-          <div className="mt-3 space-y-3 pt-1 border-t border-divider">
+          <div className="mt-3 space-y-3 border-t border-divider pt-3">
             <div>
-              <label className="block text-xs font-medium text-student-ink mb-1">
-                Question
-              </label>
+              <label className="mb-1 block text-xs font-medium text-student-ink">Question</label>
               <input
-                className="w-full rounded border border-divider px-3 py-2 text-sm"
+                className="w-full rounded-md border border-divider px-3 py-2 text-sm"
                 value={questionText}
                 onChange={e => setQuestionText(e.target.value)}
                 maxLength={4000}
@@ -102,53 +129,127 @@ export default function InterviewPracticePanel() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-student-ink mb-1">
-                Your response
-              </label>
+              <label className="mb-1 block text-xs font-medium text-student-ink">Your response</label>
               <textarea
-                className="w-full rounded border border-divider px-3 py-2 text-sm font-mono"
+                className="w-full rounded-md border border-divider px-3 py-2 font-mono text-sm"
                 rows={6}
                 maxLength={20000}
                 value={responseText}
                 onChange={e => setResponseText(e.target.value)}
-                placeholder="Paste your answer. I'll coach delivery / structure / specificity. No rewrite."
+                placeholder="Paste your answer. I'll coach delivery, structure, and specificity — no rewrite."
               />
             </div>
           </div>
         </details>
+
         <div className="text-xs text-student-text">
           {hasResponse ? (
-            <>I'll coach your response — <strong>no model answer</strong> in return.</>
+            <>
+              I'll coach your response — <strong>no model answer</strong> in return.
+            </>
           ) : (
             <>
-              You'll get 5+ questions to practice. <strong>No model answers</strong> —
-              practicing your own response is the point.
+              You'll get questions to rehearse.{' '}
+              <strong>These are practice questions, not answers.</strong>
             </>
           )}
         </div>
+
         <div className="flex justify-end">
-          <Button onClick={() => practiceMut.mutate()} loading={practiceMut.isPending}>
-            {hasResponse ? 'Coach my response' : 'Generate questions'}
+          <Button
+            variant="secondary"
+            onClick={() => practiceMut.mutate()}
+            loading={practiceMut.isPending}
+          >
+            {hasResponse ? 'Get feedback' : 'Get practice questions'}
           </Button>
         </div>
       </Card>
 
-      {run && run.suggested_questions.length > 0 && (
-        <Card>
-          <div className="text-xs uppercase tracking-wide text-student-text mb-3">
-            Practice questions · {run.suggested_questions.length}
-          </div>
-          <ol className="space-y-3">
-            {run.suggested_questions.map((q, i) => (
-              <li key={i} className="text-sm">
-                <div className="text-student-ink font-medium">
-                  {i + 1}. {q.question}
-                </div>
-                <div className="text-xs text-student-text italic mt-0.5">{q.why}</div>
-              </li>
-            ))}
-          </ol>
-        </Card>
+      {!run && !practiceMut.isPending && !practiceMut.isError && (
+        <EmptyHint>
+          Pick a type for questions to rehearse — or paste a response below for coaching.
+        </EmptyHint>
+      )}
+
+      {practiceMut.isError && !run && <ErrorNote onRetry={() => practiceMut.mutate()} />}
+
+      {run && (
+        <>
+          {readiness && program && (
+            <ReadinessCard programName={program.programName} summary={readiness} />
+          )}
+
+          {scored && (
+            <Card>
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-eyebrow uppercase text-student-text">Rubric scores</div>
+                {run.is_stub && <StubNote />}
+              </div>
+              <RubricScores scores={run.rubric_scores} />
+            </Card>
+          )}
+
+          {run.structural_issues.length > 0 && (
+            <Card>
+              <div className="mb-2 text-eyebrow uppercase text-student-text">
+                Response issues · {run.structural_issues.length}
+              </div>
+              <ul className="space-y-2">
+                {run.structural_issues.map((iss, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm">
+                    <Badge variant={SEVERITY_VARIANT[iss.severity]} size="sm">
+                      {iss.severity}
+                    </Badge>
+                    <div className="flex-1">
+                      <div className="text-student-ink">{iss.issue}</div>
+                      {iss.location_ref && (
+                        <div className="mt-0.5 text-xs text-student-text">{iss.location_ref}</div>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+
+          {run.missing_elements.length > 0 && (
+            <Card>
+              <div className="mb-2 text-eyebrow uppercase text-student-text">
+                Missing elements · {run.missing_elements.length}
+              </div>
+              <ul className="space-y-2">
+                {run.missing_elements.map((m, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm">
+                    <Badge variant={IMPORTANCE_VARIANT[m.importance]} size="sm">
+                      {m.importance.replace(/_/g, ' ')}
+                    </Badge>
+                    <span className="flex-1 text-student-ink">{m.element}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+
+          {run.suggested_questions.length > 0 && (
+            <Card>
+              <div className="mb-3 text-eyebrow uppercase text-student-text">
+                {hasResponse ? 'Questions to practice next' : 'Practice questions'} ·{' '}
+                {run.suggested_questions.length}
+              </div>
+              <ol className="space-y-3">
+                {run.suggested_questions.map((q, i) => (
+                  <li key={i} className="text-sm">
+                    <div className="font-medium text-student-ink">
+                      {i + 1}. {q.question}
+                    </div>
+                    {q.why && <div className="mt-0.5 text-xs italic text-student-text">{q.why}</div>}
+                  </li>
+                ))}
+              </ol>
+            </Card>
+          )}
+        </>
       )}
     </div>
   )

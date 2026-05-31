@@ -3,19 +3,19 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.database import get_db
 from unipaith.dependencies import require_student
-from unipaith.models.institution import Institution, Program
 from unipaith.models.user import User
 from unipaith.schemas.saved_list import (
     CompareProgramsRequest,
     ComparisonResponse,
     SavedProgramResponse,
     SaveProgramRequest,
+    StartApplicationResponse,
     UpdateSavedNotesRequest,
+    UpdateSavedRequest,
 )
 from unipaith.services.saved_list_service import SavedListService
 from unipaith.services.student_service import StudentService
@@ -31,39 +31,10 @@ async def list_saved_programs(
     user: User = Depends(require_student),
     db: AsyncSession = Depends(get_db),
 ):
+    """Spec 13 §7 — the student's saved programs, enriched with priority/tags,
+    derived status, reach/target/safer band, and dual match scores."""
     profile = await StudentService(db)._get_student_profile(user.id)
-    svc = SavedListService(db)
-    items = await svc.list_saved(profile.id)
-
-    # Enrich with program names
-    program_ids = [item.program_id for item in items]
-    if program_ids:
-        prog_result = await db.execute(
-            select(
-                Program.id,
-                Program.program_name,
-                Institution.name.label("institution_name"),
-            )
-            .join(Institution, Program.institution_id == Institution.id)
-            .where(Program.id.in_(program_ids))
-        )
-        prog_map = {row.id: row for row in prog_result.all()}
-    else:
-        prog_map = {}
-
-    enriched = []
-    for item in items:
-        prog = prog_map.get(item.program_id)
-        enriched.append(SavedProgramResponse(
-            id=item.id,
-            list_id=item.list_id,
-            program_id=item.program_id,
-            notes=item.notes,
-            added_at=item.added_at,
-            program_name=prog.program_name if prog else None,
-            institution_name=prog.institution_name if prog else None,
-        ))
-    return enriched
+    return await SavedListService(db).list_saved_enriched(profile.id)
 
 
 @router.post("", response_model=SavedProgramResponse, status_code=status.HTTP_201_CREATED)
@@ -88,6 +59,26 @@ async def unsave_program(
     await svc.unsave_program(profile.id, program_id)
 
 
+@router.patch("/{program_id}", response_model=SavedProgramResponse)
+async def update_saved(
+    program_id: UUID,
+    body: UpdateSavedRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 13 §4.2 (priority — closes G-S5) / §4.3 (tags & notes). Partial."""
+    profile = await StudentService(db)._get_student_profile(user.id)
+    svc = SavedListService(db)
+    await svc.update_saved(
+        profile.id,
+        program_id,
+        priority=body.priority,
+        notes=body.notes,
+        tags=body.tags,
+    )
+    return await svc.get_one_enriched(profile.id, program_id)
+
+
 @router.put("/{program_id}/notes", response_model=SavedProgramResponse)
 async def update_notes(
     program_id: UUID,
@@ -95,9 +86,27 @@ async def update_notes(
     user: User = Depends(require_student),
     db: AsyncSession = Depends(get_db),
 ):
+    """Legacy notes-only update — kept for back-compat (prefer PATCH)."""
     profile = await StudentService(db)._get_student_profile(user.id)
     svc = SavedListService(db)
-    return await svc.update_notes(profile.id, program_id, body.notes)
+    await svc.update_notes(profile.id, program_id, body.notes)
+    return await svc.get_one_enriched(profile.id, program_id)
+
+
+@router.post(
+    "/{program_id}/start-application",
+    response_model=StartApplicationResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def start_application(
+    program_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 13 §6 — create an application from a saved program (idempotent)."""
+    profile = await StudentService(db)._get_student_profile(user.id)
+    svc = SavedListService(db)
+    return await svc.start_application(profile.id, program_id)
 
 
 @router.post("/compare", response_model=ComparisonResponse)

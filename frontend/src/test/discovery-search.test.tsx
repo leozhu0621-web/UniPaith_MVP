@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 
+import ChipControls from '../pages/student/explore/discovery/ChipControls'
 import ConstraintChips from '../pages/student/explore/discovery/ConstraintChips'
 import GenreTiles from '../pages/student/explore/discovery/GenreTiles'
 import FiltersPanel from '../pages/student/explore/discovery/FiltersPanel'
@@ -101,6 +102,33 @@ describe('GenreTiles', () => {
     expect(screen.getByText('Computer Science')).toBeInTheDocument()
     fireEvent.click(screen.getByText('Business'))
     expect(onPick).toHaveBeenCalledWith({ value: 'business', label: 'Business' })
+  })
+})
+
+describe('ChipControls editor', () => {
+  it('resolves a singular degree value to the matching option (master → masters)', () => {
+    render(
+      <ChipControls
+        category="degree_level"
+        initial={{ id: 'degree_level:master', category: 'degree_level', value: 'master', display: "Master's", confidence: 88 }}
+        onApply={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    )
+    const select = screen.getByRole('combobox') as HTMLSelectElement
+    // Without normalization the select would default to the first option (bachelors).
+    expect(select.value).toBe('masters')
+  })
+
+  it('applies the canonical option value + label', () => {
+    const onApply = vi.fn()
+    render(<ChipControls category="degree_level" initial={undefined} onApply={onApply} onCancel={vi.fn()} />)
+    const select = screen.getByRole('combobox') as HTMLSelectElement
+    fireEvent.change(select, { target: { value: 'phd' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
+    expect(onApply).toHaveBeenCalledWith(
+      expect.objectContaining({ category: 'degree_level', value: 'phd', display: 'PhD', user_confirmed: true }),
+    )
   })
 })
 

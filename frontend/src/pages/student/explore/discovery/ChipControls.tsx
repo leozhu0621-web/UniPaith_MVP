@@ -29,6 +29,19 @@ interface ChipControlsProps {
 const optionLabel = (opts: { value: string; label: string }[], value: string) =>
   opts.find(o => o.value === value)?.label ?? value
 
+// Constraint values can arrive in variant forms (the parser emits "master",
+// the agent may emit "masters") — resolve to the matching option so the editor
+// shows the correct current selection. Singular/plural-insensitive.
+const _norm = (s: string) => s.trim().toLowerCase().replace(/['’]/g, '').replace(/s$/, '')
+function resolveOption(opts: { value: string; label: string }[], initial?: string): string {
+  if (!initial) return opts[0].value
+  const exact = opts.find(o => o.value === initial)
+  if (exact) return exact.value
+  const n = _norm(initial)
+  const fuzzy = opts.find(o => _norm(o.value) === n)
+  return fuzzy ? fuzzy.value : opts[0].value
+}
+
 export default function ChipControls({ category, initial, onApply, onCancel }: ChipControlsProps) {
   const apply = (value: string, display: string) =>
     onApply({ category, value, display, confidence: 100, user_confirmed: true })
@@ -121,7 +134,7 @@ function SelectEditor({
   onApply: (value: string, display: string) => void
   onCancel?: () => void
 }) {
-  const [value, setValue] = useState(initial ?? opts[0].value)
+  const [value, setValue] = useState(resolveOption(opts, initial))
   return (
     <div className="w-56">
       <Select

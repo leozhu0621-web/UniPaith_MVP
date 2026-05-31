@@ -18,10 +18,10 @@ from unipaith.database import async_session, engine
 from unipaith.models import Base
 from unipaith.models.application import (
     Application,
-    ApplicationChecklist,
     HistoricalOutcome,
 )
 from unipaith.models.engagement import Conversation, Message, StudentCalendar
+from unipaith.services.checklist_service import ChecklistService
 from unipaith.models.institution import (
     Institution,
     Program,
@@ -488,21 +488,9 @@ async def seed(db: AsyncSession) -> None:
     db.add_all([app_mit, app_uiuc])
     await db.flush()
 
-    # A checklist for the MIT app so the inbox "Mark complete" has a real item
-    # to flip (recommendation_letters).
-    db.add(
-        ApplicationChecklist(
-            student_id=demo.id,
-            program_id=prog_mit.id,
-            items=[
-                {"name": "Personal Information", "category": "personal_info", "required": True, "completed": True, "description": "Full name, nationality, residence."},
-                {"name": "Recommendation Letters", "category": "recommendation_letters", "required": True, "completed": False, "description": "2 recommendation letter(s) required."},
-                {"name": "Statement of Purpose", "category": "essays", "required": True, "completed": False, "description": "A statement of purpose."},
-            ],
-            manual_overrides={},
-            completion_percentage=33,
-        )
-    )
+    # A real Spec-15 checklist for the MIT app so the inbox "Mark complete"
+    # on the recommendations thread has a keyed item to flip.
+    await ChecklistService(db).generate_checklist(demo.id, app_mit.id)
 
     now = datetime.now(timezone.utc)
 

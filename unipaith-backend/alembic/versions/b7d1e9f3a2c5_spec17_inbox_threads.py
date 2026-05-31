@@ -10,19 +10,19 @@ unaffected.
 Key, non-obvious changes:
 - ``messages.sender_id`` is relaxed to NULLABLE so *system* threads
   (missing-item alerts, status updates) can carry author-less messages.
-- ``application_checklists.manual_overrides`` is a regeneration-proof
-  completion signal: ``ChecklistService.generate_checklist`` rebuilds
-  ``items`` from scratch, so a student-confirmed completion must live
-  outside that derived list. Inbox "Mark complete" writes here.
-- Calendar linkage reuses the existing ``student_calendar.reference_id``
-  (= thread id); ``completed_at`` gives "Mark complete" an observable
-  effect on the linked deadline.
+Inbox "Mark complete" reuses mechanisms already on main rather than adding
+parallel columns:
+- checklist completion → the Spec 15 per-item ``manual_complete`` flag
+  (durable across ``generate_checklist`` via ``_load_manual_keys``).
+- the linked calendar deadline → the Spec 16 ``student_calendar.status``
+  column (set to ``completed``); linkage via the existing ``reference_id``
+  (= thread id).
 
-Single head on this branch is ``a1f7c93d2e64`` (verified via
-``alembic heads``), so this is an ordinary single-parent migration.
+Chains off ``b7c1d9e2f3a4`` (Spec 16 calendar), the single head after the
+Spec 13/15/16 merge.
 
 Revision ID: b7d1e9f3a2c5
-Revises: a1f7c93d2e64
+Revises: b7c1d9e2f3a4
 Create Date: 2026-05-31
 
 """
@@ -36,7 +36,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "b7d1e9f3a2c5"
-down_revision = "a1f7c93d2e64"
+down_revision = "b7c1d9e2f3a4"
 branch_labels = None
 depends_on = None
 
@@ -141,24 +141,10 @@ def upgrade() -> None:
         "messages", "sender_id", existing_type=postgresql.UUID(as_uuid=True), nullable=True
     )
 
-    # ── student_calendar → completion marker ───────────────────────────────
-    if not _has_column(bind, "student_calendar", "completed_at"):
-        op.add_column(
-            "student_calendar",
-            sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
-        )
-
-    # ── application_checklists → regeneration-proof completion overrides ────
-    if not _has_column(bind, "application_checklists", "manual_overrides"):
-        op.add_column(
-            "application_checklists",
-            sa.Column(
-                "manual_overrides",
-                postgresql.JSONB(),
-                server_default=sa.text("'{}'::jsonb"),
-                nullable=False,
-            ),
-        )
+    # Mark-complete propagation reuses mechanisms already on main:
+    #   - checklist item completion → Spec 15 ``manual_complete`` (JSONB flag)
+    #   - linked calendar deadline → Spec 16 ``student_calendar.status``
+    # so no new checklist/calendar columns are added here.
 
     # ── ai_turns.agent CHECK → allow 'inbox_reply_drafter' (spec 45 §13) ────
     # The InboxReplyDrafter writes a cost-ledger row; without this the INSERT
@@ -183,11 +169,6 @@ def downgrade() -> None:
         "'rationale','workshop_coach','workshop_judge','embedding',"
         "'review_summarizer','authenticity_risk','matcher','query_interpreter'))"
     )
-
-    if _has_column(bind, "application_checklists", "manual_overrides"):
-        op.drop_column("application_checklists", "manual_overrides")
-    if _has_column(bind, "student_calendar", "completed_at"):
-        op.drop_column("student_calendar", "completed_at")
 
     # Restore NOT NULL only if no author-less rows exist (best-effort).
     op.alter_column(
