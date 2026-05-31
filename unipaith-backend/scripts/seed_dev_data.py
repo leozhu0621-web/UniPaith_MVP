@@ -8,7 +8,7 @@ Usage:
 import argparse
 import asyncio
 import sys
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
 from sqlalchemy import select, text
@@ -16,7 +16,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.database import async_session, engine
 from unipaith.models import Base
-from unipaith.models.application import HistoricalOutcome
+from unipaith.models.application import (
+    Application,
+    HistoricalOutcome,
+)
+from unipaith.models.engagement import Conversation, Message, StudentCalendar
+from unipaith.services.checklist_service import ChecklistService
 from unipaith.models.institution import (
     Institution,
     Program,
@@ -472,6 +477,56 @@ async def seed(db: AsyncSession) -> None:
     db.add_all(outcomes)
     await db.flush()
     print(f"  Created {len(outcomes)} historical outcomes")
+
+    # ── Inbox (Spec 17) — application-threaded conversations + system notices ──
+    demo = profiles[0]  # Maria Santos
+    mit, uiuc = institutions[0], institutions[1]
+    prog_mit, prog_uiuc = programs[0], programs[3]
+
+    app_mit = Application(student_id=demo.id, program_id=prog_mit.id, status="in_progress")
+    app_uiuc = Application(student_id=demo.id, program_id=prog_uiuc.id, status="submitted")
+    db.add_all([app_mit, app_uiuc])
+    await db.flush()
+
+    # A real Spec-15 checklist for the MIT app so the inbox "Mark complete"
+    # on the recommendations thread has a keyed item to flip.
+    await ChecklistService(db).generate_checklist(demo.id, app_mit.id)
+
+    now = datetime.now(timezone.utc)
+
+    def _thread(**kw) -> Conversation:
+        return Conversation(student_id=demo.id, status="active", started_at=now, last_message_at=now, **kw)
+
+    t_reply = _thread(institution_id=mit.id, program_id=prog_mit.id, application_id=app_mit.id, thread_type="human", subject="Your second recommender", action_label="needs_reply", waiting_on="student", due_date=now + timedelta(days=5), linked_checklist_item_category="recommendation_letters")
+    t_doc = _thread(institution_id=None, program_id=prog_mit.id, application_id=app_mit.id, thread_type="system", subject="Missing item: official transcript", action_label="document_requested", waiting_on="student", due_date=now + timedelta(days=10), linked_checklist_item_category="documents")
+    t_interview = _thread(institution_id=uiuc.id, program_id=prog_uiuc.id, application_id=app_uiuc.id, thread_type="human", subject="Interview invitation", action_label="interview_invite", waiting_on="student", due_date=now + timedelta(days=8))
+    t_clarify = _thread(institution_id=uiuc.id, program_id=prog_uiuc.id, application_id=app_uiuc.id, thread_type="human", subject="Quick question about your background", action_label="clarification_required", waiting_on="student", due_date=now + timedelta(days=3))
+    t_status = _thread(institution_id=None, program_id=prog_mit.id, application_id=app_mit.id, thread_type="system", subject="Your match scores updated", action_label="status_update_only", waiting_on="none")
+    t_done = _thread(institution_id=uiuc.id, program_id=prog_uiuc.id, application_id=app_uiuc.id, thread_type="human", subject="Application received", action_label="completed", waiting_on="none")
+    threads = [t_reply, t_doc, t_interview, t_clarify, t_status, t_done]
+    db.add_all(threads)
+    await db.flush()
+
+    def _msg(conv: Conversation, sender_type: str, body: str, *, sender_id=None, mins_ago: int = 0) -> Message:
+        return Message(conversation_id=conv.id, sender_type=sender_type, sender_id=sender_id, message_body=body, status="sent", sent_at=now - timedelta(minutes=mins_ago))
+
+    db.add_all([
+        _msg(t_reply, "admissions_officer", "Hi Maria, please send a clarification by Wednesday about your second recommender. We spoke yesterday but didn't receive the form.", sender_id=mit.admin_user_id, mins_ago=120),
+        _msg(t_doc, "system", "We're still missing your official transcript. Upload it to complete your application.", mins_ago=200),
+        _msg(t_interview, "admissions_officer", "We'd like to invite you to an interview. Please pick a time that works for you.", sender_id=uiuc.admin_user_id, mins_ago=60),
+        _msg(t_clarify, "admissions_officer", "Quick question: could you tell us more about your tissue-engineering research at IIT Bombay?", sender_id=uiuc.admin_user_id, mins_ago=90),
+        _msg(t_status, "system", "Your match scores updated after your recent profile edit. Two new programs entered your Target band.", mins_ago=30),
+        _msg(t_done, "admissions_officer", "Thank you — we've received your complete application and it's now under review.", sender_id=uiuc.admin_user_id, mins_ago=1440),
+    ])
+
+    # Calendar deadlines linked to threads via reference_id (so inbox
+    # "Mark complete" sets completed_at on the matching entry).
+    db.add_all([
+        StudentCalendar(student_id=demo.id, entry_type="inbox_deadline", reference_id=t_reply.id, title="Recommender clarification due — MIT", start_time=now + timedelta(days=5)),
+        StudentCalendar(student_id=demo.id, entry_type="interview", reference_id=t_interview.id, title="Interview — UIUC MS CS", start_time=now + timedelta(days=8)),
+    ])
+    await db.flush()
+    print(f"  Created 2 applications, {len(threads)} inbox threads, checklist + calendar links")
 
     await db.commit()
     print("\nSeed data complete!")

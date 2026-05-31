@@ -29,6 +29,8 @@ AGENT_TIERS: dict[str, str] = {
     "strategy_first_time": "flagship",
     # ── Identity (L2) ──
     "identity_summary": "batch",
+    # ── Inbox reply drafter (L2) — spec 45 §13 ──
+    "inbox_reply_drafter": "workhorse",
     # ── Workshops (L2) ──
     "workshop_coach": "workhorse",
     "workshop_judge": "batch",
