@@ -185,6 +185,7 @@ resource "aws_ecs_task_definition" "backend" {
       { name = "AI_STRATEGY_V2_ENABLED", value = "true" },
       { name = "AI_IDENTITY_V2_ENABLED", value = "true" },
       { name = "AI_DISCOVERY_QUERY_V2_ENABLED", value = "true" },
+      { name = "AI_OUTCOME_BRIEF_V2_ENABLED", value = "true" },
       # Spec 17 §7 / 45 §13 — Inbox AI-suggested replies (InboxReplyDrafter,
       # outreach-consent-gated). No rule-based fallback: on failure the card
       # is hidden, so the inbox is fully functional with the flag off too.

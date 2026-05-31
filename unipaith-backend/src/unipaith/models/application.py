@@ -82,6 +82,10 @@ class Application(Base):
     intent_rationale: Mapped[str | None] = mapped_column(Text)
     fit_band: Mapped[str | None] = mapped_column(String(10))
     guardrail_blockers: Mapped[list | None] = mapped_column(JSONB)
+    # --- Spec 18 · Decisions & Offers ---
+    # Student-side outcome action, distinct from the institution `decision`
+    # above: one of accepted_by_student | declined_by_student | withdrawn.
+    student_decision: Mapped[str | None] = mapped_column(String(24))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -248,6 +252,23 @@ class OfferLetter(Base):
     student_response: Mapped[str | None] = mapped_column(String(20))
     response_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     decline_reason: Mapped[str | None] = mapped_column(Text)
+    # --- Spec 18 · Decisions & Offers (student-facing offer shape) ---
+    # Same Offer row whether platform-issued (internal) or recorded by the
+    # student after an off-platform decision (received_externally=True, §14).
+    received_externally: Mapped[bool] = mapped_column(
+        Boolean, server_default="false", nullable=False
+    )
+    decision_date: Mapped[date | None] = mapped_column(Date)
+    scholarship_currency: Mapped[str | None] = mapped_column(String(8))
+    tuition_estimate: Mapped[int | None] = mapped_column(Integer)
+    total_cost_estimate: Mapped[int | None] = mapped_column(Integer)
+    start_term_season: Mapped[str | None] = mapped_column(String(16))
+    start_term_year: Mapped[int | None] = mapped_column(Integer)
+    # [{action, by_date}] next-step actions surfaced in the per-offer UX (§4).
+    next_step_actions: Mapped[list | None] = mapped_column(JSONB)
+    # Cached OutcomeBriefForOfferLetter output (45 §15): structured
+    # {key_terms, deadlines, next_steps, summary}. Falls back to rule-based.
+    plain_language_brief: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

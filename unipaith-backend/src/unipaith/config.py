@@ -229,6 +229,14 @@ class Settings(BaseSettings):
     # Off → returns the hardcoded STUB_IDENTITY_SUMMARY.
     ai_identity_v2_enabled: bool = False
 
+    # Spec 18 §9 / 45 §15 — OutcomeBriefForOfferLetter LLM. When True,
+    # ApplicationService routes offer-brief generation through the
+    # OutcomeBriefAgent (Sonnet, forced tool-use) at offer-create/record time
+    # and caches the structured brief on offer_letters.plain_language_brief.
+    # On any failure (parse / API error / mock mode) it falls back to the
+    # rule-based _build_structured_brief — the offer flow never 5xxes.
+    ai_outcome_brief_v2_enabled: bool = False
+
     # Spec 17 §7 / 45 §13 — Inbox AI-suggested replies. When True,
     # InboxService.suggested_reply routes a needs_reply / clarification thread
     # through the InboxReplyDrafter agent (Sonnet, forced tool-use, gated on

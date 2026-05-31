@@ -9,7 +9,8 @@ import EmptyState from '../../components/ui/EmptyState'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { formatDate } from '../../utils/format'
 import { STATUS_COLORS } from '../../utils/constants'
-import { FileText, Star, ChevronRight, CalendarClock } from 'lucide-react'
+import { FileText, Star, ChevronRight, CalendarClock, PartyPopper, ArrowRight, Mail } from 'lucide-react'
+import DecisionComparison from './apply/offer/DecisionComparison'
 import type { Application } from '../../types'
 
 type Bucket =
@@ -104,9 +105,21 @@ export default function ApplicationsPage() {
   const [institution, setInstitution] = useState('all')
   const [deadlineWindow, setDeadlineWindow] = useState('all')
   const [sort, setSort] = useState<'deadline' | 'readiness' | 'fit'>('deadline')
+  const [showCompare, setShowCompare] = useState(false)
 
   const { data, isLoading } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
   const apps: Application[] = useMemo(() => (Array.isArray(data) ? data : []), [data])
+
+  // Spec 18 — offer/decision summary for the portfolio banners.
+  const acceptedApp = useMemo(
+    () => apps.find(a => a.student_decision === 'accepted_by_student'),
+    [apps],
+  )
+  const offerApps = useMemo(() => apps.filter(a => a.offer), [apps])
+  const pendingOfferApps = useMemo(
+    () => offerApps.filter(a => !a.offer?.student_response && a.student_decision == null),
+    [offerApps],
+  )
 
   const counts = useMemo(() => {
     const c: Record<Bucket, number> = {
@@ -184,6 +197,54 @@ export default function ApplicationsPage() {
       <p className="text-sm text-student-text mb-5">
         {apps.length} application{apps.length !== 1 ? 's' : ''} across your journey.
       </p>
+
+      {/* Spec 18 — "You're in" celebration once an offer is accepted (§6/§13) */}
+      {acceptedApp && (
+        <Card className="p-4 mb-6 bg-success-soft border-0 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-success/15 flex items-center justify-center shrink-0">
+            <PartyPopper size={20} className="text-success" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-base font-bold text-student-ink">You're in. Congrats.</p>
+            <p className="text-sm text-student-text truncate">
+              You accepted {acceptedApp.program?.program_name || 'your offer'}
+              {acceptedApp.program?.institution_name ? ` at ${acceptedApp.program.institution_name}` : ''}.
+            </p>
+          </div>
+        </Card>
+      )}
+
+      {/* Spec 18 — offer-received banner + compare CTA (§5/§8) */}
+      {!acceptedApp && offerApps.length > 0 && (
+        <Card className="p-4 mb-6 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-cobalt/10 flex items-center justify-center shrink-0">
+            <Mail size={20} className="text-cobalt" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-student-ink">
+              {pendingOfferApps.length > 0
+                ? `You have ${pendingOfferApps.length} offer${pendingOfferApps.length !== 1 ? 's' : ''} to respond to`
+                : `${offerApps.length} offer${offerApps.length !== 1 ? 's' : ''} on the table`}
+            </p>
+            <p className="text-xs text-student-text">Weigh cost, fit, and deadlines side by side.</p>
+          </div>
+          {offerApps.length >= 2 ? (
+            <button
+              onClick={() => setShowCompare(true)}
+              className="text-sm text-cobalt font-medium inline-flex items-center gap-1 hover:underline shrink-0"
+            >
+              Compare your {offerApps.length} offers <ArrowRight size={14} />
+            </button>
+          ) : (
+            <button
+              onClick={() => navigate(`/s/applications/${offerApps[0].id}?tab=offer`)}
+              className="text-sm text-cobalt font-medium inline-flex items-center gap-1 hover:underline shrink-0"
+            >
+              Review your offer <ArrowRight size={14} />
+            </button>
+          )}
+        </Card>
+      )}
 
       {/* Counts */}
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-6">
@@ -338,6 +399,8 @@ export default function ApplicationsPage() {
           })
         )}
       </div>
+
+      <DecisionComparison isOpen={showCompare} onClose={() => setShowCompare(false)} />
     </div>
   )
 }
