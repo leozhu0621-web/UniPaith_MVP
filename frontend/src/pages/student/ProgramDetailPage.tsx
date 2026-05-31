@@ -154,7 +154,7 @@ export default function ProgramDetailPage() {
   const rsvpSet = new Set((rsvps as any[] ?? []).map((r: any) => r.event_id))
 
   const saveMut = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (): Promise<void> => {
       if (isSaved) await unsaveProgram(programId!)
       else await saveProgram(programId!)
     },
