@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
     ForeignKey,
     Index,
@@ -126,6 +127,10 @@ class StudentCalendar(Base):
     start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     reminder_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Spec 17 — set when an inbox thread linked to this deadline (via
+    # reference_id = thread id) is marked complete. Lets the Calendar render
+    # the item as done rather than deleting the history.
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -175,6 +180,25 @@ class Conversation(Base):
     )
     last_message_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
+    # ── Spec 17 (Inbox) — application-threaded conversation metadata ──
+    # All nullable / server-defaulted so institution messaging (Spec 29),
+    # which shares this table, is unaffected.
+    application_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("applications.id", ondelete="SET NULL"), index=True
+    )
+    # 'human' (admissions officer / coordinator) | 'system' (alerts, status
+    # updates, AI-run notices). System threads have institution_id = NULL.
+    thread_type: Mapped[str] = mapped_column(String(20), server_default="human", nullable=False)
+    # needs_reply | document_requested | clarification_required |
+    # interview_invite | status_update_only | completed
+    action_label: Mapped[str | None] = mapped_column(String(40))
+    due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # who the thread is waiting on: 'student' | 'school' | 'none'
+    waiting_on: Mapped[str] = mapped_column(String(20), server_default="none", nullable=False)
+    # category of the checklist item this thread's request maps to (Spec 15);
+    # mark-complete writes application_checklists.manual_overrides[category].
+    linked_checklist_item_category: Mapped[str | None] = mapped_column(String(50))
+
     messages: Mapped[list[Message]] = relationship(
         back_populates="conversation", cascade="all, delete-orphan"
     )
@@ -190,11 +214,20 @@ class Message(Base):
         nullable=False,
         index=True,
     )
+    # 'student' | 'admissions_officer' | 'institution' | 'system'
     sender_type: Mapped[str | None] = mapped_column(String(20))
-    sender_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    # Nullable (Spec 17): system messages have no human author.
+    sender_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE")
     )
     message_body: Mapped[str] = mapped_column(Text, nullable=False)
+    # Spec 17 — list of {id, name, kind: 'document'|'link', url?} attached to
+    # an inbox reply. Defaults to an empty list.
+    attachments: Mapped[list] = mapped_column(JSONB, server_default="[]", nullable=False)
+    # delivery status: 'sent' | 'delivered' | 'read'
+    status: Mapped[str] = mapped_column(String(20), server_default="sent", nullable=False)
+    # Spec 17 §14 — provenance: was this reply seeded from an AI draft?
+    ai_draft_used: Mapped[bool] = mapped_column(Boolean, server_default="false", nullable=False)
     sent_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

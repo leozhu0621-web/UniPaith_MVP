@@ -1,297 +1,191 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getConversations, getMessages, sendMessage } from '../../api/messaging'
-import { listDocuments } from '../../api/documents'
-import Badge from '../../components/ui/Badge'
-import Button from '../../components/ui/Button'
-import Skeleton from '../../components/ui/Skeleton'
-import { formatRelative } from '../../utils/format'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Send, Paperclip, Building2, FileText, AlertCircle, CheckCircle2,
-  Clock, MessageSquare, Bell, ExternalLink, ChevronLeft,
-} from 'lucide-react'
-import type { Conversation, Message } from '../../types'
+  getSuggestedReply,
+  getThread,
+  getThreads,
+  markThreadComplete,
+  postInboxMessage,
+} from '../../api/inbox'
+import Skeleton from '../../components/ui/Skeleton'
+import type { InboxAttachment, InboxThreadSummary } from '../../types'
+import InboxList, { type InboxFilters } from './inbox/InboxList'
+import ThreadView from './inbox/ThreadView'
+import { AI_REPLY_LABELS } from './inbox/actionLabels'
 
-type MsgFilter = 'all' | 'human' | 'system'
-type ActionState = 'needs_reply' | 'doc_requested' | 'clarification' | 'overdue' | 'completed' | null
+// Spec 17 — Inbox. Two-pane: thread list + thread view. Lives at
+// /s/manage?tab=messages (+&thread=:id). 30s poll (spec §14).
 
-const ACTION_CONFIG: Record<string, { label: string; variant: 'danger' | 'warning' | 'info' | 'success' | 'neutral'; icon: typeof AlertCircle }> = {
-  needs_reply: { label: 'Needs Reply', variant: 'danger', icon: AlertCircle },
-  doc_requested: { label: 'Doc Requested', variant: 'warning', icon: FileText },
-  clarification: { label: 'Clarification', variant: 'info', icon: MessageSquare },
-  overdue: { label: 'Overdue', variant: 'danger', icon: Clock },
-  completed: { label: 'Completed', variant: 'success', icon: CheckCircle2 },
+const DEFAULT_FILTERS: InboxFilters = {
+  type: 'all',
+  state: 'all',
+  application_id: 'all',
+  sort: 'urgent',
 }
 
-function deriveActionState(conv: Conversation): ActionState {
-  if (conv.status === 'resolved' || conv.status === 'closed') return 'completed'
-  if (conv.status === 'awaiting_response') return 'needs_reply'
-  if (conv.unread_count && conv.unread_count > 0) return 'needs_reply'
-  return null
-}
-
-function isSystemThread(conv: Conversation): boolean {
-  const subject = (conv.subject || '').toLowerCase()
-  return subject.includes('alert') || subject.includes('confirmation') ||
-    subject.includes('notification') || subject.includes('system') ||
-    subject.includes('reminder') || subject.includes('update')
+function ThreadSkeleton() {
+  return (
+    <div className="flex h-full flex-col">
+      <div className="border-b border-border px-4 py-3">
+        <Skeleton className="mb-2 h-3 w-40" />
+        <Skeleton className="h-4 w-56" />
+      </div>
+      <div className="flex-1 space-y-3 p-6">
+        <Skeleton className="h-12 w-2/3" />
+        <Skeleton className="ml-auto h-12 w-1/2" />
+        <Skeleton className="h-12 w-3/5" />
+      </div>
+    </div>
+  )
 }
 
 export default function MessagesPage({ initialThreadId }: { initialThreadId?: string | null }) {
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const [selectedConv, setSelectedConv] = useState<string | null>(initialThreadId || null)
-  const [newMessage, setNewMessage] = useState('')
-  const [msgFilter, setMsgFilter] = useState<MsgFilter>('all')
-  const [showAttachments, setShowAttachments] = useState(false)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const qc = useQueryClient()
+  const [selectedId, setSelectedId] = useState<string | null>(initialThreadId || null)
+  const [filters, setFilters] = useState<InboxFilters>(DEFAULT_FILTERS)
 
-  const { data: conversations, isLoading: convsLoading } = useQuery({
-    queryKey: ['conversations'],
-    queryFn: getConversations,
+  const apiFilters = useMemo(
+    () => ({
+      ...(filters.type !== 'all' ? { type: filters.type } : {}),
+      ...(filters.state !== 'all' ? { state: filters.state } : {}),
+      ...(filters.application_id !== 'all' ? { application_id: filters.application_id } : {}),
+      sort: filters.sort,
+    }),
+    [filters],
+  )
+
+  const { data: threadsData, isLoading: threadsLoading } = useQuery({
+    queryKey: ['inbox-threads', apiFilters],
+    queryFn: () => getThreads(apiFilters),
+    refetchInterval: 30000,
+  })
+  const threads: InboxThreadSummary[] = useMemo(
+    () => (Array.isArray(threadsData) ? threadsData : []),
+    [threadsData],
+  )
+
+  // Unfiltered list — drives the application-filter options so they don't
+  // collapse when a filter is active.
+  const { data: allThreadsData } = useQuery({
+    queryKey: ['inbox-threads-all'],
+    queryFn: () => getThreads({ sort: 'recent' }),
+    refetchInterval: 60000,
+  })
+
+  const { data: thread, isLoading: threadLoading } = useQuery({
+    queryKey: ['inbox-thread', selectedId],
+    queryFn: () => getThread(selectedId!),
+    enabled: !!selectedId,
     refetchInterval: 30000,
   })
 
-  const { data: messages } = useQuery({
-    queryKey: ['messages', selectedConv],
-    queryFn: () => getMessages(selectedConv!, { limit: 50 }),
-    enabled: !!selectedConv,
-    refetchInterval: 5000,
-  })
-
-  const { data: documents } = useQuery({
-    queryKey: ['my-documents'],
-    queryFn: listDocuments,
-    enabled: showAttachments,
+  const aiEligible = !!(thread?.action_label && AI_REPLY_LABELS.includes(thread.action_label))
+  const { data: suggestion, isLoading: suggestionLoading } = useQuery({
+    queryKey: ['inbox-suggestion', selectedId, thread?.action_label, thread?.messages.length],
+    queryFn: () => getSuggestedReply(selectedId!),
+    enabled: aiEligible,
+    staleTime: Infinity,
+    retry: false,
   })
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    if (initialThreadId && initialThreadId !== selectedId) setSelectedId(initialThreadId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialThreadId])
 
-  useEffect(() => {
-    if (initialThreadId && initialThreadId !== selectedConv) setSelectedConv(initialThreadId)
-  }, [initialThreadId, selectedConv])
+  const appOptions = useMemo(() => {
+    const all: InboxThreadSummary[] = Array.isArray(allThreadsData) ? allThreadsData : threads
+    const seen = new Map<string, string>()
+    for (const t of all) {
+      if (t.application_id) {
+        const label = t.application.program_name || t.application.institution_name || 'Application'
+        seen.set(t.application_id, label)
+      }
+    }
+    return [
+      { value: 'all', label: 'All applications' },
+      ...[...seen].map(([value, label]) => ({ value, label })),
+    ]
+  }, [allThreadsData, threads])
 
   const openThread = (id: string) => {
-    setSelectedConv(id)
+    setSelectedId(id)
     navigate(`/s/manage?tab=messages&thread=${id}`, { replace: true })
+  }
+  const closeThread = () => {
+    setSelectedId(null)
+    navigate('/s/manage?tab=messages', { replace: true })
   }
 
   const sendMut = useMutation({
-    mutationFn: (content: string) => sendMessage(selectedConv!, content),
+    mutationFn: ({
+      body,
+      attachments,
+      aiDraftUsed,
+    }: {
+      body: string
+      attachments: InboxAttachment[]
+      aiDraftUsed: boolean
+    }) => postInboxMessage(selectedId!, { body, attachments, ai_draft_used: aiDraftUsed }),
     onSuccess: () => {
-      setNewMessage('')
-      queryClient.invalidateQueries({ queryKey: ['messages', selectedConv] })
-      queryClient.invalidateQueries({ queryKey: ['conversations'] })
+      qc.invalidateQueries({ queryKey: ['inbox-thread', selectedId] })
+      qc.invalidateQueries({ queryKey: ['inbox-threads'] })
     },
   })
 
-  const handleSend = () => {
-    const trimmed = newMessage.trim()
-    if (!trimmed || sendMut.isPending) return
-    sendMut.mutate(trimmed)
-  }
-
-  const handleAttach = (docName: string) => {
-    setNewMessage(prev => `${prev}\n[Attached: ${docName}]`)
-    setShowAttachments(false)
-  }
-
-  const convList: Conversation[] = Array.isArray(conversations) ? conversations : []
-  const msgList: Message[] = Array.isArray(messages) ? messages : []
-  const docList: any[] = Array.isArray(documents) ? documents : []
-
-  const filteredConvs = convList.filter(c => {
-    if (msgFilter === 'human') return !isSystemThread(c)
-    if (msgFilter === 'system') return isSystemThread(c)
-    return true
+  const completeMut = useMutation({
+    mutationFn: () => markThreadComplete(selectedId!),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['inbox-thread', selectedId] })
+      qc.invalidateQueries({ queryKey: ['inbox-threads'] })
+      // The linked checklist item may now be complete.
+      qc.invalidateQueries({ queryKey: ['application-checklist'] })
+      qc.invalidateQueries({ queryKey: ['calendar'] })
+    },
   })
-
-  const selectedConvObj = convList.find(c => c.id === selectedConv)
 
   return (
     <div className="flex h-full">
-      {/* Left: conversation list. Mobile (Spec/02b §5): list and thread are
-          separate full screens — show the list only when no thread is open. */}
-      <div className={`${selectedConv ? 'hidden lg:flex' : 'flex'} w-full lg:w-80 border-r border-border bg-card flex-col`}>
-        <div className="p-3 border-b border-border">
-          <h2 className="font-semibold text-sm mb-2">Messages</h2>
-          <div className="flex gap-1">
-            {([['all', 'All'], ['human', 'Human'], ['system', 'System']] as [MsgFilter, string][]).map(([key, label]) => (
-              <button
-                key={key}
-                onClick={() => setMsgFilter(key)}
-                className={`px-2.5 py-1 text-xs rounded-full transition-colors ${msgFilter === key ? 'bg-cobalt text-white' : 'bg-muted text-muted-foreground hover:brightness-95'}`}
-              >
-                {key === 'system' && <Bell size={10} className="inline mr-1" />}
-                {key === 'human' && <MessageSquare size={10} className="inline mr-1" />}
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="flex-1 overflow-y-auto">
-          {convsLoading ? (
-            <div className="p-3 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-14" />)}</div>
-          ) : filteredConvs.length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">No conversations</p>
-          ) : (
-            filteredConvs.map(c => {
-              const action = deriveActionState(c)
-              const isSys = isSystemThread(c)
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => openThread(c.id)}
-                  className={`w-full text-left px-3 py-3 border-b border-divider hover:bg-muted ${selectedConv === c.id ? 'bg-muted' : ''} ${isSys ? 'bg-muted/40' : ''}`}
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium truncate flex-1">{c.subject || 'Conversation'}</p>
-                    {c.unread_count ? (
-                      <span className="ml-2 w-5 h-5 bg-error text-white text-[10px] rounded-full flex items-center justify-center flex-shrink-0">
-                        {c.unread_count}
-                      </span>
-                    ) : null}
-                  </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    {c.program_id && (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] text-cobalt">
-                        <Building2 size={9} /> Program
-                      </span>
-                    )}
-                    {isSys && <Badge variant="neutral" size="sm">System</Badge>}
-                    {action && (
-                      <Badge variant={ACTION_CONFIG[action].variant} size="sm">
-                        {ACTION_CONFIG[action].label}
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">{formatRelative(c.last_message_at)}</p>
-                </button>
-              )
-            })
-          )}
-        </div>
+      {/* Left: thread list. Mobile (02b §5): list and thread are separate full
+          screens — show the list only when no thread is open. */}
+      <div
+        className={`${selectedId ? 'hidden lg:flex' : 'flex'} w-full flex-col border-r border-border bg-card lg:w-80`}
+      >
+        <InboxList
+          threads={threads}
+          loading={threadsLoading}
+          selectedId={selectedId}
+          onSelect={openThread}
+          filters={filters}
+          onFilters={setFilters}
+          appOptions={appOptions}
+        />
       </div>
 
-      {/* Right: messages. Mobile: full screen when a thread is selected. */}
-      <div className={`${selectedConv ? 'flex' : 'hidden lg:flex'} flex-1 flex-col`}>
-        {!selectedConv ? (
-          <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
-            Select a conversation
+      {/* Right: thread view. Mobile: full screen when a thread is selected. */}
+      <div className={`${selectedId ? 'flex' : 'hidden lg:flex'} flex-1 flex-col`}>
+        {!selectedId ? (
+          <div className="flex flex-1 items-center justify-center px-6 text-center text-sm text-muted-foreground">
+            Pick a conversation to see it here.
           </div>
+        ) : threadLoading || !thread ? (
+          <ThreadSkeleton />
         ) : (
-          <>
-            {/* Thread header */}
-            {selectedConvObj && (
-              <div className="px-4 py-2.5 border-b border-border bg-card flex items-center justify-between gap-2">
-                <button
-                  onClick={() => { setSelectedConv(null); navigate('/s/manage?tab=messages') }}
-                  className="lg:hidden p-1 -ml-1 rounded-md text-muted-foreground hover:bg-muted shrink-0"
-                  aria-label="Back to messages"
-                >
-                  <ChevronLeft size={18} />
-                </button>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">{selectedConvObj.subject || 'Conversation'}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    {selectedConvObj.program_id && (
-                      <button
-                        onClick={() => navigate(`/s/programs/${selectedConvObj.program_id}`)}
-                        className="inline-flex items-center gap-1 text-[10px] text-cobalt hover:underline"
-                      >
-                        <Building2 size={10} /> View Program <ExternalLink size={8} />
-                      </button>
-                    )}
-                    {(selectedConvObj as any).application_id && (
-                      <button
-                        onClick={() => navigate(`/s/applications/${(selectedConvObj as any).application_id}`)}
-                        className="inline-flex items-center gap-1 text-[10px] text-cobalt hover:underline"
-                      >
-                        <ExternalLink size={8} /> View Application
-                      </button>
-                    )}
-                    {deriveActionState(selectedConvObj) && (
-                      <Badge variant={ACTION_CONFIG[deriveActionState(selectedConvObj)!].variant} size="sm">
-                        {ACTION_CONFIG[deriveActionState(selectedConvObj)!].label}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                {deriveActionState(selectedConvObj) === 'needs_reply' && (
-                  <Button size="sm" variant="secondary" onClick={() => {}}>
-                    <CheckCircle2 size={12} className="mr-1" /> Mark Complete
-                  </Button>
-                )}
-              </div>
-            )}
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
-              {msgList.map(msg => {
-                const isOwn = msg.sender_type === 'student'
-                const isSysMsg = msg.sender_type === 'institution' && (msg.message_body || '').startsWith('[')
-                return (
-                  <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[70%] px-4 py-2 rounded-2xl text-sm ${
-                      isOwn
-                        ? 'bg-cobalt text-white rounded-br-md'
-                        : isSysMsg
-                          ? 'bg-muted text-muted-foreground rounded-bl-md border border-border'
-                          : 'bg-muted text-charcoal rounded-bl-md'
-                    }`}>
-                      {msg.message_body}
-                      <p className={`text-[10px] mt-1 ${isOwn ? 'text-white/60' : 'text-muted-foreground'}`}>
-                        {formatRelative(msg.sent_at)}
-                      </p>
-                    </div>
-                  </div>
-                )
-              })}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Input */}
-            <div className="px-4 py-3 border-t border-border bg-card">
-              {showAttachments && (
-                <div className="mb-2 p-2 bg-muted rounded-lg border max-h-32 overflow-y-auto">
-                  <p className="text-xs text-muted-foreground mb-1">Attach from your materials:</p>
-                  {docList.length > 0 ? docList.slice(0, 10).map((doc: any) => (
-                    <button
-                      key={doc.id}
-                      onClick={() => handleAttach(doc.file_name || doc.name || 'Document')}
-                      className="block w-full text-left text-xs text-charcoal hover:bg-muted px-2 py-1 rounded"
-                    >
-                      <FileText size={10} className="inline mr-1" />
-                      {doc.file_name || doc.name || 'Document'}
-                    </button>
-                  )) : (
-                    <p className="text-xs text-muted-foreground">No documents uploaded yet</p>
-                  )}
-                </div>
-              )}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowAttachments(!showAttachments)}
-                  className={`p-2 rounded-lg transition-colors ${showAttachments ? 'bg-muted text-charcoal' : 'text-muted-foreground hover:text-charcoal'}`}
-                >
-                  <Paperclip size={16} />
-                </button>
-                <input
-                  value={newMessage}
-                  onChange={e => setNewMessage(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
-                  placeholder="Type a message..."
-                  className="flex-1 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-                <button onClick={handleSend} disabled={!newMessage.trim()} className="p-2 bg-cobalt text-white rounded-lg hover:bg-cobalt-dark disabled:opacity-50">
-                  <Send size={16} />
-                </button>
-              </div>
-            </div>
-          </>
+          <ThreadView
+            thread={thread}
+            onBack={closeThread}
+            onSend={(body, attachments, ai) =>
+              sendMut.mutate({ body, attachments, aiDraftUsed: ai })
+            }
+            sending={sendMut.isPending}
+            onMarkComplete={() => completeMut.mutate()}
+            completing={completeMut.isPending}
+            suggestion={suggestion ?? null}
+            suggestionLoading={aiEligible && suggestionLoading}
+            onNavigate={navigate}
+          />
         )}
       </div>
     </div>

@@ -70,11 +70,21 @@ class ChecklistService:
     # Item builders
     # ------------------------------------------------------------------
 
-    def _build_items(self, program: Program, profile: StudentProfile) -> list[dict]:
+    def _build_items(
+        self,
+        program: Program,
+        profile: StudentProfile,
+        overrides: dict | None = None,
+    ) -> list[dict]:
         """
         Derive checklist items from program requirements and student data.
 
         Each item: ``{name, category, required, completed, description}``
+
+        ``overrides`` is the regeneration-proof ``manual_overrides`` map
+        (Spec 17): ``{category: true}``. A student-confirmed completion —
+        e.g. via the Inbox "Mark complete" action on a request thread — is
+        OR'd into the derived ``completed`` so it survives this rebuild.
         """
         reqs: dict = program.requirements or {}
         items: list[dict] = []
@@ -203,7 +213,26 @@ class ChecklistService:
                 }
             )
 
+        # Apply manual overrides (Spec 17): a confirmed completion for a
+        # category marks every item in that category complete. OR-in so a
+        # genuinely-derived completion is never downgraded.
+        if overrides:
+            for it in items:
+                if overrides.get(it["category"]):
+                    it["completed"] = True
+
         return items
+
+    async def _load_overrides(self, student_id: UUID, program_id: UUID) -> dict:
+        """Return the persisted ``manual_overrides`` map for a checklist, or
+        ``{}`` if none exists yet."""
+        result = await self.db.execute(
+            select(ApplicationChecklist.manual_overrides).where(
+                ApplicationChecklist.student_id == student_id,
+                ApplicationChecklist.program_id == program_id,
+            )
+        )
+        return result.scalar_one_or_none() or {}
 
     @staticmethod
     def _compute_completion(items: list[dict]) -> int:
@@ -230,7 +259,8 @@ class ChecklistService:
         program = await self._load_program(app.program_id)
         profile = await self._load_student_profile(student_id)
 
-        items = self._build_items(program, profile)
+        overrides = await self._load_overrides(student_id, app.program_id)
+        items = self._build_items(program, profile, overrides)
         completion = self._compute_completion(items)
 
         # Upsert
@@ -289,7 +319,8 @@ class ChecklistService:
         program = await self._load_program(app.program_id)
         profile = await self._load_student_profile(student_id)
 
-        items = self._build_items(program, profile)
+        overrides = await self._load_overrides(student_id, app.program_id)
+        items = self._build_items(program, profile, overrides)
         completion = self._compute_completion(items)
 
         missing = [i["name"] for i in items if i["required"] and not i["completed"]]

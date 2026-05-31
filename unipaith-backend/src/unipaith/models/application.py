@@ -91,6 +91,13 @@ class ApplicationChecklist(Base):
         UUID(as_uuid=True), ForeignKey("programs.id", ondelete="CASCADE"), nullable=False
     )
     items: Mapped[dict | None] = mapped_column(JSONB)
+    # Spec 17 — regeneration-proof completion signal keyed by checklist
+    # category (e.g. {"recommendation": true}). `generate_checklist` rebuilds
+    # `items` from scratch, so a student-confirmed completion (inbox "Mark
+    # complete") must live here and be OR'd into the derived item.
+    manual_overrides: Mapped[dict] = mapped_column(
+        JSONB, server_default="{}", nullable=False, default=dict
+    )
     completion_percentage: Mapped[int] = mapped_column(Integer, default=0)
     auto_generated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 

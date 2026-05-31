@@ -229,6 +229,16 @@ class Settings(BaseSettings):
     # Off → returns the hardcoded STUB_IDENTITY_SUMMARY.
     ai_identity_v2_enabled: bool = False
 
+    # Spec 17 §7 / 45 §13 — Inbox AI-suggested replies. When True,
+    # InboxService.suggested_reply routes a needs_reply / clarification thread
+    # through the InboxReplyDrafter agent (Sonnet, forced tool-use, gated on
+    # the `outreach` consent lever). Unlike other agents there is NO
+    # rule-based fallback: on any failure (consent deny / parse / provider /
+    # mock) the endpoint returns null and the UI hides the suggestion card —
+    # the student types from scratch. Off (default) → endpoint always returns
+    # null, so the card never shows.
+    ai_inbox_v2_enabled: bool = False
+
     # Spec 10 §3 / 45 §12 — Discovery type-first search query interpreter. When
     # True, SearchService.interpret routes a free-text query through the
     # DiscoveryQueryInterpreter agent (Sonnet, forced tool-use) to produce
