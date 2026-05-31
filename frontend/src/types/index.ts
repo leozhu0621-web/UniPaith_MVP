@@ -440,6 +440,21 @@ export interface ShortlistUnlock {
 }
 
 // ============ APPLICATIONS ============
+export interface ApplicationOffer {
+  id: string
+  application_id: string
+  offer_type: string | null
+  tuition_amount: number | null
+  scholarship_amount: number
+  financial_package_total: number | null
+  conditions: Record<string, unknown> | null
+  response_deadline: string | null
+  status: string | null
+  student_response: string | null
+  response_at: string | null
+  brief: string | null
+}
+
 export interface Application {
   id: string
   student_id: string
@@ -453,22 +468,47 @@ export interface Application {
   decision_notes: string | null
   completeness_status: string | null
   missing_items: string[] | null
+  // --- Spec 15 workspace ---
+  submission_mode: 'internal' | 'external'
+  readiness_pct: number | null
+  intent_picker: string | null
+  intent_rationale: string | null
+  fit_band: 'low' | 'medium' | 'high' | null
+  guardrail_blockers: string[] | null
+  offer: ApplicationOffer | null
   created_at: string
   updated_at: string
-  program?: Program
+  program?: Program & { institution_name?: string | null }
+}
+
+export interface ChecklistItem {
+  key?: string
+  name: string
+  item_name?: string
+  category?: string
+  item_type?: string
+  owner?: 'student' | 'recommender' | 'institution' | 'system'
+  required?: boolean
+  requirement_level?: string
+  expected_format?: string | null
+  status?: 'completed' | 'not_started' | 'in_progress' | 'blocked'
+  completed?: boolean
+  manual_complete?: boolean
+  mismatch?: boolean
+  description?: string | null
 }
 
 export interface ApplicationChecklist {
   id: string
   student_id: string
   program_id: string
-  items: { name: string; status: string; required: boolean }[]
+  items: ChecklistItem[]
   completion_percentage: number
   auto_generated_at: string | null
 }
 
 export interface ReadinessCheck {
-  ready: boolean
+  is_ready: boolean
   completion_percentage: number
   missing_items: string[]
   warnings: string[]

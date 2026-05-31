@@ -102,20 +102,103 @@ async def test_list_my_applications(
 
 
 @pytest.mark.asyncio
-async def test_submit_application(
+async def test_create_application_populates_spec15_fields(
     student_client: AsyncClient,
     db_session: AsyncSession,
     mock_student_user: User,
     mock_institution_user: User,
 ):
+    """Spec 15 §14 — create from saved → expected fields populated."""
+    _, prog = await _setup_student_and_program(db_session, mock_student_user, mock_institution_user)
+    resp = await student_client.post("/api/v1/applications", json={"program_id": str(prog.id)})
+    assert resp.status_code == 201
+    body = resp.json()
+    assert body["status"] == "draft"
+    assert body["submission_mode"] == "internal"
+    assert body["readiness_pct"] == 0
+    assert body["intent_picker"] is None
+
+
+@pytest.mark.asyncio
+async def test_submit_blocked_when_not_ready(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    """Spec 15 §14 — internal submit blocked when readiness < 100%."""
     _, prog = await _setup_student_and_program(db_session, mock_student_user, mock_institution_user)
     create_resp = await student_client.post(
-        "/api/v1/applications",
-        json={
-            "program_id": str(prog.id),
-        },
+        "/api/v1/applications", json={"program_id": str(prog.id)}
     )
     app_id = create_resp.json()["id"]
+    resp = await student_client.post(f"/api/v1/applications/me/{app_id}/submit")
+    assert resp.status_code == 400
+    assert "not ready" in resp.json()["detail"].lower()
+
+
+@pytest.mark.asyncio
+async def test_submit_external_marks_platform_side(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    """Spec 15 §7/§14 — external submission marks the platform side without
+    invoking institution-receive (no submission package row)."""
+    from sqlalchemy import func, select
+
+    from unipaith.models.application import ApplicationSubmission
+
+    _, prog = await _setup_student_and_program(db_session, mock_student_user, mock_institution_user)
+    create_resp = await student_client.post(
+        "/api/v1/applications", json={"program_id": str(prog.id)}
+    )
+    app_id = create_resp.json()["id"]
+
+    patch_resp = await student_client.patch(
+        f"/api/v1/applications/me/{app_id}", json={"submission_mode": "external"}
+    )
+    assert patch_resp.status_code == 200
+    assert patch_resp.json()["submission_mode"] == "external"
+
+    resp = await student_client.post(f"/api/v1/applications/me/{app_id}/submit")
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "submitted"
+    assert resp.json()["submitted_at"] is not None
+
+    # External must NOT create an institution-side submission package.
+    count = await db_session.scalar(select(func.count()).select_from(ApplicationSubmission))
+    assert count == 0
+
+
+@pytest.mark.asyncio
+async def test_submit_allowed_when_ready_internal(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    """Spec 15 §14 — internal submit allowed when all required items complete."""
+    _, prog = await _setup_student_and_program(db_session, mock_student_user, mock_institution_user)
+    create_resp = await student_client.post(
+        "/api/v1/applications", json={"program_id": str(prog.id)}
+    )
+    app_id = create_resp.json()["id"]
+
+    # Generate the checklist, then mark every required item complete (§7 manual).
+    cl = (await student_client.get(f"/api/v1/students/me/applications/{app_id}/checklist")).json()
+    for item in cl["items"]:
+        if item.get("required"):
+            r = await student_client.patch(
+                f"/api/v1/applications/me/{app_id}/checklist",
+                json={"item_key": item["key"], "completed": True},
+            )
+            assert r.status_code == 200
+    ready = (await student_client.post(f"/api/v1/applications/me/{app_id}/check-readiness")).json()
+    assert ready["is_ready"] is True
+    assert ready["completion_percentage"] == 100
+
     resp = await student_client.post(f"/api/v1/applications/me/{app_id}/submit")
     assert resp.status_code == 200
     assert resp.json()["status"] == "submitted"
