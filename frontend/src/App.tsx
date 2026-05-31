@@ -21,6 +21,8 @@ import AuthCallbackPage from './pages/auth/AuthCallbackPage'
 import ProgramBrowsePage from './pages/public/ProgramBrowsePage'
 import InstitutionPage from './pages/public/InstitutionPage'
 import ProgramDetailPage from './pages/public/ProgramDetailPage'
+import PricingPage from './pages/public/PricingPage'
+import AboutPage from './pages/public/AboutPage'
 
 // Student pages — 4 main + profile/saved/settings from avatar
 // Discover (Stage 1) is the new student home — replaces CounselorHomePage
@@ -93,6 +95,9 @@ const router = createBrowserRouter([
   { path: '/browse', element: <PublicLayout><ProgramBrowsePage /></PublicLayout>, errorElement: <RouteErrorPage /> },
   { path: '/school/:institutionId', element: <PublicLayout><InstitutionPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
   { path: '/program/:programId', element: <PublicLayout><ProgramDetailPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  // Spec 07 — public monetization + positioning surfaces.
+  { path: '/pricing', element: <PublicLayout><PricingPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/about', element: <PublicLayout><AboutPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
 
   { path: '/login', element: <AuthLayout><LoginPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
   { path: '/signup', element: <AuthLayout><SignupPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
