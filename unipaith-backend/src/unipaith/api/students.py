@@ -886,34 +886,130 @@ async def upsert_preferences(
 @router.get("/me/matches", response_model=list[MatchResultResponse])
 async def get_my_matches(
     limit: int = Query(20, ge=1, le=100),
+    refresh: bool = Query(False, description="Recompute matches over the catalog first."),
     user: User = Depends(require_student),
     db: AsyncSession = Depends(get_db),
 ):
-    """List the student's previously-computed matches, ordered by fitness desc.
+    """List the student's matches, ordered by fitness desc, enriched with the
+    program display fields, reach/target/safer band (Spec 09 §6), and
+    probability bands (Spec 09 §4A).
 
-    Phase B2: real implementation. No LLM in this path — rationale is
-    fetched lazily per-card via `POST /me/matches/{program_id}/rationale`
-    or read inline from `MatchResult.rationale_text` if a previous
-    rationale call already populated it.
+    `refresh=true` recomputes the catalog first (same as POST /me/matches/refresh),
+    applying the student's priority-weight preferences (Spec 09 §5.2).
 
-    Empty list when Discovery hasn't completed (no feature vector yet).
+    No LLM in this path — rationale is fetched lazily per-card via
+    `POST /me/matches/{program_id}/explain`. Empty list when Discovery hasn't
+    produced a feature vector yet.
     """
+    profile = await _svc(db)._get_student_profile(user.id)
+    if refresh:
+        await _recompute_catalog_matches(db, profile.id)
+    return await _list_enriched_matches(db, profile.id, limit=limit)
+
+
+@router.post("/me/matches/refresh", response_model=list[MatchResultResponse])
+async def refresh_my_matches(
+    limit: int = Query(20, ge=1, le=100),
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 09 §7 / §5.2 / §8 — recompute matches over the published catalog,
+    applying the student's priority-weight preferences, then return the
+    refreshed top-N. Called after the priority sliders save and from the
+    Match surface's manual refresh.
+
+    Empty list when there's no feature vector yet (Discovery incomplete) or no
+    published programs — the surface then shows the appropriate empty state.
+    """
+    profile = await _svc(db)._get_student_profile(user.id)
+    await _recompute_catalog_matches(db, profile.id)
+    return await _list_enriched_matches(db, profile.id, limit=limit)
+
+
+async def _recompute_catalog_matches(db: AsyncSession, student_id: UUID) -> None:
+    """Re-score the published catalog for one student, applying their priority
+    weights (Spec 09 §5.2). Best-effort: mirrors discovery_service's recompute
+    hook so an explicit refresh and a Discovery-completion recompute agree."""
+    from unipaith.models.institution import Program
+    from unipaith.services.match_banding import weights_from_preferences
+    from unipaith.services.match_service import MatchService
+    from unipaith.services.program_features import program_row_from_orm
+
+    pref = await _svc(db).get_preferences(student_id)
+    weights = weights_from_preferences(pref)
+
+    programs = list(
+        (await db.execute(select(Program).where(Program.is_published.is_(True)))).scalars().all()
+    )
+    if not programs:
+        return
+    program_rows = [program_row_from_orm(p) for p in programs]
+    await MatchService(db).compute_matches_for_student(
+        student_id, program_rows=program_rows, weights=weights
+    )
+
+
+async def _list_enriched_matches(
+    db: AsyncSession, student_id: UUID, *, limit: int
+) -> list[MatchResultResponse]:
+    """Read matches + join program/institution + derive band + probability bands."""
+    from unipaith.config import settings as _cfg
+    from unipaith.models.institution import Institution, Program
     from unipaith.services.match_service import MatchService
 
-    profile = await _svc(db)._get_student_profile(user.id)
-    matches = await MatchService(db).list_matches(profile.id, limit=limit)
+    matches = await MatchService(db).list_matches(student_id, limit=limit)
     if not matches:
         return []
-    # Hydrate full ORM rows so response_model serializes correctly.
     program_ids = [m.program_id for m in matches]
-    result = await db.execute(
-        select(MatchResult).where(
-            MatchResult.student_id == profile.id,
-            MatchResult.program_id.in_(program_ids),
+    rows = (
+        (
+            await db.execute(
+                select(MatchResult).where(
+                    MatchResult.student_id == student_id,
+                    MatchResult.program_id.in_(program_ids),
+                )
+            )
         )
+        .scalars()
+        .all()
     )
-    # Spec 06 §5.5 — students always receive the redacted breakdown view.
-    return [_redact_match_for_student(m) for m in result.scalars().all()]
+    row_by_pid = {r.program_id: r for r in rows}
+
+    programs = (
+        (await db.execute(select(Program).where(Program.id.in_(program_ids)))).scalars().all()
+    )
+    prog_by_id = {p.id: p for p in programs}
+    inst_ids = {p.institution_id for p in programs}
+    inst_name_by_id: dict = {}
+    if inst_ids:
+        inst_rows = (
+            await db.execute(
+                select(Institution.id, Institution.name).where(Institution.id.in_(inst_ids))
+            )
+        ).all()
+        inst_name_by_id = {iid: name for iid, name in inst_rows}
+
+    pref = await _svc(db).get_preferences(student_id)
+    weight_ranking = getattr(pref, "weight_ranking", None)
+    bands_enabled = _cfg.ai_probability_bands_enabled
+
+    out: list[MatchResultResponse] = []
+    for m in matches:  # preserves fitness-desc order
+        row = row_by_pid.get(m.program_id)
+        if row is None:
+            continue
+        program = prog_by_id.get(m.program_id)
+        inst_name = inst_name_by_id.get(program.institution_id) if program else None
+        out.append(
+            _enrich_match_for_student(
+                row,
+                program=program,
+                institution_name=inst_name,
+                weight_ranking=weight_ranking,
+                bands_enabled=bands_enabled,
+            )
+        )
+    return out
 
 
 def _redact_match_for_student(match: MatchResult) -> MatchResultResponse:
@@ -931,13 +1027,54 @@ def _redact_match_for_student(match: MatchResult) -> MatchResultResponse:
     return resp
 
 
+def _enrich_match_for_student(
+    match: MatchResult,
+    *,
+    program=None,
+    institution_name: str | None = None,
+    weight_ranking: int | None = None,
+    bands_enabled: bool = True,
+) -> MatchResultResponse:
+    """Student-safe response (spec 06 §5.5) plus Spec 09 context: program
+    display fields, reach/target/safer band (§6), and probability bands (§4A)."""
+    from unipaith.ai.probability import estimate_probability_bands
+    from unipaith.services.match_banding import band_for_acceptance
+
+    resp = _redact_match_for_student(match)
+
+    acceptance_rate: float | None = None
+    if program is not None:
+        resp.program_name = getattr(program, "program_name", None)
+        resp.degree_type = getattr(program, "degree_type", None)
+        resp.tuition = getattr(program, "tuition", None)
+        ar = getattr(program, "acceptance_rate", None)
+        acceptance_rate = float(ar) if ar is not None else None
+        resp.acceptance_rate = acceptance_rate
+    if institution_name is not None:
+        resp.institution_name = institution_name
+
+    fitness = float(match.fitness_score)
+    confidence = float(match.confidence_score)
+    resp.band_label = band_for_acceptance(
+        fitness=fitness, acceptance_rate=acceptance_rate, weight_ranking=weight_ranking
+    )
+    if bands_enabled:
+        resp.probability_bands = estimate_probability_bands(
+            acceptance_rate=acceptance_rate, fitness=fitness, confidence=confidence
+        )
+    return resp
+
+
 @router.get("/me/matches/{program_id}", response_model=MatchResultResponse)
 async def get_match_detail(
     program_id: UUID,
     user: User = Depends(require_student),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get detailed match info for a specific program."""
+    """Get detailed match info for a specific program (enriched per Spec 09)."""
+    from unipaith.config import settings as _cfg
+    from unipaith.models.institution import Institution, Program
+
     profile = await _svc(db)._get_student_profile(user.id)
     result = await db.execute(
         select(MatchResult).where(
@@ -948,7 +1085,84 @@ async def get_match_detail(
     match = result.scalar_one_or_none()
     if not match:
         raise NotFoundException("No match found for this program. Try refreshing matches.")
-    return _redact_match_for_student(match)
+
+    program = await db.scalar(select(Program).where(Program.id == program_id))
+    inst_name = None
+    if program is not None:
+        inst_name = await db.scalar(
+            select(Institution.name).where(Institution.id == program.institution_id)
+        )
+    pref = await _svc(db).get_preferences(profile.id)
+    return _enrich_match_for_student(
+        match,
+        program=program,
+        institution_name=inst_name,
+        weight_ranking=getattr(pref, "weight_ranking", None),
+        bands_enabled=_cfg.ai_probability_bands_enabled,
+    )
+
+
+class ProbabilityBandsResponse(BaseModel):
+    """Spec 09 §4A — admit / scholarship / waitlist ranges + drivers for one
+    program. `probability_bands` is null when there isn't enough signal; `reason`
+    tells the UI why so it can show the right "Not enough data yet" copy."""
+
+    program_id: UUID
+    probability_bands: dict | None = None
+    match_ready: bool = False
+    reason: str | None = None
+
+
+@router.get("/me/matches/{program_id}/probability", response_model=ProbabilityBandsResponse)
+async def get_match_probability(
+    program_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 09 §4A — probability bands for a program (card expand / detail load).
+
+    Honesty guardrail: returns null bands (with a `reason`) rather than a
+    misleading number when the program lacks historical admit signal or the
+    student isn't match-ready."""
+    from unipaith.ai.probability import estimate_probability_bands, is_match_ready
+    from unipaith.config import settings as _cfg
+    from unipaith.models.institution import Program
+
+    profile = await _svc(db)._get_student_profile(user.id)
+    match = (
+        await db.execute(
+            select(MatchResult).where(
+                MatchResult.student_id == profile.id,
+                MatchResult.program_id == program_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if not match:
+        raise NotFoundException("No match found for this program. Try refreshing matches.")
+
+    program = await db.scalar(select(Program).where(Program.id == program_id))
+    ar = (
+        float(program.acceptance_rate)
+        if program is not None and program.acceptance_rate is not None
+        else None
+    )
+    fitness = float(match.fitness_score)
+    confidence = float(match.confidence_score)
+    ready = is_match_ready(confidence)
+
+    bands: dict | None = None
+    reason: str | None = None
+    if not _cfg.ai_probability_bands_enabled:
+        reason = "disabled"
+    else:
+        bands = estimate_probability_bands(
+            acceptance_rate=ar, fitness=fitness, confidence=confidence
+        )
+        if bands is None:
+            reason = "no_history" if ar is None else "not_match_ready"
+    return ProbabilityBandsResponse(
+        program_id=program_id, probability_bands=bands, match_ready=ready, reason=reason
+    )
 
 
 @router.post("/me/matches/{program_id}/explain", response_model=ExplainMatchResponse)

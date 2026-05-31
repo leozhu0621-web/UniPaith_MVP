@@ -43,6 +43,16 @@ class MatchResultResponse(BaseModel):
     institution_name: str | None = None
     degree_type: str | None = None
     tuition: int | None = None
+    acceptance_rate: float | None = None
+
+    # Spec 09 §6 — reach / target / safer banding (derived from program
+    # selectivity vs the student's stated tolerance; fitness-only fallback).
+    band_label: str | None = None
+
+    # Spec 09 §4A — probability bands (admit / scholarship / waitlist + drivers).
+    # null when the program lacks historical admit signal OR the student isn't
+    # match-ready, so the UI shows "Not enough data yet" instead of false precision.
+    probability_bands: dict | None = None
 
 
 class ExplainMatchResponse(BaseModel):

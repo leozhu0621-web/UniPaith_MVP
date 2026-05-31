@@ -28,6 +28,8 @@ import type { EventItem } from '../../types'
 import MatchRing from './program/MatchRing'
 import DualRing from './match/DualRing'
 import RationalePopover from './match/RationalePopover'
+import ProbabilityBands from './match/ProbabilityBands'
+import BandBadge from '../../components/ui/BandBadge'
 import ProgramHeader from './program/ProgramHeader'
 import KeyMetrics from './program/KeyMetrics'
 import StatGroup from './program/StatGroup'
@@ -268,8 +270,11 @@ export default function ProgramDetailPage() {
               onClick={() => setRationaleOpen(true)}
             />
             <div>
-              <div className="text-eyebrow text-student-text">Your match</div>
-              <p className="text-sm text-student-ink max-w-md">
+              <div className="flex items-center gap-2">
+                <div className="text-eyebrow text-student-text">Your match</div>
+                {match.band_label && <BandBadge band={match.band_label} />}
+              </div>
+              <p className="text-sm text-student-ink max-w-md mt-0.5">
                 Fitness is how well this program matches your strategy; confidence is how sure
                 we are given your profile depth.
               </p>
@@ -278,6 +283,16 @@ export default function ProgramDetailPage() {
           <Button size="sm" variant="secondary" onClick={() => setRationaleOpen(true)}>
             <Sparkles size={14} className="mr-1.5" /> Why this match?
           </Button>
+        </Card>
+      )}
+
+      {/* ── Your realistic shot — probability bands (Spec 09 §4A) ── */}
+      {match && (match.fitness_score != null || match.match_score != null) && (
+        <Card className="mb-5 p-4">
+          <ProbabilityBands
+            bands={match.probability_bands ?? null}
+            reason={match.acceptance_rate == null ? 'no_history' : 'not_match_ready'}
+          />
         </Card>
       )}
 
