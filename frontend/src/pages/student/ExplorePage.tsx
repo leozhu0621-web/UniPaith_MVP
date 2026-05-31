@@ -232,8 +232,14 @@ export default function ExplorePage() {
       {isSearching && (
         <>
           {(searchLoading || nlpMut.isPending) ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3].map(i => <div key={i} className="h-72 bg-white rounded-xl border border-divider animate-pulse" />)}
+            <div aria-busy="true">
+              {/* Spec 09/10 §8 — live-search progress on the results region. */}
+              <p className="flex items-center gap-2 text-xs text-slate mb-3">
+                <Loader2 size={12} className="animate-spin" /> Searching…
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[1, 2, 3].map(i => <div key={i} className="h-72 bg-white rounded-xl border border-divider animate-pulse" />)}
+              </div>
             </div>
           ) : searchProgramList.length === 0 ? (
             <div className="text-center py-16 bg-white rounded-xl border border-divider">

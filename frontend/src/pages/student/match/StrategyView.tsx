@@ -25,7 +25,7 @@ import {
 } from 'lucide-react'
 
 import { listGoals } from '../../../api/goals'
-import { generateStrategy, getActiveStrategy } from '../../../api/strategy'
+import { activateStrategy, generateStrategy, getActiveStrategy } from '../../../api/strategy'
 import Badge from '../../../components/ui/Badge'
 import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
@@ -57,10 +57,17 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
     enabled: !strategy,
   })
 
+  // Spec 09 §3 / §12 — "Generate" (no active yet) and "Regenerate" (refresh the
+  // active) both produce a *visible* active strategy: generate the new version,
+  // then promote it so the card updates in place. (The separate "Edit" path
+  // intentionally creates a draft for review without activating.)
   const generateMut = useMutation({
-    mutationFn: () => generateStrategy(),
+    mutationFn: async () => {
+      const next = await generateStrategy()
+      return activateStrategy(next.id)
+    },
     onSuccess: () => {
-      showToast('Draft strategy generated. Activate from Profile.', 'success')
+      showToast(strategy ? 'Strategy regenerated.' : 'Strategy generated.', 'success')
       qc.invalidateQueries({ queryKey: ['strategy'] })
     },
     onError: (err: unknown) =>

@@ -88,12 +88,17 @@ def band_for_acceptance(
 
 
 def weights_from_preferences(pref: Any | None) -> dict[str, float] | None:
-    """Map the 6 priority sliders (0–10) to matcher composition weights.
+    """Map the priority sliders (0–10) to matcher composition weights.
 
-    Spec 09 §5.2 sliders → matcher levers:
-      - outcomes + ranking (academic/career substance) → ``cosine`` (content)
-      - support                                        → ``needs_match``
-      - cost + location + flexibility (lifestyle fit)  → ``soft_align``
+    Spec 09 §5.2 surfaces six sliders — Cost · Outcomes · Selectivity ·
+    Location · Modality · Time-to-degree — and every one must measurably
+    re-rank (§12). They fold into the matcher's three levers:
+      - outcomes + ranking (academic/career substance)        → ``cosine``
+      - support (needs-fit baseline; no dedicated §5.2 slider) → ``needs_match``
+      - cost + location + flexibility + time_to_degree (fit)   → ``soft_align``
+
+    ``ranking`` additionally drives the reach/target/safer banding tolerance
+    (``tolerance_from_preferences``), so Selectivity moves both rank and band.
 
     Returns ``None`` when no slider is set, so the caller uses
     ``DEFAULT_WEIGHTS`` unchanged. Output is normalized to ~1.0 (each weight
@@ -108,8 +113,11 @@ def weights_from_preferences(pref: Any | None) -> dict[str, float] | None:
     location = getattr(pref, "weight_location", None)
     flexibility = getattr(pref, "weight_flexibility", None)
     support = getattr(pref, "weight_support", None)
+    time_to_degree = getattr(pref, "weight_time_to_degree", None)
 
-    if all(v is None for v in (cost, outcomes, ranking, location, flexibility, support)):
+    if all(
+        v is None for v in (cost, outcomes, ranking, location, flexibility, support, time_to_degree)
+    ):
         return None
 
     def g(v: int | None) -> float:
@@ -119,7 +127,7 @@ def weights_from_preferences(pref: Any | None) -> dict[str, float] | None:
 
     raw_cosine = 1.0 + g(outcomes) + g(ranking)
     raw_needs = 1.0 + g(support)
-    raw_soft = 1.0 + g(cost) + g(location) + g(flexibility)
+    raw_soft = 1.0 + g(cost) + g(location) + g(flexibility) + g(time_to_degree)
     total = raw_cosine + raw_needs + raw_soft
     return {
         "cosine": round(raw_cosine / total, 4),
