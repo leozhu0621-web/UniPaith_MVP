@@ -496,6 +496,7 @@ export interface ApplicationOffer {
   start_term_year?: number | null
   next_step_actions?: OfferNextStep[] | null
   plain_language_brief?: PlainLanguageBrief | null
+  generated_letter_url?: string | null
 }
 
 export interface OfferComparisonItem {
@@ -527,6 +528,7 @@ export interface OffersComparison {
   }
   must_have_constraints: { need: string; signal: string }[]
   count: number
+  advisor_summary?: string | null
 }
 
 export interface WithdrawableApp {

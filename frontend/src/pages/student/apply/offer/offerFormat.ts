@@ -72,3 +72,30 @@ export const OFFER_TYPE_LABEL: Record<string, string> = {
   partial: 'Partial offer',
   transfer_credit_offer: 'Transfer credit offer',
 }
+
+/** Spec 18 §10 — bold amounts and ISO dates inside plain-language brief copy. */
+export function briefSummaryParts(text: string): Array<{ text: string; bold: boolean }> {
+  const re = /(\$[\d,]+(?:\.\d+)?|\b\d{4}-\d{2}-\d{2}\b|\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{1,2},? \d{4}\b)/gi
+  const parts: Array<{ text: string; bold: boolean }> = []
+  let last = 0
+  for (const match of text.matchAll(re)) {
+    const idx = match.index ?? 0
+    if (idx > last) parts.push({ text: text.slice(last, idx), bold: false })
+    parts.push({ text: match[0], bold: true })
+    last = idx + match[0].length
+  }
+  if (last < text.length) parts.push({ text: text.slice(last), bold: false })
+  return parts.length ? parts : [{ text, bold: false }]
+}
+
+export function hasPendingOfferResponse(app: {
+  offer?: { student_response?: string | null } | null
+  student_decision?: string | null
+}): boolean {
+  return Boolean(
+    app.offer &&
+      !app.offer.student_response &&
+      app.student_decision !== 'accepted_by_student' &&
+      app.student_decision !== 'declined_by_student',
+  )
+}

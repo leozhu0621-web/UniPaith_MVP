@@ -256,6 +256,20 @@ class Settings(BaseSettings):
     # search box always works and never 5xxes.
     ai_discovery_query_v2_enabled: bool = False
 
+    # Spec 20 §8 — ConnectFeedRanker + EventRecommender (Haiku-tier, cheap).
+    # When True, the Connect "Most relevant" toggle routes the feed through the
+    # ConnectFeedRanker agent and the Events tab through EventRecommender. On
+    # any failure (consent deny / parse / provider error) both silently fall
+    # back to the deterministic relevance heuristic / reverse-chronological
+    # order — the feed never errors (Spec 20 §9 "AI rank failure").
+    ai_connect_ranker_v2_enabled: bool = False
+
+    # Spec 20 §6 / §14 — Peers tab (opt-in, privacy-gated). The spec ships
+    # Updates + Events for MVP and gates Peers behind this flag as a
+    # fast-follow. When False the Peers tab shows the opt-in explainer only and
+    # peer endpoints 404/403; no peer data is read or written.
+    connect_peers_enabled: bool = True
+
     # Spec 09 §4A — probability bands (admit / scholarship / waitlist) on the
     # Match surface + program detail. Rule-based + calibrated heuristic
     # (unipaith.ai.probability); honest ranges, "not enough data yet" when a

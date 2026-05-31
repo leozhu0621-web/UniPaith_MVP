@@ -7,6 +7,7 @@ import AccountCard from './settings/AccountCard'
 import SecurityCard from './settings/SecurityCard'
 import PreferencesCard from './settings/PreferencesCard'
 import NotificationsCard from './settings/NotificationsCard'
+import ConnectCard from './settings/ConnectCard'
 import DataPrivacyCard from './settings/DataPrivacyCard'
 import BillingCard from './settings/BillingCard'
 import DangerZone from './settings/DangerZone'
@@ -37,10 +38,12 @@ export default function SettingsPage() {
 
   const savePrefs = (payload: UpdateSettingsPayload) => saveMut.mutate(payload)
   const saveAccount = (payload: UpdateSettingsPayload) =>
-    saveMut.mutate(payload, { onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['settings'] })
-      showToast('Saved', 'success')
-    } })
+    saveMut.mutate(payload, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['settings'] })
+        showToast('Saved', 'success')
+      },
+    })
 
   const refetch = () => queryClient.invalidateQueries({ queryKey: ['settings'] })
 
@@ -74,6 +77,7 @@ export default function SettingsPage() {
             emailFrequency={settings.email_frequency}
             onChanged={refetch}
           />
+          <ConnectCard />
           <DataPrivacyCard />
           <BillingCard />
           <DangerZone deletion={settings.deletion} onChanged={refetch} />

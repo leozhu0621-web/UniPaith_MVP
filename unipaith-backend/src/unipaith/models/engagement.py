@@ -240,7 +240,8 @@ class Conversation(Base):
     application_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("applications.id", ondelete="SET NULL"), nullable=True
     )
-    # 'human' | 'system' (alerts, status updates, AI-run notices).
+    # 'human' (student↔institution) | 'system' (alerts, status updates, RSVP /
+    # event confirmations, AI-run notices) | 'peer' (student↔student, Spec 20 §6.3).
     thread_type: Mapped[str] = mapped_column(String(20), server_default="human", nullable=False)
     action_label: Mapped[str | None] = mapped_column(String(40))
     due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -248,6 +249,10 @@ class Conversation(Base):
     linked_checklist_item_category: Mapped[str | None] = mapped_column(String(50))
     subject: Mapped[str | None] = mapped_column(String(500))
     status: Mapped[str | None] = mapped_column(String(20))
+    # For a peer thread, the OTHER student in the conversation (Spec 20 §6.3).
+    peer_student_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("student_profiles.id", ondelete="SET NULL")
+    )
     started_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

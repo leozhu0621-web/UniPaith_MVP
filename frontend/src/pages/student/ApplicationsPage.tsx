@@ -11,6 +11,7 @@ import { formatDate } from '../../utils/format'
 import { STATUS_COLORS } from '../../utils/constants'
 import { FileText, Star, ChevronRight, CalendarClock, PartyPopper, ArrowRight, Mail } from 'lucide-react'
 import DecisionComparison from './apply/offer/DecisionComparison'
+import { deadlineTone, DEADLINE_TONE_CLASS, hasPendingOfferResponse } from './apply/offer/offerFormat'
 import type { Application } from '../../types'
 
 type Bucket =
@@ -77,19 +78,27 @@ function nextAction(app: Application): string {
     case 'under_review':
       return app.status === 'interview' ? 'Prepare for your interview' : 'Under review'
     case 'decided':
-      if (app.decision === 'admitted' && app.offer?.status !== 'accepted')
-        return 'Respond to your offer'
-      return `Decision: ${app.decision ?? 'received'}`
+      if (hasPendingOfferResponse(app)) return 'Respond to your offer'
+      return `Decision: ${app.decision ?? app.decision_state ?? 'received'}`
   }
+}
+
+function appHref(app: Application): string {
+  if (hasPendingOfferResponse(app) || app.offer) return `/s/applications/${app.id}?tab=offer`
+  return `/s/applications/${app.id}`
 }
 
 /** Priority score for the ★ Next actions rail — higher = more urgent. */
 function actionScore(app: Application): number {
   const b = bucketOf(app)
   const d = daysUntil(app.program?.application_deadline)
+  const offerDays = daysUntil(app.offer?.response_deadline)
   let score = 0
   if (b === 'ready') score += 100
-  if (b === 'decided' && app.decision === 'admitted' && app.offer?.status !== 'accepted')
+  if (hasPendingOfferResponse(app)) {
+    score += 95
+    if (offerDays != null && offerDays >= 0 && offerDays <= 14) score += 40 - offerDays
+  } else if (b === 'decided' && app.decision === 'admitted' && app.offer?.status !== 'accepted')
     score += 90
   if (app.status === 'interview') score += 80
   if (b === 'in_progress') score += 40
@@ -119,6 +128,16 @@ export default function ApplicationsPage() {
   const pendingOfferApps = useMemo(
     () => offerApps.filter(a => !a.offer?.student_response && a.student_decision == null),
     [offerApps],
+  )
+  const awaitingDecisionApps = useMemo(
+    () =>
+      apps.filter(
+        a =>
+          !a.offer &&
+          a.student_decision == null &&
+          ['submitted', 'under_review', 'interview'].includes(a.status || ''),
+      ),
+    [apps],
   )
 
   const counts = useMemo(() => {
@@ -214,6 +233,19 @@ export default function ApplicationsPage() {
         </Card>
       )}
 
+      {/* Spec 18 — no offers yet, decisions pending (§8) */}
+      {!acceptedApp && offerApps.length === 0 && awaitingDecisionApps.length > 0 && (
+        <Card className="p-4 mb-6 bg-student-mist border-0">
+          <p className="text-sm text-student-ink">
+            Decisions usually arrive within 4–8 weeks of submission. You'll be notified here.
+          </p>
+          <p className="text-xs text-student-text mt-1">
+            {awaitingDecisionApps.length} application
+            {awaitingDecisionApps.length !== 1 ? 's' : ''} awaiting a decision.
+          </p>
+        </Card>
+      )}
+
       {/* Spec 18 — offer-received banner + compare CTA (§5/§8) */}
       {!acceptedApp && offerApps.length > 0 && (
         <Card className="p-4 mb-6 flex items-center gap-3">
@@ -274,7 +306,7 @@ export default function ApplicationsPage() {
               return (
                 <button
                   key={a.id}
-                  onClick={() => navigate(`/s/applications/${a.id}`)}
+                  onClick={() => navigate(appHref(a))}
                   className="w-full flex items-center gap-2 text-left text-sm hover:bg-student-mist rounded-lg px-2 py-1.5"
                 >
                   <Star size={14} className="text-student flex-shrink-0" fill="currentColor" />
@@ -343,11 +375,14 @@ export default function ApplicationsPage() {
           filtered.map(app => {
             const pct = app.readiness_pct ?? 0
             const d = daysUntil(app.program?.application_deadline)
+            const offerDays = daysUntil(app.offer?.response_deadline)
+            const offerTone = deadlineTone(offerDays)
             const isDraft = app.status === 'draft'
+            const pendingOffer = hasPendingOfferResponse(app)
             return (
               <Card
                 key={app.id}
-                onClick={() => navigate(`/s/applications/${app.id}`)}
+                onClick={() => navigate(appHref(app))}
                 className="p-4 hover:shadow-sm transition-shadow cursor-pointer"
               >
                 <div className="flex justify-between items-start gap-3">
@@ -374,6 +409,14 @@ export default function ApplicationsPage() {
                       {d != null && d >= 0 && d <= 30 && isDraft && (
                         <span className={`text-xs font-medium inline-flex items-center gap-1 ${d <= 7 ? 'text-destructive' : 'text-warning'}`}>
                           <CalendarClock size={11} />{d === 0 ? 'Due today' : `${d}d left`}
+                        </span>
+                      )}
+                      {pendingOffer && offerDays != null && offerDays >= 0 && (
+                        <span
+                          className={`text-xs font-medium inline-flex items-center gap-1 ${DEADLINE_TONE_CLASS[offerTone]}`}
+                        >
+                          <CalendarClock size={11} />
+                          Offer: {offerDays === 0 ? 'due today' : `${offerDays}d to respond`}
                         </span>
                       )}
                     </div>

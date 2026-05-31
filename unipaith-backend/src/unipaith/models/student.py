@@ -346,6 +346,8 @@ class StudentPreference(Base):
     target_degree_level: Mapped[str | None] = mapped_column(String(30))
     target_start_term: Mapped[str | None] = mapped_column(String(30))
     thesis_interest: Mapped[str | None] = mapped_column(String(20))
+    # Spec 20 §2 — when false, saving a program does not auto-follow its institution.
+    auto_follow_on_save: Mapped[bool] = mapped_column(default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -685,6 +687,11 @@ class StudentDataConsent(Base):
     # fine-tuning corpus. Opt-in (default false). No inference-time agent
     # gates on this; it governs the offline training-corpus extractor only.
     consent_training: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false", nullable=False
+    )
+    # Spec 20 §6.1 / §11 — NEW consent dimension for the Peers tab. Off by
+    # default; revocable. No peer data is read or shown until this is true.
+    consent_peer_connect: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false", nullable=False
     )
     data_retention_preference: Mapped[str | None] = mapped_column(String(30))

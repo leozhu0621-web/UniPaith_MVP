@@ -1,10 +1,18 @@
 import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import Modal from '../../../../components/ui/Modal'
 import Badge from '../../../../components/ui/Badge'
 import Skeleton from '../../../../components/ui/Skeleton'
 import { getOffersComparison } from '../../../../api/offers'
 import type { OfferComparisonItem } from '../../../../types'
-import { money, formatTermDate, DECISION_STATE_LABEL } from './offerFormat'
+import {
+  money,
+  formatTermDate,
+  DECISION_STATE_LABEL,
+  daysUntil,
+  deadlineTone,
+  DEADLINE_TONE_CLASS,
+} from './offerFormat'
 import { Award, Sparkles, PiggyBank, ShieldCheck } from 'lucide-react'
 
 const pct = (n: number | null | undefined) =>
@@ -51,6 +59,7 @@ export default function DecisionComparison({
   isOpen: boolean
   onClose: () => void
 }) {
+  const navigate = useNavigate()
   const { data, isLoading } = useQuery({
     queryKey: ['offers-comparison'],
     queryFn: getOffersComparison,
@@ -74,6 +83,11 @@ export default function DecisionComparison({
         </p>
       ) : (
         <div className="space-y-4">
+          {data?.advisor_summary && (
+            <p className="text-sm text-student-ink leading-relaxed rounded-lg bg-student-mist px-3 py-2.5">
+              {data.advisor_summary}
+            </p>
+          )}
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
@@ -81,12 +95,21 @@ export default function DecisionComparison({
                   <th className="w-32" />
                   {offers.map(o => (
                     <th key={o.offer_id} scope="col" className="text-left py-2 px-3 min-w-[180px]">
-                      <p className="text-sm font-semibold text-student-ink leading-snug">
-                        {o.program_name || 'Program'}
-                      </p>
-                      {o.institution_name && (
-                        <p className="text-xs text-student-text">{o.institution_name}</p>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose()
+                          navigate(`/s/applications/${o.application_id}?tab=offer`)
+                        }}
+                        className="text-left hover:opacity-80 transition-opacity"
+                      >
+                        <p className="text-sm font-semibold text-student-ink leading-snug">
+                          {o.program_name || 'Program'}
+                        </p>
+                        {o.institution_name && (
+                          <p className="text-xs text-student-text">{o.institution_name}</p>
+                        )}
+                      </button>
                       <div className="flex flex-wrap gap-1 mt-1.5">
                         {ind?.most_affordable === o.application_id && (
                           <Badge variant="success">
@@ -153,7 +176,32 @@ export default function DecisionComparison({
                 <Row
                   label="Respond by"
                   offers={offers}
-                  render={o => formatTermDate(o.response_deadline) || '—'}
+                  highlight={o => {
+                    const d = daysUntil(o.response_deadline)
+                    return d != null && d >= 0 && d <= 7
+                  }}
+                  render={o => {
+                    const d = daysUntil(o.response_deadline)
+                    const tone = deadlineTone(d)
+                    const label = formatTermDate(o.response_deadline) || '—'
+                    return (
+                      <span className={d != null && d >= 0 ? DEADLINE_TONE_CLASS[tone] : undefined}>
+                        {label}
+                        {d != null && d >= 0 && d <= 14 && tone !== 'normal' && (
+                          <span className="block text-xs mt-0.5">{d}d left</span>
+                        )}
+                      </span>
+                    )
+                  }}
+                />
+                <Row
+                  label="Placement"
+                  offers={offers}
+                  render={o =>
+                    o.outcomes.placement_rate != null
+                      ? `${Math.round(o.outcomes.placement_rate * 100)}%`
+                      : '—'
+                  }
                 />
               </tbody>
             </table>

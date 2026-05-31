@@ -101,6 +101,11 @@ export default function AcceptOfferModal({
             Now that you've accepted, would you like to withdraw your other open applications? You
             can keep any you're still considering.
           </p>
+          {selected.size > 0 && (
+            <p className="text-xs text-student-text rounded-lg border border-divider px-3 py-2">
+              Are you sure? Withdrawing tells schools you're no longer pursuing those applications.
+            </p>
+          )}
           <div className="space-y-2">
             {withdrawable.map(a => (
               <label

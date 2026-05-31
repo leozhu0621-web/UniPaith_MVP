@@ -1,28 +1,13 @@
 /**
  * Stage 1 (Discovery) — student home page (spec 19).
- *
- * Three-track journey: Profile / Goals / Needs, each backed by
- * `discovery_sessions` rows on the server. The chat panel auto-creates a
- * session on the first message; the artifact rail live-updates as the LLM
- * extractor writes signals into typed tables.
- *
- * Profile has three layers (Basic → Personality → Identity) that auto-advance
- * server-side as each layer's exit conditions are met; the active layer is
- * read off the most-recent active profile session. A manual switcher lets the
- * student jump to a deeper layer once the prior one is underway.
- *
- * When all three tracks reach the handoff threshold (50%), the
- * "Generate strategy" CTA turns gold (the one earned accent moment, spec
- * §11) — it calls /me/strategy/generate and routes to Stage 2
- * (`/s/explore?showStrategy=open`, spec §7).
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { CheckCircle2, ChevronRight, Compass, Lock, Sparkles } from 'lucide-react'
+import { CheckCircle2, ChevronRight, Lock, Sparkles } from 'lucide-react'
 import clsx from 'clsx'
 
-import { getCompletionMap, listSessions } from '../../api/discovery'
+import { getCompletionMap, getHandoffVerdict, listSessions } from '../../api/discovery'
 import { generateStrategy } from '../../api/strategy'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
@@ -36,25 +21,26 @@ import type {
 import ArtifactRail from './discover/ArtifactRail'
 import ChatPanel from './discover/ChatPanel'
 import TrackSelector from './discover/TrackSelector'
+import {
+  DISCOVERY_TRACKS,
+  HANDOFF_THRESHOLD,
+  PROFILE_LAYERS,
+  confirmDiscardDraft,
+} from './discover/discoveryConstants'
 
-const TRACK_KEYS: DiscoveryTrack[] = ['profile', 'goals', 'needs']
-const HANDOFF_THRESHOLD = 0.5
+const VALID_LAYERS = new Set(PROFILE_LAYERS.map(l => l.key))
 
-const PROFILE_LAYERS: { key: DiscoveryLayer; label: string }[] = [
-  { key: 'basic', label: 'Basic' },
-  { key: 'personality', label: 'Personality' },
-  { key: 'identity', label: 'Identity' },
-]
+function parseLayerParam(raw: string | null): DiscoveryLayer | null {
+  if (raw && VALID_LAYERS.has(raw as DiscoveryLayer)) return raw as DiscoveryLayer
+  return null
+}
 
-/** Layer chips + a manual switcher. A deeper layer unlocks once the layer
- *  before it has been started (spec §15 — "Open Personality" beside the chip). */
 function LayerSwitcher({
   active,
   unlockedThrough,
   onChange,
 }: {
   active: DiscoveryLayer
-  /** Index of the deepest layer the student may switch to. */
   unlockedThrough: number
   onChange: (l: DiscoveryLayer) => void
 }) {
@@ -77,20 +63,20 @@ function LayerSwitcher({
               className={clsx(
                 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full transition-colors',
                 isActive
-                  ? 'bg-student/10 text-student-ink font-medium'
+                  ? 'bg-primary/15 text-foreground font-medium'
                   : isDone
-                    ? 'text-student-text hover:text-student-ink'
+                    ? 'text-muted-foreground hover:text-foreground'
                     : isLocked
-                      ? 'text-student-text/40 cursor-not-allowed'
-                      : 'text-student-text/70 hover:text-student-ink',
+                      ? 'text-muted-foreground/50 cursor-not-allowed'
+                      : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              {isDone && <CheckCircle2 size={11} className="text-student" />}
+              {isDone && <CheckCircle2 size={11} className="text-accent" />}
               {isLocked && <Lock size={9} />}
               {l.label}
             </button>
             {i < PROFILE_LAYERS.length - 1 && (
-              <ChevronRight size={11} className="text-student-text/40" />
+              <ChevronRight size={11} className="text-muted-foreground/40" />
             )}
           </span>
         )
@@ -101,11 +87,10 @@ function LayerSwitcher({
 
 interface StrategyHandoffProps {
   completion: CompletionMap | null
+  judgeReady: boolean
 }
 
-/** Always visible once any progress exists; gold + enabled only when all three
- *  tracks clear the threshold (spec §7/§11). */
-function StrategyHandoffCTA({ completion }: StrategyHandoffProps) {
+function StrategyHandoffCTA({ completion, judgeReady }: StrategyHandoffProps) {
   const navigate = useNavigate()
   const qc = useQueryClient()
 
@@ -121,14 +106,13 @@ function StrategyHandoffCTA({ completion }: StrategyHandoffProps) {
     onSuccess: () => {
       showToast('Draft strategy generated.', 'success')
       qc.invalidateQueries({ queryKey: ['strategy'] })
-      // Spec §7 — hand off to Stage 2 with the strategy view open.
       navigate('/s/explore?showStrategy=open')
     },
     onError: (err: unknown) =>
       showToast((err as Error).message ?? 'Could not generate strategy.', 'error'),
   })
 
-  const behind = TRACK_KEYS.filter(k => pct(k) < HANDOFF_THRESHOLD)
+  const behind = DISCOVERY_TRACKS.filter(k => pct(k) < HANDOFF_THRESHOLD)
   const hint = ready
     ? "All three tracks are far enough along — let's turn what you've shared into a broad strategy."
     : `Reach 50% on ${behind
@@ -139,20 +123,26 @@ function StrategyHandoffCTA({ completion }: StrategyHandoffProps) {
     <Card
       className={clsx(
         'flex items-center justify-between gap-3 transition-colors',
-        ready ? 'bg-student/5 border-student/30' : 'border-divider',
+        ready ? 'border-primary/40 bg-primary/5' : 'border-border',
       )}
     >
       <div className="flex items-center gap-3">
-        <Sparkles size={18} className={ready ? 'text-student' : 'text-student-text/50'} />
+        <Sparkles size={18} className={ready ? 'text-primary' : 'text-muted-foreground'} />
         <div>
-          <div className="text-sm font-medium text-student-ink">
+          <div className="text-sm font-medium text-foreground">
             {ready ? 'Ready to plan a strategy.' : 'Keep going to unlock your strategy.'}
           </div>
-          <div className="text-xs text-student-text">{hint}</div>
+          <div className="text-xs text-muted-foreground">{hint}</div>
+          {judgeReady && !ready && (
+            <div className="text-xs text-accent mt-0.5">
+              You're making strong progress — keep going on all three tracks.
+            </div>
+          )}
         </div>
       </div>
       <Button
         size="sm"
+        variant={ready ? 'primary' : 'tertiary'}
         disabled={!ready}
         onClick={() => generateMut.mutate()}
         loading={generateMut.isPending}
@@ -166,25 +156,16 @@ function StrategyHandoffCTA({ completion }: StrategyHandoffProps) {
 export default function DiscoverHomePage() {
   const [params, setParams] = useSearchParams()
   const trackParam = params.get('track') as DiscoveryTrack | null
-  const initialTrack: DiscoveryTrack = TRACK_KEYS.includes(trackParam ?? ('' as DiscoveryTrack))
+  const initialTrack: DiscoveryTrack = DISCOVERY_TRACKS.includes(trackParam ?? ('' as DiscoveryTrack))
     ? (trackParam as DiscoveryTrack)
     : 'profile'
 
   const [track, setTrack] = useState<DiscoveryTrack>(initialTrack)
-  // Manual layer override; null means "follow the active session's layer".
-  const [layerOverride, setLayerOverride] = useState<DiscoveryLayer | null>(null)
-
-  // Keep the URL in sync so a refresh / shared link lands on the same track.
-  useEffect(() => {
-    if (track === 'profile') {
-      params.delete('track')
-    } else {
-      params.set('track', track)
-    }
-    setParams(params, { replace: true })
-    setLayerOverride(null) // reset the layer override when switching tracks
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [track])
+  const [layerOverride, setLayerOverride] = useState<DiscoveryLayer | null>(
+    () => parseLayerParam(params.get('layer')),
+  )
+  const [draft, setDraft] = useState('')
+  const [handoffBanner, setHandoffBanner] = useState(false)
 
   const { data: completion } = useQuery<CompletionMap>({
     queryKey: ['discovery', 'completion'],
@@ -196,53 +177,113 @@ export default function DiscoverHomePage() {
     queryFn: () => listSessions({ track, status: 'active' }),
   })
 
-  // Most-recent active session for this track, or null (ChatPanel will
-  // create one lazily on the first message).
   const activeSession = useMemo<DiscoverySession | null>(() => {
     if (sessions.length === 0) return null
     return [...sessions].sort((a, b) => b.started_at.localeCompare(a.started_at))[0]
   }, [sessions])
 
-  // The layer the conversation is actually on: the server's active-session
-  // layer wins, falling back to 'basic' for a fresh profile track. A manual
-  // override (the switcher) takes precedence until the track changes.
   const sessionLayer: DiscoveryLayer = (activeSession?.layer as DiscoveryLayer | null) ?? 'basic'
   const layer: DiscoveryLayer = track === 'profile' ? (layerOverride ?? sessionLayer) : 'basic'
-
-  // Unlock layers up to and including the active session's layer.
   const unlockedThrough = PROFILE_LAYERS.findIndex(l => l.key === sessionLayer)
+
+  const guardedSetTrack = useCallback(
+    (next: DiscoveryTrack) => {
+      if (next === track) return
+      if (!confirmDiscardDraft(draft, 'switch track')) return
+      setDraft('')
+      setLayerOverride(null)
+      setTrack(next)
+    },
+    [draft, track],
+  )
+
+  const guardedSetLayer = useCallback(
+    (next: DiscoveryLayer) => {
+      if (next === layer) return
+      if (!confirmDiscardDraft(draft, 'switch layer')) return
+      setDraft('')
+      setLayerOverride(next)
+    },
+    [draft, layer],
+  )
+
+  useEffect(() => {
+    const next = new URLSearchParams(params)
+    if (track === 'profile') {
+      next.delete('track')
+    } else {
+      next.set('track', track)
+    }
+    if (track === 'profile') {
+      next.set('layer', layer)
+    } else {
+      next.delete('layer')
+    }
+    setParams(next, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [track, layer])
+
+  const refreshHandoff = useCallback(() => {
+    getHandoffVerdict()
+      .then(v => setHandoffBanner(v.should_handoff))
+      .catch(() => setHandoffBanner(false))
+  }, [])
+
+  useEffect(() => {
+    refreshHandoff()
+  }, [completion, refreshHandoff])
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-4">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Compass size={18} className="text-gold" />
-            <h1 className="text-2xl font-semibold text-student-ink">
-              Let's figure out what you're looking for
-            </h1>
-          </div>
-          <p className="text-sm text-student-text max-w-2xl">
-            Stage 1 of three. Talk through who you are, what you want, and what you need —
-            I'll build out your profile as we go.
+          <p className="text-eyebrow text-accent mb-1">Discover</p>
+          <h1 className="text-2xl font-semibold text-foreground">
+            Let's figure out what you're looking for
+          </h1>
+          <p className="text-sm text-muted-foreground max-w-2xl mt-1">
+            Talk through who you are, what you want, and what you need — I'll build your profile as
+            we go.
           </p>
         </div>
         {track === 'profile' && (
           <LayerSwitcher
             active={layer}
             unlockedThrough={unlockedThrough < 0 ? 0 : unlockedThrough}
-            onChange={setLayerOverride}
+            onChange={guardedSetLayer}
           />
         )}
       </header>
 
-      <TrackSelector active={track} onChange={setTrack} completion={completion ?? null} />
+      {handoffBanner && (
+        <div className="rounded-lg border border-accent/30 bg-accent/5 px-3 py-2 text-xs text-foreground">
+          Your discovery progress looks strong. Generate a strategy when all three tracks reach 50%.
+        </div>
+      )}
 
-      <StrategyHandoffCTA completion={completion ?? null} />
+      <TrackSelector
+        active={track}
+        onChange={guardedSetTrack}
+        completion={completion ?? null}
+        profileLayer={track === 'profile' ? layer : sessionLayer}
+      />
+
+      <StrategyHandoffCTA completion={completion ?? null} judgeReady={handoffBanner} />
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
-        <Card>
-          <ChatPanel track={track} layer={layer} session={activeSession} onSwitchTrack={setTrack} />
+        <Card className="p-4">
+          <ChatPanel
+            track={track}
+            layer={layer}
+            session={activeSession}
+            draft={draft}
+            onDraftChange={setDraft}
+            onSwitchTrack={guardedSetTrack}
+            onTurnComplete={refreshHandoff}
+            onSessionCreated={() => {
+              refreshHandoff()
+            }}
+          />
         </Card>
         <ArtifactRail track={track} layer={track === 'profile' ? layer : undefined} />
       </div>
