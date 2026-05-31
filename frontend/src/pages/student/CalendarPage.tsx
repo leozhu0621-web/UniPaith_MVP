@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval,
   format, addMonths, subMonths, addWeeks, subWeeks, isSameDay, isToday, parseISO,
+  setHours, setMinutes, differenceInMinutes, addMinutes,
 } from 'date-fns'
 import {
   ChevronLeft, ChevronRight, Clock, FileText, Mic, Video,
@@ -72,6 +73,16 @@ const WORK_CATEGORIES = [
   { value: 'interview_prep', label: 'Interview prep' },
   { value: 'research', label: 'Program research' },
   { value: 'general', label: 'General prep' },
+]
+
+const WEEK_GRID_START_HOUR = 7
+const WEEK_GRID_END_HOUR = 21 // 9 PM boundary
+const WEEK_HOUR_PX = 44
+const WEEK_GRID_HEIGHT = (WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR) * WEEK_HOUR_PX
+const WEEK_GRID_MINUTES = (WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR) * 60
+const DEADLINE_TYPES: CalendarItemType[] = [
+  'submission_deadline', 'document_deadline', 'recommendation_deadline',
+  'interview_submission_deadline', 'deposit_deadline',
 ]
 
 const isOverdue = (i: CalendarItem) => i.status === 'overdue'
@@ -289,7 +300,7 @@ export default function CalendarPage() {
         </>
       )}
 
-      {/* ── WEEK ── */}
+      {/* ── WEEK (Spec 16 §3: hour grid 7am–9pm) ── */}
       {view === 'week' && (
         <>
           <div className="flex items-center justify-end gap-3 mb-4">
@@ -297,29 +308,7 @@ export default function CalendarPage() {
             <span className="text-sm font-semibold text-center text-charcoal">{format(weekStart, 'MMM d')} — {format(weekEnd, 'MMM d, yyyy')}</span>
             <button onClick={() => setCurrentWeek(w => addWeeks(w, 1))} className="p-1.5 hover:bg-divider rounded transition-colors" aria-label="Next week"><ChevronRight size={18} /></button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-7 gap-3">
-            {weekDays.map(day => {
-              const dayItems = itemsOn(day).sort((a, b) => +parseISO(a.start_at) - +parseISO(b.start_at))
-              const today = isToday(day)
-              return (
-                <div key={day.toISOString()} className={`rounded-lg border p-2 min-h-[180px] ${today ? 'border-cobalt bg-cobalt/5' : 'border-divider bg-white'}`}>
-                  <p className={`text-xs font-semibold mb-2 ${today ? 'text-cobalt border-b-2 border-cobalt inline-block' : 'text-slate'}`}>{format(day, 'EEE d')}</p>
-                  <div className="space-y-1.5">
-                    {dayItems.map(i => {
-                      const c = isOverdue(i) ? 'error' : TYPE_META[i.type].color
-                      return (
-                        <button key={i.id} onClick={() => setDetailItem(i)} className={`w-full text-left rounded p-1.5 transition-colors hover:brightness-95 ${ICON_SOFT_BG[c]} ${isDone(i) ? 'opacity-50' : ''}`}>
-                          <p className={`text-[11px] font-medium truncate ${isDone(i) ? 'line-through' : ''} text-charcoal`}>{i.title}</p>
-                          <p className="text-[10px] text-slate truncate">{format(parseISO(i.start_at), 'h:mm a')}{i.subtitle ? ` · ${i.subtitle}` : ''}</p>
-                        </button>
-                      )
-                    })}
-                    {dayItems.length === 0 && <p className="text-[10px] text-slate/60">—</p>}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+          <WeekHourGrid weekDays={weekDays} itemsOn={itemsOn} onOpen={setDetailItem} />
         </>
       )}
 
@@ -350,6 +339,145 @@ export default function CalendarPage() {
         onClose={() => setShowWorkBlock(false)}
         onCreated={() => { setShowWorkBlock(false); invalidate() }}
       />
+    </div>
+  )
+}
+
+// ── Week hour grid (Spec 16 §3: 7am–9pm) ─────────────────────────────────
+function weekItemLayout(item: CalendarItem, day: Date): { top: number; height: number } | 'allday' | null {
+  const start = parseISO(item.start_at)
+  if (!isSameDay(start, day)) return null
+
+  const gridStart = setMinutes(setHours(day, WEEK_GRID_START_HOUR), 0)
+  const defaultEnd = item.end_at
+    ? parseISO(item.end_at)
+    : addMinutes(start, item.type === 'work_block' ? 60 : DEADLINE_TYPES.includes(item.type) ? 30 : 45)
+
+  const startMins = differenceInMinutes(start, gridStart)
+  const endMins = differenceInMinutes(defaultEnd, gridStart)
+
+  // Deadlines stored as end-of-day UTC often fall outside the visible grid in local time.
+  if (DEADLINE_TYPES.includes(item.type) && (startMins >= WEEK_GRID_MINUTES || startMins < 0)) {
+    return 'allday'
+  }
+  if (startMins >= WEEK_GRID_MINUTES || endMins <= 0) return 'allday'
+
+  const clampedStart = Math.max(0, startMins)
+  const clampedEnd = Math.min(WEEK_GRID_MINUTES, Math.max(endMins, clampedStart + 30))
+  const top = (clampedStart / WEEK_GRID_MINUTES) * WEEK_GRID_HEIGHT
+  const height = Math.max(22, ((clampedEnd - clampedStart) / WEEK_GRID_MINUTES) * WEEK_GRID_HEIGHT)
+  return { top, height }
+}
+
+function WeekHourGrid({ weekDays, itemsOn, onOpen }: {
+  weekDays: Date[]
+  itemsOn: (day: Date) => CalendarItem[]
+  onOpen: (i: CalendarItem) => void
+}) {
+  const hourLabels = Array.from(
+    { length: WEEK_GRID_END_HOUR - WEEK_GRID_START_HOUR },
+    (_, i) => WEEK_GRID_START_HOUR + i,
+  )
+  const hasAllDay = weekDays.some(day =>
+    itemsOn(day).some(i => weekItemLayout(i, day) === 'allday'),
+  )
+
+  return (
+    <div className="overflow-x-auto rounded-lg border border-divider bg-white">
+      <div className="min-w-[720px]">
+        {/* Day headers */}
+        <div className="grid grid-cols-[48px_repeat(7,1fr)] border-b border-divider bg-paper">
+          <div />
+          {weekDays.map(day => {
+            const today = isToday(day)
+            return (
+              <div key={day.toISOString()} className={`py-2 text-center text-xs font-semibold ${today ? 'text-cobalt' : 'text-slate'}`}>
+                <span className={today ? 'border-b-2 border-cobalt pb-0.5' : ''}>{format(day, 'EEE d')}</span>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* All-day / deadline strip */}
+        {hasAllDay && (
+          <div className="grid grid-cols-[48px_repeat(7,1fr)] border-b border-divider min-h-[36px]">
+            <div className="text-[10px] text-slate px-1 py-1 flex items-start justify-end">All day</div>
+            {weekDays.map(day => (
+              <div key={`allday-${day.toISOString()}`} className="border-l border-divider p-0.5 space-y-0.5">
+                {itemsOn(day).filter(i => weekItemLayout(i, day) === 'allday').map(i => {
+                  const c = isOverdue(i) ? 'error' : TYPE_META[i.type].color
+                  return (
+                    <button
+                      key={i.id}
+                      onClick={() => onOpen(i)}
+                      className={`w-full text-left rounded px-1 py-0.5 text-[10px] truncate hover:brightness-95 ${ICON_SOFT_BG[c]} ${isDone(i) ? 'opacity-50 line-through' : ''} text-charcoal`}
+                    >
+                      {i.title}
+                    </button>
+                  )
+                })}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Hour grid */}
+        <div className="grid grid-cols-[48px_repeat(7,1fr)]">
+          <div className="relative" style={{ height: WEEK_GRID_HEIGHT }}>
+            {hourLabels.map(h => (
+              <div
+                key={h}
+                className="absolute right-1 -translate-y-1/2 text-[10px] text-slate tabular-nums"
+                style={{ top: (h - WEEK_GRID_START_HOUR) * WEEK_HOUR_PX }}
+              >
+                {format(setMinutes(setHours(new Date(), h), 0), 'ha')}
+              </div>
+            ))}
+          </div>
+          {weekDays.map(day => {
+            const today = isToday(day)
+            const timed = itemsOn(day)
+              .map(i => ({ item: i, layout: weekItemLayout(i, day) }))
+              .filter((x): x is { item: CalendarItem; layout: { top: number; height: number } } =>
+                x.layout !== null && x.layout !== 'allday',
+              )
+            return (
+              <div
+                key={day.toISOString()}
+                className={`relative border-l border-divider ${today ? 'bg-cobalt/[0.03]' : ''}`}
+                style={{ height: WEEK_GRID_HEIGHT }}
+              >
+                {hourLabels.map(h => (
+                  <div
+                    key={h}
+                    className="absolute inset-x-0 border-t border-divider/60"
+                    style={{ top: (h - WEEK_GRID_START_HOUR) * WEEK_HOUR_PX }}
+                  />
+                ))}
+                {timed.map(({ item, layout }) => {
+                  const c = isOverdue(item) ? 'error' : TYPE_META[item.type].color
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => onOpen(item)}
+                      style={{ top: layout.top, height: layout.height }}
+                      className={`absolute left-0.5 right-0.5 z-10 overflow-hidden rounded px-1 py-0.5 text-left transition-colors hover:brightness-95 ${ICON_SOFT_BG[c]} ${isDone(item) ? 'opacity-50' : ''}`}
+                    >
+                      <p className={`text-[10px] font-medium leading-tight truncate ${isDone(item) ? 'line-through' : ''} text-charcoal`}>
+                        {item.title}
+                      </p>
+                      <p className="text-[9px] text-slate truncate">
+                        {format(parseISO(item.start_at), 'h:mm a')}
+                        {item.end_at ? ` – ${format(parseISO(item.end_at), 'h:mm a')}` : ''}
+                      </p>
+                    </button>
+                  )
+                })}
+              </div>
+            )
+          })}
+        </div>
+      </div>
     </div>
   )
 }
