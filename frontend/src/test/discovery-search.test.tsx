@@ -4,6 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import ChipControls from '../pages/student/explore/discovery/ChipControls'
 import ConstraintChips from '../pages/student/explore/discovery/ConstraintChips'
 import GenreTiles from '../pages/student/explore/discovery/GenreTiles'
+import FiltersPanel from '../pages/student/explore/discovery/FiltersPanel'
 import {
   decodeRange,
   encodeChipsParam,
@@ -12,7 +13,14 @@ import {
   formatDurationDisplay,
   parseChipsParam,
 } from '../pages/student/explore/discovery/chipUtils'
-import type { ConstraintChip } from '../types/search'
+import {
+  countActiveFilters,
+  encodeFiltersParam,
+  parseFiltersParam,
+  selectivityFromRange,
+} from '../pages/student/explore/discovery/filterUtils'
+import { COMPARE_DIMENSIONS } from '../components/student/compareDimensions'
+import type { ConstraintChip, SearchFilters } from '../types/search'
 
 // Spec 10 — Discovery type-first search (chip utils + chip strip + genre tiles).
 
@@ -121,5 +129,76 @@ describe('ChipControls editor', () => {
     expect(onApply).toHaveBeenCalledWith(
       expect.objectContaining({ category: 'degree_level', value: 'phd', display: 'PhD', user_confirmed: true }),
     )
+  })
+})
+
+describe('filterUtils — panel filters (Spec §5)', () => {
+  it('round-trips filters through the URL param', () => {
+    const f: SearchFilters = {
+      degree_types: ['masters'],
+      min_tuition: 20000,
+      max_tuition: 50000,
+      campus_setting: 'urban',
+    }
+    expect(parseFiltersParam(encodeFiltersParam(f))).toMatchObject(f)
+  })
+
+  it('drops malformed / empty input rather than throwing', () => {
+    expect(parseFiltersParam('not-json')).toEqual({})
+    expect(parseFiltersParam(null)).toEqual({})
+  })
+
+  it('counts active facets (a min/max pair counts once)', () => {
+    expect(countActiveFilters({})).toBe(0)
+    expect(countActiveFilters({ min_tuition: 1, max_tuition: 2 })).toBe(1)
+    expect(countActiveFilters({ campus_setting: 'urban', degree_types: ['masters'] })).toBe(2)
+  })
+
+  it('maps a selectivity band from an acceptance range', () => {
+    expect(selectivityFromRange(0.6, undefined)).toBe('low')
+    expect(selectivityFromRange(0.1, 0.3)).toBe('high')
+    expect(selectivityFromRange(undefined, 0.1)).toBe('very_high')
+  })
+})
+
+describe('FiltersPanel', () => {
+  it('shows an accent count badge and applies the current filters', () => {
+    const onApply = vi.fn()
+    render(<FiltersPanel filters={{ min_tuition: 50000 }} onApply={onApply} />)
+    expect(screen.getByLabelText('1 active filters')).toBeInTheDocument()
+    fireEvent.click(screen.getByTestId('filters-trigger'))
+    fireEvent.click(screen.getByText('Apply filters'))
+    expect(onApply).toHaveBeenCalledWith(expect.objectContaining({ min_tuition: 50000 }))
+  })
+
+  it('clears all filters', () => {
+    const onApply = vi.fn()
+    render(<FiltersPanel filters={{ campus_setting: 'urban' }} onApply={onApply} />)
+    fireEvent.click(screen.getByTestId('filters-trigger'))
+    fireEvent.click(screen.getByText('Clear all'))
+    expect(onApply).toHaveBeenCalledWith({})
+  })
+})
+
+describe('compareDimensions (Spec §8)', () => {
+  it('exposes the five comparison dimensions in order', () => {
+    expect(COMPARE_DIMENSIONS.map(d => d.title)).toEqual([
+      'Structure & format',
+      'Location & setting',
+      'Cost & affordability',
+      'Access & competitiveness',
+      'Outcomes & employer signals',
+    ])
+  })
+
+  it('formats values with graceful fallbacks', () => {
+    const cost = COMPARE_DIMENSIONS.find(d => d.title === 'Cost & affordability')!
+    const tuition = cost.rows.find(r => r.label === 'Tuition / yr')!
+    expect(tuition.get({ id: '1', program_name: 'X', tuition: 40000 })).toBe('$40,000')
+    expect(tuition.get({ id: '1', program_name: 'X' })).toBe('—')
+
+    const access = COMPARE_DIMENSIONS.find(d => d.title === 'Access & competitiveness')!
+    const fit = access.rows.find(r => r.label === 'Fit')!
+    expect(fit.get({ id: '1', program_name: 'X', fitness_score: 0.82 })).toBe('82%')
   })
 })

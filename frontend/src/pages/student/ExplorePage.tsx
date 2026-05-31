@@ -10,6 +10,7 @@ import StrategyView from './match/StrategyView'
 import MatchesSection from './match/MatchesSection'
 import DiscoverySearch from './explore/discovery/DiscoverySearch'
 import { parseChipsParam } from './explore/discovery/chipUtils'
+import { hasActiveFilters as hasProgramFilters, parseFiltersParam } from './explore/discovery/filterUtils'
 import type {
   InstitutionClassification,
   SatTier,
@@ -90,7 +91,9 @@ export default function ExplorePage() {
   // A Spec-10 program search is "active" once there are constraint chips in the
   // URL (matching DiscoverySearch's own notion) — drives whether the matches +
   // universities browse stand aside so the programs results own the screen.
-  const searchActive = parseChipsParam(searchParams.get('chips')).length > 0
+  const searchActive =
+    parseChipsParam(searchParams.get('chips')).length > 0 ||
+    hasProgramFilters(parseFiltersParam(searchParams.get('filters')))
 
   // Universities browse filter state lives in the URL.
   const filters = useMemo(() => filtersFromURL(searchParams), [searchParams])

@@ -205,6 +205,9 @@ def _merge_filters(kwargs: dict, filters: FilterState | None) -> None:
         "min_acceptance_rate",
         "max_acceptance_rate",
         "start_year",
+        "min_median_salary",
+        "min_employment_rate",
+        "max_payback_months",
     ):
         v = getattr(filters, fld, None)
         if v is not None:
