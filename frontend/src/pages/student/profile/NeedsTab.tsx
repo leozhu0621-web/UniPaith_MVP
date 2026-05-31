@@ -114,9 +114,9 @@ function NeedForm({ initial, onCancel, onSubmit, submitting, isEdit }: NeedFormP
     <form onSubmit={handle} className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-student-ink mb-1">Maslow tier</label>
+          <label className="block text-sm font-medium text-foreground mb-1">Maslow tier</label>
           <select
-            className="w-full rounded border border-divider px-3 py-2 text-sm"
+            className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
             value={form.maslow_level}
             onChange={e => setForm(f => ({ ...f, maslow_level: e.target.value as MaslowLevel }))}
           >
@@ -128,9 +128,9 @@ function NeedForm({ initial, onCancel, onSubmit, submitting, isEdit }: NeedFormP
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-student-ink mb-1">Severity</label>
+          <label className="block text-sm font-medium text-foreground mb-1">Severity</label>
           <select
-            className="w-full rounded border border-divider px-3 py-2 text-sm"
+            className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
             value={form.severity}
             onChange={e => setForm(f => ({ ...f, severity: e.target.value as NeedSeverity }))}
           >
@@ -142,11 +142,11 @@ function NeedForm({ initial, onCancel, onSubmit, submitting, isEdit }: NeedFormP
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-student-ink mb-1">
-          Need type <span className="text-red-600">*</span>
+        <label className="block text-sm font-medium text-foreground mb-1">
+          Need type <span className="text-error">*</span>
         </label>
         <input
-          className="w-full rounded border border-divider px-3 py-2 text-sm"
+          className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
           maxLength={120}
           value={form.need_type}
           onChange={e => setForm(f => ({ ...f, need_type: e.target.value }))}
@@ -156,11 +156,11 @@ function NeedForm({ initial, onCancel, onSubmit, submitting, isEdit }: NeedFormP
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-student-ink mb-1">
-          Signal <span className="text-red-600">*</span>
+        <label className="block text-sm font-medium text-foreground mb-1">
+          Signal <span className="text-error">*</span>
         </label>
         <textarea
-          className="w-full rounded border border-divider px-3 py-2 text-sm"
+          className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
           rows={2}
           maxLength={4000}
           value={form.signal}
@@ -171,9 +171,9 @@ function NeedForm({ initial, onCancel, onSubmit, submitting, isEdit }: NeedFormP
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-student-ink mb-1">Source quote</label>
+        <label className="block text-sm font-medium text-foreground mb-1">Source quote</label>
         <input
-          className="w-full rounded border border-divider px-3 py-2 text-sm"
+          className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
           value={form.source_quote}
           onChange={e => setForm(f => ({ ...f, source_quote: e.target.value }))}
           placeholder="Optional — direct quote from a conversation or note."
@@ -244,8 +244,8 @@ export default function NeedsTab() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-student-ink">Needs map</h2>
-          <p className="text-sm text-student-text mt-1">
+          <h2 className="text-lg font-semibold text-foreground">Needs map</h2>
+          <p className="text-sm text-muted-foreground mt-1">
             Maslow-keyed. Higher tiers carry the differentiating signal — community, scholarship,
             mental support. Discovery infers; you can edit anything.
           </p>
@@ -255,29 +255,29 @@ export default function NeedsTab() {
         </Button>
       </div>
 
-      {isLoading && <div className="text-sm text-student-text">Loading…</div>}
+      {isLoading && <div className="text-sm text-muted-foreground">Loading…</div>}
 
       {!isLoading &&
         MASLOW_TIERS.map(tier => (
           <div key={tier.key}>
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-semibold text-student-ink">{tier.label}</h3>
-              <span className="text-xs text-student-text">{tier.hint}</span>
+              <h3 className="text-sm font-semibold text-foreground">{tier.label}</h3>
+              <span className="text-xs text-muted-foreground">{tier.hint}</span>
             </div>
             {grouped[tier.key].length === 0 ? (
-              <Card className="text-sm text-student-text italic">
+              <Card className="p-4 text-sm text-muted-foreground italic">
                 No {tier.label.toLowerCase()} signals yet.
               </Card>
             ) : (
               <div className="space-y-2">
                 {grouped[tier.key].map(n => (
-                  <Card key={n.id} className="space-y-2">
+                  <Card key={n.id} className="p-4 space-y-2">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <div className="text-sm font-medium text-student-ink">{n.need_type}</div>
-                        <div className="text-xs text-student-text mt-0.5">{n.signal}</div>
+                        <div className="text-sm font-medium text-foreground">{n.need_type}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">{n.signal}</div>
                         {n.source_quote && (
-                          <div className="text-xs text-student-text mt-1 italic border-l-2 border-divider pl-2">
+                          <div className="text-xs text-muted-foreground mt-1 italic border-l-2 border-border pl-2">
                             "{n.source_quote}"
                           </div>
                         )}
@@ -285,14 +285,14 @@ export default function NeedsTab() {
                       <div className="flex gap-1 shrink-0">
                         <button
                           aria-label="Edit need"
-                          className="p-1 text-student-text hover:text-student-ink"
+                          className="p-1 text-muted-foreground hover:text-foreground"
                           onClick={() => setEditing(n)}
                         >
                           <Pencil size={14} />
                         </button>
                         <button
                           aria-label="Delete need"
-                          className="p-1 text-red-600 hover:text-red-700"
+                          className="p-1 text-error hover:opacity-80"
                           onClick={() => {
                             if (confirm('Remove this need?')) deleteMut.mutate(n.id)
                           }}

@@ -60,9 +60,9 @@ function NarrativeEditor({ initial, onCancel, onSubmit, submitting }: NarrativeE
       className="space-y-4"
     >
       <div>
-        <label className="block text-sm font-medium text-student-ink mb-1">Career target</label>
+        <label className="block text-sm font-medium text-foreground mb-1">Career target</label>
         <input
-          className="w-full rounded border border-divider px-3 py-2 text-sm"
+          className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary"
           maxLength={500}
           value={career}
           onChange={e => setCareer(e.target.value)}
@@ -70,9 +70,9 @@ function NarrativeEditor({ initial, onCancel, onSubmit, submitting }: NarrativeE
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-student-ink mb-1">Target degree</label>
+        <label className="block text-sm font-medium text-foreground mb-1">Target degree</label>
         <input
-          className="w-full rounded border border-divider px-3 py-2 text-sm"
+          className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary"
           maxLength={120}
           value={degree}
           onChange={e => setDegree(e.target.value)}
@@ -80,16 +80,16 @@ function NarrativeEditor({ initial, onCancel, onSubmit, submitting }: NarrativeE
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-student-ink mb-1">Narrative</label>
+        <label className="block text-sm font-medium text-foreground mb-1">Narrative</label>
         <textarea
-          className="w-full rounded border border-divider px-3 py-2 text-sm font-mono"
+          className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary"
           rows={10}
           maxLength={20000}
           value={narrative}
           onChange={e => setNarrative(e.target.value)}
           placeholder="The prose explanation of your strategy."
         />
-        <div className="text-xs text-student-text mt-1">
+        <div className="text-xs text-muted-foreground mt-1">
           Saving creates a new draft — your current version is archived. Activate the new draft
           when you're ready.
         </div>
@@ -118,11 +118,11 @@ function StrategyCard({
   isActivating?: boolean
 }) {
   return (
-    <Card className="space-y-3">
+    <Card className="p-5 space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs uppercase tracking-wide text-student-text">
+            <span className="text-xs uppercase tracking-wide text-muted-foreground">
               Version {strategy.version}
             </span>
             <Badge variant={STATUS_VARIANTS[strategy.status]} size="sm">
@@ -136,10 +136,10 @@ function StrategyCard({
             )}
           </div>
           {strategy.career_target && (
-            <div className="text-base font-medium text-student-ink">{strategy.career_target}</div>
+            <div className="text-base font-medium text-foreground">{strategy.career_target}</div>
           )}
           {strategy.target_degree && (
-            <div className="text-sm text-student-text">→ {strategy.target_degree}</div>
+            <div className="text-sm text-muted-foreground">→ {strategy.target_degree}</div>
           )}
         </div>
         <div className="flex gap-1">
@@ -159,7 +159,7 @@ function StrategyCard({
       </div>
 
       {strategy.narrative && (
-        <div className="text-sm text-student-ink whitespace-pre-line border-l-2 border-divider pl-3">
+        <div className="text-sm text-foreground whitespace-pre-line border-l-2 border-border pl-3">
           {strategy.narrative}
         </div>
       )}
@@ -168,13 +168,13 @@ function StrategyCard({
         <PathSection title="Academic path">
           {strategy.academic_path.map((step, i) => (
             <PathRow key={i}>
-              <div className="text-sm font-medium text-student-ink">{step.step}</div>
+              <div className="text-sm font-medium text-foreground">{step.step}</div>
               {step.options.length > 0 && (
-                <div className="text-xs text-student-text">
+                <div className="text-xs text-muted-foreground">
                   Options: {step.options.join(', ')}
                 </div>
               )}
-              <div className="text-xs text-student-text italic">{step.rationale}</div>
+              <div className="text-xs text-muted-foreground italic">{step.rationale}</div>
             </PathRow>
           ))}
         </PathSection>
@@ -184,10 +184,10 @@ function StrategyCard({
         <PathSection title="Financial path">
           {strategy.financial_path.map((item, i) => (
             <PathRow key={i}>
-              <div className="text-sm font-medium text-student-ink">{item.aid_type}</div>
-              <div className="text-xs text-student-text">{item.eligibility}</div>
+              <div className="text-sm font-medium text-foreground">{item.aid_type}</div>
+              <div className="text-xs text-muted-foreground">{item.eligibility}</div>
               {item.estimated_value && (
-                <div className="text-xs text-student-text">≈ {item.estimated_value}</div>
+                <div className="text-xs text-muted-foreground">≈ {item.estimated_value}</div>
               )}
             </PathRow>
           ))}
@@ -198,10 +198,10 @@ function StrategyCard({
         <PathSection title="Geographic path">
           {strategy.geographic_path.map((item, i) => (
             <PathRow key={i}>
-              <div className="text-sm font-medium text-student-ink">{item.region}</div>
-              <div className="text-xs text-student-text italic">{item.rationale}</div>
+              <div className="text-sm font-medium text-foreground">{item.region}</div>
+              <div className="text-xs text-muted-foreground italic">{item.rationale}</div>
               {item.constraints.length > 0 && (
-                <div className="text-xs text-student-text">
+                <div className="text-xs text-muted-foreground">
                   Constraints: {item.constraints.join(', ')}
                 </div>
               )}
@@ -216,7 +216,7 @@ function StrategyCard({
 function PathSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-xs uppercase tracking-wide text-student-text mb-1">{title}</div>
+      <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">{title}</div>
       <div className="space-y-2">{children}</div>
     </div>
   )
@@ -225,7 +225,7 @@ function PathSection({ title, children }: { title: string; children: React.React
 function PathRow({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-start gap-2">
-      <ChevronRight size={14} className="text-student-text mt-0.5 shrink-0" />
+      <ChevronRight size={14} className="text-muted-foreground mt-0.5 shrink-0" />
       <div className="space-y-0.5">{children}</div>
     </div>
   )
@@ -287,8 +287,8 @@ export default function StrategyTab() {
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-student-ink">Strategy</h2>
-          <p className="text-sm text-student-text mt-1">
+          <h2 className="text-lg font-semibold text-foreground">Strategy</h2>
+          <p className="text-sm text-muted-foreground mt-1">
             The broad-strategy artifact that bridges Discovery → Match. Versioned per student;
             exactly one can be active at a time.
           </p>
@@ -299,7 +299,7 @@ export default function StrategyTab() {
         </Button>
       </div>
 
-      {isLoading && <div className="text-sm text-student-text">Loading…</div>}
+      {isLoading && <div className="text-sm text-muted-foreground">Loading…</div>}
 
       {/* Spec 03 §7 — on regenerate failure, preserve the existing active
           strategy and surface an inline brand-aligned banner. The toast
@@ -308,29 +308,26 @@ export default function StrategyTab() {
       {generateMut.isError && active && (
         <div
           role="status"
-          className="flex items-start gap-2 rounded border border-divider bg-student-surface-elevated px-3 py-2 text-sm text-student-ink"
-          style={{ borderLeft: '3px solid #FFD60A' }}
+          className="flex items-start gap-2 rounded-lg border border-border border-l-2 border-l-primary bg-muted px-3 py-2.5 text-sm text-foreground"
         >
-          <AlertTriangle size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
+          <AlertTriangle size={16} className="mt-0.5 shrink-0 text-warning" aria-hidden="true" />
           <div>
-            <div className="font-medium">Couldn't regenerate your strategy.</div>
-            <div className="text-student-text">
-              Showing your current active strategy. Try again in a few moments.
-            </div>
+            <div className="font-medium">We couldn't reach the AI service. Showing your last strategy.</div>
+            <div className="text-muted-foreground">Try again in a few moments.</div>
           </div>
         </div>
       )}
 
       {!isLoading && !active && drafts.length === 0 && versions.length === 0 && (
-        <Card className="text-sm text-student-text">
+        <Card className="p-5 text-sm text-muted-foreground">
           You don't have a strategy yet. Generation needs at least one active academic goal — add
-          one in the Goals tab, then come back and click "Generate new draft."
+          one in the Goals tab, then come back and select "Generate new draft."
         </Card>
       )}
 
       {active && (
         <div>
-          <div className="text-xs uppercase tracking-wide text-student-text mb-2">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
             Active strategy
           </div>
           <StrategyCard strategy={active} onEdit={() => setEditing(active)} />
@@ -339,7 +336,7 @@ export default function StrategyTab() {
 
       {drafts.length > 0 && (
         <div>
-          <div className="text-xs uppercase tracking-wide text-student-text mb-2">Drafts</div>
+          <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Drafts</div>
           <div className="space-y-3">
             {drafts.map(d => (
               <StrategyCard
@@ -356,7 +353,7 @@ export default function StrategyTab() {
 
       {archived.length > 0 && (
         <div>
-          <div className="text-xs uppercase tracking-wide text-student-text mb-2">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
             Earlier versions
           </div>
           <div className="space-y-3 opacity-70">
@@ -364,7 +361,7 @@ export default function StrategyTab() {
               <StrategyCard key={a.id} strategy={a} />
             ))}
             {archived.length > 3 && (
-              <div className="text-xs text-student-text">
+              <div className="text-xs text-muted-foreground">
                 {archived.length - 3} older version(s) hidden.
               </div>
             )}

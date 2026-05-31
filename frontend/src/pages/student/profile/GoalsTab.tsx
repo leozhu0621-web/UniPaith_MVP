@@ -22,6 +22,7 @@ import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
 import Modal from '../../../components/ui/Modal'
 import { showToast } from '../../../stores/toast-store'
+import { ConfidenceDots } from './shared'
 import type { GoalCategory, GoalStatus, StudentGoal } from '../../../types'
 
 const CATEGORIES: { key: GoalCategory; label: string; hint: string }[] = [
@@ -88,9 +89,9 @@ function GoalForm({ initial, onCancel, onSubmit, submitting, isEdit }: GoalFormP
   return (
     <form onSubmit={handle} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-student-ink mb-1">Category</label>
+        <label className="block text-sm font-medium text-foreground mb-1">Category</label>
         <select
-          className="w-full rounded border border-divider px-3 py-2 text-sm"
+          className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
           value={form.category}
           onChange={e => setForm(f => ({ ...f, category: e.target.value as GoalCategory }))}
         >
@@ -103,11 +104,11 @@ function GoalForm({ initial, onCancel, onSubmit, submitting, isEdit }: GoalFormP
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-student-ink mb-1">
-          Specific <span className="text-red-600">*</span>
+        <label className="block text-sm font-medium text-foreground mb-1">
+          Specific <span className="text-error">*</span>
         </label>
         <textarea
-          className="w-full rounded border border-divider px-3 py-2 text-sm"
+          className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
           rows={2}
           maxLength={2000}
           value={form.specific}
@@ -118,9 +119,9 @@ function GoalForm({ initial, onCancel, onSubmit, submitting, isEdit }: GoalFormP
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-student-ink mb-1">Measurable</label>
+        <label className="block text-sm font-medium text-foreground mb-1">Measurable</label>
         <input
-          className="w-full rounded border border-divider px-3 py-2 text-sm"
+          className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
           maxLength={2000}
           value={form.measurable}
           onChange={e => setForm(f => ({ ...f, measurable: e.target.value }))}
@@ -129,9 +130,9 @@ function GoalForm({ initial, onCancel, onSubmit, submitting, isEdit }: GoalFormP
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-student-ink mb-1">Achievable notes</label>
+        <label className="block text-sm font-medium text-foreground mb-1">Achievable notes</label>
         <input
-          className="w-full rounded border border-divider px-3 py-2 text-sm"
+          className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
           value={form.achievable_notes}
           onChange={e => setForm(f => ({ ...f, achievable_notes: e.target.value }))}
           placeholder="What gets in the way?"
@@ -139,9 +140,9 @@ function GoalForm({ initial, onCancel, onSubmit, submitting, isEdit }: GoalFormP
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-student-ink mb-1">Relevance</label>
+        <label className="block text-sm font-medium text-foreground mb-1">Relevance</label>
         <input
-          className="w-full rounded border border-divider px-3 py-2 text-sm"
+          className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
           value={form.relevant_notes}
           onChange={e => setForm(f => ({ ...f, relevant_notes: e.target.value }))}
           placeholder="Why does this matter to you?"
@@ -150,19 +151,19 @@ function GoalForm({ initial, onCancel, onSubmit, submitting, isEdit }: GoalFormP
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-student-ink mb-1">Target date</label>
+          <label className="block text-sm font-medium text-foreground mb-1">Target date</label>
           <input
             type="date"
-            className="w-full rounded border border-divider px-3 py-2 text-sm"
+            className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
             value={form.time_bound}
             onChange={e => setForm(f => ({ ...f, time_bound: e.target.value }))}
           />
         </div>
         {isEdit && (
           <div>
-            <label className="block text-sm font-medium text-student-ink mb-1">Status</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Status</label>
             <select
-              className="w-full rounded border border-divider px-3 py-2 text-sm"
+              className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
               value={form.status}
               onChange={e => setForm(f => ({ ...f, status: e.target.value as GoalStatus }))}
             >
@@ -239,8 +240,8 @@ export default function GoalsTab() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-student-ink">SMART goals</h2>
-          <p className="text-sm text-student-text mt-1">
+          <h2 className="text-lg font-semibold text-foreground">SMART goals</h2>
+          <p className="text-sm text-muted-foreground mt-1">
             Specific, measurable, achievable, relevant, time-bound. Discovery-sourced goals show a
             confidence badge; you can edit anything.
           </p>
@@ -250,36 +251,36 @@ export default function GoalsTab() {
         </Button>
       </div>
 
-      {isLoading && <div className="text-sm text-student-text">Loading…</div>}
+      {isLoading && <div className="text-sm text-muted-foreground">Loading…</div>}
 
       {!isLoading &&
         CATEGORIES.map(cat => (
           <div key={cat.key}>
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-semibold text-student-ink">{cat.label}</h3>
-              <span className="text-xs text-student-text">{cat.hint}</span>
+              <h3 className="text-sm font-semibold text-foreground">{cat.label}</h3>
+              <span className="text-xs text-muted-foreground">{cat.hint}</span>
             </div>
             {grouped[cat.key].length === 0 ? (
-              <Card className="text-sm text-student-text italic">
+              <Card className="p-4 text-sm text-muted-foreground italic">
                 No {cat.label.toLowerCase()} goals yet.
               </Card>
             ) : (
               <div className="space-y-2">
                 {grouped[cat.key].map(g => (
-                  <Card key={g.id} className="space-y-2">
+                  <Card key={g.id} className="p-4 space-y-2">
                     <div className="flex items-start justify-between gap-3">
-                      <div className="text-sm font-medium text-student-ink">{g.specific}</div>
+                      <div className="text-sm font-medium text-foreground">{g.specific}</div>
                       <div className="flex gap-1 shrink-0">
                         <button
                           aria-label="Edit goal"
-                          className="p-1 text-student-text hover:text-student-ink"
+                          className="p-1 text-muted-foreground hover:text-foreground"
                           onClick={() => setEditing(g)}
                         >
                           <Pencil size={14} />
                         </button>
                         <button
                           aria-label="Delete goal"
-                          className="p-1 text-red-600 hover:text-red-700"
+                          className="p-1 text-error hover:opacity-80"
                           onClick={() => {
                             if (confirm('Remove this goal?')) deleteMut.mutate(g.id)
                           }}
@@ -289,11 +290,17 @@ export default function GoalsTab() {
                       </div>
                     </div>
                     {(g.measurable || g.achievable_notes || g.relevant_notes) && (
-                      <div className="text-xs text-student-text space-y-0.5">
-                        {g.measurable && <div>📏 {g.measurable}</div>}
-                        {g.achievable_notes && <div>🛠️ {g.achievable_notes}</div>}
-                        {g.relevant_notes && <div>🎯 {g.relevant_notes}</div>}
-                      </div>
+                      <dl className="text-xs text-muted-foreground space-y-1">
+                        {g.measurable && (
+                          <div className="flex gap-1.5"><dt className="font-semibold text-foreground shrink-0">Measurable</dt><dd>{g.measurable}</dd></div>
+                        )}
+                        {g.achievable_notes && (
+                          <div className="flex gap-1.5"><dt className="font-semibold text-foreground shrink-0">Achievable</dt><dd>{g.achievable_notes}</dd></div>
+                        )}
+                        {g.relevant_notes && (
+                          <div className="flex gap-1.5"><dt className="font-semibold text-foreground shrink-0">Relevant</dt><dd>{g.relevant_notes}</dd></div>
+                        )}
+                      </dl>
                     )}
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant={STATUS_VARIANTS[g.status]} size="sm">
@@ -305,11 +312,14 @@ export default function GoalsTab() {
                         </Badge>
                       )}
                       {g.source === 'discovery' && (
-                        <Badge variant="info" size="sm" className="inline-flex items-center gap-1">
-                          <Sparkles size={10} />
-                          discovery
-                          {g.confidence ? ` · ${Math.round(Number(g.confidence) * 100)}%` : ''}
-                        </Badge>
+                        <span className="inline-flex items-center gap-1.5">
+                          <Badge variant="info" size="sm" className="inline-flex items-center gap-1">
+                            <Sparkles size={10} /> discovery
+                          </Badge>
+                          {g.confidence != null && (
+                            <ConfidenceDots filled={Math.round(Number(g.confidence) * 5)} showLabel={false} />
+                          )}
+                        </span>
                       )}
                     </div>
                   </Card>

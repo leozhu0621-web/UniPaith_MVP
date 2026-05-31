@@ -71,6 +71,8 @@ export const upsertScheduling = (data: any) => apiClient.put('/students/me/sched
 export const getDataRights = () => apiClient.get('/students/me/data-rights').then(r => r.data)
 export const upsertDataRights = (data: any) => apiClient.put('/students/me/data-rights', data).then(r => r.data)
 
+export const getAccessLog = () => apiClient.get('/students/me/access-log').then(r => r.data)
+
 export const exportProfileJson = async () => {
   const res = await apiClient.get('/students/me/export')
   const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' })

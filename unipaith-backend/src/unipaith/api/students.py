@@ -856,6 +856,17 @@ async def upsert_data_rights(
     return await svc.upsert_data_consent(profile.id, body)
 
 
+@router.get("/me/access-log")
+async def get_access_log(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 08 §16 / 46 §8 — who/what accessed your data, when, and which fields."""
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.get_access_log(profile.id)
+
+
 # --- Preferences ---
 
 

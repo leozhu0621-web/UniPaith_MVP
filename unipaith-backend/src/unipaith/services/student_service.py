@@ -1093,7 +1093,104 @@ class StudentService:
 
             await invalidate_for_consent_change(self.db, student_id)
 
+        # Load server-side defaults (created_at/updated_at) within the async
+        # context so response serialization never triggers a sync lazy-load
+        # (MissingGreenlet) on a fresh insert.
+        await self.db.refresh(record)
         return record
+
+    # --- Access Log (spec 08 §16 / 46 §8) ---
+
+    async def get_access_log(self, student_id: UUID, limit: int = 50) -> list[dict]:
+        """Return a human-readable log of who/what accessed the student's data.
+
+        Sourced from the AI audit ledger (`ai_turns`): every agent run on the
+        student's data writes one row with provider, model, and the consent
+        mask active at request time. We map each agent to a plain-language
+        actor + action + the data category it touched, plus any recorded
+        consent-change events. Newest first.
+        """
+        from unipaith.models.ai_artifacts import AiTurn
+
+        # agent -> (actor, action, fields touched)
+        agent_map: dict[str, tuple[str, str, str]] = {
+            "orchestrator": (
+                "Discovery assistant",
+                "Guided your discovery conversation",
+                "Chat messages",
+            ),
+            "extractor": (
+                "Signal extractor",
+                "Extracted profile signals from your messages",
+                "Discovery messages",
+            ),
+            "validator": (
+                "Signal validator",
+                "Checked extracted signals for accuracy",
+                "Extracted signals",
+            ),
+            "feature_emitter": ("Match engine", "Built your match profile", "Profile"),
+            "rationale": (
+                "Match engine",
+                "Explained why a program matched you",
+                "Profile, program",
+            ),
+            "workshop_coach": ("Workshop coach", "Gave feedback on your draft", "Your draft"),
+            "workshop_judge": (
+                "Workshop coach",
+                "Scored your practice response",
+                "Your draft",
+            ),
+            "embedding": ("Match engine", "Indexed your profile for matching", "Profile"),
+            "review_summarizer": (
+                "Institution reviewer",
+                "Summarized your application packet",
+                "Application",
+            ),
+            "authenticity_risk": ("Integrity check", "Scanned a submitted essay", "Essay"),
+            "matcher": ("Match engine", "Scored your program matches", "Profile"),
+        }
+
+        result = await self.db.execute(
+            select(AiTurn)
+            .where(AiTurn.student_id == student_id)
+            .order_by(AiTurn.created_at.desc())
+            .limit(limit)
+        )
+        entries: list[dict] = []
+        for turn in result.scalars().all():
+            actor, action, fields = agent_map.get(
+                turn.agent, ("AI service", "Processed your data", "Profile")
+            )
+            entries.append(
+                {
+                    "timestamp": turn.created_at.isoformat(),
+                    "actor": actor,
+                    "action": action,
+                    "fields": fields,
+                    "provider": turn.provider,
+                    "model": turn.model,
+                }
+            )
+
+        # Prepend consent-change events when present.
+        consent = await self.get_data_consent(student_id)
+        if consent and consent.consent_revocation_timestamps:
+            for evt in consent.consent_revocation_timestamps:
+                if isinstance(evt, dict) and evt.get("timestamp"):
+                    entries.append(
+                        {
+                            "timestamp": evt["timestamp"],
+                            "actor": "You",
+                            "action": f"Changed consent: {evt.get('lever', 'preferences')}",
+                            "fields": "Consent settings",
+                            "provider": None,
+                            "model": None,
+                        }
+                    )
+
+        entries.sort(key=lambda e: e["timestamp"], reverse=True)
+        return entries[:limit]
 
     # --- Peer Comparison ---
 

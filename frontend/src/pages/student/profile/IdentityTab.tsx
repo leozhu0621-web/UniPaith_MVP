@@ -23,6 +23,7 @@ import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
 import Modal from '../../../components/ui/Modal'
 import { showToast } from '../../../stores/toast-store'
+import { relativeShort } from './shared'
 import type {
   CoreValue,
   SelfAwarenessItem,
@@ -76,11 +77,11 @@ function ItemForm({ state, onCancel, onSave, setState, submitting }: ItemFormPro
         className="space-y-3"
       >
         <div>
-          <label className="block text-sm font-medium text-student-ink mb-1">
-            Value <span className="text-red-600">*</span>
+          <label className="block text-sm font-medium text-foreground mb-1">
+            Value <span className="text-error">*</span>
           </label>
           <input
-            className="w-full rounded border border-divider px-3 py-2 text-sm"
+            className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary"
             maxLength={200}
             value={draft.value}
             onChange={e => setState({ ...state, draft: { ...draft, value: e.target.value } })}
@@ -88,11 +89,11 @@ function ItemForm({ state, onCancel, onSave, setState, submitting }: ItemFormPro
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-student-ink mb-1">
-            Evidence <span className="text-red-600">*</span>
+          <label className="block text-sm font-medium text-foreground mb-1">
+            Evidence <span className="text-error">*</span>
           </label>
           <textarea
-            className="w-full rounded border border-divider px-3 py-2 text-sm"
+            className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary"
             rows={3}
             maxLength={4000}
             value={draft.evidence}
@@ -122,11 +123,11 @@ function ItemForm({ state, onCancel, onSave, setState, submitting }: ItemFormPro
         className="space-y-3"
       >
         <div>
-          <label className="block text-sm font-medium text-student-ink mb-1">
-            Belief <span className="text-red-600">*</span>
+          <label className="block text-sm font-medium text-foreground mb-1">
+            Belief <span className="text-error">*</span>
           </label>
           <input
-            className="w-full rounded border border-divider px-3 py-2 text-sm"
+            className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary"
             maxLength={400}
             value={draft.belief}
             onChange={e => setState({ ...state, draft: { ...draft, belief: e.target.value } })}
@@ -134,11 +135,11 @@ function ItemForm({ state, onCancel, onSave, setState, submitting }: ItemFormPro
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-student-ink mb-1">
-            Context <span className="text-red-600">*</span>
+          <label className="block text-sm font-medium text-foreground mb-1">
+            Context <span className="text-error">*</span>
           </label>
           <textarea
-            className="w-full rounded border border-divider px-3 py-2 text-sm"
+            className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary"
             rows={3}
             maxLength={4000}
             value={draft.context}
@@ -168,11 +169,11 @@ function ItemForm({ state, onCancel, onSave, setState, submitting }: ItemFormPro
       className="space-y-3"
     >
       <div>
-        <label className="block text-sm font-medium text-student-ink mb-1">
-          Insight <span className="text-red-600">*</span>
+        <label className="block text-sm font-medium text-foreground mb-1">
+          Insight <span className="text-error">*</span>
         </label>
         <input
-          className="w-full rounded border border-divider px-3 py-2 text-sm"
+          className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary"
           maxLength={400}
           value={draft.insight}
           onChange={e => setState({ ...state, draft: { ...draft, insight: e.target.value } })}
@@ -180,9 +181,9 @@ function ItemForm({ state, onCancel, onSave, setState, submitting }: ItemFormPro
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-student-ink mb-1">Trigger event</label>
+        <label className="block text-sm font-medium text-foreground mb-1">Trigger event</label>
         <textarea
-          className="w-full rounded border border-divider px-3 py-2 text-sm"
+          className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary"
           rows={3}
           maxLength={4000}
           value={draft.trigger_event ?? ''}
@@ -282,38 +283,22 @@ export default function IdentityTab() {
   }
 
   if (isLoading || !identity) {
-    return <div className="text-sm text-student-text">Loading…</div>
+    return <div className="text-sm text-muted-foreground">Loading…</div>
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-semibold text-student-ink">Identity</h2>
-          <p className="text-sm text-student-text mt-1">
-            The deepest layer of who you are — values, worldview, self-awareness. Discovery surfaces
-            these from your conversations; you can edit and regenerate the summary any time.
-          </p>
-        </div>
-        <Button
-          variant="ghost"
-          onClick={() => regenMut.mutate()}
-          loading={regenMut.isPending}
-          aria-label="Regenerate summary"
-        >
-          <Sparkles size={14} className="mr-1" />
-          Regenerate summary
-        </Button>
-      </div>
-
       {showPrivacy && (
-        <Card className="bg-blue-50 border-blue-200 flex items-start gap-3">
-          <ShieldCheck size={18} className="text-blue-600 shrink-0 mt-0.5" />
-          <div className="text-sm text-blue-900">
-            <strong>Private to you.</strong> Identity entries are stored encrypted at rest and
-            never shared with institutions without your explicit consent.
+        <Card className="p-4 flex items-start gap-3 bg-muted">
+          <ShieldCheck size={18} className="text-secondary shrink-0 mt-0.5" />
+          <div className="text-sm text-foreground">
+            Identity is the deepest layer of your profile. We use this to personalize matches and
+            rationales — nothing here goes to institutions until you choose to share it. Manage in{' '}
+            <a href="/s/profile?tab=data" className="font-semibold text-secondary hover:underline">
+              Data Rights →
+            </a>
             <button
-              className="ml-2 underline"
+              className="ml-2 font-semibold text-secondary hover:underline"
               onClick={() => {
                 window.localStorage.setItem(PRIVACY_DISCLOSURE_KEY, '1')
                 setShowPrivacy(false)
@@ -325,14 +310,13 @@ export default function IdentityTab() {
         </Card>
       )}
 
-      {identity.identity_summary && (
-        <Card className="bg-student-bg-surface">
-          <div className="text-xs uppercase tracking-wide text-student-text mb-1">Summary</div>
-          <div className="text-sm text-student-ink whitespace-pre-line">
-            {identity.identity_summary}
-          </div>
-        </Card>
-      )}
+      <div>
+        <h2 className="text-h3 text-foreground">Identity</h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          The deepest layer of who you are — values, worldview, and self-awareness. Discovery surfaces
+          these from your conversations; edit anything.
+        </p>
+      </div>
 
       <Section
         title="Core values"
@@ -350,9 +334,9 @@ export default function IdentityTab() {
           <Empty kind="value" />
         ) : (
           identity.core_values.map((v, i) => (
-            <Card key={i} className="space-y-1">
+            <Card key={i} className="p-4 space-y-1">
               <div className="flex items-start justify-between gap-2">
-                <div className="text-sm font-medium text-student-ink">{v.value}</div>
+                <div className="text-sm font-medium text-foreground">{v.value}</div>
                 <ItemActions
                   onEdit={() =>
                     setEditing({
@@ -364,9 +348,9 @@ export default function IdentityTab() {
                   onRemove={() => removeItem('core_values', i)}
                 />
               </div>
-              <div className="text-xs text-student-text">{v.evidence}</div>
+              <div className="text-xs text-muted-foreground">{v.evidence}</div>
               {v.source_quote && (
-                <div className="text-xs italic text-student-text border-l-2 border-divider pl-2">
+                <div className="text-xs italic text-muted-foreground border-l-2 border-border pl-2">
                   "{v.source_quote}"
                 </div>
               )}
@@ -391,9 +375,9 @@ export default function IdentityTab() {
           <Empty kind="belief" />
         ) : (
           identity.worldview.map((w, i) => (
-            <Card key={i} className="space-y-1">
+            <Card key={i} className="p-4 space-y-1">
               <div className="flex items-start justify-between gap-2">
-                <div className="text-sm font-medium text-student-ink">{w.belief}</div>
+                <div className="text-sm font-medium text-foreground">{w.belief}</div>
                 <ItemActions
                   onEdit={() =>
                     setEditing({
@@ -405,7 +389,7 @@ export default function IdentityTab() {
                   onRemove={() => removeItem('worldview', i)}
                 />
               </div>
-              <div className="text-xs text-student-text">{w.context}</div>
+              <div className="text-xs text-muted-foreground">{w.context}</div>
             </Card>
           ))
         )}
@@ -427,9 +411,9 @@ export default function IdentityTab() {
           <Empty kind="insight" />
         ) : (
           identity.self_awareness.map((s, i) => (
-            <Card key={i} className="space-y-1">
+            <Card key={i} className="p-4 space-y-1">
               <div className="flex items-start justify-between gap-2">
-                <div className="text-sm font-medium text-student-ink">{s.insight}</div>
+                <div className="text-sm font-medium text-foreground">{s.insight}</div>
                 <ItemActions
                   onEdit={() =>
                     setEditing({
@@ -441,11 +425,42 @@ export default function IdentityTab() {
                   onRemove={() => removeItem('self_awareness', i)}
                 />
               </div>
-              {s.trigger_event && <div className="text-xs text-student-text">{s.trigger_event}</div>}
+              {s.trigger_event && <div className="text-xs text-muted-foreground">{s.trigger_event}</div>}
             </Card>
           ))
         )}
       </Section>
+
+      {/* AI summary (§5) — generated by IdentitySummaryAgent. */}
+      <Card className="p-5">
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2">
+            <h3 className="text-h3 text-foreground">AI summary</h3>
+            <span className="inline-flex items-center gap-1 rounded-pill border border-accent px-2 py-0.5 text-[11px] font-semibold text-accent">
+              <Sparkles size={10} /> AI
+            </span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => regenMut.mutate()}
+            loading={regenMut.isPending}
+            aria-label="Regenerate summary"
+          >
+            <Sparkles size={14} /> Regenerate
+          </Button>
+        </div>
+        {identity.identity_summary ? (
+          <p className="text-sm text-foreground whitespace-pre-line">{identity.identity_summary}</p>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Once you've added a few values and beliefs, we'll synthesize a short summary of who you are.
+          </p>
+        )}
+        {identity.updated_at && (
+          <p className="text-xs text-muted-foreground mt-3">Updated {relativeShort(identity.updated_at) ?? 'recently'}</p>
+        )}
+      </Card>
 
       {editing && (
         <Modal
@@ -479,8 +494,8 @@ function Section({ title, hint, addLabel, onAdd, children }: SectionProps) {
     <div>
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h3 className="text-sm font-semibold text-student-ink">{title}</h3>
-          <span className="text-xs text-student-text">{hint}</span>
+          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+          <span className="text-xs text-muted-foreground">{hint}</span>
         </div>
         <Button size="sm" variant="ghost" onClick={onAdd}>
           <Plus size={14} className="mr-1" /> {addLabel}
@@ -492,7 +507,7 @@ function Section({ title, hint, addLabel, onAdd, children }: SectionProps) {
 }
 
 function Empty({ kind }: { kind: string }) {
-  return <Card className="text-sm text-student-text italic">No {kind}s recorded yet.</Card>
+  return <Card className="p-4 text-sm text-muted-foreground italic">No {kind}s recorded yet.</Card>
 }
 
 function ItemActions({ onEdit, onRemove }: { onEdit: () => void; onRemove: () => void }) {
@@ -500,14 +515,14 @@ function ItemActions({ onEdit, onRemove }: { onEdit: () => void; onRemove: () =>
     <div className="flex gap-1 shrink-0">
       <button
         aria-label="Edit"
-        className="p-1 text-student-text hover:text-student-ink"
+        className="p-1 text-muted-foreground hover:text-foreground"
         onClick={onEdit}
       >
         <Pencil size={14} />
       </button>
       <button
         aria-label="Delete"
-        className="p-1 text-red-600 hover:text-red-700"
+        className="p-1 text-error hover:opacity-80"
         onClick={onRemove}
       >
         <Trash2 size={14} />

@@ -102,11 +102,12 @@ async def get_consent_mask(
         "outreach": bool(row.consent_outreach),
         # DB legacy: `consent_research` is the analytics consent.
         "analytics": bool(row.consent_research),
-        # Anthropic doesn't train on customer data by default. The
-        # explicit gate covers the retrieval-augmented finetune corpus
-        # we may build later. Defaults to True so absence-of-flag means
-        # opted-in for the existing default-permissive behavior.
-        "training": True,
+        # Spec 46 §2 4th lever. Anthropic doesn't train on customer data by
+        # default; this gate governs UniPaith's own future fine-tuning
+        # corpus extractor. Opt-in (column default false). No inference-time
+        # agent declares `training` in AGENT_REQUIRES, so toggling it never
+        # blocks a live call — it only flips the recorded consent mask.
+        "training": bool(row.consent_training),
     }
 
 

@@ -250,6 +250,73 @@ async def test_preferences_upsert(
     assert resp.json()["preferred_countries"] == ["United States"]
 
 
+# --- Data Rights (spec 08 §16 / 46 §2) ---
+
+
+@pytest.mark.asyncio
+async def test_data_rights_four_levers_roundtrip(
+    student_client: AsyncClient, db_session: AsyncSession, mock_student_user: User
+):
+    """The Data tab persists all four consent levers, including `training`."""
+    await _ensure_profile(db_session, mock_student_user)
+
+    resp = await student_client.put(
+        "/api/v1/students/me/data-rights",
+        json={
+            "consent_matching": True,
+            "consent_outreach": False,
+            "consent_research": True,  # analytics lever
+            "consent_training": True,  # spec 46 §2 4th lever
+        },
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["consent_matching"] is True
+    assert body["consent_outreach"] is False
+    assert body["consent_research"] is True
+    assert body["consent_training"] is True
+
+    # Partial update preserves untouched levers.
+    resp = await student_client.put(
+        "/api/v1/students/me/data-rights",
+        json={"consent_training": False},
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["consent_training"] is False
+    assert body["consent_research"] is True
+
+
+@pytest.mark.asyncio
+async def test_training_lever_flows_into_consent_mask(
+    db_session: AsyncSession, mock_student_user: User
+):
+    """get_consent_mask must reflect the stored consent_training value."""
+    from unipaith.ai.consent import get_consent_mask
+    from unipaith.models.student import StudentDataConsent
+
+    profile = StudentProfile(user_id=mock_student_user.id)
+    db_session.add(mock_student_user)
+    db_session.add(profile)
+    await db_session.flush()
+    db_session.add(StudentDataConsent(student_id=profile.id, consent_training=False))
+    await db_session.commit()
+
+    mask = await get_consent_mask(db_session, profile.id)
+    assert mask["training"] is False
+    assert set(mask.keys()) == {"matching", "outreach", "analytics", "training"}
+
+
+@pytest.mark.asyncio
+async def test_access_log_returns_list(
+    student_client: AsyncClient, db_session: AsyncSession, mock_student_user: User
+):
+    await _ensure_profile(db_session, mock_student_user)
+    resp = await student_client.get("/api/v1/students/me/access-log")
+    assert resp.status_code == 200
+    assert isinstance(resp.json(), list)
+
+
 # --- Onboarding ---
 
 

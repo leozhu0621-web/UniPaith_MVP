@@ -678,7 +678,15 @@ class StudentDataConsent(Base):
     )
     consent_matching: Mapped[bool] = mapped_column(Boolean, default=True)
     consent_outreach: Mapped[bool] = mapped_column(Boolean, default=True)
+    # `consent_research` is the analytics lever (spec 46 §2 `analytics`):
+    # de-identified aggregate insights + the extractor/validator agents.
     consent_research: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Spec 46 §2 4th lever — `training`: inclusion in any future UniPaith
+    # fine-tuning corpus. Opt-in (default false). No inference-time agent
+    # gates on this; it governs the offline training-corpus extractor only.
+    consent_training: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false", nullable=False
+    )
     data_retention_preference: Mapped[str | None] = mapped_column(String(30))
     deletion_requested: Mapped[bool] = mapped_column(Boolean, default=False)
     deletion_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
