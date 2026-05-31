@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getMyApplication, submitApplication, getChecklist, generateChecklist, respondToOffer,
@@ -52,6 +52,8 @@ const RATIONALE_REQUIRED = ['back_up', 'other']
 export default function ApplicationDetailPage() {
   const { appId } = useParams<{ appId: string }>()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const checklistFocus = searchParams.get('checklist')
   const queryClient = useQueryClient()
   const [tab, setTab] = useState('checklist')
   const [showEssayModal, setShowEssayModal] = useState(false)
@@ -305,7 +307,14 @@ export default function ApplicationDetailPage() {
             <h3 className="font-medium text-sm text-student-ink mb-3">Checklist</h3>
             <div className="space-y-2 mb-3">
               {checklistItems.map((item, i) => (
-                <div key={item.key || i} className="flex items-center gap-2 text-sm">
+                <div
+                  key={item.key || i}
+                  className={`flex items-center gap-2 rounded-md px-1 py-0.5 text-sm ${
+                    checklistFocus && item.category === checklistFocus
+                      ? 'bg-warning-soft ring-1 ring-warning/40'
+                      : ''
+                  }`}
+                >
                   {item.status === 'completed' ? (
                     <Check size={14} className="text-success flex-shrink-0" />
                   ) : item.status === 'blocked' || item.mismatch ? (

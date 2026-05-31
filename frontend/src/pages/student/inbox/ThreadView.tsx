@@ -27,6 +27,12 @@ const ACTION_COPY: Record<ActionLabel, string> = {
   completed: 'This conversation is complete.',
 }
 
+const INTERVIEW_QUICK_REPLIES = [
+  { label: 'Accept', text: "Thank you for the invitation — I'd be glad to interview. Please share available times and I'll confirm shortly." },
+  { label: 'Decline', text: "Thank you for considering me. Unfortunately I won't be able to attend an interview at this time, but I remain very interested in the program." },
+  { label: 'Propose time', text: "Thank you for the invitation. Could we schedule for next week? I'm flexible Tue–Thu between 9am and 4pm in my local time — happy to adjust." },
+] as const
+
 export default function ThreadView({
   thread,
   onBack,
@@ -52,6 +58,7 @@ export default function ThreadView({
   const [attachments, setAttachments] = useState<InboxAttachment[]>([])
   const [showAttach, setShowAttach] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
+  const replyRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -123,6 +130,24 @@ export default function ThreadView({
                 View application <ExternalLink size={9} />
               </button>
             )}
+            {thread.linked_checklist_item_category && thread.application_id && (
+              <button
+                onClick={() =>
+                  onNavigate(`/s/applications/${thread.application_id}?checklist=${thread.linked_checklist_item_category}`)
+                }
+                className="inline-flex items-center gap-1 text-[11px] text-cobalt hover:underline"
+              >
+                Checklist item <ExternalLink size={9} />
+              </button>
+            )}
+            {thread.linked_calendar_item_id && (
+              <button
+                onClick={() => onNavigate('/s/manage?tab=calendar')}
+                className="inline-flex items-center gap-1 text-[11px] text-cobalt hover:underline"
+              >
+                Calendar <ExternalLink size={9} />
+              </button>
+            )}
           </div>
         </div>
         {!isCompleted && (
@@ -183,6 +208,45 @@ export default function ThreadView({
             <span className="font-semibold text-warning">★ Action: </span>
             {ACTION_COPY[thread.action_label]}
             {due && <span className="text-muted-foreground"> · Due {due}</span>}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              {(thread.action_label === 'document_requested' ||
+                thread.action_label === 'needs_reply' ||
+                thread.action_label === 'clarification_required') && (
+                <Button variant="tertiary" size="sm" onClick={() => setShowAttach(true)}>
+                  <Paperclip size={13} className="mr-1" /> Attach
+                </Button>
+              )}
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  replyRef.current?.focus()
+                  replyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+                }}
+              >
+                Reply
+              </Button>
+              <Button variant="tertiary" size="sm" loading={completing} onClick={onMarkComplete}>
+                <CheckCircle2 size={13} className="mr-1" /> Mark complete
+              </Button>
+            </div>
+            {thread.action_label === 'interview_invite' && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {INTERVIEW_QUICK_REPLIES.map(q => (
+                  <button
+                    key={q.label}
+                    type="button"
+                    onClick={() => {
+                      setReply(q.text)
+                      replyRef.current?.focus()
+                    }}
+                    className="rounded-pill border border-border bg-card px-2.5 py-1 text-[11px] font-medium text-foreground hover:bg-muted"
+                  >
+                    {q.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
         <div ref={endRef} />
@@ -235,6 +299,7 @@ export default function ThreadView({
               <Paperclip size={16} />
             </button>
             <textarea
+              ref={replyRef}
               value={reply}
               onChange={e => setReply(e.target.value)}
               onKeyDown={e => {

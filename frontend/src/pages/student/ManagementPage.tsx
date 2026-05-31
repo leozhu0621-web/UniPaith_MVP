@@ -38,19 +38,21 @@ export default function ManagementPage() {
     navigate(qs ? `/s/manage?${qs}` : '/s/manage', { replace: true })
   }
 
+  const isInbox = tab === 'messages'
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex min-h-0 flex-1 flex-col">
       {/* Sub-tab bar */}
-      <div className="bg-white border-b border-divider px-6 flex-shrink-0">
+      <div className="flex-shrink-0 border-b border-border bg-card px-6">
         <div className="flex gap-0.5">
           {TABS.map(t => (
             <button
               key={t.key}
               onClick={() => switchTab(t.key)}
-              className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`flex items-center gap-1.5 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
                 tab === t.key
-                  ? 'border-student text-student'
-                  : 'border-transparent text-student-text hover:text-student-ink'
+                  ? 'border-secondary text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
               <t.icon size={15} />
@@ -60,12 +62,18 @@ export default function ManagementPage() {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto">
-        <Suspense fallback={<div className="p-6 text-center text-student-text">Loading...</div>}>
+      {/* Content — inbox is a fixed two-pane surface (Spec 17 §2); other tabs scroll. */}
+      <div
+        className={`min-h-0 flex-1 ${isInbox ? 'overflow-hidden' : 'overflow-y-auto'}`}
+      >
+        <Suspense fallback={<div className="p-6 text-center text-muted-foreground">Loading...</div>}>
           {tab === 'applications' && <ApplicationsPage />}
           {tab === 'calendar' && <CalendarPage />}
-          {tab === 'messages' && <MessagesPage initialThreadId={threadId} />}
+          {tab === 'messages' && (
+            <div className="h-full min-h-[min(100dvh-9rem,720px)] lg:min-h-[calc(100dvh-8rem)]">
+              <MessagesPage initialThreadId={threadId} />
+            </div>
+          )}
           {tab === 'workshops' && <WorkshopsTab />}
         </Suspense>
       </div>
