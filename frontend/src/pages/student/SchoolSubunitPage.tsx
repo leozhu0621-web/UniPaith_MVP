@@ -1,4 +1,4 @@
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   getInstitutionSchools, getSchoolPrograms, getPublicInstitution,
@@ -9,36 +9,32 @@ import ProgramCard from './explore/cards/ProgramCard'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Skeleton from '../../components/ui/Skeleton'
-import {
-  ArrowLeft, Building2, BookOpen, ChevronRight, GraduationCap,
-} from 'lucide-react'
+import { ArrowLeft, BookOpen, ChevronRight, GraduationCap } from 'lucide-react'
 import type { SchoolSummary, ProgramSummary } from '../../types'
 
+interface Props { isAuthenticated?: boolean }
+
 /**
- * SchoolSubunitPage — detail page for a school within an institution.
- *
- * Route: /s/institutions/:institutionId/schools/:schoolId
- *
- * Shows the school's logo, name, description, campus media, and a grid of
- * all programs offered by that school. Replaces the old in-Explore drill
- * level 1 panel with a real URL so refresh and deep-linking work.
+ * SchoolSubunitPage — a school *within* an institution (Spec 12 §4).
+ * Auth route: /s/institutions/:institutionId/schools/:schoolId
+ * Public route: /school/:institutionId/schools/:schoolId
+ * Text-driven, no campus photos / logo images (Spec 12 §9).
  */
-export default function SchoolSubunitPage() {
+export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
   const { institutionId, schoolId } = useParams<{ institutionId: string; schoolId: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const compareStore = useCompareStore()
 
-  // Fetch institution (for the breadcrumb label)
+  const instHref = isAuthenticated ? `/s/institutions/${institutionId}` : `/school/${institutionId}`
+  const programHref = (id: string) => (isAuthenticated ? `/s/programs/${id}` : `/program/${id}`)
+
   const { data: institution } = useQuery({
     queryKey: ['institution', institutionId],
     queryFn: () => getPublicInstitution(institutionId!),
     enabled: !!institutionId,
   })
 
-  // Fetch the schools list and filter to the one we want. There's no
-  // single-school endpoint — the list already includes everything we need
-  // (name, description, media_urls, logo_url, program_count).
   const { data: schools, isLoading: schoolsLoading } = useQuery({
     queryKey: ['institution-schools', institutionId],
     queryFn: () => getInstitutionSchools(institutionId!),
@@ -51,10 +47,11 @@ export default function SchoolSubunitPage() {
     enabled: !!institutionId && !!schoolId,
   })
 
-  const { data: savedData } = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved, retry: false })
+  const { data: savedData } = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved, enabled: isAuthenticated, retry: false })
   const savedIds = new Set<string>((savedData as any[] ?? []).map((s: any) => String(s.program_id)))
 
   const toggleSave = async (programId: string) => {
+    if (!isAuthenticated) { navigate('/login'); return }
     try {
       if (savedIds.has(programId)) await unsaveProgram(programId)
       else await saveProgram(programId)
@@ -70,7 +67,7 @@ export default function SchoolSubunitPage() {
     return (
       <div className="p-6 max-w-6xl mx-auto space-y-4">
         <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-40" />
+        <Skeleton className="h-32" />
         <Skeleton className="h-96" />
       </div>
     )
@@ -80,114 +77,72 @@ export default function SchoolSubunitPage() {
     return (
       <div className="p-6 max-w-3xl mx-auto text-center py-20">
         <GraduationCap size={32} className="mx-auto text-stone mb-3" />
-        <p className="text-sm text-student-text mb-4">School not found.</p>
-        <Button size="sm" variant="secondary" onClick={() => navigate(institutionId ? `/s/institutions/${institutionId}` : '/s/explore')}>
-          Back
-        </Button>
+        <p className="text-sm text-charcoal mb-4">School not found.</p>
+        <Button size="sm" variant="secondary" onClick={() => navigate(instHref)}>Back</Button>
       </div>
     )
   }
 
-  // media_urls can be an array, a dict with array inside, or null.
-  const mediaList: string[] = (() => {
-    const m: any = school.media_urls
-    if (!m) return []
-    if (Array.isArray(m)) return m.filter(x => typeof x === 'string')
-    if (typeof m === 'object') {
-      for (const k of ['images', 'photos', 'media', 'urls']) {
-        if (Array.isArray(m[k])) return m[k].filter((x: any) => typeof x === 'string')
-      }
-    }
-    return []
-  })()
-
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      {/* Back button */}
-      <button
-        onClick={() => navigate(`/s/institutions/${institutionId}`)}
-        className="flex items-center gap-1 text-sm text-student-text hover:text-student-ink mb-4 transition-colors"
-      >
+      {/* Breadcrumb / back */}
+      <button onClick={() => navigate(instHref)} className="flex items-center gap-1 text-sm text-slate hover:text-charcoal mb-4 transition-colors">
         <ArrowLeft size={14} /> Back to {institution?.name || 'university'}
       </button>
 
-      {/* Header */}
-      <div className="bg-white rounded-xl border border-divider p-6 mb-5">
+      {/* Header — text-only monogram tile, no images */}
+      <div className="bg-white rounded-xl border border-stone p-6 mb-5">
         <div className="flex items-start gap-4">
-          <div className="w-16 h-16 rounded-xl bg-student-mist flex items-center justify-center flex-shrink-0 overflow-hidden">
-            {school.logo_url ? (
-              <img src={school.logo_url} alt="" className="w-full h-full object-contain p-2" onError={e => { (e.currentTarget.style.display = 'none') }} />
-            ) : (
-              <Building2 size={28} className="text-student" />
-            )}
+          <div className="w-16 h-16 rounded-xl bg-muted border border-stone/60 flex items-center justify-center flex-shrink-0">
+            <span className="text-cobalt font-bold text-xl tracking-tight">{monogram(school.name)}</span>
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-bold text-student-ink leading-tight">{school.name}</h1>
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-1 mt-1.5 text-[13px] text-student-text flex-wrap">
-              <Link to={`/s/institutions/${institutionId}`} className="text-student hover:underline font-medium">
+            <h1 className="text-2xl font-bold text-charcoal leading-tight">{school.name}</h1>
+            <div className="flex items-center gap-1 mt-1.5 text-[13px] text-slate flex-wrap">
+              <button onClick={() => navigate(instHref)} className="text-cobalt hover:underline font-medium">
                 {institution?.name || 'University'}
-              </Link>
-              <ChevronRight size={11} className="text-student-text/40" />
+              </button>
+              <ChevronRight size={11} className="text-stone" />
               <span>{school.name}</span>
             </div>
-            <div className="flex items-center gap-3 mt-3 text-xs text-student-text">
-              <span className="flex items-center gap-1">
-                <BookOpen size={11} className="text-student" />
-                <span className="font-semibold text-student-ink">{school.program_count}</span> programs
+            <div className="flex items-center gap-3 mt-3 text-xs text-slate">
+              <span className="inline-flex items-center gap-1">
+                <BookOpen size={11} className="text-cobalt" />
+                <span className="font-semibold text-charcoal">{school.program_count}</span> programs
               </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Hero media strip — show campus photos if the school has any */}
-      {mediaList.length > 0 ? (
-        <div className={`mb-5 rounded-xl overflow-hidden border border-divider grid gap-1 ${
-          mediaList.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
-        }`}>
-          {mediaList.slice(0, 4).map((url, i) => (
-            <img
-              key={i}
-              src={url}
-              alt=""
-              className="w-full h-48 object-cover bg-student-mist"
-              onError={e => (e.currentTarget.style.display = 'none')}
-            />
-          ))}
-        </div>
-      ) : null}
-
-      {/* Description */}
+      {/* About this school */}
       <Card className="p-5 mb-5">
-        <div className="flex items-center gap-2 mb-3">
-          <BookOpen size={14} className="text-student" />
-          <h2 className="font-semibold text-student-ink">About this school</h2>
+        <div className="flex items-center gap-2 mb-2">
+          <BookOpen size={14} className="text-cobalt" />
+          <h2 className="font-semibold text-charcoal">About this school</h2>
         </div>
         {school.description_text ? (
-          <p className="text-sm text-student-text leading-relaxed whitespace-pre-line">{school.description_text}</p>
+          <p className="text-sm text-slate leading-relaxed whitespace-pre-line">{school.description_text}</p>
         ) : (
-          <p className="text-sm text-student-text/70 italic">
-            About this school coming soon. In the meantime, explore the programs below.
-          </p>
+          <p className="text-sm text-slate/70 italic">A profile for this school is coming soon. Explore its programs below.</p>
         )}
       </Card>
 
       {/* Programs */}
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-student-ink">Programs</h2>
-        <span className="text-xs text-student-text">{programList.length} program{programList.length !== 1 ? 's' : ''}</span>
+        <h2 className="text-lg font-semibold text-charcoal">Programs</h2>
+        <span className="text-xs text-slate">{programList.length} program{programList.length !== 1 ? 's' : ''}</span>
       </div>
 
       {programsLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map(i => <div key={i} className="h-64 bg-white rounded-xl border border-divider animate-pulse" />)}
+          {[1, 2, 3].map(i => <div key={i} className="h-64 bg-white rounded-xl border border-stone animate-pulse" />)}
         </div>
       ) : programList.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-divider">
+        <div className="text-center py-16 bg-white rounded-xl border border-stone">
           <GraduationCap size={32} className="mx-auto text-stone mb-3" />
-          <p className="text-sm text-student-ink font-medium mb-1">No programs yet</p>
-          <p className="text-xs text-student-text">This school hasn't published any programs yet.</p>
+          <p className="text-sm text-charcoal font-medium mb-1">No programs yet</p>
+          <p className="text-xs text-slate">This school hasn&rsquo;t published any programs yet.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -201,12 +156,20 @@ export default function SchoolSubunitPage() {
               onCompare={() => compareStore.has(p.id)
                 ? compareStore.remove(p.id)
                 : compareStore.add({ program_id: p.id, program_name: p.program_name, institution_name: p.institution_name, degree_type: p.degree_type })}
-              onAskCounselor={() => navigate(`/s?prefill=${encodeURIComponent(`Tell me about ${p.program_name} at ${p.institution_name}. Is it a good fit?`)}`)}
-              onView={() => navigate(`/s/programs/${p.id}`)}
+              onAskCounselor={isAuthenticated ? () => navigate(`/s?prefill=${encodeURIComponent(`Tell me about ${p.program_name} at ${p.institution_name}. Is it a good fit?`)}`) : undefined}
+              onView={() => navigate(programHref(p.id))}
             />
           ))}
         </div>
       )}
     </div>
   )
+}
+
+function monogram(name: string): string {
+  const stop = new Set(['of', 'the', 'and', 'at', 'for', 'de', 'la', 'school'])
+  const words = name.split(/\s+/).filter(w => w && !stop.has(w.toLowerCase()))
+  if (words.length === 0) return name.slice(0, 2).toUpperCase()
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase()
+  return (words[0][0] + words[1][0]).toUpperCase()
 }

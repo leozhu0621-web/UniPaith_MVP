@@ -108,6 +108,61 @@ async def _ensure_schools_table(db: AsyncSession) -> None:
     log.info("Schools table created and populated successfully.")
 
 
+async def _ensure_follow_schema(db) -> None:
+    """Idempotently ensure the Spec-12 School Detail schema exists.
+
+    The Alembic chain has a documented history of divergence (see
+    ``_ensure_schools_table``) and the docker entrypoint may stamp heads without
+    running a migration after a failed ``upgrade``. To guarantee the "Save
+    school" / Follow feature and the institution header render in production
+    regardless of Alembic state, we create ``institution_follows`` and the
+    ``institutions.founded_year`` column here too. No-op once present.
+    """
+    from sqlalchemy import text
+
+    log = logging.getLogger("unipaith.startup")
+
+    col = await db.execute(
+        text(
+            "SELECT 1 FROM information_schema.columns "
+            "WHERE table_name='institutions' AND column_name='founded_year'"
+        )
+    )
+    if not col.scalar():
+        log.info("Adding institutions.founded_year (Alembic chain bypass)...")
+        await db.execute(text("ALTER TABLE institutions ADD COLUMN founded_year INTEGER"))
+
+    tbl = await db.execute(
+        text("SELECT 1 FROM information_schema.tables WHERE table_name='institution_follows'")
+    )
+    if not tbl.scalar():
+        log.info("Creating institution_follows table (Alembic chain bypass)...")
+        await db.execute(
+            text("""
+            CREATE TABLE IF NOT EXISTS institution_follows (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                student_id UUID NOT NULL REFERENCES student_profiles(id) ON DELETE CASCADE,
+                institution_id UUID NOT NULL REFERENCES institutions(id) ON DELETE CASCADE,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+                CONSTRAINT uq_institution_follow UNIQUE (student_id, institution_id)
+            )
+            """)
+        )
+        await db.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_institution_follows_student "
+                "ON institution_follows(student_id)"
+            )
+        )
+        await db.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_institution_follows_institution "
+                "ON institution_follows(institution_id)"
+            )
+        )
+    await db.commit()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):  # noqa: ARG001
     # Ensure schools table exists (bypasses broken Alembic chain)
@@ -116,6 +171,13 @@ async def lifespan(app: FastAPI):  # noqa: ARG001
             await _ensure_schools_table(db)
     except Exception:
         logging.getLogger("unipaith.startup").exception("Schools table bootstrap failed")
+
+    # Ensure Spec-12 School Detail schema exists (follows + founded_year)
+    try:
+        async with async_session() as db:
+            await _ensure_follow_schema(db)
+    except Exception:
+        logging.getLogger("unipaith.startup").exception("Follow schema bootstrap failed")
 
     # Spec 06 §5.4 — cache-invalidation trigger for prompt/model rolls. After a
     # deploy that bumped RATIONALE_PROMPT_VERSION (also the documented hook for

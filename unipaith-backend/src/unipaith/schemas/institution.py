@@ -31,6 +31,7 @@ class CreateInstitutionRequest(BaseModel):
     campus_description: str | None = None
     campus_setting: Literal["urban", "suburban", "rural"] | None = None
     student_body_size: int | None = None
+    founded_year: int | None = None
     contact_email: str | None = None
     logo_url: str | None = None
     website_url: str | None = None
@@ -62,6 +63,7 @@ class UpdateInstitutionRequest(BaseModel):
     campus_description: str | None = None
     campus_setting: Literal["urban", "suburban", "rural"] | None = None
     student_body_size: int | None = None
+    founded_year: int | None = None
     contact_email: str | None = None
     logo_url: str | None = None
     website_url: str | None = None
@@ -90,6 +92,7 @@ class InstitutionResponse(BaseModel):
     campus_description: str | None = None
     campus_setting: str | None = None
     student_body_size: int | None = None
+    founded_year: int | None = None
     contact_email: str | None = None
     logo_url: str | None
     website_url: str | None

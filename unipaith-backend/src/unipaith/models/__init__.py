@@ -38,6 +38,7 @@ from unipaith.models.engagement import (
     StudentEssay,
     StudentResume,
 )
+from unipaith.models.follow import InstitutionFollow
 from unipaith.models.goals import StudentGoal
 from unipaith.models.identity import StudentIdentity
 from unipaith.models.institution import (
@@ -198,6 +199,7 @@ __all__ = [
     "OfferLetter",
     "EnrollmentRecord",
     "StudentEngagementSignal",
+    "InstitutionFollow",
     "SavedList",
     "SavedListItem",
     "StudentCompareItem",
