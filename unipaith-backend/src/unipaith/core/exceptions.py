@@ -32,3 +32,13 @@ class BadRequestException(UniPaithException):
 class ConflictException(UniPaithException):
     def __init__(self, detail: str = "Conflict"):
         super().__init__(status_code=409, detail=detail, error_code="CONFLICT")
+
+
+class ApplicationNotReadyException(BadRequestException):
+    def __init__(self, missing_items: list[str], readiness_pct: int = 0):
+        self.missing_items = missing_items
+        self.readiness_pct = readiness_pct
+        super().__init__(
+            detail=(f"Application is not ready for submission. Missing: {', '.join(missing_items)}")
+        )
+        self.error_code = "APPLICATION_NOT_READY"

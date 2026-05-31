@@ -29,6 +29,7 @@ class ApplicationChecklistResponse(BaseModel):
 
 class ReadinessCheckResponse(BaseModel):
     is_ready: bool
+    ready: bool
     completion_percentage: int
     missing_items: list[str]
     warnings: list[str]

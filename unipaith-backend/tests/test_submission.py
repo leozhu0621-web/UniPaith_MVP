@@ -101,6 +101,4 @@ async def test_submit_blocks_incomplete(
     await db_session.commit()
 
     resp = await student_client.post(f"/api/v1/applications/me/{app.id}/submit")
-    # Simple submit succeeds for any draft application
-    assert resp.status_code == 200
-    assert resp.json()["status"] == "submitted"
+    assert resp.status_code == 400

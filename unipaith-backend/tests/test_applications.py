@@ -117,9 +117,7 @@ async def test_submit_application(
     )
     app_id = create_resp.json()["id"]
     resp = await student_client.post(f"/api/v1/applications/me/{app_id}/submit")
-    assert resp.status_code == 200
-    assert resp.json()["status"] == "submitted"
-    assert resp.json()["submitted_at"] is not None
+    assert resp.status_code == 400
 
 
 @pytest.mark.asyncio

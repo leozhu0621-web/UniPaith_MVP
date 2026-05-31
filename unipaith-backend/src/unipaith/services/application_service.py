@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import random
 import string
-import uuid
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -11,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from unipaith.core.exceptions import (
+    ApplicationNotReadyException,
     BadRequestException,
     ConflictException,
     NotFoundException,
@@ -22,7 +22,9 @@ from unipaith.models.application import (
 )
 from unipaith.models.engagement import StudentEssay, StudentResume
 from unipaith.models.institution import Program
+from unipaith.models.matching import MatchResult
 from unipaith.models.student import StudentProfile
+from unipaith.services.guardrail_service import validate_intent
 
 
 class ApplicationService:
@@ -47,46 +49,140 @@ class ApplicationService:
         if existing.scalar_one_or_none():
             raise ConflictException("Application already exists for this program")
 
+        match = (
+            await self.db.execute(
+                select(MatchResult).where(
+                    MatchResult.student_id == student_id,
+                    MatchResult.program_id == program_id,
+                )
+            )
+        ).scalar_one_or_none()
+
         app = Application(
             student_id=student_id,
             program_id=program_id,
             status="draft",
+            submission_mode="internal",
             completeness_status="incomplete",
+            readiness_pct=0,
+            match_score=(match.fitness_score if match else None),
+            match_reasoning_text=(
+                (getattr(match, "rationale_text", None) or getattr(match, "reasoning_text", None))
+                if match
+                else None
+            ),
         )
         self.db.add(app)
         await self.db.flush()
+
+        from unipaith.services.checklist_service import ChecklistService
+
+        await ChecklistService(self.db).generate_checklist(student_id, app.id)
+        await self.sync_readiness_metadata(student_id, app.id)
+        await self.db.refresh(app)
         return app
 
     async def list_student_applications(self, student_id: UUID) -> list[Application]:
         result = await self.db.execute(
             select(Application)
             .where(Application.student_id == student_id)
-            .options(selectinload(Application.program))
+            .options(
+                selectinload(Application.program).selectinload(Program.institution),
+            )
+            .order_by(Application.created_at.desc())
         )
         return list(result.scalars().all())
 
     async def get_student_application(self, student_id: UUID, application_id: UUID) -> Application:
         return await self._get_application_for_student(student_id, application_id)
 
-    async def submit_application(self, student_id: UUID, application_id: UUID) -> Application:
+    async def patch_application(
+        self, student_id: UUID, application_id: UUID, updates: dict
+    ) -> Application:
         app = await self._get_application_for_student(student_id, application_id)
-
         if app.status != "draft":
-            raise BadRequestException("Only draft applications can be submitted")
+            raise BadRequestException("Only draft applications can be updated")
 
-        app.status = "submitted"
-        app.submitted_at = datetime.now(UTC)
+        if updates.get("submission_mode") is not None:
+            mode = updates["submission_mode"]
+            if mode not in ("internal", "external"):
+                raise BadRequestException("submission_mode must be internal or external")
+            app.submission_mode = mode
 
-        confirmation = f"UNI-{uuid.uuid4().hex[:8].upper()}"
-        submission = ApplicationSubmission(
-            application_id=app.id,
-            submitted_at=app.submitted_at,
-            confirmation_number=confirmation,
-        )
-        self.db.add(submission)
+        if "intent_picker" in updates or "intent_rationale" in updates:
+            intent = updates.get("intent_picker", app.intent_picker)
+            rationale = updates.get("intent_rationale", app.intent_rationale)
+            validate_intent(intent, rationale)
+            if "intent_picker" in updates:
+                app.intent_picker = updates["intent_picker"]
+            if "intent_rationale" in updates:
+                app.intent_rationale = updates["intent_rationale"]
+
+        from unipaith.services.checklist_service import ChecklistService
+
+        if updates.get("checklist_item_completions"):
+            await ChecklistService(self.db).apply_item_completions(
+                student_id, application_id, updates["checklist_item_completions"]
+            )
+
+        await self.sync_readiness_metadata(student_id, application_id)
+        await self.db.refresh(app)
+
+        if updates.get("ready_to_submit") is not None:
+            if updates["ready_to_submit"]:
+                readiness = await ChecklistService(self.db).readiness_check(
+                    student_id, application_id
+                )
+                if app.submission_mode == "internal" and not readiness["is_ready"]:
+                    raise BadRequestException(
+                        "Cannot mark ready to submit until all required items are complete."
+                    )
+            app.ready_to_submit = bool(updates["ready_to_submit"])
+
         await self.db.flush()
         await self.db.refresh(app)
         return app
+
+    async def sync_readiness_metadata(self, student_id: UUID, application_id: UUID) -> None:
+        from unipaith.services.checklist_service import ChecklistService
+
+        app = await self._get_application_for_student(student_id, application_id)
+        svc = ChecklistService(self.db)
+        try:
+            readiness = await svc.readiness_check(student_id, application_id)
+        except NotFoundException:
+            await svc.generate_checklist(student_id, application_id)
+            readiness = await svc.readiness_check(student_id, application_id)
+
+        app.readiness_pct = readiness["completion_percentage"]
+        if not readiness["is_ready"]:
+            app.ready_to_submit = False
+        _, items = await svc._get_or_build_items(student_id, application_id)
+        app.next_action = (
+            "Submit application" if readiness["is_ready"] else svc.first_missing_action(items)
+        )
+        await self.db.flush()
+
+    async def submit_application(self, student_id: UUID, application_id: UUID) -> Application:
+        app = await self._get_application_for_student(student_id, application_id)
+        if app.status != "draft":
+            raise BadRequestException("Only draft applications can be submitted")
+
+        if app.submission_mode == "external":
+            if not app.ready_to_submit:
+                raise ApplicationNotReadyException(
+                    ["Mark as ready to submit after completing external steps"],
+                    app.readiness_pct or 0,
+                )
+            now = datetime.now(UTC)
+            app.status = "submitted"
+            app.submitted_at = now
+            app.completeness_status = "complete"
+            await self.db.flush()
+            await self.db.refresh(app)
+            return app
+
+        return await self.submit_application_with_guardrails(student_id, application_id)
 
     async def withdraw_application(self, student_id: UUID, application_id: UUID) -> None:
         app = await self._get_application_for_student(student_id, application_id)
@@ -183,6 +279,16 @@ class ApplicationService:
 
     # --- Student offer response ---
 
+    async def get_student_offer(self, student_id: UUID, application_id: UUID) -> OfferLetter:
+        app = await self._get_application_for_student(student_id, application_id)
+        result = await self.db.execute(
+            select(OfferLetter).where(OfferLetter.application_id == app.id)
+        )
+        offer = result.scalar_one_or_none()
+        if not offer:
+            raise NotFoundException("No offer found for this application")
+        return offer
+
     async def respond_to_offer(
         self,
         student_id: UUID,
@@ -268,9 +374,14 @@ class ApplicationService:
         readiness = await checklist_svc.readiness_check(student_id, application_id)
 
         if not readiness["is_ready"]:
-            missing = ", ".join(readiness["missing_items"])
-            raise BadRequestException(
-                f"Application is not ready for submission. Missing: {missing}"
+            raise ApplicationNotReadyException(
+                readiness["missing_items"],
+                readiness["completion_percentage"],
+            )
+        if not app.ready_to_submit:
+            raise ApplicationNotReadyException(
+                ["Mark as ready to submit before submitting"],
+                readiness["completion_percentage"],
             )
 
         # Build frozen snapshot
@@ -428,12 +539,29 @@ class ApplicationService:
                 Application.id == application_id,
                 Application.student_id == student_id,
             )
-            .options(selectinload(Application.program))
+            .options(
+                selectinload(Application.program).selectinload(Program.institution),
+            )
         )
         app = result.scalar_one_or_none()
         if not app:
             raise NotFoundException("Application not found")
         return app
+
+    @staticmethod
+    def offer_plain_language_brief(offer: OfferLetter, program: Program | None) -> str:
+        prog_name = program.program_name if program else "the program"
+        otype = (offer.offer_type or "offer").replace("_", " ")
+        parts = [f"You've received a {otype} from {prog_name}."]
+        if offer.scholarship_amount:
+            parts.append(f"Scholarship: ${offer.scholarship_amount:,}.")
+        if offer.tuition_amount:
+            parts.append(f"Tuition: ${offer.tuition_amount:,}.")
+        if offer.financial_package_total:
+            parts.append(f"Total package: ${offer.financial_package_total:,}.")
+        if offer.response_deadline:
+            parts.append(f"Respond by {offer.response_deadline.isoformat()}.")
+        return " ".join(parts)
 
     async def _get_application_for_institution(
         self, institution_id: UUID, application_id: UUID

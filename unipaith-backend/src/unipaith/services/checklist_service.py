@@ -305,9 +305,77 @@ class ChecklistService:
             elif days_left <= 30:
                 warnings.append(f"Deadline is in {days_left} days — start finalising.")
 
+        is_ready = len(missing) == 0
+        stored = await self._load_stored_items(student_id, app.program_id)
+        if app.submission_mode == "external" and stored:
+            missing = [
+                (i.get("item_name") or i.get("name") or "Item")
+                for i in stored
+                if i.get("required", True) and not i.get("student_marked_complete")
+            ]
+            is_ready = len(missing) == 0
+
         return {
-            "is_ready": len(missing) == 0,
+            "is_ready": is_ready,
+            "ready": is_ready,
             "completion_percentage": completion,
             "missing_items": missing,
             "warnings": warnings,
         }
+
+    async def _load_stored_items(self, student_id: UUID, program_id: UUID) -> list[dict] | None:
+        result = await self.db.execute(
+            select(ApplicationChecklist).where(
+                ApplicationChecklist.student_id == student_id,
+                ApplicationChecklist.program_id == program_id,
+            )
+        )
+        row = result.scalar_one_or_none()
+        return list(row.items) if row and row.items else None
+
+    async def _get_or_build_items(
+        self, student_id: UUID, application_id: UUID
+    ) -> tuple[Application, list[dict]]:
+        app = await self._load_application(student_id, application_id)
+        program = await self._load_program(app.program_id)
+        profile = await self._load_student_profile(student_id)
+        prior = await self._load_stored_items(student_id, app.program_id)
+        items = self._build_items(program, profile)
+        if prior:
+            marks = {
+                str(p.get("id") or p.get("name")): p.get("student_marked_complete")
+                for p in prior
+                if p.get("student_marked_complete")
+            }
+            for item in items:
+                key = str(item.get("id") or item.get("name"))
+                if marks.get(key):
+                    item["student_marked_complete"] = True
+                    item["completed"] = True
+                    item["status"] = "completed"
+        return app, items
+
+    def first_missing_action(self, items: list[dict]) -> str | None:
+        for item in items:
+            if item.get("required", True) and not item.get("completed"):
+                return f"Complete {item.get('name', 'item')}"
+        return None
+
+    async def apply_item_completions(
+        self,
+        student_id: UUID,
+        application_id: UUID,
+        completions: dict[str, bool],
+    ) -> ApplicationChecklist:
+        checklist = await self.get_checklist(student_id, application_id)
+        items = list(checklist.items or [])
+        for item in items:
+            key = str(item.get("id") or item.get("name"))
+            if completions.get(key):
+                item["student_marked_complete"] = True
+                item["completed"] = True
+                item["status"] = "completed"
+        checklist.items = items
+        checklist.completion_percentage = self._compute_completion(items)
+        await self.db.flush()
+        return checklist

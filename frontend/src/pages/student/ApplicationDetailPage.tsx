@@ -1,8 +1,20 @@
 import { useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getMyApplication, submitApplication, getChecklist, generateChecklist, respondToOffer, getReadiness } from '../../api/applications'
-import { listEssays, createEssay, updateEssay, requestEssayFeedback } from '../../api/essays'
+import {
+  getMyApplication,
+  submitApplication,
+  getChecklist,
+  generateChecklist,
+  respondToOffer,
+  getReadiness,
+  checkReadiness,
+  guardrailScan,
+  patchMyApplication,
+  getMyOffer,
+} from '../../api/applications'
+import { listEssays, createEssay, updateEssay } from '../../api/essays'
+import { requestEssayFeedback } from '../../api/workshops-feedback'
 import { listResumes, generateResume } from '../../api/resumes'
 import { requestUpload, uploadToS3, confirmUpload, listDocuments } from '../../api/documents'
 import Button from '../../components/ui/Button'
@@ -64,12 +76,32 @@ export default function ApplicationDetailPage() {
   const { data: documents } = useQuery({ queryKey: ['documents'], queryFn: listDocuments, enabled: tab === 'documents' })
   const { data: interviews } = useQuery({ queryKey: ['interviews'], queryFn: getMyInterviews, enabled: tab === 'interviews' })
 
-  const [guardrailResult, setGuardrailResult] = useState<any>(null)
-  void setGuardrailResult
-  const [intentReason, setIntentReason] = useState('')
+  const [guardrailResult, setGuardrailResult] = useState<import('../../types').GuardrailScan | null>(null)
+  const [intentPicker, setIntentPicker] = useState('')
   const [rationale, setRationale] = useState('')
+  const [showSubmitBlocked, setShowSubmitBlocked] = useState(false)
+  const [submitBlockers, setSubmitBlockers] = useState<string[]>([])
 
-  const submitMut = useMutation({ mutationFn: () => submitApplication(appId!), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['application', appId] }); showToast('Application submitted!', 'success') } })
+  const submitMut = useMutation({
+    mutationFn: () => submitApplication(appId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['application', appId] })
+      showToast('Application submitted!', 'success')
+    },
+    onError: (err: { response?: { data?: { detail?: { missing_items?: string[] } } } }) => {
+      const items = err.response?.data?.detail?.missing_items
+      if (items?.length) {
+        setSubmitBlockers(items)
+        setShowSubmitBlocked(true)
+      } else {
+        showToast('Could not submit', 'error')
+      }
+    },
+  })
+  const patchMut = useMutation({
+    mutationFn: (body: Parameters<typeof patchMyApplication>[1]) => patchMyApplication(appId!, body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['application', appId] }),
+  })
   const essayMut = useMutation({ mutationFn: (data: any) => createEssay(data), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['essays'] }); setShowEssayModal(false); setEssayContent(''); setEssayPrompt(''); showToast('Essay created', 'success') } })
   const essayUpdateMut = useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => updateEssay(id, data), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['essays'] }); setEditingEssay(null); showToast('Essay updated', 'success') } })
   const resumeGenMut = useMutation({ mutationFn: () => generateResume({ format_type: 'standard', target_program_id: app?.program_id }), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['resumes'] }); showToast('Resume generated', 'success') } })
@@ -120,23 +152,36 @@ export default function ApplicationDetailPage() {
     }
   }, [handleFileUpload])
 
-  // Readiness check
-  const checkReadiness = async () => {
+  const runReadiness = async () => {
     try {
-      const result = await getReadiness(appId!)
+      const result = await checkReadiness(appId!)
       setReadiness(result)
       setShowReadiness(true)
+      queryClient.invalidateQueries({ queryKey: ['application', appId] })
     } catch {
       showToast('Could not check readiness', 'error')
     }
   }
 
-  // Essay feedback
-  const handleEssayFeedback = async (essayId: string) => {
-    setFeedbackLoading(essayId)
+  const runGuardrailScan = async () => {
     try {
-      const result = await requestEssayFeedback(essayId)
-      setFeedbackResults(prev => ({ ...prev, [essayId]: result }))
+      const result = await guardrailScan(appId!)
+      setGuardrailResult(result)
+    } catch {
+      showToast('Could not run guardrail scan', 'error')
+    }
+  }
+
+  const handleEssayFeedback = async (essay: Essay) => {
+    if (!essay.content?.trim()) return
+    setFeedbackLoading(essay.id)
+    try {
+      await requestEssayFeedback({
+        essay_text: essay.content,
+        prompt_text: essay.prompt_text,
+        target_program_id: app?.program_id,
+      })
+      navigate('/s/manage?tab=workshops')
     } catch {
       showToast('Could not get feedback', 'error')
     } finally {
@@ -238,7 +283,7 @@ export default function ApplicationDetailPage() {
               className="w-full mt-3"
               size="sm"
               variant="secondary"
-              onClick={checkReadiness}
+              onClick={runReadiness}
             >
               <FileCheck size={14} className="mr-1" /> Check Readiness
             </Button>
@@ -246,17 +291,35 @@ export default function ApplicationDetailPage() {
             {(() => {
               const requiredItems = checklistItems.filter((i: any) => i.required !== false)
               const incompleteRequired = requiredItems.filter((i: any) => i.status !== 'completed')
-              const canSubmit = application.status === 'draft' && incompleteRequired.length === 0
+              const canSubmit =
+                application.status === 'draft' &&
+                application.ready_to_submit &&
+                incompleteRequired.length === 0
               return (
                 <>
+                  <Button
+                    className="w-full mt-2"
+                    variant="primary"
+                    disabled={incompleteRequired.length > 0}
+                    onClick={() =>
+                      patchMut.mutate({ ready_to_submit: !application.ready_to_submit })
+                    }
+                    loading={patchMut.isPending}
+                    size="sm"
+                  >
+                    {application.ready_to_submit
+                      ? 'Unmark ready to submit'
+                      : 'Mark as ready to submit'}
+                  </Button>
                   <Button
                     className="w-full mt-2"
                     disabled={!canSubmit}
                     onClick={() => submitMut.mutate()}
                     loading={submitMut.isPending}
                     size="sm"
+                    variant="secondary"
                   >
-                    {canSubmit ? 'Submit Application' : `${incompleteRequired.length} Required Item${incompleteRequired.length !== 1 ? 's' : ''} Missing`}
+                    Submit application
                   </Button>
                   {application.status === 'draft' && incompleteRequired.length > 0 && (
                     <div className="mt-2 text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
@@ -365,7 +428,7 @@ export default function ApplicationDetailPage() {
                           <Button
                             size="sm"
                             variant="secondary"
-                            onClick={() => handleEssayFeedback(e.id)}
+                            onClick={() => handleEssayFeedback(e)}
                             loading={feedbackLoading === e.id}
                           >
                             <Sparkles size={12} className="mr-1" /> AI Feedback
@@ -563,43 +626,65 @@ export default function ApplicationDetailPage() {
                     <h3 className="text-sm font-medium text-stone-700">Why are you applying?</h3>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {['Dream school', 'Safety option', 'Recommended', 'Exploring', 'Location fit', 'Program fit'].map(reason => (
+                    {(
+                      [
+                        ['dream', 'Dream school'],
+                        ['back_up', 'Safety / backup'],
+                        ['career_fit', 'Career fit'],
+                        ['cultural_fit', 'Cultural fit'],
+                        ['family_input', 'Family input'],
+                        ['other', 'Other'],
+                      ] as const
+                    ).map(([value, label]) => (
                       <button
-                        key={reason}
-                        onClick={() => setIntentReason(reason)}
+                        key={value}
+                        type="button"
+                        onClick={() => {
+                          setIntentPicker(value)
+                          patchMut.mutate({ intent_picker: value })
+                          runGuardrailScan()
+                        }}
                         className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
-                          intentReason === reason
-                            ? 'bg-ink text-white border-ink'
-                            : 'bg-white text-stone-600 border-gray-300 hover:bg-stone-50'
+                          intentPicker === value || application.intent_picker === value
+                            ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] border-transparent'
+                            : 'bg-white text-stone-600 border-gray-300'
                         }`}
                       >
-                        {reason}
+                        {label}
                       </button>
                     ))}
                   </div>
                 </Card>
 
                 {guardrailResult && (
-                  <Card className={`p-4 ${guardrailResult.level === 'green' ? 'bg-emerald-50' : guardrailResult.level === 'red' ? 'bg-red-50' : 'bg-amber-50'}`}>
-                    <p className={`text-sm font-medium ${guardrailResult.level === 'green' ? 'text-emerald-700' : guardrailResult.level === 'red' ? 'text-red-700' : 'text-amber-700'}`}>
-                      {guardrailResult.message || 'AI analysis complete'}
+                  <Card className="p-4">
+                    <p className="text-sm font-medium capitalize">
+                      Fit band: {guardrailResult.fit_band} — {guardrailResult.recommended_action}
                     </p>
-                    {guardrailResult.points && (
-                      <ul className="mt-2 space-y-1">
-                        {guardrailResult.points.map((pt: string, i: number) => (
-                          <li key={i} className="text-xs text-gray-600 flex items-start gap-1">
-                            <span>-</span> {pt}
-                          </li>
+                    <p className="text-xs text-muted-foreground mt-1">Showing rule-based result</p>
+                    {guardrailResult.blockers?.length > 0 && (
+                      <ul className="mt-2 text-sm space-y-1">
+                        {guardrailResult.blockers.map((b, i) => (
+                          <li key={i}>— {b}</li>
                         ))}
                       </ul>
                     )}
                   </Card>
                 )}
+                <Button size="sm" variant="secondary" onClick={runGuardrailScan}>
+                  Re-run guardrail scan
+                </Button>
 
-                {(guardrailResult?.level === 'red' || (application.match_score != null && application.match_score < 0.3)) && (
+                {(guardrailResult?.fit_band === 'low' ||
+                  application.match_score != null && application.match_score <= 0.3) && (
                   <Card className="p-4">
-                    <p className="text-xs text-gray-500 mb-2">Please explain your rationale for proceeding:</p>
-                    <Textarea value={rationale} onChange={e => setRationale(e.target.value)} placeholder="I'm applying because..." />
+                    <p className="text-xs text-gray-500 mb-2">Please explain your rationale (80+ chars):</p>
+                    <Textarea
+                      value={rationale}
+                      onChange={e => setRationale(e.target.value)}
+                      onBlur={() => patchMut.mutate({ intent_rationale: rationale })}
+                      placeholder="I'm applying because..."
+                    />
                   </Card>
                 )}
               </div>
@@ -715,6 +800,21 @@ export default function ApplicationDetailPage() {
             )}
           </div>
         )}
+      </Modal>
+
+      <Modal
+        isOpen={showSubmitBlocked}
+        onClose={() => setShowSubmitBlocked(false)}
+        title="Submit blocked. Resolve these items first:"
+      >
+        <ul className="space-y-1 text-sm">
+          {submitBlockers.map((item, i) => (
+            <li key={i} className="flex gap-2">
+              <AlertCircle size={14} className="text-red-500 shrink-0" />
+              {item}
+            </li>
+          ))}
+        </ul>
       </Modal>
     </div>
   )
