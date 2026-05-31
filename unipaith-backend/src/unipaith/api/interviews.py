@@ -111,7 +111,22 @@ async def confirm_time(
 ):
     profile = await StudentService(db)._get_student_profile(user.id)
     svc = InterviewService(db)
-    return await svc.confirm_time(profile.id, interview_id, body.confirmed_time)
+    result = await svc.confirm_time(profile.id, interview_id, body.confirmed_time)
+    await db.commit()
+    return result
+
+
+@router.post("/{interview_id}/decline", response_model=InterviewResponse)
+async def decline_interview(
+    interview_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    profile = await StudentService(db)._get_student_profile(user.id)
+    svc = InterviewService(db)
+    result = await svc.decline_interview(profile.id, interview_id)
+    await db.commit()
+    return result
 
 
 @router.get("/me", response_model=list[InterviewResponse])
@@ -136,7 +151,9 @@ async def batch_invite_interviews(
     await InstitutionService(db).get_institution(user.id)
     svc = InterviewService(db)
     result = BatchOperationResult(
-        success_count=0, failed_ids=[], errors=[],
+        success_count=0,
+        failed_ids=[],
+        errors=[],
     )
     for app_id in body.application_ids:
         try:
