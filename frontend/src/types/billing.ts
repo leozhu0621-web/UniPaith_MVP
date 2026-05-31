@@ -31,6 +31,10 @@ export interface PaymentMethodInfo {
 export interface BillingStatus {
   enabled: boolean
   mock?: boolean
+  /** "mock" | "stripe" — which provider services payments. */
+  provider?: string
+  /** Stripe publishable key (client-safe), present only when provider="stripe". */
+  publishable_key?: string | null
   plan: Plan
   status: string
   trial_ends_at: string | null

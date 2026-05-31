@@ -20,6 +20,7 @@ import {
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
+import StripeCardForm from '../../components/student/StripeCardForm'
 import { showToast } from '../../stores/toast-store'
 import { formatDate } from '../../utils/format'
 
@@ -191,6 +192,7 @@ function PaymentCard({ data, onChange }: { data: BillingStatus; onChange: () => 
   }
 
   const pm = data.payment_method
+  const isStripe = data.provider === 'stripe' && !!data.publishable_key
   return (
     <Card className="p-5">
       <h2 className="flex items-center gap-2 font-semibold mb-3 text-charcoal">
@@ -210,6 +212,19 @@ function PaymentCard({ data, onChange }: { data: BillingStatus; onChange: () => 
           <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
             Replace
           </Button>
+        </div>
+      ) : isStripe ? (
+        <div className="space-y-3">
+          <StripeCardForm
+            publishableKey={data.publishable_key as string}
+            onToken={token => addMut.mutate({ token })}
+            loading={addMut.isPending}
+          />
+          {data.has_payment_method && (
+            <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
+              Cancel
+            </Button>
+          )}
         </div>
       ) : (
         <div className="space-y-3">

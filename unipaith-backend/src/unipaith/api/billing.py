@@ -15,7 +15,7 @@ from __future__ import annotations
 from collections.abc import Callable, Coroutine
 from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,6 +34,8 @@ from unipaith.services.institution_service import InstitutionService
 
 router = APIRouter(prefix="/students/me/billing", tags=["billing"])
 institution_router = APIRouter(prefix="/institutions/me/billing", tags=["billing"])
+# Public (unauthenticated) — Stripe posts here; auth is the signature, not a token.
+webhook_router = APIRouter(prefix="/billing", tags=["billing"])
 
 
 # --------------------------------------------------------------- request bodies
@@ -172,3 +174,16 @@ async def get_institution_usage(
 ):
     institution = await InstitutionService(db).get_institution(user.id)
     return await BillingService(db).get_institution_usage(institution.id)
+
+
+# ------------------------------------------------------------------ webhook
+
+
+@webhook_router.post("/stripe/webhook", response_model=dict)
+async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
+    """Stripe → us. Verifies the signature against STRIPE_WEBHOOK_SECRET and
+    reconciles local subscription state (renewals, failures, cancellations).
+    Public: the signature is the auth, so there is no bearer token."""
+    payload = await request.body()
+    sig = request.headers.get("stripe-signature")
+    return await BillingService(db).handle_stripe_webhook(payload, sig)

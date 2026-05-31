@@ -102,6 +102,11 @@ class BillingProvider(Protocol):
         """One-off charge (used for the institution per-applicant fee)."""
         ...
 
+    def set_ad_free(self, *, subscription_id: str, enabled: bool) -> None:
+        """Add/remove the $5/mo ad-free add-on item on an existing subscription.
+        No-op for providers that model ad-free as a local flag only."""
+        ...
+
 
 def _brand_from_number(number: str) -> str:
     n = (number or "").replace(" ", "")
@@ -164,6 +169,10 @@ class MockBillingProvider:
             amount_cents=amount_cents,
         )
 
+    def set_ad_free(self, *, subscription_id: str, enabled: bool) -> None:
+        # Mock tracks ad-free as a local flag on the Subscription row only.
+        return None
+
 
 _provider_singleton: BillingProvider | None = None
 
@@ -183,10 +192,15 @@ def get_billing_provider() -> BillingProvider:
     if settings.billing_mock_mode or name == "mock":
         _provider_singleton = MockBillingProvider()
     elif name == "stripe":
-        raise ProviderNotConfiguredError(
-            "Stripe billing provider is planned but not implemented in this MVP. "
-            "Set BILLING_MOCK_MODE=true or BILLING_PROVIDER=mock."
-        )
+        if not settings.stripe_secret_key:
+            raise ProviderNotConfiguredError(
+                "BILLING_PROVIDER=stripe but STRIPE_SECRET_KEY is empty. "
+                "Set the Stripe keys, or use BILLING_MOCK_MODE=true."
+            )
+        # Imported lazily so the stripe SDK isn't required for mock/dev/test.
+        from unipaith.services.billing.stripe_provider import StripeBillingProvider
+
+        _provider_singleton = StripeBillingProvider()
     else:
         raise ProviderNotConfiguredError(f"Unknown billing provider: {name!r}")
     return _provider_singleton

@@ -252,6 +252,12 @@ class Settings(BaseSettings):
     stripe_secret_key: str = ""
     stripe_publishable_key: str = ""
     stripe_webhook_secret: str = ""
+    # Recurring Price ids created in the Stripe dashboard (or by
+    # scripts/setup_stripe_products.py). If stripe_price_id is empty the
+    # provider falls back to an inline price_data using the cents config above.
+    stripe_price_id: str = ""  # $15/mo Plus
+    stripe_adfree_price_id: str = ""  # $5/mo ad-free add-on
+    stripe_api_version: str = "2024-06-20"
 
     # GPU infrastructure (cloud-first)
     gpu_mode: str = "openai"  # "openai" | "aws" | "local" | "mock"

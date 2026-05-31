@@ -31,6 +31,7 @@ from unipaith.models.billing import (
     EVENT_ADFREE_DISABLED,
     EVENT_ADFREE_ENABLED,
     EVENT_APPLICANT_CHARGED,
+    EVENT_PAYMENT_FAILED,
     EVENT_PAYMENT_METHOD_ADDED,
     EVENT_PAYMENT_SUCCEEDED,
     EVENT_SUBSCRIPTION_CANCELED,
@@ -41,7 +42,9 @@ from unipaith.models.billing import (
     PLAN_PLUS,
     PLAN_TRIAL,
     STATUS_ACTIVE,
+    STATUS_CANCELED,
     STATUS_FREE,
+    STATUS_PAST_DUE,
     STATUS_TRIALING,
     BillingEvent,
     InstitutionApplicantCharge,
@@ -125,9 +128,15 @@ class BillingService:
 
         plan = await self._resolve_and_persist_expiry(sub)
         pm = await self._get_default_payment_method(user.id)
+        provider_name = "mock" if settings.billing_mock_mode else settings.billing_provider
         return {
             "enabled": True,
             "mock": settings.billing_mock_mode,
+            "provider": provider_name,
+            # Only the publishable key is client-safe; never the secret key.
+            "publishable_key": (
+                settings.stripe_publishable_key if provider_name == "stripe" else None
+            ),
             "plan": plan,
             "status": sub.status,
             "trial_ends_at": _iso(sub.trial_ends_at),
@@ -266,6 +275,15 @@ class BillingService:
             raise BadRequestException("Subscribe to Plus before adding the ad-free upgrade.")
         if bool(sub.ad_free) == enabled:
             return await self.get_status(user)
+        # Reflect the add-on on the provider subscription (Stripe adds/removes a
+        # $5/mo line item; the mock is a no-op).
+        if sub.provider_subscription_id:
+            try:
+                get_billing_provider().set_ad_free(
+                    subscription_id=sub.provider_subscription_id, enabled=enabled
+                )
+            except BillingError as e:
+                raise BadRequestException(str(e)) from e
         sub.ad_free = enabled
         await self.db.flush()
         await self._log_event(
@@ -397,6 +415,90 @@ class BillingService:
             "charges": [_charge_public(r) for r in rows[:limit]],
         }
 
+    # ----------------------------------------------------------- stripe webhook
+
+    async def handle_stripe_webhook(self, payload: bytes, sig_header: str | None) -> dict:
+        """Verify a Stripe webhook signature and reconcile local state with the
+        async lifecycle events Stripe owns (renewals, failures, cancellations).
+        Raises BadRequestException on a bad signature so the route returns 400."""
+        import stripe
+
+        if not settings.stripe_webhook_secret:
+            raise BadRequestException("Stripe webhook secret is not configured.")
+        try:
+            event = stripe.Webhook.construct_event(
+                payload, sig_header or "", settings.stripe_webhook_secret
+            )
+        except Exception as e:  # noqa: BLE001 — any failure = reject
+            raise BadRequestException(f"Invalid Stripe webhook signature: {e}") from e
+
+        handled = await self._apply_stripe_event(event["type"], event["data"]["object"])
+        await self.db.flush()
+        return {"received": True, "type": event["type"], "handled": handled}
+
+    async def _apply_stripe_event(self, event_type: str, obj: dict) -> bool:
+        # Resolve the affected local subscription from the Stripe object.
+        if event_type.startswith("customer.subscription"):
+            sub_ref = obj.get("id")
+        else:  # invoice.* events carry the subscription id
+            sub_ref = obj.get("subscription")
+        if not sub_ref:
+            return False
+        sub = (
+            await self.db.execute(
+                select(Subscription).where(Subscription.provider_subscription_id == sub_ref)
+            )
+        ).scalar_one_or_none()
+        if sub is None:
+            return False
+
+        if event_type == "customer.subscription.updated":
+            stripe_status = obj.get("status", sub.status)
+            sub.cancel_at_period_end = bool(obj.get("cancel_at_period_end"))
+            sub.current_period_end = _epoch(obj.get("current_period_end"))
+            if stripe_status == "active":
+                sub.status = STATUS_ACTIVE
+                sub.plan = PLAN_PLUS
+            elif stripe_status == "past_due":
+                sub.status = STATUS_PAST_DUE
+            elif stripe_status in ("canceled", "unpaid", "incomplete_expired"):
+                sub.status = STATUS_CANCELED
+                sub.plan = PLAN_FREE
+            return True
+
+        if event_type == "customer.subscription.deleted":
+            sub.status = STATUS_CANCELED
+            sub.plan = PLAN_FREE
+            sub.cancel_at_period_end = False
+            sub.canceled_at = datetime.now(UTC)
+            return True
+
+        if event_type == "invoice.payment_succeeded":
+            sub.status = STATUS_ACTIVE
+            sub.plan = PLAN_PLUS
+            sub.current_period_end = _epoch(obj.get("period_end")) or sub.current_period_end
+            await self._log_event(
+                user_id=sub.user_id,
+                event_type=EVENT_PAYMENT_SUCCEEDED,
+                amount_cents=int(obj.get("amount_paid") or 0),
+                provider="stripe",
+                provider_ref=obj.get("id"),
+            )
+            return True
+
+        if event_type == "invoice.payment_failed":
+            sub.status = STATUS_PAST_DUE
+            await self._log_event(
+                user_id=sub.user_id,
+                event_type=EVENT_PAYMENT_FAILED,
+                status="failed",
+                provider="stripe",
+                provider_ref=obj.get("id"),
+            )
+            return True
+
+        return False
+
     # ------------------------------------------------------------------ helpers
 
     def _prices(self) -> dict:
@@ -488,6 +590,11 @@ class BillingService:
 def _aware(dt: datetime) -> datetime:
     """Treat naive timestamps (from some DB drivers) as UTC."""
     return dt if dt.tzinfo is not None else dt.replace(tzinfo=UTC)
+
+
+def _epoch(ts: int | None) -> datetime | None:
+    """Stripe sends Unix-epoch seconds; convert to an aware UTC datetime."""
+    return datetime.fromtimestamp(ts, UTC) if ts else None
 
 
 def _iso(dt: datetime | None) -> str | None:
