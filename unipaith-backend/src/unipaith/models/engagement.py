@@ -85,6 +85,9 @@ class SavedListItem(Base):
     priority: Mapped[str] = mapped_column(
         String(20), nullable=False, default="considering", server_default=text("'considering'")
     )
+    status: Mapped[str] = mapped_column(
+        String(30), nullable=False, default="considering", server_default="considering"
+    )
     # Spec 13 §4.3 — free-text tags from the student's own tag dictionary.
     tags: Mapped[list] = mapped_column(
         JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb")
@@ -221,6 +224,7 @@ class CRMRecord(Base):
 
 class Conversation(Base):
     __tablename__ = "conversations"
+    __table_args__ = (Index("ix_conversations_application_id", "application_id"),)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     student_id: Mapped[uuid.UUID] = mapped_column(
@@ -232,6 +236,14 @@ class Conversation(Base):
     program_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("programs.id", ondelete="SET NULL")
     )
+    application_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("applications.id", ondelete="SET NULL"), nullable=True
+    )
+    thread_type: Mapped[str] = mapped_column(String(20), default="human", nullable=False)
+    action_label: Mapped[str | None] = mapped_column(String(40))
+    due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    waiting_on: Mapped[str] = mapped_column(String(20), default="none", nullable=False)
+    linked_checklist_item_category: Mapped[str | None] = mapped_column(String(50))
     subject: Mapped[str | None] = mapped_column(String(500))
     status: Mapped[str | None] = mapped_column(String(20))
     started_at: Mapped[datetime] = mapped_column(

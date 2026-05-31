@@ -71,4 +71,12 @@ export const listWorkshopRuns = (
     .get(`${BASE}/runs`, { params: domain ? { domain } : undefined })
     .then(r => r.data)
 
+export const getWorkshopRun = (runId: string): Promise<WorkshopFeedbackRun> =>
+  apiClient.get(`${BASE}/runs/${runId}`).then(r => r.data)
+
+export const requestInterviewFeedback = (
+  body: InterviewPracticeBody,
+): Promise<WorkshopFeedbackRun> =>
+  apiClient.post(`${BASE}/interview/feedback`, body).then(r => r.data)
+
 export type { WorkshopDomain, WorkshopFeedbackRun }

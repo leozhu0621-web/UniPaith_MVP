@@ -129,7 +129,7 @@ export default function TestGuidancePanel() {
             onClick={() => guidanceMut.mutate()}
             loading={guidanceMut.isPending}
           >
-            Get guidance
+            Get feedback
           </Button>
         </div>
       </Card>
