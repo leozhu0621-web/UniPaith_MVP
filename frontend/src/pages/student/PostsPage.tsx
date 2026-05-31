@@ -63,6 +63,12 @@ export default function PostsPage() {
           </div>
           <button
             onClick={() => setManaging(true)}
+            className="inline-flex sm:hidden items-center gap-1 px-3 py-1.5 mb-1 text-xs font-medium text-student-text hover:text-student-ink rounded-lg hover:bg-student-mist transition-colors"
+          >
+            Following ({followCount}) <ChevronDown size={13} />
+          </button>
+          <button
+            onClick={() => setManaging(true)}
             className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 mb-1 text-xs font-medium text-student-text hover:text-student-ink rounded-lg hover:bg-student-mist transition-colors"
           >
             Manage following ({followCount}) <ChevronDown size={13} />

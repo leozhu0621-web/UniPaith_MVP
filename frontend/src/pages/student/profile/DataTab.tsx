@@ -45,6 +45,11 @@ const LEVERS: { key: string; label: string; help: string }[] = [
     label: 'Model training',
     help: 'Include my data in any future UniPaith model-training corpus.',
   },
+  {
+    key: 'consent_peer_connect',
+    label: 'Peer connections',
+    help: 'Let other applicants find you by shared programs. Only what you choose to share is visible — never scores or financials.',
+  },
 ]
 
 function buildCommonApp(p: any): { mapped: Record<string, any>; unmapped: string[] } {
@@ -131,6 +136,8 @@ export default function DataTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['data-rights'] })
       qc.invalidateQueries({ queryKey: ['profile'] })
+      qc.invalidateQueries({ queryKey: ['peers-status'] })
+      qc.invalidateQueries({ queryKey: ['peers-discover'] })
       showToast('Saved', 'success')
     },
     onError: () => showToast("Something didn't work. Try again.", 'error'),
