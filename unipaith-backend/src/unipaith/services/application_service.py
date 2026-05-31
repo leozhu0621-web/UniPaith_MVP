@@ -127,6 +127,16 @@ class ApplicationService:
         )
         self.db.add(app)
         await self.db.flush()
+
+        # Spec 20 §2 — starting an application auto-follows the institution.
+        # This follow cannot be muted-away as a program_change item and cannot
+        # be unfollowed while the application is active (enforced in
+        # FollowService.unfollow via the live application check).
+        from unipaith.services.follow_service import FollowService
+
+        await FollowService(self.db).auto_follow_for_program(
+            student_id, program_id, source="application"
+        )
         return app
 
     async def list_student_applications(self, student_id: UUID) -> list[Application]:

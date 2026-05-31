@@ -111,6 +111,9 @@ def test_each_agent_declares_consent_requirement():
         "query_interpreter",
         # Spec 17 §7 / 45 §13 — inbox AI-suggested reply drafter (outreach).
         "inbox_reply_drafter",
+        # Spec 20 §8 — Connect feed ranker + event recommender (Haiku).
+        "connect_ranker",
+        "event_recommender",
     }
     assert set(AGENT_REQUIRES.keys()) == expected_agents
 

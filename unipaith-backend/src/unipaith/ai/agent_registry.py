@@ -41,6 +41,9 @@ AGENT_TIERS: dict[str, str] = {
     "matcher": "rule_based",
     # ── Discovery type-first program search (spec 10 §3 / 45 §12) ──
     "query_interpreter": "workhorse",
+    # ── Connect feed (spec 20 §8) — cheap Haiku ranking, always falls back ──
+    "connect_ranker": "batch",
+    "event_recommender": "batch",
 }
 
 

@@ -687,6 +687,11 @@ class StudentDataConsent(Base):
     consent_training: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false", nullable=False
     )
+    # Spec 20 §6.1 / §11 — NEW consent dimension for the Peers tab. Off by
+    # default; revocable. No peer data is read or shown until this is true.
+    consent_peer_connect: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false", nullable=False
+    )
     data_retention_preference: Mapped[str | None] = mapped_column(String(30))
     deletion_requested: Mapped[bool] = mapped_column(Boolean, default=False)
     deletion_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

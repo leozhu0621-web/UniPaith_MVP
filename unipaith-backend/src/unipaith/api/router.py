@@ -10,6 +10,7 @@ from unipaith.api.applications import router as applications_router
 from unipaith.api.auth import router as auth_router
 from unipaith.api.billing import router as billing_router
 from unipaith.api.calendar import router as calendar_router
+from unipaith.api.connect import router as connect_router
 from unipaith.api.discovery import router as discovery_router
 from unipaith.api.documents import router as documents_router
 from unipaith.api.events import router as events_router
@@ -62,6 +63,7 @@ api_router.include_router(interviews_router)
 api_router.include_router(notifications_router)
 api_router.include_router(recommendations_router)
 api_router.include_router(calendar_router)
+api_router.include_router(connect_router)
 
 
 @api_router.get("/health", tags=["health"])
