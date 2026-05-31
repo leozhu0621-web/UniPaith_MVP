@@ -7,13 +7,15 @@ import { interpretQuery, searchProgramsTyped } from '../../../../api/search'
 import { listSaved, saveProgram, unsaveProgram } from '../../../../api/saved-lists'
 import { MAX_COMPARE, useCompareStore } from '../../../../stores/compare-store'
 import { showToast } from '../../../../stores/toast-store'
-import type { ConstraintChip, SortOption } from '../../../../types/search'
+import type { ConstraintChip, SearchFilters, SortOption } from '../../../../types/search'
 import type { ProgramSummary } from '../../../../types'
 import ProgramCard from '../cards/ProgramCard'
 import ConstraintChips from './ConstraintChips'
+import FiltersPanel from './FiltersPanel'
 import GenreTiles from './GenreTiles'
 import SortMenu from './SortMenu'
 import { encodeChipsParam, parseChipsParam, withChipId } from './chipUtils'
+import { encodeFiltersParam, hasActiveFilters, normalizeFilters, parseFiltersParam } from './filterUtils'
 
 // Spec 10 — Discovery type-first program search. Sits inside /s/explore below
 // the StrategyView. Type a query → constraint chips → programs-only results.
@@ -29,15 +31,23 @@ export default function DiscoverySearch() {
 
   const chips = useMemo(() => parseChipsParam(params.get('chips')), [params])
   const chipsKey = params.get('chips') || ''
+  const filters = useMemo(() => parseFiltersParam(params.get('filters')), [params])
+  const filtersKey = params.get('filters') || ''
   const sort = (params.get('sort') as SortOption) || 'relevance'
   const urlQuery = params.get('q') || ''
   const [draft, setDraft] = useState(urlQuery)
   const [degraded, setDegraded] = useState(false)
   const [serviceDown, setServiceDown] = useState(false)
 
-  const active = chips.length > 0
+  // A search is "active" once any constraint exists — a chip OR a panel filter.
+  const active = chips.length > 0 || hasActiveFilters(filters)
 
-  const writeUrl = (next: { q: string; chips: ConstraintChip[]; sort: SortOption }) => {
+  const writeUrl = (next: {
+    q: string
+    chips: ConstraintChip[]
+    sort: SortOption
+    filters: SearchFilters
+  }) => {
     const p = new URLSearchParams(params)
     if (next.q.trim()) p.set('q', next.q.trim())
     else p.delete('q')
@@ -45,6 +55,9 @@ export default function DiscoverySearch() {
     else p.delete('chips')
     if (next.sort && next.sort !== 'relevance') p.set('sort', next.sort)
     else p.delete('sort')
+    const nf = normalizeFilters(next.filters)
+    if (Object.keys(nf).length) p.set('filters', encodeFiltersParam(nf))
+    else p.delete('filters')
     setParams(p, { replace: true })
   }
 
@@ -54,7 +67,7 @@ export default function DiscoverySearch() {
     onSuccess: res => {
       setDegraded(res.degraded)
       setServiceDown(false)
-      writeUrl({ q: draft, chips: res.chips, sort })
+      writeUrl({ q: draft, chips: res.chips, sort, filters })
     },
     onError: () => setServiceDown(true),
   })
@@ -76,9 +89,16 @@ export default function DiscoverySearch() {
 
   // ── Search execution ──
   const searchQuery = useQuery({
-    queryKey: ['discovery-search', chipsKey, sort],
+    queryKey: ['discovery-search', chipsKey, filtersKey, sort],
     queryFn: () =>
-      searchProgramsTyped({ query: urlQuery || null, chips, sort, page: 1, page_size: PAGE_SIZE }),
+      searchProgramsTyped({
+        query: urlQuery || null,
+        chips,
+        filters,
+        sort,
+        page: 1,
+        page_size: PAGE_SIZE,
+      }),
     enabled: active,
     placeholderData: prev => prev,
   })
@@ -110,7 +130,7 @@ export default function DiscoverySearch() {
   }
 
   // ── Chip operations (all re-write the URL → re-run search) ──
-  const setChips = (next: ConstraintChip[]) => writeUrl({ q: urlQuery, chips: next, sort })
+  const setChips = (next: ConstraintChip[]) => writeUrl({ q: urlQuery, chips: next, sort, filters })
   const removeChip = (id: string) => setChips(chips.filter(c => c.id !== id))
   const applyEdit = (id: string, edited: ConstraintChip) => {
     const replacement = withChipId(edited)
@@ -127,12 +147,14 @@ export default function DiscoverySearch() {
   }
   const confirmChip = (id: string) =>
     setChips(chips.map(c => (c.id === id ? { ...c, user_confirmed: true } : c)))
-  const setSort = (s: SortOption) => writeUrl({ q: urlQuery, chips, sort: s })
+  const setSort = (s: SortOption) => writeUrl({ q: urlQuery, chips, sort: s, filters })
+  const setFilters = (next: SearchFilters) =>
+    writeUrl({ q: urlQuery, chips, sort, filters: next })
   const clearAll = () => {
     setDraft('')
     setDegraded(false)
     setServiceDown(false)
-    writeUrl({ q: '', chips: [], sort: 'relevance' })
+    writeUrl({ q: '', chips: [], sort: 'relevance', filters: {} })
   }
 
   const onCompareToggle = (p: ProgramSummary) => {
@@ -209,23 +231,31 @@ export default function DiscoverySearch() {
         </p>
       )}
 
-      {active ? (
-        <>
-          <ConstraintChips
-            chips={chips}
-            onApplyEdit={applyEdit}
-            onRemove={removeChip}
-            onAdd={addChip}
-            onConfirm={confirmChip}
-          />
+      {active && (
+        <ConstraintChips
+          chips={chips}
+          onApplyEdit={applyEdit}
+          onRemove={removeChip}
+          onAdd={addChip}
+          onConfirm={confirmChip}
+        />
+      )}
 
-          <div className="flex items-center justify-between gap-3 flex-wrap">
+      {/* Toolbar — Filters (always available) · results count + Sort (when active). Spec §2/§5/§6. */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <FiltersPanel filters={filters} onApply={setFilters} />
+          {active && (
             <p className="text-sm text-muted-foreground" data-testid="results-count" aria-live="polite">
               {loading ? 'Searching…' : `Showing ${total} program${total === 1 ? '' : 's'}`}
             </p>
-            <SortMenu value={sort} onChange={setSort} />
-          </div>
+          )}
+        </div>
+        {active && <SortMenu value={sort} onChange={setSort} />}
+      </div>
 
+      {active ? (
+        <>
           {searchQuery.isError ? (
             <div className="text-center py-16 bg-card rounded-xl border border-border">
               <AlertTriangle size={28} className="mx-auto text-warning mb-3" />
@@ -246,9 +276,15 @@ export default function DiscoverySearch() {
               <Search size={28} className="mx-auto text-stone mb-3" />
               <p className="text-sm text-foreground font-semibold mb-1">No programs match.</p>
               <p className="text-xs text-muted-foreground mb-4">
-                Try removing a chip{chips.some(c => c.category === 'budget') ? ' or widening your budget' : ''}.
+                Try removing a {chips.length ? 'chip' : 'filter'}
+                {chips.some(c => c.category === 'budget') ||
+                filters.max_tuition != null ||
+                filters.min_tuition != null
+                  ? ' or widening your budget'
+                  : ''}
+                .
               </p>
-              {chips.length > 0 && (
+              {chips.length > 0 ? (
                 <Button
                   size="sm"
                   variant="tertiary"
@@ -256,7 +292,11 @@ export default function DiscoverySearch() {
                 >
                   Remove last filter
                 </Button>
-              )}
+              ) : hasActiveFilters(filters) ? (
+                <Button size="sm" variant="tertiary" onClick={() => setFilters({})}>
+                  Clear filters
+                </Button>
+              ) : null}
             </div>
           ) : (
             <>

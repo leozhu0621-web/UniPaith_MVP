@@ -41,6 +41,24 @@ _UNCERTAINTY = 0.12
 _STRETCH_CEILING = 1.25
 # Merit/need adjustments to the expected aid discount, keyed by likelihood band.
 _LIKELIHOOD_DISCOUNT = {"high": 0.10, "moderate": 0.0, "low": -0.05}
+# `funding_requirement` values that signal demonstrated need / aid-seeking. The
+# stored enum (schema) is `full_scholarship | partial | self_funded | flexible`:
+# the first two are a need signal; `self_funded` / `flexible` are not. Legacy
+# free-text tokens are kept so external callers passing them still work.
+_NEEDS_AID_FUNDING = frozenset(
+    {
+        "full_scholarship",
+        "partial",
+        # legacy / external tolerant tokens
+        "need",
+        "needs_aid",
+        "need_based",
+        "full_funding",
+        "full",
+        "required",
+        "yes",
+    }
+)
 
 
 def _num(v: Any) -> float | None:
@@ -245,15 +263,7 @@ def compute_net_price_estimate(
         return _unavailable(budget, "no_cost_data")
 
     acceptance_rate = _num(program.get("acceptance_rate"))
-    needs_aid = (funding_requirement or "").strip().lower() in {
-        "need",
-        "needs_aid",
-        "need_based",
-        "full_funding",
-        "full",
-        "required",
-        "yes",
-    }
+    needs_aid = (funding_requirement or "").strip().lower() in _NEEDS_AID_FUNDING
     budget_below_coa = budget is not None and budget < coa
 
     likelihood = _scholarship_likelihood(

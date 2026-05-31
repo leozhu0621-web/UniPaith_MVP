@@ -38,9 +38,33 @@ export interface InterpretResponse {
   degraded: boolean
 }
 
+// Spec 10 §5 — panel-level filters that coexist with chips. Mirrors the
+// backend `FilterState`; all optional. Sent alongside chips on every search;
+// the backend merges them (explicit filters win on conflict with a chip).
+export interface SearchFilters {
+  campus_setting?: string | null
+  program_name?: string | null
+  country?: string | null
+  region?: string | null
+  city?: string | null
+  degree_types?: string[] | null
+  delivery_formats?: string[] | null
+  min_tuition?: number | null
+  max_tuition?: number | null
+  min_duration_months?: number | null
+  max_duration_months?: number | null
+  min_acceptance_rate?: number | null
+  max_acceptance_rate?: number | null
+  start_year?: number | null
+  min_median_salary?: number | null
+  min_employment_rate?: number | null
+  max_payback_months?: number | null
+}
+
 export interface SearchRequestPayload {
   query?: string | null
   chips: ConstraintChip[]
+  filters?: SearchFilters | null
   sort?: SortOption
   page?: number
   page_size?: number

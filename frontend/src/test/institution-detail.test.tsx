@@ -71,6 +71,8 @@ describe('InstitutionDetail (Spec 12)', () => {
     // Breadcrumb: Match · Search · University of Foo
     expect(screen.getByRole('button', { name: 'Match' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Search' })).toBeInTheDocument()
+    // Header meta renders the founded year (Spec 12 §2: "Founded 1831")
+    expect(screen.getByText(/Founded 1831/)).toBeInTheDocument()
     // Eyebrow must not double the noun (regression: "University University" when
     // ownership_type is absent). type='university' + no ownership → "University".
     expect(screen.getByText('University')).toBeInTheDocument()

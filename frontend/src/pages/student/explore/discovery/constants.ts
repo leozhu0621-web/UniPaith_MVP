@@ -38,6 +38,7 @@ export const DEGREE_OPTIONS: { value: string; label: string }[] = [
   { value: 'doctorate', label: 'Doctorate' },
   { value: 'certificate', label: 'Certificate' },
   { value: 'associate', label: 'Associate' },
+  { value: 'professional', label: 'Professional' },
 ]
 
 export const FORMAT_OPTIONS: { value: string; label: string }[] = [
@@ -51,6 +52,13 @@ export const SELECTIVITY_OPTIONS: { value: string; label: string }[] = [
   { value: 'medium', label: 'Moderately selective' },
   { value: 'high', label: 'Selective' },
   { value: 'very_high', label: 'Highly selective' },
+]
+
+/** Spec 10 §5 — campus setting facet. */
+export const CAMPUS_SETTING_OPTIONS: { value: string; label: string }[] = [
+  { value: 'urban', label: 'Urban' },
+  { value: 'suburban', label: 'Suburban' },
+  { value: 'rural', label: 'Rural' },
 ]
 
 export const SEASON_OPTIONS: { value: string; label: string }[] = [

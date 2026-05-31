@@ -40,7 +40,7 @@ export async function updateInstitution(payload: Partial<{
   name: string; type: string; country: string; region: string; city: string;
   website_url: string; description_text: string; logo_url: string;
   campus_description: string; campus_setting: 'urban' | 'suburban' | 'rural';
-  student_body_size: number; contact_email: string;
+  student_body_size: number; founded_year: number; contact_email: string;
   media_gallery: string[];
   // JSONB dicts — see UpdateInstitutionRequest in the backend schema.
   social_links: Record<string, any>;

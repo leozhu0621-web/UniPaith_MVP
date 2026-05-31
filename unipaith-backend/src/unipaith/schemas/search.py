@@ -80,6 +80,11 @@ class FilterState(BaseModel):
     min_acceptance_rate: float | None = None
     max_acceptance_rate: float | None = None
     start_year: int | None = None
+    # Spec 10 §5 — featured / outcome filters (data-gated; null-valued programs
+    # are excluded when the corresponding filter is set).
+    min_median_salary: int | None = None
+    min_employment_rate: float | None = None
+    max_payback_months: int | None = None
 
 
 class InterpretRequest(BaseModel):

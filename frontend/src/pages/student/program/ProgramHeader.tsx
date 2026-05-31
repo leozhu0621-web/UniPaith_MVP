@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowLeft, Bookmark, BookmarkCheck, ArrowRightLeft, Sparkles,
@@ -132,6 +133,8 @@ interface Props {
   onAskCounselor?: () => void
   onApply?: () => void
   onViewApplication?: () => void
+  /** Spec 11 §2 — DualRing (the sole accent) sits inline in the fact strip. */
+  matchSlot?: ReactNode
 }
 
 export default function ProgramHeader({
@@ -140,6 +143,7 @@ export default function ProgramHeader({
   durationMonths, deliveryFormat, highlights, tracks, description,
   isSaved, isComparing, hasApplication, archived,
   onBack, onSave, onCompare, onAskCounselor, onApply, onViewApplication,
+  matchSlot,
 }: Props) {
   const degreeLabel = DEGREE_LABELS[degreeType] || degreeType
   const duration = durationLabel(durationMonths, degreeType)
@@ -252,40 +256,48 @@ export default function ProgramHeader({
               )}
             </div>
 
-            {/* Standard basics — two-line info cards consistent across all programs */}
-            <div className="flex flex-wrap items-stretch gap-1.5 mt-4">
-              {pills.map((p, i) => (
-                <div
-                  key={i}
-                  title={p.title}
-                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border ${PILL_TONE[p.tone || 'default']}`}
-                >
-                  <p.icon
-                    size={14}
-                    className={
-                      p.tone === 'primary' ? 'text-cobalt' :
-                      p.tone === 'urgent' ? 'text-warning' :
-                      'text-slate/60'
-                    }
-                  />
-                  <div className="leading-tight">
-                    <p className={`text-[9px] uppercase tracking-wider font-semibold ${
-                      p.tone === 'primary' ? 'text-cobalt/70' :
-                      p.tone === 'urgent' ? 'text-warning/80' :
-                      'text-slate/60'
-                    }`}>
-                      {p.heading}
-                    </p>
-                    <p className={`text-[13px] font-semibold ${
-                      p.tone === 'primary' ? 'text-cobalt' :
-                      p.tone === 'urgent' ? 'text-warning' :
-                      'text-charcoal'
-                    }`}>
-                      {p.value}
-                    </p>
-                  </div>
+            {/* Fact strip — DualRing (the sole accent, §2) leads the standard
+                basics: two-line info cards consistent across all programs. */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4">
+              {matchSlot && (
+                <div className="flex-shrink-0 pr-4 mr-1 border-r border-divider">
+                  {matchSlot}
                 </div>
-              ))}
+              )}
+              <div className="flex flex-wrap items-stretch gap-1.5">
+                {pills.map((p, i) => (
+                  <div
+                    key={i}
+                    title={p.title}
+                    className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border ${PILL_TONE[p.tone || 'default']}`}
+                  >
+                    <p.icon
+                      size={14}
+                      className={
+                        p.tone === 'primary' ? 'text-cobalt' :
+                        p.tone === 'urgent' ? 'text-warning' :
+                        'text-slate/60'
+                      }
+                    />
+                    <div className="leading-tight">
+                      <p className={`text-[9px] uppercase tracking-wider font-semibold ${
+                        p.tone === 'primary' ? 'text-cobalt/70' :
+                        p.tone === 'urgent' ? 'text-warning/80' :
+                        'text-slate/60'
+                      }`}>
+                        {p.heading}
+                      </p>
+                      <p className={`text-[13px] font-semibold ${
+                        p.tone === 'primary' ? 'text-cobalt' :
+                        p.tone === 'urgent' ? 'text-warning' :
+                        'text-charcoal'
+                      }`}>
+                        {p.value}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 

@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { useCompareStore } from '../../stores/compare-store'
 import { comparePrograms } from '../../api/saved-lists'
 import Badge from '../ui/Badge'
 import Button from '../ui/Button'
-import Card from '../ui/Card'
 import { X, ArrowRightLeft, ChevronUp, ChevronDown, GraduationCap } from 'lucide-react'
+import { COMPARE_DIMENSIONS, type CompareProgram } from './compareDimensions'
 
 interface CompareTrayProps {
   initialExpanded?: boolean
@@ -64,36 +64,60 @@ export default function CompareTray({ initialExpanded = false, syncUrl = false }
                 <X size={18} />
               </button>
             </div>
-            {comparisonResult.ai_analysis && (
-              <Card variant="card-flush" className="p-4 mb-4 bg-muted">
-                <p className="text-sm text-foreground">{comparisonResult.ai_analysis}</p>
-              </Card>
-            )}
-            {comparisonResult.comparison_data && (
+            {comparisonResult.ai_analysis &&
+              comparisonResult.ai_analysis !== 'AI analysis unavailable.' && (
+                <div className="p-4 mb-4 rounded-lg bg-muted border border-border">
+                  <p className="text-sm text-foreground">{comparisonResult.ai_analysis}</p>
+                </div>
+              )}
+            {Array.isArray(comparisonResult.programs) && comparisonResult.programs.length > 0 && (
               <div className="overflow-x-auto rounded-lg border border-border">
-                <table className="w-full text-sm">
+                {/* Spec 10 §8 — five dimensions, side by side. */}
+                <table className="w-full text-sm border-collapse">
                   <thead>
                     <tr className="bg-muted">
-                      <th className="sticky left-0 z-10 bg-muted text-left py-2 px-3 text-xs text-muted-foreground font-semibold">Field</th>
-                      {items.map(item => (
-                        <th key={item.program_id} className="text-left py-2 px-3 text-xs text-foreground font-semibold whitespace-nowrap">
-                          {item.program_name}
+                      <th className="sticky left-0 z-10 bg-muted text-left py-2.5 px-3 text-xs text-muted-foreground font-semibold w-40">
+                        Dimension
+                      </th>
+                      {(comparisonResult.programs as CompareProgram[]).map(p => (
+                        <th
+                          key={p.id}
+                          className="text-left py-2.5 px-3 text-xs text-foreground font-semibold min-w-[150px] align-top"
+                        >
+                          {p.program_name}
+                          {p.institution_name && (
+                            <span className="block text-[11px] font-normal text-muted-foreground">
+                              {p.institution_name}
+                            </span>
+                          )}
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {Object.entries(comparisonResult.comparison_data as Record<string, Record<string, string>>).map(([field, values]) => (
-                      <tr key={field} className="border-t border-border">
-                        <td className="sticky left-0 z-10 bg-card py-2 px-3 text-xs text-muted-foreground font-medium capitalize">
-                          {field.replace(/_/g, ' ')}
-                        </td>
-                        {items.map(item => (
-                          <td key={item.program_id} className="py-2 px-3 text-xs text-foreground">
-                            {String(values[item.program_id] ?? '—')}
+                    {COMPARE_DIMENSIONS.map(dim => (
+                      <Fragment key={dim.title}>
+                        <tr>
+                          <td
+                            colSpan={1 + comparisonResult.programs.length}
+                            className="bg-muted/50 py-1.5 px-3 text-[11px] uppercase tracking-wide text-secondary font-semibold"
+                          >
+                            {dim.title}
                           </td>
+                        </tr>
+                        {dim.rows.map(row => (
+                          <tr key={row.label} className="border-t border-border">
+                            <td className="sticky left-0 z-10 bg-card py-2 px-3 text-xs text-muted-foreground font-medium">
+                              {row.label}
+                            </td>
+                            {(comparisonResult.programs as CompareProgram[]).map(p => (
+                              <td key={p.id} className="py-2 px-3 text-xs text-foreground">
+                                {row.get(p)}
+                              </td>
+                            ))}
+                          </tr>
                         ))}
-                      </tr>
+                      </Fragment>
                     ))}
                   </tbody>
                 </table>

@@ -223,6 +223,46 @@ async def test_search_sort_tuition_asc(
     assert tuitions[0] == 30000
 
 
+@pytest.mark.asyncio
+async def test_search_outcome_filters(
+    student_client, db_session, mock_student_user, mock_institution_user
+):
+    """Spec 10 §5 — featured/outcome filters narrow on program-level outcomes."""
+    inst, _ = await _seed(db_session, mock_student_user, mock_institution_user)
+    high = Program(
+        institution_id=inst.id,
+        program_name="High Outcomes MS",
+        degree_type="masters",
+        is_published=True,
+        tuition=45000,
+        outcomes_data={"median_salary": 95000, "employment_rate": 0.92, "payback_months": 18},
+    )
+    low = Program(
+        institution_id=inst.id,
+        program_name="Low Outcomes MS",
+        degree_type="masters",
+        is_published=True,
+        tuition=45000,
+        outcomes_data={"median_salary": 50000, "employment_rate": 0.60, "payback_months": 48},
+    )
+    db_session.add_all([high, low])
+    await db_session.commit()
+
+    # Salary floor keeps only the high-salary program; programs without
+    # outcomes_data (the seeded ones) are excluded by the filter.
+    r = await student_client.post(SEARCH, json={"filters": {"min_median_salary": 80000}})
+    assert r.status_code == 200
+    names = _names(r.json())
+    assert names == {"High Outcomes MS"}
+
+    # Employment-rate floor + payback ceiling combine (AND) → still just the one.
+    r2 = await student_client.post(
+        SEARCH, json={"filters": {"min_employment_rate": 0.85, "max_payback_months": 24}}
+    )
+    assert r2.status_code == 200
+    assert _names(r2.json()) == {"High Outcomes MS"}
+
+
 # ── compare set ──────────────────────────────────────────────────────────────
 
 

@@ -723,6 +723,7 @@ export interface Institution {
   campus_description: string | null
   campus_setting: 'urban' | 'suburban' | 'rural' | null
   student_body_size: number | null
+  founded_year: number | null
   contact_email: string | null
   logo_url: string | null
   website_url: string | null
