@@ -124,6 +124,8 @@ interface Props {
   isSaved: boolean
   isComparing?: boolean
   hasApplication?: boolean
+  /** Spec 11 §6 — archived program: actions are disabled. */
+  archived?: boolean
   onBack: () => void
   onSave: () => void
   onCompare?: () => void
@@ -136,7 +138,7 @@ export default function ProgramHeader({
   programName, degreeType, institutionId, institutionName, institutionCity,
   institutionCountry, department,
   durationMonths, deliveryFormat, highlights, tracks, description,
-  isSaved, isComparing, hasApplication,
+  isSaved, isComparing, hasApplication, archived,
   onBack, onSave, onCompare, onAskCounselor, onApply, onViewApplication,
 }: Props) {
   const degreeLabel = DEGREE_LABELS[degreeType] || degreeType
@@ -196,7 +198,8 @@ export default function ProgramHeader({
         <div className="flex items-center gap-1.5">
           <button
             onClick={onSave}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+            disabled={archived}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
               isSaved
                 ? 'bg-cobalt text-white border-cobalt'
                 : 'bg-white text-slate border-divider hover:border-cobalt hover:text-cobalt'
@@ -209,7 +212,8 @@ export default function ProgramHeader({
           {onCompare && (
             <button
               onClick={onCompare}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+              disabled={archived}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                 isComparing
                   ? 'bg-cobalt text-white border-cobalt'
                   : 'bg-white text-slate border-divider hover:border-cobalt hover:text-cobalt'
@@ -306,7 +310,8 @@ export default function ProgramHeader({
             ) : onApply ? (
               <button
                 onClick={onApply}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-cobalt text-white hover:bg-cobalt-dark transition-colors shadow-sm"
+                disabled={archived}
+                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-cobalt text-white hover:bg-cobalt-dark transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-cobalt"
               >
                 <Send size={12} /> Start application
               </button>

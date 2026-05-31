@@ -1654,6 +1654,97 @@ export interface ProbabilityBandsResponse {
   reason: string | null // "no_history" | "not_match_ready" | "disabled" | null
 }
 
+// Spec 11 §3.5 — Insights: student/alumni reviews + employer feedback.
+export interface ProgramReview {
+  id: string
+  program_id: string
+  rating_teaching: number | null
+  rating_workload: number | null
+  rating_career_support: number | null
+  rating_internship_access: number | null
+  rating_community_culture: number | null
+  rating_roi: number | null
+  rating_overall: number | null
+  review_text: string | null
+  who_thrives_here: string | null
+  reviewer_context: Record<string, unknown> | null
+  external_source: Record<string, unknown> | null
+  is_verified: boolean
+  created_at: string
+}
+
+export interface ProgramReviewSummary {
+  total_reviews: number
+  avg_teaching: number | null
+  avg_workload: number | null
+  avg_career_support: number | null
+  avg_internship_access: number | null
+  avg_community_culture: number | null
+  avg_roi: number | null
+  avg_overall: number | null
+  reviews: ProgramReview[]
+}
+
+export interface EmployerFeedback {
+  id: string
+  program_id: string
+  employer_name: string
+  industry: string | null
+  rating_technical: number | null
+  rating_practical: number | null
+  rating_communication: number | null
+  rating_teamwork: number | null
+  rating_reliability: number | null
+  rating_overall: number | null
+  job_readiness_sentiment: string | null
+  feedback_text: string | null
+  hiring_pattern: string | null
+  feedback_year: number | null
+  created_at: string
+}
+
+export interface EmployerFeedbackSummary {
+  total_feedback: number
+  avg_technical: number | null
+  avg_practical: number | null
+  avg_communication: number | null
+  avg_teamwork: number | null
+  avg_reliability: number | null
+  avg_overall: number | null
+  sentiment_counts: Record<string, number>
+  feedback: EmployerFeedback[]
+}
+
+// Spec 11 §3.3a — personalized Net Price Estimator (GET /me/programs/:id/net-price).
+export type AffordabilityBand = 'affordable' | 'stretch' | 'out_of_reach' | 'unknown'
+export type AidLikelihoodBand = 'low' | 'moderate' | 'high' | 'unknown'
+
+export interface NetPriceRange {
+  min: number
+  expected: number
+  max: number
+}
+
+export interface NetPriceEstimate {
+  program_id: string
+  available: boolean
+  reason: string | null // "no_cost_data" | null
+  currency: string
+  cost_of_attendance_annual: number | null
+  net_cost_scenario_range: NetPriceRange | null
+  net_cost_scenario_range_total: NetPriceRange | null
+  years: number | null
+  affordability_band: AffordabilityBand
+  aid_scholarship_likelihood_band: AidLikelihoodBand
+  gap: {
+    student_annual_budget: number | null
+    shortfall_annual: number | null
+    band: AffordabilityBand
+  }
+  drivers: string[]
+  disclaimer: string
+}
+
 export interface ExplainMatchResponse {
   program_id: string
   rationale_text: string
