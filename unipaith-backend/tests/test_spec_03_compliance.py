@@ -89,7 +89,11 @@ def test_default_mask_has_all_four_keys():
 
 def test_each_agent_declares_consent_requirement():
     """Every agent name listed on `AiTurn.agent` CHECK constraint also
-    appears in AGENT_REQUIRES so the consent gate has an answer for it."""
+    appears in AGENT_REQUIRES so the consent gate has an answer for it.
+
+    Spec 06 §2 added review_summarizer (Opus) + authenticity_risk (Haiku) +
+    the L3 'matcher' audit label; all are declared in AGENT_REQUIRES.
+    """
     expected_agents = {
         "orchestrator",
         "extractor",
@@ -99,6 +103,10 @@ def test_each_agent_declares_consent_requirement():
         "workshop_coach",
         "workshop_judge",
         "embedding",
+        # Spec 06 §2 additions.
+        "review_summarizer",
+        "authenticity_risk",
+        "matcher",
     }
     assert set(AGENT_REQUIRES.keys()) == expected_agents
 

@@ -17,6 +17,7 @@ from unipaith.schemas.goals import (
     UpdateGoalRequest,
 )
 from unipaith.services.goals_service import GoalsService
+from unipaith.services.match_service import invalidate_matches_for_user
 
 router = APIRouter(prefix="/students/me/goals", tags=["goals"])
 
@@ -42,6 +43,7 @@ async def create_goal(
     db: AsyncSession = Depends(get_db),
 ):
     goal = await _svc(db).create_goal(user.id, body)
+    await invalidate_matches_for_user(db, user.id)  # spec 06 §5.1
     return GoalResponse.model_validate(goal)
 
 
@@ -53,6 +55,7 @@ async def update_goal(
     db: AsyncSession = Depends(get_db),
 ):
     goal = await _svc(db).update_goal(user.id, goal_id, body)
+    await invalidate_matches_for_user(db, user.id)  # spec 06 §5.1
     return GoalResponse.model_validate(goal)
 
 
@@ -63,3 +66,4 @@ async def delete_goal(
     db: AsyncSession = Depends(get_db),
 ):
     await _svc(db).delete_goal(user.id, goal_id)
+    await invalidate_matches_for_user(db, user.id)  # spec 06 §5.1

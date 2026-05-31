@@ -117,6 +117,23 @@ async def lifespan(app: FastAPI):  # noqa: ARG001
     except Exception:
         logging.getLogger("unipaith.startup").exception("Schools table bootstrap failed")
 
+    # Spec 06 §5.4 — cache-invalidation trigger for prompt/model rolls. After a
+    # deploy that bumped RATIONALE_PROMPT_VERSION (also the documented hook for
+    # a workhorse-model roll), purge cached rationales generated under an older
+    # prompt version. Idempotent: a no-op DELETE on every subsequent boot.
+    try:
+        from unipaith.ai.cache_invalidation import invalidate_for_prompt_change
+
+        async with async_session() as db:
+            removed = await invalidate_for_prompt_change(db)
+            await db.commit()
+            if removed:
+                logging.getLogger("unipaith.startup").info(
+                    "Purged %d stale-prompt match_rationale rows on startup", removed
+                )
+    except Exception:
+        logging.getLogger("unipaith.startup").exception("Prompt-cache invalidation failed")
+
     if settings.environment.lower() in {"production", "staging"}:
         try:
             async with async_session() as db:

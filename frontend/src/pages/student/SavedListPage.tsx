@@ -14,6 +14,8 @@ import { showToast } from '../../stores/toast-store'
 import { formatCurrency, formatDate, formatPercent, formatScore } from '../../utils/format'
 import { DEGREE_LABELS, TIER_LABELS, STATUS_COLORS } from '../../utils/constants'
 import { Heart, Trash2, Pencil, BarChart3, ArrowUp, ArrowDown, Minus, ArrowUpDown, Filter, FileText, ChevronDown, GraduationCap, MapPin } from 'lucide-react'
+import Breadcrumbs from '../../components/ui/Breadcrumbs'
+import usePageTitle from '../../hooks/usePageTitle'
 import type { SavedProgram, ComparisonResponse, MatchResult, Application } from '../../types'
 
 type Priority = 'considering' | 'planning' | 'applied' | 'dropped'
@@ -65,6 +67,8 @@ export default function SavedListPage() {
   const { data: saved, isLoading } = useQuery({ queryKey: ['saved'], queryFn: listSaved })
   const { data: matches } = useQuery({ queryKey: ['matches'], queryFn: () => getMatches() })
   const { data: applications } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
+  // Hooks must run before any early return (react-hooks/rules-of-hooks).
+  usePageTitle('Saved')
 
   const removeMut = useMutation({
     mutationFn: unsaveProgram,
@@ -272,6 +276,7 @@ export default function SavedListPage() {
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
+      <Breadcrumbs className="mb-3" items={[{ label: 'Profile', to: '/s/profile' }, { label: 'Saved' }]} />
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-semibold">Saved Programs</h1>
         {selected.size >= 2 && (

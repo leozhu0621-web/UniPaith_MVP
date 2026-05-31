@@ -33,16 +33,26 @@ export default function RationalePopover({
 }: RationalePopoverProps) {
   const [rationale, setRationale] = useState<string | null>(cachedRationale ?? null)
   const [isStub, setIsStub] = useState(false)
+  // Spec 06 §5.5 — these come back already redacted to the student-safe view.
+  const [resp, setResp] = useState<ExplainMatchResponse | null>(null)
 
   const explainMut = useMutation({
     mutationFn: () => explainMatch(programId),
-    onSuccess: (resp: ExplainMatchResponse) => {
-      setRationale(resp.rationale_text)
-      setIsStub(resp.is_stub)
+    onSuccess: (r: ExplainMatchResponse) => {
+      setRationale(r.rationale_text)
+      setIsStub(r.is_stub)
+      setResp(r)
     },
     onError: (err: unknown) =>
       showToast((err as Error).message ?? 'Could not load rationale.', 'error'),
   })
+
+  // Prefer the server's redacted breakdowns/citations; fall back to props
+  // (passed from the match list) only until the call returns.
+  const fitness = (resp?.fitness_breakdown as Record<string, unknown> | null) ?? fitnessBreakdown
+  const confidence =
+    (resp?.confidence_breakdown as Record<string, unknown> | null) ?? confidenceBreakdown
+  const studentCitations = resp?.cited_student_fields ?? []
 
   useEffect(() => {
     if (!cachedRationale) explainMut.mutate()
@@ -77,11 +87,27 @@ export default function RationalePopover({
             rationale && <p className="text-sm leading-relaxed text-foreground whitespace-pre-line">{rationale}</p>
           )}
 
-          {fitnessBreakdown && Object.keys(fitnessBreakdown).length > 0 && (
-            <BreakdownBlock title="Based on — fitness drivers" data={fitnessBreakdown} />
+          {studentCitations.length > 0 && (
+            <div className="border-t border-border pt-3">
+              <div className="text-eyebrow text-muted-foreground mb-2">Based on your profile</div>
+              <div className="flex flex-wrap gap-1.5">
+                {studentCitations.map(path => (
+                  <span
+                    key={path}
+                    className="inline-flex items-center gap-1 rounded-pill border border-student bg-student/10 px-2 py-0.5 text-xs text-student-ink"
+                  >
+                    {prettyField(path)}
+                  </span>
+                ))}
+              </div>
+            </div>
           )}
-          {confidenceBreakdown && Object.keys(confidenceBreakdown).length > 0 && (
-            <BreakdownBlock title="Based on — confidence drivers" data={confidenceBreakdown} />
+
+          {fitness && Object.keys(fitness).length > 0 && (
+            <BreakdownBlock title="Based on — fitness drivers" data={fitness} />
+          )}
+          {confidence && Object.keys(confidence).length > 0 && (
+            <BreakdownBlock title="Based on — confidence drivers" data={confidence} />
           )}
 
           {isStub && <p className="text-xs text-muted-foreground italic">Showing rule-based result.</p>}
@@ -100,6 +126,13 @@ export default function RationalePopover({
       </div>
     </div>
   )
+}
+
+// "sparse.research_experience" → "Research experience"
+function prettyField(path: string): string {
+  const last = path.split('.').pop() ?? path
+  const words = last.replace(/_/g, ' ').trim()
+  return words.charAt(0).toUpperCase() + words.slice(1)
 }
 
 function BreakdownBlock({ title, data }: { title: string; data: Record<string, unknown> }) {

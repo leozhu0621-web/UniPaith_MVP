@@ -67,6 +67,13 @@ AGENT_REQUIRES: dict[str, str | None] = {
     "workshop_coach": None,
     "workshop_judge": None,
     "embedding": "matching",  # used by the match pipeline
+    # Spec 06 §2 / §5.2.
+    "review_summarizer": "matching",  # institution review summary (45 §14)
+    # Essay authenticity is an institution integrity workflow on a *submitted*
+    # application — the act of applying is the consent signal, like the
+    # workshop coaches. Gated by institution role, not the matching mask.
+    "authenticity_risk": None,
+    "matcher": "matching",  # L3 ML scoring (consent-gated in MatchService)
 }
 
 

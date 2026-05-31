@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react'
+import { useState, lazy, Suspense, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getProfile, updateProfile, createAcademic, updateAcademic, deleteAcademic, createTestScore, updateTestScore, deleteTestScore, createActivity, updateActivity, deleteActivity, createOnlinePresence, updateOnlinePresence, deleteOnlinePresence, createPortfolioItem, updatePortfolioItem, deletePortfolioItem, createResearch, updateResearch, deleteResearch, createLanguage, updateLanguage, deleteLanguage, upsertPreferences, getNextStep, listWorkExperiences, createWorkExperience, updateWorkExperience, deleteWorkExperience, listCompetitions, createCompetition, updateCompetition, deleteCompetition, getAccommodations, upsertAccommodations, getScheduling, upsertScheduling, getPeerComparison, getTimeline, getDataRights, upsertDataRights } from '../../api/students'
@@ -17,9 +17,10 @@ import { Pencil, Trash2, Plus, Upload, Sparkles, CheckCircle2, Circle, ExternalL
 import { BasicInfoForm, AcademicForm, TestScoreForm, ActivityForm, PreferencesForm, OnlinePresenceForm, PortfolioItemForm, ResearchForm, LanguageForm, WorkExperienceForm, CompetitionForm, AccommodationForm, SchedulingForm, DataRightsForm } from './components/ProfileForms'
 import type { StudentProfile } from '../../types'
 
+import { PROFILE_TAB_ALIASES, normalizeProfileTab, type ProfileTabSpec } from '../../utils/information-architecture'
+import usePageTitle from '../../hooks/usePageTitle'
+
 // Lazy-load absorbed pages as tabs
-const EssayWorkshopPage = lazy(() => import('./EssayWorkshopPage'))
-const ResumeWorkshopPage = lazy(() => import('./ResumeWorkshopPage'))
 const RecommendationsPage = lazy(() => import('./RecommendationsPage'))
 const FinancialAidPage = lazy(() => import('./FinancialAidPage'))
 
@@ -29,28 +30,23 @@ const GoalsTab = lazy(() => import('./profile/GoalsTab'))
 const NeedsTab = lazy(() => import('./profile/NeedsTab'))
 const StrategyTab = lazy(() => import('./profile/StrategyTab'))
 
-type ProfileTab =
-  | 'overview'
-  | 'identity'
-  | 'goals'
-  | 'needs'
-  | 'strategy'
-  | 'essays'
-  | 'recommenders'
-  | 'financial'
+type ProfileTab = ProfileTabSpec
 
-// Order: durable record (Overview) → deepest layer (Identity) → durable
-// artifacts (Goals, Needs) → bridge to Match (Strategy) → existing tabs.
-// Per the Phase D plan, Essays & Resume will move to Apply > Workshops.
+// Spec/04 §4.6 — 13 tabs covering all 19 Universal Profile sections.
 const PROFILE_TABS: { key: ProfileTab; label: string }[] = [
   { key: 'overview', label: 'Overview' },
   { key: 'identity', label: 'Identity' },
+  { key: 'academics', label: 'Academics' },
+  { key: 'experience', label: 'Experience' },
   { key: 'goals', label: 'Goals' },
   { key: 'needs', label: 'Needs' },
   { key: 'strategy', label: 'Strategy' },
-  { key: 'essays', label: 'Essays & Resume' },
-  { key: 'recommenders', label: 'Recommenders' },
+  { key: 'preparation', label: 'Preparation' },
+  { key: 'preferences', label: 'Preferences' },
   { key: 'financial', label: 'Financial' },
+  { key: 'timeline', label: 'Timeline' },
+  { key: 'analytics', label: 'Analytics' },
+  { key: 'data', label: 'Data' },
 ]
 
 // --- Profile Strength Ring ---
@@ -112,9 +108,32 @@ export default function ProfilePage() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const activeTab = (searchParams.get('tab') as ProfileTab) || 'overview'
+  const rawTab = searchParams.get('tab')
+  const activeTab = normalizeProfileTab(rawTab)
+  const sectionFocus = searchParams.get('section')
+  const recommendersRef = useRef<HTMLDivElement>(null)
+  usePageTitle('Profile')
   const [editModal, setEditModal] = useState<string | null>(null)
   const [editItem, setEditItem] = useState<any>(null)
+
+  // Legacy tab aliases (Spec/04 §4.4 / §8).
+  useEffect(() => {
+    if (!rawTab) return
+    const alias = PROFILE_TAB_ALIASES[rawTab]
+    if (alias) {
+      navigate(alias, { replace: true })
+    }
+  }, [rawTab, navigate])
+
+  useEffect(() => {
+    if (activeTab === 'preparation' && sectionFocus === 'recommenders') {
+      recommendersRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [activeTab, sectionFocus])
+
+  const setTab = (tab: ProfileTab) => {
+    setSearchParams(tab === 'overview' ? {} : { tab }, { replace: true })
+  }
 
   const { data: profile, isLoading } = useQuery({ queryKey: ['profile'], queryFn: getProfile })
   const { data: onboarding } = useQuery({ queryKey: ['onboarding'], queryFn: getOnboarding })
@@ -203,47 +222,41 @@ export default function ProfilePage() {
     }
   }
 
-  // Tab content for non-overview tabs
-  if (activeTab !== 'overview') {
+  const show = (...tabs: ProfileTab[]) => tabs.includes(activeTab)
+
+  const tabBar = (
+    <div className="flex gap-1 border-b border-divider overflow-x-auto no-scrollbar mb-6">
+      {PROFILE_TABS.map(tab => (
+        <button
+          key={tab.key}
+          onClick={() => setTab(tab.key)}
+          className={`px-3 py-2 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
+            activeTab === tab.key
+              ? 'border-student text-student'
+              : 'border-transparent text-student-text hover:text-student-ink'
+          }`}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  )
+
+  // Discovery artifact tabs — lazy-loaded standalone panels.
+  if (show('identity', 'goals', 'needs', 'strategy', 'financial')) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
         <div className="flex items-center gap-2 mb-1">
           <Sparkles size={18} className="text-gold" />
-          <h1 className="text-2xl font-semibold text-student-ink">My Story</h1>
+          <h1 className="text-2xl font-semibold text-student-ink">Profile</h1>
         </div>
-        <p className="text-sm text-gray-500 mb-4">Everything about you in one place.</p>
-
-        {/* Tab bar */}
-        <div className="flex gap-1 mb-6 border-b border-divider">
-          {PROFILE_TABS.map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setSearchParams(tab.key === 'overview' ? {} : { tab: tab.key })}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab.key
-                  ? 'border-student text-student'
-                  : 'border-transparent text-student-text hover:text-student-ink'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
+        <p className="text-sm text-muted-foreground mb-4">Your durable record across every stage.</p>
+        {tabBar}
         <Suspense fallback={<div className="py-10 text-center text-student-text">Loading...</div>}>
           {activeTab === 'identity' && <IdentityTab />}
           {activeTab === 'goals' && <GoalsTab />}
           {activeTab === 'needs' && <NeedsTab />}
           {activeTab === 'strategy' && <StrategyTab />}
-          {activeTab === 'essays' && (
-            <div className="-mx-6 -mt-2">
-              <EssayWorkshopPage />
-              <div className="border-t border-divider mt-8 pt-4">
-                <ResumeWorkshopPage />
-              </div>
-            </div>
-          )}
-          {activeTab === 'recommenders' && <div className="-mx-6 -mt-2"><RecommendationsPage /></div>}
           {activeTab === 'financial' && <div className="-mx-6 -mt-2"><FinancialAidPage /></div>}
         </Suspense>
       </div>
@@ -255,28 +268,14 @@ export default function ProfilePage() {
       <div>
         <div className="flex items-center gap-2 mb-1">
           <Sparkles size={18} className="text-gold" />
-          <h1 className="text-2xl font-semibold text-student-ink">My Story</h1>
+          <h1 className="text-2xl font-semibold text-student-ink">Profile</h1>
         </div>
-        <p className="text-sm text-gray-500 mb-4">Everything about you in one place.</p>
-
-        {/* Tab bar */}
-        <div className="flex gap-1 border-b border-divider">
-          {PROFILE_TABS.map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setSearchParams(tab.key === 'overview' ? {} : { tab: tab.key })}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab.key
-                  ? 'border-student text-student'
-                  : 'border-transparent text-student-text hover:text-student-ink'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        <p className="text-sm text-muted-foreground mb-4">Your durable record across every stage.</p>
+        {tabBar}
       </div>
 
+      {show('overview') && (
+      <>
       {/* Self-Discovery Progress */}
       <Card className="p-5">
         <div className="flex items-center gap-6">
@@ -329,7 +328,11 @@ export default function ProfilePage() {
         </dl>
         {p?.bio_text && <p className="mt-3 text-sm text-gray-600">{p.bio_text}</p>}
       </Card>
+      </>
+      )}
 
+      {show('academics') && (
+      <>
       {/* Academic Records */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
@@ -392,7 +395,11 @@ export default function ProfilePage() {
           </div>
         )}
       </Card>
+      </>
+      )}
 
+      {show('experience') && (
+      <>
       {/* Activities */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
@@ -483,7 +490,11 @@ export default function ProfilePage() {
           </div>
         )}
       </Card>
+      </>
+      )}
 
+      {show('academics') && (
+      <>
       {/* Research */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
@@ -547,7 +558,11 @@ export default function ProfilePage() {
           </div>
         )}
       </Card>
+      </>
+      )}
 
+      {show('preferences') && (
+      <>
       {/* Preferences */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
@@ -565,7 +580,11 @@ export default function ProfilePage() {
           <p className="text-sm text-gray-500">No preferences set yet</p>
         )}
       </Card>
+      </>
+      )}
 
+      {show('preparation') && (
+      <>
       {/* Documents */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
@@ -585,7 +604,11 @@ export default function ProfilePage() {
           </div>
         )}
       </Card>
+      </>
+      )}
 
+      {show('experience') && (
+      <>
       {/* Work & Service */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
@@ -648,7 +671,11 @@ export default function ProfilePage() {
           </div>
         )}
       </Card>
+      </>
+      )}
 
+      {show('preparation') && (
+      <>
       {/* Accommodations */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
@@ -690,6 +717,25 @@ export default function ProfilePage() {
         )}
       </Card>
 
+      <div ref={recommendersRef} id="section-recommenders">
+        <Suspense fallback={<div className="py-6 text-center text-student-text">Loading recommenders...</div>}>
+          <RecommendationsPage />
+        </Suspense>
+      </div>
+      </>
+      )}
+
+      {show('analytics') && (
+      <>
+      <Card className="p-5">
+        <div className="flex items-center gap-6">
+          <StrengthRing value={completionPct} />
+          <div>
+            <h2 className="font-semibold text-student-ink mb-1">Profile completion</h2>
+            <p className="text-sm text-muted-foreground">{completionPct}% complete across all sections.</p>
+          </div>
+        </div>
+      </Card>
       {/* Peer Comparison */}
       {peerMetrics.length > 0 && (
         <Card className="p-5">
@@ -708,8 +754,16 @@ export default function ProfilePage() {
           </div>
         </Card>
       )}
+      {!peerMetrics.length && (
+        <Card className="p-5">
+          <p className="text-sm text-muted-foreground">Peer comparison data appears once enough profile signals are saved.</p>
+        </Card>
+      )}
+      </>
+      )}
 
-      {/* Export */}
+      {show('timeline') && (
+      <>
       {/* Timeline */}
       {timelineItems.length > 0 && (
         <Card className="p-5">
@@ -731,7 +785,16 @@ export default function ProfilePage() {
           </div>
         </Card>
       )}
+      {timelineItems.length === 0 && (
+        <Card className="p-5">
+          <p className="text-sm text-muted-foreground">Your profile timeline fills in as you complete sections and discovery tracks.</p>
+        </Card>
+      )}
+      </>
+      )}
 
+      {show('data') && (
+      <>
       {/* Data Rights */}
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
@@ -777,6 +840,8 @@ export default function ProfilePage() {
           </Button>
         </div>
       </Card>
+      </>
+      )}
 
       {/* === MODALS === */}
 

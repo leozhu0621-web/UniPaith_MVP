@@ -157,6 +157,12 @@ class Program(Base):
     highlights: Mapped[dict | None] = mapped_column(JSONB)
     faculty_contacts: Mapped[dict | None] = mapped_column(JSONB)
     cost_data: Mapped[dict | None] = mapped_column(JSONB)
+    # Spec 06 §5.4 — bumped on any published-program edit so the rationale
+    # cache (keyed by program_version) invalidates. Was a dead no-op before:
+    # the column didn't exist and call sites read getattr(...,1) → always 1.
+    feature_version: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=1, server_default="1"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -170,13 +176,9 @@ class Program(Base):
 
 class IntakeRound(Base):
     __tablename__ = "intake_rounds"
-    __table_args__ = (
-        Index("ix_intake_rounds_program", "program_id"),
-    )
+    __table_args__ = (Index("ix_intake_rounds_program", "program_id"),)
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     program_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("programs.id", ondelete="CASCADE"),
@@ -192,7 +194,9 @@ class IntakeRound(Base):
     enrolled_count: Mapped[int] = mapped_column(Integer, default=0)
     requirements: Mapped[dict | None] = mapped_column(JSONB)
     status: Mapped[str] = mapped_column(
-        String(20), default="upcoming", nullable=False,
+        String(20),
+        default="upcoming",
+        nullable=False,
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
@@ -209,13 +213,9 @@ class IntakeRound(Base):
 
 class ProgramChecklistItem(Base):
     __tablename__ = "program_checklist_items"
-    __table_args__ = (
-        Index("ix_prog_checklist_program", "program_id"),
-    )
+    __table_args__ = (Index("ix_prog_checklist_program", "program_id"),)
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     program_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("programs.id", ondelete="CASCADE"),
@@ -223,10 +223,14 @@ class ProgramChecklistItem(Base):
     )
     item_name: Mapped[str] = mapped_column(String(255), nullable=False)
     category: Mapped[str] = mapped_column(
-        String(50), default="document", nullable=False,
+        String(50),
+        default="document",
+        nullable=False,
     )
     requirement_level: Mapped[str] = mapped_column(
-        String(20), default="required", nullable=False,
+        String(20),
+        default="required",
+        nullable=False,
     )
     description: Mapped[str | None] = mapped_column(Text)
     instructions: Mapped[str | None] = mapped_column(Text)
@@ -435,9 +439,7 @@ class InstitutionDataset(Base):
 
 class InstitutionPost(Base):
     __tablename__ = "institution_posts"
-    __table_args__ = (
-        Index("ix_institution_posts_inst_status", "institution_id", "status"),
-    )
+    __table_args__ = (Index("ix_institution_posts_inst_status", "institution_id", "status"),)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     institution_id: Mapped[uuid.UUID] = mapped_column(
@@ -470,13 +472,9 @@ class InstitutionPost(Base):
 
 class CampaignLink(Base):
     __tablename__ = "campaign_links"
-    __table_args__ = (
-        Index("ix_campaign_links_code", "short_code", unique=True),
-    )
+    __table_args__ = (Index("ix_campaign_links_code", "short_code", unique=True),)
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     campaign_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("campaigns.id", ondelete="CASCADE"),
@@ -510,9 +508,7 @@ class CampaignAction(Base):
         ),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     campaign_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("campaigns.id", ondelete="CASCADE"),
@@ -539,13 +535,9 @@ class CampaignAction(Base):
 
 class Inquiry(Base):
     __tablename__ = "inquiries"
-    __table_args__ = (
-        Index("ix_inquiries_institution_status", "institution_id", "status"),
-    )
+    __table_args__ = (Index("ix_inquiries_institution_status", "institution_id", "status"),)
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     institution_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("institutions.id", ondelete="CASCADE"),
@@ -564,10 +556,14 @@ class Inquiry(Base):
     subject: Mapped[str] = mapped_column(String(500), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
     inquiry_type: Mapped[str] = mapped_column(
-        String(30), default="general", nullable=False,
+        String(30),
+        default="general",
+        nullable=False,
     )
     status: Mapped[str] = mapped_column(
-        String(20), default="new", nullable=False,
+        String(20),
+        default="new",
+        nullable=False,
     )
     assigned_to: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
@@ -605,9 +601,7 @@ class CommunicationTemplate(Base):
         ),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     institution_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("institutions.id", ondelete="CASCADE"),
@@ -618,7 +612,8 @@ class CommunicationTemplate(Base):
         ForeignKey("programs.id", ondelete="SET NULL"),
     )
     template_type: Mapped[str] = mapped_column(
-        String(30), nullable=False,
+        String(30),
+        nullable=False,
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     subject: Mapped[str] = mapped_column(String(500), nullable=False)
@@ -639,15 +634,12 @@ class CommunicationTemplate(Base):
     institution: Mapped[Institution] = relationship()
     program: Mapped[Program | None] = relationship()
 
+
 class Promotion(Base):
     __tablename__ = "promotions"
-    __table_args__ = (
-        Index("ix_promotions_active", "institution_id", "status"),
-    )
+    __table_args__ = (Index("ix_promotions_active", "institution_id", "status"),)
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     institution_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("institutions.id", ondelete="CASCADE"),
@@ -658,13 +650,17 @@ class Promotion(Base):
         ForeignKey("programs.id", ondelete="SET NULL"),
     )
     promotion_type: Mapped[str] = mapped_column(
-        String(30), default="spotlight", nullable=False,
+        String(30),
+        default="spotlight",
+        nullable=False,
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
     targeting: Mapped[dict | None] = mapped_column(JSONB)
     status: Mapped[str] = mapped_column(
-        String(20), default="draft", nullable=False,
+        String(20),
+        default="draft",
+        nullable=False,
     )
     starts_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
@@ -690,12 +686,12 @@ class Promotion(Base):
 
 class StudentProgramReview(Base):
     __tablename__ = "student_program_reviews"
-    __table_args__ = (
-        UniqueConstraint("student_id", "program_id"),
-    )
+    __table_args__ = (UniqueConstraint("student_id", "program_id"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
     )
     # student_id is nullable because some reviews are ingested from
     # authoritative external sources (NYU Stories, Niche, bulletin). In that
@@ -728,7 +724,9 @@ class StudentProgramReview(Base):
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     is_published: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False,
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
     )
 
 
@@ -736,7 +734,9 @@ class EmployerFeedback(Base):
     __tablename__ = "employer_feedback"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
     )
     program_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -762,5 +762,7 @@ class EmployerFeedback(Base):
     feedback_year: Mapped[int | None] = mapped_column(Integer)
     is_published: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False,
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
     )

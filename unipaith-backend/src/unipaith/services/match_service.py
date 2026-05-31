@@ -108,11 +108,87 @@ class MatchService:
     used to read multiple matches.
     """
 
+    # Spec 06 §5.3 — the L3 ML scorer's audit label + the model id recorded
+    # on its ledger rows. The matcher is rule-based/calibrated today (no LLM),
+    # so provider='rule_based'.
+    _ML_AGENT = "matcher"
+    _ML_MODEL_ID = "heuristic-matcher-v1"
+
     def __init__(self, db: AsyncSession):
         self.db = db
         # Lazy-loaded once per service instance.
         self._calibrator_state: CalibratorState | None = None
         self._reranker_state: RerankerState | None = None
+
+    async def invalidate_for_profile_change(self, student_id: UUID) -> None:
+        """Spec 06 §5.1 / §5.4 — keep derived artifacts honest after a direct
+        profile edit (PUT /me/profile, goals/needs/identity CRUD), not just at
+        Discovery completion.
+
+        Bumps the feature vector's `profile_version` (so the rationale cache,
+        keyed by profile_version, misses and regenerates on next read) and
+        flags existing matches stale so the next refresh recomputes them.
+        Cheap + idempotent; the expensive re-embed happens lazily on the next
+        match refresh.
+        """
+        from sqlalchemy import update as _update
+
+        sfv = await self._student_feature_record(student_id)
+        if sfv is not None:
+            sfv.profile_version = int(sfv.profile_version or 1) + 1
+        await self.db.execute(
+            _update(MatchResult).where(MatchResult.student_id == student_id).values(is_stale=True)
+        )
+        await self.db.flush()
+
+    async def _matching_consent(self, student_id: UUID) -> tuple[bool, dict[str, bool]]:
+        """Spec 06 §5.2 — resolve whether L3 (ML) processing is permitted.
+
+        Returns (allowed, mask). `consent.matching=false` blocks all L3
+        scoring + reads, mirroring the L2 guard in `AIClient`.
+        """
+        from unipaith.ai.consent import get_consent_mask
+
+        mask = await get_consent_mask(self.db, student_id)
+        return bool(mask.get("matching", True)), mask
+
+    async def _log_ml_turn(
+        self,
+        *,
+        student_id: UUID,
+        mask: dict[str, bool],
+        n_programs: int,
+        latency_ms: int,
+        success: bool = True,
+        failure_reason: str | None = None,
+    ) -> None:
+        """Spec 06 §5.3 — write one `ai_turns` row per L3 scoring event with
+        provider/model/consent_mask, so the audit ledger covers L3 (not just
+        the L2 LLM calls). Best-effort: a ledger write must never break
+        matching."""
+        from unipaith.models.ai_artifacts import AiTurn
+
+        try:
+            self.db.add(
+                AiTurn(
+                    student_id=student_id,
+                    agent=self._ML_AGENT,
+                    surface="matching",
+                    role="assistant",
+                    model=self._ML_MODEL_ID,
+                    provider="rule_based",
+                    input_tokens=n_programs,  # programs scored — the L3 "input"
+                    output_tokens=0,
+                    cost_usd=Decimal("0"),
+                    latency_ms=latency_ms,
+                    success=success,
+                    failure_reason=failure_reason,
+                    consent_mask=mask,
+                )
+            )
+            await self.db.flush()
+        except Exception as exc:  # noqa: BLE001 — audit must not break scoring
+            logger.warning("failed to write L3 audit turn for student=%s: %s", student_id, exc)
 
     async def _calibrator(self) -> CalibratorState:
         if self._calibrator_state is None:
@@ -149,6 +225,27 @@ class MatchService:
         student before inserting fresh ones, so the table doesn't bloat
         with stale matches when a student re-completes Discovery.
         """
+        # Spec 06 §5.2 — consent gate on L3 (ML) processing.
+        allowed, mask = await self._matching_consent(student_id)
+        if not allowed:
+            logger.info(
+                "MatchService: matching consent denied for student=%s; skipping L3 scoring.",
+                student_id,
+            )
+            await self._log_ml_turn(
+                student_id=student_id,
+                mask=mask,
+                n_programs=0,
+                latency_ms=0,
+                success=False,
+                failure_reason="consent_denied",
+            )
+            return []
+
+        import time as _time
+
+        _t0 = _time.perf_counter()
+
         sfv = await self._student_features(student_id)
         if sfv is None:
             logger.info(
@@ -203,6 +300,13 @@ class MatchService:
                 )
             )
         await self.db.flush()
+        # Spec 06 §5.3 — audit the L3 scoring event.
+        await self._log_ml_turn(
+            student_id=student_id,
+            mask=mask,
+            n_programs=len(program_features),
+            latency_ms=int((_time.perf_counter() - _t0) * 1000),
+        )
         return out
 
     # ── Read paths ────────────────────────────────────────────────────
@@ -213,10 +317,17 @@ class MatchService:
 
         Confidence is calibrated at read time using the active
         CalibratorState. Cold start (unfitted) → raw confidence flows
-        through unchanged. The breakdown carries `{raw, calibrated,
+        through unchanged.         The breakdown carries `{raw, calibrated,
         calibrator_fitted}` so admin/rationale tooling can tell the two
         apart.
+
+        Spec 06 §5.2 — a student who has revoked matching consent gets no L3
+        read (returns []), consistent with "consent.matching=false → no AI
+        processing".
         """
+        allowed, _ = await self._matching_consent(student_id)
+        if not allowed:
+            return []
         result = await self.db.execute(
             select(MatchResult)
             .where(MatchResult.student_id == student_id)
@@ -264,7 +375,12 @@ class MatchService:
         `program_view` is provided by the caller (ApiRouter typically
         joins Program + program_features into the view shape) so the
         match service stays DB-decoupled at this layer.
+
+        Spec 06 §5.2 — gated on matching consent (L3 read).
         """
+        allowed, _ = await self._matching_consent(student_id)
+        if not allowed:
+            return None
         match_row = await self._read_match(student_id, program_id)
         if match_row is None:
             return None
@@ -445,6 +561,66 @@ class MatchService:
         await self.db.flush()
 
 
+async def invalidate_matches_for_user(db: AsyncSession, user_id: UUID) -> None:
+    """Spec 06 §5.1 — invalidate derived matching artifacts after a direct
+    profile-data edit, resolving the student profile from the user id.
+
+    Best-effort and side-effect-only: callers fire it after a successful
+    profile/goals/needs/identity write so the rationale cache and match
+    staleness reflect the change. Never raises into the request path.
+    """
+    from unipaith.models.student import StudentProfile
+
+    try:
+        profile = await db.scalar(select(StudentProfile).where(StudentProfile.user_id == user_id))
+        if profile is not None:
+            await MatchService(db).invalidate_for_profile_change(profile.id)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("invalidate_matches_for_user failed for user=%s: %s", user_id, exc)
+
+
+def build_program_view(program: Any) -> ProgramView:
+    """Build the rationale agent's ProgramView from a `Program` ORM row.
+
+    Centralized so the student rationale endpoints and the institution
+    review endpoint construct identical inputs (the asymmetric projection
+    must run on the SAME artifact). Derives a sparse citation dict from the
+    program's structured columns so the rationale agent can ground program
+    citations against real fields — without a separate stored vector.
+
+    NOTE: the column is `program_name`/`description_text` (not `name`/
+    `description`); earlier call sites referenced the wrong attribute and
+    silently fell through to the stub. This helper is the single correct
+    construction.
+    """
+    raw_sparse = {
+        "degree_type": getattr(program, "degree_type", None),
+        "department": getattr(program, "department", None),
+        "delivery_format": getattr(program, "delivery_format", None),
+        "campus_setting": getattr(program, "campus_setting", None),
+        "duration_months": getattr(program, "duration_months", None),
+        "tuition": getattr(program, "tuition", None),
+        "tracks": getattr(program, "tracks", None),
+        "outcomes": getattr(program, "outcomes_data", None),
+        "who_its_for": getattr(program, "who_its_for", None),
+        "requirements": (
+            getattr(program, "application_requirements", None)
+            or getattr(program, "requirements", None)
+        ),
+        "cost_data": getattr(program, "cost_data", None),
+    }
+    sparse = {k: v for k, v in raw_sparse.items() if v not in (None, "", {}, [])}
+    return ProgramView(
+        name=getattr(program, "program_name", None) or getattr(program, "name", "") or "",
+        description=getattr(program, "description_text", None)
+        or getattr(program, "description", "")
+        or "",
+        sparse=sparse,
+        program_id=getattr(program, "id", None),
+        program_version=int(getattr(program, "feature_version", 1) or 1),
+    )
+
+
 # ── Helper: bridge an EmittedFeatures into a StudentFeatures ──────────────
 # Used by tests + the discovery-completion hook that wants to test the
 # pipeline without a DB.
@@ -467,6 +643,8 @@ __all__ = [
     "MatchRow",
     "MatchWithRationale",
     "MatchService",
+    "build_program_view",
+    "invalidate_matches_for_user",
     "features_from_emitted",
     # Re-export the matcher score type so API schemas can reference it
     # without a deeper import.

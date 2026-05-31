@@ -17,6 +17,7 @@ Translation details
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import time
 from decimal import Decimal
@@ -98,6 +99,18 @@ class OpenAIProvider(AIProvider):
             else:
                 flat_messages.append({"role": role, "content": content})
 
+        # Spec 03 §1 model-portability — translate Anthropic-shape tool defs +
+        # tool_choice into OpenAI function-calling so forced-tool agents
+        # (rationale, strategy, review_summarizer, authenticity, …) keep
+        # producing structured output on an Anthropic→OpenAI failover instead
+        # of silently degrading to free text and dropping to rule-based.
+        extra_kwargs: dict[str, Any] = {}
+        if request.tools:
+            extra_kwargs["tools"] = self._to_openai_tools(request.tools)
+            tc = self._to_openai_tool_choice(request.tool_choice)
+            if tc is not None:
+                extra_kwargs["tool_choice"] = tc
+
         timeout_s = request.timeout_ms / 1000.0
         start = time.perf_counter()
         last_err: Exception | None = None
@@ -110,6 +123,7 @@ class OpenAIProvider(AIProvider):
                     max_tokens=request.max_tokens,
                     temperature=request.temperature,
                     timeout=timeout_s,
+                    **extra_kwargs,
                 )
                 break
             except TimeoutError as e:
@@ -134,7 +148,31 @@ class OpenAIProvider(AIProvider):
 
         choice = raw_resp.choices[0]
         text = choice.message.content or ""
-        content_blocks = [{"type": "text", "text": text}]
+        # Translate OpenAI tool_calls back into Anthropic-shape `tool_use`
+        # content blocks so AIClient consumers parse them identically across
+        # providers (input is the parsed JSON args).
+        content_blocks: list[dict[str, Any]] = []
+        tool_calls = getattr(choice.message, "tool_calls", None) or []
+        for tc in tool_calls:
+            fn = getattr(tc, "function", None)
+            if fn is None:
+                continue
+            try:
+                parsed_args = json.loads(fn.arguments) if fn.arguments else {}
+            except (json.JSONDecodeError, TypeError):
+                parsed_args = {}
+            content_blocks.append(
+                {
+                    "type": "tool_use",
+                    "id": getattr(tc, "id", "") or "",
+                    "name": getattr(fn, "name", "") or "",
+                    "input": parsed_args,
+                }
+            )
+        if text:
+            content_blocks.append({"type": "text", "text": text})
+        if not content_blocks:
+            content_blocks = [{"type": "text", "text": text}]
 
         cost = self._compute_cost(
             model_id=model_id,
@@ -154,6 +192,47 @@ class OpenAIProvider(AIProvider):
             stop_reason=getattr(choice, "finish_reason", None),
             raw=raw_resp,
         )
+
+    @staticmethod
+    def _to_openai_tools(tools: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Anthropic tool defs → OpenAI function-calling tools.
+
+        Anthropic: {name, description, input_schema, [cache_control]}
+        OpenAI:    {type: function, function: {name, description, parameters}}
+        """
+        out: list[dict[str, Any]] = []
+        for t in tools:
+            name = t.get("name")
+            if not name:
+                continue
+            out.append(
+                {
+                    "type": "function",
+                    "function": {
+                        "name": name,
+                        "description": t.get("description", ""),
+                        "parameters": t.get("input_schema", {"type": "object"}),
+                    },
+                }
+            )
+        return out
+
+    @staticmethod
+    def _to_openai_tool_choice(tool_choice: dict[str, Any] | None) -> Any | None:
+        """Anthropic tool_choice → OpenAI tool_choice.
+
+        {type: tool, name: X} → {type: function, function: {name: X}}
+        {type: any}           → "required"
+        {type: auto}/None     → "auto"
+        """
+        if not tool_choice:
+            return None
+        kind = tool_choice.get("type")
+        if kind == "tool" and tool_choice.get("name"):
+            return {"type": "function", "function": {"name": tool_choice["name"]}}
+        if kind == "any":
+            return "required"
+        return "auto"
 
     def _get_sdk(self):
         if self._sdk is None:

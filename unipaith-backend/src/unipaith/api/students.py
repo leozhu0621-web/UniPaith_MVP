@@ -105,6 +105,11 @@ async def update_profile(
 ):
     svc = _svc(db)
     profile = await svc.update_profile(user.id, body)
+    # Spec 06 §5.1 — a direct profile edit invalidates derived matching
+    # artifacts (rationale cache + match staleness), not just Discovery.
+    from unipaith.services.match_service import invalidate_matches_for_user
+
+    await invalidate_matches_for_user(db, user.id)
     return StudentProfileResponse.model_validate(profile)
 
 
@@ -907,7 +912,23 @@ async def get_my_matches(
             MatchResult.program_id.in_(program_ids),
         )
     )
-    return list(result.scalars().all())
+    # Spec 06 §5.5 — students always receive the redacted breakdown view.
+    return [_redact_match_for_student(m) for m in result.scalars().all()]
+
+
+def _redact_match_for_student(match: MatchResult) -> MatchResultResponse:
+    """Serialize a MatchResult to its student-safe response (spec 06 §5.5).
+
+    Strips institution-only comparative signals from the score breakdowns so
+    no student match surface ever leaks them.
+    """
+    from unipaith.ai.rationale_redaction import redact_mapping
+
+    resp = MatchResultResponse.model_validate(match)
+    resp.fitness_breakdown = redact_mapping(resp.fitness_breakdown or {})
+    resp.confidence_breakdown = redact_mapping(resp.confidence_breakdown or {})
+    resp.score_breakdown = redact_mapping(resp.score_breakdown or {}) or None
+    return resp
 
 
 @router.get("/me/matches/{program_id}", response_model=MatchResultResponse)
@@ -927,7 +948,7 @@ async def get_match_detail(
     match = result.scalar_one_or_none()
     if not match:
         raise NotFoundException("No match found for this program. Try refreshing matches.")
-    return match
+    return _redact_match_for_student(match)
 
 
 @router.post("/me/matches/{program_id}/explain", response_model=ExplainMatchResponse)
@@ -963,23 +984,26 @@ async def explain_match(
     # stub so the caller always gets a usable response.
     if _cfg.ai_match_rationale_v2_enabled:
         try:
-            from unipaith.ai.rationale import ProgramView
+            from unipaith.ai.rationale_redaction import project_for_student
             from unipaith.models.institution import Program
-            from unipaith.services.match_service import MatchService
+            from unipaith.services.match_service import MatchService, build_program_view
 
             program = await db.scalar(select(Program).where(Program.id == program_id))
             if program is not None:
-                program_view = ProgramView(
-                    name=program.name or "",
-                    description=getattr(program, "description", "") or "",
-                    sparse=getattr(program, "feature_vector_sparse", None) or {},
-                    program_id=program.id,
-                    program_version=int(getattr(program, "feature_version", 1) or 1),
-                )
+                program_view = build_program_view(program)
                 out = await MatchService(db).get_match_with_rationale(
                     profile.id, program_id, program_view=program_view
                 )
                 if out is not None and out.rationale_text:
+                    # Spec 06 §5.5 — serve the STUDENT (redacted) projection.
+                    proj = project_for_student(
+                        rationale_text=out.rationale_text,
+                        cited_student_fields=out.cited_student_fields,
+                        cited_program_fields=out.cited_program_fields,
+                        fitness_breakdown=out.match.fitness_breakdown,
+                        confidence_breakdown=out.match.confidence_breakdown,
+                        grounded=out.grounded,
+                    )
                     # MatchService persists rationale into `match_rationales` cache,
                     # not match_results.rationale_text. Mirror it back so consumers
                     # of GET /me/matches/{id} get the inline value too.
@@ -992,6 +1016,11 @@ async def explain_match(
                         rationale_text=out.rationale_text,
                         rationale_generated_at=match.rationale_generated_at,
                         is_stub=False,
+                        fitness_breakdown=proj.fitness_breakdown,
+                        confidence_breakdown=proj.confidence_breakdown,
+                        cited_student_fields=proj.cited_student_fields,
+                        cited_program_fields=proj.cited_program_fields,
+                        redacted=proj.redacted,
                     )
         except Exception as e:  # noqa: BLE001
             import logging
@@ -1002,7 +1031,10 @@ async def explain_match(
                 e,
             )
 
-    # Stub path: 3-line rationale from the breakdown JSON.
+    # Stub path: 3-line rationale from the breakdown JSON. Breakdowns are
+    # redacted to the student-safe view (spec 06 §5.5) before they leave.
+    from unipaith.ai.rationale_redaction import project_for_student as _proj_student
+
     fitness_drivers = list((match.fitness_breakdown or {}).keys())
     confidence_reason = (match.confidence_breakdown or {}).get("reason", "default")
     rationale = (
@@ -1016,11 +1048,24 @@ async def explain_match(
     await db.flush()
     await db.refresh(match)
 
+    stub_proj = _proj_student(
+        rationale_text=rationale,
+        cited_student_fields=[],
+        cited_program_fields=[],
+        fitness_breakdown=match.fitness_breakdown or {},
+        confidence_breakdown=match.confidence_breakdown or {},
+        grounded=False,
+    )
     return ExplainMatchResponse(
         program_id=program_id,
         rationale_text=match.rationale_text,
         rationale_generated_at=match.rationale_generated_at,
         is_stub=True,
+        fitness_breakdown=stub_proj.fitness_breakdown,
+        confidence_breakdown=stub_proj.confidence_breakdown,
+        cited_student_fields=stub_proj.cited_student_fields,
+        cited_program_fields=stub_proj.cited_program_fields,
+        redacted=stub_proj.redacted,
     )
 
 
@@ -1034,6 +1079,9 @@ class RationaleResponse(BaseModel):
     cited_program_fields: list[str]
     cache_hit: bool
     grounded: bool
+    # Spec 06 §5.5 — this is the student (redacted) projection. True when any
+    # institution-only comparative signal was withheld from this response.
+    redacted: bool = True
 
 
 @router.post("/me/matches/{program_id}/rationale", response_model=RationaleResponse)
@@ -1053,9 +1101,9 @@ async def generate_match_rationale(
     Returns 404 if no MatchResult or no feature vector exists yet
     (Discovery must complete first).
     """
-    from unipaith.ai.rationale import ProgramView
+    from unipaith.ai.rationale_redaction import project_for_student
     from unipaith.models.institution import Program
-    from unipaith.services.match_service import MatchService
+    from unipaith.services.match_service import MatchService, build_program_view
 
     profile = await _svc(db)._get_student_profile(user.id)
 
@@ -1063,13 +1111,7 @@ async def generate_match_rationale(
     if program is None:
         raise NotFoundException(f"Program {program_id} not found.")
 
-    program_view = ProgramView(
-        name=program.name or "",
-        description=getattr(program, "description", "") or "",
-        sparse=getattr(program, "feature_vector_sparse", None) or {},
-        program_id=program.id,
-        program_version=int(getattr(program, "feature_version", 1) or 1),
-    )
+    program_view = build_program_view(program)
 
     out = await MatchService(db).get_match_with_rationale(
         profile.id, program_id, program_view=program_view
@@ -1078,13 +1120,24 @@ async def generate_match_rationale(
         raise NotFoundException(
             "No match found. Complete Discovery and run /me/matches/refresh first."
         )
-    return RationaleResponse(
-        program_id=program_id,
+    # Spec 06 §5.5 — the student receives the REDACTED projection. Previously
+    # this endpoint returned the full citation set (the institution view) to
+    # the student, inverting the asymmetry. project_for_student strips program
+    # citations that touch sensitive comparative signals.
+    proj = project_for_student(
         rationale_text=out.rationale_text,
         cited_student_fields=out.cited_student_fields,
         cited_program_fields=out.cited_program_fields,
+        grounded=out.grounded,
+    )
+    return RationaleResponse(
+        program_id=program_id,
+        rationale_text=proj.rationale_text,
+        cited_student_fields=proj.cited_student_fields,
+        cited_program_fields=proj.cited_program_fields,
         cache_hit=out.cache_hit,
         grounded=out.grounded,
+        redacted=proj.redacted,
     )
 
 
@@ -1200,7 +1253,7 @@ async def intake_chat(
             "sparked your interest in this field?"
         )
     elif "country_of_residence" in extracted and "goals_text" not in extracted:
-        next_q = f"{greeting}What are you hoping to study, " "and what draws you to that area?"
+        next_q = f"{greeting}What are you hoping to study, and what draws you to that area?"
     elif extracted:
         next_q = (
             f"{greeting}I'd love to learn more about what "

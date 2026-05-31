@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { useCompareStore } from '../../stores/compare-store'
 import { comparePrograms } from '../../api/saved-lists'
@@ -7,9 +8,16 @@ import Button from '../ui/Button'
 import Card from '../ui/Card'
 import { X, ArrowRightLeft, ChevronUp, ChevronDown, GraduationCap } from 'lucide-react'
 
-export default function CompareTray() {
+interface CompareTrayProps {
+  initialExpanded?: boolean
+  syncUrl?: boolean
+}
+
+export default function CompareTray({ initialExpanded = false, syncUrl = false }: CompareTrayProps) {
   const { items, remove, clear } = useCompareStore()
-  const [expanded, setExpanded] = useState(false)
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [expanded, setExpanded] = useState(initialExpanded)
   const [comparisonResult, setComparisonResult] = useState<any>(null)
 
   const compareMut = useMutation({
@@ -20,10 +28,26 @@ export default function CompareTray() {
     },
   })
 
+  useEffect(() => {
+    if (!syncUrl || !location.pathname.startsWith('/s/explore')) return
+    const params = new URLSearchParams(location.search)
+    if (items.length === 0) params.delete('compareIds')
+    else params.set('compareIds', items.map(i => i.program_id).join(','))
+    const qs = params.toString()
+    const target = qs ? `/s/explore?${qs}` : '/s/explore'
+    if (`${location.pathname}${location.search}` !== target) navigate(target, { replace: true })
+  }, [items, syncUrl, location.pathname, location.search, navigate])
+
+  useEffect(() => {
+    if (initialExpanded && items.length >= 2 && !comparisonResult && !compareMut.isPending) {
+      compareMut.mutate()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialExpanded, items.length])
+
   if (items.length === 0) return null
 
   return (
-    // Sits above the mobile bottom tab bar (Spec/02b §3.1, §5); flush on desktop.
     <div className="fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom))] lg:bottom-0 z-40">
       {expanded && comparisonResult && (
         <div className="bg-card border-t border-border elev-raised max-h-[60vh] overflow-y-auto">
@@ -77,52 +101,28 @@ export default function CompareTray() {
         <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center gap-3">
           <ArrowRightLeft size={16} className="text-cream/60 flex-shrink-0" />
           <span className="hidden sm:inline text-xs text-cream/60 flex-shrink-0">Compare</span>
-
           <div className="flex items-center gap-2 flex-1 overflow-x-auto no-scrollbar">
             {items.map(item => (
-              <span
-                key={item.program_id}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 rounded-full text-xs whitespace-nowrap flex-shrink-0"
-              >
+              <span key={item.program_id} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 rounded-full text-xs whitespace-nowrap flex-shrink-0">
                 <GraduationCap size={12} className="text-cream/60" />
                 <span className="max-w-[140px] truncate">{item.program_name}</span>
-                {item.degree_type && (
-                  <Badge variant="info" size="sm">{item.degree_type}</Badge>
-                )}
+                {item.degree_type && <Badge variant="info" size="sm">{item.degree_type}</Badge>}
                 <button onClick={() => remove(item.program_id)} aria-label="Remove" className="text-cream/50 hover:text-white">
                   <X size={12} />
                 </button>
               </span>
             ))}
-            {items.length < 5 && (
-              <span className="hidden sm:inline text-[10px] text-cream/50 flex-shrink-0">
-                {5 - items.length} more slots
-              </span>
-            )}
           </div>
-
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Button
-              size="sm"
-              onClick={() => compareMut.mutate()}
-              disabled={items.length < 2 || compareMut.isPending}
-              loading={compareMut.isPending}
-              className="!bg-primary !text-primary-foreground hover:brightness-95"
-            >
+            <Button size="sm" onClick={() => compareMut.mutate()} disabled={items.length < 2 || compareMut.isPending} loading={compareMut.isPending} className="!bg-primary !text-primary-foreground hover:brightness-95">
               Compare ({items.length})
             </Button>
             {comparisonResult && (
-              <button
-                onClick={() => setExpanded(!expanded)}
-                aria-label={expanded ? 'Collapse' : 'Expand'}
-                className="p-1 text-cream/60 hover:text-white"
-              >
+              <button onClick={() => setExpanded(!expanded)} aria-label={expanded ? 'Collapse' : 'Expand'} className="p-1 text-cream/60 hover:text-white">
                 {expanded ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
               </button>
             )}
-            <button onClick={clear} className="text-cream/60 hover:text-white text-xs">
-              Clear
-            </button>
+            <button onClick={clear} className="text-cream/60 hover:text-white text-xs">Clear</button>
           </div>
         </div>
       </div>

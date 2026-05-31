@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react'
+import { useState, lazy, Suspense, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { FolderKanban, Calendar, MessageSquare, GraduationCap } from 'lucide-react'
 
@@ -22,11 +22,20 @@ export default function ManagementPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const rawTab = searchParams.get('tab') as Tab | null
+  const threadId = searchParams.get('thread')
   const [tab, setTab] = useState<Tab>(rawTab && TABS.some(t => t.key === rawTab) ? rawTab : 'applications')
+
+  useEffect(() => {
+    if (rawTab && TABS.some(t => t.key === rawTab) && rawTab !== tab) setTab(rawTab)
+  }, [rawTab, tab])
 
   const switchTab = (t: Tab) => {
     setTab(t)
-    navigate(t === 'applications' ? '/s/manage' : `/s/manage?tab=${t}`, { replace: true })
+    const params = new URLSearchParams()
+    if (t !== 'applications') params.set('tab', t)
+    if (t === 'messages' && threadId) params.set('thread', threadId)
+    const qs = params.toString()
+    navigate(qs ? `/s/manage?${qs}` : '/s/manage', { replace: true })
   }
 
   return (
@@ -56,7 +65,7 @@ export default function ManagementPage() {
         <Suspense fallback={<div className="p-6 text-center text-student-text">Loading...</div>}>
           {tab === 'applications' && <ApplicationsPage />}
           {tab === 'calendar' && <CalendarPage />}
-          {tab === 'messages' && <MessagesPage />}
+          {tab === 'messages' && <MessagesPage initialThreadId={threadId} />}
           {tab === 'workshops' && <WorkshopsTab />}
         </Suspense>
       </div>

@@ -1,0 +1,51 @@
+"""Spec 45 §20 / spec 06 §2 — agent → model-tier registry.
+
+Single source of truth for which model tier each agent runs at. The
+`AIClient` resolves the tier from the `model=` literal passed at the call
+site; this registry documents the canonical mapping and is used by tests and
+the admin cost dashboard to label spend per agent.
+
+Tiers map to provider Protocol tiers (`ai/providers/base.py`):
+  flagship  → Opus  (claude-opus-4-8)
+  workhorse → Sonnet
+  batch     → Haiku
+  rule_based → no LLM (the L3 ML matcher's audit-ledger label)
+"""
+
+from __future__ import annotations
+
+AGENT_TIERS: dict[str, str] = {
+    # ── Discovery (L2) ──
+    "orchestrator": "workhorse",
+    "extractor": "batch",
+    "validator": "batch",
+    # ── Feature/embedding handoff (L2 → L3) ──
+    "feature_emitter": "batch",
+    "embedding": "batch",
+    # ── Match rationale (L2) ──
+    "rationale": "workhorse",
+    # ── Strategy (L2) ── default workhorse; flagship on first-time gen ≥80% (45 §10)
+    "strategy": "workhorse",
+    "strategy_first_time": "flagship",
+    # ── Identity (L2) ──
+    "identity_summary": "batch",
+    # ── Workshops (L2) ──
+    "workshop_coach": "workhorse",
+    "workshop_judge": "batch",
+    # ── Institution review (L2) — spec 06 §2 ──
+    "review_summarizer": "flagship",  # DraftSummarizerForReview — Opus
+    "authenticity_risk": "batch",  # AuthenticityRiskScorer — Haiku
+    # ── L3 ML scorer (not an LLM; labels the audit-ledger row) ──
+    "matcher": "rule_based",
+}
+
+
+def tier_for(agent: str) -> str:
+    """Canonical tier for an agent name; defaults to workhorse."""
+    return AGENT_TIERS.get(agent, "workhorse")
+
+
+def flagship_agents() -> list[str]:
+    """Agents that run on Opus — used by the cost dashboard to spotlight the
+    expensive tier (spec 06 §2: review summary is the headline Opus caller)."""
+    return [a for a, t in AGENT_TIERS.items() if t == "flagship"]

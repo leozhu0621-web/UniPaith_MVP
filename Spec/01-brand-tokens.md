@@ -170,7 +170,7 @@ Frontend single source: `frontend/src/index.css` `@layer base` block. Tokens bel
 
 **Rule: one font — Europa.** Hierarchy comes from size, weight, and tracking — never a second typeface.
 
-The current frontend `index.css` uses **EB Garamond** for headings and **Caveat / Kalam** for handwriting accents. **These must be removed.** See `90-current-vs-spec-gap-audit.md` G-B1 for the migration task.
+The current frontend `index.css` uses **EB Garamond** for headings and **Caveat / Kalam** for handwriting accents. **These must be removed.** See `47-current-vs-spec-gap-audit.md` G-B1 for the migration task.
 
 ### 3.1 How Europa is loaded — Adobe Fonts Typekit (NOT self-hosted)
 
@@ -407,7 +407,7 @@ Export the monogram at the seven sizes the brand guide specifies: **16 / 32 / 48
 
 ## 8. Tailwind alias map
 
-Recommended `tailwind.config.js` aliases so utility classes match token names. (Current config is ~80% there; gaps captured in `90-current-vs-spec-gap-audit.md`.)
+Recommended `tailwind.config.js` aliases so utility classes match token names. (Current config is ~80% there; gaps captured in `47-current-vs-spec-gap-audit.md`.)
 
 ```js
 colors: {
@@ -483,7 +483,7 @@ Use this before merging a UI change.
 - [ ] Shadow is one of the three documented elevations or none.
 - [ ] On a light surface, gold + cobalt together cover ≤ 15% of the visual area.
 - [ ] On a dark surface, the brand pair is swapped to the dark variants (`#F2C800`, `#6FA0E8`).
-- [ ] No gradients, no decorative images, no color accents on **program detail pages** (`13-detail-pages-program.md` is editorial-only).
+- [ ] No gradients, no decorative images, no color accents on **program detail pages** (`11-detail-pages-program.md` is editorial-only).
 - [ ] Status color is the LIGHT or DARK variant matching the surface — never crossed.
 - [ ] Wordmark is at ≥ 80px wide; otherwise the UP monogram is used.
 - [ ] Eyebrow text is uppercase, 12px, 600 weight, tracking 0.22em, in `--accent`.

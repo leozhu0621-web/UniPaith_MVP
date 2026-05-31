@@ -10,6 +10,7 @@ import AuthLayout from './components/layout/AuthLayout'
 import StudentLayout from './components/layout/StudentLayout'
 import InstitutionLayout from './components/layout/InstitutionLayout'
 import RequireAuth from './components/layout/RequireAuth'
+import PublicLayout from './components/layout/PublicLayout'
 
 // Auth pages
 import LoginPage from './pages/auth/LoginPage'
@@ -89,14 +90,14 @@ const router = createBrowserRouter([
   { path: '/', element: <Navigate to="/login" replace />, errorElement: <RouteErrorPage /> },
 
   // Public program browsing (linked from marketing-site CTAs)
-  { path: '/browse', element: <ProgramBrowsePage />, errorElement: <RouteErrorPage /> },
-  { path: '/school/:institutionId', element: <InstitutionPage />, errorElement: <RouteErrorPage /> },
-  { path: '/program/:programId', element: <ProgramDetailPage />, errorElement: <RouteErrorPage /> },
+  { path: '/browse', element: <PublicLayout><ProgramBrowsePage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/school/:institutionId', element: <PublicLayout><InstitutionPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/program/:programId', element: <PublicLayout><ProgramDetailPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
 
   { path: '/login', element: <AuthLayout><LoginPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
   { path: '/signup', element: <AuthLayout><SignupPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
   { path: '/auth/callback', element: <AuthCallbackPage />, errorElement: <RouteErrorPage /> },
-  { path: '/onboarding', element: <OnboardingPage />, errorElement: <RouteErrorPage /> },
+  { path: '/onboarding', element: <RequireAuth role="student"><OnboardingPage /></RequireAuth>, errorElement: <RouteErrorPage /> },
 
   // Student routes
   {
@@ -132,11 +133,11 @@ const router = createBrowserRouter([
       { path: 'messages', element: <Navigate to="/s/manage?tab=messages" replace /> },
       { path: 'messages/:convId', element: <LegacyMessageRedirect /> },
       { path: 'financial-aid', element: <Navigate to="/s/profile?tab=financial" replace /> },
-      { path: 'recommendations', element: <Navigate to="/s/profile?tab=recommenders" replace /> },
+      { path: 'recommendations', element: <Navigate to="/s/profile?tab=preparation&section=recommenders" replace /> },
       // Phase D — Workshops moved from Profile to Apply > Workshops (feedback-only).
       { path: 'resume-workshop', element: <Navigate to="/s/manage?tab=workshops" replace /> },
       { path: 'essay-workshop', element: <Navigate to="/s/manage?tab=workshops" replace /> },
-      { path: 'test-scores', element: <Navigate to="/s/profile" replace /> },
+      { path: 'test-scores', element: <Navigate to="/s/profile?tab=academics" replace /> },
       { path: 'decisions', element: <Navigate to="/s/manage" replace /> },
       { path: 'intake', element: <Navigate to="/s" replace /> },
       { path: 'intelligence', element: <Navigate to="/s" replace /> },
