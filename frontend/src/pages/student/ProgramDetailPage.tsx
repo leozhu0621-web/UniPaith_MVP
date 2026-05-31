@@ -154,7 +154,10 @@ export default function ProgramDetailPage() {
   const rsvpSet = new Set((rsvps as any[] ?? []).map((r: any) => r.event_id))
 
   const saveMut = useMutation({
-    mutationFn: () => isSaved ? unsaveProgram(programId!) : saveProgram(programId!),
+    mutationFn: async () => {
+      if (isSaved) await unsaveProgram(programId!)
+      else await saveProgram(programId!)
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['saved'] }),
   })
   const applyMut = useMutation({

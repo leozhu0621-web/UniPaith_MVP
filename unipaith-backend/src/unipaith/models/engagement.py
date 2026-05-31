@@ -12,6 +12,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -77,6 +78,16 @@ class SavedListItem(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     notes: Mapped[str | None] = mapped_column(Text)
+    # Spec 13 §4.2 (G-S5) — student-set priority on a saved program, persisted
+    # server-side (was localStorage-only). One of:
+    # considering | planning_to_apply | applied | dropped.
+    priority: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="considering", server_default=text("'considering'")
+    )
+    # Spec 13 §4.3 — free-text tags from the student's own tag dictionary.
+    tags: Mapped[list] = mapped_column(
+        JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb")
+    )
 
     saved_list: Mapped[SavedList] = relationship(back_populates="items")
 

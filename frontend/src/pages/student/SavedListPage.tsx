@@ -1,540 +1,966 @@
-import { useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { listSaved, unsaveProgram, updateSavedNotes, comparePrograms } from '../../api/saved-lists'
-import { listMyApplications, createApplication } from '../../api/applications'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  ArrowRight,
+  ArrowUp,
+  ArrowUpDown,
+  Bookmark,
+  FileText,
+  GraduationCap,
+  Heart,
+  Layers,
+  MapPin,
+  Minus,
+  Pencil,
+  Sparkles,
+  Trash2,
+  X,
+} from 'lucide-react'
+
+import {
+  comparePrograms,
+  listSaved,
+  startApplication,
+  unsaveProgram,
+  updateSaved,
+} from '../../api/saved-lists'
+import { getMyFollows, unfollowInstitution, type FollowedInstitution } from '../../api/events'
 import { getMatches } from '../../api/matching'
-import Card from '../../components/ui/Card'
-import Button from '../../components/ui/Button'
-import Modal from '../../components/ui/Modal'
 import Badge from '../../components/ui/Badge'
-import EmptyState from '../../components/ui/EmptyState'
-import { SkeletonCard } from '../../components/ui/Skeleton'
-import { showToast } from '../../stores/toast-store'
-import { formatCurrency, formatDate, formatPercent, formatScore } from '../../utils/format'
-import { DEGREE_LABELS, TIER_LABELS, STATUS_COLORS } from '../../utils/constants'
-import { Heart, Trash2, Pencil, BarChart3, ArrowUp, ArrowDown, Minus, ArrowUpDown, Filter, FileText, ChevronDown, GraduationCap, MapPin } from 'lucide-react'
+import BandBadge from '../../components/ui/BandBadge'
 import Breadcrumbs from '../../components/ui/Breadcrumbs'
+import Button from '../../components/ui/Button'
+import Card from '../../components/ui/Card'
+import EmptyState from '../../components/ui/EmptyState'
+import Modal from '../../components/ui/Modal'
+import { SkeletonCard } from '../../components/ui/Skeleton'
+import Tabs from '../../components/ui/Tabs'
+import DualRing from './match/DualRing'
+import RationalePopover from './match/RationalePopover'
+import { showToast } from '../../stores/toast-store'
+import { DEGREE_LABELS, DELIVERY_FORMAT_LABELS } from '../../utils/constants'
+import { formatCurrency, formatDate, formatPercent } from '../../utils/format'
 import usePageTitle from '../../hooks/usePageTitle'
-import type { SavedProgram, ComparisonResponse, MatchResultDual, MatchBand, Application } from '../../types'
+import type {
+  ComparisonResponse,
+  MatchBand,
+  MatchResultDual,
+  SavedPriority,
+  SavedProgram,
+  SavedStatus,
+} from '../../types'
 
-// Match rows now carry dual scores (fitness/confidence) + band_label; the
-// legacy match_score/match_tier are deprecated (Phase E). Read defensively so
-// the saved list works against either shape.
-const BAND_TO_TIER: Record<MatchBand, number> = { reach: 1, target: 2, safer: 3 }
-function matchScoreOf(m?: MatchResultDual): number | null {
-  if (!m) return null
-  const raw = m.fitness_score ?? m.match_score
-  if (raw == null) return null
-  const n = parseFloat(String(raw))
-  return Number.isFinite(n) ? n : null
-}
-function matchTierOf(m?: MatchResultDual): number {
-  if (!m) return 0
-  if (m.match_tier != null) return m.match_tier
-  if (m.band_label) return BAND_TO_TIER[m.band_label] ?? 0
-  const s = matchScoreOf(m)
-  if (s == null) return 0
-  return s >= 0.75 ? 3 : s >= 0.6 ? 2 : 1
-}
-
-type Priority = 'considering' | 'planning' | 'applied' | 'dropped'
-
-const PRIORITY_CONFIG: Record<Priority, { label: string; color: string }> = {
-  considering: { label: 'Considering', color: 'bg-muted text-charcoal' },
-  planning: { label: 'Planning', color: 'bg-cobalt/10 text-cobalt' },
-  applied: { label: 'Applied', color: 'bg-success-soft text-success' },
-  dropped: { label: 'Dropped', color: 'bg-error-soft text-error' },
-}
-const PRIORITY_ORDER: Priority[] = ['considering', 'planning', 'applied', 'dropped']
-
-type SortKey = 'date_added' | 'match_score' | 'deadline'
-const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: 'date_added', label: 'Date Added' },
-  { value: 'match_score', label: 'Match Score' },
-  { value: 'deadline', label: 'Deadline' },
+// ── Spec 13 vocab ─────────────────────────────────────────────────────────
+const PRIORITY_ORDER: SavedPriority[] = [
+  'considering',
+  'planning_to_apply',
+  'applied',
+  'dropped',
 ]
+const PRIORITY_META: Record<SavedPriority, { label: string; chip: string }> = {
+  // §10 — priority chips use cobalt/neutral/status tints, never gold.
+  considering: { label: 'Considering', chip: 'bg-muted text-charcoal' },
+  planning_to_apply: { label: 'Planning to apply', chip: 'bg-cobalt/10 text-cobalt' },
+  applied: { label: 'Applied', chip: 'bg-success-soft text-success' },
+  dropped: { label: 'Dropped', chip: 'bg-error-soft text-error' },
+}
 
-const TIER_GROUP_LABELS: Record<number, string> = { 1: 'Reach', 2: 'Target', 3: 'Safer' }
-const TIER_GROUP_ORDER = [1, 2, 3, 0] // 0 = unmatched
+const STATUS_META: Record<
+  SavedStatus,
+  { label: string; variant: 'neutral' | 'info' | 'success' | 'warning' | 'danger' }
+> = {
+  considering: { label: 'Considering', variant: 'neutral' },
+  application_started: { label: 'Application started', variant: 'info' },
+  submitted: { label: 'Submitted', variant: 'info' },
+  accepted: { label: 'Accepted', variant: 'success' },
+  rejected: { label: 'Rejected', variant: 'danger' },
+  waitlisted: { label: 'Waitlisted', variant: 'warning' },
+  dropped: { label: 'Dropped', variant: 'neutral' },
+}
 
-// Persist priority locally so it survives refresh. Server-side persistence
-// (saved_lists.priority + PATCH) is the spec target (Spec/15 §4.2, G-S5) — it
-// is blocked here by a divergent alembic state on the dev DB; local storage is
-// the interim so the label isn't wiped on reload.
-const PRIORITY_STORAGE_KEY = 'unipaith-saved-priorities'
-function loadPriorities(): Record<string, Priority> {
-  try {
-    const raw = localStorage.getItem(PRIORITY_STORAGE_KEY)
-    return raw ? JSON.parse(raw) : {}
-  } catch {
-    return {}
-  }
+const BAND_ORDER: MatchBand[] = ['reach', 'target', 'safer']
+const BAND_BLURB: Record<MatchBand, string> = {
+  reach: 'Ambitious — worth a shot',
+  target: 'Strong, realistic fits',
+  safer: 'High-confidence matches',
+}
+
+const VIEW_OPTIONS = [
+  { value: 'tier', label: 'Grouped by tier' },
+  { value: 'priority', label: 'Grouped by priority' },
+  { value: 'flat', label: 'Flat list' },
+] as const
+type ViewMode = (typeof VIEW_OPTIONS)[number]['value']
+
+const SORT_OPTIONS = [
+  { value: 'match', label: 'Match score' },
+  { value: 'date', label: 'Date added' },
+  { value: 'deadline', label: 'Deadline' },
+] as const
+type SortKey = (typeof SORT_OPTIONS)[number]['value']
+
+const MAX_COMPARE = 4 // Spec 13 §5
+
+function toUnit(v: string | number | null | undefined): number {
+  const n = typeof v === 'string' ? parseFloat(v) : v ?? 0
+  if (!Number.isFinite(n)) return 0
+  return Math.max(0, Math.min(1, n > 1 ? n / 100 : n))
 }
 
 export default function SavedListPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  usePageTitle('Saved')
 
+  const [tab, setTab] = useState<'programs' | 'schools'>('programs')
   const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [editingNotes, setEditingNotes] = useState<{ id: string; notes: string } | null>(null)
+  const [editing, setEditing] = useState<{ programId: string; notes: string; tags: string[] } | null>(
+    null
+  )
   const [comparison, setComparison] = useState<ComparisonResponse | null>(null)
-  const [priorities, setPriorities] = useState<Record<string, Priority>>(loadPriorities)
-  const [filterPriority, setFilterPriority] = useState<Priority | 'all'>('all')
-  const [sortKey, setSortKey] = useState<SortKey>('date_added')
-  const [groupByTier, setGroupByTier] = useState(true)
+  const [rationaleFor, setRationaleFor] = useState<string | null>(null)
+  const [view, setView] = useState<ViewMode>('tier')
+  const [sortKey, setSortKey] = useState<SortKey>('match')
+  const [filter, setFilter] = useState<SavedPriority | 'all'>('all')
 
   const { data: saved, isLoading } = useQuery({ queryKey: ['saved'], queryFn: listSaved })
+  const { data: follows } = useQuery({ queryKey: ['my-follows'], queryFn: getMyFollows })
   const { data: matches } = useQuery({ queryKey: ['matches'], queryFn: () => getMatches() })
-  const { data: applications } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
-  // Hooks must run before any early return (react-hooks/rules-of-hooks).
-  usePageTitle('Saved')
 
   const removeMut = useMutation({
     mutationFn: unsaveProgram,
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['saved'] }); showToast('Removed', 'success') },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['saved'] })
+      showToast('Removed from your shortlist', 'success')
+    },
   })
-  const notesMut = useMutation({
-    mutationFn: ({ id, notes }: { id: string; notes: string }) => updateSavedNotes(id, notes),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['saved'] }); setEditingNotes(null); showToast('Notes updated', 'success') },
+  const patchMut = useMutation({
+    mutationFn: ({ programId, ...patch }: { programId: string } & Parameters<typeof updateSaved>[1]) =>
+      updateSaved(programId, patch),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['saved'] }),
   })
   const compareMut = useMutation({
     mutationFn: (ids: string[]) => comparePrograms(ids),
-    onSuccess: (data) => setComparison(data),
+    onSuccess: data => setComparison(data),
   })
-  const applyMut = useMutation({
-    mutationFn: createApplication,
-    onSuccess: (data) => {
+  const startAppMut = useMutation({
+    mutationFn: (programId: string) => startApplication(programId),
+    onSuccess: data => {
+      queryClient.invalidateQueries({ queryKey: ['saved'] })
       queryClient.invalidateQueries({ queryKey: ['my-applications'] })
-      showToast('Application started', 'success')
-      navigate(`/s/applications/${data.id}`)
+      showToast(data.created ? 'Application started' : 'Opening your application', 'success')
+      navigate(`/s/applications/${data.app_id}`)
+    },
+  })
+  const unfollowMut = useMutation({
+    mutationFn: unfollowInstitution,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-follows'] })
+      showToast('Unfollowed', 'success')
     },
   })
 
   const matchLookup = useMemo(() => {
     const map: Record<string, MatchResultDual> = {}
-    const list: MatchResultDual[] = Array.isArray(matches) ? matches : []
-    list.forEach(m => { map[m.program_id] = m })
+    ;(Array.isArray(matches) ? matches : []).forEach(m => {
+      map[m.program_id] = m
+    })
     return map
   }, [matches])
 
-  const appLookup = useMemo(() => {
-    const map: Record<string, Application> = {}
-    const list: Application[] = Array.isArray(applications) ? applications : []
-    list.forEach(a => { map[a.program_id] = a })
-    return map
-  }, [applications])
+  const programs: SavedProgram[] = useMemo(() => (Array.isArray(saved) ? saved : []), [saved])
+  const schools: FollowedInstitution[] = useMemo(
+    () => (Array.isArray(follows) ? follows : []),
+    [follows]
+  )
 
-  const programs: SavedProgram[] = useMemo(() => Array.isArray(saved) ? saved : [], [saved])
+  const bandOf = (sp: SavedProgram): MatchBand | null =>
+    sp.band_label ?? matchLookup[sp.program_id]?.band_label ?? null
+  const fitnessOf = (sp: SavedProgram): number =>
+    toUnit(sp.fitness_score ?? matchLookup[sp.program_id]?.fitness_score)
+  const confidenceOf = (sp: SavedProgram): number =>
+    toUnit(sp.confidence_score ?? matchLookup[sp.program_id]?.confidence_score)
 
-  const getPriority = (programId: string): Priority => priorities[programId] ?? 'considering'
-  const setProgramPriority = (programId: string, p: Priority) => setPriorities(prev => {
-    const next = { ...prev, [programId]: p }
-    try { localStorage.setItem(PRIORITY_STORAGE_KEY, JSON.stringify(next)) } catch { /* ignore */ }
-    return next
-  })
+  // Every tag the student has used — powers the autocomplete (Spec 13 §4.3).
+  const tagDictionary = useMemo(() => {
+    const set = new Set<string>()
+    programs.forEach(sp => (sp.tags ?? []).forEach(t => set.add(t)))
+    return Array.from(set).sort()
+  }, [programs])
 
-  const filtered = useMemo(() => {
+  const priorityCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: programs.length }
+    PRIORITY_ORDER.forEach(p => (counts[p] = 0))
+    programs.forEach(sp => (counts[sp.priority] = (counts[sp.priority] ?? 0) + 1))
+    return counts
+  }, [programs])
+
+  const visible = useMemo(() => {
     let list = programs
-    if (filterPriority !== 'all') {
-      list = list.filter(sp => getPriority(sp.program_id) === filterPriority)
-    }
+    if (filter !== 'all') list = list.filter(sp => sp.priority === filter)
     return [...list].sort((a, b) => {
-      if (sortKey === 'match_score') {
-        const sa = matchScoreOf(matchLookup[a.program_id]) ?? -1
-        const sb = matchScoreOf(matchLookup[b.program_id]) ?? -1
-        return sb - sa
-      }
+      if (sortKey === 'match') return fitnessOf(b) - fitnessOf(a)
       if (sortKey === 'deadline') {
-        const da = a.program?.application_deadline ?? '9999'
-        const db = b.program?.application_deadline ?? '9999'
+        const da = a.application_deadline ?? a.program?.application_deadline ?? '9999'
+        const db = b.application_deadline ?? b.program?.application_deadline ?? '9999'
         return da.localeCompare(db)
       }
       return new Date(b.added_at).getTime() - new Date(a.added_at).getTime()
     })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [programs, filterPriority, sortKey, matchLookup, priorities])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [programs, filter, sortKey, matchLookup])
 
-  const grouped = useMemo(() => {
-    if (!groupByTier) return null
-    const groups: Record<number, SavedProgram[]> = { 1: [], 2: [], 3: [], 0: [] }
-    filtered.forEach(sp => {
-      const tier = matchTierOf(matchLookup[sp.program_id])
-      groups[tier].push(sp)
-    })
-    return groups
-  }, [filtered, groupByTier, matchLookup])
-
-  const priorityCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: programs.length }
-    PRIORITY_ORDER.forEach(p => { counts[p] = 0 })
-    programs.forEach(sp => { counts[getPriority(sp.program_id)]++ })
-    return counts
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [programs, priorities])
-
-  // Derive saved schools from unique institutions
-  const savedSchools = useMemo(() => {
-    const schoolMap = new Map<string, { id: string; name: string; country: string; city: string | null; count: number }>()
-    for (const p of programs) {
-      const instId = (p as any).institution_id
-      const instName = (p as any).institution_name || (p as any).program?.institution_name || ''
-      const instCountry = (p as any).institution_country || (p as any).program?.institution_country || ''
-      const instCity = (p as any).institution_city || (p as any).program?.institution_city || null
-      if (instId && instName) {
-        const existing = schoolMap.get(instId)
-        if (existing) { existing.count++ }
-        else { schoolMap.set(instId, { id: instId, name: instName, country: instCountry, city: instCity, count: 1 }) }
-      }
+  type Group = { key: string; label: string; band?: MatchBand; blurb?: string; items: SavedProgram[] }
+  const groups: Group[] = useMemo(() => {
+    if (view === 'flat') return [{ key: 'all', label: '', items: visible }]
+    if (view === 'priority') {
+      return PRIORITY_ORDER.map(p => ({
+        key: p,
+        label: PRIORITY_META[p].label,
+        items: visible.filter(sp => sp.priority === p),
+      })).filter(g => g.items.length > 0)
     }
-    return Array.from(schoolMap.values())
-  }, [programs])
+    // tier (default)
+    const out: Group[] = BAND_ORDER.map(band => ({
+      key: band,
+      label: band[0].toUpperCase() + band.slice(1),
+      band,
+      blurb: BAND_BLURB[band],
+      items: visible.filter(sp => bandOf(sp) === band),
+    }))
+    const unbanded = visible.filter(sp => bandOf(sp) == null)
+    if (unbanded.length) out.push({ key: 'unbanded', label: 'Not yet matched', items: unbanded })
+    return out.filter(g => g.items.length > 0)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, view, matchLookup])
 
-  const toggle = (id: string) => {
-    const next = new Set(selected)
-    if (next.has(id)) next.delete(id); else next.add(id)
-    setSelected(next)
+  const toggleSelect = (programId: string) => {
+    setSelected(prev => {
+      const next = new Set(prev)
+      if (next.has(programId)) {
+        next.delete(programId)
+      } else if (next.size >= MAX_COMPARE) {
+        showToast(`You can compare up to ${MAX_COMPARE} programs`, 'info')
+        return prev
+      } else {
+        next.add(programId)
+      }
+      return next
+    })
   }
 
-  const bestValue = (values: (number | null | undefined)[], higher = true) => {
-    const nums = values.filter((v): v is number => v != null)
-    if (nums.length === 0) return null
-    return higher ? Math.max(...nums) : Math.min(...nums)
-  }
-  const ValueIndicator = ({ value, best }: { value: number | null | undefined; best: number | null }) => {
-    if (value == null || best == null) return <Minus size={12} className="text-slate/40" />
-    if (value === best) return <ArrowUp size={12} className="text-success" />
-    return <ArrowDown size={12} className="text-error" />
-  }
-
-  if (isLoading) return <div className="p-6 space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
-
-  const renderCard = (sp: SavedProgram) => {
-    const matchInfo = matchLookup[sp.program_id]
-    const tierInfo = matchInfo ? TIER_LABELS[matchTierOf(matchInfo)] : null
-    const app = appLookup[sp.program_id]
-    const priority = getPriority(sp.program_id)
-    const isDropped = priority === 'dropped'
-
+  if (isLoading) {
     return (
-      <Card key={sp.id} className={`p-4 ${isDropped ? 'opacity-60' : ''}`}>
-        <div className="flex items-start gap-3">
-          <input
-            type="checkbox"
-            checked={selected.has(sp.program_id)}
-            onChange={() => toggle(sp.program_id)}
-            className="mt-1"
-          />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className={`font-semibold text-sm cursor-pointer hover:underline ${isDropped ? 'line-through text-slate/60' : ''}`} onClick={() => navigate(`/s/programs/${sp.program_id}`)}>
-                  {sp.program_name || sp.program?.program_name || 'Program'}
-                </p>
-                <p className="text-xs text-slate">{sp.institution_name || sp.program?.institution_name}</p>
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                {matchInfo && tierInfo && (
-                  <>
-                    <span className="text-sm font-bold">{formatScore(matchScoreOf(matchInfo))}</span>
-                    <Badge variant={tierInfo.color as any} size="sm">{tierInfo.label}</Badge>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-slate/60">
-              {sp.program?.tuition != null && <span>Tuition: {formatCurrency(sp.program.tuition)}</span>}
-              {sp.program?.application_deadline && <span>Deadline: {formatDate(sp.program.application_deadline)}</span>}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 mt-2">
-              <div className="relative inline-block">
-                <select
-                  value={priority}
-                  onChange={e => setProgramPriority(sp.program_id, e.target.value as Priority)}
-                  className={`appearance-none text-xs font-medium rounded-full pl-2.5 pr-6 py-0.5 border-0 cursor-pointer ${PRIORITY_CONFIG[priority].color}`}
-                >
-                  {PRIORITY_ORDER.map(p => (
-                    <option key={p} value={p}>{PRIORITY_CONFIG[p].label}</option>
-                  ))}
-                </select>
-                <ChevronDown size={10} className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate/60" />
-              </div>
-
-              {app && (
-                <Badge variant={(STATUS_COLORS[app.status] ?? 'neutral') as any} size="sm">
-                  {app.status.replace(/_/g, ' ')}
-                </Badge>
-              )}
-
-              {!app && priority !== 'dropped' && (
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => applyMut.mutate(sp.program_id)}
-                  loading={applyMut.isPending}
-                  className="text-xs"
-                >
-                  <FileText size={12} className="mr-1" />
-                  Start Application
-                </Button>
-              )}
-            </div>
-
-            {sp.notes && <p className="text-xs text-slate mt-1 italic">"{sp.notes}"</p>}
-          </div>
-
-          <div className="flex gap-1 flex-shrink-0">
-            <Button size="sm" variant="ghost" onClick={() => setEditingNotes({ id: sp.program_id, notes: sp.notes || '' })}><Pencil size={12} /></Button>
-            <Button size="sm" variant="ghost" onClick={() => removeMut.mutate(sp.program_id)}><Trash2 size={12} /></Button>
-          </div>
-        </div>
-      </Card>
+      <div className="p-6 max-w-4xl mx-auto space-y-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <SkeletonCard key={i} />
+        ))}
+      </div>
     )
   }
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
+    <div className="p-6 max-w-4xl mx-auto pb-28">
       <Breadcrumbs className="mb-3" items={[{ label: 'Profile', to: '/s/profile' }, { label: 'Saved' }]} />
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-semibold">Saved Programs</h1>
-        {selected.size >= 2 && (
-          <Button size="sm" variant="secondary" onClick={() => compareMut.mutate(Array.from(selected))} loading={compareMut.isPending}>
-            <BarChart3 size={14} className="mr-1" /> Compare ({selected.size})
-          </Button>
-        )}
-      </div>
 
-      {/* Saved Schools strip */}
-      {savedSchools.length > 0 && (
-        <div className="mb-5">
-          <p className="text-xs font-semibold text-student-text uppercase tracking-wider mb-2">Schools You Follow ({savedSchools.length})</p>
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {savedSchools.map(s => (
-              <button
-                key={s.id}
-                onClick={() => navigate(`/s/institutions/${s.id}`)}
-                className="flex items-center gap-2 px-3 py-2 bg-white border border-divider rounded-xl hover:shadow-sm transition-shadow flex-shrink-0"
+      {/* ── Header — eyebrow + H1 (Spec 13 §2 / §13) ── */}
+      <header className="mb-5">
+        <p className="text-eyebrow uppercase tracking-[0.22em] text-cobalt font-semibold">Saved</p>
+        <h1 className="text-h2 font-bold text-charcoal mt-1">Your shortlist</h1>
+        <p className="text-sm text-slate mt-1">
+          Curate the programs and schools you're considering, then turn them into applications.
+        </p>
+      </header>
+
+      <Tabs
+        tabs={[
+          { id: 'programs', label: 'Programs', count: programs.length },
+          { id: 'schools', label: 'Schools', count: schools.length },
+        ]}
+        activeTab={tab}
+        onChange={id => setTab(id as 'programs' | 'schools')}
+      />
+
+      {tab === 'programs' ? (
+        <div className="mt-5">
+          {programs.length === 0 ? (
+            <EmptyState
+              icon={<Heart size={48} />}
+              title="Your shortlist is empty"
+              description="Save programs from Match or Discovery to see them here."
+              action={{ label: 'Open Match →', onClick: () => navigate('/s/explore') }}
+            />
+          ) : (
+            <>
+              {/* ── Controls: View · Sort · Filter ── */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-3 mb-5">
+                <label className="inline-flex items-center gap-1.5 text-xs text-slate">
+                  <Layers size={13} className="text-slate/60" />
+                  <span className="sr-only">View</span>
+                  <select
+                    value={view}
+                    onChange={e => setView(e.target.value as ViewMode)}
+                    className="text-xs font-semibold bg-transparent border border-stone rounded-md pl-2 pr-6 py-1 cursor-pointer text-charcoal focus:outline-none focus:ring-2 focus:ring-cobalt/40"
+                  >
+                    {VIEW_OPTIONS.map(o => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="inline-flex items-center gap-1.5 text-xs text-slate">
+                  <ArrowUpDown size={13} className="text-slate/60" />
+                  <span className="sr-only">Sort</span>
+                  <select
+                    value={sortKey}
+                    onChange={e => setSortKey(e.target.value as SortKey)}
+                    className="text-xs font-semibold bg-transparent border border-stone rounded-md pl-2 pr-6 py-1 cursor-pointer text-charcoal focus:outline-none focus:ring-2 focus:ring-cobalt/40"
+                  >
+                    {SORT_OPTIONS.map(o => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <div className="flex items-center gap-1 ml-auto flex-wrap">
+                  {(['all', ...PRIORITY_ORDER] as const).map(p => (
+                    <button
+                      key={p}
+                      onClick={() => setFilter(p)}
+                      className={`text-xs px-2.5 py-1 rounded-pill font-medium transition-colors ${
+                        filter === p
+                          ? 'bg-charcoal text-white'
+                          : 'bg-muted text-slate hover:bg-stone/40'
+                      }`}
+                    >
+                      {p === 'all' ? 'All' : PRIORITY_META[p].label} ({priorityCounts[p] ?? 0})
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── Grouped rows ── */}
+              {groups.length === 0 ? (
+                <p className="text-sm text-slate py-8 text-center">No programs match this filter.</p>
+              ) : (
+                <div className="space-y-7">
+                  {groups.map(g => (
+                    <section key={g.key}>
+                      {g.label && (
+                        <div className="flex items-center gap-2.5 mb-3">
+                          {g.band ? (
+                            <BandBadge band={g.band} size="md" />
+                          ) : (
+                            <p className="text-eyebrow uppercase tracking-[0.18em] font-semibold text-slate">
+                              {g.label}
+                            </p>
+                          )}
+                          <span className="text-xs text-slate/60">{g.items.length}</span>
+                          {g.blurb && <span className="text-xs text-slate/50">· {g.blurb}</span>}
+                        </div>
+                      )}
+                      <div className="space-y-3">
+                        {g.items.map(sp => (
+                          <SavedProgramRow
+                            key={sp.id}
+                            sp={sp}
+                            band={bandOf(sp)}
+                            fitness={fitnessOf(sp)}
+                            confidence={confidenceOf(sp)}
+                            selected={selected.has(sp.program_id)}
+                            onToggleSelect={() => toggleSelect(sp.program_id)}
+                            onPriority={priority => patchMut.mutate({ programId: sp.program_id, priority })}
+                            onEdit={() =>
+                              setEditing({
+                                programId: sp.program_id,
+                                notes: sp.notes ?? '',
+                                tags: sp.tags ?? [],
+                              })
+                            }
+                            onRemove={() => removeMut.mutate(sp.program_id)}
+                            onStartApp={() => startAppMut.mutate(sp.program_id)}
+                            startingApp={startAppMut.isPending && startAppMut.variables === sp.program_id}
+                            onRationale={() => setRationaleFor(sp.program_id)}
+                            onView={() => navigate(`/s/programs/${sp.program_id}`)}
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      ) : (
+        // ── Schools tab (Spec 13 §3.2) ──
+        <div className="mt-5">
+          {schools.length === 0 ? (
+            <EmptyState
+              icon={<GraduationCap size={48} />}
+              title="No schools followed yet"
+              description="Follow a school from its page to keep it on your shortlist and in your Connect feed."
+              action={{ label: 'Browse schools →', onClick: () => navigate('/s/explore?tab=schools') }}
+            />
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {schools.map(s => (
+                <SavedSchoolCard
+                  key={s.institution_id}
+                  school={s}
+                  onView={() => navigate(`/s/institutions/${s.institution_id}`)}
+                  onUnfollow={() => unfollowMut.mutate(s.institution_id)}
+                  unfollowing={unfollowMut.isPending && unfollowMut.variables === s.institution_id}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Compare tray (sticky) — Spec 13 §5 ── */}
+      {tab === 'programs' && selected.size > 0 && (
+        <div className="fixed bottom-0 inset-x-0 z-30 bg-card/95 backdrop-blur border-t border-border shadow-[0_-2px_12px_rgba(10,20,40,0.06)]">
+          <div className="max-w-4xl mx-auto px-6 py-3 flex items-center gap-3">
+            <span className="text-sm text-slate">
+              <span className="font-semibold text-charcoal">{selected.size}</span> selected
+              <span className="text-slate/50"> · up to {MAX_COMPARE}</span>
+            </span>
+            <button
+              onClick={() => setSelected(new Set())}
+              className="text-xs text-slate hover:text-charcoal underline-offset-2 hover:underline"
+            >
+              Clear
+            </button>
+            <div className="ml-auto flex items-center gap-2">
+              {selected.size < 2 && (
+                <span className="text-xs text-slate/60">Select at least 2 to compare</span>
+              )}
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={selected.size < 2}
+                loading={compareMut.isPending}
+                onClick={() => compareMut.mutate(Array.from(selected))}
               >
-                <div className="w-8 h-8 rounded-lg bg-school-mist flex items-center justify-center">
-                  <GraduationCap size={14} className="text-school" />
-                </div>
-                <div className="text-left">
-                  <p className="text-xs font-medium text-student-ink">{s.name}</p>
-                  <p className="text-[10px] text-student-text flex items-center gap-0.5">
-                    <MapPin size={8} /> {s.city ? `${s.city}, ` : ''}{s.country} · {s.count} program{s.count !== 1 ? 's' : ''}
-                  </p>
-                </div>
-              </button>
-            ))}
+                Compare selected ({selected.size}) <ArrowRight size={14} className="ml-1" />
+              </Button>
+            </div>
           </div>
         </div>
       )}
 
-      {programs.length === 0 ? (
-        <EmptyState
-          icon={<Heart size={48} />}
-          title="Programs you save will appear here"
-          description="Browse Explore to find programs that interest you."
-          action={{ label: 'Explore Programs', onClick: () => navigate('/s/explore') }}
+      {/* ── Notes & tags editor (mounted only while open) ── */}
+      {editing && (
+        <NotesTagsModal
+          key={editing.programId}
+          initialNotes={editing.notes}
+          initialTags={editing.tags}
+          tagDictionary={tagDictionary}
+          saving={patchMut.isPending}
+          onClose={() => setEditing(null)}
+          onSave={(notes, tags) =>
+            patchMut.mutate(
+              { programId: editing.programId, notes, tags },
+              { onSuccess: () => setEditing(null) }
+            )
+          }
         />
-      ) : (
-        <>
-          <div className="flex flex-wrap items-center gap-3 mb-4">
-            <div className="flex items-center gap-1">
-              <Filter size={14} className="text-slate/60 mr-1" />
-              {(['all', ...PRIORITY_ORDER] as const).map(p => (
-                <button
-                  key={p}
-                  onClick={() => setFilterPriority(p)}
-                  className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
-                    filterPriority === p
-                      ? 'bg-ink text-white'
-                      : 'bg-muted text-slate hover:bg-stone/40'
+      )}
+
+      {/* ── Comparison modal ── */}
+      <CompareModal comparison={comparison} onClose={() => setComparison(null)} />
+
+      {/* ── "Why this match" rationale popover ── */}
+      {rationaleFor && (
+        <RationalePopover
+          programId={rationaleFor}
+          fitnessBreakdown={matchLookup[rationaleFor]?.fitness_breakdown}
+          confidenceBreakdown={matchLookup[rationaleFor]?.confidence_breakdown}
+          confidenceScore={toUnit(matchLookup[rationaleFor]?.confidence_score)}
+          cachedRationale={matchLookup[rationaleFor]?.rationale_text}
+          onClose={() => setRationaleFor(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Saved program row — full program + curation controls (Spec 13 §3.1).
+// ───────────────────────────────────────────────────────────────────────────
+function SavedProgramRow({
+  sp,
+  band,
+  fitness,
+  confidence,
+  selected,
+  onToggleSelect,
+  onPriority,
+  onEdit,
+  onRemove,
+  onStartApp,
+  startingApp,
+  onRationale,
+  onView,
+}: {
+  sp: SavedProgram
+  band: MatchBand | null
+  fitness: number
+  confidence: number
+  selected: boolean
+  onToggleSelect: () => void
+  onPriority: (p: SavedPriority) => void
+  onEdit: () => void
+  onRemove: () => void
+  onStartApp: () => void
+  startingApp: boolean
+  onRationale: () => void
+  onView: () => void
+}) {
+  const dropped = sp.priority === 'dropped'
+  const status = STATUS_META[sp.status] ?? STATUS_META.considering
+  const degree = sp.degree_type ? DEGREE_LABELS[sp.degree_type] ?? sp.degree_type : null
+  const deadline = sp.application_deadline ?? sp.program?.application_deadline ?? null
+  const tuition = sp.tuition ?? sp.program?.tuition ?? null
+  const city = sp.institution_city ?? sp.program?.institution_city ?? null
+  const country = sp.institution_country ?? sp.program?.institution_country ?? null
+  const hasApp = sp.status !== 'considering' && sp.status !== 'dropped'
+  const hasScore = fitness > 0 || confidence > 0
+
+  return (
+    <Card className={`p-4 ${dropped ? 'opacity-60' : ''}`}>
+      <div className="flex items-start gap-3">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={onToggleSelect}
+          className="mt-1.5 h-4 w-4 accent-cobalt cursor-pointer"
+          aria-label="Add to compare"
+        />
+
+        {hasScore && (
+          <button onClick={onRationale} className="shrink-0 mt-0.5" aria-label="Why this match">
+            <DualRing fitness={fitness} confidence={confidence} size={56} compact />
+          </button>
+        )}
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <button onClick={onView} className="text-left">
+                <h3
+                  className={`text-[15px] font-bold leading-tight hover:text-cobalt transition-colors ${
+                    dropped ? 'line-through text-slate/60' : 'text-charcoal'
                   }`}
                 >
-                  {p === 'all' ? 'All' : PRIORITY_CONFIG[p].label} ({priorityCounts[p] ?? 0})
-                </button>
+                  {sp.program_name ?? sp.program?.program_name ?? 'Program'}
+                </h3>
+              </button>
+              <p className="text-xs text-slate mt-0.5 truncate">
+                {sp.institution_name ?? sp.program?.institution_name}
+                {(city || country) && (
+                  <span className="text-slate/60">
+                    {' · '}
+                    <MapPin size={9} className="inline -mt-0.5" /> {[city, country].filter(Boolean).join(', ')}
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {band && <BandBadge band={band} />}
+              <Badge variant={status.variant} size="sm">
+                {status.label}
+              </Badge>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs text-slate/70">
+            {degree && (
+              <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded bg-muted text-charcoal border border-stone/50">
+                {degree}
+              </span>
+            )}
+            {tuition != null && <span>{formatCurrency(tuition)}/yr</span>}
+            {deadline && <span>Due {formatDate(deadline)}</span>}
+          </div>
+
+          {/* Tags */}
+          {sp.tags && sp.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {sp.tags.map(t => (
+                <span
+                  key={t}
+                  className="px-2 py-0.5 text-[10px] rounded-pill bg-cobalt/8 text-cobalt border border-cobalt/15"
+                >
+                  {t}
+                </span>
               ))}
             </div>
+          )}
 
-            <div className="flex items-center gap-2 ml-auto">
-              <div className="flex items-center gap-1 text-xs text-slate">
-                <ArrowUpDown size={12} />
-                <select
-                  value={sortKey}
-                  onChange={e => setSortKey(e.target.value as SortKey)}
-                  className="text-xs border-0 bg-transparent cursor-pointer text-slate font-medium"
-                >
-                  {SORT_OPTIONS.map(o => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </div>
+          {/* Notes */}
+          {sp.notes && <p className="text-xs text-slate mt-2 italic">“{sp.notes}”</p>}
 
+          {/* Controls row */}
+          <div className="flex flex-wrap items-center gap-2 mt-3">
+            <select
+              value={sp.priority}
+              onChange={e => onPriority(e.target.value as SavedPriority)}
+              className={`appearance-none text-xs font-semibold rounded-pill pl-2.5 pr-6 py-1 border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-cobalt/40 ${PRIORITY_META[sp.priority].chip}`}
+              aria-label="Priority"
+            >
+              {PRIORITY_ORDER.map(p => (
+                <option key={p} value={p}>
+                  {PRIORITY_META[p].label}
+                </option>
+              ))}
+            </select>
+
+            {hasScore && (
               <button
-                onClick={() => setGroupByTier(!groupByTier)}
-                className={`text-xs px-2.5 py-1 rounded font-medium transition-colors ${
-                  groupByTier ? 'bg-ink text-white' : 'bg-muted text-slate hover:bg-stone/40'
-                }`}
+                onClick={onRationale}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-cobalt hover:underline"
               >
-                Group by Tier
+                <Sparkles size={12} /> Why this match
+              </button>
+            )}
+
+            {!hasApp && !dropped && (
+              <Button size="sm" variant="secondary" onClick={onStartApp} loading={startingApp} className="text-xs">
+                <FileText size={12} className="mr-1" /> Start application
+              </Button>
+            )}
+
+            <div className="ml-auto flex items-center gap-0.5">
+              <button
+                onClick={onEdit}
+                className="p-1.5 rounded-md text-slate hover:text-cobalt hover:bg-muted transition-colors"
+                aria-label="Edit notes & tags"
+              >
+                <Pencil size={13} />
+              </button>
+              <button
+                onClick={onRemove}
+                className="p-1.5 rounded-md text-slate hover:text-error hover:bg-error-soft/40 transition-colors"
+                aria-label="Remove"
+              >
+                <Trash2 size={13} />
               </button>
             </div>
           </div>
+        </div>
+      </div>
+    </Card>
+  )
+}
 
-          {grouped ? (
-            <div className="space-y-6">
-              {TIER_GROUP_ORDER.map(tier => {
-                const items = grouped[tier]
-                if (!items || items.length === 0) return null
-                const label = tier === 0 ? 'Unmatched' : TIER_GROUP_LABELS[tier]
-                return (
-                  <div key={tier}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <h2 className="text-sm font-semibold text-charcoal">{label}</h2>
-                      <span className="text-xs text-slate/60">({items.length})</span>
-                    </div>
-                    <div className="space-y-3">
-                      {items.map(renderCard)}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filtered.map(renderCard)}
-            </div>
+// ───────────────────────────────────────────────────────────────────────────
+// Saved school card — editorial duotone, institution-level (Spec 13 §3.2).
+// ───────────────────────────────────────────────────────────────────────────
+function SavedSchoolCard({
+  school,
+  onView,
+  onUnfollow,
+  unfollowing,
+}: {
+  school: FollowedInstitution
+  onView: () => void
+  onUnfollow: () => void
+  unfollowing: boolean
+}) {
+  const location = [school.city, school.country].filter(Boolean).join(', ')
+  return (
+    <Card className="p-4 flex items-start gap-3">
+      <div className="w-11 h-11 rounded-lg bg-cobalt/10 flex items-center justify-center shrink-0 overflow-hidden">
+        {school.logo_url ? (
+          <img src={school.logo_url} alt="" className="w-full h-full object-contain" />
+        ) : (
+          <GraduationCap size={20} className="text-cobalt" />
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <button onClick={onView} className="text-left">
+          <h3 className="text-[15px] font-bold text-charcoal leading-tight hover:text-cobalt transition-colors truncate">
+            {school.name}
+          </h3>
+        </button>
+        <p className="text-xs text-slate mt-0.5 flex items-center gap-1 flex-wrap">
+          {location && (
+            <>
+              <MapPin size={10} /> {location}
+            </>
           )}
-        </>
+          {school.program_count != null && (
+            <span className="text-slate/60">
+              {location ? ' · ' : ''}
+              {school.program_count} program{school.program_count === 1 ? '' : 's'}
+            </span>
+          )}
+        </p>
+        <div className="flex items-center gap-3 mt-3">
+          <button
+            onClick={onView}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-cobalt hover:underline"
+          >
+            View school <ArrowRight size={12} />
+          </button>
+          <button
+            onClick={onUnfollow}
+            disabled={unfollowing}
+            className="inline-flex items-center gap-1 text-xs text-slate hover:text-error transition-colors disabled:opacity-50"
+          >
+            <Bookmark size={12} /> Unfollow
+          </button>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Notes & tags editor (Spec 13 §4.3).
+// ───────────────────────────────────────────────────────────────────────────
+function NotesTagsModal({
+  initialNotes,
+  initialTags,
+  tagDictionary,
+  saving,
+  onClose,
+  onSave,
+}: {
+  initialNotes: string
+  initialTags: string[]
+  tagDictionary: string[]
+  saving: boolean
+  onClose: () => void
+  onSave: (notes: string, tags: string[]) => void
+}) {
+  const [notes, setNotes] = useState(initialNotes)
+  const [tags, setTags] = useState<string[]>(initialTags)
+  const [draft, setDraft] = useState('')
+
+  const addTag = (raw: string) => {
+    const t = raw.trim()
+    if (!t) return
+    if (!tags.some(x => x.toLowerCase() === t.toLowerCase())) setTags([...tags, t])
+    setDraft('')
+  }
+  const suggestions = tagDictionary.filter(
+    t => !tags.some(x => x.toLowerCase() === t.toLowerCase())
+  )
+
+  return (
+    <Modal isOpen onClose={onClose} title="Notes & tags">
+      <div className="space-y-4">
+        <div>
+          <label className="text-xs font-semibold text-charcoal block mb-1.5">Notes</label>
+          <textarea
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+            className="w-full border border-stone rounded-md px-3 py-2 text-sm min-h-[96px] focus:outline-none focus:ring-2 focus:ring-cobalt/40"
+            placeholder="Why I saved this · things to verify…"
+          />
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold text-charcoal block mb-1.5">Tags</label>
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {tags.map(t => (
+              <span
+                key={t}
+                className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-pill bg-cobalt/10 text-cobalt"
+              >
+                {t}
+                <button onClick={() => setTags(tags.filter(x => x !== t))} aria-label={`Remove ${t}`}>
+                  <X size={11} />
+                </button>
+              </span>
+            ))}
+          </div>
+          <input
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault()
+                addTag(draft)
+              }
+            }}
+            list="saved-tag-suggestions"
+            placeholder="Add a tag and press Enter"
+            className="w-full border border-stone rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cobalt/40"
+          />
+          <datalist id="saved-tag-suggestions">
+            {suggestions.map(t => (
+              <option key={t} value={t} />
+            ))}
+          </datalist>
+        </div>
+
+        <Button onClick={() => onSave(notes, tags)} loading={saving} className="w-full">
+          Save
+        </Button>
+      </div>
+    </Modal>
+  )
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Compare modal — side-by-side with dual scores + best-value markers (§5).
+// ───────────────────────────────────────────────────────────────────────────
+function CompareModal({
+  comparison,
+  onClose,
+}: {
+  comparison: ComparisonResponse | null
+  onClose: () => void
+}) {
+  const progs = comparison?.programs ?? []
+
+  const best = (vals: (number | null | undefined)[], higher = true): number | null => {
+    const nums = vals.filter((v): v is number => v != null && Number.isFinite(v))
+    if (!nums.length) return null
+    return higher ? Math.max(...nums) : Math.min(...nums)
+  }
+  const Marker = ({ v, b }: { v: number | null | undefined; b: number | null }) =>
+    v == null || b == null ? (
+      <Minus size={11} className="text-slate/30" />
+    ) : v === b ? (
+      <ArrowUp size={11} className="text-success" />
+    ) : (
+      <span className="inline-block w-[11px]" />
+    )
+
+  const fitness = progs.map(p => (p.fitness_score != null ? Number(p.fitness_score) : null))
+  const confidence = progs.map(p => (p.confidence_score != null ? Number(p.confidence_score) : null))
+  const tuitions = progs.map(p => p.tuition ?? null)
+  const rates = progs.map(p => p.acceptance_rate ?? null)
+  const bestFit = best(fitness, true)
+  const bestConf = best(confidence, true)
+  const bestTuition = best(tuitions, false)
+  const bestRate = best(rates, true)
+
+  const cell = 'py-2.5 px-3 align-top'
+  const rowLabel = 'py-2.5 px-3 text-slate font-medium whitespace-nowrap'
+
+  return (
+    <Modal isOpen={!!comparison} onClose={onClose} title="Compare programs" size="lg">
+      {progs.length < 2 ? (
+        <p className="text-sm text-slate py-6 text-center">Select at least 2 programs to compare.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-left py-2.5 px-3 text-slate font-medium">Dimension</th>
+                {progs.map(p => (
+                  <th key={p.id} className="text-left py-2.5 px-3 font-bold text-charcoal min-w-[140px]">
+                    {p.program_name}
+                    <span className="block text-xs font-normal text-slate">{p.institution_name}</span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b border-divider bg-muted/40">
+                <td className={rowLabel}>Fitness</td>
+                {progs.map((p, i) => (
+                  <td key={p.id} className={cell}>
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="font-bold">
+                        {fitness[i] != null ? `${Math.round(toUnit(fitness[i]) * 100)}%` : '—'}
+                      </span>
+                      <Marker v={fitness[i]} b={bestFit} />
+                    </span>
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-divider bg-muted/40">
+                <td className={rowLabel}>Confidence</td>
+                {progs.map((p, i) => (
+                  <td key={p.id} className={cell}>
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="font-bold">
+                        {confidence[i] != null ? `${Math.round(toUnit(confidence[i]) * 100)}%` : '—'}
+                      </span>
+                      <Marker v={confidence[i]} b={bestConf} />
+                    </span>
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-divider">
+                <td className={rowLabel}>Band</td>
+                {progs.map(p => (
+                  <td key={p.id} className={cell}>
+                    {p.band_label ? <BandBadge band={p.band_label} /> : '—'}
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-divider">
+                <td className={rowLabel}>Degree</td>
+                {progs.map(p => (
+                  <td key={p.id} className={cell}>
+                    {p.degree_type ? DEGREE_LABELS[p.degree_type] ?? p.degree_type : '—'}
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-divider">
+                <td className={rowLabel}>Format</td>
+                {progs.map(p => (
+                  <td key={p.id} className={cell}>
+                    {p.delivery_format ? DELIVERY_FORMAT_LABELS[p.delivery_format] ?? p.delivery_format : '—'}
+                    {p.duration_months ? ` · ${p.duration_months} mo` : ''}
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-divider">
+                <td className={rowLabel}>Location</td>
+                {progs.map(p => (
+                  <td key={p.id} className={cell}>
+                    {[p.institution_city, p.institution_country].filter(Boolean).join(', ') || '—'}
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-divider">
+                <td className={rowLabel}>Tuition</td>
+                {progs.map((p, i) => (
+                  <td key={p.id} className={cell}>
+                    <span className="inline-flex items-center gap-1.5">
+                      {formatCurrency(p.tuition)}
+                      <Marker v={tuitions[i]} b={bestTuition} />
+                    </span>
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b border-divider">
+                <td className={rowLabel}>Acceptance</td>
+                {progs.map((p, i) => (
+                  <td key={p.id} className={cell}>
+                    <span className="inline-flex items-center gap-1.5">
+                      {p.acceptance_rate != null ? formatPercent(p.acceptance_rate, 1) : '—'}
+                      <Marker v={rates[i]} b={bestRate} />
+                    </span>
+                  </td>
+                ))}
+              </tr>
+              <tr>
+                <td className={rowLabel}>Deadline</td>
+                {progs.map(p => (
+                  <td key={p.id} className={cell}>
+                    {p.application_deadline ? formatDate(p.application_deadline) : '—'}
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
       )}
-
-      {/* Edit notes modal */}
-      <Modal isOpen={!!editingNotes} onClose={() => setEditingNotes(null)} title="Edit Notes">
-        {editingNotes && (
-          <div className="space-y-3">
-            <textarea
-              value={editingNotes.notes}
-              onChange={e => setEditingNotes({ ...editingNotes, notes: e.target.value })}
-              className="w-full border rounded px-3 py-2 text-sm min-h-[100px]"
-              placeholder="Your notes about this program..."
-            />
-            <Button onClick={() => notesMut.mutate({ id: editingNotes.id, notes: editingNotes.notes })} loading={notesMut.isPending} className="w-full">Save</Button>
-          </div>
-        )}
-      </Modal>
-
-      {/* Comparison modal */}
-      <Modal isOpen={!!comparison} onClose={() => setComparison(null)} title="Program Comparison" size="lg">
-        {comparison && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-2 px-2 text-slate font-medium">Feature</th>
-                  {comparison.programs.map(p => (
-                    <th key={p.id} className="text-left py-2 px-2 font-semibold">{p.program_name}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b">
-                  <td className="py-2 px-2 text-slate">Institution</td>
-                  {comparison.programs.map(p => (
-                    <td key={p.id} className="py-2 px-2">{p.institution_name}</td>
-                  ))}
-                </tr>
-                <tr className="border-b">
-                  <td className="py-2 px-2 text-slate">Country</td>
-                  {comparison.programs.map(p => (
-                    <td key={p.id} className="py-2 px-2">{p.institution_country}</td>
-                  ))}
-                </tr>
-                <tr className="border-b">
-                  <td className="py-2 px-2 text-slate">Degree</td>
-                  {comparison.programs.map(p => (
-                    <td key={p.id} className="py-2 px-2">
-                      <Badge variant="info" size="sm">{DEGREE_LABELS[p.degree_type] || p.degree_type}</Badge>
-                    </td>
-                  ))}
-                </tr>
-                {(() => {
-                  const scores = comparison.programs.map(p => matchScoreOf(matchLookup[p.id]))
-                  const best = bestValue(scores, true)
-                  return (
-                    <tr className="border-b bg-muted/50">
-                      <td className="py-2 px-2 text-slate font-medium">Match Score</td>
-                      {comparison.programs.map((p, i) => {
-                        const m = matchLookup[p.id]
-                        const ti = m ? TIER_LABELS[matchTierOf(m)] : null
-                        return (
-                          <td key={p.id} className="py-2 px-2">
-                            {m ? (
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold">{formatScore(matchScoreOf(m))}</span>
-                                {ti && <Badge variant={ti.color as any} size="sm">{ti.label}</Badge>}
-                                <ValueIndicator value={scores[i]} best={best} />
-                              </div>
-                            ) : '\u2014'}
-                          </td>
-                        )
-                      })}
-                    </tr>
-                  )
-                })()}
-                {(() => {
-                  const tuitions = comparison.programs.map(p => (p as any).tuition)
-                  const best = bestValue(tuitions, false)
-                  return (
-                    <tr className="border-b">
-                      <td className="py-2 px-2 text-slate">Tuition</td>
-                      {comparison.programs.map((p, i) => (
-                        <td key={p.id} className="py-2 px-2">
-                          <div className="flex items-center gap-2">
-                            <span>{formatCurrency((p as any).tuition)}</span>
-                            <ValueIndicator value={tuitions[i]} best={best} />
-                          </div>
-                        </td>
-                      ))}
-                    </tr>
-                  )
-                })()}
-                {(() => {
-                  const rates = comparison.programs.map(p => (p as any).acceptance_rate)
-                  const best = bestValue(rates, true)
-                  return (
-                    <tr className="border-b">
-                      <td className="py-2 px-2 text-slate">Acceptance Rate</td>
-                      {comparison.programs.map((p, i) => (
-                        <td key={p.id} className="py-2 px-2">
-                          <div className="flex items-center gap-2">
-                            <span>{formatPercent((p as any).acceptance_rate, 1)}</span>
-                            <ValueIndicator value={rates[i]} best={best} />
-                          </div>
-                        </td>
-                      ))}
-                    </tr>
-                  )
-                })()}
-                <tr className="border-b">
-                  <td className="py-2 px-2 text-slate">Deadline</td>
-                  {comparison.programs.map(p => (
-                    <td key={p.id} className="py-2 px-2">{formatDate(p.application_deadline)}</td>
-                  ))}
-                </tr>
-                <tr className="border-b">
-                  <td className="py-2 px-2 text-slate">Duration</td>
-                  {comparison.programs.map(p => (
-                    <td key={p.id} className="py-2 px-2">{(p as any).duration_months ? `${(p as any).duration_months} months` : '\u2014'}</td>
-                  ))}
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Modal>
-    </div>
+    </Modal>
   )
 }

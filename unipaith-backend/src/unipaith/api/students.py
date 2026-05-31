@@ -1696,6 +1696,13 @@ class FollowedInstitutionResponse(BaseModel):
     institution_id: UUID
     name: str
     followed_at: datetime | None = None
+    # Enriched so the Saved → Schools card (Spec 13 §3.2) renders without
+    # an extra fetch per institution.
+    country: str | None = None
+    city: str | None = None
+    logo_url: str | None = None
+    type: str | None = None
+    program_count: int = 0
 
 
 @router.get("/me/follows", response_model=list[FollowedInstitutionResponse])
@@ -1703,19 +1710,51 @@ async def list_follows(
     user: User = Depends(require_student),
     db: AsyncSession = Depends(get_db),
 ):
-    """Institutions the student explicitly follows (drives the Connect feed)."""
+    """Institutions the student explicitly follows — drives the Connect feed
+    and the Saved → Schools tab (Spec 13 §3.2). Enriched with location, logo,
+    and a published-program count for the school card."""
+    from sqlalchemy import func as sa_func
+
     from unipaith.models.follow import InstitutionFollow
-    from unipaith.models.institution import Institution
+    from unipaith.models.institution import Institution, Program
 
     profile = await StudentService(db)._get_student_profile(user.id)
+
+    prog_count_sq = (
+        select(Program.institution_id, sa_func.count(Program.id).label("pc"))
+        .where(Program.is_published.is_(True))
+        .group_by(Program.institution_id)
+        .subquery()
+    )
     result = await db.execute(
-        select(InstitutionFollow.institution_id, Institution.name, InstitutionFollow.created_at)
+        select(
+            InstitutionFollow.institution_id,
+            Institution.name,
+            InstitutionFollow.created_at,
+            Institution.country,
+            Institution.city,
+            Institution.logo_url,
+            Institution.type,
+            sa_func.coalesce(prog_count_sq.c.pc, 0),
+        )
         .join(Institution, Institution.id == InstitutionFollow.institution_id)
+        .outerjoin(
+            prog_count_sq, prog_count_sq.c.institution_id == InstitutionFollow.institution_id
+        )
         .where(InstitutionFollow.student_id == profile.id)
         .order_by(InstitutionFollow.created_at.desc())
     )
     return [
-        FollowedInstitutionResponse(institution_id=row[0], name=row[1], followed_at=row[2])
+        FollowedInstitutionResponse(
+            institution_id=row[0],
+            name=row[1],
+            followed_at=row[2],
+            country=row[3],
+            city=row[4],
+            logo_url=row[5],
+            type=row[6],
+            program_count=row[7] or 0,
+        )
         for row in result.all()
     ]
 
@@ -1825,9 +1864,7 @@ async def get_student_feed(
         .distinct()
     )
     follow_result = await db.execute(
-        select(InstitutionFollow.institution_id).where(
-            InstitutionFollow.student_id == profile.id
-        )
+        select(InstitutionFollow.institution_id).where(InstitutionFollow.student_id == profile.id)
     )
     followed_inst_ids = list(
         {row[0] for row in saved_result.all()} | {row[0] for row in follow_result.all()}
