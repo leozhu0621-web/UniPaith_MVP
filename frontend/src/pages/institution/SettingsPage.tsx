@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -7,7 +7,11 @@ import { Settings, Plus, Trash2, CreditCard, Users } from 'lucide-react'
 import { getInstitution, updateInstitution } from '../../api/institutions'
 import { getRubrics, createRubric } from '../../api/reviews'
 import { getInstitutionBilling } from '../../api/billing'
-import { getInstitutionSettings, updateInstitutionSettings, type UpdateInstitutionSettingsPayload } from '../../api/settings'
+import {
+  getInstitutionSettings,
+  updateInstitutionSettings,
+  type UpdateInstitutionSettingsPayload,
+} from '../../api/settings'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -21,6 +25,9 @@ import { useAuthStore } from '../../stores/auth-store'
 import { INSTITUTION_TYPES } from '../../utils/constants'
 import { formatDate } from '../../utils/format'
 import type { Rubric } from '../../types'
+import {
+  PairRowsEditor, LinkRowsEditor, MetricRowsEditor, StringListEditor,
+} from './settings/ProfileJsonEditors'
 import SecurityCard from '../student/settings/SecurityCard'
 import PreferencesCard from '../student/settings/PreferencesCard'
 import NotificationsCard from '../student/settings/NotificationsCard'
@@ -48,19 +55,44 @@ const profileSchema = z.object({
   campus_setting: z.string().optional(),
   student_body_size: z.coerce.number().int().nonnegative().optional(),
   founded_year: z.coerce.number().int().nonnegative().optional(),
-  media_gallery_text: z.string().optional(),
 })
 type ProfileForm = z.infer<typeof profileSchema>
 
-type InstJsonKey = 'social_links' | 'inquiry_routing' | 'support_services' | 'policies' | 'international_info' | 'school_outcomes'
-const INST_JSON_FIELDS: { key: InstJsonKey; label: string; placeholder: string; hint: string }[] = [
-  { key: 'social_links', label: 'Social Links', placeholder: '{\n  "twitter": "https://twitter.com/school"\n}', hint: 'JSON dict of platform → URL. Renders on the institution overview.' },
-  { key: 'inquiry_routing', label: 'Inquiry Routing', placeholder: '{\n  "general": "admissions@school.edu"\n}', hint: 'JSON dict of inquiry type → destination. Powers the student contact flow.' },
-  { key: 'support_services', label: 'Support Services', placeholder: '{\n  "counseling": {"url": "https://…"}\n}', hint: 'JSON dict of service → {url, phone, description}.' },
-  { key: 'policies', label: 'Policies', placeholder: '{\n  "transfer_credit": {"url": "https://…"}\n}', hint: 'JSON dict of policy name → {url, summary?}.' },
-  { key: 'international_info', label: 'International Student Info', placeholder: '{\n  "toefl_min": 100\n}', hint: 'JSON dict of international requirements + contacts.' },
-  { key: 'school_outcomes', label: 'Aggregate Outcomes', placeholder: '{\n  "6mo_placement_rate": 0.95\n}', hint: 'JSON dict for school-wide placement stats.' },
-]
+// Datalist suggestions for the guided JSONB editors (Spec 22 §3 / gap G-I1).
+const SOCIAL_SUGGESTIONS = ['twitter', 'linkedin', 'instagram', 'youtube', 'facebook', 'tiktok']
+const INQUIRY_TYPE_SUGGESTIONS = ['general', 'international', 'financial_aid', 'undergraduate', 'graduate', 'transfer']
+const SUPPORT_SUGGESTIONS = ['Tutoring', 'Career services', 'Counseling', 'Disability services', 'First-gen support', 'Financial literacy']
+const POLICY_SUGGESTIONS = ['Transfer credit', 'Code of conduct', 'Admissions policy', 'Test policy', 'Refund policy']
+const INTL_SUGGESTIONS = ['toefl_min', 'ielts_min', 'duolingo_min', 'visa_contact', 'visa_url', 'supported_visas', 'application_fee']
+const OUTCOME_SUGGESTIONS = ['employed_or_continuing_ed', 'graduation_rate_6yr', 'first_destination_placement_rate', 'median_starting_salary', 'top_employers', 'top_employer_industries', 'source']
+
+type Dict = Record<string, unknown>
+
+/** Section wrapper for the Profile form — matches the existing settings idiom. */
+function Section({ title, hint, children, divider = true }: { title: string; hint?: string; children: ReactNode; divider?: boolean }) {
+  return (
+    <section className={divider ? 'border-t border-border pt-4 space-y-4' : 'space-y-4'}>
+      <div>
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+      </div>
+      {children}
+    </section>
+  )
+}
+
+/** Labelled wrapper for a guided editor inside a section. */
+function Field({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
+  return (
+    <div className="space-y-2">
+      <div>
+        <h4 className="text-[13px] font-semibold text-foreground">{title}</h4>
+        {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+      </div>
+      {children}
+    </div>
+  )
+}
 
 export default function SettingsPage() {
   const queryClient = useQueryClient()
@@ -80,20 +112,35 @@ export default function SettingsPage() {
   // Shared per-user settings (security / preferences / notifications / account).
   const settingsQ = useQuery({ queryKey: ['institution-settings'], queryFn: getInstitutionSettings })
   const refetchSettings = () => queryClient.invalidateQueries({ queryKey: ['institution-settings'] })
-
   const updatePrefsMut = useMutation({
     mutationFn: (p: UpdateInstitutionSettingsPayload) => updateInstitutionSettings(p),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['institution-settings'] }),
     onError: e => showToast(e instanceof Error ? e.message : 'Could not save', 'error'),
   })
 
-  // ── Profile (existing editor, rebranded) ──
+  // Rubric state
+  const [showRubricForm, setShowRubricForm] = useState(false)
+  const [rubricName, setRubricName] = useState('')
+  const [criteria, setCriteria] = useState<{ name: string; weight: number }[]>([{ name: '', weight: 0 }])
+
+  // --- Billing ---
+  const billingQ = useQuery({
+    queryKey: ['institution-billing'],
+    queryFn: getInstitutionBilling,
+    enabled: activeTab === 'billing',
+  })
+
+  // --- Profile (Spec 22 guided editor) ---
   const instQ = useQuery({ queryKey: ['institution'], queryFn: getInstitution })
   const profileForm = useForm<ProfileForm>({ resolver: zodResolver(profileSchema) as any })
-  const [instJsonText, setInstJsonText] = useState<Record<InstJsonKey, string>>({
-    social_links: '', inquiry_routing: '', support_services: '', policies: '', international_info: '', school_outcomes: '',
-  })
-  const [instJsonErrors, setInstJsonErrors] = useState<Partial<Record<InstJsonKey, string>>>({})
+
+  const [socialLinks, setSocialLinks] = useState<Dict>({})
+  const [inquiryRouting, setInquiryRouting] = useState<Dict>({})
+  const [supportServices, setSupportServices] = useState<Dict>({})
+  const [policies, setPolicies] = useState<Dict>({})
+  const [internationalInfo, setInternationalInfo] = useState<Dict>({})
+  const [schoolOutcomes, setSchoolOutcomes] = useState<Dict>({})
+  const [mediaGallery, setMediaGallery] = useState<string[]>([])
 
   useEffect(() => {
     if (instQ.data) {
@@ -105,16 +152,14 @@ export default function SettingsPage() {
         logo_url: inst.logo_url ?? '', description_text: inst.description_text ?? '',
         campus_description: inst.campus_description ?? '', campus_setting: inst.campus_setting ?? '',
         student_body_size: inst.student_body_size ?? undefined, founded_year: inst.founded_year ?? undefined,
-        media_gallery_text: Array.isArray(inst.media_gallery) ? inst.media_gallery.join('\n') : '',
       })
-      setInstJsonText({
-        social_links: inst.social_links ? JSON.stringify(inst.social_links, null, 2) : '',
-        inquiry_routing: inst.inquiry_routing ? JSON.stringify(inst.inquiry_routing, null, 2) : '',
-        support_services: inst.support_services ? JSON.stringify(inst.support_services, null, 2) : '',
-        policies: inst.policies ? JSON.stringify(inst.policies, null, 2) : '',
-        international_info: inst.international_info ? JSON.stringify(inst.international_info, null, 2) : '',
-        school_outcomes: inst.school_outcomes ? JSON.stringify(inst.school_outcomes, null, 2) : '',
-      })
+      setSocialLinks(inst.social_links ?? {})
+      setInquiryRouting(inst.inquiry_routing ?? {})
+      setSupportServices(inst.support_services ?? {})
+      setPolicies(inst.policies ?? {})
+      setInternationalInfo(inst.international_info ?? {})
+      setSchoolOutcomes(inst.school_outcomes ?? {})
+      setMediaGallery(Array.isArray(inst.media_gallery) ? inst.media_gallery : [])
     }
   }, [instQ.data, profileForm])
 
@@ -127,17 +172,7 @@ export default function SettingsPage() {
     onError: () => showToast('Failed to update profile', 'error'),
   })
 
-  const onSaveProfile = profileForm.handleSubmit(data => {
-    const parsed: Partial<Record<InstJsonKey, unknown>> = {}
-    const errs: Partial<Record<InstJsonKey, string>> = {}
-    for (const { key } of INST_JSON_FIELDS) {
-      const text = instJsonText[key]
-      if (!text || !text.trim()) continue
-      try { parsed[key] = JSON.parse(text) } catch (e: any) { errs[key] = `Invalid JSON: ${e?.message || 'parse error'}` }
-    }
-    if (Object.keys(errs).length) { setInstJsonErrors(errs); showToast('Please fix JSON errors before saving', 'error'); return }
-    setInstJsonErrors({})
-    const mediaGallery = (data.media_gallery_text ?? '').split('\n').map(s => s.trim()).filter(Boolean)
+  const onSaveProfile = profileForm.handleSubmit((data) => {
     updateInstMut.mutate({
       name: data.name, type: data.type, country: data.country,
       region: data.region || undefined, city: data.city || undefined,
@@ -146,17 +181,13 @@ export default function SettingsPage() {
       campus_description: data.campus_description || undefined,
       campus_setting: (data.campus_setting as 'urban' | 'suburban' | 'rural' | '') || undefined,
       student_body_size: data.student_body_size || undefined, founded_year: data.founded_year || undefined,
-      media_gallery: mediaGallery.length ? mediaGallery : undefined,
-      social_links: parsed.social_links as any, inquiry_routing: parsed.inquiry_routing as any,
-      support_services: parsed.support_services as any, policies: parsed.policies as any,
-      international_info: parsed.international_info as any, school_outcomes: parsed.school_outcomes as any,
+      media_gallery: mediaGallery,
+      social_links: socialLinks, inquiry_routing: inquiryRouting, support_services: supportServices,
+      policies, international_info: internationalInfo, school_outcomes: schoolOutcomes,
     })
   })
 
-  // ── Review (rubrics) ──
-  const [showRubricForm, setShowRubricForm] = useState(false)
-  const [rubricName, setRubricName] = useState('')
-  const [criteria, setCriteria] = useState<{ name: string; weight: number }[]>([{ name: '', weight: 0 }])
+  // --- Review (rubrics) ---
   const rubricsQ = useQuery({ queryKey: ['rubrics'], queryFn: () => getRubrics(), enabled: activeTab === 'review' })
   const rubrics: Rubric[] = Array.isArray(rubricsQ.data) ? rubricsQ.data : []
   const createRubricMut = useMutation({
@@ -176,10 +207,12 @@ export default function SettingsPage() {
     if (valid.length === 0) { showToast('Add at least one criterion', 'warning'); return }
     createRubricMut.mutate({ rubric_name: rubricName, criteria: valid })
   }
+  const updateCriterion = (i: number, field: 'name' | 'weight', value: string | number) =>
+    setCriteria(criteria.map((c, idx) => (idx === i ? { ...c, [field]: value } : c)))
   const weightSum = criteria.reduce((s, c) => s + c.weight, 0)
 
-  // ── Billing ──
-  const billingQ = useQuery({ queryKey: ['institution-billing'], queryFn: getInstitutionBilling, enabled: activeTab === 'billing' })
+  const inst = instQ.data as any
+  const seedKey = inst?.updated_at ?? 'init'
 
   return (
     <div className="px-4 sm:px-6 py-6 space-y-5 max-w-3xl mx-auto w-full">
@@ -190,65 +223,79 @@ export default function SettingsPage() {
 
       <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
-      {/* Profile */}
+      {/* Profile (Spec 22 guided editor) */}
       {activeTab === 'profile' && (
         <Card className="p-5 sm:p-6">
-          {instQ.isLoading ? (
+          {instQ.isLoading || !inst ? (
             <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10" />)}</div>
           ) : (
             <form onSubmit={onSaveProfile} className="space-y-6">
-              <div className="space-y-4">
+              <Section title="Identity" hint="Core facts shown on your public profile card and header." divider={false}>
                 <Input label="Institution Name" required {...profileForm.register('name')} error={profileForm.formState.errors.name?.message} />
                 <Select label="Type" required options={INSTITUTION_TYPES} {...profileForm.register('type')} error={profileForm.formState.errors.type?.message} />
-                <Input label="Country" required {...profileForm.register('country')} error={profileForm.formState.errors.country?.message} />
+                <div className="grid grid-cols-2 gap-4">
+                  <Input label="Country" required {...profileForm.register('country')} error={profileForm.formState.errors.country?.message} />
+                  <Input label="Founded year" type="number" placeholder="e.g. 1831" {...profileForm.register('founded_year')} error={profileForm.formState.errors.founded_year?.message} />
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <Input label="Region" {...profileForm.register('region')} />
                   <Input label="City" {...profileForm.register('city')} />
                 </div>
+              </Section>
+
+              <Section title="Campus" hint="The environment and scale of your campus.">
+                <div className="grid grid-cols-2 gap-4">
+                  <Select label="Campus setting" options={CAMPUS_SETTING_OPTIONS} {...profileForm.register('campus_setting')} />
+                  <Input label="Student body size" type="number" {...profileForm.register('student_body_size')} />
+                </div>
+                <Textarea label="Campus description" {...profileForm.register('campus_description')} rows={3} placeholder="How the campus looks and feels, where it's located..." />
+                <Field title="Media gallery" hint="Text-only per brand — S3 image URLs, one per row. The first is the hero.">
+                  <StringListEditor key={`mg-${seedKey}`} initial={Array.isArray(inst.media_gallery) ? inst.media_gallery : []} onChange={setMediaGallery} placeholder="https://…/campus.jpg" addLabel="Add image URL" />
+                </Field>
+              </Section>
+
+              <Section title="Web presence" hint="Where students reach you online.">
                 <div className="grid grid-cols-2 gap-4">
                   <Input label="Website URL" {...profileForm.register('website_url')} error={profileForm.formState.errors.website_url?.message} />
                   <Input label="Contact Email" {...profileForm.register('contact_email')} error={profileForm.formState.errors.contact_email?.message} />
                 </div>
                 <Input label="Logo URL (S3)" {...profileForm.register('logo_url')} error={profileForm.formState.errors.logo_url?.message} />
-              </div>
+                <Field title="Social links" hint="Platform → profile URL. Shown in your public header.">
+                  <PairRowsEditor key={`sl-${seedKey}`} initial={inst.social_links} onChange={setSocialLinks}
+                    keyLabel="Platform" valueLabel="Profile URL" keySuggestions={SOCIAL_SUGGESTIONS}
+                    valuePlaceholder="https://…" valueType="url" addLabel="Add social link" />
+                </Field>
+              </Section>
 
-              <div className="border-t border-border pt-4 space-y-4">
-                <h3 className="text-sm font-semibold text-foreground">Description &amp; Campus</h3>
+              <Section title="Story & support" hint="Your description and the support services students care about.">
                 <Textarea label="Short description" {...profileForm.register('description_text')} rows={3} />
-                <Textarea label="Campus description" {...profileForm.register('campus_description')} rows={3} />
-                <div className="grid grid-cols-3 gap-4">
-                  <Select label="Campus setting" options={CAMPUS_SETTING_OPTIONS} {...profileForm.register('campus_setting')} />
-                  <Input label="Student body size" type="number" {...profileForm.register('student_body_size')} />
-                  <Input label="Founded year" type="number" placeholder="e.g. 1831" {...profileForm.register('founded_year')} error={profileForm.formState.errors.founded_year?.message} />
-                </div>
-              </div>
+                <Field title="Support services" hint="Shown on the public About tab (tutoring, career, counseling, …).">
+                  <LinkRowsEditor key={`ss-${seedKey}`} initial={inst.support_services} onChange={setSupportServices}
+                    withSummary={false} nameLabel="Service name" nameSuggestions={SUPPORT_SUGGESTIONS} addLabel="Add support service" />
+                </Field>
+              </Section>
 
-              <div className="border-t border-border pt-4 space-y-2">
-                <h3 className="text-sm font-semibold text-foreground">Media Gallery</h3>
-                <p className="text-xs text-muted-foreground">One S3 URL per line. First entry is the hero image.</p>
-                <textarea
-                  className="w-full rounded-md border border-border bg-card text-foreground p-3 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-ring"
-                  rows={4}
-                  {...profileForm.register('media_gallery_text')}
-                />
-              </div>
+              <Section title="Policies & international" hint="Admissions, transfer and international guidance.">
+                <Field title="Policies" hint="Each shows its name, an optional summary and a link on the About tab.">
+                  <LinkRowsEditor key={`pol-${seedKey}`} initial={inst.policies} onChange={setPolicies}
+                    withSummary nameLabel="Policy name" nameSuggestions={POLICY_SUGGESTIONS} addLabel="Add policy" />
+                </Field>
+                <Field title="International student info" hint="Test minimums, visa contacts, supported visas, etc.">
+                  <MetricRowsEditor key={`intl-${seedKey}`} initial={inst.international_info} onChange={setInternationalInfo}
+                    keySuggestions={INTL_SUGGESTIONS} addLabel="Add international detail" />
+                </Field>
+              </Section>
 
-              {INST_JSON_FIELDS.map(({ key, label, placeholder, hint }) => (
-                <div key={key} className="border-t border-border pt-4 space-y-2">
-                  <div>
-                    <h3 className="text-sm font-semibold text-foreground">{label}</h3>
-                    <p className="text-xs text-muted-foreground">{hint}</p>
-                  </div>
-                  <textarea
-                    className="w-full rounded-md border border-border bg-card text-foreground p-3 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-ring"
-                    rows={5}
-                    value={instJsonText[key]}
-                    placeholder={placeholder}
-                    onChange={e => setInstJsonText(prev => ({ ...prev, [key]: e.target.value }))}
-                  />
-                  {instJsonErrors[key] && <p className="text-xs text-error">{instJsonErrors[key]}</p>}
-                </div>
-              ))}
+              <Section title="Outcomes" hint="Institution-wide stats, distinct from program outcomes. A number 0–1 renders as a percentage on the Overview tab.">
+                <MetricRowsEditor key={`out-${seedKey}`} initial={inst.school_outcomes} onChange={setSchoolOutcomes}
+                  keySuggestions={OUTCOME_SUGGESTIONS} addLabel="Add outcome metric" />
+              </Section>
+
+              <Section title="Inquiry routing" hint="Where ‘Request info’ inquiries from your page should go, by type (email or URL).">
+                <PairRowsEditor key={`ir-${seedKey}`} initial={inst.inquiry_routing} onChange={setInquiryRouting}
+                  keyLabel="Inquiry type" valueLabel="Destination" keySuggestions={INQUIRY_TYPE_SUGGESTIONS}
+                  valuePlaceholder="admissions@example.edu" addLabel="Add routing rule" />
+              </Section>
 
               <div className="flex justify-end">
                 <Button type="submit" variant="secondary" loading={updateInstMut.isPending}>Save Changes</Button>
@@ -280,8 +327,8 @@ export default function SettingsPage() {
                 </div>
                 {criteria.map((c, i) => (
                   <div key={i} className="flex items-center gap-2 mb-2">
-                    <Input className="flex-1" placeholder="Criterion name" value={c.name} onChange={e => setCriteria(criteria.map((x, idx) => idx === i ? { ...x, name: e.target.value } : x))} />
-                    <Input className="w-20" type="number" value={c.weight} onChange={e => setCriteria(criteria.map((x, idx) => idx === i ? { ...x, weight: Number(e.target.value) } : x))} />
+                    <Input className="flex-1" placeholder="Criterion name" value={c.name} onChange={e => updateCriterion(i, 'name', e.target.value)} />
+                    <Input className="w-20" type="number" value={c.weight} onChange={e => updateCriterion(i, 'weight', Number(e.target.value))} />
                     <button onClick={() => setCriteria(criteria.filter((_, idx) => idx !== i))} className="ui-btn p-1.5 text-muted-foreground hover:text-error"><Trash2 size={16} /></button>
                   </div>
                 ))}
@@ -321,7 +368,7 @@ export default function SettingsPage() {
         <IntegrationsCard primaryDomain={settingsQ.data?.account.primary_domain ?? null} />
       )}
 
-      {/* Notifications */}
+      {/* Notifications (matrix) */}
       {activeTab === 'notifications' && (
         settingsQ.isLoading || !settingsQ.data ? (
           <Card className="p-6"><Skeleton className="h-40" /></Card>
