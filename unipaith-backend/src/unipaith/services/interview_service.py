@@ -175,6 +175,14 @@ class InterviewService:
         await self.db.flush()
         return interview
 
+    async def decline_interview(self, student_id: UUID, interview_id: UUID) -> Interview:
+        interview = await self._get_student_interview(student_id, interview_id)
+        if interview.status != "proposed":
+            raise BadRequestException("Only proposed interviews can be declined")
+        interview.status = "cancelled"
+        await self.db.flush()
+        return interview
+
     # ------------------------------------------------------------------
     # Interviewer actions
     # ------------------------------------------------------------------

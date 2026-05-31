@@ -154,6 +154,9 @@ class CalendarService:
                     "subtitle": inst.name,
                     "institution_name": inst.name,
                     "link": f"/s/applications/{app.id}?tab=interviews",
+                    "interview_id": iv.id,
+                    "can_decline": (iv.status or "").lower() == "proposed",
+                    "can_reschedule": (iv.status or "").lower() in {"proposed", "confirmed"},
                 }
             )
 

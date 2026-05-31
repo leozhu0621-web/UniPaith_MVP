@@ -6,3 +6,6 @@ export const getMyInterviews = () =>
 
 export const confirmInterview = (interviewId: string, confirmedTime: string) =>
   apiClient.post(`/interviews/${interviewId}/confirm`, { confirmed_time: confirmedTime }).then(r => r.data)
+
+export const declineInterview = (interviewId: string) =>
+  apiClient.post(`/interviews/${interviewId}/decline`).then(r => r.data)

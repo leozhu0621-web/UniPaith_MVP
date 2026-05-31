@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
     ForeignKey,
     Index,
@@ -84,6 +85,9 @@ class SavedListItem(Base):
     priority: Mapped[str] = mapped_column(
         String(20), nullable=False, default="considering", server_default=text("'considering'")
     )
+    status: Mapped[str] = mapped_column(
+        String(30), nullable=False, default="considering", server_default="considering"
+    )
     # Spec 13 §4.3 — free-text tags from the student's own tag dictionary.
     tags: Mapped[list] = mapped_column(
         JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb")
@@ -147,6 +151,8 @@ class StudentCalendar(Base):
     end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     reminder_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # Spec 16 §6 CalendarItem fields ---------------------------------------
+    # Spec 17 reuses `status` ("completed") to mark an inbox-linked deadline
+    # done when the thread is marked complete (via reference_id = thread id).
     status: Mapped[str] = mapped_column(String(20), default="scheduled", nullable=False)
     category: Mapped[str | None] = mapped_column(String(30))
     location: Mapped[str | None] = mapped_column(String(500))
@@ -218,6 +224,7 @@ class CRMRecord(Base):
 
 class Conversation(Base):
     __tablename__ = "conversations"
+    __table_args__ = (Index("ix_conversations_application_id", "application_id"),)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     student_id: Mapped[uuid.UUID] = mapped_column(
@@ -229,6 +236,16 @@ class Conversation(Base):
     program_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("programs.id", ondelete="SET NULL")
     )
+    # Spec 17 — application-threaded inbox metadata (nullable for legacy threads).
+    application_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("applications.id", ondelete="SET NULL"), nullable=True
+    )
+    # 'human' | 'system' (alerts, status updates, AI-run notices).
+    thread_type: Mapped[str] = mapped_column(String(20), server_default="human", nullable=False)
+    action_label: Mapped[str | None] = mapped_column(String(40))
+    due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    waiting_on: Mapped[str] = mapped_column(String(20), server_default="none", nullable=False)
+    linked_checklist_item_category: Mapped[str | None] = mapped_column(String(50))
     subject: Mapped[str | None] = mapped_column(String(500))
     status: Mapped[str | None] = mapped_column(String(20))
     started_at: Mapped[datetime] = mapped_column(
@@ -251,11 +268,20 @@ class Message(Base):
         nullable=False,
         index=True,
     )
+    # 'student' | 'admissions_officer' | 'institution' | 'system'
     sender_type: Mapped[str | None] = mapped_column(String(20))
-    sender_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    # Nullable (Spec 17): system messages have no human author.
+    sender_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE")
     )
     message_body: Mapped[str] = mapped_column(Text, nullable=False)
+    # Spec 17 — list of {id, name, kind: 'document'|'link', url?} attached to
+    # an inbox reply. Defaults to an empty list.
+    attachments: Mapped[list] = mapped_column(JSONB, server_default="[]", nullable=False)
+    # delivery status: 'sent' | 'delivered' | 'read'
+    status: Mapped[str] = mapped_column(String(20), server_default="sent", nullable=False)
+    # Spec 17 §14 — provenance: was this reply seeded from an AI draft?
+    ai_draft_used: Mapped[bool] = mapped_column(Boolean, server_default="false", nullable=False)
     sent_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

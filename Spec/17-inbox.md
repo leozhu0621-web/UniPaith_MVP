@@ -163,8 +163,8 @@ Endpoints:
 
 ## 11. Gaps (from `47`)
 
-- G-A6 (minor): `/s/messages/:convId` redirect doesn't carry id; fix to `?thread=:convId`.
-- G-AI7 (minor): `InboxReplyDrafter` agent not built.
+- ~~G-A6~~ — fixed: `/s/messages/:convId` → `/s/manage?tab=messages&thread=:convId`.
+- ~~G-AI7~~ — fixed: `InboxReplyDrafter` (`unipaith/ai/inbox_reply.py`), gated by `AI_INBOX_V2_ENABLED`.
 - Suggested replies could include attachments suggestions (e.g., "attach your transcript here") — defer.
 
 ---

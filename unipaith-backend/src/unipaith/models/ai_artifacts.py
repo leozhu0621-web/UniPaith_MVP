@@ -120,7 +120,8 @@ class AiTurn(Base, UUIDPrimaryKeyMixin):
         CheckConstraint(
             "agent IN ('orchestrator','extractor','validator','feature_emitter',"
             "'rationale','workshop_coach','workshop_judge','embedding',"
-            "'review_summarizer','authenticity_risk','matcher','query_interpreter')",
+            "'review_summarizer','authenticity_risk','matcher','query_interpreter',"
+            "'inbox_reply_drafter')",
             name="ck_ai_turns_agent",
         ),
         # Spec 03 §8: provider tracked per call so the cost ledger splits

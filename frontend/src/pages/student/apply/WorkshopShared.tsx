@@ -36,7 +36,7 @@ export function ErrorNote({ onRetry }: { onRetry: () => void }) {
 export function StubNote() {
   return (
     <span className="inline-flex items-center gap-1 text-xs text-student-text">
-      <Info size={12} /> Showing rule-based feedback
+      <Info size={12} /> We couldn&apos;t analyze this draft in depth. Showing rule-based result.
     </span>
   )
 }

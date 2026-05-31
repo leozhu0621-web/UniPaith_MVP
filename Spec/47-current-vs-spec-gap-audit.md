@@ -88,10 +88,10 @@ Not in `App.tsx` routes. Replaced by Discover + Explore. Delete.
 
 Per CLAUDE.md "Phase E follow-ups" — kept until `ProfilePage`'s "Essays & Resume" legacy tab is removed. Delete after no remaining `?tab=essays` links.
 
-### G-A6 · `/s/messages/:convId` redirect drops conversation id
-**Severity:** `minor` · **Type:** `wire` · **Owner:** `17-inbox.md` · **Effort:** 0.25 day
+### ~~G-A6~~ · `/s/messages/:convId` redirect — **resolved**
+**Severity:** `minor` · **Type:** `wire` · **Owner:** `17-inbox.md`
 
-`App.tsx` line 120: redirects to `/s/manage?tab=messages` without carrying the conversation. Fix: pass through as `&thread=:convId`.
+`LegacyMessageRedirect` in `App.tsx` preserves `convId` as `?thread=:convId` on `/s/manage?tab=messages`.
 
 ### G-A7 · `components/CommunityTab.tsx`, `CounselorSessionCard.tsx`, `ExploreFeed.tsx`
 **Severity:** `minor` · **Type:** `remove` · **Owner:** `05` · **Effort:** 0.25 day
@@ -263,10 +263,10 @@ Per `45` §13 — Opus-tier per-application packet summary for institution revie
 
 See G-S3. The structured-constraint output is missing.
 
-### G-AI7 · No InboxReplyDrafter
-**Severity:** `minor` · **Type:** `new` · **Owner:** `17-inbox.md`, `45` · **Effort:** 2 days
+### ~~G-AI7~~ · InboxReplyDrafter — **resolved**
+**Severity:** `minor` · **Type:** `new` · **Owner:** `17-inbox.md`, `45`
 
-Spec calls for AI-suggested replies in the student inbox (admissions-officer threads). Not implemented.
+`InboxReplyDrafter` wired via `POST /me/inbox/threads/:id/suggested-reply`; production flag `AI_INBOX_V2_ENABLED=true`.
 
 ---
 
