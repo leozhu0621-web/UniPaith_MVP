@@ -182,7 +182,15 @@ async def test_publish_program_missing_fields(
     )
     pid = create_resp.json()["id"]
     resp = await institution_client.post(f"/api/v1/institutions/me/programs/{pid}/publish")
-    assert resp.status_code == 400
+    # Spec 23 §6 — structured 422 so the editor can list missing fields and
+    # scroll to each section. (Was a flat 400 before the guided editor.)
+    assert resp.status_code == 422
+    detail = resp.json()["detail"]
+    assert "missing required fields" in detail["message"].lower()
+    missing = {m["field"] for m in detail["missing_fields"]}
+    # No description and no cost signal → both flagged, each tagged with its section.
+    assert "description_text" in missing
+    assert all({"field", "section", "message"} <= set(m) for m in detail["missing_fields"])
 
 
 @pytest.mark.asyncio
@@ -345,3 +353,125 @@ async def test_segment_crud(
 
     resp = await institution_client.delete(f"/api/v1/institutions/me/segments/{sid}")
     assert resp.status_code == 204
+
+
+# --- Spec 23 · Program editor: version, optimistic lock, blast-radius ---
+
+
+async def _create_min_program(client: AsyncClient, **overrides) -> dict:
+    payload = {"program_name": "MS in CS", "degree_type": "masters", **overrides}
+    resp = await client.post("/api/v1/institutions/me/programs", json=payload)
+    assert resp.status_code == 201
+    return resp.json()
+
+
+@pytest.mark.asyncio
+async def test_program_response_exposes_version_and_status(
+    institution_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_institution_user: User,
+):
+    await _ensure_institution(db_session, mock_institution_user)
+    created = await _create_min_program(institution_client)
+    # Spec 23 §5 — version + derived status surfaced for the editor.
+    assert created["version"] == 1
+    assert created["feature_version"] == 1
+    assert created["status"] == "draft"
+    assert created["applications_count"] == 0
+
+
+@pytest.mark.asyncio
+async def test_program_version_increments_on_save(
+    institution_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_institution_user: User,
+):
+    await _ensure_institution(db_session, mock_institution_user)
+    pid = (await _create_min_program(institution_client))["id"]
+    r1 = await institution_client.put(
+        f"/api/v1/institutions/me/programs/{pid}",
+        json={"description_text": "v2"},
+    )
+    assert r1.status_code == 200
+    assert r1.json()["version"] == 2
+    r2 = await institution_client.put(
+        f"/api/v1/institutions/me/programs/{pid}",
+        json={"description_text": "v3"},
+    )
+    assert r2.json()["version"] == 3
+
+
+@pytest.mark.asyncio
+async def test_optimistic_lock_conflict(
+    institution_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_institution_user: User,
+):
+    await _ensure_institution(db_session, mock_institution_user)
+    pid = (await _create_min_program(institution_client))["id"]
+    # Bump to v2 so a stale expected_version=1 is now out of date.
+    await institution_client.put(
+        f"/api/v1/institutions/me/programs/{pid}",
+        json={"description_text": "v2"},
+    )
+    stale = await institution_client.put(
+        f"/api/v1/institutions/me/programs/{pid}",
+        json={"description_text": "from a stale tab", "expected_version": 1},
+    )
+    assert stale.status_code == 409
+    # A correct expected_version (2) succeeds.
+    fresh = await institution_client.put(
+        f"/api/v1/institutions/me/programs/{pid}",
+        json={"description_text": "ok", "expected_version": 2},
+    )
+    assert fresh.status_code == 200
+    assert fresh.json()["version"] == 3
+
+
+@pytest.mark.asyncio
+async def test_publish_then_create_and_publish_flow(
+    institution_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_institution_user: User,
+):
+    # Spec 23 §10 — create → publish; draft never appears publicly until then.
+    await _ensure_institution(db_session, mock_institution_user)
+    created = await _create_min_program(
+        institution_client, description_text="A great program.", tuition=40000
+    )
+    pid = created["id"]
+    pub = await institution_client.post(f"/api/v1/institutions/me/programs/{pid}/publish")
+    assert pub.status_code == 200
+    assert pub.json()["status"] == "published"
+
+
+@pytest.mark.asyncio
+async def test_publish_validation_lists_sections(
+    institution_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_institution_user: User,
+):
+    await _ensure_institution(db_session, mock_institution_user)
+    # Has a name+degree (identity ok) but no description and no cost signal.
+    pid = (await _create_min_program(institution_client))["id"]
+    resp = await institution_client.post(f"/api/v1/institutions/me/programs/{pid}/publish")
+    assert resp.status_code == 422
+    sections = {m["section"] for m in resp.json()["detail"]["missing_fields"]}
+    assert "overview" in sections  # description_text
+    assert "costs" in sections  # no tuition/deadline/cost_data/intake_rounds
+
+
+@pytest.mark.asyncio
+async def test_promotion_categories_round_trip(
+    institution_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_institution_user: User,
+):
+    await _ensure_institution(db_session, mock_institution_user)
+    pid = (await _create_min_program(institution_client))["id"]
+    r = await institution_client.put(
+        f"/api/v1/institutions/me/programs/{pid}",
+        json={"promotion_categories": ["computer_science", "data_science"]},
+    )
+    assert r.status_code == 200
+    assert r.json()["promotion_categories"] == ["computer_science", "data_science"]

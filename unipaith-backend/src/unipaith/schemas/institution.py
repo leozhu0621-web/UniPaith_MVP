@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Generic, Literal, TypeVar
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 T = TypeVar("T")
 
@@ -115,6 +115,7 @@ class InstitutionResponse(BaseModel):
 class CreateProgramRequest(BaseModel):
     program_name: str = Field(min_length=1, max_length=255)
     degree_type: Literal["bachelors", "masters", "phd", "certificate", "diploma"]
+    school_id: UUID | None = None
     department: str | None = None
     duration_months: int | None = Field(None, ge=1, le=120)
     tuition: int | None = Field(None, ge=0)
@@ -137,12 +138,18 @@ class CreateProgramRequest(BaseModel):
     highlights: list[str] | None = None
     faculty_contacts: list[dict] | None = None
     cost_data: dict | None = None
+    promotion_categories: list[str] | None = None
 
 
 class UpdateProgramRequest(BaseModel):
     program_name: str | None = Field(None, min_length=1, max_length=255)
     degree_type: Literal["bachelors", "masters", "phd", "certificate", "diploma"] | None = None
+    school_id: UUID | None = None
     department: str | None = None
+    # Spec 23 §6 — optimistic lock. When sent, the service rejects the write
+    # with 409 if the stored feature_version has moved on (concurrent edit).
+    # Control field only — popped before fields are applied to the model.
+    expected_version: int | None = None
     duration_months: int | None = Field(None, ge=1, le=120)
     tuition: int | None = Field(None, ge=0)
     acceptance_rate: Decimal | None = Field(None, ge=0, le=1)
@@ -162,12 +169,14 @@ class UpdateProgramRequest(BaseModel):
     highlights: list[str] | None = None
     faculty_contacts: list[dict] | None = None
     cost_data: dict | None = None
+    promotion_categories: list[str] | None = None
 
 
 class ProgramResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
     institution_id: UUID
+    school_id: UUID | None = None
     program_name: str
     degree_type: str
     department: str | None
@@ -190,8 +199,25 @@ class ProgramResponse(BaseModel):
     highlights: list | dict | None
     faculty_contacts: list | dict | None = None
     cost_data: dict | None = None
+    promotion_categories: list | dict | None = None
+    # Spec 06 §5.4 — version used for cache invalidation + Spec 23 §6 optimistic
+    # lock. Mapped from the model's feature_version; surfaced as `version` too.
+    feature_version: int = 1
+    # Spec 23 §12 — blast-radius awareness. Count of applications that reference
+    # this program (set transiently by get_program; 0 on mutation responses).
+    applications_count: int = 0
     created_at: datetime
     updated_at: datetime
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def version(self) -> int:
+        return self.feature_version
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def status(self) -> str:
+        return "published" if self.is_published else "draft"
 
 
 class ProgramSummaryResponse(BaseModel):
@@ -381,7 +407,8 @@ class CampaignMetricsResponse(BaseModel):
 
 class CreateCampaignLinkRequest(BaseModel):
     destination_type: str = Field(
-        ..., pattern=r"^(program|institution|event|post|custom)$",
+        ...,
+        pattern=r"^(program|institution|event|post|custom)$",
     )
     destination_id: UUID | None = None
     custom_url: str | None = None
@@ -432,7 +459,8 @@ class CampaignAttributionDetail(BaseModel):
 class RecordActionRequest(BaseModel):
     campaign_id: UUID
     action_type: str = Field(
-        ..., pattern=r"^(view|save|rsvp|request_info|apply)$",
+        ...,
+        pattern=r"^(view|save|rsvp|request_info|apply)$",
     )
     target_id: UUID | None = None
 
@@ -451,7 +479,8 @@ class SubmitInquiryRequest(BaseModel):
 
 class UpdateInquiryRequest(BaseModel):
     status: str | None = Field(
-        None, pattern=r"^(new|in_progress|responded|closed)$",
+        None,
+        pattern=r"^(new|in_progress|responded|closed)$",
     )
     assigned_to: UUID | None = None
     response_text: str | None = None
@@ -480,6 +509,7 @@ class InquiryResponse(BaseModel):
 
 class InquiryRoutingConfig(BaseModel):
     """Institution's inquiry routing preferences."""
+
     default_email: str | None = None
     auto_reply_enabled: bool = False
     auto_reply_message: str | None = None
@@ -517,7 +547,8 @@ class UpdatePromotionRequest(BaseModel):
     description: str | None = None
     targeting: TargetingScope | None = None
     status: str | None = Field(
-        None, pattern=r"^(draft|active|paused|expired)$",
+        None,
+        pattern=r"^(draft|active|paused|expired)$",
     )
     starts_at: datetime | None = None
     ends_at: datetime | None = None

@@ -23,6 +23,13 @@ import {
   Briefcase, Building2, Users, Clock, Sparkles, Mail, Archive,
 } from 'lucide-react'
 import type { EventItem } from '../../types'
+import {
+  normalizeCostData,
+  normalizeOutcomes,
+  normalizeRequirements,
+  intakeDeadlineFromArray,
+  intakeTimelineFromArray,
+} from '../../utils/programNormalize'
 
 // Redesigned components
 import DualRing from './match/DualRing'
@@ -186,7 +193,11 @@ export default function ProgramDetailPage() {
   const match: any = matchResult ?? null
   const hasMatch = !!(match && (match.fitness_score != null || match.match_score != null))
   const rd: any = p.ranking_data || {}
-  const cd: any = p.cost_data || {}
+  // Spec 23 bridge: project the institution editor's canonical cost/outcomes
+  // blobs onto the legacy keys this page renders (canonical-first, legacy
+  // fallback). See utils/programNormalize.ts.
+  const cd: any = normalizeCostData(p.cost_data)
+  const odn: any = normalizeOutcomes(p.outcomes_data)
   const instName = p.institution_name || ''
 
   // Spec 11 §6 — archived program. No dedicated column exists yet, so key on the
@@ -202,6 +213,8 @@ export default function ProgramDetailPage() {
     ?? rd.tuition_out_of_state ?? rd.tuition_in_state ?? null
 
   function pickDeadline(ir: any): string | null {
+    // Spec 23 — the editor now writes intake_rounds as an array.
+    if (Array.isArray(ir)) return intakeDeadlineFromArray(ir)
     if (!ir || typeof ir !== 'object') return null
     const pick = (t: any) =>
       t?.regular_decision?.deadline ?? t?.early_decision_2?.deadline ?? t?.early_decision_1?.deadline ?? null
@@ -215,6 +228,8 @@ export default function ProgramDetailPage() {
   const effectiveDeadline: string | null = p.application_deadline ?? pickDeadline(p.intake_rounds)
 
   function extractTimeline(ir: any): { term: string; rounds: any[]; enrollment_deadline: string | null } | null {
+    // Spec 23 — array shape from the editor takes the dedicated path.
+    if (Array.isArray(ir)) return intakeTimelineFromArray(ir)
     if (!ir || typeof ir !== 'object') return null
     const buildFrom = (term: any, termKey: string) => {
       if (!term || typeof term !== 'object') return null
@@ -341,12 +356,12 @@ export default function ProgramDetailPage() {
         tracks={p.tracks}
         highlights={p.highlights}
         descriptionText={p.description_text}
-        outcomesMedianSalary={p.outcomes_data?.median_salary}
-        outcomesEmploymentRate={p.outcomes_data?.employment_rate}
-        outcomesInternshipConversion={p.outcomes_data?.internship_conversion_rate}
-        outcomesTopEmployers={p.outcomes_data?.top_employers}
-        outcomesTopIndustries={p.outcomes_data?.top_industries}
-        outcomesPaybackMonths={p.outcomes_data?.payback_months}
+        outcomesMedianSalary={odn.median_salary}
+        outcomesEmploymentRate={odn.employment_rate}
+        outcomesInternshipConversion={odn.internship_conversion_rate}
+        outcomesTopEmployers={odn.top_employers}
+        outcomesTopIndustries={odn.top_industries}
+        outcomesPaybackMonths={odn.payback_months}
         institutionTuition={rd.tuition_out_of_state ?? rd.tuition_in_state}
         earnings6yr={rd.earnings_6yr_median}
         earnings10yr={rd.earnings_10yr_median}
@@ -492,9 +507,8 @@ export default function ProgramDetailPage() {
           )}
 
           {tab === 'admissions' && (() => {
-            const appReqs: Array<{ label: string; required?: boolean; note?: string }> = Array.isArray(p.application_requirements)
-              ? p.application_requirements
-              : []
+            const appReqs: Array<{ label: string; required?: boolean; note?: string }> =
+              normalizeRequirements(p.application_requirements)
             const legacyReqs = p.requirements && typeof p.requirements === 'object' ? Object.entries(p.requirements) : []
             const requiredItems = appReqs.filter(r => r.required !== false)
             const optionalItems = appReqs.filter(r => r.required === false)
@@ -696,7 +710,7 @@ export default function ProgramDetailPage() {
             const totalMid = (annual + feeTotal + living + books) * years
             const totalHigh = Math.round(totalMid * 1.15)
             const netPriceByIncome: Record<string, number> = cd.net_price_by_income || {}
-            const od = p.outcomes_data || {}
+            const od = odn
             const salary = od.median_salary ? Number(od.median_salary) : (rd.earnings_10yr_median || null)
             const empRate = od.employment_rate ? Number(od.employment_rate) : (rd.graduation_rate || null)
             const payback = od.payback_months ? Number(od.payback_months) : null
@@ -891,7 +905,7 @@ export default function ProgramDetailPage() {
           })()}
 
           {tab === 'outcomes' && (() => {
-            const od = p.outcomes_data || {}
+            const od = odn
             const salary = od.median_salary ? Number(od.median_salary) : (rd.earnings_10yr_median || null)
             const salaryLow = od.salary_25th ? Number(od.salary_25th) : (salary ? Math.round(salary * 0.75) : null)
             const salaryHigh = od.salary_75th ? Number(od.salary_75th) : (salary ? Math.round(salary * 1.3) : null)

@@ -16,6 +16,7 @@ from unipaith.core.exceptions import (
     BadRequestException,
     ConflictException,
     NotFoundException,
+    UnprocessableEntityException,
 )
 from unipaith.models.application import Application, OfferLetter
 from unipaith.models.engagement import Conversation, Message, StudentEngagementSignal
@@ -32,6 +33,7 @@ from unipaith.models.institution import (
     InstitutionPost,
     Program,
     Promotion,
+    School,
     TargetSegment,
 )
 from unipaith.models.matching import MatchResult
@@ -177,9 +179,34 @@ class InstitutionService:
         return list(result.scalars().all())
 
     async def get_program(self, institution_id: UUID, program_id: UUID) -> Program:
-        return await self._verify_program_ownership(institution_id, program_id)
+        program = await self._verify_program_ownership(institution_id, program_id)
+        # Spec 23 §12 — blast-radius: how many applications reference this program.
+        program.applications_count = await self._program_application_count(program_id)
+        return program
+
+    async def _program_application_count(self, program_id: UUID) -> int:
+        result = await self.db.execute(
+            select(func.count())
+            .select_from(Application)
+            .where(Application.program_id == program_id)
+        )
+        return int(result.scalar_one() or 0)
+
+    async def _verify_school_in_institution(self, institution_id: UUID, school_id: UUID) -> None:
+        """A program's school (sub-institution) must belong to the same
+        institution — guards against assigning another org's school."""
+        result = await self.db.execute(
+            select(School.id).where(
+                School.id == school_id,
+                School.institution_id == institution_id,
+            )
+        )
+        if result.scalar_one_or_none() is None:
+            raise BadRequestException("Selected school does not belong to this institution")
 
     async def create_program(self, institution_id: UUID, data: CreateProgramRequest) -> Program:
+        if data.school_id is not None:
+            await self._verify_school_in_institution(institution_id, data.school_id)
         program = Program(
             institution_id=institution_id,
             is_published=False,
@@ -189,6 +216,7 @@ class InstitutionService:
         await self.db.flush()
         # AI feature extraction skipped (engine being rebuilt)
         await self.db.refresh(program)
+        program.applications_count = 0
         return program
 
     async def update_program(
@@ -196,6 +224,13 @@ class InstitutionService:
     ) -> Program:
         program = await self._verify_program_ownership(institution_id, program_id)
         update_data = data.model_dump(exclude_unset=True)
+        # Spec 23 §6 — optimistic lock. `expected_version` is a control field,
+        # not a column: pull it out before applying fields to the model.
+        expected_version = update_data.pop("expected_version", None)
+        if expected_version is not None and int(program.feature_version) != int(expected_version):
+            raise ConflictException("Someone else edited this. Reload to see their changes?")
+        if update_data.get("school_id") is not None:
+            await self._verify_school_in_institution(institution_id, update_data["school_id"])
         for key, value in update_data.items():
             setattr(program, key, value)
         if update_data:
@@ -205,25 +240,69 @@ class InstitutionService:
             program.feature_version = int(getattr(program, "feature_version", 1) or 1) + 1
         await self.db.flush()
         await self.db.refresh(program)
+        program.applications_count = await self._program_application_count(program_id)
         return program
+
+    # Spec 23 §4/§6 — fields required before a program can be published, mapped
+    # to the editor section that owns each one so the validation modal can
+    # scroll the institution straight to the fix.
+    def _publish_validation_errors(self, program: Program) -> list[dict]:
+        missing: list[dict] = []
+        if not program.program_name:
+            missing.append(
+                {
+                    "field": "program_name",
+                    "section": "identity",
+                    "message": "Program name is required.",
+                }
+            )
+        if not program.degree_type:
+            missing.append(
+                {
+                    "field": "degree_type",
+                    "section": "identity",
+                    "message": "Degree type is required.",
+                }
+            )
+        if not program.description_text:
+            missing.append(
+                {
+                    "field": "description_text",
+                    "section": "overview",
+                    "message": "A program description is required.",
+                }
+            )
+        has_cost_signal = (
+            program.tuition is not None
+            or program.application_deadline is not None
+            or bool(program.cost_data)
+            or bool(program.intake_rounds)
+        )
+        if not has_cost_signal:
+            missing.append(
+                {
+                    "field": "cost_data",
+                    "section": "costs",
+                    "message": "Add tuition, a deadline, or cost details before publishing.",
+                }
+            )
+        return missing
 
     async def publish_program(self, institution_id: UUID, program_id: UUID) -> Program:
         program = await self._verify_program_ownership(institution_id, program_id)
-        errors = []
-        if not program.program_name:
-            errors.append("program_name is required")
-        if not program.degree_type:
-            errors.append("degree_type is required")
-        if not program.description_text:
-            errors.append("description_text is required")
-        if program.tuition is None and program.application_deadline is None:
-            errors.append("At least one of tuition or application_deadline is required")
-        if errors:
-            raise BadRequestException(f"Cannot publish: {'; '.join(errors)}")
+        missing = self._publish_validation_errors(program)
+        if missing:
+            raise UnprocessableEntityException(
+                {
+                    "message": "This program is missing required fields. Resolve to publish.",
+                    "missing_fields": missing,
+                }
+            )
         program.is_published = True
         await self.db.flush()
         # AI feature extraction skipped (engine being rebuilt)
         await self.db.refresh(program)
+        program.applications_count = await self._program_application_count(program_id)
         return program
 
     async def unpublish_program(self, institution_id: UUID, program_id: UUID) -> Program:
@@ -232,6 +311,7 @@ class InstitutionService:
         await self.db.flush()
         # AI feature extraction skipped (engine being rebuilt)
         await self.db.refresh(program)
+        program.applications_count = await self._program_application_count(program_id)
         return program
 
     async def delete_program(self, institution_id: UUID, program_id: UUID) -> None:

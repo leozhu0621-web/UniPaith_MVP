@@ -1,0 +1,130 @@
+// Spec 23 ↔ Spec 11 bridge.
+//
+// The institution editor (Spec 23 §3) writes *canonical* structured blobs:
+//   cost_data.tuition_amount / fees[] / estimated_total_cost_band
+//   outcomes_data.median_starting_salary / placement_rate_pct (0–100) / …
+//   application_requirements.materials[] / prerequisites / test_policy
+//   intake_rounds[]  (array of {name, term, deadline, …})
+//
+// The student program detail page (Spec 11) was built against the earlier
+// *legacy* blob shapes (cost_data.tuition_annual, fees as a dict, outcomes_data
+// .median_salary, employment_rate as a 0–1 fraction, intake_rounds as a dict).
+// These helpers project canonical → the legacy-compatible shape the page already
+// renders, while passing legacy keys through untouched — so existing seeds and
+// freshly-edited programs both render. Canonical wins; legacy is the fallback.
+
+const isObj = (v: unknown): v is Record<string, any> =>
+  !!v && typeof v === 'object' && !Array.isArray(v)
+
+const num = (v: unknown): number | null =>
+  v == null || v === '' || Number.isNaN(Number(v)) ? null : Number(v)
+
+// A percent (0–100) → the 0–1 fraction the student page multiplies by 100.
+const pctToFraction = (v: unknown): number | null => {
+  const n = num(v)
+  return n == null ? null : n / 100
+}
+
+export function normalizeCostData(raw: unknown): Record<string, any> {
+  if (!isObj(raw)) return {}
+  // fees → dict { label: amount } for the legacy `Object.entries(fees)` render.
+  let feesDict: Record<string, number> = {}
+  if (Array.isArray(raw.fees)) {
+    for (const f of raw.fees) {
+      if (isObj(f) && f.name) feesDict[String(f.name)] = Number(f.amount) || 0
+    }
+  } else if (isObj(raw.fees)) {
+    feesDict = raw.fees as Record<string, number>
+  }
+  const band = isObj(raw.estimated_total_cost_band) ? raw.estimated_total_cost_band : {}
+  return {
+    ...raw,
+    // tuition_annual is the key the page's effective-tuition fallback reads.
+    tuition_annual: num(raw.tuition_amount ?? raw.tuition_annual ?? raw.tuition_annual_institution),
+    fees: feesDict,
+    total_cost_attendance: num(raw.total_cost_attendance ?? (band as any).max),
+  }
+}
+
+export function normalizeOutcomes(raw: unknown): Record<string, any> {
+  if (!isObj(raw)) return {}
+  return {
+    ...raw,
+    median_salary: num(raw.median_starting_salary ?? raw.median_salary),
+    // placement_rate_pct is a percent; the page renders employment_rate × 100.
+    employment_rate:
+      raw.placement_rate_pct != null ? pctToFraction(raw.placement_rate_pct) : num(raw.employment_rate),
+    internship_conversion_rate:
+      raw.internship_to_offer_pct != null
+        ? pctToFraction(raw.internship_to_offer_pct)
+        : num(raw.internship_conversion_rate),
+    // The student page renders "Within {timeframe}"; strip a leading "Within "
+    // from the reporting window so it doesn't read "Within Within …".
+    employment_timeframe:
+      String(raw.outcome_reporting_window || raw.employment_timeframe || '').replace(/^within\s+/i, '') ||
+      undefined,
+    top_employers: Array.isArray(raw.top_employers) ? raw.top_employers : [],
+    // The student Outcomes tab surfaces an "Industry Placement" panel; the
+    // editor captures common_roles, so fall back to those when no industries set.
+    top_industries: Array.isArray(raw.top_industries)
+      ? raw.top_industries
+      : Array.isArray(raw.common_roles)
+        ? raw.common_roles
+        : [],
+  }
+}
+
+// Application requirements → the flat checklist the Admissions tab renders.
+// Accepts the canonical {materials:[{name,required,note}], …} object OR the
+// legacy [{label,required,note}] array.
+export function normalizeRequirements(
+  raw: unknown,
+): Array<{ label: string; required?: boolean; note?: string }> {
+  const fromItem = (m: Record<string, any>) => ({
+    label: String(m.name ?? m.label ?? ''),
+    required: m.required,
+    note: m.note,
+  })
+  if (Array.isArray(raw)) return raw.filter(isObj).map(fromItem).filter(r => r.label)
+  if (isObj(raw) && Array.isArray(raw.materials))
+    return raw.materials.filter(isObj).map(fromItem).filter((r: any) => r.label)
+  return []
+}
+
+// Earliest deadline from a canonical intake_rounds[] (headline fallback).
+export function intakeDeadlineFromArray(arr: unknown): string | null {
+  if (!Array.isArray(arr)) return null
+  const dated = arr
+    .filter(isObj)
+    .map(r => (r as any).deadline)
+    .filter((d): d is string => !!d)
+    .sort()
+  return dated[0] ?? null
+}
+
+// Canonical intake_rounds[] → the {term, rounds, enrollment_deadline} the
+// admissions timeline renders (rounds need name + deadline + decision_release).
+export function intakeTimelineFromArray(
+  arr: unknown,
+): { term: string; rounds: any[]; enrollment_deadline: string | null } | null {
+  if (!Array.isArray(arr)) return null
+  const rounds = arr
+    .filter(isObj)
+    .filter(r => (r as any).deadline)
+    .map(r => {
+      const x = r as any
+      return {
+        name: String(x.name || 'Application round'),
+        deadline: x.deadline,
+        decision_release: x.decision_date ?? null,
+        binding: false,
+      }
+    })
+  if (rounds.length === 0) return null
+  const first = arr.find(isObj) as any
+  const term =
+    first && isObj(first.term) && first.term.season
+      ? `${first.term.season} ${first.term.year ?? ''}`.trim()
+      : 'Upcoming intake'
+  return { term, rounds, enrollment_deadline: null }
+}

@@ -158,6 +158,10 @@ class Program(Base):
     highlights: Mapped[dict | None] = mapped_column(JSONB)
     faculty_contacts: Mapped[dict | None] = mapped_column(JSONB)
     cost_data: Mapped[dict | None] = mapped_column(JSONB)
+    # Spec 23 §2.8 — promoted-placement categories this program opts into.
+    # The actual promoted campaigns/auction live in Spec 25 (`promotions`); this
+    # is just the program's declared participation set.
+    promotion_categories: Mapped[list | None] = mapped_column(JSONB)
     # Spec 06 §5.4 — bumped on any published-program edit so the rationale
     # cache (keyed by program_version) invalidates. Was a dead no-op before:
     # the column didn't exist and call sites read getattr(...,1) → always 1.

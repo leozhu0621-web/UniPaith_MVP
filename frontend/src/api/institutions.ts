@@ -65,18 +65,28 @@ export async function getInstitutionProgram(programId: string): Promise<Program>
 }
 
 type ProgramWritablePayload = {
-  program_name: string; degree_type: string; department: string;
+  program_name: string; degree_type: string; school_id: string | null; department: string;
   duration_months: number; tuition: number; acceptance_rate: number;
   delivery_format: string; campus_setting: string;
-  requirements: Record<string, any>; application_requirements: Record<string, any>[];
+  requirements: Record<string, any>; application_requirements: Record<string, any> | Record<string, any>[];
   description_text: string; who_its_for: string;
   application_deadline: string; program_start_date: string;
   // tracks + intake_rounds are JSONB dicts in the DB (e.g., tracks has
   // {concentrations, note}; intake_rounds has {fall_YYYY: {...}, source}).
+  // Spec 23 §3 — the guided editor now also writes a structured intake_rounds[]
+  // and the typed cost_data / outcomes_data / application_requirements blobs.
   tracks: Record<string, any>; outcomes_data: Record<string, any>;
-  intake_rounds: Record<string, any>; media_urls: string[];
+  intake_rounds: Record<string, any> | Record<string, any>[]; media_urls: string[];
   highlights: string[]; faculty_contacts: { name: string; email?: string; role?: string }[];
-  cost_data: Record<string, any>;
+  cost_data: Record<string, any>; promotion_categories: string[];
+}
+
+// Spec 23 §6 — structured publish-validation error. The publish endpoint returns
+// 422 with this under `detail` so the editor can list each missing field and
+// scroll to the section that owns it.
+export type PublishValidationDetail = {
+  message: string
+  missing_fields: { field: string; section: string; message: string }[]
 }
 
 export async function createProgram(payload: Partial<ProgramWritablePayload> & {
@@ -86,8 +96,15 @@ export async function createProgram(payload: Partial<ProgramWritablePayload> & {
   return data
 }
 
-export async function updateProgram(programId: string, payload: Partial<ProgramWritablePayload>): Promise<Program> {
-  const { data } = await apiClient.put(`/institutions/me/programs/${programId}`, payload)
+// `expectedVersion` (Spec 23 §6) lets the server reject a save that raced another
+// edit (409). Omit it for first-load saves where no baseline version is known.
+export async function updateProgram(
+  programId: string,
+  payload: Partial<ProgramWritablePayload>,
+  expectedVersion?: number,
+): Promise<Program> {
+  const body = expectedVersion != null ? { ...payload, expected_version: expectedVersion } : payload
+  const { data } = await apiClient.put(`/institutions/me/programs/${programId}`, body)
   return data
 }
 
