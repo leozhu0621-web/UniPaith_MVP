@@ -786,6 +786,7 @@ class UpsertDataConsentRequest(BaseModel):
     consent_matching: bool | None = None
     consent_outreach: bool | None = None
     consent_research: bool | None = None
+    consent_training: bool | None = None
     data_retention_preference: Literal["standard", "minimum", "delete_after_cycle"] | None = None
     deletion_requested: bool | None = None
     first_generation_status: bool | None = None
@@ -814,6 +815,7 @@ class DataConsentResponse(BaseModel):
     consent_matching: bool
     consent_outreach: bool
     consent_research: bool
+    consent_training: bool = False
     data_retention_preference: str | None
     deletion_requested: bool
     deletion_requested_at: datetime | None
@@ -834,6 +836,7 @@ class DataConsentResponse(BaseModel):
     third_party_sharing_consent: bool | None = None
     marketing_channel_consent: dict | None = None
     consent_revocation_timestamps: list | None = None
+    consent_change_log: list | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -848,6 +851,40 @@ class OnboardingStatusResponse(BaseModel):
     completion_percentage: int
     steps_completed: list[str]
     next_step: NextStepResponse | None
+
+
+# --- Profile Overview (spec 10 §4, §18) ---
+
+
+class CompletionCategory(BaseModel):
+    category: str
+    pct: int
+    last_updated: datetime | None = None
+
+
+class CompletionSummary(BaseModel):
+    overall_pct: int
+    per_category: list[CompletionCategory]
+
+
+class NextAction(BaseModel):
+    action: str
+    reason: str
+    deep_link: str
+
+
+class ProfileOverviewResponse(BaseModel):
+    personal: dict
+    completion: CompletionSummary
+    next_actions: list[NextAction]
+
+
+class AccessLogEntry(BaseModel):
+    viewer: str
+    context: str | None = None
+    fields_accessed: str
+    accessed_at: datetime | None = None
+    status: str | None = None
 
 
 class StudentProfileResponse(BaseModel):

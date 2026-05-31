@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -1068,12 +1068,35 @@ class StudentService:
         # on a real change.
         prior_matching = bool(record.consent_matching) if record is not None else True
 
+        # Snapshot the four consent levers BEFORE the patch so we can log only
+        # real changes (spec 10 §16 — each toggle shows "Last changed" + history).
+        lever_defaults = {
+            "consent_matching": True,
+            "consent_outreach": True,
+            "consent_research": True,
+            "consent_training": False,
+        }
+        prior_levers = {
+            lever: (bool(getattr(record, lever)) if record is not None else default)
+            for lever, default in lever_defaults.items()
+        }
+
         if record is None:
             record = StudentDataConsent(student_id=student_id, **update_data)
             self.db.add(record)
         else:
             for key, value in update_data.items():
                 setattr(record, key, value)
+
+        # Append a change-log entry for each lever that actually changed.
+        now_iso = dt.now(UTC).isoformat()
+        changes = [
+            {"lever": lever, "value": bool(getattr(record, lever)), "at": now_iso}
+            for lever in lever_defaults
+            if lever in update_data and bool(getattr(record, lever)) != prior_levers[lever]
+        ]
+        if changes:
+            record.consent_change_log = [*(record.consent_change_log or []), *changes]
 
         # Track when deletion was requested
         if record.deletion_requested and record.deletion_requested_at is None:
@@ -1093,6 +1116,10 @@ class StudentService:
 
             await invalidate_for_consent_change(self.db, student_id)
 
+        # Reload server-computed columns (updated_at uses onupdate=func.now(),
+        # which is expired after an UPDATE flush) inside the async context so
+        # response serialization never triggers a lazy load → MissingGreenlet.
+        await self.db.refresh(record)
         return record
 
     # --- Peer Comparison ---
@@ -1228,6 +1255,275 @@ class StudentService:
             )
 
         return {"metrics": metrics}
+
+    # --- Profile Overview (spec 10 §4, §18) ---
+
+    async def get_profile_overview(self, student_id: UUID, email: str | None = None) -> dict:
+        """Canonical ProfileOverview: personal header, per-category completion, next actions."""
+        from unipaith.models.goals import StudentGoal
+        from unipaith.models.identity import StudentIdentity
+        from unipaith.models.needs import StudentNeed
+        from unipaith.models.strategy import StudentStrategy
+
+        result = await self.db.execute(
+            select(StudentProfile)
+            .where(StudentProfile.id == student_id)
+            .options(
+                selectinload(StudentProfile.academic_records),
+                selectinload(StudentProfile.test_scores),
+                selectinload(StudentProfile.activities),
+                selectinload(StudentProfile.online_presence),
+                selectinload(StudentProfile.portfolio_items),
+                selectinload(StudentProfile.research_entries),
+                selectinload(StudentProfile.languages),
+                selectinload(StudentProfile.work_experiences),
+                selectinload(StudentProfile.competitions),
+                selectinload(StudentProfile.preferences),
+                selectinload(StudentProfile.accommodations),
+                selectinload(StudentProfile.scheduling),
+                selectinload(StudentProfile.visa_info),
+                selectinload(StudentProfile.data_consent),
+                selectinload(StudentProfile.documents),
+                selectinload(StudentProfile.recommendation_requests),
+            )
+        )
+        p = result.scalar_one_or_none()
+        if not p:
+            raise NotFoundException("Student profile not found")
+
+        identity = (
+            await self.db.execute(
+                select(StudentIdentity).where(StudentIdentity.student_id == student_id)
+            )
+        ).scalar_one_or_none()
+        goals = list(
+            (await self.db.execute(select(StudentGoal).where(StudentGoal.student_id == student_id)))
+            .scalars()
+            .all()
+        )
+        needs = list(
+            (await self.db.execute(select(StudentNeed).where(StudentNeed.student_id == student_id)))
+            .scalars()
+            .all()
+        )
+        strategies = list(
+            (
+                await self.db.execute(
+                    select(StudentStrategy).where(StudentStrategy.student_id == student_id)
+                )
+            )
+            .scalars()
+            .all()
+        )
+        active_strategy = next((s for s in strategies if s.status == "active"), None)
+
+        def _latest(*records: object) -> datetime | None:
+            stamps: list = []
+            for r in records:
+                if r is None:
+                    continue
+                for attr in ("updated_at", "uploaded_at", "generated_at", "created_at"):
+                    val = getattr(r, attr, None)
+                    if val is not None:
+                        stamps.append(val)
+                        break
+            return max(stamps) if stamps else None
+
+        def _pct(flags: list[bool]) -> int:
+            return round(sum(1 for f in flags if f) / len(flags) * 100) if flags else 0
+
+        prefs = p.preferences
+        documents = list(p.documents)
+        recommenders = list(p.recommendation_requests)
+
+        identity_flags = [
+            bool(identity and identity.core_values),
+            bool(identity and identity.worldview),
+            bool(identity and identity.self_awareness),
+            bool(identity and identity.identity_summary),
+        ]
+        academics_flags = [
+            bool(p.academic_records),
+            bool(p.test_scores),
+            bool(p.languages),
+            bool(p.research_entries),
+        ]
+        experience_flags = [
+            bool(p.activities),
+            bool(p.work_experiences),
+            bool(p.competitions),
+            bool(p.portfolio_items),
+            bool(p.online_presence),
+        ]
+        preparation_flags = [
+            bool(documents),
+            bool(p.accommodations),
+            bool(p.scheduling),
+            bool(recommenders),
+        ]
+        preferences_flags = [
+            bool(prefs and prefs.preferred_countries),
+            bool(prefs and prefs.target_degree_level),
+            bool(prefs and (prefs.career_goals or prefs.values_priorities)),
+        ]
+        financial_flags = [
+            bool(prefs and (prefs.budget_min is not None or prefs.budget_max is not None)),
+            bool(prefs and prefs.funding_requirement),
+            bool(p.visa_info and p.visa_info.financial_proof_available),
+        ]
+
+        categories = [
+            {
+                "category": "identity",
+                "pct": _pct(identity_flags),
+                "last_updated": _latest(identity),
+            },
+            {
+                "category": "academics",
+                "pct": _pct(academics_flags),
+                "last_updated": _latest(
+                    *p.academic_records, *p.test_scores, *p.languages, *p.research_entries
+                ),
+            },
+            {
+                "category": "experience",
+                "pct": _pct(experience_flags),
+                "last_updated": _latest(
+                    *p.activities,
+                    *p.work_experiences,
+                    *p.competitions,
+                    *p.portfolio_items,
+                    *p.online_presence,
+                ),
+            },
+            {"category": "goals", "pct": 100 if goals else 0, "last_updated": _latest(*goals)},
+            {"category": "needs", "pct": 100 if needs else 0, "last_updated": _latest(*needs)},
+            {
+                "category": "strategy",
+                "pct": 100 if active_strategy else 0,
+                "last_updated": _latest(*strategies),
+            },
+            {
+                "category": "preparation",
+                "pct": _pct(preparation_flags),
+                "last_updated": _latest(p.accommodations, p.scheduling, *documents, *recommenders),
+            },
+            {
+                "category": "preferences",
+                "pct": _pct(preferences_flags),
+                "last_updated": _latest(prefs),
+            },
+            {
+                "category": "financial",
+                "pct": _pct(financial_flags),
+                "last_updated": _latest(prefs, p.visa_info),
+            },
+            {
+                "category": "data",
+                "pct": 100 if p.data_consent else 0,
+                "last_updated": _latest(p.data_consent),
+            },
+        ]
+        overall = round(sum(c["pct"] for c in categories) / len(categories)) if categories else 0
+
+        # Rule-based next actions (mirrors _compute_next_step; spec 10 §4/§20).
+        next_actions: list[dict] = []
+        if not p.academic_records:
+            next_actions.append(
+                {
+                    "action": "Add your academic record",
+                    "reason": "Match scores improve with grades and coursework.",
+                    "deep_link": "/s/profile?tab=academics",
+                }
+            )
+        if not p.test_scores:
+            next_actions.append(
+                {
+                    "action": "Add a test score",
+                    "reason": "Standardized scores sharpen your program matches.",
+                    "deep_link": "/s/profile?tab=academics",
+                }
+            )
+        if len(recommenders) < 2:
+            next_actions.append(
+                {
+                    "action": "Add a second recommender",
+                    "reason": "Many programs ask for two or more recommendations.",
+                    "deep_link": "/s/profile?tab=preparation",
+                }
+            )
+        if not goals:
+            next_actions.append(
+                {
+                    "action": "Set your first goal",
+                    "reason": "Goals steer your strategy and recommendations.",
+                    "deep_link": "/s/profile?tab=goals",
+                }
+            )
+        if not active_strategy:
+            next_actions.append(
+                {
+                    "action": "Generate your strategy",
+                    "reason": "A strategy ties your goals, needs, and profile together.",
+                    "deep_link": "/s/profile?tab=strategy",
+                }
+            )
+        if not (identity and identity.identity_summary):
+            next_actions.append(
+                {
+                    "action": "Deepen your identity profile",
+                    "reason": "Identity signals personalize your matches and rationales.",
+                    "deep_link": "/s/profile?tab=identity",
+                }
+            )
+
+        personal = {
+            "first_name": p.first_name,
+            "last_name": p.last_name,
+            "preferred_name": p.preferred_name,
+            "primary_email": email,
+            "preferred_pronouns": p.preferred_pronouns,
+            "nationality": p.nationality,
+            "country_of_residence": p.country_of_residence,
+        }
+        return {
+            "personal": personal,
+            "completion": {"overall_pct": overall, "per_category": categories},
+            "next_actions": next_actions[:4],
+        }
+
+    async def get_access_log(self, student_id: UUID) -> list[dict]:
+        """Who has access to this student's data (spec 10 §16 / 43 §8).
+
+        Derived from the student's own applications — applying shares the
+        profile + application with that institution. Passive institution
+        browse-access tracking lands with the institution-view hook (43 §11);
+        until then this is the honest, real access surface.
+        """
+        from unipaith.models.institution import Institution, Program
+
+        rows = (
+            await self.db.execute(
+                select(Application, Program.program_name, Institution.name)
+                .join(Program, Application.program_id == Program.id)
+                .join(Institution, Program.institution_id == Institution.id)
+                .where(Application.student_id == student_id)
+                .order_by(Application.created_at.desc())
+            )
+        ).all()
+        entries: list[dict] = []
+        for app, program_name, institution_name in rows:
+            accessed_at = app.submitted_at or app.created_at
+            entries.append(
+                {
+                    "viewer": institution_name,
+                    "context": program_name,
+                    "fields_accessed": "Application + shared profile",
+                    "accessed_at": accessed_at.isoformat() if accessed_at else None,
+                    "status": app.status or "draft",
+                }
+            )
+        return entries
 
     # --- Helpers ---
 

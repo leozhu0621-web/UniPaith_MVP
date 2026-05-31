@@ -679,6 +679,9 @@ class StudentDataConsent(Base):
     consent_matching: Mapped[bool] = mapped_column(Boolean, default=True)
     consent_outreach: Mapped[bool] = mapped_column(Boolean, default=True)
     consent_research: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Spec 43 §2 / gap G-AI3 — 4th consent lever: include this student's data in
+    # a future UniPaith fine-tuning corpus. Opt-in, so defaults to False.
+    consent_training: Mapped[bool] = mapped_column(Boolean, default=False)
     data_retention_preference: Mapped[str | None] = mapped_column(String(30))
     deletion_requested: Mapped[bool] = mapped_column(Boolean, default=False)
     deletion_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -703,6 +706,9 @@ class StudentDataConsent(Base):
     marketing_channel_consent: Mapped[dict | None] = mapped_column(JSONB)
     # [{channel, timestamp, version}].
     consent_revocation_timestamps: Mapped[list | None] = mapped_column(JSONB)
+    # [{lever, value, at}] — per-lever consent change history (spec 10 §16:
+    # each toggle surfaces "Last changed" + a change-history link).
+    consent_change_log: Mapped[list | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

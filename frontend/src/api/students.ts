@@ -90,3 +90,25 @@ export const getTimeline = () => apiClient.get('/students/me/timeline').then(r =
 
 export const getPreferences = () => apiClient.get('/students/me/preferences').then(r => r.data)
 export const upsertPreferences = (data: any) => apiClient.put('/students/me/preferences', data).then(r => r.data)
+
+// --- Universal Profile (spec 10) ---
+export const getProfileOverview = () =>
+  apiClient.get('/students/me/profile/overview').then(r => r.data)
+
+export const getAccessLog = () => apiClient.get('/students/me/access-log').then(r => r.data)
+
+export const exportProfilePdf = async () => {
+  const res = await apiClient.get('/students/me/profile/export', {
+    params: { format: 'pdf' },
+    responseType: 'blob',
+  })
+  const url = URL.createObjectURL(res.data)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'unipaith-profile.pdf'
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+export const exportProfileExternal = (format: 'commonapp' | 'coalition') =>
+  apiClient.get('/students/me/profile/export', { params: { format } }).then(r => r.data)
