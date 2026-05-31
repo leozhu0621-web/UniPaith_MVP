@@ -24,6 +24,7 @@ from unipaith.api.reviews import router as reviews_router
 from unipaith.api.saved_lists import router as saved_lists_router
 from unipaith.api.strategy import router as strategy_router
 from unipaith.api.students import router as students_router
+from unipaith.api.subscription import router as subscription_router
 from unipaith.api.workshop_feedback import router as workshop_feedback_router
 from unipaith.api.workshops import router as workshops_router
 from unipaith.database import get_db
@@ -35,6 +36,7 @@ api_router = APIRouter()
 
 api_router.include_router(auth_router)
 api_router.include_router(students_router)
+api_router.include_router(subscription_router)
 api_router.include_router(discovery_router)
 api_router.include_router(goals_router)
 api_router.include_router(needs_router)
