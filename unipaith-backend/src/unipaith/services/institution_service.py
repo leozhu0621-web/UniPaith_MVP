@@ -8,7 +8,7 @@ import uuid
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.config import settings
@@ -1712,6 +1712,16 @@ class InstitutionService:
         campus_setting: str | None = None,
         max_duration_months: int | None = None,
         city: str | None = None,
+        # Spec 10 — additive type-first search filters (constraint chips → kwargs).
+        degree_types: list[str] | None = None,
+        delivery_formats: list[str] | None = None,
+        location: str | None = None,
+        region: str | None = None,
+        min_duration_months: int | None = None,
+        min_acceptance_rate: float | None = None,
+        max_acceptance_rate: float | None = None,
+        start_year: int | None = None,
+        program_name: str | None = None,
         sort_by: str | None = None,
         page: int = 1,
         page_size: int = 20,
@@ -1754,6 +1764,45 @@ class InstitutionService:
             stmt = stmt.where(Program.duration_months <= max_duration_months)
         if city:
             stmt = stmt.where(Institution.city.ilike(f"%{_escape_like(city)}%"))
+        # Spec 10 — chip-derived filters. degree_types/delivery_formats are
+        # case-insensitive IN lists so a single chip can match DB synonyms
+        # (e.g. format "in_person" → {in_person, on_campus}).
+        if degree_types:
+            stmt = stmt.where(
+                func.lower(Program.degree_type).in_([d.lower() for d in degree_types])
+            )
+        if delivery_formats:
+            stmt = stmt.where(
+                func.lower(Program.delivery_format).in_([f.lower() for f in delivery_formats])
+            )
+        if location:
+            loc = f"%{_escape_like(location)}%"
+            stmt = stmt.where(
+                or_(
+                    Institution.country.ilike(loc),
+                    Institution.region.ilike(loc),
+                    Institution.city.ilike(loc),
+                )
+            )
+        if region:
+            stmt = stmt.where(Institution.region.ilike(f"%{_escape_like(region)}%"))
+        if min_duration_months is not None:
+            stmt = stmt.where(Program.duration_months >= min_duration_months)
+        if min_acceptance_rate is not None:
+            stmt = stmt.where(Program.acceptance_rate >= min_acceptance_rate)
+        if max_acceptance_rate is not None:
+            stmt = stmt.where(Program.acceptance_rate <= max_acceptance_rate)
+        if start_year is not None:
+            # Soft filter: keep programs with no start date set so a low-
+            # confidence start_term chip doesn't zero out the results.
+            stmt = stmt.where(
+                or_(
+                    Program.program_start_date.is_(None),
+                    func.extract("year", Program.program_start_date) == start_year,
+                )
+            )
+        if program_name:
+            stmt = stmt.where(Program.program_name.ilike(f"%{_escape_like(program_name)}%"))
 
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total = (await self.db.execute(count_stmt)).scalar_one()
@@ -1778,6 +1827,12 @@ class InstitutionService:
             stmt = stmt.order_by(
                 Program.outcomes_data["payback_months"].as_integer().asc().nulls_last(),
             )
+        elif sort_by == "acceptance_asc":
+            stmt = stmt.order_by(Program.acceptance_rate.asc().nulls_last())
+        elif sort_by == "acceptance_desc":
+            stmt = stmt.order_by(Program.acceptance_rate.desc().nulls_last())
+        elif sort_by == "recently_added":
+            stmt = stmt.order_by(Program.created_at.desc().nulls_last())
         else:
             stmt = stmt.order_by(Program.program_name.asc())
 

@@ -23,6 +23,7 @@ from unipaith.api.programs import router as programs_router
 from unipaith.api.recommendations import router as recommendations_router
 from unipaith.api.reviews import router as reviews_router
 from unipaith.api.saved_lists import router as saved_lists_router
+from unipaith.api.search import router as search_router
 from unipaith.api.strategy import router as strategy_router
 from unipaith.api.students import router as students_router
 from unipaith.api.workshop_feedback import router as workshop_feedback_router
@@ -47,6 +48,7 @@ api_router.include_router(programs_router)
 api_router.include_router(applications_router)
 api_router.include_router(documents_router)
 api_router.include_router(saved_lists_router)
+api_router.include_router(search_router)
 api_router.include_router(workshops_router)
 api_router.include_router(workshop_feedback_router)
 api_router.include_router(ai_feedback_router)

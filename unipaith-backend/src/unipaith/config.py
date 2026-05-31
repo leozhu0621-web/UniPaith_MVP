@@ -229,6 +229,15 @@ class Settings(BaseSettings):
     # Off → returns the hardcoded STUB_IDENTITY_SUMMARY.
     ai_identity_v2_enabled: bool = False
 
+    # Spec 10 §3 / 45 §12 — Discovery type-first search query interpreter. When
+    # True, SearchService.interpret routes a free-text query through the
+    # DiscoveryQueryInterpreter agent (Sonnet, forced tool-use) to produce
+    # structured constraint chips. On any failure (consent deny / parse /
+    # provider error) it falls back to the deterministic rule-based parser
+    # (services/query_parser.py), which is also the flag-off default — so the
+    # search box always works and never 5xxes.
+    ai_discovery_query_v2_enabled: bool = False
+
     # Spec 09 §4A — probability bands (admit / scholarship / waitlist) on the
     # Match surface + program detail. Rule-based + calibrated heuristic
     # (unipaith.ai.probability); honest ranges, "not enough data yet" when a

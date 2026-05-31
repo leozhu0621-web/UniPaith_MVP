@@ -74,6 +74,9 @@ AGENT_REQUIRES: dict[str, str | None] = {
     # workshop coaches. Gated by institution role, not the matching mask.
     "authenticity_risk": None,
     "matcher": "matching",  # L3 ML scoring (consent-gated in MatchService)
+    # Spec 10 §3 / 45 §12 — type-first search interpreter (consent ["matching"]).
+    # On deny, the SearchService catches ConsentDeniedError → rule-based parser.
+    "query_interpreter": "matching",
 }
 
 

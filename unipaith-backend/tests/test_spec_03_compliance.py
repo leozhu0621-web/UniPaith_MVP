@@ -107,6 +107,8 @@ def test_each_agent_declares_consent_requirement():
         "review_summarizer",
         "authenticity_risk",
         "matcher",
+        # Spec 10 §3 / 45 §12 — type-first search query interpreter.
+        "query_interpreter",
     }
     assert set(AGENT_REQUIRES.keys()) == expected_agents
 

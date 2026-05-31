@@ -14,11 +14,17 @@ interface CompareTrayProps {
 }
 
 export default function CompareTray({ initialExpanded = false, syncUrl = false }: CompareTrayProps) {
-  const { items, remove, clear } = useCompareStore()
+  const { items, remove, clear, hydrate, hydrated } = useCompareStore()
   const location = useLocation()
   const navigate = useNavigate()
   const [expanded, setExpanded] = useState(initialExpanded)
   const [comparisonResult, setComparisonResult] = useState<any>(null)
+
+  // Spec 10 §8 — load the server-persisted compare set once per session so it
+  // accumulates across reloads/devices.
+  useEffect(() => {
+    if (!hydrated) hydrate()
+  }, [hydrated, hydrate])
 
   const compareMut = useMutation({
     mutationFn: () => comparePrograms(items.map(i => i.program_id)),

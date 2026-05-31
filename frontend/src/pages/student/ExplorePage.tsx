@@ -1,68 +1,32 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { searchPrograms, nlpSearch } from '../../api/programs'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { searchInstitutions } from '../../api/institutions'
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
-import { useCompareStore } from '../../stores/compare-store'
 import UniversityCard from './explore/cards/UniversityCard'
-import ProgramCard from './explore/cards/ProgramCard'
 import ExploreFilters, { EMPTY_FILTERS, applyFilters, countActiveFilters, type FilterState } from './explore/shared/ExploreFilters'
-import ConstraintChips, { chipsFromFilters, displayForChip, type SearchChip } from './explore/shared/ConstraintChips'
-import {
-  Search, X, Loader2, Building2,
-} from 'lucide-react'
+import { Building2 } from 'lucide-react'
 import StrategyView from './match/StrategyView'
 import MatchesSection from './match/MatchesSection'
-import type { ProgramSummary } from '../../types'
+import DiscoverySearch from './explore/discovery/DiscoverySearch'
+import { parseChipsParam } from './explore/discovery/chipUtils'
 import type {
   InstitutionClassification,
   SatTier,
   TuitionTier,
 } from './explore/shared/classifyInstitution'
 
-interface NlpResult {
-  filters_applied: Record<string, any>
-  results: { items: ProgramSummary[]; total: number }
-  interpretation: string
-}
-
-type SearchProgramParams = {
-  q?: string
-  degree_type?: string
-  country?: string
-  city?: string
-  min_tuition?: number
-  max_tuition?: number
-  delivery_format?: string
-  page_size: number
-}
-
-/** Map the active constraint chips + leftover keyword into searchPrograms params. */
-function paramsFromChips(chips: SearchChip[], keyword: string): SearchProgramParams {
-  const params: SearchProgramParams = { page_size: 21 }
-  if (keyword.trim()) params.q = keyword.trim()
-  for (const c of chips) {
-    switch (c.category) {
-      case 'degree_type': params.degree_type = String(c.value); break
-      case 'country': params.country = String(c.value); break
-      case 'city': params.city = String(c.value); break
-      case 'delivery_format': params.delivery_format = String(c.value); break
-      case 'max_tuition': params.max_tuition = Number(c.value); break
-      case 'min_tuition': params.min_tuition = Number(c.value); break
-    }
-  }
-  return params
-}
-
 /**
- * ExplorePage — top-level universities grid plus flat program search.
+ * ExplorePage — the Stage-2 "Match" surface (Spec 09 + 10) at /s/explore.
  *
- * Schools and programs each live on their own URL-routed detail page — this
- * page no longer drills down in-place. Clicking a university card navigates
- * to /s/institutions/:id, which exposes a Schools tab that leads to the
- * per-school detail page.
+ * Top: the active strategy (Spec 09 §2) and the ranked dual-score matches.
+ * Then the Spec-10 type-first program search (DiscoverySearch): search box,
+ * constraint chips, genre tiles, sort, and a programs-only results grid.
+ * When a search is active (chips/query in the URL) the matches + universities
+ * browse step aside so the results own the screen; otherwise the universities
+ * browse grid remains available below the genre tiles.
  */
+
 /** Parse filter state from URL search params. List filters are comma-
  *  separated on their own key; boolean toggles are '1' or absent. */
 function filtersFromURL(params: URLSearchParams): FilterState {
@@ -86,7 +50,7 @@ function filtersFromURL(params: URLSearchParams): FilterState {
   }
 }
 
-/** Serialize filter state into URL search params (preserves `q`). */
+/** Serialize filter state into URL search params (preserves other keys). */
 function filtersToURL(base: URLSearchParams, f: FilterState): URLSearchParams {
   const next = new URLSearchParams(base)
   const listKeys: Array<{ key: keyof FilterState; param: string }> = [
@@ -122,120 +86,48 @@ export default function ExplorePage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
-  const compareStore = useCompareStore()
 
-  // Search state
-  const [q, setQ] = useState(searchParams.get('q') || '')
-  const [isSearching, setIsSearching] = useState(false)
-  const [nlpResult, setNlpResult] = useState<NlpResult | null>(null)
-  // Spec 09 §5.1 / Spec 10 §4 — structured constraint chips parsed from the
-  // query, plus the leftover keyword. Removing/editing a chip re-runs the
-  // search live (`refinedResults`) without re-interpreting the whole query.
-  const [chips, setChips] = useState<SearchChip[]>([])
-  const [keyword, setKeyword] = useState('')
-  const [refinedResults, setRefinedResults] = useState<ProgramSummary[] | null>(null)
+  // A Spec-10 program search is "active" once there are constraint chips in the
+  // URL (matching DiscoverySearch's own notion) — drives whether the matches +
+  // universities browse stand aside so the programs results own the screen.
+  const searchActive = parseChipsParam(searchParams.get('chips')).length > 0
 
-  // Filter state lives in the URL so refresh + share + back all work.
+  // Universities browse filter state lives in the URL.
   const filters = useMemo(() => filtersFromURL(searchParams), [searchParams])
   const setFilters = (next: FilterState) => {
     setSearchParams(filtersToURL(searchParams, next), { replace: true })
   }
 
-  // ─── Queries ───
-
   const { data: universities, isLoading: uniLoading } = useQuery({
     queryKey: ['explore-universities'],
     queryFn: () => searchInstitutions({ page_size: 50 }),
     staleTime: 5 * 60 * 1000,
+    enabled: !searchActive,
   })
 
-  // Search mode: flat program search
-  const { data: searchResults, isLoading: searchLoading } = useQuery({
-    queryKey: ['explore-search', q],
-    queryFn: () => searchPrograms({ q: q || undefined, page_size: 21 }),
-    enabled: isSearching && q.length >= 2 && !nlpResult,
-  })
-
-  // Saved programs
+  // Saved programs — for the MatchesSection cards.
   const { data: savedData } = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved, retry: false })
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
-  useEffect(() => { if (savedData) setSavedIds(new Set(savedData.map((s: any) => String(s.program_id)))) }, [savedData])
-
-  const nlpMut = useMutation({
-    mutationFn: nlpSearch,
-    onSuccess: (data: NlpResult) => {
-      setNlpResult(data)
-      const filters = data.filters_applied ?? {}
-      setChips(chipsFromFilters(filters))
-      setKeyword(typeof filters.parsed_query === 'string' ? filters.parsed_query : '')
-      setRefinedResults(null)
-    },
-    onError: () => { setNlpResult(null); setChips([]); setKeyword('') },
-  })
-
-  // Re-run the program search with the current chip set (Spec 09 §5.1) — used
-  // when a chip is removed or edited. Distinct from the NLP interpret call so
-  // refinement is instant and doesn't re-parse the query.
-  const refineMut = useMutation({
-    mutationFn: (params: SearchProgramParams) => searchPrograms(params),
-    onSuccess: (data: { items?: ProgramSummary[] }) => setRefinedResults(data.items ?? []),
-  })
-
-  const rerunWithChips = (next: SearchChip[]) => {
-    setChips(next)
-    refineMut.mutate(paramsFromChips(next, keyword))
-  }
-  const removeChip = (id: string) => rerunWithChips(chips.filter(c => c.id !== id))
-  const editChip = (id: string, value: string) =>
-    rerunWithChips(
-      chips.map(c => (c.id === id ? { ...c, value, display: displayForChip(c.category, value) } : c)),
-    )
+  useEffect(() => {
+    if (savedData) setSavedIds(new Set(savedData.map((s: { program_id: string }) => String(s.program_id))))
+  }, [savedData])
 
   const toggleSave = async (programId: string) => {
     try {
-      if (savedIds.has(programId)) { await unsaveProgram(programId); setSavedIds(prev => { const n = new Set(prev); n.delete(programId); return n }) }
-      else { await saveProgram(programId); setSavedIds(prev => new Set(prev).add(programId)) }
+      if (savedIds.has(programId)) {
+        await unsaveProgram(programId)
+        setSavedIds(prev => { const n = new Set(prev); n.delete(programId); return n })
+      } else {
+        await saveProgram(programId)
+        setSavedIds(prev => new Set(prev).add(programId))
+      }
       queryClient.invalidateQueries({ queryKey: ['saved-programs'] })
-    } catch { /* */ }
+    } catch { /* non-blocking */ }
   }
 
-  // Search handling
-  const handleSearch = () => {
-    if (q.trim().length >= 3) {
-      setIsSearching(true)
-      nlpMut.mutate(q.trim())
-    }
-  }
-
-  const resetSearchState = () => {
-    setNlpResult(null)
-    setChips([])
-    setKeyword('')
-    setRefinedResults(null)
-  }
-
-  const clearSearch = () => {
-    setQ('')
-    setIsSearching(false)
-    resetSearchState()
-  }
-
-  const exitSearch = () => {
-    setIsSearching(false)
-    resetSearchState()
-  }
-
-  // ─── Data ───
-
-  const uniList: any[] = universities?.items ?? []
+  const uniList: UniversityRow[] = universities?.items ?? []
   const filteredUniList = useMemo(() => applyFilters(uniList, filters), [uniList, filters])
   const hasActiveFilters = countActiveFilters(filters) > 0
-  // Refined results (after a chip edit/remove) win; otherwise the initial NLP
-  // results; otherwise the plain keyword-search query.
-  const searchProgramList: ProgramSummary[] = refinedResults
-    ?? (nlpResult ? (nlpResult.results?.items ?? []) : (searchResults?.items ?? []))
-
-  // ─── Render ───
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -246,130 +138,50 @@ export default function ExplorePage() {
         <p className="text-sm text-slate mt-0.5">Ranked for fit, not fame — and every score explains itself.</p>
       </div>
 
-      {/* Spec 09 §2 — Strategy lands first, then the ranked matches, then the
-          search/browse region. When a student has no active strategy, the
-          StrategyView surfaces a CTA back to Discover or to generate one. */}
+      {/* Spec 09 §2 — strategy lands first. */}
       <div className="mb-4">
         <StrategyView forceExpanded={searchParams.get('showStrategy') === 'open'} />
       </div>
 
-      {/* Spec 09 §4/§6 — ranked program matches with dual scores, banding,
-          rationale, and probability bands. Hidden while actively searching so
-          the search results region (below) owns the screen. */}
-      {!isSearching && (
-        <MatchesSection savedIds={savedIds} onToggleSave={toggleSave} />
+      {/* Ranked matches — hidden while a program search owns the screen. */}
+      {!searchActive && (
+        <div className="mb-6">
+          <MatchesSection savedIds={savedIds} onToggleSave={toggleSave} />
+        </div>
       )}
 
-      {/* Search bar */}
-      <div className="relative mb-4">
-        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-student-text" />
-        <input
-          type="text"
-          value={q}
-          onChange={e => { setQ(e.target.value); if (!e.target.value.trim()) clearSearch() }}
-          onKeyDown={e => { if (e.key === 'Enter') handleSearch() }}
-          onFocus={() => { if (q.length >= 2) setIsSearching(true) }}
-          placeholder="Search universities, schools, or programs..."
-          className="w-full pl-10 pr-24 py-3 bg-white border border-stone rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-student"
-        />
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-          {q && <button onClick={clearSearch} className="p-1 text-student-text hover:text-student-ink"><X size={14} /></button>}
-          <button
-            onClick={handleSearch}
-            disabled={q.trim().length < 3 || nlpMut.isPending}
-            className="px-3 py-1.5 bg-cobalt text-white text-xs font-medium rounded-lg hover:bg-cobalt-dark disabled:opacity-40 transition-colors"
-          >
-            {nlpMut.isPending ? <Loader2 size={12} className="animate-spin" /> : 'Search'}
-          </button>
-        </div>
+      {/* Spec 10 — type-first program search (search box · chips · genre tiles · sort · results). */}
+      <div className="mb-8">
+        <DiscoverySearch />
       </div>
 
-      {/* Spec 09 §5.1 / Spec 10 §4 — editable + removable constraint chips
-          parsed from the query. No gold in the chips region (Spec 10 §13). */}
-      {nlpResult && isSearching && (
-        <div className="mb-4 flex items-center gap-2 flex-wrap">
-          {chips.length > 0 ? (
-            <ConstraintChips chips={chips} onRemove={removeChip} onEdit={editChip} />
-          ) : refinedResults === null ? (
-            // Initial interpretation (before any chip edit/removal).
-            <span className="text-xs text-slate">{nlpResult.interpretation}</span>
-          ) : (
-            // After all chips were removed — never show the stale interpretation.
-            <span className="text-xs text-slate">{keyword ? `Results for “${keyword}”` : 'All programs'}</span>
-          )}
-          <button onClick={exitSearch} className="ml-auto text-xs text-cobalt hover:underline">
-            Back to browse
-          </button>
-        </div>
-      )}
+      {/* Browse universities — secondary, idle-only (no entity-mixing with the program results). */}
+      {!searchActive && (
+        <div>
+          <h2 className="text-eyebrow uppercase text-muted-foreground font-semibold mb-3">Browse universities</h2>
 
-      {/* ── SEARCH MODE: Flat program results ── */}
-      {isSearching && (
-        <>
-          {(searchLoading || nlpMut.isPending || refineMut.isPending) ? (
-            <div aria-busy="true">
-              {/* Spec 09/10 §8 — live-search progress on the results region. */}
-              <p className="flex items-center gap-2 text-xs text-slate mb-3">
-                <Loader2 size={12} className="animate-spin" /> Searching…
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[1, 2, 3].map(i => <div key={i} className="h-72 bg-white rounded-xl border border-divider animate-pulse" />)}
-              </div>
-            </div>
-          ) : searchProgramList.length === 0 ? (
-            <div className="text-center py-16 bg-white rounded-xl border border-divider">
-              <Search size={32} className="mx-auto text-stone mb-3" />
-              <p className="text-sm text-student-ink font-medium mb-1">No results found</p>
-              <p className="text-xs text-student-text">Try a different search term.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {searchProgramList.map(p => (
-                <ProgramCard
-                  key={p.id}
-                  program={p}
-                  saved={savedIds.has(p.id)}
-                  comparing={compareStore.has(p.id)}
-                  onSave={() => toggleSave(p.id)}
-                  onCompare={() => compareStore.has(p.id) ? compareStore.remove(p.id) : compareStore.add({ program_id: p.id, program_name: p.program_name, institution_name: p.institution_name, degree_type: p.degree_type })}
-                  onAskCounselor={() => navigate(`/s?prefill=${encodeURIComponent(`Tell me about ${p.program_name} at ${p.institution_name}. Is it a good fit?`)}`)}
-                  onView={() => navigate(`/s/programs/${p.id}`)}
-                />
-              ))}
-            </div>
-          )}
-        </>
-      )}
-
-      {/* ── BROWSE MODE: Filter bar + Universities grid ── */}
-      {!isSearching && (
-        <>
           {uniList.length > 0 && (
-            <ExploreFilters
-              universities={uniList}
-              filters={filters}
-              onChange={setFilters}
-            />
+            <ExploreFilters universities={uniList} filters={filters} onChange={setFilters} />
           )}
 
           {uniLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3].map(i => <div key={i} className="h-80 bg-white rounded-xl border border-divider animate-pulse" />)}
+              {[1, 2, 3].map(i => <div key={i} className="h-80 bg-card rounded-xl border border-border animate-pulse" />)}
             </div>
           ) : uniList.length === 0 ? (
-            <div className="text-center py-16 bg-white rounded-xl border border-divider">
+            <div className="text-center py-16 bg-card rounded-xl border border-border">
               <Building2 size={32} className="mx-auto text-stone mb-3" />
-              <p className="text-sm text-student-ink font-medium mb-1">No universities yet</p>
-              <p className="text-xs text-student-text">Universities will appear here as they join the platform.</p>
+              <p className="text-sm text-foreground font-semibold mb-1">No universities yet</p>
+              <p className="text-xs text-muted-foreground">Universities will appear here as they join the platform.</p>
             </div>
           ) : filteredUniList.length === 0 ? (
-            <div className="text-center py-16 bg-white rounded-xl border border-divider">
+            <div className="text-center py-16 bg-card rounded-xl border border-border">
               <Building2 size={32} className="mx-auto text-stone mb-3" />
-              <p className="text-sm text-student-ink font-medium mb-1">No universities match your filters</p>
-              <p className="text-xs text-student-text mb-4">Try removing a filter or broadening your search.</p>
+              <p className="text-sm text-foreground font-semibold mb-1">No universities match your filters</p>
+              <p className="text-xs text-muted-foreground mb-4">Try removing a filter or broadening your search.</p>
               <button
                 onClick={() => setFilters(EMPTY_FILTERS)}
-                className="text-xs font-medium text-student hover:text-student-hover"
+                className="text-xs font-semibold text-secondary hover:underline"
               >
                 Clear all filters
               </button>
@@ -377,12 +189,12 @@ export default function ExplorePage() {
           ) : (
             <>
               {hasActiveFilters && (
-                <p className="text-[11px] text-student-text/70 mb-3">
-                  Showing <span className="font-semibold text-student-ink">{filteredUniList.length}</span> of {uniList.length} universities
+                <p className="text-[11px] text-muted-foreground mb-3">
+                  Showing <span className="font-semibold text-foreground">{filteredUniList.length}</span> of {uniList.length} universities
                 </p>
               )}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredUniList.map((inst: any) => (
+                {filteredUniList.map((inst: UniversityRow) => (
                   <UniversityCard
                     key={inst.id}
                     institution={inst}
@@ -392,8 +204,13 @@ export default function ExplorePage() {
               </div>
             </>
           )}
-        </>
+        </div>
       )}
     </div>
   )
 }
+
+// The institution browse rows are loosely typed by the API; ExploreFilters and
+// UniversityCard consume the wider shape.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type UniversityRow = any
