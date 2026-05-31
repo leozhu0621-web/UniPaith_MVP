@@ -787,6 +787,7 @@ class UpsertDataConsentRequest(BaseModel):
     consent_outreach: bool | None = None
     consent_research: bool | None = None  # spec 46 §2 `analytics` lever
     consent_training: bool | None = None  # spec 46 §2 `training` lever
+    consent_peer_connect: bool | None = None  # spec 20 §6.1 / 46 §2
     data_retention_preference: Literal["standard", "minimum", "delete_after_cycle"] | None = None
     deletion_requested: bool | None = None
     first_generation_status: bool | None = None
@@ -816,6 +817,7 @@ class DataConsentResponse(BaseModel):
     consent_outreach: bool
     consent_research: bool  # spec 46 §2 `analytics` lever
     consent_training: bool = False  # spec 46 §2 `training` lever
+    consent_peer_connect: bool = False  # spec 20 §6.1 — Peers opt-in
     data_retention_preference: str | None
     deletion_requested: bool
     deletion_requested_at: datetime | None

@@ -48,8 +48,8 @@ async def _seed_program(db, student_user, institution_user, *, dob=None):
         tuition=50000,
     )
     db.add(program)
-    await db.flush()
     await db.commit()
+    await db.refresh(program)
     return profile, institution, program
 
 
@@ -67,6 +67,7 @@ async def _make_peer(db, program_id, *, name="Grace Peer", dob=None) -> StudentP
     )
     db.add(p)
     await db.flush()
+    await db.refresh(p)
     await SavedListService(db).save_program(p.id, program_id)  # shared program
     await PeerService(db).set_opt_in(p.id, True)
     prof = await PeerService(db).get_my_profile(p.id)

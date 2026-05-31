@@ -1,13 +1,14 @@
 // Connect → Events (Spec 20 §5). Upcoming | Past | My RSVPs; RSVP / waitlist;
 // add-to-calendar; detail modal with meeting-link reveal near start.
 // Brand: cobalt CTAs; GOLD reserved for the RSVP-confirmed state (§10).
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   CalendarPlus, Clock, ExternalLink, MapPin, Sparkles, Users, Video, X,
 } from 'lucide-react'
 import { getConnectEvents, type ConnectEvent } from '../../../api/connect'
 import { rsvpEvent, cancelRsvp, addEventToCalendar } from '../../../api/events'
+import Sheet from '../../../components/ui/Sheet'
 
 type Scope = 'upcoming' | 'past' | 'mine'
 
@@ -33,8 +34,22 @@ function fmtDate(iso: string) {
   })
 }
 
+function useIsMobile() {
+  const [mobile, setMobile] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches,
+  )
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639px)')
+    const onChange = () => setMobile(mq.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+  return mobile
+}
+
 export default function EventsTab() {
   const qc = useQueryClient()
+  const isMobile = useIsMobile()
   const [scope, setScope] = useState<Scope>('upcoming')
   const [detail, setDetail] = useState<ConnectEvent | null>(null)
 
@@ -99,12 +114,37 @@ export default function EventsTab() {
       )}
 
       {detail && (
-        <EventDetailModal
-          event={detail}
-          onClose={() => setDetail(null)}
-          onRsvp={() => rsvpMut.mutate({ id: detail.id, going: detail.rsvp_state === 'rsvp' || detail.rsvp_state === 'waitlist' })}
-          onAddCalendar={() => addEventToCalendar(detail.id, detail.event_name)}
-        />
+        isMobile ? (
+          <Sheet
+            isOpen
+            onClose={() => setDetail(null)}
+            title={detail.event_name}
+            side="bottom"
+            footer={
+              <div className="flex items-center gap-2">
+                <RsvpButton
+                  event={detail}
+                  onRsvp={() => rsvpMut.mutate({ id: detail.id, going: detail.rsvp_state === 'rsvp' || detail.rsvp_state === 'waitlist' })}
+                />
+                <button
+                  onClick={() => addEventToCalendar(detail.id, detail.event_name)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-cobalt hover:bg-cobalt/5"
+                >
+                  <CalendarPlus size={13} /> Add to calendar
+                </button>
+              </div>
+            }
+          >
+            <EventDetailBody event={detail} />
+          </Sheet>
+        ) : (
+          <EventDetailModal
+            event={detail}
+            onClose={() => setDetail(null)}
+            onRsvp={() => rsvpMut.mutate({ id: detail.id, going: detail.rsvp_state === 'rsvp' || detail.rsvp_state === 'waitlist' })}
+            onAddCalendar={() => addEventToCalendar(detail.id, detail.event_name)}
+          />
+        )
       )}
     </div>
   )
@@ -203,10 +243,39 @@ function EventListCard({ event, busy, onOpen, onRsvp, onAddCalendar }: CardProps
   )
 }
 
+function EventDetailBody({ event }: { event: ConnectEvent }) {
+  const rsvped = event.rsvp_state === 'rsvp' || event.rsvp_state === 'attended'
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-student-text">{event.institution_name}</p>
+      <div className="flex items-center gap-2 text-sm text-student-ink">
+        <Clock size={14} className="text-cobalt" /> {fmtDate(event.start_time)}
+      </div>
+      <div className="flex items-center gap-2 text-sm text-student-ink">
+        {event.location ? <><MapPin size={14} className="text-cobalt" /> {event.location}</> : <><Video size={14} className="text-cobalt" /> Online event</>}
+      </div>
+      <div className="flex items-center gap-2 text-sm text-student-text">
+        <Users size={14} /> Who else is going: {event.going_count}{event.capacity ? ` of ${event.capacity}` : ''}{event.waitlist_count > 0 ? ` · ${event.waitlist_count} waitlisted` : ''}
+      </div>
+      {event.description && <p className="text-sm text-student-text leading-relaxed whitespace-pre-line">{event.description}</p>}
+      {rsvped && event.meeting_link && (
+        <a href={event.meeting_link} target="_blank" rel="noreferrer"
+           className="inline-flex items-center gap-1.5 text-sm font-medium text-cobalt hover:underline">
+          <ExternalLink size={14} /> Join meeting
+        </a>
+      )}
+      {rsvped && !event.meeting_link && event.meeting_link_reveals_at && (
+        <p className="text-xs text-student-text">
+          The meeting link appears here closer to the start time.
+        </p>
+      )}
+    </div>
+  )
+}
+
 function EventDetailModal({ event, onClose, onRsvp, onAddCalendar }: {
   event: ConnectEvent; onClose: () => void; onRsvp: () => void; onAddCalendar: () => void
 }) {
-  const rsvped = event.rsvp_state === 'rsvp' || event.rsvp_state === 'attended'
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/40" onClick={onClose}>
       <div className="bg-white rounded-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto shadow-xl" onClick={e => e.stopPropagation()}>
@@ -219,29 +288,7 @@ function EventDetailModal({ event, onClose, onRsvp, onAddCalendar }: {
           <button onClick={onClose} className="text-student-text hover:text-student-ink p-1"><X size={18} /></button>
         </div>
         <div className="p-5 space-y-3">
-          <div className="flex items-center gap-2 text-sm text-student-ink">
-            <Clock size={14} className="text-cobalt" /> {fmtDate(event.start_time)}
-          </div>
-          <div className="flex items-center gap-2 text-sm text-student-ink">
-            {event.location ? <><MapPin size={14} className="text-cobalt" /> {event.location}</> : <><Video size={14} className="text-cobalt" /> Online event</>}
-          </div>
-          <div className="flex items-center gap-2 text-sm text-student-text">
-            <Users size={14} /> {event.going_count} going{event.capacity ? ` of ${event.capacity}` : ''}{event.waitlist_count > 0 ? ` · ${event.waitlist_count} waitlisted` : ''}
-          </div>
-          {event.description && <p className="text-sm text-student-text leading-relaxed whitespace-pre-line">{event.description}</p>}
-
-          {/* Meeting link reveal (Spec 20 §5) */}
-          {rsvped && event.meeting_link && (
-            <a href={event.meeting_link} target="_blank" rel="noreferrer"
-               className="inline-flex items-center gap-1.5 text-sm font-medium text-cobalt hover:underline">
-              <ExternalLink size={14} /> Join meeting
-            </a>
-          )}
-          {rsvped && !event.meeting_link && event.meeting_link_reveals_at && (
-            <p className="text-xs text-student-text">
-              The meeting link appears here closer to the start time.
-            </p>
-          )}
+          <EventDetailBody event={event} />
         </div>
         <div className="flex items-center gap-2 p-5 border-t border-divider">
           <RsvpButton event={event} onRsvp={onRsvp} />

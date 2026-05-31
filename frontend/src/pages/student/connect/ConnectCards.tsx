@@ -60,26 +60,51 @@ function InstitutionRow({ item }: { item: ConnectFeedItem }) {
 }
 
 function CtaRow({ item, onViewProgram, onAddToCalendar }: Props) {
-  if (!item.program_id) return null
-  // "Add to calendar" only when the item carries a real deadline date (Spec 20
-  // §4.1) — avoids meaningless reminders on generic posts.
-  const hasDeadline = Boolean(item.deadline)
+  const ctas = item.ctas?.length
+    ? item.ctas
+    : item.program_id
+      ? [
+          { type: 'view_program', label: 'View program', target: item.program_id },
+          ...(item.deadline
+            ? [{ type: 'add_to_calendar', label: 'Add deadline to calendar', target: item.program_id }]
+            : []),
+        ]
+      : []
+
+  if (ctas.length === 0) return null
+
   return (
     <div className="flex flex-wrap items-center gap-2 mt-3">
-      <button
-        onClick={() => onViewProgram(item.program_id!)}
-        className="px-3 py-1.5 text-xs font-medium rounded-lg border border-cobalt text-cobalt hover:bg-cobalt/5 transition-colors"
-      >
-        View program
-      </button>
-      {hasDeadline && (
-        <button
-          onClick={() => onAddToCalendar(item)}
-          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg text-cobalt hover:bg-cobalt/5 transition-colors"
-        >
-          <CalendarPlus size={13} /> Add deadline to calendar
-        </button>
-      )}
+      {ctas.map((cta, i) => {
+        const key = `${cta.type}-${cta.target}-${i}`
+        if (cta.type === 'view_program' || cta.type === 'start_application') {
+          return (
+            <button
+              key={key}
+              onClick={() => onViewProgram(cta.target)}
+              className="px-3 py-1.5 text-xs font-medium rounded-lg border border-cobalt text-cobalt hover:bg-cobalt/5 transition-colors"
+            >
+              {cta.label}
+            </button>
+          )
+        }
+        if (cta.type === 'add_to_calendar' || cta.type === 'add_deadline_to_calendar') {
+          return (
+            <button
+              key={key}
+              onClick={() => onAddToCalendar(item)}
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg text-cobalt hover:bg-cobalt/5 transition-colors"
+            >
+              <CalendarPlus size={13} /> {cta.label}
+            </button>
+          )
+        }
+        return (
+          <span key={key} className="px-3 py-1.5 text-xs font-medium rounded-lg bg-student-mist text-student-text">
+            {cta.label}
+          </span>
+        )
+      })}
     </div>
   )
 }
