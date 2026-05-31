@@ -1,10 +1,11 @@
-# UniPaith MVP — Build-Ready Spec Index
+# 00 · UniPaith MVP — Build-Ready Spec Index
 
 > Canonical specification set for the UniPaith MVP. One file per feature/page, plus cross-cutting foundation docs. Each spec is self-contained and build-ready: route, IA, user goal, visual layout, components, data shape, states, edge cases, copy, brand-compliance checklist, AI integration, and current-vs-spec gap.
 
-- **Version:** v1.0 · 2026-05-29
+- **Version:** v2.0 · 2026-05-30 (renumbered contiguous 00–49)
 - **Owner:** Leo Zhu — leozjc@unipaith.co
 - **Audience:** anyone building the MVP — human engineers, designers, or coding agents.
+- **Count:** 53 numbered specs (`00`–`52`) + `ASSETS.md` = 54 docs. Numbering is contiguous — no gaps. (`50`–`52` are build-integration docs derived from the live code.)
 
 ---
 
@@ -14,147 +15,120 @@ These are the ground-truth inputs every spec was derived from. If any spec contr
 
 | Source | Location | Purpose |
 |---|---|---|
-| **Master Paper** (4,227 paragraphs) | `/Users/leozhu/Desktop/工作/UniPAith/Master Paper.docx` | Canonical product spec — every feature definition. |
-| **Business Methodology** | `/Users/leozhu/Desktop/工作/UniPAith/Business Methodology.docx` | Strategic positioning, voice, market thesis. |
-| **Brand Visual Guide** (23 pp PDF) | `/Users/leozhu/Desktop/工作/UniPAith/UniPaith_Brand_Visual_Guide.pdf` | Wordmark, monogram, color, typography, system tokens. |
-| **Brand assets** | `/Users/leozhu/Desktop/工作/UniPAith/Brand Materials/` | SVG wordmarks, favicons, color HTML refs, namecard template. |
-| **Color CSS refs** | `Brand Materials/color-{palette,light-theme,dark-theme}.html` | CSS variable spec for both themes incl. status colors. |
-| **Reference brand guides** | `Brand Materials/example/` | Discord, AmEx, FOLU, GL, Sydney Univ — voice/structure references only; not visual sources. |
-| **Existing MVP** | `/Users/leozhu/Desktop/工作/UniPAith/App_MVP/` | Current code state. Used for current-vs-spec gap audits. |
-| **CLAUDE.md** | `App_MVP/CLAUDE.md` | Project conventions, IA decisions, deferred work, invariants. |
+| **Master Paper** | `/Users/leozhu/Desktop/工作/UniPAith/Master Paper.docx` | Canonical product spec — every feature definition. |
+| **Business Methodology** | `…/Business Methodology.docx` | Strategic positioning, voice, market thesis. |
+| **Brand Visual Guide** (23 pp) | `…/UniPaith_Brand_Visual_Guide.pdf` | Wordmark, monogram, color, typography, tokens. |
+| **Brand assets** | `…/Brand Materials/` | SVG wordmarks, favicons, color HTML refs, namecard. |
+| **Canonical CSS** | `White-Paper/design_extracted/.../colors_and_type.css` | The single source of truth for tokens (embedded in `01` §11). |
+| **Prompt Library / Map** | `Misc./Prompt Library.docx`, `Misc./Prompt Map.pdf` | Signal schema (input + output). |
+| **Feature List / Roadmap** | `Misc./Feature List V1.docx`, `Misc./Roadmap.docx` | Feature checklist + founder sequencing. |
+| **Competition Analysis** | `…/Competition Analysis.docx` | 18 competitor profiles, moat taxonomy. |
+| **Architecture diagram** | `Misc./UniPaith-Architecture-Flow*.png` | 9-stage module flow (transcribed in `06`). |
+| **Existing MVP** | `/Users/leozhu/Desktop/工作/UniPAith/App_MVP/` | Current code state (gap audits). |
+| **CLAUDE.md** | `App_MVP/CLAUDE.md` | Project conventions, IA decisions, invariants. |
 
 ---
 
 ## 2. How to use these specs
 
-1. **Start with the foundation docs** (`00`–`04`). Every feature spec assumes you've read brand tokens, design system, IA, and the LLM migration plan.
-2. **Pick a feature doc** matching what you're building. Each doc lists its own dependencies and downstream consumers.
-3. **Honor the brand-compliance checklist** at the end of every feature doc. The user's stated invariants:
+1. **Start with the foundation docs** (`00`–`07`). Every feature spec assumes you've read brand tokens, design system, IA, architecture, and the LLM migration plan.
+2. **Pick a feature doc** matching what you're building. Each lists its own dependencies and downstream consumers.
+3. **Honor the brand-compliance checklist** at the end of every feature doc. Stated invariants:
    - No decorative images, gradients, or color accents on program detail pages.
-   - Editorial and program-specific aesthetic — not generic marketing.
-   - Always confirm WHICH component is being changed (explore card vs detail page) before editing.
-4. **When implementing**: run the project's pre-work checklist first (DB up, Docker running, build green, tests passing — see `CLAUDE.md`). Do not start feature work in a broken environment.
-5. **When LLM work is involved**: route through the Claude provider per `03-llm-claude-migration.md`. The existing model-portable interface means you swap providers, not call sites.
+   - Editorial, program-specific aesthetic — not generic marketing.
+   - Confirm WHICH component is being changed (explore card vs detail page) before editing.
+4. **When implementing**: run the project pre-work checklist first (DB up, Docker running, build green, tests passing — see `CLAUDE.md`).
+5. **When LLM work is involved**: route through the Claude provider per `04-llm-claude-migration.md` — swap providers, not call sites.
 
 ---
 
 ## 3. Spec file map
 
-Naming convention: `NN-slug.md`. Two-digit prefix groups specs; lower numbers are higher leverage.
+Naming convention: `NN-slug.md`. Two-digit prefix, **contiguous 00–49** (no gaps). `ASSETS.md` is unnumbered (a catalog, not a spec).
 
-### Foundation (00–06)
-- `00-overview.md` — this file.
-- `01-brand-tokens.md` — colors, type, spacing, elevation, radii, **embedded SVGs + canonical CSS**, voice. (v1.1 — Europa via Adobe Typekit.)
-- `02-design-system.md` — component-level rules: buttons, inputs, cards, modals, nav, tables, chips, AI-rationale popovers.
-- `02b-design-system-mobile.md` — responsive/mobile: breakpoints, mobile nav, per-pattern transforms, touch ergonomics.
-- `03-llm-claude-migration.md` — agent-by-agent OpenAI→Claude port, model selection, prompt caching, env, cost.
-- `04-information-architecture.md` — full route map for student + institution + public + auth, role guards, nav hierarchy, cross-page links.
-- `05-architecture.md` — module-by-module platform flow, the 3-layer AI engine, information flow (incoming/outgoing), service topology. (From the founder's architecture diagram + Prompt Map.)
-- `06-product-context.md` — positioning, beachhead/GTM, pricing, competitive moat, market-validated pains, performance targets, funding. The "why" behind scope tradeoffs.
+### Foundation & cross-cutting design (00–07)
+- `00-overview.md` — this index.
+- `01-brand-tokens.md` — colors, type, spacing, elevation, radii, embedded SVGs + canonical CSS, voice. (Europa via Adobe Typekit.)
+- `02-design-system.md` — component rules: buttons, inputs, cards, modals, nav, tables, chips, AI-rationale popovers.
+- `03-design-system-mobile.md` — responsive/mobile: breakpoints, mobile nav, per-pattern transforms, touch ergonomics.
+- `04-llm-claude-migration.md` — agent-by-agent OpenAI→Claude port, model selection, prompt caching, env, cost.
+- `05-information-architecture.md` — full route map (student + institution + public + auth), role guards, nav, cross-page links.
+- `06-architecture.md` — module-by-module platform flow, the 3-layer AI engine, information flow, service topology.
+- `07-product-context.md` — positioning, beachhead/GTM, pricing, competitive moat, market-validated pains, performance targets, funding.
 - `ASSETS.md` — embedded brand-asset catalog (SVG/CSS verbatim) + binary-asset paths + source-doc provenance map.
 
-### Student-side features (10–1C)
-- `10-universal-profile.md` — 19-section profile workspace + completion meter + edit-first UX.
-- `11-program-match.md` — guided shortlist with reasoning + iterative refinement.
-- `12-discovery.md` — type-first NL search + LLM query interpretation + constraint chips + filters.
-- `13-detail-pages-program.md` — program-level evaluation page with Insights tab (student/alumni + employer feedback).
-- `14-detail-pages-school.md` — institutional context + program directory gateway.
-- `15-saved-list.md` — saved hub with reach/target/safer grouping, compare, one-click application conversion.
-- `16-workshops.md` — resume / essay / test workshops, general + program-specific modes, **feedback-only** (no generation — schema-enforced).
-- `17-applications.md` — per-application workspace with program-adaptive checklist, readiness gate, external vs internal submission.
-- `18-calendar.md` — admissions deadlines + interview events + work blocks, application-linked.
-- `19-inbox.md` — application-threaded messages, action labels, attachment handling, human vs system separation.
-- `1A-decisions-offers.md` — outcomes tracking, offer capture, side-by-side comparison, post-submission workflow.
-- `1B-discovery-stage-conversation.md` — Stage-1 LLM-led 3-track journey (Profile / Goals / Needs) with chat + artifact rail.
-- `1C-connect.md` — Stage-3a Connect: Updates / Events / Peers from followed institutions; `/s/posts`.
-- `1D-settings.md` — account, security, locale, notifications, data-rights entry, deletion (student + institution); `/s/settings`, `/i/settings`.
+### Student-side features (08–21)
+- `08-universal-profile.md` — 19-section profile workspace + completion meter + edit-first UX.
+- `09-program-match.md` — guided shortlist with reasoning, dual scores, probability bands, iterative refinement.
+- `10-discovery.md` — type-first NL search + LLM query interpretation + constraint chips + filters.
+- `11-detail-pages-program.md` — program evaluation page (Insights, costs, net-price estimator). No hero images.
+- `12-detail-pages-school.md` — institutional context + program directory gateway.
+- `13-saved-list.md` — saved hub, reach/target/safer grouping, compare, one-click application conversion.
+- `14-workshops.md` — resume / essay / test workshops, **feedback-only** (no generation — schema-enforced).
+- `15-applications.md` — per-application workspace, program-adaptive checklist, readiness gate, app-cost tracker.
+- `16-calendar.md` — admissions deadlines + interview events + work blocks, application-linked.
+- `17-inbox.md` — application-threaded messages, action labels, attachments, human vs system separation.
+- `18-decisions-offers.md` — outcomes tracking, offer capture, side-by-side comparison, post-submission.
+- `19-discovery-stage-conversation.md` — Stage-1 LLM-led 3-track journey (Profile / Goals / Needs), chat + artifact rail.
+- `20-connect.md` — Stage-3a Connect: Updates / Events / Peers from followed institutions; `/s/posts`.
+- `21-settings.md` — settings for **both roles** (account, security, locale, notifications, data-rights entry, deletion).
 
-### Institution-side features (20–27)
-- `20-institution-profile-page.md` — public school presence, posts, events, program directory.
-- `21-program-detail-page-institution.md` — program-level public page, deadlines, requirements, cost, outcomes, media.
-- `22-data-upload.md` — admissions history / prospect lists / outcomes summaries with mapping, versioning, validation.
-- `23-campaigns.md` — internal platform messaging + external email with trackable links.
-- `24-audience-segmentation.md` — reusable segments by activity/intent/readiness/uploaded lists.
-- `25-posts-updates-events.md` — unified publishing with promotion controls and performance tracking.
-- `26-attribution-funnel-analytics.md` — funnel attribution from impression → application outcome.
-- `27-institution-messaging.md` — institution inbox/messaging (mirror of `19`); reason-coded threads, AI drafts, bulk.
-- `28-institution-setup.md` — first-run institution wizard (`/i/setup`); orchestrates profile/program/data/team.
+### Institution-side features (22–30)
+- `22-institution-profile-page.md` — public school presence, posts, events, program directory.
+- `23-program-detail-page-institution.md` — program editor (deadlines, requirements, cost, outcomes, test policy).
+- `24-data-upload.md` — admissions history / prospect lists / outcomes with mapping, versioning, validation.
+- `25-campaigns.md` — internal platform messaging + external SES email with trackable links.
+- `26-audience-segmentation.md` — reusable segments by activity/intent/readiness/uploaded lists.
+- `27-posts-updates-events.md` — unified publishing with promotion controls and performance tracking.
+- `28-attribution-funnel-analytics.md` — funnel attribution from impression → application outcome.
+- `29-institution-messaging.md` — institution inbox/messaging (mirror of `17`); reason-coded threads, AI drafts, bulk.
+- `30-institution-setup.md` — first-run institution wizard (`/i/setup`); orchestrates profile/program/data/team.
 
-### Cross-role
-- `1D-settings.md` — settings for both roles (account, security, locale, notifications, data-rights entry, deletion).
+### Admissions system (31–41)
+- `31-admissions-intake.md` — pipeline + dashboard, queue management, batch actions.
+- `32-review-workspace.md` — rubric scoring, side-by-side reviewers, cohort compare, blind review, calibration.
+- `33-interviews-module.md` — interview types, scheduling, prep, recording handling.
+- `34-decisions-offers-institution.md` — decision release, offer terms, yield management.
+- `35-enrollment-yield.md` — enrollment confirmation, intent forms, waitlist movement, yield analytics (Stage 8 tail).
+- `36-audit-log.md` — append-only audit trail for compliance.
+- `37-ai-extensibility.md` — AI-assistive layer: drafts, summaries, prioritization — humans keep final action.
+- `38-international-admissions.md` — credential eval, I-20/DS-2019, English proficiency, visa coordination. *(Phase-2)*
+- `39-fees-payments.md` — application fees, waivers, deposit gateway, refunds. *(Phase-2)*
+- `40-recruitment-crm.md` — pre-applicant prospect mgmt, travel, territory. *(Phase-2)*
+- `41-graduate-admissions.md` — faculty-advisor matching, funding-package builder, department portal. *(Phase-2)*
 
-### Admissions System (30–35, 33b)
-- `30-admissions-intake.md` — intake dashboard, queue management, batch actions.
-- `31-review-workspace.md` — rubric scoring, side-by-side reviewers, cohort comparison.
-- `32-interviews-module.md` — interview types, scheduling, prep, recording handling.
-- `33-decisions-offers-institution.md` — decision release, offer terms, yield management.
-- `33b-enrollment-yield.md` — enrollment confirmation, intent forms, waitlist movement, yield analytics (Stage 8 tail).
-- `34-audit-log.md` — append-only audit trail for compliance.
-- `35-ai-extensibility.md` — AI-assistive layer: drafts, summaries, prioritization — humans keep final action.
+### Cross-cutting data & AI (42–46)
+- `42-prompt-library-schema.md` — enumerated catalog of profile signals (input + output), behavioral layer.
+- `43-prompt-library-major-specific.md` — per-discipline readiness field catalog (15 tracks).
+- `44-adaptive-intake-engine.md` — multi-source signal population, raw/normalized/derived/engagement, provenance + confidence.
+- `45-ai-agents-claude.md` — per-agent system prompts, tool schemas, cache breakpoints, fallback behavior.
+- `46-data-rights-privacy.md` — FERPA, consent, no-training tiers, retention, audit, fairness.
 
-### Cross-cutting (40–43, 90–91)
-- `40-prompt-library-schema.md` — enumerated catalog of profile signals (Master Paper Appendix A).
-- `41-adaptive-intake-engine.md` — multi-source signal population, raw/normalized/derived/engagement layers, provenance + confidence.
-- `42-ai-agents-claude.md` — per-agent system prompts, tool schemas, cache breakpoints, fallback behavior.
-- `43-data-rights-privacy.md` — FERPA, consent, no-training tiers, retention, audit.
-- `90-current-vs-spec-gap-audit.md` — what's in the codebase today, what's missing, what's mislabeled, what to archive.
-- `91-build-sequencing.md` — recommended phase order, dependencies between specs, parallelizable workstreams.
-- `92-feature-backlog.md` — every feature in the founder's Feature List V1, mapped to a spec or flagged net-new, classified MVP-core / extend / defer.
+### Meta (47–49)
+- `47-current-vs-spec-gap-audit.md` — what's in the codebase today, what's missing/mislabeled, what to archive.
+- `48-build-sequencing.md` — recommended phase order, dependencies, parallelizable workstreams.
+- `49-feature-backlog.md` — every Feature List V1 item, mapped to a spec, classified MVP-core / extend / defer.
 
----
-
-## 4. Conventions
-
-- **Markdown only.** No images embedded; ASCII layout sketches when helpful.
-- **Tokens, not values.** Every color reference uses a token name (e.g., `--primary`, `--ink`, `paper-cream`) defined in `01-brand-tokens.md`. Never hard-code hex outside `01-brand-tokens.md`.
-- **Routes are absolute** (`/s/explore`, `/i/admissions`), never relative.
-- **Data shapes use TypeScript-ish notation** for frontend types and SQLAlchemy-ish pseudo-code for backend models, with field names matching the existing codebase where the spec extends rather than replaces.
-- **States are enumerated.** Every interactive UI must define loading / empty / error / success states explicitly.
-- **Copy strings are literal** — sentence case, no marketing voice, no exclamation marks (see voice rules in `01-brand-tokens.md` §6).
-- **AI integration sections** describe: agent name, model tier (Sonnet vs Haiku), input shape, output shape, cache key, fallback when the agent fails or `AI_MOCK_MODE=true`.
+### Build integration (50–52) — front↔back readiness, derived from the live code
+- `50-api-contract.md` — the front↔back handshake: envelope, auth, errors, pagination + the authoritative router map (26 routers / 276 routes) from real code; OpenAPI at `/docs` is machine truth.
+- `51-data-model.md` — consolidated table map (28 live tables) with key columns, FKs, JSONB blobs, and an explicit "spec'd-but-not-built-yet" list.
+- `52-mvp-acceptance-runbook.md` — the "ready to use, front+back" gate: two end-to-end critical-path journeys, per-surface DoD, integration gates, launch blockers, seed data, run/deploy verify.
 
 ---
 
-## 5. Glossary
+## 4. Build order (quick reference)
 
-| Term | Meaning |
-|---|---|
-| **Universal Profile** | The student's single, reusable, modular profile (19 sections — see `10`). |
-| **Program Match** | The guided shortlist workflow (see `11`). |
-| **Discovery** | The type-first program-search workspace (see `12`). |
-| **My Applications** | The student execution hub for the active cycle (see `17`–`1A`). |
-| **Workshops** | Feedback-only preparation workspace (resume, essay, test — see `16`). Schema-enforced: no generation. |
-| **Prompt Library** | The canonical signal schema for all profile data (see `40`). Master Paper Appendix A. |
-| **Adaptive Intake Engine** | The multi-source signal pipeline that populates the Prompt Library (see `41`). |
-| **Display card** | A single program/school card schema reused across Discovery, Compare, Saved, Detail, and institution pages. Edited once, reflected everywhere. |
-| **Constraint chip** | Editable LLM-extracted filter applied to a search (e.g., `degree: master's`, `location: USA`, `budget: ≤ $40k/yr`). |
-| **Fitness score** vs **Confidence score** | Two-dimensional match scoring. Fitness = how well program matches student. Confidence = how reliable that fitness estimate is given data completeness. |
-| **Reach / Target / Safer** | Three-band classification for saved programs based on selectivity vs student profile. |
-| **Intake / Round** | A single admissions cycle window for one program (e.g., Fall 2026 Round 1). |
-| **Internal submission** vs **External submission** | Internal = student submits through UniPaith and the institution receives the packet via UniPaith. External = student tracks the application in UniPaith but submits on the institution's own portal. |
-| **Action label** (Inbox) | The state of a message thread: needs reply, document requested, clarification required, interview invite, status update only. |
-| **Provenance** (Prompt Library) | Source of a signal value: student-confirmed, student-uploaded, institution-provided, system-derived. |
-| **Confidence** (Prompt Library) | Numeric reliability of an extracted/derived signal value; low-confidence values get flagged for student clarification. |
-| **AI Extensibility** | The principle that AI generates drafts and suggestions but never autonomously changes status, sends communications, or issues decisions — humans keep the final action. |
+See `48-build-sequencing.md` for the full plan. TL;DR phase order:
+
+1. **Foundation** — brand tokens + design system + IA + LLM migration (`01`–`05`).
+2. **Student spine** — Profile → Discovery chat → Match → Detail → Saved → Applications (`08`,`19`,`09`,`11`,`13`,`15`).
+3. **Institution spine** — Profile → Programs → Data → Admissions intake → Review (`22`,`23`,`24`,`31`,`32`).
+4. **Cross-cutting** — Prompt Library + Adaptive Intake + AI agents + Data rights (`42`–`46`).
+5. **Polish** — Calendar, Inbox, Connect, Workshops, Decisions, Settings, Analytics.
+6. **Phase-2** (post-MVP, up-market) — International, Fees/Payments, Recruitment CRM, Graduate (`38`–`41`).
 
 ---
 
-## 6. Versioning
+## 5. Status
 
-Each spec doc carries its own `Status:` line. Allowed states:
-
-- **draft v0.x** — in active authoring; expect changes.
-- **draft v1.0** — complete first pass; ready for build.
-- **stable v1.x** — built once, refined.
-- **archived** — superseded; the file says what replaced it.
-
-Index version (this file): bump the top-of-file `v1.x` when a spec is added or significantly restructured. A typo fix in one feature doc does not bump the index.
-
----
-
-## 7. What this spec set does NOT cover
-
-- **Brand identity definition.** The wordmark, monogram, colors, type, and proportion rules are decided. This spec applies them; it does not redesign them. Source: `UniPaith_Brand_Visual_Guide.pdf`.
-- **Business model decisions.** Pricing, financial model, funding strategy are in the Master Paper sections 1–4 and not duplicated here except where they constrain product behavior (e.g., the 7-day trial paywall affects auth flow → see `04`).
-- **Marketing site (unipaith.co).** That's a WordPress install — see `CLAUDE.md`. This spec is for the app at `app.unipaith.co`.
-- **Terraform / infrastructure.** AWS topology lives in `App_MVP/infra/`. Specs reference env vars and service names but do not redesign infra.
+All 53 numbered specs (`00`–`52`) + `ASSETS.md` are written and detailed — no stubs, no numbering gaps. The four Phase-2 docs (`38`–`41`) are full specs but explicitly sequenced after the MVP per the beachhead strategy (`07` §3, `49` §5). Docs `50`–`52` (API contract, data model, acceptance runbook) are build-integration references derived from the live `unipaith-backend`/`frontend` code so a builder can wire front and back to a single contract and verify "ready to use" end-to-end.

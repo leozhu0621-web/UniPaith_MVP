@@ -2,7 +2,7 @@
 
 > Every asset a builder needs, with text-based assets (SVG, CSS) embedded verbatim and binary assets cataloged with path + usage + recommended destination. Goal: the spec set is self-contained — you should rarely need to open the original files.
 >
-> Status: **draft v1.0** · 2026-05-29 · Companion to `01-brand-tokens.md` (tokens) and `05-architecture.md` (diagrams).
+> Status: **draft v1.0** · 2026-05-29 · Companion to `01-brand-tokens.md` (tokens) and `06-architecture.md` (diagrams).
 
 ---
 
@@ -93,11 +93,11 @@ Business-card template + print-ready PDFs (Staples spec). Not app-relevant; refe
 ### Architecture diagrams (`Misc./`)
 | File | Use |
 |---|---|
-| `UniPaith-Architecture-Flow.png` | Authoritative module-by-module flow (9 stages × student/shared/institution). Transcribed in `05-architecture.md` §1. |
+| `UniPaith-Architecture-Flow.png` | Authoritative module-by-module flow (9 stages × student/shared/institution). Transcribed in `06-architecture.md` §1. |
 | `UniPaith-Architecture-Flow_1/_2/_3.png` | Zoom variants of the same flow. |
 
 ### Prompt Map (`Misc./Prompt Map.pdf`)
-2-page xmind. Page 1 "Incoming Info" (input tree), Page 2 "Outgoing Info" (output tree). Transcribed in `05-architecture.md` §3. Source for `40-prompt-library-schema.md`.
+2-page xmind. Page 1 "Incoming Info" (input tree), Page 2 "Outgoing Info" (output tree). Transcribed in `06-architecture.md` §3. Source for `42-prompt-library-schema.md`.
 
 ### QR code (`SV_bm8302fmH5xoV9A-qrcode.png`)
 Survey QR (links to the OutReach Survey — Qualtrics `SV_bm8302fmH5xoV9A`). Marketing/research, not app.
@@ -111,18 +111,18 @@ Which source doc is authoritative for which spec:
 | Source | Authoritative for | Spec consumer |
 |---|---|---|
 | `Master Paper.docx` | Vision, business model, feature definitions, Appendix A (typed Prompt Library I/O) | all feature specs |
-| `Business Methodology.docx` | Operational schema precision, AI guardrails, intake thresholds, governance | `40`, `41`, `42`, `43` |
-| `Misc./Prompt Library.docx` | **Deepest INPUT enumeration** — behavioral prompts, story bank, decision-psych, working-style, per-major tracks (untyped) | `40` §3 |
-| Master Paper Appendix A | **Typed I/O** — Categorical/Numeric/Text tags + the OUTPUT half | `40` §3–§4 |
-| `Misc./Feature List V1.docx` | Full feature checklist incl. net-new scope | `92-feature-backlog.md` |
-| `Misc./Roadmap.docx` | Founder's intended phasing | `91-build-sequencing.md` |
-| `Competition Analysis.docx` | 18 competitor profiles, moat taxonomy, threat verdicts | `06-product-context.md` |
-| `OutReach Survey.docx` | Market-validated pain points, willingness-to-pay | `06-product-context.md` |
-| `Platform_Presentation.pptx` | Investor narrative, "blockade" thesis | `06-product-context.md` |
+| `Business Methodology.docx` | Operational schema precision, AI guardrails, intake thresholds, governance | `42`, `44`, `45`, `46` |
+| `Misc./Prompt Library.docx` | **Deepest INPUT enumeration** — behavioral prompts, story bank, decision-psych, working-style, per-major tracks (untyped) | `42` §3 |
+| Master Paper Appendix A | **Typed I/O** — Categorical/Numeric/Text tags + the OUTPUT half | `42` §3–§4 |
+| `Misc./Feature List V1.docx` | Full feature checklist incl. net-new scope | `49-feature-backlog.md` |
+| `Misc./Roadmap.docx` | Founder's intended phasing | `48-build-sequencing.md` |
+| `Competition Analysis.docx` | 18 competitor profiles, moat taxonomy, threat verdicts | `07-product-context.md` |
+| `OutReach Survey.docx` | Market-validated pain points, willingness-to-pay | `07-product-context.md` |
+| `Platform_Presentation.pptx` | Investor narrative, "blockade" thesis | `07-product-context.md` |
 | `UniPaith_Brand_Visual_Guide.pdf` | Human-readable brand guide | `01-brand-tokens.md` |
 | `colors_and_type.css` | **Canonical brand tokens** | `01-brand-tokens.md` |
 | `Brand Materials/*.svg` | Logo files | `01` §7, this doc |
-| `Landing_MVP/` | Brand voice, taglines, fairness commitment, design language | `43`, `06` |
+| `Landing_MVP/` | Brand voice, taglines, fairness commitment, design language | `46`, `07` |
 | `White-Paper/UniPaith-Whitepaper.html` | Typeset investor view (assembled) | reference only |
 
 ### Documents that are duplicate / archival (do not re-spec)
@@ -145,7 +145,7 @@ Which source doc is authoritative for which spec:
 
 ## 7. What to do first (asset setup checklist)
 
-Per `91-build-sequencing.md` Phase 1:
+Per `48-build-sequencing.md` Phase 1:
 - [ ] Add Typekit kit `spe3ioy` to `frontend/index.html`; verify domain allowlist.
 - [ ] Copy `wordmark-light.svg` → `frontend/public/wordmark.svg`; `wordmark-dark.svg` → `frontend/public/wordmark-dark.svg`.
 - [ ] Convert `favicon.svg` text→paths; export PNG set @ 16/32/48/64/180/192/512 → `frontend/public/icons/`.

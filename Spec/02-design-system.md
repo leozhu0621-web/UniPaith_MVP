@@ -459,7 +459,7 @@ If a designer wants to deviate from a templated rule, the rule changes here firs
 
 ## 18. Open questions / known gaps
 
-- **Specific component implementations.** The current codebase uses shadcn primitives + custom components in `frontend/src/components/ui/`. A mapping table from each spec component → existing source file should be added once the audit subagent's output is in (`90-current-vs-spec-gap-audit.md`).
+- **Specific component implementations.** The current codebase uses shadcn primitives + custom components in `frontend/src/components/ui/`. A mapping table from each spec component → existing source file should be added once the audit subagent's output is in (`47-current-vs-spec-gap-audit.md`).
 - **Animation tokens.** Not yet specified. Recommend the Landing_MVP convention: cubic-bezier(0.22, 1, 0.36, 1) at 200/300/700 ms for ui/ux/page transitions respectively.
 - **Dark theme audit.** Need to spot-check every component variant on dark to confirm contrast. Specifically the `--primary` on `--secondary` button hover is suspicious.
-- **Mobile spec.** This document defines desktop-first. A mobile breakpoints + touch-target audit doc should be added (proposed as `02b-design-system-mobile.md`).
+- **Mobile spec.** This document defines desktop-first. A mobile breakpoints + touch-target audit doc should be added (proposed as `03-design-system-mobile.md`).
