@@ -109,6 +109,9 @@ def test_each_agent_declares_consent_requirement():
         "matcher",
         # Spec 10 §3 / 45 §12 — type-first search query interpreter.
         "query_interpreter",
+        # Spec 20 §8 — Connect feed ranker + event recommender (Haiku).
+        "connect_ranker",
+        "event_recommender",
     }
     assert set(AGENT_REQUIRES.keys()) == expected_agents
 

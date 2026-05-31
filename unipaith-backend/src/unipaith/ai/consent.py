@@ -77,6 +77,10 @@ AGENT_REQUIRES: dict[str, str | None] = {
     # Spec 10 §3 / 45 §12 — type-first search interpreter (consent ["matching"]).
     # On deny, the SearchService catches ConsentDeniedError → rule-based parser.
     "query_interpreter": "matching",
+    # Spec 20 §8 — Connect feed ranking + event recs. Gated on matching consent;
+    # on deny the agent returns None and the feed falls back to its heuristic.
+    "connect_ranker": "matching",
+    "event_recommender": "matching",
 }
 
 

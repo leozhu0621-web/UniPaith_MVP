@@ -231,6 +231,15 @@ class Conversation(Base):
     )
     subject: Mapped[str | None] = mapped_column(String(500))
     status: Mapped[str | None] = mapped_column(String(20))
+    # Spec 20 §6.3 — 'human' (student↔institution), 'system' (RSVP / event
+    # confirmations), or 'peer' (student↔student). Legacy null rows read 'human'.
+    thread_type: Mapped[str | None] = mapped_column(
+        String(20), default="human", server_default=text("'human'")
+    )
+    # For a peer thread, the OTHER student in the conversation (Spec 20 §6.3).
+    peer_student_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("student_profiles.id", ondelete="SET NULL")
+    )
     started_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

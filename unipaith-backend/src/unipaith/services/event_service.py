@@ -20,8 +20,8 @@ from unipaith.core.exceptions import (
     ForbiddenException,
     NotFoundException,
 )
-from unipaith.models.engagement import StudentCalendar
-from unipaith.models.institution import Event, EventRSVP
+from unipaith.models.engagement import Conversation, Message, StudentCalendar
+from unipaith.models.institution import Event, EventRSVP, Institution
 
 logger = logging.getLogger(__name__)
 
@@ -139,19 +139,15 @@ class EventService:
     # ------------------------------------------------------------------
 
     async def rsvp(self, student_id: UUID, event_id: UUID, user_id: UUID) -> EventRSVP:
-        """
-        RSVP a student to an event.
+        """RSVP a student to an event (Spec 20 §5).
 
-        Checks capacity constraints and duplicate RSVPs.
-        Automatically adds the event to the student's calendar.
+        At capacity the student joins the **waitlist** (no 409). A confirmed
+        RSVP adds a Calendar item (Spec 16). Both confirmed and waitlisted
+        RSVPs post an Inbox confirmation (Spec 17). ``rsvp_count`` tracks only
+        confirmed seats.
         """
         event = await self._get_event(event_id)
 
-        # Check capacity
-        if event.capacity is not None and event.rsvp_count >= event.capacity:
-            raise ConflictException("Event is at full capacity")
-
-        # Check for existing RSVP
         existing = await self.db.execute(
             select(EventRSVP).where(
                 EventRSVP.event_id == event_id,
@@ -162,41 +158,28 @@ class EventService:
             raise ConflictException("Already RSVP'd to this event")
 
         now = datetime.now(UTC)
+        at_capacity = event.capacity is not None and (event.rsvp_count or 0) >= event.capacity
+        rsvp_status = "waitlisted" if at_capacity else "registered"
+
         rsvp = EventRSVP(
             event_id=event_id,
             student_id=student_id,
-            rsvp_status="registered",
+            rsvp_status=rsvp_status,
             registered_at=now,
         )
         self.db.add(rsvp)
 
-        # Increment RSVP count
-        event.rsvp_count = (event.rsvp_count or 0) + 1
+        if rsvp_status == "registered":
+            event.rsvp_count = (event.rsvp_count or 0) + 1
+            self._add_calendar_item(student_id, event, now)
 
-        # Add to student calendar
-        reminder_hours = settings.event_rsvp_reminder_hours
-        reminder_at = event.start_time - timedelta(hours=reminder_hours)
-
-        calendar_entry = StudentCalendar(
-            student_id=student_id,
-            entry_type="event",
-            reference_id=event_id,
-            title=event.event_name,
-            description=event.description,
-            start_time=event.start_time,
-            end_time=event.end_time,
-            reminder_at=reminder_at if reminder_at > now else None,
-        )
-        self.db.add(calendar_entry)
-
+        await self._inbox_confirm(student_id, user_id, event, waitlisted=at_capacity)
         await self.db.flush()
         return rsvp
 
     async def cancel_rsvp(self, student_id: UUID, event_id: UUID) -> None:
-        """
-        Cancel an RSVP and remove the event from the student's calendar.
-        """
-        # Find existing RSVP
+        """Cancel an RSVP, free the calendar item, and promote the next
+        waitlisted student if a confirmed seat opened up (Spec 20 §5)."""
         result = await self.db.execute(
             select(EventRSVP).where(
                 EventRSVP.event_id == event_id,
@@ -207,13 +190,11 @@ class EventService:
         if not rsvp:
             raise NotFoundException("RSVP not found")
 
+        was_registered = rsvp.rsvp_status == "registered"
         await self.db.delete(rsvp)
+        await self.db.flush()
 
-        # Decrement RSVP count
         event = await self._get_event(event_id)
-        event.rsvp_count = max((event.rsvp_count or 0) - 1, 0)
-
-        # Remove from student calendar
         await self.db.execute(
             delete(StudentCalendar).where(
                 StudentCalendar.student_id == student_id,
@@ -222,7 +203,107 @@ class EventService:
             )
         )
 
+        if was_registered:
+            event.rsvp_count = max((event.rsvp_count or 0) - 1, 0)
+            await self._promote_waitlist(event)
+
         await self.db.flush()
+
+    async def _promote_waitlist(self, event: Event) -> None:
+        """Promote the longest-waiting waitlisted student into the freed seat."""
+        if event.capacity is not None and (event.rsvp_count or 0) >= event.capacity:
+            return
+        nxt = await self.db.scalar(
+            select(EventRSVP)
+            .where(EventRSVP.event_id == event.id, EventRSVP.rsvp_status == "waitlisted")
+            .order_by(EventRSVP.registered_at.asc())
+            .limit(1)
+        )
+        if nxt is None:
+            return
+        nxt.rsvp_status = "registered"
+        event.rsvp_count = (event.rsvp_count or 0) + 1
+        self._add_calendar_item(nxt.student_id, event, datetime.now(UTC))
+        await self._inbox_confirm(nxt.student_id, None, event, waitlisted=False, promoted=True)
+
+    def _add_calendar_item(self, student_id: UUID, event: Event, now: datetime) -> None:
+        reminder_at = event.start_time - timedelta(hours=settings.event_rsvp_reminder_hours)
+        self.db.add(
+            StudentCalendar(
+                student_id=student_id,
+                entry_type="event",
+                reference_id=event.id,
+                title=event.event_name,
+                description=event.description,
+                start_time=event.start_time,
+                end_time=event.end_time,
+                location=event.location,
+                meeting_link=event.meeting_link,
+                reminder_at=reminder_at if reminder_at > now else None,
+            )
+        )
+
+    async def _inbox_confirm(
+        self,
+        student_id: UUID,
+        user_id: UUID | None,
+        event: Event,
+        *,
+        waitlisted: bool,
+        promoted: bool = False,
+    ) -> None:
+        """Post an Inbox confirmation (Spec 20 §5 → Spec 17) as a system message
+        in the student's institution thread. Best-effort: never blocks the RSVP."""
+        try:
+            inst = await self.db.get(Institution, event.institution_id)
+            sender_id = inst.admin_user_id if inst else user_id
+            if sender_id is None:
+                return
+            now = datetime.now(UTC)
+            conv = await self.db.scalar(
+                select(Conversation).where(
+                    Conversation.student_id == student_id,
+                    Conversation.institution_id == event.institution_id,
+                    Conversation.thread_type == "system",
+                )
+            )
+            if conv is None:
+                conv = Conversation(
+                    student_id=student_id,
+                    institution_id=event.institution_id,
+                    subject="Event updates",
+                    status="active",
+                    thread_type="system",
+                    started_at=now,
+                    last_message_at=now,
+                )
+                self.db.add(conv)
+                await self.db.flush()
+
+            when = event.start_time.strftime("%b %-d, %-I:%M %p")
+            if waitlisted:
+                body = (
+                    f"You've joined the waitlist for {event.event_name}. "
+                    "We'll notify you if a spot opens up."
+                )
+            elif promoted:
+                body = f"A spot opened up — you're now confirmed for {event.event_name} on {when}."
+            else:
+                body = f"You're confirmed for {event.event_name} on {when}."
+
+            self.db.add(
+                Message(
+                    conversation_id=conv.id,
+                    sender_id=sender_id,
+                    sender_type="system",
+                    message_body=body,
+                    sent_at=now,
+                )
+            )
+            conv.last_message_at = now
+            await self.db.flush()
+        except Exception as exc:  # noqa: BLE001 — confirmation is best-effort
+            logger.warning("RSVP inbox confirmation failed (non-fatal): %s", exc)
 
     async def list_student_rsvps(self, student_id: UUID) -> list[EventRSVP]:
         """List all RSVPs for a student, with event details loaded."""

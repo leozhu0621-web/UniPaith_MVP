@@ -94,6 +94,7 @@ from unipaith.models.ml_loop import (
     TrainingRun,
 )
 from unipaith.models.needs import StudentNeed
+from unipaith.models.peer import PeerConnection, PeerProfile, PeerReport
 from unipaith.models.pipeline import (
     PipelineConfig,
     PipelineStageSnapshot,
@@ -201,6 +202,9 @@ __all__ = [
     "EnrollmentRecord",
     "StudentEngagementSignal",
     "InstitutionFollow",
+    "PeerProfile",
+    "PeerConnection",
+    "PeerReport",
     "SavedList",
     "SavedListItem",
     "StudentCompareItem",

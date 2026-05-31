@@ -343,6 +343,8 @@ class Event(Base):
     event_type: Mapped[str | None] = mapped_column(String(30))
     description: Mapped[str | None] = mapped_column(Text)
     location: Mapped[str | None] = mapped_column(String(500))
+    # Spec 20 §5 — revealed to RSVP'd students near start time.
+    meeting_link: Mapped[str | None] = mapped_column(String(1000))
     start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     end_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     capacity: Mapped[int | None] = mapped_column(Integer)

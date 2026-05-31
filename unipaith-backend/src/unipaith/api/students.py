@@ -1780,6 +1780,7 @@ async def follow_institution(
 
     from unipaith.models.follow import InstitutionFollow
     from unipaith.models.institution import Institution
+    from unipaith.services.follow_service import FollowService
 
     profile = await StudentService(db)._get_student_profile(user.id)
 
@@ -1787,15 +1788,10 @@ async def follow_institution(
     if inst is None:
         raise NotFoundException("Institution not found")
 
-    existing = await db.execute(
-        select(InstitutionFollow).where(
-            InstitutionFollow.student_id == profile.id,
-            InstitutionFollow.institution_id == institution_id,
-        )
-    )
-    if existing.scalar_one_or_none() is None:
-        db.add(InstitutionFollow(student_id=profile.id, institution_id=institution_id))
-        await db.commit()
+    # Explicit follow from a school page (Spec 20 §2). Idempotent + upgrades
+    # source if a stronger reason already exists.
+    await FollowService(db).ensure_follow(profile.id, institution_id, source="explicit")
+    await db.commit()
 
     count = await db.scalar(
         select(sa_func.count())
@@ -1811,18 +1807,15 @@ async def unfollow_institution(
     user: User = Depends(require_student),
     db: AsyncSession = Depends(get_db),
 ):
-    """Unfollow an institution. Idempotent — unfollowing when not following is a no-op."""
-    from sqlalchemy import delete as sa_delete
+    """Unfollow an institution. Idempotent when not following.
 
-    from unipaith.models.follow import InstitutionFollow
+    Blocked while an active application exists at the institution (Spec 20 §2)
+    — FollowService raises a 400 explaining why.
+    """
+    from unipaith.services.follow_service import FollowService
 
     profile = await StudentService(db)._get_student_profile(user.id)
-    await db.execute(
-        sa_delete(InstitutionFollow).where(
-            InstitutionFollow.student_id == profile.id,
-            InstitutionFollow.institution_id == institution_id,
-        )
-    )
+    await FollowService(db).unfollow(profile.id, institution_id)
     await db.commit()
 
 

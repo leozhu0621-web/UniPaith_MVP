@@ -274,6 +274,12 @@ class SavedListService:
         )
         self.db.add(item)
         await self.db.flush()
+
+        # Spec 20 §2 — saving a program auto-follows its institution so its
+        # updates appear in the Connect feed. Best-effort; never blocks the save.
+        from unipaith.services.follow_service import FollowService
+
+        await FollowService(self.db).auto_follow_for_program(student_id, program_id, source="saved")
         return item
 
     async def unsave_program(self, student_id: UUID, program_id: UUID) -> None:
