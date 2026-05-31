@@ -9,7 +9,7 @@
  *
  * Collapsible so power users who skim straight to programs can hide it.
  */
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -31,11 +31,16 @@ import type { StudentGoal, StudentStrategy } from '../../../types'
 
 const COLLAPSED_KEY = 'unipaith.match-strategy-collapsed'
 
-export default function StrategyView() {
+export default function StrategyView({ forceExpanded = false }: { forceExpanded?: boolean }) {
   const qc = useQueryClient()
-  const [collapsed, setCollapsed] = useState(
-    () => typeof window !== 'undefined' && window.localStorage.getItem(COLLAPSED_KEY) === '1',
-  )
+  const [collapsed, setCollapsed] = useState(() => {
+    if (forceExpanded) return false
+    return typeof window !== 'undefined' && window.localStorage.getItem(COLLAPSED_KEY) === '1'
+  })
+
+  useEffect(() => {
+    if (forceExpanded) setCollapsed(false)
+  }, [forceExpanded])
 
   const { data: strategy, isLoading: strategyLoading } = useQuery<StudentStrategy | null>({
     queryKey: ['strategy', 'active'],

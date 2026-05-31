@@ -16,6 +16,7 @@ from unipaith.schemas.needs import (
     NeedResponse,
     UpdateNeedRequest,
 )
+from unipaith.services.match_service import invalidate_matches_for_user
 from unipaith.services.needs_service import NeedsService
 
 router = APIRouter(prefix="/students/me/needs", tags=["needs"])
@@ -42,6 +43,7 @@ async def create_need(
     db: AsyncSession = Depends(get_db),
 ):
     need = await _svc(db).create_need(user.id, body)
+    await invalidate_matches_for_user(db, user.id)  # spec 06 §5.1
     return NeedResponse.model_validate(need)
 
 
@@ -53,6 +55,7 @@ async def update_need(
     db: AsyncSession = Depends(get_db),
 ):
     need = await _svc(db).update_need(user.id, need_id, body)
+    await invalidate_matches_for_user(db, user.id)  # spec 06 §5.1
     return NeedResponse.model_validate(need)
 
 
@@ -63,3 +66,4 @@ async def delete_need(
     db: AsyncSession = Depends(get_db),
 ):
     await _svc(db).delete_need(user.id, need_id)
+    await invalidate_matches_for_user(db, user.id)  # spec 06 §5.1

@@ -50,7 +50,13 @@ class ExplainMatchResponse(BaseModel):
     is generated on demand — Phase A synthesizes a deterministic 3-line
     explanation from the breakdown columns; Plan 2 will replace with an LLM
     call. Cached on the row, so subsequent reads via /me/matches return it
-    inline."""
+    inline.
+
+    Spec 06 §3 / §5.5 — this is the STUDENT (redacted) projection of the
+    rationale. The breakdowns and citations carried here are already passed
+    through `ai.rationale_redaction.project_for_student`, so institution-only
+    comparative signals never reach this surface. `redacted=True` tells the
+    UI it is showing the safe view."""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -58,6 +64,37 @@ class ExplainMatchResponse(BaseModel):
     rationale_text: str
     rationale_generated_at: datetime
     is_stub: bool = True
+    # Redacted (student-safe) signal views — single source the popover renders.
+    fitness_breakdown: dict | None = None
+    confidence_breakdown: dict | None = None
+    cited_student_fields: list[str] = []
+    cited_program_fields: list[str] = []
+    redacted: bool = True
+
+
+class InstitutionMatchRationaleResponse(BaseModel):
+    """Spec 06 §3 / §5.5 + spec 32 §6 — the INSTITUTION (full, evidence-linked)
+    projection of the same match rationale a student sees redacted.
+
+    Served only to `institution_admin` for applications to that institution's
+    programs. Nothing is withheld: every citation and every comparative /
+    internal matching signal is present so a reviewer has the full audit
+    trail. `redacted` is always False here."""
+
+    application_id: UUID
+    student_id: UUID
+    program_id: UUID
+    available: bool = True
+    rationale_text: str = ""
+    cited_student_fields: list[str] = []
+    cited_program_fields: list[str] = []
+    fitness_breakdown: dict = {}
+    confidence_breakdown: dict = {}
+    fitness_score: float | None = None
+    confidence_score: float | None = None
+    grounded: bool = True
+    redacted: bool = False
+    is_stub: bool = False
 
 
 class MatchListResponse(BaseModel):

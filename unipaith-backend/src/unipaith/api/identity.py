@@ -15,6 +15,7 @@ from unipaith.dependencies import require_student
 from unipaith.models.user import User
 from unipaith.schemas.identity import IdentityResponse, UpsertIdentityRequest
 from unipaith.services.identity_service import IdentityService
+from unipaith.services.match_service import invalidate_matches_for_user
 
 router = APIRouter(prefix="/students/me/identity", tags=["identity"])
 
@@ -39,6 +40,7 @@ async def upsert_identity(
     db: AsyncSession = Depends(get_db),
 ):
     identity = await _svc(db).upsert(user.id, body)
+    await invalidate_matches_for_user(db, user.id)  # spec 06 §5.1
     return IdentityResponse.model_validate(identity)
 
 

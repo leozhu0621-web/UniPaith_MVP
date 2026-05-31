@@ -10,6 +10,7 @@ import AuthLayout from './components/layout/AuthLayout'
 import StudentLayout from './components/layout/StudentLayout'
 import InstitutionLayout from './components/layout/InstitutionLayout'
 import RequireAuth from './components/layout/RequireAuth'
+import PublicLayout from './components/layout/PublicLayout'
 
 // Auth pages
 import LoginPage from './pages/auth/LoginPage'
@@ -20,6 +21,8 @@ import AuthCallbackPage from './pages/auth/AuthCallbackPage'
 import ProgramBrowsePage from './pages/public/ProgramBrowsePage'
 import InstitutionPage from './pages/public/InstitutionPage'
 import ProgramDetailPage from './pages/public/ProgramDetailPage'
+import PricingPage from './pages/public/PricingPage'
+import AboutPage from './pages/public/AboutPage'
 
 // Student pages — 4 main + profile/saved/settings from avatar
 // Discover (Stage 1) is the new student home — replaces CounselorHomePage
@@ -89,14 +92,17 @@ const router = createBrowserRouter([
   { path: '/', element: <Navigate to="/login" replace />, errorElement: <RouteErrorPage /> },
 
   // Public program browsing (linked from marketing-site CTAs)
-  { path: '/browse', element: <ProgramBrowsePage />, errorElement: <RouteErrorPage /> },
-  { path: '/school/:institutionId', element: <InstitutionPage />, errorElement: <RouteErrorPage /> },
-  { path: '/program/:programId', element: <ProgramDetailPage />, errorElement: <RouteErrorPage /> },
+  { path: '/browse', element: <PublicLayout><ProgramBrowsePage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/school/:institutionId', element: <PublicLayout><InstitutionPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/program/:programId', element: <PublicLayout><ProgramDetailPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  // Spec 07 — public monetization + positioning surfaces.
+  { path: '/pricing', element: <PublicLayout><PricingPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/about', element: <PublicLayout><AboutPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
 
   { path: '/login', element: <AuthLayout><LoginPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
   { path: '/signup', element: <AuthLayout><SignupPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
   { path: '/auth/callback', element: <AuthCallbackPage />, errorElement: <RouteErrorPage /> },
-  { path: '/onboarding', element: <OnboardingPage />, errorElement: <RouteErrorPage /> },
+  { path: '/onboarding', element: <RequireAuth role="student"><OnboardingPage /></RequireAuth>, errorElement: <RouteErrorPage /> },
 
   // Student routes
   {
@@ -132,7 +138,7 @@ const router = createBrowserRouter([
       { path: 'messages', element: <Navigate to="/s/manage?tab=messages" replace /> },
       { path: 'messages/:convId', element: <LegacyMessageRedirect /> },
       { path: 'financial-aid', element: <Navigate to="/s/profile?tab=financial" replace /> },
-      { path: 'recommendations', element: <Navigate to="/s/profile?tab=preparation" replace /> },
+      { path: 'recommendations', element: <Navigate to="/s/profile?tab=preparation&section=recommenders" replace /> },
       // Phase D — Workshops moved from Profile to Apply > Workshops (feedback-only).
       { path: 'resume-workshop', element: <Navigate to="/s/manage?tab=workshops" replace /> },
       { path: 'essay-workshop', element: <Navigate to="/s/manage?tab=workshops" replace /> },

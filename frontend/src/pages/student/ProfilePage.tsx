@@ -9,7 +9,9 @@ import { useQuery } from '@tanstack/react-query'
 
 import { getProfileOverview } from '../../api/students'
 import { SkeletonCard } from '../../components/ui/Skeleton'
+import usePageTitle from '../../hooks/usePageTitle'
 import type { ProfileOverview } from '../../types'
+import { normalizeProfileTab } from '../../utils/information-architecture'
 import CompletionRing from './profile/CompletionRing'
 import { relativeTime } from './profile/_shared'
 
@@ -45,9 +47,10 @@ const TABS: { key: string; label: string; Component: ComponentType }[] = [
 
 export default function ProfilePage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const tabParam = searchParams.get('tab') || 'overview'
-  const active = TABS.find(t => t.key === tabParam) ?? TABS[0]
+  // Spec/04 §4.6 — normalize legacy aliases (e.g. ?tab=recommenders → preparation).
+  const active = TABS.find(t => t.key === normalizeProfileTab(searchParams.get('tab'))) ?? TABS[0]
   const ActiveComponent = active.Component
+  usePageTitle('Your record')
 
   const { data: overview } = useQuery<ProfileOverview>({ queryKey: ['profile-overview'], queryFn: getProfileOverview })
   const overallPct = overview?.completion?.overall_pct ?? 0

@@ -199,6 +199,11 @@ Agent = Literal[
     "workshop_coach",
     "workshop_judge",
     "embedding",
+    # Spec 06 §2 — institution review summary (Opus) + essay authenticity
+    # (Haiku), and the L3 ML scorer's audit-ledger agent name.
+    "review_summarizer",
+    "authenticity_risk",
+    "matcher",
 ]
 
 

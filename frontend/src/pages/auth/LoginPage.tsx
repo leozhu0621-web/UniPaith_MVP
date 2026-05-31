@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { postLoginDestination } from '../../utils/auth-redirect'
+import usePageTitle from '../../hooks/usePageTitle'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -16,7 +18,9 @@ type FormData = z.infer<typeof schema>
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const login = useAuthStore(s => s.login)
+  usePageTitle('Log in')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -30,8 +34,7 @@ export default function LoginPage() {
     try {
       await login(data.email, data.password)
       const user = useAuthStore.getState().user
-      const dest = user?.role === 'student' ? '/s/dashboard' : '/i/dashboard'
-      navigate(dest)
+      navigate(postLoginDestination(user?.role, searchParams))
     } catch (err: any) {
       setError(err.message || 'Login failed')
     } finally {
@@ -72,6 +75,12 @@ export default function LoginPage() {
         Don't have an account?{' '}
         <Link to="/signup" className="text-brand-slate-600 font-medium hover:underline">
           Sign up
+        </Link>
+      </p>
+
+      <p className="text-center text-sm text-gray-400">
+        <Link to="/pricing" className="hover:underline">
+          View plans and pricing
         </Link>
       </p>
     </div>

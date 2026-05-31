@@ -198,8 +198,12 @@ class InstitutionService:
         update_data = data.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(program, key, value)
+        if update_data:
+            # Spec 06 §5.4 — bump the program version so the rationale cache
+            # (keyed by program_version) invalidates on next read. Previously
+            # the column didn't exist and this was a dead no-op.
+            program.feature_version = int(getattr(program, "feature_version", 1) or 1) + 1
         await self.db.flush()
-        # AI feature extraction skipped (engine being rebuilt)
         await self.db.refresh(program)
         return program
 
