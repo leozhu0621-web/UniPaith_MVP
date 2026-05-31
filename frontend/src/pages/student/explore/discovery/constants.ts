@@ -53,6 +53,13 @@ export const SELECTIVITY_OPTIONS: { value: string; label: string }[] = [
   { value: 'very_high', label: 'Highly selective' },
 ]
 
+/** Spec 10 §5 — campus setting facet. */
+export const CAMPUS_SETTING_OPTIONS: { value: string; label: string }[] = [
+  { value: 'urban', label: 'Urban' },
+  { value: 'suburban', label: 'Suburban' },
+  { value: 'rural', label: 'Rural' },
+]
+
 export const SEASON_OPTIONS: { value: string; label: string }[] = [
   { value: 'fall', label: 'Fall' },
   { value: 'spring', label: 'Spring' },

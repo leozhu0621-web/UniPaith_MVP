@@ -157,6 +157,21 @@ class SavedListService:
         for prog in programs:
             inst: Institution = prog.institution
             match = match_map.get(prog.id)
+            # Spec 10 §8 — program-level outcomes feed the "outcomes + employer
+            # signals" comparison dimension. Match displayed salary coalescing.
+            outcomes = prog.outcomes_data or {}
+            salary = next(
+                (
+                    outcomes[k]
+                    for k in ("median_salary", "earnings_4yr_median", "earnings_1yr_median")
+                    if isinstance(outcomes.get(k), (int, float))
+                ),
+                None,
+            )
+            employment = outcomes.get("employment_rate")
+            employment = employment if isinstance(employment, (int, float)) else None
+            payback = outcomes.get("payback_months")
+            payback = payback if isinstance(payback, (int, float)) else None
             comparison_data.append(
                 {
                     "id": str(prog.id),
@@ -165,6 +180,7 @@ class SavedListService:
                     "institution_name": inst.name if inst else None,
                     "institution_country": inst.country if inst else None,
                     "institution_city": inst.city if inst else None,
+                    "campus_setting": prog.campus_setting,
                     "degree_type": prog.degree_type,
                     "department": prog.department,
                     "duration_months": prog.duration_months,
@@ -177,6 +193,16 @@ class SavedListService:
                     if prog.application_deadline
                     else None,
                     "requirements": prog.requirements,
+                    "median_salary": salary,
+                    "employment_rate": employment,
+                    "payback_months": payback,
+                    # Dual-score (Spec 09 §4 / G-S2) — preferred over legacy match_score.
+                    "fitness_score": float(match.fitness_score)
+                    if match and match.fitness_score is not None
+                    else None,
+                    "confidence_score": float(match.confidence_score)
+                    if match and match.confidence_score is not None
+                    else None,
                     "match_score": float(match.match_score)
                     if match and match.match_score
                     else None,
