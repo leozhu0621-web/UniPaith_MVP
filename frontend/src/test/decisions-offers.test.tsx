@@ -4,6 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
+import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import OfferPanel from '../pages/student/apply/offer/OfferPanel'
 import DecisionComparison from '../pages/student/apply/offer/DecisionComparison'
@@ -21,7 +22,7 @@ vi.mock('../api/offers', () => ({
         decision_state: 'accepted',
         cost: { tuition: 48000, scholarship: 20000, net_cost: 76000, currency: 'USD' },
         fit: { fitness: 0.82, confidence: 0.71 },
-        outcomes: { median_salary: 120000 },
+        outcomes: { median_salary: 120000, placement_rate: 0.92 },
         location: 'Boston, US',
         response_deadline: '2027-04-15',
       },
@@ -33,13 +34,14 @@ vi.mock('../api/offers', () => ({
         decision_state: 'accepted',
         cost: { tuition: 40000, scholarship: 0, net_cost: 80000, currency: 'USD' },
         fit: { fitness: 0.75, confidence: 0.65 },
-        outcomes: { median_salary: 110000 },
+        outcomes: { median_salary: 110000, placement_rate: 0.88 },
         location: 'Boston, US',
         response_deadline: '2027-05-01',
       },
     ],
     indicators: { most_affordable: 'a1', best_fit: 'a1', best_value: 'a1' },
     must_have_constraints: [{ need: 'location', signal: 'East Coast' }],
+    advisor_summary: 'MS CS has the lowest net cost ($76,000). MS CS scores highest on fit (82%).',
   }),
   respondToOfferV2: vi.fn(),
 }))
@@ -80,7 +82,11 @@ const baseApp = (overrides: Partial<Application> = {}): Application =>
 
 function wrap(ui: ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>)
+  return render(
+    <MemoryRouter>
+      <QueryClientProvider client={client}>{ui}</QueryClientProvider>
+    </MemoryRouter>,
+  )
 }
 
 describe('Spec 18 · OfferPanel', () => {
@@ -133,6 +139,7 @@ describe('Spec 18 · DecisionComparison', () => {
     expect(await screen.findByText('Net cost')).toBeTruthy()
     expect(await screen.findByText('Fitness')).toBeTruthy()
     expect(await screen.findByText('Most affordable')).toBeTruthy()
+    expect(await screen.findByText(/lowest net cost/i)).toBeTruthy()
     expect(await screen.findByText(/Your must-haves/i)).toBeTruthy()
   })
 })

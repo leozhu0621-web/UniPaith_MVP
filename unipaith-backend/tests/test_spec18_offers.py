@@ -181,6 +181,9 @@ async def test_offers_comparison_renders_dimensions_and_indicators(
         assert item["location"] == "Boston, US"
     # most-affordable indicator points at the cheaper net cost (§5)
     assert data["indicators"]["most_affordable"] == app0
+    # rule-based advisor copy when 2+ offers (§9)
+    assert data.get("advisor_summary")
+    assert "net cost" in data["advisor_summary"].lower() or "fit" in data["advisor_summary"].lower()
 
 
 @pytest.mark.asyncio

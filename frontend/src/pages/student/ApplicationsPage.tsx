@@ -11,7 +11,7 @@ import { formatDate } from '../../utils/format'
 import { STATUS_COLORS } from '../../utils/constants'
 import { FileText, Star, ChevronRight, CalendarClock, PartyPopper, ArrowRight, Mail } from 'lucide-react'
 import DecisionComparison from './apply/offer/DecisionComparison'
-import { deadlineTone, DEADLINE_TONE_CLASS } from './apply/offer/offerFormat'
+import { deadlineTone, DEADLINE_TONE_CLASS, hasPendingOfferResponse } from './apply/offer/offerFormat'
 import type { Application } from '../../types'
 
 type Bucket =
@@ -78,15 +78,14 @@ function nextAction(app: Application): string {
     case 'under_review':
       return app.status === 'interview' ? 'Prepare for your interview' : 'Under review'
     case 'decided':
-      if (
-        app.offer &&
-        !app.offer.student_response &&
-        app.student_decision !== 'accepted_by_student' &&
-        app.student_decision !== 'declined_by_student'
-      )
-        return 'Respond to your offer'
+      if (hasPendingOfferResponse(app)) return 'Respond to your offer'
       return `Decision: ${app.decision ?? app.decision_state ?? 'received'}`
   }
+}
+
+function appHref(app: Application): string {
+  if (hasPendingOfferResponse(app) || app.offer) return `/s/applications/${app.id}?tab=offer`
+  return `/s/applications/${app.id}`
 }
 
 /** Priority score for the ★ Next actions rail — higher = more urgent. */
@@ -96,12 +95,7 @@ function actionScore(app: Application): number {
   const offerDays = daysUntil(app.offer?.response_deadline)
   let score = 0
   if (b === 'ready') score += 100
-  if (
-    app.offer &&
-    !app.offer.student_response &&
-    app.student_decision !== 'accepted_by_student' &&
-    app.student_decision !== 'declined_by_student'
-  ) {
+  if (hasPendingOfferResponse(app)) {
     score += 95
     if (offerDays != null && offerDays >= 0 && offerDays <= 14) score += 40 - offerDays
   } else if (b === 'decided' && app.decision === 'admitted' && app.offer?.status !== 'accepted')
@@ -312,7 +306,7 @@ export default function ApplicationsPage() {
               return (
                 <button
                   key={a.id}
-                  onClick={() => navigate(`/s/applications/${a.id}`)}
+                  onClick={() => navigate(appHref(a))}
                   className="w-full flex items-center gap-2 text-left text-sm hover:bg-student-mist rounded-lg px-2 py-1.5"
                 >
                   <Star size={14} className="text-student flex-shrink-0" fill="currentColor" />
@@ -384,15 +378,11 @@ export default function ApplicationsPage() {
             const offerDays = daysUntil(app.offer?.response_deadline)
             const offerTone = deadlineTone(offerDays)
             const isDraft = app.status === 'draft'
-            const pendingOffer =
-              app.offer &&
-              !app.offer.student_response &&
-              app.student_decision !== 'accepted_by_student' &&
-              app.student_decision !== 'declined_by_student'
+            const pendingOffer = hasPendingOfferResponse(app)
             return (
               <Card
                 key={app.id}
-                onClick={() => navigate(`/s/applications/${app.id}`)}
+                onClick={() => navigate(appHref(app))}
                 className="p-4 hover:shadow-sm transition-shadow cursor-pointer"
               >
                 <div className="flex justify-between items-start gap-3">

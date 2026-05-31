@@ -91,6 +91,7 @@ class OfferLetterResponse(BaseModel):
     start_term_year: int | None = None
     next_step_actions: list | None = None
     plain_language_brief: dict | None = None
+    generated_letter_url: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -210,3 +211,4 @@ class OffersComparisonResponse(BaseModel):
     indicators: dict
     must_have_constraints: list[dict]
     count: int
+    advisor_summary: str | None = None

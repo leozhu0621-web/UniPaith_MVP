@@ -14,11 +14,12 @@ import {
   DEADLINE_TONE_CLASS,
   formatTermDate,
   OFFER_TYPE_LABEL,
+  briefSummaryParts,
 } from './offerFormat'
 import RecordExternalOfferModal from './RecordExternalOfferModal'
 import AcceptOfferModal from './AcceptOfferModal'
 import DecisionComparison from './DecisionComparison'
-import { Star, ArrowRight, Inbox, Clock } from 'lucide-react'
+import { Star, ArrowRight, Inbox, Clock, FileText, AlertTriangle } from 'lucide-react'
 
 /** Derive key terms / next steps from the offer when the structured brief is
  * absent (flag off + uncached), so the panel always has content. */
@@ -35,7 +36,24 @@ function deriveKeyTerms(app: Application): OfferKeyTerm[] {
   if (total) terms.push({ label: 'Total cost estimate', value: money(total, cur) || '' })
   if (o.start_term_season && o.start_term_year)
     terms.push({ label: 'Start term', value: `${o.start_term_season} ${o.start_term_year}` })
+  if (o.conditions) {
+    const cond =
+      typeof o.conditions === 'object' && o.conditions !== null && 'summary' in o.conditions
+        ? String((o.conditions as { summary?: string }).summary || '')
+        : typeof o.conditions === 'string'
+          ? o.conditions
+          : ''
+    if (cond) terms.push({ label: 'Conditions', value: cond })
+  }
   return terms
+}
+
+function deriveNextSteps(app: Application): OfferNextStep[] {
+  const o = app.offer
+  if (!o?.next_step_actions?.length) return []
+  return o.next_step_actions
+    .filter(a => a?.action)
+    .map(a => ({ action: a.action, by_date: a.by_date ?? null }))
 }
 
 export default function OfferPanel({ application }: { application: Application }) {
@@ -99,7 +117,8 @@ export default function OfferPanel({ application }: { application: Application }
   const brief = offer.plain_language_brief
   const summary = brief?.summary || offer.brief
   const keyTerms: OfferKeyTerm[] = brief?.key_terms?.length ? brief.key_terms : deriveKeyTerms(application)
-  const nextSteps: OfferNextStep[] = brief?.next_steps ?? []
+  const nextSteps: OfferNextStep[] =
+    brief?.next_steps?.length ? brief.next_steps : deriveNextSteps(application)
   const respDays = daysUntil(offer.response_deadline)
   const tone = deadlineTone(respDays)
 
@@ -127,7 +146,13 @@ export default function OfferPanel({ application }: { application: Application }
           )}
         </p>
 
-        {/* Deadline escalation banner (spec 18 §8) */}
+        {/* Deadline escalation (spec 18 §8) */}
+        {!respondedState && tone === 'warning' && respDays != null && respDays >= 0 && (
+          <div className="flex items-center gap-2 rounded-lg bg-warning-soft px-3 py-2 mb-4 text-sm text-warning">
+            <AlertTriangle size={14} />
+            Response due in {respDays} day{respDays !== 1 ? 's' : ''} — review terms before you decide.
+          </div>
+        )}
         {!respondedState && tone === 'error' && respDays != null && respDays >= 0 && (
           <div className="flex items-center gap-2 rounded-lg bg-error-soft px-3 py-2 mb-4 text-sm text-destructive">
             <Clock size={14} />
@@ -143,8 +168,30 @@ export default function OfferPanel({ application }: { application: Application }
             <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-student-text mb-1.5">
               Plain-language brief
             </p>
-            <p className="text-base leading-relaxed text-student-ink">{summary}</p>
+            <p className="text-base leading-relaxed text-student-ink">
+              {briefSummaryParts(summary).map((part, i) =>
+                part.bold ? (
+                  <strong key={i} className="font-semibold">
+                    {part.text}
+                  </strong>
+                ) : (
+                  <span key={i}>{part.text}</span>
+                ),
+              )}
+            </p>
           </div>
+        )}
+
+        {offer.generated_letter_url && (
+          <a
+            href={offer.generated_letter_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm text-cobalt font-medium hover:underline mb-5"
+          >
+            <FileText size={14} />
+            View offer letter
+          </a>
         )}
 
         {/* Key terms */}

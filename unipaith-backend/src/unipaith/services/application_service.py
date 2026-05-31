@@ -79,6 +79,88 @@ def _comparison_indicators(offers: list[dict]) -> dict:
     }
 
 
+def _outcomes_from_program(program: Program | None) -> dict:
+    """Pull salary/placement bands from program.outcomes_data (spec 18 §5)."""
+    if program is None or not program.outcomes_data:
+        return {"median_salary": None, "placement_rate": None}
+    data = program.outcomes_data
+    if isinstance(data, str):
+        try:
+            import json as _json
+
+            data = _json.loads(data)
+        except (ValueError, TypeError):
+            return {"median_salary": None, "placement_rate": None}
+    if not isinstance(data, dict):
+        return {"median_salary": None, "placement_rate": None}
+
+    def _int(*keys: str) -> int | None:
+        for key in keys:
+            val = data.get(key)
+            if val is None:
+                continue
+            try:
+                return int(float(val))
+            except (ValueError, TypeError):
+                continue
+        return None
+
+    def _rate(*keys: str) -> float | None:
+        for key in keys:
+            val = data.get(key)
+            if val is None:
+                continue
+            try:
+                f = float(val)
+                return f / 100 if f > 1 else f
+            except (ValueError, TypeError):
+                continue
+        return None
+
+    return {
+        "median_salary": _int("median_salary", "earnings_4yr_median", "earnings_1yr_median"),
+        "placement_rate": _rate("employment_rate", "placement_rate", "grad_employment_rate"),
+    }
+
+
+def _comparison_advisor_summary(offers: list[dict], indicators: dict) -> str | None:
+    """Rule-based DecisionComparisonAdvisor (spec 18 §9) — surfaces tradeoffs."""
+    if len(offers) < 2:
+        return None
+
+    by_id = {o["application_id"]: o for o in offers}
+    parts: list[str] = []
+
+    aff_id = indicators.get("most_affordable")
+    if aff_id and aff_id in by_id:
+        o = by_id[aff_id]
+        net = o["cost"]["net_cost"]
+        label = o["program_name"] or "One offer"
+        if net is not None:
+            parts.append(f"{label} has the lowest net cost (${net:,}).")
+
+    fit_id = indicators.get("best_fit")
+    if fit_id and fit_id in by_id:
+        o = by_id[fit_id]
+        fit = o["fit"]["fitness"]
+        label = o["program_name"] or "One offer"
+        if fit is not None:
+            parts.append(f"{label} scores highest on fit ({int(round(fit * 100))}%).")
+
+    soonest = sorted(
+        (o for o in offers if o.get("response_deadline")),
+        key=lambda o: o["response_deadline"],
+    )
+    if soonest:
+        o = soonest[0]
+        label = o["program_name"] or "An offer"
+        parts.append(f"{label} has the earliest response deadline.")
+
+    if not parts:
+        return "Compare cost, fit, and deadlines side by side before you decide."
+    return " ".join(parts)
+
+
 class ApplicationService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -519,6 +601,8 @@ class ApplicationService:
         self.db.add(offer)
         await self.db.flush()
         program = await self.db.get(Program, app.program_id)
+        if program is not None:
+            await self._attach_institution_names([app])
         offer.plain_language_brief = await self.generate_offer_brief(offer, program)
         offer.brief = (offer.plain_language_brief or {}).get("summary") or self._build_offer_brief(
             offer, program
@@ -747,7 +831,7 @@ class ApplicationService:
                         if match["confidence"] is not None
                         else None,
                     },
-                    "outcomes": {"median_salary": None, "placement_rate": None},
+                    "outcomes": _outcomes_from_program(program),
                     "location": _program_location(program),
                     "response_deadline": offer.response_deadline.isoformat()
                     if offer.response_deadline
@@ -756,11 +840,13 @@ class ApplicationService:
                 }
             )
 
+        indicators = _comparison_indicators(offers_data)
         return {
             "offers": offers_data,
-            "indicators": _comparison_indicators(offers_data),
+            "indicators": indicators,
             "must_have_constraints": must_haves,
             "count": len(offers_data),
+            "advisor_summary": _comparison_advisor_summary(offers_data, indicators),
         }
 
     async def _latest_match(self, student_id: UUID, program_id: UUID) -> dict:
@@ -786,16 +872,41 @@ class ApplicationService:
             from unipaith.services.calendar_service import CalendarService
 
             now = datetime.now(UTC)
+            milestones: list[tuple[str, datetime]] = []
+            seen_titles: set[str] = set()
+
+            for action in offer.next_step_actions or []:
+                if not isinstance(action, dict) or not action.get("action"):
+                    continue
+                title = str(action["action"])
+                if title in seen_titles:
+                    continue
+                seen_titles.add(title)
+                by_date = action.get("by_date")
+                when = now + timedelta(days=30)
+                if by_date:
+                    try:
+                        if isinstance(by_date, str):
+                            when = datetime.combine(
+                                datetime.fromisoformat(by_date.replace("Z", "+00:00")).date(),
+                                datetime.min.time(),
+                                tzinfo=UTC,
+                            )
+                    except ValueError:
+                        pass
+                milestones.append((title, when))
+
             deposit_at = (
                 datetime.combine(offer.response_deadline, datetime.min.time(), tzinfo=UTC)
                 if offer.response_deadline
                 else now + timedelta(days=14)
             )
-            milestones = [
-                ("Submit your enrollment deposit", deposit_at),
-                ("Schedule orientation", now + timedelta(days=30)),
-                ("Apply for housing", now + timedelta(days=30)),
-            ]
+            if "Submit your enrollment deposit" not in seen_titles:
+                milestones.append(("Submit your enrollment deposit", deposit_at))
+            if "Schedule orientation" not in seen_titles:
+                milestones.append(("Schedule orientation", now + timedelta(days=30)))
+            if "Apply for housing" not in seen_titles:
+                milestones.append(("Apply for housing", now + timedelta(days=30)))
             cal = CalendarService(self.db)
             for title, when in milestones:
                 await cal.create_reminder(

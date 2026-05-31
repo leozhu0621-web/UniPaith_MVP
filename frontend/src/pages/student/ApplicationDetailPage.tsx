@@ -28,6 +28,7 @@ import {
 import Breadcrumbs from '../../components/ui/Breadcrumbs'
 import usePageTitle from '../../hooks/usePageTitle'
 import OfferPanel from './apply/offer/OfferPanel'
+import { DECISION_STATE_LABEL } from './apply/offer/offerFormat'
 import type { Application, Essay, Resume, ChecklistItem } from '../../types'
 
 const STATUS_STEPS = ['draft', 'submitted', 'under_review', 'interview', 'decision_made']
@@ -263,16 +264,42 @@ export default function ApplicationDetailPage() {
         </div>
       </div>
 
-      {/* Decision banner (§10) */}
+      {/* Decision banner — routes to Offer tab when admitted (spec 18 §4) */}
       {application.status === 'decision_made' && application.decision && (
         <div className={`mt-4 rounded-lg px-4 py-3 flex items-center gap-3 ${
-          application.decision === 'admitted' ? 'bg-success-soft' : application.decision === 'rejected' ? 'bg-destructive/10' : 'bg-warning-soft'
+          application.decision === 'admitted' || application.student_decision === 'accepted_by_student'
+            ? 'bg-success-soft'
+            : application.decision === 'rejected'
+              ? 'bg-destructive/10'
+              : 'bg-warning-soft'
         }`}>
-          <Award size={18} className={application.decision === 'admitted' ? 'text-success' : application.decision === 'rejected' ? 'text-destructive' : 'text-warning'} />
-          <div>
-            <p className="text-sm font-medium text-student-ink">Decision received: {application.decision}</p>
-            {application.decision === 'admitted' && <p className="text-xs text-student-text">Review your offer in the Offer tab.</p>}
+          <Award size={18} className={
+            application.decision === 'admitted' || application.student_decision === 'accepted_by_student'
+              ? 'text-success'
+              : application.decision === 'rejected'
+                ? 'text-destructive'
+                : 'text-warning'
+          } />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-student-ink">
+              {DECISION_STATE_LABEL[application.decision_state || application.decision] ||
+                `Decision: ${application.decision}`}
+            </p>
+            {application.decision === 'admitted' && application.student_decision !== 'accepted_by_student' && (
+              <p className="text-xs text-student-text">Review your offer in the Offer tab.</p>
+            )}
+            {application.student_decision === 'accepted_by_student' && (
+              <p className="text-xs text-student-text">You're in — enrollment steps are on your calendar.</p>
+            )}
           </div>
+          {application.decision === 'admitted' && application.student_decision !== 'accepted_by_student' && (
+            <button
+              onClick={() => setTab('offer')}
+              className="text-xs text-cobalt font-medium shrink-0 hover:underline"
+            >
+              View offer →
+            </button>
+          )}
         </div>
       )}
 

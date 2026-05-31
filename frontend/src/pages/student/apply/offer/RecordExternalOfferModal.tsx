@@ -48,6 +48,18 @@ export default function RecordExternalOfferModal({
   const [year, setYear] = useState('')
   const [conditions, setConditions] = useState('')
 
+  const resetForm = () => {
+    setOfferType('full_admission')
+    setScholarship('')
+    setCurrency('USD')
+    setTuition('')
+    setTotalCost('')
+    setDeadline('')
+    setSeason('')
+    setYear('')
+    setConditions('')
+  }
+
   const mut = useMutation({
     mutationFn: () => {
       const payload: RecordOfferPayload = {
@@ -67,6 +79,7 @@ export default function RecordExternalOfferModal({
       queryClient.invalidateQueries({ queryKey: ['my-applications'] })
       queryClient.invalidateQueries({ queryKey: ['offers-comparison'] })
       showToast('Offer recorded', 'success')
+      resetForm()
       onClose()
     },
     onError: (err: { response?: { data?: { detail?: string } } }) =>
@@ -74,7 +87,15 @@ export default function RecordExternalOfferModal({
   })
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Record an offer you received" size="lg">
+    <Modal
+      isOpen={isOpen}
+      onClose={() => {
+        resetForm()
+        onClose()
+      }}
+      title="Record an offer you received"
+      size="lg"
+    >
       <div className="space-y-3">
         <p className="text-sm text-student-text">
           Applied somewhere off-platform? Add the offer here to compare it alongside the rest.
@@ -143,7 +164,7 @@ export default function RecordExternalOfferModal({
           onChange={e => setConditions(e.target.value)}
         />
         <div className="flex justify-end gap-2 pt-1">
-          <Button variant="tertiary" onClick={onClose}>
+          <Button variant="tertiary" onClick={() => { resetForm(); onClose() }}>
             Cancel
           </Button>
           <Button variant="secondary" loading={mut.isPending} onClick={() => mut.mutate()}>
