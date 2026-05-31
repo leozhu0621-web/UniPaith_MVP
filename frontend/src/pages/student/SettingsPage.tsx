@@ -16,7 +16,8 @@ import Badge from '../../components/ui/Badge'
 import { showToast } from '../../stores/toast-store'
 import { useState, useEffect } from 'react'
 import { formatDate } from '../../utils/format'
-import { ShieldCheck, Bell, User, Database, LogOut, ChevronRight, CreditCard, Sparkles, Check } from 'lucide-react'
+import { ShieldCheck, Bell, User, Database, LogOut, ChevronRight, CreditCard, Sparkles, Check, Users } from 'lucide-react'
+import { getPreferences, upsertPreferences } from '../../api/students'
 
 const NOTIF_TYPES = [
   { key: 'application_updates', label: 'Application updates' },
@@ -71,6 +72,9 @@ export default function SettingsPage() {
       {/* Billing — Spec 07 §4.1 / 21 §2.7 */}
       <BillingSection />
 
+      {/* Connect — Spec 20 §2 */}
+      <ConnectPreferencesSection />
+
       {/* Notifications */}
       <Card className="p-5">
         <SectionHeader icon={Bell} title="Notifications" />
@@ -124,6 +128,53 @@ export default function SettingsPage() {
         </div>
       </Card>
     </div>
+  )
+}
+
+function ConnectPreferencesSection() {
+  const queryClient = useQueryClient()
+  const { data: prefs, isLoading } = useQuery({
+    queryKey: ['student-preferences'],
+    queryFn: getPreferences,
+    retry: false,
+  })
+
+  const saveMut = useMutation({
+    mutationFn: (autoFollow: boolean) => upsertPreferences({ auto_follow_on_save: autoFollow }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['student-preferences'] })
+      queryClient.invalidateQueries({ queryKey: ['connect-follows'] })
+      queryClient.invalidateQueries({ queryKey: ['connect-feed'] })
+      showToast('Connect preferences saved', 'success')
+    },
+    onError: () => showToast("Something didn't work. Try again.", 'error'),
+  })
+
+  const autoFollow = prefs?.auto_follow_on_save ?? true
+
+  return (
+    <Card className="p-5">
+      <SectionHeader icon={Users} title="Connect" />
+      {isLoading ? (
+        <div className="h-12 animate-pulse rounded-lg bg-muted" />
+      ) : (
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-charcoal">Auto-follow when I save a program</p>
+            <p className="text-xs text-slate mt-0.5 max-w-md">
+              When on, saving a program follows its institution so updates and events appear in Connect.
+              Starting an application always follows — that cannot be disabled while you are applying.
+            </p>
+          </div>
+          <Toggle
+            checked={autoFollow}
+            disabled={saveMut.isPending}
+            onChange={v => saveMut.mutate(v)}
+            label="Auto-follow on save"
+          />
+        </div>
+      )}
+    </Card>
   )
 }
 

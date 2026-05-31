@@ -14,6 +14,7 @@ vi.mock('../api/saved-lists', () => ({
 
 vi.mock('../api/events', () => ({
   getMyFollows: vi.fn().mockResolvedValue([]),
+  unfollowInstitution: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('../stores/compare-store', () => ({
@@ -60,5 +61,12 @@ describe('SavedListPage', () => {
     renderPage()
     expect(await screen.findByRole('button', { name: /Programs \(0\)/i })).toBeTruthy()
     expect(screen.getByRole('button', { name: /Schools \(0\)/i })).toBeTruthy()
+  })
+
+  it('shows shortlist helper copy', async () => {
+    renderPage()
+    expect(
+      await screen.findByText(/Curate programs you are serious about/i),
+    ).toBeTruthy()
   })
 })

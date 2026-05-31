@@ -361,6 +361,7 @@ class UpsertPreferencesRequest(BaseModel):
     target_degree_level: str | None = None
     target_start_term: str | None = None
     thesis_interest: str | None = None
+    auto_follow_on_save: bool | None = None
 
 
 class StudentPreferenceResponse(BaseModel):
@@ -398,6 +399,7 @@ class StudentPreferenceResponse(BaseModel):
     target_degree_level: str | None = None
     target_start_term: str | None = None
     thesis_interest: str | None = None
+    auto_follow_on_save: bool = True
     created_at: datetime
     updated_at: datetime
 

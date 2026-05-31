@@ -26,6 +26,9 @@ interface Props {
   item: ConnectFeedItem
   onViewProgram: (programId: string) => void
   onAddToCalendar: (item: ConnectFeedItem) => void
+  onStartApplication?: (programId: string) => void
+  onRsvpEvent?: (eventId: string) => void
+  onRequestInfo?: (programId: string) => void
   onMute?: (institutionId: string) => void
 }
 
@@ -59,7 +62,7 @@ function InstitutionRow({ item }: { item: ConnectFeedItem }) {
   )
 }
 
-function CtaRow({ item, onViewProgram, onAddToCalendar }: Props) {
+function CtaRow({ item, onViewProgram, onAddToCalendar, onStartApplication, onRsvpEvent, onRequestInfo }: Props) {
   const ctas = item.ctas?.length
     ? item.ctas
     : item.program_id
@@ -73,17 +76,40 @@ function CtaRow({ item, onViewProgram, onAddToCalendar }: Props) {
 
   if (ctas.length === 0) return null
 
+  const cobaltBtn = 'px-3 py-1.5 text-xs font-medium rounded-lg border border-cobalt text-cobalt hover:bg-cobalt/5 transition-colors'
+
   return (
     <div className="flex flex-wrap items-center gap-2 mt-3">
       {ctas.map((cta, i) => {
         const key = `${cta.type}-${cta.target}-${i}`
-        if (cta.type === 'view_program' || cta.type === 'start_application') {
+        if (cta.type === 'view_program') {
+          return (
+            <button key={key} onClick={() => onViewProgram(cta.target)} className={cobaltBtn}>
+              {cta.label}
+            </button>
+          )
+        }
+        if (cta.type === 'start_application') {
           return (
             <button
               key={key}
-              onClick={() => onViewProgram(cta.target)}
-              className="px-3 py-1.5 text-xs font-medium rounded-lg border border-cobalt text-cobalt hover:bg-cobalt/5 transition-colors"
+              onClick={() => (onStartApplication ? onStartApplication(cta.target) : onViewProgram(cta.target))}
+              className={cobaltBtn}
             >
+              {cta.label}
+            </button>
+          )
+        }
+        if (cta.type === 'rsvp_event') {
+          return (
+            <button key={key} onClick={() => onRsvpEvent?.(cta.target)} className={cobaltBtn}>
+              {cta.label}
+            </button>
+          )
+        }
+        if (cta.type === 'request_info') {
+          return (
+            <button key={key} onClick={() => onRequestInfo?.(cta.target)} className={cobaltBtn}>
               {cta.label}
             </button>
           )
@@ -109,7 +135,7 @@ function CtaRow({ item, onViewProgram, onAddToCalendar }: Props) {
   )
 }
 
-function PostCardLarge({ item, onViewProgram, onAddToCalendar, onMute }: Props) {
+function PostCardLarge({ item, onViewProgram, onAddToCalendar, onStartApplication, onRsvpEvent, onRequestInfo, onMute }: Props) {
   const [expanded, setExpanded] = useState(false)
   const body = item.body || ''
   const isLong = body.length > 220
@@ -167,7 +193,14 @@ function PostCardLarge({ item, onViewProgram, onAddToCalendar, onMute }: Props) 
             ))}
           </div>
         )}
-        <CtaRow item={item} onViewProgram={onViewProgram} onAddToCalendar={onAddToCalendar} />
+        <CtaRow
+          item={item}
+          onViewProgram={onViewProgram}
+          onAddToCalendar={onAddToCalendar}
+          onStartApplication={onStartApplication}
+          onRsvpEvent={onRsvpEvent}
+          onRequestInfo={onRequestInfo}
+        />
       </div>
     </CardShell>
   )

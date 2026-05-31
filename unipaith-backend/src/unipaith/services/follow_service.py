@@ -24,6 +24,7 @@ from unipaith.core.exceptions import BadRequestException, NotFoundException
 from unipaith.models.application import Application
 from unipaith.models.follow import InstitutionFollow
 from unipaith.models.institution import Institution, Program
+from unipaith.models.student import StudentPreference
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +87,12 @@ class FollowService:
         Used by the save-program and start-application hooks. Defensive: if the
         program or its institution can't be resolved, silently no-ops so the
         primary action (save / apply) is never blocked by follow bookkeeping.
+
+        Respects ``auto_follow_on_save`` for ``source='saved'`` (Settings toggle).
+        Application auto-follow is always enforced.
         """
+        if source == "saved" and not await self.auto_follow_on_save(student_id):
+            return None
         institution_id = await self.db.scalar(
             select(Program.institution_id).where(Program.id == program_id)
         )
@@ -95,6 +101,15 @@ class FollowService:
         return await self.ensure_follow(
             student_id, institution_id, program_id=program_id, source=source
         )
+
+    async def auto_follow_on_save(self, student_id: UUID) -> bool:
+        """Whether saving a program should auto-follow its institution (Spec 20 §2)."""
+        row = await self.db.scalar(
+            select(StudentPreference.auto_follow_on_save).where(
+                StudentPreference.student_id == student_id
+            )
+        )
+        return True if row is None else bool(row)
 
     async def set_muted(
         self, student_id: UUID, institution_id: UUID, muted: bool
@@ -173,7 +188,7 @@ class FollowService:
         follow_rows = await self.db.execute(q)
         ids = {r[0] for r in follow_rows.all()}
 
-        if include_saved:
+        if include_saved and await self.auto_follow_on_save(student_id):
             from unipaith.models.engagement import SavedList, SavedListItem
 
             saved_rows = await self.db.execute(
