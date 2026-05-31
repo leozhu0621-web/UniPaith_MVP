@@ -3,7 +3,7 @@ import { useParams, Link, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import {
   GraduationCap, MapPin, Clock, DollarSign, CalendarDays,
-  Users, Globe, ExternalLink, BookOpen, CheckCircle2, ArrowLeft, MessageSquare,
+  Users, Globe, ExternalLink, BookOpen, CheckCircle2, ArrowLeft, MessageSquare, Sparkles,
 } from 'lucide-react'
 import { getProgram } from '../../api/programs'
 import { getPublicInstitution, submitInquiry } from '../../api/institutions'
@@ -83,7 +83,7 @@ export default function ProgramDetailPage() {
   // --- Loading ---
   if (programQ.isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-paper">
         <Header />
         <div className="max-w-5xl mx-auto px-6 py-10 space-y-6">
           <Skeleton className="h-10 w-96" />
@@ -97,20 +97,20 @@ export default function ProgramDetailPage() {
   // --- Not found ---
   if (!p) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-paper">
         <Header />
         <div className="max-w-5xl mx-auto px-6 py-16 text-center">
           <GraduationCap size={48} className="mx-auto text-gray-300 mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Program not found</h2>
           <p className="text-gray-500 mb-6">This program may not be published or the link is incorrect.</p>
-          <Link to="/browse" className="text-indigo-600 hover:underline">Browse programs</Link>
+          <Link to="/browse" className="text-cobalt hover:underline">Browse programs</Link>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-paper">
       <Header />
 
       <div className="max-w-5xl mx-auto px-6 py-8">
@@ -131,7 +131,7 @@ export default function ProgramDetailPage() {
               </div>
               {p.department && <p className="text-gray-500 mb-1">{p.department}</p>}
               {inst && (
-                <Link to={`/school/${p.institution_id}`} className="text-sm text-indigo-600 hover:underline">
+                <Link to={`/school/${p.institution_id}`} className="text-sm text-cobalt hover:underline">
                   {inst.name}
                 </Link>
               )}
@@ -158,10 +158,18 @@ export default function ProgramDetailPage() {
               {/* Deadline callout */}
               {p.application_deadline && (
                 <div className="flex items-center gap-2 mt-3 text-sm">
-                  <CalendarDays size={14} className="text-amber-600" />
-                  <span className="text-amber-700 font-medium">Application deadline: {formatDate(p.application_deadline)}</span>
+                  <CalendarDays size={14} className="text-warning" />
+                  <span className="text-warning font-medium">Application deadline: {formatDate(p.application_deadline)}</span>
                 </div>
               )}
+
+              {/* Spec 11 §6 — public visitor: DualRing hidden; sign-in CTA in the fact strip */}
+              <Link
+                to="/login"
+                className="inline-flex items-center gap-2 mt-4 px-3 py-2 rounded-lg border border-cobalt/30 bg-cobalt/5 text-cobalt text-sm font-semibold hover:bg-cobalt/10 transition-colors"
+              >
+                <Sparkles size={14} /> Sign in to see your match
+              </Link>
             </div>
 
             {/* Actions */}
@@ -224,7 +232,7 @@ export default function ProgramDetailPage() {
                   <ul className="space-y-2">
                     {highlights.map((h, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                        <CheckCircle2 size={16} className="text-emerald-500 mt-0.5 shrink-0" />
+                        <CheckCircle2 size={16} className="text-cobalt mt-0.5 shrink-0" />
                         {h}
                       </li>
                     ))}
@@ -237,8 +245,8 @@ export default function ProgramDetailPage() {
                   <h3 className="text-sm font-semibold text-gray-900 mb-3">Faculty Contacts</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {faculty.map((f, i) => (
-                      <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
-                        <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-sm font-medium text-indigo-700">
+                      <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-student-mist/50">
+                        <div className="w-9 h-9 rounded-full bg-cobalt/10 flex items-center justify-center text-sm font-medium text-cobalt">
                           {(f.name || '?')[0].toUpperCase()}
                         </div>
                         <div className="min-w-0">
@@ -276,13 +284,13 @@ export default function ProgramDetailPage() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   {p.application_deadline && (
                     <div className="flex items-center gap-2">
-                      <CalendarDays size={16} className="text-amber-600" />
+                      <CalendarDays size={16} className="text-warning" />
                       <div><span className="text-gray-500">Deadline:</span> <span className="font-medium">{formatDate(p.application_deadline)}</span></div>
                     </div>
                   )}
                   {p.program_start_date && (
                     <div className="flex items-center gap-2">
-                      <CalendarDays size={16} className="text-indigo-600" />
+                      <CalendarDays size={16} className="text-cobalt" />
                       <div><span className="text-gray-500">Start Date:</span> <span className="font-medium">{formatDate(p.program_start_date)}</span></div>
                     </div>
                   )}
@@ -311,7 +319,7 @@ export default function ProgramDetailPage() {
                   <ul className="space-y-2">
                     {appReqs.map((req, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm">
-                        <CheckCircle2 size={16} className={`mt-0.5 shrink-0 ${req.required ? 'text-amber-500' : 'text-gray-300'}`} />
+                        <CheckCircle2 size={16} className={`mt-0.5 shrink-0 ${req.required ? 'text-warning' : 'text-gray-300'}`} />
                         <div>
                           <span className="text-gray-900">{req.item || req.name || JSON.stringify(req)}</span>
                           {req.required && <Badge variant="warning" className="ml-2 text-[10px]">Required</Badge>}
@@ -329,7 +337,7 @@ export default function ProgramDetailPage() {
                   <h3 className="text-sm font-semibold text-gray-900 mb-3">Intake Rounds</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {intakeRounds.map((round, i) => (
-                      <div key={i} className="p-3 rounded-lg bg-gray-50 border border-gray-100">
+                      <div key={i} className="p-3 rounded-lg bg-student-mist/50 border border-gray-100">
                         <p className="text-sm font-medium text-gray-900">{round.round_name || `Round ${i + 1}`}</p>
                         {round.deadline && <p className="text-xs text-gray-500 mt-1">Deadline: {formatDate(round.deadline)}</p>}
                         {round.capacity && <p className="text-xs text-gray-400">Capacity: {round.capacity}</p>}
@@ -368,7 +376,7 @@ export default function ProgramDetailPage() {
                   <h3 className="text-sm font-semibold text-gray-900 mb-3">Outcomes</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {Object.entries(outcomes).map(([key, value]) => (
-                      <div key={key} className="p-3 rounded-lg bg-gray-50">
+                      <div key={key} className="p-3 rounded-lg bg-student-mist/50">
                         <p className="text-xs text-gray-500 capitalize">{key.replace(/_/g, ' ')}</p>
                         <p className="text-lg font-semibold text-gray-900 mt-1">{typeof value === 'number' && value < 1 ? formatPercent(value, 0) : String(value)}</p>
                       </div>
