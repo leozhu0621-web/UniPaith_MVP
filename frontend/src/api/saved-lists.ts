@@ -11,8 +11,8 @@ export const listSavedTagSuggestions = () =>
 export const saveProgram = (programId: string, notes?: string) =>
   apiClient.post('/students/me/saved', { program_id: programId, notes }).then(r => r.data as SavedProgram)
 
-export const unsaveProgram = (programId: string) =>
-  apiClient.delete(`/students/me/saved/${programId}`)
+export const unsaveProgram = (programId: string): Promise<void> =>
+  apiClient.delete(`/students/me/saved/${programId}`).then(() => {})
 
 export const updateSavedNotes = (programId: string, notes: string) =>
   apiClient.put(`/students/me/saved/${programId}/notes`, { notes }).then(r => r.data as SavedProgram)
