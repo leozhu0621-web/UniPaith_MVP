@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
@@ -22,6 +23,7 @@ from unipaith.schemas.matching import (
 )
 from unipaith.schemas.student import (
     AcademicRecordResponse,
+    AccessLogEntry,
     AccommodationResponse,
     ActivityResponse,
     CompetitionResponse,
@@ -45,6 +47,7 @@ from unipaith.schemas.student import (
     OnlinePresenceResponse,
     PlatformEventResponse,
     PortfolioItemResponse,
+    ProfileOverviewResponse,
     ResearchResponse,
     SchedulingResponse,
     StudentAssistantChatRequest,
@@ -106,6 +109,17 @@ async def update_profile(
     svc = _svc(db)
     profile = await svc.update_profile(user.id, body)
     return StudentProfileResponse.model_validate(profile)
+
+
+@router.get("/me/profile/overview", response_model=ProfileOverviewResponse)
+async def get_profile_overview(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Personal header + per-category completion + next-action queue (spec 10 §4, §18)."""
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.get_profile_overview(profile.id, email=user.email)
 
 
 # --- Onboarding ---
@@ -827,6 +841,43 @@ async def export_profile(
     )
 
 
+@router.get("/me/profile/export")
+async def export_profile_formatted(
+    format: Literal["json", "pdf", "commonapp", "coalition"] = "json",
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Portable export: JSON, PDF, or Common App / Coalition mapping (spec 10 §16)."""
+    from fastapi.responses import JSONResponse, Response
+
+    from unipaith.services.export_service import profile_to_pdf, to_external_format
+
+    svc = _svc(db)
+    profile = await svc.get_profile(user.id)
+    onboarding = await svc.get_onboarding_status(profile.id)
+    resp = StudentProfileResponse.model_validate(profile)
+    resp.onboarding = onboarding
+    data = resp.model_dump(mode="json")
+
+    if format == "pdf":
+        pdf_bytes = profile_to_pdf(data)
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="unipaith-profile-{user.id}.pdf"'
+            },
+        )
+    if format in ("commonapp", "coalition"):
+        return JSONResponse(content=to_external_format(data, format))
+    return JSONResponse(
+        content=data,
+        headers={
+            "Content-Disposition": f'attachment; filename="unipaith-profile-{user.id}.json"',
+        },
+    )
+
+
 # --- Data Rights ---
 
 
@@ -849,6 +900,17 @@ async def upsert_data_rights(
     svc = _svc(db)
     profile = await svc._get_student_profile(user.id)
     return await svc.upsert_data_consent(profile.id, body)
+
+
+@router.get("/me/access-log", response_model=list[AccessLogEntry])
+async def get_access_log(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Institutions with access to this student's data (spec 10 §16 / 43 §8)."""
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    return await svc.get_access_log(profile.id)
 
 
 # --- Preferences ---
@@ -1200,7 +1262,7 @@ async def intake_chat(
             "sparked your interest in this field?"
         )
     elif "country_of_residence" in extracted and "goals_text" not in extracted:
-        next_q = f"{greeting}What are you hoping to study, " "and what draws you to that area?"
+        next_q = f"{greeting}What are you hoping to study, and what draws you to that area?"
     elif extracted:
         next_q = (
             f"{greeting}I'd love to learn more about what "

@@ -130,17 +130,57 @@ export interface StudentAccommodation {
   updated_at: string
 }
 
+export interface ConsentChangeEntry {
+  lever: string
+  value: boolean
+  at: string
+}
+
 export interface StudentDataConsent {
   id: string
   student_id: string
   consent_matching: boolean
   consent_outreach: boolean
   consent_research: boolean
+  consent_training: boolean
   data_retention_preference: string | null
   deletion_requested: boolean
   deletion_requested_at: string | null
+  consent_change_log: ConsentChangeEntry[] | null
   created_at: string
   updated_at: string
+}
+
+// --- Universal Profile overview (spec 10 §4, §18) ---
+export interface CompletionCategory {
+  category: string
+  pct: number
+  last_updated: string | null
+}
+
+export interface ProfileOverview {
+  personal: {
+    first_name: string | null
+    last_name: string | null
+    preferred_name: string | null
+    primary_email: string | null
+    preferred_pronouns: string | null
+    nationality: string | null
+    country_of_residence: string | null
+  }
+  completion: {
+    overall_pct: number
+    per_category: CompletionCategory[]
+  }
+  next_actions: { action: string; reason: string; deep_link: string }[]
+}
+
+export interface AccessLogEntry {
+  viewer: string
+  context: string | null
+  fields_accessed: string
+  accessed_at: string | null
+  status: string | null
 }
 
 export interface StudentVisaInfo {
