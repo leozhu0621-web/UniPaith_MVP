@@ -46,9 +46,23 @@ async def _already_seeded(db: AsyncSession) -> bool:
 
 
 async def _reset(db: AsyncSession) -> None:
+    """Drop and recreate the schema, then rebuild all tables.
+
+    Uses ``DROP SCHEMA public CASCADE`` rather than
+    ``Base.metadata.drop_all``: the latter can't topologically sort the
+    ``student_profiles`` ↔ ``student_strategies`` foreign-key cycle (the
+    constraints are unnamed) and raises ``CircularDependencyError``.
+    DROP SCHEMA also clears leftover enum types, matching what the test
+    conftest does for a clean rebuild.
+    """
     print("Resetting database ...")
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        # asyncpg can't run multiple statements in one prepared call, so
+        # issue each separately. CASCADE drops tables, types, and the
+        # pgvector extension (recreated below).
+        await conn.execute(text("DROP SCHEMA public CASCADE"))
+        await conn.execute(text("CREATE SCHEMA public"))
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         await conn.run_sync(Base.metadata.create_all)
     print("Tables recreated.")
 
