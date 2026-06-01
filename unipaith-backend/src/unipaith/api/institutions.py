@@ -908,6 +908,18 @@ async def request_post_media_upload(
     return await svc.request_post_media_upload(inst.id, body.content_type)
 
 
+@router.post("/me/media/upload", response_model=PostMediaUploadResponse)
+async def request_institution_media_upload(
+    body: MediaUploadRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 22 §9 — presigned upload for institution logo / gallery media."""
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.request_institution_media_upload(inst.id, body.content_type)
+
+
 @router.get("/me/posts/templates", response_model=list[PostResponse])
 async def list_post_templates(
     user: User = Depends(require_institution_admin),

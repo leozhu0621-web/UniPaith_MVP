@@ -1,5 +1,6 @@
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.models.institution import Institution
@@ -7,6 +8,11 @@ from unipaith.models.user import User
 
 
 async def _ensure_institution(db: AsyncSession, user: User) -> Institution:
+    """Idempotent — safe when a prior test in the same session already created one."""
+    result = await db.execute(select(Institution).where(Institution.admin_user_id == user.id))
+    existing = result.scalar_one_or_none()
+    if existing:
+        return existing
     inst = Institution(
         admin_user_id=user.id,
         name="Test University",
@@ -15,6 +21,7 @@ async def _ensure_institution(db: AsyncSession, user: User) -> Institution:
     )
     db.add(inst)
     await db.commit()
+    await db.refresh(inst)
     return inst
 
 
@@ -96,6 +103,8 @@ async def test_update_institution_profile_jsonb_roundtrip(
     persist and round-trip exactly through PUT + GET /institutions/me."""
     await _ensure_institution(db_session, mock_institution_user)
     payload = {
+        "accreditation": "Middle States Commission on Higher Education",
+        "contact_phone": "+1 (212) 555-0100",
         "social_links": {"twitter": "https://x.com/foo"},
         "inquiry_routing": {"general": "admissions@foo.edu", "financial_aid": "finaid@foo.edu"},
         "support_services": {"tutoring": {"name": "Tutoring", "url": "https://foo.edu/tutoring"}},
@@ -108,11 +117,16 @@ async def test_update_institution_profile_jsonb_roundtrip(
     resp = await institution_client.put("/api/v1/institutions/me", json=payload)
     assert resp.status_code == 200, resp.text
     body = resp.json()
+    assert body["ranking_data"]["accreditor"] == payload["accreditation"]
     for key, value in payload.items():
+        if key == "accreditation":
+            continue
         assert body[key] == value, key
 
     # Persisted — a fresh GET returns the same nested shapes.
     got = (await institution_client.get("/api/v1/institutions/me")).json()
+    assert got["ranking_data"]["accreditor"] == payload["accreditation"]
+    assert got["contact_phone"] == payload["contact_phone"]
     assert got["support_services"]["tutoring"]["url"] == "https://foo.edu/tutoring"
     assert got["international_info"]["supported_visas"] == ["F-1", "J-1"]
     assert got["school_outcomes"]["employed_or_continuing_ed"] == 0.94
@@ -143,6 +157,24 @@ async def test_student_submits_institution_level_inquiry(
     assert body["program_id"] is None
     assert body["inquiry_type"] == "general"
     assert body["subject"] == "Tell me more"
+
+
+@pytest.mark.asyncio
+async def test_institution_media_upload_presign(
+    institution_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_institution_user: User,
+):
+    """Spec 22 §9 — POST /institutions/me/media/upload returns a presigned URL."""
+    await _ensure_institution(db_session, mock_institution_user)
+    resp = await institution_client.post(
+        "/api/v1/institutions/me/media/upload",
+        json={"content_type": "image/png"},
+    )
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert "upload_url" in body and body["upload_url"]
+    assert "media_key" in body and body["media_key"].startswith("institutions/")
 
 
 # --- Programs ---
@@ -459,6 +491,20 @@ async def test_publish_validation_lists_sections(
     sections = {m["section"] for m in resp.json()["detail"]["missing_fields"]}
     assert "overview" in sections  # description_text
     assert "costs" in sections  # no tuition/deadline/cost_data/intake_rounds
+
+
+@pytest.mark.asyncio
+async def test_draft_program_not_publicly_visible(
+    institution_client: AsyncClient,
+    client: AsyncClient,
+    db_session: AsyncSession,
+    mock_institution_user: User,
+):
+    # Spec 23 §10 — draft never appears on the public program endpoint.
+    await _ensure_institution(db_session, mock_institution_user)
+    pid = (await _create_min_program(institution_client))["id"]
+    resp = await client.get(f"/api/v1/programs/{pid}")
+    assert resp.status_code == 404
 
 
 @pytest.mark.asyncio

@@ -157,6 +157,15 @@ class InstitutionService:
     ) -> Institution:
         institution = await self._get_institution_for_user(user_id)
         update_data = data.model_dump(exclude_unset=True)
+        accreditation = update_data.pop("accreditation", None)
+        if accreditation is not None:
+            rd = dict(institution.ranking_data or {})
+            trimmed = accreditation.strip()
+            if trimmed:
+                rd["accreditor"] = trimmed
+            else:
+                rd.pop("accreditor", None)
+            institution.ranking_data = rd or None
         for key, value in update_data.items():
             setattr(institution, key, value)
         await self.db.flush()
@@ -2027,6 +2036,19 @@ class InstitutionService:
 
         s3 = S3Client()
         key = f"institutions/{institution_id}/posts/media/{uuid.uuid4()}"
+        upload_url = s3.generate_upload_url(key, content_type)
+        return PostMediaUploadResponse(upload_url=upload_url, media_key=key)
+
+    async def request_institution_media_upload(
+        self,
+        institution_id: UUID,
+        content_type: str,
+    ) -> PostMediaUploadResponse:
+        """Spec 22 §9 — presigned upload for logo / gallery assets."""
+        from unipaith.core.s3 import S3Client
+
+        s3 = S3Client()
+        key = f"institutions/{institution_id}/media/{uuid.uuid4()}"
         upload_url = s3.generate_upload_url(key, content_type)
         return PostMediaUploadResponse(upload_url=upload_url, media_key=key)
 

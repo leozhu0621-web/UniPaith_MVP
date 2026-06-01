@@ -16,6 +16,8 @@
 const isObj = (v: unknown): v is Record<string, any> =>
   !!v && typeof v === 'object' && !Array.isArray(v)
 
+const arr = <T>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : [])
+
 const num = (v: unknown): number | null =>
   v == null || v === '' || Number.isNaN(Number(v)) ? null : Number(v)
 
@@ -117,6 +119,7 @@ export function intakeTimelineFromArray(
         name: String(x.name || 'Application round'),
         deadline: x.deadline,
         decision_release: x.decision_date ?? null,
+        start_date: x.start_date ?? null,
         binding: false,
       }
     })
@@ -127,4 +130,103 @@ export function intakeTimelineFromArray(
       ? `${first.term.season} ${first.term.year ?? ''}`.trim()
       : 'Upcoming intake'
   return { term, rounds, enrollment_deadline: null }
+}
+
+// Tracks / concentrations metadata from the Spec 23 editor (tracks object or array).
+export function extractTracksMeta(tracks: unknown): {
+  concentrations: string[]
+  note: string
+  learning_format: string
+} {
+  const out = { concentrations: [] as string[], note: '', learning_format: '' }
+  if (Array.isArray(tracks)) {
+    out.concentrations = tracks.filter(t => typeof t === 'string') as string[]
+  } else if (isObj(tracks)) {
+    for (const key of ['concentrations', 'tracks', 'subfields', 'specializations']) {
+      if (Array.isArray(tracks[key])) {
+        out.concentrations = (tracks[key] as unknown[]).filter(t => typeof t === 'string') as string[]
+        break
+      }
+    }
+    out.note = String(tracks.note || '')
+    out.learning_format = String(tracks.learning_format || '')
+  }
+  return out
+}
+
+export function extractPrerequisites(
+  raw: unknown,
+): Array<{ name: string; required: boolean; allowed_substitutes: string[] }> {
+  if (!isObj(raw)) return []
+  return arr<Record<string, any>>(raw.prerequisites)
+    .map(p => ({
+      name: String(p.name ?? ''),
+      required: p.required !== false,
+      allowed_substitutes: arr<string>(p.allowed_substitutes).map(String),
+    }))
+    .filter(p => p.name)
+}
+
+const TEST_STANCE_LABELS: Record<string, string> = {
+  required: 'Required',
+  recommended: 'Recommended',
+  test_optional: 'Test-optional',
+  test_blind: 'Test-blind',
+}
+
+export function extractTestPolicy(raw: unknown): {
+  stance: string
+  stance_label: string
+  required: string[]
+  optional: string[]
+  accepted_tests: string[]
+  superscore_enabled: boolean
+  waived_rules: string
+  typical_ranges: Array<{ test: string; low: number; high: number }>
+} | null {
+  if (!isObj(raw) || !isObj(raw.test_policy)) return null
+  const tp = raw.test_policy
+  const stance = String(tp.stance || '')
+  const required = arr<string>(tp.required).map(String).filter(Boolean)
+  const optional = arr<string>(tp.optional).map(String).filter(Boolean)
+  const accepted = arr<string>(tp.accepted_tests).map(String).filter(Boolean)
+  const ranges = arr<Record<string, any>>(tp.typical_ranges)
+    .filter(t => t.test)
+    .map(t => ({ test: String(t.test), low: Number(t.low) || 0, high: Number(t.high) || 0 }))
+  const waived = String(tp.waived_rules || '')
+  const hasContent =
+    stance || required.length || optional.length || accepted.length || ranges.length || waived
+  if (!hasContent) return null
+  return {
+    stance,
+    stance_label: TEST_STANCE_LABELS[stance] || stance.replace(/_/g, ' '),
+    required,
+    optional,
+    accepted_tests: accepted,
+    superscore_enabled: !!tp.superscore_enabled,
+    waived_rules: waived,
+    typical_ranges: ranges,
+  }
+}
+
+export function extractRecommendations(raw: unknown): { required_count: number; types: string[] } | null {
+  if (!isObj(raw) || !isObj(raw.recommendations)) return null
+  const count = Number(raw.recommendations.required_count) || 0
+  const types = arr<string>(raw.recommendations.types).map(String).filter(Boolean)
+  if (count <= 0 && types.length === 0) return null
+  return { required_count: count, types }
+}
+
+export function extractFundingSignals(raw: unknown): Record<string, boolean> | null {
+  if (!isObj(raw) || !isObj(raw.funding_signals)) return null
+  const fs = raw.funding_signals as Record<string, boolean>
+  if (!Object.values(fs).some(Boolean)) return null
+  return fs
+}
+
+export function extractSalaryBands(raw: unknown): Array<{ band_label: string; percent: number }> {
+  if (!isObj(raw)) return []
+  return arr<Record<string, any>>(raw.salary_distribution_bands)
+    .filter(b => b.band_label)
+    .map(b => ({ band_label: String(b.band_label), percent: Number(b.percent) || 0 }))
 }
