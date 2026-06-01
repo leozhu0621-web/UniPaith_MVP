@@ -64,8 +64,11 @@ class CalendarItem(BaseModel):
     confirmation_url: str | None = None
     editable: bool = False
     interview_id: UUID | None = None
+    proposed_times: list[str] = Field(default_factory=list)
+    can_confirm: bool = False
     can_decline: bool = False
     can_reschedule: bool = False
+    interview_status: str | None = None
 
 
 class ReminderCreate(BaseModel):

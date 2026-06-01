@@ -15,7 +15,9 @@ import {
   getCalendar, createReminder, createWorkBlock, patchCalendarItem,
   type CalendarItem, type CalendarItemType,
 } from '../../api/calendar'
-import { declineInterview } from '../../api/interviews'
+import { declineInterview, getMyInterviews } from '../../api/interviews'
+import InterviewRespondPanel from './interviews/InterviewRespondPanel'
+import type { Interview } from '../../types'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -593,6 +595,45 @@ function ItemDetailModal({ item, onClose, onNavigate, onPatch, onDecline, patchi
   patching: boolean
 }) {
   const [confirmUrl, setConfirmUrl] = useState('')
+  const interviewsQ = useQuery({
+    queryKey: ['interviews'],
+    queryFn: getMyInterviews,
+    enabled: !!item?.interview_id,
+  })
+  const interview: Interview | null = useMemo(() => {
+    if (!item?.interview_id) return null
+    const found = (interviewsQ.data ?? []).find(i => i.id === item.interview_id)
+    if (found) return found
+    // Fallback while interviews load — enough for slot labels from calendar payload.
+    if (item.proposed_times?.length) {
+      return {
+        id: item.interview_id,
+        application_id: item.application_id || '',
+        applicant: { student_id: null, name: '' },
+        program: { id: null, name: item.subtitle || '' },
+        interviewer_id: null,
+        interview_type: item.type === 'interview_recorded_window' ? 'recorded_async' : 'live',
+        status: item.interview_status || 'proposed',
+        async_expired: false,
+        proposed_times: item.proposed_times,
+        proposed_slots: item.proposed_times,
+        confirmed_time: null,
+        scheduled_at: null,
+        duration_minutes: 30,
+        location: item.location,
+        meeting_link: item.meeting_link,
+        location_or_link: item.meeting_link || item.location,
+        async_window_end: null,
+        recording_url: null,
+        notes_to_student: item.notes,
+        recommendation: null,
+        scores: [],
+        created_at: null,
+      }
+    }
+    return null
+  }, [interviewsQ.data, item])
+
   if (!item) return null
   const meta = TYPE_META[item.type]
   const c = isOverdue(item) ? 'error' : meta.color
@@ -652,6 +693,14 @@ function ItemDetailModal({ item, onClose, onNavigate, onPatch, onDecline, patchi
           </div>
         )}
 
+        {interview && item.interview_id && (
+          <InterviewRespondPanel
+            interview={interview}
+            compact
+            onUpdated={onClose}
+          />
+        )}
+
         {/* Actions */}
         <div className="flex flex-wrap gap-2 pt-1">
           {item.link && (
@@ -659,13 +708,13 @@ function ItemDetailModal({ item, onClose, onNavigate, onPatch, onDecline, patchi
               <ExternalLink size={13} className="mr-1" /> Open application
             </Button>
           )}
-          {completable(item) && !isDone(item) && (
+          {completable(item) && !isDone(item) && !item.interview_id && (
             <Button size="sm" variant="secondary" disabled={patching}
               onClick={() => onPatch(item.id, { status: 'completed' })}>
               <Check size={13} className="mr-1" /> Mark complete
             </Button>
           )}
-          {item.can_decline && item.interview_id && !isDone(item) && (
+          {item.can_decline && item.interview_id && !isDone(item) && !interview && (
             <Button size="sm" variant="danger" disabled={patching}
               onClick={() => onDecline(item.interview_id!)}>
               <XIcon size={13} className="mr-1" /> Decline
