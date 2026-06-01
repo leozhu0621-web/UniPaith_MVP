@@ -33,19 +33,24 @@ export default function InstitutionLayout() {
     queryFn: getUnreadCount,
     refetchInterval: 30000,
   })
+  // Spec 30 §2/§4 — first-run gating. While setup is incomplete the institution
+  // is forced to /i/setup (and /i/data for step 3 upload) and the rest of the nav is dimmed.
+  const setupQ = useQuery({ queryKey: ['institution-setup'], queryFn: getSetupState })
+  const setupIncomplete = setupQ.isSuccess && setupQ.data?.setup_complete !== true
   const programsQ = useQuery({
     queryKey: ['institution-programs'],
     queryFn: getInstitutionPrograms,
+    retry: false,
+    enabled:
+      setupQ.isSuccess &&
+      (!!setupQ.data?.setup_complete || !!setupQ.data?.steps_complete?.program),
   })
-  // Spec 30 §2/§4 — first-run gating. While setup is incomplete the institution
-  // is forced to /i/setup and the rest of the nav is dimmed to keep focus.
-  const setupQ = useQuery({ queryKey: ['institution-setup'], queryFn: getSetupState })
   const programs = Array.isArray(programsQ.data) ? programsQ.data : []
-  const setupIncomplete = setupQ.isSuccess && setupQ.data?.setup_complete !== true
+  const setupExemptPaths = ['/i/setup', '/i/data']
 
   useEffect(() => {
     if (!setupIncomplete) return
-    if (location.pathname === '/i/setup') return
+    if (setupExemptPaths.some(p => location.pathname === p || location.pathname.startsWith(`${p}/`))) return
     navigate('/i/setup', { replace: true })
   }, [setupIncomplete, location.pathname, navigate])
 
