@@ -814,6 +814,18 @@ class MediaUploadRequest(BaseModel):
     content_type: str = "image/jpeg"
 
 
+@router.post("/me/media/upload", response_model=PostMediaUploadResponse)
+async def request_institution_media_upload(
+    body: MediaUploadRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 22 §9 — profile/gallery media presign (alias of post media key layout)."""
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.request_post_media_upload(inst.id, body.content_type)
+
+
 @router.post("/me/posts/media/upload", response_model=PostMediaUploadResponse)
 async def request_post_media_upload(
     body: MediaUploadRequest,
