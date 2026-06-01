@@ -5,8 +5,37 @@ import { MemoryRouter } from 'react-router-dom'
 import SettingsPage from '../pages/institution/SettingsPage'
 import * as institutionsApi from '../api/institutions'
 import * as reviewsApi from '../api/reviews'
+import * as settingsApi from '../api/settings'
 import * as billingApi from '../api/billing'
 import * as notificationsApi from '../api/notifications'
+
+const INSTITUTION_SETTINGS = {
+  account: {
+    institution_id: 'inst-1',
+    name: 'University of Foo',
+    contact_email: 'admissions@foo.edu',
+    website_url: 'https://www.foo.edu',
+    primary_domain: 'foo.edu',
+    member_since: '2026-01-01T00:00:00Z',
+  },
+  security: { mfa_enabled: false, mfa_method: null },
+  preferences: {
+    locale: 'en',
+    timezone: 'UTC',
+    theme: 'system',
+    accessibility: { dyslexia_mode: false, font_size: 'md', reduced_motion: false },
+  },
+  notifications: [],
+  email_enabled: true,
+  email_frequency: 'all',
+  team: [],
+  deletion: null,
+  review_config: {
+    blind_review_default: false,
+    calibration_enabled: true,
+    reviewer_assignment_mode: 'round_robin',
+  },
+}
 
 // Spec 22 §3 / gap G-I1 — the institution profile editor uses guided forms,
 // not raw JSON. These tests prove the round-trip: load the JSONB dicts into
@@ -39,7 +68,13 @@ function mockApis() {
   vi.spyOn(institutionsApi, 'updateInstitution').mockResolvedValue(INSTITUTION as any)
   vi.spyOn(reviewsApi, 'getRubrics').mockResolvedValue([] as any)
   vi.spyOn(billingApi, 'getInstitutionBilling').mockResolvedValue({} as any)
+  vi.spyOn(settingsApi, 'getInstitutionSettings').mockResolvedValue(INSTITUTION_SETTINGS as any)
   vi.spyOn(notificationsApi, 'getNotificationPrefs').mockResolvedValue({ email_enabled: true, preferences: {} } as any)
+}
+
+async function openProfileTab() {
+  fireEvent.click(screen.getByRole('tab', { name: /public profile/i }))
+  expect(await screen.findByDisplayValue('University of Foo')).toBeInTheDocument()
 }
 
 function renderSettings() {
@@ -61,8 +96,7 @@ beforeEach(() => {
 describe('Institution SettingsPage — guided profile editors (Spec 22 G-I1)', () => {
   it('decomposes the JSONB dicts into labelled rows (no raw JSON textarea)', async () => {
     renderSettings()
-    // Identity loaded
-    expect(await screen.findByDisplayValue('University of Foo')).toBeInTheDocument()
+    await openProfileTab()
     // support_services → name + url rows
     expect(screen.getByDisplayValue('Tutoring')).toBeInTheDocument()
     expect(screen.getByDisplayValue('https://foo.edu/tutoring')).toBeInTheDocument()
@@ -82,7 +116,7 @@ describe('Institution SettingsPage — guided profile editors (Spec 22 G-I1)', (
   it('saves correctly-shaped dicts; edited fields re-slug, untouched fields and unknown keys are preserved', async () => {
     const updateSpy = vi.spyOn(institutionsApi, 'updateInstitution')
     renderSettings()
-    await screen.findByDisplayValue('University of Foo')
+    await openProfileTab()
 
     // Edit a support-service name → key must re-slug, url carried along.
     fireEvent.change(screen.getByDisplayValue('Tutoring'), { target: { value: 'Peer Tutoring' } })
@@ -113,7 +147,7 @@ describe('Institution SettingsPage — guided profile editors (Spec 22 G-I1)', (
   it('lets an admin add a new social link row that ends up in the payload', async () => {
     const updateSpy = vi.spyOn(institutionsApi, 'updateInstitution')
     renderSettings()
-    await screen.findByDisplayValue('University of Foo')
+    await openProfileTab()
 
     fireEvent.click(screen.getByRole('button', { name: /add social link/i }))
     // The new empty row exposes a Platform + URL input pair; fill them.

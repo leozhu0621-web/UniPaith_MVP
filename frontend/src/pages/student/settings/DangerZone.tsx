@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { AlertTriangle, LogOut, Trash2, RotateCcw } from 'lucide-react'
+import { AlertTriangle, Trash2, RotateCcw } from 'lucide-react'
 import Button from '../../../components/ui/Button'
 import Input from '../../../components/ui/Input'
 import Modal from '../../../components/ui/Modal'
 import SettingsSection from './SettingsSection'
 import { deleteAccount, cancelDeletion } from '../../../api/settings'
 import { showToast } from '../../../stores/toast-store'
-import { useAuthStore } from '../../../stores/auth-store'
 import { formatDate } from '../../../utils/format'
 import type { DeletionInfo } from '../../../types'
 
@@ -18,7 +17,6 @@ interface DangerZoneProps {
 
 export default function DangerZone({ deletion, onChanged }: DangerZoneProps) {
   const [confirmOpen, setConfirmOpen] = useState(false)
-  const logout = useAuthStore(s => s.logout)
 
   const cancelMut = useMutation({
     mutationFn: cancelDeletion,
@@ -33,7 +31,7 @@ export default function DangerZone({ deletion, onChanged }: DangerZoneProps) {
     <SettingsSection
       icon={AlertTriangle}
       title="Danger zone"
-      description="Sign out, or permanently delete your account."
+      description="Permanently delete your account and data."
       tone="danger"
     >
       {deletion ? (
@@ -42,10 +40,18 @@ export default function DangerZone({ deletion, onChanged }: DangerZoneProps) {
             <Trash2 size={18} className="text-error mt-0.5 shrink-0" />
             <div>
               <p className="text-sm font-semibold text-foreground">
-                Scheduled for deletion on {formatDate(deletion.purge_at)}
+                Scheduled for deletion on {formatDate(deletion.purge_at)} ·{' '}
+                <button
+                  type="button"
+                  onClick={() => cancelMut.mutate()}
+                  disabled={cancelMut.isPending}
+                  className="font-semibold text-secondary hover:underline disabled:opacity-50"
+                >
+                  Undo
+                </button>
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Your account and data will be permanently removed then. You can undo until that date.
+                Your account and data will be permanently removed after the grace period.
               </p>
             </div>
           </div>
@@ -59,14 +65,9 @@ export default function DangerZone({ deletion, onChanged }: DangerZoneProps) {
           </Button>
         </div>
       ) : (
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="tertiary" onClick={logout}>
-            <LogOut size={14} /> Sign out
-          </Button>
-          <Button variant="destructive" onClick={() => setConfirmOpen(true)}>
-            <Trash2 size={14} /> Delete account
-          </Button>
-        </div>
+        <Button variant="destructive" onClick={() => setConfirmOpen(true)}>
+          <Trash2 size={14} /> Delete account
+        </Button>
       )}
 
       {confirmOpen && (
@@ -84,8 +85,9 @@ export default function DangerZone({ deletion, onChanged }: DangerZoneProps) {
 
 function DeleteModal({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
   const [text, setText] = useState('')
+  const [password, setPassword] = useState('')
   const mut = useMutation({
-    mutationFn: () => deleteAccount(text),
+    mutationFn: () => deleteAccount(text, password),
     onSuccess: () => {
       showToast('Account scheduled for deletion', 'success')
       onDone()
@@ -105,7 +107,7 @@ function DeleteModal({ onClose, onDone }: { onClose: () => void; onDone: () => v
           </Button>
           <Button
             variant="destructive"
-            disabled={text.trim().toUpperCase() !== 'DELETE'}
+            disabled={text.trim().toUpperCase() !== 'DELETE' || !password}
             loading={mut.isPending}
             onClick={() => mut.mutate()}
           >
@@ -120,6 +122,13 @@ function DeleteModal({ onClose, onDone }: { onClose: () => void; onDone: () => v
           This starts a 30-day grace period. After that, your profile, applications, and data are
           permanently erased. You can undo any time before then.
         </div>
+        <Input
+          label="Current password"
+          type="password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          helperText="Re-enter your password to confirm it's you."
+        />
         <Input
           label='Type "DELETE" to confirm'
           value={text}

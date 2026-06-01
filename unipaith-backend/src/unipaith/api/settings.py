@@ -191,7 +191,7 @@ async def delete_account(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await SettingsService(db).request_deletion(user, body.confirm_text)
+    return await SettingsService(db).request_deletion(user, body.confirm_text, body.password)
 
 
 @router.post("/account/delete/cancel", response_model=dict)
