@@ -92,61 +92,65 @@ export default function BatchReleaseModal({
   return (
     <Modal isOpen={isOpen} onClose={close} title="Release decisions" size="lg">
       <div className="space-y-4">
-        <div className="flex flex-wrap items-end gap-3">
-          <Select
-            label="Decision for all"
-            options={DECISION_OPTIONS}
-            value={bulk}
-            onChange={e => setBulk(e.target.value as InstitutionDecision)}
-            className="w-48"
-          />
-          <p className="text-xs text-gray-500 pb-2">
-            Set a default, then override individuals below.
-          </p>
-        </div>
+        {!result && (
+          <>
+            <div className="flex flex-wrap items-end gap-3">
+              <Select
+                label="Decision for all"
+                options={DECISION_OPTIONS}
+                value={bulk}
+                onChange={e => setBulk(e.target.value as InstitutionDecision)}
+                className="w-48"
+              />
+              <p className="text-xs text-gray-500 pb-2">
+                Set a default, then override individuals below.
+              </p>
+            </div>
 
-        {/* Standard offer template (applied to admits / conditional admits) */}
-        <div className="rounded-lg border border-border p-3 space-y-3">
-          <p className="text-xs font-medium text-gray-500">
-            Standard offer template — applied to {admitCount} admit{admitCount === 1 ? '' : 's'}
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            <Input label="Scholarship ($)" type="number" value={scholarship} onChange={e => setScholarship(e.target.value)} />
-            <Input label="Response deadline" type="date" value={deadline} onChange={e => setDeadline(e.target.value)} />
-          </div>
-        </div>
-
-        {/* Per-applicant confirmation list */}
-        <div className="max-h-64 overflow-y-auto rounded-lg border border-border divide-y divide-gray-100">
-          {selectedApps.map(a => {
-            const d = decisionFor(a.id)
-            return (
-              <div key={a.id} className="flex items-center justify-between gap-3 px-3 py-2">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    Applicant {a.student_id.slice(0, 8)}
-                  </p>
-                  <p className="text-xs text-gray-500 truncate">{a.program?.program_name ?? 'Program'}</p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Badge variant={DECISION_TONE[d]}>{DECISION_OPTIONS.find(o => o.value === d)?.label}</Badge>
-                  <Select
-                    label=""
-                    options={DECISION_OPTIONS}
-                    value={d}
-                    onChange={e => setPerApp(prev => ({ ...prev, [a.id]: e.target.value as InstitutionDecision }))}
-                    className="w-40"
-                  />
-                </div>
+            {/* Standard offer template (applied to admits / conditional admits) */}
+            <div className="rounded-lg border border-border p-3 space-y-3">
+              <p className="text-xs font-medium text-gray-500">
+                Standard offer template — applied to {admitCount} admit{admitCount === 1 ? '' : 's'}
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="Scholarship ($)" type="number" value={scholarship} onChange={e => setScholarship(e.target.value)} />
+                <Input label="Response deadline" type="date" value={deadline} onChange={e => setDeadline(e.target.value)} />
               </div>
-            )
-          })}
-        </div>
+            </div>
 
-        {releaseMut.isPending && (
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-            <div className="h-full w-1/2 animate-pulse rounded-full bg-cobalt" />
-          </div>
+            {/* Per-applicant confirmation list */}
+            <div className="max-h-64 overflow-y-auto rounded-lg border border-border divide-y divide-gray-100">
+              {selectedApps.map(a => {
+                const d = decisionFor(a.id)
+                return (
+                  <div key={a.id} className="flex items-center justify-between gap-3 px-3 py-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        Applicant {a.student_id.slice(0, 8)}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate">{a.program?.program_name ?? 'Program'}</p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge variant={DECISION_TONE[d]}>{DECISION_OPTIONS.find(o => o.value === d)?.label}</Badge>
+                      <Select
+                        label=""
+                        options={DECISION_OPTIONS}
+                        value={d}
+                        onChange={e => setPerApp(prev => ({ ...prev, [a.id]: e.target.value as InstitutionDecision }))}
+                        className="w-40"
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {releaseMut.isPending && (
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div className="h-full w-1/2 animate-pulse rounded-full bg-cobalt" />
+              </div>
+            )}
+          </>
         )}
 
         {result ? (
