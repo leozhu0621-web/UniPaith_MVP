@@ -33,28 +33,47 @@ const AnalyticsTab = lazy(() => import('./profile/AnalyticsTab'))
 type ProfileTab =
   | 'overview'
   | 'identity'
+  | 'academics'
+  | 'experience'
   | 'goals'
   | 'needs'
   | 'strategy'
   | 'recommenders'
+  | 'preparation'
+  | 'preferences'
   | 'financial'
+  | 'timeline'
   | 'analytics'
+  | 'data'
   | 'essays'
 
-// Order: durable record (Overview) → deepest layer (Identity) → durable
-// artifacts (Goals, Needs) → bridge to Match (Strategy) → preparation
-// (Recommenders, Financial) → Analytics (the 19th section). The legacy
-// Essays & Resume tab is hidden from the bar but kept as a redirect target
-// for old links (Phase E follow-up).
+// 19 universal-profile sections grouped into discrete tabs per
+// 04-information-architecture §4.6 (no more Overview super-scroll). Overview is
+// just the progress ring + Basic Info; every other section cluster gets its own
+// tab. The legacy Essays & Resume tab is hidden from the bar but kept as a
+// redirect target for old links (Phase E follow-up).
 const PROFILE_TABS: { key: ProfileTab; label: string }[] = [
   { key: 'overview', label: 'Overview' },
   { key: 'identity', label: 'Identity' },
+  { key: 'academics', label: 'Academics' },
+  { key: 'experience', label: 'Experience' },
   { key: 'goals', label: 'Goals' },
   { key: 'needs', label: 'Needs' },
   { key: 'strategy', label: 'Strategy' },
   { key: 'recommenders', label: 'Recommenders' },
+  { key: 'preparation', label: 'Preparation' },
+  { key: 'preferences', label: 'Preferences' },
   { key: 'financial', label: 'Financial' },
+  { key: 'timeline', label: 'Timeline' },
   { key: 'analytics', label: 'Analytics' },
+  { key: 'data', label: 'Data Rights' },
+]
+
+// Tabs backed by a dedicated full-page component (rendered in the compact
+// layout). Everything else is a "card" tab rendered from the section cards
+// below, filtered by `sectionTab`.
+const COMPONENT_TABS: ProfileTab[] = [
+  'identity', 'goals', 'needs', 'strategy', 'recommenders', 'financial', 'analytics', 'essays',
 ]
 
 // --- Profile Strength Ring ---
@@ -117,6 +136,8 @@ export default function ProfilePage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const activeTab = (searchParams.get('tab') as ProfileTab) || 'overview'
+  // A section card is visible when its assigned tab is active (04 §4.6).
+  const show = (sectionTab: ProfileTab) => activeTab === sectionTab
   const [editModal, setEditModal] = useState<string | null>(null)
   const [editItem, setEditItem] = useState<any>(null)
 
@@ -208,7 +229,7 @@ export default function ProfilePage() {
   }
 
   // Tab content for non-overview tabs
-  if (activeTab !== 'overview') {
+  if (COMPONENT_TABS.includes(activeTab)) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
         <div className="flex items-center gap-2 mb-1">
@@ -282,7 +303,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Self-Discovery Progress */}
+      {show('overview') && (
       <Card className="p-5">
         <div className="flex items-center gap-6">
           <StrengthRing value={completionPct} />
@@ -312,7 +333,9 @@ export default function ProfilePage() {
         </div>
       </Card>
 
-      {/* Basic Info */}
+      )}
+
+      {show('overview') && (
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-2">
@@ -335,7 +358,9 @@ export default function ProfilePage() {
         {p?.bio_text && <p className="mt-3 text-sm text-gray-600">{p.bio_text}</p>}
       </Card>
 
-      {/* Academic Records */}
+      )}
+
+      {show('academics') && (
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
           <h2 className="font-semibold text-student-ink">Academic Records</h2>
@@ -366,7 +391,9 @@ export default function ProfilePage() {
         )}
       </Card>
 
-      {/* Test Scores */}
+      )}
+
+      {show('academics') && (
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
           <h2 className="font-semibold text-student-ink">Test Scores</h2>
@@ -398,7 +425,9 @@ export default function ProfilePage() {
         )}
       </Card>
 
-      {/* Activities */}
+      )}
+
+      {show('experience') && (
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
           <h2 className="font-semibold text-student-ink">Activities</h2>
@@ -429,7 +458,9 @@ export default function ProfilePage() {
         )}
       </Card>
 
-      {/* Online Presence */}
+      )}
+
+      {show('experience') && (
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
           <h2 className="font-semibold text-student-ink">Online Presence</h2>
@@ -458,7 +489,9 @@ export default function ProfilePage() {
         )}
       </Card>
 
-      {/* Portfolio */}
+      )}
+
+      {show('experience') && (
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
           <h2 className="font-semibold text-student-ink">Portfolio</h2>
@@ -489,7 +522,9 @@ export default function ProfilePage() {
         )}
       </Card>
 
-      {/* Research */}
+      )}
+
+      {show('academics') && (
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
           <h2 className="font-semibold text-student-ink">Research</h2>
@@ -523,7 +558,9 @@ export default function ProfilePage() {
         )}
       </Card>
 
-      {/* Languages */}
+      )}
+
+      {show('academics') && (
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
           <h2 className="font-semibold text-student-ink">Languages</h2>
@@ -553,7 +590,9 @@ export default function ProfilePage() {
         )}
       </Card>
 
-      {/* Preferences */}
+      )}
+
+      {show('preferences') && (
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
           <h2 className="font-semibold text-student-ink">Preferences</h2>
@@ -571,7 +610,9 @@ export default function ProfilePage() {
         )}
       </Card>
 
-      {/* Documents */}
+      )}
+
+      {show('preparation') && (
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
           <h2 className="font-semibold text-student-ink">Documents</h2>
@@ -591,7 +632,9 @@ export default function ProfilePage() {
         )}
       </Card>
 
-      {/* Work & Service */}
+      )}
+
+      {show('experience') && (
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-2">
@@ -621,7 +664,9 @@ export default function ProfilePage() {
         )}
       </Card>
 
-      {/* Competitions */}
+      )}
+
+      {show('experience') && (
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-2">
@@ -654,7 +699,9 @@ export default function ProfilePage() {
         )}
       </Card>
 
-      {/* Accommodations */}
+      )}
+
+      {show('preparation') && (
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-2">
@@ -674,7 +721,9 @@ export default function ProfilePage() {
         )}
       </Card>
 
-      {/* Scheduling */}
+      )}
+
+      {show('preparation') && (
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-2">
@@ -695,8 +744,10 @@ export default function ProfilePage() {
         )}
       </Card>
 
+      )}
+
       {/* Peer Comparison */}
-      {peerMetrics.length > 0 && (
+      {show('timeline') && peerMetrics.length > 0 && (
         <Card className="p-5">
           <div className="flex items-center gap-2 mb-3">
             <BarChart3 size={16} className="text-student" />
@@ -714,9 +765,8 @@ export default function ProfilePage() {
         </Card>
       )}
 
-      {/* Export */}
       {/* Timeline */}
-      {timelineItems.length > 0 && (
+      {show('timeline') && timelineItems.length > 0 && (
         <Card className="p-5">
           <div className="flex items-center gap-2 mb-3">
             <Milestone size={16} className="text-student" />
@@ -737,7 +787,8 @@ export default function ProfilePage() {
         </Card>
       )}
 
-      {/* Data Rights */}
+      {show('data') && (
+      <>
       <Card className="p-5">
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-2">
@@ -752,6 +803,7 @@ export default function ProfilePage() {
           <dl className="grid grid-cols-2 gap-2 text-sm">
             <div><dt className="text-gray-500">AI Matching</dt><dd>{dataRights.consent_matching ? 'Allowed' : 'Not allowed'}</dd></div>
             <div><dt className="text-gray-500">School Outreach</dt><dd>{dataRights.consent_outreach ? 'Allowed' : 'Not allowed'}</dd></div>
+            <div><dt className="text-gray-500">AI Model Training</dt><dd>{dataRights.consent_training === false ? 'Excluded' : 'Allowed'}</dd></div>
             {dataRights.data_retention && <div><dt className="text-gray-500">Data Retention</dt><dd className="capitalize">{dataRights.data_retention.replace(/_/g, ' ')}</dd></div>}
             {dataRights.deletion_requested && <div><dt className="text-gray-500">Deletion</dt><dd className="text-red-600">Requested</dd></div>}
           </dl>
@@ -782,6 +834,9 @@ export default function ProfilePage() {
           </Button>
         </div>
       </Card>
+
+      </>
+      )}
 
       {/* === MODALS === */}
 
