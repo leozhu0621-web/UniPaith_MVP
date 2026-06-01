@@ -43,11 +43,6 @@ _FAIRNESS_SKEW_THRESHOLD = 0.70
 # surfaced as a fairness watch-point (advisory only — never an auto-halt).
 _ADMIT_RATE_GAP = 0.20
 
-# Student-side outcome values that mean "responded" (no longer at yield risk).
-_RESPONDED = ("accepted_by_student", "declined_by_student", "withdrawn")
-# Statuses that count as an active competing application elsewhere.
-_INACTIVE = ("draft", "rejected", "withdrawn")
-
 
 class DashboardIntelligenceService:
     def __init__(self, db: AsyncSession):
@@ -228,8 +223,11 @@ class DashboardIntelligenceService:
         return " ".join(parts)
 
     # ------------------------------------------------------------------
-    # Yield-risk alerts
+    # Applicant context (digest stats)
     # ------------------------------------------------------------------
+    # NOTE: the /me/intelligence/yield-risks endpoint is owned by the offers
+    # domain (Spec 34 — ApplicationService.get_yield_risk_alerts, deadline-aware).
+    # This service only contributes the admitted-no-response count to the digest.
 
     async def _admitted_no_response_count(self, institution_id: UUID) -> int:
         stmt = (
@@ -240,76 +238,6 @@ class DashboardIntelligenceService:
                 Program.institution_id == institution_id,
                 Application.decision == "admitted",
                 Application.student_decision.is_(None),
-            )
-        )
-        return int((await self.db.execute(stmt)).scalar_one() or 0)
-
-    async def yield_risks(self, institution_id: UUID) -> dict[str, Any]:
-        """Admitted applicants who have not yet responded — ranked by risk."""
-        now = datetime.now(UTC)
-        rows = await self.db.execute(
-            select(Application)
-            .join(Program, Application.program_id == Program.id)
-            .where(
-                Program.institution_id == institution_id,
-                Application.decision == "admitted",
-                Application.student_decision.is_(None),
-            )
-        )
-        admitted = list(rows.scalars().all())
-
-        alerts: list[dict[str, Any]] = []
-        for app in admitted:
-            competing = await self._competing_count(app)
-            decided = app.decision_at or app.updated_at
-            days_waiting = (now - decided).days if decided else 0
-            if competing >= 2 or days_waiting >= 10:
-                risk = "high"
-            elif competing >= 1 or days_waiting >= 5:
-                risk = "medium"
-            else:
-                risk = "low"
-            reason_bits = []
-            if days_waiting > 0:
-                reason_bits.append(f"admitted {days_waiting}d ago, no response")
-            else:
-                reason_bits.append("admitted, no response yet")
-            if competing:
-                reason_bits.append(
-                    f"{competing} competing application{'s' if competing != 1 else ''}"
-                )
-            alerts.append(
-                {
-                    "application_id": str(app.id),
-                    "student_id": str(app.student_id),
-                    "program_id": str(app.program_id),
-                    "risk_level": risk,
-                    "competing_programs": competing,
-                    "reason": "; ".join(reason_bits),
-                    "days_waiting": days_waiting,
-                }
-            )
-
-        # Most urgent first: high → medium → low, then longest-waiting.
-        order = {"high": 0, "medium": 1, "low": 2}
-        alerts.sort(key=lambda a: (order[a["risk_level"]], -a["days_waiting"]))
-        return {
-            "institution_id": str(institution_id),
-            "alerts": alerts,
-            "generated_at": now.isoformat(),
-        }
-
-    async def _competing_count(self, app: Application) -> int:
-        """Other active applications by the same student (any institution)."""
-        stmt = (
-            select(func.count())
-            .select_from(Application)
-            .where(
-                Application.student_id == app.student_id,
-                Application.id != app.id,
-                Application.status.not_in(_INACTIVE),
-                Application.student_decision.is_distinct_from("declined_by_student"),
-                Application.student_decision.is_distinct_from("withdrawn"),
             )
         )
         return int((await self.db.execute(stmt)).scalar_one() or 0)

@@ -34,9 +34,11 @@ AGENT_TIERS: dict[str, str] = {
     # ── Workshops (L2) ──
     "workshop_coach": "workhorse",
     "workshop_judge": "batch",
-    # ── Institution review (L2) — spec 06 §2 ──
+    # ── Institution review (L2) — spec 06 §2 / spec 32 ──
     "review_summarizer": "flagship",  # DraftSummarizerForReview — Opus
     "authenticity_risk": "batch",  # AuthenticityRiskScorer — Haiku
+    "review_synthesis": "workhorse",  # ReviewSynthesisAgent (32 §4) — Sonnet
+    "review_assistant": "workhorse",  # ReviewAssistant (32 §6) — Sonnet
     # ── L3 ML scorer (not an LLM; labels the audit-ledger row) ──
     "matcher": "rule_based",
     # ── Discovery type-first program search (spec 10 §3 / 45 §12) ──

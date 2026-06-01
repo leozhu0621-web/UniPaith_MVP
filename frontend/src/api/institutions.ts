@@ -656,9 +656,17 @@ export async function getDemandForecast(): Promise<{
 }
 
 export async function getYieldRiskAlerts(): Promise<{
-  institution_id: string
-  alerts: { application_id: string; student_id: string; program_id: string; risk_level: string; competing_programs: number; reason: string }[]
-  generated_at: string
+  // Spec 34 §6 — admitted students with an unanswered offer near/past deadline.
+  alerts: {
+    application_id: string
+    student_id: string
+    offer_id?: string
+    risk_level: 'high' | 'medium'
+    reason: string
+    days_remaining?: number | null
+    response_deadline?: string | null
+  }[]
+  count: number
 }> {
   const { data } = await apiClient.get('/institutions/me/intelligence/yield-risks')
   return data

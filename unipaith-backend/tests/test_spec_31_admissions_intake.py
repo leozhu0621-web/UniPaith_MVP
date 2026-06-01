@@ -5,7 +5,7 @@ yield-risk alerts, integrity resolve workflow, and batch-action audit logging.
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
 import pytest
 from httpx import AsyncClient
@@ -194,80 +194,10 @@ async def test_intelligence_digest_fallback(
     assert isinstance(data["stats"], dict)
 
 
-@pytest.mark.asyncio
-async def test_yield_risk_alerts(
-    institution_client: AsyncClient,
-    db_session: AsyncSession,
-    mock_institution_user: User,
-):
-    ctx = await _seed(db_session, mock_institution_user)
-    program = ctx["program"]
-    s = await _student(db_session)
-    db_session.add(
-        Application(
-            student_id=s.id,
-            program_id=program.id,
-            status="decision_made",
-            decision="admitted",
-            decision_at=datetime.now(UTC) - timedelta(days=12),
-        )
-    )
-    await db_session.commit()
-
-    resp = await institution_client.get(f"{API}/institutions/me/intelligence/yield-risks")
-    assert resp.status_code == 200
-    data = resp.json()
-    assert len(data["alerts"]) == 1
-    alert = data["alerts"][0]
-    for key in (
-        "application_id",
-        "student_id",
-        "program_id",
-        "risk_level",
-        "competing_programs",
-        "reason",
-    ):
-        assert key in alert
-    # admitted 12 days ago, no response → high risk
-    assert alert["risk_level"] == "high"
-
-
-@pytest.mark.asyncio
-async def test_yield_risk_ordering(
-    institution_client: AsyncClient,
-    db_session: AsyncSession,
-    mock_institution_user: User,
-):
-    ctx = await _seed(db_session, mock_institution_user)
-    program = ctx["program"]
-    # one long-waiting (high) + one fresh (low)
-    s_old = await _student(db_session)
-    db_session.add(
-        Application(
-            student_id=s_old.id,
-            program_id=program.id,
-            status="decision_made",
-            decision="admitted",
-            decision_at=datetime.now(UTC) - timedelta(days=20),
-        )
-    )
-    s_new = await _student(db_session)
-    db_session.add(
-        Application(
-            student_id=s_new.id,
-            program_id=program.id,
-            status="decision_made",
-            decision="admitted",
-            decision_at=datetime.now(UTC),
-        )
-    )
-    await db_session.commit()
-    resp = await institution_client.get(f"{API}/institutions/me/intelligence/yield-risks")
-    alerts = resp.json()["alerts"]
-    assert len(alerts) == 2
-    order = {"high": 0, "medium": 1, "low": 2}
-    risks = [order[a["risk_level"]] for a in alerts]
-    assert risks == sorted(risks)  # most urgent first
+# NOTE: the /me/intelligence/yield-risks endpoint is owned by the offers domain
+# (Spec 34 — ApplicationService.get_yield_risk_alerts, offer-deadline aware) and
+# is covered by that spec's tests. Spec 31's dashboard consumes it; the digest's
+# admitted-no-response stat is exercised via test_intelligence_digest_fallback.
 
 
 @pytest.mark.asyncio

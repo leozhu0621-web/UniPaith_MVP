@@ -215,7 +215,22 @@ class ReviewPipelineService:
 
         Raises:
             NotFoundException: If the rubric does not exist or is inactive.
+            BadRequestException: If the applicant is locked (decision released);
+                scoring is read-only after a decision (spec 32 §9).
         """
+        # Spec 32 §9 — a released decision locks the applicant: scoring is
+        # read-only. Reject new scores rather than silently accepting them.
+        app_result = await self.db.execute(
+            select(Application).where(Application.id == application_id)
+        )
+        app = app_result.scalar_one_or_none()
+        if app is None:
+            raise NotFoundException("Application not found")
+        if app.decision is not None:
+            raise BadRequestException(
+                "Applicant is locked — a decision has been released; scoring is read-only."
+            )
+
         # Load rubric to compute weighted total
         rubric_result = await self.db.execute(
             select(Rubric).where(Rubric.id == rubric_id, Rubric.is_active.is_(True))
@@ -999,6 +1014,18 @@ class ReviewPipelineService:
         prog_r = await self.db.execute(select(Program).where(Program.id.in_(prog_ids)))
         programs = {p.id: p for p in prog_r.scalars().all()}
 
+        # Spec 32 — applicant display names so the queue shows names, not UUIDs.
+        student_ids = list({a.student_id for a in apps})
+        name_r = await self.db.execute(
+            select(StudentProfile.id, StudentProfile.first_name, StudentProfile.last_name).where(
+                StudentProfile.id.in_(student_ids)
+            )
+        )
+        student_names = {
+            sid: (f"{(fn or '').strip()} {(ln or '').strip()}".strip() or None)
+            for sid, fn, ln in name_r.all()
+        }
+
         # Load intake round deadlines
         intake_r = await self.db.execute(
             select(IntakeRound).where(
@@ -1114,6 +1141,8 @@ class ReviewPipelineService:
                 {
                     "application_id": str(app.id),
                     "student_id": str(app.student_id),
+                    "student_name": student_names.get(app.student_id)
+                    or f"Applicant {str(app.student_id)[:8]}",
                     "program_id": str(app.program_id),
                     "program_name": (prog.program_name if prog else "Unknown"),
                     "status": app.status,
@@ -1174,3 +1203,643 @@ class ReviewPipelineService:
             }
 
         return pipeline
+
+    # ------------------------------------------------------------------
+    # Spec 32 — consolidated review packet + assist + fairness tools
+    # ------------------------------------------------------------------
+
+    async def _load_app_for_institution(self, application_id: UUID, institution_id: UUID):
+        """Load (application, program) tenant-guarded to the institution."""
+        app_r = await self.db.execute(select(Application).where(Application.id == application_id))
+        app = app_r.scalar_one_or_none()
+        if not app:
+            raise NotFoundException("Application not found")
+        prog_r = await self.db.execute(select(Program).where(Program.id == app.program_id))
+        program = prog_r.scalar_one_or_none()
+        if not program or program.institution_id != institution_id:
+            raise NotFoundException("Application not found for this institution")
+        return app, program
+
+    async def _reviewer_names(self, institution_id: UUID) -> dict[str, str]:
+        r = await self.db.execute(select(Reviewer).where(Reviewer.institution_id == institution_id))
+        return {str(rv.id): rv.name for rv in r.scalars().all()}
+
+    async def _resolve_rubric_criteria(
+        self, institution_id: UUID, program_id: UUID, rubric_id: UUID | None
+    ) -> tuple[UUID | None, list[dict]]:
+        """Pick the rubric to aggregate against: explicit id, else the active
+        program rubric, else an institution-wide one. Returns (id, criteria)."""
+        stmt = select(Rubric).where(
+            Rubric.institution_id == institution_id, Rubric.is_active.is_(True)
+        )
+        if rubric_id is not None:
+            stmt = stmt.where(Rubric.id == rubric_id)
+        rubrics = list((await self.db.execute(stmt)).scalars().all())
+        if not rubrics:
+            return None, []
+        chosen = (
+            next((r for r in rubrics if r.program_id == program_id), None)
+            or next((r for r in rubrics if r.program_id is None), None)
+            or rubrics[0]
+        )
+        criteria = chosen.criteria if isinstance(chosen.criteria, list) else []
+        return chosen.id, criteria
+
+    async def build_review_packet(
+        self,
+        institution_id: UUID,
+        application_id: UUID,
+        *,
+        rubric_id: UUID | None = None,
+        reveal: bool = False,
+    ) -> dict:
+        """Spec 32 §8 — the consolidated ApplicantReviewPacket: student summary
+        (blind-aware), program card, cached AI summary, per-criterion ×
+        per-reviewer scores + variance, integrity signals, documents, essays,
+        decision, offer, plus holistic-context (§7A.4) and test-optional (§7A.3)
+        context and the blind-review / locked state."""
+        from datetime import UTC, datetime
+
+        from unipaith.models.application import OfferLetter
+        from unipaith.models.engagement import StudentEssay
+        from unipaith.models.institution import Institution
+        from unipaith.services.review_packet_helpers import (
+            aggregate_rubric_scores,
+            blind_redact_student,
+            holistic_context,
+            round_label,
+            test_optional_analysis,
+        )
+
+        app, program = await self._load_app_for_institution(application_id, institution_id)
+
+        inst = (
+            await self.db.execute(select(Institution).where(Institution.id == institution_id))
+        ).scalar_one_or_none()
+        review_cfg = inst.review_config if inst and isinstance(inst.review_config, dict) else {}
+        blind = bool(review_cfg.get("blind_review_default", False))
+
+        profile = (
+            await self.db.execute(
+                select(StudentProfile)
+                .where(StudentProfile.id == app.student_id)
+                .options(
+                    selectinload(StudentProfile.academic_records),
+                    selectinload(StudentProfile.test_scores),
+                    selectinload(StudentProfile.activities),
+                    selectinload(StudentProfile.languages),
+                    selectinload(StudentProfile.documents),
+                )
+            )
+        ).scalar_one_or_none()
+
+        # --- student summary ---
+        dob = getattr(profile, "date_of_birth", None) if profile else None
+        today = datetime.now(UTC).date()
+        prior_institutions = (
+            [r.institution_name for r in (profile.academic_records or []) if r.institution_name]
+            if profile
+            else []
+        )
+        student_summary: dict = {
+            "student_id": str(app.student_id),
+            "display_name": (
+                f"{(profile.first_name or '').strip()} {(profile.last_name or '').strip()}".strip()
+                or f"Applicant {str(app.student_id)[:8]}"
+            )
+            if profile
+            else f"Applicant {str(app.student_id)[:8]}",
+            "first_name": getattr(profile, "first_name", None) if profile else None,
+            "last_name": getattr(profile, "last_name", None) if profile else None,
+            "preferred_name": getattr(profile, "preferred_name", None) if profile else None,
+            "name_in_native_script": getattr(profile, "name_in_native_script", None)
+            if profile
+            else None,
+            "preferred_pronouns": getattr(profile, "preferred_pronouns", None) if profile else None,
+            "date_of_birth": dob.isoformat() if dob else None,
+            "age": (today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day)))
+            if dob
+            else None,
+            "gender_identity": getattr(profile, "gender_identity", None) if profile else None,
+            "legal_sex": getattr(profile, "legal_sex", None) if profile else None,
+            "nationality": getattr(profile, "nationality", None) if profile else None,
+            "place_of_birth": getattr(profile, "place_of_birth", None) if profile else None,
+            "country_of_residence": getattr(profile, "country_of_residence", None)
+            if profile
+            else None,
+            "bio": getattr(profile, "bio_text", None) if profile else None,
+            "goals": getattr(profile, "goals_text", None) if profile else None,
+            "academics": [
+                {
+                    "institution": r.institution_name,
+                    "degree": r.degree_type,
+                    "field": r.field_of_study,
+                    "gpa": str(r.gpa) if r.gpa else None,
+                }
+                for r in (profile.academic_records or [])
+            ]
+            if profile
+            else [],
+            "test_scores": [
+                {"type": s.test_type, "total": str(s.total_score) if s.total_score else None}
+                for s in (profile.test_scores or [])
+            ]
+            if profile
+            else [],
+            "activities": [
+                {"type": a.activity_type, "title": a.title, "organization": a.organization}
+                for a in (profile.activities or [])
+            ]
+            if profile
+            else [],
+        }
+        student_summary, redacted_fields = blind_redact_student(
+            student_summary, blind=blind, revealed=reveal
+        )
+
+        # --- scores → per-criterion aggregation + variance ---
+        scores_rows = list(
+            (
+                await self.db.execute(
+                    select(ApplicationScore)
+                    .where(ApplicationScore.application_id == application_id)
+                    .order_by(ApplicationScore.scored_at.desc())
+                )
+            )
+            .scalars()
+            .all()
+        )
+        reviewer_names = await self._reviewer_names(institution_id)
+        rubric_used_id, criteria = await self._resolve_rubric_criteria(
+            institution_id, program.id, rubric_id
+        )
+        score_dicts = [
+            {
+                "reviewer_id": str(s.reviewer_id),
+                "criterion_scores": s.criterion_scores or {},
+                "reviewer_notes": s.reviewer_notes,
+                "total_weighted_score": float(s.total_weighted_score)
+                if s.total_weighted_score is not None
+                else None,
+                "scored_at": s.scored_at.isoformat() if s.scored_at else None,
+            }
+            for s in scores_rows
+        ]
+        rubric_scores = aggregate_rubric_scores(criteria, score_dicts, reviewer_names)
+        reviewer_notes = [
+            {
+                "reviewer_id": s["reviewer_id"],
+                "reviewer_name": reviewer_names.get(s["reviewer_id"], "Reviewer"),
+                "total_weighted_score": s["total_weighted_score"],
+                "note": s["reviewer_notes"],
+                "scored_at": s["scored_at"],
+            }
+            for s in score_dicts
+        ]
+
+        # --- cached AI packet summary (read-only here; generated on the AI tab) ---
+        cached = (
+            await self.db.execute(
+                select(AIPacketSummary).where(AIPacketSummary.application_id == application_id)
+            )
+        ).scalar_one_or_none()
+        ai_packet = self._packet_to_dict(cached) if cached else None
+
+        # --- integrity, documents, essays, offer ---
+        integrity = await self.list_integrity_signals(institution_id, application_id)
+        documents = (
+            [
+                {
+                    "id": str(d.id),
+                    "document_type": d.document_type,
+                    "file_name": d.file_name,
+                    "file_url": d.file_url,
+                    "mime_type": d.mime_type,
+                    "uploaded_at": d.uploaded_at.isoformat() if d.uploaded_at else None,
+                }
+                for d in (profile.documents or [])
+            ]
+            if profile
+            else []
+        )
+        essays_rows = list(
+            (
+                await self.db.execute(
+                    select(StudentEssay).where(
+                        StudentEssay.student_id == app.student_id,
+                        StudentEssay.program_id == app.program_id,
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+        essays = [
+            {
+                "id": str(e.id),
+                "prompt_text": e.prompt_text,
+                "content": e.content,
+                "word_count": e.word_count,
+                "status": e.status,
+                "essay_version": e.essay_version,
+            }
+            for e in essays_rows
+        ]
+        offer_row = (
+            await self.db.execute(
+                select(OfferLetter).where(OfferLetter.application_id == application_id)
+            )
+        ).scalar_one_or_none()
+        offer = (
+            {
+                "id": str(offer_row.id),
+                "offer_type": offer_row.offer_type,
+                "status": offer_row.status,
+                "tuition_amount": offer_row.tuition_amount,
+                "scholarship_amount": offer_row.scholarship_amount,
+                "response_deadline": offer_row.response_deadline.isoformat()
+                if offer_row.response_deadline
+                else None,
+                "student_response": offer_row.student_response,
+            }
+            if offer_row
+            else None
+        )
+
+        # --- holistic context (§7A.4) + test-optional (§7A.3) ---
+        holistic = holistic_context(
+            nationality=getattr(profile, "nationality", None) if profile else None,
+            country_of_residence=getattr(profile, "country_of_residence", None)
+            if profile
+            else None,
+            institution_country=inst.country if inst else None,
+            language_count=len(profile.languages) if profile and profile.languages else 0,
+            prior_institutions=prior_institutions,
+        )
+        test_optional = test_optional_analysis(
+            has_test_scores=bool(profile.test_scores) if profile else False,
+            program={
+                "requirements": program.requirements,
+                "application_requirements": program.application_requirements,
+            },
+        )
+
+        return {
+            "application_id": str(application_id),
+            "student": student_summary,
+            "program": {
+                "id": str(program.id),
+                "program_name": program.program_name,
+                "degree_type": program.degree_type,
+                "department": program.department,
+                "label": round_label(
+                    program_name=program.program_name,
+                    degree_type=program.degree_type,
+                    program_start_date=program.program_start_date,
+                    intake_term=None,
+                ),
+            },
+            "ai_packet_summary": ai_packet,
+            "rubric_id": str(rubric_used_id) if rubric_used_id else None,
+            "rubric_scores": rubric_scores,
+            "reviewer_notes": reviewer_notes,
+            "reviewer_count": len({s["reviewer_id"] for s in score_dicts}),
+            "integrity_signals": integrity,
+            "documents": documents,
+            "essays": essays,
+            "decision": {
+                "decision": app.decision,
+                "decision_notes": app.decision_notes,
+                "decision_at": app.decision_at.isoformat() if app.decision_at else None,
+            }
+            if app.decision
+            else None,
+            "offer": offer,
+            "status": app.status,
+            "match_score": float(app.match_score) if app.match_score is not None else None,
+            "completeness_status": app.completeness_status,
+            "submitted_at": app.submitted_at.isoformat() if app.submitted_at else None,
+            "locked": app.decision is not None,
+            "blind_review": {
+                "enabled": blind,
+                "revealed": bool(reveal) or not blind,
+                "redacted_fields": redacted_fields,
+            },
+            "holistic_context": holistic,
+            "test_optional": test_optional,
+        }
+
+    async def synthesize_reviews(
+        self,
+        institution_id: UUID,
+        application_id: UUID,
+        rubric_id: UUID | None = None,
+    ) -> dict:
+        """Spec 32 §4 — cross-reviewer synthesis (Sonnet, rule-based fallback)."""
+        from unipaith.ai.review_assist import get_review_synthesis_agent
+
+        app, program = await self._load_app_for_institution(application_id, institution_id)
+        _rid, criteria = await self._resolve_rubric_criteria(institution_id, program.id, rubric_id)
+        scores_rows = list(
+            (
+                await self.db.execute(
+                    select(ApplicationScore).where(
+                        ApplicationScore.application_id == application_id
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+        reviewer_names = await self._reviewer_names(institution_id)
+        reviewers = [
+            {
+                "reviewer_name": reviewer_names.get(str(s.reviewer_id), "Reviewer"),
+                "criterion_scores": s.criterion_scores or {},
+                "note": s.reviewer_notes,
+            }
+            for s in scores_rows
+        ]
+        profile = (
+            await self.db.execute(select(StudentProfile).where(StudentProfile.id == app.student_id))
+        ).scalar_one_or_none()
+        applicant_name = (
+            f"{(profile.first_name or '').strip()} {(profile.last_name or '').strip()}".strip()
+            if profile
+            else "the applicant"
+        ) or "the applicant"
+        result = await get_review_synthesis_agent().synthesize(
+            criteria=criteria,
+            reviewers=reviewers,
+            applicant_name=applicant_name,
+            db=self.db,
+        )
+        out = result.to_dict()
+        out["reviewer_count"] = len(reviewers)
+        return out
+
+    async def answer_applicant_question(
+        self,
+        institution_id: UUID,
+        application_id: UUID,
+        question: str,
+    ) -> dict:
+        """Spec 32 §6 — grounded Q&A about one applicant (Sonnet, fallback)."""
+        from unipaith.ai.review_assist import get_review_assistant
+
+        app, _program = await self._load_app_for_institution(application_id, institution_id)
+        # Build a blind-respecting packet to ground the answer (no identity leak).
+        packet = await self.build_review_packet(institution_id, application_id, reveal=False)
+        # Trim to what the assistant needs (keep token cost down).
+        grounding = {
+            "program": packet.get("program"),
+            "ai_packet_summary": packet.get("ai_packet_summary"),
+            "rubric_scores": packet.get("rubric_scores"),
+            "test_optional": packet.get("test_optional"),
+            "match_score": packet.get("match_score"),
+            "completeness_status": packet.get("completeness_status"),
+        }
+        result = await get_review_assistant().answer(
+            question=question,
+            packet=grounding,
+            student_id=app.student_id,
+            db=self.db,
+        )
+        return result.to_dict()
+
+    async def act_on_integrity_signal(
+        self,
+        institution_id: UUID,
+        signal_id: UUID,
+        user_id: UUID,
+        action: str,
+        notes: str | None = None,
+    ) -> dict:
+        """Spec 32 §7 — reviewer acts on an integrity signal:
+        ``acknowledge`` | ``clarify`` | ``reject_application``. Each action is
+        audit-logged (spec 36); ``reject_application`` flips the application to a
+        rejected decision (humans keep the final action)."""
+        from datetime import UTC, datetime
+
+        from unipaith.models.application import IntegritySignal
+        from unipaith.services.audit_service import AuditService
+
+        valid = {"acknowledge", "clarify", "reject_application", "resolve"}
+        if action not in valid:
+            raise BadRequestException(f"Unknown integrity action '{action}'")
+
+        sig = (
+            await self.db.execute(
+                select(IntegritySignal).where(
+                    IntegritySignal.id == signal_id,
+                    IntegritySignal.institution_id == institution_id,
+                )
+            )
+        ).scalar_one_or_none()
+        if not sig:
+            raise NotFoundException("Signal not found")
+
+        status_map = {
+            "acknowledge": "acknowledged",
+            "clarify": "clarifying",
+            "reject_application": "rejected",
+            "resolve": "resolved",
+        }
+        sig.status = status_map[action]
+        sig.resolved_by = user_id
+        sig.resolved_at = datetime.now(UTC)
+        sig.resolution_notes = notes
+
+        rejected_application = False
+        if action == "reject_application":
+            app = (
+                await self.db.execute(
+                    select(Application).where(Application.id == sig.application_id)
+                )
+            ).scalar_one_or_none()
+            if app and app.decision is None:
+                app.decision = "rejected"
+                app.decision_at = datetime.now(UTC)
+                app.decision_notes = f"Rejected on integrity signal: {sig.title}." + (
+                    f" {notes}" if notes else ""
+                )
+                app.status = "decision_made"
+                rejected_application = True
+
+        await self.db.flush()
+        await AuditService(self.db).log(
+            institution_id=institution_id,
+            actor_user_id=user_id,
+            action=f"integrity_{action}",
+            entity_type="integrity_signal",
+            entity_id=str(signal_id),
+            application_id=sig.application_id,
+            description=f"Integrity signal '{sig.title}' → {action}",
+            new_value={"status": sig.status, "notes": notes},
+        )
+        return {
+            "id": str(sig.id),
+            "status": sig.status,
+            "action": action,
+            "rejected_application": rejected_application,
+            "resolved_at": sig.resolved_at.isoformat(),
+        }
+
+    async def reveal_identity(
+        self,
+        institution_id: UUID,
+        application_id: UUID,
+        user_id: UUID,
+        reason: str | None = None,
+    ) -> dict:
+        """Spec 32 §7A.1 — reveal a blind-redacted applicant's identity. The
+        reveal is audit-logged with a reason; callers then re-fetch the packet
+        with ``reveal=true``."""
+        from unipaith.services.audit_service import AuditService
+
+        app, _program = await self._load_app_for_institution(application_id, institution_id)
+        await AuditService(self.db).log(
+            institution_id=institution_id,
+            actor_user_id=user_id,
+            action="blind_review_reveal",
+            entity_type="application",
+            entity_id=str(application_id),
+            application_id=application_id,
+            description="Revealed blind-redacted applicant identity",
+            new_value={"reason": reason or "(no reason given)"},
+        )
+        return {"application_id": str(application_id), "revealed": True, "reason": reason}
+
+    async def compute_calibration(
+        self,
+        institution_id: UUID,
+        program_id: UUID | None = None,
+    ) -> dict:
+        """Spec 32 §7A.2 — reader calibration: inter-rater reliability per
+        criterion, per-reviewer drift vs the panel, and a test-optional cohort
+        breakdown. Coaching signals only — never auto-adjusts committed scores."""
+        from unipaith.services.review_packet_helpers import VARIANCE_THRESHOLD
+
+        stmt = (
+            select(ApplicationScore, Application.decision)
+            .join(Application, ApplicationScore.application_id == Application.id)
+            .join(Program, Application.program_id == Program.id)
+            .where(Program.institution_id == institution_id)
+        )
+        if program_id:
+            stmt = stmt.where(Application.program_id == program_id)
+        rows = (await self.db.execute(stmt)).all()
+        reviewer_names = await self._reviewer_names(institution_id)
+
+        # Group by application for per-applicant per-criterion spreads.
+        by_app: dict[UUID, list[ApplicationScore]] = {}
+        all_scores: list[ApplicationScore] = []
+        for score, _decision in rows:
+            by_app.setdefault(score.application_id, []).append(score)
+            all_scores.append(score)
+
+        # Inter-rater reliability per criterion.
+        crit_spreads: dict[str, list[float]] = {}
+        crit_values: dict[str, list[float]] = {}
+        for scores in by_app.values():
+            crit_names: set[str] = set()
+            for s in scores:
+                crit_names.update((s.criterion_scores or {}).keys())
+            for name in crit_names:
+                vals = []
+                for s in scores:
+                    v = (s.criterion_scores or {}).get(name)
+                    if v is not None:
+                        try:
+                            vals.append(float(v))
+                        except (TypeError, ValueError):
+                            pass
+                if vals:
+                    crit_values.setdefault(name, []).extend(vals)
+                if len(vals) >= 2:
+                    crit_spreads.setdefault(name, []).append(max(vals) - min(vals))
+        inter_rater = []
+        for name, values in crit_values.items():
+            spreads = crit_spreads.get(name, [])
+            mean_spread = round(sum(spreads) / len(spreads), 2) if spreads else 0.0
+            inter_rater.append(
+                {
+                    "criterion": name,
+                    "mean_score": round(sum(values) / len(values), 2),
+                    "scored_pairs": len(spreads),
+                    "mean_spread": mean_spread,
+                    "needs_calibration": mean_spread >= VARIANCE_THRESHOLD,
+                }
+            )
+        inter_rater.sort(key=lambda x: x["mean_spread"], reverse=True)
+
+        # Per-reviewer drift vs the panel mean (of total weighted scores).
+        totals = [
+            float(s.total_weighted_score) for s in all_scores if s.total_weighted_score is not None
+        ]
+        panel_mean = round(sum(totals) / len(totals), 2) if totals else 0.0
+        by_reviewer: dict[str, list[float]] = {}
+        for s in all_scores:
+            if s.total_weighted_score is not None:
+                by_reviewer.setdefault(str(s.reviewer_id), []).append(float(s.total_weighted_score))
+        reviewer_drift = []
+        for rid, vals in by_reviewer.items():
+            mean = round(sum(vals) / len(vals), 2)
+            delta = round(mean - panel_mean, 2)
+            tendency = "lenient" if delta >= 0.5 else "harsher" if delta <= -0.5 else "aligned"
+            reviewer_drift.append(
+                {
+                    "reviewer_id": rid,
+                    "reviewer_name": reviewer_names.get(rid, "Reviewer"),
+                    "n_scores": len(vals),
+                    "mean_total": mean,
+                    "delta_vs_panel": delta,
+                    "tendency": tendency,
+                }
+            )
+        reviewer_drift.sort(key=lambda x: abs(x["delta_vs_panel"]), reverse=True)
+
+        # Test-optional cohort (§7A.3): admit outcomes for submitters vs non.
+        # Determined per application via its student's test scores.
+        app_ids = list(by_app.keys())
+        submitter_admit = {"submitters": [0, 0], "non_submitters": [0, 0]}  # [n, admitted]
+        if app_ids:
+            apps = list(
+                (await self.db.execute(select(Application).where(Application.id.in_(app_ids))))
+                .scalars()
+                .all()
+            )
+            from unipaith.models.student import TestScore
+
+            student_ids = list({a.student_id for a in apps})
+            ts_rows = (
+                await self.db.execute(
+                    select(TestScore.student_id).where(TestScore.student_id.in_(student_ids))
+                )
+            ).all()
+            has_scores = {row[0] for row in ts_rows}
+            for a in apps:
+                bucket = "submitters" if a.student_id in has_scores else "non_submitters"
+                submitter_admit[bucket][0] += 1
+                if a.decision == "admitted":
+                    submitter_admit[bucket][1] += 1
+
+        def _rate(pair: list[int]) -> dict:
+            n, admitted = pair
+            return {
+                "n": n,
+                "admitted": admitted,
+                "admit_rate": round(admitted / n, 3) if n else None,
+            }
+
+        return {
+            "panel_mean": panel_mean,
+            "inter_rater": inter_rater,
+            "reviewer_drift": reviewer_drift,
+            "test_optional_cohort": {
+                "submitters": _rate(submitter_admit["submitters"]),
+                "non_submitters": _rate(submitter_admit["non_submitters"]),
+                "guardrail": "Non-submission must never count against an applicant.",
+            },
+            "note": "Coaching signals only — never auto-adjusts committed scores.",
+        }

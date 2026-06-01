@@ -125,6 +125,9 @@ def test_each_agent_declares_consent_requirement():
         "inbound_intent_classifier",
         # Spec 31 §9 / §11 — admissions-intake dashboard digest narrator (Sonnet).
         "intelligence_digest",
+        # Spec 32 §4/§6 — review-workspace assist agents (Sonnet).
+        "review_synthesis",
+        "review_assistant",
     }
     assert set(AGENT_REQUIRES.keys()) == expected_agents
 

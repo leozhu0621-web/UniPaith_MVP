@@ -62,7 +62,8 @@ class Application(Base):
     match_score: Mapped[Decimal | None] = mapped_column(Numeric(5, 4))
     match_reasoning_text: Mapped[str | None] = mapped_column(Text)
     submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    decision: Mapped[str | None] = mapped_column(String(20))
+    # 30 chars to fit the spec-34 decision vocabulary (e.g. ``conditional_admission``).
+    decision: Mapped[str | None] = mapped_column(String(30))
     decision_by: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("reviewers.id", ondelete="SET NULL")
     )

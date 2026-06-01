@@ -32,7 +32,9 @@ class BatchStatusRequest(BaseModel):
 
 class BatchDecisionRequest(BaseModel):
     application_ids: list[UUID] = Field(min_length=1)
-    decision: Literal["admitted", "rejected", "waitlisted", "deferred"]
+    decision: Literal[
+        "admitted", "accepted", "conditional_admission", "rejected", "waitlisted", "deferred"
+    ]
     decision_notes: str | None = None
 
 

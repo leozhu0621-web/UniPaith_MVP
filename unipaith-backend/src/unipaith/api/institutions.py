@@ -2313,8 +2313,10 @@ async def institution_yield_risks(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    """Spec 31 §9 — admitted students who haven't responded, ranked by risk."""
-    from unipaith.services.dashboard_intelligence_service import DashboardIntelligenceService
+    """Admitted students with an unanswered offer near/past deadline (spec 34
+    §6 / spec 31 §2 yield-risk alerts). Owned by the offers domain (Spec 34);
+    Spec 31's dashboard yield card consumes this same endpoint."""
+    from unipaith.services.application_service import ApplicationService
 
-    inst = await _svc(db).get_institution(user.id)
-    return await DashboardIntelligenceService(db).yield_risks(inst.id)
+    inst = await InstitutionService(db).get_institution(user.id)
+    return await ApplicationService(db).get_yield_risk_alerts(inst.id)
