@@ -15,9 +15,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from unipaith.config import settings
 from unipaith.core.exceptions import BadRequestException, NotFoundException
 from unipaith.models.institution import (
+    DatasetMappingTemplate,
+    DatasetVersion,
     InstitutionDataset,
-    InstitutionDatasetMappingTemplate,
-    InstitutionDatasetVersion,
     Program,
 )
 from unipaith.services.audit_service import AuditService
@@ -232,13 +232,11 @@ class DatasetUploadService:
         validation_report: dict | None,
         user_id: UUID,
     ) -> None:
-        version = InstitutionDatasetVersion(
+        version = DatasetVersion(
             dataset_id=dataset.id,
             version_number=dataset.version,
             s3_key=dataset.s3_key,
-            file_name=dataset.file_name,
             row_count=dataset.row_count,
-            column_mapping=dataset.column_mapping,
             changes_summary=changes_summary,
             validation_report=validation_report,
             uploaded_by=user_id,
@@ -413,14 +411,12 @@ class DatasetUploadService:
         await self.db.refresh(dataset)
         return dataset, report
 
-    async def list_versions(
-        self, institution_id: UUID, dataset_id: UUID
-    ) -> list[InstitutionDatasetVersion]:
+    async def list_versions(self, institution_id: UUID, dataset_id: UUID) -> list[DatasetVersion]:
         await self._get_dataset(institution_id, dataset_id)
         result = await self.db.execute(
-            select(InstitutionDatasetVersion)
-            .where(InstitutionDatasetVersion.dataset_id == dataset_id)
-            .order_by(InstitutionDatasetVersion.version_number.desc())
+            select(DatasetVersion)
+            .where(DatasetVersion.dataset_id == dataset_id)
+            .order_by(DatasetVersion.version_number.desc())
         )
         return list(result.scalars().all())
 
@@ -433,9 +429,9 @@ class DatasetUploadService:
     ) -> InstitutionDataset:
         dataset = await self._get_dataset(institution_id, dataset_id)
         result = await self.db.execute(
-            select(InstitutionDatasetVersion).where(
-                InstitutionDatasetVersion.id == version_id,
-                InstitutionDatasetVersion.dataset_id == dataset_id,
+            select(DatasetVersion).where(
+                DatasetVersion.id == version_id,
+                DatasetVersion.dataset_id == dataset_id,
             )
         )
         version = result.scalar_one_or_none()
@@ -444,7 +440,6 @@ class DatasetUploadService:
 
         content = _read_dataset_content(version.s3_key)
         _write_dataset_content(dataset.s3_key, content)
-        dataset.file_name = version.file_name
         dataset.row_count = version.row_count
         dataset.column_mapping = version.column_mapping
         dataset.version = (dataset.version or 0) + 1
@@ -484,15 +479,13 @@ class DatasetUploadService:
 
     async def list_mapping_templates(
         self, institution_id: UUID, dataset_type: str | None = None
-    ) -> list[InstitutionDatasetMappingTemplate]:
-        stmt = select(InstitutionDatasetMappingTemplate).where(
-            InstitutionDatasetMappingTemplate.institution_id == institution_id
+    ) -> list[DatasetMappingTemplate]:
+        stmt = select(DatasetMappingTemplate).where(
+            DatasetMappingTemplate.institution_id == institution_id
         )
         if dataset_type:
-            stmt = stmt.where(InstitutionDatasetMappingTemplate.dataset_type == dataset_type)
-        result = await self.db.execute(
-            stmt.order_by(InstitutionDatasetMappingTemplate.updated_at.desc())
-        )
+            stmt = stmt.where(DatasetMappingTemplate.dataset_type == dataset_type)
+        result = await self.db.execute(stmt.order_by(DatasetMappingTemplate.updated_at.desc()))
         return list(result.scalars().all())
 
     async def save_mapping_template(
@@ -502,12 +495,12 @@ class DatasetUploadService:
         template_name: str,
         dataset_type: str,
         column_mapping: dict[str, str],
-    ) -> InstitutionDatasetMappingTemplate:
+    ) -> DatasetMappingTemplate:
         result = await self.db.execute(
-            select(InstitutionDatasetMappingTemplate).where(
-                InstitutionDatasetMappingTemplate.institution_id == institution_id,
-                InstitutionDatasetMappingTemplate.template_name == template_name,
-                InstitutionDatasetMappingTemplate.dataset_type == dataset_type,
+            select(DatasetMappingTemplate).where(
+                DatasetMappingTemplate.institution_id == institution_id,
+                DatasetMappingTemplate.name == template_name,
+                DatasetMappingTemplate.dataset_type == dataset_type,
             )
         )
         existing = result.scalar_one_or_none()
@@ -516,9 +509,9 @@ class DatasetUploadService:
             await self.db.flush()
             await self.db.refresh(existing)
             return existing
-        tpl = InstitutionDatasetMappingTemplate(
+        tpl = DatasetMappingTemplate(
             institution_id=institution_id,
-            template_name=template_name,
+            name=template_name,
             dataset_type=dataset_type,
             column_mapping=column_mapping,
         )

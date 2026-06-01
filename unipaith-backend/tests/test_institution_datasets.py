@@ -123,7 +123,7 @@ async def test_mapping_template_reuse(
         f"{BASE}/mapping-templates", params={"dataset_type": "prospect_list"}
     )
     assert listed.status_code == 200
-    assert any(t["template_name"] == "Prospect default" for t in listed.json())
+    assert any(t["name"] == "Prospect default" for t in listed.json())
 
 
 @pytest.mark.asyncio
