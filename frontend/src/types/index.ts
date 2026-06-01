@@ -903,6 +903,89 @@ export interface SuggestedReply {
   alternate_drafts: string[]
 }
 
+// ============ INSTITUTION INBOX (Spec 29) ============
+export type ReasonCode =
+  | 'request_document'
+  | 'request_clarification'
+  | 'interview_invite'
+  | 'status_update'
+  | 'general_reply'
+  | 'decision_notice'
+
+export type InstThreadStatus = 'open' | 'awaiting_student' | 'awaiting_us' | 'closed'
+export type InstThreadFilter = 'mine' | 'unassigned' | 'all'
+
+export interface InstThreadContext {
+  stage: string | null
+  checklist_complete: number
+  checklist_total: number
+  missing_items: string[]
+}
+
+export interface InstThreadStudentRef {
+  id: string
+  name: string
+}
+
+export interface InstMessage {
+  id: string
+  thread_id: string
+  sender: 'student' | 'institution' | 'admissions_officer' | 'system'
+  body: string
+  attachments: InboxAttachment[]
+  sent_at: string
+  read_at: string | null
+  status: string
+  ai_draft_used: boolean
+}
+
+export interface InstThreadSummary {
+  id: string
+  application_id: string | null
+  student: InstThreadStudentRef
+  program_name: string | null
+  reason_label: ReasonCode | null
+  action_label: ActionLabel | null
+  status: InstThreadStatus
+  assigned_to: string | null
+  assigned_to_name: string | null
+  due_date: string | null
+  unread_count: number
+  last_message_at: string | null
+  context: InstThreadContext
+}
+
+export interface InstThread extends InstThreadSummary {
+  messages: InstMessage[]
+}
+
+export interface InstSuggestedReply {
+  draft: string
+  tone: string
+  length: string
+  alternate_drafts: string[]
+}
+
+export interface IntentSuggestion {
+  reason_code: ReasonCode
+  confidence: number
+  rationale: string
+}
+
+export interface StaffMember {
+  id: string
+  name: string
+  email: string
+  role: string
+}
+
+export interface BulkMessageResult {
+  sent_count: number
+  suppressed_count: number
+  recipient_count: number
+  thread_ids: string[]
+}
+
 // ============ EVENTS ============
 export interface EventItem {
   id: string

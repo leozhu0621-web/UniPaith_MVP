@@ -224,7 +224,12 @@ class CRMRecord(Base):
 
 class Conversation(Base):
     __tablename__ = "conversations"
-    __table_args__ = (Index("ix_conversations_application_id", "application_id"),)
+    __table_args__ = (
+        Index("ix_conversations_application_id", "application_id"),
+        # Spec 29 — institution inbox: scope + assignment filters (mine /
+        # unassigned / all) hit (institution_id, assigned_to) together.
+        Index("ix_conversations_inst_assigned", "institution_id", "assigned_to"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     student_id: Mapped[uuid.UUID] = mapped_column(
@@ -249,6 +254,14 @@ class Conversation(Base):
     linked_checklist_item_category: Mapped[str | None] = mapped_column(String(50))
     subject: Mapped[str | None] = mapped_column(String(500))
     status: Mapped[str | None] = mapped_column(String(20))
+    # Spec 29 — institution-side inbox metadata over the shared thread.
+    # `reason_code` is the institution's outbound reason (drives the student's
+    # `action_label` per the §4 mapping); `assigned_to` is the staff user who
+    # owns the thread (§2; null = unassigned shared queue).
+    reason_code: Mapped[str | None] = mapped_column(String(40))
+    assigned_to: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
     # For a peer thread, the OTHER student in the conversation (Spec 20 §6.3).
     peer_student_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("student_profiles.id", ondelete="SET NULL")

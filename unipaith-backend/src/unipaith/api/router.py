@@ -17,6 +17,7 @@ from unipaith.api.events import router as events_router
 from unipaith.api.goals import router as goals_router
 from unipaith.api.identity import router as identity_router
 from unipaith.api.inbox import router as inbox_router
+from unipaith.api.institution_inbox import router as institution_inbox_router
 from unipaith.api.institutions import router as institutions_router
 from unipaith.api.interviews import router as interviews_router
 from unipaith.api.messaging import router as messaging_router
@@ -50,6 +51,9 @@ api_router.include_router(goals_router)
 api_router.include_router(needs_router)
 api_router.include_router(identity_router)
 api_router.include_router(strategy_router)
+# Institution inbox before institutions_router so the literal
+# `/institutions/me/inbox/*` paths win over any param route (spec 29).
+api_router.include_router(institution_inbox_router)
 api_router.include_router(institutions_router)
 api_router.include_router(programs_router)
 api_router.include_router(applications_router)
