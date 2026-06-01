@@ -25,13 +25,18 @@ import { getMyInterviews } from '../../api/interviews'
 import InterviewRespondPanel from './interviews/InterviewRespondPanel'
 import {
   ArrowLeft, Check, Circle, Upload, Sparkles, AlertCircle, FileCheck, ListChecks,
-  Users, AlertTriangle, ShieldCheck, Award, Send, Building2,
+  Users, AlertTriangle, ShieldCheck, Award, Send, Building2, CreditCard, Receipt, HandCoins,
 } from 'lucide-react'
 import Breadcrumbs from '../../components/ui/Breadcrumbs'
 import usePageTitle from '../../hooks/usePageTitle'
 import OfferPanel from './apply/offer/OfferPanel'
 import EnrollmentPanel from './apply/enrollment/EnrollmentPanel'
 import { DECISION_STATE_LABEL } from './apply/offer/offerFormat'
+import PaymentCheckout from '../../components/student/PaymentCheckout'
+import {
+  getCostTracker, payApplicationFee, requestFeeWaiver, isFeeClear, formatMoney,
+  type CheckoutSession, type FeeView,
+} from '../../api/payments'
 import type { Application, Essay, Resume, ChecklistItem } from '../../types'
 
 const STATUS_STEPS = ['draft', 'submitted', 'under_review', 'interview', 'decision_made']
@@ -89,6 +94,12 @@ export default function ApplicationDetailPage() {
   const [rationale, setRationale] = useState('')
   const [scanning, setScanning] = useState(false)
 
+  // Spec 39 — fees & payments (pay step + cost tracker)
+  const [checkout, setCheckout] = useState<CheckoutSession | null>(null)
+  const [waiverOpen, setWaiverOpen] = useState(false)
+  const [waiverBasis, setWaiverBasis] = useState('first_gen')
+  const [waiverNote, setWaiverNote] = useState('')
+
   useEffect(() => {
     const qTab = searchParams.get('tab')
     if (qTab) setTab(qTab)
@@ -101,6 +112,18 @@ export default function ApplicationDetailPage() {
   const { data: documents } = useQuery({ queryKey: ['documents'], queryFn: listDocuments, enabled: tab === 'documents' })
   const { data: interviews } = useQuery({ queryKey: ['interviews'], queryFn: getMyInterviews, enabled: tab === 'interviews' })
   const { data: recommenders } = useQuery({ queryKey: ['recommendations'], queryFn: listRecommendations, enabled: tab === 'recommenders' })
+  const { data: cost } = useQuery({ queryKey: ['payment', appId], queryFn: () => getCostTracker(appId!), enabled: !!appId })
+
+  // Spec 39 — after a Stripe redirect-return (?paid=fee|deposit), refresh state.
+  useEffect(() => {
+    const paid = searchParams.get('paid')
+    if (paid === 'fee' || paid === 'deposit') {
+      queryClient.invalidateQueries({ queryKey: ['payment', appId] })
+      queryClient.invalidateQueries({ queryKey: ['application', appId] })
+      if (paid === 'deposit') queryClient.invalidateQueries({ queryKey: ['enrollment', appId] })
+      showToast('Payment received — thank you.', 'success')
+    }
+  }, [searchParams, appId, queryClient])
 
   const submitMut = useMutation({
     mutationFn: () => submitApplication(appId!),
@@ -118,6 +141,21 @@ export default function ApplicationDetailPage() {
         showToast(detail || 'Could not submit', 'error')
       }
     },
+  })
+  const payFeeMut = useMutation({
+    mutationFn: () => payApplicationFee(appId!),
+    onSuccess: (session) => setCheckout(session),
+    onError: (err: any) => showToast(err?.response?.data?.detail || err?.message || 'Could not start checkout', 'error'),
+  })
+  const waiverMut = useMutation({
+    mutationFn: () => requestFeeWaiver(appId!, waiverBasis, waiverNote || undefined),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payment', appId] })
+      setWaiverOpen(false)
+      setWaiverNote('')
+      showToast('Waiver requested — the school will review it.', 'success')
+    },
+    onError: (err: any) => showToast(err?.response?.data?.detail || 'Could not request a waiver', 'error'),
   })
   const essayMut = useMutation({ mutationFn: (data: any) => createEssay(data), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['essays'] }); queryClient.invalidateQueries({ queryKey: ['checklist', appId] }); setShowEssayModal(false); setEssayContent(''); setEssayPrompt(''); showToast('Essay created', 'success') } })
   const essayUpdateMut = useMutation({ mutationFn: ({ id, data }: { id: string; data: any }) => updateEssay(id, data), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['essays'] }); setEditingEssay(null); showToast('Essay updated', 'success') } })
@@ -233,7 +271,11 @@ export default function ApplicationDetailPage() {
   const requiredItems = checklistItems.filter(i => i.required !== false)
   const incompleteRequired = requiredItems.filter(i => i.status !== 'completed')
   const allComplete = application.status === 'draft' && incompleteRequired.length === 0 && checklistItems.length > 0
-  const canSubmit = application.status === 'draft' && (allComplete && (markedReady || isExternal))
+  // Spec 39 — internal submission is gated on the application fee being paid or
+  // waived (allow-and-reconcile lets a requested waiver through).
+  const fee = cost?.fee
+  const feeClear = isFeeClear(fee)
+  const canSubmit = application.status === 'draft' && allComplete && (markedReady || isExternal) && feeClear
 
   const tabs = [
     { id: 'checklist', label: `Checklist ${completionPct}%` },
@@ -392,7 +434,13 @@ export default function ApplicationDetailPage() {
                 onClick={() => submitMut.mutate()}
               >
                 <Send size={14} className="mr-1" />
-                {canSubmit ? 'Submit application' : allComplete ? 'Confirm ready first' : `${incompleteRequired.length} item${incompleteRequired.length !== 1 ? 's' : ''} left`}
+                {canSubmit
+                  ? 'Submit application'
+                  : allComplete && markedReady && !feeClear
+                    ? 'Settle the fee to submit'
+                    : allComplete
+                      ? 'Confirm ready first'
+                      : `${incompleteRequired.length} item${incompleteRequired.length !== 1 ? 's' : ''} left`}
               </Button>
             )}
 
@@ -411,6 +459,17 @@ export default function ApplicationDetailPage() {
               <p className="text-xs text-success mt-2 flex items-center gap-1"><Check size={10} /> All required items complete</p>
             )}
           </Card>
+
+          {/* Application fee + cost tracker (Spec 39 §2.2 / §2A) */}
+          {fee?.required && (
+            <FeeCard
+              fee={fee}
+              isDraft={application.status === 'draft'}
+              payPending={payFeeMut.isPending}
+              onPay={() => payFeeMut.mutate()}
+              onRequestWaiver={() => setWaiverOpen(true)}
+            />
+          )}
 
           {/* Submission mode (§7) */}
           {application.status === 'draft' && (
@@ -747,7 +806,126 @@ export default function ApplicationDetailPage() {
         </ul>
         <Button className="w-full mt-4" variant="tertiary" onClick={() => setSubmitBlockers(null)}>Got it</Button>
       </Modal>
+
+      {/* Spec 39 — fee checkout (calm, cobalt, no gold) */}
+      <PaymentCheckout
+        session={checkout}
+        onClose={() => setCheckout(null)}
+        onPaid={() => {
+          setCheckout(null)
+          queryClient.invalidateQueries({ queryKey: ['payment', appId] })
+          queryClient.invalidateQueries({ queryKey: ['application', appId] })
+        }}
+      />
+
+      {/* Spec 39 §2.2 — fee-waiver request (equally prominent to paying) */}
+      <Modal isOpen={waiverOpen} onClose={() => setWaiverOpen(false)} title="Request a fee waiver" size="sm">
+        <div className="space-y-3">
+          <p className="text-sm text-student-text">
+            Choose a basis for your request. The school reviews it — there's no fee to ask.
+          </p>
+          <Select
+            label="Basis"
+            value={waiverBasis}
+            onChange={e => setWaiverBasis(e.target.value)}
+            options={[
+              { value: 'fee_waiver_code', label: 'I have a fee-waiver code' },
+              { value: 'first_gen', label: 'First-generation student' },
+              { value: 'income_band', label: 'Financial hardship / income' },
+              { value: 'nacac_sram', label: 'NACAC / SRAR waiver' },
+              { value: 'other', label: 'Other' },
+            ]}
+          />
+          <Textarea
+            label="Anything to add? (optional)"
+            value={waiverNote}
+            onChange={e => setWaiverNote(e.target.value)}
+            placeholder="Context or a fee-waiver code…"
+          />
+          <Button
+            variant="secondary"
+            className="w-full"
+            loading={waiverMut.isPending}
+            onClick={() => waiverMut.mutate()}
+          >
+            Request waiver
+          </Button>
+        </div>
+      </Modal>
     </div>
+  )
+}
+
+// --- Application fee + cost tracker (Spec 39 §2.2 / §2A) ---
+function FeeCard({ fee, isDraft, payPending, onPay, onRequestWaiver }: {
+  fee: FeeView
+  isDraft: boolean
+  payPending: boolean
+  onPay: () => void
+  onRequestWaiver: () => void
+}) {
+  const money = formatMoney(fee.amount, fee.currency)
+  const paid = fee.status === 'paid'
+  const waived = fee.status === 'waived'
+  const waiverPending = fee.status === 'waiver_pending'
+  const waiverDenied = fee.status === 'waiver_denied'
+  const processing = fee.status === 'processing'
+  const refunded = fee.status === 'refunded' || fee.status === 'partially_refunded'
+  const actionable = isDraft && (fee.status === 'due' || waiverDenied)
+
+  return (
+    <Card className="p-4">
+      <div className="flex items-center gap-2 mb-1">
+        <HandCoins size={15} className="text-cobalt" />
+        <h3 className="font-medium text-sm text-student-ink">Application fee</h3>
+      </div>
+      <p className="text-2xl font-bold text-student-ink tabular-nums mb-2">{money}</p>
+
+      {paid && (
+        <div className="rounded-lg bg-success-soft px-3 py-2 text-xs text-success flex items-start gap-1.5">
+          <Receipt size={14} className="mt-0.5 shrink-0" />
+          <span>
+            Fee paid{fee.paid_at ? ` on ${new Date(fee.paid_at).toLocaleDateString()}` : ''}. Receipt saved to your record.
+            {fee.refunded_amount ? ` Refunded ${formatMoney(fee.refunded_amount, fee.currency)}.` : ''}
+          </span>
+        </div>
+      )}
+      {waived && <Badge variant="info">Fee waived</Badge>}
+      {refunded && (
+        <div className="rounded-lg bg-student-mist px-3 py-2 text-xs text-student-text">
+          Refunded {formatMoney(fee.refunded_amount || 0, fee.currency)} of {money}.
+        </div>
+      )}
+      {processing && <p className="text-xs text-student-text">Confirming your payment…</p>}
+      {waiverPending && (
+        <div className="space-y-1.5">
+          <Badge variant="warning">Waiver requested — the school will review it</Badge>
+          {fee.waiver_policy === 'allow_and_reconcile' && (
+            <p className="text-xs text-student-text">You can submit now; the school reconciles the fee.</p>
+          )}
+        </div>
+      )}
+
+      {actionable && (
+        <div className="mt-3 space-y-2">
+          {waiverDenied && (
+            <p className="text-xs text-warning">Your waiver wasn't approved. You can pay the fee to submit.</p>
+          )}
+          {/* Equal prominence (Spec 39 §8): pay (cobalt) beside waiver (outline), never gold. */}
+          <Button variant="secondary" size="sm" className="w-full" loading={payPending} onClick={onPay}>
+            <CreditCard size={14} className="mr-1" /> Pay application fee ({money})
+          </Button>
+          {!waiverDenied && (
+            <Button variant="tertiary" size="sm" className="w-full" onClick={onRequestWaiver}>
+              Request a fee waiver instead
+            </Button>
+          )}
+        </div>
+      )}
+      {!isDraft && !paid && !waived && !refunded && (
+        <p className="text-xs text-student-text mt-1">Fee status: {fee.status.replace(/_/g, ' ')}.</p>
+      )}
+    </Card>
   )
 }
 

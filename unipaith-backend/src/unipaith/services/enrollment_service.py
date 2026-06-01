@@ -510,6 +510,65 @@ class EnrollmentService:
         data["timeline"] = self._timeline(enr, offer)
         return data
 
+    async def apply_paid_deposit(
+        self,
+        application_id: UUID,
+        *,
+        deposit_amount_cents: int | None = None,
+        actor_user_id: UUID | None = None,
+    ) -> dict:
+        """Spec 39 — a real enrollment deposit cleared (webhook / student pay).
+
+        Marks the deposit ``paid`` and advances the §5 state machine — paying a
+        deposit *implies* confirmed intent, so yield reflects it (§35 §4). Unlike
+        the institution-facing ``record_deposit`` (status-only), this resolves
+        the application directly and is the money-backed path."""
+        app = await self.db.get(Application, application_id)
+        if app is None:
+            raise NotFoundException("Application not found")
+        offer = await self._offer_for(app.id)
+        program = await self.db.get(Program, app.program_id)
+        institution_id = program.institution_id if program else None
+        if program is not None:
+            await self._apps._attach_institution_names([app])
+        enr = await self._get_or_create(app, offer, program)
+        if enr.state == "withdrew":
+            raise BadRequestException("Cannot record a deposit on a withdrawn enrollment")
+        now = datetime.now(UTC)
+        if enr.state == "accepted":
+            enr.state = "intent_confirmed"
+            enr.intent_confirmed_at = enr.intent_confirmed_at or now
+        enr.deposit_status = "paid"
+        if deposit_amount_cents:
+            enr.deposit_amount = int(round(deposit_amount_cents / 100))
+        if _state_at_least(enr.state, "intent_confirmed") and not _state_at_least(
+            enr.state, "deposit_recorded"
+        ):
+            enr.state = "deposit_recorded"
+        enr.enrollment_status = enr.state
+        await self.db.flush()
+        await self._audit(
+            institution_id,
+            actor_user_id,
+            app,
+            "enrollment_deposit_paid",
+            description="Enrollment deposit paid (Spec 39 — real payment processed)",
+            new_value={
+                "deposit_status": "paid",
+                "deposit_amount": enr.deposit_amount,
+                "state": enr.state,
+            },
+        )
+        await self._notify_student(
+            app,
+            program,
+            "Deposit received — your spot is confirmed",
+            f"Your enrollment deposit at "
+            f"{getattr(program, 'institution_name', None) or 'your school'} was received.",
+        )
+        await self.db.refresh(enr)
+        return self._serialize(enr, app, offer, program)
+
     async def mark_enrollment_confirmed(
         self,
         institution_id: UUID,

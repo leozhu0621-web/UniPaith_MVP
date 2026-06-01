@@ -37,6 +37,7 @@ import IntegrationsCard from './settings/IntegrationsCard'
 import OrgAccountCard from './settings/OrgAccountCard'
 import ReviewConfigCard from './settings/ReviewConfigCard'
 import AIConfigCard from './settings/AIConfigCard'
+import FeeConfigCard from './settings/FeeConfigCard'
 
 const CAMPUS_SETTING_OPTIONS = [
   { value: '', label: 'Not specified' },
@@ -439,6 +440,9 @@ export default function SettingsPage() {
       {/* Billing */}
       {activeTab === 'billing' && (
         <div className="space-y-4">
+          {/* Spec 39 — applicant-facing fee & deposit collection config. */}
+          <FeeConfigCard />
+          <h2 className="text-sm font-semibold text-muted-foreground pt-2">Platform usage billing</h2>
           {billingQ.isLoading || !billingQ.data ? (
             <Card className="p-6"><Skeleton className="h-28" /></Card>
           ) : (
