@@ -23,6 +23,7 @@ import { STATUS_COLORS, INTERVIEW_TYPES, INTERVIEW_TYPE_LABELS } from '../../uti
 import type { Interview, Program } from '../../types'
 import ProposeInterviewModal from './interviews/ProposeInterviewModal'
 import ScoreInterviewModal from './interviews/ScoreInterviewModal'
+import RescheduleInterviewModal from './interviews/RescheduleInterviewModal'
 
 type BadgeVariant = 'neutral' | 'info' | 'success' | 'warning' | 'danger'
 
@@ -42,6 +43,7 @@ export default function InterviewsPage({ embedded = false }: { embedded?: boolea
   const [typeFilter, setTypeFilter] = useState('')
   const [showPropose, setShowPropose] = useState(false)
   const [scoreTarget, setScoreTarget] = useState<Interview | null>(null)
+  const [rescheduleTarget, setRescheduleTarget] = useState<Interview | null>(null)
 
   const qc = useQueryClient()
 
@@ -132,6 +134,7 @@ export default function InterviewsPage({ embedded = false }: { embedded?: boolea
 
     const menu: { label: string; onClick: () => void; variant?: 'default' | 'danger' }[] = []
     if (completable && scoreable) menu.push({ label: 'Mark complete', onClick: () => completeMut.mutate(iv.id) })
+    if (cancellable) menu.push({ label: 'Reschedule', onClick: () => setRescheduleTarget(iv) })
     if (noshowable) menu.push({ label: 'Mark no-show', onClick: () => noShowMut.mutate(iv.id) })
     if (cancellable) menu.push({ label: 'Cancel interview', onClick: () => cancelMut.mutate(iv.id), variant: 'danger' })
 
@@ -288,6 +291,12 @@ export default function InterviewsPage({ embedded = false }: { embedded?: boolea
         onClose={() => setScoreTarget(null)}
         onScored={invalidate}
         interview={scoreTarget}
+      />
+      <RescheduleInterviewModal
+        isOpen={rescheduleTarget !== null}
+        onClose={() => setRescheduleTarget(null)}
+        onRescheduled={invalidate}
+        interview={rescheduleTarget}
       />
     </>
   )

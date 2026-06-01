@@ -492,3 +492,66 @@ async def test_ai_draft_invite_graceful_when_enabled(
     )
     assert resp.status_code == 200
     assert resp.json()["available"] is False
+
+
+@pytest.mark.asyncio
+async def test_reschedule_interview(
+    institution_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    """Spec 33 §13 — institution reschedules: back to proposed with new times."""
+    from datetime import datetime
+
+    _, _, _, application, reviewer = await _seed_interview_context(
+        db_session, mock_student_user, mock_institution_user
+    )
+    interview = Interview(
+        application_id=application.id,
+        interviewer_id=reviewer.id,
+        interview_type="live",
+        proposed_times=["2026-05-10T10:00:00Z"],
+        confirmed_time=datetime(2026, 5, 10, 10, 0, 0, tzinfo=UTC),
+        status="confirmed",
+    )
+    db_session.add(interview)
+    await db_session.commit()
+
+    resp = await institution_client.post(
+        f"/api/v1/interviews/{interview.id}/reschedule",
+        json={"proposed_times": ["2026-06-01T09:00:00Z", "2026-06-02T09:00:00Z"]},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "proposed"
+    assert data["scheduled_at"] is None
+    assert len(data["proposed_times"]) == 2
+
+
+@pytest.mark.asyncio
+async def test_student_request_reschedule(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    """Spec 33 §8 — student requests a reschedule; staff is notified (no 5xx)."""
+    from datetime import datetime
+
+    _, _, _, application, reviewer = await _seed_interview_context(
+        db_session, mock_student_user, mock_institution_user
+    )
+    interview = Interview(
+        application_id=application.id,
+        interviewer_id=reviewer.id,
+        interview_type="live",
+        proposed_times=["2026-05-10T10:00:00Z"],
+        confirmed_time=datetime(2026, 5, 10, 10, 0, 0, tzinfo=UTC),
+        status="confirmed",
+    )
+    db_session.add(interview)
+    await db_session.commit()
+
+    resp = await student_client.post(f"/api/v1/interviews/{interview.id}/request-reschedule")
+    assert resp.status_code == 200

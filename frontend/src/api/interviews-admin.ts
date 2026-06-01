@@ -50,6 +50,19 @@ export async function markInterviewNoShow(interviewId: string): Promise<Intervie
   return data
 }
 
+export async function rescheduleInterview(
+  interviewId: string,
+  payload: {
+    proposed_times?: string[]
+    async_window_end?: string | null
+    duration_minutes?: number
+    location_or_link?: string | null
+  },
+): Promise<Interview> {
+  const { data } = await apiClient.post(`/interviews/${interviewId}/reschedule`, payload)
+  return data
+}
+
 export async function scoreInterview(
   interviewId: string,
   payload: {

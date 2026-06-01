@@ -62,6 +62,13 @@ class CancelInterviewRequest(BaseModel):
     reason: str | None = None
 
 
+class RescheduleInterviewRequest(BaseModel):
+    proposed_times: list[str] = []  # new ISO8601 slots for live
+    async_window_end: str | None = None  # new deadline for async types
+    duration_minutes: int | None = None
+    location_or_link: str | None = None
+
+
 # ── Rich response shapes (Spec 33 §7) ───────────────────────────────────────
 
 
