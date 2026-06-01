@@ -291,7 +291,7 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
           </Button>
           <Button size="sm" variant="tertiary" onClick={onRequestInfo}>
             <Send size={14} className="mr-1.5" />
-            {isAuthenticated ? 'Request info' : 'Sign in to ask'}
+            Request info
           </Button>
           {schoolList.length > 0 ? (
             <Button size="sm" variant="ghost" onClick={() => setTab('schools')}>
@@ -772,7 +772,13 @@ function EventsTab({ events, institutionName, isAuthenticated, rsvpSet, onRsvp, 
    ────────────────────────────────────────────────────────────────────────── */
 function UpdatesTab({ posts, institutionName }: { posts: InstitutionPost[]; institutionName: string }) {
   if (posts.length === 0) {
-    return <EmptyBlock icon={BookOpen} title="No updates yet" body={`When ${institutionName} posts an update, it'll appear here.`} />
+    return (
+      <EmptyBlock
+        icon={BookOpen}
+        title="No updates yet"
+        body="Posts arrive here once you publish your first."
+      />
+    )
   }
   return (
     <div className="space-y-3">

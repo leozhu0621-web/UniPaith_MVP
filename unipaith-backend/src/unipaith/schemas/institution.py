@@ -77,6 +77,8 @@ class UpdateInstitutionRequest(BaseModel):
     policies: dict | None = None
     international_info: dict | None = None
     school_outcomes: dict | None = None
+    # Spec 22 §3 Identity — editable accreditation (stored in ranking_data.accreditor).
+    accreditation: str | None = None
 
 
 class InstitutionResponse(BaseModel):

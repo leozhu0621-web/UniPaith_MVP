@@ -55,6 +55,7 @@ const profileSchema = z.object({
   campus_setting: z.string().optional(),
   student_body_size: z.coerce.number().int().nonnegative().optional(),
   founded_year: z.coerce.number().int().nonnegative().optional(),
+  accreditation: z.string().optional(),
 })
 type ProfileForm = z.infer<typeof profileSchema>
 
@@ -152,6 +153,7 @@ export default function SettingsPage() {
         logo_url: inst.logo_url ?? '', description_text: inst.description_text ?? '',
         campus_description: inst.campus_description ?? '', campus_setting: inst.campus_setting ?? '',
         student_body_size: inst.student_body_size ?? undefined, founded_year: inst.founded_year ?? undefined,
+        accreditation: (inst.ranking_data as any)?.accreditor ?? '',
       })
       setSocialLinks(inst.social_links ?? {})
       setInquiryRouting(inst.inquiry_routing ?? {})
@@ -181,6 +183,7 @@ export default function SettingsPage() {
       campus_description: data.campus_description || undefined,
       campus_setting: (data.campus_setting as 'urban' | 'suburban' | 'rural' | '') || undefined,
       student_body_size: data.student_body_size || undefined, founded_year: data.founded_year || undefined,
+      accreditation: data.accreditation?.trim() || undefined,
       media_gallery: mediaGallery,
       social_links: socialLinks, inquiry_routing: inquiryRouting, support_services: supportServices,
       policies, international_info: internationalInfo, school_outcomes: schoolOutcomes,
@@ -241,6 +244,7 @@ export default function SettingsPage() {
                   <Input label="Region" {...profileForm.register('region')} />
                   <Input label="City" {...profileForm.register('city')} />
                 </div>
+                <Input label="Accreditation" {...profileForm.register('accreditation')} placeholder="e.g. Middle States Commission on Higher Education" />
               </Section>
 
               <Section title="Campus" hint="The environment and scale of your campus.">

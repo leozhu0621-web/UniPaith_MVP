@@ -123,7 +123,31 @@ describe('InstitutionDetail (Spec 12)', () => {
     expect(await screen.findByText('No events scheduled')).toBeInTheDocument()
 
     clickTab(/updates/i)
-    expect(await screen.findByText('No updates yet')).toBeInTheDocument()
+    expect(await screen.findByText('Posts arrive here once you publish your first.')).toBeInTheDocument()
+  })
+
+  it('Updates tab shows pinned posts first with a Pinned marker', async () => {
+    vi.spyOn(institutionsApi, 'getPublicPosts').mockResolvedValue([
+      { id: 'post-2', title: 'Regular update', body: 'Body two', pinned: false, created_at: '2026-05-02T00:00:00Z', media_urls: [] },
+      { id: 'post-1', title: 'Featured news', body: 'Body one', pinned: true, created_at: '2026-05-01T00:00:00Z', media_urls: [] },
+    ] as any)
+    renderDetail(true)
+    await screen.findByRole('heading', { name: 'University of Foo' })
+    clickTab(/updates/i)
+
+    expect(await screen.findByText('Featured news')).toBeInTheDocument()
+    expect(screen.getByText('Pinned')).toBeInTheDocument()
+    const titles = screen.getAllByRole('heading', { level: 3 }).map(el => el.textContent)
+    expect(titles.indexOf('Featured news')).toBeLessThan(titles.indexOf('Regular update'))
+  })
+
+  it('Programs tab renders canonical ProgramCard entries', async () => {
+    renderDetail(true)
+    await screen.findByRole('heading', { name: 'University of Foo' })
+    clickTab(/programs/i)
+
+    expect(await screen.findByText('MS in Data Science')).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /save to my list/i }).length).toBeGreaterThanOrEqual(1)
   })
 
   it('About tab surfaces support services and international info', async () => {
@@ -163,11 +187,11 @@ describe('InstitutionDetail (Spec 12)', () => {
     }))
   })
 
-  // Spec 22 §8 — public surface swaps the action for a sign-in CTA.
-  it('public: Request info becomes "Sign in to ask"', async () => {
+  // Spec 22 §8 — only Save/RSVP swap to sign-in CTAs; Request info stays labelled.
+  it('public: Request info label stays; click routes to sign-in', async () => {
     renderDetail(false)
     await screen.findByRole('heading', { name: 'University of Foo' })
-    expect(screen.getByRole('button', { name: /sign in to ask/i })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /^request info$/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /request info/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /sign in to ask/i })).not.toBeInTheDocument()
   })
 })

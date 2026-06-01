@@ -96,6 +96,7 @@ async def test_update_institution_profile_jsonb_roundtrip(
     persist and round-trip exactly through PUT + GET /institutions/me."""
     await _ensure_institution(db_session, mock_institution_user)
     payload = {
+        "accreditation": "Middle States Commission on Higher Education",
         "social_links": {"twitter": "https://x.com/foo"},
         "inquiry_routing": {"general": "admissions@foo.edu", "financial_aid": "finaid@foo.edu"},
         "support_services": {"tutoring": {"name": "Tutoring", "url": "https://foo.edu/tutoring"}},
@@ -108,11 +109,15 @@ async def test_update_institution_profile_jsonb_roundtrip(
     resp = await institution_client.put("/api/v1/institutions/me", json=payload)
     assert resp.status_code == 200, resp.text
     body = resp.json()
+    assert body["ranking_data"]["accreditor"] == payload["accreditation"]
     for key, value in payload.items():
+        if key == "accreditation":
+            continue
         assert body[key] == value, key
 
     # Persisted — a fresh GET returns the same nested shapes.
     got = (await institution_client.get("/api/v1/institutions/me")).json()
+    assert got["ranking_data"]["accreditor"] == payload["accreditation"]
     assert got["support_services"]["tutoring"]["url"] == "https://foo.edu/tutoring"
     assert got["international_info"]["supported_visas"] == ["F-1", "J-1"]
     assert got["school_outcomes"]["employed_or_continuing_ed"] == 0.94

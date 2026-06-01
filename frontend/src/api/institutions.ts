@@ -49,6 +49,7 @@ export async function updateInstitution(payload: Partial<{
   policies: Record<string, any>;
   international_info: Record<string, any>;
   school_outcomes: Record<string, any>;
+  accreditation?: string;
 }>): Promise<Institution> {
   const { data } = await apiClient.put('/institutions/me', payload)
   return data

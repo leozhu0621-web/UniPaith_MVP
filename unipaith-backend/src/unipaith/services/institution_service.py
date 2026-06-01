@@ -164,6 +164,15 @@ class InstitutionService:
     ) -> Institution:
         institution = await self._get_institution_for_user(user_id)
         update_data = data.model_dump(exclude_unset=True)
+        accreditation = update_data.pop("accreditation", None)
+        if accreditation is not None:
+            rd = dict(institution.ranking_data or {})
+            trimmed = accreditation.strip()
+            if trimmed:
+                rd["accreditor"] = trimmed
+            else:
+                rd.pop("accreditor", None)
+            institution.ranking_data = rd or None
         for key, value in update_data.items():
             setattr(institution, key, value)
         await self.db.flush()
