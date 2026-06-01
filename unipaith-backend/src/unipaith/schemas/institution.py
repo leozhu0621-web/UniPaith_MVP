@@ -33,6 +33,7 @@ class CreateInstitutionRequest(BaseModel):
     student_body_size: int | None = None
     founded_year: int | None = None
     contact_email: str | None = None
+    contact_phone: str | None = None
     logo_url: str | None = None
     website_url: str | None = None
     media_gallery: list[str] | None = None
@@ -65,6 +66,7 @@ class UpdateInstitutionRequest(BaseModel):
     student_body_size: int | None = None
     founded_year: int | None = None
     contact_email: str | None = None
+    contact_phone: str | None = None
     logo_url: str | None = None
     website_url: str | None = None
     media_gallery: list[str] | None = None
@@ -96,6 +98,7 @@ class InstitutionResponse(BaseModel):
     student_body_size: int | None = None
     founded_year: int | None = None
     contact_email: str | None = None
+    contact_phone: str | None = None
     logo_url: str | None
     website_url: str | None
     media_gallery: list | dict | None = None
@@ -668,18 +671,17 @@ class DatasetVersionResponse(BaseModel):
     id: UUID
     dataset_id: UUID
     version_number: int
-    file_name: str
     row_count: int | None
-    changes_summary: dict
+    changes_summary: dict | None
     validation_report: dict | None
-    created_at: datetime
+    uploaded_at: datetime
 
 
 class DatasetMappingTemplateResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
     institution_id: UUID
-    template_name: str
+    name: str
     dataset_type: str
     column_mapping: dict
     created_at: datetime

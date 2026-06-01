@@ -1610,17 +1610,16 @@ export interface DatasetVersion {
   id: string
   dataset_id: string
   version_number: number
-  file_name: string
   row_count: number | null
-  changes_summary: { added: number; modified: number; invalidated: number }
+  changes_summary: { added?: number; modified?: number; invalidated?: number } | null
   validation_report: ValidationReport | null
-  created_at: string
+  uploaded_at: string
 }
 
 export interface DatasetMappingTemplate {
   id: string
   institution_id: string
-  template_name: string
+  name: string
   dataset_type: string
   column_mapping: Record<string, string>
   created_at: string

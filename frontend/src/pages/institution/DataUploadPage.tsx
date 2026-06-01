@@ -288,7 +288,7 @@ export default function DataUploadPage() {
 
   const applyTemplate = (tpl: DatasetMappingTemplate) => {
     setColumnMap(tpl.column_mapping)
-    showToast(`Applied template "${tpl.template_name}"`, 'success')
+    showToast(`Applied template "${tpl.name}"`, 'success')
   }
 
   const suggestMapping = (columns: string[]) => {
@@ -640,7 +640,7 @@ export default function DataUploadPage() {
               <div className="flex flex-wrap gap-2">
                 {(templatesQ.data ?? []).map(tpl => (
                   <Button key={tpl.id} variant="tertiary" size="sm" onClick={() => applyTemplate(tpl)}>
-                    {tpl.template_name}
+                    {tpl.name}
                   </Button>
                 ))}
               </div>
@@ -848,10 +848,10 @@ export default function DataUploadPage() {
                 <div>
                   <p className="text-sm font-medium text-foreground">Version {v.version_number}</p>
                   <p className="text-xs text-muted-foreground">
-                    {v.changes_summary.added} added · {v.changes_summary.modified} modified ·{' '}
-                    {v.changes_summary.invalidated} invalidated
+                    {v.changes_summary?.added ?? 0} added · {v.changes_summary?.modified ?? 0} modified ·{' '}
+                    {v.changes_summary?.invalidated ?? 0} invalidated
                   </p>
-                  <p className="text-xs text-muted-foreground">{formatDate(v.created_at)}</p>
+                  <p className="text-xs text-muted-foreground">{formatDate(v.uploaded_at)}</p>
                 </div>
                 <Button
                   variant="tertiary"

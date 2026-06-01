@@ -42,6 +42,7 @@ class Institution(Base):
     student_body_size: Mapped[int | None] = mapped_column(Integer)
     founded_year: Mapped[int | None] = mapped_column(Integer)
     contact_email: Mapped[str | None] = mapped_column(String(255))
+    contact_phone: Mapped[str | None] = mapped_column(String(50))
     logo_url: Mapped[str | None] = mapped_column(String(2000))
     website_url: Mapped[str | None] = mapped_column(String(1000))
     media_gallery: Mapped[dict | None] = mapped_column(JSONB)
@@ -54,6 +55,7 @@ class Institution(Base):
     claimed_from_source: Mapped[str | None] = mapped_column(String(50))
     claimed_extracted_ids: Mapped[dict | None] = mapped_column(JSONB)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    review_config: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -427,8 +429,9 @@ class InstitutionDataset(Base):
     file_size_bytes: Mapped[int | None] = mapped_column(Integer)
     row_count: Mapped[int | None] = mapped_column(Integer)
     column_mapping: Mapped[dict | None] = mapped_column(JSONB)
+    normalization_map: Mapped[dict | None] = mapped_column(JSONB)
     validation_errors: Mapped[dict | None] = mapped_column(JSONB)
-    status: Mapped[str] = mapped_column(String(20), default="pending")
+    status: Mapped[str] = mapped_column(String(20), default="uploaded")
     usage_scope: Mapped[str | None] = mapped_column(String(50))
     coverage_start: Mapped[date | None] = mapped_column(Date)
     coverage_end: Mapped[date | None] = mapped_column(Date)
@@ -444,15 +447,19 @@ class InstitutionDataset(Base):
     )
 
     institution: Mapped[Institution] = relationship(back_populates="datasets")
-    versions: Mapped[list[InstitutionDatasetVersion]] = relationship(
+    versions: Mapped[list[DatasetVersion]] = relationship(
         back_populates="dataset",
         cascade="all, delete-orphan",
-        order_by="InstitutionDatasetVersion.version_number.desc()",
+        order_by="DatasetVersion.version_number",
     )
 
 
-class InstitutionDatasetVersion(Base):
-    __tablename__ = "institution_dataset_versions"
+class DatasetVersion(Base):
+    __tablename__ = "dataset_versions"
+    __table_args__ = (
+        UniqueConstraint("dataset_id", "version_number", name="uq_dataset_version_number"),
+        Index("ix_dataset_versions_dataset", "dataset_id"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     dataset_id: Mapped[uuid.UUID] = mapped_column(
@@ -462,31 +469,36 @@ class InstitutionDatasetVersion(Base):
     )
     version_number: Mapped[int] = mapped_column(Integer, nullable=False)
     s3_key: Mapped[str] = mapped_column(String(1000), nullable=False)
-    file_name: Mapped[str] = mapped_column(String(255), nullable=False)
     row_count: Mapped[int | None] = mapped_column(Integer)
-    column_mapping: Mapped[dict | None] = mapped_column(JSONB)
-    changes_summary: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    changes_summary: Mapped[dict | None] = mapped_column(JSONB)
     validation_report: Mapped[dict | None] = mapped_column(JSONB)
-    uploaded_by: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    uploaded_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
     )
-    created_at: Mapped[datetime] = mapped_column(
+    uploaded_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
     dataset: Mapped[InstitutionDataset] = relationship(back_populates="versions")
 
 
-class InstitutionDatasetMappingTemplate(Base):
-    __tablename__ = "institution_dataset_mapping_templates"
+class DatasetMappingTemplate(Base):
+    __tablename__ = "dataset_mapping_templates"
+    __table_args__ = (
+        UniqueConstraint("institution_id", "dataset_type", "name", name="uq_mapping_template_name"),
+        Index("ix_mapping_templates_inst_type", "institution_id", "dataset_type"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     institution_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False
     )
-    template_name: Mapped[str] = mapped_column(String(255), nullable=False)
     dataset_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
     column_mapping: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
