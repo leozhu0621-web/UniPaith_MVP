@@ -178,10 +178,14 @@ async def test_change_email_pending(student_client):
 
 
 async def test_account_deletion_grace_and_cancel(student_client, db_session, mock_student_user):
-    bad = await student_client.post(f"{API}/account/delete", json={"confirm_text": "nope"})
+    bad = await student_client.post(
+        f"{API}/account/delete", json={"confirm_text": "nope", "password": _CUR_PW}
+    )
     assert bad.status_code == 400
 
-    ok = await student_client.post(f"{API}/account/delete", json={"confirm_text": "DELETE"})
+    ok = await student_client.post(
+        f"{API}/account/delete", json={"confirm_text": "DELETE", "password": _CUR_PW}
+    )
     assert ok.status_code == 200, ok.text
     info = ok.json()
     from datetime import datetime
@@ -223,6 +227,7 @@ async def test_institution_settings_and_team(institution_client, db_session, moc
     body = r.json()
     assert body["account"]["name"] == "Test University"
     assert body["account"]["primary_domain"] == "testu.edu"
+    assert body["review_config"]["reviewer_assignment_mode"] == "round_robin"
     # team starts with just the admin
     assert len(body["team"]) == 1 and body["team"][0]["role"] == "admin"
 
@@ -264,6 +269,22 @@ async def test_institution_settings_and_team(institution_client, db_session, moc
     assert patch.status_code == 200, patch.text
     assert patch.json()["preferences"]["theme"] == "dark"
     assert patch.json()["account"]["name"] == "Test U Renamed"
+
+    rc = await institution_client.patch(
+        f"{API}/institutions/settings",
+        json={
+            "review_config": {
+                "blind_review_default": True,
+                "calibration_enabled": False,
+                "reviewer_assignment_mode": "manual",
+            }
+        },
+    )
+    assert rc.status_code == 200, rc.text
+    cfg = rc.json()["review_config"]
+    assert cfg["blind_review_default"] is True
+    assert cfg["calibration_enabled"] is False
+    assert cfg["reviewer_assignment_mode"] == "manual"
 
 
 # ── Role scoping (spec §8) ──────────────────────────────────────────────────

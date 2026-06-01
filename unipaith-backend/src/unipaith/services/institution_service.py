@@ -11,7 +11,6 @@ from uuid import UUID
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from unipaith.config import settings
 from unipaith.core.exceptions import (
     BadRequestException,
     ConflictException,
@@ -53,6 +52,7 @@ from unipaith.schemas.institution import (
     CreateSegmentRequest,
     DashboardSummaryResponse,
     DatasetPreviewResponse,
+    DatasetReplaceRequest,
     DatasetResponse,
     DatasetUploadResponse,
     EventAttribution,
@@ -161,6 +161,15 @@ class InstitutionService:
     ) -> Institution:
         institution = await self._get_institution_for_user(user_id)
         update_data = data.model_dump(exclude_unset=True)
+        accreditation = update_data.pop("accreditation", None)
+        if accreditation is not None:
+            rd = dict(institution.ranking_data or {})
+            trimmed = accreditation.strip()
+            if trimmed:
+                rd["accreditor"] = trimmed
+            else:
+                rd.pop("accreditor", None)
+            institution.ranking_data = rd or None
         for key, value in update_data.items():
             setattr(institution, key, value)
         await self.db.flush()
@@ -1505,7 +1514,9 @@ class InstitutionService:
             file_name=data.file_name,
             file_size_bytes=data.file_size_bytes,
             usage_scope=data.usage_scope,
-            status="pending",
+            coverage_start=data.coverage_start,
+            coverage_end=data.coverage_end,
+            status="uploaded",
             uploaded_by=user_id,
         )
         self.db.add(dataset)
@@ -1517,14 +1528,28 @@ class InstitutionService:
         self,
         institution_id: UUID,
         dataset_id: UUID,
-    ) -> InstitutionDataset:
-        dataset = await self._verify_dataset_ownership(institution_id, dataset_id)
-        dataset.status = "validated"
-        await self.db.flush()
-        await self.db.refresh(dataset)
-        return dataset
+        user_id: UUID,
+        *,
+        column_mapping: dict | None = None,
+        skip_invalid_rows: bool = False,
+        save_template: bool = False,
+        template_name: str | None = None,
+    ) -> tuple[InstitutionDataset, dict]:
+        from unipaith.services.dataset_upload_service import DatasetUploadService
+
+        return await DatasetUploadService(self.db).confirm_upload(
+            institution_id,
+            dataset_id,
+            user_id,
+            column_mapping=column_mapping,
+            skip_invalid_rows=skip_invalid_rows,
+            save_template=save_template,
+            template_name=template_name,
+        )
 
     async def get_dataset(self, institution_id: UUID, dataset_id: UUID) -> DatasetResponse:
+        from unipaith.services.dataset_upload_service import dataset_used_by
+
         dataset = await self._verify_dataset_ownership(institution_id, dataset_id)
         from unipaith.core.s3 import S3Client
 
@@ -1532,47 +1557,63 @@ class InstitutionService:
         download_url = s3.generate_download_url(dataset.s3_key)
         resp = DatasetResponse.model_validate(dataset)
         resp.download_url = download_url
+        resp.used_by = dataset_used_by(dataset.usage_scope)
         return resp
 
     async def get_dataset_preview(
         self,
         institution_id: UUID,
         dataset_id: UUID,
+        *,
+        limit: int = 100,
     ) -> DatasetPreviewResponse:
+        from unipaith.services.dataset_upload_service import DatasetUploadService
+
+        data = await DatasetUploadService(self.db).get_preview(
+            institution_id, dataset_id, limit=limit
+        )
+        return DatasetPreviewResponse(**data)
+
+    async def request_dataset_replace_upload(
+        self,
+        institution_id: UUID,
+        dataset_id: UUID,
+        data: DatasetReplaceRequest,
+    ) -> DatasetUploadResponse:
+        from unipaith.core.s3 import S3Client
+
         dataset = await self._verify_dataset_ownership(institution_id, dataset_id)
-        import csv
-        import io
+        s3_key = f"datasets/{institution_id}/{dataset.id}/staging/{uuid.uuid4()}/{data.file_name}"
+        s3 = S3Client()
+        upload_url = s3.generate_upload_url(s3_key, data.content_type)
+        return DatasetUploadResponse(
+            dataset_id=dataset.id, upload_url=upload_url, staging_s3_key=s3_key
+        )
 
-        # Read file from S3 (or local)
-        if settings.s3_local_mode:
-            from pathlib import Path
+    async def confirm_dataset_replace(
+        self,
+        institution_id: UUID,
+        dataset_id: UUID,
+        user_id: UUID,
+        *,
+        staging_s3_key: str,
+        file_name: str,
+        update_mode: str,
+        column_mapping: dict | None = None,
+        skip_invalid_rows: bool = False,
+    ) -> tuple[InstitutionDataset, dict]:
+        from unipaith.services.dataset_upload_service import DatasetUploadService
 
-            local_path = Path(settings.s3_local_path) / dataset.s3_key
-            if not local_path.exists():
-                return DatasetPreviewResponse(columns=[], rows=[], total_rows=0)
-            content = local_path.read_text(encoding="utf-8")
-        else:
-            import boto3
-
-            client = boto3.client("s3", region_name=settings.aws_region)
-            obj = client.get_object(Bucket=settings.s3_bucket_name, Key=dataset.s3_key)
-            content = obj["Body"].read().decode("utf-8")
-
-        reader = csv.DictReader(io.StringIO(content))
-        columns = reader.fieldnames or []
-        rows = []
-        total = 0
-        for row in reader:
-            total += 1
-            if len(rows) < 10:
-                rows.append(dict(row))
-
-        # Update row_count if not set
-        if dataset.row_count is None:
-            dataset.row_count = total
-            await self.db.flush()
-
-        return DatasetPreviewResponse(columns=list(columns), rows=rows, total_rows=total)
+        return await DatasetUploadService(self.db).replace_or_append_file(
+            institution_id,
+            dataset_id,
+            user_id,
+            new_s3_key=staging_s3_key,
+            new_file_name=file_name,
+            mode=update_mode,
+            column_mapping=column_mapping,
+            skip_invalid_rows=skip_invalid_rows,
+        )
 
     async def update_dataset(
         self,
@@ -1588,13 +1629,10 @@ class InstitutionService:
         await self.db.refresh(dataset)
         return dataset
 
-    async def delete_dataset(self, institution_id: UUID, dataset_id: UUID) -> None:
-        dataset = await self._verify_dataset_ownership(institution_id, dataset_id)
-        from unipaith.core.s3 import S3Client
+    async def delete_dataset(self, institution_id: UUID, dataset_id: UUID, user_id: UUID) -> None:
+        from unipaith.services.dataset_upload_service import DatasetUploadService
 
-        S3Client().delete_object(dataset.s3_key)
-        await self.db.delete(dataset)
-        await self.db.flush()
+        await DatasetUploadService(self.db).delete_dataset(institution_id, dataset_id, user_id)
 
     async def _verify_dataset_ownership(
         self,

@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AnalyticsData, AuditLogList, Campaign, CommunicationTemplate, IntakeRound, ProgramChecklistItem, CampaignAttributionDetail, CampaignLink, CampaignMetrics, CampaignObjective, CampaignDestinationType, CampaignCtaType, CampaignChannel, AudiencePreview, DraftCampaignCopy, UploadedList, CampaignSuppression, DashboardSummary, DatasetPreview, Inquiry, Institution, InstitutionDataset, InstitutionPost, Program, Promotion, Segment } from '../types'
+import type { AnalyticsData, AuditLogList, Campaign, CommunicationTemplate, IntakeRound, ProgramChecklistItem, CampaignAttributionDetail, CampaignLink, CampaignMetrics, CampaignObjective, CampaignDestinationType, CampaignCtaType, CampaignChannel, AudiencePreview, DraftCampaignCopy, UploadedList, CampaignSuppression, DashboardSummary, DatasetMappingTemplate, DatasetPreview, DatasetVersion, Inquiry, Institution, InstitutionDataset, InstitutionPost, Program, Promotion, Segment, ValidationReport } from '../types'
 
 export async function getInstitution(): Promise<Institution> {
   const { data } = await apiClient.get('/institutions/me')
@@ -40,7 +40,7 @@ export async function updateInstitution(payload: Partial<{
   name: string; type: string; country: string; region: string; city: string;
   website_url: string; description_text: string; logo_url: string;
   campus_description: string; campus_setting: 'urban' | 'suburban' | 'rural';
-  student_body_size: number; founded_year: number; contact_email: string;
+  student_body_size: number; founded_year: number; contact_email: string; contact_phone: string;
   media_gallery: string[];
   // JSONB dicts — see UpdateInstitutionRequest in the backend schema.
   social_links: Record<string, any>;
@@ -50,6 +50,7 @@ export async function updateInstitution(payload: Partial<{
   international_info: Record<string, any>;
   school_outcomes: Record<string, any>;
   require_campaign_approval: boolean;
+  accreditation?: string;
 }>): Promise<Institution> {
   const { data } = await apiClient.put('/institutions/me', payload)
   return data
@@ -575,13 +576,23 @@ export async function requestDatasetUpload(payload: {
   dataset_name: string; dataset_type: string; file_name: string;
   content_type?: string; file_size_bytes?: number;
   description?: string; usage_scope?: string;
-}): Promise<{ dataset_id: string; upload_url: string }> {
+  coverage_start?: string; coverage_end?: string;
+  update_mode?: 'replace' | 'append';
+}): Promise<{ dataset_id: string; upload_url: string; staging_s3_key?: string }> {
   const { data } = await apiClient.post('/institutions/me/datasets/upload', payload)
   return data
 }
 
-export async function confirmDatasetUpload(datasetId: string): Promise<InstitutionDataset> {
-  const { data } = await apiClient.post(`/institutions/me/datasets/${datasetId}/confirm`)
+export async function confirmDatasetUpload(
+  datasetId: string,
+  payload?: {
+    column_mapping?: Record<string, string>;
+    skip_invalid_rows?: boolean;
+    save_template?: boolean;
+    template_name?: string;
+  },
+): Promise<InstitutionDataset> {
+  const { data } = await apiClient.post(`/institutions/me/datasets/${datasetId}/confirm`, payload ?? {})
   return data
 }
 
@@ -595,14 +606,15 @@ export async function getDataset(datasetId: string): Promise<InstitutionDataset>
   return data
 }
 
-export async function getDatasetPreview(datasetId: string): Promise<DatasetPreview> {
-  const { data } = await apiClient.get(`/institutions/me/datasets/${datasetId}/preview`)
+export async function getDatasetPreview(datasetId: string, limit = 100): Promise<DatasetPreview> {
+  const { data } = await apiClient.get(`/institutions/me/datasets/${datasetId}/preview`, { params: { limit } })
   return data
 }
 
 export async function updateDataset(datasetId: string, payload: Partial<{
   dataset_name: string; description: string; column_mapping: Record<string, string>;
   usage_scope: string; status: string;
+  coverage_start: string; coverage_end: string;
 }>): Promise<InstitutionDataset> {
   const { data } = await apiClient.put(`/institutions/me/datasets/${datasetId}`, payload)
   return data
@@ -610,6 +622,63 @@ export async function updateDataset(datasetId: string, payload: Partial<{
 
 export async function deleteDataset(datasetId: string): Promise<void> {
   await apiClient.delete(`/institutions/me/datasets/${datasetId}`)
+}
+
+export async function requestDatasetReplaceUpload(
+  datasetId: string,
+  payload: { file_name: string; content_type?: string; file_size_bytes?: number },
+): Promise<{ dataset_id: string; upload_url: string; staging_s3_key?: string }> {
+  const { data } = await apiClient.post(`/institutions/me/datasets/${datasetId}/replace/upload`, payload)
+  return data
+}
+
+export async function confirmDatasetReplace(
+  datasetId: string,
+  payload: {
+    staging_s3_key: string; file_name: string; update_mode?: 'replace' | 'append';
+    column_mapping?: Record<string, string>; skip_invalid_rows?: boolean;
+  },
+): Promise<InstitutionDataset> {
+  const path = payload.update_mode === 'append'
+    ? `/institutions/me/datasets/${datasetId}/append`
+    : `/institutions/me/datasets/${datasetId}/replace`
+  const { data } = await apiClient.post(path, payload)
+  return data
+}
+
+export async function getDatasetVersions(datasetId: string): Promise<DatasetVersion[]> {
+  const { data } = await apiClient.get(`/institutions/me/datasets/${datasetId}/versions`)
+  return data
+}
+
+export async function rollbackDatasetVersion(datasetId: string, versionId: string): Promise<InstitutionDataset> {
+  const { data } = await apiClient.post(`/institutions/me/datasets/${datasetId}/versions/${versionId}/rollback`)
+  return data
+}
+
+export async function getDatasetMappingTemplates(datasetType?: string): Promise<DatasetMappingTemplate[]> {
+  const { data } = await apiClient.get('/institutions/me/datasets/mapping-templates', {
+    params: datasetType ? { dataset_type: datasetType } : undefined,
+  })
+  return data
+}
+
+export async function saveDatasetMappingTemplate(payload: {
+  template_name: string;
+  dataset_type: string;
+  column_mapping: Record<string, string>;
+}): Promise<DatasetMappingTemplate> {
+  const { data } = await apiClient.post('/institutions/me/datasets/mapping-templates', payload)
+  return data
+}
+
+export function parseValidationReport(err: unknown): ValidationReport | null {
+  const detail = (err as { response?: { data?: { detail?: { validation_report?: ValidationReport } } } })
+    ?.response?.data?.detail
+  if (detail && typeof detail === 'object' && 'validation_report' in detail) {
+    return detail.validation_report as ValidationReport
+  }
+  return null
 }
 
 // --- Posts ---

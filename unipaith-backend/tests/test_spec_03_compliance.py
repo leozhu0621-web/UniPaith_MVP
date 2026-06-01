@@ -116,6 +116,8 @@ def test_each_agent_declares_consent_requirement():
         "event_recommender",
         # Spec 25 §10 / 45 §16 — institution campaign copy suggester.
         "campaign_copy",
+        # Spec 24 §9 / 45 §19 — dataset upload parse triage (Haiku).
+        "document_parse_triage",
     }
     assert set(AGENT_REQUIRES.keys()) == expected_agents
 

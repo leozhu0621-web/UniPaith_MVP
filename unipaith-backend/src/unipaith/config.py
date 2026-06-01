@@ -277,6 +277,13 @@ class Settings(BaseSettings):
     # peer endpoints 404/403; no peer data is read or written.
     connect_peers_enabled: bool = True
 
+    # Spec 24 §9 / 45 §19 — DocumentParseTriage on dataset upload. When True the
+    # upload validation report is enriched with a Haiku-tier human-readable
+    # triage summary; on any failure (parse / provider / guardrail) the
+    # deterministic rule-based validation report is returned unchanged — the
+    # upload never 5xxes (Plan-2 integration invariant).
+    ai_data_parse_triage_v2_enabled: bool = False
+
     # Spec 09 §4A — probability bands (admit / scholarship / waitlist) on the
     # Match surface + program detail. Rule-based + calibrated heuristic
     # (unipaith.ai.probability); honest ranges, "not enough data yet" when a

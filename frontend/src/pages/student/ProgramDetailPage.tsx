@@ -29,6 +29,12 @@ import {
   normalizeRequirements,
   intakeDeadlineFromArray,
   intakeTimelineFromArray,
+  extractTracksMeta,
+  extractPrerequisites,
+  extractTestPolicy,
+  extractRecommendations,
+  extractFundingSignals,
+  extractSalaryBands,
 } from '../../utils/programNormalize'
 
 // Redesigned components
@@ -198,6 +204,22 @@ export default function ProgramDetailPage() {
   // fallback). See utils/programNormalize.ts.
   const cd: any = normalizeCostData(p.cost_data)
   const odn: any = normalizeOutcomes(p.outcomes_data)
+  const tracksMeta = extractTracksMeta(p.tracks)
+  const prerequisites = extractPrerequisites(p.application_requirements)
+  const testPolicy = extractTestPolicy(p.application_requirements)
+  const recommendations = extractRecommendations(p.application_requirements)
+  const fundingSignals = extractFundingSignals(p.cost_data)
+  const salaryBands = extractSalaryBands(p.outcomes_data)
+  const costBandMin =
+    cd.estimated_total_cost_band?.min != null && !Number.isNaN(Number(cd.estimated_total_cost_band.min))
+      ? Number(cd.estimated_total_cost_band.min)
+      : null
+  const costBandMax =
+    cd.estimated_total_cost_band?.max != null && !Number.isNaN(Number(cd.estimated_total_cost_band.max))
+      ? Number(cd.estimated_total_cost_band.max)
+      : cd.total_cost_attendance != null && !Number.isNaN(Number(cd.total_cost_attendance))
+        ? Number(cd.total_cost_attendance)
+        : null
   const instName = p.institution_name || ''
 
   // Spec 11 §6 — archived program. No dedicated column exists yet, so key on the
@@ -432,6 +454,34 @@ export default function ProgramDetailPage() {
                 </Card>
               )}
 
+              {(tracksMeta.concentrations.length > 0 || tracksMeta.note || tracksMeta.learning_format) && (
+                <Card className="p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <BookOpen size={14} className="text-cobalt" />
+                    <h3 className="font-semibold text-student-ink">Tracks & Structure</h3>
+                  </div>
+                  {tracksMeta.concentrations.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-[10px] font-semibold text-student-text/70 uppercase tracking-wider mb-2">Concentrations</p>
+                      <div className="flex flex-wrap gap-2">
+                        {tracksMeta.concentrations.map((t, i) => (
+                          <Badge key={i} variant="neutral" size="sm">{t}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {tracksMeta.note && (
+                    <p className="text-sm text-student-text mb-3">{tracksMeta.note}</p>
+                  )}
+                  {tracksMeta.learning_format && (
+                    <div>
+                      <p className="text-[10px] font-semibold text-student-text/70 uppercase tracking-wider mb-1">Learning format</p>
+                      <p className="text-sm text-student-text leading-relaxed">{tracksMeta.learning_format}</p>
+                    </div>
+                  )}
+                </Card>
+              )}
+
               <NextStepsCard
                 applicationDeadline={effectiveDeadline}
                 upcomingEvent={upcomingEvent ? {
@@ -586,6 +636,106 @@ export default function ProgramDetailPage() {
                   )}
                 </Card>
 
+                {prerequisites.length > 0 && (
+                  <Card className="p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <GraduationCap size={14} className="text-cobalt" />
+                      <h3 className="font-semibold text-student-ink">Prerequisites</h3>
+                    </div>
+                    <ul className="space-y-2">
+                      {prerequisites.map((pr, i) => (
+                        <li key={i} className="rounded-lg border border-divider px-3 py-2 text-sm">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium text-student-ink">{pr.name}</span>
+                            <Badge variant={pr.required ? 'warning' : 'neutral'} size="sm">
+                              {pr.required ? 'Required' : 'Recommended'}
+                            </Badge>
+                          </div>
+                          {pr.allowed_substitutes.length > 0 && (
+                            <p className="text-[11px] text-student-text/70 mt-1">
+                              Substitutes: {pr.allowed_substitutes.join(', ')}
+                            </p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+                )}
+
+                {testPolicy && (
+                  <Card className="p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <BookOpen size={14} className="text-cobalt" />
+                      <h3 className="font-semibold text-student-ink">Test Policy</h3>
+                      {testPolicy.stance_label && (
+                        <Badge variant="info" size="sm">{testPolicy.stance_label}</Badge>
+                      )}
+                    </div>
+                    <div className="space-y-3 text-sm">
+                      {testPolicy.required.length > 0 && (
+                        <div>
+                          <p className="text-[10px] font-semibold text-student-text/70 uppercase tracking-wider mb-1">Required</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {testPolicy.required.map(t => <Badge key={t} variant="neutral" size="sm">{t}</Badge>)}
+                          </div>
+                        </div>
+                      )}
+                      {testPolicy.optional.length > 0 && (
+                        <div>
+                          <p className="text-[10px] font-semibold text-student-text/70 uppercase tracking-wider mb-1">Optional</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {testPolicy.optional.map(t => <Badge key={t} variant="neutral" size="sm">{t}</Badge>)}
+                          </div>
+                        </div>
+                      )}
+                      {testPolicy.accepted_tests.length > 0 && (
+                        <div>
+                          <p className="text-[10px] font-semibold text-student-text/70 uppercase tracking-wider mb-1">Accepted</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {testPolicy.accepted_tests.map(t => <Badge key={t} variant="neutral" size="sm">{t}</Badge>)}
+                          </div>
+                        </div>
+                      )}
+                      {testPolicy.typical_ranges.length > 0 && (
+                        <div>
+                          <p className="text-[10px] font-semibold text-student-text/70 uppercase tracking-wider mb-1">Typical score ranges</p>
+                          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {testPolicy.typical_ranges.map(r => (
+                              <div key={r.test} className="flex justify-between border-b border-divider pb-1">
+                                <dt className="text-student-text">{r.test}</dt>
+                                <dd className="font-medium text-student-ink tabular-nums">{r.low}–{r.high}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                        </div>
+                      )}
+                      {testPolicy.superscore_enabled && (
+                        <p className="text-xs text-student-text">Superscore across attempts is accepted.</p>
+                      )}
+                      {testPolicy.waived_rules && (
+                        <p className="text-xs text-student-text"><span className="font-semibold text-student-ink">Waiver rules:</span> {testPolicy.waived_rules}</p>
+                      )}
+                    </div>
+                  </Card>
+                )}
+
+                {recommendations && (
+                  <Card className="p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Mail size={14} className="text-cobalt" />
+                      <h3 className="font-semibold text-student-ink">Recommendations</h3>
+                    </div>
+                    <p className="text-sm text-student-text">
+                      {recommendations.required_count > 0
+                        ? `${recommendations.required_count} letter${recommendations.required_count === 1 ? '' : 's'} required`
+                        : 'Recommendations may be requested'}
+                      {recommendations.types.length > 0 && (
+                        <> · {recommendations.types.map(t => t.replace(/_/g, ' ')).join(', ')}</>
+                      )}
+                    </p>
+                  </Card>
+                )}
+
                 {/* Admission Timeline */}
                 {admissionTimeline && (
                   <Card className="p-5">
@@ -707,8 +857,10 @@ export default function ProgramDetailPage() {
             const books = cd.book_supplies || 1200
             const intlPremium = cd.international_premium || 0
             const totalTuitionOnly = annual * years
-            const totalMid = (annual + feeTotal + living + books) * years
-            const totalHigh = Math.round(totalMid * 1.15)
+            const totalMid = costBandMin != null && costBandMax != null
+              ? Math.round((costBandMin + costBandMax) / 2)
+              : (annual + feeTotal + living + books) * years
+            const totalHigh = costBandMax ?? Math.round(totalMid * 1.15)
             const netPriceByIncome: Record<string, number> = cd.net_price_by_income || {}
             const od = odn
             const salary = od.median_salary ? Number(od.median_salary) : (rd.earnings_10yr_median || null)
@@ -765,19 +917,54 @@ export default function ProgramDetailPage() {
                   </div>
                   <div className="grid grid-cols-3 gap-3 text-center">
                     <div className="bg-student-mist/60 rounded-lg p-3">
-                      <p className="text-xs text-student-text mb-1">Tuition Only</p>
-                      <p className="text-lg font-bold text-student-ink">{formatCurrency(totalTuitionOnly)}</p>
+                      <p className="text-xs text-student-text mb-1">{costBandMin != null ? 'Low estimate' : 'Tuition Only'}</p>
+                      <p className="text-lg font-bold text-student-ink">{formatCurrency(costBandMin ?? totalTuitionOnly)}</p>
                     </div>
                     <div className="bg-student-mist/60 rounded-lg p-3">
-                      <p className="text-xs text-student-text mb-1">With Living Costs</p>
-                      <p className="text-lg font-bold text-student-ink">{formatCurrency(totalMid)}</p>
+                      <p className="text-xs text-student-text mb-1">{costBandMax != null ? 'Expected range' : 'With Living Costs'}</p>
+                      <p className="text-lg font-bold text-student-ink">
+                        {costBandMin != null && costBandMax != null
+                          ? `${formatCurrency(costBandMin)} – ${formatCurrency(costBandMax)}`
+                          : formatCurrency(totalMid)}
+                      </p>
                     </div>
                     <div className="bg-student-mist/60 rounded-lg p-3">
-                      <p className="text-xs text-student-text mb-1">High Estimate</p>
+                      <p className="text-xs text-student-text mb-1">{costBandMax != null ? 'High estimate' : 'High Estimate'}</p>
                       <p className="text-lg font-bold text-student-ink">{formatCurrency(totalHigh)}</p>
                     </div>
                   </div>
                 </Card>
+
+                {fundingSignals && (
+                  <Card className="p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <DollarSign size={14} className="text-cobalt" />
+                      <h3 className="font-semibold text-student-ink">Funding & Aid Signals</h3>
+                    </div>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                      {fundingSignals.ta_funded && (
+                        <li className="flex items-center gap-2 text-student-text">
+                          <span className="w-1.5 h-1.5 rounded-full bg-cobalt" /> TA funding available
+                        </li>
+                      )}
+                      {fundingSignals.ra_funded && (
+                        <li className="flex items-center gap-2 text-student-text">
+                          <span className="w-1.5 h-1.5 rounded-full bg-cobalt" /> RA funding available
+                        </li>
+                      )}
+                      {fundingSignals.merit_scholarship_available && (
+                        <li className="flex items-center gap-2 text-student-text">
+                          <span className="w-1.5 h-1.5 rounded-full bg-cobalt" /> Merit scholarships
+                        </li>
+                      )}
+                      {fundingSignals.need_based_available && (
+                        <li className="flex items-center gap-2 text-student-text">
+                          <span className="w-1.5 h-1.5 rounded-full bg-cobalt" /> Need-based aid
+                        </li>
+                      )}
+                    </ul>
+                  </Card>
+                )}
 
                 {/* Net Price by Income — what families actually pay after aid */}
                 {Object.keys(netPriceByIncome).length > 0 && (() => {
@@ -940,24 +1127,43 @@ export default function ProgramDetailPage() {
                           <DollarSign size={14} className="text-cobalt" />
                           <h3 className="font-semibold text-student-ink">Salary Distribution</h3>
                         </div>
-                        <div className="flex items-end justify-between mb-2">
-                          <div className="text-center flex-1">
-                            <p className="text-xs text-student-text/60">25th %ile</p>
-                            <p className="text-sm font-medium text-student-ink">{salaryLow ? formatCurrency(salaryLow) : '—'}</p>
+                        {salaryBands.length > 0 ? (
+                          <div className="space-y-2">
+                            {salaryBands.map(b => (
+                              <div key={b.band_label} className="grid grid-cols-[1fr_48px_40px] gap-3 items-center">
+                                <p className="text-sm text-student-ink">{b.band_label}</p>
+                                <div className="relative h-2 rounded-pill bg-student-mist overflow-hidden">
+                                  <div className="h-full rounded-pill bg-cobalt" style={{ width: `${Math.min(100, b.percent)}%` }} />
+                                </div>
+                                <p className="text-xs font-semibold text-student-ink text-right tabular-nums">{b.percent}%</p>
+                              </div>
+                            ))}
+                            {odn.outcome_reporting_window && (
+                              <p className="text-[10px] text-student-text/60 mt-2">{odn.outcome_reporting_window}</p>
+                            )}
                           </div>
-                          <div className="text-center flex-1">
-                            <p className="text-xs text-student-text/60">Median</p>
-                            <p className="text-2xl font-bold text-student-ink">{formatCurrency(salary)}</p>
-                          </div>
-                          <div className="text-center flex-1">
-                            <p className="text-xs text-student-text/60">75th %ile</p>
-                            <p className="text-sm font-medium text-student-ink">{salaryHigh ? formatCurrency(salaryHigh) : '—'}</p>
-                          </div>
-                        </div>
-                        <div className="relative h-2 bg-student-mist rounded-pill mt-3">
-                          <div className="absolute h-full bg-cobalt/30 rounded-pill" style={{ left: '15%', width: '70%' }} />
-                          <div className="absolute h-full bg-cobalt rounded-pill" style={{ left: '40%', width: '20%' }} />
-                        </div>
+                        ) : (
+                          <>
+                            <div className="flex items-end justify-between mb-2">
+                              <div className="text-center flex-1">
+                                <p className="text-xs text-student-text/60">25th %ile</p>
+                                <p className="text-sm font-medium text-student-ink">{salaryLow ? formatCurrency(salaryLow) : '—'}</p>
+                              </div>
+                              <div className="text-center flex-1">
+                                <p className="text-xs text-student-text/60">Median</p>
+                                <p className="text-2xl font-bold text-student-ink">{formatCurrency(salary)}</p>
+                              </div>
+                              <div className="text-center flex-1">
+                                <p className="text-xs text-student-text/60">75th %ile</p>
+                                <p className="text-sm font-medium text-student-ink">{salaryHigh ? formatCurrency(salaryHigh) : '—'}</p>
+                              </div>
+                            </div>
+                            <div className="relative h-2 bg-student-mist rounded-pill mt-3">
+                              <div className="absolute h-full bg-cobalt/30 rounded-pill" style={{ left: '15%', width: '70%' }} />
+                              <div className="absolute h-full bg-cobalt rounded-pill" style={{ left: '40%', width: '20%' }} />
+                            </div>
+                          </>
+                        )}
                       </Card>
                     )}
 

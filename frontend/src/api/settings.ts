@@ -4,6 +4,7 @@ import type {
   InstitutionSettings,
   LoginEvent,
   MfaEnrollResponse,
+  ReviewConfig,
   SessionInfo,
   TeamMember,
   UserSettings,
@@ -54,8 +55,8 @@ export const revokeSessions = () =>
 export const getLoginActivity = (): Promise<LoginEvent[]> =>
   apiClient.get('/account/login-activity').then(r => r.data)
 
-export const deleteAccount = (confirm_text: string): Promise<DeletionInfo> =>
-  apiClient.post('/account/delete', { confirm_text }).then(r => r.data)
+export const deleteAccount = (confirm_text: string, password: string): Promise<DeletionInfo> =>
+  apiClient.post('/account/delete', { confirm_text, password }).then(r => r.data)
 
 export const cancelDeletion = () =>
   apiClient.post('/account/delete/cancel').then(r => r.data)
@@ -66,6 +67,7 @@ export interface UpdateInstitutionSettingsPayload {
   name?: string
   contact_email?: string
   website_url?: string
+  review_config?: Partial<ReviewConfig>
   theme?: 'light' | 'dark' | 'system'
   locale?: string
   timezone?: string
