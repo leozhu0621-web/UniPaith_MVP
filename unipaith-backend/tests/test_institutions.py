@@ -424,7 +424,7 @@ async def test_segment_preview_and_nl_bridge(
 
     resp = await institution_client.post(
         "/api/v1/institutions/me/segments/nl-bridge",
-        json={"description": "students who saved programs and have not started an app"},
+        json={"text": "students who saved programs and have not started an app"},
     )
     assert resp.status_code == 200
     assert resp.json()["rules"]
