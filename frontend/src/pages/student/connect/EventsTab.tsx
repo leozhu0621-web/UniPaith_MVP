@@ -160,6 +160,9 @@ function TypeBadge({ type }: { type: string | null }) {
 }
 
 function RsvpButton({ event, onRsvp, busy }: { event: ConnectEvent; onRsvp: () => void; busy?: boolean }) {
+  if (event.status === 'cancelled') {
+    return <span className="px-4 py-1.5 text-xs font-medium rounded-lg bg-student-mist text-student-text">Cancelled</span>
+  }
   const st = event.rsvp_state
   if (st === 'rsvp') {
     // Gold = the earned RSVP-confirmed state (Spec 20 §10).
@@ -207,6 +210,11 @@ function EventListCard({ event, busy, onOpen, onRsvp, onAddCalendar }: CardProps
     <div className="bg-white rounded-xl border border-divider hover:shadow-sm transition-shadow">
       <div className="flex items-center gap-2 px-4 pt-3">
         <TypeBadge type={event.event_type} />
+        {event.status === 'cancelled' && (
+          <span className="px-2 py-0.5 text-[10px] rounded-full bg-error/10 text-error font-medium">
+            Cancelled
+          </span>
+        )}
         {event.recommended && (
           <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-cobalt">
             <Sparkles size={11} /> Recommended

@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { searchInstitutions } from '../../api/institutions'
+import { searchInstitutions, getFeaturedPromotions, recordPromotionClick } from '../../api/institutions'
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
 import UniversityCard from './explore/cards/UniversityCard'
 import ExploreFilters, { EMPTY_FILTERS, applyFilters, countActiveFilters, type FilterState } from './explore/shared/ExploreFilters'
 import { Building2 } from 'lucide-react'
 import StrategyView from './match/StrategyView'
 import MatchesSection from './match/MatchesSection'
+import PromoCard from './explore/cards/PromoCard'
 import DiscoverySearch from './explore/discovery/DiscoverySearch'
 import { parseChipsParam } from './explore/discovery/chipUtils'
 import { hasActiveFilters as hasProgramFilters, parseFiltersParam } from './explore/discovery/filterUtils'
@@ -110,6 +111,14 @@ export default function ExplorePage() {
 
   // Saved programs — for the MatchesSection cards.
   const { data: savedData } = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved, retry: false })
+
+  const { data: featuredPromos } = useQuery({
+    queryKey: ['featured-promotions', 'explore'],
+    queryFn: () => getFeaturedPromotions(),
+    staleTime: 5 * 60 * 1000,
+    enabled: !searchActive,
+  })
+
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   useEffect(() => {
     if (savedData) setSavedIds(new Set(savedData.map((s: { program_id: string }) => String(s.program_id))))
@@ -145,6 +154,26 @@ export default function ExplorePage() {
       <div className="mb-4">
         <StrategyView forceExpanded={searchParams.get('showStrategy') === 'open'} />
       </div>
+
+      {/* Spec 27 §6 — featured promotions from followed / matched institutions. */}
+      {!searchActive && featuredPromos && featuredPromos.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-eyebrow uppercase text-muted-foreground font-semibold mb-3">Featured programs</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {featuredPromos.slice(0, 3).map(promo => (
+              <PromoCard
+                key={promo.id}
+                promo={promo}
+                onView={() => {
+                  recordPromotionClick(promo.id).catch(() => {})
+                  if (promo.program_id) navigate(`/s/programs/${promo.program_id}`)
+                  else if (promo.target_url) window.open(promo.target_url, '_blank', 'noopener,noreferrer')
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Ranked matches — hidden while a program search owns the screen. */}
       {!searchActive && (

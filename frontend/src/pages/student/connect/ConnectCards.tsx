@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import type { ConnectFeedItem } from '../../../api/connect'
 import { trackEngagement } from '../../../api/institutions'
+import { renderInlineMarkdown } from '../../../utils/inlineMarkdown'
 
 // Spec 27 §5 — best-effort per-post engagement tracking (fire-and-forget).
 function trackPost(
@@ -190,7 +191,7 @@ function PostCardLarge({ item, onViewProgram, onAddToCalendar, onStartApplicatio
           <span className="text-[10px] font-semibold text-cobalt uppercase tracking-wider">Update</span>
         </div>
         <h3 className="text-sm font-semibold text-student-ink">{item.title}</h3>
-        <p className="text-xs text-student-text leading-relaxed mt-1 whitespace-pre-line">{shown}</p>
+        <p className="text-xs text-student-text leading-relaxed mt-1 whitespace-pre-line">{renderInlineMarkdown(shown)}</p>
         {isLong && (
           <button
             onClick={() => setExpanded(e => !e)}

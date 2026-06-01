@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   FileText, Plus, Pin, PinOff, Send, Edit2, Trash2, Eye, Clock,
-  Image, Tag, Copy, MousePointerClick, Bookmark, Mail, Megaphone,
+  Image, Tag, Copy, MousePointerClick, Bookmark, Mail, Megaphone, Archive,
 } from 'lucide-react'
 import {
   getPosts, createPost, updatePost, deletePost, publishPost, pinPost,
@@ -157,6 +157,13 @@ export default function PostsPage() {
       queryClient.invalidateQueries({ queryKey: ['posts'] })
     },
   })
+  const archiveM = useMutation({
+    mutationFn: (id: string) => updatePost(id, { status: 'archived' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] })
+      showToast('Post archived', 'success')
+    },
+  })
 
   const handleMediaUpload = async (file: File) => {
     setUploading(true)
@@ -173,14 +180,19 @@ export default function PostsPage() {
     }
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = (statusOverride?: 'draft' | 'published' | 'scheduled') => {
+    const status = statusOverride ?? postStatus
+    if (status === 'scheduled' && !scheduledFor) {
+      showToast('Pick a schedule date and time', 'error')
+      return
+    }
     const payload = {
       title, body,
       media_urls: mediaUrls.length > 0 ? mediaUrls : undefined,
       tagged_program_ids: taggedProgramIds.length > 0 ? taggedProgramIds : undefined,
       tagged_intake: taggedIntake || undefined,
-      status: postStatus,
-      scheduled_for: postStatus === 'scheduled' && scheduledFor ? new Date(scheduledFor).toISOString() : undefined,
+      status,
+      scheduled_for: status === 'scheduled' && scheduledFor ? new Date(scheduledFor).toISOString() : undefined,
       is_template: isTemplate,
       template_name: isTemplate ? templateName || undefined : undefined,
       ctas: ctas.filter(c => c.label.trim()).length > 0 ? ctas.filter(c => c.label.trim()) : undefined,
@@ -202,6 +214,7 @@ export default function PostsPage() {
     { id: 'published', label: `Published (${posts.filter(p => p.status === 'published').length})` },
     { id: 'draft', label: `Drafts (${posts.filter(p => p.status === 'draft').length})` },
     { id: 'scheduled', label: `Scheduled (${posts.filter(p => p.status === 'scheduled').length})` },
+    { id: 'archived', label: `Archived (${posts.filter(p => p.status === 'archived').length})` },
   ]
 
   return (
@@ -309,6 +322,15 @@ export default function PostsPage() {
                   >
                     {post.pinned ? <PinOff size={16} className="text-[hsl(var(--primary))]" /> : <Pin size={16} className="text-gray-400" />}
                   </button>
+                  {post.status === 'published' && (
+                    <button
+                      onClick={() => archiveM.mutate(post.id)}
+                      className="p-1.5 rounded hover:bg-gray-100"
+                      title="Archive"
+                    >
+                      <Archive size={16} className="text-gray-500" />
+                    </button>
+                  )}
                   {post.status !== 'published' && (
                     <button
                       onClick={() => publishM.mutate(post.id)}
@@ -490,10 +512,24 @@ export default function PostsPage() {
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
             <Button variant="secondary" onClick={() => setShowCreateModal(false)}>Cancel</Button>
             <Button
-              onClick={handleSubmit}
+              variant="secondary"
+              onClick={() => handleSubmit('draft')}
               disabled={!title.trim() || !body.trim() || createM.isPending || updateM.isPending}
             >
-              {createM.isPending || updateM.isPending ? 'Saving...' : editTarget ? 'Update' : 'Create'}
+              {createM.isPending || updateM.isPending ? 'Saving...' : 'Save draft'}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => handleSubmit('scheduled')}
+              disabled={!title.trim() || !body.trim() || !scheduledFor || createM.isPending || updateM.isPending}
+            >
+              Schedule post
+            </Button>
+            <Button
+              onClick={() => handleSubmit('published')}
+              disabled={!title.trim() || !body.trim() || createM.isPending || updateM.isPending}
+            >
+              Publish post
             </Button>
           </div>
         </div>
