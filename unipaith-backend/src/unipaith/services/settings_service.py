@@ -51,6 +51,7 @@ logger = logging.getLogger(__name__)
 
 _GRACE_DAYS = 30
 _VALID_FONT = {"sm", "md", "lg", "xl"}
+_VALID_ASSIGNMENT_MODES = {"round_robin", "load_balanced", "manual"}
 
 
 # ── TOTP (RFC 6238) — stdlib, no external dependency ────────────────────────
@@ -342,9 +343,20 @@ class SettingsService:
 
     # ── account deletion (soft-delete + 30-day grace) ──────────────────────
 
-    async def request_deletion(self, user: User, confirm_text: str) -> dict:
+    async def request_deletion(
+        self, user: User, confirm_text: str, password: str | None = None
+    ) -> dict:
         if (confirm_text or "").strip().upper() != "DELETE":
             raise BadRequestException('Type "DELETE" to confirm account deletion')
+        if not settings.cognito_bypass:
+            if not password:
+                raise BadRequestException("Enter your password to confirm")
+            try:
+                from unipaith.services.auth_service import AuthService
+
+                await AuthService(self.db).login(user.email, password)
+            except BadRequestException as e:
+                raise BadRequestException("Incorrect password") from e
         s = await self._get_or_seed(user)
         now = datetime.now(UTC)
         s.deletion_scheduled_at = now
@@ -392,6 +404,15 @@ class SettingsService:
             return inst.contact_email.split("@", 1)[1]
         return None
 
+    @staticmethod
+    def _review_config(inst: Institution) -> dict:
+        raw = inst.review_config if isinstance(inst.review_config, dict) else {}
+        return {
+            "blind_review_default": bool(raw.get("blind_review_default", False)),
+            "calibration_enabled": bool(raw.get("calibration_enabled", True)),
+            "reviewer_assignment_mode": raw.get("reviewer_assignment_mode", "round_robin"),
+        }
+
     async def get_institution_settings(self, user: User) -> dict:
         inst = await self._get_institution(user)
         s = await self._get_or_seed(user)
@@ -414,6 +435,7 @@ class SettingsService:
             "email_frequency": base["email_frequency"],
             "team": team,
             "deletion": base["deletion"],
+            "review_config": self._review_config(inst),
         }
 
     async def update_institution_settings(self, user: User, data: dict) -> dict:
@@ -421,6 +443,21 @@ class SettingsService:
         for field in ("name", "contact_email", "website_url"):
             if field in data and data[field] is not None:
                 setattr(inst, field, data[field])
+        if "review_config" in data and data["review_config"] is not None:
+            rc = data["review_config"]
+            current = self._review_config(inst)
+            if "blind_review_default" in rc and rc["blind_review_default"] is not None:
+                current["blind_review_default"] = bool(rc["blind_review_default"])
+            if "calibration_enabled" in rc and rc["calibration_enabled"] is not None:
+                current["calibration_enabled"] = bool(rc["calibration_enabled"])
+            if "reviewer_assignment_mode" in rc and rc["reviewer_assignment_mode"] is not None:
+                mode = rc["reviewer_assignment_mode"]
+                if mode not in _VALID_ASSIGNMENT_MODES:
+                    raise BadRequestException(
+                        f"reviewer_assignment_mode must be one of {sorted(_VALID_ASSIGNMENT_MODES)}"
+                    )
+                current["reviewer_assignment_mode"] = mode
+            inst.review_config = current
         # Shared per-user prefs (theme/locale/timezone/accessibility) live in
         # user_settings — same store + behaviour as students.
         pref_keys = ("theme", "locale", "timezone", "dyslexia_mode", "font_size", "reduced_motion")

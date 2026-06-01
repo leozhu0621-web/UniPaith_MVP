@@ -18,7 +18,7 @@ export default function DataPrivacyCard() {
       >
         <span className="flex items-center gap-2.5 text-sm text-foreground">
           <ShieldCheck size={16} className="text-secondary" />
-          Manage data rights, consent &amp; export
+          Manage data rights →
         </span>
         <ChevronRight size={16} className="text-muted-foreground" />
       </Link>

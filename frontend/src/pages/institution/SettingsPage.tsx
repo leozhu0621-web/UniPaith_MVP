@@ -33,6 +33,8 @@ import PreferencesCard from '../student/settings/PreferencesCard'
 import NotificationsCard from '../student/settings/NotificationsCard'
 import TeamCard from './settings/TeamCard'
 import IntegrationsCard from './settings/IntegrationsCard'
+import OrgAccountCard from './settings/OrgAccountCard'
+import ReviewConfigCard from './settings/ReviewConfigCard'
 
 const CAMPUS_SETTING_OPTIONS = [
   { value: '', label: 'Not specified' },
@@ -49,6 +51,7 @@ const profileSchema = z.object({
   city: z.string().optional(),
   website_url: z.string().url().optional().or(z.literal('')),
   contact_email: z.string().email().optional().or(z.literal('')),
+  contact_phone: z.string().optional(),
   logo_url: z.string().url().optional().or(z.literal('')),
   description_text: z.string().optional(),
   campus_description: z.string().optional(),
@@ -98,16 +101,17 @@ function Field({ title, hint, children }: { title: string; hint?: string; childr
 export default function SettingsPage() {
   const queryClient = useQueryClient()
   const authUser = useAuthStore(s => s.user)
-  const [activeTab, setActiveTab] = useState('profile')
+  const [activeTab, setActiveTab] = useState('account')
 
   const tabs = [
-    { id: 'profile', label: 'Profile' },
+    { id: 'account', label: 'Account' },
+    { id: 'profile', label: 'Public profile' },
     { id: 'team', label: 'Team' },
     { id: 'review', label: 'Review' },
     { id: 'integrations', label: 'Integrations' },
     { id: 'notifications', label: 'Notifications' },
     { id: 'billing', label: 'Billing' },
-    { id: 'account', label: 'My account' },
+    { id: 'security', label: 'Security' },
   ]
 
   // Shared per-user settings (security / preferences / notifications / account).
@@ -150,6 +154,7 @@ export default function SettingsPage() {
         name: inst.name, type: inst.type, country: inst.country,
         region: inst.region ?? '', city: inst.city ?? '',
         website_url: inst.website_url ?? '', contact_email: inst.contact_email ?? '',
+        contact_phone: inst.contact_phone ?? '',
         logo_url: inst.logo_url ?? '', description_text: inst.description_text ?? '',
         campus_description: inst.campus_description ?? '', campus_setting: inst.campus_setting ?? '',
         student_body_size: inst.student_body_size ?? undefined, founded_year: inst.founded_year ?? undefined,
@@ -179,6 +184,7 @@ export default function SettingsPage() {
       name: data.name, type: data.type, country: data.country,
       region: data.region || undefined, city: data.city || undefined,
       website_url: data.website_url || undefined, contact_email: data.contact_email || undefined,
+      contact_phone: data.contact_phone?.trim() || undefined,
       logo_url: data.logo_url || undefined, description_text: data.description_text || undefined,
       campus_description: data.campus_description || undefined,
       campus_setting: (data.campus_setting as 'urban' | 'suburban' | 'rural' | '') || undefined,
@@ -226,7 +232,15 @@ export default function SettingsPage() {
 
       <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
-      {/* Profile (Spec 22 guided editor) */}
+      {activeTab === 'account' && (
+        settingsQ.isLoading || !settingsQ.data ? (
+          <Card className="p-6"><Skeleton className="h-40" /></Card>
+        ) : (
+          <OrgAccountCard account={settingsQ.data.account} onChanged={refetchSettings} />
+        )
+      )}
+
+      {/* Public profile (Spec 22 guided editor) */}
       {activeTab === 'profile' && (
         <Card className="p-5 sm:p-6">
           {instQ.isLoading || !inst ? (
@@ -263,6 +277,7 @@ export default function SettingsPage() {
                   <Input label="Website URL" {...profileForm.register('website_url')} error={profileForm.formState.errors.website_url?.message} />
                   <Input label="Contact Email" {...profileForm.register('contact_email')} error={profileForm.formState.errors.contact_email?.message} />
                 </div>
+                <Input label="Contact Phone" {...profileForm.register('contact_phone')} placeholder="e.g. +1 (212) 555-0100" />
                 <Input label="Logo URL (S3)" {...profileForm.register('logo_url')} error={profileForm.formState.errors.logo_url?.message} />
                 <Field title="Social links" hint="Platform → profile URL. Shown in your public header.">
                   <PairRowsEditor key={`sl-${seedKey}`} initial={inst.social_links} onChange={setSocialLinks}
@@ -312,9 +327,14 @@ export default function SettingsPage() {
       {/* Team */}
       {activeTab === 'team' && <TeamCard />}
 
-      {/* Review (rubrics) */}
+      {/* Review (config + rubrics) */}
       {activeTab === 'review' && (
         <div className="space-y-4">
+          {settingsQ.isLoading || !settingsQ.data ? (
+            <Card className="p-6"><Skeleton className="h-32" /></Card>
+          ) : (
+            <ReviewConfigCard config={settingsQ.data.review_config} onChanged={refetchSettings} />
+          )}
           <div className="flex justify-end">
             <Button variant="secondary" onClick={() => setShowRubricForm(!showRubricForm)}>
               <Plus size={16} /> New Rubric
@@ -439,13 +459,12 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* My account — preferences + security (personal) */}
-      {activeTab === 'account' && (
+      {/* Security + personal preferences (§3.7) */}
+      {activeTab === 'security' && (
         settingsQ.isLoading || !settingsQ.data ? (
           <div className="space-y-4">{Array.from({ length: 2 }).map((_, i) => <Card key={i} className="p-6"><Skeleton className="h-40" /></Card>)}</div>
         ) : (
           <div className="space-y-5">
-            <PreferencesCard preferences={settingsQ.data.preferences} onSave={p => updatePrefsMut.mutate(p)} saving={updatePrefsMut.isPending} />
             <SecurityCard
               mfaEnabled={settingsQ.data.security.mfa_enabled}
               mfaMethod={settingsQ.data.security.mfa_method}
@@ -453,6 +472,7 @@ export default function SettingsPage() {
               pendingEmail={null}
               onChanged={refetchSettings}
             />
+            <PreferencesCard preferences={settingsQ.data.preferences} onSave={p => updatePrefsMut.mutate(p)} saving={updatePrefsMut.isPending} />
           </div>
         )
       )}

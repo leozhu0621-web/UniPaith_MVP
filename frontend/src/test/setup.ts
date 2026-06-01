@@ -1,7 +1,5 @@
 import "@testing-library/jest-dom";
 
-// jsdom in Vitest 2 can expose a broken localStorage stub — provide a real
-// in-memory implementation so auth-store and settings tests can import cleanly.
 function mockStorage(): Storage {
   const store = new Map<string, string>()
   return {
@@ -14,5 +12,13 @@ function mockStorage(): Storage {
   }
 }
 
-Object.defineProperty(globalThis, 'localStorage', { value: mockStorage(), writable: true })
-Object.defineProperty(globalThis, 'sessionStorage', { value: mockStorage(), writable: true })
+function installStorage() {
+  const ls = mockStorage()
+  const ss = mockStorage()
+  for (const target of [globalThis, typeof window !== 'undefined' ? window : null]) {
+    if (!target) continue
+    Object.defineProperty(target, 'localStorage', { value: ls, writable: true, configurable: true })
+    Object.defineProperty(target, 'sessionStorage', { value: ss, writable: true, configurable: true })
+  }
+}
+installStorage()
