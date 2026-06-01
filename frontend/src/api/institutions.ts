@@ -487,6 +487,29 @@ export async function deleteChecklistItem(programId: string, itemId: string): Pr
   await apiClient.delete(`/institutions/me/programs/${programId}/checklist/${itemId}`)
 }
 
+// Reorder checklist items — Spec/47 G-I3. Persists the new order by
+// PUT-ing the `sort_order` field for each item in the supplied order.
+// Items keep their existing `sort_order` only if they remain at the same
+// index — otherwise they get assigned (index * 10) so adding an item later
+// doesn't immediately force a cascade.
+export async function reorderChecklistItems(
+  programId: string,
+  orderedIds: string[],
+  currentItems: ProgramChecklistItem[],
+): Promise<void> {
+  const idToCurrentSort = new Map(currentItems.map(it => [it.id, it.sort_order]))
+  const updates = orderedIds
+    .map((id, index) => ({ id, newSort: index * 10, oldSort: idToCurrentSort.get(id) }))
+    .filter(u => u.oldSort !== u.newSort)
+  await Promise.all(
+    updates.map(u =>
+      apiClient.put(`/institutions/me/programs/${programId}/checklist/${u.id}`, {
+        sort_order: u.newSort,
+      }),
+    ),
+  )
+}
+
 // --- Intake Rounds ---
 
 export async function getIntakeRounds(programId: string): Promise<IntakeRound[]> {
