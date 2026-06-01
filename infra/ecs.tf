@@ -211,6 +211,11 @@ resource "aws_ecs_task_definition" "backend" {
       # Score modal). Both return null on failure, so the module works with it
       # off too; enabled in prod for the assisted experience.
       { name = "AI_INTERVIEW_V2_ENABLED", value = "true" },
+      # Spec 35 §6 / 45 — enrollment-yield intelligence (NextBestActionForYield,
+      # Sonnet). Refines the yield dashboard's ranked actions; always falls back
+      # to deterministic counts on failure, so the dashboard works with it off
+      # too. YieldRiskScorer is a deterministic heuristic regardless.
+      { name = "AI_YIELD_INTELLIGENCE_V2_ENABLED", value = "true" },
       # Pin Claude model IDs — config.py defaults match, but pinning here
       # makes the prod surface auditable (and trivial to roll a single
       # agent class to a different model without a code deploy).

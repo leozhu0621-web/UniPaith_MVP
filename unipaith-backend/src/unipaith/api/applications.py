@@ -9,6 +9,7 @@ from unipaith.models.user import User
 from unipaith.schemas.application import (
     ApplicationDetailResponse,
     ApplicationResponse,
+    ApproveDeferralRequest,
     BatchReleaseDecisionRequest,
     BatchReleaseDecisionResponse,
     BulkWithdrawRequest,
@@ -16,14 +17,19 @@ from unipaith.schemas.application import (
     CreateApplicationRequest,
     CreateOfferRequest,
     DecisionRequest,
+    EnrollmentChecklistItemRequest,
+    EnrollmentDeclineRequest,
+    EnrollmentDeferRequest,
     ExtendDeadlineRequest,
     GuardrailScanResponse,
+    MarkEnrollmentConfirmedRequest,
     OfferDecisionResponse,
     OfferLetterResponse,
     OfferRespondRequest,
     OffersComparisonResponse,
     OfferStatusResponse,
     PatchApplicationRequest,
+    RecordDepositRequest,
     RecordOfferRequest,
     ReleaseDecisionRequest,
     ReleaseDecisionResponse,
@@ -39,6 +45,7 @@ from unipaith.schemas.batch import (
 from unipaith.schemas.checklist import ApplicationChecklistResponse, ReadinessCheckResponse
 from unipaith.services.application_service import ApplicationService
 from unipaith.services.checklist_service import ChecklistService
+from unipaith.services.enrollment_service import EnrollmentService
 from unipaith.services.guardrail_service import GuardrailService
 from unipaith.services.institution_service import InstitutionService
 from unipaith.services.student_service import StudentService
@@ -582,3 +589,128 @@ async def batch_release_decision(
             result.failed_ids.append(app_id)
             result.errors.append(str(e))
     return result
+
+
+# --- Spec 35 · Enrollment Confirmation & Yield (student) ---
+
+
+@router.get("/me/{application_id}/enrollment")
+async def get_my_enrollment(
+    application_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """The student's enrollment window for an accepted offer (spec 35 §2).
+    Returns ``{available: False}`` until an offer is accepted (§7)."""
+    profile = await StudentService(db)._get_student_profile(user.id)
+    return await EnrollmentService(db).get_student_enrollment(profile.id, application_id)
+
+
+@router.post("/me/{application_id}/enrollment/confirm")
+async def confirm_enrollment(
+    application_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Confirm intent to enroll — the §2.2 celebratory moment (intent_confirmed)."""
+    profile = await StudentService(db)._get_student_profile(user.id)
+    return await EnrollmentService(db).confirm_intent(profile.id, application_id)
+
+
+@router.post("/me/{application_id}/enrollment/decline")
+async def decline_enrollment(
+    application_id: UUID,
+    body: EnrollmentDeclineRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Decline a place after accepting (§2.2) — frees the seat for the waitlist."""
+    profile = await StudentService(db)._get_student_profile(user.id)
+    return await EnrollmentService(db).decline_after_accept(profile.id, application_id, body.reason)
+
+
+@router.post("/me/{application_id}/enrollment/defer")
+async def defer_enrollment(
+    application_id: UUID,
+    body: EnrollmentDeferRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Request a deferral to a later start term (§2.2) — routes to the school."""
+    profile = await StudentService(db)._get_student_profile(user.id)
+    to_term = body.to_term.model_dump() if body.to_term else None
+    return await EnrollmentService(db).request_deferral(profile.id, application_id, to_term)
+
+
+@router.post("/me/{application_id}/enrollment/checklist-item")
+async def toggle_enrollment_checklist_item(
+    application_id: UUID,
+    body: EnrollmentChecklistItemRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Mark a self-serve pre-arrival checklist item complete/incomplete (§2.1)."""
+    profile = await StudentService(db)._get_student_profile(user.id)
+    return await EnrollmentService(db).toggle_checklist_item(
+        profile.id, application_id, body.key, body.complete
+    )
+
+
+# --- Spec 35 · Enrollment tracking (institution, per-applicant) ---
+
+
+@router.get("/review/{application_id}/enrollment")
+async def get_applicant_enrollment(
+    application_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Per-applicant enrollment state, deposit, checklist + timeline (spec 35 §3.1)."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    return await EnrollmentService(db).get_institution_enrollment(inst.id, application_id)
+
+
+@router.post("/review/{application_id}/enrollment/record-deposit")
+async def record_enrollment_deposit(
+    application_id: UUID,
+    body: RecordDepositRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Record deposit *status* — status-only in MVP, no money moves (§3.1)."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    return await EnrollmentService(db).record_deposit(
+        inst.id,
+        application_id,
+        body.deposit_status,
+        deposit_amount=body.deposit_amount,
+        actor_user_id=user.id,
+    )
+
+
+@router.post("/review/{application_id}/enrollment/confirm")
+async def mark_enrollment_confirmed(
+    application_id: UUID,
+    body: MarkEnrollmentConfirmedRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Mark enrollment confirmed (or finalize as enrolled with ``final``) (§3.1)."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    return await EnrollmentService(db).mark_enrollment_confirmed(
+        inst.id, application_id, final=body.final, actor_user_id=user.id
+    )
+
+
+@router.post("/review/{application_id}/enrollment/approve-deferral")
+async def approve_enrollment_deferral(
+    application_id: UUID,
+    body: ApproveDeferralRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Approve / decline a student's deferral request (§3.1)."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    return await EnrollmentService(db).approve_deferral(
+        inst.id, application_id, approved=body.approved, actor_user_id=user.id
+    )

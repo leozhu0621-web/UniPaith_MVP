@@ -30,6 +30,7 @@ import {
 import Breadcrumbs from '../../components/ui/Breadcrumbs'
 import usePageTitle from '../../hooks/usePageTitle'
 import OfferPanel from './apply/offer/OfferPanel'
+import EnrollmentPanel from './apply/enrollment/EnrollmentPanel'
 import { DECISION_STATE_LABEL } from './apply/offer/offerFormat'
 import type { Application, Essay, Resume, ChecklistItem } from '../../types'
 
@@ -243,6 +244,11 @@ export default function ApplicationDetailPage() {
     { id: 'guardrails', label: 'Guardrails' },
     // Spec 18 — Offer tab once submitted (record/await an offer) or whenever one exists.
     ...(application.status !== 'draft' || application.offer ? [{ id: 'offer', label: 'Offer' }] : []),
+    // Spec 35 — Enrollment tab once an offer is accepted (§7: hidden until then).
+    ...(application.student_decision === 'accepted_by_student' ||
+    application.offer?.student_response === 'accepted'
+      ? [{ id: 'enrollment', label: 'Enrollment' }]
+      : []),
   ]
 
   const programName = application.program?.program_name || 'Application'
@@ -657,6 +663,7 @@ export default function ApplicationDetailPage() {
             )}
 
             {tab === 'offer' && <OfferPanel application={application} />}
+            {tab === 'enrollment' && <EnrollmentPanel application={application} />}
           </div>
         </div>
       </div>

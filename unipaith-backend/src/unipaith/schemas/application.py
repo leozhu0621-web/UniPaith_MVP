@@ -308,3 +308,59 @@ class OffersComparisonResponse(BaseModel):
     must_have_constraints: list[dict]
     count: int
     advisor_summary: str | None = None
+
+
+# --- Spec 35 · Enrollment Confirmation & Yield ---
+
+
+class TermRef(BaseModel):
+    season: str | None = None
+    year: int | None = None
+
+
+class EnrollmentDeclineRequest(BaseModel):
+    """Decline a place after accepting (§2.2) — reason capture."""
+
+    reason: str | None = None
+
+
+class EnrollmentDeferRequest(BaseModel):
+    """Request a deferral to a later start term (§2.2)."""
+
+    to_term: TermRef | None = None
+
+
+class EnrollmentChecklistItemRequest(BaseModel):
+    """Toggle a self-serve pre-arrival checklist item (§2.1)."""
+
+    key: str
+    complete: bool = True
+
+
+class RecordDepositRequest(BaseModel):
+    """Institution records deposit *status* only — no money moves (§3.1)."""
+
+    deposit_status: Literal["none", "pending", "paid", "waived"]
+    deposit_amount: int | None = None
+
+
+class MarkEnrollmentConfirmedRequest(BaseModel):
+    """Mark enrollment confirmed, or finalize as enrolled (``final=True``)."""
+
+    final: bool = False
+
+
+class ApproveDeferralRequest(BaseModel):
+    approved: bool = True
+
+
+class WaitlistOfferNextRequest(BaseModel):
+    """Promote the top-ranked waitlisted applicant for a program (§3.3)."""
+
+    program_id: UUID
+    offer: dict | None = None
+
+
+class WaitlistBulkOfferRequest(BaseModel):
+    program_id: UUID
+    count: int = Field(ge=1, le=100)

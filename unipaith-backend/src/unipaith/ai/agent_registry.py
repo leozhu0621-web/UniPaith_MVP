@@ -61,6 +61,9 @@ AGENT_TIERS: dict[str, str] = {
     # ── Interviews (spec 33 §9) — Haiku invite drafter + Sonnet score prefill ──
     "interview_invite_drafter": "batch",  # InterviewInviteDrafter — invite message
     "interview_score_prefill": "workhorse",  # InterviewScorePrefill — rubric prefill
+    # ── Enrollment / yield (spec 35 §6) — both fall back to deterministic counts ──
+    "yield_risk_scorer": "batch",  # YieldRiskScorer — per-admit confirm-probability (Haiku)
+    "next_best_action_yield": "workhorse",  # NextBestActionForYield — ranked actions (Sonnet)
 }
 
 
