@@ -112,6 +112,12 @@ AGENT_REQUIRES: dict[str, str | None] = {
     # only rather than blocking the call.
     "institution_reply_drafter": None,
     "inbound_intent_classifier": None,
+    # Spec 32 §4/§6 — review-workspace assist agents are institution-initiated
+    # and role-gated at the API layer (like review_summarizer). They operate on
+    # an application within the reviewer's own tenant, so no student-consent
+    # lever here.
+    "review_synthesis": None,
+    "review_assistant": None,
 }
 
 

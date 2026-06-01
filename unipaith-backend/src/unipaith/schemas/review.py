@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CreateRubricRequest(BaseModel):
@@ -99,3 +99,25 @@ class PipelineResponse(BaseModel):
 
     total: int
     program_id: str | None = None
+
+
+# --- Spec 32 review-workspace assist / fairness requests ---
+
+
+class ReviewAssistantChatRequest(BaseModel):
+    """Spec 32 §6 — a reviewer's grounded question about one applicant."""
+
+    question: str = Field(min_length=1, max_length=1000)
+
+
+class RevealIdentityRequest(BaseModel):
+    """Spec 32 §7A.1 — audit-logged reveal of a blind-redacted applicant."""
+
+    reason: str | None = Field(None, max_length=500)
+
+
+class IntegrityActionRequest(BaseModel):
+    """Spec 32 §7 — reviewer action on an integrity signal."""
+
+    action: str = Field(pattern=r"^(acknowledge|clarify|reject_application|resolve)$")
+    notes: str | None = Field(None, max_length=2000)
