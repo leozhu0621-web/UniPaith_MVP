@@ -112,9 +112,33 @@ class InstitutionResponse(BaseModel):
     school_outcomes: dict | None = None
     is_verified: bool
     require_campaign_approval: bool = False
+    setup_complete: bool = False
+    setup_step: int = 1
+    setup_steps_complete: dict[str, bool] | None = None
+    first_program_id: UUID | None = None
     created_at: datetime
     updated_at: datetime
     program_count: int | None = None
+
+
+class SetupStepsComplete(BaseModel):
+    profile: bool = False
+    program: bool = False
+    data: bool = False
+    team: bool = False
+
+
+class InstitutionSetupResponse(BaseModel):
+    institution_id: UUID | None = None
+    step: int = Field(ge=1, le=4, default=1)
+    steps_complete: SetupStepsComplete = Field(default_factory=SetupStepsComplete)
+    setup_complete: bool = False
+    first_program_id: UUID | None = None
+
+
+class PatchSetupStepRequest(BaseModel):
+    step: int | None = Field(None, ge=1, le=4)
+    steps_complete: SetupStepsComplete | None = None
 
 
 # --- Program ---
@@ -405,6 +429,7 @@ class CampaignAttribution(BaseModel):
     opened: int
     clicked: int
     applications_started: int
+    delivery_rate: float | None = None
 
 
 class EventAttribution(BaseModel):
@@ -413,6 +438,66 @@ class EventAttribution(BaseModel):
     rsvps: int
     attended: int
     applications_after: int
+
+
+class AnalyticsFilterState(BaseModel):
+    program_id: UUID | None = None
+    intake_round_id: UUID | None = None
+    segment_id: UUID | None = None
+    campaign_id: UUID | None = None
+    time_window: str = "30d"
+
+
+class AnalyticsKpi(BaseModel):
+    key: str
+    label: str
+    value: str | int | float
+    comparison_pct: float | None = None
+    comparison_label: str | None = None
+
+
+class TopSource(BaseModel):
+    source_id: str
+    source_kind: str
+    source_name: str
+    action_count: int
+    metric: str
+
+
+class DropOffAlert(BaseModel):
+    from_stage: str
+    to_stage: str
+    drop_pct: float
+    hint: str
+
+
+class AnalyticsOverviewResponse(BaseModel):
+    filter: AnalyticsFilterState
+    kpis: list[AnalyticsKpi]
+    discovery_funnel: list[FunnelStage]
+    top_sources_by_clicks: list[TopSource]
+    top_sources_by_apply_started: list[TopSource]
+    drop_off_alerts: list[DropOffAlert]
+    insufficient_data: bool = False
+    empty: bool = False
+
+
+class FunnelReportResponse(BaseModel):
+    filter: AnalyticsFilterState
+    funnel: str
+    stages: list[FunnelStage]
+    top_sources: list[TopSource]
+    drop_off_alerts: list[DropOffAlert]
+    insufficient_data: bool = False
+    empty: bool = False
+
+
+class AnalyticsAttributionResponse(BaseModel):
+    filter: AnalyticsFilterState
+    campaigns: list[CampaignAttribution]
+    events: list[EventAttribution]
+    insufficient_data: bool = False
+    empty: bool = False
 
 
 class AnalyticsResponse(BaseModel):

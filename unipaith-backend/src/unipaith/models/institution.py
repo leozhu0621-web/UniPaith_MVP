@@ -61,6 +61,13 @@ class Institution(Base):
         Boolean, nullable=False, server_default="false", default=False
     )
     review_config: Mapped[dict | None] = mapped_column(JSONB)
+    # Spec 30 — first-run wizard orchestration (editors persist their own data).
+    setup_complete: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default="false", default=False
+    )
+    setup_step: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1", default=1)
+    setup_steps_complete: Mapped[dict | None] = mapped_column(JSONB)
+    first_program_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

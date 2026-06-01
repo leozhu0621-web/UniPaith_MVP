@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../stores/auth-store'
 import { useUIStore } from '../../stores/ui-store'
 import { getUnreadCount } from '../../api/notifications'
-import { getInstitution, getInstitutionPrograms } from '../../api/institutions'
+import { getInstitution, getInstitutionPrograms, getInstitutionSetup } from '../../api/institutions'
 import Wordmark from '../ui/Wordmark'
 import Dropdown from '../ui/Dropdown'
 import Sheet from '../ui/Sheet'
@@ -37,27 +37,36 @@ export default function InstitutionLayout() {
     queryFn: getInstitution,
     retry: false,
   })
+  const setupQ = useQuery({
+    queryKey: ['institution-setup'],
+    queryFn: getInstitutionSetup,
+  })
   const programsQ = useQuery({
     queryKey: ['institution-programs'],
     queryFn: getInstitutionPrograms,
+    enabled: !!institutionQ.data,
   })
   const programs = Array.isArray(programsQ.data) ? programsQ.data : []
   const institutionMissing =
     institutionQ.isError &&
     institutionQ.error instanceof Error &&
     /not found|no institution|404/i.test(institutionQ.error.message)
+  const setupIncomplete = setupQ.data != null && !setupQ.data.setup_complete
 
   useEffect(() => {
-    if (!institutionMissing) return
+    if (setupQ.isLoading) return
+    const needsSetup = institutionMissing || setupIncomplete
+    if (!needsSetup) return
     if (location.pathname === '/i/setup') return
     navigate('/i/setup', { replace: true })
-  }, [institutionMissing, location.pathname, navigate])
+  }, [institutionMissing, setupIncomplete, setupQ.isLoading, location.pathname, navigate])
 
   useEffect(() => {
     setMobileNavOpen(false)
   }, [location.pathname])
 
-  const showSetup = institutionQ.isError
+  const showSetup = institutionMissing || setupIncomplete
+  const navDimmed = setupIncomplete && !institutionMissing
 
   const programSwitcher = (
     <div className="px-4 py-3 border-b border-border">
@@ -92,11 +101,11 @@ export default function InstitutionLayout() {
   )
 
   const mobileLinks = [
-    { to: '/i/dashboard', label: 'Dashboard' },
-    ...(showSetup ? [{ to: '/i/setup', label: 'Get Started' }] : []),
-    ...TOP_NAV,
-    { to: '/i/analytics', label: 'Analytics' },
-    { to: '/i/settings', label: 'Settings' },
+    { to: '/i/dashboard', label: 'Dashboard', dimmed: navDimmed },
+    ...(showSetup ? [{ to: '/i/setup', label: 'Set up', dimmed: false }] : []),
+    ...TOP_NAV.map(item => ({ ...item, dimmed: navDimmed })),
+    { to: '/i/analytics', label: 'Analytics', dimmed: navDimmed },
+    { to: '/i/settings', label: 'Settings', dimmed: navDimmed },
   ]
 
   return (
@@ -105,7 +114,7 @@ export default function InstitutionLayout() {
         <NavLink to="/i/dashboard" className="leading-none" aria-label="Institution home">
           <Wordmark className="h-7 w-auto" />
         </NavLink>
-        <nav className="flex items-center gap-1" aria-label="Primary">
+        <nav className={`flex items-center gap-1 ${navDimmed ? 'opacity-40 pointer-events-none' : ''}`} aria-label="Primary">
           {TOP_NAV.map(item => (
             <NavLink
               key={item.to}
@@ -179,6 +188,8 @@ export default function InstitutionLayout() {
               onClick={() => setMobileNavOpen(false)}
               className={({ isActive }) =>
                 `touch-target px-4 py-3 text-sm rounded-md mx-2 transition-colors ${
+                  item.dimmed ? 'opacity-40 pointer-events-none' : ''
+                } ${
                   isActive ? 'bg-cobalt/10 text-cobalt font-medium' : 'text-foreground hover:bg-muted'
                 }`
               }

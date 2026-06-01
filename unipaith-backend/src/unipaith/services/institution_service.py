@@ -37,6 +37,7 @@ from unipaith.models.institution import (
     TargetSegment,
 )
 from unipaith.models.matching import MatchResult
+from unipaith.models.settings import InstitutionTeamInvite
 from unipaith.models.student import StudentProfile
 from unipaith.models.user import User
 from unipaith.models.workflow import Notification
@@ -64,6 +65,7 @@ from unipaith.schemas.institution import (
     MonthlyApplicationCount,
     NLPSearchResponse,
     PaginatedResponse,
+    PatchSetupStepRequest,
     PostMediaUploadResponse,
     PostResponse,
     ProgramApplicationCount,
@@ -80,6 +82,13 @@ from unipaith.schemas.institution import (
 )
 
 logger = logging.getLogger(__name__)
+
+_DEFAULT_SETUP_STEPS: dict[str, bool] = {
+    "profile": False,
+    "program": False,
+    "data": False,
+    "team": False,
+}
 
 
 def _escape_like(value: str) -> str:
@@ -155,6 +164,8 @@ class InstitutionService:
         institution = Institution(admin_user_id=user_id, **data.model_dump())
         self.db.add(institution)
         await self.db.flush()
+        self._mark_setup_profile_complete(institution)
+        await self.db.flush()
         await self.db.refresh(institution)
         return institution
 
@@ -177,6 +188,120 @@ class InstitutionService:
         await self.db.flush()
         await self.db.refresh(institution)
         return institution
+
+    # --- Spec 30: Institution setup wizard ---
+
+    @staticmethod
+    def _normalize_setup_steps(raw: dict | None) -> dict[str, bool]:
+        steps = dict(_DEFAULT_SETUP_STEPS)
+        if isinstance(raw, dict):
+            for key in steps:
+                if key in raw:
+                    steps[key] = bool(raw[key])
+        return steps
+
+    def _mark_setup_profile_complete(self, institution: Institution) -> None:
+        steps = self._normalize_setup_steps(institution.setup_steps_complete)
+        steps["profile"] = True
+        institution.setup_steps_complete = steps
+        institution.setup_step = max(int(institution.setup_step or 1), 2)
+
+    def _mark_setup_program_complete(self, institution: Institution, program_id: UUID) -> None:
+        steps = self._normalize_setup_steps(institution.setup_steps_complete)
+        steps["program"] = True
+        institution.setup_steps_complete = steps
+        if institution.first_program_id is None:
+            institution.first_program_id = program_id
+        institution.setup_step = max(int(institution.setup_step or 1), 3)
+
+    async def _reconcile_setup_steps(self, institution: Institution) -> dict[str, bool]:
+        steps = self._normalize_setup_steps(institution.setup_steps_complete)
+        if institution.name and institution.type and institution.country:
+            steps["profile"] = True
+        if await self.get_program_count(institution.id) > 0:
+            steps["program"] = True
+        ds_result = await self.db.execute(
+            select(func.count())
+            .select_from(InstitutionDataset)
+            .where(InstitutionDataset.institution_id == institution.id)
+        )
+        if int(ds_result.scalar_one() or 0) > 0:
+            steps["data"] = True
+        team_result = await self.db.execute(
+            select(func.count())
+            .select_from(InstitutionTeamInvite)
+            .where(
+                InstitutionTeamInvite.institution_id == institution.id,
+                InstitutionTeamInvite.status != "revoked",
+            )
+        )
+        if int(team_result.scalar_one() or 0) > 0:
+            steps["team"] = True
+        return steps
+
+    @staticmethod
+    def _resolve_setup_step(steps: dict[str, bool], stored_step: int) -> int:
+        if not steps["profile"]:
+            return 1
+        if not steps["program"]:
+            return 2
+        return min(max(int(stored_step or 3), 3), 4)
+
+    async def get_setup_state(self, user_id: UUID) -> dict:
+        result = await self.db.execute(
+            select(Institution).where(Institution.admin_user_id == user_id)
+        )
+        institution = result.scalar_one_or_none()
+        if institution is None:
+            return {
+                "institution_id": None,
+                "step": 1,
+                "steps_complete": dict(_DEFAULT_SETUP_STEPS),
+                "setup_complete": False,
+                "first_program_id": None,
+            }
+
+        steps = await self._reconcile_setup_steps(institution)
+        institution.setup_steps_complete = steps
+        if institution.setup_complete:
+            step = 4
+        else:
+            step = self._resolve_setup_step(steps, int(institution.setup_step or 1))
+            institution.setup_step = step
+        await self.db.flush()
+
+        return {
+            "institution_id": institution.id,
+            "step": step,
+            "steps_complete": steps,
+            "setup_complete": bool(institution.setup_complete),
+            "first_program_id": institution.first_program_id,
+        }
+
+    async def patch_setup_step(self, user_id: UUID, data: PatchSetupStepRequest) -> dict:
+        institution = await self._get_institution_for_user(user_id)
+        if data.step is not None:
+            institution.setup_step = data.step
+        if data.steps_complete is not None:
+            merged = self._normalize_setup_steps(institution.setup_steps_complete)
+            for key, value in data.steps_complete.model_dump().items():
+                merged[key] = bool(value)
+            institution.setup_steps_complete = merged
+        await self.db.flush()
+        return await self.get_setup_state(user_id)
+
+    async def complete_setup(self, user_id: UUID) -> dict:
+        institution = await self._get_institution_for_user(user_id)
+        steps = await self._reconcile_setup_steps(institution)
+        if not steps["profile"] or not steps["program"]:
+            raise BadRequestException(
+                "Profile and at least one program are required to finish setup"
+            )
+        institution.setup_steps_complete = steps
+        institution.setup_complete = True
+        institution.setup_step = 4
+        await self.db.flush()
+        return await self.get_setup_state(user_id)
 
     # --- Programs ---
 
@@ -223,6 +348,12 @@ class InstitutionService:
         self.db.add(program)
         await self.db.flush()
         # AI feature extraction skipped (engine being rebuilt)
+        inst_result = await self.db.execute(
+            select(Institution).where(Institution.id == institution_id)
+        )
+        institution = inst_result.scalar_one()
+        self._mark_setup_program_complete(institution, program.id)
+        await self.db.flush()
         await self.db.refresh(program)
         program.applications_count = 0
         return program
@@ -788,7 +919,8 @@ class InstitutionService:
         sent_campaigns = await self.db.execute(
             select(Campaign).where(
                 Campaign.institution_id == institution_id,
-                Campaign.status == "sent",
+                Campaign.sent_at.isnot(None),
+                Campaign.status.in_(("active", "completed")),
             )
         )
         for camp in sent_campaigns.scalars().all():

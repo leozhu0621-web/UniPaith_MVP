@@ -903,6 +903,59 @@ export interface SuggestedReply {
   alternate_drafts: string[]
 }
 
+// ============ INSTITUTION INBOX (Spec 29) ============
+export type InstReasonCode =
+  | 'request_document'
+  | 'request_clarification'
+  | 'interview_invite'
+  | 'status_update'
+  | 'general_reply'
+  | 'decision_notice'
+
+export interface InstThreadContext {
+  stage: string | null
+  checklist_complete: number
+  checklist_total: number
+  missing_items: string[]
+}
+
+export interface InstInboxThreadSummary {
+  id: string
+  application_id: string | null
+  student_ref: { id: string; name: string }
+  program_ref: { id: string | null; name: string | null } | null
+  assigned_to: string | null
+  reason_label: InstReasonCode | null
+  action_label: ActionLabel | null
+  status: 'open' | 'awaiting_student' | 'awaiting_us' | 'closed'
+  due_date: string | null
+  waiting_on: WaitingOn
+  unread_count: number
+  last_message_at: string | null
+  subject: string | null
+  context: InstThreadContext
+}
+
+export interface InstInboxThread extends InstInboxThreadSummary {
+  participants: InboxParticipant[]
+  messages: InboxMessage[]
+}
+
+export interface InstSuggestedReply {
+  draft: string
+  tone: string
+  length: string
+  alternate_drafts: string[]
+  suggested_reason_code?: InstReasonCode | null
+}
+
+export interface InstBulkMessageResult {
+  batch_id: string
+  sent_count: number
+  skipped_count: number
+  failed_ids: string[]
+}
+
 // ============ EVENTS ============
 export interface EventItem {
   id: string
@@ -1121,9 +1174,31 @@ export interface Institution {
   school_outcomes: Record<string, any> | null
   is_verified: boolean
   require_campaign_approval?: boolean
+  setup_complete?: boolean
+  setup_step?: number
+  setup_steps_complete?: {
+    profile: boolean
+    program: boolean
+    data: boolean
+    team: boolean
+  } | null
+  first_program_id?: string | null
   created_at: string
   updated_at: string
   program_count?: number
+}
+
+export interface InstitutionSetupState {
+  institution_id: string | null
+  step: 1 | 2 | 3 | 4
+  steps_complete: {
+    profile: boolean
+    program: boolean
+    data: boolean
+    team: boolean
+  }
+  setup_complete: boolean
+  first_program_id: string | null
 }
 
 // ============ REVIEW / SCORING ============

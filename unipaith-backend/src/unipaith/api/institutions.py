@@ -2,6 +2,7 @@ from datetime import date
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,6 +24,8 @@ from unipaith.schemas.communication import (
     UpdateTemplateRequest,
 )
 from unipaith.schemas.institution import (
+    AnalyticsAttributionResponse,
+    AnalyticsOverviewResponse,
     AnalyticsResponse,
     AudiencePreviewResponse,
     CampaignAttributionDetail,
@@ -50,10 +53,13 @@ from unipaith.schemas.institution import (
     DatasetVersionResponse,
     DraftCampaignCopyRequest,
     DraftCampaignCopyResponse,
+    FunnelReportResponse,
     InquiryResponse,
     InstitutionResponse,
+    InstitutionSetupResponse,
     NLBridgeRequest,
     NLBridgeResponse,
+    PatchSetupStepRequest,
     PostMediaUploadResponse,
     PostResponse,
     ProgramResponse,
@@ -84,6 +90,7 @@ from unipaith.schemas.intake import (
     IntakeRoundResponse,
     UpdateIntakeRoundRequest,
 )
+from unipaith.services.analytics_service import AnalyticsService
 from unipaith.services.campaign_service import CampaignService
 from unipaith.services.institution_service import InstitutionService
 from unipaith.services.segment_service import SegmentService
@@ -109,6 +116,10 @@ def _svc(db: AsyncSession) -> InstitutionService:
 
 def _csvc(db: AsyncSession) -> CampaignService:
     return CampaignService(db)
+
+
+def _asvc(db: AsyncSession) -> AnalyticsService:
+    return AnalyticsService(db)
 
 
 # --- Institution Profile ---
@@ -153,6 +164,34 @@ async def update_institution(
     resp = InstitutionResponse.model_validate(inst)
     resp.program_count = count
     return resp
+
+
+# --- Spec 30: Institution setup wizard ---
+
+
+@router.get("/me/setup", response_model=InstitutionSetupResponse)
+async def get_institution_setup(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await _svc(db).get_setup_state(user.id)
+
+
+@router.patch("/me/setup/step", response_model=InstitutionSetupResponse)
+async def patch_institution_setup_step(
+    body: PatchSetupStepRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await _svc(db).patch_setup_step(user.id, body)
+
+
+@router.post("/me/setup/complete", response_model=InstitutionSetupResponse)
+async def complete_institution_setup(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await _svc(db).complete_setup(user.id)
 
 
 # --- Programs (institution admin) ---
@@ -311,6 +350,75 @@ async def get_analytics(
     svc = _svc(db)
     inst = await svc.get_institution(user.id)
     return await svc.get_analytics(inst.id)
+
+
+def _analytics_filters(
+    program_id: UUID | None = Query(None),
+    intake_round_id: UUID | None = Query(None),
+    segment_id: UUID | None = Query(None),
+    campaign_id: UUID | None = Query(None),
+    time_window: str = Query("30d"),
+) -> dict:
+    return {
+        "program_id": program_id,
+        "intake_round_id": intake_round_id,
+        "segment_id": segment_id,
+        "campaign_id": campaign_id,
+        "time_window": time_window,
+    }
+
+
+@router.get("/me/analytics/overview", response_model=AnalyticsOverviewResponse)
+async def get_analytics_overview(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+    filters: dict = Depends(_analytics_filters),
+):
+    inst = await _svc(db).get_institution(user.id)
+    return await _asvc(db).get_overview(inst.id, **filters)
+
+
+@router.get("/me/analytics/funnel", response_model=FunnelReportResponse)
+async def get_analytics_funnel(
+    funnel: str = Query("discovery"),
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+    filters: dict = Depends(_analytics_filters),
+):
+    inst = await _svc(db).get_institution(user.id)
+    return await _asvc(db).get_funnel(inst.id, funnel=funnel, **filters)  # type: ignore[arg-type]
+
+
+@router.get("/me/analytics/attribution", response_model=AnalyticsAttributionResponse)
+async def get_analytics_attribution(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+    filters: dict = Depends(_analytics_filters),
+):
+    inst = await _svc(db).get_institution(user.id)
+    return await _asvc(db).get_attribution(inst.id, **filters)
+
+
+@router.get("/me/analytics/export")
+async def export_analytics(
+    tab: str = Query("overview"),
+    format: str = Query("csv", alias="format"),
+    funnel: str = Query("discovery"),
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+    filters: dict = Depends(_analytics_filters),
+):
+    inst = await _svc(db).get_institution(user.id)
+    if format != "csv":
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=400, detail="Only csv export is supported")
+    csv_text = await _asvc(db).export_csv(inst.id, tab, funnel=funnel, **filters)
+    return Response(
+        content=csv_text,
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="analytics-{tab}.csv"'},
+    )
 
 
 # --- Campaigns (Spec 25) ---

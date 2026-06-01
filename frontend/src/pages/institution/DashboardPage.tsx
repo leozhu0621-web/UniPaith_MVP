@@ -18,7 +18,7 @@ import {
   MessageSquare,
   Inbox,
 } from 'lucide-react'
-import { getInstitution, getInstitutionPrograms, getDashboardSummary, getInquiries, getIntelligenceDigest, getYieldRiskAlerts } from '../../api/institutions'
+import { getInstitution, getInstitutionPrograms, getInstitutionSetup, getDashboardSummary, getInquiries, getIntelligenceDigest, getYieldRiskAlerts } from '../../api/institutions'
 import { getReviewPriorityQueue, getIntegritySignals } from '../../api/reviews'
 import { getNotifications } from '../../api/notifications'
 import Card from '../../components/ui/Card'
@@ -35,6 +35,7 @@ export default function DashboardPage() {
   const navigate = useNavigate()
 
   const institutionQ = useQuery({ queryKey: ['institution'], queryFn: getInstitution, retry: false })
+  const setupQ = useQuery({ queryKey: ['institution-setup'], queryFn: getInstitutionSetup })
   const programsQ = useQuery({ queryKey: ['institution-programs'], queryFn: getInstitutionPrograms })
   const summaryQ = useQuery({
     queryKey: ['dashboard-summary'],
@@ -75,6 +76,7 @@ export default function DashboardPage() {
   })
 
   const institution = institutionQ.data
+  const setup = setupQ.data
   const programs: Program[] = Array.isArray(programsQ.data) ? programsQ.data : []
   const summary: DashboardSummary | undefined = summaryQ.data
   const notifications: Notification[] = Array.isArray(notificationsQ.data) ? notificationsQ.data : []
@@ -112,6 +114,35 @@ export default function DashboardPage() {
   }
 
   if (!institution) return null
+
+  const unpublishedPrograms = programs.filter(p => !p.is_published)
+  const setupNudges: { title: string; description: string; action: string; onClick: () => void }[] = []
+  if (setup?.setup_complete) {
+    if (unpublishedPrograms.length > 0) {
+      setupNudges.push({
+        title: 'Publish your program',
+        description: `${unpublishedPrograms.length} program(s) still in draft — publish to appear in student Match.`,
+        action: 'Publish programs',
+        onClick: () => navigate('/i/programs'),
+      })
+    }
+    if (!setup.steps_complete.data) {
+      setupNudges.push({
+        title: 'Upload your first dataset',
+        description: 'Admissions history or a prospect list powers analytics and matching.',
+        action: 'Upload data',
+        onClick: () => navigate('/i/data'),
+      })
+    }
+    if (!setup.steps_complete.team) {
+      setupNudges.push({
+        title: 'Invite your team',
+        description: 'Add admissions, recruiting, or marketing colleagues to collaborate.',
+        action: 'Invite team',
+        onClick: () => navigate('/i/settings'),
+      })
+    }
+  }
 
   const executiveKpis = [
     {
@@ -217,6 +248,39 @@ export default function DashboardPage() {
           Run today&apos;s admissions workload, track outcomes, and take next actions from one place.
         </p>
       </div>
+
+      {setup && !setup.setup_complete && (
+        <Card className="p-4 border-secondary/30 bg-secondary/5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Finish institution setup</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Step {setup.step} of 4 — profile and your first program are required before the full dashboard unlocks.
+              </p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {(['profile', 'program', 'data', 'team'] as const).map(key => (
+                  <Badge key={key} variant={setup.steps_complete[key] ? 'success' : 'neutral'}>
+                    {key.replace('_', ' ')}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            <Button onClick={() => navigate('/i/setup')}>Continue setup</Button>
+          </div>
+        </Card>
+      )}
+
+      {setupNudges.length > 0 && (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {setupNudges.map(nudge => (
+            <Card key={nudge.title} className="p-4 border-dashed">
+              <h3 className="text-sm font-semibold text-foreground">{nudge.title}</h3>
+              <p className="text-sm text-muted-foreground mt-1 mb-3">{nudge.description}</p>
+              <Button size="sm" variant="secondary" onClick={nudge.onClick}>{nudge.action}</Button>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* AI Command Center */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
