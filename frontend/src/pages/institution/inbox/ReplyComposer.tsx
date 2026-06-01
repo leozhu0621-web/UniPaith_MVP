@@ -74,7 +74,9 @@ export default function ReplyComposer({
       body: body.trim(),
       reason_code: reason,
       attachments,
-      due_date: dueDate ? new Date(dueDate).toISOString() : null,
+      // Parse YYYY-MM-DD as LOCAL midnight so the due date doesn't display a
+      // day early in timezones behind UTC.
+      due_date: dueDate ? new Date(`${dueDate}T00:00:00`).toISOString() : null,
       request_document: isDoc,
       requested_item: isDoc ? requestedItem : null,
       ai_draft_used: aiDraftUsed,
@@ -125,7 +127,7 @@ export default function ReplyComposer({
           value={reason}
           onChange={e => setReason(e.target.value as ReasonCode)}
           aria-label="Reason code"
-          className="h-7 rounded-md border border-border bg-surface px-2 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          className="h-7 rounded-md border border-border bg-card px-2 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
         >
           {REASON_OPTIONS.map(o => (
             <option key={o.value} value={o.value}>
@@ -142,7 +144,7 @@ export default function ReplyComposer({
               e.stopPropagation()
               setShowTemplates(s => !s)
             }}
-            className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-surface px-2 text-xs text-foreground hover:bg-muted"
+            className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2 text-xs text-foreground hover:bg-muted"
           >
             <FileText size={12} /> Template
           </button>
@@ -178,7 +180,7 @@ export default function ReplyComposer({
           type="button"
           onClick={onRequestAiDraft}
           disabled={aiDraftLoading}
-          className="inline-flex h-7 items-center gap-1 rounded-md border border-accent/40 bg-surface px-2 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
+          className="inline-flex h-7 items-center gap-1 rounded-md border border-accent/40 bg-card px-2 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
         >
           <Sparkles size={12} className="text-accent" /> AI draft
         </button>
@@ -187,7 +189,7 @@ export default function ReplyComposer({
           type="button"
           onClick={() => setShowAttach(s => !s)}
           className={`inline-flex h-7 items-center gap-1 rounded-md border border-border px-2 text-xs hover:bg-muted ${
-            showAttach ? 'bg-muted text-foreground' : 'bg-surface text-foreground'
+            showAttach ? 'bg-muted text-foreground' : 'bg-card text-foreground'
           }`}
         >
           <Paperclip size={12} /> Attach
@@ -199,7 +201,7 @@ export default function ReplyComposer({
             value={dueDate}
             onChange={e => setDueDate(e.target.value)}
             aria-label="Due date"
-            className={`h-7 rounded-md border bg-surface px-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${
+            className={`h-7 rounded-md border bg-card px-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${
               dueMissing ? 'border-warning' : 'border-border'
             }`}
           />
@@ -213,7 +215,7 @@ export default function ReplyComposer({
           <select
             value={requestedItem}
             onChange={e => setRequestedItem(e.target.value)}
-            className="h-7 rounded-md border border-border bg-surface px-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            className="h-7 rounded-md border border-border bg-card px-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           >
             {DOC_CATEGORIES.map(o => (
               <option key={o.value} value={o.value}>
@@ -240,7 +242,7 @@ export default function ReplyComposer({
               }
             }}
             placeholder="Attachment name (e.g. Offer letter.pdf)"
-            className="h-7 flex-1 rounded-md border border-border bg-surface px-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            className="h-7 flex-1 rounded-md border border-border bg-card px-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <Button variant="tertiary" size="sm" onClick={addAttachment} disabled={!attachName.trim()}>
             Add
@@ -281,7 +283,7 @@ export default function ReplyComposer({
           }}
           rows={1}
           placeholder="Write a reply…"
-          className="max-h-32 min-h-[40px] flex-1 resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          className="max-h-32 min-h-[40px] flex-1 resize-none rounded-lg border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         {/* Send is cobalt — no gold (§10): gold celebration belongs to the student. */}
         <Button variant="secondary" size="md" loading={sending} disabled={!canSend} onClick={send}>

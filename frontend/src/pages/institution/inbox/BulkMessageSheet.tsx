@@ -45,7 +45,7 @@ export default function BulkMessageSheet({
         segment_id: segmentId,
         body,
         reason_code: reason,
-        due_date: dueDate ? new Date(dueDate).toISOString() : null,
+        due_date: dueDate ? new Date(`${dueDate}T00:00:00`).toISOString() : null,
       }),
     onSuccess: res => {
       qc.invalidateQueries({ queryKey: ['inst-inbox-threads'] })
@@ -91,7 +91,7 @@ export default function BulkMessageSheet({
           <select
             value={segmentId}
             onChange={e => setSegmentId(e.target.value)}
-            className="mt-1 h-9 w-full rounded-lg border border-border bg-surface px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            className="mt-1 h-9 w-full rounded-lg border border-border bg-card px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="">Select a segment…</option>
             {segments.map(s => (
@@ -108,7 +108,7 @@ export default function BulkMessageSheet({
           <select
             value={reason}
             onChange={e => setReason(e.target.value as ReasonCode)}
-            className="mt-1 h-9 w-full rounded-lg border border-border bg-surface px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            className="mt-1 h-9 w-full rounded-lg border border-border bg-card px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           >
             {REASON_OPTIONS.map(o => (
               <option key={o.value} value={o.value}>
@@ -125,7 +125,7 @@ export default function BulkMessageSheet({
               type="date"
               value={dueDate}
               onChange={e => setDueDate(e.target.value)}
-              className="mt-1 h-9 w-full rounded-lg border border-border bg-surface px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className="mt-1 h-9 w-full rounded-lg border border-border bg-card px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </label>
         )}
@@ -139,7 +139,7 @@ export default function BulkMessageSheet({
                 const t = templates.find(x => x.id === e.target.value)
                 if (t) setBody(t.body)
               }}
-              className="mt-1 h-9 w-full rounded-lg border border-border bg-surface px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className="mt-1 h-9 w-full rounded-lg border border-border bg-card px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">Choose a template…</option>
               {templates.map(t => (
@@ -158,7 +158,7 @@ export default function BulkMessageSheet({
             onChange={e => setBody(e.target.value)}
             rows={6}
             placeholder="Write once — personalized per recipient…"
-            className="mt-1 w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            className="mt-1 w-full resize-y rounded-lg border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <span className="mt-1 block text-[11px] text-muted-foreground">
             Variables: {'{{student_name}}'}, {'{{program}}'}, {'{{deadline}}'}, {'{{missing_items}}'}
