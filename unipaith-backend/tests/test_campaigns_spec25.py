@@ -37,18 +37,18 @@ async def test_campaign_audience_preview_empty_without_segment(
     await _ensure_institution(db_session, mock_institution_user)
     create = await institution_client.post(
         "/api/v1/institutions/me/campaigns",
-        json={"campaign_name": "Preview test", "campaign_type": "in_app"},
+        json={"name": "Preview test", "objective": "general"},
     )
     assert create.status_code == 201
     campaign_id = create.json()["id"]
 
-    preview = await institution_client.get(
-        f"/api/v1/institutions/me/campaigns/{campaign_id}/audience",
+    preview = await institution_client.post(
+        f"/api/v1/institutions/me/campaigns/{campaign_id}/preview-audience",
     )
     assert preview.status_code == 200
     data = preview.json()
     assert data["campaign_id"] == campaign_id
-    assert "audience_count" in data
+    assert "deduped_count" in data
     assert isinstance(data["sample"], list)
 
 
@@ -64,8 +64,7 @@ async def test_campaign_draft_copy_endpoint(
         json={
             "objective": "deadline_reminder",
             "cta_type": "start_application",
-            "campaign_name": "Fall reminder",
-            "program_name": "MBA",
+            "additional_context": "Fall MBA reminder",
         },
     )
     assert resp.status_code == 200
