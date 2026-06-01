@@ -17,6 +17,7 @@ from unipaith.core.exceptions import (
     NotFoundException,
     UnprocessableEntityException,
 )
+from unipaith.core.media_urls import resolve_media_urls
 from unipaith.models.application import Application, OfferLetter
 from unipaith.models.engagement import Conversation, Message, StudentEngagementSignal
 from unipaith.models.institution import (
@@ -2210,7 +2211,7 @@ class InstitutionService:
             author_id=post.author_id,
             title=post.title,
             body=post.body,
-            media_urls=post.media_urls,
+            media_urls=resolve_media_urls(post.media_urls),
             pinned=post.pinned,
             tagged_program_ids=post.tagged_program_ids,
             tagged_intake=post.tagged_intake,
