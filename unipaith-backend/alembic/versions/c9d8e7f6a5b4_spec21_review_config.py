@@ -1,7 +1,7 @@
 """Spec 21 — institution review_config JSONB for blind review + calibration toggles.
 
 Revision ID: c9d8e7f6a5b4
-Revises: a8263041209b
+Revises: d1e2f3a4b5c6
 Create Date: 2026-05-31
 
 """
