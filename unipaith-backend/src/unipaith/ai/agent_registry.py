@@ -55,6 +55,9 @@ AGENT_TIERS: dict[str, str] = {
     # ── Institution messaging (spec 29 §8 / 45) — Haiku, always falls back ──
     "institution_reply_drafter": "batch",  # InstitutionReplyDrafter — per-thread reply
     "inbound_intent_classifier": "batch",  # InboundIntentClassifier — reason-code suggestion
+    # ── Admissions-intake dashboard digest (spec 31 §9 / §11) — Sonnet, falls
+    #    back to a rule-based narrator. 45 §11: migrated off GPT-4o to Claude. ──
+    "intelligence_digest": "workhorse",
 }
 
 

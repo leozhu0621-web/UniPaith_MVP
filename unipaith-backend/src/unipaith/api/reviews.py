@@ -320,10 +320,15 @@ async def list_integrity_signals(
 async def resolve_integrity_signal(
     signal_id: UUID,
     notes: str | None = Query(None),
+    resolution: str | None = Query(
+        None,
+        description="acceptable | requires_clarification | reject_application",
+    ),
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    """Resolve an integrity signal."""
+    """Resolve an integrity signal (spec 31 §6). The resolution outcome is
+    audit-logged; reject_application is advisory (never auto-rejects)."""
     inst = await InstitutionService(db).get_institution(user.id)
     svc = ReviewPipelineService(db)
     return await svc.resolve_integrity_signal(
@@ -331,6 +336,7 @@ async def resolve_integrity_signal(
         signal_id,
         user.id,
         notes,
+        resolution,
     )
 
 
@@ -388,10 +394,23 @@ async def batch_assign_reviewers(
 ):
     inst = await InstitutionService(db).get_institution(user.id)
     svc = ReviewPipelineService(db)
+    from unipaith.services.audit_service import AuditService
+
+    audit = AuditService(db)
     result = BatchOperationResult(success_count=0, failed_ids=[], errors=[])
     for app_id in body.application_ids:
         try:
             await svc.assign_reviewers(app_id, inst.id)
+            # Spec 31 §5 — audit-log per application in a batch action.
+            await audit.log(
+                institution_id=inst.id,
+                actor_user_id=user.id,
+                action="batch_assign_reviewers",
+                entity_type="application",
+                entity_id=str(app_id),
+                application_id=app_id,
+                description="Batch reviewer assignment.",
+            )
             result.success_count += 1
         except Exception as e:
             result.failed_ids.append(app_id)

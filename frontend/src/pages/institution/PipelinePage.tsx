@@ -100,11 +100,12 @@ function DroppableColumn({ id, label, color, children }: { id: string; label: st
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 min-w-[240px] rounded-lg p-3 transition-colors ${isOver ? 'bg-brand-slate-50 ring-2 ring-brand-slate-300' : 'bg-gray-50'}`}
+      className={`flex-1 min-w-[240px] rounded-lg p-3 transition-colors ${isOver ? 'bg-accent/5 ring-2 ring-accent border border-accent' : 'bg-gray-50'}`}
     >
       <div className="flex items-center gap-2 mb-3">
         <div className={`w-3 h-3 rounded-full ${color}`} />
-        <h3 className="text-sm font-semibold text-gray-700">{label}</h3>
+        {/* Spec 31 §10 — Kanban column headers use the eyebrow style. */}
+        <h3 className="text-eyebrow uppercase text-gray-500">{label}</h3>
       </div>
       <div className="space-y-2 min-h-[100px]">{children}</div>
     </div>

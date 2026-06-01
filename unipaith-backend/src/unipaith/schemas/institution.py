@@ -369,6 +369,12 @@ class SignalDictionaryResponse(BaseModel):
 # --- Dashboard Summary ---
 
 
+class PriorityQueueItem(BaseModel):
+    category: str
+    count: int
+    deep_link: str
+
+
 class DashboardSummaryResponse(BaseModel):
     program_count: int
     published_program_count: int
@@ -378,6 +384,24 @@ class DashboardSummaryResponse(BaseModel):
     unread_messages_count: int
     acceptance_rate: float | None = None
     yield_rate: float | None = None
+    # --- Spec 31 · Admissions Intake contract (§2 / §8) ---
+    # Label for the active admissions cycle, e.g. "Fall 2027" (derived from the
+    # institution's upcoming program intakes; None when no signal yet).
+    cycle: str | None = None
+    # Mean applicant match (fitness) score for the cycle, 0–100.
+    avg_match: int | None = None
+    # Conversion = admitted / decided (alias of acceptance_rate, named per §2).
+    conversion_pct: float | None = None
+    # Projected yield % (alias of yield_rate, named per §2).
+    projected_yield_pct: float | None = None
+    new_inquiries_24h: int = 0
+    unanswered_inquiries_4h: int = 0
+    integrity_signals_count: int = 0
+    # Categorized priority queue with deep links (§2: reviewer-assignment,
+    # integrity-flagged, interview-confirmations-pending).
+    priority_queue: list[PriorityQueueItem] = []
+    # Advisory fairness watch-point over the applicant pool (§11, G-D4/G-I5).
+    fairness: dict | None = None
 
 
 # --- Analytics ---

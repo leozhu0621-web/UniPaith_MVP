@@ -913,6 +913,7 @@ class ReviewPipelineService:
                 "description": s.description,
                 "evidence": s.evidence,
                 "status": s.status,
+                "resolution": s.resolution,
                 "resolved_by": (str(s.resolved_by) if s.resolved_by else None),
                 "resolved_at": (s.resolved_at.isoformat() if s.resolved_at else None),
                 "resolution_notes": s.resolution_notes,
@@ -921,16 +922,25 @@ class ReviewPipelineService:
             for s in result.scalars().all()
         ]
 
+    # Spec 31 §6 — the three resolution outcomes a reviewer can pick.
+    INTEGRITY_RESOLUTIONS = ("acceptable", "requires_clarification", "reject_application")
+
     async def resolve_integrity_signal(
         self,
         institution_id: UUID,
         signal_id: UUID,
         user_id: UUID,
         notes: str | None = None,
+        resolution: str | None = None,
     ) -> dict:
         from datetime import UTC, datetime
 
+        from unipaith.core.exceptions import BadRequestException
         from unipaith.models.application import IntegritySignal
+        from unipaith.services.audit_service import AuditService
+
+        if resolution is not None and resolution not in self.INTEGRITY_RESOLUTIONS:
+            raise BadRequestException(f"resolution must be one of {self.INTEGRITY_RESOLUTIONS}")
 
         result = await self.db.execute(
             select(IntegritySignal).where(
@@ -945,10 +955,26 @@ class ReviewPipelineService:
         sig.resolved_by = user_id
         sig.resolved_at = datetime.now(UTC)
         sig.resolution_notes = notes
+        sig.resolution = resolution
         await self.db.flush()
+
+        # Spec 31 §6 — every resolution is audit-logged. The reject_application
+        # outcome is advisory (recorded as a recommendation): the actual decision
+        # still flows through the normal decision endpoint — we never auto-reject.
+        await AuditService(self.db).log(
+            institution_id=institution_id,
+            actor_user_id=user_id,
+            action="integrity_signal_resolved",
+            entity_type="integrity_signal",
+            entity_id=str(sig.id),
+            application_id=sig.application_id,
+            description=(f"Integrity signal '{sig.title}' resolved as {resolution or 'resolved'}."),
+            new_value={"resolution": resolution, "notes": notes},
+        )
         return {
             "id": str(sig.id),
             "status": sig.status,
+            "resolution": sig.resolution,
             "resolved_at": sig.resolved_at.isoformat(),
         }
 

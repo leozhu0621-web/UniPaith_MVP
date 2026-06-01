@@ -125,6 +125,8 @@ class AiTurn(Base, UUIDPrimaryKeyMixin):
             "'campaign_copy','document_parse_triage','segment_builder_nl',"
             # Spec 29 §8 — institution messaging agents.
             "'institution_reply_drafter','inbound_intent_classifier',"
+            # Spec 31 §9 — admissions-intake dashboard digest narrator.
+            "'intelligence_digest',"
             # Spec 32 §4/§6 — review-workspace assist agents.
             "'review_synthesis','review_assistant')",
             name="ck_ai_turns_agent",

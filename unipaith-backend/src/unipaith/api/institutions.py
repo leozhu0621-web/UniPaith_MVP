@@ -2281,8 +2281,12 @@ async def institution_narrative_digest(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    """Generate a narrative digest of the institution's applicant landscape."""
-    return {"status": "unavailable"}
+    """Spec 31 §9 — plain-English daily digest of the institution's applicant
+    landscape. Claude narrator when flagged; deterministic fallback otherwise."""
+    from unipaith.services.dashboard_intelligence_service import DashboardIntelligenceService
+
+    inst = await _svc(db).get_institution(user.id)
+    return await DashboardIntelligenceService(db).generate_digest(inst.id)
 
 
 @router.get("/me/intelligence/applicant/{student_id}")
@@ -2310,7 +2314,8 @@ async def institution_yield_risks(
     db: AsyncSession = Depends(get_db),
 ):
     """Admitted students with an unanswered offer near/past deadline (spec 34
-    §6 / spec 31 §2 yield-risk alerts)."""
+    §6 / spec 31 §2 yield-risk alerts). Owned by the offers domain (Spec 34);
+    Spec 31's dashboard yield card consumes this same endpoint."""
     from unipaith.services.application_service import ApplicationService
 
     inst = await InstitutionService(db).get_institution(user.id)

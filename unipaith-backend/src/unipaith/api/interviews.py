@@ -148,8 +148,11 @@ async def batch_invite_interviews(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    await InstitutionService(db).get_institution(user.id)
+    inst = await InstitutionService(db).get_institution(user.id)
     svc = InterviewService(db)
+    from unipaith.services.audit_service import AuditService
+
+    audit = AuditService(db)
     result = BatchOperationResult(
         success_count=0,
         failed_ids=[],
@@ -164,6 +167,16 @@ async def batch_invite_interviews(
                 proposed_times=body.proposed_times,
                 duration_minutes=body.duration_minutes,
                 location_or_link=body.location_or_link,
+            )
+            # Spec 31 §5 — audit-log per application in a batch action.
+            await audit.log(
+                institution_id=inst.id,
+                actor_user_id=user.id,
+                action="batch_invite_interview",
+                entity_type="application",
+                entity_id=str(app_id),
+                application_id=app_id,
+                description="Batch interview invitation sent.",
             )
             result.success_count += 1
         except Exception as e:
