@@ -1291,12 +1291,14 @@ export interface IntegritySignal {
   title: string
   description: string
   evidence: Record<string, unknown> | null
-  status: 'open' | 'resolved' | 'dismissed'
+  status: 'open' | 'resolved' | 'dismissed' | 'acknowledged' | 'clarifying' | 'rejected'
   resolved_by: string | null
   resolved_at: string | null
   resolution_notes: string | null
   created_at: string
 }
+
+export type IntegrityAction = 'acknowledge' | 'clarify' | 'reject_application' | 'resolve'
 
 export interface AIPacketSummary {
   id: string | null
