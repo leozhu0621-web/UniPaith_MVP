@@ -4,6 +4,7 @@ import type {
   InstitutionSettings,
   LoginEvent,
   MfaEnrollResponse,
+  ReviewConfig,
   SessionInfo,
   TeamMember,
   UserSettings,
@@ -66,6 +67,7 @@ export interface UpdateInstitutionSettingsPayload {
   name?: string
   contact_email?: string
   website_url?: string
+  review_config?: Partial<ReviewConfig>
   theme?: 'light' | 'dark' | 'system'
   locale?: string
   timezone?: string
