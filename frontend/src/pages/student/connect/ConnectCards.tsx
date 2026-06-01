@@ -1,12 +1,23 @@
 // Connect feed cards — Spec 20 §4.1 / §10.
 // Brand: cobalt + neutral. GOLD is reserved for the pinned-institution marker
 // and the RSVP-confirmed state only (Spec 20 §10). No decorative imagery.
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   AlertTriangle, BellOff, CalendarClock, CalendarPlus, ChevronDown, ChevronUp,
   GraduationCap, Megaphone, Pin,
 } from 'lucide-react'
 import type { ConnectFeedItem } from '../../../api/connect'
+import { trackEngagement } from '../../../api/institutions'
+
+// Spec 27 §5 — best-effort per-post engagement tracking (fire-and-forget).
+function trackPost(
+  item: ConnectFeedItem,
+  action: 'view' | 'click' | 'request_info' | 'apply_started',
+) {
+  if (item.kind === 'post' && item.post_id) {
+    trackEngagement({ object_type: 'post', object_id: item.post_id, action })
+  }
+}
 
 function relativeTime(iso: string): string {
   const then = new Date(iso).getTime()
@@ -84,7 +95,7 @@ function CtaRow({ item, onViewProgram, onAddToCalendar, onStartApplication, onRs
         const key = `${cta.type}-${cta.target}-${i}`
         if (cta.type === 'view_program') {
           return (
-            <button key={key} onClick={() => onViewProgram(cta.target)} className={cobaltBtn}>
+            <button key={key} onClick={() => { trackPost(item, 'click'); onViewProgram(cta.target) }} className={cobaltBtn}>
               {cta.label}
             </button>
           )
@@ -93,23 +104,27 @@ function CtaRow({ item, onViewProgram, onAddToCalendar, onStartApplication, onRs
           return (
             <button
               key={key}
-              onClick={() => (onStartApplication ? onStartApplication(cta.target) : onViewProgram(cta.target))}
+              onClick={() => {
+                trackPost(item, 'apply_started')
+                if (onStartApplication) onStartApplication(cta.target)
+                else onViewProgram(cta.target)
+              }}
               className={cobaltBtn}
             >
               {cta.label}
             </button>
           )
         }
-        if (cta.type === 'rsvp_event') {
+        if (cta.type === 'rsvp' || cta.type === 'rsvp_event') {
           return (
-            <button key={key} onClick={() => onRsvpEvent?.(cta.target)} className={cobaltBtn}>
+            <button key={key} onClick={() => { trackPost(item, 'click'); onRsvpEvent?.(cta.target) }} className={cobaltBtn}>
               {cta.label}
             </button>
           )
         }
         if (cta.type === 'request_info') {
           return (
-            <button key={key} onClick={() => onRequestInfo?.(cta.target)} className={cobaltBtn}>
+            <button key={key} onClick={() => { trackPost(item, 'request_info'); onRequestInfo?.(cta.target) }} className={cobaltBtn}>
               {cta.label}
             </button>
           )
@@ -118,7 +133,7 @@ function CtaRow({ item, onViewProgram, onAddToCalendar, onStartApplication, onRs
           return (
             <button
               key={key}
-              onClick={() => onAddToCalendar(item)}
+              onClick={() => { trackPost(item, 'click'); onAddToCalendar(item) }}
               className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg text-cobalt hover:bg-cobalt/5 transition-colors"
             >
               <CalendarPlus size={13} /> {cta.label}
@@ -137,6 +152,11 @@ function CtaRow({ item, onViewProgram, onAddToCalendar, onStartApplication, onRs
 
 function PostCardLarge({ item, onViewProgram, onAddToCalendar, onStartApplication, onRsvpEvent, onRequestInfo, onMute }: Props) {
   const [expanded, setExpanded] = useState(false)
+  // Spec 27 §5 — record a post impression once when the card mounts.
+  const postId = item.kind === 'post' ? item.post_id : undefined
+  useEffect(() => {
+    if (postId) trackEngagement({ object_type: 'post', object_id: postId, action: 'view' })
+  }, [postId])
   const body = item.body || ''
   const isLong = body.length > 220
   const shown = expanded || !isLong ? body : body.slice(0, 220).trimEnd() + '…'

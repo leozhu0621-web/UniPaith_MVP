@@ -914,8 +914,13 @@ export interface EventItem {
   location: string | null
   start_time: string
   end_time: string
+  meeting_link?: string | null
   capacity: number | null
   rsvp_count: number
+  // Spec 27 §3.1 — confirmed vs waitlisted split + impressions.
+  confirmed_count?: number
+  waitlist_count?: number
+  view_count?: number
   status: string
 }
 
@@ -926,6 +931,10 @@ export interface RSVP {
   rsvp_status: string
   registered_at: string
   attended_at: string | null
+  // Spec 27 §3.1 — attendance capture + roster identity.
+  attendance_status?: string | null
+  student_name?: string | null
+  student_email?: string | null
 }
 
 // ============ INTERVIEWS ============
@@ -1510,11 +1519,14 @@ export interface Promotion {
     degree_types?: string[]
     interests?: string[]
   } | null
-  status: 'draft' | 'active' | 'paused' | 'expired'
+  status: 'draft' | 'scheduled' | 'active' | 'paused' | 'expired'
   starts_at: string | null
   ends_at: string | null
   impression_count: number
   click_count: number
+  // Spec 27 §4.1 — promotion target: program | institution | landing.
+  target_kind?: 'program' | 'institution' | 'landing'
+  target_url?: string | null
   created_at: string
   updated_at: string
   program_name: string | null
@@ -1627,6 +1639,27 @@ export interface DatasetMappingTemplate {
 }
 
 // ============ POSTS ============
+// Spec 27 §2.4 — a call-to-action attached to a post.
+export type PostCTAType =
+  | 'view_program'
+  | 'rsvp'
+  | 'request_info'
+  | 'start_application'
+  | 'add_to_calendar'
+
+export interface PostCTA {
+  type: PostCTAType
+  label: string
+  target?: string | null
+}
+
+// Spec 27 §2.3 — visibility scope for a post.
+export interface PostVisibility {
+  public: boolean
+  segment_ids: string[]
+  region_scopes: string[]
+}
+
 export interface InstitutionPost {
   id: string
   institution_id: string
@@ -1643,6 +1676,14 @@ export interface InstitutionPost {
   is_template: boolean
   template_name: string | null
   view_count: number
+  // Spec 27 §5 — per-object engagement counters.
+  click_count?: number
+  save_count?: number
+  request_info_count?: number
+  apply_started_count?: number
+  // Spec 27 §2.4 / §2.3 — authored CTAs + visibility scope.
+  ctas?: PostCTA[] | null
+  visibility?: PostVisibility | null
   created_at: string
   updated_at: string
   author_email?: string

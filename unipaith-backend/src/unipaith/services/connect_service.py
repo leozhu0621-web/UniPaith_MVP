@@ -263,7 +263,12 @@ class ConnectService:
                     "title": p.title,
                     "body": p.body,
                     "media_urls": self._media_list(p.media_urls),
-                    "ctas": self._post_ctas(prog_id),
+                    # Spec 27 §2.4 — prefer the post's authored CTAs; fall back to
+                    # program-derived defaults for legacy posts that have none.
+                    "ctas": (
+                        p.ctas if isinstance(p.ctas, list) and p.ctas else self._post_ctas(prog_id)
+                    ),
+                    "post_id": str(p.id),
                 }
             )
         return out

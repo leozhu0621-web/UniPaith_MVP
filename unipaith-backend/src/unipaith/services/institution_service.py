@@ -8,7 +8,7 @@ import uuid
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.core.exceptions import (
@@ -1502,6 +1502,8 @@ class InstitutionService:
             targeting=targeting_dict,
             starts_at=data.starts_at,
             ends_at=data.ends_at,
+            target_kind=data.target_kind,
+            target_url=data.target_url,
         )
         self.db.add(promo)
         await self.db.flush()
@@ -1642,6 +1644,8 @@ class InstitutionService:
             ends_at=promo.ends_at,
             impression_count=promo.impression_count or 0,
             click_count=promo.click_count or 0,
+            target_kind=getattr(promo, "target_kind", "program") or "program",
+            target_url=getattr(promo, "target_url", None),
             created_at=promo.created_at,
             updated_at=promo.updated_at,
             program_name=prog_name,
@@ -2140,6 +2144,8 @@ class InstitutionService:
             scheduled_for=data.scheduled_for,
             is_template=data.is_template,
             template_name=data.template_name,
+            ctas=([c.model_dump(mode="json") for c in data.ctas] if data.ctas else None),
+            visibility=(data.visibility.model_dump(mode="json") if data.visibility else None),
         )
         if data.status == "published":
             post.published_at = datetime.now(UTC)
@@ -2160,6 +2166,15 @@ class InstitutionService:
             update_data["tagged_program_ids"] = [
                 str(pid) for pid in update_data["tagged_program_ids"]
             ]
+        # Spec 27 §2.4 / §2.3 — store CTAs + visibility as JSON-safe dicts.
+        if "ctas" in update_data:
+            update_data["ctas"] = (
+                [c.model_dump(mode="json") for c in data.ctas] if data.ctas else None
+            )
+        if "visibility" in update_data:
+            update_data["visibility"] = (
+                data.visibility.model_dump(mode="json") if data.visibility else None
+            )
         was_published = post.status == "published"
         for key, value in update_data.items():
             setattr(post, key, value)
@@ -2200,6 +2215,40 @@ class InstitutionService:
         await self.db.flush()
         await self.db.refresh(post)
         return await self._enrich_post(post)
+
+    # Spec 27 §5 — per-object engagement: (object_type, action) -> counter column.
+    _ENGAGEMENT_COLUMNS: dict[tuple[str, str], str] = {
+        ("post", "view"): "view_count",
+        ("post", "click"): "click_count",
+        ("post", "save"): "save_count",
+        ("post", "request_info"): "request_info_count",
+        ("post", "apply_started"): "apply_started_count",
+        ("event", "view"): "view_count",
+        ("promotion", "view"): "impression_count",
+        ("promotion", "impression"): "impression_count",
+        ("promotion", "click"): "click_count",
+    }
+
+    async def record_engagement(
+        self,
+        object_type: str,
+        object_id: UUID,
+        action: str,
+    ) -> None:
+        """Spec 27 §5 — increment a per-object performance counter.
+
+        Best-effort: an unknown (type, action) pair is ignored so a new client
+        event never 500s the caller. Atomic increment (no read-modify-write).
+        """
+        model_map = {"post": InstitutionPost, "event": Event, "promotion": Promotion}
+        model = model_map.get(object_type)
+        col = self._ENGAGEMENT_COLUMNS.get((object_type, action))
+        if model is None or col is None:
+            return
+        await self.db.execute(
+            update(model).where(model.id == object_id).values({col: getattr(model, col) + 1})
+        )
+        await self.db.flush()
 
     async def request_post_media_upload(
         self,
@@ -2244,6 +2293,12 @@ class InstitutionService:
             )
         )
         posts = list(result.scalars().all())
+        # Spec 27 §2.3 — public pages exclude posts scoped non-public.
+        posts = [
+            p
+            for p in posts
+            if not (isinstance(p.visibility, dict) and p.visibility.get("public") is False)
+        ]
         return [await self._enrich_post(p) for p in posts]
 
     async def _get_post(
@@ -2294,6 +2349,12 @@ class InstitutionService:
             is_template=post.is_template,
             template_name=post.template_name,
             view_count=post.view_count,
+            click_count=post.click_count or 0,
+            save_count=post.save_count or 0,
+            request_info_count=post.request_info_count or 0,
+            apply_started_count=post.apply_started_count or 0,
+            ctas=post.ctas,
+            visibility=post.visibility,
             created_at=post.created_at,
             updated_at=post.updated_at,
             author_email=author_email,

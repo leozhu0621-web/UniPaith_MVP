@@ -52,6 +52,7 @@ from unipaith.schemas.institution import (
     ProgramResponse,
     PromotionResponse,
     RecordActionRequest,
+    RecordEngagementRequest,
     SaveMappingTemplateRequest,
     SegmentResponse,
     SubmitInquiryRequest,
@@ -1250,6 +1251,17 @@ async def record_campaign_action(
         body.action_type,
         body.target_id,
     )
+
+
+@router.post("/track/engagement", status_code=status.HTTP_204_NO_CONTENT)
+async def record_engagement(
+    body: RecordEngagementRequest,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 27 §5 — record a per-object engagement event (post/event/promotion)."""
+    svc = _svc(db)
+    await svc.record_engagement(body.object_type, body.object_id, body.action)
 
 
 # --- Inquiries ---
