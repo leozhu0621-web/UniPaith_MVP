@@ -38,11 +38,11 @@ export default function AdmissionsPage() {
   return (
     <div className="p-6 space-y-4">
       <Tabs tabs={tabs} activeTab={activeTab} onChange={handleTabChange} />
-      {activeTab === 'pipeline' && <PipelinePage />}
-      {activeTab === 'integrity' && <IntegrityQueuePage />}
+      {activeTab === 'pipeline' && <PipelinePage embedded />}
+      {activeTab === 'integrity' && <IntegrityQueuePage embedded />}
       {activeTab === 'interviews' && <InterviewsPage embedded />}
-      {activeTab === 'inquiries' && <InquiriesPage />}
-      {activeTab === 'cohort' && <CohortComparisonPage />}
+      {activeTab === 'inquiries' && <InquiriesPage embedded />}
+      {activeTab === 'cohort' && <CohortComparisonPage embedded />}
     </div>
   )
 }

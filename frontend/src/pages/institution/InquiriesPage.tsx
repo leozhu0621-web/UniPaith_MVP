@@ -31,7 +31,7 @@ const STATUS_BADGE: Record<string, 'neutral' | 'info' | 'success' | 'warning'> =
   closed: 'neutral',
 }
 
-export default function InquiriesPage() {
+export default function InquiriesPage({ embedded = false }: { embedded?: boolean }) {
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState('all')
   const [selected, setSelected] = useState<Inquiry | null>(null)
@@ -104,12 +104,14 @@ export default function InquiriesPage() {
 
   const newCount = inquiries.filter(i => i.status === 'new').length
 
-  return (
-    <div className="p-6 space-y-4">
-      <InstitutionPageHeader
-        title="Inquiry Queue"
-        description="Manage information requests from prospective students."
-      />
+  const inner = (
+    <div className="space-y-4">
+      {!embedded && (
+        <InstitutionPageHeader
+          title="Inquiry Queue"
+          description="Manage information requests from prospective students."
+        />
+      )}
 
       {inquiries.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -246,4 +248,7 @@ export default function InquiriesPage() {
       </Modal>
     </div>
   )
+
+  if (embedded) return inner
+  return <div className="p-6">{inner}</div>
 }

@@ -25,7 +25,7 @@ const DECISION_COLORS: Record<string, string> = {
 const applicantLabel = (a: { student_name?: string | null; student_id: string }) =>
   a.student_name ?? `Applicant ${a.student_id.slice(0, 8)}`
 
-export default function CohortComparisonPage() {
+export default function CohortComparisonPage({ embedded = false }: { embedded?: boolean }) {
   const [selectedProgram, setSelectedProgram] = useState('')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [sortBy, setSortBy] = useState<'avg_score' | 'match_score' | 'student_name'>('avg_score')
@@ -101,12 +101,14 @@ export default function CohortComparisonPage() {
     return sortDir === 'desc' ? <ChevronDown size={12} /> : <ChevronUp size={12} />
   }
 
-  return (
-    <div className="p-6 space-y-4">
-      <InstitutionPageHeader
-        title="Cohort Comparison"
-        description="Side-by-side comparison of applicants on rubric scores and key fields for calibration."
-      />
+  const inner = (
+    <div className="space-y-4">
+      {!embedded && (
+        <InstitutionPageHeader
+          title="Cohort Comparison"
+          description="Side-by-side comparison of applicants on rubric scores and key fields for calibration."
+        />
+      )}
 
       {/* Program selector */}
       <Card className="p-4">
@@ -328,6 +330,9 @@ export default function CohortComparisonPage() {
       )}
     </div>
   )
+
+  if (embedded) return inner
+  return <div className="p-6">{inner}</div>
 }
 
 function pctRate(r: number | null): string {

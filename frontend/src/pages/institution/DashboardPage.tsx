@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -22,10 +23,11 @@ import {
   ArrowRight,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { getInstitution, getInstitutionPrograms, getDashboardSummary, getInquiries, getIntelligenceDigest, getYieldRiskAlerts, getDatasets } from '../../api/institutions'
+import { getInstitution, getInstitutionPrograms, getDashboardSummary, getIntelligenceDigest, getYieldRiskAlerts, getDatasets } from '../../api/institutions'
 import { getTeam } from '../../api/settings'
 import { getReviewPriorityQueue, getIntegritySignals } from '../../api/reviews'
-import { getNotifications } from '../../api/notifications'
+import { getNotifications, getUnreadCount } from '../../api/notifications'
+import { admissionsUrl, applicantUrl, INQUIRIES_URL } from '../../utils/institution-routes'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -34,7 +36,17 @@ import EmptyState from '../../components/ui/EmptyState'
 import Table from '../../components/ui/Table'
 import { formatDate, formatRelative, formatCurrency, formatPercent } from '../../utils/format'
 import { DEGREE_LABELS } from '../../utils/constants'
-import type { Notification, PrioritizedApplication, IntegritySignal, Inquiry, Program, DashboardSummary } from '../../types'
+import type { Notification, PrioritizedApplication, IntegritySignal, Program, DashboardSummary } from '../../types'
+
+const INTEGRITY_LINE: Record<string, (n: number) => string> = {
+  essay_authenticity: (n) => `${n} essay authenticity flag${n === 1 ? '' : 's'} pending review`,
+  duplicate_submission: (n) => `${n} duplicate-account suspicion${n === 1 ? '' : 's'}`,
+  credential_mismatch: (n) => `${n} credential mismatch flag${n === 1 ? '' : 's'}`,
+  incomplete_profile: (n) => `${n} incomplete profile flag${n === 1 ? '' : 's'}`,
+}
+function integrityLine(type: string, count: number): string {
+  return (INTEGRITY_LINE[type] ?? ((n) => `${n} ${type.replace(/_/g, ' ')} flag${n === 1 ? '' : 's'} pending review`))(count)
+}
 
 export default function DashboardPage() {
   const navigate = useNavigate()
@@ -61,9 +73,9 @@ export default function DashboardPage() {
     queryFn: () => getIntegritySignals(undefined, 'open'),
     enabled: !!institutionQ.data,
   })
-  const inquiriesQ = useQuery({
-    queryKey: ['dashboard-inquiries', 'new'],
-    queryFn: () => getInquiries('new'),
+  const unreadQ = useQuery({
+    queryKey: ['notifications-unread-count'],
+    queryFn: getUnreadCount,
     enabled: !!institutionQ.data,
   })
   const digestQ = useQuery({
@@ -96,7 +108,14 @@ export default function DashboardPage() {
   const notifications: Notification[] = Array.isArray(notificationsQ.data) ? notificationsQ.data : []
   const topPriority: PrioritizedApplication[] = (Array.isArray(priorityQ.data) ? priorityQ.data : []).slice(0, 5)
   const openAlerts: IntegritySignal[] = Array.isArray(integrityQ.data) ? integrityQ.data : []
-  const newInquiries: Inquiry[] = Array.isArray(inquiriesQ.data) ? inquiriesQ.data : []
+  const unreadNotifications: number = unreadQ.data?.count ?? unreadQ.data?.unread_count ?? 0
+  const integrityBreakdown = useMemo(() => {
+    const byType: Record<string, number> = {}
+    for (const sig of openAlerts) {
+      byType[sig.signal_type] = (byType[sig.signal_type] ?? 0) + 1
+    }
+    return Object.entries(byType).map(([type, count]) => ({ type, count, label: integrityLine(type, count) }))
+  }, [openAlerts])
 
   const isLoading = institutionQ.isLoading || programsQ.isLoading
 
@@ -246,12 +265,12 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6 p-6">
       <div>
-        {summary?.cycle && (
-          <p className="up-eyebrow mb-1">{institution.name} · {summary.cycle} cycle</p>
-        )}
-        <h1 className="text-2xl font-bold text-gray-900">Welcome back, {institution.name}</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Run today&apos;s admissions workload, track outcomes, and take next actions from one place.
+        <p className="up-eyebrow mb-1">
+          {institution.name}{summary?.cycle ? ` · ${summary.cycle} cycle` : ''}
+        </p>
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Admissions intake for the active cycle — queues, integrity, inquiries, and yield at a glance.
         </p>
       </div>
 
@@ -331,68 +350,12 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      {/* AI Command Center */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        {/* Integrity Alerts */}
-        <Card className={`p-4 ${openAlerts.length > 0 ? 'border-amber-300 bg-amber-50/30' : ''}`}>
-          <div className="flex items-center gap-2 mb-2">
-            <Shield size={18} className={openAlerts.length > 0 ? 'text-amber-600' : 'text-green-500'} />
-            <h3 className="text-sm font-semibold text-gray-900">Integrity Signals</h3>
-          </div>
-          {openAlerts.length > 0 ? (
-            <>
-              <p className="text-2xl font-bold text-amber-700">{openAlerts.length}</p>
-              <p className="text-xs text-amber-600 mb-2">open alerts need review</p>
-              <Button size="sm" variant="secondary" onClick={() => navigate('/i/admissions?tab=integrity')} className="flex items-center gap-1">
-                <Shield size={12} /> Review Alerts
-              </Button>
-            </>
-          ) : (
-            <p className="text-sm text-green-600">All clear — no integrity issues</p>
-          )}
-        </Card>
-
-        {/* New Inquiries */}
-        <Card className={`p-4 ${newInquiries.length > 0 ? 'border-blue-300 bg-blue-50/30' : ''}`}>
-          <div className="flex items-center gap-2 mb-2">
-            <Inbox size={18} className={newInquiries.length > 0 ? 'text-blue-600' : 'text-gray-400'} />
-            <h3 className="text-sm font-semibold text-gray-900">New Inquiries</h3>
-          </div>
-          <p className="text-2xl font-bold text-gray-900">{newInquiries.length}</p>
-          <p className="text-xs text-gray-500 mb-2">awaiting response</p>
-          {newInquiries.length > 0 && (
-            <Button size="sm" variant="secondary" onClick={() => navigate('/i/inquiries')} className="flex items-center gap-1">
-              <MessageSquare size={12} /> Respond
-            </Button>
-          )}
-        </Card>
-
-        {/* AI Quick Actions */}
-        <Card className="p-4 bg-gradient-to-br from-brand-slate-50 to-white">
-          <div className="flex items-center gap-2 mb-2">
-            <Brain size={18} className="text-brand-slate-600" />
-            <h3 className="text-sm font-semibold text-gray-900">AI Actions</h3>
-          </div>
-          <div className="space-y-1.5">
-            <Button size="sm" variant="secondary" onClick={() => navigate('/i/pipeline?tab=priority')} className="w-full flex items-center gap-1 justify-start text-left">
-              <Zap size={12} /> Review Next Priority
-            </Button>
-            <Button size="sm" variant="secondary" onClick={() => navigate('/i/templates')} className="w-full flex items-center gap-1 justify-start text-left">
-              <Brain size={12} /> Compose AI Message
-            </Button>
-            <Button size="sm" variant="secondary" onClick={() => navigate('/i/pipeline?tab=board')} className="w-full flex items-center gap-1 justify-start text-left">
-              <ClipboardCheck size={12} /> Run Batch Action
-            </Button>
-          </div>
-        </Card>
-      </div>
-
-      {/* AI Intelligence Digest */}
+      {/* Intelligence Digest — Spec 31 §2 */}
       {digestQ.data?.digest && (
-        <Card className="p-4 border-brand-slate-200 bg-gradient-to-r from-brand-slate-50/50 to-white">
+        <Card className="p-4 border-border bg-card">
           <div className="flex items-center gap-2 mb-3">
             <Brain size={18} className="text-brand-slate-600" />
-            <h3 className="text-sm font-semibold text-gray-900">AI Intelligence Digest</h3>
+            <h3 className="text-sm font-semibold text-gray-900">Intelligence Digest</h3>
             <Badge variant="info">Auto-generated</Badge>
           </div>
           <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
@@ -402,27 +365,35 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      {/* Yield Risk Alerts */}
+      {/* Yield-Risk Alerts — Spec 31 §2 */}
       {(yieldRiskQ.data?.alerts?.length ?? 0) > 0 && (
-        <Card className="p-4 border-amber-200 bg-amber-50/30">
+        <Card className="p-4 border-warning/30 bg-warning-soft/20">
           <div className="flex items-center gap-2 mb-3">
-            <TrendingUp size={16} className="text-amber-600" />
-            <h3 className="text-sm font-semibold text-gray-900">Yield Risk Alerts</h3>
-            <Badge variant="warning">{yieldRiskQ.data!.alerts.length} at risk</Badge>
+            <TrendingUp size={16} className="text-warning" />
+            <h3 className="text-sm font-semibold text-gray-900">Yield-Risk Alerts</h3>
+            <Badge variant="warning">{yieldRiskQ.data!.count ?? yieldRiskQ.data!.alerts.length} at risk</Badge>
           </div>
+          {yieldRiskQ.data!.alerts.length >= 3 && (
+            <p className="text-sm text-foreground mb-2">
+              {yieldRiskQ.data!.alerts.length} admitted students haven&apos;t responded
+              {yieldRiskQ.data!.alerts[0]?.days_remaining != null && yieldRiskQ.data!.alerts[0].days_remaining >= 0
+                ? `; deadline in ${yieldRiskQ.data!.alerts[0].days_remaining} days`
+                : ''}
+            </p>
+          )}
           <div className="space-y-2">
             {yieldRiskQ.data!.alerts.slice(0, 5).map(alert => (
               <button
                 key={alert.application_id}
                 type="button"
-                onClick={() => navigate(`/i/pipeline/${alert.application_id}?tab=decision`)}
-                className="w-full flex items-center justify-between p-2 rounded-lg bg-white border border-amber-100 hover:border-cobalt/30 hover:bg-cobalt/5 transition-colors text-left"
+                onClick={() => navigate(applicantUrl(alert.application_id, 'decision'))}
+                className="w-full flex items-center justify-between gap-3 p-2 rounded-lg border border-border bg-background hover:bg-muted transition-colors text-left"
               >
                 <div className="min-w-0">
-                  <span className="text-sm text-gray-900">
+                  <span className="text-sm font-medium text-foreground block truncate">
                     {alert.student_name ?? `Applicant ${alert.student_id.slice(0, 8)}`}
                   </span>
-                  <span className="text-xs text-gray-500 ml-2 block sm:inline">{alert.reason}</span>
+                  <span className="text-xs text-muted-foreground">{alert.reason}</span>
                 </div>
                 <Badge variant={alert.risk_level === 'high' ? 'danger' : 'warning'}>{alert.risk_level}</Badge>
               </button>
@@ -430,6 +401,49 @@ export default function DashboardPage() {
           </div>
         </Card>
       )}
+
+      {/* Integrity Signals + New Inquiries — Spec 31 §2 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <Card className={`p-4 ${openAlerts.length > 0 ? 'border-warning/40' : ''}`}>
+          <div className="flex items-center gap-2 mb-2">
+            <Shield size={18} className={openAlerts.length > 0 ? 'text-warning' : 'text-success'} />
+            <h3 className="text-sm font-semibold text-gray-900">Integrity Signals</h3>
+          </div>
+          {integrityBreakdown.length > 0 ? (
+            <ul className="space-y-1.5 mb-3">
+              {integrityBreakdown.map(row => (
+                <li key={row.type} className="flex items-center gap-2 text-sm text-foreground">
+                  <span className="text-warning" aria-hidden>⚠</span>
+                  {row.label}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-success mb-2">All clear — no integrity issues</p>
+          )}
+          {(summary?.integrity_signals_count ?? openAlerts.length) > 0 && (
+            <Button size="sm" variant="secondary" onClick={() => navigate(admissionsUrl('integrity'))} className="flex items-center gap-1">
+              <Shield size={12} /> Review queue
+            </Button>
+          )}
+        </Card>
+
+        <Card className={`p-4 ${(summary?.new_inquiries_24h ?? 0) > 0 ? 'border-secondary/30' : ''}`}>
+          <div className="flex items-center gap-2 mb-2">
+            <Inbox size={18} className={(summary?.new_inquiries_24h ?? 0) > 0 ? 'text-secondary' : 'text-muted-foreground'} />
+            <h3 className="text-sm font-semibold text-gray-900">New Inquiries</h3>
+          </div>
+          <p className="text-2xl font-bold text-gray-900">
+            Last 24h: {summary?.new_inquiries_24h ?? 0}
+            {(summary?.unanswered_inquiries_4h ?? 0) > 0 && (
+              <span className="text-base font-bold text-warning"> ({summary!.unanswered_inquiries_4h} unanswered ≥ 4h)</span>
+            )}
+          </p>
+          <Button size="sm" variant="secondary" onClick={() => navigate(INQUIRIES_URL)} className="mt-2 flex items-center gap-1">
+            <MessageSquare size={12} /> Open inquiry queue
+          </Button>
+        </Card>
+      </div>
 
       {/* Fairness signal — Spec 31 §11 (G-D4 / G-I5). Advisory representation check. */}
       {summary?.fairness && summary.fairness.status !== 'insufficient_data' && (
@@ -456,11 +470,11 @@ export default function DashboardPage() {
               <h3 className="text-sm font-semibold text-gray-900">Priority Review Queue</h3>
               <Badge variant="warning">{topPriority.length} urgent</Badge>
             </div>
-            <Button size="sm" variant="ghost" onClick={() => navigate('/i/pipeline?tab=priority')}>View All</Button>
+            <Button size="sm" variant="ghost" onClick={() => navigate(admissionsUrl('pipeline', 'priority'))}>View All</Button>
           </div>
           <div className="space-y-1.5">
             {topPriority.map((p, i) => (
-              <div key={p.application_id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/i/pipeline/${p.application_id}`)}>
+              <div key={p.application_id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer" onClick={() => navigate(applicantUrl(p.application_id))}>
                 <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
                   style={{ backgroundColor: p.priority_score >= 70 ? '#ef4444' : p.priority_score >= 40 ? '#f59e0b' : '#22c55e' }}>
                   {Math.round(p.priority_score)}
@@ -487,10 +501,10 @@ export default function DashboardPage() {
           <Button onClick={() => navigate('/i/programs/new')} className="flex items-center gap-2">
             <Plus size={16} /> Add Program
           </Button>
-          <Button onClick={() => navigate('/i/pipeline?tab=review')} variant="secondary" className="flex items-center gap-2">
+          <Button onClick={() => navigate(admissionsUrl('pipeline', 'review'))} variant="secondary" className="flex items-center gap-2">
             <ClipboardCheck size={16} /> Triage Review Queue
           </Button>
-          <Button onClick={() => navigate('/i/pipeline?tab=board')} variant="secondary" className="flex items-center gap-2">
+          <Button onClick={() => navigate(admissionsUrl('pipeline', 'board'))} variant="secondary" className="flex items-center gap-2">
             <GitBranch size={16} /> Applications Board
           </Button>
           <Button onClick={() => navigate('/i/campaigns')} variant="secondary" className="flex items-center gap-2">
@@ -519,10 +533,10 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="p-4">
+        <Card className="p-4 lg:col-span-1">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-900">Activity Feed</h3>
-            <Bell size={16} className="text-gray-400" />
+            <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
+            {unreadNotifications > 0 && <Badge variant="info">{unreadNotifications} unread</Badge>}
           </div>
           {notifications.length === 0 ? (
             <p className="text-sm text-gray-500 py-4 text-center">No recent activity</p>

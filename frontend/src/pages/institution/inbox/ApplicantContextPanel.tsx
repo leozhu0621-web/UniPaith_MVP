@@ -60,13 +60,13 @@ export default function ApplicantContextPanel({
         {thread.application_id ? (
           <>
             <button
-              onClick={() => onNavigate(`/i/pipeline/${thread.application_id}`)}
+              onClick={() => onNavigate(`/i/admissions/applicant/${thread.application_id}`)}
               className="inline-flex items-center gap-1 text-xs font-medium text-cobalt hover:underline"
             >
               Open review workspace <ExternalLink size={11} />
             </button>
             <button
-              onClick={() => onNavigate(`/i/pipeline/${thread.application_id}?tab=documents`)}
+              onClick={() => onNavigate(`/i/admissions/applicant/${thread.application_id}?tab=documents`)}
               className="inline-flex items-center gap-1 text-xs font-medium text-cobalt hover:underline"
             >
               View documents <ExternalLink size={11} />
