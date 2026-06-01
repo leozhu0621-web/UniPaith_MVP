@@ -12,6 +12,40 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { formatDelta, formatKpi, priorLabel } from '../pages/institution/analytics/constants'
 
+const emptyFunnel = {
+  filter: {},
+  stages: [],
+  sub_funnels: [],
+  top_sources_by_clicks: [],
+  top_sources_by_apply_started: [],
+  drop_off_alerts: [],
+  total_events: 0,
+  has_data: false,
+  generated_at: '2026-06-01T00:00:00Z',
+}
+
+const richFunnel = {
+  filter: {},
+  stages: [
+    { stage: 'saves', label: 'Saves', count: 840, conversion_from_prev: null },
+    { stage: 'apps_started', label: 'Apps started', count: 210, conversion_from_prev: 0.25 },
+  ],
+  sub_funnels: [],
+  top_sources_by_clicks: [{ source_kind: 'post', source_id: '1', label: 'Open house', action_count: 50 }],
+  top_sources_by_apply_started: [],
+  drop_off_alerts: [
+    {
+      from_stage: 'saves',
+      to_stage: 'apps_started',
+      drop_pct: 0.75,
+      hint: 'Biggest drop: Saves → Apps started (75% drop). Investigate ▾',
+    },
+  ],
+  total_events: 1050,
+  has_data: true,
+  generated_at: '2026-06-01T00:00:00Z',
+}
+
 vi.mock('../api/institutions', () => ({
   getAnalyticsOverview: vi.fn(async () => ({
     filter: {},
@@ -26,17 +60,7 @@ vi.mock('../api/institutions', () => ({
     has_data: true,
     generated_at: '2026-06-01T00:00:00Z',
   })),
-  getAnalyticsFunnel: vi.fn(async () => ({
-    filter: {},
-    stages: [],
-    sub_funnels: [],
-    top_sources_by_clicks: [],
-    top_sources_by_apply_started: [],
-    drop_off_alerts: [],
-    total_events: 0,
-    has_data: false,
-    generated_at: '2026-06-01T00:00:00Z',
-  })),
+  getAnalyticsFunnel: vi.fn(async () => richFunnel),
   getAnalyticsAttribution: vi.fn(async () => ({
     filter: {},
     campaigns: [],
@@ -53,6 +77,7 @@ vi.mock('../api/institutions', () => ({
   exportAnalyticsCsv: vi.fn(async () => undefined),
 }))
 
+import { getAnalyticsFunnel } from '../api/institutions'
 import AnalyticsPage from '../pages/institution/AnalyticsPage'
 
 function renderPage(initial = '/i/analytics?tab=overview') {
@@ -91,9 +116,12 @@ describe('Spec 28 — AnalyticsPage', () => {
     expect(screen.getByText('Attribution')).toBeInTheDocument()
     await waitFor(() => expect(screen.getByText('Total applications')).toBeInTheDocument())
     expect(screen.getByText('+20% vs prior 30 days')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText('Recruitment funnel')).toBeInTheDocument())
+    expect(screen.getByText(/Biggest drop: Saves/)).toBeInTheDocument()
   })
 
   it('shows the insufficient-data state on the funnel tab', async () => {
+    vi.mocked(getAnalyticsFunnel).mockResolvedValueOnce(emptyFunnel)
     renderPage('/i/analytics?tab=funnel')
     await waitFor(() =>
       expect(screen.getByText('Not enough events in this window to plot.')).toBeInTheDocument()
