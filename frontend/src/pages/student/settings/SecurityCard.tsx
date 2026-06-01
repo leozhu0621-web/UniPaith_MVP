@@ -402,9 +402,21 @@ function MfaEnrollModal({ onClose, onDone }: { onClose: () => void; onDone: () =
         <div className="space-y-4">
           <ol className="text-sm text-muted-foreground list-decimal pl-5 space-y-1">
             <li>Open your authenticator app (Google Authenticator, Authy, 1Password…).</li>
-            <li>Add an account and enter this setup key.</li>
+            <li>Scan the QR code or enter the setup key manually.</li>
             <li>Enter the 6-digit code it shows below.</li>
           </ol>
+          <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(data.otpauth_uri)}`}
+              alt="Scan with your authenticator app"
+              width={160}
+              height={160}
+              className="rounded-lg border border-border bg-card p-2 shrink-0"
+            />
+            <p className="text-xs text-muted-foreground sm:pt-2">
+              Can't scan? Copy the setup key below and paste it into your app.
+            </p>
+          </div>
           <div className="flex items-center gap-2 rounded-lg border border-border bg-muted px-3 py-2">
             <code className="text-sm font-mono text-foreground break-all flex-1">{data.secret}</code>
             <button

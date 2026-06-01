@@ -10,6 +10,7 @@ import NotificationsCard from './settings/NotificationsCard'
 import ConnectCard from './settings/ConnectCard'
 import DataPrivacyCard from './settings/DataPrivacyCard'
 import BillingCard from './settings/BillingCard'
+import SignOutCard from './settings/SignOutCard'
 import DangerZone from './settings/DangerZone'
 
 export default function SettingsPage() {
@@ -80,6 +81,7 @@ export default function SettingsPage() {
           <ConnectCard />
           <DataPrivacyCard />
           <BillingCard />
+          <SignOutCard />
           <DangerZone deletion={settings.deletion} onChanged={refetch} />
         </div>
       )}
