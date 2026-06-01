@@ -1546,19 +1546,46 @@ export interface InterviewScore {
 }
 
 // ============ INSTITUTION DATASETS ============
+export type DatasetType = 'admissions_history' | 'prospect_list' | 'outcomes_summary'
+export type DatasetUsageScope = 'marketing' | 'analytics' | 'admissions' | 'all'
+
+export interface DatasetHistogramColumn {
+  top: { value: string; count: number }[]
+  null_count: number
+  distinct: number
+}
+export type DatasetHistogram = Record<string, DatasetHistogramColumn>
+
+export interface DatasetValidationReport {
+  total_rows: number
+  valid_rows: number
+  missing_required: { row: number; fields: string[] }[]
+  duplicates: { row: number; key: string; first_seen_row?: number }[]
+  invalid_dates: { row: number; field: string; value: string }[]
+  unmappable_programs: { row: number; value: string; suggestions: string[] }[]
+  summary: string
+  source?: string
+  triage_status?: string
+  triage_summary?: string
+  triage_recommended_action?: string
+}
+
 export interface InstitutionDataset {
   id: string
   institution_id: string
   dataset_name: string
-  dataset_type: 'admissions_history' | 'prospect_list' | 'outcomes_summary'
+  dataset_type: DatasetType
   description: string | null
   file_name: string
   file_size_bytes: number | null
   row_count: number | null
   column_mapping: Record<string, string> | null
-  validation_errors: Record<string, any>[] | null
-  status: 'pending' | 'validated' | 'active' | 'archived'
-  usage_scope: string | null
+  normalization_map: Record<string, string> | null
+  validation_errors: DatasetValidationReport | null
+  status: 'uploaded' | 'validated' | 'processed' | 'failed'
+  usage_scope: DatasetUsageScope | null
+  coverage_start: string | null
+  coverage_end: string | null
   version: number
   created_at: string
   updated_at: string
@@ -1569,6 +1596,32 @@ export interface DatasetPreview {
   columns: string[]
   rows: Record<string, string>[]
   total_rows: number
+  histogram: DatasetHistogram
+}
+
+export interface DatasetInspect {
+  columns: string[]
+  rows: Record<string, string>[]
+  total_rows: number
+  histogram: DatasetHistogram
+}
+
+export interface DatasetVersion {
+  id: string
+  version_number: number
+  row_count: number | null
+  changes_summary: { added?: number; modified?: number; invalidated?: number; note?: string } | null
+  validation_report: DatasetValidationReport | null
+  uploaded_at: string
+}
+
+export interface DatasetMappingTemplate {
+  id: string
+  dataset_type: DatasetType
+  name: string
+  column_mapping: Record<string, string>
+  created_at: string
+  updated_at: string
 }
 
 // ============ POSTS ============

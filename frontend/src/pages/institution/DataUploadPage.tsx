@@ -1,9 +1,13 @@
 import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Upload, FileText, Trash2, Download, Eye, Database } from 'lucide-react'
 import {
-  getDatasets, requestDatasetUpload, confirmDatasetUpload,
-  getDatasetPreview, updateDataset, deleteDataset,
+  Upload, Database, Eye, Pencil, RefreshCw, Plus, History, Download, Trash2,
+  MoreHorizontal, RotateCcw, Table2, BarChart3, UploadCloud,
+} from 'lucide-react'
+import {
+  getDatasets, getDatasetPreview, updateDataset, deleteDataset,
+  getDatasetVersions, rollbackDataset, exportDataset,
+  uploadDatasetFile, replaceDataset, appendDataset,
 } from '../../api/institutions'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -14,318 +18,374 @@ import Select from '../../components/ui/Select'
 import Textarea from '../../components/ui/Textarea'
 import Skeleton from '../../components/ui/Skeleton'
 import EmptyState from '../../components/ui/EmptyState'
+import Dropdown from '../../components/ui/Dropdown'
 import InstitutionPageHeader from '../../components/institution/InstitutionPageHeader'
 import { showToast } from '../../stores/toast-store'
-import { formatDate } from '../../utils/format'
-import type { InstitutionDataset, DatasetPreview } from '../../types'
+import { formatRelative } from '../../utils/format'
+import type { InstitutionDataset, DatasetPreview, DatasetVersion } from '../../types'
+import { DATASET_TYPES, USAGE_SCOPES, STATUS_BADGE, SCOPE_LABEL, USED_BY } from './data-upload/constants'
+import HistogramBars from './data-upload/HistogramBars'
+import UploadWizard from './data-upload/UploadWizard'
 
-const DATASET_TYPES = [
-  { value: 'admissions_history', label: 'Admissions History' },
-  { value: 'prospect_list', label: 'Prospect List' },
-  { value: 'outcomes_summary', label: 'Outcomes Summary' },
-]
-
-const USAGE_SCOPES = [
-  { value: '', label: 'Not specified' },
-  { value: 'marketing', label: 'Marketing only' },
-  { value: 'analytics', label: 'Analytics only' },
-  { value: 'admissions', label: 'Admissions only' },
-  { value: 'all', label: 'All' },
-]
-
-const STATUS_BADGE: Record<string, 'neutral' | 'info' | 'success' | 'warning'> = {
-  pending: 'warning',
-  validated: 'info',
-  active: 'success',
-  archived: 'neutral',
-}
-
-const COLUMN_FIELDS: Record<string, string[]> = {
-  prospect_list: ['email', 'first_name', 'last_name', 'phone', 'nationality', 'country', 'degree_interest', 'program_interest', 'source', 'notes'],
-  admissions_history: ['student_email', 'program_name', 'application_date', 'decision', 'gpa', 'test_score', 'enrollment_status'],
-  outcomes_summary: ['program_name', 'graduation_year', 'employment_status', 'employer', 'salary_range', 'time_to_employment'],
-}
+const FILTERS = [{ value: 'all', label: 'All datasets' }, ...DATASET_TYPES.map((t) => ({ value: t.value, label: t.label }))]
 
 export default function DataUploadPage() {
-  const queryClient = useQueryClient()
-  const fileRef = useRef<HTMLInputElement>(null)
-  const [showUploadModal, setShowUploadModal] = useState(false)
-  const [previewTarget, setPreviewTarget] = useState<string | null>(null)
+  const qc = useQueryClient()
+  const [filter, setFilter] = useState('all')
+  const [showWizard, setShowWizard] = useState(false)
+  const [previewTarget, setPreviewTarget] = useState<InstitutionDataset | null>(null)
+  const [versionsTarget, setVersionsTarget] = useState<InstitutionDataset | null>(null)
+  const [editTarget, setEditTarget] = useState<InstitutionDataset | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<InstitutionDataset | null>(null)
-  const [mappingTarget, setMappingTarget] = useState<InstitutionDataset | null>(null)
+  const [fileTarget, setFileTarget] = useState<{ ds: InstitutionDataset; mode: 'replace' | 'append' } | null>(null)
 
-  // Upload form state
-  const [name, setName] = useState('')
-  const [type, setType] = useState('prospect_list')
-  const [description, setDescription] = useState('')
-  const [scope, setScope] = useState('')
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [uploading, setUploading] = useState(false)
+  const datasetsQ = useQuery({ queryKey: ['datasets', filter], queryFn: () => getDatasets(filter) })
+  const datasets = datasetsQ.data ?? []
 
-  // Mapping state
-  const [columnMap, setColumnMap] = useState<Record<string, string>>({})
+  const invalidate = () => qc.invalidateQueries({ queryKey: ['datasets'] })
 
-  const datasetsQ = useQuery({ queryKey: ['datasets'], queryFn: getDatasets })
-  const datasets: InstitutionDataset[] = Array.isArray(datasetsQ.data) ? datasetsQ.data : []
-
-  const previewQ = useQuery({
-    queryKey: ['dataset-preview', previewTarget],
-    queryFn: () => getDatasetPreview(previewTarget!),
-    enabled: !!previewTarget,
-  })
-  const preview: DatasetPreview | undefined = previewQ.data
-
-  const deleteMut = useMutation({
-    mutationFn: deleteDataset,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['datasets'] })
-      showToast('Dataset deleted', 'success')
-      setDeleteTarget(null)
-    },
-    onError: () => showToast('Failed to delete', 'error'),
-  })
-
-  const updateMut = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: any }) => updateDataset(id, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['datasets'] })
-      showToast('Mapping saved', 'success')
-      setMappingTarget(null)
-    },
-    onError: () => showToast('Failed to save mapping', 'error'),
-  })
-
-  const resetForm = () => {
-    setName(''); setType('prospect_list'); setDescription(''); setScope(''); setSelectedFile(null)
-  }
-
-  const handleUpload = async () => {
-    if (!name.trim() || !selectedFile) {
-      showToast('Name and file are required', 'warning')
-      return
-    }
-    setUploading(true)
+  async function handleExport(ds: InstitutionDataset) {
     try {
-      const { dataset_id, upload_url } = await requestDatasetUpload({
-        dataset_name: name,
-        dataset_type: type,
-        file_name: selectedFile.name,
-        content_type: selectedFile.type || 'text/csv',
-        file_size_bytes: selectedFile.size,
-        description: description || undefined,
-        usage_scope: scope || undefined,
-      })
-
-      // Upload file to S3 presigned URL
-      await fetch(upload_url, {
-        method: 'PUT',
-        body: selectedFile,
-        headers: { 'Content-Type': selectedFile.type || 'text/csv' },
-      })
-
-      await confirmDatasetUpload(dataset_id)
-      queryClient.invalidateQueries({ queryKey: ['datasets'] })
-      showToast('Dataset uploaded!', 'success')
-      setShowUploadModal(false)
-      resetForm()
+      const { blob, fileName } = await exportDataset(ds.id)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = fileName
+      a.click()
+      URL.revokeObjectURL(url)
     } catch {
-      showToast('Upload failed', 'error')
-    } finally {
-      setUploading(false)
+      showToast('Export failed.', 'error')
     }
-  }
-
-  const openMapping = (ds: InstitutionDataset) => {
-    setMappingTarget(ds)
-    setColumnMap(ds.column_mapping || {})
-    setPreviewTarget(ds.id)
-  }
-
-  const saveMapping = () => {
-    if (!mappingTarget) return
-    updateMut.mutate({
-      id: mappingTarget.id,
-      payload: { column_mapping: columnMap, status: 'active' },
-    })
   }
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="space-y-4 p-6">
       <InstitutionPageHeader
-        title="Data Upload"
-        description="Upload and manage institution datasets for segmentation, campaigns, and analytics."
-        actions={(
-          <Button onClick={() => { resetForm(); setShowUploadModal(true) }} className="flex items-center gap-2">
-            <Upload size={16} /> Upload Dataset
+        title="Data"
+        description="Upload your own datasets to power matching, campaigns, and analytics."
+        actions={
+          <Button variant="secondary" onClick={() => setShowWizard(true)}>
+            <Upload size={16} /> Upload dataset
           </Button>
-        )}
+        }
       />
 
+      <div className="flex items-center gap-3">
+        <div className="w-52">
+          <Select value={filter} onChange={(e) => setFilter(e.target.value)} options={FILTERS} uiSize="sm" />
+        </div>
+        {!datasetsQ.isLoading && (
+          <span className="text-xs text-muted-foreground">
+            {datasets.length} dataset{datasets.length === 1 ? '' : 's'}
+          </span>
+        )}
+      </div>
+
       {datasetsQ.isLoading ? (
-        <div className="grid grid-cols-2 gap-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-40" />)}</div>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-40" />)}
+        </div>
       ) : datasets.length === 0 ? (
         <EmptyState
           icon={<Database size={40} />}
-          title="No datasets"
-          description="Upload CSV files with admissions history, prospect lists, or outcomes data."
-          action={{ label: 'Upload Dataset', onClick: () => { resetForm(); setShowUploadModal(true) } }}
+          title="No datasets yet"
+          description="Upload a dataset to power matching, campaigns, or analytics."
+          action={{ label: 'Upload dataset', onClick: () => setShowWizard(true) }}
         />
       ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {datasets.map(ds => (
-            <Card key={ds.id} className="p-4">
-              <div className="flex items-start justify-between mb-2">
-                <div className="min-w-0">
-                  <h3 className="font-semibold text-gray-900 truncate">{ds.dataset_name}</h3>
-                  <p className="text-xs text-gray-500">{ds.file_name}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={STATUS_BADGE[ds.status] ?? 'neutral'}>{ds.status}</Badge>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
-                <Badge variant="info">{DATASET_TYPES.find(t => t.value === ds.dataset_type)?.label ?? ds.dataset_type}</Badge>
-                {ds.row_count != null && <span>{ds.row_count.toLocaleString()} rows</span>}
-                {ds.usage_scope && <span>Scope: {ds.usage_scope}</span>}
-                <span>v{ds.version}</span>
-              </div>
-              {ds.description && <p className="text-xs text-gray-400 mb-3 line-clamp-2">{ds.description}</p>}
-              <p className="text-xs text-gray-400 mb-3">Uploaded {formatDate(ds.created_at)}</p>
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setPreviewTarget(ds.id)} className="flex items-center gap-1">
-                  <Eye size={14} /> Preview
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => openMapping(ds)} className="flex items-center gap-1">
-                  <FileText size={14} /> Map Columns
-                </Button>
-                {ds.download_url && (
-                  <a href={ds.download_url} target="_blank" rel="noopener noreferrer">
-                    <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                      <Download size={14} /> Download
-                    </Button>
-                  </a>
-                )}
-                <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(ds)} className="flex items-center gap-1 text-red-600">
-                  <Trash2 size={14} /> Delete
-                </Button>
-              </div>
-            </Card>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          {datasets.map((ds) => (
+            <DatasetCard
+              key={ds.id}
+              ds={ds}
+              onPreview={() => setPreviewTarget(ds)}
+              onEdit={() => setEditTarget(ds)}
+              onReplace={() => setFileTarget({ ds, mode: 'replace' })}
+              onAppend={() => setFileTarget({ ds, mode: 'append' })}
+              onVersions={() => setVersionsTarget(ds)}
+              onExport={() => handleExport(ds)}
+              onDelete={() => setDeleteTarget(ds)}
+            />
           ))}
         </div>
       )}
 
-      {/* Upload Modal */}
-      <Modal isOpen={showUploadModal} onClose={() => setShowUploadModal(false)} title="Upload Dataset">
-        <div className="space-y-4">
-          <Input label="Dataset Name *" value={name} onChange={e => setName(e.target.value)} />
-          <Select label="Type" options={DATASET_TYPES} value={type} onChange={e => setType(e.target.value)} />
-          <Textarea label="Description" value={description} onChange={e => setDescription(e.target.value)} rows={2} />
-          <Select label="Usage Scope" options={USAGE_SCOPES} value={scope} onChange={e => setScope(e.target.value)} />
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">CSV File *</label>
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".csv"
-              onChange={e => setSelectedFile(e.target.files?.[0] ?? null)}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
-            />
-            {selectedFile && <p className="text-xs text-gray-400 mt-1">{selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)</p>}
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setShowUploadModal(false)}>Cancel</Button>
-            <Button onClick={handleUpload} disabled={uploading}>
-              {uploading ? 'Uploading...' : 'Upload'}
-            </Button>
-          </div>
+      <UploadWizard isOpen={showWizard} onClose={() => setShowWizard(false)} onComplete={invalidate} />
+      {previewTarget && <PreviewModal ds={previewTarget} onClose={() => setPreviewTarget(null)} />}
+      {versionsTarget && (
+        <VersionsModal ds={versionsTarget} onClose={() => setVersionsTarget(null)} onChange={invalidate} />
+      )}
+      {editTarget && <EditModal ds={editTarget} onClose={() => setEditTarget(null)} onSaved={invalidate} />}
+      {deleteTarget && <DeleteModal ds={deleteTarget} onClose={() => setDeleteTarget(null)} onDeleted={invalidate} />}
+      {fileTarget && (
+        <FileModal {...fileTarget} onClose={() => setFileTarget(null)} onDone={invalidate} />
+      )}
+    </div>
+  )
+}
+
+function DatasetCard({ ds, onPreview, onEdit, onReplace, onAppend, onVersions, onExport, onDelete }: {
+  ds: InstitutionDataset
+  onPreview: () => void; onEdit: () => void; onReplace: () => void; onAppend: () => void
+  onVersions: () => void; onExport: () => void; onDelete: () => void
+}) {
+  const typeLabel = DATASET_TYPES.find((t) => t.value === ds.dataset_type)?.label ?? ds.dataset_type
+  return (
+    <Card className="p-4">
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <h3 className="min-w-0 truncate font-semibold text-foreground" title={ds.dataset_name}>
+          {ds.dataset_name}
+        </h3>
+        <Badge variant={STATUS_BADGE[ds.status] ?? 'neutral'}>{ds.status}</Badge>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {typeLabel} · {(ds.row_count ?? 0).toLocaleString()} rows · v{ds.version}
+      </p>
+      <p className="mt-0.5 text-xs text-muted-foreground">
+        Updated {formatRelative(ds.updated_at)} · Used by: {USED_BY[ds.dataset_type]}
+        {ds.usage_scope ? ` · Scope: ${SCOPE_LABEL[ds.usage_scope] ?? ds.usage_scope}` : ''}
+      </p>
+      {ds.description && <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{ds.description}</p>}
+
+      <div className="mt-3 flex items-center gap-2">
+        <Button variant="tertiary" size="sm" onClick={onPreview}><Eye size={14} /> Preview</Button>
+        <Button variant="ghost" size="sm" onClick={onVersions}><History size={14} /> Versions</Button>
+        <div className="ml-auto">
+          <Dropdown
+            trigger={<Button variant="ghost" size="sm" aria-label="More actions"><MoreHorizontal size={16} /></Button>}
+            items={[
+              { label: 'Edit', icon: <Pencil size={14} />, onClick: onEdit },
+              { label: 'Replace', icon: <RefreshCw size={14} />, onClick: onReplace },
+              { label: 'Append rows', icon: <Plus size={14} />, onClick: onAppend },
+              { label: 'Export CSV', icon: <Download size={14} />, onClick: onExport },
+              { label: 'Delete', icon: <Trash2 size={14} />, onClick: onDelete, variant: 'danger' },
+            ]}
+          />
         </div>
-      </Modal>
+      </div>
+    </Card>
+  )
+}
 
-      {/* Preview Modal */}
-      <Modal isOpen={!!previewTarget && !mappingTarget} onClose={() => setPreviewTarget(null)} title="Dataset Preview">
-        {previewQ.isLoading ? (
-          <div className="space-y-2">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-8" />)}</div>
-        ) : !preview || preview.columns.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-4">No data available. The file may still be uploading.</p>
-        ) : (
-          <div>
-            <p className="text-xs text-gray-500 mb-3">{preview.total_rows.toLocaleString()} total rows, showing first {preview.rows.length}</p>
-            <div className="overflow-x-auto max-h-80">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="bg-gray-50 text-left">
-                    {preview.columns.map(col => (
-                      <th key={col} className="px-2 py-1.5 font-medium text-gray-600 whitespace-nowrap">{col}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {preview.rows.map((row, i) => (
-                    <tr key={i} className="border-b border-gray-50">
-                      {preview.columns.map(col => (
-                        <td key={col} className="px-2 py-1.5 text-gray-700 whitespace-nowrap max-w-[200px] truncate">{row[col] ?? ''}</td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </Modal>
+function PreviewModal({ ds, onClose }: { ds: InstitutionDataset; onClose: () => void }) {
+  const [view, setView] = useState<'rows' | 'columns'>('rows')
+  const previewQ = useQuery({ queryKey: ['dataset-preview', ds.id], queryFn: () => getDatasetPreview(ds.id) })
+  const preview = previewQ.data as DatasetPreview | undefined
 
-      {/* Column Mapping Modal */}
-      <Modal isOpen={!!mappingTarget} onClose={() => { setMappingTarget(null); setPreviewTarget(null) }} title="Map Columns">
-        {previewQ.isLoading ? (
-          <Skeleton className="h-40" />
-        ) : !preview ? (
-          <p className="text-sm text-gray-500">Loading preview...</p>
-        ) : (
-          <div className="space-y-4">
-            <p className="text-xs text-gray-500">Map each CSV column to a platform field. Unmapped columns will be ignored.</p>
-            <div className="space-y-2 max-h-80 overflow-y-auto">
-              {preview.columns.map(col => {
-                const fieldOptions = COLUMN_FIELDS[mappingTarget?.dataset_type ?? 'prospect_list'] ?? []
-                return (
-                  <div key={col} className="flex items-center gap-3">
-                    <span className="text-sm text-gray-700 w-40 truncate font-mono">{col}</span>
-                    <span className="text-gray-400">&rarr;</span>
-                    <select
-                      value={columnMap[col] || ''}
-                      onChange={e => setColumnMap(prev => ({ ...prev, [col]: e.target.value }))}
-                      className="flex-1 px-2 py-1.5 text-sm border border-gray-300 rounded bg-white"
-                    >
-                      <option value="">— skip —</option>
-                      {fieldOptions.map(f => (
-                        <option key={f} value={f}>{f}</option>
-                      ))}
-                    </select>
-                  </div>
-                )
-              })}
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => { setMappingTarget(null); setPreviewTarget(null) }}>Cancel</Button>
-              <Button onClick={saveMapping} disabled={updateMut.isPending}>
-                {updateMut.isPending ? 'Saving...' : 'Save Mapping'}
-              </Button>
-            </div>
-          </div>
-        )}
-      </Modal>
-
-      {/* Delete Confirmation */}
-      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Delete Dataset">
-        <p className="text-sm text-gray-600 mb-4">
-          Delete <strong>{deleteTarget?.dataset_name}</strong>? This removes the file from storage permanently.
+  return (
+    <Modal isOpen onClose={onClose} title={`Preview · ${ds.dataset_name}`} size="lg">
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">
+          {preview ? `${preview.total_rows.toLocaleString()} rows · showing ${preview.rows.length}` : ' '}
         </p>
-        <div className="flex justify-end gap-2">
-          <Button variant="ghost" onClick={() => setDeleteTarget(null)}>Cancel</Button>
-          <Button variant="danger" onClick={() => deleteTarget && deleteMut.mutate(deleteTarget.id)} disabled={deleteMut.isPending}>
-            {deleteMut.isPending ? 'Deleting...' : 'Delete'}
+        <div className="flex gap-1 rounded-md border border-border p-0.5">
+          <button onClick={() => setView('rows')}
+            className={`flex items-center gap-1 rounded px-2 py-1 text-xs ${view === 'rows' ? 'bg-muted text-foreground' : 'text-muted-foreground'}`}>
+            <Table2 size={13} /> Rows
+          </button>
+          <button onClick={() => setView('columns')}
+            className={`flex items-center gap-1 rounded px-2 py-1 text-xs ${view === 'columns' ? 'bg-muted text-foreground' : 'text-muted-foreground'}`}>
+            <BarChart3 size={13} /> Columns
+          </button>
+        </div>
+      </div>
+
+      {previewQ.isLoading ? (
+        <div className="space-y-2">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-7" />)}</div>
+      ) : !preview || preview.columns.length === 0 ? (
+        <p className="py-6 text-center text-sm text-muted-foreground">No data to preview.</p>
+      ) : view === 'rows' ? (
+        <div className="max-h-96 overflow-auto rounded-md border border-border">
+          <table className="w-full text-xs">
+            <thead className="sticky top-0 bg-muted">
+              <tr className="text-left">
+                {preview.columns.map((c) => (
+                  <th key={c} className="whitespace-nowrap px-2.5 py-2 font-semibold text-foreground">{c}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {preview.rows.map((row, i) => (
+                <tr key={i} className="border-t border-border">
+                  {preview.columns.map((c) => (
+                    <td key={c} className="max-w-[220px] truncate whitespace-nowrap px-2.5 py-1.5 text-muted-foreground">
+                      {row[c] ?? ''}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="grid max-h-96 grid-cols-1 gap-4 overflow-y-auto sm:grid-cols-2">
+          {preview.columns.map((c) => (
+            <div key={c} className="rounded-md border border-border p-3">
+              <p className="mb-2 truncate font-mono text-xs font-semibold text-foreground">{c}</p>
+              <HistogramBars col={preview.histogram[c] ?? { top: [], null_count: 0, distinct: 0 }} />
+            </div>
+          ))}
+        </div>
+      )}
+    </Modal>
+  )
+}
+
+function VersionsModal({ ds, onClose, onChange }: { ds: InstitutionDataset; onClose: () => void; onChange: () => void }) {
+  const qc = useQueryClient()
+  const versionsQ = useQuery({ queryKey: ['dataset-versions', ds.id], queryFn: () => getDatasetVersions(ds.id) })
+  const versions = (versionsQ.data ?? []) as DatasetVersion[]
+  const latest = versions.length ? versions[0].version_number : 0
+
+  const rollbackMut = useMutation({
+    mutationFn: (n: number) => rollbackDataset(ds.id, n),
+    onSuccess: () => {
+      showToast('Rolled back.', 'success')
+      qc.invalidateQueries({ queryKey: ['dataset-versions', ds.id] })
+      qc.invalidateQueries({ queryKey: ['dataset-preview', ds.id] })
+      onChange()
+    },
+    onError: () => showToast('Rollback failed.', 'error'),
+  })
+
+  return (
+    <Modal isOpen onClose={onClose} title={`Version history · ${ds.dataset_name}`} size="md">
+      {versionsQ.isLoading ? (
+        <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-14" />)}</div>
+      ) : (
+        <div className="space-y-2">
+          {versions.map((v) => {
+            const cs = v.changes_summary
+            return (
+              <div key={v.id} className="flex items-center justify-between rounded-md border border-border p-3">
+                <div className="min-w-0">
+                  <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    v{v.version_number}
+                    {v.version_number === latest && <Badge variant="info">current</Badge>}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {(v.row_count ?? 0).toLocaleString()} rows · {formatRelative(v.uploaded_at)}
+                  </p>
+                  {cs && (
+                    <p className="text-[11px] text-muted-foreground">
+                      {cs.note
+                        ? cs.note
+                        : `${cs.added ?? 0} added · ${cs.modified ?? 0} modified · ${cs.invalidated ?? 0} invalidated`}
+                    </p>
+                  )}
+                </div>
+                {v.version_number !== latest && (
+                  <Button variant="tertiary" size="sm" loading={rollbackMut.isPending}
+                    onClick={() => rollbackMut.mutate(v.version_number)}>
+                    <RotateCcw size={13} /> Roll back
+                  </Button>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </Modal>
+  )
+}
+
+function EditModal({ ds, onClose, onSaved }: { ds: InstitutionDataset; onClose: () => void; onSaved: () => void }) {
+  const [name, setName] = useState(ds.dataset_name)
+  const [description, setDescription] = useState(ds.description ?? '')
+  const [scope, setScope] = useState<string>(ds.usage_scope ?? 'all')
+  const mut = useMutation({
+    mutationFn: () => updateDataset(ds.id, { dataset_name: name, description, usage_scope: scope }),
+    onSuccess: () => { showToast('Saved.', 'success'); onSaved(); onClose() },
+    onError: () => showToast('Could not save.', 'error'),
+  })
+  return (
+    <Modal isOpen onClose={onClose} title="Edit dataset" size="md"
+      footer={
+        <div className="flex w-full justify-end gap-2">
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="secondary" onClick={() => mut.mutate()} loading={mut.isPending}>Save</Button>
+        </div>
+      }>
+      <div className="space-y-3">
+        <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} />
+        <Textarea label="Description" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
+        <Select label="Usage scope" value={scope} onChange={(e) => setScope(e.target.value)} options={USAGE_SCOPES} />
+      </div>
+    </Modal>
+  )
+}
+
+function DeleteModal({ ds, onClose, onDeleted }: { ds: InstitutionDataset; onClose: () => void; onDeleted: () => void }) {
+  const mut = useMutation({
+    mutationFn: () => deleteDataset(ds.id),
+    onSuccess: () => { showToast('Dataset deleted.', 'success'); onDeleted(); onClose() },
+    onError: () => showToast('Could not delete.', 'error'),
+  })
+  return (
+    <Modal isOpen onClose={onClose} title="Delete dataset" size="sm"
+      footer={
+        <div className="flex w-full justify-end gap-2">
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="destructive" onClick={() => mut.mutate()} loading={mut.isPending}>Delete</Button>
+        </div>
+      }>
+      <p className="text-sm text-muted-foreground">
+        Delete <strong className="text-foreground">{ds.dataset_name}</strong> and all its versions? This permanently
+        removes the files from storage and is audit-logged. This cannot be undone.
+      </p>
+    </Modal>
+  )
+}
+
+function FileModal({ ds, mode, onClose, onDone }: {
+  ds: InstitutionDataset; mode: 'replace' | 'append'; onClose: () => void; onDone: () => void
+}) {
+  const fileInput = useRef<HTMLInputElement>(null)
+  const [file, setFile] = useState<File | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  async function submit() {
+    if (!file) { showToast('Choose a file.', 'warning'); return }
+    setBusy(true)
+    try {
+      const { file_ref } = await uploadDatasetFile(file)
+      if (mode === 'replace') {
+        await replaceDataset(ds.id, { file_ref, file_name: file.name })
+      } else {
+        await appendDataset(ds.id, { file_ref, file_name: file.name })
+      }
+      showToast(mode === 'replace' ? 'Dataset replaced.' : 'Rows appended.', 'success')
+      onDone()
+      onClose()
+    } catch {
+      showToast(`${mode === 'replace' ? 'Replace' : 'Append'} failed.`, 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Modal isOpen onClose={onClose} title={mode === 'replace' ? 'Replace this dataset?' : 'Append rows'} size="md"
+      footer={
+        <div className="flex w-full justify-end gap-2">
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant="secondary" onClick={submit} loading={busy} disabled={!file}>
+            {mode === 'replace' ? 'Replace' : 'Append'}
           </Button>
         </div>
-      </Modal>
-    </div>
+      }>
+      <p className="mb-3 text-xs text-muted-foreground">
+        {mode === 'replace'
+          ? 'Upload a new file to replace the current data. The existing column mapping is reused; a new version is recorded.'
+          : 'Upload a file whose rows are added to this dataset. A new version is recorded.'}
+      </p>
+      <button type="button" onClick={() => fileInput.current?.click()}
+        className="flex w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border py-8 text-muted-foreground transition-colors hover:border-secondary hover:text-secondary">
+        <UploadCloud size={24} />
+        <span className="text-sm font-medium">{file ? file.name : 'Choose a CSV, TSV, or xlsx file'}</span>
+      </button>
+      <input ref={fileInput} type="file" accept=".csv,.tsv,.xlsx,.xlsm" className="hidden"
+        onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+    </Modal>
   )
 }
