@@ -714,7 +714,7 @@ class ApplicationService:
         offer_row: OfferLetter | None = None
         norm = "admitted" if decision == "accepted" else decision
         if norm in _OFFER_PRODUCING_DECISIONS:
-            offer_row = await self._ensure_release_offer(app, program, norm, offer)
+            offer_row = await self._ensure_release_offer(institution_id, app, program, norm, offer)
 
         if notify:
             await self._notify_decision(app, program, norm, offer_row, custom_message)
@@ -727,6 +727,7 @@ class ApplicationService:
 
     async def _ensure_release_offer(
         self,
+        institution_id: UUID,
         app: Application,
         program: Program | None,
         decision: str,
@@ -754,7 +755,7 @@ class ApplicationService:
         row = existing.scalar_one_or_none()
         if row is None:
             return await self.create_offer(
-                program.institution_id if program else app.program_id,  # type: ignore[arg-type]
+                institution_id,
                 app.id,
                 offer_type=offer_type,
                 tuition_amount=terms.get("tuition_amount"),
