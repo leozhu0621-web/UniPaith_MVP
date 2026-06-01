@@ -66,7 +66,11 @@ export default function FunnelTab({ filters }: { filters: AnalyticsFilters }) {
     return (
       <Card className="p-10 text-center">
         <p className="text-sm text-muted-foreground">
-          {filters.program_id || filters.segment_id || filters.campaign_id
+          {filters.program_id ||
+          filters.intake_id ||
+          filters.segment_id ||
+          filters.campaign_id ||
+          filters.source_id
             ? 'No events match these filters.'
             : 'Not enough events in this window to plot.'}
         </p>
