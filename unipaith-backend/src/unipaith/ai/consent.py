@@ -112,6 +112,11 @@ AGENT_REQUIRES: dict[str, str | None] = {
     # only rather than blocking the call.
     "institution_reply_drafter": None,
     "inbound_intent_classifier": None,
+    # Spec 33 §9 — interview agents are institution-initiated and role-gated at
+    # the API layer (like campaign_copy / institution_reply_drafter), so they
+    # carry no student-consent lever here. Both degrade to no-AI on any failure.
+    "interview_invite_drafter": None,
+    "interview_score_prefill": None,
 }
 
 

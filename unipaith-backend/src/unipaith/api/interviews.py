@@ -11,10 +11,14 @@ from unipaith.models.user import User
 from unipaith.schemas.batch import BatchInviteRequest, BatchOperationResult
 from unipaith.schemas.interview import (
     ConfirmInterviewRequest,
+    DraftInviteRequest,
+    DraftInviteResponse,
     InterviewResponse,
     InterviewScoreResponse,
     ProposeInterviewRequest,
     ScoreInterviewRequest,
+    ScorePrefillRequest,
+    ScorePrefillResponse,
 )
 from unipaith.services.institution_service import InstitutionService
 from unipaith.services.interview_service import InterviewService
@@ -27,22 +31,31 @@ router = APIRouter(prefix="/interviews", tags=["interviews"])
 # --- Institution ---
 
 
-@router.post("", response_model=InterviewResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=list[InterviewResponse], status_code=status.HTTP_201_CREATED)
 async def propose_interview(
     body: ProposeInterviewRequest,
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    await InstitutionService(db).get_institution(user.id)
+    """Propose an interview to one or more applicants (Spec 33 §3). Creates an
+    interview per applicant and posts each an ``interview_invite`` Inbox message;
+    the student's Calendar item is auto-derived."""
+    inst = await InstitutionService(db).get_institution(user.id)
     svc = InterviewService(db)
-    return await svc.propose_interview(
-        application_id=body.application_id,
-        interviewer_id=body.interviewer_id,
+    interviews = await svc.propose_interviews(
+        institution_id=inst.id,
+        actor_user_id=user.id,
+        application_ids=body.resolved_application_ids(),
         interview_type=body.interview_type,
         proposed_times=body.proposed_times,
         duration_minutes=body.duration_minutes,
         location_or_link=body.location_or_link,
+        async_window_end=body.async_window_end,
+        notes_to_student=body.notes_to_student,
+        interviewer_id=body.interviewer_id,
+        ai_draft_used=body.ai_draft_used,
     )
+    return await svc.build_views(interviews)
 
 
 @router.get("/institution", response_model=list[InterviewResponse])
@@ -53,7 +66,20 @@ async def list_institution_interviews(
 ):
     inst = await InstitutionService(db).get_institution(user.id)
     svc = InterviewService(db)
-    return await svc.list_institution_interviews(inst.id, status_filter=interview_status)
+    interviews = await svc.list_institution_interviews(inst.id, status_filter=interview_status)
+    return await svc.build_views(interviews)
+
+
+@router.get("/rubrics")
+async def get_interview_rubrics(
+    program_id: UUID | None = Query(None),
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Interviewing rubrics (kind='interview') for the Score modal, with a
+    built-in default appended (§6)."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    return await InterviewService(db).get_interview_rubrics(inst.id, program_id)
 
 
 @router.get("/application/{application_id}", response_model=list[InterviewResponse])
@@ -64,7 +90,8 @@ async def list_interviews(
 ):
     await InstitutionService(db).get_institution(user.id)
     svc = InterviewService(db)
-    return await svc.list_application_interviews(application_id)
+    interviews = await svc.list_application_interviews(application_id)
+    return await svc.build_views(interviews)
 
 
 @router.post("/{interview_id}/complete", response_model=InterviewResponse)
@@ -75,7 +102,32 @@ async def complete_interview(
 ):
     await InstitutionService(db).get_institution(user.id)
     svc = InterviewService(db)
-    return await svc.complete_interview(interview_id)
+    interview = await svc.complete_interview(interview_id)
+    return await svc.build_view(interview)
+
+
+@router.post("/{interview_id}/cancel", response_model=InterviewResponse)
+async def cancel_interview(
+    interview_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    await InstitutionService(db).get_institution(user.id)
+    svc = InterviewService(db)
+    interview = await svc.cancel_interview(interview_id)
+    return await svc.build_view(interview)
+
+
+@router.post("/{interview_id}/no-show", response_model=InterviewResponse)
+async def mark_no_show(
+    interview_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    await InstitutionService(db).get_institution(user.id)
+    svc = InterviewService(db)
+    interview = await svc.mark_no_show(interview_id)
+    return await svc.build_view(interview)
 
 
 @router.post("/{interview_id}/score", response_model=InterviewScoreResponse)
@@ -99,6 +151,56 @@ async def score_interview(
     )
 
 
+# --- AI helpers (Spec 33 §9, gated by ai_interview_v2_enabled) ---
+
+
+@router.post("/draft-invite", response_model=DraftInviteResponse)
+async def draft_invite(
+    body: DraftInviteRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await InstitutionService(db).get_institution(user.id)
+    result = await InterviewService(db).draft_invite(
+        institution_id=inst.id,
+        application_id=body.application_id,
+        interview_type=body.interview_type,
+        proposed_times=body.proposed_times,
+        async_window_end=body.async_window_end,
+        duration_minutes=body.duration_minutes,
+        location_or_link=body.location_or_link,
+    )
+    if result is None:
+        return DraftInviteResponse(available=False)
+    return DraftInviteResponse(
+        available=True, draft=result.draft, tone=result.tone, length=result.length
+    )
+
+
+@router.post("/{interview_id}/score-prefill", response_model=ScorePrefillResponse)
+async def score_prefill(
+    interview_id: UUID,
+    body: ScorePrefillRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await InstitutionService(db).get_institution(user.id)
+    result = await InterviewService(db).score_prefill(
+        institution_id=inst.id,
+        interview_id=interview_id,
+        rubric_id=body.rubric_id,
+        transcript_or_notes=body.transcript_or_notes,
+    )
+    if result is None:
+        return ScorePrefillResponse(available=False)
+    return ScorePrefillResponse(
+        available=True,
+        criterion_scores=result.criterion_scores,
+        overall_note=result.overall_note,
+        recommendation=result.recommendation,
+    )
+
+
 # --- Student ---
 
 
@@ -112,8 +214,9 @@ async def confirm_time(
     profile = await StudentService(db)._get_student_profile(user.id)
     svc = InterviewService(db)
     result = await svc.confirm_time(profile.id, interview_id, body.confirmed_time)
+    view = await svc.build_view(result)
     await db.commit()
-    return result
+    return view
 
 
 @router.post("/{interview_id}/decline", response_model=InterviewResponse)
@@ -125,8 +228,9 @@ async def decline_interview(
     profile = await StudentService(db)._get_student_profile(user.id)
     svc = InterviewService(db)
     result = await svc.decline_interview(profile.id, interview_id)
+    view = await svc.build_view(result)
     await db.commit()
-    return result
+    return view
 
 
 @router.get("/me", response_model=list[InterviewResponse])
@@ -136,7 +240,8 @@ async def my_interviews(
 ):
     profile = await StudentService(db)._get_student_profile(user.id)
     svc = InterviewService(db)
-    return await svc.get_student_interviews(profile.id)
+    interviews = await svc.get_student_interviews(profile.id)
+    return await svc.build_views(interviews)
 
 
 # --- Batch Operations ---
@@ -148,25 +253,23 @@ async def batch_invite_interviews(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    await InstitutionService(db).get_institution(user.id)
+    inst = await InstitutionService(db).get_institution(user.id)
     svc = InterviewService(db)
-    result = BatchOperationResult(
-        success_count=0,
-        failed_ids=[],
-        errors=[],
-    )
+    result = BatchOperationResult(success_count=0, failed_ids=[], errors=[])
     for app_id in body.application_ids:
         try:
-            await svc.propose_interview(
-                application_id=app_id,
-                interviewer_id=body.interviewer_id,
+            await svc.propose_interviews(
+                institution_id=inst.id,
+                actor_user_id=user.id,
+                application_ids=[app_id],
                 interview_type=body.interview_type,
                 proposed_times=body.proposed_times,
                 duration_minutes=body.duration_minutes,
                 location_or_link=body.location_or_link,
+                interviewer_id=body.interviewer_id,
             )
             result.success_count += 1
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             result.failed_ids.append(app_id)
             result.errors.append(str(e))
     return result

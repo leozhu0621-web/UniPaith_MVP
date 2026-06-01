@@ -116,6 +116,8 @@ export const STATUS_COLORS: Record<string, string> = {
   confirmed: 'success',
   invited: 'info',
   scheduling: 'info',
+  // Spec 33 §8 — proposed interview = "Awaiting student" (yellow).
+  proposed: 'warning',
   no_show: 'danger',
   open: 'success',
   awaiting_response: 'warning',
@@ -155,12 +157,31 @@ export const EVENT_TYPES = [
   { value: 'workshop', label: 'Workshop' },
 ]
 
+// Spec 33 §2 interview types.
 export const INTERVIEW_TYPES = [
-  { value: 'video', label: 'Video' },
-  { value: 'in_person', label: 'In Person' },
-  { value: 'phone', label: 'Phone' },
-  { value: 'group', label: 'Group' },
+  { value: 'live', label: 'Live' },
+  { value: 'recorded_async', label: 'Recorded (async)' },
+  { value: 'portfolio_review', label: 'Portfolio review' },
+  { value: 'technical_assessment', label: 'Technical assessment' },
+  { value: 'third_party_platform', label: 'Third-party platform' },
 ]
+
+// Spec 33 §2 — short labels for table/badge rendering.
+export const INTERVIEW_TYPE_LABELS: Record<string, string> = {
+  live: 'Live',
+  recorded_async: 'Recorded (async)',
+  portfolio_review: 'Portfolio review',
+  technical_assessment: 'Technical assessment',
+  third_party_platform: 'Third-party platform',
+  // legacy values still render
+  video: 'Video',
+  in_person: 'In person',
+  phone: 'Phone',
+  group: 'Group',
+}
+
+// Async types submit within a window rather than at a fixed live time (§5/§8).
+export const ASYNC_INTERVIEW_TYPES = ['recorded_async', 'technical_assessment']
 
 export const DECISION_OPTIONS = [
   { value: 'admitted', label: 'Admit' },
