@@ -2117,6 +2117,7 @@ class InstitutionService:
             degree_type=parsed.get("degree_type"),
             min_tuition=parsed.get("min_tuition"),
             max_tuition=parsed.get("max_tuition"),
+            delivery_format=parsed.get("delivery_format"),
             sort_by=parsed.get("sort_by"),
         )
 
@@ -2125,8 +2126,12 @@ class InstitutionService:
             f"Showing results for: {query}",
         )
 
+        # `parsed_query` is the internal full-text term; it is represented to the
+        # user by the `subjects` chip, so keep it out of the editable chip set.
         filters_applied = {
-            k: v for k, v in parsed.items() if k != "interpretation" and v is not None
+            k: v
+            for k, v in parsed.items()
+            if k not in ("interpretation", "parsed_query") and v is not None
         }
 
         return NLPSearchResponse(
@@ -2136,17 +2141,181 @@ class InstitutionService:
         )
 
     async def _parse_nlp_query(self, query: str) -> dict:
-        """Use LLM to extract structured search params from natural language."""
-        # AI engine is being rebuilt — always use passthrough mode
-        return {
-            "parsed_query": query,
-            "country": None,
-            "degree_type": None,
-            "max_tuition": None,
-            "min_tuition": None,
-            "sort_by": None,
-            "interpretation": f"Showing results for: {query}",
-        }
+        """Extract structured search constraints from a natural-language query.
+
+        Currently rule-based (regex/keyword) so it works with no LLM in
+        AI_MOCK_MODE and as the deterministic fallback for the
+        DiscoveryQueryInterpreter (gap audit G-S3 / G-AI6). When the Claude
+        interpreter is wired behind ai_discovery_v2_enabled it can populate
+        the same keys; the contract — structured, individually-editable
+        constraints in `filters_applied` — stays identical.
+        """
+        return _rule_based_query_parse(query)
+
+
+_NLP_COUNTRIES = {
+    "united states": "United States",
+    "usa": "United States",
+    "u.s.a": "United States",
+    "u.s.": "United States",
+    "us": "United States",
+    "america": "United States",
+    "united kingdom": "United Kingdom",
+    "uk": "United Kingdom",
+    "u.k.": "United Kingdom",
+    "britain": "United Kingdom",
+    "england": "United Kingdom",
+    "scotland": "United Kingdom",
+    "canada": "Canada",
+    "australia": "Australia",
+    "germany": "Germany",
+    "france": "France",
+    "netherlands": "Netherlands",
+    "singapore": "Singapore",
+    "ireland": "Ireland",
+    "switzerland": "Switzerland",
+    "japan": "Japan",
+    "china": "China",
+    "india": "India",
+    "spain": "Spain",
+    "italy": "Italy",
+    "sweden": "Sweden",
+}
+_NLP_US_STATES = {
+    "california",
+    "new york",
+    "texas",
+    "massachusetts",
+    "illinois",
+    "washington",
+    "florida",
+    "pennsylvania",
+    "michigan",
+    "georgia",
+    "ohio",
+    "north carolina",
+    "new jersey",
+    "virginia",
+    "colorado",
+    "maryland",
+    "arizona",
+    "indiana",
+    "oregon",
+}
+
+
+def _rule_based_query_parse(query: str) -> dict:
+    """Deterministically extract typed search constraints from free text.
+
+    Returns a dict whose non-None keys become the Discovery constraint chips:
+    `subjects` (text), `degree_type`, `country` (+optional `region`),
+    `max_tuition`, `delivery_format`, `sort_by`, plus `parsed_query` (the
+    keyword remainder fed to full-text search) and `interpretation`.
+    """
+    q = (query or "").strip()
+    low = q.lower()
+    out: dict = {}
+
+    # --- degree ---
+    if re.search(r"\b(ph\.?\s?d|doctoral|doctorate|d\.?phil)\b", low):
+        out["degree_type"] = "phd"
+    elif re.search(r"\bm\.?b\.?a\b", low):
+        out["degree_type"] = "masters"
+    elif re.search(r"\b(m\.?\s?s\.?|m\.?eng|m\.?a\.?|master'?s?|graduate|grad school)\b", low):
+        out["degree_type"] = "masters"
+    elif re.search(r"\b(b\.?\s?s\.?|b\.?a\.?|bachelor'?s?|undergrad(uate)?)\b", low):
+        out["degree_type"] = "bachelors"
+    elif re.search(r"\bcertificate\b", low):
+        out["degree_type"] = "certificate"
+
+    # --- budget / max tuition ---
+    m = re.search(
+        r"(?:under|below|less than|cheaper than|max(?:imum)?|up to|<|budget(?: of)?)\s*"
+        r"\$?\s*([\d][\d,\.]*)\s*(k|thousand)?",
+        low,
+    )
+    if m:
+        num = float(m.group(1).replace(",", ""))
+        if m.group(2):
+            num *= 1000
+        elif num < 1000:  # "under 50" in a tuition context means 50k
+            num *= 1000
+        out["max_tuition"] = int(num)
+
+    # --- location ---
+    for name, canon in _NLP_COUNTRIES.items():
+        if re.search(r"\b" + re.escape(name) + r"\b", low):
+            out["country"] = canon
+            break
+    if "country" not in out:
+        for state in _NLP_US_STATES:
+            if re.search(r"\b" + re.escape(state) + r"\b", low):
+                out["country"] = "United States"
+                out["region"] = state.title()
+                break
+
+    # --- delivery format ---
+    if re.search(r"\b(online|remote|distance)\b", low):
+        out["delivery_format"] = "online"
+    elif re.search(r"\bhybrid\b", low):
+        out["delivery_format"] = "hybrid"
+    elif re.search(r"\b(on[-\s]?campus|in[-\s]?person)\b", low):
+        out["delivery_format"] = "on_campus"
+
+    # --- sort intent ---
+    if re.search(r"\b(cheapest|most affordable|lowest (cost|tuition)|affordable)\b", low):
+        out["sort_by"] = "tuition_asc"
+    elif re.search(r"\b(highest|best|top) (salary|earnings|pay)\b", low):
+        out["sort_by"] = "salary_desc"
+    elif re.search(r"\b(best|highest) (employment|job placement)\b", low):
+        out["sort_by"] = "employment_desc"
+
+    # --- subject remainder (strip matched constraint words) ---
+    subject = low
+    strip = [
+        r"\b(ph\.?\s?d|doctoral|doctorate|d\.?phil|m\.?b\.?a|m\.?\s?s\.?|m\.?eng|m\.?a\.?|"
+        r"master'?s?|graduate|grad school|b\.?\s?s\.?|b\.?a\.?|bachelor'?s?|undergrad(uate)?|"
+        r"certificate|degree|program(?:s|me|mes)?)\b",
+        r"\b(in|at|for|with|the|a|an|me|find|show|looking|want|i'm|under|below|less|than|"
+        r"cheaper|max|maximum|up|to|budget|of|per|year|annually|online|remote|distance|"
+        r"hybrid|on[-\s]?campus|in[-\s]?person|cheapest|affordable|most|lowest|cost|tuition|"
+        r"highest|best|top|salary|earnings|pay|employment|placement|ranked|ranking)\b",
+        r"\$?\s*[\d][\d,\.]*\s*(k|thousand)?",
+    ]
+    for name in list(_NLP_COUNTRIES.keys()) + list(_NLP_US_STATES):
+        strip.append(r"\b" + re.escape(name) + r"\b")
+    for pat in strip:
+        subject = re.sub(pat, " ", subject)
+    subject = re.sub(r"[^\w\s&/+-]", " ", subject)
+    subject = re.sub(r"\s+", " ", subject).strip()
+    if subject:
+        out["subjects"] = subject.title()
+        out["parsed_query"] = subject
+    else:
+        out["parsed_query"] = q
+
+    # --- human-readable interpretation ---
+    deg = {
+        "phd": "PhD",
+        "masters": "master's",
+        "bachelors": "bachelor's",
+        "certificate": "certificate",
+    }
+    bits = []
+    if out.get("degree_type"):
+        bits.append(deg.get(out["degree_type"], out["degree_type"]))
+    if out.get("subjects"):
+        bits.append(f"in {out['subjects']}")
+    if out.get("country"):
+        bits.append(f"in {out.get('region') or out['country']}")
+    if out.get("max_tuition"):
+        bits.append(f"under ${out['max_tuition']:,}/yr")
+    if out.get("delivery_format"):
+        bits.append(out["delivery_format"].replace("_", " "))
+    out["interpretation"] = (
+        "Showing " + " ".join(bits) + " programs" if bits else f"Showing results for: {q}"
+    )
+    return out
 
 
 def _safe_json(text: str):

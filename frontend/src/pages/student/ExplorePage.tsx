@@ -9,8 +9,9 @@ import { useCompareStore } from '../../stores/compare-store'
 import UniversityCard from './explore/cards/UniversityCard'
 import ProgramCard from './explore/cards/ProgramCard'
 import ExploreFilters, { EMPTY_FILTERS, applyFilters, countActiveFilters, type FilterState } from './explore/shared/ExploreFilters'
+import ConstraintChips, { type Constraints } from './explore/shared/ConstraintChips'
 import {
-  Search, X, Loader2, Sparkles, Building2,
+  Search, X, Loader2, Building2,
 } from 'lucide-react'
 import StrategyView from './match/StrategyView'
 import type { ProgramSummary, MatchResult } from '../../types'
@@ -24,6 +25,18 @@ interface NlpResult {
   filters_applied: Record<string, any>
   results: { items: ProgramSummary[]; total: number }
   interpretation: string
+}
+
+/** Map editable constraint chips to structured /programs query params. */
+function chipsToParams(c: Constraints) {
+  const p: Record<string, any> = { page_size: 21 }
+  if (c.subjects) p.q = String(c.subjects)
+  if (c.degree_type) p.degree_type = String(c.degree_type)
+  if (c.country) p.country = String(c.country)
+  if (c.max_tuition) p.max_tuition = Number(c.max_tuition)
+  if (c.delivery_format) p.delivery_format = String(c.delivery_format)
+  if (c.sort_by) p.sort_by = String(c.sort_by)
+  return p
 }
 
 /**
@@ -99,6 +112,9 @@ export default function ExplorePage() {
   const [q, setQ] = useState(searchParams.get('q') || '')
   const [isSearching, setIsSearching] = useState(false)
   const [nlpResult, setNlpResult] = useState<NlpResult | null>(null)
+  // Structured constraint chips (G-S3) — the editable source of truth once a
+  // natural-language search has been parsed.
+  const [chips, setChips] = useState<Constraints>({})
 
   // Filter state lives in the URL so refresh + share + back all work.
   const filters = useMemo(() => filtersFromURL(searchParams), [searchParams])
@@ -137,8 +153,21 @@ export default function ExplorePage() {
 
   const nlpMut = useMutation({
     mutationFn: nlpSearch,
-    onSuccess: (data: NlpResult) => setNlpResult(data),
-    onError: () => setNlpResult(null),
+    onSuccess: (data: NlpResult) => {
+      setNlpResult(data)
+      setChips((data.filters_applied || {}) as Constraints)
+    },
+    onError: () => { setNlpResult(null); setChips({}) },
+  })
+
+  // Once constraints exist, results come from a structured search keyed on the
+  // (editable) chips — so removing/editing a chip re-runs the search live.
+  const hasChips = Object.keys(chips).length > 0
+  const chipParams = useMemo(() => chipsToParams(chips), [chips])
+  const { data: chipSearchData, isFetching: chipFetching } = useQuery({
+    queryKey: ['chip-search', chipParams],
+    queryFn: () => searchPrograms(chipParams),
+    enabled: isSearching && hasChips,
   })
 
   const toggleSave = async (programId: string) => {
@@ -161,11 +190,24 @@ export default function ExplorePage() {
     setQ('')
     setIsSearching(false)
     setNlpResult(null)
+    setChips({})
   }
 
   const exitSearch = () => {
     setIsSearching(false)
     setNlpResult(null)
+    setChips({})
+  }
+
+  // Editing/removing a chip updates the constraint map (which re-runs the
+  // structured search) and reflects the field term in the URL `q` param.
+  const updateChips = (next: Constraints) => {
+    setChips(next)
+    const nextParams = new URLSearchParams(searchParams)
+    if (next.subjects) nextParams.set('q', String(next.subjects))
+    else nextParams.delete('q')
+    setSearchParams(nextParams, { replace: true })
+    if (Object.keys(next).length === 0) exitSearch()
   }
 
   // ─── Data ───
@@ -173,9 +215,11 @@ export default function ExplorePage() {
   const uniList: any[] = universities?.items ?? []
   const filteredUniList = useMemo(() => applyFilters(uniList, filters), [uniList, filters])
   const hasActiveFilters = countActiveFilters(filters) > 0
-  const searchProgramList: ProgramSummary[] = nlpResult
-    ? (nlpResult.results?.items ?? [])
-    : (searchResults?.items ?? [])
+  const searchProgramList: ProgramSummary[] = hasChips
+    ? (chipSearchData?.items ?? nlpResult?.results?.items ?? [])
+    : nlpResult
+      ? (nlpResult.results?.items ?? [])
+      : (searchResults?.items ?? [])
 
   // ─── Render ───
 
@@ -212,21 +256,21 @@ export default function ExplorePage() {
         </div>
       </div>
 
-      {/* NLP interpretation chips */}
-      {nlpResult && isSearching && (
-        <div className="mb-4 space-y-2">
-          <div className="flex items-center gap-2 px-3 py-2 bg-gold-soft rounded-lg border border-gold/20">
-            <Sparkles size={12} className="text-gold flex-shrink-0" />
-            <p className="text-xs text-student-ink flex-1">{nlpResult.interpretation}</p>
-            <button onClick={exitSearch} className="text-xs text-student-text hover:text-student-ink">Back to browse</button>
-          </div>
-        </div>
+      {/* Structured constraint chips — each individually editable (G-S3) */}
+      {isSearching && hasChips && (
+        <ConstraintChips
+          constraints={chips}
+          region={(chips as any).region ?? null}
+          interpretation={nlpResult?.interpretation}
+          onChange={updateChips}
+          onClear={exitSearch}
+        />
       )}
 
       {/* ── SEARCH MODE: Flat program results ── */}
       {isSearching && (
         <>
-          {(searchLoading || nlpMut.isPending) ? (
+          {(searchLoading || nlpMut.isPending || chipFetching) ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map(i => <div key={i} className="h-72 bg-white rounded-xl border border-divider animate-pulse" />)}
             </div>
