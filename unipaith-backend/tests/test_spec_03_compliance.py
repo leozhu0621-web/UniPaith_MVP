@@ -137,6 +137,9 @@ def test_each_agent_declares_consent_requirement():
         # Spec 38 §5 — international-admissions processing agents.
         "credential_normalizer",
         "country_requirement_advisor",
+        # Spec 40 §5 — recruitment CRM agents.
+        "prospect_prioritizer",
+        "territory_optimizer",
     }
     assert set(AGENT_REQUIRES.keys()) == expected_agents
 

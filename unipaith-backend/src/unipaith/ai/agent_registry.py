@@ -67,6 +67,10 @@ AGENT_TIERS: dict[str, str] = {
     # ── International admissions (spec 38 §5) — both Haiku, always fall back ──
     "credential_normalizer": "batch",  # CredentialNormalizer — foreign GPA → 4.0 scale
     "country_requirement_advisor": "batch",  # CountryRequirementAdvisor — country pack
+    # ── Recruitment CRM (spec 40 §5) — both fall back to deterministic sorting ──
+    "prospect_prioritizer": "batch",  # ProspectPrioritizer — apply-likelihood ranking (Haiku)
+    # TerritoryOptimizer — high-yield school/fair suggestions (Sonnet).
+    "territory_optimizer": "workhorse",
 }
 
 
