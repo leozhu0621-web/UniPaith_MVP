@@ -55,6 +55,11 @@ class Institution(Base):
     claimed_from_source: Mapped[str | None] = mapped_column(String(50))
     claimed_extracted_ids: Mapped[dict | None] = mapped_column(JSONB)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Spec 25 §7 — optional campaign approval step. When True, campaigns must
+    # pass through `pending_approval` before they can be scheduled/sent.
+    require_campaign_approval: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default="false", default=False
+    )
     review_config: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -86,6 +91,12 @@ class Institution(Base):
         back_populates="institution", cascade="all, delete-orphan"
     )
     schools: Mapped[list[School]] = relationship(
+        back_populates="institution", cascade="all, delete-orphan"
+    )
+    uploaded_lists: Mapped[list[UploadedList]] = relationship(
+        back_populates="institution", cascade="all, delete-orphan"
+    )
+    campaign_suppressions: Mapped[list[CampaignSuppression]] = relationship(
         back_populates="institution", cascade="all, delete-orphan"
     )
 
@@ -265,7 +276,21 @@ class TargetSegment(Base):
         UUID(as_uuid=True), ForeignKey("programs.id", ondelete="SET NULL")
     )
     segment_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    # Spec 26 §7 — legacy flat AND criteria kept for campaign back-compat; the
+    # nested include/exclude rule tree supersedes it when `rules` is set.
     criteria: Mapped[dict | None] = mapped_column(JSONB)
+    rules: Mapped[dict | None] = mapped_column(JSONB)
+    # Spec 26 §2.5 — uploaded prospect-list dataset ids merged into the audience.
+    uploaded_list_ids: Mapped[list | None] = mapped_column(JSONB, default=list)
+    # Spec 26 §5 — optional per-segment send cap (max sends per week).
+    frequency_cap_per_week: Mapped[int | None] = mapped_column(Integer)
+    created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    # Spec 26 §7 — cached audience size from the last preview.
+    preview_audience_count: Mapped[int | None] = mapped_column(Integer)
+    preview_generated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -297,6 +322,34 @@ class Campaign(Base):
     status: Mapped[str | None] = mapped_column(String(20))
     scheduled_send_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # ── Spec 25 §3 campaign setup ──────────────────────────────────────────
+    objective: Mapped[str | None] = mapped_column(String(40))
+    owner_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    destination_type: Mapped[str | None] = mapped_column(String(40))
+    destination_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    destination_url: Mapped[str | None] = mapped_column(String(1000))
+    cta_type: Mapped[str | None] = mapped_column(String(30))
+    # ['internal_messaging', 'external_email']
+    channels: Mapped[list | None] = mapped_column(JSONB)
+    # 0..N associated programs (Spec 25 §3 associate_program_ids)
+    associate_program_ids: Mapped[list | None] = mapped_column(JSONB)
+    associate_intake_round_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("intake_rounds.id", ondelete="SET NULL")
+    )
+    # ── Spec 25 §3/§4 audience ─────────────────────────────────────────────
+    audience_segment_ids: Mapped[list | None] = mapped_column(JSONB)
+    audience_uploaded_list_ids: Mapped[list | None] = mapped_column(JSONB)
+    audience_deduped_count: Mapped[int | None] = mapped_column(Integer)
+    sent_count: Mapped[int | None] = mapped_column(Integer)
+    # ── Spec 25 §7 approval workflow ───────────────────────────────────────
+    submitted_for_approval_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    approved_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    rejection_comment: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -318,19 +371,36 @@ class Campaign(Base):
 
 class CampaignRecipient(Base):
     __tablename__ = "campaign_recipients"
-    __table_args__ = (UniqueConstraint("campaign_id", "student_id"),)
+    __table_args__ = (
+        UniqueConstraint("campaign_id", "student_id"),
+        Index("ix_campaign_recipients_campaign_email", "campaign_id", "email"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     campaign_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("campaigns.id", ondelete="CASCADE"), nullable=False
     )
-    student_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("student_profiles.id", ondelete="CASCADE"), nullable=False
+    # Platform-student recipient (internal messaging + email). Nullable so an
+    # uploaded-list contact (external email only) can be a recipient too.
+    student_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("student_profiles.id", ondelete="CASCADE")
     )
+    uploaded_contact_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("uploaded_contacts.id", ondelete="SET NULL")
+    )
+    email: Mapped[str | None] = mapped_column(String(320))
+    first_name: Mapped[str | None] = mapped_column(String(255))
+    last_name: Mapped[str | None] = mapped_column(String(255))
+    # 'internal' | 'external' — which channel this row was delivered through.
+    channel: Mapped[str | None] = mapped_column(String(20))
     delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     opened_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     clicked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     responded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    unsubscribed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    bounced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    failed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    failure_reason: Mapped[str | None] = mapped_column(String(255))
 
     campaign: Mapped[Campaign] = relationship(back_populates="recipients")
 
@@ -355,6 +425,10 @@ class Event(Base):
     end_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     capacity: Mapped[int | None] = mapped_column(Integer)
     rsvp_count: Mapped[int] = mapped_column(Integer, default=0)
+    # Spec 27 §5 — event impressions (feed/detail views) for the per-object
+    # performance rollup.
+    view_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    # Spec 27 §3.2 lifecycle: draft | scheduled | live | completed | cancelled.
     status: Mapped[str | None] = mapped_column(String(20))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -380,11 +454,15 @@ class EventRSVP(Base):
     student_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("student_profiles.id", ondelete="CASCADE"), nullable=False
     )
+    # Spec 20 / 27 §3.1 — rsvp_status: registered | waitlisted | cancelled.
     rsvp_status: Mapped[str | None] = mapped_column(String(20))
     registered_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     attended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Spec 27 §3.1 — attendance capture after the event: attended | no_show.
+    # Null until the institution records attendance.
+    attendance_status: Mapped[str | None] = mapped_column(String(20))
 
     event: Mapped[Event] = relationship(back_populates="rsvps")
 
@@ -530,6 +608,20 @@ class InstitutionPost(Base):
     is_template: Mapped[bool] = mapped_column(Boolean, default=False)
     template_name: Mapped[str | None] = mapped_column(String(255))
     view_count: Mapped[int] = mapped_column(Integer, default=0)
+    # Spec 27 §5 — per-object engagement counters. `view_count` above covers
+    # impressions; these cover card/CTA clicks, saves, and the two downstream
+    # conversions attributed to a post.
+    click_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    save_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    request_info_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    apply_started_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    # Spec 27 §2.4 — CTAs attached to the post. List of
+    # {type: view_program|rsvp|request_info|start_application|add_to_calendar,
+    #  label: str, target: str}.
+    ctas: Mapped[list | None] = mapped_column(JSONB)
+    # Spec 27 §2.3 — visibility scope: {public: bool, segment_ids: [...],
+    # region_scopes: [...]}. Null => public to followers (the default).
+    visibility: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -601,6 +693,104 @@ class CampaignAction(Base):
     )
 
     campaign: Mapped[Campaign] = relationship(back_populates="actions")
+
+
+class UploadedList(Base):
+    """Spec 24/26 §2.5 — an institution's uploaded contact list (CSV import)
+    usable as external-email audience for Campaigns. Each list owns N
+    `UploadedContact` rows; merged with platform users by email at send time."""
+
+    __tablename__ = "uploaded_lists"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    institution_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    # 'csv_upload' | 'manual' | 'crm'. Tracked for source-consent compliance.
+    source: Mapped[str] = mapped_column(String(30), nullable=False, server_default="csv_upload")
+    source_consent_confirmed: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default="false", default=False
+    )
+    dataset_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("institution_datasets.id", ondelete="SET NULL")
+    )
+    contact_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="0", default=0
+    )
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    institution: Mapped[Institution] = relationship(back_populates="uploaded_lists")
+    contacts: Mapped[list[UploadedContact]] = relationship(
+        back_populates="uploaded_list", cascade="all, delete-orphan"
+    )
+
+
+class UploadedContact(Base):
+    __tablename__ = "uploaded_contacts"
+    __table_args__ = (
+        Index("ix_uploaded_contacts_list", "list_id"),
+        Index("ix_uploaded_contacts_inst_email", "institution_id", "email"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    list_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("uploaded_lists.id", ondelete="CASCADE"), nullable=False
+    )
+    # Denormalized for institution-wide suppression lookups at send time.
+    institution_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False
+    )
+    email: Mapped[str] = mapped_column(String(320), nullable=False)
+    first_name: Mapped[str | None] = mapped_column(String(255))
+    last_name: Mapped[str | None] = mapped_column(String(255))
+    extra: Mapped[dict | None] = mapped_column(JSONB)
+    opted_out: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default="false", default=False
+    )
+    opted_out_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    uploaded_list: Mapped[UploadedList] = relationship(back_populates="contacts")
+
+
+class CampaignSuppression(Base):
+    """Spec 25 §4 / 46 — institution-wide opt-out / suppression list. An email
+    here is excluded from every external send (unsubscribe, bounce, complaint,
+    or manual). Applied before the deduped audience count."""
+
+    __tablename__ = "campaign_suppressions"
+    __table_args__ = (
+        UniqueConstraint("institution_id", "email", name="uq_campaign_suppression_inst_email"),
+        Index("ix_campaign_suppressions_inst", "institution_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    institution_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False
+    )
+    email: Mapped[str] = mapped_column(String(320), nullable=False)
+    # 'unsubscribed' | 'bounced' | 'complaint' | 'manual'
+    reason: Mapped[str | None] = mapped_column(String(30))
+    source_campaign_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("campaigns.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    institution: Mapped[Institution] = relationship(back_populates="campaign_suppressions")
 
 
 class Inquiry(Base):
@@ -740,6 +930,12 @@ class Promotion(Base):
     )
     impression_count: Mapped[int] = mapped_column(Integer, default=0)
     click_count: Mapped[int] = mapped_column(Integer, default=0)
+    # Spec 27 §4.1 — promotion target: a program (default, uses program_id), the
+    # institution overall, or a custom landing URL (target_url).
+    target_kind: Mapped[str] = mapped_column(
+        String(20), default="program", server_default="program", nullable=False
+    )
+    target_url: Mapped[str | None] = mapped_column(String(1000))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

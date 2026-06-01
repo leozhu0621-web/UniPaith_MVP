@@ -88,11 +88,22 @@ AGENT_REQUIRES: dict[str, str | None] = {
     # on deny the agent returns None and the feed falls back to its heuristic.
     "connect_ranker": "matching",
     "event_recommender": "matching",
+    # Spec 25 §10 / 45 §16 — institution-side campaign copy suggester. Operates
+    # on an aggregate audience summary, not any individual student's protected
+    # data, so it sits behind no student-consent lever (institution role gates
+    # it). Declared here so the spec-03 agent registry stays consistent.
+    "campaign_copy": None,
     # Spec 24 §9 / 45 §19 — DocumentParseTriage runs on an institution-uploaded
     # dataset (no student in scope), so it carries no student-consent gate —
     # like review_summarizer / authenticity_risk. Access is gated by the
     # institution_admin role at the API layer.
     "document_parse_triage": None,
+    # Spec 26 §6 / 45 §17 — SegmentBuilderNLBridge converts the institution's own
+    # natural-language description into rules; no individual student is in scope,
+    # so no student-consent gate (institution_admin role-gated at the API layer).
+    # The resulting audience preview still honors each student's outreach
+    # suppression in SegmentService.
+    "segment_builder_nl": None,
 }
 
 

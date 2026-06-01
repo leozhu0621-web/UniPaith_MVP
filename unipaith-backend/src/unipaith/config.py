@@ -264,6 +264,13 @@ class Settings(BaseSettings):
     # order — the feed never errors (Spec 20 §9 "AI rank failure").
     ai_connect_ranker_v2_enabled: bool = False
 
+    # Spec 25 §10 / 45 §16 — CampaignAudienceCopySuggester. When True, the
+    # institution campaign editor's "Draft with AI" button routes through the
+    # Sonnet copy agent (forced tool-use). On any failure (parse / provider /
+    # mock) it falls back to a deterministic objective-keyed template stub, also
+    # the flag-off default — so the button always returns usable copy.
+    ai_campaign_copy_v2_enabled: bool = False
+
     # Spec 20 §6 / §14 — Peers tab (opt-in, privacy-gated). The spec ships
     # Updates + Events for MVP and gates Peers behind this flag as a
     # fast-follow. When False the Peers tab shows the opt-in explainer only and
@@ -276,6 +283,13 @@ class Settings(BaseSettings):
     # deterministic rule-based validation report is returned unchanged — the
     # upload never 5xxes (Plan-2 integration invariant).
     ai_data_parse_triage_v2_enabled: bool = False
+
+    # Spec 26 §6 / 45 §17 — SegmentBuilderNLBridge. When True the "Try AI assist"
+    # bar on the segment builder routes the institution's natural-language
+    # audience description through the Sonnet agent to draft structured rules;
+    # on any failure (parse / provider / mock mode) it falls back to a keyword
+    # parser so the institution always gets editable rules (never a 5xx).
+    ai_segment_builder_v2_enabled: bool = False
 
     # Spec 09 §4A — probability bands (admit / scholarship / waitlist) on the
     # Match surface + program detail. Rule-based + calibrated heuristic

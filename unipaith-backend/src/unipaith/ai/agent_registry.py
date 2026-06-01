@@ -44,9 +44,11 @@ AGENT_TIERS: dict[str, str] = {
     # ── Connect feed (spec 20 §8) — cheap Haiku ranking, always falls back ──
     "connect_ranker": "batch",
     "event_recommender": "batch",
+    # ── Campaign copy (spec 25 §10 / 45 §16) — Sonnet, template fallback ──
+    "campaign_copy": "workhorse",
     # ── Data upload parse triage (spec 24 §9 / 45 §19) — Haiku, always falls back ──
     "document_parse_triage": "batch",
-    # ── Segment NL bridge (spec 26 §6 / 45 §17) ──
+    # ── Audience segmentation NL bridge (spec 26 §6 / 45 §17) — Sonnet, keyword fallback ──
     "segment_builder_nl": "workhorse",
 }
 

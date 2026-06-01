@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   FileText, Plus, Pin, PinOff, Send, Edit2, Trash2, Eye, Clock,
-  Image, Tag, Copy,
+  Image, Tag, Copy, MousePointerClick, Bookmark, Mail, Megaphone,
 } from 'lucide-react'
 import {
   getPosts, createPost, updatePost, deletePost, publishPost, pinPost,
@@ -21,13 +21,29 @@ import Skeleton from '../../components/ui/Skeleton'
 import InstitutionPageHeader from '../../components/institution/InstitutionPageHeader'
 import { showToast } from '../../stores/toast-store'
 import { formatDateTime } from '../../utils/format'
-import type { InstitutionPost, Program } from '../../types'
+import type { InstitutionPost, PostCTA, Program } from '../../types'
 
 const STATUS_BADGE: Record<string, 'neutral' | 'info' | 'success' | 'warning'> = {
   draft: 'neutral',
   published: 'success',
   scheduled: 'info',
   archived: 'warning',
+}
+
+// Spec 27 §2.4 — CTA types attachable to a post.
+const CTA_TYPE_OPTIONS = [
+  { value: 'view_program', label: 'View program' },
+  { value: 'rsvp', label: 'RSVP to event' },
+  { value: 'request_info', label: 'Request info' },
+  { value: 'start_application', label: 'Start application' },
+  { value: 'add_to_calendar', label: 'Add to calendar' },
+]
+const CTA_DEFAULT_LABEL: Record<string, string> = {
+  view_program: 'View program',
+  rsvp: 'RSVP',
+  request_info: 'Request info',
+  start_application: 'Start application',
+  add_to_calendar: 'Add to calendar',
 }
 
 export default function PostsPage() {
@@ -50,6 +66,10 @@ export default function PostsPage() {
   const [isTemplate, setIsTemplate] = useState(false)
   const [templateName, setTemplateName] = useState('')
   const [uploading, setUploading] = useState(false)
+  // Spec 27 §2.4 / §2.3 — CTAs + visibility scope.
+  const [ctas, setCtas] = useState<PostCTA[]>([])
+  const [visPublic, setVisPublic] = useState(true)
+  const [visRegions, setVisRegions] = useState('')
 
   const postsQ = useQuery({ queryKey: ['posts'], queryFn: getPosts })
   const programsQ = useQuery({ queryKey: ['institution-programs'], queryFn: getInstitutionPrograms })
@@ -66,7 +86,14 @@ export default function PostsPage() {
     setTitle(''); setBody(''); setMediaUrls([]); setTaggedProgramIds([])
     setTaggedIntake(''); setPostStatus('draft'); setScheduledFor('')
     setIsTemplate(false); setTemplateName('')
+    setCtas([]); setVisPublic(true); setVisRegions('')
   }
+
+  const addCta = () =>
+    setCtas(prev => [...prev, { type: 'view_program', label: CTA_DEFAULT_LABEL.view_program, target: '' }])
+  const updateCta = (i: number, patch: Partial<PostCTA>) =>
+    setCtas(prev => prev.map((c, j) => (j === i ? { ...c, ...patch } : c)))
+  const removeCta = (i: number) => setCtas(prev => prev.filter((_, j) => j !== i))
 
   const openCreate = () => { resetForm(); setEditTarget(null); setShowCreateModal(true) }
   const openEdit = (p: InstitutionPost) => {
@@ -77,6 +104,9 @@ export default function PostsPage() {
     setPostStatus(p.status === 'archived' ? 'draft' : p.status as 'draft' | 'published' | 'scheduled')
     setScheduledFor(p.scheduled_for ? p.scheduled_for.slice(0, 16) : '')
     setIsTemplate(p.is_template); setTemplateName(p.template_name ?? '')
+    setCtas(Array.isArray(p.ctas) ? p.ctas : [])
+    setVisPublic(p.visibility?.public ?? true)
+    setVisRegions((p.visibility?.region_scopes ?? []).join(', '))
     setEditTarget(p); setShowCreateModal(true)
   }
   const fillFromTemplate = (t: InstitutionPost) => {
@@ -86,6 +116,8 @@ export default function PostsPage() {
     setTaggedIntake(t.tagged_intake ?? '')
     setPostStatus('draft'); setScheduledFor('')
     setIsTemplate(false); setTemplateName('')
+    setCtas(Array.isArray(t.ctas) ? t.ctas : [])
+    setVisPublic(true); setVisRegions('')
     setShowTemplatesModal(false); setEditTarget(null); setShowCreateModal(true)
   }
 
@@ -151,6 +183,12 @@ export default function PostsPage() {
       scheduled_for: postStatus === 'scheduled' && scheduledFor ? new Date(scheduledFor).toISOString() : undefined,
       is_template: isTemplate,
       template_name: isTemplate ? templateName || undefined : undefined,
+      ctas: ctas.filter(c => c.label.trim()).length > 0 ? ctas.filter(c => c.label.trim()) : undefined,
+      visibility: {
+        public: visPublic,
+        segment_ids: [],
+        region_scopes: visRegions.split(',').map(s => s.trim()).filter(Boolean),
+      },
     }
     if (editTarget) {
       updateM.mutate({ id: editTarget.id, data: payload })
@@ -202,7 +240,7 @@ export default function PostsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     {post.pinned && (
-                      <Pin size={14} className="text-amber-500 flex-shrink-0" />
+                      <Pin size={14} className="text-[hsl(var(--primary))] flex-shrink-0" />
                     )}
                     <h3 className="text-sm font-semibold text-gray-900 truncate">{post.title}</h3>
                     <Badge variant={STATUS_BADGE[post.status] ?? 'neutral'}>{post.status}</Badge>
@@ -219,8 +257,33 @@ export default function PostsPage() {
                       </span>
                     )}
                     {post.view_count > 0 && (
-                      <span className="flex items-center gap-1">
+                      <span className="flex items-center gap-1" title="Views">
                         <Eye size={12} /> {post.view_count}
+                      </span>
+                    )}
+                    {(post.click_count ?? 0) > 0 && (
+                      <span className="flex items-center gap-1" title="CTA clicks">
+                        <MousePointerClick size={12} /> {post.click_count}
+                      </span>
+                    )}
+                    {(post.save_count ?? 0) > 0 && (
+                      <span className="flex items-center gap-1" title="Saves">
+                        <Bookmark size={12} /> {post.save_count}
+                      </span>
+                    )}
+                    {(post.request_info_count ?? 0) > 0 && (
+                      <span className="flex items-center gap-1" title="Info requests">
+                        <Mail size={12} /> {post.request_info_count}
+                      </span>
+                    )}
+                    {(post.apply_started_count ?? 0) > 0 && (
+                      <span className="flex items-center gap-1" title="Applications started">
+                        <Send size={12} /> {post.apply_started_count}
+                      </span>
+                    )}
+                    {post.ctas && post.ctas.length > 0 && (
+                      <span className="flex items-center gap-1" title="Call-to-action buttons">
+                        <Megaphone size={12} /> {post.ctas.length} CTA{post.ctas.length > 1 ? 's' : ''}
                       </span>
                     )}
                     {post.program_names && post.program_names.length > 0 && (
@@ -244,7 +307,7 @@ export default function PostsPage() {
                     className="p-1.5 rounded hover:bg-gray-100"
                     title={post.pinned ? 'Unpin' : 'Pin'}
                   >
-                    {post.pinned ? <PinOff size={16} className="text-amber-500" /> : <Pin size={16} className="text-gray-400" />}
+                    {post.pinned ? <PinOff size={16} className="text-[hsl(var(--primary))]" /> : <Pin size={16} className="text-gray-400" />}
                   </button>
                   {post.status !== 'published' && (
                     <button
@@ -354,6 +417,58 @@ export default function PostsPage() {
                 onChange={e => setScheduledFor(e.target.value)}
               />
             )}
+          </div>
+
+          {/* CTAs (Spec 27 §2.4) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Call-to-action buttons</label>
+            <p className="text-xs text-gray-500 mb-2">Buttons students see on this post in their feed.</p>
+            <div className="space-y-2">
+              {ctas.map((c, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Select
+                    className="w-40"
+                    value={c.type}
+                    onChange={e => {
+                      const type = e.target.value as PostCTA['type']
+                      updateCta(i, { type, label: c.label || CTA_DEFAULT_LABEL[type] })
+                    }}
+                    options={CTA_TYPE_OPTIONS}
+                  />
+                  <Input
+                    className="flex-1"
+                    value={c.label}
+                    onChange={e => updateCta(i, { label: e.target.value })}
+                    placeholder="Button label"
+                  />
+                  <Input
+                    className="flex-1"
+                    value={c.target ?? ''}
+                    onChange={e => updateCta(i, { target: e.target.value })}
+                    placeholder="Target (program/event/URL — optional)"
+                  />
+                  <button onClick={() => removeCta(i)} className="text-red-400 p-1 text-lg leading-none" title="Remove CTA">&times;</button>
+                </div>
+              ))}
+              <Button variant="secondary" size="sm" onClick={addCta}>
+                <Plus size={14} className="mr-1" /> Add CTA
+              </Button>
+            </div>
+          </div>
+
+          {/* Visibility (Spec 27 §2.3) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Visibility</label>
+            <label className="flex items-center gap-2 text-sm mb-2">
+              <input type="checkbox" checked={visPublic} onChange={e => setVisPublic(e.target.checked)} className="rounded" />
+              Public on institution &amp; program pages
+            </label>
+            <Input
+              label="Limit to regions (optional)"
+              value={visRegions}
+              onChange={e => setVisRegions(e.target.value)}
+              placeholder="e.g. North America, Europe (comma-separated)"
+            />
           </div>
 
           {/* Template */}

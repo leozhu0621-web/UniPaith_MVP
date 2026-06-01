@@ -10,6 +10,7 @@ from unipaith.database import get_db
 from unipaith.dependencies import require_institution_admin, require_student
 from unipaith.models.user import User
 from unipaith.schemas.event import (
+    AttendanceUpdateRequest,
     CreateEventRequest,
     EventResponse,
     RSVPResponse,
@@ -103,6 +104,7 @@ async def create_event(
         end_time=body.end_time,
         description=body.description,
         location=body.location,
+        meeting_link=body.meeting_link,
         capacity=body.capacity,
         program_id=body.program_id,
     )
@@ -155,3 +157,20 @@ async def get_attendees(
     inst = await InstitutionService(db).get_institution(user.id)
     svc = EventService(db)
     return await svc.get_event_attendees(inst.id, event_id)
+
+
+@router.put(
+    "/manage/{event_id}/rsvps/{rsvp_id}/attendance",
+    response_model=RSVPResponse,
+)
+async def mark_attendance(
+    event_id: UUID,
+    rsvp_id: UUID,
+    body: AttendanceUpdateRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 27 §3.1 — record a single attendee's attendance (attended | no_show)."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    svc = EventService(db)
+    return await svc.mark_attendance(inst.id, event_id, rsvp_id, body.attendance_status)

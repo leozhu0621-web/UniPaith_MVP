@@ -915,8 +915,13 @@ export interface EventItem {
   meeting_link?: string | null
   start_time: string
   end_time: string
+  meeting_link?: string | null
   capacity: number | null
   rsvp_count: number
+  // Spec 27 §3.1 — confirmed vs waitlisted split + impressions.
+  confirmed_count?: number
+  waitlist_count?: number
+  view_count?: number
   status: string
 }
 
@@ -927,6 +932,8 @@ export interface RSVP {
   rsvp_status: string
   registered_at: string
   attended_at: string | null
+  // Spec 27 §3.1 — attendance capture + roster identity.
+  attendance_status?: string | null
   student_name?: string | null
   student_email?: string | null
 }
@@ -1114,6 +1121,7 @@ export interface Institution {
   international_info: Record<string, any> | null
   school_outcomes: Record<string, any> | null
   is_verified: boolean
+  require_campaign_approval?: boolean
   created_at: string
   updated_at: string
   program_count?: number
@@ -1283,29 +1291,128 @@ export interface AnalyticsData {
 }
 
 // ============ CAMPAIGNS ============
+// ============ CAMPAIGNS (Spec 25) ============
+export type CampaignObjective =
+  | 'application_open'
+  | 'event_promotion'
+  | 'scholarship_announcement'
+  | 'deadline_reminder'
+  | 'nurture'
+  | 'general'
+export type CampaignDestinationType =
+  | 'institution_page'
+  | 'program_page'
+  | 'campaign_landing_page'
+  | 'external_url'
+export type CampaignCtaType = 'learn_more' | 'rsvp_event' | 'request_info' | 'start_application'
+export type CampaignChannel = 'internal_messaging' | 'external_email'
+export type CampaignStatus =
+  | 'draft'
+  | 'pending_approval'
+  | 'scheduled'
+  | 'active'
+  | 'paused'
+  | 'completed'
+export type AttributionAction =
+  | 'view'
+  | 'save'
+  | 'rsvp'
+  | 'request_info'
+  | 'apply_started'
+  | 'apply_submitted'
+  | 'decision'
+
+export interface CampaignAudience {
+  segment_ids: string[]
+  uploaded_list_ids: string[]
+  deduped_count: number | null
+}
+
+export interface CampaignMetrics {
+  campaign_id?: string
+  sent: number
+  delivered: number
+  opens: number
+  clicks: number
+  conversions: Record<string, number>
+  unsubscribes: number
+  bounces: number
+}
+
 export interface Campaign {
   id: string
   institution_id: string
-  program_id: string | null
-  segment_id: string | null
-  campaign_name: string
-  campaign_type: string | null
-  message_subject: string | null
-  message_body: string | null
-  status: string | null
-  scheduled_send_at: string | null
+  name: string
+  objective: CampaignObjective | null
+  owner_id: string | null
+  status: CampaignStatus
+  associate_program_ids: string[]
+  associate_intake_round_id: string | null
+  destination_type: CampaignDestinationType | null
+  destination_id: string | null
+  destination_url: string | null
+  cta_type: CampaignCtaType | null
+  channels: CampaignChannel[]
+  audience: CampaignAudience
+  subject: string | null
+  body: string | null
+  scheduled_at: string | null
   sent_at: string | null
+  sent_count: number | null
+  metrics: CampaignMetrics | null
+  submitted_for_approval_at: string | null
+  approved_by: string | null
+  approved_at: string | null
+  rejection_comment: string | null
+  requires_approval: boolean
   created_at: string
   updated_at: string
 }
 
-export interface CampaignMetrics {
-  campaign_id: string
-  total_recipients: number
-  delivered: number
-  opened: number
-  clicked: number
-  responded: number
+export interface AudienceSamplePerson {
+  student_id: string | null
+  name: string | null
+  email: string | null
+  source: string
+  channel: string
+}
+
+export interface AudiencePreview {
+  campaign_id?: string | null
+  deduped_count: number
+  platform_count: number
+  uploaded_count: number
+  suppressed_count: number
+  consent_excluded_count: number
+  sample: AudienceSamplePerson[]
+}
+
+export interface UploadedList {
+  id: string
+  institution_id: string
+  name: string
+  description: string | null
+  source: string
+  source_consent_confirmed: boolean
+  contact_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface CampaignSuppression {
+  id: string
+  institution_id: string
+  email: string
+  reason: string | null
+  created_at: string
+}
+
+export interface DraftCampaignCopy {
+  subject: string
+  body: string
+  alternate_subjects: string[]
+  preview_text: string
+  source: string
 }
 
 // ============ CAMPAIGN LINKS & ATTRIBUTION ============
@@ -1513,11 +1620,14 @@ export interface Promotion {
     degree_types?: string[]
     interests?: string[]
   } | null
-  status: 'draft' | 'active' | 'paused' | 'expired'
+  status: 'draft' | 'scheduled' | 'active' | 'paused' | 'expired'
   starts_at: string | null
   ends_at: string | null
   impression_count: number
   click_count: number
+  // Spec 27 §4.1 — promotion target: program | institution | landing.
+  target_kind?: 'program' | 'institution' | 'landing'
+  target_url?: string | null
   created_at: string
   updated_at: string
   program_name: string | null
@@ -1525,16 +1635,88 @@ export interface Promotion {
   is_eligible: boolean
 }
 
-// ============ SEGMENTS ============
+// ============ SEGMENTS (Spec 26 · Audience Segmentation) ============
+
+/** One leaf rule: a signal field + operator + value. */
+export interface SegmentRule {
+  field: string
+  operator: string
+  value?: any
+  branch?: 'include' | 'exclude'
+  ambiguous?: boolean
+}
+
+/** A nested AND/OR/NOT group of rules or sub-groups. */
+export interface SegmentRuleGroup {
+  op: 'AND' | 'OR' | 'NOT'
+  rules: Array<SegmentRule | SegmentRuleGroup>
+}
+
+/** The stored rule tree: separate include / exclude branches. */
+export interface SegmentRuleTree {
+  include: SegmentRuleGroup
+  exclude: SegmentRuleGroup
+}
+
 export interface Segment {
   id: string
   institution_id: string
   program_id: string | null
   segment_name: string
+  description?: string | null
+  rules?: SegmentRuleTree | null
   criteria: Record<string, any> | null
+  uploaded_list_ids?: string[] | null
+  frequency_cap_per_week?: number | null
+  created_by_user_id?: string | null
+  preview_audience_count?: number | null
+  preview_generated_at?: string | null
   is_active: boolean
   created_at: string
   updated_at: string
+}
+
+export interface SignalDef {
+  key: string
+  label: string
+  category: string
+  category_label: string
+  operators: string[]
+  value_type: 'enum_multi' | 'enum_single' | 'number' | 'band' | 'boolean' | 'days'
+  options: Array<{ value: string; label: string }> | null
+  plain_language: string
+  protected: boolean
+  derived: boolean
+  help_text: string
+}
+
+export interface SignalDictionary {
+  categories: Array<{ key: string; label: string }>
+  signals: SignalDef[]
+}
+
+export interface StudentSummary {
+  student_id: string
+  name: string
+  email: string | null
+  nationality: string | null
+  country_of_residence: string | null
+  fit_band: string | null
+}
+
+export interface SegmentPreview {
+  audience_count: number
+  platform_count: number
+  uploaded_external_count: number
+  sample: StudentSummary[]
+  composition: Record<string, Record<string, number>>
+  fairness_warning: string | null
+}
+
+export interface NLBridgeResult {
+  rules: SegmentRule[]
+  confidence_overall: number
+  ambiguity_notes: string[]
 }
 
 // ============ INTERVIEW SCORING ============
@@ -1630,6 +1812,27 @@ export interface DatasetMappingTemplate {
 }
 
 // ============ POSTS ============
+// Spec 27 §2.4 — a call-to-action attached to a post.
+export type PostCTAType =
+  | 'view_program'
+  | 'rsvp'
+  | 'request_info'
+  | 'start_application'
+  | 'add_to_calendar'
+
+export interface PostCTA {
+  type: PostCTAType
+  label: string
+  target?: string | null
+}
+
+// Spec 27 §2.3 — visibility scope for a post.
+export interface PostVisibility {
+  public: boolean
+  segment_ids: string[]
+  region_scopes: string[]
+}
+
 export interface InstitutionPost {
   id: string
   institution_id: string
@@ -1646,7 +1849,14 @@ export interface InstitutionPost {
   is_template: boolean
   template_name: string | null
   view_count: number
-  ctas?: { type: string; label: string; target: string }[] | null
+  // Spec 27 §5 — per-object engagement counters.
+  click_count?: number
+  save_count?: number
+  request_info_count?: number
+  apply_started_count?: number
+  // Spec 27 §2.4 / §2.3 — authored CTAs + visibility scope.
+  ctas?: PostCTA[] | null
+  visibility?: PostVisibility | null
   created_at: string
   updated_at: string
   author_email?: string

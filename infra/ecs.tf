@@ -190,6 +190,14 @@ resource "aws_ecs_task_definition" "backend" {
       # outreach-consent-gated). No rule-based fallback: on failure the card
       # is hidden, so the inbox is fully functional with the flag off too.
       { name = "AI_INBOX_V2_ENABLED", value = "true" },
+      # Spec 25 §10 / 45 §16 — "Draft with AI" campaign copy (Sonnet). Falls
+      # back to an objective-keyed template stub on any failure, so the editor
+      # button works with the flag off too.
+      { name = "AI_CAMPAIGN_COPY_V2_ENABLED", value = "true" },
+      # Spec 26 §6 / 45 §17 — SegmentBuilderNLBridge (natural-language → segment
+      # rules, Sonnet). On any failure it falls back to a keyword parser, so the
+      # segment builder is fully functional with the flag off too.
+      { name = "AI_SEGMENT_BUILDER_V2_ENABLED", value = "true" },
       # Pin Claude model IDs — config.py defaults match, but pinning here
       # makes the prod surface auditable (and trivial to roll a single
       # agent class to a different model without a code deploy).

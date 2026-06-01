@@ -1,4 +1,15 @@
-"""SegmentBuilderNLBridge — Spec 26 §6 / 45 §17."""
+"""SegmentBuilderNLBridge — Spec 26 §6 / 45 §17.
+
+Converts a natural-language audience description into structured segment rules
+drawn from the platform signal dictionary. Workhorse-tier (Sonnet, forced tool
+use). Per the Plan-2 integration invariant, ANY failure (feature flag off, mock
+mode, consent/parse/provider error) returns a keyword-parser fallback so the
+caller never sees a 5xx — the institution always gets *some* editable rules.
+
+Output: ``{rules: [{field, operator, value, branch, ambiguous}], confidence_overall:int,
+ambiguity_notes: [str]}``. ``rules`` is a flat list (matches 45 §17); the
+frontend loads include/exclude branches from each rule's ``branch``.
+"""
 
 from __future__ import annotations
 
@@ -8,132 +19,238 @@ import re
 from pathlib import Path
 from typing import Any
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from unipaith.ai.client import AIClient, get_client
 from unipaith.ai.prompt_cache import CACHE_1H
-from unipaith.ai.tools.segment_builder_schema import SUBMIT_SEGMENT_RULES_TOOL
+from unipaith.ai.tools.segment_builder_schema import EMIT_RULES_TOOL
+from unipaith.config import settings
+from unipaith.services.segment_signals import SIGNAL_REGISTRY
 
 logger = logging.getLogger(__name__)
 
 PROMPTS_DIR = Path(__file__).parent / "prompts"
-_SYSTEM = (PROMPTS_DIR / "segment_builder.md").read_text(encoding="utf-8").rstrip()
+_PROMPT = (PROMPTS_DIR / "segment_builder.md").read_text(encoding="utf-8").rstrip()
 
-SIGNAL_DICTIONARY = [
-    {"field": "engagement.viewed_institution", "operators": ["within_days"]},
-    {"field": "engagement.saved_program", "operators": ["within_days"]},
-    {"field": "engagement.compared_program", "operators": ["within_days"]},
-    {"field": "engagement.requested_info", "operators": ["within_days"]},
-    {"field": "engagement.event_rsvp", "operators": ["within_days"]},
-    {"field": "application.started", "operators": ["equals"]},
-    {"field": "application.not_submitted", "operators": ["equals"]},
-    {"field": "fit.fitness_band", "operators": ["has_band"], "values": ["high", "medium", "low"]},
-    {"field": "match.tier", "operators": ["in"], "values": ["reach", "target", "safer"]},
-    {
-        "field": "readiness.budget_band",
-        "operators": ["has_band"],
-        "values": ["high", "medium", "low"],
-    },
-    {
-        "field": "readiness.modality",
-        "operators": ["in"],
-        "values": ["in_person", "online", "hybrid"],
-    },
-    {
-        "field": "readiness.timeline",
-        "operators": ["equals"],
-        "values": ["this_intake", "next_intake", "later"],
-    },
-    {"field": "profile.nationality", "operators": ["in"]},
-    {"field": "suppression.unsubscribed", "operators": ["equals"]},
-]
-
-AGENT_NAME = "segment_builder_nl"
+_FALLBACK_NOTE = "AI assist is in rule-based fallback mode — review the suggested rules carefully."
 
 
-def _parse_tool(blocks: list[dict[str, Any]]) -> dict | None:
-    for b in blocks:
-        if b.get("type") == "tool_use" and b.get("name") == "submit_segment_rules":
-            data = b.get("input") or {}
-            rules = data.get("rules")
-            if isinstance(rules, list) and rules:
-                return {
-                    "rules": rules,
-                    "confidence_overall": int(data.get("confidence_overall") or 70),
-                    "ambiguity_notes": list(data.get("ambiguity_notes") or []),
-                }
-    return None
+class SegmentBuilderNLBridge:
+    AGENT_NAME = "segment_builder_nl"
+    PROMPT_VERSION = "v1"
 
+    def __init__(self, db: AsyncSession | None = None, client: AIClient | None = None):
+        self.db = db
+        self.client = client or get_client()
 
-def _keyword_fallback(description: str) -> dict:
-    """Rule-based fallback when LLM unavailable (Plan 2 invariant)."""
-    text = description.lower()
-    rules: list[dict[str, Any]] = []
-    notes: list[str] = []
+    async def convert(self, text: str) -> dict[str, Any]:
+        text = (text or "").strip()
+        if not text:
+            return {
+                "rules": [],
+                "confidence_overall": 0,
+                "ambiguity_notes": ["No description provided."],
+            }
 
-    if "saved" in text:
-        rules.append({"field": "engagement.saved_program", "operator": "within_days", "value": 90})
-    if "viewed" in text or "visited" in text:
-        rules.append(
-            {"field": "engagement.viewed_institution", "operator": "within_days", "value": 30}
-        )
-    if "engineering" in text or " cs" in text or "computer" in text:
-        notes.append("Major/field filter not yet mapped — used saved-program activity instead")
-        if not any(r["field"] == "engagement.saved_program" for r in rules):
-            rules.append(
-                {"field": "engagement.saved_program", "operator": "within_days", "value": 180}
+        if not settings.ai_segment_builder_v2_enabled:
+            return self._fallback(text)
+
+        try:
+            payload = json.dumps(
+                {"description": text, "available_signals": self._compact_dictionary()},
+                ensure_ascii=False,
             )
-    if "california" in text or " ca" in text:
-        notes.append("Location filter not directly available — review manually")
-    if re.search(r"budget|cost|\$|≤|<=", text):
-        rules.append({"field": "readiness.budget_band", "operator": "has_band", "value": "high"})
-    if "high fit" in text or "fit-band" in text or "fit band" in text:
-        rules.append({"field": "fit.fitness_band", "operator": "has_band", "value": "high"})
-    if "not started" in text or "haven't started" in text or "have not started" in text:
-        rules.append({"field": "application.not_submitted", "operator": "equals", "value": True})
-    if "unsubscrib" in text:
-        rules.append({"field": "suppression.unsubscribed", "operator": "equals", "value": True})
+            response = await self.client.message(
+                agent=self.AGENT_NAME,
+                model="sonnet",
+                system=[{"type": "text", "text": _PROMPT, "cache_control": CACHE_1H}],
+                messages=[{"role": "user", "content": payload}],
+                tools=[{**EMIT_RULES_TOOL, "cache_control": CACHE_1H}],
+                tool_choice={"type": "tool", "name": "emit_rules"},
+                max_tokens=1500,
+                temperature=0.0,
+                surface="segments",
+                db=self.db,
+            )
+            parsed = self._parse(response.content_blocks)
+            if not parsed:
+                return self._fallback(text)
+            validated = self._validate(parsed)
+            if not validated["rules"]:
+                return self._fallback(text)
+            return validated
+        except Exception as exc:  # noqa: BLE001 — NL bridge is best-effort
+            logger.info("SegmentBuilderNLBridge fell back to keyword parser: %s", exc)
+            return self._fallback(text)
 
-    if not rules:
-        rules.append(
-            {"field": "engagement.viewed_institution", "operator": "within_days", "value": 30}
-        )
-        notes.append("Could not parse specifics — defaulting to recent page viewers")
+    # ── helpers ──────────────────────────────────────────────────────────
+    @staticmethod
+    def _compact_dictionary() -> list[dict[str, Any]]:
+        out = []
+        for sig in SIGNAL_REGISTRY.values():
+            entry: dict[str, Any] = {
+                "key": sig.key,
+                "label": sig.label,
+                "operators": sig.operators,
+                "value_type": sig.value_type,
+            }
+            if sig.options:
+                entry["options"] = [o["value"] for o in sig.options]
+            out.append(entry)
+        return out
 
-    return {
-        "rules": rules,
-        "confidence_overall": 55 if notes else 70,
-        "ambiguity_notes": notes,
-    }
+    @staticmethod
+    def _parse(blocks: list[dict[str, Any]]) -> dict[str, Any] | None:
+        for b in blocks:
+            if b.get("type") == "tool_use" and b.get("name") == "emit_rules":
+                return b.get("input") or {}
+        return None
+
+    @staticmethod
+    def _validate(parsed: dict[str, Any]) -> dict[str, Any]:
+        raw_rules = parsed.get("rules") or []
+        notes = list(parsed.get("ambiguity_notes") or [])
+        clean: list[dict[str, Any]] = []
+        dropped: list[str] = []
+        for r in raw_rules:
+            if not isinstance(r, dict):
+                continue
+            field = r.get("field")
+            sig = SIGNAL_REGISTRY.get(field)
+            if sig is None:
+                if field:
+                    dropped.append(str(field))
+                continue
+            operator = r.get("operator")
+            if operator not in sig.operators:
+                operator = sig.operators[0] if sig.operators else operator
+            branch = r.get("branch") if r.get("branch") in ("include", "exclude") else "include"
+            clean.append(
+                {
+                    "field": field,
+                    "operator": operator,
+                    "value": r.get("value"),
+                    "branch": branch,
+                    "ambiguous": bool(r.get("ambiguous")),
+                }
+            )
+        if dropped:
+            notes.append(
+                "Could not map: " + ", ".join(sorted(set(dropped))) + " — no matching signal."
+            )
+        conf = parsed.get("confidence_overall")
+        try:
+            conf = max(0, min(100, int(conf)))
+        except (TypeError, ValueError):
+            conf = 50
+        return {"rules": clean, "confidence_overall": conf, "ambiguity_notes": notes[:8]}
+
+    # ── keyword fallback (no LLM) ─────────────────────────────────────────
+    @staticmethod
+    def _fallback(text: str) -> dict[str, Any]:
+        t = text.lower()
+        rules: list[dict[str, Any]] = []
+
+        def add(field: str, operator: str, value: Any = None, branch: str = "include") -> None:
+            rule: dict[str, Any] = {
+                "field": field,
+                "operator": operator,
+                "branch": branch,
+                "ambiguous": True,
+            }
+            if value is not None:
+                rule["value"] = value
+            rules.append(rule)
+
+        # degree
+        degrees = []
+        if re.search(r"\bmaster|\bmsc|\bgraduate|\bgrad\b|\bmba\b", t):
+            degrees.append("master")
+        if re.search(r"\bbachelor|\bundergrad", t):
+            degrees.append("bachelor")
+        if re.search(r"\bphd|\bdoctora", t):
+            degrees.append("phd")
+        if degrees:
+            add("saved_program_degree", "in", degrees)
+
+        # activity verbs
+        if re.search(r"\bview|visit|looked at|browsed", t):
+            add("viewed_institution", "within_days", 30)
+        if re.search(r"\bsaved|shortlist|bookmark", t):
+            add("saved_program", "exists")
+        if re.search(r"\bcompared\b", t):
+            add("compared_program", "exists")
+        if re.search(r"requested info|inquir|reached out|asked about", t):
+            add("requested_info", "exists")
+        if re.search(r"attended", t):
+            add("event_engagement", "in", ["attended"])
+        elif re.search(r"\brsvp|webinar|open house|info session|event", t):
+            add("event_engagement", "in", ["rsvp"])
+
+        # fit / likelihood / nurture
+        if re.search(r"high[- ]?fit|strong fit|best fit|top match|great match|high match", t):
+            add("fit_band", "in", ["high"])
+        if re.search(r"likely to apply|high intent|ready to apply", t):
+            add("likelihood_band", "in", ["high"])
+        if re.search(r"nurtur", t):
+            add("nurture_band", "in", ["high"])
+
+        # application state (negation first)
+        if re.search(
+            r"haven'?t applied|not applied|no application|hasn'?t applied|without applying", t
+        ):
+            add("started_application", "exists", branch="exclude")
+        elif re.search(
+            r"started but|didn'?t submit|incomplete application|abandoned|not submitted", t
+        ):
+            add("started_not_submitted", "exists")
+        elif re.search(r"\bapplied\b|applicants?\b", t):
+            add("started_application", "exists")
+
+        # modality
+        modality = []
+        if re.search(r"\bonline\b|remote", t):
+            modality.append("online")
+        if re.search(r"in[- ]person|on campus|on-campus", t):
+            modality.append("in_person")
+        if re.search(r"hybrid", t):
+            modality.append("hybrid")
+        if modality:
+            add("modality_pref", "in", modality)
+
+        # budget (e.g. "under $40k", "budget 60k")
+        m = re.search(r"(\d{2,3})\s*k", t)
+        if m and ("budget" in t or "$" in t or "afford" in t or "tuition" in t):
+            amt = int(m.group(1)) * 1000
+            band = (
+                "under_20k"
+                if amt < 20000
+                else "20k_40k"
+                if amt < 40000
+                else "40k_60k"
+                if amt < 60000
+                else "60k_plus"
+            )
+            add("budget_band", "in", [band])
+
+        notes = [_FALLBACK_NOTE]
+        if not rules:
+            notes.append(
+                "Could not derive rules from the description — build the segment manually."
+            )
+        return {"rules": rules, "confidence_overall": 40 if rules else 0, "ambiguity_notes": notes}
 
 
-async def build_rules_from_nl(
-    description: str,
-    *,
-    client: AIClient | None = None,
-) -> dict:
-    """Return structured rules; always succeeds via keyword fallback."""
-    try:
-        cl = client or get_client()
-        user_msg = json.dumps(
-            {
-                "description": description,
-                "signal_dictionary": SIGNAL_DICTIONARY,
-            },
-            ensure_ascii=False,
-        )
-        response = await cl.message(
-            agent=AGENT_NAME,
-            model="sonnet",
-            system=[{"type": "text", "text": _SYSTEM, "cache_control": CACHE_1H}],
-            messages=[{"role": "user", "content": user_msg}],
-            tools=[SUBMIT_SEGMENT_RULES_TOOL],
-            tool_choice={"type": "tool", "name": "submit_segment_rules"},
-            max_tokens=1200,
-            temperature=0.2,
-        )
-        parsed = _parse_tool(response.content_blocks)
-        if parsed:
-            return parsed
-    except Exception as e:  # noqa: BLE001
-        logger.warning("SegmentBuilderNLBridge failed, using keyword fallback: %s", e)
+_default: SegmentBuilderNLBridge | None = None
 
-    return _keyword_fallback(description)
+
+def get_segment_builder() -> SegmentBuilderNLBridge:
+    global _default
+    if _default is None:
+        _default = SegmentBuilderNLBridge()
+    return _default
+
+
+def reset_segment_builder() -> None:
+    global _default
+    _default = None

@@ -8,7 +8,7 @@ import uuid
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.core.exceptions import (
@@ -48,9 +48,7 @@ from unipaith.schemas.institution import (
     CampaignDraftCopyRequest,
     CampaignDraftCopyResponse,
     CampaignLinkResponse,
-    CampaignMetricsResponse,
     CreateCampaignLinkRequest,
-    CreateCampaignRequest,
     CreateDatasetRequest,
     CreateInstitutionRequest,
     CreatePostRequest,
@@ -75,7 +73,6 @@ from unipaith.schemas.institution import (
     ProgramSummaryResponse,
     PromotionResponse,
     SubmitInquiryRequest,
-    UpdateCampaignRequest,
     UpdateDatasetRequest,
     UpdateInquiryRequest,
     UpdateInstitutionRequest,
@@ -349,13 +346,36 @@ class InstitutionService:
         return list(result.scalars().all())
 
     async def create_segment(
-        self, institution_id: UUID, data: CreateSegmentRequest
+        self, institution_id: UUID, data: CreateSegmentRequest, created_by: UUID | None = None
     ) -> TargetSegment:
-        segment = TargetSegment(institution_id=institution_id, **data.model_dump())
+        segment = TargetSegment(
+            institution_id=institution_id, created_by_user_id=created_by, **data.model_dump()
+        )
         self.db.add(segment)
         await self.db.flush()
         await self.db.refresh(segment)
         return segment
+
+    async def get_segment(self, institution_id: UUID, segment_id: UUID) -> TargetSegment:
+        result = await self.db.execute(
+            select(TargetSegment).where(
+                TargetSegment.id == segment_id,
+                TargetSegment.institution_id == institution_id,
+            )
+        )
+        segment = result.scalar_one_or_none()
+        if not segment:
+            raise NotFoundException("Segment not found")
+        return segment
+
+    async def cache_segment_preview(
+        self, institution_id: UUID, segment_id: UUID, count: int
+    ) -> None:
+        """Spec 26 §7 — persist the last preview audience size on the segment."""
+        segment = await self.get_segment(institution_id, segment_id)
+        segment.preview_audience_count = count
+        segment.preview_generated_at = datetime.now(UTC)
+        await self.db.flush()
 
     async def update_segment(
         self, institution_id: UUID, segment_id: UUID, data: UpdateSegmentRequest
@@ -407,6 +427,21 @@ class InstitutionService:
         if not segment:
             raise NotFoundException("Segment not found")
 
+        # Spec 26 — when the segment carries a nested rule tree, evaluate it via
+        # the SegmentService engine (with outreach suppression) and return that.
+        # Older segments with only flat `criteria` fall through to the legacy
+        # AND-combined path below, keeping existing campaign wiring intact.
+        if segment.rules:
+            from unipaith.services.segment_service import SegmentService
+
+            seg_svc = SegmentService(self.db)
+            members = await seg_svc.evaluate_rules(
+                institution_id, segment.rules, segment.program_id
+            )
+            members = await seg_svc.apply_suppression(members)
+            return list(members)
+
+        criteria = segment.criteria or {}
         programs = await self.list_programs(institution_id)
         program_ids = [p.id for p in programs]
         if segment.program_id:
@@ -822,278 +857,10 @@ class InstitutionService:
 
     # --- Campaigns ---
 
-    async def list_campaigns(
-        self, institution_id: UUID, status_filter: str | None = None
-    ) -> list[Campaign]:
-        stmt = select(Campaign).where(Campaign.institution_id == institution_id)
-        if status_filter:
-            stmt = stmt.where(Campaign.status == status_filter)
-        stmt = stmt.order_by(Campaign.created_at.desc())
-        result = await self.db.execute(stmt)
-        return list(result.scalars().all())
-
-    @staticmethod
-    def _campaign_status_for_schedule(scheduled_at: datetime | None) -> str | None:
-        if scheduled_at and scheduled_at > datetime.now(UTC):
-            return "scheduled"
-        return None
-
-    async def create_campaign(self, institution_id: UUID, data: CreateCampaignRequest) -> Campaign:
-        payload = data.model_dump()
-        status = "draft"
-        scheduled_status = self._campaign_status_for_schedule(payload.get("scheduled_send_at"))
-        if scheduled_status:
-            status = scheduled_status
-        campaign = Campaign(
-            institution_id=institution_id,
-            status=status,
-            **payload,
-        )
-        self.db.add(campaign)
-        await self.db.flush()
-        await self.db.refresh(campaign)
-        return campaign
-
-    async def update_campaign(
-        self, institution_id: UUID, campaign_id: UUID, data: UpdateCampaignRequest
-    ) -> Campaign:
-        campaign = await self._verify_campaign_ownership(institution_id, campaign_id)
-        update_data = data.model_dump(exclude_unset=True)
-        if campaign.status not in ("sent",):
-            scheduled_status = self._campaign_status_for_schedule(
-                update_data.get("scheduled_send_at", campaign.scheduled_send_at)
-            )
-            if scheduled_status and update_data.get("status") is None:
-                update_data["status"] = scheduled_status
-            elif (
-                "scheduled_send_at" in update_data
-                and update_data["scheduled_send_at"] is None
-                and campaign.status == "scheduled"
-            ):
-                update_data.setdefault("status", "draft")
-        for key, value in update_data.items():
-            setattr(campaign, key, value)
-        await self.db.flush()
-        await self.db.refresh(campaign)
-        return campaign
-
-    async def delete_campaign(self, institution_id: UUID, campaign_id: UUID) -> None:
-        campaign = await self._verify_campaign_ownership(institution_id, campaign_id)
-        if campaign.status == "sent":
-            raise BadRequestException("Cannot delete a sent campaign")
-        await self.db.delete(campaign)
-        await self.db.flush()
-
-    async def _resolve_campaign_student_ids(
-        self,
-        institution_id: UUID,
-        campaign: Campaign,
-    ) -> list[UUID]:
-        if campaign.segment_id:
-            return await self.resolve_segment_members(
-                institution_id,
-                campaign.segment_id,
-            )
-        programs = await self.list_programs(institution_id)
-        program_ids = [campaign.program_id] if campaign.program_id else [p.id for p in programs]
-        if not program_ids:
-            return []
-        result = await self.db.execute(
-            select(Application.student_id)
-            .distinct()
-            .where(
-                Application.program_id.in_(program_ids),
-                Application.status != "draft",
-            )
-        )
-        return [row[0] for row in result.all()]
-
-    async def preview_campaign_audience(
-        self,
-        institution_id: UUID,
-        campaign_id: UUID,
-    ) -> CampaignAudiencePreviewResponse:
-        campaign = await self._verify_campaign_ownership(institution_id, campaign_id)
-        student_ids = await self._resolve_campaign_student_ids(institution_id, campaign)
-        seen: set[UUID] = set()
-        unique_ids: list[UUID] = []
-        for sid in student_ids:
-            if sid not in seen:
-                seen.add(sid)
-                unique_ids.append(sid)
-
-        sample: list[CampaignAudienceSampleRow] = []
-        if unique_ids:
-            rows = await self.db.execute(
-                select(StudentProfile.id, StudentProfile.first_name, User.email)
-                .join(User, User.id == StudentProfile.user_id)
-                .where(StudentProfile.id.in_(unique_ids[:10]))
-            )
-            for sid, first_name, email in rows.all():
-                sample.append(
-                    CampaignAudienceSampleRow(
-                        student_id=sid,
-                        first_name=first_name,
-                        email=email,
-                    )
-                )
-
-        return CampaignAudiencePreviewResponse(
-            campaign_id=campaign_id,
-            audience_count=len(unique_ids),
-            sample=sample,
-        )
-
-    async def draft_campaign_copy(
-        self,
-        institution_name: str,
-        data: CampaignDraftCopyRequest,
-    ) -> CampaignDraftCopyResponse:
-        objective = data.objective or "general"
-        templates: dict[str, tuple[str, str, list[str]]] = {
-            "application_open": (
-                f"Applications are open at {institution_name}",
-                (
-                    f"Hi {{{{first_name}}}},\n\n{institution_name} has opened applications"
-                    f" for {{{{program_name}}}}."
-                ),
-                ["Ready to apply to {{program_name}}?"],
-            ),
-            "event_promotion": (
-                f"You are invited — {institution_name}",
-                (
-                    "Hi {{first_name}},\n\nJoin us for a session about {{program_name}}."
-                    " Reserve your spot: {{event_link}}."
-                ),
-                [],
-            ),
-            "deadline_reminder": (
-                "Deadline reminder — {{program_name}}",
-                (
-                    f"Hi {{{{first_name}}}},\n\nA key deadline for {{{{program_name}}}} at"
-                    f" {institution_name} is approaching."
-                ),
-                [],
-            ),
-        }
-        subject, body, alternates = templates.get(
-            objective,
-            (
-                f"{data.campaign_name or 'Outreach'} — {institution_name}",
-                (
-                    f"Hi {{{{first_name}}}},\n\n"
-                    f"{institution_name} has an update about {{{{program_name}}}}."
-                ),
-                [],
-            ),
-        )
-        if data.program_name:
-            subject = subject.replace("{{program_name}}", data.program_name)
-            body = body.replace("{{program_name}}", data.program_name)
-        return CampaignDraftCopyResponse(
-            subject=subject,
-            body=body,
-            alternate_subjects=alternates[:3],
-            preview_text=body.split("\n")[0][:120],
-        )
-
-    async def send_campaign(self, institution_id: UUID, campaign_id: UUID) -> Campaign:
-        campaign = await self._verify_campaign_ownership(institution_id, campaign_id)
-        if campaign.status == "sent":
-            raise BadRequestException("Campaign already sent")
-        if not campaign.message_subject and not campaign.message_body:
-            raise BadRequestException("Campaign must have subject or body")
-
-        student_ids = await self._resolve_campaign_student_ids(institution_id, campaign)
-        if not student_ids:
-            raise BadRequestException("0 recipients after filtering. Adjust your audience.")
-
-        channel = campaign.campaign_type or "both"
-        send_in_app = channel in ("in_app", "both", None)
-        send_email = channel in ("email", "both", None)
-
-        now = datetime.now(UTC)
-        for sid in student_ids:
-            # Deduplicate
-            existing = await self.db.execute(
-                select(CampaignRecipient).where(
-                    CampaignRecipient.campaign_id == campaign_id,
-                    CampaignRecipient.student_id == sid,
-                )
-            )
-            if existing.scalar_one_or_none():
-                continue
-            recipient = CampaignRecipient(
-                campaign_id=campaign_id,
-                student_id=sid,
-                delivered_at=now,
-            )
-            self.db.add(recipient)
-
-            if send_in_app:
-                profile_result = await self.db.execute(
-                    select(StudentProfile.user_id).where(StudentProfile.id == sid)
-                )
-                user_id = profile_result.scalar_one_or_none()
-                if user_id:
-                    notification = Notification(
-                        user_id=user_id,
-                        title=campaign.message_subject or campaign.campaign_name,
-                        body=campaign.message_body or "",
-                        notification_type="campaign",
-                        action_url="/s/messages",
-                    )
-                    self.db.add(notification)
-
-        campaign.status = "sent"
-        campaign.sent_at = now
-        await self.db.flush()
-
-        if send_email:
-            from unipaith.services.campaign_email_service import CampaignEmailService
-
-            inst_result = await self.db.execute(
-                select(Institution).where(Institution.id == institution_id)
-            )
-            inst = inst_result.scalar_one_or_none()
-            inst_name = inst.name if inst else "UniPaith"
-
-            program_name = None
-            if campaign.program_id:
-                prog_result = await self.db.execute(
-                    select(Program).where(Program.id == campaign.program_id)
-                )
-                p = prog_result.scalar_one_or_none()
-                program_name = p.program_name if p else None
-
-            email_svc = CampaignEmailService(self.db)
-            await email_svc.send_campaign_emails(campaign, inst_name, program_name)
-
-        await self.db.refresh(campaign)
-        return campaign
-
-    async def get_campaign_metrics(
-        self, institution_id: UUID, campaign_id: UUID
-    ) -> CampaignMetricsResponse:
-        await self._verify_campaign_ownership(institution_id, campaign_id)
-        result = await self.db.execute(
-            select(
-                func.count().label("total"),
-                func.count().filter(CampaignRecipient.delivered_at.isnot(None)).label("delivered"),
-                func.count().filter(CampaignRecipient.opened_at.isnot(None)).label("opened"),
-                func.count().filter(CampaignRecipient.clicked_at.isnot(None)).label("clicked"),
-                func.count().filter(CampaignRecipient.responded_at.isnot(None)).label("responded"),
-            ).where(CampaignRecipient.campaign_id == campaign_id)
-        )
-        row = result.one()
-        return CampaignMetricsResponse(
-            campaign_id=campaign_id,
-            total_recipients=row.total,
-            delivered=row.delivered,
-            opened=row.opened,
-            clicked=row.clicked,
-            responded=row.responded,
-        )
+    # Campaign CRUD / send / preview / metrics moved to CampaignService
+    # (Spec 25). This service retains only segment resolution and the
+    # trackable-link + attribution helpers used by the public redirect and
+    # student-action endpoints.
 
     async def _verify_campaign_ownership(self, institution_id: UUID, campaign_id: UUID) -> Campaign:
         result = await self.db.execute(
@@ -1218,14 +985,25 @@ class InstitutionService:
         student_id: UUID,
         action_type: str,
         target_id: UUID | None = None,
+        link_id: UUID | None = None,
     ) -> None:
         action = CampaignAction(
             campaign_id=campaign_id,
             student_id=student_id,
             action_type=action_type,
             target_id=target_id,
+            link_id=link_id,
         )
         self.db.add(action)
+        # Mark the recipient as responded so §8 conversions reflect engagement.
+        recip = await self.db.scalar(
+            select(CampaignRecipient).where(
+                CampaignRecipient.campaign_id == campaign_id,
+                CampaignRecipient.student_id == student_id,
+            )
+        )
+        if recip and not recip.responded_at:
+            recip.responded_at = datetime.now(UTC)
         await self.db.flush()
 
     async def get_campaign_attribution(
@@ -1578,7 +1356,8 @@ class InstitutionService:
             targeting=targeting_dict,
             starts_at=data.starts_at,
             ends_at=data.ends_at,
-            status=status,
+            target_kind=data.target_kind,
+            target_url=data.target_url,
         )
         self.db.add(promo)
         await self.db.flush()
@@ -1719,6 +1498,8 @@ class InstitutionService:
             ends_at=promo.ends_at,
             impression_count=promo.impression_count or 0,
             click_count=promo.click_count or 0,
+            target_kind=getattr(promo, "target_kind", "program") or "program",
+            target_url=getattr(promo, "target_url", None),
             created_at=promo.created_at,
             updated_at=promo.updated_at,
             program_name=prog_name,
@@ -2237,7 +2018,8 @@ class InstitutionService:
             scheduled_for=data.scheduled_for,
             is_template=data.is_template,
             template_name=data.template_name,
-            ctas=data.ctas,
+            ctas=([c.model_dump(mode="json") for c in data.ctas] if data.ctas else None),
+            visibility=(data.visibility.model_dump(mode="json") if data.visibility else None),
         )
         if data.status == "published":
             post.published_at = datetime.now(UTC)
@@ -2258,8 +2040,15 @@ class InstitutionService:
             update_data["tagged_program_ids"] = [
                 str(pid) for pid in update_data["tagged_program_ids"]
             ]
-        if "ctas" in update_data and update_data["ctas"] is not None:
-            update_data["ctas"] = list(update_data["ctas"])
+        # Spec 27 §2.4 / §2.3 — store CTAs + visibility as JSON-safe dicts.
+        if "ctas" in update_data:
+            update_data["ctas"] = (
+                [c.model_dump(mode="json") for c in data.ctas] if data.ctas else None
+            )
+        if "visibility" in update_data:
+            update_data["visibility"] = (
+                data.visibility.model_dump(mode="json") if data.visibility else None
+            )
         was_published = post.status == "published"
         for key, value in update_data.items():
             setattr(post, key, value)
@@ -2300,6 +2089,40 @@ class InstitutionService:
         await self.db.flush()
         await self.db.refresh(post)
         return await self._enrich_post(post)
+
+    # Spec 27 §5 — per-object engagement: (object_type, action) -> counter column.
+    _ENGAGEMENT_COLUMNS: dict[tuple[str, str], str] = {
+        ("post", "view"): "view_count",
+        ("post", "click"): "click_count",
+        ("post", "save"): "save_count",
+        ("post", "request_info"): "request_info_count",
+        ("post", "apply_started"): "apply_started_count",
+        ("event", "view"): "view_count",
+        ("promotion", "view"): "impression_count",
+        ("promotion", "impression"): "impression_count",
+        ("promotion", "click"): "click_count",
+    }
+
+    async def record_engagement(
+        self,
+        object_type: str,
+        object_id: UUID,
+        action: str,
+    ) -> None:
+        """Spec 27 §5 — increment a per-object performance counter.
+
+        Best-effort: an unknown (type, action) pair is ignored so a new client
+        event never 500s the caller. Atomic increment (no read-modify-write).
+        """
+        model_map = {"post": InstitutionPost, "event": Event, "promotion": Promotion}
+        model = model_map.get(object_type)
+        col = self._ENGAGEMENT_COLUMNS.get((object_type, action))
+        if model is None or col is None:
+            return
+        await self.db.execute(
+            update(model).where(model.id == object_id).values({col: getattr(model, col) + 1})
+        )
+        await self.db.flush()
 
     async def request_post_media_upload(
         self,
@@ -2345,6 +2168,12 @@ class InstitutionService:
             )
         )
         posts = list(result.scalars().all())
+        # Spec 27 §2.3 — public pages exclude posts scoped non-public.
+        posts = [
+            p
+            for p in posts
+            if not (isinstance(p.visibility, dict) and p.visibility.get("public") is False)
+        ]
         return [await self._enrich_post(p) for p in posts]
 
     async def _get_post(
@@ -2395,7 +2224,12 @@ class InstitutionService:
             is_template=post.is_template,
             template_name=post.template_name,
             view_count=post.view_count,
-            ctas=post.ctas if isinstance(post.ctas, list) else None,
+            click_count=post.click_count or 0,
+            save_count=post.save_count or 0,
+            request_info_count=post.request_info_count or 0,
+            apply_started_count=post.apply_started_count or 0,
+            ctas=post.ctas,
+            visibility=post.visibility,
             created_at=post.created_at,
             updated_at=post.updated_at,
             author_email=author_email,

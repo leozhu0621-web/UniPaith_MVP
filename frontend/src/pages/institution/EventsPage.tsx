@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { CalendarDays, Plus, Users, MapPin, Clock, Edit2, XCircle } from 'lucide-react'
-import { getInstitutionEvents, createEvent, updateEvent, cancelEvent, getEventAttendees } from '../../api/events-admin'
+import { CalendarDays, Plus, Users, MapPin, Clock, Edit2, XCircle, Video, UserCheck, UserX } from 'lucide-react'
+import { getInstitutionEvents, createEvent, updateEvent, cancelEvent, getEventAttendees, markAttendance } from '../../api/events-admin'
 import { getInstitutionPrograms } from '../../api/institutions'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -33,8 +33,10 @@ export default function EventsPage() {
   const [endTime, setEndTime] = useState('')
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState('')
+  const [meetingLink, setMeetingLink] = useState('')
   const [capacity, setCapacity] = useState('')
   const [programId, setProgramId] = useState('')
+  const [cancelTarget, setCancelTarget] = useState<EventItem | null>(null)
 
   const eventsQ = useQuery({
     queryKey: ['institution-events', statusFilter],
@@ -79,9 +81,19 @@ export default function EventsPage() {
     mutationFn: cancelEvent,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['institution-events'] })
-      showToast('Event cancelled', 'success')
+      showToast('Event cancelled — RSVP’d students notified', 'success')
+      setCancelTarget(null)
     },
     onError: () => showToast('Failed to cancel event', 'error'),
+  })
+
+  const attendanceMut = useMutation({
+    mutationFn: ({ rsvpId, status }: { rsvpId: string; status: 'attended' | 'no_show' }) =>
+      markAttendance(selectedEventId!, rsvpId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['event-attendees', selectedEventId] })
+    },
+    onError: () => showToast('Failed to update attendance', 'error'),
   })
 
   const openEdit = (ev: EventItem) => {
@@ -92,6 +104,7 @@ export default function EventsPage() {
     setEndTime(ev.end_time.slice(0, 16))
     setDescription(ev.description ?? '')
     setLocation(ev.location ?? '')
+    setMeetingLink(ev.meeting_link ?? '')
     setCapacity(ev.capacity?.toString() ?? '')
     setProgramId(ev.program_id ?? '')
     setShowCreateModal(true)
@@ -105,6 +118,7 @@ export default function EventsPage() {
     setEndTime('')
     setDescription('')
     setLocation('')
+    setMeetingLink('')
     setCapacity('')
     setProgramId('')
   }
@@ -118,6 +132,7 @@ export default function EventsPage() {
       end_time: new Date(endTime).toISOString(),
       description: description || undefined,
       location: location || undefined,
+      meeting_link: meetingLink || undefined,
       capacity: capacity ? Number(capacity) : undefined,
       program_id: programId || null,
     }
@@ -205,10 +220,14 @@ export default function EventsPage() {
                 <div className="space-y-1.5 text-sm text-gray-600">
                   <div className="flex items-center gap-2"><Clock size={14} /> {formatDateTime(ev.start_time)} - {formatDateTime(ev.end_time)}</div>
                   {ev.location && <div className="flex items-center gap-2"><MapPin size={14} /> {ev.location}</div>}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Users size={14} />
-                    {ev.rsvp_count} RSVPs{ev.capacity ? ` / ${ev.capacity} capacity` : ''}
+                    RSVP&rsquo;d: {ev.confirmed_count ?? ev.rsvp_count}{ev.capacity ? ` / ${ev.capacity}` : ''}
+                    {(ev.waitlist_count ?? 0) > 0 && (
+                      <span className="text-[hsl(var(--primary))] font-medium">· {ev.waitlist_count} waitlisted</span>
+                    )}
                   </div>
+                  {ev.meeting_link && <div className="flex items-center gap-2"><Video size={14} /> Online event</div>}
                   {prog && <p className="text-xs text-gray-400">Program: {prog.program_name}</p>}
                 </div>
                 <div className="flex gap-2 mt-3">
@@ -220,8 +239,8 @@ export default function EventsPage() {
                       <Button variant="ghost" size="sm" onClick={() => openEdit(ev)} className="flex items-center gap-1">
                         <Edit2 size={14} /> Edit
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => cancelMut.mutate(ev.id)}
-                        disabled={cancelMut.isPending} className="flex items-center gap-1 text-red-600">
+                      <Button variant="ghost" size="sm" onClick={() => setCancelTarget(ev)}
+                        className="flex items-center gap-1 text-red-600">
                         <XCircle size={14} /> Cancel
                       </Button>
                     </>
@@ -243,7 +262,8 @@ export default function EventsPage() {
             <Input label="End *" type="datetime-local" value={endTime} onChange={e => setEndTime(e.target.value)} />
           </div>
           <Textarea label="Description" value={description} onChange={e => setDescription(e.target.value)} rows={3} />
-          <Input label="Location" value={location} onChange={e => setLocation(e.target.value)} />
+          <Input label="Location" value={location} onChange={e => setLocation(e.target.value)} placeholder="Venue or city (in-person)" />
+          <Input label="Meeting link" value={meetingLink} onChange={e => setMeetingLink(e.target.value)} placeholder="Zoom / Meet link (online events)" />
           <Input label="Capacity" type="number" value={capacity} onChange={e => setCapacity(e.target.value)} />
           <Select label="Program" options={programOptions} value={programId} onChange={e => setProgramId(e.target.value)} />
           <div className="flex justify-end gap-2">
@@ -262,18 +282,62 @@ export default function EventsPage() {
         ) : attendees.length === 0 ? (
           <p className="text-sm text-gray-500 text-center py-4">No attendees yet.</p>
         ) : (
-          <div className="space-y-2">
-            {attendees.map(a => (
-              <div key={a.id} className="flex items-center justify-between py-2 border-b border-gray-100">
-                <span className="text-sm text-gray-700">{a.student_id.slice(0, 12)}...</span>
-                <div className="flex items-center gap-2">
-                  <Badge variant={a.rsvp_status === 'registered' ? 'success' : 'neutral'}>{a.rsvp_status}</Badge>
-                  {a.attended_at && <Badge variant="info">Attended</Badge>}
-                </div>
-              </div>
-            ))}
+          <div className="space-y-3">
+            <p className="text-sm text-gray-600">
+              Attendees: {attendees.filter(a => a.attendance_status === 'attended' || a.attended_at).length} of{' '}
+              {attendees.filter(a => a.rsvp_status !== 'waitlisted').length} RSVPs
+              {attendees.some(a => a.rsvp_status === 'waitlisted') &&
+                ` · ${attendees.filter(a => a.rsvp_status === 'waitlisted').length} waitlisted`}
+            </p>
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {attendees.map(a => {
+                const attended = a.attendance_status === 'attended' || !!a.attended_at
+                const noShow = a.attendance_status === 'no_show'
+                return (
+                  <div key={a.id} className="flex items-center justify-between py-2 border-b border-gray-100 gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm text-gray-700 truncate">
+                        {a.student_name || a.student_email || `${a.student_id.slice(0, 8)}…`}
+                      </p>
+                      {a.student_name && a.student_email && (
+                        <p className="text-xs text-gray-400 truncate">{a.student_email}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Badge variant={a.rsvp_status === 'waitlisted' ? 'warning' : 'success'}>
+                        {a.rsvp_status === 'waitlisted' ? 'Waitlist' : 'RSVP'}
+                      </Badge>
+                      <button
+                        onClick={() => attendanceMut.mutate({ rsvpId: a.id, status: 'attended' })}
+                        className={`p-1 rounded ${attended ? 'bg-green-100 text-green-700' : 'text-gray-400 hover:bg-gray-100'}`}
+                        title="Mark attended"
+                      ><UserCheck size={16} /></button>
+                      <button
+                        onClick={() => attendanceMut.mutate({ rsvpId: a.id, status: 'no_show' })}
+                        className={`p-1 rounded ${noShow ? 'bg-red-100 text-red-700' : 'text-gray-400 hover:bg-gray-100'}`}
+                        title="Mark no-show"
+                      ><UserX size={16} /></button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         )}
+      </Modal>
+
+      {/* Cancel Confirmation (Spec 27 §7) */}
+      <Modal isOpen={!!cancelTarget} onClose={() => setCancelTarget(null)} title="Cancel Event">
+        <p className="text-sm text-gray-600 mb-4">
+          Cancel &ldquo;{cancelTarget?.event_name}&rdquo;? All RSVP&rsquo;d students will be notified and the event
+          removed from their calendars. This cannot be undone.
+        </p>
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" onClick={() => setCancelTarget(null)}>Keep event</Button>
+          <Button variant="danger" onClick={() => cancelTarget && cancelMut.mutate(cancelTarget.id)} disabled={cancelMut.isPending}>
+            {cancelMut.isPending ? 'Cancelling...' : 'Cancel event'}
+          </Button>
+        </div>
       </Modal>
     </div>
   )

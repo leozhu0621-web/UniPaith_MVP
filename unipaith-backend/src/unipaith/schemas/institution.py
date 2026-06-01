@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Generic, Literal, TypeVar
+from typing import Any, Generic, Literal, TypeVar
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
 T = TypeVar("T")
 
@@ -79,6 +79,8 @@ class UpdateInstitutionRequest(BaseModel):
     policies: dict | None = None
     international_info: dict | None = None
     school_outcomes: dict | None = None
+    # Spec 25 §7 — campaign approval workflow toggle.
+    require_campaign_approval: bool | None = None
     # Spec 22 §3 Identity — editable accreditation (stored in ranking_data.accreditor).
     accreditation: str | None = None
 
@@ -109,6 +111,7 @@ class InstitutionResponse(BaseModel):
     international_info: dict | None = None
     school_outcomes: dict | None = None
     is_verified: bool
+    require_campaign_approval: bool = False
     created_at: datetime
     updated_at: datetime
     program_count: int | None = None
@@ -268,15 +271,25 @@ class SchoolSummaryResponse(BaseModel):
 
 class CreateSegmentRequest(BaseModel):
     segment_name: str = Field(min_length=1, max_length=255)
+    description: str | None = None
     program_id: UUID | None = None
-    criteria: dict
+    # Spec 26 §7 — nested include/exclude rule tree; legacy flat `criteria` kept
+    # optional for back-compat. The engine prefers `rules` when present.
+    rules: dict | None = None
+    criteria: dict | None = None
+    uploaded_list_ids: list[str] = Field(default_factory=list)
+    frequency_cap_per_week: int | None = Field(default=None, ge=0)
     is_active: bool = True
 
 
 class UpdateSegmentRequest(BaseModel):
     segment_name: str | None = Field(None, min_length=1, max_length=255)
+    description: str | None = None
     program_id: UUID | None = None
+    rules: dict | None = None
     criteria: dict | None = None
+    uploaded_list_ids: list[str] | None = None
+    frequency_cap_per_week: int | None = Field(default=None, ge=0)
     is_active: bool | None = None
 
 
@@ -286,25 +299,69 @@ class SegmentResponse(BaseModel):
     institution_id: UUID
     program_id: UUID | None
     segment_name: str
+    description: str | None = None
+    rules: dict | None = None
     criteria: dict | None
+    uploaded_list_ids: list[str] | None = None
+    frequency_cap_per_week: int | None = None
+    created_by_user_id: UUID | None = None
+    preview_audience_count: int | None = None
+    preview_generated_at: datetime | None = None
     is_active: bool
     created_at: datetime
     updated_at: datetime
 
 
+# --- Spec 26 §3/§7 — preview + NL bridge + signal dictionary ---
+
+
+class StudentSummarySchema(BaseModel):
+    student_id: str
+    name: str
+    email: str | None = None
+    nationality: str | None = None
+    country_of_residence: str | None = None
+    fit_band: str | None = None
+
+
 class SegmentPreviewRequest(BaseModel):
+    """Preview an unsaved (or saved) rule tree (§3 'Preview audience')."""
+
+    rules: dict | None = None
     program_id: UUID | None = None
-    criteria: dict = Field(default_factory=dict)
+    uploaded_list_ids: list[str] = Field(default_factory=list)
 
 
-class SegmentNlBridgeRequest(BaseModel):
-    description: str = Field(min_length=3, max_length=2000)
+class SegmentPreviewResponse(BaseModel):
+    audience_count: int
+    platform_count: int
+    uploaded_external_count: int
+    sample: list[StudentSummarySchema]
+    composition: dict[str, dict[str, int]] = Field(default_factory=dict)
+    fairness_warning: str | None = None
 
 
-class SegmentNlBridgeResponse(BaseModel):
-    rules: list[dict]
+class NLBridgeRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=2000)
+
+
+class NLBridgeRuleSchema(BaseModel):
+    field: str
+    operator: str
+    value: Any = None
+    branch: Literal["include", "exclude"] = "include"
+    ambiguous: bool = False
+
+
+class NLBridgeResponse(BaseModel):
+    rules: list[NLBridgeRuleSchema]
     confidence_overall: int
-    ambiguity_notes: list[str]
+    ambiguity_notes: list[str] = Field(default_factory=list)
+
+
+class SignalDictionaryResponse(BaseModel):
+    categories: list[dict[str, Any]]
+    signals: list[dict[str, Any]]
 
 
 # --- Dashboard Summary ---
@@ -372,54 +429,195 @@ class AnalyticsResponse(BaseModel):
     event_attribution: list[EventAttribution] | None = None
 
 
-# --- Campaigns ---
+# --- Campaigns (Spec 25) ---
+
+# Spec 25 §3 enums.
+CAMPAIGN_OBJECTIVES = (
+    "application_open",
+    "event_promotion",
+    "scholarship_announcement",
+    "deadline_reminder",
+    "nurture",
+    "general",
+)
+CAMPAIGN_DESTINATION_TYPES = (
+    "institution_page",
+    "program_page",
+    "campaign_landing_page",
+    "external_url",
+)
+CAMPAIGN_CTA_TYPES = ("learn_more", "rsvp_event", "request_info", "start_application")
+CAMPAIGN_CHANNELS = ("internal_messaging", "external_email")
+CAMPAIGN_STATUSES = (
+    "draft",
+    "pending_approval",
+    "scheduled",
+    "active",
+    "paused",
+    "completed",
+)
+# Spec 25 §6 attribution funnel.
+ATTRIBUTION_ACTIONS = (
+    "view",
+    "save",
+    "rsvp",
+    "request_info",
+    "apply_started",
+    "apply_submitted",
+    "decision",
+)
+
+
+class CampaignAudience(BaseModel):
+    segment_ids: list[UUID] = Field(default_factory=list)
+    uploaded_list_ids: list[UUID] = Field(default_factory=list)
+    deduped_count: int | None = None
 
 
 class CreateCampaignRequest(BaseModel):
-    campaign_name: str = Field(min_length=1, max_length=255)
-    campaign_type: str | None = None
-    program_id: UUID | None = None
-    segment_id: UUID | None = None
-    message_subject: str | None = None
-    message_body: str | None = None
-    scheduled_send_at: datetime | None = None
+    name: str = Field(min_length=1, max_length=255)
+    objective: str | None = None
+    owner_id: UUID | None = None
+    associate_program_ids: list[UUID] = Field(default_factory=list)
+    associate_intake_round_id: UUID | None = None
+    destination_type: str | None = None
+    destination_id: UUID | None = None
+    destination_url: str | None = None
+    cta_type: str | None = None
+    channels: list[str] = Field(default_factory=list)
+    audience_segment_ids: list[UUID] = Field(default_factory=list)
+    audience_uploaded_list_ids: list[UUID] = Field(default_factory=list)
+    subject: str | None = None
+    body: str | None = None
+    scheduled_at: datetime | None = None
+
+    @field_validator("objective")
+    @classmethod
+    def _v_obj(cls, v: str | None) -> str | None:
+        if v is not None and v not in CAMPAIGN_OBJECTIVES:
+            raise ValueError(f"objective must be one of {CAMPAIGN_OBJECTIVES}")
+        return v
+
+    @field_validator("destination_type")
+    @classmethod
+    def _v_dest(cls, v: str | None) -> str | None:
+        if v is not None and v not in CAMPAIGN_DESTINATION_TYPES:
+            raise ValueError(f"destination_type must be one of {CAMPAIGN_DESTINATION_TYPES}")
+        return v
+
+    @field_validator("cta_type")
+    @classmethod
+    def _v_cta(cls, v: str | None) -> str | None:
+        if v is not None and v not in CAMPAIGN_CTA_TYPES:
+            raise ValueError(f"cta_type must be one of {CAMPAIGN_CTA_TYPES}")
+        return v
+
+    @field_validator("channels")
+    @classmethod
+    def _v_channels(cls, v: list[str]) -> list[str]:
+        for c in v:
+            if c not in CAMPAIGN_CHANNELS:
+                raise ValueError(f"channel must be one of {CAMPAIGN_CHANNELS}")
+        return v
 
 
 class UpdateCampaignRequest(BaseModel):
-    campaign_name: str | None = Field(None, min_length=1, max_length=255)
-    campaign_type: str | None = None
-    program_id: UUID | None = None
-    segment_id: UUID | None = None
-    message_subject: str | None = None
-    message_body: str | None = None
-    status: str | None = None
-    scheduled_send_at: datetime | None = None
+    name: str | None = Field(None, min_length=1, max_length=255)
+    objective: str | None = None
+    owner_id: UUID | None = None
+    associate_program_ids: list[UUID] | None = None
+    associate_intake_round_id: UUID | None = None
+    destination_type: str | None = None
+    destination_id: UUID | None = None
+    destination_url: str | None = None
+    cta_type: str | None = None
+    channels: list[str] | None = None
+    audience_segment_ids: list[UUID] | None = None
+    audience_uploaded_list_ids: list[UUID] | None = None
+    subject: str | None = None
+    body: str | None = None
+    scheduled_at: datetime | None = None
+
+    @field_validator("objective")
+    @classmethod
+    def _v_obj(cls, v: str | None) -> str | None:
+        if v is not None and v not in CAMPAIGN_OBJECTIVES:
+            raise ValueError(f"objective must be one of {CAMPAIGN_OBJECTIVES}")
+        return v
+
+    @field_validator("destination_type")
+    @classmethod
+    def _v_dest(cls, v: str | None) -> str | None:
+        if v is not None and v not in CAMPAIGN_DESTINATION_TYPES:
+            raise ValueError(f"destination_type must be one of {CAMPAIGN_DESTINATION_TYPES}")
+        return v
+
+    @field_validator("cta_type")
+    @classmethod
+    def _v_cta(cls, v: str | None) -> str | None:
+        if v is not None and v not in CAMPAIGN_CTA_TYPES:
+            raise ValueError(f"cta_type must be one of {CAMPAIGN_CTA_TYPES}")
+        return v
+
+    @field_validator("channels")
+    @classmethod
+    def _v_channels(cls, v: list[str] | None) -> list[str] | None:
+        if v is None:
+            return v
+        for c in v:
+            if c not in CAMPAIGN_CHANNELS:
+                raise ValueError(f"channel must be one of {CAMPAIGN_CHANNELS}")
+        return v
+
+
+class RejectCampaignRequest(BaseModel):
+    comment: str = Field(min_length=1, max_length=2000)
+
+
+class CampaignMetrics(BaseModel):
+    sent: int = 0
+    delivered: int = 0
+    opens: int = 0
+    clicks: int = 0
+    conversions: dict[str, int] = Field(default_factory=dict)
+    unsubscribes: int = 0
+    bounces: int = 0
 
 
 class CampaignResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
     id: UUID
     institution_id: UUID
-    program_id: UUID | None
-    segment_id: UUID | None
-    campaign_name: str
-    campaign_type: str | None
-    message_subject: str | None
-    message_body: str | None
-    status: str | None
-    scheduled_send_at: datetime | None
-    sent_at: datetime | None
+    name: str
+    objective: str | None = None
+    owner_id: UUID | None = None
+    status: str
+    associate_program_ids: list[UUID] = Field(default_factory=list)
+    associate_intake_round_id: UUID | None = None
+    destination_type: str | None = None
+    destination_id: UUID | None = None
+    destination_url: str | None = None
+    cta_type: str | None = None
+    channels: list[str] = Field(default_factory=list)
+    audience: CampaignAudience
+    subject: str | None = None
+    body: str | None = None
+    scheduled_at: datetime | None = None
+    sent_at: datetime | None = None
+    sent_count: int | None = None
+    metrics: CampaignMetrics | None = None
+    submitted_for_approval_at: datetime | None = None
+    approved_by: UUID | None = None
+    approved_at: datetime | None = None
+    rejection_comment: str | None = None
+    requires_approval: bool = False
     created_at: datetime
     updated_at: datetime
 
 
-class CampaignMetricsResponse(BaseModel):
+class CampaignMetricsResponse(CampaignMetrics):
+    """Spec 25 §8 metrics shape, plus the campaign id for convenience."""
+
     campaign_id: UUID
-    total_recipients: int
-    delivered: int
-    opened: int
-    clicked: int
-    responded: int
 
 
 class CampaignAudienceSampleRow(BaseModel):
@@ -506,9 +704,108 @@ class RecordActionRequest(BaseModel):
     campaign_id: UUID
     action_type: str = Field(
         ...,
-        pattern=r"^(view|save|rsvp|request_info|apply)$",
+        # Spec 25 §6 funnel (+ legacy 'apply' alias for apply_started).
+        pattern=r"^(view|save|rsvp|request_info|apply|apply_started|apply_submitted|decision)$",
     )
     target_id: UUID | None = None
+    link_id: UUID | None = None
+
+
+# --- Campaign audience preview (Spec 25 §8 preview-audience) ---
+
+
+class AudienceSamplePerson(BaseModel):
+    student_id: UUID | None = None
+    name: str | None = None
+    email: str | None = None
+    source: str  # 'platform' | 'uploaded_list'
+    channel: str  # 'internal' | 'external'
+
+
+class AudiencePreviewResponse(BaseModel):
+    campaign_id: UUID | None = None
+    deduped_count: int
+    platform_count: int = 0
+    uploaded_count: int = 0
+    suppressed_count: int = 0
+    consent_excluded_count: int = 0
+    sample: list[AudienceSamplePerson] = Field(default_factory=list)
+
+
+# --- Uploaded contact lists (Spec 24/26 §2.5) ---
+
+
+class CreateUploadedListRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    description: str | None = None
+    source: str = Field(default="csv_upload", max_length=30)
+    source_consent_confirmed: bool = False
+    # Inline CSV-style rows: list of {email, first_name?, last_name?, ...}
+    contacts: list[dict] = Field(default_factory=list)
+
+
+class UpdateUploadedListRequest(BaseModel):
+    name: str | None = Field(None, min_length=1, max_length=255)
+    description: str | None = None
+    source_consent_confirmed: bool | None = None
+
+
+class UploadedListResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    institution_id: UUID
+    name: str
+    description: str | None = None
+    source: str
+    source_consent_confirmed: bool
+    contact_count: int
+    created_at: datetime
+    updated_at: datetime
+
+
+# --- Suppression list (Spec 25 §4 / 46) ---
+
+
+class CreateSuppressionRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+    reason: str | None = Field(default="manual", max_length=30)
+
+
+class SuppressionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    institution_id: UUID
+    email: str
+    reason: str | None = None
+    created_at: datetime
+
+
+# --- AI: CampaignAudienceCopySuggester (Spec 45 §16) ---
+
+
+class DraftCampaignCopyRequest(BaseModel):
+    objective: str | None = None
+    cta_type: str | None = None
+    audience_summary: str | None = Field(default=None, max_length=2000)
+    audience_segment_ids: list[UUID] = Field(default_factory=list)
+    tone: str | None = Field(default=None, max_length=120)
+    additional_context: str | None = Field(default=None, max_length=2000)
+
+
+class DraftCampaignCopyResponse(BaseModel):
+    subject: str
+    body: str
+    alternate_subjects: list[str] = Field(default_factory=list)
+    preview_text: str = ""
+    source: str = "llm"  # 'llm' | 'fallback'
+
+
+class RecordEngagementRequest(BaseModel):
+    """Spec 27 §5 — a per-object engagement event from a student surface."""
+
+    object_type: Literal["post", "event", "promotion"]
+    object_id: UUID
+    action: Literal["view", "impression", "click", "save", "request_info", "apply_started"]
 
 
 # --- Inquiries ---
@@ -584,6 +881,9 @@ class CreatePromotionRequest(BaseModel):
     targeting: TargetingScope | None = None
     starts_at: datetime | None = None
     ends_at: datetime | None = None
+    # Spec 27 §4.1 — target a program (default), the institution, or a landing URL.
+    target_kind: Literal["program", "institution", "landing"] = "program"
+    target_url: str | None = Field(None, max_length=1000)
 
 
 class UpdatePromotionRequest(BaseModel):
@@ -598,6 +898,8 @@ class UpdatePromotionRequest(BaseModel):
     )
     starts_at: datetime | None = None
     ends_at: datetime | None = None
+    target_kind: Literal["program", "institution", "landing"] | None = None
+    target_url: str | None = Field(None, max_length=1000)
 
 
 class PromotionResponse(BaseModel):
@@ -614,6 +916,8 @@ class PromotionResponse(BaseModel):
     ends_at: datetime | None
     impression_count: int
     click_count: int
+    target_kind: str = "program"
+    target_url: str | None = None
     created_at: datetime
     updated_at: datetime
     program_name: str | None = None
@@ -738,6 +1042,29 @@ class SaveMappingTemplateRequest(BaseModel):
 # --- Posts ---
 
 
+class PostCTA(BaseModel):
+    """Spec 27 §2.4 — a call-to-action attached to a post."""
+
+    type: Literal[
+        "view_program",
+        "rsvp",
+        "request_info",
+        "start_application",
+        "add_to_calendar",
+    ]
+    label: str = Field(min_length=1, max_length=80)
+    # program_id / event_id / url depending on type; optional for institution-wide.
+    target: str | None = None
+
+
+class PostVisibility(BaseModel):
+    """Spec 27 §2.3 — visibility scope for a post."""
+
+    public: bool = True
+    segment_ids: list[UUID] = Field(default_factory=list)
+    region_scopes: list[str] = Field(default_factory=list)
+
+
 class CreatePostRequest(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     body: str = Field(min_length=1)
@@ -748,7 +1075,8 @@ class CreatePostRequest(BaseModel):
     scheduled_for: datetime | None = None
     is_template: bool = False
     template_name: str | None = None
-    ctas: list[dict] | None = None
+    ctas: list[PostCTA] | None = None
+    visibility: PostVisibility | None = None
 
 
 class UpdatePostRequest(BaseModel):
@@ -761,7 +1089,8 @@ class UpdatePostRequest(BaseModel):
     scheduled_for: datetime | None = None
     is_template: bool | None = None
     template_name: str | None = None
-    ctas: list[dict] | None = None
+    ctas: list[PostCTA] | None = None
+    visibility: PostVisibility | None = None
 
 
 class PostResponse(BaseModel):
@@ -781,7 +1110,14 @@ class PostResponse(BaseModel):
     is_template: bool
     template_name: str | None
     view_count: int
-    ctas: list | dict | None = None
+    # Spec 27 §5 — per-object engagement counters.
+    click_count: int = 0
+    save_count: int = 0
+    request_info_count: int = 0
+    apply_started_count: int = 0
+    # Spec 27 §2.4 / §2.3 — CTAs + visibility scope (raw JSONB passthrough).
+    ctas: list | None = None
+    visibility: dict | None = None
     created_at: datetime
     updated_at: datetime
     author_email: str | None = None

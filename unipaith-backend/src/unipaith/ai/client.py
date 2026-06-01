@@ -206,6 +206,8 @@ Agent = Literal[
     "matcher",
     # Spec 10 §3 / 45 §12 — type-first program search query interpreter.
     "query_interpreter",
+    # Spec 25 §10 / 45 §16 — institution campaign copy suggester.
+    "campaign_copy",
     # Spec 20 §8 — Connect feed ranker + event recommender (Haiku).
     "connect_ranker",
     "event_recommender",

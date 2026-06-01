@@ -33,6 +33,13 @@ const TYPE_OPTIONS = [
   { value: 'banner', label: 'Banner' },
 ]
 
+// Spec 27 §4.1 — promotion target.
+const TARGET_KIND_OPTIONS = [
+  { value: 'program', label: 'A program' },
+  { value: 'institution', label: 'The institution' },
+  { value: 'landing', label: 'A custom landing URL' },
+]
+
 export default function PromotionsPage() {
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState('all')
@@ -50,6 +57,8 @@ export default function PromotionsPage() {
   const [targetRegions, setTargetRegions] = useState('')
   const [targetCountries, setTargetCountries] = useState('')
   const [targetDegrees, setTargetDegrees] = useState('')
+  const [targetKind, setTargetKind] = useState<'program' | 'institution' | 'landing'>('program')
+  const [targetUrl, setTargetUrl] = useState('')
 
   const tabs = [
     { id: 'all', label: 'All' },
@@ -71,6 +80,7 @@ export default function PromotionsPage() {
   const resetForm = () => {
     setTitle(''); setDescription(''); setPromoType('spotlight'); setProgramId('')
     setStartsAt(''); setEndsAt(''); setTargetRegions(''); setTargetCountries(''); setTargetDegrees('')
+    setTargetKind('program'); setTargetUrl('')
     setEditTarget(null)
   }
 
@@ -86,6 +96,8 @@ export default function PromotionsPage() {
     setTargetRegions(p.targeting?.regions?.join(', ') || '')
     setTargetCountries(p.targeting?.countries?.join(', ') || '')
     setTargetDegrees(p.targeting?.degree_types?.join(', ') || '')
+    setTargetKind(p.target_kind || 'program')
+    setTargetUrl(p.target_url || '')
     setShowModal(true)
   }
 
@@ -127,6 +139,8 @@ export default function PromotionsPage() {
       starts_at: startsAt ? new Date(startsAt).toISOString() : undefined,
       ends_at: endsAt ? new Date(endsAt).toISOString() : undefined,
       targeting: buildTargeting(),
+      target_kind: targetKind,
+      target_url: targetKind === 'landing' ? targetUrl || undefined : undefined,
     }
     if (editTarget) {
       updateMut.mutate({ id: editTarget.id, payload })
@@ -248,6 +262,12 @@ export default function PromotionsPage() {
           <div className="grid grid-cols-2 gap-3">
             <Select label="Type" options={TYPE_OPTIONS} value={promoType} onChange={e => setPromoType(e.target.value)} />
             <Select label="Program" options={programOptions} value={programId} onChange={e => setProgramId(e.target.value)} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Select label="Links to" options={TARGET_KIND_OPTIONS} value={targetKind} onChange={e => setTargetKind(e.target.value as 'program' | 'institution' | 'landing')} />
+            {targetKind === 'landing' && (
+              <Input label="Landing URL" value={targetUrl} onChange={e => setTargetUrl(e.target.value)} placeholder="https://..." />
+            )}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Input label="Start Date" type="datetime-local" value={startsAt} onChange={e => setStartsAt(e.target.value)} />
