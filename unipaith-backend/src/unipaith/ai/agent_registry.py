@@ -64,6 +64,10 @@ AGENT_TIERS: dict[str, str] = {
     # ── Enrollment / yield (spec 35 §6) — both fall back to deterministic counts ──
     "yield_risk_scorer": "batch",  # YieldRiskScorer — per-admit confirm-probability (Haiku)
     "next_best_action_yield": "workhorse",  # NextBestActionForYield — ranked actions (Sonnet)
+    # ── Recruitment CRM (spec 40 §5) — both fall back to deterministic sorting ──
+    "prospect_prioritizer": "batch",  # ProspectPrioritizer — apply-likelihood ranking (Haiku)
+    # TerritoryOptimizer — high-yield school/fair suggestions (Sonnet).
+    "territory_optimizer": "workhorse",
 }
 
 

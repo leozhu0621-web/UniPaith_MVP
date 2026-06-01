@@ -136,6 +136,15 @@ AGENT_REQUIRES: dict[str, str | None] = {
     # selection (§4 / 46 §6); on any failure the services fall back to counts.
     "yield_risk_scorer": None,
     "next_best_action_yield": None,
+    # Spec 40 §5 — recruitment CRM agents are institution-initiated and
+    # role-gated at the API layer (like campaign_copy / segment_builder_nl).
+    # They operate on the institution's own prospect pool + historical
+    # conversion aggregates, with no individual student-consent lever here.
+    # Marketing outreach to prospects is gated separately by each prospect's
+    # `consent_outreach` flag (§7 / 46). Both agents fall back to deterministic
+    # sorting on any failure.
+    "prospect_prioritizer": None,
+    "territory_optimizer": None,
 }
 
 

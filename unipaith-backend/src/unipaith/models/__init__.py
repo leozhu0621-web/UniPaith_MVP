@@ -105,6 +105,13 @@ from unipaith.models.pipeline import (
     PipelineConfig,
     PipelineStageSnapshot,
 )
+from unipaith.models.recruitment import (
+    Prospect,
+    RecruitmentFair,
+    RecruitmentTrip,
+    Territory,
+    TripVisit,
+)
 from unipaith.models.settings import InstitutionTeamInvite, UserSettings
 from unipaith.models.strategy import StudentStrategy
 from unipaith.models.student import (
@@ -263,4 +270,10 @@ __all__ = [
     "PipelineStageSnapshot",
     "PipelineConfig",
     "StudentSubscription",
+    # Recruitment CRM (Spec 40)
+    "Prospect",
+    "RecruitmentTrip",
+    "TripVisit",
+    "RecruitmentFair",
+    "Territory",
 ]

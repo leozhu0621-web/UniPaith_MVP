@@ -27,6 +27,7 @@ from unipaith.api.needs import router as needs_router
 from unipaith.api.notifications import router as notifications_router
 from unipaith.api.programs import router as programs_router
 from unipaith.api.recommendations import router as recommendations_router
+from unipaith.api.recruitment import router as recruitment_router
 from unipaith.api.reviews import router as reviews_router
 from unipaith.api.saved_lists import router as saved_lists_router
 from unipaith.api.search import router as search_router
@@ -62,6 +63,9 @@ api_router.include_router(institution_inbox_router)
 # Spec 37 — AI edit-diff capture under `/institutions/me/ai-surface/*`; before
 # institutions_router so the literal path wins over `/institutions/{id}`.
 api_router.include_router(ai_surface_router)
+# Spec 40 — recruitment CRM under `/institutions/me/recruitment/*`; before
+# institutions_router so the literal path wins over `/institutions/{id}`.
+api_router.include_router(recruitment_router)
 api_router.include_router(institutions_router)
 api_router.include_router(programs_router)
 api_router.include_router(applications_router)

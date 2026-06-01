@@ -336,6 +336,15 @@ class Settings(BaseSettings):
     # narrator so the endpoint never 5xxes (the spec 31 integration invariant).
     ai_intelligence_digest_v2_enabled: bool = False
 
+    # Spec 40 §5 — recruitment CRM intelligence (ProspectPrioritizer +
+    # TerritoryOptimizer). When True, ProspectPrioritizer ranks prospects by
+    # apply-likelihood on list load (deterministic propensity heuristic either
+    # way) and TerritoryOptimizer (Sonnet) refines the per-territory travel
+    # suggestions. Always falls back to manual sorting / deterministic
+    # prior-year-yield ranking on any failure (§5). Prioritization + planning
+    # only, never selection (46 §6). Off in code, enabled per-env via ECS.
+    ai_recruitment_v2_enabled: bool = False
+
     # GPU infrastructure (cloud-first)
     gpu_mode: str = "openai"  # "openai" | "aws" | "local" | "mock"
     gpu_8b_instance_id: str = ""

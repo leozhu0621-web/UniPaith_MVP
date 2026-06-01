@@ -134,6 +134,9 @@ def test_each_agent_declares_consent_requirement():
         # Spec 35 §6 — enrollment/yield intelligence agents.
         "yield_risk_scorer",
         "next_best_action_yield",
+        # Spec 40 §5 — recruitment CRM agents.
+        "prospect_prioritizer",
+        "territory_optimizer",
     }
     assert set(AGENT_REQUIRES.keys()) == expected_agents
 
