@@ -284,6 +284,13 @@ class Settings(BaseSettings):
     # upload never 5xxes (Plan-2 integration invariant).
     ai_data_parse_triage_v2_enabled: bool = False
 
+    # Spec 26 §6 / 45 §17 — SegmentBuilderNLBridge. When True the "Try AI assist"
+    # bar on the segment builder routes the institution's natural-language
+    # audience description through the Sonnet agent to draft structured rules;
+    # on any failure (parse / provider / mock mode) it falls back to a keyword
+    # parser so the institution always gets editable rules (never a 5xx).
+    ai_segment_builder_v2_enabled: bool = False
+
     # Spec 09 §4A — probability bands (admit / scholarship / waitlist) on the
     # Match surface + program detail. Rule-based + calibrated heuristic
     # (unipaith.ai.probability); honest ranges, "not enough data yet" when a

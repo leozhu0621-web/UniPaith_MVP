@@ -1634,19 +1634,88 @@ export interface Promotion {
   is_eligible: boolean
 }
 
-// ============ SEGMENTS ============
+// ============ SEGMENTS (Spec 26 · Audience Segmentation) ============
+
+/** One leaf rule: a signal field + operator + value. */
+export interface SegmentRule {
+  field: string
+  operator: string
+  value?: any
+  branch?: 'include' | 'exclude'
+  ambiguous?: boolean
+}
+
+/** A nested AND/OR/NOT group of rules or sub-groups. */
+export interface SegmentRuleGroup {
+  op: 'AND' | 'OR' | 'NOT'
+  rules: Array<SegmentRule | SegmentRuleGroup>
+}
+
+/** The stored rule tree: separate include / exclude branches. */
+export interface SegmentRuleTree {
+  include: SegmentRuleGroup
+  exclude: SegmentRuleGroup
+}
+
 export interface Segment {
   id: string
   institution_id: string
   program_id: string | null
   segment_name: string
   description?: string | null
+  rules?: SegmentRuleTree | null
   criteria: Record<string, any> | null
   uploaded_list_ids?: string[] | null
   frequency_cap_per_week?: number | null
+  created_by_user_id?: string | null
+  preview_audience_count?: number | null
+  preview_generated_at?: string | null
   is_active: boolean
   created_at: string
   updated_at: string
+}
+
+export interface SignalDef {
+  key: string
+  label: string
+  category: string
+  category_label: string
+  operators: string[]
+  value_type: 'enum_multi' | 'enum_single' | 'number' | 'band' | 'boolean' | 'days'
+  options: Array<{ value: string; label: string }> | null
+  plain_language: string
+  protected: boolean
+  derived: boolean
+  help_text: string
+}
+
+export interface SignalDictionary {
+  categories: Array<{ key: string; label: string }>
+  signals: SignalDef[]
+}
+
+export interface StudentSummary {
+  student_id: string
+  name: string
+  email: string | null
+  nationality: string | null
+  country_of_residence: string | null
+  fit_band: string | null
+}
+
+export interface SegmentPreview {
+  audience_count: number
+  platform_count: number
+  uploaded_external_count: number
+  sample: StudentSummary[]
+  composition: Record<string, Record<string, number>>
+  fairness_warning: string | null
+}
+
+export interface NLBridgeResult {
+  rules: SegmentRule[]
+  confidence_overall: number
+  ambiguity_notes: string[]
 }
 
 // ============ INTERVIEW SCORING ============

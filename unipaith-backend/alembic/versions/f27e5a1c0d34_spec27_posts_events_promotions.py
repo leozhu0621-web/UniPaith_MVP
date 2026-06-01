@@ -15,7 +15,7 @@ Every op is guarded with ``_has_column`` so the revision is a safe no-op against
 dev/test DB built from the models via ``create_all``.
 
 Revision ID: f27e5a1c0d34
-Revises: e9f0a1b2c3d4
+Revises: a26d5e9f1b3c
 Create Date: 2026-06-01
 
 """
@@ -29,7 +29,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "f27e5a1c0d34"  # pragma: allowlist secret
-down_revision = "e9f0a1b2c3d4"  # pragma: allowlist secret
+down_revision = "a26d5e9f1b3c"  # pragma: allowlist secret
 branch_labels = None
 depends_on = None
 
