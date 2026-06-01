@@ -27,7 +27,7 @@ const DEFAULTS: AnalyticsFilters = {
 
 export function filtersToParams(f: AnalyticsFilters): Record<string, string> {
   const p: Record<string, string> = { tab: f.tab, window: f.timeWindow }
-  if f.funnel !== 'discovery') p.funnel = f.funnel
+  if (f.funnel !== 'discovery') p.funnel = f.funnel
   if (f.programId) p.program_id = f.programId
   if (f.intakeId) p.intake_id = f.intakeId
   if (f.segmentId) p.segment_id = f.segmentId
