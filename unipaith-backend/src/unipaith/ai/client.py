@@ -206,6 +206,13 @@ Agent = Literal[
     "matcher",
     # Spec 10 §3 / 45 §12 — type-first program search query interpreter.
     "query_interpreter",
+    # Spec 20 §8 — Connect feed ranker + event recommender (Haiku).
+    "connect_ranker",
+    "event_recommender",
+    # Spec 17 §7 / 45 §13 — inbox AI-suggested reply drafter.
+    "inbox_reply_drafter",
+    # Spec 24 §9 / 45 §19 — dataset upload parse triage (Haiku).
+    "document_parse_triage",
 ]
 
 

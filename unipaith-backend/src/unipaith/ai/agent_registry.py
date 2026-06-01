@@ -44,6 +44,8 @@ AGENT_TIERS: dict[str, str] = {
     # ── Connect feed (spec 20 §8) — cheap Haiku ranking, always falls back ──
     "connect_ranker": "batch",
     "event_recommender": "batch",
+    # ── Data upload parse triage (spec 24 §9 / 45 §19) — Haiku, always falls back ──
+    "document_parse_triage": "batch",
 }
 
 

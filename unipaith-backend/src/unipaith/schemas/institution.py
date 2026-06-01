@@ -578,22 +578,71 @@ class PromotionResponse(BaseModel):
 # --- Datasets ---
 
 
-class CreateDatasetRequest(BaseModel):
-    dataset_name: str = Field(min_length=1, max_length=255)
-    dataset_type: Literal["admissions_history", "prospect_list", "outcomes_summary"]
-    description: str | None = None
+DatasetType = Literal["admissions_history", "prospect_list", "outcomes_summary"]
+UsageScope = Literal["marketing", "analytics", "admissions", "all"]
+
+
+class DatasetUploadUrlRequest(BaseModel):
     file_name: str = Field(min_length=1)
     content_type: str = "text/csv"
+
+
+class DatasetUploadUrlResponse(BaseModel):
+    file_ref: str
+    upload_url: str
+
+
+class DatasetInspectRequest(BaseModel):
+    file_ref: str = Field(min_length=1)
+
+
+class DatasetInspectResponse(BaseModel):
+    columns: list[str]
+    rows: list[dict]
+    total_rows: int
+    histogram: dict
+
+
+class ValidateDatasetRequest(BaseModel):
+    dataset_type: DatasetType
+    mapping: dict[str, str]
+    file_ref: str = Field(min_length=1)
+
+
+class ValidateDatasetResponse(BaseModel):
+    validation_report: dict
+    normalization_map: dict
+
+
+class ConfirmDatasetUploadRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    dataset_type: DatasetType
+    file_ref: str = Field(min_length=1)
+    file_name: str = Field(min_length=1)
+    mapping: dict[str, str]
+    description: str | None = None
+    usage_scope: UsageScope | None = None
+    coverage_start: date | None = None
+    coverage_end: date | None = None
     file_size_bytes: int | None = None
-    usage_scope: Literal["marketing", "analytics", "admissions", "all"] | None = None
+
+
+class ReplaceDatasetRequest(BaseModel):
+    file_ref: str = Field(min_length=1)
+    file_name: str = Field(min_length=1)
+    mapping: dict[str, str] | None = None
+
+
+class AppendDatasetRequest(BaseModel):
+    file_ref: str = Field(min_length=1)
+    file_name: str = Field(min_length=1)
 
 
 class UpdateDatasetRequest(BaseModel):
     dataset_name: str | None = Field(None, min_length=1, max_length=255)
     description: str | None = None
     column_mapping: dict | None = None
-    usage_scope: str | None = None
-    status: Literal["pending", "validated", "active", "archived"] | None = None
+    usage_scope: UsageScope | None = None
 
 
 class DatasetResponse(BaseModel):
@@ -607,24 +656,49 @@ class DatasetResponse(BaseModel):
     file_size_bytes: int | None
     row_count: int | None
     column_mapping: dict | None
+    normalization_map: dict | None = None
     validation_errors: list | dict | None = None
     status: str
     usage_scope: str | None
+    coverage_start: date | None = None
+    coverage_end: date | None = None
     version: int
     created_at: datetime
     updated_at: datetime
     download_url: str | None = None
 
 
-class DatasetUploadResponse(BaseModel):
-    dataset_id: UUID
-    upload_url: str
+class DatasetVersionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    version_number: int
+    row_count: int | None
+    changes_summary: dict | None
+    validation_report: dict | None
+    uploaded_at: datetime
 
 
 class DatasetPreviewResponse(BaseModel):
     columns: list[str]
     rows: list[dict]
     total_rows: int
+    histogram: dict = Field(default_factory=dict)
+
+
+class CreateMappingTemplateRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    dataset_type: DatasetType
+    column_mapping: dict[str, str]
+
+
+class MappingTemplateResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    dataset_type: str
+    name: str
+    column_mapping: dict
+    created_at: datetime
+    updated_at: datetime
 
 
 # --- Posts ---

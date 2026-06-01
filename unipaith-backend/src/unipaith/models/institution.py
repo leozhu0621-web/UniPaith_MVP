@@ -427,9 +427,15 @@ class InstitutionDataset(Base):
     file_size_bytes: Mapped[int | None] = mapped_column(Integer)
     row_count: Mapped[int | None] = mapped_column(Integer)
     column_mapping: Mapped[dict | None] = mapped_column(JSONB)
+    # Spec 24 §4.6 — institution program identifier → UniPaith programs.id map.
+    normalization_map: Mapped[dict | None] = mapped_column(JSONB)
     validation_errors: Mapped[dict | None] = mapped_column(JSONB)
-    status: Mapped[str] = mapped_column(String(20), default="pending")
+    # Spec 24 §10/§11 — lifecycle: uploaded → validated → processed → failed.
+    status: Mapped[str] = mapped_column(String(20), default="uploaded")
     usage_scope: Mapped[str | None] = mapped_column(String(50))
+    # Spec 24 §4.2 — coverage / time range the dataset covers.
+    coverage_start: Mapped[date | None] = mapped_column(Date)
+    coverage_end: Mapped[date | None] = mapped_column(Date)
     version: Mapped[int] = mapped_column(Integer, default=1)
     uploaded_by: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
@@ -442,6 +448,78 @@ class InstitutionDataset(Base):
     )
 
     institution: Mapped[Institution] = relationship(back_populates="datasets")
+    versions: Mapped[list[DatasetVersion]] = relationship(
+        back_populates="dataset",
+        cascade="all, delete-orphan",
+        order_by="DatasetVersion.version_number",
+    )
+
+
+class DatasetVersion(Base):
+    """Spec 24 §6 — every dataset write creates an immutable version snapshot.
+
+    Holds the S3 key of the file as it was at that version plus the change
+    summary and the validation report produced for that write, so the
+    institution can review per-version diffs and roll back.
+    """
+
+    __tablename__ = "dataset_versions"
+    __table_args__ = (
+        UniqueConstraint("dataset_id", "version_number", name="uq_dataset_version_number"),
+        Index("ix_dataset_versions_dataset", "dataset_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    dataset_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("institution_datasets.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    version_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    s3_key: Mapped[str] = mapped_column(String(1000), nullable=False)
+    row_count: Mapped[int | None] = mapped_column(Integer)
+    # {added, modified, invalidated}
+    changes_summary: Mapped[dict | None] = mapped_column(JSONB)
+    validation_report: Mapped[dict | None] = mapped_column(JSONB)
+    uploaded_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    uploaded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    dataset: Mapped[InstitutionDataset] = relationship(back_populates="versions")
+
+
+class DatasetMappingTemplate(Base):
+    """Spec 24 §4.5 / §12 — saved column→field mappings, reusable across uploads.
+
+    Scoped to an institution + dataset_type so a team can re-apply the same
+    mapping to recurring uploads of the same shape.
+    """
+
+    __tablename__ = "dataset_mapping_templates"
+    __table_args__ = (
+        UniqueConstraint("institution_id", "dataset_type", "name", name="uq_mapping_template_name"),
+        Index("ix_mapping_templates_inst_type", "institution_id", "dataset_type"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    institution_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False
+    )
+    dataset_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    column_mapping: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
 
 
 class InstitutionPost(Base):

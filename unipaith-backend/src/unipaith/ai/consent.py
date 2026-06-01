@@ -88,6 +88,11 @@ AGENT_REQUIRES: dict[str, str | None] = {
     # on deny the agent returns None and the feed falls back to its heuristic.
     "connect_ranker": "matching",
     "event_recommender": "matching",
+    # Spec 24 §9 / 45 §19 — DocumentParseTriage runs on an institution-uploaded
+    # dataset (no student in scope), so it carries no student-consent gate —
+    # like review_summarizer / authenticity_risk. Access is gated by the
+    # institution_admin role at the API layer.
+    "document_parse_triage": None,
 }
 
 
