@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 import string
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import select
@@ -30,10 +30,55 @@ from unipaith.services.guardrail_service import validate_intent
 _INSTITUTION_DECISION_STATE = {
     "admitted": "accepted",
     "accepted": "accepted",
+    "conditional_admission": "accepted",
     "rejected": "rejected",
     "denied": "rejected",
     "waitlisted": "waitlisted",
     "deferred": "deferred",
+}
+
+# Spec 34 §2 — institution decision values the reviewer can release. ``admitted``
+# is the canonical "accepted"; ``conditional_admission`` carries conditions.
+_VALID_DECISIONS = {
+    "admitted",
+    "accepted",
+    "conditional_admission",
+    "rejected",
+    "waitlisted",
+    "deferred",
+}
+# Spec 34 §3 — decisions that mint a student-facing offer on release.
+_OFFER_PRODUCING_DECISIONS = {"admitted", "accepted", "conditional_admission"}
+# Default offer_type per decision when the reviewer doesn't pick one (§4).
+_DEFAULT_OFFER_TYPE = {
+    "admitted": "full_admission",
+    "accepted": "full_admission",
+    "conditional_admission": "conditional",
+}
+# Spec 34 §3/§13 — student-facing decision notice copy (restrained; the
+# celebration lives on the student side per §10). ``{prog}`` / ``{inst}`` filled.
+_DECISION_NOTICE: dict[str, tuple[str, str]] = {
+    "admitted": (
+        "You've been admitted to {prog}",
+        "{inst} has admitted you to {prog}. Review your offer and respond by the deadline.",
+    ),
+    "conditional_admission": (
+        "Conditional admission to {prog}",
+        "{inst} has offered you conditional admission to {prog}. "
+        "Review the conditions in your offer.",
+    ),
+    "waitlisted": (
+        "Waitlist decision from {prog}",
+        "{inst} has placed you on the waitlist for {prog}. We'll be in touch if a place opens.",
+    ),
+    "deferred": (
+        "Decision deferred at {prog}",
+        "{inst} has deferred your application to {prog} to a later round.",
+    ),
+    "rejected": (
+        "Decision from {prog}",
+        "{inst} has completed its review of your application to {prog}.",
+    ),
 }
 
 
@@ -548,19 +593,31 @@ class ApplicationService:
         reviewer_id: UUID | None = None,
     ) -> Application:
         app = await self._get_application_for_institution(institution_id, application_id)
-        if app.status not in ("submitted", "under_review", "interview"):
+        # ``decision_made`` is allowed so a waitlisted/deferred applicant can be
+        # re-decided (e.g. waitlist → admit, spec 34 §14). A finalized student
+        # decision is the only hard stop.
+        if app.status not in ("submitted", "under_review", "interview", "decision_made"):
             raise BadRequestException(
                 "Application must be submitted/under review to make a decision"
             )
+        if decision not in _VALID_DECISIONS:
+            raise BadRequestException(f"Unknown decision '{decision}'")
+        if app.student_decision == "accepted_by_student":
+            raise BadRequestException("Cannot change a decision the student has already accepted")
 
+        # Canonicalize "accepted" → "admitted" so analytics / badges stay uniform.
         app.status = "decision_made"
-        app.decision = decision
+        app.decision = "admitted" if decision == "accepted" else decision
         app.decision_at = datetime.now(UTC)
         app.decision_notes = decision_notes
         app.decision_by = reviewer_id
         await self.db.flush()
         await self.db.refresh(app)
         return app
+
+    # Decisions whose offer can be minted (spec 34 §3). ``waitlisted`` is allowed
+    # so a waitlist-to-admit offer can be attached without re-deciding first.
+    _OFFER_ELIGIBLE_DECISIONS = {"admitted", "accepted", "conditional_admission", "waitlisted"}
 
     async def create_offer(
         self,
@@ -573,10 +630,20 @@ class ApplicationService:
         financial_package_total: int | None = None,
         conditions: dict | None = None,
         response_deadline=None,
+        *,
+        scholarship_currency: str | None = None,
+        tuition_estimate: int | None = None,
+        total_cost_estimate: int | None = None,
+        start_term_season: str | None = None,
+        start_term_year: int | None = None,
+        next_step_actions: list | None = None,
+        notify: bool = True,
     ) -> OfferLetter:
         app = await self._get_application_for_institution(institution_id, application_id)
-        if app.decision != "admitted":
-            raise BadRequestException("Can only create offers for admitted applications")
+        if app.decision not in self._OFFER_ELIGIBLE_DECISIONS:
+            raise BadRequestException(
+                "Can only create offers for admitted / conditional / waitlist-to-admit applications"
+            )
 
         existing = await self.db.execute(
             select(OfferLetter).where(OfferLetter.application_id == application_id)
@@ -588,13 +655,17 @@ class ApplicationService:
             application_id=application_id,
             offer_type=offer_type,
             tuition_amount=tuition_amount,
-            tuition_estimate=tuition_amount,
-            scholarship_amount=scholarship_amount,
+            tuition_estimate=tuition_estimate or tuition_amount,
+            scholarship_amount=scholarship_amount or 0,
+            scholarship_currency=scholarship_currency or "USD",
             assistantship_details=assistantship_details,
             financial_package_total=financial_package_total,
-            total_cost_estimate=financial_package_total,
+            total_cost_estimate=total_cost_estimate or financial_package_total,
             conditions=conditions,
             response_deadline=response_deadline,
+            start_term_season=start_term_season,
+            start_term_year=start_term_year,
+            next_step_actions=next_step_actions,
             decision_date=datetime.now(UTC).date(),
             status="sent",
         )
@@ -609,8 +680,475 @@ class ApplicationService:
         )
         await self.db.flush()
         await self.db.refresh(offer)
-        await self._notify_offer(app, offer)
+        if notify:
+            await self._notify_offer(app, offer)
+            await self._seed_offer_deadline_reminder(app, program, offer)
         return offer
+
+    # --- Spec 34 · Institution decision release + offer + yield ---------------
+
+    async def release_decision(
+        self,
+        institution_id: UUID,
+        application_id: UUID,
+        decision: str,
+        *,
+        decision_notes: str | None = None,
+        reviewer_id: UUID | None = None,
+        actor_user_id: UUID | None = None,
+        offer: dict | None = None,
+        custom_message: str | None = None,
+        notify: bool = True,
+    ) -> tuple[Application, OfferLetter | None]:
+        """Release a decision and (for accepted / conditional admits) the offer,
+        notify the student (Inbox + email + Calendar), and audit — atomically
+        (spec 34 §3). The single source of truth for both per-applicant and
+        batch release. Returns ``(application, offer | None)``."""
+        app = await self.make_decision(
+            institution_id, application_id, decision, decision_notes, reviewer_id
+        )
+        program = await self.db.get(Program, app.program_id)
+        if program is not None:
+            await self._attach_institution_names([app])
+
+        offer_row: OfferLetter | None = None
+        norm = "admitted" if decision == "accepted" else decision
+        if norm in _OFFER_PRODUCING_DECISIONS:
+            offer_row = await self._ensure_release_offer(app, program, norm, offer)
+
+        if notify:
+            await self._notify_decision(app, program, norm, offer_row, custom_message)
+
+        if actor_user_id is not None:
+            await self._audit_decision(institution_id, actor_user_id, app, norm, offer_row)
+
+        await self.db.refresh(app)
+        return app, offer_row
+
+    async def _ensure_release_offer(
+        self,
+        app: Application,
+        program: Program | None,
+        decision: str,
+        offer: dict | None,
+    ) -> OfferLetter:
+        """Create the offer for an accepted/conditional release, or refresh the
+        terms of one that already exists (re-release / waitlist-to-admit)."""
+        terms = dict(offer or {})
+        offer_type = terms.get("offer_type") or _DEFAULT_OFFER_TYPE.get(decision, "full_admission")
+        start_term = terms.get("start_term") or {}
+        if isinstance(start_term, dict):
+            season, year = start_term.get("season"), start_term.get("year")
+        else:
+            season, year = None, None
+        deadline = terms.get("response_deadline")
+        if isinstance(deadline, str) and deadline:
+            try:
+                deadline = date.fromisoformat(deadline)
+            except ValueError:
+                deadline = None
+
+        existing = await self.db.execute(
+            select(OfferLetter).where(OfferLetter.application_id == app.id)
+        )
+        row = existing.scalar_one_or_none()
+        if row is None:
+            return await self.create_offer(
+                program.institution_id if program else app.program_id,  # type: ignore[arg-type]
+                app.id,
+                offer_type=offer_type,
+                tuition_amount=terms.get("tuition_amount"),
+                scholarship_amount=terms.get("scholarship_amount") or 0,
+                conditions=terms.get("conditions"),
+                financial_package_total=terms.get("financial_package_total"),
+                response_deadline=deadline,
+                scholarship_currency=terms.get("scholarship_currency"),
+                tuition_estimate=terms.get("tuition_estimate"),
+                total_cost_estimate=terms.get("total_cost_estimate"),
+                start_term_season=season,
+                start_term_year=year,
+                next_step_actions=terms.get("next_step_actions"),
+                notify=False,  # release sends one unified notice instead
+            )
+        # Refresh existing offer terms in place (clone-free re-release).
+        row.offer_type = offer_type
+        if terms.get("scholarship_amount") is not None:
+            row.scholarship_amount = terms["scholarship_amount"]
+        if terms.get("conditions") is not None:
+            row.conditions = terms["conditions"]
+        if deadline is not None:
+            row.response_deadline = deadline
+        if row.status == "rescinded":
+            row.status = "sent"
+        await self.db.flush()
+        row.plain_language_brief = await self.generate_offer_brief(row, program)
+        row.brief = (row.plain_language_brief or {}).get("summary") or self._build_offer_brief(
+            row, program
+        )
+        await self.db.flush()
+        await self.db.refresh(row)
+        return row
+
+    async def _audit_decision(
+        self,
+        institution_id: UUID,
+        actor_user_id: UUID,
+        app: Application,
+        decision: str,
+        offer: OfferLetter | None,
+    ) -> None:
+        """Per-application audit entry for a release (spec 34 §5/§12)."""
+        try:
+            from unipaith.services.audit_service import AuditService
+
+            await AuditService(self.db).log(
+                institution_id=institution_id,
+                actor_user_id=actor_user_id,
+                action="decision_release",
+                entity_type="application",
+                entity_id=str(app.id),
+                application_id=app.id,
+                description=f"Released decision: {decision}",
+                new_value={
+                    "decision": decision,
+                    "offer_id": str(offer.id) if offer else None,
+                },
+            )
+        except Exception:  # noqa: BLE001 — audit must not block the release
+            pass
+
+    async def _notify_decision(
+        self,
+        app: Application,
+        program: Program | None,
+        decision: str,
+        offer: OfferLetter | None,
+        custom_message: str | None = None,
+    ) -> None:
+        """Fire the decision notification across Inbox + email + Calendar
+        (spec 34 §3.4). Best-effort — a failed channel never blocks release."""
+        prog = program.program_name if program else "your program"
+        inst = (
+            getattr(program, "institution_name", None) if program else None
+        ) or "the institution"
+        title_t, body_t = _DECISION_NOTICE.get(decision, _DECISION_NOTICE["rejected"])
+        title = title_t.format(prog=prog, inst=inst)
+        body = custom_message or (
+            offer.brief if (offer and offer.brief) else body_t.format(prog=prog, inst=inst)
+        )
+
+        # 1) In-app notification + email (NotificationService honors prefs).
+        try:
+            from unipaith.services.notification_service import NotificationService
+
+            user_id = await self._resolve_user_id(app.student_id)
+            if user_id is not None:
+                await NotificationService(self.db).notify(
+                    user_id=user_id,
+                    notification_type="decision_made",
+                    title=title,
+                    body=body,
+                    action_url=f"/s/applications/{app.id}?tab=offer",
+                    metadata={
+                        "application_id": str(app.id),
+                        "decision": decision,
+                        "offer_id": str(offer.id) if offer else None,
+                    },
+                )
+        except Exception:  # noqa: BLE001
+            pass
+
+        # 2) Threaded system message in the student's Spec-17 inbox.
+        await self._post_decision_to_inbox(app, program, title, body)
+
+        # 3) Calendar: a respond-by reminder when the offer carries a deadline.
+        if offer is not None:
+            await self._seed_offer_deadline_reminder(app, program, offer)
+
+    async def _post_decision_to_inbox(
+        self, app: Application, program: Program | None, title: str, body: str
+    ) -> None:
+        """Append a system message to the application's inbox thread (creating
+        the thread if needed) so the decision lands in the student's Messages."""
+        try:
+            from unipaith.models.engagement import Conversation, Message
+
+            now = datetime.now(UTC)
+            inst_id = getattr(program, "institution_id", None) if program else None
+            res = await self.db.execute(
+                select(Conversation).where(Conversation.application_id == app.id).limit(1)
+            )
+            conv = res.scalar_one_or_none()
+            if conv is None:
+                conv = Conversation(
+                    student_id=app.student_id,
+                    institution_id=inst_id,
+                    program_id=app.program_id,
+                    application_id=app.id,
+                    subject=title,
+                    thread_type="system",
+                    action_label="status_update_only",
+                    status="active",
+                    started_at=now,
+                    last_message_at=now,
+                )
+                self.db.add(conv)
+                await self.db.flush()
+            else:
+                conv.last_message_at = now
+                if conv.action_label not in ("needs_reply", "document_requested"):
+                    conv.action_label = "status_update_only"
+            self.db.add(
+                Message(
+                    conversation_id=conv.id,
+                    sender_type="system",
+                    sender_id=None,
+                    message_body=f"{title}\n\n{body}",
+                    status="sent",
+                )
+            )
+            await self.db.flush()
+        except Exception:  # noqa: BLE001 — inbox post is best-effort
+            pass
+
+    async def _seed_offer_deadline_reminder(
+        self, app: Application, program: Program | None, offer: OfferLetter
+    ) -> None:
+        """Put a 'Respond to your offer' reminder on the student's calendar at
+        the response deadline (spec 34 §3.4 — Calendar updated). Best-effort."""
+        if not offer.response_deadline:
+            return
+        try:
+            from unipaith.schemas.calendar import ReminderCreate
+            from unipaith.services.calendar_service import CalendarService
+
+            prog = program.program_name if program else "your program"
+            when = datetime.combine(offer.response_deadline, datetime.min.time(), tzinfo=UTC)
+            await CalendarService(self.db).create_reminder(
+                app.student_id,
+                ReminderCreate(
+                    title=f"Respond to your {prog} offer",
+                    start_at=when,
+                    application_id=app.id,
+                ),
+            )
+        except Exception:  # noqa: BLE001
+            pass
+
+    @staticmethod
+    def _response_state(app: Application, offer: OfferLetter | None) -> str:
+        """Coarse student-response state for the institution yield view (§7)."""
+        if offer is None:
+            if app.decision in ("rejected", "waitlisted", "deferred"):
+                return "no_offer"
+            return "no_offer"
+        if offer.student_response == "accepted":
+            return "accepted"
+        if offer.student_response == "declined":
+            return "declined"
+        today = datetime.now(UTC).date()
+        if offer.status == "rescinded":
+            return "rescinded"
+        if offer.response_deadline and offer.response_deadline < today:
+            return "deadline_passed"
+        return "awaiting_response"
+
+    async def get_offer_status(self, institution_id: UUID, application_id: UUID) -> dict:
+        """Current student-response state for an offer (spec 34 §7)."""
+        app = await self._get_application_for_institution(institution_id, application_id)
+        res = await self.db.execute(select(OfferLetter).where(OfferLetter.application_id == app.id))
+        offer = res.scalar_one_or_none()
+        today = datetime.now(UTC).date()
+        deadline = offer.response_deadline if offer else None
+        days_remaining = (deadline - today).days if deadline else None
+        return {
+            "application_id": str(app.id),
+            "student_id": str(app.student_id),
+            "decision": app.decision,
+            "decision_at": app.decision_at,
+            "has_offer": offer is not None,
+            "offer_id": str(offer.id) if offer else None,
+            "offer_type": offer.offer_type if offer else None,
+            "offer_status": offer.status if offer else None,
+            "student_response": offer.student_response if offer else None,
+            "response_at": offer.response_at if offer else None,
+            "response_deadline": deadline,
+            "days_remaining": days_remaining,
+            "deadline_passed": bool(
+                deadline
+                and days_remaining is not None
+                and days_remaining < 0
+                and (not offer or offer.student_response not in ("accepted", "declined"))
+            ),
+            "response_state": self._response_state(app, offer),
+        }
+
+    async def _get_offer_for_institution(
+        self, institution_id: UUID, offer_id: UUID
+    ) -> tuple[OfferLetter, Application]:
+        res = await self.db.execute(
+            select(OfferLetter, Application)
+            .join(Application, OfferLetter.application_id == Application.id)
+            .join(Program, Application.program_id == Program.id)
+            .where(OfferLetter.id == offer_id, Program.institution_id == institution_id)
+        )
+        row = res.first()
+        if row is None:
+            raise NotFoundException("Offer not found")
+        return row[0], row[1]
+
+    async def extend_offer_deadline(
+        self,
+        institution_id: UUID,
+        offer_id: UUID,
+        new_deadline: date,
+        *,
+        notify: bool = True,
+    ) -> OfferLetter:
+        """Push an offer's response deadline out (spec 34 §7). Re-activates a
+        deadline-rescinded offer and re-notifies the student."""
+        offer, app = await self._get_offer_for_institution(institution_id, offer_id)
+        if offer.student_response in ("accepted", "declined"):
+            raise BadRequestException("Cannot extend the deadline after the student has responded")
+        offer.response_deadline = new_deadline
+        if offer.status == "rescinded":
+            offer.status = "sent"
+        await self.db.flush()
+        program = await self.db.get(Program, app.program_id)
+        if program is not None:
+            await self._attach_institution_names([app])
+        offer.plain_language_brief = await self.generate_offer_brief(offer, program)
+        offer.brief = (offer.plain_language_brief or {}).get("summary") or self._build_offer_brief(
+            offer, program
+        )
+        await self.db.flush()
+        await self.db.refresh(offer)
+        if notify:
+            prog = program.program_name if program else "your program"
+            await self._notify_decision(
+                app,
+                program,
+                "admitted",
+                offer,
+                custom_message=(
+                    f"Your response deadline for the {prog} offer has been extended to "
+                    f"{new_deadline.isoformat()}."
+                ),
+            )
+        return offer
+
+    async def rescind_offer(self, institution_id: UUID, offer_id: UUID) -> OfferLetter:
+        """Rescind an unanswered offer (spec 34 §8 — deadline-passed policy)."""
+        offer, _app = await self._get_offer_for_institution(institution_id, offer_id)
+        if offer.student_response in ("accepted", "declined"):
+            raise BadRequestException("Cannot rescind an offer the student has answered")
+        offer.status = "rescinded"
+        await self.db.flush()
+        await self.db.refresh(offer)
+        return offer
+
+    async def batch_release_decisions(
+        self,
+        institution_id: UUID,
+        items: list[dict],
+        *,
+        actor_user_id: UUID | None = None,
+        notify: bool = True,
+    ) -> dict:
+        """Per-applicant batch release (spec 34 §5). Each item is
+        ``{application_id, decision, decision_notes?, offer?}``. Every applicant
+        is audited individually; one failure never aborts the rest."""
+        results: list[dict] = []
+        success = 0
+        for item in items:
+            app_id = item.get("application_id")
+            try:
+                _app, offer = await self.release_decision(
+                    institution_id,
+                    UUID(str(app_id)),
+                    item["decision"],
+                    decision_notes=item.get("decision_notes"),
+                    actor_user_id=actor_user_id,
+                    offer=item.get("offer"),
+                    custom_message=item.get("message"),
+                    notify=notify,
+                )
+                success += 1
+                results.append(
+                    {
+                        "application_id": str(app_id),
+                        "ok": True,
+                        "decision": item["decision"],
+                        "offer_id": str(offer.id) if offer else None,
+                    }
+                )
+            except Exception as exc:  # noqa: BLE001 — collect per-item errors
+                results.append({"application_id": str(app_id), "ok": False, "error": str(exc)})
+        return {
+            "results": results,
+            "success_count": success,
+            "failed_count": len(items) - success,
+        }
+
+    async def get_yield_risk_alerts(self, institution_id: UUID, *, within_days: int = 14) -> dict:
+        """Admitted students with an unanswered offer, flagged by deadline
+        proximity (spec 34 §6 / spec 31 §2). High risk = deadline within 7 days
+        or already past; medium otherwise."""
+        today = datetime.now(UTC).date()
+        res = await self.db.execute(
+            select(OfferLetter, Application)
+            .join(Application, OfferLetter.application_id == Application.id)
+            .join(Program, Application.program_id == Program.id)
+            .where(
+                Program.institution_id == institution_id,
+                OfferLetter.student_response.is_(None),
+                OfferLetter.status != "rescinded",
+                Application.student_decision.is_(None),
+            )
+        )
+        alerts: list[dict] = []
+        for offer, app in res.all():
+            deadline = offer.response_deadline
+            days = (deadline - today).days if deadline else None
+            # Only surface offers approaching/past their deadline, or any
+            # unanswered offer once it's older than a week.
+            if days is not None:
+                if days > within_days:
+                    continue
+                if days < 0:
+                    reason = f"Deadline passed {abs(days)}d ago — no response"
+                    risk = "high"
+                elif days <= 7:
+                    reason = f"No response — deadline in {days}d"
+                    risk = "high"
+                else:
+                    reason = f"No response — deadline in {days}d"
+                    risk = "medium"
+            else:
+                age = (today - offer.created_at.date()) if offer.created_at else None
+                if age is None or age.days < 7:
+                    continue
+                reason = f"No response {age.days}d after offer"
+                risk = "medium"
+            alerts.append(
+                {
+                    "application_id": str(app.id),
+                    "student_id": str(app.student_id),
+                    "offer_id": str(offer.id),
+                    "reason": reason,
+                    "risk_level": risk,
+                    "days_remaining": days,
+                    "response_deadline": deadline.isoformat() if deadline else None,
+                }
+            )
+
+        # Highest urgency first (past-due / high risk, then soonest deadline).
+        def _sort_key(a: dict) -> tuple:
+            dr = a["days_remaining"]
+            return (a["risk_level"] != "high", dr is None, dr if dr is not None else 999)
+
+        alerts.sort(key=_sort_key)
+        return {"alerts": alerts, "count": len(alerts)}
 
     # --- Student offer response ---
 

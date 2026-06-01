@@ -9,18 +9,24 @@ from unipaith.models.user import User
 from unipaith.schemas.application import (
     ApplicationDetailResponse,
     ApplicationResponse,
+    BatchReleaseDecisionRequest,
+    BatchReleaseDecisionResponse,
     BulkWithdrawRequest,
     ChecklistToggleRequest,
     CreateApplicationRequest,
     CreateOfferRequest,
     DecisionRequest,
+    ExtendDeadlineRequest,
     GuardrailScanResponse,
     OfferDecisionResponse,
     OfferLetterResponse,
     OfferRespondRequest,
     OffersComparisonResponse,
+    OfferStatusResponse,
     PatchApplicationRequest,
     RecordOfferRequest,
+    ReleaseDecisionRequest,
+    ReleaseDecisionResponse,
     UpdateApplicationRequest,
     WithdrawResult,
 )
@@ -340,6 +346,7 @@ async def create_offer(
 ):
     inst = await InstitutionService(db).get_institution(user.id)
     svc = ApplicationService(db)
+    start = body.start_term
     return await svc.create_offer(
         institution_id=inst.id,
         application_id=application_id,
@@ -350,6 +357,101 @@ async def create_offer(
         financial_package_total=body.financial_package_total,
         conditions=body.conditions,
         response_deadline=body.response_deadline,
+        scholarship_currency=body.scholarship_currency,
+        tuition_estimate=body.tuition_estimate,
+        total_cost_estimate=body.total_cost_estimate,
+        start_term_season=start.season if start else None,
+        start_term_year=start.year if start else None,
+        next_step_actions=body.next_step_actions,
+    )
+
+
+# --- Spec 34 · Decision release + offer + yield ---
+
+
+@router.post("/review/{application_id}/release", response_model=ReleaseDecisionResponse)
+async def release_decision(
+    application_id: UUID,
+    body: ReleaseDecisionRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Release a decision (and offer for accepts/conditionals) in one audited,
+    notified action (spec 34 §3). Replaces the decision-then-offer two-step."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    svc = ApplicationService(db)
+    app, offer = await svc.release_decision(
+        inst.id,
+        application_id,
+        body.decision,
+        decision_notes=body.decision_notes,
+        actor_user_id=user.id,
+        offer=body.offer.model_dump() if body.offer else None,
+        custom_message=body.message,
+        notify=body.notify,
+    )
+    detail = await svc.get_application_detail(inst.id, application_id)
+    return ReleaseDecisionResponse(application=detail, offer=offer)
+
+
+@router.get("/review/{application_id}/offer-status", response_model=OfferStatusResponse)
+async def get_offer_status(
+    application_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Current student-response state for an applicant's offer (spec 34 §7)."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    return await ApplicationService(db).get_offer_status(inst.id, application_id)
+
+
+@router.post("/offers/{offer_id}/extend-deadline", response_model=OfferLetterResponse)
+async def extend_offer_deadline(
+    offer_id: UUID,
+    body: ExtendDeadlineRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Push an offer's response deadline out and re-notify the student (§7)."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    return await ApplicationService(db).extend_offer_deadline(
+        inst.id, offer_id, body.response_deadline
+    )
+
+
+@router.post("/offers/{offer_id}/rescind", response_model=OfferLetterResponse)
+async def rescind_offer(
+    offer_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Rescind an unanswered offer past its deadline (spec 34 §8)."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    return await ApplicationService(db).rescind_offer(inst.id, offer_id)
+
+
+@router.post("/batch-release-decision", response_model=BatchReleaseDecisionResponse)
+async def batch_release_decision_v2(
+    body: BatchReleaseDecisionRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Per-applicant batch release with per-item decision + offer (spec 34 §5).
+    Each applicant is audited individually."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    svc = ApplicationService(db)
+    items = [
+        {
+            "application_id": it.application_id,
+            "decision": it.decision,
+            "decision_notes": it.decision_notes,
+            "offer": it.offer.model_dump() if it.offer else None,
+            "message": it.message,
+        }
+        for it in body.items
+    ]
+    return await svc.batch_release_decisions(
+        inst.id, items, actor_user_id=user.id, notify=body.notify
     )
 
 

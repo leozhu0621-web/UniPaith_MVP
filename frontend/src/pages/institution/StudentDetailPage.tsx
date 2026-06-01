@@ -1,9 +1,10 @@
-import { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { User, Star, Brain, ClipboardCheck, Calendar, Award, FileText, RefreshCw, Shield } from 'lucide-react'
-import { reviewApplication, makeDecision, createOffer } from '../../api/applications-admin'
+import { User, Star, Brain, ClipboardCheck, Calendar, Award, RefreshCw, Shield } from 'lucide-react'
+import { reviewApplication } from '../../api/applications-admin'
 import { chatInstitutionAssistant, generateAIDraft } from '../../api/institutions'
+import DecisionPanel from './pipeline/DecisionPanel'
 import { getScores, assignReviewer, scoreApplication, getRubrics, getAIPacketSummary, regenerateAIPacketSummary, getAIPrefill, scanIntegrity, getIntegritySignals, resolveIntegritySignal, getMatchRationaleFull } from '../../api/reviews'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -16,23 +17,16 @@ import Select from '../../components/ui/Select'
 import Skeleton from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
 import { formatDate, formatScore } from '../../utils/format'
-import { STATUS_COLORS, DECISION_OPTIONS } from '../../utils/constants'
+import { STATUS_COLORS } from '../../utils/constants'
 import type { AIPacketSummary, ApplicationScore, IntegritySignal, Rubric } from '../../types'
 
 export default function StudentDetailPage() {
   const { appId, studentId } = useParams<{ appId?: string; studentId?: string }>()
   const applicationId = appId ?? studentId
   const queryClient = useQueryClient()
-  const [activeTab, setActiveTab] = useState('overview')
-  const [showDecisionModal, setShowDecisionModal] = useState(false)
-  const [showOfferModal, setShowOfferModal] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') ?? 'overview')
   const [showScoringModal, setShowScoringModal] = useState(false)
-  const [decision, setDecision] = useState('')
-  const [decisionNotes, setDecisionNotes] = useState('')
-  const [offerType, setOfferType] = useState('full_admission')
-  const [tuitionAmount, setTuitionAmount] = useState('')
-  const [scholarshipAmount, setScholarshipAmount] = useState('')
-  const [responseDeadline, setResponseDeadline] = useState('')
   const [selectedRubric, setSelectedRubric] = useState('')
   const [criterionScores, setCriterionScores] = useState<Record<string, number>>({})
   const [criterionNotes, setCriterionNotes] = useState<Record<string, string>>({})
@@ -123,29 +117,20 @@ export default function StudentDetailPage() {
     onError: () => showToast('Failed to assign reviewer', 'error'),
   })
 
-  const decisionMut = useMutation({
-    mutationFn: () => makeDecision(applicationId!, { decision: decision as any, decision_notes: decisionNotes || null }),
-    onSuccess: () => {
-      showToast('Decision recorded', 'success')
-      setShowDecisionModal(false)
-      queryClient.invalidateQueries({ queryKey: ['application-review', applicationId] })
-    },
-    onError: () => showToast('Failed to record decision', 'error'),
-  })
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab)
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.set('tab', tab)
+      return next
+    })
+  }
 
-  const offerMut = useMutation({
-    mutationFn: () => createOffer(applicationId!, {
-      offer_type: offerType as any,
-      tuition_amount: tuitionAmount ? Number(tuitionAmount) : null,
-      scholarship_amount: scholarshipAmount ? Number(scholarshipAmount) : 0,
-      response_deadline: responseDeadline || null,
-    }),
-    onSuccess: () => {
-      showToast('Offer created', 'success')
-      setShowOfferModal(false)
-    },
-    onError: () => showToast('Failed to create offer', 'error'),
-  })
+  useEffect(() => {
+    const t = searchParams.get('tab')
+    if (t && t !== activeTab) setActiveTab(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   const scoreMut = useMutation({
     mutationFn: () => scoreApplication(applicationId!, { rubric_id: selectedRubric, criterion_scores: criterionScores, reviewer_notes: reviewerNotes || null }),
@@ -174,6 +159,7 @@ export default function StudentDetailPage() {
     { id: 'overview', label: 'Overview' },
     { id: 'scores', label: 'Scores' },
     { id: 'interview', label: 'Interview' },
+    { id: 'decision', label: 'Decision' },
     { id: 'ai', label: 'AI Insights' },
     { id: 'integrity', label: 'Integrity' },
   ]
@@ -241,23 +227,18 @@ export default function StudentDetailPage() {
             <Button variant="secondary" className="w-full flex items-center gap-2" onClick={() => {}}>
               <Calendar size={16} /> Schedule Interview
             </Button>
-            <Button className="w-full flex items-center gap-2" onClick={() => setShowDecisionModal(true)}>
-              <Award size={16} /> Make Decision
+            <Button variant="secondary" className="w-full flex items-center gap-2" onClick={() => handleTabChange('decision')}>
+              <Award size={16} /> Decision &amp; Offer
             </Button>
             <Button variant="secondary" className="w-full flex items-center gap-2" onClick={() => setShowDraftModal(true)}>
               <Brain size={16} /> AI Message Draft
             </Button>
-            {app.decision === 'admitted' && (
-              <Button variant="secondary" className="w-full flex items-center gap-2" onClick={() => setShowOfferModal(true)}>
-                <FileText size={16} /> Create Offer
-              </Button>
-            )}
           </Card>
         </div>
 
         {/* Right: Tabs */}
         <div className="col-span-2">
-          <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+          <Tabs tabs={tabs} activeTab={activeTab} onChange={handleTabChange} />
           <div className="mt-4">
             {activeTab === 'overview' && (
               <Card className="p-5 space-y-4">
@@ -319,6 +300,10 @@ export default function StudentDetailPage() {
                 <h3 className="font-semibold text-gray-900 mb-2">Interview</h3>
                 <p className="text-sm text-gray-500">Interview management coming soon. Use the Schedule Interview action to propose times.</p>
               </Card>
+            )}
+
+            {activeTab === 'decision' && (
+              <DecisionPanel applicationId={applicationId!} app={app} />
             )}
 
             {activeTab === 'ai' && (
@@ -605,51 +590,6 @@ export default function StudentDetailPage() {
         </div>
       </Modal>
 
-      {/* Decision Modal */}
-      <Modal isOpen={showDecisionModal} onClose={() => setShowDecisionModal(false)} title="Make Decision">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            {DECISION_OPTIONS.map(opt => (
-              <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="decision" value={opt.value} checked={decision === opt.value} onChange={e => setDecision(e.target.value)} />
-                <span className="text-sm text-gray-700">{opt.label}</span>
-              </label>
-            ))}
-          </div>
-          <Textarea label="Notes" value={decisionNotes} onChange={e => setDecisionNotes(e.target.value)} rows={3} />
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setShowDecisionModal(false)}>Cancel</Button>
-            <Button onClick={() => decisionMut.mutate()} disabled={!decision || decisionMut.isPending}>
-              {decisionMut.isPending ? 'Saving...' : 'Confirm Decision'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Offer Modal */}
-      <Modal isOpen={showOfferModal} onClose={() => setShowOfferModal(false)} title="Create Offer">
-        <div className="space-y-4">
-          <Select
-            label="Offer Type"
-            options={[
-              { value: 'full_admission', label: 'Full Admission' },
-              { value: 'conditional', label: 'Conditional' },
-              { value: 'waitlist_offer', label: 'Waitlist Offer' },
-            ]}
-            value={offerType}
-            onChange={e => setOfferType(e.target.value)}
-          />
-          <Input label="Tuition Amount" type="number" value={tuitionAmount} onChange={e => setTuitionAmount(e.target.value)} />
-          <Input label="Scholarship Amount" type="number" value={scholarshipAmount} onChange={e => setScholarshipAmount(e.target.value)} />
-          <Input label="Response Deadline" type="date" value={responseDeadline} onChange={e => setResponseDeadline(e.target.value)} />
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setShowOfferModal(false)}>Cancel</Button>
-            <Button onClick={() => offerMut.mutate()} disabled={offerMut.isPending}>
-              {offerMut.isPending ? 'Creating...' : 'Create Offer'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
 
       {/* Scoring Modal */}
       <Modal isOpen={showScoringModal} onClose={() => setShowScoringModal(false)} title="Score Application" size="lg">
