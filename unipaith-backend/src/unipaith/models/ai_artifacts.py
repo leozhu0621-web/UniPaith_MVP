@@ -132,7 +132,9 @@ class AiTurn(Base, UUIDPrimaryKeyMixin):
             # Spec 33 §9 — interview invite drafter (Haiku) + score prefill (Sonnet).
             "'interview_invite_drafter','interview_score_prefill',"
             # Spec 35 §6 — enrollment/yield intelligence agents.
-            "'yield_risk_scorer','next_best_action_yield')",
+            "'yield_risk_scorer','next_best_action_yield',"
+            # Spec 38 §5 — international-admissions processing agents.
+            "'credential_normalizer','country_requirement_advisor')",
             name="ck_ai_turns_agent",
         ),
         # Spec 03 §8: provider tracked per call so the cost ledger splits

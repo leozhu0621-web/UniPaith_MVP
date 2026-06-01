@@ -134,6 +134,9 @@ def test_each_agent_declares_consent_requirement():
         # Spec 35 §6 — enrollment/yield intelligence agents.
         "yield_risk_scorer",
         "next_best_action_yield",
+        # Spec 38 §5 — international-admissions processing agents.
+        "credential_normalizer",
+        "country_requirement_advisor",
     }
     assert set(AGENT_REQUIRES.keys()) == expected_agents
 

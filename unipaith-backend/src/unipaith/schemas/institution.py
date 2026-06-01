@@ -149,6 +149,8 @@ class CreateProgramRequest(BaseModel):
     faculty_contacts: list[dict] | None = None
     cost_data: dict | None = None
     promotion_categories: list[str] | None = None
+    # Spec 38 §2.2 — English-proficiency policy for international applicants.
+    english_policy: dict | None = None
 
 
 class UpdateProgramRequest(BaseModel):
@@ -180,6 +182,8 @@ class UpdateProgramRequest(BaseModel):
     faculty_contacts: list[dict] | None = None
     cost_data: dict | None = None
     promotion_categories: list[str] | None = None
+    # Spec 38 §2.2 — English-proficiency policy for international applicants.
+    english_policy: dict | None = None
 
 
 class ProgramResponse(BaseModel):
@@ -210,6 +214,8 @@ class ProgramResponse(BaseModel):
     faculty_contacts: list | dict | None = None
     cost_data: dict | None = None
     promotion_categories: list | dict | None = None
+    # Spec 38 §2.2 — English-proficiency policy for international applicants.
+    english_policy: dict | None = None
     # Spec 06 §5.4 — version used for cache invalidation + Spec 23 §6 optimistic
     # lock. Mapped from the model's feature_version; surfaced as `version` too.
     feature_version: int = 1

@@ -43,11 +43,17 @@ from unipaith.schemas.batch import (
     BatchStatusRequest,
 )
 from unipaith.schemas.checklist import ApplicationChecklistResponse, ReadinessCheckResponse
+from unipaith.schemas.international import (
+    GenerateImmigrationDocRequest,
+    NormalizeGpaRequest,
+    PatchInternationalRequest,
+)
 from unipaith.services.application_service import ApplicationService
 from unipaith.services.checklist_service import ChecklistService
 from unipaith.services.enrollment_service import EnrollmentService
 from unipaith.services.guardrail_service import GuardrailService
 from unipaith.services.institution_service import InstitutionService
+from unipaith.services.international_service import InternationalService
 from unipaith.services.student_service import StudentService
 
 router = APIRouter(prefix="/applications", tags=["applications"])
@@ -732,3 +738,88 @@ async def approve_enrollment_deferral(
     return await EnrollmentService(db).approve_deferral(
         inst.id, application_id, approved=body.approved, actor_user_id=user.id
     )
+
+
+# --- Spec 38 · International Admissions (institution processing) ---
+
+
+@router.get("/review/{application_id}/international")
+async def get_international_processing(
+    application_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """The international-processing record + read-only student inputs + the
+    immigration-document gate + feasibility band (§4). Initializes the record for
+    an international applicant on first read; domestic applicants return
+    ``is_international: false`` with no record (the tab is hidden, §6)."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    result = await InternationalService(db).get_or_init(inst.id, application_id)
+    return result
+
+
+@router.patch("/review/{application_id}/international")
+async def update_international_processing(
+    application_id: UUID,
+    body: PatchInternationalRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Partial update of the editable processing fields (§4)."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    result = await InternationalService(db).update(
+        inst.id, application_id, user.id, body.model_dump(exclude_unset=True)
+    )
+    return result
+
+
+@router.post("/review/{application_id}/international/normalize-gpa")
+async def normalize_credential_gpa(
+    application_id: UUID,
+    body: NormalizeGpaRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Normalize a foreign GPA to the program scale — deterministic mapper, or
+    the CredentialNormalizer agent when ``ai_international_v2_enabled`` (§2.1).
+    ``ai_used`` tells the UI whether to show the rule-based fallback note."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    result = await InternationalService(db).normalize_gpa(
+        inst.id,
+        application_id,
+        user.id,
+        raw_gpa=body.raw_gpa,
+        scale_hint=body.scale_hint,
+        country=body.country,
+    )
+    return result
+
+
+@router.post("/review/{application_id}/international/suggest-country-pack")
+async def suggest_country_requirement_pack(
+    application_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Attach the country-requirement pack for the applicant's country (§2.3) —
+    platform default, or the CountryRequirementAdvisor agent when enabled."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    result = await InternationalService(db).suggest_country_pack(inst.id, application_id, user.id)
+    return result
+
+
+@router.post("/review/{application_id}/immigration-doc/generate")
+async def generate_immigration_doc(
+    application_id: UUID,
+    body: GenerateImmigrationDocRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Generate the I-20 / DS-2019 (§2.4). Gated on admit + enrollment intent +
+    financial proof; returns 422 with the missing fields when blocked (§6).
+    Every generation is audit-logged (high-sensitivity, §36 / §46)."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    result = await InternationalService(db).generate_immigration_doc(
+        inst.id, application_id, user.id, doc_type=body.doc_type
+    )
+    return result

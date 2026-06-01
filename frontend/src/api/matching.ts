@@ -20,11 +20,11 @@ export const refreshMatches = (): Promise<MatchResultDual[]> =>
 export const getMatchProbability = (programId: string): Promise<ProbabilityBandsResponse> =>
   apiClient.get(`/students/me/matches/${programId}/probability`).then(r => r.data)
 
-// Untyped on purpose — legacy callers (e.g. SchoolDetailPage) consume this
-// against the older `MatchResult` shape with number scores. Phase C will
-// migrate consumers to MatchResultDual; until then the response carries
-// both the legacy `match_score` and the new `fitness_score` /
-// `confidence_score` fields, so consumers can read either.
+// Untyped on purpose — legacy callers (e.g. ProgramDetailPage prior to its
+// dual-score migration) consume this against the older `MatchResult` shape
+// with number scores. Phase C will migrate consumers to MatchResultDual;
+// until then the response carries both the legacy `match_score` and the
+// new `fitness_score` / `confidence_score` fields, so consumers can read either.
 export const getMatchDetail = (programId: string) =>
   apiClient.get(`/students/me/matches/${programId}`).then(r => r.data)
 

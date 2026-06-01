@@ -1,7 +1,10 @@
+import { useEffect, useRef } from 'react'
 import clsx from 'clsx'
 
 // Tabs — Spec/02 §10 + Spec/02b §3.3. On mobile this scrolls horizontally as a
-// segmented control; selection stays deep-linkable (consumer writes ?tab=).
+// segmented control with scroll-into-view on selection; selection stays
+// deep-linkable (consumer writes ?tab=). `sticky` pins the strip to the top of
+// the scroll container on mobile, matching §3.3's pinned behavior.
 interface Tab {
   id: string
   label: string
@@ -12,19 +15,44 @@ interface TabsProps {
   tabs: Tab[]
   activeTab: string
   onChange: (tabId: string) => void
+  /** Pin to top of scroll container — recommended for mobile per Spec/02b §3.3. */
+  sticky?: boolean
 }
 
-export default function Tabs({ tabs, activeTab, onChange }: TabsProps) {
+export default function Tabs({ tabs, activeTab, onChange, sticky }: TabsProps) {
+  const stripRef = useRef<HTMLDivElement>(null)
+  const activeRef = useRef<HTMLButtonElement>(null)
+
+  // Scroll the active tab into view on selection — matches §3.3's
+  // "snap to first item on tap" behavior. Only triggers when the
+  // active tab is partially outside the visible strip.
+  useEffect(() => {
+    const strip = stripRef.current
+    const node = activeRef.current
+    if (!strip || !node) return
+    const stripRect = strip.getBoundingClientRect()
+    const nodeRect = node.getBoundingClientRect()
+    const partiallyHidden = nodeRect.left < stripRect.left || nodeRect.right > stripRect.right
+    if (partiallyHidden) {
+      node.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    }
+  }, [activeTab])
+
   return (
     <div
+      ref={stripRef}
       role="tablist"
-      className="flex border-b border-border overflow-x-auto no-scrollbar flex-nowrap"
+      className={clsx(
+        'flex border-b border-border overflow-x-auto no-scrollbar flex-nowrap',
+        sticky && 'sticky top-0 z-20 bg-background',
+      )}
     >
       {tabs.map(tab => {
         const active = activeTab === tab.id
         return (
           <button
             key={tab.id}
+            ref={active ? activeRef : undefined}
             role="tab"
             aria-selected={active}
             onClick={() => onChange(tab.id)}

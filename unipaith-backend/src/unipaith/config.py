@@ -336,6 +336,15 @@ class Settings(BaseSettings):
     # narrator so the endpoint never 5xxes (the spec 31 integration invariant).
     ai_intelligence_digest_v2_enabled: bool = False
 
+    # Spec 38 §5 — international-admissions processing agents (CredentialNormalizer
+    # + CountryRequirementAdvisor). When True, CredentialNormalizer (Haiku) refines
+    # the foreign-GPA normalization and CountryRequirementAdvisor (Haiku) proposes
+    # a richer country-requirement pack. Both always fall back to deterministic
+    # logic (the grading-scale mapper / the platform default pack) on any failure
+    # — AI never decides feasibility (§5 / 46 §6) and the endpoint never 5xxes.
+    # Off in code, enabled per-env via ECS.
+    ai_international_v2_enabled: bool = False
+
     # GPU infrastructure (cloud-first)
     gpu_mode: str = "openai"  # "openai" | "aws" | "local" | "mock"
     gpu_8b_instance_id: str = ""

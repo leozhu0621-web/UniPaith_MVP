@@ -2,8 +2,17 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ClipboardList, Plus, Edit2, Trash2, GripVertical } from 'lucide-react'
 import {
+  DndContext, type DragEndEvent, KeyboardSensor, PointerSensor,
+  closestCenter, useSensor, useSensors,
+} from '@dnd-kit/core'
+import {
+  SortableContext, arrayMove, useSortable, verticalListSortingStrategy,
+  sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import {
   getProgramChecklist, createChecklistItem, updateChecklistItem, deleteChecklistItem,
-  getInstitutionPrograms,
+  reorderChecklistItems, getInstitutionPrograms,
 } from '../../api/institutions'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -49,6 +58,68 @@ const CATEGORY_ICON: Record<string, string> = {
   financial: 'Financial', other: 'Other',
 }
 
+// Sortable row wrapper — Spec 47 G-I3.
+function SortableChecklistItem({
+  item, onEdit, onDelete,
+}: {
+  item: ProgramChecklistItem
+  onEdit: (i: ProgramChecklistItem) => void
+  onDelete: (i: ProgramChecklistItem) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: item.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : undefined,
+    zIndex: isDragging ? 10 : undefined,
+  } as React.CSSProperties
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <Card className={`p-3 flex items-center gap-3 ${!item.is_active ? 'opacity-50' : ''}`}>
+      <button
+        type="button"
+        aria-label={`Reorder ${item.item_name}`}
+        className="ui-btn touch-target -ml-1 px-1 py-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-grab active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical size={16} />
+      </button>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+          <span className="text-sm font-semibold text-foreground">{item.item_name}</span>
+          <Badge variant={LEVEL_BADGE[item.requirement_level] ?? 'neutral'}>
+            {item.requirement_level.replace('_', ' ')}
+          </Badge>
+          <Badge variant="neutral">{CATEGORY_ICON[item.category] ?? item.category}</Badge>
+          {!item.is_active && <Badge variant="neutral">Inactive</Badge>}
+        </div>
+        {item.description && (
+          <p className="text-xs text-muted-foreground truncate">{item.description}</p>
+        )}
+      </div>
+      <div className="flex gap-1 shrink-0">
+        <Button variant="ghost" size="sm" onClick={() => onEdit(item)} aria-label="Edit">
+          <Edit2 size={14} />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onDelete(item)}
+          className="text-destructive hover:text-destructive"
+          aria-label="Delete"
+        >
+          <Trash2 size={14} />
+        </Button>
+      </div>
+      </Card>
+    </div>
+  )
+}
+
 export default function RequirementsChecklistPage() {
   const queryClient = useQueryClient()
   const [selectedProgram, setSelectedProgram] = useState('')
@@ -73,6 +144,8 @@ export default function RequirementsChecklistPage() {
     enabled: !!selectedProgram,
   })
   const items: ProgramChecklistItem[] = Array.isArray(checklistQ.data) ? checklistQ.data : []
+  // Sort by sort_order so drag reflects persisted order.
+  const orderedItems = [...items].sort((a, b) => a.sort_order - b.sort_order)
 
   const resetForm = () => {
     setItemName(''); setCategory('document'); setLevel('required')
@@ -99,6 +172,62 @@ export default function RequirementsChecklistPage() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['program-checklist'] }); setDeleteTarget(null); showToast('Item removed', 'success') },
   })
 
+  // Reorder mutation — optimistic so drag feels instant.
+  const reorderMut = useMutation({
+    mutationFn: (orderedIds: string[]) =>
+      reorderChecklistItems(selectedProgram, orderedIds, orderedItems),
+    onMutate: async (orderedIds: string[]) => {
+      await queryClient.cancelQueries({ queryKey: ['program-checklist', selectedProgram] })
+      const previous = queryClient.getQueryData<ProgramChecklistItem[]>(
+        ['program-checklist', selectedProgram],
+      )
+      if (previous) {
+        const map = new Map(previous.map(it => [it.id, it]))
+        const next = orderedIds
+          .map((id, index) => {
+            const it = map.get(id)
+            return it ? { ...it, sort_order: index * 10 } : null
+          })
+          .filter(Boolean) as ProgramChecklistItem[]
+        queryClient.setQueryData<ProgramChecklistItem[]>(
+          ['program-checklist', selectedProgram],
+          next,
+        )
+      }
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(
+          ['program-checklist', selectedProgram],
+          context.previous,
+        )
+      }
+      showToast('Reorder failed — restored previous order', 'error')
+    },
+    onSuccess: () => {
+      showToast('Order saved', 'success')
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['program-checklist', selectedProgram] })
+    },
+  })
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+
+  const onDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = orderedItems.findIndex(i => i.id === active.id)
+    const newIndex = orderedItems.findIndex(i => i.id === over.id)
+    if (oldIndex < 0 || newIndex < 0) return
+    const newOrderIds = arrayMove(orderedItems, oldIndex, newIndex).map(i => i.id)
+    reorderMut.mutate(newOrderIds)
+  }
+
   const handleSubmit = () => {
     if (!itemName.trim()) { showToast('Item name is required', 'warning'); return }
     const payload = {
@@ -110,15 +239,15 @@ export default function RequirementsChecklistPage() {
     else createMut.mutate(payload)
   }
 
-  const requiredItems = items.filter(i => i.requirement_level === 'required' && i.is_active)
-  const optionalItems = items.filter(i => i.requirement_level === 'optional' && i.is_active)
-  const otherItems = items.filter(i => !['required', 'optional'].includes(i.requirement_level) || !i.is_active)
+  const requiredItems = orderedItems.filter(i => i.requirement_level === 'required' && i.is_active)
+  const optionalItems = orderedItems.filter(i => i.requirement_level === 'optional' && i.is_active)
+  const otherItems = orderedItems.filter(i => !['required', 'optional'].includes(i.requirement_level) || !i.is_active)
 
   return (
     <div className="p-6 space-y-4">
       <InstitutionPageHeader
         title="Requirements Checklist"
-        description="Configure per-program requirements: what's required, optional, conditional, or N/A."
+        description="Configure per-program requirements: what's required, optional, conditional, or N/A. Drag to reorder."
         actions={selectedProgram ? <Button onClick={openCreate} className="flex items-center gap-2"><Plus size={16} /> Add Item</Button> : undefined}
       />
 
@@ -130,47 +259,41 @@ export default function RequirementsChecklistPage() {
         <EmptyState icon={<ClipboardList size={40} />} title="Select a program" description="Choose a program to configure its application requirements checklist." />
       ) : checklistQ.isLoading ? (
         <Skeleton className="h-60" />
-      ) : items.length === 0 ? (
+      ) : orderedItems.length === 0 ? (
         <EmptyState icon={<ClipboardList size={40} />} title="No checklist items" description="Add required and optional items applicants need to submit." action={{ label: 'Add Item', onClick: openCreate }} />
       ) : (
         <div className="space-y-4">
           {/* Summary */}
           <div className="grid grid-cols-3 gap-3">
-            <Card className="p-3 border-amber-200">
-              <p className="text-xs text-amber-600">Required</p>
-              <p className="text-xl font-bold text-amber-700">{requiredItems.length}</p>
+            <Card className="p-3 border-warning-soft">
+              <p className="text-xs text-warning">Required</p>
+              <p className="text-xl font-bold text-warning">{requiredItems.length}</p>
             </Card>
-            <Card className="p-3 border-blue-200">
-              <p className="text-xs text-blue-600">Optional</p>
-              <p className="text-xl font-bold text-blue-700">{optionalItems.length}</p>
+            <Card className="p-3 border-secondary/30">
+              <p className="text-xs text-secondary">Optional</p>
+              <p className="text-xl font-bold text-secondary">{optionalItems.length}</p>
             </Card>
             <Card className="p-3">
-              <p className="text-xs text-gray-500">Other</p>
-              <p className="text-xl font-semibold text-gray-700">{otherItems.length}</p>
+              <p className="text-xs text-muted-foreground">Other</p>
+              <p className="text-xl font-semibold text-foreground">{otherItems.length}</p>
             </Card>
           </div>
 
-          {/* Items list */}
-          <div className="space-y-2">
-            {items.map(item => (
-              <Card key={item.id} className={`p-3 flex items-center gap-3 ${!item.is_active ? 'opacity-50' : ''}`}>
-                <GripVertical size={14} className="text-gray-300 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-sm font-medium text-gray-900">{item.item_name}</span>
-                    <Badge variant={LEVEL_BADGE[item.requirement_level] ?? 'neutral'}>{item.requirement_level.replace('_', ' ')}</Badge>
-                    <Badge variant="neutral">{CATEGORY_ICON[item.category] ?? item.category}</Badge>
-                    {!item.is_active && <Badge variant="neutral">Inactive</Badge>}
-                  </div>
-                  {item.description && <p className="text-xs text-gray-500 truncate">{item.description}</p>}
-                </div>
-                <div className="flex gap-1 shrink-0">
-                  <Button variant="ghost" size="sm" onClick={() => openEdit(item)}><Edit2 size={14} /></Button>
-                  <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(item)} className="text-red-500"><Trash2 size={14} /></Button>
-                </div>
-              </Card>
-            ))}
-          </div>
+          {/* Items list — drag to reorder */}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+            <SortableContext items={orderedItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
+              <div className="space-y-2">
+                {orderedItems.map(item => (
+                  <SortableChecklistItem
+                    key={item.id}
+                    item={item}
+                    onEdit={openEdit}
+                    onDelete={setDeleteTarget}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         </div>
       )}
 
@@ -184,7 +307,7 @@ export default function RequirementsChecklistPage() {
           </div>
           <Textarea label="Description" value={description} onChange={e => setDescription(e.target.value)} rows={2} placeholder="What this requirement is about..." />
           <Textarea label="Instructions for Applicants" value={instructions} onChange={e => setInstructions(e.target.value)} rows={2} placeholder="Specific instructions on how to fulfill this requirement..." />
-          <Input label="Sort Order" type="number" value={sortOrder} onChange={e => setSortOrder(e.target.value)} />
+          <Input label="Sort Order" type="number" value={sortOrder} onChange={e => setSortOrder(e.target.value)} helperText="Drag items in the list to reorder visually; this number is the raw value." />
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => { setShowModal(false); resetForm() }}>Cancel</Button>
             <Button onClick={handleSubmit} disabled={createMut.isPending || updateMut.isPending}>
@@ -196,7 +319,7 @@ export default function RequirementsChecklistPage() {
 
       {/* Delete Modal */}
       <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Remove Requirement">
-        <p className="text-sm text-gray-600 mb-4">Remove <strong>{deleteTarget?.item_name}</strong> from this program's checklist?</p>
+        <p className="text-sm text-muted-foreground mb-4">Remove <strong className="text-foreground">{deleteTarget?.item_name}</strong> from this program's checklist?</p>
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={() => setDeleteTarget(null)}>Cancel</Button>
           <Button variant="danger" onClick={() => deleteTarget && deleteMut.mutate(deleteTarget.id)} disabled={deleteMut.isPending}>

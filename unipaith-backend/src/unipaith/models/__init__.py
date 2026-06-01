@@ -70,6 +70,10 @@ from unipaith.models.institution import (
     UploadedContact,
     UploadedList,
 )
+from unipaith.models.international import (
+    CountryRequirementPack,
+    InternationalProcessing,
+)
 from unipaith.models.knowledge import (
     AdvisorPersona,
     CrawlFrontier,
@@ -253,6 +257,9 @@ __all__ = [
     "FairnessReport",
     "AdminAuditEvent",
     "AdmissionsAuditLog",
+    # International admissions (Spec 38)
+    "InternationalProcessing",
+    "CountryRequirementPack",
     "KnowledgeDocument",
     "KnowledgeLink",
     "CrawlFrontier",
