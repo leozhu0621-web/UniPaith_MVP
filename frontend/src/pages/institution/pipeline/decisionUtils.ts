@@ -37,6 +37,9 @@ export function formatOfferTermsSummary(offer: ReleaseOfferTerms | null | undefi
   }
   const cond = offer.conditions as { summary?: string } | null | undefined
   if (cond?.summary) lines.push(`Conditions: ${cond.summary}`)
+  if (offer.next_step_actions?.length) {
+    lines.push(`Next steps: ${offer.next_step_actions.length} item${offer.next_step_actions.length === 1 ? '' : 's'}`)
+  }
   return lines
 }
 

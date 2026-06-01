@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode, type KeyboardEvent, Fragment } from 'react'
+import { useState, useEffect, useRef, type ReactNode, type KeyboardEvent, Fragment } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -65,6 +65,7 @@ export default function StudentDetailPage() {
 
   const [synthesis, setSynthesis] = useState<ReviewSynthesis | null>(null)
   const [synthLoading, setSynthLoading] = useState(false)
+  const synthesisAutoRan = useRef(false)
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab)
@@ -180,8 +181,14 @@ export default function StudentDetailPage() {
   }
 
   useEffect(() => {
+    synthesisAutoRan.current = false
+    setSynthesis(null)
+  }, [applicationId])
+
+  useEffect(() => {
     const p = packetQ.data
-    if (activeTab !== 'scores' || !p || p.reviewer_count < 2 || synthesis || synthLoading) return
+    if (activeTab !== 'scores' || !p || p.reviewer_count < 2 || synthesis || synthLoading || synthesisAutoRan.current) return
+    synthesisAutoRan.current = true
     void runSynthesis()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, packetQ.data?.reviewer_count, applicationId])
@@ -698,13 +705,15 @@ function AISummaryTab({ packet, regen, regenPending, matchRationale, matchLoadin
             <AIBadge label="AI packet summary" fallback={isFallback} />
             {p?.confidence_level && <Badge variant={p.confidence_level === 'high' ? 'success' : p.confidence_level === 'medium' ? 'info' : 'warning'}><Shield size={10} className="mr-1" />{p.confidence_level} confidence</Badge>}
           </div>
-          <Button variant="ghost" size="sm" onClick={regen} disabled={regenPending} className="flex items-center gap-1"><RefreshCw size={14} className={regenPending ? 'animate-spin' : ''} /> {regenPending ? 'Generating…' : 'Regenerate'}</Button>
+          <Button variant="ghost" size="sm" onClick={regen} disabled={regenPending} className="flex items-center gap-1"><RefreshCw size={14} className={regenPending ? 'animate-spin' : ''} /> {regenPending ? 'Generating summary…' : p ? 'Regenerate' : 'Generate AI summary'}</Button>
         </div>
-        {isFallback && p && (
-          <div className="flex items-center gap-2 rounded-md border border-warning/30 bg-warning-soft px-3 py-2 text-xs text-warning"><AlertTriangle size={13} /> Showing a rule-based summary. Enable the review model for the full Opus summary.</div>
+        {isFallback && p && !regenPending && (
+          <div className="flex items-center gap-2 rounded-md border border-warning/30 bg-warning-soft px-3 py-2 text-xs text-warning"><AlertTriangle size={13} /> Showing rule-based summary</div>
         )}
-        {!p ? (
-          <p className="text-sm text-muted-foreground">No AI summary yet. Click Regenerate to create one.</p>
+        {regenPending && !p ? (
+          <p className="text-sm text-muted-foreground">Generating summary…</p>
+        ) : !p ? (
+          <p className="text-sm text-muted-foreground">No AI summary yet. Click Generate AI summary to create one.</p>
         ) : (
           <div className="space-y-4">
             <div className="rounded-lg bg-muted/60 p-4"><p className="text-sm text-foreground whitespace-pre-wrap">{p.overall_summary}</p></div>
