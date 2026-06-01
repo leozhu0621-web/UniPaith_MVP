@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AnalyticsData, AuditLogList, Campaign, CommunicationTemplate, IntakeRound, ProgramChecklistItem, CampaignAttributionDetail, CampaignLink, CampaignMetrics, DashboardSummary, DatasetPreview, DatasetInspect, DatasetVersion, DatasetMappingTemplate, DatasetValidationReport, DatasetType, Inquiry, Institution, InstitutionDataset, InstitutionPost, Program, Promotion, Segment } from '../types'
+import type { AnalyticsData, AuditLogList, Campaign, CommunicationTemplate, IntakeRound, ProgramChecklistItem, CampaignAttributionDetail, CampaignLink, CampaignMetrics, DashboardSummary, DatasetMappingTemplate, DatasetPreview, DatasetVersion, Inquiry, Institution, InstitutionDataset, InstitutionPost, Program, Promotion, Segment, ValidationReport } from '../types'
 
 export async function getInstitution(): Promise<Institution> {
   const { data } = await apiClient.get('/institutions/me')
@@ -41,7 +41,6 @@ export async function updateInstitution(payload: Partial<{
   website_url: string; description_text: string; logo_url: string;
   campus_description: string; campus_setting: 'urban' | 'suburban' | 'rural';
   student_body_size: number; founded_year: number; contact_email: string;
-  contact_phone?: string;
   media_gallery: string[];
   // JSONB dicts — see UpdateInstitutionRequest in the backend schema.
   social_links: Record<string, any>;
@@ -487,122 +486,115 @@ export async function chatInstitutionAssistant(message: string, contextProgramId
   return data
 }
 
-// --- Datasets (Spec 24) ---
+// --- Datasets ---
 
-const D = '/institutions/me/datasets'
+export async function requestDatasetUpload(payload: {
+  dataset_name: string; dataset_type: string; file_name: string;
+  content_type?: string; file_size_bytes?: number;
+  description?: string; usage_scope?: string;
+  coverage_start?: string; coverage_end?: string;
+  update_mode?: 'replace' | 'append';
+}): Promise<{ dataset_id: string; upload_url: string; staging_s3_key?: string }> {
+  const { data } = await apiClient.post('/institutions/me/datasets/upload', payload)
+  return data
+}
 
-export async function getDatasets(type?: string): Promise<InstitutionDataset[]> {
-  const { data } = await apiClient.get(D, { params: type && type !== 'all' ? { type } : {} })
+export async function confirmDatasetUpload(
+  datasetId: string,
+  payload?: {
+    column_mapping?: Record<string, string>;
+    skip_invalid_rows?: boolean;
+    save_template?: boolean;
+    template_name?: string;
+  },
+): Promise<InstitutionDataset> {
+  const { data } = await apiClient.post(`/institutions/me/datasets/${datasetId}/confirm`, payload ?? {})
+  return data
+}
+
+export async function getDatasets(): Promise<InstitutionDataset[]> {
+  const { data } = await apiClient.get('/institutions/me/datasets')
   return data
 }
 
 export async function getDataset(datasetId: string): Promise<InstitutionDataset> {
-  const { data } = await apiClient.get(`${D}/${datasetId}`)
-  return data
-}
-
-/** Direct multipart upload — returns the file_ref used by inspect/validate/confirm. */
-export async function uploadDatasetFile(file: File): Promise<{ file_ref: string; file_name: string; size_bytes: number }> {
-  const form = new FormData()
-  form.append('file', file)
-  const { data } = await apiClient.post(`${D}/upload-file`, form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
-  return data
-}
-
-export async function inspectDatasetFile(fileRef: string): Promise<DatasetInspect> {
-  const { data } = await apiClient.post(`${D}/inspect`, { file_ref: fileRef })
-  return data
-}
-
-export async function validateDatasetFile(payload: {
-  dataset_type: DatasetType; mapping: Record<string, string>; file_ref: string
-}): Promise<{ validation_report: DatasetValidationReport; normalization_map: Record<string, string> }> {
-  const { data } = await apiClient.post(`${D}/validate`, payload)
-  return data
-}
-
-export async function confirmDatasetUpload(payload: {
-  name: string; dataset_type: DatasetType; file_ref: string; file_name: string;
-  mapping: Record<string, string>; description?: string; usage_scope?: string;
-  coverage_start?: string | null; coverage_end?: string | null; file_size_bytes?: number;
-}): Promise<InstitutionDataset> {
-  const { data } = await apiClient.post(`${D}/confirm-upload`, payload)
+  const { data } = await apiClient.get(`/institutions/me/datasets/${datasetId}`)
   return data
 }
 
 export async function getDatasetPreview(datasetId: string, limit = 100): Promise<DatasetPreview> {
-  const { data } = await apiClient.get(`${D}/${datasetId}/preview`, { params: { limit } })
-  return data
-}
-
-export async function getDatasetValidation(datasetId: string): Promise<DatasetValidationReport> {
-  const { data } = await apiClient.get(`${D}/${datasetId}/validation`)
+  const { data } = await apiClient.get(`/institutions/me/datasets/${datasetId}/preview`, { params: { limit } })
   return data
 }
 
 export async function updateDataset(datasetId: string, payload: Partial<{
-  dataset_name: string; description: string; column_mapping: Record<string, string>; usage_scope: string;
+  dataset_name: string; description: string; column_mapping: Record<string, string>;
+  usage_scope: string; status: string;
+  coverage_start: string; coverage_end: string;
 }>): Promise<InstitutionDataset> {
-  const { data } = await apiClient.patch(`${D}/${datasetId}`, payload)
+  const { data } = await apiClient.put(`/institutions/me/datasets/${datasetId}`, payload)
   return data
 }
 
 export async function deleteDataset(datasetId: string): Promise<void> {
-  await apiClient.delete(`${D}/${datasetId}`)
+  await apiClient.delete(`/institutions/me/datasets/${datasetId}`)
 }
 
-export async function replaceDataset(datasetId: string, payload: {
-  file_ref: string; file_name: string; mapping?: Record<string, string>
-}): Promise<InstitutionDataset> {
-  const { data } = await apiClient.post(`${D}/${datasetId}/replace`, payload)
+export async function requestDatasetReplaceUpload(
+  datasetId: string,
+  payload: { file_name: string; content_type?: string; file_size_bytes?: number },
+): Promise<{ dataset_id: string; upload_url: string; staging_s3_key?: string }> {
+  const { data } = await apiClient.post(`/institutions/me/datasets/${datasetId}/replace/upload`, payload)
   return data
 }
 
-export async function appendDataset(datasetId: string, payload: {
-  file_ref: string; file_name: string
-}): Promise<InstitutionDataset> {
-  const { data } = await apiClient.post(`${D}/${datasetId}/append`, payload)
+export async function confirmDatasetReplace(
+  datasetId: string,
+  payload: {
+    staging_s3_key: string; file_name: string; update_mode?: 'replace' | 'append';
+    column_mapping?: Record<string, string>; skip_invalid_rows?: boolean;
+  },
+): Promise<InstitutionDataset> {
+  const path = payload.update_mode === 'append'
+    ? `/institutions/me/datasets/${datasetId}/append`
+    : `/institutions/me/datasets/${datasetId}/replace`
+  const { data } = await apiClient.post(path, payload)
   return data
 }
 
 export async function getDatasetVersions(datasetId: string): Promise<DatasetVersion[]> {
-  const { data } = await apiClient.get(`${D}/${datasetId}/versions`)
+  const { data } = await apiClient.get(`/institutions/me/datasets/${datasetId}/versions`)
   return data
 }
 
-export async function rollbackDataset(datasetId: string, versionNumber: number): Promise<InstitutionDataset> {
-  const { data } = await apiClient.post(`${D}/${datasetId}/versions/${versionNumber}/rollback`)
+export async function rollbackDatasetVersion(datasetId: string, versionId: string): Promise<InstitutionDataset> {
+  const { data } = await apiClient.post(`/institutions/me/datasets/${datasetId}/versions/${versionId}/rollback`)
   return data
 }
 
-/** Download a dataset's current CSV via authenticated blob fetch. */
-export async function exportDataset(datasetId: string): Promise<{ blob: Blob; fileName: string }> {
-  const resp = await apiClient.get(`${D}/${datasetId}/export`, { responseType: 'blob' })
-  const cd: string = resp.headers['content-disposition'] || ''
-  const match = cd.match(/filename="?([^"]+)"?/)
-  return { blob: resp.data, fileName: match?.[1] || 'dataset.csv' }
-}
-
-// --- Mapping templates ---
-
-export async function getMappingTemplates(type?: string): Promise<DatasetMappingTemplate[]> {
-  const { data } = await apiClient.get('/institutions/me/dataset-mapping-templates', {
-    params: type ? { type } : {},
+export async function getDatasetMappingTemplates(datasetType?: string): Promise<DatasetMappingTemplate[]> {
+  const { data } = await apiClient.get('/institutions/me/datasets/mapping-templates', {
+    params: datasetType ? { dataset_type: datasetType } : undefined,
   })
   return data
 }
 
-export async function createMappingTemplate(payload: {
-  name: string; dataset_type: DatasetType; column_mapping: Record<string, string>
+export async function saveDatasetMappingTemplate(payload: {
+  template_name: string;
+  dataset_type: string;
+  column_mapping: Record<string, string>;
 }): Promise<DatasetMappingTemplate> {
-  const { data } = await apiClient.post('/institutions/me/dataset-mapping-templates', payload)
+  const { data } = await apiClient.post('/institutions/me/datasets/mapping-templates', payload)
   return data
 }
 
-export async function deleteMappingTemplate(templateId: string): Promise<void> {
-  await apiClient.delete(`/institutions/me/dataset-mapping-templates/${templateId}`)
+export function parseValidationReport(err: unknown): ValidationReport | null {
+  const detail = (err as { response?: { data?: { detail?: { validation_report?: ValidationReport } } } })
+    ?.response?.data?.detail
+  if (detail && typeof detail === 'object' && 'validation_report' in detail) {
+    return detail.validation_report as ValidationReport
+  }
+  return null
 }
 
 // --- Posts ---
@@ -648,12 +640,6 @@ export async function pinPost(postId: string): Promise<InstitutionPost> {
 
 export async function requestPostMediaUpload(contentType: string): Promise<{ upload_url: string; media_key: string }> {
   const { data } = await apiClient.post('/institutions/me/posts/media/upload', { content_type: contentType })
-  return data
-}
-
-/** Spec 22 §9 — presigned upload for institution logo / gallery media. */
-export async function requestInstitutionMediaUpload(contentType: string): Promise<{ upload_url: string; media_key: string }> {
-  const { data } = await apiClient.post('/institutions/me/media/upload', { content_type: contentType })
   return data
 }
 

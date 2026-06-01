@@ -28,6 +28,7 @@ from unipaith.models.institution import (
     EventRSVP,
     Inquiry,
     Institution,
+    InstitutionDataset,
     InstitutionPost,
     Program,
     Promotion,
@@ -45,12 +46,17 @@ from unipaith.schemas.institution import (
     CampaignMetricsResponse,
     CreateCampaignLinkRequest,
     CreateCampaignRequest,
+    CreateDatasetRequest,
     CreateInstitutionRequest,
     CreatePostRequest,
     CreateProgramRequest,
     CreatePromotionRequest,
     CreateSegmentRequest,
     DashboardSummaryResponse,
+    DatasetPreviewResponse,
+    DatasetReplaceRequest,
+    DatasetResponse,
+    DatasetUploadResponse,
     EventAttribution,
     FunnelStage,
     InquiryResponse,
@@ -65,6 +71,7 @@ from unipaith.schemas.institution import (
     PromotionResponse,
     SubmitInquiryRequest,
     UpdateCampaignRequest,
+    UpdateDatasetRequest,
     UpdateInquiryRequest,
     UpdateInstitutionRequest,
     UpdatePostRequest,
@@ -1642,6 +1649,173 @@ class InstitutionService:
             is_eligible=is_eligible,
         )
 
+    # --- Datasets ---
+
+    async def list_datasets(self, institution_id: UUID) -> list[InstitutionDataset]:
+        result = await self.db.execute(
+            select(InstitutionDataset)
+            .where(InstitutionDataset.institution_id == institution_id)
+            .order_by(InstitutionDataset.created_at.desc())
+        )
+        return list(result.scalars().all())
+
+    async def request_dataset_upload(
+        self,
+        institution_id: UUID,
+        user_id: UUID,
+        data: CreateDatasetRequest,
+    ) -> DatasetUploadResponse:
+        from unipaith.core.s3 import S3Client
+
+        s3_key = f"datasets/{institution_id}/{uuid.uuid4()}/{data.file_name}"
+        s3 = S3Client()
+        upload_url = s3.generate_upload_url(s3_key, data.content_type)
+
+        dataset = InstitutionDataset(
+            institution_id=institution_id,
+            dataset_name=data.dataset_name,
+            dataset_type=data.dataset_type,
+            description=data.description,
+            s3_key=s3_key,
+            file_name=data.file_name,
+            file_size_bytes=data.file_size_bytes,
+            usage_scope=data.usage_scope,
+            coverage_start=data.coverage_start,
+            coverage_end=data.coverage_end,
+            status="uploaded",
+            uploaded_by=user_id,
+        )
+        self.db.add(dataset)
+        await self.db.flush()
+        await self.db.refresh(dataset)
+        return DatasetUploadResponse(dataset_id=dataset.id, upload_url=upload_url)
+
+    async def confirm_dataset_upload(
+        self,
+        institution_id: UUID,
+        dataset_id: UUID,
+        user_id: UUID,
+        *,
+        column_mapping: dict | None = None,
+        skip_invalid_rows: bool = False,
+        save_template: bool = False,
+        template_name: str | None = None,
+    ) -> tuple[InstitutionDataset, dict]:
+        from unipaith.services.dataset_upload_service import DatasetUploadService
+
+        return await DatasetUploadService(self.db).confirm_upload(
+            institution_id,
+            dataset_id,
+            user_id,
+            column_mapping=column_mapping,
+            skip_invalid_rows=skip_invalid_rows,
+            save_template=save_template,
+            template_name=template_name,
+        )
+
+    async def get_dataset(self, institution_id: UUID, dataset_id: UUID) -> DatasetResponse:
+        from unipaith.services.dataset_upload_service import dataset_used_by
+
+        dataset = await self._verify_dataset_ownership(institution_id, dataset_id)
+        from unipaith.core.s3 import S3Client
+
+        s3 = S3Client()
+        download_url = s3.generate_download_url(dataset.s3_key)
+        resp = DatasetResponse.model_validate(dataset)
+        resp.download_url = download_url
+        resp.used_by = dataset_used_by(dataset.usage_scope)
+        return resp
+
+    async def get_dataset_preview(
+        self,
+        institution_id: UUID,
+        dataset_id: UUID,
+        *,
+        limit: int = 100,
+    ) -> DatasetPreviewResponse:
+        from unipaith.services.dataset_upload_service import DatasetUploadService
+
+        data = await DatasetUploadService(self.db).get_preview(
+            institution_id, dataset_id, limit=limit
+        )
+        return DatasetPreviewResponse(**data)
+
+    async def request_dataset_replace_upload(
+        self,
+        institution_id: UUID,
+        dataset_id: UUID,
+        data: DatasetReplaceRequest,
+    ) -> DatasetUploadResponse:
+        from unipaith.core.s3 import S3Client
+
+        dataset = await self._verify_dataset_ownership(institution_id, dataset_id)
+        s3_key = f"datasets/{institution_id}/{dataset.id}/staging/{uuid.uuid4()}/{data.file_name}"
+        s3 = S3Client()
+        upload_url = s3.generate_upload_url(s3_key, data.content_type)
+        return DatasetUploadResponse(
+            dataset_id=dataset.id, upload_url=upload_url, staging_s3_key=s3_key
+        )
+
+    async def confirm_dataset_replace(
+        self,
+        institution_id: UUID,
+        dataset_id: UUID,
+        user_id: UUID,
+        *,
+        staging_s3_key: str,
+        file_name: str,
+        update_mode: str,
+        column_mapping: dict | None = None,
+        skip_invalid_rows: bool = False,
+    ) -> tuple[InstitutionDataset, dict]:
+        from unipaith.services.dataset_upload_service import DatasetUploadService
+
+        return await DatasetUploadService(self.db).replace_or_append_file(
+            institution_id,
+            dataset_id,
+            user_id,
+            new_s3_key=staging_s3_key,
+            new_file_name=file_name,
+            mode=update_mode,
+            column_mapping=column_mapping,
+            skip_invalid_rows=skip_invalid_rows,
+        )
+
+    async def update_dataset(
+        self,
+        institution_id: UUID,
+        dataset_id: UUID,
+        data: UpdateDatasetRequest,
+    ) -> InstitutionDataset:
+        dataset = await self._verify_dataset_ownership(institution_id, dataset_id)
+        update_data = data.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(dataset, key, value)
+        await self.db.flush()
+        await self.db.refresh(dataset)
+        return dataset
+
+    async def delete_dataset(self, institution_id: UUID, dataset_id: UUID, user_id: UUID) -> None:
+        from unipaith.services.dataset_upload_service import DatasetUploadService
+
+        await DatasetUploadService(self.db).delete_dataset(institution_id, dataset_id, user_id)
+
+    async def _verify_dataset_ownership(
+        self,
+        institution_id: UUID,
+        dataset_id: UUID,
+    ) -> InstitutionDataset:
+        result = await self.db.execute(
+            select(InstitutionDataset).where(
+                InstitutionDataset.id == dataset_id,
+                InstitutionDataset.institution_id == institution_id,
+            )
+        )
+        dataset = result.scalar_one_or_none()
+        if not dataset:
+            raise NotFoundException("Dataset not found")
+        return dataset
+
     # --- Public Program Browsing ---
 
     async def search_programs(
@@ -2036,19 +2210,6 @@ class InstitutionService:
 
         s3 = S3Client()
         key = f"institutions/{institution_id}/posts/media/{uuid.uuid4()}"
-        upload_url = s3.generate_upload_url(key, content_type)
-        return PostMediaUploadResponse(upload_url=upload_url, media_key=key)
-
-    async def request_institution_media_upload(
-        self,
-        institution_id: UUID,
-        content_type: str,
-    ) -> PostMediaUploadResponse:
-        """Spec 22 §9 — presigned upload for logo / gallery assets."""
-        from unipaith.core.s3 import S3Client
-
-        s3 = S3Client()
-        key = f"institutions/{institution_id}/media/{uuid.uuid4()}"
         upload_url = s3.generate_upload_url(key, content_type)
         return PostMediaUploadResponse(upload_url=upload_url, media_key=key)
 

@@ -33,7 +33,6 @@ class CreateInstitutionRequest(BaseModel):
     student_body_size: int | None = None
     founded_year: int | None = None
     contact_email: str | None = None
-    contact_phone: str | None = None
     logo_url: str | None = None
     website_url: str | None = None
     media_gallery: list[str] | None = None
@@ -66,7 +65,6 @@ class UpdateInstitutionRequest(BaseModel):
     student_body_size: int | None = None
     founded_year: int | None = None
     contact_email: str | None = None
-    contact_phone: str | None = None
     logo_url: str | None = None
     website_url: str | None = None
     media_gallery: list[str] | None = None
@@ -98,7 +96,6 @@ class InstitutionResponse(BaseModel):
     student_body_size: int | None = None
     founded_year: int | None = None
     contact_email: str | None = None
-    contact_phone: str | None = None
     logo_url: str | None
     website_url: str | None
     media_gallery: list | dict | None = None
@@ -583,71 +580,51 @@ class PromotionResponse(BaseModel):
 # --- Datasets ---
 
 
-DatasetType = Literal["admissions_history", "prospect_list", "outcomes_summary"]
-UsageScope = Literal["marketing", "analytics", "admissions", "all"]
-
-
-class DatasetUploadUrlRequest(BaseModel):
+class CreateDatasetRequest(BaseModel):
+    dataset_name: str = Field(min_length=1, max_length=255)
+    dataset_type: Literal["admissions_history", "prospect_list", "outcomes_summary"]
+    description: str | None = None
     file_name: str = Field(min_length=1)
     content_type: str = "text/csv"
-
-
-class DatasetUploadUrlResponse(BaseModel):
-    file_ref: str
-    upload_url: str
-
-
-class DatasetInspectRequest(BaseModel):
-    file_ref: str = Field(min_length=1)
-
-
-class DatasetInspectResponse(BaseModel):
-    columns: list[str]
-    rows: list[dict]
-    total_rows: int
-    histogram: dict
-
-
-class ValidateDatasetRequest(BaseModel):
-    dataset_type: DatasetType
-    mapping: dict[str, str]
-    file_ref: str = Field(min_length=1)
-
-
-class ValidateDatasetResponse(BaseModel):
-    validation_report: dict
-    normalization_map: dict
-
-
-class ConfirmDatasetUploadRequest(BaseModel):
-    name: str = Field(min_length=1, max_length=255)
-    dataset_type: DatasetType
-    file_ref: str = Field(min_length=1)
-    file_name: str = Field(min_length=1)
-    mapping: dict[str, str]
-    description: str | None = None
-    usage_scope: UsageScope | None = None
+    file_size_bytes: int | None = None
+    usage_scope: Literal["marketing", "analytics", "admissions", "all"] | None = None
     coverage_start: date | None = None
     coverage_end: date | None = None
+    update_mode: Literal["replace", "append"] = "replace"
+
+
+class ConfirmDatasetRequest(BaseModel):
+    column_mapping: dict[str, str] | None = None
+    skip_invalid_rows: bool = False
+    save_template: bool = False
+    template_name: str | None = None
+
+
+class DatasetReplaceRequest(BaseModel):
+    file_name: str = Field(min_length=1)
+    content_type: str = "text/csv"
     file_size_bytes: int | None = None
 
 
-class ReplaceDatasetRequest(BaseModel):
-    file_ref: str = Field(min_length=1)
+class ConfirmDatasetReplaceRequest(BaseModel):
+    staging_s3_key: str
     file_name: str = Field(min_length=1)
-    mapping: dict[str, str] | None = None
-
-
-class AppendDatasetRequest(BaseModel):
-    file_ref: str = Field(min_length=1)
-    file_name: str = Field(min_length=1)
+    update_mode: Literal["replace", "append"] = "replace"
+    column_mapping: dict[str, str] | None = None
+    skip_invalid_rows: bool = False
 
 
 class UpdateDatasetRequest(BaseModel):
     dataset_name: str | None = Field(None, min_length=1, max_length=255)
     description: str | None = None
     column_mapping: dict | None = None
-    usage_scope: UsageScope | None = None
+    usage_scope: str | None = None
+    coverage_start: date | None = None
+    coverage_end: date | None = None
+    status: (
+        Literal["uploaded", "validated", "processed", "failed", "pending", "active", "archived"]
+        | None
+    ) = None
 
 
 class DatasetResponse(BaseModel):
@@ -661,7 +638,6 @@ class DatasetResponse(BaseModel):
     file_size_bytes: int | None
     row_count: int | None
     column_mapping: dict | None
-    normalization_map: dict | None = None
     validation_errors: list | dict | None = None
     status: str
     usage_scope: str | None
@@ -671,39 +647,49 @@ class DatasetResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     download_url: str | None = None
+    used_by: list[str] = []
 
 
-class DatasetVersionResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    id: UUID
-    version_number: int
-    row_count: int | None
-    changes_summary: dict | None
-    validation_report: dict | None
-    uploaded_at: datetime
+class DatasetUploadResponse(BaseModel):
+    dataset_id: UUID
+    upload_url: str
+    staging_s3_key: str | None = None
 
 
 class DatasetPreviewResponse(BaseModel):
     columns: list[str]
     rows: list[dict]
     total_rows: int
-    histogram: dict = Field(default_factory=dict)
+    column_histogram: dict[str, dict[str, int]] = {}
 
 
-class CreateMappingTemplateRequest(BaseModel):
-    name: str = Field(min_length=1, max_length=255)
-    dataset_type: DatasetType
-    column_mapping: dict[str, str]
-
-
-class MappingTemplateResponse(BaseModel):
+class DatasetVersionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
+    dataset_id: UUID
+    version_number: int
+    file_name: str
+    row_count: int | None
+    changes_summary: dict
+    validation_report: dict | None
+    created_at: datetime
+
+
+class DatasetMappingTemplateResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    institution_id: UUID
+    template_name: str
     dataset_type: str
-    name: str
     column_mapping: dict
     created_at: datetime
     updated_at: datetime
+
+
+class SaveMappingTemplateRequest(BaseModel):
+    template_name: str = Field(min_length=1, max_length=255)
+    dataset_type: Literal["admissions_history", "prospect_list", "outcomes_summary"]
+    column_mapping: dict[str, str]
 
 
 # --- Posts ---

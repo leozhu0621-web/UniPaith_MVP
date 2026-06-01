@@ -1,7 +1,7 @@
 from datetime import date
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Query, UploadFile, status
+from fastapi import APIRouter, Depends, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,37 +24,35 @@ from unipaith.schemas.communication import (
 )
 from unipaith.schemas.institution import (
     AnalyticsResponse,
-    AppendDatasetRequest,
     CampaignAttributionDetail,
     CampaignLinkResponse,
     CampaignMetricsResponse,
     CampaignResponse,
-    ConfirmDatasetUploadRequest,
+    ConfirmDatasetReplaceRequest,
+    ConfirmDatasetRequest,
     CreateCampaignLinkRequest,
     CreateCampaignRequest,
+    CreateDatasetRequest,
     CreateInstitutionRequest,
-    CreateMappingTemplateRequest,
     CreatePostRequest,
     CreateProgramRequest,
     CreatePromotionRequest,
     CreateSegmentRequest,
     DashboardSummaryResponse,
-    DatasetInspectRequest,
-    DatasetInspectResponse,
+    DatasetMappingTemplateResponse,
     DatasetPreviewResponse,
+    DatasetReplaceRequest,
     DatasetResponse,
-    DatasetUploadUrlRequest,
-    DatasetUploadUrlResponse,
+    DatasetUploadResponse,
     DatasetVersionResponse,
     InquiryResponse,
     InstitutionResponse,
-    MappingTemplateResponse,
     PostMediaUploadResponse,
     PostResponse,
     ProgramResponse,
     PromotionResponse,
     RecordActionRequest,
-    ReplaceDatasetRequest,
+    SaveMappingTemplateRequest,
     SegmentResponse,
     SubmitInquiryRequest,
     UpdateCampaignRequest,
@@ -65,15 +63,12 @@ from unipaith.schemas.institution import (
     UpdateProgramRequest,
     UpdatePromotionRequest,
     UpdateSegmentRequest,
-    ValidateDatasetRequest,
-    ValidateDatasetResponse,
 )
 from unipaith.schemas.intake import (
     CreateIntakeRoundRequest,
     IntakeRoundResponse,
     UpdateIntakeRoundRequest,
 )
-from unipaith.services.dataset_service import DatasetService
 from unipaith.services.institution_service import InstitutionService
 
 router = APIRouter(prefix="/institutions", tags=["institutions"])
@@ -92,10 +87,6 @@ class InstitutionAssistantChatResponse(BaseModel):
 
 def _svc(db: AsyncSession) -> InstitutionService:
     return InstitutionService(db)
-
-
-def _dsvc(db: AsyncSession) -> DatasetService:
-    return DatasetService(db)
 
 
 # --- Institution Profile ---
@@ -495,244 +486,104 @@ async def institution_assistant_chat(
     )
 
 
-# --- Datasets (Spec 24) ---
+# --- Datasets ---
 
 
-def _dataset_out(dsvc: DatasetService, dataset) -> DatasetResponse:
+@router.post("/me/datasets/upload", response_model=DatasetUploadResponse)
+async def request_dataset_upload(
+    body: CreateDatasetRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.request_dataset_upload(inst.id, user.id, body)
+
+
+def _dataset_response(dataset, download_url: str | None = None) -> DatasetResponse:
+    from unipaith.services.dataset_upload_service import dataset_used_by
+
     resp = DatasetResponse.model_validate(dataset)
-    resp.download_url = dsvc.download_url(dataset)
+    resp.download_url = download_url
+    resp.used_by = dataset_used_by(dataset.usage_scope)
+    if dataset.status == "pending":
+        resp.status = "uploaded"
+    elif dataset.status == "active":
+        resp.status = "processed"
     return resp
 
 
-async def _audit_dataset(
-    db: AsyncSession,
-    institution_id: UUID,
-    user_id: UUID,
-    action: str,
+@router.post("/me/datasets/{dataset_id}/confirm", response_model=DatasetResponse)
+async def confirm_dataset_upload(
     dataset_id: UUID,
-    description: str,
-    old_value: dict | None = None,
-) -> None:
-    from unipaith.services.audit_service import AuditService
+    body: ConfirmDatasetRequest | None = None,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from fastapi import HTTPException
 
-    await AuditService(db).log(
-        institution_id=institution_id,
-        actor_user_id=user_id,
-        action=action,
-        entity_type="dataset",
-        entity_id=str(dataset_id),
-        description=description,
-        old_value=old_value,
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    req = body or ConfirmDatasetRequest()
+    dataset, report = await svc.confirm_dataset_upload(
+        inst.id,
+        dataset_id,
+        user.id,
+        column_mapping=req.column_mapping,
+        skip_invalid_rows=req.skip_invalid_rows,
+        save_template=req.save_template,
+        template_name=req.template_name,
     )
+    if report.get("error_count", 0) > 0 and not req.skip_invalid_rows:
+        raise HTTPException(
+            status_code=422,
+            detail={"message": "Validation failed", "validation_report": report},
+        )
+    return _dataset_response(dataset)
 
 
 @router.get("/me/datasets", response_model=list[DatasetResponse])
 async def list_datasets(
-    type: str | None = Query(None),
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    inst = await _svc(db).get_institution(user.id)
-    dsvc = _dsvc(db)
-    datasets = await dsvc.list_datasets(inst.id, type)
-    return [_dataset_out(dsvc, d) for d in datasets]
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    datasets = await svc.list_datasets(inst.id)
+    return [_dataset_response(d) for d in datasets]
 
 
-@router.post("/me/datasets/upload-url", response_model=DatasetUploadUrlResponse)
-async def request_dataset_upload_url(
-    body: DatasetUploadUrlRequest,
+@router.get("/me/datasets/mapping-templates", response_model=list[DatasetMappingTemplateResponse])
+async def list_dataset_mapping_templates(
+    dataset_type: str | None = None,
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    inst = await _svc(db).get_institution(user.id)
-    out = _dsvc(db).request_upload_url(inst.id, body.file_name, body.content_type)
-    return DatasetUploadUrlResponse(**out)
+    from unipaith.services.dataset_upload_service import DatasetUploadService
+
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    templates = await DatasetUploadService(db).list_mapping_templates(inst.id, dataset_type)
+    return [DatasetMappingTemplateResponse.model_validate(t) for t in templates]
 
 
-@router.post("/me/datasets/upload-file")
-async def upload_dataset_file(
-    file: UploadFile = File(...),
+@router.post("/me/datasets/mapping-templates", response_model=DatasetMappingTemplateResponse)
+async def save_dataset_mapping_template(
+    body: SaveMappingTemplateRequest,
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    """Direct multipart upload — the file is stored and a ``file_ref`` returned,
-    which the client then passes to inspect / validate / confirm-upload."""
-    inst = await _svc(db).get_institution(user.id)
-    content = await file.read()
-    return _dsvc(db).store_upload(inst.id, file.filename or "upload.csv", content)
+    from unipaith.services.dataset_upload_service import DatasetUploadService
 
-
-@router.post("/me/datasets/inspect", response_model=DatasetInspectResponse)
-async def inspect_dataset_file(
-    body: DatasetInspectRequest,
-    user: User = Depends(require_institution_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    await _svc(db).get_institution(user.id)
-    out = await _dsvc(db).inspect(body.file_ref)
-    return DatasetInspectResponse(**out)
-
-
-@router.post("/me/datasets/validate", response_model=ValidateDatasetResponse)
-async def validate_dataset_file(
-    body: ValidateDatasetRequest,
-    user: User = Depends(require_institution_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    inst = await _svc(db).get_institution(user.id)
-    out = await _dsvc(db).validate_dry_run(inst.id, body.dataset_type, body.mapping, body.file_ref)
-    return ValidateDatasetResponse(**out)
-
-
-@router.post("/me/datasets/confirm-upload", response_model=DatasetResponse)
-async def confirm_dataset_upload(
-    body: ConfirmDatasetUploadRequest,
-    user: User = Depends(require_institution_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    inst = await _svc(db).get_institution(user.id)
-    dsvc = _dsvc(db)
-    dataset = await dsvc.confirm_upload(
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    tpl = await DatasetUploadService(db).save_mapping_template(
         inst.id,
-        user.id,
-        name=body.name,
+        template_name=body.template_name,
         dataset_type=body.dataset_type,
-        file_ref=body.file_ref,
-        file_name=body.file_name,
-        mapping=body.mapping,
-        description=body.description,
-        usage_scope=body.usage_scope,
-        coverage_start=body.coverage_start,
-        coverage_end=body.coverage_end,
-        file_size_bytes=body.file_size_bytes,
+        column_mapping=body.column_mapping,
     )
-    await _audit_dataset(
-        db,
-        inst.id,
-        user.id,
-        "dataset.create",
-        dataset.id,
-        f"Uploaded dataset {dataset.dataset_name} ({dataset.row_count or 0} rows)",
-    )
-    return _dataset_out(dsvc, dataset)
-
-
-@router.get("/me/datasets/{dataset_id}/preview", response_model=DatasetPreviewResponse)
-async def get_dataset_preview(
-    dataset_id: UUID,
-    limit: int = Query(100, ge=1, le=1000),
-    user: User = Depends(require_institution_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    inst = await _svc(db).get_institution(user.id)
-    out = await _dsvc(db).get_preview(inst.id, dataset_id, limit)
-    return DatasetPreviewResponse(**out)
-
-
-@router.get("/me/datasets/{dataset_id}/validation")
-async def get_dataset_validation(
-    dataset_id: UUID,
-    user: User = Depends(require_institution_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    inst = await _svc(db).get_institution(user.id)
-    return await _dsvc(db).get_validation(inst.id, dataset_id)
-
-
-@router.get("/me/datasets/{dataset_id}/versions", response_model=list[DatasetVersionResponse])
-async def list_dataset_versions(
-    dataset_id: UUID,
-    user: User = Depends(require_institution_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    inst = await _svc(db).get_institution(user.id)
-    versions = await _dsvc(db).list_versions(inst.id, dataset_id)
-    return [DatasetVersionResponse.model_validate(v) for v in versions]
-
-
-@router.post(
-    "/me/datasets/{dataset_id}/versions/{version_number}/rollback",
-    response_model=DatasetResponse,
-)
-async def rollback_dataset(
-    dataset_id: UUID,
-    version_number: int,
-    user: User = Depends(require_institution_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    inst = await _svc(db).get_institution(user.id)
-    dsvc = _dsvc(db)
-    dataset = await dsvc.rollback(inst.id, user.id, dataset_id, version_number)
-    await _audit_dataset(
-        db,
-        inst.id,
-        user.id,
-        "dataset.rollback",
-        dataset_id,
-        f"Rolled back {dataset.dataset_name} to v{version_number}",
-    )
-    return _dataset_out(dsvc, dataset)
-
-
-@router.post("/me/datasets/{dataset_id}/replace", response_model=DatasetResponse)
-async def replace_dataset(
-    dataset_id: UUID,
-    body: ReplaceDatasetRequest,
-    user: User = Depends(require_institution_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    inst = await _svc(db).get_institution(user.id)
-    dsvc = _dsvc(db)
-    dataset = await dsvc.replace_dataset(
-        inst.id, user.id, dataset_id, body.file_ref, body.file_name, body.mapping
-    )
-    await _audit_dataset(
-        db,
-        inst.id,
-        user.id,
-        "dataset.replace",
-        dataset_id,
-        f"Replaced dataset {dataset.dataset_name} (now v{dataset.version})",
-    )
-    return _dataset_out(dsvc, dataset)
-
-
-@router.post("/me/datasets/{dataset_id}/append", response_model=DatasetResponse)
-async def append_dataset(
-    dataset_id: UUID,
-    body: AppendDatasetRequest,
-    user: User = Depends(require_institution_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    inst = await _svc(db).get_institution(user.id)
-    dsvc = _dsvc(db)
-    dataset = await dsvc.append_dataset(inst.id, user.id, dataset_id, body.file_ref, body.file_name)
-    await _audit_dataset(
-        db,
-        inst.id,
-        user.id,
-        "dataset.append",
-        dataset_id,
-        f"Appended rows to {dataset.dataset_name} (now v{dataset.version})",
-    )
-    return _dataset_out(dsvc, dataset)
-
-
-@router.get("/me/datasets/{dataset_id}/export")
-async def export_dataset(
-    dataset_id: UUID,
-    user: User = Depends(require_institution_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    from fastapi.responses import Response
-
-    inst = await _svc(db).get_institution(user.id)
-    csv_text, file_name = await _dsvc(db).export_csv(inst.id, dataset_id)
-    return Response(
-        content=csv_text,
-        media_type="text/csv",
-        headers={"Content-Disposition": f'attachment; filename="{file_name}"'},
-    )
+    return DatasetMappingTemplateResponse.model_validate(tpl)
 
 
 @router.get("/me/datasets/{dataset_id}", response_model=DatasetResponse)
@@ -741,23 +592,138 @@ async def get_dataset(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    inst = await _svc(db).get_institution(user.id)
-    dsvc = _dsvc(db)
-    dataset = await dsvc.get_dataset_with_url(inst.id, dataset_id)
-    return _dataset_out(dsvc, dataset)
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.get_dataset(inst.id, dataset_id)
 
 
-@router.patch("/me/datasets/{dataset_id}", response_model=DatasetResponse)
+@router.get("/me/datasets/{dataset_id}/preview", response_model=DatasetPreviewResponse)
+async def get_dataset_preview(
+    dataset_id: UUID,
+    limit: int = 100,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.get_dataset_preview(inst.id, dataset_id, limit=min(limit, 100))
+
+
+@router.post("/me/datasets/{dataset_id}/replace/upload", response_model=DatasetUploadResponse)
+async def request_dataset_replace_upload(
+    dataset_id: UUID,
+    body: DatasetReplaceRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.request_dataset_replace_upload(inst.id, dataset_id, body)
+
+
+@router.post("/me/datasets/{dataset_id}/replace", response_model=DatasetResponse)
+async def confirm_dataset_replace(
+    dataset_id: UUID,
+    body: ConfirmDatasetReplaceRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from fastapi import HTTPException
+
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    dataset, report = await svc.confirm_dataset_replace(
+        inst.id,
+        dataset_id,
+        user.id,
+        staging_s3_key=body.staging_s3_key,
+        file_name=body.file_name,
+        update_mode=body.update_mode,
+        column_mapping=body.column_mapping,
+        skip_invalid_rows=body.skip_invalid_rows,
+    )
+    if report.get("error_count", 0) > 0 and not body.skip_invalid_rows:
+        raise HTTPException(
+            status_code=422,
+            detail={"message": "Validation failed", "validation_report": report},
+        )
+    return _dataset_response(dataset)
+
+
+@router.post("/me/datasets/{dataset_id}/append", response_model=DatasetResponse)
+async def confirm_dataset_append(
+    dataset_id: UUID,
+    body: ConfirmDatasetReplaceRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from fastapi import HTTPException
+
+    body = body.model_copy(update={"update_mode": "append"})
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    dataset, report = await svc.confirm_dataset_replace(
+        inst.id,
+        dataset_id,
+        user.id,
+        staging_s3_key=body.staging_s3_key,
+        file_name=body.file_name,
+        update_mode="append",
+        column_mapping=body.column_mapping,
+        skip_invalid_rows=body.skip_invalid_rows,
+    )
+    if report.get("error_count", 0) > 0 and not body.skip_invalid_rows:
+        raise HTTPException(
+            status_code=422,
+            detail={"message": "Validation failed", "validation_report": report},
+        )
+    return _dataset_response(dataset)
+
+
+@router.get("/me/datasets/{dataset_id}/versions", response_model=list[DatasetVersionResponse])
+async def list_dataset_versions(
+    dataset_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from unipaith.services.dataset_upload_service import DatasetUploadService
+
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    versions = await DatasetUploadService(db).list_versions(inst.id, dataset_id)
+    return [DatasetVersionResponse.model_validate(v) for v in versions]
+
+
+@router.post(
+    "/me/datasets/{dataset_id}/versions/{version_id}/rollback", response_model=DatasetResponse
+)
+async def rollback_dataset_version(
+    dataset_id: UUID,
+    version_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from unipaith.services.dataset_upload_service import DatasetUploadService
+
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    dataset = await DatasetUploadService(db).rollback_version(
+        inst.id, dataset_id, version_id, user.id
+    )
+    return _dataset_response(dataset)
+
+
+@router.put("/me/datasets/{dataset_id}", response_model=DatasetResponse)
 async def update_dataset(
     dataset_id: UUID,
     body: UpdateDatasetRequest,
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    inst = await _svc(db).get_institution(user.id)
-    dsvc = _dsvc(db)
-    dataset = await dsvc.update_dataset(inst.id, dataset_id, body.model_dump(exclude_unset=True))
-    return _dataset_out(dsvc, dataset)
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    dataset = await svc.update_dataset(inst.id, dataset_id, body)
+    return _dataset_response(dataset)
 
 
 @router.delete("/me/datasets/{dataset_id}", status_code=204)
@@ -766,58 +732,9 @@ async def delete_dataset(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    inst = await _svc(db).get_institution(user.id)
-    snapshot = await _dsvc(db).delete_dataset(inst.id, user.id, dataset_id)
-    await _audit_dataset(
-        db,
-        inst.id,
-        user.id,
-        "dataset.delete",
-        dataset_id,
-        f"Deleted dataset {snapshot['dataset_name']}",
-        old_value=snapshot,
-    )
-
-
-# --- Dataset mapping templates (Spec 24 §4.5 / §12) ---
-
-
-@router.get("/me/dataset-mapping-templates", response_model=list[MappingTemplateResponse])
-async def list_mapping_templates(
-    type: str | None = Query(None),
-    user: User = Depends(require_institution_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    inst = await _svc(db).get_institution(user.id)
-    tpls = await _dsvc(db).list_templates(inst.id, type)
-    return [MappingTemplateResponse.model_validate(t) for t in tpls]
-
-
-@router.post("/me/dataset-mapping-templates", response_model=MappingTemplateResponse)
-async def create_mapping_template(
-    body: CreateMappingTemplateRequest,
-    user: User = Depends(require_institution_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    inst = await _svc(db).get_institution(user.id)
-    tpl = await _dsvc(db).create_template(
-        inst.id,
-        user.id,
-        name=body.name,
-        dataset_type=body.dataset_type,
-        column_mapping=body.column_mapping,
-    )
-    return MappingTemplateResponse.model_validate(tpl)
-
-
-@router.delete("/me/dataset-mapping-templates/{template_id}", status_code=204)
-async def delete_mapping_template(
-    template_id: UUID,
-    user: User = Depends(require_institution_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    inst = await _svc(db).get_institution(user.id)
-    await _dsvc(db).delete_template(inst.id, template_id)
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    await svc.delete_dataset(inst.id, dataset_id, user.id)
 
 
 # --- Posts ---
@@ -906,18 +823,6 @@ async def request_post_media_upload(
     svc = _svc(db)
     inst = await svc.get_institution(user.id)
     return await svc.request_post_media_upload(inst.id, body.content_type)
-
-
-@router.post("/me/media/upload", response_model=PostMediaUploadResponse)
-async def request_institution_media_upload(
-    body: MediaUploadRequest,
-    user: User = Depends(require_institution_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    """Spec 22 §9 — presigned upload for institution logo / gallery media."""
-    svc = _svc(db)
-    inst = await svc.get_institution(user.id)
-    return await svc.request_institution_media_upload(inst.id, body.content_type)
 
 
 @router.get("/me/posts/templates", response_model=list[PostResponse])
