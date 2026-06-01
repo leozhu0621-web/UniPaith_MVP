@@ -529,7 +529,7 @@ export default function PipelinePage() {
             <Button size="sm" variant="secondary" onClick={() => setBatchAction('request-items')}>Request Items</Button>
             <Button size="sm" variant="secondary" onClick={() => setBatchAction('interview')}>Schedule Interview</Button>
             <Button size="sm" variant="secondary" onClick={() => setBatchAction('status')}>Update Status</Button>
-            <Button size="sm" variant="secondary" onClick={() => setBatchAction('decision')}>Release Decision</Button>
+            <Button size="sm" variant="secondary" onClick={() => setBatchAction('decision')}>Release decisions</Button>
             <Button size="sm" variant="ghost" onClick={clearSelection}>Clear</Button>
           </div>
         </div>

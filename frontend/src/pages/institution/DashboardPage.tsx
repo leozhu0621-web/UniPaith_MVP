@@ -140,10 +140,10 @@ export default function DashboardPage() {
       color: 'text-brand-slate-600 bg-brand-slate-100',
     },
     {
-      label: 'Conversion',
+      label: 'Accept rate',
       value: conversionVal != null ? formatPercent(conversionVal) : '—',
       icon: Target,
-      color: 'text-emerald-600 bg-emerald-100',
+      color: 'text-cobalt bg-cobalt/10',
     },
     {
       label: 'Avg match',
@@ -412,13 +412,20 @@ export default function DashboardPage() {
           </div>
           <div className="space-y-2">
             {yieldRiskQ.data!.alerts.slice(0, 5).map(alert => (
-              <div key={alert.application_id} className="flex items-center justify-between p-2 rounded-lg bg-white border border-amber-100">
-                <div>
-                  <span className="text-sm text-gray-900">Student {alert.student_id.slice(0, 8)}</span>
-                  <span className="text-xs text-gray-500 ml-2">{alert.reason}</span>
+              <button
+                key={alert.application_id}
+                type="button"
+                onClick={() => navigate(`/i/pipeline/${alert.application_id}?tab=decision`)}
+                className="w-full flex items-center justify-between p-2 rounded-lg bg-white border border-amber-100 hover:border-cobalt/30 hover:bg-cobalt/5 transition-colors text-left"
+              >
+                <div className="min-w-0">
+                  <span className="text-sm text-gray-900">
+                    {alert.student_name ?? `Applicant ${alert.student_id.slice(0, 8)}`}
+                  </span>
+                  <span className="text-xs text-gray-500 ml-2 block sm:inline">{alert.reason}</span>
                 </div>
                 <Badge variant={alert.risk_level === 'high' ? 'danger' : 'warning'}>{alert.risk_level}</Badge>
-              </div>
+              </button>
             ))}
           </div>
         </Card>

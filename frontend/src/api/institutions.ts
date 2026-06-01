@@ -660,6 +660,7 @@ export async function getYieldRiskAlerts(): Promise<{
   alerts: {
     application_id: string
     student_id: string
+    student_name?: string | null
     offer_id?: string
     risk_level: 'high' | 'medium'
     reason: string

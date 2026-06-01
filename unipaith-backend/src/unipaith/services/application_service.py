@@ -1120,9 +1120,10 @@ class ApplicationService:
         or already past; medium otherwise."""
         today = datetime.now(UTC).date()
         res = await self.db.execute(
-            select(OfferLetter, Application)
+            select(OfferLetter, Application, StudentProfile)
             .join(Application, OfferLetter.application_id == Application.id)
             .join(Program, Application.program_id == Program.id)
+            .join(StudentProfile, Application.student_id == StudentProfile.id)
             .where(
                 Program.institution_id == institution_id,
                 OfferLetter.student_response.is_(None),
@@ -1131,7 +1132,7 @@ class ApplicationService:
             )
         )
         alerts: list[dict] = []
-        for offer, app in res.all():
+        for offer, app, profile in res.all():
             deadline = offer.response_deadline
             days = (deadline - today).days if deadline else None
             # Only surface offers approaching/past their deadline, or any
@@ -1154,10 +1155,14 @@ class ApplicationService:
                     continue
                 reason = f"No response {age.days}d after offer"
                 risk = "medium"
+            name = profile.preferred_name or (
+                f"{profile.first_name or ''} {profile.last_name or ''}".strip() or None
+            )
             alerts.append(
                 {
                     "application_id": str(app.id),
                     "student_id": str(app.student_id),
+                    "student_name": name,
                     "offer_id": str(offer.id),
                     "reason": reason,
                     "risk_level": risk,
