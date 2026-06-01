@@ -19,8 +19,6 @@ import { showToast } from '../../../stores/toast-store'
 import { formatDate } from '../../../utils/format'
 import type { Application, InstitutionDecision, OfferType, ReleaseOfferTerms } from '../../../types'
 import ReleaseConfirmModal from './ReleaseConfirmModal'
-import OfferResponseTimeline from './OfferResponseTimeline'
-import NextStepActionsEditor, { type NextStepRow } from './NextStepActionsEditor'
 import {
   INSTITUTION_DECISIONS,
   decisionLabel,
@@ -93,13 +91,9 @@ export default function DecisionPanel({
   const [drafting, setDrafting] = useState(false)
   const [extendDate, setExtendDate] = useState('')
   const [showConfirm, setShowConfirm] = useState(false)
-  const [nextStepRows, setNextStepRows] = useState<NextStepRow[]>([])
 
   const offerTerms = useMemo((): ReleaseOfferTerms | null => {
     if (!isOfferDecision(decision)) return null
-    const steps = nextStepRows
-      .filter(r => r.action.trim())
-      .map(r => ({ action: r.action.trim(), by_date: r.by_date || null }))
     return {
       offer_type: decision === 'conditional_admission' ? 'conditional' : offerType,
       scholarship_amount: num(scholarship),
@@ -108,9 +102,8 @@ export default function DecisionPanel({
       response_deadline: deadline || null,
       start_term: { season, year: num(year) },
       conditions: conditions ? { summary: conditions } : null,
-      next_step_actions: steps.length > 0 ? steps : null,
     }
-  }, [decision, offerType, scholarship, tuitionEst, totalCost, deadline, season, year, conditions, nextStepRows])
+  }, [decision, offerType, scholarship, tuitionEst, totalCost, deadline, season, year, conditions])
 
   const studentResponded = status?.response_state === 'accepted' || status?.response_state === 'declined'
 
@@ -193,7 +186,7 @@ export default function DecisionPanel({
 
         {statusQ.isLoading ? (
           <Skeleton className="h-16" />
-        ) : status && (status.has_offer || status.decision_at) ? (
+        ) : status && status.has_offer ? (
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
               <div className="flex items-center gap-2">
@@ -215,8 +208,6 @@ export default function DecisionPanel({
                 <span className="text-muted-foreground">Responded {formatDate(status.response_at)}</span>
               )}
             </div>
-
-            <OfferResponseTimeline status={status} />
 
             {!studentResponded && status.offer_id && (
               <div className="flex flex-wrap items-end gap-2 pt-1 border-t border-border">
@@ -329,7 +320,6 @@ export default function DecisionPanel({
                     placeholder="e.g. Maintain a 3.5 GPA in your final term"
                   />
                 )}
-                <NextStepActionsEditor rows={nextStepRows} onChange={setNextStepRows} />
               </div>
             )}
 
