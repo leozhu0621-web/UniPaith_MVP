@@ -43,9 +43,7 @@ from unipaith.schemas.institution import (
     CampaignAttribution,
     CampaignAttributionDetail,
     CampaignLinkResponse,
-    CampaignMetricsResponse,
     CreateCampaignLinkRequest,
-    CreateCampaignRequest,
     CreateDatasetRequest,
     CreateInstitutionRequest,
     CreatePostRequest,
@@ -70,7 +68,6 @@ from unipaith.schemas.institution import (
     ProgramSummaryResponse,
     PromotionResponse,
     SubmitInquiryRequest,
-    UpdateCampaignRequest,
     UpdateDatasetRequest,
     UpdateInquiryRequest,
     UpdateInstitutionRequest,
@@ -875,184 +872,10 @@ class InstitutionService:
 
     # --- Campaigns ---
 
-    async def list_campaigns(
-        self, institution_id: UUID, status_filter: str | None = None
-    ) -> list[Campaign]:
-        stmt = select(Campaign).where(Campaign.institution_id == institution_id)
-        if status_filter:
-            stmt = stmt.where(Campaign.status == status_filter)
-        stmt = stmt.order_by(Campaign.created_at.desc())
-        result = await self.db.execute(stmt)
-        return list(result.scalars().all())
-
-    async def create_campaign(self, institution_id: UUID, data: CreateCampaignRequest) -> Campaign:
-        campaign = Campaign(
-            institution_id=institution_id,
-            status="draft",
-            **data.model_dump(),
-        )
-        self.db.add(campaign)
-        await self.db.flush()
-        await self.db.refresh(campaign)
-        return campaign
-
-    async def update_campaign(
-        self, institution_id: UUID, campaign_id: UUID, data: UpdateCampaignRequest
-    ) -> Campaign:
-        campaign = await self._verify_campaign_ownership(institution_id, campaign_id)
-        update_data = data.model_dump(exclude_unset=True)
-        for key, value in update_data.items():
-            setattr(campaign, key, value)
-        await self.db.flush()
-        await self.db.refresh(campaign)
-        return campaign
-
-    async def delete_campaign(self, institution_id: UUID, campaign_id: UUID) -> None:
-        campaign = await self._verify_campaign_ownership(institution_id, campaign_id)
-        if campaign.status == "sent":
-            raise BadRequestException("Cannot delete a sent campaign")
-        await self.db.delete(campaign)
-        await self.db.flush()
-
-    async def preview_campaign_audience(
-        self,
-        institution_id: UUID,
-        campaign_id: UUID,
-    ) -> int:
-        """Return the number of students that would receive this campaign."""
-        campaign = await self._verify_campaign_ownership(institution_id, campaign_id)
-        if campaign.segment_id:
-            student_ids = await self.resolve_segment_members(
-                institution_id,
-                campaign.segment_id,
-            )
-            return len(student_ids)
-        # No segment — count all non-draft applicants for the campaign's program(s)
-        programs = await self.list_programs(institution_id)
-        program_ids = [campaign.program_id] if campaign.program_id else [p.id for p in programs]
-        if not program_ids:
-            return 0
-        result = await self.db.execute(
-            select(func.count(Application.student_id.distinct())).where(
-                Application.program_id.in_(program_ids),
-                Application.status != "draft",
-            )
-        )
-        return result.scalar_one() or 0
-
-    async def send_campaign(self, institution_id: UUID, campaign_id: UUID) -> Campaign:
-        campaign = await self._verify_campaign_ownership(institution_id, campaign_id)
-        if campaign.status == "sent":
-            raise BadRequestException("Campaign already sent")
-        if not campaign.message_subject and not campaign.message_body:
-            raise BadRequestException("Campaign must have subject or body")
-
-        # Resolve recipients from segment
-        student_ids: list[UUID] = []
-        if campaign.segment_id:
-            student_ids = await self.resolve_segment_members(
-                institution_id,
-                campaign.segment_id,
-            )
-        else:
-            # No segment — target all non-draft applicants for the campaign's program(s)
-            programs = await self.list_programs(institution_id)
-            program_ids = [campaign.program_id] if campaign.program_id else [p.id for p in programs]
-            if program_ids:
-                result = await self.db.execute(
-                    select(Application.student_id)
-                    .distinct()
-                    .where(
-                        Application.program_id.in_(program_ids),
-                        Application.status != "draft",
-                    )
-                )
-                student_ids = [row[0] for row in result.all()]
-
-        # Create CampaignRecipient rows and in-app notifications
-        now = datetime.now(UTC)
-        for sid in student_ids:
-            # Deduplicate
-            existing = await self.db.execute(
-                select(CampaignRecipient).where(
-                    CampaignRecipient.campaign_id == campaign_id,
-                    CampaignRecipient.student_id == sid,
-                )
-            )
-            if existing.scalar_one_or_none():
-                continue
-            recipient = CampaignRecipient(
-                campaign_id=campaign_id,
-                student_id=sid,
-                delivered_at=now,
-            )
-            self.db.add(recipient)
-
-            # Create in-app notification (map student_profile.id → user_id)
-            profile_result = await self.db.execute(
-                select(StudentProfile.user_id).where(StudentProfile.id == sid)
-            )
-            user_id = profile_result.scalar_one_or_none()
-            if user_id:
-                notification = Notification(
-                    user_id=user_id,
-                    title=campaign.message_subject or campaign.campaign_name,
-                    body=campaign.message_body or "",
-                    notification_type="campaign",
-                    action_url="/s/messages",
-                )
-                self.db.add(notification)
-
-        campaign.status = "sent"
-        campaign.sent_at = now
-        await self.db.flush()
-
-        # Send emails for email-type campaigns
-        if campaign.campaign_type in ("email", None):
-            from unipaith.services.campaign_email_service import CampaignEmailService
-
-            inst_result = await self.db.execute(
-                select(Institution).where(Institution.id == institution_id)
-            )
-            inst = inst_result.scalar_one_or_none()
-            inst_name = inst.name if inst else "UniPaith"
-
-            program_name = None
-            if campaign.program_id:
-                prog_result = await self.db.execute(
-                    select(Program).where(Program.id == campaign.program_id)
-                )
-                p = prog_result.scalar_one_or_none()
-                program_name = p.program_name if p else None
-
-            email_svc = CampaignEmailService(self.db)
-            await email_svc.send_campaign_emails(campaign, inst_name, program_name)
-
-        await self.db.refresh(campaign)
-        return campaign
-
-    async def get_campaign_metrics(
-        self, institution_id: UUID, campaign_id: UUID
-    ) -> CampaignMetricsResponse:
-        await self._verify_campaign_ownership(institution_id, campaign_id)
-        result = await self.db.execute(
-            select(
-                func.count().label("total"),
-                func.count().filter(CampaignRecipient.delivered_at.isnot(None)).label("delivered"),
-                func.count().filter(CampaignRecipient.opened_at.isnot(None)).label("opened"),
-                func.count().filter(CampaignRecipient.clicked_at.isnot(None)).label("clicked"),
-                func.count().filter(CampaignRecipient.responded_at.isnot(None)).label("responded"),
-            ).where(CampaignRecipient.campaign_id == campaign_id)
-        )
-        row = result.one()
-        return CampaignMetricsResponse(
-            campaign_id=campaign_id,
-            total_recipients=row.total,
-            delivered=row.delivered,
-            opened=row.opened,
-            clicked=row.clicked,
-            responded=row.responded,
-        )
+    # Campaign CRUD / send / preview / metrics moved to CampaignService
+    # (Spec 25). This service retains only segment resolution and the
+    # trackable-link + attribution helpers used by the public redirect and
+    # student-action endpoints.
 
     async def _verify_campaign_ownership(self, institution_id: UUID, campaign_id: UUID) -> Campaign:
         result = await self.db.execute(
@@ -1177,14 +1000,25 @@ class InstitutionService:
         student_id: UUID,
         action_type: str,
         target_id: UUID | None = None,
+        link_id: UUID | None = None,
     ) -> None:
         action = CampaignAction(
             campaign_id=campaign_id,
             student_id=student_id,
             action_type=action_type,
             target_id=target_id,
+            link_id=link_id,
         )
         self.db.add(action)
+        # Mark the recipient as responded so §8 conversions reflect engagement.
+        recip = await self.db.scalar(
+            select(CampaignRecipient).where(
+                CampaignRecipient.campaign_id == campaign_id,
+                CampaignRecipient.student_id == student_id,
+            )
+        )
+        if recip and not recip.responded_at:
+            recip.responded_at = datetime.now(UTC)
         await self.db.flush()
 
     async def get_campaign_attribution(

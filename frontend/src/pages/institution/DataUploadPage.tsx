@@ -312,7 +312,7 @@ export default function DataUploadPage() {
     setUploadProgress(15)
     try {
       let datasetId = pendingDatasetId
-      let staging = stagingKey
+      const staging = stagingKey
 
       if (wizardMode === 'create') {
         const init = await requestDatasetUpload({

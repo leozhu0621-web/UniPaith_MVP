@@ -24,6 +24,7 @@ from unipaith.schemas.communication import (
 )
 from unipaith.schemas.institution import (
     AnalyticsResponse,
+    AudiencePreviewResponse,
     CampaignAttributionDetail,
     CampaignLinkResponse,
     CampaignMetricsResponse,
@@ -38,6 +39,8 @@ from unipaith.schemas.institution import (
     CreateProgramRequest,
     CreatePromotionRequest,
     CreateSegmentRequest,
+    CreateSuppressionRequest,
+    CreateUploadedListRequest,
     DashboardSummaryResponse,
     DatasetMappingTemplateResponse,
     DatasetPreviewResponse,
@@ -45,6 +48,8 @@ from unipaith.schemas.institution import (
     DatasetResponse,
     DatasetUploadResponse,
     DatasetVersionResponse,
+    DraftCampaignCopyRequest,
+    DraftCampaignCopyResponse,
     InquiryResponse,
     InstitutionResponse,
     PostMediaUploadResponse,
@@ -52,9 +57,11 @@ from unipaith.schemas.institution import (
     ProgramResponse,
     PromotionResponse,
     RecordActionRequest,
+    RejectCampaignRequest,
     SaveMappingTemplateRequest,
     SegmentResponse,
     SubmitInquiryRequest,
+    SuppressionResponse,
     UpdateCampaignRequest,
     UpdateDatasetRequest,
     UpdateInquiryRequest,
@@ -63,12 +70,15 @@ from unipaith.schemas.institution import (
     UpdateProgramRequest,
     UpdatePromotionRequest,
     UpdateSegmentRequest,
+    UpdateUploadedListRequest,
+    UploadedListResponse,
 )
 from unipaith.schemas.intake import (
     CreateIntakeRoundRequest,
     IntakeRoundResponse,
     UpdateIntakeRoundRequest,
 )
+from unipaith.services.campaign_service import CampaignService
 from unipaith.services.institution_service import InstitutionService
 
 router = APIRouter(prefix="/institutions", tags=["institutions"])
@@ -87,6 +97,10 @@ class InstitutionAssistantChatResponse(BaseModel):
 
 def _svc(db: AsyncSession) -> InstitutionService:
     return InstitutionService(db)
+
+
+def _csvc(db: AsyncSession) -> CampaignService:
+    return CampaignService(db)
 
 
 # --- Institution Profile ---
@@ -291,7 +305,7 @@ async def get_analytics(
     return await svc.get_analytics(inst.id)
 
 
-# --- Campaigns ---
+# --- Campaigns (Spec 25) ---
 
 
 @router.get("/me/campaigns", response_model=list[CampaignResponse])
@@ -300,9 +314,8 @@ async def list_campaigns(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    svc = _svc(db)
-    inst = await svc.get_institution(user.id)
-    return await svc.list_campaigns(inst.id, status_filter=campaign_status)
+    inst = await _svc(db).get_institution(user.id)
+    return await _csvc(db).list_campaigns(inst.id, status_filter=campaign_status)
 
 
 @router.post(
@@ -315,9 +328,18 @@ async def create_campaign(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    svc = _svc(db)
-    inst = await svc.get_institution(user.id)
-    return await svc.create_campaign(inst.id, body)
+    inst = await _svc(db).get_institution(user.id)
+    return await _csvc(db).create_campaign(inst.id, body)
+
+
+@router.get("/me/campaigns/{campaign_id}", response_model=CampaignResponse)
+async def get_campaign(
+    campaign_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await _svc(db).get_institution(user.id)
+    return await _csvc(db).get_campaign(inst.id, campaign_id)
 
 
 @router.put("/me/campaigns/{campaign_id}", response_model=CampaignResponse)
@@ -327,9 +349,8 @@ async def update_campaign(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    svc = _svc(db)
-    inst = await svc.get_institution(user.id)
-    return await svc.update_campaign(inst.id, campaign_id, body)
+    inst = await _svc(db).get_institution(user.id)
+    return await _csvc(db).update_campaign(inst.id, campaign_id, body)
 
 
 @router.delete("/me/campaigns/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -338,9 +359,8 @@ async def delete_campaign(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    svc = _svc(db)
-    inst = await svc.get_institution(user.id)
-    await svc.delete_campaign(inst.id, campaign_id)
+    inst = await _svc(db).get_institution(user.id)
+    await _csvc(db).delete_campaign(inst.id, campaign_id)
 
 
 @router.get("/me/segments/{segment_id}/preview")
@@ -356,17 +376,31 @@ async def preview_segment_audience(
     return {"segment_id": str(segment_id), "audience_count": len(student_ids)}
 
 
-@router.get("/me/campaigns/{campaign_id}/audience")
+@router.post(
+    "/me/campaigns/{campaign_id}/preview-audience",
+    response_model=AudiencePreviewResponse,
+)
 async def preview_campaign_audience(
     campaign_id: UUID,
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    """Preview the audience that will receive this campaign when sent."""
-    svc = _svc(db)
-    inst = await svc.get_institution(user.id)
-    count = await svc.preview_campaign_audience(inst.id, campaign_id)
-    return {"campaign_id": str(campaign_id), "audience_count": count}
+    """Spec 25 §8 — deduped recipient count + 10-row sample after suppression
+    and consent filtering."""
+    inst = await _svc(db).get_institution(user.id)
+    return await _csvc(db).preview_audience(inst.id, campaign_id)
+
+
+@router.get("/me/campaigns/{campaign_id}/audience")
+async def preview_campaign_audience_count(
+    campaign_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Back-compat alias returning just the deduped count."""
+    inst = await _svc(db).get_institution(user.id)
+    preview = await _csvc(db).preview_audience(inst.id, campaign_id)
+    return {"campaign_id": str(campaign_id), "audience_count": preview.deduped_count}
 
 
 @router.post("/me/campaigns/{campaign_id}/send", response_model=CampaignResponse)
@@ -375,9 +409,82 @@ async def send_campaign(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    svc = _svc(db)
-    inst = await svc.get_institution(user.id)
-    return await svc.send_campaign(inst.id, campaign_id)
+    inst = await _svc(db).get_institution(user.id)
+    return await _csvc(db).send(inst.id, campaign_id)
+
+
+@router.post("/me/campaigns/{campaign_id}/schedule", response_model=CampaignResponse)
+async def schedule_campaign(
+    campaign_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await _svc(db).get_institution(user.id)
+    return await _csvc(db).schedule(inst.id, campaign_id)
+
+
+@router.post("/me/campaigns/{campaign_id}/pause", response_model=CampaignResponse)
+async def pause_campaign(
+    campaign_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await _svc(db).get_institution(user.id)
+    return await _csvc(db).pause(inst.id, campaign_id)
+
+
+@router.post("/me/campaigns/{campaign_id}/resume", response_model=CampaignResponse)
+async def resume_campaign(
+    campaign_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await _svc(db).get_institution(user.id)
+    return await _csvc(db).resume(inst.id, campaign_id)
+
+
+@router.post("/me/campaigns/{campaign_id}/complete", response_model=CampaignResponse)
+async def complete_campaign(
+    campaign_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await _svc(db).get_institution(user.id)
+    return await _csvc(db).complete(inst.id, campaign_id)
+
+
+# --- Campaign approval (Spec 25 §7) ---
+
+
+@router.post("/me/campaigns/{campaign_id}/submit-approval", response_model=CampaignResponse)
+async def submit_campaign_for_approval(
+    campaign_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await _svc(db).get_institution(user.id)
+    return await _csvc(db).submit_for_approval(inst.id, campaign_id)
+
+
+@router.post("/me/campaigns/{campaign_id}/approve", response_model=CampaignResponse)
+async def approve_campaign(
+    campaign_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await _svc(db).get_institution(user.id)
+    return await _csvc(db).approve(inst.id, campaign_id, user.id)
+
+
+@router.post("/me/campaigns/{campaign_id}/reject", response_model=CampaignResponse)
+async def reject_campaign(
+    campaign_id: UUID,
+    body: RejectCampaignRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await _svc(db).get_institution(user.id)
+    return await _csvc(db).reject(inst.id, campaign_id, body.comment)
 
 
 @router.get(
@@ -389,9 +496,109 @@ async def get_campaign_metrics(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    svc = _svc(db)
-    inst = await svc.get_institution(user.id)
-    return await svc.get_campaign_metrics(inst.id, campaign_id)
+    inst = await _svc(db).get_institution(user.id)
+    return await _csvc(db).get_metrics(inst.id, campaign_id)
+
+
+# --- Uploaded contact lists (Spec 24/26 §2.5) ---
+
+
+@router.get("/me/uploaded-lists", response_model=list[UploadedListResponse])
+async def list_uploaded_lists(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await _svc(db).get_institution(user.id)
+    return await _csvc(db).list_uploaded_lists(inst.id)
+
+
+@router.post(
+    "/me/uploaded-lists",
+    response_model=UploadedListResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_uploaded_list(
+    body: CreateUploadedListRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await _svc(db).get_institution(user.id)
+    return await _csvc(db).create_uploaded_list(inst.id, user.id, body)
+
+
+@router.put("/me/uploaded-lists/{list_id}", response_model=UploadedListResponse)
+async def update_uploaded_list(
+    list_id: UUID,
+    body: UpdateUploadedListRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await _svc(db).get_institution(user.id)
+    return await _csvc(db).update_uploaded_list(inst.id, list_id, body)
+
+
+@router.delete("/me/uploaded-lists/{list_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_uploaded_list(
+    list_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await _svc(db).get_institution(user.id)
+    await _csvc(db).delete_uploaded_list(inst.id, list_id)
+
+
+# --- Suppression list (Spec 25 §4 / 46) ---
+
+
+@router.get("/me/suppressions", response_model=list[SuppressionResponse])
+async def list_suppressions(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await _svc(db).get_institution(user.id)
+    return await _csvc(db).list_suppressions(inst.id)
+
+
+@router.post(
+    "/me/suppressions",
+    response_model=SuppressionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def add_suppression(
+    body: CreateSuppressionRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await _svc(db).get_institution(user.id)
+    return await _csvc(db).add_suppression(inst.id, body)
+
+
+@router.delete("/me/suppressions/{suppression_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_suppression(
+    suppression_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    inst = await _svc(db).get_institution(user.id)
+    await _csvc(db).delete_suppression(inst.id, suppression_id)
+
+
+# --- AI: CampaignAudienceCopySuggester (Spec 45 §16) ---
+
+
+@router.post("/me/campaigns/draft-copy", response_model=DraftCampaignCopyResponse)
+async def draft_campaign_copy(
+    body: DraftCampaignCopyRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 25 §10 "Draft with AI" — subject + body draft for the campaign editor.
+    Falls back to an objective-keyed template stub when the LLM path is disabled
+    or fails (never 5xxes)."""
+    inst = await _svc(db).get_institution(user.id)
+    from unipaith.services.campaign_copy_service import draft_campaign_copy as _draft
+
+    return await _draft(db, inst, body)
 
 
 # --- Campaign Links & Attribution ---
@@ -1261,6 +1468,7 @@ async def record_campaign_action(
         student_id,
         body.action_type,
         body.target_id,
+        link_id=body.link_id,
     )
 
 

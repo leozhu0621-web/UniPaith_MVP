@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AnalyticsData, AuditLogList, Campaign, CommunicationTemplate, IntakeRound, ProgramChecklistItem, CampaignAttributionDetail, CampaignLink, CampaignMetrics, DashboardSummary, DatasetMappingTemplate, DatasetPreview, DatasetVersion, Inquiry, Institution, InstitutionDataset, InstitutionPost, Program, Promotion, Segment, ValidationReport } from '../types'
+import type { AnalyticsData, AuditLogList, Campaign, CommunicationTemplate, IntakeRound, ProgramChecklistItem, CampaignAttributionDetail, CampaignLink, CampaignMetrics, CampaignObjective, CampaignDestinationType, CampaignCtaType, CampaignChannel, AudiencePreview, DraftCampaignCopy, UploadedList, CampaignSuppression, DashboardSummary, DatasetMappingTemplate, DatasetPreview, DatasetVersion, Inquiry, Institution, InstitutionDataset, InstitutionPost, Program, Promotion, Segment, ValidationReport } from '../types'
 
 export async function getInstitution(): Promise<Institution> {
   const { data } = await apiClient.get('/institutions/me')
@@ -49,6 +49,7 @@ export async function updateInstitution(payload: Partial<{
   policies: Record<string, any>;
   international_info: Record<string, any>;
   school_outcomes: Record<string, any>;
+  require_campaign_approval: boolean;
   accreditation?: string;
 }>): Promise<Institution> {
   const { data } = await apiClient.put('/institutions/me', payload)
@@ -130,7 +131,8 @@ export async function getSegments(): Promise<Segment[]> {
 
 export async function createSegment(payload: {
   segment_name: string; program_id?: string | null;
-  criteria: Record<string, any>; is_active?: boolean
+  criteria: Record<string, any>; description?: string | null;
+  uploaded_list_ids?: string[]; frequency_cap_per_week?: number | null; is_active?: boolean
 }): Promise<Segment> {
   const { data } = await apiClient.post('/institutions/me/segments', payload)
   return data
@@ -138,7 +140,8 @@ export async function createSegment(payload: {
 
 export async function updateSegment(segmentId: string, payload: Partial<{
   segment_name: string; program_id: string | null;
-  criteria: Record<string, any>; is_active: boolean
+  criteria: Record<string, any>; description: string | null;
+  uploaded_list_ids: string[]; frequency_cap_per_week: number | null; is_active: boolean
 }>): Promise<Segment> {
   const { data } = await apiClient.put(`/institutions/me/segments/${segmentId}`, payload)
   return data
@@ -160,7 +163,25 @@ export async function getAnalytics(): Promise<AnalyticsData> {
   return data
 }
 
-// --- Campaigns ---
+// --- Campaigns (Spec 25) ---
+
+export interface CampaignPayload {
+  name: string
+  objective?: CampaignObjective | null
+  owner_id?: string | null
+  associate_program_ids?: string[]
+  associate_intake_round_id?: string | null
+  destination_type?: CampaignDestinationType | null
+  destination_id?: string | null
+  destination_url?: string | null
+  cta_type?: CampaignCtaType | null
+  channels?: CampaignChannel[]
+  audience_segment_ids?: string[]
+  audience_uploaded_list_ids?: string[]
+  subject?: string | null
+  body?: string | null
+  scheduled_at?: string | null
+}
 
 export async function getCampaigns(status?: string): Promise<Campaign[]> {
   const params = status ? { status } : undefined
@@ -168,20 +189,17 @@ export async function getCampaigns(status?: string): Promise<Campaign[]> {
   return data
 }
 
-export async function createCampaign(payload: {
-  campaign_name: string; campaign_type?: string; program_id?: string | null;
-  segment_id?: string | null; message_subject?: string; message_body?: string;
-  scheduled_send_at?: string | null
-}): Promise<Campaign> {
+export async function getCampaign(campaignId: string): Promise<Campaign> {
+  const { data } = await apiClient.get(`/institutions/me/campaigns/${campaignId}`)
+  return data
+}
+
+export async function createCampaign(payload: CampaignPayload): Promise<Campaign> {
   const { data } = await apiClient.post('/institutions/me/campaigns', payload)
   return data
 }
 
-export async function updateCampaign(campaignId: string, payload: Partial<{
-  campaign_name: string; campaign_type: string; program_id: string | null;
-  segment_id: string | null; message_subject: string; message_body: string;
-  status: string; scheduled_send_at: string | null
-}>): Promise<Campaign> {
+export async function updateCampaign(campaignId: string, payload: Partial<CampaignPayload>): Promise<Campaign> {
   const { data } = await apiClient.put(`/institutions/me/campaigns/${campaignId}`, payload)
   return data
 }
@@ -190,8 +208,20 @@ export async function deleteCampaign(campaignId: string): Promise<void> {
   await apiClient.delete(`/institutions/me/campaigns/${campaignId}`)
 }
 
-export async function sendCampaign(campaignId: string): Promise<Campaign> {
-  const { data } = await apiClient.post(`/institutions/me/campaigns/${campaignId}/send`)
+async function campaignAction(campaignId: string, action: string): Promise<Campaign> {
+  const { data } = await apiClient.post(`/institutions/me/campaigns/${campaignId}/${action}`)
+  return data
+}
+export const sendCampaign = (id: string) => campaignAction(id, 'send')
+export const scheduleCampaign = (id: string) => campaignAction(id, 'schedule')
+export const pauseCampaign = (id: string) => campaignAction(id, 'pause')
+export const resumeCampaign = (id: string) => campaignAction(id, 'resume')
+export const completeCampaign = (id: string) => campaignAction(id, 'complete')
+export const submitCampaignForApproval = (id: string) => campaignAction(id, 'submit-approval')
+export const approveCampaign = (id: string) => campaignAction(id, 'approve')
+
+export async function rejectCampaign(campaignId: string, comment: string): Promise<Campaign> {
+  const { data } = await apiClient.post(`/institutions/me/campaigns/${campaignId}/reject`, { comment })
   return data
 }
 
@@ -200,9 +230,63 @@ export async function getCampaignMetrics(campaignId: string): Promise<CampaignMe
   return data
 }
 
-export async function previewCampaignAudience(campaignId: string): Promise<{ campaign_id: string; audience_count: number }> {
-  const { data } = await apiClient.get(`/institutions/me/campaigns/${campaignId}/audience`)
+export async function previewCampaignAudience(campaignId: string): Promise<AudiencePreview> {
+  const { data } = await apiClient.post(`/institutions/me/campaigns/${campaignId}/preview-audience`)
   return data
+}
+
+export async function draftCampaignCopy(payload: {
+  objective?: string | null
+  cta_type?: string | null
+  audience_summary?: string | null
+  audience_segment_ids?: string[]
+  tone?: string | null
+  additional_context?: string | null
+}): Promise<DraftCampaignCopy> {
+  const { data } = await apiClient.post('/institutions/me/campaigns/draft-copy', payload)
+  return data
+}
+
+// --- Uploaded contact lists (Spec 24/26) ---
+
+export async function getUploadedLists(): Promise<UploadedList[]> {
+  const { data } = await apiClient.get('/institutions/me/uploaded-lists')
+  return data
+}
+
+export async function createUploadedList(payload: {
+  name: string; description?: string | null; source?: string;
+  source_consent_confirmed?: boolean; contacts: Record<string, any>[]
+}): Promise<UploadedList> {
+  const { data } = await apiClient.post('/institutions/me/uploaded-lists', payload)
+  return data
+}
+
+export async function updateUploadedList(listId: string, payload: Partial<{
+  name: string; description: string | null; source_consent_confirmed: boolean
+}>): Promise<UploadedList> {
+  const { data } = await apiClient.put(`/institutions/me/uploaded-lists/${listId}`, payload)
+  return data
+}
+
+export async function deleteUploadedList(listId: string): Promise<void> {
+  await apiClient.delete(`/institutions/me/uploaded-lists/${listId}`)
+}
+
+// --- Suppression list (Spec 25 §4) ---
+
+export async function getSuppressions(): Promise<CampaignSuppression[]> {
+  const { data } = await apiClient.get('/institutions/me/suppressions')
+  return data
+}
+
+export async function addSuppression(email: string, reason?: string): Promise<CampaignSuppression> {
+  const { data } = await apiClient.post('/institutions/me/suppressions', { email, reason })
+  return data
+}
+
+export async function deleteSuppression(suppressionId: string): Promise<void> {
+  await apiClient.delete(`/institutions/me/suppressions/${suppressionId}`)
 }
 
 // --- Campaign Links & Attribution ---
