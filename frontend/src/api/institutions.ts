@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AnalyticsData, AuditLogList, Campaign, CommunicationTemplate, IntakeRound, ProgramChecklistItem, CampaignAttributionDetail, CampaignLink, CampaignMetrics, CampaignObjective, CampaignDestinationType, CampaignCtaType, CampaignChannel, AudiencePreview, DraftCampaignCopy, UploadedList, CampaignSuppression, DashboardSummary, DatasetMappingTemplate, DatasetPreview, DatasetVersion, Inquiry, Institution, InstitutionDataset, InstitutionPost, Program, Promotion, Segment, ValidationReport } from '../types'
+import type { AnalyticsData, AuditLogList, Campaign, CommunicationTemplate, IntakeRound, ProgramChecklistItem, CampaignAttributionDetail, CampaignLink, CampaignMetrics, CampaignObjective, CampaignDestinationType, CampaignCtaType, CampaignChannel, AudiencePreview, DraftCampaignCopy, UploadedList, CampaignSuppression, DashboardSummary, DatasetMappingTemplate, DatasetPreview, DatasetVersion, Inquiry, Institution, InstitutionDataset, InstitutionPost, NLBridgeResult, Program, Promotion, Segment, SegmentPreview, SegmentRuleTree, SignalDictionary, ValidationReport } from '../types'
 
 export async function getInstitution(): Promise<Institution> {
   const { data } = await apiClient.get('/institutions/me')
@@ -129,26 +129,55 @@ export async function getSegments(): Promise<Segment[]> {
   return data
 }
 
-export async function createSegment(payload: {
-  segment_name: string; program_id?: string | null;
-  criteria: Record<string, any>; description?: string | null;
-  uploaded_list_ids?: string[]; frequency_cap_per_week?: number | null; is_active?: boolean
-}): Promise<Segment> {
+type SegmentWritePayload = Partial<{
+  segment_name: string
+  description: string | null
+  program_id: string | null
+  rules: SegmentRuleTree | null
+  criteria: Record<string, any> | null
+  uploaded_list_ids: string[]
+  frequency_cap_per_week: number | null
+  is_active: boolean
+}>
+
+export async function createSegment(payload: SegmentWritePayload): Promise<Segment> {
   const { data } = await apiClient.post('/institutions/me/segments', payload)
   return data
 }
 
-export async function updateSegment(segmentId: string, payload: Partial<{
-  segment_name: string; program_id: string | null;
-  criteria: Record<string, any>; description: string | null;
-  uploaded_list_ids: string[]; frequency_cap_per_week: number | null; is_active: boolean
-}>): Promise<Segment> {
+export async function updateSegment(segmentId: string, payload: SegmentWritePayload): Promise<Segment> {
   const { data } = await apiClient.put(`/institutions/me/segments/${segmentId}`, payload)
   return data
 }
 
 export async function deleteSegment(segmentId: string): Promise<void> {
   await apiClient.delete(`/institutions/me/segments/${segmentId}`)
+}
+
+// --- Spec 26 §2/§3/§6 — signal dictionary, preview, NL bridge ---
+
+export async function getSegmentSignalDictionary(): Promise<SignalDictionary> {
+  const { data } = await apiClient.get('/institutions/me/segments/signal-dictionary')
+  return data
+}
+
+export async function previewSegmentRules(payload: {
+  rules: SegmentRuleTree | null
+  program_id?: string | null
+  uploaded_list_ids?: string[]
+}): Promise<SegmentPreview> {
+  const { data } = await apiClient.post('/institutions/me/segments/preview', payload)
+  return data
+}
+
+export async function previewSavedSegment(segmentId: string): Promise<SegmentPreview> {
+  const { data } = await apiClient.post(`/institutions/me/segments/${segmentId}/preview`)
+  return data
+}
+
+export async function segmentNlBridge(text: string): Promise<NLBridgeResult> {
+  const { data } = await apiClient.post('/institutions/me/segments/nl-bridge', { text })
+  return data
 }
 
 // --- Dashboard & Analytics ---

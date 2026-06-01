@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Generic, Literal, TypeVar
+from typing import Any, Generic, Literal, TypeVar
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
@@ -271,21 +271,25 @@ class SchoolSummaryResponse(BaseModel):
 
 class CreateSegmentRequest(BaseModel):
     segment_name: str = Field(min_length=1, max_length=255)
-    program_id: UUID | None = None
-    criteria: dict
     description: str | None = None
-    uploaded_list_ids: list[UUID] | None = None
-    frequency_cap_per_week: int | None = Field(None, ge=0)
+    program_id: UUID | None = None
+    # Spec 26 §7 — nested include/exclude rule tree; legacy flat `criteria` kept
+    # optional for back-compat. The engine prefers `rules` when present.
+    rules: dict | None = None
+    criteria: dict | None = None
+    uploaded_list_ids: list[str] = Field(default_factory=list)
+    frequency_cap_per_week: int | None = Field(default=None, ge=0)
     is_active: bool = True
 
 
 class UpdateSegmentRequest(BaseModel):
     segment_name: str | None = Field(None, min_length=1, max_length=255)
-    program_id: UUID | None = None
-    criteria: dict | None = None
     description: str | None = None
-    uploaded_list_ids: list[UUID] | None = None
-    frequency_cap_per_week: int | None = Field(None, ge=0)
+    program_id: UUID | None = None
+    rules: dict | None = None
+    criteria: dict | None = None
+    uploaded_list_ids: list[str] | None = None
+    frequency_cap_per_week: int | None = Field(default=None, ge=0)
     is_active: bool | None = None
 
 
@@ -296,12 +300,68 @@ class SegmentResponse(BaseModel):
     program_id: UUID | None
     segment_name: str
     description: str | None = None
+    rules: dict | None = None
     criteria: dict | None
-    uploaded_list_ids: list[UUID] | None = None
+    uploaded_list_ids: list[str] | None = None
     frequency_cap_per_week: int | None = None
+    created_by_user_id: UUID | None = None
+    preview_audience_count: int | None = None
+    preview_generated_at: datetime | None = None
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+
+# --- Spec 26 §3/§7 — preview + NL bridge + signal dictionary ---
+
+
+class StudentSummarySchema(BaseModel):
+    student_id: str
+    name: str
+    email: str | None = None
+    nationality: str | None = None
+    country_of_residence: str | None = None
+    fit_band: str | None = None
+
+
+class SegmentPreviewRequest(BaseModel):
+    """Preview an unsaved (or saved) rule tree (§3 'Preview audience')."""
+
+    rules: dict | None = None
+    program_id: UUID | None = None
+    uploaded_list_ids: list[str] = Field(default_factory=list)
+
+
+class SegmentPreviewResponse(BaseModel):
+    audience_count: int
+    platform_count: int
+    uploaded_external_count: int
+    sample: list[StudentSummarySchema]
+    composition: dict[str, dict[str, int]] = Field(default_factory=dict)
+    fairness_warning: str | None = None
+
+
+class NLBridgeRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=2000)
+
+
+class NLBridgeRuleSchema(BaseModel):
+    field: str
+    operator: str
+    value: Any = None
+    branch: Literal["include", "exclude"] = "include"
+    ambiguous: bool = False
+
+
+class NLBridgeResponse(BaseModel):
+    rules: list[NLBridgeRuleSchema]
+    confidence_overall: int
+    ambiguity_notes: list[str] = Field(default_factory=list)
+
+
+class SignalDictionaryResponse(BaseModel):
+    categories: list[dict[str, Any]]
+    signals: list[dict[str, Any]]
 
 
 # --- Dashboard Summary ---
