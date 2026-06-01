@@ -571,3 +571,39 @@ export async function getPublicPostsFeed(limit = 20): Promise<InstitutionPost[]>
   const { data } = await apiClient.get('/institutions/posts/feed', { params: { limit } })
   return data
 }
+
+// ── Fairness auto-halt (G-I5) ──────────────────────────────────────────────
+export interface FairnessSignal {
+  program_id: string
+  protected_attribute: string
+  week_start: string
+  reference_group: string | null
+  disadvantaged_group: string | null
+  disparate_impact_ratio: number | null
+  disparate_impact_delta: number | null
+  sample_size: number
+  breached: boolean
+}
+
+export interface ProgramFairnessStatus {
+  program_id: string
+  program_name: string
+  matching_halted: boolean
+  signals: FairnessSignal[]
+}
+
+export async function getFairness(): Promise<ProgramFairnessStatus[]> {
+  const { data } = await apiClient.get('/institutions/me/fairness')
+  return data
+}
+
+export async function overrideFairnessHalt(
+  programId: string,
+  reason: string,
+): Promise<ProgramFairnessStatus> {
+  const { data } = await apiClient.post(
+    `/institutions/me/fairness/${programId}/override`,
+    { reason },
+  )
+  return data
+}

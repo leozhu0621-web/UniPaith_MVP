@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { getInstitution, getInstitutionPrograms, getDashboardSummary, getInquiries, getIntelligenceDigest, getYieldRiskAlerts } from '../../api/institutions'
 import { getReviewPriorityQueue, getIntegritySignals } from '../../api/reviews'
+import FairnessPanel from './FairnessPanel'
 import { getNotifications } from '../../api/notifications'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -288,6 +289,9 @@ export default function DashboardPage() {
           <p className="text-xs text-gray-400 mt-2">Generated {formatRelative(digestQ.data.generated_at)}</p>
         </Card>
       )}
+
+      {/* Fairness auto-halt + disparate-impact alerts (G-I5) */}
+      <FairnessPanel />
 
       {/* Yield Risk Alerts */}
       {(yieldRiskQ.data?.alerts?.length ?? 0) > 0 && (
