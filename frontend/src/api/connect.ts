@@ -28,6 +28,8 @@ export interface ConnectFeedItem {
   body?: string
   media_urls?: (string | { url?: string })[]
   ctas?: ConnectCta[]
+  // Spec 27 §5 — raw post id for per-object engagement tracking.
+  post_id?: string
   // deadline
   deadline?: string
   days_until?: number

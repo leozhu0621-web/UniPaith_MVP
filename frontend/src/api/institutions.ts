@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AnalyticsData, AuditLogList, Campaign, CommunicationTemplate, IntakeRound, ProgramChecklistItem, CampaignAttributionDetail, CampaignLink, CampaignMetrics, CampaignObjective, CampaignDestinationType, CampaignCtaType, CampaignChannel, AudiencePreview, DraftCampaignCopy, UploadedList, CampaignSuppression, DashboardSummary, DatasetMappingTemplate, DatasetPreview, DatasetVersion, Inquiry, Institution, InstitutionDataset, InstitutionPost, NLBridgeResult, Program, Promotion, Segment, SegmentPreview, SegmentRuleTree, SignalDictionary, ValidationReport } from '../types'
+import type { AnalyticsData, AuditLogList, Campaign, CommunicationTemplate, IntakeRound, ProgramChecklistItem, CampaignAttributionDetail, CampaignLink, CampaignMetrics, CampaignObjective, CampaignDestinationType, CampaignCtaType, CampaignChannel, AudiencePreview, DraftCampaignCopy, UploadedList, CampaignSuppression, DashboardSummary, DatasetMappingTemplate, DatasetPreview, DatasetVersion, Inquiry, Institution, InstitutionDataset, InstitutionPost, NLBridgeResult, PostCTA, PostVisibility, Program, Promotion, Segment, SegmentPreview, SegmentRuleTree, SignalDictionary, ValidationReport } from '../types'
 
 export async function getInstitution(): Promise<Institution> {
   const { data } = await apiClient.get('/institutions/me')
@@ -352,6 +352,19 @@ export async function recordCampaignAction(payload: {
   await apiClient.post('/institutions/track/action', payload)
 }
 
+// Spec 27 §5 — per-object engagement tracking (post/event/promotion).
+export async function trackEngagement(payload: {
+  object_type: 'post' | 'event' | 'promotion'
+  object_id: string
+  action: 'view' | 'impression' | 'click' | 'save' | 'request_info' | 'apply_started'
+}): Promise<void> {
+  try {
+    await apiClient.post('/institutions/track/engagement', payload)
+  } catch {
+    // Engagement tracking is best-effort — never surface an error to the user.
+  }
+}
+
 export async function previewSegmentAudience(segmentId: string): Promise<{ segment_id: string; audience_count: number }> {
   const { data } = await apiClient.get(`/institutions/me/segments/${segmentId}/preview`)
   return data
@@ -524,6 +537,8 @@ export async function createPromotion(payload: {
   targeting?: { regions?: string[]; countries?: string[]; degree_types?: string[]; interests?: string[] }
   starts_at?: string
   ends_at?: string
+  target_kind?: 'program' | 'institution' | 'landing'
+  target_url?: string
 }): Promise<Promotion> {
   const { data } = await apiClient.post('/institutions/me/promotions', payload)
   return data
@@ -538,6 +553,8 @@ export async function updatePromotion(promotionId: string, payload: Partial<{
   status: string
   starts_at: string
   ends_at: string
+  target_kind: 'program' | 'institution' | 'landing'
+  target_url: string
 }>): Promise<Promotion> {
   const { data } = await apiClient.put(`/institutions/me/promotions/${promotionId}`, payload)
   return data
@@ -722,6 +739,7 @@ export async function createPost(payload: {
   tagged_program_ids?: string[]; tagged_intake?: string;
   status?: string; scheduled_for?: string;
   is_template?: boolean; template_name?: string;
+  ctas?: PostCTA[]; visibility?: PostVisibility;
 }): Promise<InstitutionPost> {
   const { data } = await apiClient.post('/institutions/me/posts', payload)
   return data
@@ -732,6 +750,7 @@ export async function updatePost(postId: string, payload: Partial<{
   tagged_program_ids: string[]; tagged_intake: string;
   status: string; scheduled_for: string;
   is_template: boolean; template_name: string;
+  ctas: PostCTA[]; visibility: PostVisibility;
 }>): Promise<InstitutionPost> {
   const { data } = await apiClient.put(`/institutions/me/posts/${postId}`, payload)
   return data

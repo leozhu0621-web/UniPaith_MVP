@@ -9,7 +9,7 @@ import logging
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -43,6 +43,7 @@ class EventService:
         end_time: datetime,
         description: str | None = None,
         location: str | None = None,
+        meeting_link: str | None = None,
         capacity: int | None = None,
         program_id: UUID | None = None,
     ) -> Event:
@@ -57,6 +58,7 @@ class EventService:
             event_type=event_type,
             description=description,
             location=location,
+            meeting_link=meeting_link,
             start_time=start_time,
             end_time=end_time,
             capacity=capacity,
@@ -93,8 +95,114 @@ class EventService:
             raise BadRequestException("Event is already cancelled")
         event.status = "cancelled"
         await self.db.flush()
+        # Spec 27 §7 — every RSVP'd student is notified of the cancellation.
+        await self._notify_cancellation(event)
         await self.db.refresh(event)
+        await self._attach_counts([event])
         return event
+
+    async def mark_attendance(
+        self,
+        institution_id: UUID,
+        event_id: UUID,
+        rsvp_id: UUID,
+        attendance_status: str,
+    ) -> EventRSVP:
+        """Spec 27 §3.1 — record an attendee's attendance: attended | no_show."""
+        if attendance_status not in ("attended", "no_show"):
+            raise BadRequestException("attendance_status must be 'attended' or 'no_show'")
+        event = await self._get_event(event_id)
+        if event.institution_id != institution_id:
+            raise ForbiddenException("Event does not belong to this institution")
+        rsvp = await self.db.get(EventRSVP, rsvp_id)
+        if rsvp is None or rsvp.event_id != event_id:
+            raise NotFoundException("RSVP not found")
+        rsvp.attendance_status = attendance_status
+        rsvp.attended_at = datetime.now(UTC) if attendance_status == "attended" else None
+        await self.db.flush()
+        await self.db.refresh(rsvp)
+        return rsvp
+
+    async def _notify_cancellation(self, event: Event) -> None:
+        """Spec 27 §7 — post an Inbox system message to every RSVP'd student and
+        remove their calendar item. Best-effort: never blocks the cancellation."""
+        try:
+            rsvps = list(
+                (await self.db.execute(select(EventRSVP).where(EventRSVP.event_id == event.id)))
+                .scalars()
+                .all()
+            )
+            if not rsvps:
+                return
+            inst = await self.db.get(Institution, event.institution_id)
+            sender_id = inst.admin_user_id if inst else None
+            now = datetime.now(UTC)
+            when = event.start_time.strftime("%b %-d, %-I:%M %p")
+            for rsvp in rsvps:
+                await self.db.execute(
+                    delete(StudentCalendar).where(
+                        StudentCalendar.student_id == rsvp.student_id,
+                        StudentCalendar.entry_type == "event",
+                        StudentCalendar.reference_id == event.id,
+                    )
+                )
+                if sender_id is None:
+                    continue
+                conv = await self.db.scalar(
+                    select(Conversation).where(
+                        Conversation.student_id == rsvp.student_id,
+                        Conversation.institution_id == event.institution_id,
+                        Conversation.thread_type == "system",
+                    )
+                )
+                if conv is None:
+                    conv = Conversation(
+                        student_id=rsvp.student_id,
+                        institution_id=event.institution_id,
+                        subject="Event updates",
+                        status="active",
+                        thread_type="system",
+                        started_at=now,
+                        last_message_at=now,
+                    )
+                    self.db.add(conv)
+                    await self.db.flush()
+                self.db.add(
+                    Message(
+                        conversation_id=conv.id,
+                        sender_id=sender_id,
+                        sender_type="system",
+                        message_body=(
+                            f"{event.event_name} on {when} has been cancelled. "
+                            "We're sorry for the inconvenience."
+                        ),
+                        sent_at=now,
+                    )
+                )
+                conv.last_message_at = now
+            await self.db.flush()
+        except Exception as exc:  # noqa: BLE001 — notification is best-effort
+            logger.warning("Event cancellation notification failed (non-fatal): %s", exc)
+
+    async def _attach_counts(self, events: list[Event]) -> list[Event]:
+        """Spec 27 §3.1 — attach confirmed/waitlist counts as transient attributes
+        so EventResponse (from_attributes) can surface 'RSVP'd: N / capacity' + waitlist."""
+        if not events:
+            return events
+        ids = [e.id for e in events]
+        rows = await self.db.execute(
+            select(EventRSVP.event_id, EventRSVP.rsvp_status, func.count())
+            .where(EventRSVP.event_id.in_(ids))
+            .group_by(EventRSVP.event_id, EventRSVP.rsvp_status)
+        )
+        waitlist: dict[UUID, int] = {}
+        for ev_id, st, cnt in rows.all():
+            if st == "waitlisted":
+                waitlist[ev_id] = waitlist.get(ev_id, 0) + int(cnt)
+        for e in events:
+            e.confirmed_count = e.rsvp_count or 0
+            e.waitlist_count = waitlist.get(e.id, 0)
+        return events
 
     async def list_upcoming_events(
         self,
@@ -132,7 +240,7 @@ class EventService:
             query = query.where(Event.status == status_filter)
         query = query.order_by(Event.start_time.desc())
         result = await self.db.execute(query)
-        return list(result.scalars().all())
+        return await self._attach_counts(list(result.scalars().all()))
 
     # ------------------------------------------------------------------
     # RSVP
@@ -329,7 +437,33 @@ class EventService:
             .where(EventRSVP.event_id == event_id)
             .order_by(EventRSVP.registered_at.asc())
         )
-        return list(result.scalars().all())
+        rsvps = list(result.scalars().all())
+        # Spec 27 §3.1 — enrich the roster with student name + email.
+        if rsvps:
+            from unipaith.models.student import StudentProfile
+            from unipaith.models.user import User
+
+            sids = [r.student_id for r in rsvps]
+            rows = await self.db.execute(
+                select(
+                    StudentProfile.id,
+                    StudentProfile.first_name,
+                    StudentProfile.last_name,
+                    StudentProfile.preferred_name,
+                    User.email,
+                )
+                .join(User, User.id == StudentProfile.user_id)
+                .where(StudentProfile.id.in_(sids))
+            )
+            info: dict = {}
+            for sid, fn, ln, pn, email in rows.all():
+                name = pn or " ".join(x for x in [fn, ln] if x) or None
+                info[sid] = (name, email)
+            for r in rsvps:
+                nm, em = info.get(r.student_id, (None, None))
+                r.student_name = nm
+                r.student_email = em
+        return rsvps
 
     # ------------------------------------------------------------------
     # ICS Export

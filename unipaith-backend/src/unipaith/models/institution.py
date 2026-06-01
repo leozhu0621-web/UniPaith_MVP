@@ -425,6 +425,10 @@ class Event(Base):
     end_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     capacity: Mapped[int | None] = mapped_column(Integer)
     rsvp_count: Mapped[int] = mapped_column(Integer, default=0)
+    # Spec 27 §5 — event impressions (feed/detail views) for the per-object
+    # performance rollup.
+    view_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    # Spec 27 §3.2 lifecycle: draft | scheduled | live | completed | cancelled.
     status: Mapped[str | None] = mapped_column(String(20))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -450,11 +454,15 @@ class EventRSVP(Base):
     student_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("student_profiles.id", ondelete="CASCADE"), nullable=False
     )
+    # Spec 20 / 27 §3.1 — rsvp_status: registered | waitlisted | cancelled.
     rsvp_status: Mapped[str | None] = mapped_column(String(20))
     registered_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     attended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Spec 27 §3.1 — attendance capture after the event: attended | no_show.
+    # Null until the institution records attendance.
+    attendance_status: Mapped[str | None] = mapped_column(String(20))
 
     event: Mapped[Event] = relationship(back_populates="rsvps")
 
@@ -600,6 +608,20 @@ class InstitutionPost(Base):
     is_template: Mapped[bool] = mapped_column(Boolean, default=False)
     template_name: Mapped[str | None] = mapped_column(String(255))
     view_count: Mapped[int] = mapped_column(Integer, default=0)
+    # Spec 27 §5 — per-object engagement counters. `view_count` above covers
+    # impressions; these cover card/CTA clicks, saves, and the two downstream
+    # conversions attributed to a post.
+    click_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    save_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    request_info_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    apply_started_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    # Spec 27 §2.4 — CTAs attached to the post. List of
+    # {type: view_program|rsvp|request_info|start_application|add_to_calendar,
+    #  label: str, target: str}.
+    ctas: Mapped[list | None] = mapped_column(JSONB)
+    # Spec 27 §2.3 — visibility scope: {public: bool, segment_ids: [...],
+    # region_scopes: [...]}. Null => public to followers (the default).
+    visibility: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -908,6 +930,12 @@ class Promotion(Base):
     )
     impression_count: Mapped[int] = mapped_column(Integer, default=0)
     click_count: Mapped[int] = mapped_column(Integer, default=0)
+    # Spec 27 §4.1 — promotion target: a program (default, uses program_id), the
+    # institution overall, or a custom landing URL (target_url).
+    target_kind: Mapped[str] = mapped_column(
+        String(20), default="program", server_default="program", nullable=False
+    )
+    target_url: Mapped[str | None] = mapped_column(String(1000))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

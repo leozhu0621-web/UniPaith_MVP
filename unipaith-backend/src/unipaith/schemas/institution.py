@@ -774,6 +774,14 @@ class DraftCampaignCopyResponse(BaseModel):
     source: str = "llm"  # 'llm' | 'fallback'
 
 
+class RecordEngagementRequest(BaseModel):
+    """Spec 27 §5 — a per-object engagement event from a student surface."""
+
+    object_type: Literal["post", "event", "promotion"]
+    object_id: UUID
+    action: Literal["view", "impression", "click", "save", "request_info", "apply_started"]
+
+
 # --- Inquiries ---
 
 
@@ -847,6 +855,9 @@ class CreatePromotionRequest(BaseModel):
     targeting: TargetingScope | None = None
     starts_at: datetime | None = None
     ends_at: datetime | None = None
+    # Spec 27 §4.1 — target a program (default), the institution, or a landing URL.
+    target_kind: Literal["program", "institution", "landing"] = "program"
+    target_url: str | None = Field(None, max_length=1000)
 
 
 class UpdatePromotionRequest(BaseModel):
@@ -857,10 +868,12 @@ class UpdatePromotionRequest(BaseModel):
     targeting: TargetingScope | None = None
     status: str | None = Field(
         None,
-        pattern=r"^(draft|active|paused|expired)$",
+        pattern=r"^(draft|scheduled|active|paused|expired)$",
     )
     starts_at: datetime | None = None
     ends_at: datetime | None = None
+    target_kind: Literal["program", "institution", "landing"] | None = None
+    target_url: str | None = Field(None, max_length=1000)
 
 
 class PromotionResponse(BaseModel):
@@ -877,6 +890,8 @@ class PromotionResponse(BaseModel):
     ends_at: datetime | None
     impression_count: int
     click_count: int
+    target_kind: str = "program"
+    target_url: str | None = None
     created_at: datetime
     updated_at: datetime
     program_name: str | None = None
@@ -1001,6 +1016,29 @@ class SaveMappingTemplateRequest(BaseModel):
 # --- Posts ---
 
 
+class PostCTA(BaseModel):
+    """Spec 27 §2.4 — a call-to-action attached to a post."""
+
+    type: Literal[
+        "view_program",
+        "rsvp",
+        "request_info",
+        "start_application",
+        "add_to_calendar",
+    ]
+    label: str = Field(min_length=1, max_length=80)
+    # program_id / event_id / url depending on type; optional for institution-wide.
+    target: str | None = None
+
+
+class PostVisibility(BaseModel):
+    """Spec 27 §2.3 — visibility scope for a post."""
+
+    public: bool = True
+    segment_ids: list[UUID] = Field(default_factory=list)
+    region_scopes: list[str] = Field(default_factory=list)
+
+
 class CreatePostRequest(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     body: str = Field(min_length=1)
@@ -1011,6 +1049,8 @@ class CreatePostRequest(BaseModel):
     scheduled_for: datetime | None = None
     is_template: bool = False
     template_name: str | None = None
+    ctas: list[PostCTA] | None = None
+    visibility: PostVisibility | None = None
 
 
 class UpdatePostRequest(BaseModel):
@@ -1023,6 +1063,8 @@ class UpdatePostRequest(BaseModel):
     scheduled_for: datetime | None = None
     is_template: bool | None = None
     template_name: str | None = None
+    ctas: list[PostCTA] | None = None
+    visibility: PostVisibility | None = None
 
 
 class PostResponse(BaseModel):
@@ -1042,6 +1084,14 @@ class PostResponse(BaseModel):
     is_template: bool
     template_name: str | None
     view_count: int
+    # Spec 27 §5 — per-object engagement counters.
+    click_count: int = 0
+    save_count: int = 0
+    request_info_count: int = 0
+    apply_started_count: int = 0
+    # Spec 27 §2.4 / §2.3 — CTAs + visibility scope (raw JSONB passthrough).
+    ctas: list | None = None
+    visibility: dict | None = None
     created_at: datetime
     updated_at: datetime
     author_email: str | None = None
