@@ -75,15 +75,15 @@ function DraggableCard({ app, onClick, selected, onToggleSelect, onGenerateOffer
               checked={selected}
               onChange={(e) => { e.stopPropagation(); onToggleSelect(app.id) }}
               onClick={(e) => e.stopPropagation()}
-              className="mt-1 rounded border-gray-300"
+              className="mt-1 rounded border-border"
             />
           )}
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-gray-900 truncate">{applicantLabel(app)}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{app.program?.program_name ?? 'Program'}</p>
+            <p className="text-sm font-medium text-foreground truncate">{applicantLabel(app)}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{app.program?.program_name ?? 'Program'}</p>
           </div>
         </div>
-        <div {...listeners} {...attributes} className="p-1 cursor-grab text-gray-400">
+        <div {...listeners} {...attributes} className="p-1 cursor-grab text-muted-foreground/70">
           <GripVertical size={14} />
         </div>
       </div>
@@ -91,7 +91,7 @@ function DraggableCard({ app, onClick, selected, onToggleSelect, onGenerateOffer
         {app.match_score != null && (
           <span className="text-xs font-medium text-brand-slate-600">{formatScore(app.match_score)}</span>
         )}
-        <span className="text-xs text-gray-400">{formatRelative(app.updated_at)}</span>
+        <span className="text-xs text-muted-foreground/70">{formatRelative(app.updated_at)}</span>
       </div>
       {app.decision && (
         <Badge variant={(STATUS_COLORS[app.decision] as any) ?? 'neutral'} className="mt-1.5">
@@ -117,12 +117,12 @@ function DroppableColumn({ id, label, color, children }: { id: string; label: st
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 min-w-[240px] rounded-lg p-3 transition-colors ${isOver ? 'bg-accent/5 ring-2 ring-accent border border-accent' : 'bg-gray-50'}`}
+      className={`flex-1 min-w-[240px] rounded-lg p-3 transition-colors ${isOver ? 'bg-accent/5 ring-2 ring-accent border border-accent' : 'bg-muted'}`}
     >
       <div className="flex items-center gap-2 mb-3">
         <div className={`w-3 h-3 rounded-full ${color}`} />
         {/* Spec 31 §10 — Kanban column headers use the eyebrow style. */}
-        <h3 className="text-eyebrow uppercase text-gray-500">{label}</h3>
+        <h3 className="text-eyebrow uppercase text-muted-foreground">{label}</h3>
       </div>
       <div className="space-y-2 min-h-[100px]">{children}</div>
     </div>
@@ -132,8 +132,8 @@ function DroppableColumn({ id, label, color, children }: { id: string; label: st
 function PipelineCardOverlay({ app }: { app: Application }) {
   return (
     <div className="bg-white border rounded-lg p-3 shadow-lg w-[240px]">
-      <p className="text-sm font-medium text-gray-900">{applicantLabel(app)}</p>
-      <p className="text-xs text-gray-500 mt-0.5">{app.program?.program_name ?? 'Program'}</p>
+      <p className="text-sm font-medium text-foreground">{applicantLabel(app)}</p>
+      <p className="text-xs text-muted-foreground mt-0.5">{app.program?.program_name ?? 'Program'}</p>
     </div>
   )
 }
@@ -333,7 +333,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
   const interviewStageCount = filteredAllApps.filter(a => a.status === 'interview').length
 
   const toolbar = (
-    <div className={`space-y-3 ${embedded ? '' : 'sticky top-14 z-[5] -mx-6 px-6 py-3 bg-gray-50/95 backdrop-blur supports-[backdrop-filter]:bg-gray-50/90 border-y border-gray-100'}`}>
+    <div className={`space-y-3 ${embedded ? '' : 'sticky top-14 z-[5] -mx-6 px-6 py-3 bg-muted/95 backdrop-blur supports-[backdrop-filter]:bg-muted/90 border-y border-border'}`}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="up-eyebrow text-muted-foreground">Pipeline</p>
         <span className="text-xs text-muted-foreground">View: Board · List · Needs Review · Priority</span>
@@ -349,7 +349,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
           className="w-full sm:w-72"
         />
         <div className="relative w-full sm:flex-1 sm:max-w-xs">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/70" />
           <Input
             placeholder="Search"
             value={search}
@@ -381,19 +381,19 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
             <Card className="p-3">
-              <p className="text-xs text-gray-500">Program</p>
-              <p className="text-sm font-semibold text-gray-900 truncate">{selectedProgramName}</p>
+              <p className="text-xs text-muted-foreground">Program</p>
+              <p className="text-sm font-semibold text-foreground truncate">{selectedProgramName}</p>
             </Card>
             <Card className="p-3">
-              <p className="text-xs text-gray-500">Total Applications</p>
-              <p className="text-xl font-semibold text-gray-900">{applications.length}</p>
+              <p className="text-xs text-muted-foreground">Total Applications</p>
+              <p className="text-xl font-semibold text-foreground">{applications.length}</p>
             </Card>
             <Card className="p-3">
-              <p className="text-xs text-gray-500">Needs Review</p>
+              <p className="text-xs text-muted-foreground">Needs Review</p>
               <p className="text-xl font-semibold text-warning">{reviewableApps.length}</p>
             </Card>
             <Card className="p-3">
-              <p className="text-xs text-gray-500">Interview Stage</p>
+              <p className="text-xs text-muted-foreground">Interview Stage</p>
               <p className="text-xl font-bold text-cobalt">{interviewStageCount}</p>
             </Card>
           </div>
@@ -404,7 +404,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
                 {PIPELINE_COLUMNS.map(col => (
                   <DroppableColumn key={col.id} id={col.id} label={`${col.label} (${grouped[col.id].length})`} color={col.color}>
                     {grouped[col.id].length === 0 ? (
-                      <p className="text-xs text-gray-400 text-center py-4">No applications</p>
+                      <p className="text-xs text-muted-foreground/70 text-center py-4">No applications</p>
                     ) : (
                       grouped[col.id].map(app => (
                         <DraggableCard
@@ -430,7 +430,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
           {activeView === 'review' && (
             <Card className="p-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-900">Needs Review ({filteredReviewableApps.length})</h3>
+                <h3 className="text-sm font-semibold text-foreground">Needs Review ({filteredReviewableApps.length})</h3>
                 <Badge variant="warning" className="flex items-center gap-1">
                   <ClipboardCheck size={12} />
                   Priority Queue
@@ -447,7 +447,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
           {activeView === 'list' && (
             <Card className="p-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-900">All Applications ({filteredAllApps.length})</h3>
+                <h3 className="text-sm font-semibold text-foreground">All Applications ({filteredAllApps.length})</h3>
                 <Badge variant="info" className="flex items-center gap-1">
                   <List size={12} />
                   Unified View
@@ -477,27 +477,27 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium text-gray-900">#{i + 1} — {applicantLabel(p)}</span>
+                          <span className="text-sm font-medium text-foreground">#{i + 1} — {applicantLabel(p)}</span>
                           <Badge variant="info">{p.program_name}</Badge>
                           <Badge variant="neutral">{p.status}</Badge>
                         </div>
                         <div className="flex flex-wrap gap-1">
                           {p.priority_reasons.map((r, j) => (
-                            <span key={j} className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{r}</span>
+                            <span key={j} className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded">{r}</span>
                           ))}
                         </div>
                       </div>
                       <div className="text-right shrink-0">
                         {p.deadline_days != null && (
-                          <div className={`flex items-center gap-1 text-xs font-medium ${p.deadline_days <= 7 ? 'text-error' : p.deadline_days <= 14 ? 'text-warning' : 'text-gray-500'}`}>
+                          <div className={`flex items-center gap-1 text-xs font-medium ${p.deadline_days <= 7 ? 'text-error' : p.deadline_days <= 14 ? 'text-warning' : 'text-muted-foreground'}`}>
                             <Clock size={12} />
                             {p.deadline_days <= 0 ? 'Past due' : `${p.deadline_days}d left`}
                           </div>
                         )}
                         {p.match_score != null && (
-                          <p className="text-xs text-gray-400 mt-0.5">Match: {(p.match_score * 100).toFixed(0)}%</p>
+                          <p className="text-xs text-muted-foreground/70 mt-0.5">Match: {(p.match_score * 100).toFixed(0)}%</p>
                         )}
-                        <p className="text-xs text-gray-400">{p.assigned_count === 0 ? 'Unassigned' : `${p.assigned_count} reviewer(s)`}</p>
+                        <p className="text-xs text-muted-foreground/70">{p.assigned_count === 0 ? 'Unassigned' : `${p.assigned_count} reviewer(s)`}</p>
                       </div>
                     </div>
                   </Card>
@@ -538,7 +538,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
       {/* Batch Assign Modal */}
       <Modal isOpen={batchAction === 'assign'} onClose={() => setBatchAction(null)} title="Batch Assign Reviewers">
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">Auto-assign reviewers to {selectedIds.size} application(s).</p>
+          <p className="text-sm text-muted-foreground">Auto-assign reviewers to {selectedIds.size} application(s).</p>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setBatchAction(null)}>Cancel</Button>
             <Button onClick={() => batchAssignMut.mutate()} disabled={batchAssignMut.isPending}>
@@ -564,7 +564,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
       {/* Batch Interview Modal */}
       <Modal isOpen={batchAction === 'interview'} onClose={() => setBatchAction(null)} title="Batch Schedule Interviews">
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">Schedule standard interviews for {selectedIds.size} application(s).</p>
+          <p className="text-sm text-muted-foreground">Schedule standard interviews for {selectedIds.size} application(s).</p>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setBatchAction(null)}>Cancel</Button>
             <Button onClick={() => batchInterviewMut.mutate()} disabled={batchInterviewMut.isPending}>
@@ -609,7 +609,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
 
   return (
     <div className="p-6 space-y-4">
-      <h1 className="text-2xl font-bold text-gray-900">Applications Workspace</h1>
+      <h1 className="text-2xl font-bold text-foreground">Applications Workspace</h1>
       {body}
     </div>
   )

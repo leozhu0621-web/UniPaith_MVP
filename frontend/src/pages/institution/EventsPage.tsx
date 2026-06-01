@@ -163,8 +163,8 @@ export default function EventsPage() {
       />
 
       <Card className="p-3">
-        <p className="text-xs text-gray-500">Operational cue</p>
-        <p className="text-sm text-gray-700">
+        <p className="text-xs text-muted-foreground">Operational cue</p>
+        <p className="text-sm text-foreground">
           Compare event fill rates to identify which event types and programs attract stronger applicant intent.
         </p>
       </Card>
@@ -172,16 +172,16 @@ export default function EventsPage() {
       {events.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Card className="p-3">
-            <p className="text-xs text-gray-500">Open Events</p>
-            <p className="text-xl font-semibold text-gray-900">{events.filter(e => e.status === 'open').length}</p>
+            <p className="text-xs text-muted-foreground">Open Events</p>
+            <p className="text-xl font-semibold text-foreground">{events.filter(e => e.status === 'open').length}</p>
           </Card>
           <Card className="p-3">
-            <p className="text-xs text-gray-500">Total RSVPs</p>
-            <p className="text-xl font-semibold text-gray-900">{events.reduce((sum, e) => sum + e.rsvp_count, 0)}</p>
+            <p className="text-xs text-muted-foreground">Total RSVPs</p>
+            <p className="text-xl font-semibold text-foreground">{events.reduce((sum, e) => sum + e.rsvp_count, 0)}</p>
           </Card>
           <Card className="p-3">
-            <p className="text-xs text-gray-500">Average Fill</p>
-            <p className="text-xl font-semibold text-gray-900">
+            <p className="text-xs text-muted-foreground">Average Fill</p>
+            <p className="text-xl font-semibold text-foreground">
               {(() => {
                 const withCapacity = events.filter(e => (e.capacity ?? 0) > 0)
                 if (withCapacity.length === 0) return '-'
@@ -213,11 +213,11 @@ export default function EventsPage() {
             return (
               <Card key={ev.id} className="p-4">
                 <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold text-gray-900">{ev.event_name}</h3>
+                  <h3 className="font-semibold text-foreground">{ev.event_name}</h3>
                   <Badge variant={(STATUS_COLORS[ev.status] as any) ?? 'neutral'}>{ev.status}</Badge>
                 </div>
                 <Badge variant="info" className="mb-3">{ev.event_type}</Badge>
-                <div className="space-y-1.5 text-sm text-gray-600">
+                <div className="space-y-1.5 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2"><Clock size={14} /> {formatDateTime(ev.start_time)} - {formatDateTime(ev.end_time)}</div>
                   {ev.location && <div className="flex items-center gap-2"><MapPin size={14} /> {ev.location}</div>}
                   <div className="flex items-center gap-2 flex-wrap">
@@ -228,7 +228,7 @@ export default function EventsPage() {
                     )}
                   </div>
                   {ev.meeting_link && <div className="flex items-center gap-2"><Video size={14} /> Online event</div>}
-                  {prog && <p className="text-xs text-gray-400">Program: {prog.program_name}</p>}
+                  {prog && <p className="text-xs text-muted-foreground/70">Program: {prog.program_name}</p>}
                 </div>
                 <div className="flex gap-2 mt-3">
                   <Button variant="ghost" size="sm" onClick={() => { setSelectedEventId(ev.id); setShowAttendeesModal(true) }}>
@@ -240,7 +240,7 @@ export default function EventsPage() {
                         <Edit2 size={14} /> Edit
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => setCancelTarget(ev)}
-                        className="flex items-center gap-1 text-red-600">
+                        className="flex items-center gap-1 text-destructive">
                         <XCircle size={14} /> Cancel
                       </Button>
                     </>
@@ -280,10 +280,10 @@ export default function EventsPage() {
         {attendeesQ.isLoading ? (
           <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10" />)}</div>
         ) : attendees.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-4">No attendees yet.</p>
+          <p className="text-sm text-muted-foreground text-center py-4">No attendees yet.</p>
         ) : (
           <div className="space-y-3">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Attendees: {attendees.filter(a => a.attendance_status === 'attended' || a.attended_at).length} of{' '}
               {attendees.filter(a => a.rsvp_status !== 'waitlisted').length} RSVPs
               {attendees.some(a => a.rsvp_status === 'waitlisted') &&
@@ -294,13 +294,13 @@ export default function EventsPage() {
                 const attended = a.attendance_status === 'attended' || !!a.attended_at
                 const noShow = a.attendance_status === 'no_show'
                 return (
-                  <div key={a.id} className="flex items-center justify-between py-2 border-b border-gray-100 gap-2">
+                  <div key={a.id} className="flex items-center justify-between py-2 border-b border-border gap-2">
                     <div className="min-w-0">
-                      <p className="text-sm text-gray-700 truncate">
+                      <p className="text-sm text-foreground truncate">
                         {a.student_name || a.student_email || `${a.student_id.slice(0, 8)}…`}
                       </p>
                       {a.student_name && a.student_email && (
-                        <p className="text-xs text-gray-400 truncate">{a.student_email}</p>
+                        <p className="text-xs text-muted-foreground/70 truncate">{a.student_email}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
@@ -309,12 +309,12 @@ export default function EventsPage() {
                       </Badge>
                       <button
                         onClick={() => attendanceMut.mutate({ rsvpId: a.id, status: 'attended' })}
-                        className={`p-1 rounded ${attended ? 'bg-green-100 text-green-700' : 'text-gray-400 hover:bg-gray-100'}`}
+                        className={`p-1 rounded ${attended ? 'bg-success-soft text-success' : 'text-muted-foreground/70 hover:bg-muted'}`}
                         title="Mark attended"
                       ><UserCheck size={16} /></button>
                       <button
                         onClick={() => attendanceMut.mutate({ rsvpId: a.id, status: 'no_show' })}
-                        className={`p-1 rounded ${noShow ? 'bg-red-100 text-red-700' : 'text-gray-400 hover:bg-gray-100'}`}
+                        className={`p-1 rounded ${noShow ? 'bg-destructive/10 text-destructive' : 'text-muted-foreground/70 hover:bg-muted'}`}
                         title="Mark no-show"
                       ><UserX size={16} /></button>
                     </div>
@@ -328,7 +328,7 @@ export default function EventsPage() {
 
       {/* Cancel Confirmation (Spec 27 §7) */}
       <Modal isOpen={!!cancelTarget} onClose={() => setCancelTarget(null)} title="Cancel Event">
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm text-muted-foreground mb-4">
           Cancel &ldquo;{cancelTarget?.event_name}&rdquo;? All RSVP&rsquo;d students will be notified and the event
           removed from their calendars. This cannot be undone.
         </p>

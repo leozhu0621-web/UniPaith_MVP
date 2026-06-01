@@ -143,17 +143,17 @@ export default function TemplatesPage() {
             <Card key={t.id} className="p-4">
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-gray-900">{t.name}</h3>
-                  {t.is_default && <Star size={14} className="text-amber-500 fill-amber-500" />}
+                  <h3 className="font-semibold text-foreground">{t.name}</h3>
+                  {t.is_default && <Star size={14} className="text-warning fill-amber-500" />}
                 </div>
                 <div className="flex items-center gap-1">
                   <Badge variant={TYPE_BADGE[t.template_type] ?? 'neutral'}>{t.template_type.replace(/_/g, ' ')}</Badge>
                   {!t.is_active && <Badge variant="neutral">Inactive</Badge>}
                 </div>
               </div>
-              <p className="text-sm text-gray-600 mb-1"><span className="text-gray-400">Subject:</span> {t.subject}</p>
-              <p className="text-sm text-gray-500 line-clamp-2 mb-2">{t.body}</p>
-              <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
+              <p className="text-sm text-muted-foreground mb-1"><span className="text-muted-foreground/70">Subject:</span> {t.subject}</p>
+              <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{t.body}</p>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground/70 mb-2">
                 {t.program_name && <Badge variant="info">{t.program_name}</Badge>}
                 <span>{formatDate(t.created_at)}</span>
                 {t.variables && <span>{(Array.isArray(t.variables) ? t.variables : []).length} variables</span>}
@@ -161,7 +161,7 @@ export default function TemplatesPage() {
               <div className="flex gap-2">
                 <Button variant="ghost" size="sm" onClick={() => openEdit(t)} className="flex items-center gap-1"><Edit2 size={14} /> Edit</Button>
                 <Button variant="ghost" size="sm" onClick={() => handlePreview(t.id)} className="flex items-center gap-1"><Eye size={14} /> Preview</Button>
-                <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(t)} className="flex items-center gap-1 text-red-600"><Trash2 size={14} /></Button>
+                <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(t)} className="flex items-center gap-1 text-destructive"><Trash2 size={14} /></Button>
               </div>
             </Card>
           ))}
@@ -179,7 +179,7 @@ export default function TemplatesPage() {
             <Input label="Subject *" value={subject} onChange={e => setSubject(e.target.value)} placeholder="e.g. Missing documents for {{program_name}}" />
             <div className="flex gap-1 mt-1">
               {VARIABLES.map(v => (
-                <button key={v} type="button" onClick={() => insertVariable(v, 'subject')} className="text-xs bg-gray-100 hover:bg-gray-200 px-1.5 py-0.5 rounded text-gray-600">{`{{${v}}}`}</button>
+                <button key={v} type="button" onClick={() => insertVariable(v, 'subject')} className="text-xs bg-muted hover:bg-muted px-1.5 py-0.5 rounded text-muted-foreground">{`{{${v}}}`}</button>
               ))}
             </div>
           </div>
@@ -187,13 +187,13 @@ export default function TemplatesPage() {
             <Textarea label="Body *" value={body} onChange={e => setBody(e.target.value)} rows={6} placeholder="Dear {{first_name}},&#10;&#10;We noticed your application to {{program_name}} is missing..." />
             <div className="flex gap-1 mt-1">
               {VARIABLES.map(v => (
-                <button key={v} type="button" onClick={() => insertVariable(v, 'body')} className="text-xs bg-gray-100 hover:bg-gray-200 px-1.5 py-0.5 rounded text-gray-600">{`{{${v}}}`}</button>
+                <button key={v} type="button" onClick={() => insertVariable(v, 'body')} className="text-xs bg-muted hover:bg-muted px-1.5 py-0.5 rounded text-muted-foreground">{`{{${v}}}`}</button>
               ))}
             </div>
           </div>
           <Select label="Program (optional)" options={programOptions} value={programId} onChange={e => setProgramId(e.target.value)} />
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input type="checkbox" checked={isDefault} onChange={e => setIsDefault(e.target.checked)} className="rounded border-gray-300" />
+          <label className="flex items-center gap-2 text-sm text-foreground">
+            <input type="checkbox" checked={isDefault} onChange={e => setIsDefault(e.target.checked)} className="rounded border-border" />
             Set as default template for this type
           </label>
           <div className="flex justify-end gap-2">
@@ -207,7 +207,7 @@ export default function TemplatesPage() {
 
       {/* Delete Modal */}
       <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Delete Template">
-        <p className="text-sm text-gray-600 mb-4">Delete <strong>{deleteTarget?.name}</strong>?</p>
+        <p className="text-sm text-muted-foreground mb-4">Delete <strong>{deleteTarget?.name}</strong>?</p>
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={() => setDeleteTarget(null)}>Cancel</Button>
           <Button variant="danger" onClick={() => deleteTarget && deleteMut.mutate(deleteTarget.id)} disabled={deleteMut.isPending}>
@@ -221,16 +221,16 @@ export default function TemplatesPage() {
         {previewData ? (
           <div className="space-y-3">
             <div>
-              <p className="text-xs text-gray-400 mb-1">Subject</p>
-              <p className="text-sm font-medium text-gray-900 bg-gray-50 rounded px-3 py-2">{previewData.rendered_subject}</p>
+              <p className="text-xs text-muted-foreground/70 mb-1">Subject</p>
+              <p className="text-sm font-medium text-foreground bg-muted rounded px-3 py-2">{previewData.rendered_subject}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-400 mb-1">Body</p>
-              <div className="text-sm text-gray-700 bg-gray-50 rounded px-3 py-3 whitespace-pre-wrap">{previewData.rendered_body}</div>
+              <p className="text-xs text-muted-foreground/70 mb-1">Body</p>
+              <div className="text-sm text-foreground bg-muted rounded px-3 py-3 whitespace-pre-wrap">{previewData.rendered_body}</div>
             </div>
           </div>
         ) : (
-          <p className="text-sm text-gray-500 text-center py-4">Loading preview...</p>
+          <p className="text-sm text-muted-foreground text-center py-4">Loading preview...</p>
         )}
       </Modal>
     </div>
