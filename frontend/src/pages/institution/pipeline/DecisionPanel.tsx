@@ -216,6 +216,8 @@ export default function DecisionPanel({
               )}
             </div>
 
+            <OfferResponseTimeline status={status} />
+
             {!studentResponded && status.offer_id && (
               <div className="flex flex-wrap items-end gap-2 pt-1 border-t border-border">
                 <Input
@@ -327,6 +329,7 @@ export default function DecisionPanel({
                     placeholder="e.g. Maintain a 3.5 GPA in your final term"
                   />
                 )}
+                <NextStepActionsEditor rows={nextStepRows} onChange={setNextStepRows} />
               </div>
             )}
 

@@ -27,7 +27,7 @@ const DECISION_TONE: Record<InstitutionDecision, 'success' | 'info' | 'warning' 
 const applicantLabel = (a: Application) =>
   a.student_name ?? `Applicant ${a.student_id.slice(0, 8)}`
 
-/** Batch decision release (spec 34 §5): confirm per applicant, standard offer template, progress while releasing. */
+/** Batch decision release (spec 34 §5). */
 export default function BatchReleaseModal({
   isOpen,
   onClose,
@@ -44,17 +44,31 @@ export default function BatchReleaseModal({
   const [perApp, setPerApp] = useState<Record<string, InstitutionDecision>>({})
   const [scholarship, setScholarship] = useState('')
   const [deadline, setDeadline] = useState('')
-  const [templateId, setTemplateId] = useState('')
-  const [templateBody, setTemplateBody] = useState('')
+  const [offerTemplateId, setOfferTemplateId] = useState('')
+  const [offerTemplateBody, setOfferTemplateBody] = useState('')
+  const [decisionTemplateId, setDecisionTemplateId] = useState('')
+  const [decisionTemplateBody, setDecisionTemplateBody] = useState('')
   const [releaseProgress, setReleaseProgress] = useState(0)
   const [result, setResult] = useState<{ success_count: number; failed_count: number } | null>(null)
 
-  const templatesQ = useQuery({
+  const offerTemplatesQ = useQuery({
     queryKey: ['templates', 'offer_notice'],
     queryFn: () => getTemplates('offer_notice'),
     enabled: isOpen,
   })
-  const offerTemplates = templatesQ.data ?? []
+  const decisionTemplatesQ = useQuery({
+    queryKey: ['templates', 'decision_notice'],
+    queryFn: () => getTemplates('decision_notice'),
+    enabled: isOpen,
+  })
+  const offerTemplates = offerTemplatesQ.data ?? []
+  const decisionTemplates = decisionTemplatesQ.data ?? []
+
+  const alreadyReleased = useMemo(() => selectedApps.filter(a => a.decision), [selectedApps])
+  const notInDecisionStage = useMemo(
+    () => selectedApps.filter(a => a.status !== 'decision_made'),
+    [selectedApps],
+  )
 
   useEffect(() => {
     if (!isOpen) {
@@ -62,32 +76,34 @@ export default function BatchReleaseModal({
       setPerApp({})
       setResult(null)
       setReleaseProgress(0)
-      setTemplateId('')
-      setTemplateBody('')
+      setOfferTemplateId('')
+      setOfferTemplateBody('')
+      setDecisionTemplateId('')
+      setDecisionTemplateBody('')
     }
   }, [isOpen])
 
-  useEffect(() => {
+  const previewFor = (templateId: string, setter: (body: string) => void) => {
     if (!templateId || selectedApps.length === 0) {
-      setTemplateBody('')
-      return
+      setter('')
+      return () => {}
     }
     let cancelled = false
     previewTemplate(templateId, selectedApps[0].id)
-      .then(p => {
-        if (!cancelled) setTemplateBody(p.rendered_body)
-      })
-      .catch(() => {
-        if (!cancelled) setTemplateBody('')
-      })
+      .then(p => { if (!cancelled) setter(p.rendered_body) })
+      .catch(() => { if (!cancelled) setter('') })
     return () => { cancelled = true }
-  }, [templateId, selectedApps])
+  }
+
+  useEffect(() => previewFor(offerTemplateId, setOfferTemplateBody), [offerTemplateId, selectedApps])
+  useEffect(() => previewFor(decisionTemplateId, setDecisionTemplateBody), [decisionTemplateId, selectedApps])
 
   const decisionFor = (id: string): InstitutionDecision => perApp[id] ?? bulk
   const admitCount = useMemo(
     () => selectedApps.filter(a => isOfferDecision(decisionFor(a.id))).length,
     [selectedApps, perApp, bulk],
   )
+  const nonOfferCount = selectedApps.length - admitCount
 
   const standardOffer = useMemo((): ReleaseOfferTerms | null => {
     if (!scholarship && !deadline) return null
@@ -101,16 +117,18 @@ export default function BatchReleaseModal({
     mutationFn: async () => {
       const offer = standardOffer
       const items: BatchReleaseItem[] = selectedApps.map(a => {
-        const decision = decisionFor(a.id)
-        const isOffer = isOfferDecision(decision)
+        const d = decisionFor(a.id)
+        const isOffer = isOfferDecision(d)
         return {
           application_id: a.id,
-          decision,
+          decision: d,
           offer: isOffer ? offer : null,
-          message: isOffer && templateBody.trim() ? templateBody.trim() : null,
+          message: isOffer
+            ? (offerTemplateBody.trim() || null)
+            : (decisionTemplateBody.trim() || null),
         }
       })
-      setReleaseProgress(15)
+      setReleaseProgress(20)
       const data = await batchReleaseDecisionV2(items)
       setReleaseProgress(100)
       return data
@@ -122,7 +140,6 @@ export default function BatchReleaseModal({
         `${data.success_count} released` + (data.failed_count ? `, ${data.failed_count} failed` : ''),
         data.failed_count ? 'warning' : 'success',
       )
-      onDone()
     },
     onError: () => {
       setReleaseProgress(0)
@@ -131,16 +148,13 @@ export default function BatchReleaseModal({
   })
 
   const close = () => {
+    const hadResult = !!result
     setResult(null)
     setPerApp({})
     setStep('configure')
     onClose()
+    if (hadResult) onDone()
   }
-
-  const templateOptions = [
-    { value: '', label: 'No template (standard notice)' },
-    ...offerTemplates.map(t => ({ value: t.id, label: t.name })),
-  ]
 
   return (
     <Modal isOpen={isOpen} onClose={close} title="Release decisions" size="lg">
@@ -150,6 +164,16 @@ export default function BatchReleaseModal({
             <p className="text-sm text-gray-600">
               Confirm a decision for each applicant. Offer terms apply to admits and conditional admits.
             </p>
+            {notInDecisionStage.length > 0 && (
+              <p className="text-xs text-warning rounded-lg border border-warning/30 bg-warning-soft/30 px-3 py-2">
+                {notInDecisionStage.length} selected applicant{notInDecisionStage.length === 1 ? ' is' : 's are'} not in the Decision stage.
+              </p>
+            )}
+            {alreadyReleased.length > 0 && (
+              <p className="text-xs text-gray-600 rounded-lg border border-border bg-muted/50 px-3 py-2">
+                {alreadyReleased.length} already have a released decision — confirming will re-release and re-notify.
+              </p>
+            )}
             <div className="flex flex-wrap items-end gap-3">
               <Select
                 label="Decision for all"
@@ -158,29 +182,37 @@ export default function BatchReleaseModal({
                 onChange={e => setBulk(e.target.value as InstitutionDecision)}
                 className="w-48"
               />
-              <p className="text-xs text-gray-500 pb-2">Override individuals below.</p>
             </div>
 
-            <div className="rounded-lg border border-border p-3 space-y-3">
-              <p className="text-xs font-medium text-gray-500">
-                Standard offer template — applied to {admitCount} admit{admitCount === 1 ? '' : 's'}
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Input label="Scholarship ($)" type="number" value={scholarship} onChange={e => setScholarship(e.target.value)} />
-                <Input label="Response deadline" type="date" value={deadline} onChange={e => setDeadline(e.target.value)} />
+            {admitCount > 0 && (
+              <div className="rounded-lg border border-border p-3 space-y-3">
+                <p className="text-xs font-medium text-gray-500">Standard offer — {admitCount} admit{admitCount === 1 ? '' : 's'}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Input label="Scholarship ($)" type="number" value={scholarship} onChange={e => setScholarship(e.target.value)} />
+                  <Input label="Response deadline" type="date" value={deadline} onChange={e => setDeadline(e.target.value)} />
+                </div>
+                <Select
+                  label="Offer letter template"
+                  options={[{ value: '', label: 'Standard offer notice' }, ...offerTemplates.map(t => ({ value: t.id, label: t.name }))]}
+                  value={offerTemplateId}
+                  onChange={e => setOfferTemplateId(e.target.value)}
+                />
+                {offerTemplateBody && <p className="text-xs text-gray-600 line-clamp-3 whitespace-pre-wrap">{offerTemplateBody}</p>}
               </div>
-              <Select
-                label="Offer letter template"
-                options={templateOptions}
-                value={templateId}
-                onChange={e => setTemplateId(e.target.value)}
-              />
-              {templateBody && (
-                <p className="text-xs text-gray-600 line-clamp-3 border-t border-gray-100 pt-2 whitespace-pre-wrap">
-                  {templateBody}
-                </p>
-              )}
-            </div>
+            )}
+
+            {nonOfferCount > 0 && (
+              <div className="rounded-lg border border-border p-3 space-y-2">
+                <p className="text-xs font-medium text-gray-500">Decision notice — {nonOfferCount} non-admit{nonOfferCount === 1 ? '' : 's'}</p>
+                <Select
+                  label="Decision notice template"
+                  options={[{ value: '', label: 'Standard decision notice' }, ...decisionTemplates.map(t => ({ value: t.id, label: t.name }))]}
+                  value={decisionTemplateId}
+                  onChange={e => setDecisionTemplateId(e.target.value)}
+                />
+                {decisionTemplateBody && <p className="text-xs text-gray-600 line-clamp-3 whitespace-pre-wrap">{decisionTemplateBody}</p>}
+              </div>
+            )}
 
             <div className="max-h-64 overflow-y-auto rounded-lg border border-border divide-y divide-gray-100">
               {selectedApps.map(a => {
@@ -207,20 +239,14 @@ export default function BatchReleaseModal({
             </div>
 
             {releaseMut.isPending && (
-              <div className="space-y-1">
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-cobalt transition-all duration-300"
-                    style={{ width: `${releaseProgress}%` }}
-                  />
-                </div>
-                <p className="text-xs text-gray-500">Batch release in progress…</p>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div className="h-full rounded-full bg-cobalt transition-all duration-300" style={{ width: `${releaseProgress}%` }} />
               </div>
             )}
 
             <div className="flex justify-end gap-2">
               <Button variant="tertiary" onClick={close}>Cancel</Button>
-              <Button variant="secondary" onClick={() => setStep('confirm')} disabled={selectedApps.length === 0}>
+              <Button variant="secondary" onClick={() => setStep('confirm')} disabled={!selectedApps.length}>
                 Review &amp; confirm · {selectedApps.length}
               </Button>
             </div>
@@ -230,17 +256,14 @@ export default function BatchReleaseModal({
         {step === 'confirm' && !result && (
           <>
             <p className="text-sm text-gray-600">
-              You are about to release {selectedApps.length} decision{selectedApps.length === 1 ? '' : 's'}. Each release is audit-logged.
+              Release {selectedApps.length} decision{selectedApps.length === 1 ? '' : 's'}? Each is audit-logged.
             </p>
             {standardOffer && formatOfferTermsSummary(standardOffer).length > 0 && (
-              <div className="rounded-lg border border-border p-3 text-sm text-gray-700">
-                <p className="text-xs font-medium text-gray-500 mb-1">Shared offer terms (admits)</p>
-                <ul className="list-disc list-inside">
-                  {formatOfferTermsSummary(standardOffer).map(line => (
-                    <li key={line}>{line}</li>
-                  ))}
-                </ul>
-              </div>
+              <ul className="text-sm list-disc list-inside text-gray-700">
+                {formatOfferTermsSummary(standardOffer).map(line => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
             )}
             <ul className="max-h-48 overflow-y-auto text-sm space-y-1">
               {selectedApps.map(a => (
@@ -252,16 +275,11 @@ export default function BatchReleaseModal({
             </ul>
             {releaseMut.isPending && (
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full bg-cobalt transition-all duration-300"
-                  style={{ width: `${Math.max(releaseProgress, 20)}%` }}
-                />
+                <div className="h-full rounded-full bg-cobalt transition-all duration-300" style={{ width: `${Math.max(releaseProgress, 20)}%` }} />
               </div>
             )}
             <div className="flex justify-end gap-2">
-              <Button variant="tertiary" onClick={() => setStep('configure')} disabled={releaseMut.isPending}>
-                Back
-              </Button>
+              <Button variant="tertiary" onClick={() => setStep('configure')} disabled={releaseMut.isPending}>Back</Button>
               <Button variant="secondary" onClick={() => releaseMut.mutate()} disabled={releaseMut.isPending}>
                 {releaseMut.isPending ? 'Releasing…' : `Confirm release · ${selectedApps.length}`}
               </Button>
@@ -272,7 +290,7 @@ export default function BatchReleaseModal({
         {result && (
           <div className="flex items-center justify-between rounded-lg bg-success-soft px-3 py-2 text-sm text-success">
             <span>
-              Released {result.success_count} decision{result.success_count === 1 ? '' : 's'}
+              Released {result.success_count}
               {result.failed_count ? ` · ${result.failed_count} failed` : ''}.
             </span>
             <Button variant="secondary" size="sm" onClick={close}>Done</Button>

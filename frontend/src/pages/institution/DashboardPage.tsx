@@ -383,20 +383,30 @@ export default function DashboardPage() {
           )}
           <div className="space-y-2">
             {yieldRiskQ.data!.alerts.slice(0, 5).map(alert => (
-              <button
+              <div
                 key={alert.application_id}
-                type="button"
-                onClick={() => navigate(applicantUrl(alert.application_id, 'decision'))}
-                className="w-full flex items-center justify-between gap-3 p-2 rounded-lg border border-border bg-background hover:bg-muted transition-colors text-left"
+                className="flex items-center justify-between gap-2 p-2 rounded-lg border border-border bg-background"
               >
-                <div className="min-w-0">
+                <button
+                  type="button"
+                  onClick={() => navigate(applicantUrl(alert.application_id, 'decision'))}
+                  className="flex-1 min-w-0 text-left hover:opacity-90"
+                >
                   <span className="text-sm font-medium text-foreground block truncate">
                     {alert.student_name ?? `Applicant ${alert.student_id.slice(0, 8)}`}
                   </span>
                   <span className="text-xs text-muted-foreground">{alert.reason}</span>
-                </div>
+                </button>
                 <Badge variant={alert.risk_level === 'high' ? 'danger' : 'warning'}>{alert.risk_level}</Badge>
-              </button>
+                <Button
+                  size="sm"
+                  variant="tertiary"
+                  onClick={() => navigate('/i/communications?tab=inbox')}
+                  title="Open inbox to send a follow-up"
+                >
+                  Nudge
+                </Button>
+              </div>
             ))}
           </div>
         </Card>
