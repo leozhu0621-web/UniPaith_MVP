@@ -1,5 +1,6 @@
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.models.institution import Institution
@@ -7,6 +8,11 @@ from unipaith.models.user import User
 
 
 async def _ensure_institution(db: AsyncSession, user: User) -> Institution:
+    """Idempotent — safe when a prior test in the same session already created one."""
+    result = await db.execute(select(Institution).where(Institution.admin_user_id == user.id))
+    existing = result.scalar_one_or_none()
+    if existing:
+        return existing
     inst = Institution(
         admin_user_id=user.id,
         name="Test University",
@@ -15,6 +21,7 @@ async def _ensure_institution(db: AsyncSession, user: User) -> Institution:
     )
     db.add(inst)
     await db.commit()
+    await db.refresh(inst)
     return inst
 
 
@@ -464,6 +471,20 @@ async def test_publish_validation_lists_sections(
     sections = {m["section"] for m in resp.json()["detail"]["missing_fields"]}
     assert "overview" in sections  # description_text
     assert "costs" in sections  # no tuition/deadline/cost_data/intake_rounds
+
+
+@pytest.mark.asyncio
+async def test_draft_program_not_publicly_visible(
+    institution_client: AsyncClient,
+    client: AsyncClient,
+    db_session: AsyncSession,
+    mock_institution_user: User,
+):
+    # Spec 23 §10 — draft never appears on the public program endpoint.
+    await _ensure_institution(db_session, mock_institution_user)
+    pid = (await _create_min_program(institution_client))["id"]
+    resp = await client.get(f"/api/v1/programs/{pid}")
+    assert resp.status_code == 404
 
 
 @pytest.mark.asyncio
