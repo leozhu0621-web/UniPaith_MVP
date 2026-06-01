@@ -65,6 +65,7 @@ export interface ConnectEvent {
   recommended: boolean
   meeting_link: string | null
   meeting_link_reveals_at: string | null
+  status?: string | null
 }
 
 export interface FollowDetail {

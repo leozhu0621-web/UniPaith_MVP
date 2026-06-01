@@ -571,6 +571,10 @@ export async function getFeaturedPromotions(params?: {
   return data
 }
 
+export async function recordPromotionClick(promotionId: string): Promise<void> {
+  await apiClient.post(`/institutions/promotions/${promotionId}/click`)
+}
+
 // --- AI Intelligence ---
 
 export async function getIntelligenceDigest(): Promise<{
