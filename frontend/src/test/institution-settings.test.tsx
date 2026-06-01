@@ -77,11 +77,11 @@ async function openProfileTab() {
   expect(await screen.findByDisplayValue('University of Foo')).toBeInTheDocument()
 }
 
-function renderSettings() {
+function renderSettings(initialEntry = '/') {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={qc}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={[initialEntry]}>
         <SettingsPage />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -163,5 +163,13 @@ describe('Institution SettingsPage — guided profile editors (Spec 22 G-I1)', (
       twitter: 'https://x.com/foo',
       linkedin: 'https://linkedin.com/school/foo',
     })
+  })
+})
+
+describe('Institution SettingsPage — review rubrics (Spec 32 §3)', () => {
+  it('opens the rubrics panel from ?tab=rubrics', async () => {
+    renderSettings('/i/settings?tab=rubrics')
+    expect(await screen.findByText(/blind review by default/i)).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /rubrics/i })).toHaveAttribute('aria-selected', 'true')
   })
 })

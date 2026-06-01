@@ -300,3 +300,71 @@ async def test_calibration_reports_drift_and_test_optional(
     assert "inter_rater" in data and "reviewer_drift" in data
     assert "test_optional_cohort" in data
     assert data["test_optional_cohort"]["non_submitters"]["n"] >= 1
+
+
+@pytest.mark.asyncio
+async def test_score_persists_per_reviewer(
+    institution_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    """Spec 32 §12 — score persists per reviewer; aggregated on review-packet."""
+    _, inst, program, app, reviewer = await _seed(
+        db_session, mock_student_user, mock_institution_user
+    )
+    rubric = Rubric(
+        institution_id=inst.id,
+        program_id=program.id,
+        rubric_name="R",
+        criteria=[{"name": "fit", "weight": 1.0, "max_score": 5}],
+        is_active=True,
+    )
+    db_session.add(rubric)
+    await db_session.commit()
+
+    resp = await institution_client.post(
+        f"{API}/applications/{app.id}/score",
+        json={
+            "rubric_id": str(rubric.id),
+            "criterion_scores": {"fit": 4},
+            "reviewer_notes": "Strong",
+        },
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["criterion_scores"]["fit"] == 4
+
+    scores = await institution_client.get(f"{API}/applications/{app.id}/scores")
+    assert scores.status_code == 200
+    assert len(scores.json()) == 1
+
+    packet = await institution_client.get(f"{API}/applications/{app.id}/review-packet")
+    assert packet.status_code == 200
+    pdata = packet.json()
+    assert pdata["reviewer_count"] == 1
+    crit = next(c for c in pdata["rubric_scores"] if c["criterion"] == "fit")
+    assert crit["per_reviewer"][0]["score"] == 4
+
+
+@pytest.mark.asyncio
+async def test_ai_packet_summary_is_cached(
+    institution_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    """Spec 32 §12 — AI summary caches per application (second read is cached)."""
+    _, _, _, app, _ = await _seed(db_session, mock_student_user, mock_institution_user)
+    await db_session.commit()
+
+    first = await institution_client.post(f"{API}/applications/{app.id}/ai-packet/regenerate")
+    assert first.status_code == 200
+    gen_at = first.json().get("generated_at")
+    assert gen_at
+
+    second = await institution_client.get(f"{API}/applications/{app.id}/ai-packet")
+    assert second.status_code == 200
+    cached = second.json()
+    assert cached.get("generated_at") == gen_at
+    assert cached.get("overall_summary")

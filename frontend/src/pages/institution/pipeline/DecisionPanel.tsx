@@ -19,6 +19,8 @@ import { showToast } from '../../../stores/toast-store'
 import { formatDate } from '../../../utils/format'
 import type { Application, InstitutionDecision, OfferType, ReleaseOfferTerms } from '../../../types'
 import ReleaseConfirmModal from './ReleaseConfirmModal'
+import OfferResponseTimeline from './OfferResponseTimeline'
+import NextStepActionsEditor, { type NextStepRow } from './NextStepActionsEditor'
 import {
   INSTITUTION_DECISIONS,
   decisionLabel,
@@ -91,9 +93,13 @@ export default function DecisionPanel({
   const [drafting, setDrafting] = useState(false)
   const [extendDate, setExtendDate] = useState('')
   const [showConfirm, setShowConfirm] = useState(false)
+  const [nextStepRows, setNextStepRows] = useState<NextStepRow[]>([])
 
   const offerTerms = useMemo((): ReleaseOfferTerms | null => {
     if (!isOfferDecision(decision)) return null
+    const steps = nextStepRows
+      .filter(r => r.action.trim())
+      .map(r => ({ action: r.action.trim(), by_date: r.by_date || null }))
     return {
       offer_type: decision === 'conditional_admission' ? 'conditional' : offerType,
       scholarship_amount: num(scholarship),
@@ -102,8 +108,9 @@ export default function DecisionPanel({
       response_deadline: deadline || null,
       start_term: { season, year: num(year) },
       conditions: conditions ? { summary: conditions } : null,
+      next_step_actions: steps.length > 0 ? steps : null,
     }
-  }, [decision, offerType, scholarship, tuitionEst, totalCost, deadline, season, year, conditions])
+  }, [decision, offerType, scholarship, tuitionEst, totalCost, deadline, season, year, conditions, nextStepRows])
 
   const studentResponded = status?.response_state === 'accepted' || status?.response_state === 'declined'
 
@@ -174,7 +181,7 @@ export default function DecisionPanel({
     <div className="space-y-4">
       <Card className="p-5 space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-gray-900">Current decision</h3>
+          <h3 className="font-semibold text-foreground">Current decision</h3>
           {app.decision ? (
             <Badge variant={(INSTITUTION_DECISIONS.find(d => d.value === app.decision)?.tone as 'neutral') ?? 'neutral'}>
               {decisionLabel(app.decision)}
@@ -186,31 +193,31 @@ export default function DecisionPanel({
 
         {statusQ.isLoading ? (
           <Skeleton className="h-16" />
-        ) : status && status.has_offer ? (
+        ) : status && (status.has_offer || status.decision_at) ? (
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
               <div className="flex items-center gap-2">
-                <span className="text-gray-500">Response</span>
+                <span className="text-muted-foreground">Response</span>
                 <Badge variant={(stateMeta?.tone as 'neutral') ?? 'neutral'}>{stateMeta?.label}</Badge>
               </div>
               {status.response_deadline && (
-                <div className="flex items-center gap-1.5 text-gray-600">
+                <div className="flex items-center gap-1.5 text-muted-foreground">
                   <CalendarClock size={14} className="text-cobalt" />
                   <span>Respond by {formatDate(status.response_deadline)}</span>
                   {status.days_remaining != null && !studentResponded && (
-                    <span className={status.deadline_passed ? 'text-error font-medium' : 'text-gray-400'}>
+                    <span className={status.deadline_passed ? 'text-error font-medium' : 'text-muted-foreground'}>
                       ({status.deadline_passed ? `${Math.abs(status.days_remaining)}d overdue` : `${status.days_remaining}d left`})
                     </span>
                   )}
                 </div>
               )}
               {status.response_at && (
-                <span className="text-gray-500">Responded {formatDate(status.response_at)}</span>
+                <span className="text-muted-foreground">Responded {formatDate(status.response_at)}</span>
               )}
             </div>
 
             {!studentResponded && status.offer_id && (
-              <div className="flex flex-wrap items-end gap-2 pt-1 border-t border-gray-100">
+              <div className="flex flex-wrap items-end gap-2 pt-1 border-t border-border">
                 <Input
                   label="Extend deadline"
                   type="date"
@@ -242,7 +249,7 @@ export default function DecisionPanel({
             )}
           </div>
         ) : (
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             No offer issued yet. Release an admit or conditional decision below to create one.
           </p>
         )}
@@ -251,7 +258,7 @@ export default function DecisionPanel({
       <Card className="p-5 space-y-4">
         <div className="flex items-center gap-2">
           <Award size={18} className="text-cobalt" />
-          <h3 className="font-semibold text-gray-900">
+          <h3 className="font-semibold text-foreground">
             {app.decision ? 'Re-release decision' : 'Release decision'}
           </h3>
         </div>
@@ -272,7 +279,7 @@ export default function DecisionPanel({
                   className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                     decision === d.value
                       ? 'border-cobalt bg-cobalt/10 text-cobalt'
-                      : 'border-border bg-transparent text-gray-600 hover:bg-muted'
+                      : 'border-border bg-transparent text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   {d.label}
@@ -282,7 +289,7 @@ export default function DecisionPanel({
 
             {isOfferDecision(decision) && (
               <div className="space-y-3 rounded-lg border border-border p-3">
-                <p className="text-xs font-medium text-gray-500">Offer terms</p>
+                <p className="text-xs font-medium text-muted-foreground">Offer terms</p>
                 {decision === 'admitted' && (
                   <Select
                     label="Offer type"
@@ -338,7 +345,7 @@ export default function DecisionPanel({
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-sm font-medium text-gray-700">Notice to applicant (optional)</label>
+                <label className="text-sm font-medium text-foreground">Notice to applicant (optional)</label>
                 <Button variant="tertiary" size="sm" disabled={drafting} onClick={draftNotice} className="flex items-center gap-1">
                   <Brain size={14} /> {drafting ? 'Drafting…' : 'AI draft'}
                 </Button>
@@ -353,8 +360,8 @@ export default function DecisionPanel({
             </div>
 
             {confirmPreviewLines.length > 0 && (
-              <div className="rounded-lg bg-muted/50 border border-border px-3 py-2 text-xs text-gray-600">
-                <p className="font-medium text-gray-700 mb-1">Release preview</p>
+              <div className="rounded-lg bg-muted/50 border border-border px-3 py-2 text-xs text-muted-foreground">
+                <p className="font-medium text-foreground mb-1">Release preview</p>
                 <ul className="list-disc list-inside space-y-0.5">
                   {confirmPreviewLines.map(line => (
                     <li key={line}>{line}</li>
