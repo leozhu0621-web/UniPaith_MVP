@@ -123,6 +123,9 @@ def test_each_agent_declares_consent_requirement():
         # Spec 29 §8 — institution messaging agents (Haiku).
         "institution_reply_drafter",
         "inbound_intent_classifier",
+        # Spec 32 §4/§6 — review-workspace assist agents (Sonnet).
+        "review_synthesis",
+        "review_assistant",
     }
     assert set(AGENT_REQUIRES.keys()) == expected_agents
 

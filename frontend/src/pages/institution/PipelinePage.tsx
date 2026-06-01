@@ -35,11 +35,14 @@ import Textarea from '../../components/ui/Textarea'
 import type { Application, BatchOperationResult, PrioritizedApplication, Program } from '../../types'
 
 const PIPELINE_COLUMNS = [
-  { id: 'submitted', label: 'Applied', color: 'bg-blue-500' },
-  { id: 'under_review', label: 'Under Review', color: 'bg-yellow-500' },
-  { id: 'interview', label: 'Interview', color: 'bg-purple-500' },
-  { id: 'decision_made', label: 'Decision', color: 'bg-orange-500' },
+  { id: 'submitted', label: 'Applied', color: 'bg-cobalt' },
+  { id: 'under_review', label: 'Under Review', color: 'bg-warning' },
+  { id: 'interview', label: 'Interview', color: 'bg-gold-hover' },
+  { id: 'decision_made', label: 'Decision', color: 'bg-success' },
 ] as const
+
+const applicantLabel = (a: { student_name?: string | null; student_id: string }) =>
+  a.student_name ?? `Applicant ${a.student_id.slice(0, 8)}`
 
 type ColumnId = typeof PIPELINE_COLUMNS[number]['id']
 type PipelineTab = 'board' | 'review' | 'list' | 'interviews' | 'priority'
@@ -69,7 +72,7 @@ function DraggableCard({ app, onClick, selected, onToggleSelect }: {
             />
           )}
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-gray-900 truncate">Applicant {app.student_id.slice(0, 8)}</p>
+            <p className="text-sm font-medium text-gray-900 truncate">{applicantLabel(app)}</p>
             <p className="text-xs text-gray-500 mt-0.5">{app.program?.program_name ?? 'Program'}</p>
           </div>
         </div>
@@ -111,7 +114,7 @@ function DroppableColumn({ id, label, color, children }: { id: string; label: st
 function PipelineCardOverlay({ app }: { app: Application }) {
   return (
     <div className="bg-white border rounded-lg p-3 shadow-lg w-[240px]">
-      <p className="text-sm font-medium text-gray-900">Applicant {app.student_id.slice(0, 8)}</p>
+      <p className="text-sm font-medium text-gray-900">{applicantLabel(app)}</p>
       <p className="text-xs text-gray-500 mt-0.5">{app.program?.program_name ?? 'Program'}</p>
     </div>
   )
@@ -176,7 +179,7 @@ export default function PipelinePage() {
   const grouped = useMemo(() => {
     const apps: Application[] = Array.isArray(applicationsQ.data) ? applicationsQ.data : []
     const filtered = apps.filter(a =>
-      !search || a.student_id.toLowerCase().includes(search.toLowerCase())
+      !search || (a.student_name ?? a.student_id).toLowerCase().includes(search.toLowerCase())
     )
     const map: Record<ColumnId, Application[]> = {
       submitted: [],
@@ -196,10 +199,10 @@ export default function PipelinePage() {
     (a.status === 'submitted' || a.status === 'under_review') && !a.decision
   )
   const filteredReviewableApps = reviewableApps.filter(a =>
-    !search || a.student_id.toLowerCase().includes(search.toLowerCase())
+    !search || (a.student_name ?? a.student_id).toLowerCase().includes(search.toLowerCase())
   )
   const filteredAllApps = applications.filter(a =>
-    !search || a.student_id.toLowerCase().includes(search.toLowerCase())
+    !search || (a.student_name ?? a.student_id).toLowerCase().includes(search.toLowerCase())
   )
   const interviews = Array.isArray(interviewsQ.data) ? interviewsQ.data : []
   const interviewCandidates = filteredAllApps.filter(a => a.status === 'interview')
@@ -291,7 +294,7 @@ export default function PipelinePage() {
           onClick={() => navigate(`/i/pipeline/${row.id}`)}
           className="text-brand-slate-600 hover:underline font-medium"
         >
-          Applicant {row.student_id.slice(0, 8)}
+          {applicantLabel(row)}
         </button>
       ),
     },
@@ -336,7 +339,7 @@ export default function PipelinePage() {
             <div className="relative w-full sm:flex-1 sm:max-w-xs">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <Input
-                placeholder="Search by applicant ID..."
+                placeholder="Search by applicant name…"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="pl-9"
@@ -371,11 +374,11 @@ export default function PipelinePage() {
             </Card>
             <Card className="p-3">
               <p className="text-xs text-gray-500">Needs Review</p>
-              <p className="text-xl font-semibold text-amber-700">{reviewableApps.length}</p>
+              <p className="text-xl font-semibold text-warning">{reviewableApps.length}</p>
             </Card>
             <Card className="p-3">
               <p className="text-xs text-gray-500">Interview Stage</p>
-              <p className="text-xl font-semibold text-purple-700">{interviewCandidates.length}</p>
+              <p className="text-xl font-semibold text-cobalt">{interviewCandidates.length}</p>
             </Card>
           </div>
 
@@ -452,12 +455,12 @@ export default function PipelinePage() {
                   <Card key={p.application_id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/i/pipeline/${p.application_id}`)}>
                     <div className="flex items-center gap-4">
                       <div className="flex items-center justify-center w-10 h-10 rounded-full shrink-0 font-bold text-white text-sm"
-                        style={{ backgroundColor: p.priority_score >= 70 ? '#ef4444' : p.priority_score >= 40 ? '#f59e0b' : '#22c55e' }}>
+                        style={{ backgroundColor: p.priority_score >= 70 ? '#B5321F' : p.priority_score >= 40 ? '#B8741D' : '#1F6B2E' }}>
                         {Math.round(p.priority_score)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium text-gray-900">#{i + 1} — Applicant {p.student_id.slice(0, 8)}</span>
+                          <span className="text-sm font-medium text-gray-900">#{i + 1} — {applicantLabel(p)}</span>
                           <Badge variant="info">{p.program_name}</Badge>
                           <Badge variant="neutral">{p.status}</Badge>
                         </div>
@@ -469,7 +472,7 @@ export default function PipelinePage() {
                       </div>
                       <div className="text-right shrink-0">
                         {p.deadline_days != null && (
-                          <div className={`flex items-center gap-1 text-xs font-medium ${p.deadline_days <= 7 ? 'text-red-600' : p.deadline_days <= 14 ? 'text-amber-600' : 'text-gray-500'}`}>
+                          <div className={`flex items-center gap-1 text-xs font-medium ${p.deadline_days <= 7 ? 'text-error' : p.deadline_days <= 14 ? 'text-warning' : 'text-gray-500'}`}>
                             <Clock size={12} />
                             {p.deadline_days <= 0 ? 'Past due' : `${p.deadline_days}d left`}
                           </div>

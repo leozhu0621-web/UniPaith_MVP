@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AIPacketSummary, BatchOperationResult, CohortComparisonData, IntegritySignal, InstitutionMatchRationale, PrioritizedApplication, Rubric, ApplicationScore, ReviewAssignment, AIReviewSummary, PipelineData } from '../types'
+import type { AIPacketSummary, BatchOperationResult, CohortComparisonData, IntegritySignal, IntegrityAction, InstitutionMatchRationale, PrioritizedApplication, Rubric, ApplicationScore, ReviewAssignment, AIReviewSummary, PipelineData, ReviewPacket, ReviewSynthesis, ReviewAssistantAnswer, ReviewCalibration } from '../types'
 
 export async function getRubrics(programId?: string): Promise<Rubric[]> {
   const params = programId ? { program_id: programId } : {}
@@ -117,5 +117,42 @@ export async function getCohortComparison(applicationIds: string[]): Promise<Coh
 
 export async function batchAssignReviewers(applicationIds: string[], reviewerId?: string): Promise<BatchOperationResult> {
   const { data } = await apiClient.post('/reviews/batch/assign', { application_ids: applicationIds, reviewer_id: reviewerId })
+  return data
+}
+
+// --- Spec 32 · Review Workspace ---
+
+export async function getReviewPacket(applicationId: string, opts?: { rubricId?: string; reveal?: boolean }): Promise<ReviewPacket> {
+  const params: Record<string, string> = {}
+  if (opts?.rubricId) params.rubric_id = opts.rubricId
+  if (opts?.reveal) params.reveal = 'true'
+  const { data } = await apiClient.get(`/reviews/applications/${applicationId}/review-packet`, { params })
+  return data
+}
+
+export async function synthesizeReviews(applicationId: string, rubricId?: string): Promise<ReviewSynthesis> {
+  const params = rubricId ? { rubric_id: rubricId } : undefined
+  const { data } = await apiClient.post(`/reviews/applications/${applicationId}/synthesize`, null, { params })
+  return data
+}
+
+export async function reviewAssistantChat(applicationId: string, question: string): Promise<ReviewAssistantAnswer> {
+  const { data } = await apiClient.post(`/reviews/applications/${applicationId}/assistant-chat`, { question })
+  return data
+}
+
+export async function revealApplicantIdentity(applicationId: string, reason?: string): Promise<{ revealed: boolean }> {
+  const { data } = await apiClient.post(`/reviews/applications/${applicationId}/reveal-identity`, { reason: reason ?? null })
+  return data
+}
+
+export async function actOnIntegritySignal(signalId: string, action: IntegrityAction, notes?: string): Promise<{ id: string; status: string; action: string; rejected_application: boolean }> {
+  const { data } = await apiClient.post(`/reviews/integrity-signals/${signalId}/action`, { action, notes: notes ?? null })
+  return data
+}
+
+export async function getReviewCalibration(programId?: string): Promise<ReviewCalibration> {
+  const params = programId ? { program_id: programId } : undefined
+  const { data } = await apiClient.get('/reviews/calibration', { params })
   return data
 }

@@ -577,7 +577,30 @@ class ApplicationService:
                 Application.status != "draft",
             )
         )
-        return list(result.scalars().all())
+        apps = list(result.scalars().all())
+        await self._attach_student_names(apps)
+        return apps
+
+    async def _attach_student_names(self, apps: list[Application]) -> None:
+        """Spec 32 — attach each applicant's display name (instance attr read by
+        ApplicationResponse.from_attributes) so institution lists show real names,
+        never a raw UUID."""
+        from unipaith.models.student import StudentProfile
+
+        student_ids = list({a.student_id for a in apps})
+        if not student_ids:
+            return
+        rows = await self.db.execute(
+            select(StudentProfile.id, StudentProfile.first_name, StudentProfile.last_name).where(
+                StudentProfile.id.in_(student_ids)
+            )
+        )
+        names = {
+            sid: (f"{(fn or '').strip()} {(ln or '').strip()}".strip() or None)
+            for sid, fn, ln in rows.all()
+        }
+        for a in apps:
+            a.student_name = names.get(a.student_id) or f"Applicant {str(a.student_id)[:8]}"
 
     async def get_application_detail(
         self, institution_id: UUID, application_id: UUID

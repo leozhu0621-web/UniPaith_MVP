@@ -617,6 +617,7 @@ export interface OfferDecisionResult {
 export interface Application {
   id: string
   student_id: string
+  student_name?: string | null
   program_id: string
   status: 'draft' | 'submitted' | 'under_review' | 'interview' | 'decision_made'
   match_score: number | null
@@ -1324,6 +1325,7 @@ export interface RubricCriterion {
   description?: string
   scale_min?: number
   scale_max?: number
+  max_score?: number
 }
 
 export interface ApplicationScore {
@@ -1362,12 +1364,14 @@ export interface IntegritySignal {
   title: string
   description: string
   evidence: Record<string, unknown> | null
-  status: 'open' | 'resolved' | 'dismissed'
+  status: 'open' | 'resolved' | 'dismissed' | 'acknowledged' | 'clarifying' | 'rejected'
   resolved_by: string | null
   resolved_at: string | null
   resolution_notes: string | null
   created_at: string
 }
+
+export type IntegrityAction = 'acknowledge' | 'clarify' | 'reject_application' | 'resolve'
 
 export interface AIPacketSummary {
   id: string | null
@@ -1394,10 +1398,129 @@ export interface PipelineData {
   [column: string]: any
 }
 
+// --- Spec 32 · Review Workspace consolidated packet ---
+
+export interface ReviewPacketStudent {
+  student_id: string
+  display_name: string
+  first_name: string | null
+  last_name: string | null
+  preferred_name: string | null
+  preferred_pronouns: string | null
+  date_of_birth: string | null
+  age: number | null
+  gender_identity: string | null
+  nationality: string | null
+  country_of_residence: string | null
+  bio: string | null
+  goals: string | null
+  academics: { institution: string | null; degree: string | null; field: string | null; gpa: string | null }[]
+  test_scores: { type: string; total: string | null }[]
+  activities: { type: string | null; title: string | null; organization: string | null }[]
+}
+
+export interface RubricScoreRow {
+  criterion: string
+  weight: number | null
+  max_score: number
+  per_reviewer: { reviewer_id: string; reviewer_name: string; score: number; note: string | null }[]
+  variance: number
+  divergent: boolean
+  synthesized_recommendation: string | null
+}
+
+export interface ReviewerNoteRow {
+  reviewer_id: string
+  reviewer_name: string
+  total_weighted_score: number | null
+  note: string | null
+  scored_at: string | null
+}
+
+export interface HolisticFlag {
+  key: string
+  label: string
+  value: string
+  sensitivity: 'standard' | 'high'
+  source: string
+}
+
+export interface HolisticContext {
+  standard: HolisticFlag[]
+  high_sensitivity: HolisticFlag[]
+  note: string
+}
+
+export interface TestOptionalAnalysis {
+  policy: 'test_optional' | 'required' | 'test_blind'
+  submitted: boolean
+  compatibility: string
+  recommendation: string
+  guardrail: string
+}
+
+export interface BlindReviewState {
+  enabled: boolean
+  revealed: boolean
+  redacted_fields: string[]
+}
+
+export interface ReviewPacket {
+  application_id: string
+  student: ReviewPacketStudent
+  program: { id: string; program_name: string; degree_type: string | null; department: string | null; label: string }
+  ai_packet_summary: AIPacketSummary | null
+  rubric_id: string | null
+  rubric_scores: RubricScoreRow[]
+  reviewer_notes: ReviewerNoteRow[]
+  reviewer_count: number
+  integrity_signals: IntegritySignal[]
+  documents: { id: string; document_type: string; file_name: string; file_url: string | null; mime_type: string | null; uploaded_at: string | null }[]
+  essays: { id: string; prompt_text: string | null; content: string | null; word_count: number | null; status: string | null; essay_version: number }[]
+  decision: { decision: string | null; decision_notes: string | null; decision_at: string | null } | null
+  offer: { id: string; offer_type: string | null; status: string | null; tuition_amount: number | null; scholarship_amount: number; response_deadline: string | null; student_response: string | null } | null
+  status: string | null
+  match_score: number | null
+  completeness_status: string | null
+  submitted_at: string | null
+  locked: boolean
+  blind_review: BlindReviewState
+  holistic_context: HolisticContext
+  test_optional: TestOptionalAnalysis
+}
+
+export interface ReviewSynthesis {
+  overall_recommendation: string
+  agreement: 'high' | 'mixed' | 'divergent'
+  per_criterion: { criterion_name: string; synthesis: string; divergent?: boolean }[]
+  model_used: string
+  reviewer_count: number
+}
+
+export interface ReviewAssistantAnswer {
+  answer: string
+  citations: string[]
+  model_used: string
+  grounded: boolean
+}
+
+export interface ReviewCalibration {
+  panel_mean: number
+  inter_rater: { criterion: string; mean_score: number; scored_pairs: number; mean_spread: number; needs_calibration: boolean }[]
+  reviewer_drift: { reviewer_id: string; reviewer_name: string; n_scores: number; mean_total: number; delta_vs_panel: number; tendency: 'harsher' | 'lenient' | 'aligned' }[]
+  test_optional_cohort: {
+    submitters: { n: number; admitted: number; admit_rate: number | null }
+    non_submitters: { n: number; admitted: number; admit_rate: number | null }
+    guardrail: string
+  }
+  note: string
+}
+
 // ============ PRIORITY QUEUE ============
 export interface PrioritizedApplication {
   application_id: string
   student_id: string
+  student_name?: string | null
   program_id: string
   program_name: string
   status: string
