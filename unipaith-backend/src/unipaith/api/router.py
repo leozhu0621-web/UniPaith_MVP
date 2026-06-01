@@ -12,6 +12,7 @@ from unipaith.api.auth import router as auth_router
 from unipaith.api.discovery import router as discovery_router
 from unipaith.api.documents import router as documents_router
 from unipaith.api.events import router as events_router
+from unipaith.api.fairness import router as fairness_router
 from unipaith.api.goals import router as goals_router
 from unipaith.api.identity import router as identity_router
 from unipaith.api.institutions import router as institutions_router
@@ -42,6 +43,9 @@ api_router.include_router(goals_router)
 api_router.include_router(needs_router)
 api_router.include_router(identity_router)
 api_router.include_router(strategy_router)
+# Register before institutions_router so /institutions/me/fairness isn't
+# captured by /institutions/{institution_id}.
+api_router.include_router(fairness_router)
 api_router.include_router(institutions_router)
 api_router.include_router(programs_router)
 api_router.include_router(applications_router)

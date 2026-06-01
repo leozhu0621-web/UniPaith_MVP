@@ -595,7 +595,15 @@ class DiscoveryService:
         from unipaith.services.program_features import program_row_from_orm
 
         try:
-            result = await self.db.execute(select(Program).where(Program.is_published.is_(True)))
+            # Exclude fairness-halted programs (G-I5): the matcher must not
+            # score new applicants for a program whose disparate-impact breached
+            # threshold for 2 consecutive weeks until a human overrides the halt.
+            result = await self.db.execute(
+                select(Program).where(
+                    Program.is_published.is_(True),
+                    Program.matching_halted.is_(False),
+                )
+            )
             programs = list(result.scalars().all())
             if not programs:
                 logger.info(

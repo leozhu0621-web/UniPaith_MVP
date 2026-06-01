@@ -36,6 +36,7 @@ from unipaith.models.engagement import (
     StudentEssay,
     StudentResume,
 )
+from unipaith.models.fairness import FairnessSignal
 from unipaith.models.goals import StudentGoal
 from unipaith.models.identity import StudentIdentity
 from unipaith.models.institution import (
@@ -223,6 +224,7 @@ __all__ = [
     "ABTestAssignment",
     "DriftSnapshot",
     "FairnessReport",
+    "FairnessSignal",
     "AdminAuditEvent",
     "AdmissionsAuditLog",
     "KnowledgeDocument",
