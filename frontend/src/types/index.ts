@@ -622,7 +622,7 @@ export interface Application {
   match_score: number | null
   match_reasoning_text: string | null
   submitted_at: string | null
-  decision: 'admitted' | 'rejected' | 'waitlisted' | 'deferred' | null
+  decision: 'admitted' | 'accepted' | 'conditional_admission' | 'rejected' | 'waitlisted' | 'deferred' | null
   decision_at: string | null
   decision_notes: string | null
   // Spec 18 §2 — student-side action + unified derived state
@@ -688,6 +688,77 @@ export interface OfferLetter {
   status: string
   student_response: string | null
   response_at: string | null
+}
+
+// --- Spec 34 · Decisions & Offers (institution-side) ---
+
+export type InstitutionDecision =
+  | 'admitted'
+  | 'conditional_admission'
+  | 'rejected'
+  | 'waitlisted'
+  | 'deferred'
+
+export type OfferType =
+  | 'full_admission'
+  | 'conditional'
+  | 'partial'
+  | 'transfer_credit_offer'
+  | 'waitlist_to_admit'
+
+export interface ReleaseOfferTerms {
+  offer_type?: OfferType
+  scholarship_amount?: number | null
+  scholarship_currency?: string
+  tuition_amount?: number | null
+  tuition_estimate?: number | null
+  total_cost_estimate?: number | null
+  conditions?: Record<string, any> | null
+  response_deadline?: string | null
+  start_term?: { season?: string | null; year?: number | null }
+  next_step_actions?: { action: string; by_date?: string | null }[] | null
+}
+
+export interface OfferStatus {
+  application_id: string
+  student_id: string
+  decision: string | null
+  decision_at: string | null
+  has_offer: boolean
+  offer_id: string | null
+  offer_type: string | null
+  offer_status: string | null
+  student_response: string | null
+  response_at: string | null
+  response_deadline: string | null
+  days_remaining: number | null
+  deadline_passed: boolean
+  response_state:
+    | 'accepted'
+    | 'declined'
+    | 'awaiting_response'
+    | 'deadline_passed'
+    | 'rescinded'
+    | 'no_offer'
+}
+
+export interface ReleaseDecisionResult {
+  application: Application
+  offer: OfferLetter | null
+}
+
+export interface BatchReleaseItem {
+  application_id: string
+  decision: InstitutionDecision
+  decision_notes?: string | null
+  offer?: ReleaseOfferTerms | null
+  message?: string | null
+}
+
+export interface BatchReleaseResult {
+  results: { application_id: string; ok: boolean; decision?: string; offer_id?: string | null; error?: string }[]
+  success_count: number
+  failed_count: number
 }
 
 // ============ DOCUMENTS ============

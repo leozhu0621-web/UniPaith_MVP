@@ -14,7 +14,8 @@ import {
 } from '@dnd-kit/core'
 import { Search, GripVertical, ClipboardCheck, List, Video, CheckSquare, Zap, Clock } from 'lucide-react'
 import { getInstitutionPrograms } from '../../api/institutions'
-import { getApplicationsByProgram, updateApplicationStatus, batchRequestMissingItems, batchUpdateStatus, batchReleaseDecision } from '../../api/applications-admin'
+import { getApplicationsByProgram, updateApplicationStatus, batchRequestMissingItems, batchUpdateStatus } from '../../api/applications-admin'
+import BatchReleaseModal from './pipeline/BatchReleaseModal'
 import { batchAssignReviewers, getReviewPriorityQueue } from '../../api/reviews'
 import { getInstitutionInterviews, batchInviteInterviews } from '../../api/interviews-admin'
 import { showToast } from '../../stores/toast-store'
@@ -131,8 +132,6 @@ export default function PipelinePage() {
   const [batchAction, setBatchAction] = useState<string | null>(null)
   const [batchItems, setBatchItems] = useState('')
   const [batchStatus, setBatchStatus] = useState('under_review')
-  const [batchDecision, setBatchDecision] = useState('admitted')
-  const [batchNotes, setBatchNotes] = useState('')
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
@@ -227,13 +226,14 @@ export default function PipelinePage() {
     },
   })
 
+  const selectedApps = applications.filter(a => selectedIds.has(a.id))
+
   const handleBatchResult = (result: BatchOperationResult) => {
     const msg = `${result.success_count} succeeded` + (result.failed_ids.length > 0 ? `, ${result.failed_ids.length} failed` : '')
     showToast(msg, result.failed_ids.length > 0 ? 'warning' : 'success')
     clearSelection()
     setBatchAction(null)
     setBatchItems('')
-    setBatchNotes('')
     queryClient.invalidateQueries({ queryKey: ['pipeline-applications'] })
   }
 
@@ -247,10 +247,6 @@ export default function PipelinePage() {
   })
   const batchStatusMut = useMutation({
     mutationFn: () => batchUpdateStatus(Array.from(selectedIds), batchStatus),
-    onSuccess: handleBatchResult,
-  })
-  const batchDecisionMut = useMutation({
-    mutationFn: () => batchReleaseDecision(Array.from(selectedIds), batchDecision, batchNotes || undefined),
     onSuccess: handleBatchResult,
   })
   const batchInterviewMut = useMutation({
@@ -592,24 +588,16 @@ export default function PipelinePage() {
         </div>
       </Modal>
 
-      {/* Batch Decision Modal */}
-      <Modal isOpen={batchAction === 'decision'} onClose={() => setBatchAction(null)} title="Batch Release Decision">
-        <div className="space-y-4">
-          <Select label="Decision" options={[
-            { value: 'admitted', label: 'Admitted' },
-            { value: 'rejected', label: 'Rejected' },
-            { value: 'waitlisted', label: 'Waitlisted' },
-            { value: 'deferred', label: 'Deferred' },
-          ]} value={batchDecision} onChange={e => setBatchDecision(e.target.value)} />
-          <Textarea label="Notes (optional)" value={batchNotes} onChange={e => setBatchNotes(e.target.value)} rows={3} placeholder="Decision notes for all selected applications..." />
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setBatchAction(null)}>Cancel</Button>
-            <Button onClick={() => batchDecisionMut.mutate()} disabled={batchDecisionMut.isPending}>
-              {batchDecisionMut.isPending ? 'Releasing...' : `Release to ${selectedIds.size} apps`}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      {/* Batch Release Decisions (spec 34 §5) */}
+      <BatchReleaseModal
+        isOpen={batchAction === 'decision'}
+        onClose={() => setBatchAction(null)}
+        selectedApps={selectedApps}
+        onDone={() => {
+          clearSelection()
+          queryClient.invalidateQueries({ queryKey: ['pipeline-applications'] })
+        }}
+      />
     </div>
   )
 }
