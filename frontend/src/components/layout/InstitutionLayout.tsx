@@ -219,8 +219,8 @@ export default function InstitutionLayout() {
         )}
 
         <nav className="flex-1 overflow-y-auto py-3">
-          {navSections.map(section => (
-            <div key={section.label || 'root'} className={section.label ? 'mb-3' : 'mb-1'}>
+          {navSections.map((section, sIdx) => (
+            <div key={section.label || `section-${sIdx}`} className={section.label ? 'mb-3' : 'mb-1'}>
               {!sidebarCollapsed && section.label && (
                 <div className="px-4 mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
                   {section.label}
