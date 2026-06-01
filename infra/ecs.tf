@@ -198,6 +198,14 @@ resource "aws_ecs_task_definition" "backend" {
       # rules, Sonnet). On any failure it falls back to a keyword parser, so the
       # segment builder is fully functional with the flag off too.
       { name = "AI_SEGMENT_BUILDER_V2_ENABLED", value = "true" },
+      # Spec 29 §8 / 45 — InstitutionReplyDrafter (Haiku). The institution inbox
+      # "AI draft" button; respects the applicant's matching consent for profile
+      # context and hides the card on failure, so the inbox works with it off too.
+      { name = "AI_INSTITUTION_REPLY_V2_ENABLED", value = "true" },
+      # Spec 29 §8 / §14 — InboundIntentClassifier (Haiku, suggestion-only). Off
+      # by default per the spec (auto-routing risks mis-routing); ship as a
+      # suggestion first. Flip to "true" to surface reason-code suggestions.
+      { name = "AI_INBOUND_INTENT_V2_ENABLED", value = "false" },
       # Pin Claude model IDs — config.py defaults match, but pinning here
       # makes the prod surface auditable (and trivial to roll a single
       # agent class to a different model without a code deploy).

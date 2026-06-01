@@ -50,6 +50,9 @@ AGENT_TIERS: dict[str, str] = {
     "document_parse_triage": "batch",
     # ── Audience segmentation NL bridge (spec 26 §6 / 45 §17) — Sonnet, keyword fallback ──
     "segment_builder_nl": "workhorse",
+    # ── Institution messaging (spec 29 §8 / 45) — Haiku, always falls back ──
+    "institution_reply_drafter": "batch",  # InstitutionReplyDrafter — per-thread reply
+    "inbound_intent_classifier": "batch",  # InboundIntentClassifier — reason-code suggestion
 }
 
 
