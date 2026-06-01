@@ -2,9 +2,9 @@
 
 This revision does three things:
 
-1. **Unifies the open heads** by descending from main's two leaves
-   (``c9d8e7f6a5b4`` spec-21 review_config and ``d1e2f3a4b5c6`` spec-22 contact
-   phone), restoring the ``test_alembic_has_single_head`` invariant.
+1. **Chains onto main's head** (``c9d8e7f6a5b4`` spec-21 review_config, which
+   itself follows ``d1e2f3a4b5c6`` spec-22 contact phone), keeping a single
+   linear head (``test_alembic_has_single_head``).
 2. **Extends ``institution_datasets``** with the coverage range, normalization
    map, and aligns the ``status`` vocabulary to the spec
    (``uploaded → validated → processed → failed``).
@@ -19,7 +19,7 @@ is a safe no-op against a dev/test DB that was built from the models via
 ``create_all``.
 
 Revision ID: f24da7a0c1b3
-Revises: c9d8e7f6a5b4, d1e2f3a4b5c6
+Revises: c9d8e7f6a5b4
 Create Date: 2026-05-31
 
 """
@@ -33,7 +33,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "f24da7a0c1b3"  # pragma: allowlist secret
-down_revision = ("c9d8e7f6a5b4", "d1e2f3a4b5c6")  # pragma: allowlist secret
+down_revision = "c9d8e7f6a5b4"  # pragma: allowlist secret
 branch_labels = None
 depends_on = None
 

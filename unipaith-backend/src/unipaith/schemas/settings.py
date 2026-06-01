@@ -152,7 +152,14 @@ class LoginEvent(BaseModel):
 
 class DeleteAccountRequest(BaseModel):
     confirm_text: str
-    password: str | None = None
+    password: str
+
+    @field_validator("password")
+    @classmethod
+    def _password(cls, v: str) -> str:
+        if not (v or "").strip():
+            raise ValueError("Password is required")
+        return v
 
 
 class DeletionStatusResponse(BaseModel):
@@ -179,6 +186,12 @@ class TeamMember(BaseModel):
     invited_at: datetime | None = None
 
 
+class ReviewConfigInfo(BaseModel):
+    blind_review_default: bool
+    calibration_enabled: bool
+    reviewer_assignment_mode: str
+
+
 class InstitutionSettingsResponse(BaseModel):
     account: InstitutionAccountInfo
     security: SecurityInfo
@@ -188,6 +201,7 @@ class InstitutionSettingsResponse(BaseModel):
     email_frequency: str
     team: list[TeamMember]
     deletion: DeletionInfo | None = None
+    review_config: ReviewConfigInfo
 
 
 class UpdateInstitutionSettingsRequest(BaseModel):
@@ -195,6 +209,7 @@ class UpdateInstitutionSettingsRequest(BaseModel):
     name: str | None = None
     contact_email: str | None = None
     website_url: str | None = None
+    review_config: dict | None = None
     # Shared per-user prefs (stored in user_settings, same as students)
     theme: str | None = None
     locale: str | None = None

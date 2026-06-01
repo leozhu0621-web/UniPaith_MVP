@@ -55,6 +55,7 @@ class Institution(Base):
     claimed_from_source: Mapped[str | None] = mapped_column(String(50))
     claimed_extracted_ids: Mapped[dict | None] = mapped_column(JSONB)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    review_config: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
