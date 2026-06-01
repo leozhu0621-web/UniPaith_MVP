@@ -44,8 +44,11 @@ export interface CalendarItem {
   confirmation_url: string | null
   editable: boolean
   interview_id?: string | null
+  proposed_times?: string[]
+  can_confirm?: boolean
   can_decline?: boolean
   can_reschedule?: boolean
+  interview_status?: string | null
 }
 
 export interface ReminderCreate {

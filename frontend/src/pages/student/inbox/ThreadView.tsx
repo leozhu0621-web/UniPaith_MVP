@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
   CalendarClock,
   CheckCircle2,
@@ -14,6 +15,8 @@ import Badge from '../../../components/ui/Badge'
 import Button from '../../../components/ui/Button'
 import { formatRelative } from '../../../utils/format'
 import type { ActionLabel, InboxAttachment, InboxThread, SuggestedReply } from '../../../types'
+import { getMyInterviews } from '../../../api/interviews'
+import InterviewRespondPanel from '../interviews/InterviewRespondPanel'
 import { ACTION_CONFIG, formatDue, threadEyebrow, waitingCopy } from './actionLabels'
 import AttachmentPicker from './AttachmentPicker'
 import SuggestedReplyCard from './SuggestedReplyCard'
@@ -76,6 +79,20 @@ export default function ThreadView({
   const due = formatDue(thread.due_date)
   const waiting = waitingCopy(thread)
   const isCompleted = thread.action_label === 'completed'
+
+  const interviewsQ = useQuery({
+    queryKey: ['interviews'],
+    queryFn: getMyInterviews,
+    enabled: thread.action_label === 'interview_invite' && !!thread.application_id,
+  })
+  const pendingInterviews = useMemo(() => {
+    if (!thread.application_id) return []
+    return (interviewsQ.data ?? []).filter(
+      i =>
+        i.application_id === thread.application_id &&
+        ['proposed', 'confirmed'].includes(i.status),
+    )
+  }, [interviewsQ.data, thread.application_id])
 
   const sendManual = () => {
     const body = reply.trim()
@@ -230,6 +247,13 @@ export default function ThreadView({
                 <CheckCircle2 size={13} className="mr-1" /> Mark complete
               </Button>
             </div>
+            {thread.action_label === 'interview_invite' && pendingInterviews.length > 0 && (
+              <div className="mt-3 space-y-3">
+                {pendingInterviews.map(iv => (
+                  <InterviewRespondPanel key={iv.id} interview={iv} compact />
+                ))}
+              </div>
+            )}
             {thread.action_label === 'interview_invite' && (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {INTERVIEW_QUICK_REPLIES.map(q => (

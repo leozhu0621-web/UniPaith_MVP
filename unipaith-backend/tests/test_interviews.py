@@ -13,6 +13,12 @@ from unipaith.models.institution import Institution, Program, Reviewer
 from unipaith.models.student import StudentProfile
 from unipaith.models.user import User
 
+LIVE_SLOTS = [
+    "2026-05-10T10:00:00Z",
+    "2026-05-11T10:00:00Z",
+    "2026-05-12T10:00:00Z",
+]
+
 
 async def _seed_interview_context(db: AsyncSession, student_user: User, institution_user: User):
     """Create all entities needed for interview tests."""
@@ -78,6 +84,7 @@ async def test_propose_interview(
             "proposed_times": [
                 "2026-04-10T10:00:00Z",
                 "2026-04-11T14:00:00Z",
+                "2026-04-12T16:00:00Z",
             ],
             "duration_minutes": 30,
             "location_or_link": "https://zoom.us/j/123456",
@@ -213,7 +220,7 @@ async def test_propose_creates_inbox_message(
         json={
             "application_id": str(application.id),
             "interview_type": "live",
-            "proposed_times": ["2026-05-10T10:00:00Z", "2026-05-11T10:00:00Z"],
+            "proposed_times": LIVE_SLOTS,
         },
     )
     assert resp.status_code == 201
@@ -253,13 +260,17 @@ async def test_propose_appears_on_student_calendar(
         json={
             "application_id": str(application.id),
             "interview_type": "live",
-            "proposed_times": ["2026-05-10T10:00:00Z"],
+            "proposed_times": LIVE_SLOTS,
         },
     )
     assert resp.status_code == 201
 
     items = await CalendarService(db_session).get_calendar(profile.id)
     assert any("interview" in (it.type or "") for it in items)
+    interview_items = [it for it in items if it.interview_id]
+    assert interview_items
+    assert interview_items[0].can_confirm is True
+    assert len(interview_items[0].proposed_times) == 3
 
 
 @pytest.mark.asyncio
@@ -293,12 +304,34 @@ async def test_propose_multiple_applicants(
         json={
             "application_ids": [str(application.id), str(app2.id)],
             "interview_type": "live",
-            "proposed_times": ["2026-05-10T10:00:00Z"],
+            "proposed_times": LIVE_SLOTS,
         },
     )
     assert resp.status_code == 201
     data = resp.json()
     assert len(data) == 2
+
+
+@pytest.mark.asyncio
+async def test_propose_live_requires_three_slots(
+    institution_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    """Spec 33 §5 — live interviews need three or more proposed slots."""
+    _, _, _, application, _ = await _seed_interview_context(
+        db_session, mock_student_user, mock_institution_user
+    )
+    resp = await institution_client.post(
+        "/api/v1/interviews",
+        json={
+            "application_id": str(application.id),
+            "interview_type": "live",
+            "proposed_times": ["2026-05-10T10:00:00Z", "2026-05-11T10:00:00Z"],
+        },
+    )
+    assert resp.status_code == 400
 
 
 @pytest.mark.asyncio
@@ -520,13 +553,13 @@ async def test_reschedule_interview(
 
     resp = await institution_client.post(
         f"/api/v1/interviews/{interview.id}/reschedule",
-        json={"proposed_times": ["2026-06-01T09:00:00Z", "2026-06-02T09:00:00Z"]},
+        json={"proposed_times": LIVE_SLOTS},
     )
     assert resp.status_code == 200
     data = resp.json()
     assert data["status"] == "proposed"
     assert data["scheduled_at"] is None
-    assert len(data["proposed_times"]) == 2
+    assert len(data["proposed_times"]) == 3
 
 
 @pytest.mark.asyncio
@@ -555,3 +588,35 @@ async def test_student_request_reschedule(
 
     resp = await student_client.post(f"/api/v1/interviews/{interview.id}/request-reschedule")
     assert resp.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_confirm_async_interview(
+    student_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_student_user: User,
+    mock_institution_user: User,
+):
+    """Async types confirm by accepting the submission window (no slot pick)."""
+    from datetime import datetime, timedelta
+
+    _, _, _, application, reviewer = await _seed_interview_context(
+        db_session, mock_student_user, mock_institution_user
+    )
+    interview = Interview(
+        application_id=application.id,
+        interviewer_id=reviewer.id,
+        interview_type="recorded_async",
+        proposed_times=[],
+        async_window_end=datetime.now(UTC) + timedelta(days=7),
+        status="proposed",
+    )
+    db_session.add(interview)
+    await db_session.commit()
+
+    resp = await student_client.post(
+        f"/api/v1/interviews/{interview.id}/confirm",
+        json={"confirmed_time": None},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "confirmed"

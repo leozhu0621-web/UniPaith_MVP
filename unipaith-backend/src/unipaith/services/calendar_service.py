@@ -165,6 +165,8 @@ class CalendarService:
             end_at = _aware(start) + timedelta(minutes=iv.duration_minutes or 30)
             if is_recorded and iv.async_window_end is not None:
                 end_at = _aware(iv.async_window_end)
+            raw_status = (iv.status or "").lower()
+            proposed = iv.proposed_times if isinstance(iv.proposed_times, list) else []
             items.append(
                 {
                     "id": f"{item_type}:{iv.id}",
@@ -180,8 +182,11 @@ class CalendarService:
                     "institution_name": inst.name,
                     "link": f"/s/applications/{app.id}?tab=interviews",
                     "interview_id": iv.id,
-                    "can_decline": (iv.status or "").lower() == "proposed",
-                    "can_reschedule": (iv.status or "").lower() in {"proposed", "confirmed"},
+                    "proposed_times": proposed,
+                    "can_confirm": raw_status == "proposed",
+                    "can_decline": raw_status == "proposed",
+                    "can_reschedule": raw_status in {"proposed", "confirmed"},
+                    "interview_status": raw_status,
                 }
             )
 

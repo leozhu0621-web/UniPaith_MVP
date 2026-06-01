@@ -31,8 +31,8 @@ export default function RescheduleInterviewModal({ isOpen, onClose, onReschedule
   const handleSubmit = async () => {
     if (!interview) return
     const validSlots = slots.filter(Boolean).map(toIso)
-    if (!isAsync && validSlots.length === 0) {
-      showToast('Add at least one new proposed time', 'warning')
+    if (!isAsync && validSlots.length < 3) {
+      showToast('Add at least three proposed times for live interviews', 'warning')
       return
     }
     if (isAsync && !windowEnd) {
