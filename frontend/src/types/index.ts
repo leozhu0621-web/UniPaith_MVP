@@ -617,6 +617,7 @@ export interface OfferDecisionResult {
 export interface Application {
   id: string
   student_id: string
+  student_name?: string | null
   program_id: string
   status: 'draft' | 'submitted' | 'under_review' | 'interview' | 'decision_made'
   match_score: number | null
@@ -1253,6 +1254,7 @@ export interface RubricCriterion {
   description?: string
   scale_min?: number
   scale_max?: number
+  max_score?: number
 }
 
 export interface ApplicationScore {
@@ -1447,6 +1449,7 @@ export interface ReviewCalibration {
 export interface PrioritizedApplication {
   application_id: string
   student_id: string
+  student_name?: string | null
   program_id: string
   program_name: string
   status: string

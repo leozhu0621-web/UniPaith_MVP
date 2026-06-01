@@ -988,6 +988,18 @@ class ReviewPipelineService:
         prog_r = await self.db.execute(select(Program).where(Program.id.in_(prog_ids)))
         programs = {p.id: p for p in prog_r.scalars().all()}
 
+        # Spec 32 — applicant display names so the queue shows names, not UUIDs.
+        student_ids = list({a.student_id for a in apps})
+        name_r = await self.db.execute(
+            select(StudentProfile.id, StudentProfile.first_name, StudentProfile.last_name).where(
+                StudentProfile.id.in_(student_ids)
+            )
+        )
+        student_names = {
+            sid: (f"{(fn or '').strip()} {(ln or '').strip()}".strip() or None)
+            for sid, fn, ln in name_r.all()
+        }
+
         # Load intake round deadlines
         intake_r = await self.db.execute(
             select(IntakeRound).where(
@@ -1103,6 +1115,8 @@ class ReviewPipelineService:
                 {
                     "application_id": str(app.id),
                     "student_id": str(app.student_id),
+                    "student_name": student_names.get(app.student_id)
+                    or f"Applicant {str(app.student_id)[:8]}",
                     "program_id": str(app.program_id),
                     "program_name": (prog.program_name if prog else "Unknown"),
                     "status": app.status,

@@ -100,6 +100,9 @@ class ApplicationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
     student_id: UUID
+    # Spec 32 — institution-facing lists attach the applicant's display name so
+    # reviewers never see a raw UUID. None on student-side paths.
+    student_name: str | None = None
     program_id: UUID
     status: str | None
     match_score: Decimal | None
