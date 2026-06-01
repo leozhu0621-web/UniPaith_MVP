@@ -1613,9 +1613,20 @@ async def record_engagement(
     user: User = Depends(require_student),
     db: AsyncSession = Depends(get_db),
 ):
-    """Spec 27 §5 — record a per-object engagement event (post/event/promotion)."""
+    """Spec 27 §5 — record a per-object engagement event (post/event/promotion).
+
+    Spec 28 — resolve the acting student so the attribution funnel can attribute
+    the engagement per-student / per-segment.
+    """
+    from sqlalchemy import select as sel
+
+    from unipaith.models.student import StudentProfile
+
+    r = await db.execute(sel(StudentProfile.id).where(StudentProfile.user_id == user.id))
+    student_id = r.scalar_one_or_none()
+
     svc = _svc(db)
-    await svc.record_engagement(body.object_type, body.object_id, body.action)
+    await svc.record_engagement(body.object_type, body.object_id, body.action, student_id)
 
 
 # --- Inquiries ---

@@ -17,6 +17,7 @@ const TOP_NAV = [
   { to: '/i/outreach', label: 'Outreach' },
   { to: '/i/communications', label: 'Communications' },
   { to: '/i/programs', label: 'Programs' },
+  { to: '/i/analytics', label: 'Analytics' },
 ]
 
 export default function InstitutionLayout() {

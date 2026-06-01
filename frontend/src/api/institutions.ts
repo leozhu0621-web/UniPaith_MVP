@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AnalyticsData, AuditLogList, Campaign, CommunicationTemplate, IntakeRound, ProgramChecklistItem, CampaignAttributionDetail, CampaignLink, CampaignMetrics, CampaignObjective, CampaignDestinationType, CampaignCtaType, CampaignChannel, AudiencePreview, DraftCampaignCopy, UploadedList, CampaignSuppression, DashboardSummary, DatasetMappingTemplate, DatasetPreview, DatasetVersion, Inquiry, Institution, InstitutionDataset, InstitutionPost, InstitutionSetupState, NLBridgeResult, PostCTA, PostVisibility, Program, Promotion, Segment, SegmentPreview, SegmentRuleTree, SetupStepPatch, SignalDictionary, ValidationReport } from '../types'
+import type { AnalyticsData, AnalyticsFilters, AttributionReport, AuditLogList, Campaign, CommunicationTemplate, FunnelReport, IntakeRound, OverviewReport, ProgramChecklistItem, CampaignAttributionDetail, CampaignLink, CampaignMetrics, CampaignObjective, CampaignDestinationType, CampaignCtaType, CampaignChannel, AudiencePreview, DraftCampaignCopy, UploadedList, CampaignSuppression, DashboardSummary, DatasetMappingTemplate, DatasetPreview, DatasetVersion, Inquiry, Institution, InstitutionDataset, InstitutionPost, InstitutionSetupState, NLBridgeResult, PostCTA, PostVisibility, Program, Promotion, Segment, SegmentPreview, SegmentRuleTree, SetupStepPatch, SignalDictionary, ValidationReport } from '../types'
 
 export async function getInstitution(): Promise<Institution> {
   const { data } = await apiClient.get('/institutions/me')
@@ -207,6 +207,50 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
 export async function getAnalytics(): Promise<AnalyticsData> {
   const { data } = await apiClient.get('/institutions/me/analytics')
   return data
+}
+
+// --- Attribution & Funnel Analytics (Spec 28) ---
+
+function analyticsParams(f: AnalyticsFilters): Record<string, string> {
+  const p: Record<string, string> = {}
+  for (const [k, v] of Object.entries(f)) {
+    if (v) p[k] = v as string
+  }
+  return p
+}
+
+export async function getAnalyticsOverview(f: AnalyticsFilters): Promise<OverviewReport> {
+  const { data } = await apiClient.get('/institutions/me/analytics/overview', {
+    params: analyticsParams(f),
+  })
+  return data
+}
+
+export async function getAnalyticsFunnel(f: AnalyticsFilters): Promise<FunnelReport> {
+  const { data } = await apiClient.get('/institutions/me/analytics/funnel', {
+    params: analyticsParams(f),
+  })
+  return data
+}
+
+export async function getAnalyticsAttribution(f: AnalyticsFilters): Promise<AttributionReport> {
+  const { data } = await apiClient.get('/institutions/me/analytics/attribution', {
+    params: analyticsParams(f),
+  })
+  return data
+}
+
+export async function exportAnalyticsCsv(kind: string, f: AnalyticsFilters): Promise<void> {
+  const { data } = await apiClient.get('/institutions/me/analytics/export', {
+    params: { ...analyticsParams(f), kind, format: 'csv' },
+    responseType: 'blob',
+  })
+  const url = URL.createObjectURL(data as Blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `analytics-${kind}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 // --- Campaigns (Spec 25) ---
