@@ -89,8 +89,10 @@ from unipaith.schemas.intake import (
     IntakeRoundResponse,
     UpdateIntakeRoundRequest,
 )
+from unipaith.schemas.international import EnglishPolicyRequest
 from unipaith.services.campaign_service import CampaignService
 from unipaith.services.institution_service import InstitutionService
+from unipaith.services.international_service import InternationalService
 from unipaith.services.segment_service import SegmentService
 from unipaith.services.segment_signals import signal_dictionary_json
 
@@ -305,6 +307,51 @@ async def delete_program(
     svc = _svc(db)
     inst = await svc.get_institution(user.id)
     await svc.delete_program(inst.id, program_id)
+
+
+@router.patch("/me/programs/{program_id}/english-policy", response_model=ProgramResponse)
+async def update_program_english_policy(
+    program_id: UUID,
+    body: EnglishPolicyRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 38 §2.2 — accepted English tests + minimum scores + waiver rules.
+    Reuses the program-update path (optimistic lock + version bump)."""
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    payload = body.model_dump()
+    expected_version = payload.pop("expected_version", None)
+    return await svc.update_program(
+        inst.id,
+        program_id,
+        UpdateProgramRequest(english_policy=payload, expected_version=expected_version),
+    )
+
+
+# --- Spec 38 · International Admissions ---
+
+
+@router.get("/me/international/applicants")
+async def list_international_applicants(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """The institution-wide international queue for /i/admissions?tab=international
+    — every international applicant with a compact processing summary (§0)."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    return await InternationalService(db).list_applicants(inst.id)
+
+
+@router.get("/me/international/country-requirements")
+async def list_country_requirements(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Platform-default country-requirement packs merged with this institution's
+    overrides (§2.3)."""
+    inst = await InstitutionService(db).get_institution(user.id)
+    return await InternationalService(db).list_country_requirements(inst.id)
 
 
 # --- Target Segments ---

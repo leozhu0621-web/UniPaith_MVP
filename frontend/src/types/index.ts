@@ -385,6 +385,7 @@ export interface Program {
   faculty_contacts: Record<string, any>[] | null
   cost_data: ProgramCostData | Record<string, any> | null
   promotion_categories?: string[] | null
+  english_policy?: IntlEnglishPolicy | null
   institution_name?: string | null
   created_at: string
   updated_at: string
@@ -1547,6 +1548,20 @@ export interface ReviewPacket {
   blind_review: BlindReviewState
   holistic_context: HolisticContext
   test_optional: TestOptionalAnalysis
+  // Spec 38 — international signals (operational only; never a selection criterion).
+  is_international: boolean
+  international: {
+    is_international: boolean
+    credential_status: string | null
+    normalized_gpa: string | null
+    raw_gpa: string | null
+    english: { test: string | null; score: string | null; meets_minimum: boolean | null; waiver_eligible: boolean } | null
+    country_requirements: { complete: number; total: number }
+    immigration_doc_status: string
+    immigration_can_generate: boolean
+    feasibility: { band: IntlFeasibilityBand; reasons: string[] }
+    fairness_note: string
+  }
 }
 
 export interface ReviewSynthesis {
@@ -3217,4 +3232,127 @@ export interface YieldSnapshot {
   cohorts: YieldCohort[]
   next_best_actions: YieldNextBestAction[]
   empty?: boolean
+}
+
+// ── Spec 38 · International Admissions (institution processing) ───────────────
+export interface IntlCountryRequirement {
+  item: string
+  status: 'pending' | 'received' | 'verified' | 'waived'
+}
+
+export interface IntlProcessingRecord {
+  id: string
+  credential_eval: {
+    provider: 'WES' | 'ECE' | 'SpanTran' | 'other' | null
+    status: 'none' | 'requested' | 'in_progress' | 'received' | 'verified'
+    report_ref: string | null
+    normalized_gpa: string | null
+    source_scale: string | null
+    notes: string | null
+  }
+  english_proficiency: {
+    test: 'TOEFL' | 'IELTS' | 'DET' | 'PTE' | null
+    score: string | null
+    meets_minimum: boolean | null
+    waiver: { eligible: boolean; basis: string | null }
+  }
+  country_requirements: IntlCountryRequirement[]
+  immigration_doc: {
+    type: 'I-20' | 'DS-2019' | null
+    status: 'not_started' | 'drafted' | 'issued' | 'sent' | 'received'
+    sevis_id: string | null
+    issued_at: string | null
+    sevis_export: Record<string, unknown> | null
+  }
+  visa: {
+    appointment_at: string | null
+    consulate: string | null
+    outcome: 'pending' | 'approved' | 'denied' | null
+  }
+}
+
+export interface IntlStudentInputs {
+  nationality: string | null
+  country_of_birth: string | null
+  country_of_residence: string | null
+  passport_issuing_country: string | null
+  raw_gpa: string | null
+  gpa_scale: string | null
+  grading_scale_type: string | null
+  academic_country: string | null
+  degree_type: string | null
+  self_reported_normalized_gpa: string | null
+  student_credential_eval_status: string | null
+  credential_report_url: string | null
+  english_test_scores: { test: string; score: string | null }[]
+  financial_proof_available: boolean
+  financial_proof_amount_band: string | null
+  sponsorship_source: string | null
+}
+
+export type IntlFeasibilityBand = 'blocked' | 'at_risk' | 'moderate' | 'strong'
+
+export interface IntlFeasibility {
+  band: IntlFeasibilityBand
+  reasons: string[]
+}
+
+export interface IntlImmigrationGate {
+  can_generate: boolean
+  blockers: { field: string; message: string }[]
+}
+
+export interface IntlProcessingView {
+  application_id: string
+  institution_id: string | null
+  is_international: boolean
+  student: { display_name: string; name_in_native_script: string | null; date_of_birth: string | null }
+  program: { id: string; program_name: string; degree_type: string; english_policy: IntlEnglishPolicy | null }
+  decision: string | null
+  student_inputs: IntlStudentInputs
+  processing: IntlProcessingRecord | null
+  immigration_gate: IntlImmigrationGate
+  feasibility: IntlFeasibility
+  english_waiver_suggestion: { eligible: boolean; basis: string | null }
+}
+
+export interface IntlApplicantRow {
+  application_id: string
+  student_name: string
+  program_name: string | null
+  nationality: string | null
+  status: string | null
+  decision: string | null
+  credential_status: string
+  normalized_gpa: string | null
+  english_meets_minimum: boolean | null
+  country_requirements: { complete: number; total: number }
+  immigration_doc_status: string
+  feasibility: IntlFeasibilityBand
+}
+
+export interface IntlEnglishPolicyTest {
+  test: 'TOEFL' | 'IELTS' | 'DET' | 'PTE'
+  min_score: number
+}
+
+export interface IntlEnglishPolicy {
+  accepted_tests?: IntlEnglishPolicyTest[]
+  waiver_native_english_countries?: string[]
+  waiver_prior_degree_in_english?: boolean
+}
+
+export interface IntlCountryPack {
+  country_code: string
+  country_name: string
+  requirements: { item: string; description?: string }[]
+  source: 'platform_default' | 'institution'
+}
+
+export interface IntlNormalizeResult {
+  normalized_gpa: string | null
+  source_scale: string
+  raw_gpa: string
+  course_map_note: string | null
+  ai_used: boolean
 }

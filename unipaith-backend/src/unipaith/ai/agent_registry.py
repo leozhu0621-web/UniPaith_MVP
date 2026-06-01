@@ -64,6 +64,9 @@ AGENT_TIERS: dict[str, str] = {
     # ── Enrollment / yield (spec 35 §6) — both fall back to deterministic counts ──
     "yield_risk_scorer": "batch",  # YieldRiskScorer — per-admit confirm-probability (Haiku)
     "next_best_action_yield": "workhorse",  # NextBestActionForYield — ranked actions (Sonnet)
+    # ── International admissions (spec 38 §5) — both Haiku, always fall back ──
+    "credential_normalizer": "batch",  # CredentialNormalizer — foreign GPA → 4.0 scale
+    "country_requirement_advisor": "batch",  # CountryRequirementAdvisor — country pack
 }
 
 
