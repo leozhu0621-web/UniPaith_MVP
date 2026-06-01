@@ -60,6 +60,17 @@ class Institution(Base):
     require_campaign_approval: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default="false", default=False
     )
+    # Spec 30 — First-run setup wizard (/i/setup).
+    # `setup_complete` gates the forced-onboarding redirect + dimmed nav.
+    # `setup_state` persists wizard progress so the flow is resumable:
+    #   {"step": 1|2|3|4|"done",
+    #    "steps_complete": {"profile": bool, "program": bool, "data": bool, "team": bool},
+    #    "skipped": {"data": bool, "team": bool},
+    #    "first_program_id": str | None}
+    setup_complete: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default="false", default=False
+    )
+    setup_state: Mapped[dict | None] = mapped_column(JSONB)
     review_config: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

@@ -1204,9 +1204,36 @@ export interface Institution {
   school_outcomes: Record<string, any> | null
   is_verified: boolean
   require_campaign_approval?: boolean
+  setup_complete?: boolean
+  setup_state?: InstitutionSetupState | null
   created_at: string
   updated_at: string
   program_count?: number
+}
+
+// ============ INSTITUTION SETUP (Spec 30) ============
+export interface SetupStepsComplete {
+  profile: boolean
+  program: boolean
+  data: boolean
+  team: boolean
+}
+
+export interface InstitutionSetupState {
+  institution_id: string | null
+  step: 1 | 2 | 3 | 4 | 'done'
+  steps_complete: SetupStepsComplete
+  skipped: { data: boolean; team: boolean }
+  first_program_id: string | null
+  setup_complete: boolean
+  published_program_count: number
+}
+
+export interface SetupStepPatch {
+  step?: 1 | 2 | 3 | 4
+  skip_data?: boolean
+  skip_team?: boolean
+  mark_complete?: Partial<SetupStepsComplete>
 }
 
 // ============ REVIEW / SCORING ============

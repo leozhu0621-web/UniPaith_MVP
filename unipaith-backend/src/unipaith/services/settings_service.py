@@ -518,6 +518,18 @@ class SettingsService:
         )
         self.db.add(invite)
         await self.db.flush()
+        # Spec 30 §10 / Spec 36 — team invites are audit-logged.
+        from unipaith.services.audit_service import AuditService
+
+        await AuditService(self.db).log(
+            institution_id=inst.id,
+            actor_user_id=user.id,
+            action="team.invite",
+            entity_type="team_invite",
+            entity_id=str(invite.id),
+            description=f"Invited {email} as {role}",
+            new_value={"email": email, "role": role},
+        )
         return {
             "id": str(invite.id),
             "email": invite.email,

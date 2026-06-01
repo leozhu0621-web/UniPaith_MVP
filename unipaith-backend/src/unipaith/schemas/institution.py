@@ -112,6 +112,8 @@ class InstitutionResponse(BaseModel):
     school_outcomes: dict | None = None
     is_verified: bool
     require_campaign_approval: bool = False
+    setup_complete: bool = False
+    setup_state: dict | None = None
     created_at: datetime
     updated_at: datetime
     program_count: int | None = None

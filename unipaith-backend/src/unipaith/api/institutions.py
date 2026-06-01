@@ -155,6 +155,69 @@ async def update_institution(
     return resp
 
 
+# --- Setup wizard (Spec 30) ---
+
+
+class SetupStepsComplete(BaseModel):
+    profile: bool
+    program: bool
+    data: bool
+    team: bool
+
+
+class SetupSkipped(BaseModel):
+    data: bool = False
+    team: bool = False
+
+
+class SetupStateResponse(BaseModel):
+    institution_id: UUID | None = None
+    step: int | str  # 1..4 while in progress, "done" once finished
+    steps_complete: SetupStepsComplete
+    skipped: SetupSkipped
+    first_program_id: str | None = None
+    setup_complete: bool = False
+    published_program_count: int = 0
+
+
+class SetupStepPatch(BaseModel):
+    step: int | None = Field(None, ge=1, le=4)
+    skip_data: bool | None = None
+    skip_team: bool | None = None
+    mark_complete: dict[str, bool] | None = None
+
+
+@router.get("/me/setup", response_model=SetupStateResponse)
+async def get_setup_state(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await _svc(db).get_setup_state(user.id)
+
+
+@router.patch("/me/setup/step", response_model=SetupStateResponse)
+async def patch_setup_step(
+    body: SetupStepPatch,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await _svc(db).patch_setup_step(
+        user.id,
+        step=body.step,
+        skip_data=body.skip_data,
+        skip_team=body.skip_team,
+        mark_complete=body.mark_complete,
+    )
+
+
+@router.post("/me/setup/complete", response_model=SetupStateResponse)
+async def complete_setup(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await _svc(db).complete_setup(user.id)
+
+
 # --- Programs (institution admin) ---
 
 
