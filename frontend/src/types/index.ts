@@ -1538,6 +1538,8 @@ export interface InterviewScore {
 }
 
 // ============ INSTITUTION DATASETS ============
+export type DatasetStatus = 'uploaded' | 'validated' | 'processed' | 'failed' | 'pending' | 'active' | 'archived'
+
 export interface InstitutionDataset {
   id: string
   institution_id: string
@@ -1548,19 +1550,52 @@ export interface InstitutionDataset {
   file_size_bytes: number | null
   row_count: number | null
   column_mapping: Record<string, string> | null
-  validation_errors: Record<string, any>[] | null
-  status: 'pending' | 'validated' | 'active' | 'archived'
+  validation_errors: ValidationReport | null
+  status: DatasetStatus
   usage_scope: string | null
+  coverage_start: string | null
+  coverage_end: string | null
   version: number
   created_at: string
   updated_at: string
   download_url?: string
+  used_by?: string[]
+}
+
+export interface ValidationReport {
+  missing_required?: { row: number; field: string }[]
+  duplicates?: { row: number; duplicate_of_row?: number }[]
+  invalid_dates?: { row: number; field: string; value: string }[]
+  unmappable_programs?: { row: number; value: string; suggestions?: string[] }[]
+  error_count?: number
 }
 
 export interface DatasetPreview {
   columns: string[]
   rows: Record<string, string>[]
   total_rows: number
+  column_histogram?: Record<string, Record<string, number>>
+}
+
+export interface DatasetVersion {
+  id: string
+  dataset_id: string
+  version_number: number
+  file_name: string
+  row_count: number | null
+  changes_summary: { added: number; modified: number; invalidated: number }
+  validation_report: ValidationReport | null
+  created_at: string
+}
+
+export interface DatasetMappingTemplate {
+  id: string
+  institution_id: string
+  template_name: string
+  dataset_type: string
+  column_mapping: Record<string, string>
+  created_at: string
+  updated_at: string
 }
 
 // ============ POSTS ============
