@@ -98,16 +98,17 @@ function Field({ title, hint, children }: { title: string; hint?: string; childr
 export default function SettingsPage() {
   const queryClient = useQueryClient()
   const authUser = useAuthStore(s => s.user)
-  const [activeTab, setActiveTab] = useState('profile')
+  const [activeTab, setActiveTab] = useState('account')
 
   const tabs = [
-    { id: 'profile', label: 'Profile' },
+    { id: 'account', label: 'Account' },
+    { id: 'profile', label: 'Public profile' },
     { id: 'team', label: 'Team' },
     { id: 'review', label: 'Review' },
     { id: 'integrations', label: 'Integrations' },
     { id: 'notifications', label: 'Notifications' },
     { id: 'billing', label: 'Billing' },
-    { id: 'account', label: 'My account' },
+    { id: 'security', label: 'Security' },
   ]
 
   // Shared per-user settings (security / preferences / notifications / account).
@@ -226,7 +227,16 @@ export default function SettingsPage() {
 
       <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
-      {/* Profile (Spec 22 guided editor) */}
+      {/* Org account (Spec 21 §3.2) */}
+      {activeTab === 'account' && (
+        settingsQ.isLoading || !settingsQ.data ? (
+          <Card className="p-6"><Skeleton className="h-40" /></Card>
+        ) : (
+          <OrgAccountCard account={settingsQ.data.account} onChanged={refetchSettings} />
+        )
+      )}
+
+      {/* Public profile (Spec 22 guided editor) */}
       {activeTab === 'profile' && (
         <Card className="p-5 sm:p-6">
           {instQ.isLoading || !inst ? (
@@ -312,9 +322,14 @@ export default function SettingsPage() {
       {/* Team */}
       {activeTab === 'team' && <TeamCard />}
 
-      {/* Review (rubrics) */}
+      {/* Review (config + rubrics) */}
       {activeTab === 'review' && (
         <div className="space-y-4">
+          {settingsQ.isLoading || !settingsQ.data ? (
+            <Card className="p-6"><Skeleton className="h-32" /></Card>
+          ) : (
+            <ReviewConfigCard config={settingsQ.data.review_config} onChanged={refetchSettings} />
+          )}
           <div className="flex justify-end">
             <Button variant="secondary" onClick={() => setShowRubricForm(!showRubricForm)}>
               <Plus size={16} /> New Rubric
@@ -439,13 +454,12 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* My account — preferences + security (personal) */}
-      {activeTab === 'account' && (
+      {/* Security + personal preferences (§3.7) */}
+      {activeTab === 'security' && (
         settingsQ.isLoading || !settingsQ.data ? (
           <div className="space-y-4">{Array.from({ length: 2 }).map((_, i) => <Card key={i} className="p-6"><Skeleton className="h-40" /></Card>)}</div>
         ) : (
           <div className="space-y-5">
-            <PreferencesCard preferences={settingsQ.data.preferences} onSave={p => updatePrefsMut.mutate(p)} saving={updatePrefsMut.isPending} />
             <SecurityCard
               mfaEnabled={settingsQ.data.security.mfa_enabled}
               mfaMethod={settingsQ.data.security.mfa_method}
@@ -453,6 +467,7 @@ export default function SettingsPage() {
               pendingEmail={null}
               onChanged={refetchSettings}
             />
+            <PreferencesCard preferences={settingsQ.data.preferences} onSave={p => updatePrefsMut.mutate(p)} saving={updatePrefsMut.isPending} />
           </div>
         )
       )}
