@@ -88,16 +88,16 @@ export default function MessagingPage() {
   return (
     <div className="flex h-[calc(100vh-64px)]">
       {/* Left: Conversation list */}
-      <div className="w-80 border-r border-gray-200 flex flex-col bg-white">
-        <div className="p-3 border-b border-gray-200">
+      <div className="w-80 border-r border-border flex flex-col bg-white">
+        <div className="p-3 border-b border-border">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-semibold text-gray-900">Messages</h2>
-            <button onClick={() => setShowNewModal(true)} className="p-1.5 rounded hover:bg-gray-100">
-              <Plus size={18} className="text-gray-600" />
+            <h2 className="text-lg font-semibold text-foreground">Messages</h2>
+            <button onClick={() => setShowNewModal(true)} className="p-1.5 rounded hover:bg-muted">
+              <Plus size={18} className="text-muted-foreground" />
             </button>
           </div>
           <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/70" />
             <Input
               placeholder="Search conversations..."
               value={searchTerm}
@@ -111,16 +111,16 @@ export default function MessagingPage() {
           {convsQ.isLoading ? (
             <div className="p-3 space-y-2">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16" />)}</div>
           ) : filteredConvs.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-8">No conversations</p>
+            <p className="text-sm text-muted-foreground text-center py-8">No conversations</p>
           ) : (
             filteredConvs.map(conv => (
               <div
                 key={conv.id}
                 onClick={() => setSelectedConv(conv.id)}
-                className={`p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${selectedConv === conv.id ? 'bg-brand-slate-50' : ''}`}
+                className={`p-3 border-b border-border cursor-pointer hover:bg-muted ${selectedConv === conv.id ? 'bg-brand-slate-50' : ''}`}
               >
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-gray-900 truncate">{conv.subject ?? 'No subject'}</p>
+                  <p className="text-sm font-medium text-foreground truncate">{conv.subject ?? 'No subject'}</p>
                   {(conv.unread_count ?? 0) > 0 && (
                     <span className="ml-2 w-5 h-5 bg-brand-slate-600 text-white text-xs rounded-full flex items-center justify-center">
                       {conv.unread_count}
@@ -129,7 +129,7 @@ export default function MessagingPage() {
                 </div>
                 <div className="flex items-center justify-between mt-1">
                   <Badge variant={(STATUS_COLORS[conv.status] as any) ?? 'neutral'} size="sm">{conv.status}</Badge>
-                  <span className="text-xs text-gray-400">{formatRelative(conv.last_message_at)}</span>
+                  <span className="text-xs text-muted-foreground/70">{formatRelative(conv.last_message_at)}</span>
                 </div>
               </div>
             ))
@@ -138,7 +138,7 @@ export default function MessagingPage() {
       </div>
 
       {/* Right: Message thread */}
-      <div className="flex-1 flex flex-col bg-gray-50">
+      <div className="flex-1 flex flex-col bg-muted">
         {!selectedConv ? (
           <div className="flex-1 flex items-center justify-center">
             <EmptyState
@@ -150,9 +150,9 @@ export default function MessagingPage() {
         ) : (
           <>
             {/* Header */}
-            <div className="px-6 py-3 bg-white border-b border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-900">{selectedConvObj?.subject ?? 'Conversation'}</h3>
-              <p className="text-xs text-gray-500">Student: {selectedConvObj?.student_id.slice(0, 10)}...</p>
+            <div className="px-6 py-3 bg-white border-b border-border">
+              <h3 className="text-sm font-semibold text-foreground">{selectedConvObj?.subject ?? 'Conversation'}</h3>
+              <p className="text-xs text-muted-foreground">Student: {selectedConvObj?.student_id.slice(0, 10)}...</p>
             </div>
 
             {/* Messages */}
@@ -160,17 +160,17 @@ export default function MessagingPage() {
               {messagesQ.isLoading ? (
                 <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12" />)}</div>
               ) : messages.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-4">No messages yet. Start the conversation!</p>
+                <p className="text-sm text-muted-foreground text-center py-4">No messages yet. Start the conversation!</p>
               ) : (
                 messages.map(msg => (
                   <div key={msg.id} className={`flex ${msg.sender_type === 'institution' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[70%] rounded-lg px-4 py-2 ${
                       msg.sender_type === 'institution'
                         ? 'bg-brand-slate-600 text-white'
-                        : 'bg-white border border-gray-200 text-gray-800'
+                        : 'bg-white border border-border text-foreground'
                     }`}>
                       <p className="text-sm">{msg.message_body}</p>
-                      <p className={`text-xs mt-1 ${msg.sender_type === 'institution' ? 'text-brand-slate-200' : 'text-gray-400'}`}>
+                      <p className={`text-xs mt-1 ${msg.sender_type === 'institution' ? 'text-brand-slate-200' : 'text-muted-foreground/70'}`}>
                         {formatRelative(msg.sent_at)}
                       </p>
                     </div>
@@ -181,7 +181,7 @@ export default function MessagingPage() {
             </div>
 
             {/* Input */}
-            <div className="p-4 bg-white border-t border-gray-200">
+            <div className="p-4 bg-white border-t border-border">
               <div className="flex gap-2">
                 <Input
                   className="flex-1"

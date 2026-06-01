@@ -255,12 +255,12 @@ export default function PostsPage() {
                     {post.pinned && (
                       <Pin size={14} className="text-[hsl(var(--primary))] flex-shrink-0" />
                     )}
-                    <h3 className="text-sm font-semibold text-gray-900 truncate">{post.title}</h3>
+                    <h3 className="text-sm font-semibold text-foreground truncate">{post.title}</h3>
                     <Badge variant={STATUS_BADGE[post.status] ?? 'neutral'}>{post.status}</Badge>
                     {post.is_template && <Badge variant="info">Template</Badge>}
                   </div>
-                  <p className="text-sm text-gray-600 line-clamp-2 mb-2">{post.body}</p>
-                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                  <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{post.body}</p>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     {post.published_at && (
                       <span>Published {formatDateTime(post.published_at)}</span>
                     )}
@@ -317,34 +317,34 @@ export default function PostsPage() {
                 <div className="flex items-center gap-1 flex-shrink-0">
                   <button
                     onClick={() => pinM.mutate(post.id)}
-                    className="p-1.5 rounded hover:bg-gray-100"
+                    className="p-1.5 rounded hover:bg-muted"
                     title={post.pinned ? 'Unpin' : 'Pin'}
                   >
-                    {post.pinned ? <PinOff size={16} className="text-[hsl(var(--primary))]" /> : <Pin size={16} className="text-gray-400" />}
+                    {post.pinned ? <PinOff size={16} className="text-[hsl(var(--primary))]" /> : <Pin size={16} className="text-muted-foreground/70" />}
                   </button>
                   {post.status === 'published' && (
                     <button
                       onClick={() => archiveM.mutate(post.id)}
-                      className="p-1.5 rounded hover:bg-gray-100"
+                      className="p-1.5 rounded hover:bg-muted"
                       title="Archive"
                     >
-                      <Archive size={16} className="text-gray-500" />
+                      <Archive size={16} className="text-muted-foreground" />
                     </button>
                   )}
                   {post.status !== 'published' && (
                     <button
                       onClick={() => publishM.mutate(post.id)}
-                      className="p-1.5 rounded hover:bg-gray-100"
+                      className="p-1.5 rounded hover:bg-muted"
                       title="Publish"
                     >
-                      <Send size={16} className="text-green-600" />
+                      <Send size={16} className="text-success" />
                     </button>
                   )}
-                  <button onClick={() => openEdit(post)} className="p-1.5 rounded hover:bg-gray-100" title="Edit">
-                    <Edit2 size={16} className="text-gray-500" />
+                  <button onClick={() => openEdit(post)} className="p-1.5 rounded hover:bg-muted" title="Edit">
+                    <Edit2 size={16} className="text-muted-foreground" />
                   </button>
-                  <button onClick={() => setDeleteTarget(post)} className="p-1.5 rounded hover:bg-gray-100" title="Delete">
-                    <Trash2 size={16} className="text-red-400" />
+                  <button onClick={() => setDeleteTarget(post)} className="p-1.5 rounded hover:bg-muted" title="Delete">
+                    <Trash2 size={16} className="text-destructive/70" />
                   </button>
                 </div>
               </div>
@@ -366,12 +366,12 @@ export default function PostsPage() {
 
           {/* Media Upload */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Media</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Media</label>
             <div className="flex items-center gap-2 flex-wrap">
               {mediaUrls.map((m, i) => (
-                <div key={i} className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded text-xs">
+                <div key={i} className="flex items-center gap-1 px-2 py-1 bg-muted rounded text-xs">
                   <Image size={12} /> {m.type === 'image' ? 'Image' : 'File'} {i + 1}
-                  <button onClick={() => setMediaUrls(prev => prev.filter((_, j) => j !== i))} className="text-red-400 ml-1">&times;</button>
+                  <button onClick={() => setMediaUrls(prev => prev.filter((_, j) => j !== i))} className="text-destructive/70 ml-1">&times;</button>
                 </div>
               ))}
               <Button variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
@@ -389,7 +389,7 @@ export default function PostsPage() {
 
           {/* Program Tags */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tag Programs</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Tag Programs</label>
             <div className="flex flex-wrap gap-2 mb-2">
               {taggedProgramIds.map(pid => {
                 const prog = programs.find(p => p.id === pid)
@@ -443,8 +443,8 @@ export default function PostsPage() {
 
           {/* CTAs (Spec 27 §2.4) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Call-to-action buttons</label>
-            <p className="text-xs text-gray-500 mb-2">Buttons students see on this post in their feed.</p>
+            <label className="block text-sm font-medium text-foreground mb-1">Call-to-action buttons</label>
+            <p className="text-xs text-muted-foreground mb-2">Buttons students see on this post in their feed.</p>
             <div className="space-y-2">
               {ctas.map((c, i) => (
                 <div key={i} className="flex items-center gap-2">
@@ -469,7 +469,7 @@ export default function PostsPage() {
                     onChange={e => updateCta(i, { target: e.target.value })}
                     placeholder="Target (program/event/URL — optional)"
                   />
-                  <button onClick={() => removeCta(i)} className="text-red-400 p-1 text-lg leading-none" title="Remove CTA">&times;</button>
+                  <button onClick={() => removeCta(i)} className="text-destructive/70 p-1 text-lg leading-none" title="Remove CTA">&times;</button>
                 </div>
               ))}
               <Button variant="secondary" size="sm" onClick={addCta}>
@@ -480,7 +480,7 @@ export default function PostsPage() {
 
           {/* Visibility (Spec 27 §2.3) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Visibility</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Visibility</label>
             <label className="flex items-center gap-2 text-sm mb-2">
               <input type="checkbox" checked={visPublic} onChange={e => setVisPublic(e.target.checked)} className="rounded" />
               Public on institution &amp; program pages
@@ -509,7 +509,7 @@ export default function PostsPage() {
             )}
           </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+          <div className="flex justify-end gap-2 pt-2 border-t border-border">
             <Button variant="secondary" onClick={() => setShowCreateModal(false)}>Cancel</Button>
             <Button
               variant="secondary"
@@ -537,7 +537,7 @@ export default function PostsPage() {
 
       {/* Delete Confirmation */}
       <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Delete Post">
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm text-muted-foreground mb-4">
           Are you sure you want to delete &ldquo;{deleteTarget?.title}&rdquo;? This cannot be undone.
         </p>
         <div className="flex justify-end gap-2">
@@ -553,15 +553,15 @@ export default function PostsPage() {
         {templatesQ.isLoading ? (
           <div className="space-y-3">{[1, 2].map(i => <Skeleton key={i} className="h-20" />)}</div>
         ) : !templatesQ.data?.length ? (
-          <p className="text-sm text-gray-500 py-4 text-center">No templates saved yet. Create a post and check &ldquo;Save as template&rdquo;.</p>
+          <p className="text-sm text-muted-foreground py-4 text-center">No templates saved yet. Create a post and check &ldquo;Save as template&rdquo;.</p>
         ) : (
           <div className="space-y-3">
             {templatesQ.data.map(t => (
-              <Card key={t.id} className="p-3 cursor-pointer hover:bg-gray-50" onClick={() => fillFromTemplate(t)}>
+              <Card key={t.id} className="p-3 cursor-pointer hover:bg-muted" onClick={() => fillFromTemplate(t)}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="text-sm font-medium text-gray-900">{t.template_name || t.title}</h4>
-                    <p className="text-xs text-gray-500 line-clamp-1 mt-0.5">{t.body}</p>
+                    <h4 className="text-sm font-medium text-foreground">{t.template_name || t.title}</h4>
+                    <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{t.body}</p>
                   </div>
                   <Button variant="secondary" size="sm">Use</Button>
                 </div>

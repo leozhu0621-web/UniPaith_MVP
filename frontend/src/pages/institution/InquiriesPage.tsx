@@ -116,20 +116,20 @@ export default function InquiriesPage({ embedded = false }: { embedded?: boolean
       {inquiries.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <Card className="p-3">
-            <p className="text-xs text-gray-500">Total</p>
-            <p className="text-xl font-semibold text-gray-900">{inquiries.length}</p>
+            <p className="text-xs text-muted-foreground">Total</p>
+            <p className="text-xl font-semibold text-foreground">{inquiries.length}</p>
           </Card>
-          <Card className="p-3 border-amber-200">
-            <p className="text-xs text-amber-600">New</p>
-            <p className="text-xl font-bold text-amber-600">{newCount}</p>
-          </Card>
-          <Card className="p-3">
-            <p className="text-xs text-gray-500">In Progress</p>
-            <p className="text-xl font-semibold text-gray-900">{inquiries.filter(i => i.status === 'in_progress').length}</p>
+          <Card className="p-3 border-warning-soft">
+            <p className="text-xs text-warning">New</p>
+            <p className="text-xl font-bold text-warning">{newCount}</p>
           </Card>
           <Card className="p-3">
-            <p className="text-xs text-gray-500">Responded</p>
-            <p className="text-xl font-semibold text-gray-900">{inquiries.filter(i => i.status === 'responded').length}</p>
+            <p className="text-xs text-muted-foreground">In Progress</p>
+            <p className="text-xl font-semibold text-foreground">{inquiries.filter(i => i.status === 'in_progress').length}</p>
+          </Card>
+          <Card className="p-3">
+            <p className="text-xs text-muted-foreground">Responded</p>
+            <p className="text-xl font-semibold text-foreground">{inquiries.filter(i => i.status === 'responded').length}</p>
           </Card>
         </div>
       )}
@@ -150,13 +150,13 @@ export default function InquiriesPage({ embedded = false }: { embedded?: boolean
             <Card key={inq.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => openDetail(inq)}>
               <div className="flex items-start justify-between mb-1">
                 <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-gray-900 text-sm">{inq.subject}</h3>
+                  <h3 className="font-semibold text-foreground text-sm">{inq.subject}</h3>
                   <Badge variant={STATUS_BADGE[inq.status] ?? 'neutral'}>{inq.status.replace('_', ' ')}</Badge>
                   {isOverdue(inq) && <Badge variant="warning">Unanswered ≥ 4h</Badge>}
                 </div>
                 {inq.program_name && <Badge variant="info">{inq.program_name}</Badge>}
               </div>
-              <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mt-1">
+              <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground mt-1">
                 <span className="flex items-center gap-1"><User size={12} /> {inq.student_name}</span>
                 <span>{inq.student_email}</span>
                 <span className="flex items-center gap-1"><Clock size={12} /> {formatDateTime(inq.created_at)}</span>
@@ -164,7 +164,7 @@ export default function InquiriesPage({ embedded = false }: { embedded?: boolean
                   <span className="flex items-center gap-1 text-secondary"><UserPlus size={12} /> {staffEmail(inq.assigned_to)}</span>
                 )}
               </div>
-              <p className="text-sm text-gray-600 mt-2 line-clamp-2">{inq.message}</p>
+              <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{inq.message}</p>
             </Card>
           ))}
         </div>
@@ -174,7 +174,7 @@ export default function InquiriesPage({ embedded = false }: { embedded?: boolean
       <Modal isOpen={!!selected} onClose={() => setSelected(null)} title={selected?.subject ?? ''}>
         {selected && (
           <div className="space-y-4">
-            <div className="flex items-center gap-3 text-sm text-gray-600">
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
               <span className="flex items-center gap-1"><User size={14} /> {selected.student_name}</span>
               <span>{selected.student_email}</span>
               <Badge variant={STATUS_BADGE[selected.status]}>{selected.status.replace('_', ' ')}</Badge>
@@ -182,16 +182,16 @@ export default function InquiriesPage({ embedded = false }: { embedded?: boolean
             {selected.program_name && (
               <Badge variant="info">Program: {selected.program_name}</Badge>
             )}
-            <Card className="p-3 bg-gray-50">
-              <p className="text-xs text-gray-500 mb-1">Student's message</p>
-              <p className="text-sm text-gray-800 whitespace-pre-wrap">{selected.message}</p>
+            <Card className="p-3 bg-muted">
+              <p className="text-xs text-muted-foreground mb-1">Student's message</p>
+              <p className="text-sm text-foreground whitespace-pre-wrap">{selected.message}</p>
             </Card>
-            <p className="text-xs text-gray-400">Received: {formatDateTime(selected.created_at)}</p>
+            <p className="text-xs text-muted-foreground/70">Received: {formatDateTime(selected.created_at)}</p>
 
             {selected.response_text && selected.responded_at && (
-              <Card className="p-3 bg-green-50 border-green-200">
-                <p className="text-xs text-green-600 mb-1 flex items-center gap-1"><CheckCircle2 size={12} /> Responded {formatDateTime(selected.responded_at)}</p>
-                <p className="text-sm text-gray-800 whitespace-pre-wrap">{selected.response_text}</p>
+              <Card className="p-3 bg-success-soft border-success-soft">
+                <p className="text-xs text-success mb-1 flex items-center gap-1"><CheckCircle2 size={12} /> Responded {formatDateTime(selected.responded_at)}</p>
+                <p className="text-sm text-foreground whitespace-pre-wrap">{selected.response_text}</p>
               </Card>
             )}
 

@@ -124,7 +124,7 @@ export default function IntakeRoundsPage() {
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-gray-900">{r.round_name}</h3>
+                    <h3 className="font-semibold text-foreground">{r.round_name}</h3>
                     <Badge variant={STATUS_BADGE[r.status] ?? 'neutral'}>{r.status}</Badge>
                     {r.intake_term && <Badge variant="info">{r.intake_term}</Badge>}
                     {!r.is_active && <Badge variant="neutral">Inactive</Badge>}
@@ -133,22 +133,22 @@ export default function IntakeRoundsPage() {
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-3">
                 {r.application_open && (
-                  <div><span className="text-gray-400 text-xs">Opens</span><p className="text-gray-700">{formatDate(r.application_open)}</p></div>
+                  <div><span className="text-muted-foreground/70 text-xs">Opens</span><p className="text-foreground">{formatDate(r.application_open)}</p></div>
                 )}
                 {r.application_deadline && (
-                  <div><span className="text-gray-400 text-xs">Deadline</span><p className="text-gray-700 font-medium">{formatDate(r.application_deadline)}</p></div>
+                  <div><span className="text-muted-foreground/70 text-xs">Deadline</span><p className="text-foreground font-medium">{formatDate(r.application_deadline)}</p></div>
                 )}
                 {r.decision_date && (
-                  <div><span className="text-gray-400 text-xs">Decision</span><p className="text-gray-700">{formatDate(r.decision_date)}</p></div>
+                  <div><span className="text-muted-foreground/70 text-xs">Decision</span><p className="text-foreground">{formatDate(r.decision_date)}</p></div>
                 )}
                 {r.program_start && (
-                  <div><span className="text-gray-400 text-xs">Starts</span><p className="text-gray-700">{formatDate(r.program_start)}</p></div>
+                  <div><span className="text-muted-foreground/70 text-xs">Starts</span><p className="text-foreground">{formatDate(r.program_start)}</p></div>
                 )}
               </div>
               {r.capacity != null && (
                 <div className="flex items-center gap-2 text-sm mb-2">
-                  <Users size={14} className="text-gray-400" />
-                  <span className="text-gray-600">{r.enrolled_count} / {r.capacity} enrolled</span>
+                  <Users size={14} className="text-muted-foreground/70" />
+                  <span className="text-muted-foreground">{r.enrolled_count} / {r.capacity} enrolled</span>
                   {r.spots_remaining != null && (
                     <Badge variant={r.spots_remaining > 0 ? 'success' : 'warning'}>
                       {r.spots_remaining > 0 ? `${r.spots_remaining} spots left` : 'Full'}
@@ -159,12 +159,12 @@ export default function IntakeRoundsPage() {
               <div className="flex gap-2 mt-2">
                 <Button variant="ghost" size="sm" onClick={() => openEdit(r)} className="flex items-center gap-1"><Edit2 size={14} /> Edit</Button>
                 {r.status === 'upcoming' && (
-                  <Button variant="ghost" size="sm" onClick={() => statusMut.mutate({ id: r.id, status: 'open' })} className="flex items-center gap-1 text-green-600"><CheckCircle2 size={14} /> Open</Button>
+                  <Button variant="ghost" size="sm" onClick={() => statusMut.mutate({ id: r.id, status: 'open' })} className="flex items-center gap-1 text-success"><CheckCircle2 size={14} /> Open</Button>
                 )}
                 {r.status === 'open' && (
-                  <Button variant="ghost" size="sm" onClick={() => statusMut.mutate({ id: r.id, status: 'closed' })} className="flex items-center gap-1 text-amber-600">Close</Button>
+                  <Button variant="ghost" size="sm" onClick={() => statusMut.mutate({ id: r.id, status: 'closed' })} className="flex items-center gap-1 text-warning">Close</Button>
                 )}
-                <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(r)} className="flex items-center gap-1 text-red-600"><Trash2 size={14} /></Button>
+                <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(r)} className="flex items-center gap-1 text-destructive"><Trash2 size={14} /></Button>
               </div>
             </Card>
           ))}
@@ -201,7 +201,7 @@ export default function IntakeRoundsPage() {
 
       {/* Delete Modal */}
       <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Delete Intake Round">
-        <p className="text-sm text-gray-600 mb-4">Delete <strong>{deleteTarget?.round_name}</strong>?</p>
+        <p className="text-sm text-muted-foreground mb-4">Delete <strong>{deleteTarget?.round_name}</strong>?</p>
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={() => setDeleteTarget(null)}>Cancel</Button>
           <Button variant="danger" onClick={() => deleteTarget && deleteMut.mutate(deleteTarget.id)} disabled={deleteMut.isPending}>

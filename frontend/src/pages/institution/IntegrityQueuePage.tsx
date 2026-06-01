@@ -115,12 +115,12 @@ export default function IntegrityQueuePage({ embedded = false }: { embedded?: bo
       {signals.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <Card className="p-3">
-            <p className="text-xs text-gray-500">Open</p>
-            <p className="text-xl font-bold text-gray-900">{openCount}</p>
+            <p className="text-xs text-muted-foreground">Open</p>
+            <p className="text-xl font-bold text-foreground">{openCount}</p>
           </Card>
-          <Card className="p-3 border-amber-200">
-            <p className="text-xs text-amber-600">High severity</p>
-            <p className="text-xl font-bold text-amber-700">{highCount}</p>
+          <Card className="p-3 border-warning-soft">
+            <p className="text-xs text-warning">High severity</p>
+            <p className="text-xl font-bold text-warning">{highCount}</p>
           </Card>
         </div>
       )}
@@ -143,9 +143,9 @@ export default function IntegrityQueuePage({ embedded = false }: { embedded?: bo
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     {sig.severity === 'high'
-                      ? <ShieldAlert size={16} className="text-red-600 shrink-0" />
-                      : <AlertTriangle size={16} className="text-amber-600 shrink-0" />}
-                    <h3 className="text-sm font-semibold text-gray-900">{sig.title}</h3>
+                      ? <ShieldAlert size={16} className="text-destructive shrink-0" />
+                      : <AlertTriangle size={16} className="text-warning shrink-0" />}
+                    <h3 className="text-sm font-semibold text-foreground">{sig.title}</h3>
                     <Badge variant={SEVERITY_BADGE[sig.severity] ?? 'neutral'}>{sig.severity}</Badge>
                     <Badge variant="info">{SIGNAL_LABELS[sig.signal_type] ?? sig.signal_type.replace(/_/g, ' ')}</Badge>
                     {sig.status === 'resolved' && (
@@ -154,9 +154,9 @@ export default function IntegrityQueuePage({ embedded = false }: { embedded?: bo
                       </Badge>
                     )}
                   </div>
-                  <p className="mt-1 text-sm text-gray-600">{sig.description}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{sig.description}</p>
                   <EvidenceChips signal={sig} />
-                  <div className="mt-2 flex items-center gap-3 text-xs text-gray-400">
+                  <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground/70">
                     <button
                       onClick={() => navigate(applicantUrl(sig.application_id))}
                       className="inline-flex items-center gap-1 text-secondary hover:underline"
@@ -181,9 +181,9 @@ export default function IntegrityQueuePage({ embedded = false }: { embedded?: bo
       <Modal isOpen={!!selected} onClose={() => setSelected(null)} title="Resolve integrity signal">
         {selected && (
           <div className="space-y-4">
-            <Card className="p-3 bg-gray-50">
-              <p className="text-sm font-medium text-gray-900">{selected.title}</p>
-              <p className="mt-1 text-xs text-gray-600">{selected.description}</p>
+            <Card className="p-3 bg-muted">
+              <p className="text-sm font-medium text-foreground">{selected.title}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{selected.description}</p>
             </Card>
 
             <div className="space-y-2">
