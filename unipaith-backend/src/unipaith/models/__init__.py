@@ -20,6 +20,7 @@ from unipaith.models.application import (
     ReviewAssignment,
     Rubric,
 )
+from unipaith.models.attribution import AttributionEvent
 from unipaith.models.audit import AdmissionsAuditLog
 from unipaith.models.base import Base
 from unipaith.models.billing import StudentSubscription
@@ -212,6 +213,7 @@ __all__ = [
     "OfferLetter",
     "EnrollmentRecord",
     "StudentEngagementSignal",
+    "AttributionEvent",
     "InstitutionFollow",
     "PeerProfile",
     "PeerConnection",

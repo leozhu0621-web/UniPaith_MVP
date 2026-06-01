@@ -1372,6 +1372,133 @@ export interface AnalyticsData {
   event_attribution: EventAttributionData[] | null
 }
 
+// ============ ATTRIBUTION & FUNNEL ANALYTICS (Spec 28) ============
+
+export interface AnalyticsFilters {
+  program_id?: string
+  intake_id?: string
+  segment_id?: string
+  campaign_id?: string
+  source_kind?: string
+  source_id?: string
+  time_window?: string
+  from?: string
+  to?: string
+}
+
+export interface KpiMetric {
+  value: number | null
+  prior: number | null
+  delta_pct: number | null
+  unit: 'count' | 'percent' | 'score'
+}
+
+export interface NamedCount {
+  label: string
+  count: number
+}
+
+export interface PeriodCount {
+  period: string
+  count: number
+}
+
+export interface OverviewReport {
+  filter: AnalyticsFilters
+  total_applications: KpiMetric
+  acceptance_rate: KpiMetric
+  avg_match_score: KpiMetric
+  yield_rate: KpiMetric
+  apps_by_status: Record<string, number>
+  apps_by_program: NamedCount[]
+  apps_over_time: PeriodCount[]
+  decisions_breakdown: Record<string, number>
+  has_data: boolean
+  generated_at: string
+}
+
+export interface FunnelStageItem {
+  stage: string
+  label: string
+  count: number
+  conversion_from_prev: number | null
+}
+
+export interface SubFunnel {
+  key: string
+  label: string
+  stages: FunnelStageItem[]
+}
+
+export interface TopSource {
+  source_id: string | null
+  source_kind: string
+  label: string
+  action_count: number
+}
+
+export interface DropOffAlert {
+  from_stage: string
+  to_stage: string
+  drop_pct: number
+  hint: string
+}
+
+export interface FunnelReport {
+  filter: AnalyticsFilters
+  stages: FunnelStageItem[]
+  sub_funnels: SubFunnel[]
+  top_sources_by_clicks: TopSource[]
+  top_sources_by_apply_started: TopSource[]
+  drop_off_alerts: DropOffAlert[]
+  total_events: number
+  has_data: boolean
+  generated_at: string
+}
+
+export interface CampaignMetricRow {
+  campaign_id: string
+  campaign_name: string
+  channels: string[]
+  status: string | null
+  send_volume: number
+  delivered: number
+  delivery_rate: number | null
+  opened: number
+  open_rate: number | null
+  open_supported: boolean
+  clicked: number
+  click_rate: number | null
+  applications_started: number
+}
+
+export interface EventMetricRow {
+  event_id: string
+  event_name: string
+  rsvps: number
+  attended: number
+  attendance_rate: number | null
+  applications_after: number
+}
+
+export interface TopContentRow {
+  source_id: string | null
+  source_kind: string
+  title: string
+  clicks: number
+  apply_started: number
+}
+
+export interface AttributionReport {
+  filter: AnalyticsFilters
+  campaigns: CampaignMetricRow[]
+  events: EventMetricRow[]
+  top_content_by_clicks: TopContentRow[]
+  top_content_by_apply_started: TopContentRow[]
+  has_data: boolean
+  generated_at: string
+}
+
 // ============ CAMPAIGNS ============
 // ============ CAMPAIGNS (Spec 25) ============
 export type CampaignObjective =
