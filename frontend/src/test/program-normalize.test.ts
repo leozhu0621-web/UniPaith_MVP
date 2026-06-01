@@ -13,6 +13,12 @@ import {
   normalizeRequirements,
   intakeDeadlineFromArray,
   intakeTimelineFromArray,
+  extractTracksMeta,
+  extractPrerequisites,
+  extractTestPolicy,
+  extractRecommendations,
+  extractFundingSignals,
+  extractSalaryBands,
 } from '../utils/programNormalize'
 import { fromProgram, toPayload, emptyDraft } from '../pages/institution/program-editor/helpers'
 import type { Program } from '../types'
@@ -124,6 +130,49 @@ describe('intake rounds (array shape)', () => {
       deadline: '2026-11-01',
       decision_release: '2027-01-15',
     })
+  })
+})
+
+describe('extractStructuredFields', () => {
+  const appReqs = {
+    materials: [{ name: 'Essay', required: true }],
+    prerequisites: [{ name: 'Calculus I–III', required: true, allowed_substitutes: ['AP Calc BC'] }],
+    test_policy: {
+      stance: 'test_optional',
+      required: ['GRE'],
+      optional: ['GMAT'],
+      accepted_tests: ['GRE', 'GMAT'],
+      superscore_enabled: true,
+      waived_rules: 'Waived with 5+ years experience',
+      typical_ranges: [{ test: 'GRE', low: 310, high: 330 }],
+    },
+    recommendations: { required_count: 2, types: ['academic', 'professional'] },
+  }
+
+  it('extracts tracks metadata from canonical tracks object', () => {
+    const meta = extractTracksMeta({ concentrations: ['AI', 'Systems'], note: 'Pick one', learning_format: 'Cohort-based' })
+    expect(meta.concentrations).toEqual(['AI', 'Systems'])
+    expect(meta.note).toBe('Pick one')
+    expect(meta.learning_format).toBe('Cohort-based')
+  })
+
+  it('extracts prerequisites, test policy, and recommendations', () => {
+    expect(extractPrerequisites(appReqs)).toHaveLength(1)
+    const tp = extractTestPolicy(appReqs)
+    expect(tp?.stance_label).toBe('Test-optional')
+    expect(tp?.optional).toEqual(['GMAT'])
+    expect(tp?.typical_ranges[0]).toEqual({ test: 'GRE', low: 310, high: 330 })
+    expect(extractRecommendations(appReqs)).toEqual({ required_count: 2, types: ['academic', 'professional'] })
+  })
+
+  it('extracts funding signals and salary bands', () => {
+    const fs = extractFundingSignals({
+      funding_signals: { ta_funded: true, ra_funded: false, merit_scholarship_available: true, need_based_available: false },
+    })
+    expect(fs?.ta_funded).toBe(true)
+    expect(extractSalaryBands({
+      salary_distribution_bands: [{ band_label: '$80k–$100k', percent: 40 }, { band_label: '$100k+', percent: 35 }],
+    })).toHaveLength(2)
   })
 })
 

@@ -386,9 +386,13 @@ export default function ProgramEditorPage() {
                   <ChipsInput values={draft.application_requirements.test_policy.required} onChange={v => setTestPolicy({ required: v })} placeholder="e.g. GRE · press Enter" />
                 </div>
                 <div>
-                  <MiniLabel>Accepted tests</MiniLabel>
-                  <ChipsInput values={draft.application_requirements.test_policy.accepted_tests} onChange={v => setTestPolicy({ accepted_tests: v })} placeholder="e.g. GRE, GMAT" />
+                  <MiniLabel>Optional tests</MiniLabel>
+                  <ChipsInput values={draft.application_requirements.test_policy.optional} onChange={v => setTestPolicy({ optional: v })} placeholder="e.g. GMAT · press Enter" />
                 </div>
+              </div>
+              <div>
+                <MiniLabel>Accepted tests</MiniLabel>
+                <ChipsInput values={draft.application_requirements.test_policy.accepted_tests} onChange={v => setTestPolicy({ accepted_tests: v })} placeholder="e.g. GRE, GMAT" />
               </div>
               <Toggle checked={draft.application_requirements.test_policy.superscore_enabled} onChange={v => setTestPolicy({ superscore_enabled: v })} label="Superscore across attempts" />
               <Input label="Waiver rules" value={draft.application_requirements.test_policy.waived_rules} onChange={e => setTestPolicy({ waived_rules: e.target.value })} placeholder="e.g. Waived for 3+ years professional experience" />
@@ -473,10 +477,11 @@ export default function ProgramEditorPage() {
                     <Input value={r.term.season} onChange={e => set('intake_rounds', draft.intake_rounds.map((x, j) => (j === i ? { ...x, term: { ...x.term, season: e.target.value } } : x)))} placeholder="Season (e.g. Fall)" />
                     <Input type="number" value={String(r.term.year)} onChange={e => set('intake_rounds', draft.intake_rounds.map((x, j) => (j === i ? { ...x, term: { ...x.term, year: Number(e.target.value) || x.term.year } } : x)))} placeholder="Year" />
                   </div>
-                  <div className="grid gap-2 sm:grid-cols-4">
+                  <div className="grid gap-2 sm:grid-cols-5">
                     <DateField label="Opens" value={r.open_date} onChange={v => set('intake_rounds', draft.intake_rounds.map((x, j) => (j === i ? { ...x, open_date: v } : x)))} />
                     <DateField label="Deadline" value={r.deadline} onChange={v => set('intake_rounds', draft.intake_rounds.map((x, j) => (j === i ? { ...x, deadline: v } : x)))} />
                     <DateField label="Decision" value={r.decision_date} onChange={v => set('intake_rounds', draft.intake_rounds.map((x, j) => (j === i ? { ...x, decision_date: v } : x)))} />
+                    <DateField label="Start" value={r.start_date} onChange={v => set('intake_rounds', draft.intake_rounds.map((x, j) => (j === i ? { ...x, start_date: v } : x)))} />
                     <Input label="Capacity" type="number" value={r.capacity != null ? String(r.capacity) : ''} onChange={e => set('intake_rounds', draft.intake_rounds.map((x, j) => (j === i ? { ...x, capacity: e.target.value ? Number(e.target.value) : null } : x)))} placeholder="—" />
                   </div>
                 </div>
