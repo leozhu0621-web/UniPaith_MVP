@@ -33,6 +33,7 @@ class CreateInstitutionRequest(BaseModel):
     student_body_size: int | None = None
     founded_year: int | None = None
     contact_email: str | None = None
+    contact_phone: str | None = None
     logo_url: str | None = None
     website_url: str | None = None
     media_gallery: list[str] | None = None
@@ -65,6 +66,7 @@ class UpdateInstitutionRequest(BaseModel):
     student_body_size: int | None = None
     founded_year: int | None = None
     contact_email: str | None = None
+    contact_phone: str | None = None
     logo_url: str | None = None
     website_url: str | None = None
     media_gallery: list[str] | None = None
@@ -96,6 +98,7 @@ class InstitutionResponse(BaseModel):
     student_body_size: int | None = None
     founded_year: int | None = None
     contact_email: str | None = None
+    contact_phone: str | None = None
     logo_url: str | None
     website_url: str | None
     media_gallery: list | dict | None = None

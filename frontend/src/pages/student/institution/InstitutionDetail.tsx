@@ -24,7 +24,7 @@ import Select from '../../../components/ui/Select'
 import Textarea from '../../../components/ui/Textarea'
 import {
   Bookmark, BookmarkCheck, MapPin, Globe, Users, Building2, BookOpen,
-  Mail, CalendarPlus, Check, ChevronDown, X, Search, GraduationCap,
+  Mail, Phone, CalendarPlus, Check, ChevronDown, X, Search, GraduationCap,
   Filter, ArrowRight, Calendar, Send, Link2,
 } from 'lucide-react'
 import type { Institution, ProgramSummary, InstitutionPost, SchoolSummary } from '../../../types'
@@ -259,7 +259,7 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
             </div>
 
             {/* Secondary links (Spec 22 §3 — Web presence) */}
-            {(inst.website_url || inst.contact_email || hasSocialLinks(inst.social_links)) && (
+            {(inst.website_url || inst.contact_email || inst.contact_phone || hasSocialLinks(inst.social_links)) && (
               <div className="flex items-center gap-4 mt-2.5 text-[12px] flex-wrap">
                 {inst.website_url && (
                   <a href={inst.website_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-cobalt hover:underline">
@@ -269,6 +269,11 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
                 {inst.contact_email && (
                   <a href={`mailto:${inst.contact_email}`} className="inline-flex items-center gap-1 text-cobalt hover:underline">
                     <Mail size={12} /> Contact
+                  </a>
+                )}
+                {inst.contact_phone && (
+                  <a href={`tel:${inst.contact_phone.replace(/\s/g, '')}`} className="inline-flex items-center gap-1 text-cobalt hover:underline">
+                    <Phone size={12} /> {inst.contact_phone}
                   </a>
                 )}
                 <SocialLinks links={inst.social_links} />

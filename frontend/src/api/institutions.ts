@@ -41,6 +41,7 @@ export async function updateInstitution(payload: Partial<{
   website_url: string; description_text: string; logo_url: string;
   campus_description: string; campus_setting: 'urban' | 'suburban' | 'rural';
   student_body_size: number; founded_year: number; contact_email: string;
+  contact_phone?: string;
   media_gallery: string[];
   // JSONB dicts — see UpdateInstitutionRequest in the backend schema.
   social_links: Record<string, any>;
@@ -572,6 +573,12 @@ export async function pinPost(postId: string): Promise<InstitutionPost> {
 
 export async function requestPostMediaUpload(contentType: string): Promise<{ upload_url: string; media_key: string }> {
   const { data } = await apiClient.post('/institutions/me/posts/media/upload', { content_type: contentType })
+  return data
+}
+
+/** Spec 22 §9 — presigned upload for institution logo / gallery media. */
+export async function requestInstitutionMediaUpload(contentType: string): Promise<{ upload_url: string; media_key: string }> {
+  const { data } = await apiClient.post('/institutions/me/media/upload', { content_type: contentType })
   return data
 }
 

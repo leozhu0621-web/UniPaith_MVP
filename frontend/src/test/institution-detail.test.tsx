@@ -159,6 +159,48 @@ describe('InstitutionDetail (Spec 12)', () => {
     expect(screen.getByText('International students')).toBeInTheDocument()
   })
 
+  // Spec 22 §14 — RSVP from institution page uses the same events API (→ Calendar via backend).
+  it('authenticated: RSVP calls the events API', async () => {
+    const rsvpSpy = vi.spyOn(eventsApi, 'rsvpEvent').mockResolvedValue({} as any)
+    vi.spyOn(eventsApi, 'listEvents').mockResolvedValue([
+      {
+        id: 'ev-1', event_name: 'Info Session', start_time: '2026-06-15T18:00:00Z',
+        location: 'Online', event_type: 'info_session', capacity: 50, rsvp_count: 0,
+      },
+    ] as any)
+    renderDetail(true)
+    await screen.findByRole('heading', { name: 'University of Foo' })
+    clickTab(/events/i)
+    fireEvent.click(await screen.findByRole('button', { name: /^rsvp$/i }))
+    await waitFor(() => expect(rsvpSpy).toHaveBeenCalledWith('ev-1'))
+  })
+
+  it('public: Events tab shows Sign in to RSVP', async () => {
+    vi.spyOn(eventsApi, 'listEvents').mockResolvedValue([
+      { id: 'ev-1', event_name: 'Open House', start_time: '2026-06-15T18:00:00Z', location: 'Campus' },
+    ] as any)
+    renderDetail(false)
+    await screen.findByRole('heading', { name: 'University of Foo' })
+    clickTab(/events/i)
+    expect(await screen.findByRole('button', { name: /sign in to rsvp/i })).toBeInTheDocument()
+  })
+
+  it('Updates tab renders program tags and markdown links on posts', async () => {
+    vi.spyOn(institutionsApi, 'getPublicPosts').mockResolvedValue([
+      {
+        id: 'post-1', title: 'Aid update', body: 'See our [aid page](https://foo.edu/aid) for **details**.',
+        pinned: false, created_at: '2026-05-01T00:00:00Z', media_urls: [],
+        program_names: ['MS in Data Science'],
+      },
+    ] as any)
+    renderDetail(true)
+    await screen.findByRole('heading', { name: 'University of Foo' })
+    clickTab(/updates/i)
+    expect(await screen.findByText('MS in Data Science')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'aid page' })).toHaveAttribute('href', 'https://foo.edu/aid')
+    expect(screen.getByText('details')).toBeInTheDocument()
+  })
+
   // Spec 22 §3 — social links surface on the header (text links, no logos).
   it('renders social links in the header', async () => {
     renderDetail(true)

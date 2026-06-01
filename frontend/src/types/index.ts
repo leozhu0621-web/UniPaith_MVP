@@ -1041,6 +1041,12 @@ export interface TeamMember {
   invited_at: string | null
 }
 
+export interface ReviewConfig {
+  blind_review_default: boolean
+  calibration_enabled: boolean
+  reviewer_assignment_mode: 'round_robin' | 'load_balanced' | 'manual'
+}
+
 export interface InstitutionSettings {
   account: {
     institution_id: string | null
@@ -1057,6 +1063,7 @@ export interface InstitutionSettings {
   email_frequency: EmailFrequency
   team: TeamMember[]
   deletion: DeletionInfo | null
+  review_config: ReviewConfig
 }
 
 // ============ RECOMMENDATIONS ============
@@ -1093,6 +1100,7 @@ export interface Institution {
   student_body_size: number | null
   founded_year: number | null
   contact_email: string | null
+  contact_phone: string | null
   logo_url: string | null
   website_url: string | null
   media_gallery: string[] | null

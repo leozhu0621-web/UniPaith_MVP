@@ -2184,6 +2184,19 @@ class InstitutionService:
         upload_url = s3.generate_upload_url(key, content_type)
         return PostMediaUploadResponse(upload_url=upload_url, media_key=key)
 
+    async def request_institution_media_upload(
+        self,
+        institution_id: UUID,
+        content_type: str,
+    ) -> PostMediaUploadResponse:
+        """Spec 22 §9 — presigned upload for logo / gallery assets."""
+        from unipaith.core.s3 import S3Client
+
+        s3 = S3Client()
+        key = f"institutions/{institution_id}/media/{uuid.uuid4()}"
+        upload_url = s3.generate_upload_url(key, content_type)
+        return PostMediaUploadResponse(upload_url=upload_url, media_key=key)
+
     async def list_post_templates(
         self,
         institution_id: UUID,
