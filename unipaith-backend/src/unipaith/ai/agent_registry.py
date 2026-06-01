@@ -34,9 +34,11 @@ AGENT_TIERS: dict[str, str] = {
     # ── Workshops (L2) ──
     "workshop_coach": "workhorse",
     "workshop_judge": "batch",
-    # ── Institution review (L2) — spec 06 §2 ──
+    # ── Institution review (L2) — spec 06 §2 / spec 32 ──
     "review_summarizer": "flagship",  # DraftSummarizerForReview — Opus
     "authenticity_risk": "batch",  # AuthenticityRiskScorer — Haiku
+    "review_synthesis": "workhorse",  # ReviewSynthesisAgent (32 §4) — Sonnet
+    "review_assistant": "workhorse",  # ReviewAssistant (32 §6) — Sonnet
     # ── L3 ML scorer (not an LLM; labels the audit-ledger row) ──
     "matcher": "rule_based",
     # ── Discovery type-first program search (spec 10 §3 / 45 §12) ──
@@ -53,6 +55,12 @@ AGENT_TIERS: dict[str, str] = {
     # ── Institution messaging (spec 29 §8 / 45) — Haiku, always falls back ──
     "institution_reply_drafter": "batch",  # InstitutionReplyDrafter — per-thread reply
     "inbound_intent_classifier": "batch",  # InboundIntentClassifier — reason-code suggestion
+    # ── Admissions-intake dashboard digest (spec 31 §9 / §11) — Sonnet, falls
+    #    back to a rule-based narrator. 45 §11: migrated off GPT-4o to Claude. ──
+    "intelligence_digest": "workhorse",
+    # ── Interviews (spec 33 §9) — Haiku invite drafter + Sonnet score prefill ──
+    "interview_invite_drafter": "batch",  # InterviewInviteDrafter — invite message
+    "interview_score_prefill": "workhorse",  # InterviewScorePrefill — rubric prefill
 }
 
 

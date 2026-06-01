@@ -41,8 +41,26 @@ _OVERDUE_ELIGIBLE = {
     "reminder",
 }
 
-_LIVE_INTERVIEW_KINDS = {"video", "phone", "in_person", "live", "on_campus"}
-_RECORDED_INTERVIEW_KINDS = {"recorded", "async", "asynchronous", "video_submission"}
+# Spec 33 §2 interview types map onto the calendar's live-vs-window split.
+# portfolio_review / third_party_platform are scheduled (live); recorded_async /
+# technical_assessment submit within a window.
+_LIVE_INTERVIEW_KINDS = {
+    "video",
+    "phone",
+    "in_person",
+    "live",
+    "on_campus",
+    "portfolio_review",
+    "third_party_platform",
+}
+_RECORDED_INTERVIEW_KINDS = {
+    "recorded",
+    "async",
+    "asynchronous",
+    "video_submission",
+    "recorded_async",
+    "technical_assessment",
+}
 
 _CAMPUS_EVENT_KINDS = {"campus_visit", "visit", "campus_tour", "tour", "open_house", "open-house"}
 _INFO_EVENT_KINDS = {
@@ -127,26 +145,33 @@ class CalendarService:
             .where(Application.student_id == student_id)
         )
         for iv, app, program, inst in rows.all():
+            kind = (iv.interview_type or "").lower()
+            is_recorded = kind in _RECORDED_INTERVIEW_KINDS
             start = iv.confirmed_time
             if start is None and iv.proposed_times:
                 start = _parse_first_time(iv.proposed_times)
+            # Async interviews (recorded_async / technical_assessment) carry only
+            # a submission window — anchor the calendar item on its deadline.
+            if start is None and iv.async_window_end is not None:
+                start = iv.async_window_end
             if start is None:
                 continue
-            kind = (iv.interview_type or "").lower()
-            is_recorded = kind in _RECORDED_INTERVIEW_KINDS
             item_type = "interview_recorded_window" if is_recorded else "interview_live"
             link_or_loc = iv.location_or_link or ""
             meeting_link = link_or_loc if link_or_loc.startswith("http") else None
             location = None if meeting_link else (link_or_loc or None)
             status = _interview_status(iv.status)
             label = "Interview window" if is_recorded else "Interview"
+            end_at = _aware(start) + timedelta(minutes=iv.duration_minutes or 30)
+            if is_recorded and iv.async_window_end is not None:
+                end_at = _aware(iv.async_window_end)
             items.append(
                 {
                     "id": f"{item_type}:{iv.id}",
                     "type": item_type,
                     "title": f"{label} — {program.program_name}",
                     "start_at": _aware(start),
-                    "end_at": _aware(start) + timedelta(minutes=iv.duration_minutes or 30),
+                    "end_at": end_at,
                     "location": location,
                     "meeting_link": meeting_link,
                     "application_id": app.id,

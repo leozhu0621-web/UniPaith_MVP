@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CreateApplicationRequest(BaseModel):
@@ -34,8 +34,21 @@ class SubmitApplicationRequest(BaseModel):
     pass
 
 
+DecisionLiteral = Literal[
+    "admitted", "accepted", "conditional_admission", "rejected", "waitlisted", "deferred"
+]
+OfferTypeLiteral = Literal[
+    "full_admission",
+    "conditional",
+    "partial",
+    "transfer_credit_offer",
+    "waitlist_to_admit",
+    "waitlist_offer",
+]
+
+
 class DecisionRequest(BaseModel):
-    decision: Literal["admitted", "rejected", "waitlisted", "deferred"]
+    decision: DecisionLiteral
     decision_notes: str | None = None
 
 
@@ -100,6 +113,9 @@ class ApplicationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
     student_id: UUID
+    # Spec 32 — institution-facing lists attach the applicant's display name so
+    # reviewers never see a raw UUID. None on student-side paths.
+    student_name: str | None = None
     program_id: UUID
     status: str | None
     match_score: Decimal | None
@@ -131,13 +147,18 @@ class ApplicationDetailResponse(ApplicationResponse):
 
 
 class CreateOfferRequest(BaseModel):
-    offer_type: Literal["full_admission", "conditional", "waitlist_offer"]
+    offer_type: OfferTypeLiteral
     tuition_amount: int | None = None
     scholarship_amount: int = 0
+    scholarship_currency: str | None = "USD"
+    tuition_estimate: int | None = None
+    total_cost_estimate: int | None = None
     assistantship_details: dict | None = None
     financial_package_total: int | None = None
     conditions: dict | None = None
     response_deadline: date | None = None
+    start_term: StartTerm | None = None
+    next_step_actions: list[dict] | None = None
 
 
 class OfferRespondRequest(BaseModel):
@@ -181,6 +202,81 @@ class OfferDecisionResponse(BaseModel):
 
     offer: OfferLetterResponse
     withdrawable_apps: list[dict] = []
+
+
+# --- Spec 34 · Decisions & Offers (institution) ---
+
+
+class ReleaseOfferTerms(BaseModel):
+    """Offer terms attached to a decision release (spec 34 §4)."""
+
+    offer_type: OfferTypeLiteral | None = None
+    scholarship_amount: int | None = None
+    scholarship_currency: str | None = "USD"
+    tuition_amount: int | None = None
+    tuition_estimate: int | None = None
+    total_cost_estimate: int | None = None
+    financial_package_total: int | None = None
+    conditions: dict | None = None
+    response_deadline: date | None = None
+    start_term: StartTerm | None = None
+    next_step_actions: list[dict] | None = None
+
+
+class ReleaseDecisionRequest(BaseModel):
+    """Per-applicant decision release (spec 34 §3). When ``offer`` is omitted for
+    an accepted / conditional decision the service mints a default offer."""
+
+    decision: DecisionLiteral
+    decision_notes: str | None = None
+    offer: ReleaseOfferTerms | None = None
+    message: str | None = None  # optional custom student-facing notice body
+    notify: bool = True
+
+
+class ReleaseDecisionResponse(BaseModel):
+    application: ApplicationDetailResponse
+    offer: OfferLetterResponse | None = None
+
+
+class ExtendDeadlineRequest(BaseModel):
+    response_deadline: date
+
+
+class OfferStatusResponse(BaseModel):
+    application_id: UUID
+    student_id: UUID
+    decision: str | None = None
+    decision_at: datetime | None = None
+    has_offer: bool
+    offer_id: UUID | None = None
+    offer_type: str | None = None
+    offer_status: str | None = None
+    student_response: str | None = None
+    response_at: datetime | None = None
+    response_deadline: date | None = None
+    days_remaining: int | None = None
+    deadline_passed: bool = False
+    response_state: str
+
+
+class BatchReleaseItem(BaseModel):
+    application_id: UUID
+    decision: DecisionLiteral
+    decision_notes: str | None = None
+    offer: ReleaseOfferTerms | None = None
+    message: str | None = None
+
+
+class BatchReleaseDecisionRequest(BaseModel):
+    items: list[BatchReleaseItem] = Field(min_length=1)
+    notify: bool = True
+
+
+class BatchReleaseDecisionResponse(BaseModel):
+    results: list[dict]
+    success_count: int
+    failed_count: int
 
 
 class BulkWithdrawRequest(BaseModel):

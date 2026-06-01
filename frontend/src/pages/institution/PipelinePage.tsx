@@ -14,7 +14,8 @@ import {
 } from '@dnd-kit/core'
 import { Search, GripVertical, ClipboardCheck, List, Video, CheckSquare, Zap, Clock } from 'lucide-react'
 import { getInstitutionPrograms } from '../../api/institutions'
-import { getApplicationsByProgram, updateApplicationStatus, batchRequestMissingItems, batchUpdateStatus, batchReleaseDecision } from '../../api/applications-admin'
+import { getApplicationsByProgram, updateApplicationStatus, batchRequestMissingItems, batchUpdateStatus } from '../../api/applications-admin'
+import BatchReleaseModal from './pipeline/BatchReleaseModal'
 import { batchAssignReviewers, getReviewPriorityQueue } from '../../api/reviews'
 import { getInstitutionInterviews, batchInviteInterviews } from '../../api/interviews-admin'
 import { showToast } from '../../stores/toast-store'
@@ -34,11 +35,14 @@ import Textarea from '../../components/ui/Textarea'
 import type { Application, BatchOperationResult, PrioritizedApplication, Program } from '../../types'
 
 const PIPELINE_COLUMNS = [
-  { id: 'submitted', label: 'Applied', color: 'bg-blue-500' },
-  { id: 'under_review', label: 'Under Review', color: 'bg-yellow-500' },
-  { id: 'interview', label: 'Interview', color: 'bg-purple-500' },
-  { id: 'decision_made', label: 'Decision', color: 'bg-orange-500' },
+  { id: 'submitted', label: 'Applied', color: 'bg-cobalt' },
+  { id: 'under_review', label: 'Under Review', color: 'bg-warning' },
+  { id: 'interview', label: 'Interview', color: 'bg-gold-hover' },
+  { id: 'decision_made', label: 'Decision', color: 'bg-success' },
 ] as const
+
+const applicantLabel = (a: { student_name?: string | null; student_id: string }) =>
+  a.student_name ?? `Applicant ${a.student_id.slice(0, 8)}`
 
 type ColumnId = typeof PIPELINE_COLUMNS[number]['id']
 type PipelineTab = 'board' | 'review' | 'list' | 'interviews' | 'priority'
@@ -68,7 +72,7 @@ function DraggableCard({ app, onClick, selected, onToggleSelect }: {
             />
           )}
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-gray-900 truncate">Applicant {app.student_id.slice(0, 8)}</p>
+            <p className="text-sm font-medium text-gray-900 truncate">{applicantLabel(app)}</p>
             <p className="text-xs text-gray-500 mt-0.5">{app.program?.program_name ?? 'Program'}</p>
           </div>
         </div>
@@ -96,11 +100,12 @@ function DroppableColumn({ id, label, color, children }: { id: string; label: st
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 min-w-[240px] rounded-lg p-3 transition-colors ${isOver ? 'bg-brand-slate-50 ring-2 ring-brand-slate-300' : 'bg-gray-50'}`}
+      className={`flex-1 min-w-[240px] rounded-lg p-3 transition-colors ${isOver ? 'bg-accent/5 ring-2 ring-accent border border-accent' : 'bg-gray-50'}`}
     >
       <div className="flex items-center gap-2 mb-3">
         <div className={`w-3 h-3 rounded-full ${color}`} />
-        <h3 className="text-sm font-semibold text-gray-700">{label}</h3>
+        {/* Spec 31 §10 — Kanban column headers use the eyebrow style. */}
+        <h3 className="text-eyebrow uppercase text-gray-500">{label}</h3>
       </div>
       <div className="space-y-2 min-h-[100px]">{children}</div>
     </div>
@@ -110,7 +115,7 @@ function DroppableColumn({ id, label, color, children }: { id: string; label: st
 function PipelineCardOverlay({ app }: { app: Application }) {
   return (
     <div className="bg-white border rounded-lg p-3 shadow-lg w-[240px]">
-      <p className="text-sm font-medium text-gray-900">Applicant {app.student_id.slice(0, 8)}</p>
+      <p className="text-sm font-medium text-gray-900">{applicantLabel(app)}</p>
       <p className="text-xs text-gray-500 mt-0.5">{app.program?.program_name ?? 'Program'}</p>
     </div>
   )
@@ -131,8 +136,6 @@ export default function PipelinePage() {
   const [batchAction, setBatchAction] = useState<string | null>(null)
   const [batchItems, setBatchItems] = useState('')
   const [batchStatus, setBatchStatus] = useState('under_review')
-  const [batchDecision, setBatchDecision] = useState('admitted')
-  const [batchNotes, setBatchNotes] = useState('')
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
@@ -177,7 +180,7 @@ export default function PipelinePage() {
   const grouped = useMemo(() => {
     const apps: Application[] = Array.isArray(applicationsQ.data) ? applicationsQ.data : []
     const filtered = apps.filter(a =>
-      !search || a.student_id.toLowerCase().includes(search.toLowerCase())
+      !search || (a.student_name ?? a.student_id).toLowerCase().includes(search.toLowerCase())
     )
     const map: Record<ColumnId, Application[]> = {
       submitted: [],
@@ -197,10 +200,10 @@ export default function PipelinePage() {
     (a.status === 'submitted' || a.status === 'under_review') && !a.decision
   )
   const filteredReviewableApps = reviewableApps.filter(a =>
-    !search || a.student_id.toLowerCase().includes(search.toLowerCase())
+    !search || (a.student_name ?? a.student_id).toLowerCase().includes(search.toLowerCase())
   )
   const filteredAllApps = applications.filter(a =>
-    !search || a.student_id.toLowerCase().includes(search.toLowerCase())
+    !search || (a.student_name ?? a.student_id).toLowerCase().includes(search.toLowerCase())
   )
   const interviews = Array.isArray(interviewsQ.data) ? interviewsQ.data : []
   const interviewCandidates = filteredAllApps.filter(a => a.status === 'interview')
@@ -227,13 +230,14 @@ export default function PipelinePage() {
     },
   })
 
+  const selectedApps = applications.filter(a => selectedIds.has(a.id))
+
   const handleBatchResult = (result: BatchOperationResult) => {
     const msg = `${result.success_count} succeeded` + (result.failed_ids.length > 0 ? `, ${result.failed_ids.length} failed` : '')
     showToast(msg, result.failed_ids.length > 0 ? 'warning' : 'success')
     clearSelection()
     setBatchAction(null)
     setBatchItems('')
-    setBatchNotes('')
     queryClient.invalidateQueries({ queryKey: ['pipeline-applications'] })
   }
 
@@ -247,10 +251,6 @@ export default function PipelinePage() {
   })
   const batchStatusMut = useMutation({
     mutationFn: () => batchUpdateStatus(Array.from(selectedIds), batchStatus),
-    onSuccess: handleBatchResult,
-  })
-  const batchDecisionMut = useMutation({
-    mutationFn: () => batchReleaseDecision(Array.from(selectedIds), batchDecision, batchNotes || undefined),
     onSuccess: handleBatchResult,
   })
   const batchInterviewMut = useMutation({
@@ -295,7 +295,7 @@ export default function PipelinePage() {
           onClick={() => navigate(`/i/pipeline/${row.id}`)}
           className="text-brand-slate-600 hover:underline font-medium"
         >
-          Applicant {row.student_id.slice(0, 8)}
+          {applicantLabel(row)}
         </button>
       ),
     },
@@ -340,7 +340,7 @@ export default function PipelinePage() {
             <div className="relative w-full sm:flex-1 sm:max-w-xs">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <Input
-                placeholder="Search by applicant ID..."
+                placeholder="Search by applicant name…"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="pl-9"
@@ -375,11 +375,11 @@ export default function PipelinePage() {
             </Card>
             <Card className="p-3">
               <p className="text-xs text-gray-500">Needs Review</p>
-              <p className="text-xl font-semibold text-amber-700">{reviewableApps.length}</p>
+              <p className="text-xl font-semibold text-warning">{reviewableApps.length}</p>
             </Card>
             <Card className="p-3">
               <p className="text-xs text-gray-500">Interview Stage</p>
-              <p className="text-xl font-semibold text-purple-700">{interviewCandidates.length}</p>
+              <p className="text-xl font-semibold text-cobalt">{interviewCandidates.length}</p>
             </Card>
           </div>
 
@@ -456,12 +456,12 @@ export default function PipelinePage() {
                   <Card key={p.application_id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/i/pipeline/${p.application_id}`)}>
                     <div className="flex items-center gap-4">
                       <div className="flex items-center justify-center w-10 h-10 rounded-full shrink-0 font-bold text-white text-sm"
-                        style={{ backgroundColor: p.priority_score >= 70 ? '#ef4444' : p.priority_score >= 40 ? '#f59e0b' : '#22c55e' }}>
+                        style={{ backgroundColor: p.priority_score >= 70 ? '#B5321F' : p.priority_score >= 40 ? '#B8741D' : '#1F6B2E' }}>
                         {Math.round(p.priority_score)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium text-gray-900">#{i + 1} — Applicant {p.student_id.slice(0, 8)}</span>
+                          <span className="text-sm font-medium text-gray-900">#{i + 1} — {applicantLabel(p)}</span>
                           <Badge variant="info">{p.program_name}</Badge>
                           <Badge variant="neutral">{p.status}</Badge>
                         </div>
@@ -473,7 +473,7 @@ export default function PipelinePage() {
                       </div>
                       <div className="text-right shrink-0">
                         {p.deadline_days != null && (
-                          <div className={`flex items-center gap-1 text-xs font-medium ${p.deadline_days <= 7 ? 'text-red-600' : p.deadline_days <= 14 ? 'text-amber-600' : 'text-gray-500'}`}>
+                          <div className={`flex items-center gap-1 text-xs font-medium ${p.deadline_days <= 7 ? 'text-error' : p.deadline_days <= 14 ? 'text-warning' : 'text-gray-500'}`}>
                             <Clock size={12} />
                             {p.deadline_days <= 0 ? 'Past due' : `${p.deadline_days}d left`}
                           </div>
@@ -592,24 +592,16 @@ export default function PipelinePage() {
         </div>
       </Modal>
 
-      {/* Batch Decision Modal */}
-      <Modal isOpen={batchAction === 'decision'} onClose={() => setBatchAction(null)} title="Batch Release Decision">
-        <div className="space-y-4">
-          <Select label="Decision" options={[
-            { value: 'admitted', label: 'Admitted' },
-            { value: 'rejected', label: 'Rejected' },
-            { value: 'waitlisted', label: 'Waitlisted' },
-            { value: 'deferred', label: 'Deferred' },
-          ]} value={batchDecision} onChange={e => setBatchDecision(e.target.value)} />
-          <Textarea label="Notes (optional)" value={batchNotes} onChange={e => setBatchNotes(e.target.value)} rows={3} placeholder="Decision notes for all selected applications..." />
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setBatchAction(null)}>Cancel</Button>
-            <Button onClick={() => batchDecisionMut.mutate()} disabled={batchDecisionMut.isPending}>
-              {batchDecisionMut.isPending ? 'Releasing...' : `Release to ${selectedIds.size} apps`}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      {/* Batch Release Decisions (spec 34 §5) */}
+      <BatchReleaseModal
+        isOpen={batchAction === 'decision'}
+        onClose={() => setBatchAction(null)}
+        selectedApps={selectedApps}
+        onDone={() => {
+          clearSelection()
+          queryClient.invalidateQueries({ queryKey: ['pipeline-applications'] })
+        }}
+      />
     </div>
   )
 }

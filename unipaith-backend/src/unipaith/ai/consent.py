@@ -112,6 +112,23 @@ AGENT_REQUIRES: dict[str, str | None] = {
     # only rather than blocking the call.
     "institution_reply_drafter": None,
     "inbound_intent_classifier": None,
+    # Spec 31 §9 — the dashboard intelligence-digest narrator runs on a
+    # pre-aggregated, non-PII applicant-landscape stat block for the
+    # institution's own pipeline (no individual student in scope), so it sits
+    # behind no student-consent lever — institution_admin role-gated at the API
+    # layer, like campaign_copy / segment_builder_nl.
+    "intelligence_digest": None,
+    # Spec 32 §4/§6 — review-workspace assist agents are institution-initiated
+    # and role-gated at the API layer (like review_summarizer). They operate on
+    # an application within the reviewer's own tenant, so no student-consent
+    # lever here.
+    "review_synthesis": None,
+    "review_assistant": None,
+    # Spec 33 §9 — interview agents are institution-initiated and role-gated at
+    # the API layer (like campaign_copy / institution_reply_drafter), so they
+    # carry no student-consent lever here. Both degrade to no-AI on any failure.
+    "interview_invite_drafter": None,
+    "interview_score_prefill": None,
 }
 
 

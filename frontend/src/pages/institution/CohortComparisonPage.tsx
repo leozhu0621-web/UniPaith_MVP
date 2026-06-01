@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Users, BarChart3, ChevronDown, ChevronUp } from 'lucide-react'
+import { Users, BarChart3, ChevronDown, ChevronUp, Scale, AlertTriangle } from 'lucide-react'
 import { getApplicationsByProgram } from '../../api/applications-admin'
-import { getCohortComparison } from '../../api/reviews'
+import { getCohortComparison, getReviewCalibration } from '../../api/reviews'
 import { getInstitutionPrograms } from '../../api/institutions'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -13,12 +13,16 @@ import InstitutionPageHeader from '../../components/institution/InstitutionPageH
 import { formatScore } from '../../utils/format'
 import type { Application, CohortApplicant, Program } from '../../types'
 
+// Brand-tokened decision chips (§5 decision-colored chips).
 const DECISION_COLORS: Record<string, string> = {
-  admitted: 'text-green-600 bg-green-50',
-  rejected: 'text-red-600 bg-red-50',
-  waitlisted: 'text-amber-600 bg-amber-50',
-  deferred: 'text-blue-600 bg-blue-50',
+  admitted: 'text-success bg-success-soft',
+  rejected: 'text-error bg-error-soft',
+  waitlisted: 'text-warning bg-warning-soft',
+  deferred: 'text-cobalt bg-cobalt/10',
 }
+
+const applicantLabel = (a: { student_name?: string | null; student_id: string }) =>
+  a.student_name ?? `Applicant ${a.student_id.slice(0, 8)}`
 
 export default function CohortComparisonPage() {
   const [selectedProgram, setSelectedProgram] = useState('')
@@ -44,6 +48,14 @@ export default function CohortComparisonPage() {
     enabled: selectedIds.length >= 2,
   })
   const applicants: CohortApplicant[] = useMemo(() => cohortQ.data?.applicants ?? [], [cohortQ.data])
+
+  // Reader calibration (§7A.2) — program-scoped inter-rater reliability + drift.
+  const calibrationQ = useQuery({
+    queryKey: ['review-calibration', selectedProgram],
+    queryFn: () => getReviewCalibration(selectedProgram || undefined),
+    enabled: !!selectedProgram,
+  })
+  const calibration = calibrationQ.data
 
   const sorted = useMemo(() => {
     const arr = [...applicants]
@@ -102,6 +114,58 @@ export default function CohortComparisonPage() {
         </div>
       </Card>
 
+      {/* Reader calibration (§7A.2) — coaching signals only */}
+      {selectedProgram && calibration && (calibration.reviewer_drift.length > 0 || calibration.inter_rater.length > 0) && (
+        <Card className="p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Scale size={16} className="text-cobalt" />
+            <h3 className="text-sm font-semibold text-foreground">Reader calibration</h3>
+            <Badge variant="neutral">coaching only</Badge>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-1.5">Inter-rater reliability</p>
+              {calibration.inter_rater.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Not enough multi-reviewer scores yet.</p>
+              ) : (
+                <div className="space-y-1">
+                  {calibration.inter_rater.slice(0, 6).map(c => (
+                    <div key={c.criterion} className="flex items-center justify-between text-xs">
+                      <span className="text-foreground truncate">{c.criterion}</span>
+                      <span className={`inline-flex items-center gap-1 tabular-nums ${c.needs_calibration ? 'text-warning font-medium' : 'text-muted-foreground'}`}>
+                        {c.needs_calibration && <AlertTriangle size={11} />}Δ {c.mean_spread}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-1.5">Reviewer norming (vs panel mean {calibration.panel_mean})</p>
+              {calibration.reviewer_drift.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No scored reviewers yet.</p>
+              ) : (
+                <div className="space-y-1">
+                  {calibration.reviewer_drift.slice(0, 6).map(r => (
+                    <div key={r.reviewer_id} className="flex items-center justify-between text-xs">
+                      <span className="text-foreground truncate">{r.reviewer_name}</span>
+                      <Badge variant={r.tendency === 'aligned' ? 'success' : r.tendency === 'lenient' ? 'info' : 'warning'}>
+                        {r.tendency} {r.delta_vs_panel > 0 ? '+' : ''}{r.delta_vs_panel}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="border-t border-border pt-2 text-xs text-muted-foreground">
+            Test-optional outcomes — submitters: {pctRate(calibration.test_optional_cohort.submitters.admit_rate)} admit ({calibration.test_optional_cohort.submitters.n}) ·
+            {' '}non-submitters: {pctRate(calibration.test_optional_cohort.non_submitters.admit_rate)} admit ({calibration.test_optional_cohort.non_submitters.n}).
+            {' '}{calibration.test_optional_cohort.guardrail}
+          </div>
+        </Card>
+      )}
+
       {/* Application picker */}
       {selectedProgram && (
         <Card className="p-4">
@@ -118,11 +182,11 @@ export default function CohortComparisonPage() {
                   onClick={() => toggleApp(app.id)}
                   className={`px-3 py-1.5 rounded-lg border text-sm transition-all ${
                     selectedIds.includes(app.id)
-                      ? 'bg-brand-slate-50 border-brand-slate-400 text-brand-slate-700 font-medium'
-                      : 'bg-white border-gray-200 text-gray-600 hover:border-gray-400'
+                      ? 'bg-cobalt/10 border-cobalt/40 text-cobalt font-medium'
+                      : 'bg-card border-border text-muted-foreground hover:border-cobalt/40'
                   }`}
                 >
-                  {app.student_id.slice(0, 8)} {app.match_score != null && `(${formatScore(app.match_score / 100)})`}
+                  {applicantLabel(app)} {app.match_score != null && `(${formatScore(app.match_score)})`}
                 </button>
               ))}
             </div>
@@ -178,13 +242,13 @@ export default function CohortComparisonPage() {
                 </td>
                 {sorted.map(a => (
                   <td key={a.application_id} className="text-center px-4 py-2 font-mono">
-                    {a.match_score != null ? formatScore(a.match_score / 100) : '—'}
+                    {a.match_score != null ? formatScore(a.match_score) : '—'}
                   </td>
                 ))}
               </tr>
               {/* Avg Rubric Score */}
-              <tr className="border-b bg-blue-50/50 hover:bg-blue-50 cursor-pointer" onClick={() => toggleSort('avg_score')}>
-                <td className="px-3 py-2 font-semibold text-gray-700 sticky left-0 bg-blue-50/50 flex items-center gap-1">
+              <tr className="border-b bg-cobalt/5 hover:bg-cobalt/10 cursor-pointer" onClick={() => toggleSort('avg_score')}>
+                <td className="px-3 py-2 font-semibold text-gray-700 sticky left-0 bg-cobalt/5 flex items-center gap-1">
                   Avg Rubric Score <SortIcon col="avg_score" />
                 </td>
                 {sorted.map(a => (
@@ -252,4 +316,8 @@ export default function CohortComparisonPage() {
       )}
     </div>
   )
+}
+
+function pctRate(r: number | null): string {
+  return r == null ? '—' : `${Math.round(r * 100)}%`
 }

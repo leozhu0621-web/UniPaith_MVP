@@ -617,12 +617,13 @@ export interface OfferDecisionResult {
 export interface Application {
   id: string
   student_id: string
+  student_name?: string | null
   program_id: string
   status: 'draft' | 'submitted' | 'under_review' | 'interview' | 'decision_made'
   match_score: number | null
   match_reasoning_text: string | null
   submitted_at: string | null
-  decision: 'admitted' | 'rejected' | 'waitlisted' | 'deferred' | null
+  decision: 'admitted' | 'accepted' | 'conditional_admission' | 'rejected' | 'waitlisted' | 'deferred' | null
   decision_at: string | null
   decision_notes: string | null
   // Spec 18 §2 — student-side action + unified derived state
@@ -688,6 +689,77 @@ export interface OfferLetter {
   status: string
   student_response: string | null
   response_at: string | null
+}
+
+// --- Spec 34 · Decisions & Offers (institution-side) ---
+
+export type InstitutionDecision =
+  | 'admitted'
+  | 'conditional_admission'
+  | 'rejected'
+  | 'waitlisted'
+  | 'deferred'
+
+export type OfferType =
+  | 'full_admission'
+  | 'conditional'
+  | 'partial'
+  | 'transfer_credit_offer'
+  | 'waitlist_to_admit'
+
+export interface ReleaseOfferTerms {
+  offer_type?: OfferType
+  scholarship_amount?: number | null
+  scholarship_currency?: string
+  tuition_amount?: number | null
+  tuition_estimate?: number | null
+  total_cost_estimate?: number | null
+  conditions?: Record<string, any> | null
+  response_deadline?: string | null
+  start_term?: { season?: string | null; year?: number | null }
+  next_step_actions?: { action: string; by_date?: string | null }[] | null
+}
+
+export interface OfferStatus {
+  application_id: string
+  student_id: string
+  decision: string | null
+  decision_at: string | null
+  has_offer: boolean
+  offer_id: string | null
+  offer_type: string | null
+  offer_status: string | null
+  student_response: string | null
+  response_at: string | null
+  response_deadline: string | null
+  days_remaining: number | null
+  deadline_passed: boolean
+  response_state:
+    | 'accepted'
+    | 'declined'
+    | 'awaiting_response'
+    | 'deadline_passed'
+    | 'rescinded'
+    | 'no_offer'
+}
+
+export interface ReleaseDecisionResult {
+  application: Application
+  offer: OfferLetter | null
+}
+
+export interface BatchReleaseItem {
+  application_id: string
+  decision: InstitutionDecision
+  decision_notes?: string | null
+  offer?: ReleaseOfferTerms | null
+  message?: string | null
+}
+
+export interface BatchReleaseResult {
+  results: { application_id: string; ok: boolean; decision?: string; offer_id?: string | null; error?: string }[]
+  success_count: number
+  failed_count: number
 }
 
 // ============ DOCUMENTS ============
@@ -1021,18 +1093,63 @@ export interface RSVP {
 }
 
 // ============ INTERVIEWS ============
+// Spec 33 §2 interview types + §7 statuses.
+export type InterviewType =
+  | 'live'
+  | 'recorded_async'
+  | 'portfolio_review'
+  | 'technical_assessment'
+  | 'third_party_platform'
+
+export type InterviewStatus =
+  | 'proposed'
+  | 'confirmed'
+  | 'completed'
+  | 'cancelled'
+  | 'no_show'
+
+export interface InterviewScoreView {
+  interviewer_id: string
+  criterion_scores: Record<string, number> | null
+  total_weighted_score: number | null
+  notes: string | null
+  recommendation: string | null
+  created_at: string | null
+}
+
+// Spec 33 §7 — the institution-facing rich interview shape returned by the API.
 export interface Interview {
   id: string
   application_id: string
-  interviewer_id: string
-  interview_type: 'video' | 'in_person' | 'phone' | 'group'
+  applicant: { student_id: string | null; name: string }
+  program: { id: string | null; name: string }
+  interviewer_id: string | null
+  interview_type: InterviewType | string
+  status: InterviewStatus | string
+  async_expired: boolean
   proposed_times: string[]
+  proposed_slots: string[] | null
   confirmed_time: string | null
-  location_or_link: string | null
-  status: 'invited' | 'scheduling' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
+  scheduled_at: string | null
   duration_minutes: number
-  created_at: string
-  updated_at: string
+  location: string | null
+  meeting_link: string | null
+  location_or_link: string | null
+  async_window_end: string | null
+  recording_url: string | null
+  notes_to_student: string | null
+  recommendation: string | null
+  scores: InterviewScoreView[]
+  created_at: string | null
+}
+
+// Spec 33 §6 — interviewing rubric (with a built-in default).
+export interface InterviewRubric {
+  id: string | null
+  rubric_name: string
+  program_id: string | null
+  rubric_kind: string
+  criteria: Array<{ key: string; label: string; description: string; max: number }>
 }
 
 // ============ NOTIFICATIONS ============
@@ -1253,6 +1370,7 @@ export interface RubricCriterion {
   description?: string
   scale_min?: number
   scale_max?: number
+  max_score?: number
 }
 
 export interface ApplicationScore {
@@ -1292,12 +1410,14 @@ export interface IntegritySignal {
   description: string
   evidence: Record<string, unknown> | null
   status: 'open' | 'resolved' | 'dismissed' | 'acknowledged' | 'clarifying' | 'rejected'
+  resolution?: 'acceptable' | 'requires_clarification' | 'reject_application' | null
   resolved_by: string | null
   resolved_at: string | null
   resolution_notes: string | null
   created_at: string
 }
 
+export type IntegrityResolution = 'acceptable' | 'requires_clarification' | 'reject_application'
 export type IntegrityAction = 'acknowledge' | 'clarify' | 'reject_application' | 'resolve'
 
 export interface AIPacketSummary {
@@ -1325,10 +1445,129 @@ export interface PipelineData {
   [column: string]: any
 }
 
+// --- Spec 32 · Review Workspace consolidated packet ---
+
+export interface ReviewPacketStudent {
+  student_id: string
+  display_name: string
+  first_name: string | null
+  last_name: string | null
+  preferred_name: string | null
+  preferred_pronouns: string | null
+  date_of_birth: string | null
+  age: number | null
+  gender_identity: string | null
+  nationality: string | null
+  country_of_residence: string | null
+  bio: string | null
+  goals: string | null
+  academics: { institution: string | null; degree: string | null; field: string | null; gpa: string | null }[]
+  test_scores: { type: string; total: string | null }[]
+  activities: { type: string | null; title: string | null; organization: string | null }[]
+}
+
+export interface RubricScoreRow {
+  criterion: string
+  weight: number | null
+  max_score: number
+  per_reviewer: { reviewer_id: string; reviewer_name: string; score: number; note: string | null }[]
+  variance: number
+  divergent: boolean
+  synthesized_recommendation: string | null
+}
+
+export interface ReviewerNoteRow {
+  reviewer_id: string
+  reviewer_name: string
+  total_weighted_score: number | null
+  note: string | null
+  scored_at: string | null
+}
+
+export interface HolisticFlag {
+  key: string
+  label: string
+  value: string
+  sensitivity: 'standard' | 'high'
+  source: string
+}
+
+export interface HolisticContext {
+  standard: HolisticFlag[]
+  high_sensitivity: HolisticFlag[]
+  note: string
+}
+
+export interface TestOptionalAnalysis {
+  policy: 'test_optional' | 'required' | 'test_blind'
+  submitted: boolean
+  compatibility: string
+  recommendation: string
+  guardrail: string
+}
+
+export interface BlindReviewState {
+  enabled: boolean
+  revealed: boolean
+  redacted_fields: string[]
+}
+
+export interface ReviewPacket {
+  application_id: string
+  student: ReviewPacketStudent
+  program: { id: string; program_name: string; degree_type: string | null; department: string | null; label: string }
+  ai_packet_summary: AIPacketSummary | null
+  rubric_id: string | null
+  rubric_scores: RubricScoreRow[]
+  reviewer_notes: ReviewerNoteRow[]
+  reviewer_count: number
+  integrity_signals: IntegritySignal[]
+  documents: { id: string; document_type: string; file_name: string; file_url: string | null; mime_type: string | null; uploaded_at: string | null }[]
+  essays: { id: string; prompt_text: string | null; content: string | null; word_count: number | null; status: string | null; essay_version: number }[]
+  decision: { decision: string | null; decision_notes: string | null; decision_at: string | null } | null
+  offer: { id: string; offer_type: string | null; status: string | null; tuition_amount: number | null; scholarship_amount: number; response_deadline: string | null; student_response: string | null } | null
+  status: string | null
+  match_score: number | null
+  completeness_status: string | null
+  submitted_at: string | null
+  locked: boolean
+  blind_review: BlindReviewState
+  holistic_context: HolisticContext
+  test_optional: TestOptionalAnalysis
+}
+
+export interface ReviewSynthesis {
+  overall_recommendation: string
+  agreement: 'high' | 'mixed' | 'divergent'
+  per_criterion: { criterion_name: string; synthesis: string; divergent?: boolean }[]
+  model_used: string
+  reviewer_count: number
+}
+
+export interface ReviewAssistantAnswer {
+  answer: string
+  citations: string[]
+  model_used: string
+  grounded: boolean
+}
+
+export interface ReviewCalibration {
+  panel_mean: number
+  inter_rater: { criterion: string; mean_score: number; scored_pairs: number; mean_spread: number; needs_calibration: boolean }[]
+  reviewer_drift: { reviewer_id: string; reviewer_name: string; n_scores: number; mean_total: number; delta_vs_panel: number; tendency: 'harsher' | 'lenient' | 'aligned' }[]
+  test_optional_cohort: {
+    submitters: { n: number; admitted: number; admit_rate: number | null }
+    non_submitters: { n: number; admitted: number; admit_rate: number | null }
+    guardrail: string
+  }
+  note: string
+}
+
 // ============ PRIORITY QUEUE ============
 export interface PrioritizedApplication {
   application_id: string
   student_id: string
+  student_name?: string | null
   program_id: string
   program_name: string
   status: string
@@ -1342,6 +1581,19 @@ export interface PrioritizedApplication {
 }
 
 // ============ DASHBOARD & ANALYTICS ============
+export interface PriorityQueueItem {
+  category: string
+  count: number
+  deep_link: string
+}
+
+export interface FairnessSignal {
+  status: 'ok' | 'warning' | 'insufficient_data'
+  message: string
+  dimension?: string
+  pool?: number
+}
+
 export interface DashboardSummary {
   program_count: number
   published_program_count: number
@@ -1351,6 +1603,16 @@ export interface DashboardSummary {
   unread_messages_count: number
   acceptance_rate: number | null
   yield_rate: number | null
+  // Spec 31 · Admissions Intake contract (§2 / §8)
+  cycle?: string | null
+  avg_match?: number | null
+  conversion_pct?: number | null
+  projected_yield_pct?: number | null
+  new_inquiries_24h?: number
+  unanswered_inquiries_4h?: number
+  integrity_signals_count?: number
+  priority_queue?: PriorityQueueItem[]
+  fairness?: FairnessSignal | null
 }
 
 export interface ProgramApplicationCount {
