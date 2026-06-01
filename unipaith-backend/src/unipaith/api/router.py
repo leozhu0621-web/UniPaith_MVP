@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.api.ai_feedback import router as ai_feedback_router
+from unipaith.api.analytics import router as analytics_router
 from unipaith.api.applications import router as applications_router
 from unipaith.api.auth import router as auth_router
 from unipaith.api.billing import router as billing_router
@@ -44,6 +45,9 @@ api_router.include_router(billing_router)
 # Settings before students/institutions so literal `/institutions/settings` and
 # `/students/me/settings` win over param routes like `/institutions/{id}`.
 api_router.include_router(settings_router)
+# Analytics (Spec 28) before institutions so `/institutions/me/analytics/*` is
+# matched ahead of the param route `/institutions/{id}`.
+api_router.include_router(analytics_router)
 api_router.include_router(students_router)
 api_router.include_router(discovery_router)
 api_router.include_router(goals_router)

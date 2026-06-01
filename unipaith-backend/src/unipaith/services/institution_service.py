@@ -2106,21 +2106,42 @@ class InstitutionService:
         object_type: str,
         object_id: UUID,
         action: str,
+        student_id: UUID | None = None,
     ) -> None:
-        """Spec 27 §5 — increment a per-object performance counter.
+        """Spec 27 §5 — increment a per-object performance counter, and (Spec 28)
+        record a per-student attribution event for the analytics funnel.
 
-        Best-effort: an unknown (type, action) pair is ignored so a new client
-        event never 500s the caller. Atomic increment (no read-modify-write).
+        Best-effort: an unknown (type, action) pair is ignored for the counter so
+        a new client event never 500s the caller. Atomic increment (no
+        read-modify-write).
         """
         model_map = {"post": InstitutionPost, "event": Event, "promotion": Promotion}
         model = model_map.get(object_type)
-        col = self._ENGAGEMENT_COLUMNS.get((object_type, action))
-        if model is None or col is None:
+        if model is None:
             return
-        await self.db.execute(
-            update(model).where(model.id == object_id).values({col: getattr(model, col) + 1})
-        )
-        await self.db.flush()
+        col = self._ENGAGEMENT_COLUMNS.get((object_type, action))
+        if col is not None:
+            await self.db.execute(
+                update(model).where(model.id == object_id).values({col: getattr(model, col) + 1})
+            )
+            await self.db.flush()
+
+        # Spec 28 — the canonical event-sourced store the funnel reads from.
+        # post/event/promotion engagement has no durable domain table to
+        # backfill from (the counters above are anonymous totals), so capture it
+        # live here with the authenticated student.
+        from unipaith.services.attribution_service import AttributionService
+
+        obj = await self.db.get(model, object_id)
+        if obj is not None:
+            await AttributionService(self.db).record(
+                institution_id=obj.institution_id,
+                student_id=student_id,
+                source_kind=object_type,
+                source_id=object_id,
+                action=action,
+                program_id=getattr(obj, "program_id", None),
+            )
 
     async def request_post_media_upload(
         self,
