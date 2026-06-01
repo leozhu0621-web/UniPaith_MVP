@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../stores/auth-store'
 import { useUIStore } from '../../stores/ui-store'
 import { getUnreadCount } from '../../api/notifications'
-import { getInstitution, getInstitutionPrograms } from '../../api/institutions'
+import { getInstitutionPrograms, getSetupState } from '../../api/institutions'
 import Wordmark from '../ui/Wordmark'
 import Dropdown from '../ui/Dropdown'
 import Sheet from '../ui/Sheet'
@@ -32,32 +32,27 @@ export default function InstitutionLayout() {
     queryFn: getUnreadCount,
     refetchInterval: 30000,
   })
-  const institutionQ = useQuery({
-    queryKey: ['institution'],
-    queryFn: getInstitution,
-    retry: false,
-  })
   const programsQ = useQuery({
     queryKey: ['institution-programs'],
     queryFn: getInstitutionPrograms,
   })
+  // Spec 30 §2/§4 — first-run gating. While setup is incomplete the institution
+  // is forced to /i/setup and the rest of the nav is dimmed to keep focus.
+  const setupQ = useQuery({ queryKey: ['institution-setup'], queryFn: getSetupState })
   const programs = Array.isArray(programsQ.data) ? programsQ.data : []
-  const institutionMissing =
-    institutionQ.isError &&
-    institutionQ.error instanceof Error &&
-    /not found|no institution|404/i.test(institutionQ.error.message)
+  const setupIncomplete = setupQ.isSuccess && setupQ.data?.setup_complete !== true
 
   useEffect(() => {
-    if (!institutionMissing) return
+    if (!setupIncomplete) return
     if (location.pathname === '/i/setup') return
     navigate('/i/setup', { replace: true })
-  }, [institutionMissing, location.pathname, navigate])
+  }, [setupIncomplete, location.pathname, navigate])
 
   useEffect(() => {
     setMobileNavOpen(false)
   }, [location.pathname])
 
-  const showSetup = institutionQ.isError
+  const showSetup = setupIncomplete
 
   const programSwitcher = (
     <div className="px-4 py-3 border-b border-border">
@@ -93,7 +88,7 @@ export default function InstitutionLayout() {
 
   const mobileLinks = [
     { to: '/i/dashboard', label: 'Dashboard' },
-    ...(showSetup ? [{ to: '/i/setup', label: 'Get Started' }] : []),
+    ...(showSetup ? [{ to: '/i/setup', label: 'Continue setup' }] : []),
     ...TOP_NAV,
     { to: '/i/analytics', label: 'Analytics' },
     { to: '/i/settings', label: 'Settings' },
@@ -105,7 +100,11 @@ export default function InstitutionLayout() {
         <NavLink to="/i/dashboard" className="leading-none" aria-label="Institution home">
           <Wordmark className="h-7 w-auto" />
         </NavLink>
-        <nav className="flex items-center gap-1" aria-label="Primary">
+        <nav
+          className={`flex items-center gap-1 transition-opacity ${setupIncomplete ? 'pointer-events-none select-none opacity-40' : ''}`}
+          aria-label="Primary"
+          aria-hidden={setupIncomplete || undefined}
+        >
           {TOP_NAV.map(item => (
             <NavLink
               key={item.to}
@@ -172,20 +171,34 @@ export default function InstitutionLayout() {
         </div>
         {programSwitcher}
         <nav className="flex flex-col py-2">
-          {mobileLinks.map(item => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              onClick={() => setMobileNavOpen(false)}
-              className={({ isActive }) =>
-                `touch-target px-4 py-3 text-sm rounded-md mx-2 transition-colors ${
-                  isActive ? 'bg-cobalt/10 text-cobalt font-medium' : 'text-foreground hover:bg-muted'
-                }`
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
+          {mobileLinks.map(item => {
+            const dimmed = setupIncomplete && item.to !== '/i/setup'
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                onClick={(e) => {
+                  if (dimmed) {
+                    e.preventDefault()
+                    return
+                  }
+                  setMobileNavOpen(false)
+                }}
+                aria-disabled={dimmed || undefined}
+                className={({ isActive }) =>
+                  `touch-target px-4 py-3 text-sm rounded-md mx-2 transition-colors ${
+                    dimmed
+                      ? 'pointer-events-none opacity-40'
+                      : isActive
+                        ? 'bg-cobalt/10 text-cobalt font-medium'
+                        : 'text-foreground hover:bg-muted'
+                  }`
+                }
+              >
+                {item.label}
+              </NavLink>
+            )
+          })}
           <button
             onClick={() => { setMobileNavOpen(false); logout() }}
             className="touch-target mx-2 mt-2 px-4 py-3 text-sm text-error hover:bg-error-soft/50 rounded-md text-left flex items-center gap-2"

@@ -37,6 +37,7 @@ from unipaith.models.institution import (
     TargetSegment,
 )
 from unipaith.models.matching import MatchResult
+from unipaith.models.settings import InstitutionTeamInvite
 from unipaith.models.student import StudentProfile
 from unipaith.models.workflow import Notification
 from unipaith.schemas.institution import (
@@ -176,6 +177,178 @@ class InstitutionService:
         await self.db.flush()
         await self.db.refresh(institution)
         return institution
+
+    # --- Setup wizard (Spec 30) ---
+
+    _SETUP_STEP_NUM = {"profile": 1, "program": 2, "data": 3, "team": 4}
+
+    async def _maybe_institution_for_user(self, user_id: UUID) -> Institution | None:
+        """Like `_get_institution_for_user` but returns None instead of raising —
+        the setup wizard's GET must work before the institution row exists."""
+        result = await self.db.execute(
+            select(Institution).where(Institution.admin_user_id == user_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def _setup_signals(self, institution: Institution) -> dict:
+        """Real-data signals backing each wizard step's completion (Spec 30 §5)."""
+        prog_row = (
+            await self.db.execute(
+                select(
+                    func.count().label("total"),
+                    func.count().filter(Program.is_published.is_(True)).label("published"),
+                ).where(Program.institution_id == institution.id)
+            )
+        ).one()
+        first_program_id = (
+            await self.db.execute(
+                select(Program.id)
+                .where(Program.institution_id == institution.id)
+                .order_by(Program.created_at.asc())
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+        dataset_count = await self.db.scalar(
+            select(func.count())
+            .select_from(InstitutionDataset)
+            .where(InstitutionDataset.institution_id == institution.id)
+        )
+        invite_count = await self.db.scalar(
+            select(func.count())
+            .select_from(InstitutionTeamInvite)
+            .where(InstitutionTeamInvite.institution_id == institution.id)
+        )
+        has_profile = bool(
+            institution.name
+            and institution.type
+            and institution.country
+            and (institution.description_text or "").strip()
+        )
+        return {
+            "program_count": int(prog_row.total or 0),
+            "published_count": int(prog_row.published or 0),
+            "first_program_id": str(first_program_id) if first_program_id else None,
+            "dataset_count": int(dataset_count or 0),
+            "invite_count": int(invite_count or 0),
+            "has_profile": has_profile,
+        }
+
+    def _build_setup_view(self, institution: Institution, signals: dict) -> dict:
+        """Merge stored wizard progress with real-data signals into the response
+        shape. A step counts complete if the real data exists OR it was explicitly
+        flagged/skipped — so a profile filled via Settings still satisfies setup."""
+        stored = dict(institution.setup_state or {})
+        stored_steps = dict(stored.get("steps_complete") or {})
+        skipped = dict(stored.get("skipped") or {})
+        steps_complete = {
+            "profile": bool(signals["has_profile"]) or bool(stored_steps.get("profile")),
+            "program": signals["program_count"] >= 1 or bool(stored_steps.get("program")),
+            "data": (
+                signals["dataset_count"] >= 1
+                or bool(skipped.get("data"))
+                or bool(stored_steps.get("data"))
+            ),
+            "team": (
+                signals["invite_count"] >= 1
+                or bool(skipped.get("team"))
+                or bool(stored_steps.get("team"))
+            ),
+        }
+        if institution.setup_complete:
+            current: int | str = "done"
+        else:
+            # Resume on the step the user last navigated to (persisted via PATCH);
+            # fall back to the first incomplete step for a fresh wizard.
+            stored_step = stored.get("step")
+            if isinstance(stored_step, int) and 1 <= stored_step <= 4:
+                current = stored_step
+            else:
+                current = "done"
+                for name in ("profile", "program", "data", "team"):
+                    if not steps_complete[name]:
+                        current = self._SETUP_STEP_NUM[name]
+                        break
+        return {
+            "institution_id": str(institution.id),
+            "step": current,
+            "steps_complete": steps_complete,
+            "skipped": {"data": bool(skipped.get("data")), "team": bool(skipped.get("team"))},
+            "first_program_id": signals["first_program_id"],
+            "setup_complete": bool(institution.setup_complete),
+            "published_program_count": signals["published_count"],
+        }
+
+    async def get_setup_state(self, user_id: UUID) -> dict:
+        institution = await self._maybe_institution_for_user(user_id)
+        if institution is None:
+            return {
+                "institution_id": None,
+                "step": 1,
+                "steps_complete": {
+                    "profile": False,
+                    "program": False,
+                    "data": False,
+                    "team": False,
+                },
+                "skipped": {"data": False, "team": False},
+                "first_program_id": None,
+                "setup_complete": False,
+                "published_program_count": 0,
+            }
+        signals = await self._setup_signals(institution)
+        return self._build_setup_view(institution, signals)
+
+    async def patch_setup_step(
+        self,
+        user_id: UUID,
+        *,
+        step: int | None = None,
+        skip_data: bool | None = None,
+        skip_team: bool | None = None,
+        mark_complete: dict[str, bool] | None = None,
+    ) -> dict:
+        institution = await self._get_institution_for_user(user_id)
+        # Rebuild as a new dict so SQLAlchemy detects the JSONB change.
+        state = dict(institution.setup_state or {})
+        skipped = dict(state.get("skipped") or {})
+        sc = dict(state.get("steps_complete") or {})
+        if step is not None:
+            if step not in (1, 2, 3, 4):
+                raise BadRequestException("step must be between 1 and 4")
+            state["step"] = step
+        if skip_data is not None:
+            skipped["data"] = bool(skip_data)
+        if skip_team is not None:
+            skipped["team"] = bool(skip_team)
+        if mark_complete:
+            for key, value in mark_complete.items():
+                if key in ("profile", "program", "data", "team"):
+                    sc[key] = bool(value)
+        state["skipped"] = skipped
+        state["steps_complete"] = sc
+        institution.setup_state = state
+        await self.db.flush()
+        await self.db.refresh(institution)
+        signals = await self._setup_signals(institution)
+        return self._build_setup_view(institution, signals)
+
+    async def complete_setup(self, user_id: UUID) -> dict:
+        institution = await self._get_institution_for_user(user_id)
+        signals = await self._setup_signals(institution)
+        view = self._build_setup_view(institution, signals)
+        # Spec 30 §4 — minimum to finish: profile + one program.
+        if not (view["steps_complete"]["profile"] and view["steps_complete"]["program"]):
+            raise BadRequestException(
+                "Add your institution profile and a first program before finishing setup"
+            )
+        institution.setup_complete = True
+        state = dict(institution.setup_state or {})
+        state["step"] = "done"
+        institution.setup_state = state
+        await self.db.flush()
+        await self.db.refresh(institution)
+        signals = await self._setup_signals(institution)
+        return self._build_setup_view(institution, signals)
 
     # --- Programs ---
 

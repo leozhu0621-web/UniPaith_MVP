@@ -1,8 +1,25 @@
 import apiClient from './client'
-import type { AnalyticsData, AuditLogList, Campaign, CommunicationTemplate, IntakeRound, ProgramChecklistItem, CampaignAttributionDetail, CampaignLink, CampaignMetrics, CampaignObjective, CampaignDestinationType, CampaignCtaType, CampaignChannel, AudiencePreview, DraftCampaignCopy, UploadedList, CampaignSuppression, DashboardSummary, DatasetMappingTemplate, DatasetPreview, DatasetVersion, Inquiry, Institution, InstitutionDataset, InstitutionPost, NLBridgeResult, PostCTA, PostVisibility, Program, Promotion, Segment, SegmentPreview, SegmentRuleTree, SignalDictionary, ValidationReport } from '../types'
+import type { AnalyticsData, AuditLogList, Campaign, CommunicationTemplate, IntakeRound, ProgramChecklistItem, CampaignAttributionDetail, CampaignLink, CampaignMetrics, CampaignObjective, CampaignDestinationType, CampaignCtaType, CampaignChannel, AudiencePreview, DraftCampaignCopy, UploadedList, CampaignSuppression, DashboardSummary, DatasetMappingTemplate, DatasetPreview, DatasetVersion, Inquiry, Institution, InstitutionDataset, InstitutionPost, InstitutionSetupState, NLBridgeResult, PostCTA, PostVisibility, Program, Promotion, Segment, SegmentPreview, SegmentRuleTree, SetupStepPatch, SignalDictionary, ValidationReport } from '../types'
 
 export async function getInstitution(): Promise<Institution> {
   const { data } = await apiClient.get('/institutions/me')
+  return data
+}
+
+// --- First-run setup wizard (Spec 30) ---
+
+export async function getSetupState(): Promise<InstitutionSetupState> {
+  const { data } = await apiClient.get('/institutions/me/setup')
+  return data
+}
+
+export async function patchSetupStep(payload: SetupStepPatch): Promise<InstitutionSetupState> {
+  const { data } = await apiClient.patch('/institutions/me/setup/step', payload)
+  return data
+}
+
+export async function completeSetup(): Promise<InstitutionSetupState> {
+  const { data } = await apiClient.post('/institutions/me/setup/complete')
   return data
 }
 
