@@ -38,6 +38,7 @@ from unipaith.models.institution import (
 )
 from unipaith.models.matching import MatchResult
 from unipaith.models.student import StudentProfile
+from unipaith.models.user import User
 from unipaith.models.workflow import Notification
 from unipaith.schemas.institution import (
     AnalyticsResponse,
@@ -1357,7 +1358,38 @@ class InstitutionService:
             .where(Promotion.institution_id == institution_id)
             .order_by(Promotion.created_at.desc())
         )
-        return [await self._enrich_promotion(p) for p in result.scalars().all()]
+        promos = list(result.scalars().all())
+        await self._sync_promotion_statuses(promos)
+        return [await self._enrich_promotion(p) for p in promos]
+
+    async def _sync_promotion_statuses(self, promos: list[Promotion]) -> None:
+        """Advance scheduled/active promotions based on their date window."""
+        now = datetime.now(UTC)
+        changed = False
+        for promo in promos:
+            if promo.ends_at and promo.ends_at < now and promo.status in ("active", "scheduled"):
+                promo.status = "expired"
+                changed = True
+            elif promo.starts_at and promo.starts_at > now and promo.status == "active":
+                promo.status = "scheduled"
+                changed = True
+            elif (
+                promo.starts_at
+                and promo.starts_at <= now
+                and promo.status == "scheduled"
+                and (promo.ends_at is None or promo.ends_at >= now)
+            ):
+                promo.status = "active"
+                changed = True
+        if changed:
+            await self.db.flush()
+
+    async def record_promotion_click(self, promotion_id: UUID) -> None:
+        promo = await self.db.get(Promotion, promotion_id)
+        if promo is None:
+            raise NotFoundException("Promotion not found")
+        promo.click_count = (promo.click_count or 0) + 1
+        await self.db.flush()
 
     async def create_promotion(
         self,
@@ -1365,6 +1397,10 @@ class InstitutionService:
         data: CreatePromotionRequest,
     ) -> PromotionResponse:
         targeting_dict = data.targeting.model_dump() if data.targeting else None
+        now = datetime.now(UTC)
+        status = "draft"
+        if data.starts_at:
+            status = "scheduled" if data.starts_at > now else "active"
         promo = Promotion(
             institution_id=institution_id,
             program_id=data.program_id,
@@ -1372,6 +1408,7 @@ class InstitutionService:
             title=data.title,
             description=data.description,
             targeting=targeting_dict,
+            status=status,
             starts_at=data.starts_at,
             ends_at=data.ends_at,
             target_kind=data.target_kind,
@@ -1980,6 +2017,7 @@ class InstitutionService:
         institution_id: UUID,
         include_drafts: bool = True,
     ) -> list[PostResponse]:
+        await self._publish_due_scheduled_posts(institution_id)
         q = select(InstitutionPost).where(InstitutionPost.institution_id == institution_id)
         if not include_drafts:
             q = q.where(InstitutionPost.status == "published")
@@ -1991,6 +2029,25 @@ class InstitutionService:
         result = await self.db.execute(q)
         posts = list(result.scalars().all())
         return [await self._enrich_post(p) for p in posts]
+
+    async def _publish_due_scheduled_posts(self, institution_id: UUID | None = None) -> None:
+        """Promote scheduled posts whose send time has passed (Spec 27 §2.2)."""
+        now = datetime.now(UTC)
+        q = select(InstitutionPost).where(
+            InstitutionPost.status == "scheduled",
+            InstitutionPost.scheduled_for.isnot(None),
+            InstitutionPost.scheduled_for <= now,
+        )
+        if institution_id is not None:
+            q = q.where(InstitutionPost.institution_id == institution_id)
+        result = await self.db.execute(q)
+        changed = False
+        for post in result.scalars().all():
+            post.status = "published"
+            post.published_at = now
+            changed = True
+        if changed:
+            await self.db.flush()
 
     async def create_post(
         self,
@@ -2153,6 +2210,7 @@ class InstitutionService:
         self,
         institution_id: UUID,
     ) -> list[PostResponse]:
+        await self._publish_due_scheduled_posts(institution_id)
         result = await self.db.execute(
             select(InstitutionPost)
             .where(
@@ -2190,7 +2248,6 @@ class InstitutionService:
         return post
 
     async def _enrich_post(self, post: InstitutionPost) -> PostResponse:
-        from unipaith.models.user import User
 
         author_email: str | None = None
         if post.author_id:
