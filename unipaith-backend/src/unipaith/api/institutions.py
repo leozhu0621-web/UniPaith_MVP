@@ -52,6 +52,8 @@ from unipaith.schemas.institution import (
     DraftCampaignCopyResponse,
     InquiryResponse,
     InstitutionResponse,
+    NLBridgeRequest,
+    NLBridgeResponse,
     PostMediaUploadResponse,
     PostResponse,
     ProgramResponse,
@@ -59,7 +61,10 @@ from unipaith.schemas.institution import (
     RecordActionRequest,
     RejectCampaignRequest,
     SaveMappingTemplateRequest,
+    SegmentPreviewRequest,
+    SegmentPreviewResponse,
     SegmentResponse,
+    SignalDictionaryResponse,
     SubmitInquiryRequest,
     SuppressionResponse,
     UpdateCampaignRequest,
@@ -80,6 +85,8 @@ from unipaith.schemas.intake import (
 )
 from unipaith.services.campaign_service import CampaignService
 from unipaith.services.institution_service import InstitutionService
+from unipaith.services.segment_service import SegmentService
+from unipaith.services.segment_signals import signal_dictionary_json
 
 router = APIRouter(prefix="/institutions", tags=["institutions"])
 
@@ -256,7 +263,7 @@ async def create_segment(
 ):
     svc = _svc(db)
     inst = await svc.get_institution(user.id)
-    return await svc.create_segment(inst.id, body)
+    return await svc.create_segment(inst.id, body, created_by=user.id)
 
 
 @router.put("/me/segments/{segment_id}", response_model=SegmentResponse)
@@ -369,11 +376,75 @@ async def preview_segment_audience(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    """Preview how many students match this segment's criteria."""
+    """Preview how many students match this segment's criteria (legacy count-only)."""
     svc = _svc(db)
     inst = await svc.get_institution(user.id)
     student_ids = await svc.resolve_segment_members(inst.id, segment_id)
     return {"segment_id": str(segment_id), "audience_count": len(student_ids)}
+
+
+@router.get("/me/segments/signal-dictionary", response_model=SignalDictionaryResponse)
+async def get_segment_signal_dictionary(
+    user: User = Depends(require_institution_admin),
+):
+    """Spec 26 §2 — the signal vocabulary the rule builder + AI assist draw on."""
+    return signal_dictionary_json()
+
+
+@router.post("/me/segments/preview", response_model=SegmentPreviewResponse)
+async def preview_segment_rules(
+    body: SegmentPreviewRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 26 §3 — preview an unsaved rule tree: count + 10-row sample +
+    composition + fairness skew warning. Suppression is applied before the
+    count."""
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    seg_svc = SegmentService(db)
+    return await seg_svc.preview(
+        inst.id,
+        body.rules,
+        uploaded_list_ids=body.uploaded_list_ids,
+        program_id=body.program_id,
+    )
+
+
+@router.post("/me/segments/{segment_id}/preview", response_model=SegmentPreviewResponse)
+async def preview_saved_segment(
+    segment_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 26 §3 — preview a saved segment and cache its audience count."""
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    segment = await svc.get_segment(inst.id, segment_id)
+    seg_svc = SegmentService(db)
+    result = await seg_svc.preview(
+        inst.id,
+        segment.rules if segment.rules else segment.criteria,
+        uploaded_list_ids=list(segment.uploaded_list_ids or []),
+        program_id=segment.program_id,
+    )
+    # cache the count on the segment (Spec 26 §7 preview_audience_count)
+    await svc.cache_segment_preview(inst.id, segment_id, result["audience_count"])
+    return result
+
+
+@router.post("/me/segments/nl-bridge", response_model=NLBridgeResponse)
+async def segment_nl_bridge(
+    body: NLBridgeRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 26 §6 / 45 §17 — convert a natural-language audience description to
+    structured rules (Sonnet, keyword-parser fallback)."""
+    svc = _svc(db)
+    await svc.get_institution(user.id)  # ensure caller owns an institution
+    seg_svc = SegmentService(db)
+    return await seg_svc.nl_bridge(body.text)
 
 
 @router.post(

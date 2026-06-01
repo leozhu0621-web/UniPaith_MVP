@@ -118,6 +118,8 @@ def test_each_agent_declares_consent_requirement():
         "campaign_copy",
         # Spec 24 §9 / 45 §19 — dataset upload parse triage (Haiku).
         "document_parse_triage",
+        # Spec 26 §6 / 45 §17 — audience-segmentation NL bridge (Sonnet).
+        "segment_builder_nl",
     }
     assert set(AGENT_REQUIRES.keys()) == expected_agents
 
