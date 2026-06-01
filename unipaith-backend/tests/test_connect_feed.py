@@ -5,7 +5,7 @@ program_change never suppressed; deadline reminders from saved programs;
 relevance ranking falls back cleanly.
 """
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 from httpx import AsyncClient
@@ -129,10 +129,12 @@ async def test_deadline_item_from_saved_program(
     mock_student_user: User,
     mock_institution_user: User,
 ):
-    # Use the same UTC basis the feed service uses (connect_service computes
-    # days_until from datetime.now(UTC).date()), so the assertion is stable
-    # regardless of the local time-of-day the suite runs at.
-    soon = datetime.now(UTC).date() + timedelta(days=21)
+    # connect_service computes days_until against a naive `date.today()`
+    # reference (matching how a deadline is stored, and consistent with the
+    # rest of the deadline logic, e.g. checklist_service). Build the deadline on
+    # the same basis so the assertion is stable regardless of the local
+    # time-of-day the suite runs at.
+    soon = date.today() + timedelta(days=21)
     _, institution, program = await _seed(
         db_session, mock_student_user, mock_institution_user, deadline=soon
     )
