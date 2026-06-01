@@ -22,7 +22,10 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "a32revwork1b2c"  # pragma: allowlist secret
-down_revision = "a3029merge1b2c"  # pragma: allowlist secret
+# Rebased onto the Spec 34 head (s34a1b2c3d4e) so the graph stays single-headed
+# (test_alembic_has_single_head). Both this and s34 originally chained off
+# a3029merge1b2c; re-pointing here linearizes them.
+down_revision = "s34a1b2c3d4e"  # pragma: allowlist secret
 branch_labels = None
 depends_on = None
 
