@@ -58,6 +58,9 @@ AGENT_TIERS: dict[str, str] = {
     # ── Admissions-intake dashboard digest (spec 31 §9 / §11) — Sonnet, falls
     #    back to a rule-based narrator. 45 §11: migrated off GPT-4o to Claude. ──
     "intelligence_digest": "workhorse",
+    # ── Interviews (spec 33 §9) — Haiku invite drafter + Sonnet score prefill ──
+    "interview_invite_drafter": "batch",  # InterviewInviteDrafter — invite message
+    "interview_score_prefill": "workhorse",  # InterviewScorePrefill — rubric prefill
 }
 
 

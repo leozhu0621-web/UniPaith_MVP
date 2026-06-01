@@ -158,6 +158,11 @@ class Rubric(Base):
     rubric_name: Mapped[str] = mapped_column(String(255), nullable=False)
     criteria: Mapped[dict | None] = mapped_column(JSONB)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Spec 33 §6 — interviewing rubric is distinct from the application rubric.
+    # 'application' (default, back-compat) | 'interview'.
+    rubric_kind: Mapped[str] = mapped_column(
+        String(20), server_default="application", nullable=False
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -198,12 +203,27 @@ class Interview(Base):
     interviewer_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("reviewers.id", ondelete="CASCADE"), nullable=False
     )
-    interview_type: Mapped[str | None] = mapped_column(String(20))
+    # Spec 33 §2 interview types: live / recorded_async / portfolio_review /
+    # technical_assessment / third_party_platform (legacy video/phone/in_person
+    # values still render — see calendar_service kind sets).
+    interview_type: Mapped[str | None] = mapped_column(String(30))
     proposed_times: Mapped[dict | None] = mapped_column(JSONB)
     confirmed_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     location_or_link: Mapped[str | None] = mapped_column(String(500))
+    # Spec 33 §7 status: proposed / confirmed / completed / cancelled / no_show.
     status: Mapped[str | None] = mapped_column(String(20))
     duration_minutes: Mapped[int] = mapped_column(Integer, default=30)
+    # Spec 33 §5/§7 — async (recorded_async / technical_assessment) submission
+    # window; when past with no recording the response renders "No submission
+    # received" (§8) and review may advance without the interview.
+    async_window_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    recording_url: Mapped[str | None] = mapped_column(String(1000))
+    # Denormalized latest recommendation (recommend / neutral / not_recommend)
+    # mirrored from the most recent InterviewScore so the list/table avoids an
+    # extra join (§4 KPI table). Authoritative scores live on interview_scores.
+    recommendation: Mapped[str | None] = mapped_column(String(20))
+    # Invite notes for the student (§5) — also mirrored into the Inbox message body.
+    notes_to_student: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -229,6 +249,11 @@ class InterviewScore(Base):
     total_weighted_score: Mapped[Decimal | None] = mapped_column(Numeric(6, 3))
     interviewer_notes: Mapped[str | None] = mapped_column(Text)
     recommendation: Mapped[str | None] = mapped_column(String(20))
+    # Spec 33 §7 — scores[] carries a created_at so the review packet can order
+    # multiple interviewer scores chronologically.
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
 
 class OfferLetter(Base):

@@ -1093,18 +1093,63 @@ export interface RSVP {
 }
 
 // ============ INTERVIEWS ============
+// Spec 33 §2 interview types + §7 statuses.
+export type InterviewType =
+  | 'live'
+  | 'recorded_async'
+  | 'portfolio_review'
+  | 'technical_assessment'
+  | 'third_party_platform'
+
+export type InterviewStatus =
+  | 'proposed'
+  | 'confirmed'
+  | 'completed'
+  | 'cancelled'
+  | 'no_show'
+
+export interface InterviewScoreView {
+  interviewer_id: string
+  criterion_scores: Record<string, number> | null
+  total_weighted_score: number | null
+  notes: string | null
+  recommendation: string | null
+  created_at: string | null
+}
+
+// Spec 33 §7 — the institution-facing rich interview shape returned by the API.
 export interface Interview {
   id: string
   application_id: string
-  interviewer_id: string
-  interview_type: 'video' | 'in_person' | 'phone' | 'group'
+  applicant: { student_id: string | null; name: string }
+  program: { id: string | null; name: string }
+  interviewer_id: string | null
+  interview_type: InterviewType | string
+  status: InterviewStatus | string
+  async_expired: boolean
   proposed_times: string[]
+  proposed_slots: string[] | null
   confirmed_time: string | null
-  location_or_link: string | null
-  status: 'invited' | 'scheduling' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
+  scheduled_at: string | null
   duration_minutes: number
-  created_at: string
-  updated_at: string
+  location: string | null
+  meeting_link: string | null
+  location_or_link: string | null
+  async_window_end: string | null
+  recording_url: string | null
+  notes_to_student: string | null
+  recommendation: string | null
+  scores: InterviewScoreView[]
+  created_at: string | null
+}
+
+// Spec 33 §6 — interviewing rubric (with a built-in default).
+export interface InterviewRubric {
+  id: string | null
+  rubric_name: string
+  program_id: string | null
+  rubric_kind: string
+  criteria: Array<{ key: string; label: string; description: string; max: number }>
 }
 
 // ============ NOTIFICATIONS ============

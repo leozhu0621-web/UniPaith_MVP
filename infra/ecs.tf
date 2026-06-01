@@ -206,6 +206,11 @@ resource "aws_ecs_task_definition" "backend" {
       # by default per the spec (auto-routing risks mis-routing); ship as a
       # suggestion first. Flip to "true" to surface reason-code suggestions.
       { name = "AI_INBOUND_INTENT_V2_ENABLED", value = "false" },
+      # Spec 33 §9 — interview helpers: Haiku InterviewInviteDrafter ("AI draft"
+      # in the Propose modal) + Sonnet InterviewScorePrefill ("AI prefill" in the
+      # Score modal). Both return null on failure, so the module works with it
+      # off too; enabled in prod for the assisted experience.
+      { name = "AI_INTERVIEW_V2_ENABLED", value = "true" },
       # Pin Claude model IDs — config.py defaults match, but pinning here
       # makes the prod surface auditable (and trivial to roll a single
       # agent class to a different model without a code deploy).

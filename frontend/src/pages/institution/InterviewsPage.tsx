@@ -1,42 +1,47 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Calendar, Plus, Trash2 } from 'lucide-react'
+import { Calendar, Plus, MoreHorizontal } from 'lucide-react'
 import { getInstitutionPrograms } from '../../api/institutions'
-import { getInstitutionInterviews, proposeInterview, completeInterview, scoreInterview } from '../../api/interviews-admin'
+import {
+  getInstitutionInterviews,
+  completeInterview,
+  cancelInterview,
+  markInterviewNoShow,
+} from '../../api/interviews-admin'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import Tabs from '../../components/ui/Tabs'
-import Table from '../../components/ui/Table'
-import Modal from '../../components/ui/Modal'
-import Input from '../../components/ui/Input'
 import Select from '../../components/ui/Select'
-import Textarea from '../../components/ui/Textarea'
 import EmptyState from '../../components/ui/EmptyState'
 import Skeleton from '../../components/ui/Skeleton'
+import Dropdown from '../../components/ui/Dropdown'
 import InstitutionPageHeader from '../../components/institution/InstitutionPageHeader'
 import { showToast } from '../../stores/toast-store'
 import { formatDateTime } from '../../utils/format'
-import { STATUS_COLORS, INTERVIEW_TYPES } from '../../utils/constants'
-import type { Interview } from '../../types'
+import { STATUS_COLORS, INTERVIEW_TYPES, INTERVIEW_TYPE_LABELS } from '../../utils/constants'
+import type { Interview, Program } from '../../types'
+import ProposeInterviewModal from './interviews/ProposeInterviewModal'
+import ScoreInterviewModal from './interviews/ScoreInterviewModal'
 
-export default function InterviewsPage() {
+type BadgeVariant = 'neutral' | 'info' | 'success' | 'warning' | 'danger'
+
+const REC_LABELS: Record<string, string> = {
+  recommend: 'Recommend',
+  neutral: 'Neutral',
+  not_recommend: 'Do not recommend',
+}
+
+function humanize(status: string): string {
+  return status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
+export default function InterviewsPage({ embedded = false }: { embedded?: boolean }) {
   const [activeTab, setActiveTab] = useState('upcoming')
-  const [showScheduleModal, setShowScheduleModal] = useState(false)
-  const [showScoreModal, setShowScoreModal] = useState(false)
-  const [selectedInterview, setSelectedInterview] = useState<string | null>(null)
-
-  // Schedule form state
-  const [schedAppId, setSchedAppId] = useState('')
-  const [schedType, setSchedType] = useState('video')
-  const [schedTimes, setSchedTimes] = useState<string[]>([''])
-  const [schedDuration, setSchedDuration] = useState('60')
-  const [schedLocation, setSchedLocation] = useState('')
-
-  // Score form state
-  const [scoreNotes, setScoreNotes] = useState('')
-  const [scoreRec, setScoreRec] = useState('')
-  const scoreCriteria: Record<string, number> = {}
+  const [programFilter, setProgramFilter] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
+  const [showPropose, setShowPropose] = useState(false)
+  const [scoreTarget, setScoreTarget] = useState<Interview | null>(null)
 
   const qc = useQueryClient()
 
@@ -44,10 +49,44 @@ export default function InterviewsPage() {
     queryKey: ['institution-interviews'],
     queryFn: () => getInstitutionInterviews(),
   })
-  const interviews: Interview[] = Array.isArray(interviewsQ.data) ? interviewsQ.data : []
+  const interviews: Interview[] = useMemo(
+    () => (Array.isArray(interviewsQ.data) ? interviewsQ.data : []),
+    [interviewsQ.data],
+  )
 
   const programsQ = useQuery({ queryKey: ['institution-programs'], queryFn: getInstitutionPrograms })
-  void programsQ
+  const programs: Program[] = Array.isArray(programsQ.data) ? programsQ.data : []
+
+  const invalidate = () => qc.invalidateQueries({ queryKey: ['institution-interviews'] })
+
+  const completeMut = useMutation({
+    mutationFn: completeInterview,
+    onSuccess: () => {
+      invalidate()
+      showToast('Interview marked complete', 'success')
+    },
+    onError: () => showToast('Failed to complete', 'error'),
+  })
+  const cancelMut = useMutation({
+    mutationFn: cancelInterview,
+    onSuccess: () => {
+      invalidate()
+      showToast('Interview cancelled', 'success')
+    },
+    onError: () => showToast('Failed to cancel', 'error'),
+  })
+  const noShowMut = useMutation({
+    mutationFn: markInterviewNoShow,
+    onSuccess: () => {
+      invalidate()
+      showToast('Marked as no-show', 'success')
+    },
+    onError: () => showToast('Failed to update', 'error'),
+  })
+
+  const confirmedCount = interviews.filter(i => i.status === 'confirmed').length
+  const awaitingCount = interviews.filter(i => i.status === 'proposed').length
+  const completedCount = interviews.filter(i => i.status === 'completed').length
 
   const tabs = [
     { id: 'upcoming', label: 'Upcoming' },
@@ -55,199 +94,204 @@ export default function InterviewsPage() {
     { id: 'all', label: 'All' },
   ]
 
-  const filteredInterviews = interviews.filter(i => {
-    if (activeTab === 'upcoming') return ['invited', 'scheduling', 'confirmed'].includes(i.status)
-    if (activeTab === 'completed') return i.status === 'completed'
-    return true
-  })
-  const confirmedCount = interviews.filter(i => i.status === 'confirmed').length
-  const completedCount = interviews.filter(i => i.status === 'completed').length
-  const schedulingCount = interviews.filter(i => i.status === 'scheduling').length
-
-  const proposeMut = useMutation({
-    mutationFn: proposeInterview,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['institution-interviews'] })
-      showToast('Interview proposed', 'success')
-      setShowScheduleModal(false)
-    },
-    onError: () => showToast('Failed to propose interview', 'error'),
-  })
-
-  const completeMut = useMutation({
-    mutationFn: completeInterview,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['institution-interviews'] })
-      showToast('Interview completed', 'success')
-    },
-    onError: () => showToast('Failed to complete', 'error'),
-  })
-
-  const scoreMut = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: any }) => scoreInterview(id, payload),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['institution-interviews'] })
-      showToast('Interview scored', 'success')
-      setShowScoreModal(false)
-    },
-    onError: () => showToast('Failed to score', 'error'),
-  })
-
-  const columns = [
-    { key: 'application_id', label: 'Student', render: (row: Interview) => row.application_id.slice(0, 10) + '...' },
-    { key: 'interview_type', label: 'Type', render: (row: Interview) => <Badge variant="info">{row.interview_type}</Badge> },
-    { key: 'confirmed_time', label: 'Date', render: (row: Interview) => formatDateTime(row.confirmed_time ?? row.proposed_times[0]) },
-    { key: 'status', label: 'Status', render: (row: Interview) => <Badge variant={(STATUS_COLORS[row.status] as any) ?? 'neutral'}>{row.status}</Badge> },
-    { key: 'duration_minutes', label: 'Duration', render: (row: Interview) => `${row.duration_minutes} min` },
-    {
-      key: 'actions',
-      label: '',
-      render: (row: Interview) => (
-        <div className="flex gap-1">
-          {row.status === 'confirmed' && (
-            <Button size="sm" variant="ghost" onClick={() => completeMut.mutate(row.id)}>Complete</Button>
-          )}
-          {row.status === 'completed' && (
-            <Button size="sm" variant="ghost" onClick={() => { setSelectedInterview(row.id); setShowScoreModal(true) }}>Score</Button>
-          )}
-        </div>
-      ),
-    },
-  ]
-
-  const addTime = () => setSchedTimes([...schedTimes, ''])
-  const removeTime = (i: number) => setSchedTimes(schedTimes.filter((_, idx) => idx !== i))
-  const updateTime = (i: number, v: string) => setSchedTimes(schedTimes.map((t, idx) => idx === i ? v : t))
-
-  const handleSchedule = () => {
-    if (!schedAppId) { showToast('Select an application', 'warning'); return }
-    const validTimes = schedTimes.filter(Boolean)
-    if (validTimes.length === 0) { showToast('Add at least one proposed time', 'warning'); return }
-    proposeMut.mutate({
-      application_id: schedAppId,
-      interviewer_id: '', // filled by backend
-      interview_type: schedType,
-      proposed_times: validTimes,
-      duration_minutes: Number(schedDuration),
-      location_or_link: schedLocation || null,
+  const filtered = useMemo(() => {
+    return interviews.filter(i => {
+      if (activeTab === 'upcoming' && !['proposed', 'confirmed'].includes(i.status)) return false
+      if (activeTab === 'completed' && i.status !== 'completed') return false
+      if (programFilter && i.program?.id !== programFilter) return false
+      if (typeFilter && i.interview_type !== typeFilter) return false
+      return true
     })
+  }, [interviews, activeTab, programFilter, typeFilter])
+
+  const programOptions = [
+    { value: '', label: 'All programs' },
+    ...programs.map(p => ({ value: p.id, label: p.program_name })),
+  ]
+  const typeOptions = [{ value: '', label: 'All types' }, ...INTERVIEW_TYPES]
+
+  const statusBadge = (iv: Interview) => {
+    if (iv.async_expired) return <Badge variant="danger">No submission received</Badge>
+    if (iv.status === 'proposed') return <Badge variant="warning">Awaiting student</Badge>
+    const variant = (STATUS_COLORS[iv.status] as BadgeVariant) ?? 'neutral'
+    return <Badge variant={variant}>{humanize(iv.status)}</Badge>
   }
 
-  return (
-    <div className="p-6 space-y-4">
-      <InstitutionPageHeader
-        title="Interviews"
-        description="Coordinate scheduling, interview completion, and interviewer recommendations."
-        actions={(
-          <Button onClick={() => setShowScheduleModal(true)} className="flex items-center gap-2">
-            <Plus size={16} /> Schedule Interview
-          </Button>
-        )}
-      />
+  const scheduledLabel = (iv: Interview) => {
+    if (iv.scheduled_at || iv.confirmed_time) return formatDateTime(iv.scheduled_at ?? iv.confirmed_time)
+    if (iv.async_window_end) return `By ${formatDateTime(iv.async_window_end)}`
+    if (iv.proposed_times?.length) return `${iv.proposed_times.length} proposed`
+    return '—'
+  }
 
-      {interviews.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Card className="p-3">
-            <p className="text-xs text-gray-500">Confirmed</p>
-            <p className="text-xl font-semibold text-brand-slate-700">{confirmedCount}</p>
-          </Card>
-          <Card className="p-3">
-            <p className="text-xs text-gray-500">In Scheduling</p>
-            <p className="text-xl font-semibold text-amber-700">{schedulingCount}</p>
-          </Card>
-          <Card className="p-3">
-            <p className="text-xs text-gray-500">Completed</p>
-            <p className="text-xl font-semibold text-emerald-700">{completedCount}</p>
-          </Card>
-        </div>
+  const rowActions = (iv: Interview) => {
+    const scoreable = !['proposed', 'cancelled'].includes(iv.status)
+    const completable = ['proposed', 'confirmed'].includes(iv.status)
+    const cancellable = !['completed', 'cancelled'].includes(iv.status)
+    const noshowable = ['proposed', 'confirmed'].includes(iv.status) || iv.async_expired
+
+    const menu: { label: string; onClick: () => void; variant?: 'default' | 'danger' }[] = []
+    if (completable && scoreable) menu.push({ label: 'Mark complete', onClick: () => completeMut.mutate(iv.id) })
+    if (noshowable) menu.push({ label: 'Mark no-show', onClick: () => noShowMut.mutate(iv.id) })
+    if (cancellable) menu.push({ label: 'Cancel interview', onClick: () => cancelMut.mutate(iv.id), variant: 'danger' })
+
+    return (
+      <div className="flex items-center justify-end gap-1">
+        {scoreable ? (
+          <Button size="sm" variant="ghost" className="text-cobalt" onClick={() => setScoreTarget(iv)}>
+            Score
+          </Button>
+        ) : completable ? (
+          <Button size="sm" variant="ghost" onClick={() => completeMut.mutate(iv.id)}>
+            Complete
+          </Button>
+        ) : null}
+        {menu.length > 0 && (
+          <Dropdown
+            trigger={
+              <button
+                className="p-1.5 rounded-md hover:bg-muted text-muted-foreground transition-colors"
+                aria-label="More actions"
+              >
+                <MoreHorizontal size={16} />
+              </button>
+            }
+            items={menu}
+          />
+        )}
+      </div>
+    )
+  }
+
+  const body = (
+    <>
+      {!embedded && (
+        <InstitutionPageHeader
+          title="Interviews"
+          description="Propose, schedule, score, and complete admissions interviews."
+          actions={
+            <Button variant="secondary" onClick={() => setShowPropose(true)} className="flex items-center gap-2">
+              <Plus size={16} /> Propose interview
+            </Button>
+          }
+        />
       )}
 
-      <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+      {/* KPI row (§4) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Card className="p-3">
+          <p className="text-xs text-muted-foreground">Confirmed</p>
+          <p className="text-xl font-semibold text-success">{confirmedCount}</p>
+        </Card>
+        <Card className="p-3">
+          <p className="text-xs text-muted-foreground">Awaiting student</p>
+          <p className="text-xl font-semibold text-warning">{awaitingCount}</p>
+        </Card>
+        <Card className="p-3">
+          <p className="text-xs text-muted-foreground">Completed</p>
+          <p className="text-xl font-semibold text-foreground">{completedCount}</p>
+        </Card>
+      </div>
 
+      {/* Tabs + filters */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+        <div className="flex items-center gap-2">
+          <Select
+            options={programOptions}
+            value={programFilter}
+            onChange={e => setProgramFilter(e.target.value)}
+            uiSize="sm"
+            aria-label="Filter by program"
+          />
+          <Select
+            options={typeOptions}
+            value={typeFilter}
+            onChange={e => setTypeFilter(e.target.value)}
+            uiSize="sm"
+            aria-label="Filter by type"
+          />
+          {embedded && (
+            <Button variant="secondary" size="sm" onClick={() => setShowPropose(true)} className="flex items-center gap-1 whitespace-nowrap">
+              <Plus size={14} /> Propose
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Table */}
       <Card>
         {interviewsQ.isLoading ? (
-          <div className="p-4 space-y-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12" />)}</div>
-        ) : filteredInterviews.length === 0 ? (
+          <div className="p-4 space-y-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-12" />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
           <EmptyState
             icon={<Calendar size={40} />}
-            title="No interviews"
-            description="Schedule interviews from the pipeline or by clicking the button above."
+            title={interviews.length === 0 ? 'No interviews scheduled.' : 'No interviews match these filters.'}
+            description={
+              interviews.length === 0
+                ? 'Propose an interview to an applicant to get started.'
+                : 'Try a different tab, program, or type.'
+            }
+            action={interviews.length === 0 ? { label: 'Propose interview', onClick: () => setShowPropose(true) } : undefined}
           />
         ) : (
           <div className="overflow-x-auto">
-            <Table columns={columns} data={filteredInterviews} />
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                  <th className="px-4 py-2.5 font-medium">Applicant</th>
+                  <th className="px-4 py-2.5 font-medium">Program</th>
+                  <th className="px-4 py-2.5 font-medium">Type</th>
+                  <th className="px-4 py-2.5 font-medium">Status</th>
+                  <th className="px-4 py-2.5 font-medium">Scheduled</th>
+                  <th className="px-4 py-2.5 font-medium text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filtered.map(iv => (
+                  <tr key={iv.id} className="hover:bg-muted/40 transition-colors">
+                    <td className="px-4 py-3 text-foreground font-medium">{iv.applicant?.name || 'Applicant'}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{iv.program?.name || '—'}</td>
+                    <td className="px-4 py-3">
+                      <Badge variant="info">{INTERVIEW_TYPE_LABELS[iv.interview_type] || iv.interview_type}</Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      {statusBadge(iv)}
+                      {iv.recommendation && (
+                        <span className="block text-xs text-muted-foreground mt-1">
+                          {REC_LABELS[iv.recommendation] || iv.recommendation}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{scheduledLabel(iv)}</td>
+                    <td className="px-4 py-3">{rowActions(iv)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </Card>
 
-      {/* Schedule Modal */}
-      <Modal isOpen={showScheduleModal} onClose={() => setShowScheduleModal(false)} title="Schedule Interview">
-        <div className="space-y-4">
-          <Input label="Application ID" value={schedAppId} onChange={e => setSchedAppId(e.target.value)} placeholder="Paste application ID" />
-          <Select label="Interview Type" options={INTERVIEW_TYPES} value={schedType} onChange={e => setSchedType(e.target.value)} />
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Proposed Times</label>
-            {schedTimes.map((t, i) => (
-              <div key={i} className="flex items-center gap-2 mb-2">
-                <Input type="datetime-local" value={t} onChange={e => updateTime(i, e.target.value)} className="flex-1" />
-                {schedTimes.length > 1 && (
-                  <button onClick={() => removeTime(i)} className="p-1 text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
-                )}
-              </div>
-            ))}
-            <Button variant="ghost" size="sm" onClick={addTime} className="flex items-center gap-1">
-              <Plus size={14} /> Add Time
-            </Button>
-          </div>
-          <Input label="Duration (minutes)" type="number" value={schedDuration} onChange={e => setSchedDuration(e.target.value)} />
-          <Input label="Location / Link" value={schedLocation} onChange={e => setSchedLocation(e.target.value)} placeholder="Zoom link or address" />
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setShowScheduleModal(false)}>Cancel</Button>
-            <Button onClick={handleSchedule} disabled={proposeMut.isPending}>
-              {proposeMut.isPending ? 'Scheduling...' : 'Schedule'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Score Modal */}
-      <Modal isOpen={showScoreModal} onClose={() => setShowScoreModal(false)} title="Score Interview">
-        <div className="space-y-4">
-          <Textarea label="Notes" value={scoreNotes} onChange={e => setScoreNotes(e.target.value)} rows={3} />
-          <Select
-            label="Recommendation"
-            options={[
-              { value: 'strong_admit', label: 'Strong Admit' },
-              { value: 'admit', label: 'Admit' },
-              { value: 'borderline', label: 'Borderline' },
-              { value: 'reject', label: 'Reject' },
-            ]}
-            value={scoreRec}
-            onChange={e => setScoreRec(e.target.value)}
-            placeholder="Select recommendation"
-          />
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setShowScoreModal(false)}>Cancel</Button>
-            <Button
-              onClick={() => {
-                if (!selectedInterview) return
-                scoreMut.mutate({
-                  id: selectedInterview,
-                  payload: {
-                    criterion_scores: scoreCriteria,
-                    total_weighted_score: 0,
-                    interviewer_notes: scoreNotes || null,
-                    recommendation: scoreRec || null,
-                  },
-                })
-              }}
-              disabled={scoreMut.isPending}
-            >
-              {scoreMut.isPending ? 'Saving...' : 'Submit Score'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
-    </div>
+      <ProposeInterviewModal
+        isOpen={showPropose}
+        onClose={() => setShowPropose(false)}
+        onProposed={invalidate}
+        programs={programs}
+      />
+      <ScoreInterviewModal
+        isOpen={scoreTarget !== null}
+        onClose={() => setScoreTarget(null)}
+        onScored={invalidate}
+        interview={scoreTarget}
+      />
+    </>
   )
+
+  if (embedded) return <div className="space-y-4">{body}</div>
+  return <div className="p-6 space-y-4">{body}</div>
 }
