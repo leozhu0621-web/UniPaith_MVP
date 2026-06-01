@@ -87,6 +87,11 @@ class Application(Base):
     # Student-side outcome action, distinct from the institution `decision`
     # above: one of accepted_by_student | declined_by_student | withdrawn.
     student_decision: Mapped[str | None] = mapped_column(String(24))
+    # --- Spec 35 · Waitlist movement (§3.3) ---
+    # Rank within a program's waitlist (1 = next to be offered). Set when the
+    # reviewer waitlists; ``offer-next`` promotes the lowest rank first.
+    waitlist_rank: Mapped[int | None] = mapped_column(Integer)
+    waitlisted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -279,6 +284,14 @@ class OfferLetter(Base):
 
 
 class EnrollmentRecord(Base):
+    """Spec 35 — Enrollment confirmation & yield state machine (per offer).
+
+    Extends the original thin record (kept ``enrolled_at`` / ``enrollment_status``
+    / ``start_term`` for the D2 confidence-outcome hook back-compat) with the
+    §5 state machine: ``accepted → intent_confirmed → deposit_recorded →
+    enrollment_confirmed → enrolled`` (↘ ``withdrew`` / ``deferred``). Deposit is
+    **status-only** in MVP (Spec 39 owns real collection)."""
+
     __tablename__ = "enrollment_records"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -294,11 +307,35 @@ class EnrollmentRecord(Base):
     program_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("programs.id", ondelete="CASCADE"), nullable=False
     )
+    # The offer this enrollment confirms against (spec 35 §5). Nullable so the
+    # legacy D2 outcome path (which created bare rows) still validates.
+    offer_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("offer_letters.id", ondelete="SET NULL")
+    )
+    # §5 state machine. Defaults to ``accepted`` — the row is born when the
+    # student accepts the offer.
+    state: Mapped[str] = mapped_column(String(24), server_default="accepted", nullable=False)
+    # Deposit is status-only in MVP (paid/waived/pending/none); §1 scope boundary.
+    deposit_status: Mapped[str] = mapped_column(String(10), server_default="none", nullable=False)
+    deposit_amount: Mapped[int | None] = mapped_column(Integer)
+    intent_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    enrollment_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    decline_reason: Mapped[str | None] = mapped_column(Text)
+    # {requested: bool, to_term: {season, year} | null, approved: bool} (§2.2/§3.1).
+    deferral: Mapped[dict | None] = mapped_column(JSONB)
+    # [{item, status: pending|complete|overdue|waived, due: ISO|null, consequence}] (§2.1).
+    checklist: Mapped[list | None] = mapped_column(JSONB)
     enrolled_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     enrollment_status: Mapped[str | None] = mapped_column(String(20))
     start_term: Mapped[str | None] = mapped_column(String(20))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
 
 
 class AIPacketSummary(Base):

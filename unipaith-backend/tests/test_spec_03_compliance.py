@@ -126,6 +126,9 @@ def test_each_agent_declares_consent_requirement():
         # Spec 32 §4/§6 — review-workspace assist agents (Sonnet).
         "review_synthesis",
         "review_assistant",
+        # Spec 35 §6 — enrollment/yield intelligence agents.
+        "yield_risk_scorer",
+        "next_best_action_yield",
     }
     assert set(AGENT_REQUIRES.keys()) == expected_agents
 

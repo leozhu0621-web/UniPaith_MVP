@@ -206,6 +206,11 @@ resource "aws_ecs_task_definition" "backend" {
       # by default per the spec (auto-routing risks mis-routing); ship as a
       # suggestion first. Flip to "true" to surface reason-code suggestions.
       { name = "AI_INBOUND_INTENT_V2_ENABLED", value = "false" },
+      # Spec 35 §6 / 45 — enrollment-yield intelligence (NextBestActionForYield,
+      # Sonnet). Refines the yield dashboard's ranked actions; always falls back
+      # to deterministic counts on failure, so the dashboard works with it off
+      # too. YieldRiskScorer is a deterministic heuristic regardless.
+      { name = "AI_YIELD_INTELLIGENCE_V2_ENABLED", value = "true" },
       # Pin Claude model IDs — config.py defaults match, but pinning here
       # makes the prod surface auditable (and trivial to roll a single
       # agent class to a different model without a code deploy).

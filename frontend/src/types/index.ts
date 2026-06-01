@@ -2977,3 +2977,150 @@ export interface WorkshopFeedbackRun {
   is_stub: boolean
   created_at: string
 }
+
+// ── Spec 35 · Enrollment Confirmation & Yield ──────────────────────────────
+
+export type EnrollmentState =
+  | 'accepted'
+  | 'intent_confirmed'
+  | 'deposit_recorded'
+  | 'enrollment_confirmed'
+  | 'enrolled'
+  | 'withdrew'
+  | 'deferred'
+
+export type DepositStatus = 'none' | 'pending' | 'paid' | 'waived'
+export type ChecklistItemStatus = 'pending' | 'complete' | 'overdue' | 'waived'
+
+export interface EnrollmentChecklistItem {
+  key: string
+  item: string
+  status: ChecklistItemStatus
+  due: string | null
+  consequence?: string
+}
+
+export interface EnrollmentDeferral {
+  requested: boolean
+  to_term: { season?: string | null; year?: number | null } | null
+  approved: boolean
+}
+
+export interface EnrollmentOtherOffer {
+  application_id: string
+  program_name: string | null
+  institution_name: string | null
+}
+
+export interface EnrollmentTimelineEvent {
+  label: string
+  at: string | null
+}
+
+export interface Enrollment {
+  available: boolean
+  application_id: string
+  offer_id?: string | null
+  state?: EnrollmentState
+  deposit_status?: DepositStatus
+  deposit_amount?: number | null
+  intent_confirmed_at?: string | null
+  enrollment_confirmed_at?: string | null
+  decline_reason?: string | null
+  deferral?: EnrollmentDeferral | null
+  checklist?: EnrollmentChecklistItem[]
+  program_name?: string | null
+  institution_name?: string | null
+  start_term?: string | null
+  response_deadline?: string | null
+  student_name?: string | null
+  decision?: string | null
+  other_active_offers?: EnrollmentOtherOffer[]
+  timeline?: EnrollmentTimelineEvent[]
+}
+
+export interface WaitlistEntry {
+  application_id: string
+  student_id: string
+  student_name: string | null
+  program_id: string
+  program_name: string
+  waitlist_rank: number | null
+  waitlisted_at: string | null
+}
+
+export interface WaitlistView {
+  waitlist: WaitlistEntry[]
+  waitlist_count: number
+  seats_open: number | null
+  program_id: string | null
+}
+
+export interface YieldFunnelStep {
+  step: string
+  count: number
+  pct_of_admitted: number
+  drop_off: number | null
+}
+
+export interface YieldCohortGroup {
+  group: string
+  admitted: number
+  enrolled: number
+  yield_rate: number
+}
+
+export interface YieldCohort {
+  dimension: string
+  label: string
+  groups: YieldCohortGroup[]
+  disparity: number | null
+  fairness_concern: boolean
+}
+
+export interface YieldNextBestAction {
+  kind: string
+  label: string
+  rationale: string
+  count?: number | null
+}
+
+export interface YieldAtRiskAdmit {
+  application_id: string
+  student_id: string
+  student_name: string | null
+  confirm_probability: number
+  risk_level: 'high' | 'medium' | 'low'
+  state: string
+  days_remaining: number | null
+}
+
+export interface YieldTimeToConfirm {
+  count: number
+  avg_days: number | null
+  median_days: number | null
+  buckets: { label: string; count: number }[]
+}
+
+export interface YieldSnapshot {
+  scope: { institution_id: string; program_id: string | null; intake_id: string | null }
+  admitted: number
+  intent_confirmed: number
+  deposited: number
+  enrolled: number
+  yield_rate: number
+  melt: number
+  melt_rate: number
+  waitlist_conversion: number | null
+  predicted_final_class_size: number
+  target_class_size: number | null
+  funnel: YieldFunnelStep[]
+  time_to_confirm: YieldTimeToConfirm
+  waitlist_count: number
+  seats_open: number | null
+  at_risk: YieldAtRiskAdmit[]
+  at_risk_count: number
+  cohorts: YieldCohort[]
+  next_best_actions: YieldNextBestAction[]
+  empty?: boolean
+}

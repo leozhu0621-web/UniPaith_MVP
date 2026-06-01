@@ -126,7 +126,9 @@ class AiTurn(Base, UUIDPrimaryKeyMixin):
             # Spec 29 §8 — institution messaging agents.
             "'institution_reply_drafter','inbound_intent_classifier',"
             # Spec 32 §4/§6 — review-workspace assist agents.
-            "'review_synthesis','review_assistant')",
+            "'review_synthesis','review_assistant',"
+            # Spec 35 §6 — enrollment/yield intelligence agents.
+            "'yield_risk_scorer','next_best_action_yield')",
             name="ck_ai_turns_agent",
         ),
         # Spec 03 §8: provider tracked per call so the cost ledger splits

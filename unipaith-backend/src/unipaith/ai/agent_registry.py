@@ -55,6 +55,9 @@ AGENT_TIERS: dict[str, str] = {
     # ── Institution messaging (spec 29 §8 / 45) — Haiku, always falls back ──
     "institution_reply_drafter": "batch",  # InstitutionReplyDrafter — per-thread reply
     "inbound_intent_classifier": "batch",  # InboundIntentClassifier — reason-code suggestion
+    # ── Enrollment / yield (spec 35 §6) — both fall back to deterministic counts ──
+    "yield_risk_scorer": "batch",  # YieldRiskScorer — per-admit confirm-probability (Haiku)
+    "next_best_action_yield": "workhorse",  # NextBestActionForYield — ranked actions (Sonnet)
 }
 
 

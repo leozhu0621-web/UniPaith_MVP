@@ -5,14 +5,16 @@ import PipelinePage from './PipelinePage'
 import InterviewsPage from './InterviewsPage'
 import InquiriesPage from './InquiriesPage'
 import CohortComparisonPage from './CohortComparisonPage'
+import YieldPage from './yield/YieldPage'
 
-type AdmissionsTab = 'pipeline' | 'interviews' | 'inquiries' | 'cohort'
+type AdmissionsTab = 'pipeline' | 'interviews' | 'inquiries' | 'cohort' | 'yield'
 
 const tabs = [
   { id: 'pipeline', label: 'Pipeline' },
   { id: 'interviews', label: 'Interviews' },
   { id: 'inquiries', label: 'Inquiries' },
   { id: 'cohort', label: 'Cohort Compare' },
+  { id: 'yield', label: 'Yield' },
 ]
 
 export default function AdmissionsPage() {
@@ -32,6 +34,7 @@ export default function AdmissionsPage() {
       {activeTab === 'interviews' && <InterviewsPage />}
       {activeTab === 'inquiries' && <InquiriesPage />}
       {activeTab === 'cohort' && <CohortComparisonPage />}
+      {activeTab === 'yield' && <YieldPage />}
     </div>
   )
 }
