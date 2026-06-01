@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import Tabs from '../../components/ui/Tabs'
 import TemplatesPage from './TemplatesPage'
 import SegmentsPage from './SegmentsPage'
-import MessagingPage from './MessagingPage'
+import InstitutionInboxPage from './InstitutionInboxPage'
 
 type CommsTab = 'templates' | 'segments' | 'inbox'
 
@@ -24,11 +24,11 @@ export default function CommunicationsPage() {
   }
 
   return (
-    <div className="p-6 space-y-4">
+    <div className={activeTab === 'inbox' ? 'flex h-[calc(100vh-4rem)] flex-col p-4' : 'p-6 space-y-4'}>
       <Tabs tabs={tabs} activeTab={activeTab} onChange={handleTabChange} />
       {activeTab === 'templates' && <TemplatesPage />}
       {activeTab === 'segments' && <SegmentsPage />}
-      {activeTab === 'inbox' && <MessagingPage />}
+      {activeTab === 'inbox' && <InstitutionInboxPage />}
     </div>
   )
 }

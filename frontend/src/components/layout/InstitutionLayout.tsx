@@ -53,11 +53,13 @@ export default function InstitutionLayout() {
     /not found|no institution|404/i.test(institutionQ.error.message)
   const setupIncomplete = setupQ.data != null && !setupQ.data.setup_complete
 
+  const setupAllowedPaths = ['/i/setup', '/i/data']
+
   useEffect(() => {
     if (setupQ.isLoading) return
     const needsSetup = institutionMissing || setupIncomplete
     if (!needsSetup) return
-    if (location.pathname === '/i/setup') return
+    if (setupAllowedPaths.some(p => location.pathname === p || location.pathname.startsWith(`${p}/`))) return
     navigate('/i/setup', { replace: true })
   }, [institutionMissing, setupIncomplete, setupQ.isLoading, location.pathname, navigate])
 

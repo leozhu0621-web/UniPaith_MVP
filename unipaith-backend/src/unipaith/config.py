@@ -247,6 +247,12 @@ class Settings(BaseSettings):
     # null, so the card never shows.
     ai_inbox_v2_enabled: bool = False
 
+    # Spec 29 §8 / 45 — Institution inbox AI draft replies. When True,
+    # InstitutionInboxService.ai_draft routes through InstitutionReplyDrafter
+    # (Haiku-tier, matching consent). On failure returns null and staff compose
+    # manually. Off (default) → endpoint always returns null.
+    ai_institution_inbox_v2_enabled: bool = False
+
     # Spec 10 §3 / 45 §12 — Discovery type-first search query interpreter. When
     # True, SearchService.interpret routes a free-text query through the
     # DiscoveryQueryInterpreter agent (Sonnet, forced tool-use) to produce

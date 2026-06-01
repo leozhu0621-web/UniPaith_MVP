@@ -31,6 +31,8 @@ AGENT_TIERS: dict[str, str] = {
     "identity_summary": "batch",
     # ── Inbox reply drafter (L2) — spec 45 §13 ──
     "inbox_reply_drafter": "workhorse",
+    "institution_reply_drafter": "batch",
+    "inbound_intent_classifier": "batch",
     # ── Workshops (L2) ──
     "workshop_coach": "workhorse",
     "workshop_judge": "batch",

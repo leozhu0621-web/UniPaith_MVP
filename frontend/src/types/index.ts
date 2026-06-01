@@ -1340,6 +1340,7 @@ export interface CampaignAttributionData {
   opened: number
   clicked: number
   applications_started: number
+  delivery_rate?: number | null
 }
 
 export interface EventAttributionData {
@@ -1348,6 +1349,66 @@ export interface EventAttributionData {
   rsvps: number
   attended: number
   applications_after: number
+}
+
+export interface AnalyticsFilterState {
+  program_id?: string | null
+  intake_round_id?: string | null
+  segment_id?: string | null
+  campaign_id?: string | null
+  time_window: string
+}
+
+export interface AnalyticsKpi {
+  key: string
+  label: string
+  value: string | number
+  comparison_pct?: number | null
+  comparison_label?: string | null
+}
+
+export interface TopSource {
+  source_id: string
+  source_kind: string
+  source_name: string
+  action_count: number
+  metric: string
+}
+
+export interface DropOffAlert {
+  from_stage: string
+  to_stage: string
+  drop_pct: number
+  hint: string
+}
+
+export interface AnalyticsOverviewData {
+  filter: AnalyticsFilterState
+  kpis: AnalyticsKpi[]
+  discovery_funnel: FunnelStage[]
+  top_sources_by_clicks: TopSource[]
+  top_sources_by_apply_started: TopSource[]
+  drop_off_alerts: DropOffAlert[]
+  insufficient_data: boolean
+  empty: boolean
+}
+
+export interface FunnelReportData {
+  filter: AnalyticsFilterState
+  funnel: string
+  stages: FunnelStage[]
+  top_sources: TopSource[]
+  drop_off_alerts: DropOffAlert[]
+  insufficient_data: boolean
+  empty: boolean
+}
+
+export interface AnalyticsAttributionData {
+  filter: AnalyticsFilterState
+  campaigns: CampaignAttributionData[]
+  events: EventAttributionData[]
+  insufficient_data: boolean
+  empty: boolean
 }
 
 export interface AnalyticsData {

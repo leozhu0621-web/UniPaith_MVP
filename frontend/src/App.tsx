@@ -49,7 +49,6 @@ import ProgramEditorPage from './pages/institution/ProgramEditorPage'
 import PipelinePage from './pages/institution/PipelinePage'
 import StudentDetailPage from './pages/institution/StudentDetailPage'
 import InterviewsPage from './pages/institution/InterviewsPage'
-import InstitutionMessagingPage from './pages/institution/MessagingPage'
 import SegmentsPage from './pages/institution/SegmentsPage'
 import CampaignsPage from './pages/institution/CampaignsPage'
 import EventsPage from './pages/institution/EventsPage'
@@ -170,7 +169,7 @@ const router = createBrowserRouter([
       { path: 'pipeline', element: <PipelinePage /> },
       { path: 'pipeline/:studentId', element: <StudentDetailPage /> },
       { path: 'interviews', element: <InterviewsPage /> },
-      { path: 'messages', element: <InstitutionMessagingPage /> },
+      { path: 'messages', element: <Navigate to="/i/communications?tab=inbox" replace /> },
       { path: 'segments', element: <SegmentsPage /> },
       { path: 'campaigns', element: <CampaignsPage /> },
       { path: 'events', element: <EventsPage /> },

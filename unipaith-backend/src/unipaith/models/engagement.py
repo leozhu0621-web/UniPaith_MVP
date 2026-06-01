@@ -257,6 +257,10 @@ class Conversation(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     last_message_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Spec 29 — optional staff owner for the shared institution inbox.
+    assigned_to: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
 
     messages: Mapped[list[Message]] = relationship(
         back_populates="conversation", cascade="all, delete-orphan"
