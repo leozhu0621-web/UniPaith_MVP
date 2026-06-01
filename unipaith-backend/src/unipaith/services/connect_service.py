@@ -24,6 +24,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.config import settings
+from unipaith.core.media_urls import resolve_media_urls
 from unipaith.models.application import Application
 from unipaith.models.engagement import SavedList, SavedListItem
 from unipaith.models.institution import Event, EventRSVP, Institution, InstitutionPost, Program
@@ -178,6 +179,7 @@ class ConnectService:
                     "meeting_link_reveals_at": reveals_at.isoformat()
                     if (ev.meeting_link and state in ("rsvp", "attended"))
                     else None,
+                    "status": ev.status,
                 }
             )
 
@@ -515,8 +517,9 @@ class ConnectService:
 
     @staticmethod
     def _media_list(media: object) -> list:
-        if isinstance(media, list):
-            return media
+        resolved = resolve_media_urls(media)
+        if isinstance(resolved, list):
+            return resolved
         return []
 
     @staticmethod
