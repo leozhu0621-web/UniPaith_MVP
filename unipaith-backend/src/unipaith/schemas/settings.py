@@ -192,6 +192,19 @@ class ReviewConfigInfo(BaseModel):
     reviewer_assignment_mode: str
 
 
+class AISurfaceConfig(BaseModel):
+    enabled: bool
+    min_confidence: int
+
+
+class AIConfigInfo(BaseModel):
+    """Spec 37 §5 — per-institution AI controls (per-surface on/off + confidence
+    thresholds) plus the 46 §9 no-training tier override."""
+
+    surfaces: dict[str, AISurfaceConfig]
+    no_training: bool
+
+
 class InstitutionSettingsResponse(BaseModel):
     account: InstitutionAccountInfo
     security: SecurityInfo
@@ -202,6 +215,7 @@ class InstitutionSettingsResponse(BaseModel):
     team: list[TeamMember]
     deletion: DeletionInfo | None = None
     review_config: ReviewConfigInfo
+    ai_config: AIConfigInfo
 
 
 class UpdateInstitutionSettingsRequest(BaseModel):
@@ -210,6 +224,10 @@ class UpdateInstitutionSettingsRequest(BaseModel):
     contact_email: str | None = None
     website_url: str | None = None
     review_config: dict | None = None
+    # Spec 37 §5 — partial AI-config patch:
+    #   {"surfaces": {"<surface>": {"enabled": bool, "min_confidence": 0-100}},
+    #    "no_training": bool}
+    ai_config: dict | None = None
     # Shared per-user prefs (stored in user_settings, same as students)
     theme: str | None = None
     locale: str | None = None

@@ -72,6 +72,11 @@ class Institution(Base):
     )
     setup_state: Mapped[dict | None] = mapped_column(JSONB)
     review_config: Mapped[dict | None] = mapped_column(JSONB)
+    # Spec 37 (AI Extensibility) §5 / 46 §9 — per-institution AI controls:
+    # per-surface enable toggles, per-surface confidence thresholds, and the
+    # no-training tier override. NULL = all defaults (see
+    # services/ai_config_service.DEFAULT_AI_CONFIG).
+    ai_config: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

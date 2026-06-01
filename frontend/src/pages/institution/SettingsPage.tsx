@@ -36,6 +36,7 @@ import TeamCard from './settings/TeamCard'
 import IntegrationsCard from './settings/IntegrationsCard'
 import OrgAccountCard from './settings/OrgAccountCard'
 import ReviewConfigCard from './settings/ReviewConfigCard'
+import AIConfigCard from './settings/AIConfigCard'
 
 const CAMPUS_SETTING_OPTIONS = [
   { value: '', label: 'Not specified' },
@@ -110,6 +111,7 @@ export default function SettingsPage() {
     { id: 'profile', label: 'Public profile' },
     { id: 'team', label: 'Team' },
     { id: 'review', label: 'Rubrics' },
+    { id: 'ai', label: 'AI' },
     { id: 'integrations', label: 'Integrations' },
     { id: 'notifications', label: 'Notifications' },
     { id: 'billing', label: 'Billing' },
@@ -404,6 +406,15 @@ export default function SettingsPage() {
             ))
           )}
         </div>
+      )}
+
+      {/* AI extensibility (Spec 37 §5) */}
+      {activeTab === 'ai' && (
+        settingsQ.isLoading || !settingsQ.data ? (
+          <Card className="p-6"><Skeleton className="h-40" /></Card>
+        ) : (
+          <AIConfigCard config={settingsQ.data.ai_config} onChanged={refetchSettings} />
+        )
       )}
 
       {/* Integrations */}

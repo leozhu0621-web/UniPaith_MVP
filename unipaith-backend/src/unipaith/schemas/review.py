@@ -30,6 +30,9 @@ class ScoreApplicationRequest(BaseModel):
     rubric_id: UUID
     criterion_scores: dict
     reviewer_notes: str | None = None
+    # Spec 37 §3 — when the reviewer started from an AI pre-fill, the frontend
+    # passes the pre-fill's draft token so the human<->AI edit diff is captured.
+    ai_draft_token: UUID | None = None
 
 
 class ApplicationScoreResponse(BaseModel):

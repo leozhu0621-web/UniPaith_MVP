@@ -112,6 +112,8 @@ class InstSuggestedReplyResponse(BaseModel):
     tone: str = "professional"
     length: str = "medium"
     alternate_drafts: list[str] = []
+    # Spec 37 §3 — token to thread back on send so the human edit diff is captured.
+    draft_token: str | None = None
 
 
 class IntentSuggestionResponse(BaseModel):

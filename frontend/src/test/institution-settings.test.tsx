@@ -35,6 +35,19 @@ const INSTITUTION_SETTINGS = {
     calibration_enabled: true,
     reviewer_assignment_mode: 'round_robin',
   },
+  ai_config: {
+    surfaces: {
+      packet_summary: { enabled: true, min_confidence: 0 },
+      rubric_prefill: { enabled: true, min_confidence: 70 },
+      assistant_chat: { enabled: true, min_confidence: 0 },
+      message_draft: { enabled: true, min_confidence: 0 },
+      authenticity_risk: { enabled: true, min_confidence: 0 },
+      intelligence_digest: { enabled: true, min_confidence: 0 },
+      doc_parse_triage: { enabled: true, min_confidence: 0 },
+      campaign_copy: { enabled: true, min_confidence: 0 },
+    },
+    no_training: false,
+  },
 }
 
 // Spec 22 §3 / gap G-I1 — the institution profile editor uses guided forms,
@@ -69,12 +82,18 @@ function mockApis() {
   vi.spyOn(reviewsApi, 'getRubrics').mockResolvedValue([] as any)
   vi.spyOn(billingApi, 'getInstitutionBilling').mockResolvedValue({} as any)
   vi.spyOn(settingsApi, 'getInstitutionSettings').mockResolvedValue(INSTITUTION_SETTINGS as any)
+  vi.spyOn(settingsApi, 'updateInstitutionSettings').mockResolvedValue(INSTITUTION_SETTINGS as any)
   vi.spyOn(notificationsApi, 'getNotificationPrefs').mockResolvedValue({ email_enabled: true, preferences: {} } as any)
 }
 
 async function openProfileTab() {
   fireEvent.click(screen.getByRole('tab', { name: /public profile/i }))
   expect(await screen.findByDisplayValue('University of Foo')).toBeInTheDocument()
+}
+
+async function openAITab() {
+  fireEvent.click(screen.getByRole('tab', { name: /^ai$/i }))
+  expect(await screen.findByText('AI-assistive features')).toBeInTheDocument()
 }
 
 function renderSettings(initialEntry = '/') {
@@ -171,5 +190,39 @@ describe('Institution SettingsPage — review rubrics (Spec 32 §3)', () => {
     renderSettings('/i/settings?tab=rubrics')
     expect(await screen.findByText(/blind review by default/i)).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: /rubrics/i })).toHaveAttribute('aria-selected', 'true')
+  })
+})
+
+// Spec 37 §5/§6 — the AI tab: per-surface toggles, confidence thresholds, and
+// the no-training tier, each persisted via updateInstitutionSettings.
+describe('Institution SettingsPage — AI extensibility tab (Spec 37)', () => {
+  it('renders every AI surface toggle plus the no-training tier', async () => {
+    renderSettings()
+    await openAITab()
+    expect(screen.getByText('AI packet summary')).toBeInTheDocument()
+    expect(screen.getByText('Rubric pre-fill')).toBeInTheDocument()
+    expect(screen.getByText('Authenticity risk scoring')).toBeInTheDocument()
+    expect(screen.getByText('Campaign copy suggestions')).toBeInTheDocument()
+    expect(screen.getByText('No-training tier')).toBeInTheDocument()
+    // Each surface exposes a switch; the no-training switch is present + off.
+    expect(screen.getByRole('switch', { name: 'No-training tier' })).toHaveAttribute('aria-checked', 'false')
+  })
+
+  it('persists a no-training toggle as an ai_config patch', async () => {
+    const updateSpy = vi.spyOn(settingsApi, 'updateInstitutionSettings')
+    renderSettings()
+    await openAITab()
+    fireEvent.click(screen.getByRole('switch', { name: 'No-training tier' }))
+    await waitFor(() => expect(updateSpy).toHaveBeenCalled())
+    expect(updateSpy.mock.calls[0][0]).toEqual({ ai_config: { no_training: true } })
+  })
+
+  it('persists turning a surface off as an ai_config patch', async () => {
+    const updateSpy = vi.spyOn(settingsApi, 'updateInstitutionSettings')
+    renderSettings()
+    await openAITab()
+    fireEvent.click(screen.getByRole('switch', { name: 'AI packet summary enabled' }))
+    await waitFor(() => expect(updateSpy).toHaveBeenCalled())
+    expect(updateSpy.mock.calls[0][0]).toEqual({ ai_config: { surfaces: { packet_summary: { enabled: false } } } })
   })
 })

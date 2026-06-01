@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.api.ai_feedback import router as ai_feedback_router
+from unipaith.api.ai_surface import router as ai_surface_router
 from unipaith.api.analytics import router as analytics_router
 from unipaith.api.applications import router as applications_router
 from unipaith.api.auth import router as auth_router
@@ -58,6 +59,9 @@ api_router.include_router(strategy_router)
 # Institution inbox before institutions_router so the literal
 # `/institutions/me/inbox/*` paths win over any param route (spec 29).
 api_router.include_router(institution_inbox_router)
+# Spec 37 — AI edit-diff capture under `/institutions/me/ai-surface/*`; before
+# institutions_router so the literal path wins over `/institutions/{id}`.
+api_router.include_router(ai_surface_router)
 api_router.include_router(institutions_router)
 api_router.include_router(programs_router)
 api_router.include_router(applications_router)

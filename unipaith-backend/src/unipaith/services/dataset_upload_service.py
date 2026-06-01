@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import io
+import logging
 import re
 from datetime import datetime
 from typing import Any
@@ -21,6 +22,8 @@ from unipaith.models.institution import (
     Program,
 )
 from unipaith.services.audit_service import AuditService
+
+logger = logging.getLogger(__name__)
 
 REQUIRED_FIELDS: dict[str, list[str]] = {
     "prospect_list": ["email"],
@@ -244,6 +247,36 @@ class DatasetUploadService:
         self.db.add(version)
         await self.db.flush()
 
+    async def _merge_parse_triage(
+        self, institution_id: UUID, dataset: InstitutionDataset, report: dict[str, Any]
+    ) -> None:
+        """Spec 45 §19 / 37 §2.3 — merge a Haiku DocumentParseTriage note
+        (status / summary / recommended_action) into the deterministic
+        validation report. PII-free (aggregate counts only). Gated by the global
+        flag + the institution's ``doc_parse_triage`` surface toggle; best-effort
+        and never raises, so the upload always proceeds on the rule-based report."""
+        if not settings.ai_data_parse_triage_v2_enabled:
+            return
+        try:
+            from unipaith.services.ai_config_service import AIConfigService
+
+            if not await AIConfigService(self.db).is_surface_enabled(
+                institution_id, "doc_parse_triage"
+            ):
+                return
+            from unipaith.ai.document_parse_triage import triage_parse
+
+            triage = await triage_parse(
+                file_name=dataset.file_name or "dataset",
+                dataset_type=dataset.dataset_type,
+                size_bytes=int(dataset.file_size_bytes or 0),
+                report=report,
+            )
+            if triage:
+                report.update(triage)
+        except Exception as exc:  # noqa: BLE001 — triage is best-effort
+            logger.info("parse triage skipped for dataset=%s: %s", dataset.id, exc)
+
     async def confirm_upload(
         self,
         institution_id: UUID,
@@ -272,6 +305,7 @@ class DatasetUploadService:
             column_mapping=mapping,
             program_names=program_names,
         )
+        await self._merge_parse_triage(institution_id, dataset, report)
 
         if report["error_count"] > 0 and not skip_invalid_rows:
             dataset.validation_errors = report
@@ -381,6 +415,7 @@ class DatasetUploadService:
             column_mapping=mapping,
             program_names=program_names,
         )
+        await self._merge_parse_triage(institution_id, dataset, report)
 
         if report["error_count"] > 0 and not skip_invalid_rows:
             dataset.validation_errors = report

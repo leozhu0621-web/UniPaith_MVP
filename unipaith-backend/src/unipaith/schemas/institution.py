@@ -798,6 +798,9 @@ class DraftCampaignCopyResponse(BaseModel):
     alternate_subjects: list[str] = Field(default_factory=list)
     preview_text: str = ""
     source: str = "llm"  # 'llm' | 'fallback'
+    disabled: bool = False
+    # Spec 37 §3 — token to thread back on save so the human edit diff is captured.
+    draft_token: str | None = None
 
 
 class RecordEngagementRequest(BaseModel):

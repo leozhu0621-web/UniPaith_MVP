@@ -26,7 +26,9 @@ import Textarea from '../../components/ui/Textarea'
 import Select from '../../components/ui/Select'
 import Skeleton from '../../components/ui/Skeleton'
 import AIBadge from '../../components/ui/AIBadge'
+import FallbackNote from '../../components/ui/FallbackNote'
 import RubricSlider from '../../components/ui/RubricSlider'
+import { commitAISurfaceEvent } from '../../api/ai-surface'
 import { showToast } from '../../stores/toast-store'
 import { formatDate, formatDateTime } from '../../utils/format'
 import { STATUS_COLORS, INTERVIEW_TYPE_LABELS } from '../../utils/constants'
@@ -58,6 +60,10 @@ export default function StudentDetailPage() {
   const [draftSubject, setDraftSubject] = useState('')
   const [draftBody, setDraftBody] = useState('')
   const [draftLoading, setDraftLoading] = useState(false)
+  // Spec 37 §3 — capture tokens so the human edit diff is recorded on save/send.
+  const [prefillToken, setPrefillToken] = useState<string | null>(null)
+  const [draftToken, setDraftToken] = useState<string | null>(null)
+  const [draftSource, setDraftSource] = useState<'ai' | 'rule_based' | null>(null)
 
   const [revealReason, setRevealReason] = useState('')
 
@@ -113,7 +119,10 @@ export default function StudentDetailPage() {
 
   const regenMut = useMutation({
     mutationFn: () => regenerateAIPacketSummary(applicationId!, packet?.rubric_id || undefined),
-    onSuccess: () => { invalidatePacket(); showToast('AI summary regenerated', 'success') },
+    onSuccess: (data: { disabled?: boolean }) => {
+      if (data?.disabled) { showToast('AI packet summary is turned off for your institution', 'warning'); return }
+      invalidatePacket(); showToast('AI summary regenerated', 'success')
+    },
     onError: () => showToast('Could not regenerate summary', 'error'),
   })
   const scanMut = useMutation({
@@ -132,8 +141,8 @@ export default function StudentDetailPage() {
     onError: () => showToast('Failed to assign reviewer', 'error'),
   })
   const scoreMut = useMutation({
-    mutationFn: () => scoreApplication(applicationId!, { rubric_id: selectedRubric, criterion_scores: criterionScores, reviewer_notes: composeNotes() }),
-    onSuccess: () => { showToast('Score submitted', 'success'); setShowScoringModal(false); setSynthesis(null); invalidatePacket() },
+    mutationFn: () => scoreApplication(applicationId!, { rubric_id: selectedRubric, criterion_scores: criterionScores, reviewer_notes: composeNotes(), ai_draft_token: prefillToken }),
+    onSuccess: () => { showToast('Score submitted', 'success'); setShowScoringModal(false); setSynthesis(null); setPrefillToken(null); invalidatePacket() },
     onError: (e: unknown) => showToast(errDetail(e) ?? 'Failed to submit score', 'error'),
   })
   const assistantMut = useMutation({
@@ -445,13 +454,27 @@ export default function StudentDetailPage() {
             </div>
             <Button variant="secondary" disabled={draftLoading} onClick={async () => {
               setDraftLoading(true)
-              try { const r = await generateAIDraft(applicationId!, draftType); setDraftSubject(r.subject); setDraftBody(r.body); showToast('AI draft generated — edit before sending', 'success') }
+              try {
+                const r = await generateAIDraft(applicationId!, draftType)
+                if (r.disabled) { showToast('AI message drafts are turned off for your institution', 'warning'); return }
+                setDraftSubject(r.subject); setDraftBody(r.body)
+                setDraftToken(r.draft_token ?? null); setDraftSource(r.source ?? null)
+                showToast('AI draft generated — edit before sending', 'success')
+              }
               catch { showToast('Draft generation failed', 'error') } finally { setDraftLoading(false) }
             }} className="flex items-center gap-1 whitespace-nowrap"><Brain size={14} /> {draftLoading ? 'Generating…' : 'Generate draft'}</Button>
           </div>
           <Input label="Subject" value={draftSubject} onChange={e => setDraftSubject(e.target.value)} />
           <Textarea label="Message body (editable)" value={draftBody} onChange={e => setDraftBody(e.target.value)} rows={8} />
-          <div className="flex justify-end gap-2"><Button variant="ghost" onClick={() => setShowDraftModal(false)}>Cancel</Button><Button disabled={!draftSubject.trim() || !draftBody.trim()} onClick={() => { showToast('Draft ready — send from the Communications inbox', 'success'); setShowDraftModal(false) }}>Done editing</Button></div>
+          {draftSource === 'rule_based' && <FallbackNote />}
+          <div className="flex justify-end gap-2"><Button variant="ghost" onClick={() => setShowDraftModal(false)}>Cancel</Button><Button disabled={!draftSubject.trim() || !draftBody.trim()} onClick={async () => {
+            // Spec 37 §3 — record the human-edited final vs the AI draft.
+            if (draftToken) {
+              try { await commitAISurfaceEvent({ surface: 'message_draft', draft_token: draftToken, final_content: { subject: draftSubject, body: draftBody }, action: 'draft_finalized', application_id: applicationId }) } catch { /* capture is best-effort */ }
+            }
+            setDraftToken(null); setDraftSource(null)
+            showToast('Draft ready — send from the Communications inbox', 'success'); setShowDraftModal(false)
+          }}>Done editing</Button></div>
         </div>
       </Modal>
 
@@ -468,12 +491,18 @@ export default function StudentDetailPage() {
                 setPrefilling(true)
                 try {
                   const result = await getAIPrefill(applicationId!, selectedRubric)
+                  if (result.disabled) { showToast('AI pre-fill is turned off for your institution', 'warning'); return }
+                  if (result.withheld_low_confidence) {
+                    showToast(`AI pre-fill withheld — confidence ${result.confidence ?? 0} is below your ${result.min_confidence ?? 70} threshold`, 'warning')
+                    return
+                  }
                   const scores: Record<string, number> = {}; const notes: Record<string, string> = {}
                   for (const [name, data] of Object.entries(result.prefill)) {
                     if (data.suggested_score != null) scores[name] = clampScore(data.suggested_score, currentRubric, name)
                     if (data.suggested_note) notes[name] = data.suggested_note
                   }
                   setCriterionScores(scores); setCriterionNotes(notes)
+                  setPrefillToken(result.draft_token ?? null)
                   if (result.overall_note) setReviewerNotes(result.overall_note)
                   showToast('AI pre-fill applied — review and adjust', 'success')
                 } catch { showToast('AI pre-fill failed', 'error') } finally { setPrefilling(false) }

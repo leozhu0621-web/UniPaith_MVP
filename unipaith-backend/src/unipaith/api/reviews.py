@@ -22,10 +22,16 @@ from unipaith.schemas.review import (
     RubricResponse,
     ScoreApplicationRequest,
 )
+from unipaith.services.ai_config_service import AIConfigService
+from unipaith.services.ai_surface_service import AISurfaceService
 from unipaith.services.institution_service import InstitutionService
 from unipaith.services.review_pipeline_service import ReviewPipelineService
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
+
+# AI packet confidence is a band string; map it to a 0-100 number for the
+# per-surface threshold comparison (Spec 37 §5).
+_BAND_CONFIDENCE = {"low": 30, "medium": 65, "high": 90}
 
 
 # --- Rubrics ---
@@ -95,13 +101,31 @@ async def score_application(
     inst = await InstitutionService(db).get_institution(user.id)
     svc = ReviewPipelineService(db)
     reviewer = await svc.get_reviewer_by_user(user.id, inst.id)
-    return await svc.score_application(
+    result = await svc.score_application(
         reviewer_id=reviewer.id,
         application_id=application_id,
         rubric_id=body.rubric_id,
         criterion_scores=body.criterion_scores,
         reviewer_notes=body.reviewer_notes,
     )
+    # Spec 37 §3 — if scoring started from an AI pre-fill, capture the
+    # human<->AI edit diff (human_edit + decision_action) against the pre-fill.
+    if body.ai_draft_token is not None:
+        no_training = await AIConfigService(db).is_no_training(inst.id)
+        await AISurfaceService(db).record_committed(
+            institution_id=inst.id,
+            actor_user_id=user.id,
+            surface="rubric_prefill",
+            final_output={
+                "criterion_scores": body.criterion_scores,
+                "reviewer_notes": body.reviewer_notes or "",
+            },
+            action="score_saved",
+            draft_token=body.ai_draft_token,
+            application_id=application_id,
+            no_training=no_training,
+        )
+    return result
 
 
 @router.get("/applications/{application_id}/scores", response_model=list[ApplicationScoreResponse])
@@ -135,6 +159,8 @@ async def get_ai_packet_summary(
 ):
     """Get cached AI packet summary or generate a new one."""
     inst = await InstitutionService(db).get_institution(user.id)
+    if not await AIConfigService(db).is_surface_enabled(inst.id, "packet_summary"):
+        return {"disabled": True}
     svc = ReviewPipelineService(db)
     return await svc.get_or_generate_packet_summary(
         inst.id,
@@ -152,13 +178,31 @@ async def regenerate_ai_packet_summary(
 ):
     """Force regenerate AI packet summary."""
     inst = await InstitutionService(db).get_institution(user.id)
+    if not await AIConfigService(db).is_surface_enabled(inst.id, "packet_summary"):
+        return {"disabled": True}
     svc = ReviewPipelineService(db)
-    return await svc.get_or_generate_packet_summary(
+    packet = await svc.get_or_generate_packet_summary(
         inst.id,
         application_id,
         rubric_id,
         force_regenerate=True,
     )
+    # Spec 37 §3 — record the AI-generated packet summary (the join token lets a
+    # later human edit/decision tie back to this artifact).
+    no_training = await AIConfigService(db).is_no_training(inst.id)
+    token = await AISurfaceService(db).record_generated(
+        institution_id=inst.id,
+        actor_user_id=user.id,
+        surface="packet_summary",
+        agent="review_summarizer",
+        ai_output={"summary": packet.get("overall_summary") or packet.get("summary") or ""},
+        application_id=application_id,
+        confidence=_BAND_CONFIDENCE.get(str(packet.get("confidence_level", "")).lower()),
+        no_training=no_training,
+    )
+    if isinstance(packet, dict):
+        packet["draft_token"] = str(token)
+    return packet
 
 
 @router.get("/applications/{application_id}/review-packet")
@@ -202,8 +246,28 @@ async def review_assistant_chat(
 ):
     """Spec 32 §6 — grounded Q&A about one applicant (Sonnet, rule-based fallback)."""
     inst = await InstitutionService(db).get_institution(user.id)
+    if not await AIConfigService(db).is_surface_enabled(inst.id, "assistant_chat"):
+        return {
+            "answer": "The AI applicant assistant is turned off for your institution.",
+            "citations": [],
+            "grounded": True,
+            "disabled": True,
+        }
     svc = ReviewPipelineService(db)
-    return await svc.answer_applicant_question(inst.id, application_id, body.question)
+    result = await svc.answer_applicant_question(inst.id, application_id, body.question)
+    # Spec 37 §3 — record the AI Q&A artifact (grounded answer + citations).
+    answer = result.get("answer") if isinstance(result, dict) else str(result)
+    no_training = await AIConfigService(db).is_no_training(inst.id)
+    await AISurfaceService(db).record_generated(
+        institution_id=inst.id,
+        actor_user_id=user.id,
+        surface="assistant_chat",
+        agent="review_assistant",
+        ai_output={"question": body.question, "answer": answer},
+        application_id=application_id,
+        no_training=no_training,
+    )
+    return result
 
 
 @router.post("/applications/{application_id}/reveal-identity")
@@ -245,6 +309,14 @@ async def ai_rubric_prefill(
 ):
     """AI pre-fill reviewer notes + scores per rubric criterion."""
     inst = await InstitutionService(db).get_institution(user.id)
+    cfgsvc = AIConfigService(db)
+    if not await cfgsvc.is_surface_enabled(inst.id, "rubric_prefill"):
+        return {
+            "application_id": str(application_id),
+            "rubric_id": str(rubric_id),
+            "prefill": {},
+            "disabled": True,
+        }
     svc = ReviewPipelineService(db)
 
     # Get or generate packet summary with the rubric
@@ -254,34 +326,62 @@ async def ai_rubric_prefill(
         rubric_id,
     )
 
+    # Spec 37 §5 — only surface the pre-fill when its confidence clears the
+    # institution's per-surface floor (default 70); otherwise withhold it.
+    min_conf = await cfgsvc.min_confidence(inst.id, "rubric_prefill")
+    confidence = _BAND_CONFIDENCE.get(str(packet.get("confidence_level", "")).lower(), 30)
+    withheld = confidence < min_conf
+
     # Map criterion assessments to pre-fill format
     prefill: dict[str, dict] = {}
-    assessments = packet.get("criterion_assessments") or []
-    for ca in assessments:
-        name = ca.get("criterion_name", "")
-        if name:
-            evidence_text = ""
-            for ev in ca.get("evidence", []):
-                evidence_text += f"{ev.get('field', '')}: {ev.get('value', '')}. "
-            prefill[name] = {
-                "suggested_score": ca.get("score"),
-                "suggested_note": (
-                    f"{ca.get('assessment', '')} [Evidence: {evidence_text.strip()}]"
-                ).strip()
-                if evidence_text
-                else ca.get(
-                    "assessment",
-                    "",
-                ),
-            }
+    if not withheld:
+        assessments = packet.get("criterion_assessments") or []
+        for ca in assessments:
+            name = ca.get("criterion_name", "")
+            if name:
+                evidence_text = ""
+                for ev in ca.get("evidence", []):
+                    evidence_text += f"{ev.get('field', '')}: {ev.get('value', '')}. "
+                prefill[name] = {
+                    "suggested_score": ca.get("score"),
+                    "suggested_note": (
+                        f"{ca.get('assessment', '')} [Evidence: {evidence_text.strip()}]"
+                    ).strip()
+                    if evidence_text
+                    else ca.get(
+                        "assessment",
+                        "",
+                    ),
+                }
 
-    return {
+    response: dict = {
         "application_id": str(application_id),
         "rubric_id": str(rubric_id),
         "prefill": prefill,
         "overall_note": packet.get("overall_summary", ""),
         "recommended_score": packet.get("recommended_score"),
+        "confidence": confidence,
+        "min_confidence": min_conf,
+        "withheld_low_confidence": withheld,
     }
+
+    # Spec 37 §3 — record the AI-generated pre-fill (only when actually shown);
+    # the returned token lets the score-save capture the human edit diff.
+    if prefill:
+        no_training = await cfgsvc.is_no_training(inst.id)
+        token = await AISurfaceService(db).record_generated(
+            institution_id=inst.id,
+            actor_user_id=user.id,
+            surface="rubric_prefill",
+            agent="review_summarizer",
+            ai_output={"prefill": prefill, "overall_note": response["overall_note"]},
+            application_id=application_id,
+            confidence=confidence,
+            no_training=no_training,
+        )
+        response["draft_token"] = str(token)
+
+    return response
 
 
 # --- Integrity Signals ---

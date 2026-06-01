@@ -45,6 +45,8 @@ from unipaith.models.student import (
     StudentScheduling,
 )
 from unipaith.models.user import User, UserRole
+from unipaith.services.ai_config_service import apply_update as apply_ai_config_update
+from unipaith.services.ai_config_service import merge_ai_config
 from unipaith.services.notification_service import NotificationService, normalize_matrix
 
 logger = logging.getLogger(__name__)
@@ -436,6 +438,7 @@ class SettingsService:
             "team": team,
             "deletion": base["deletion"],
             "review_config": self._review_config(inst),
+            "ai_config": merge_ai_config(inst.ai_config),
         }
 
     async def update_institution_settings(self, user: User, data: dict) -> dict:
@@ -458,6 +461,11 @@ class SettingsService:
                     )
                 current["reviewer_assignment_mode"] = mode
             inst.review_config = current
+        # Spec 37 §5 — per-institution AI controls. Merge the partial patch onto
+        # the current (defaults-overlaid) config and store the full normalized
+        # blob (reassign so SQLAlchemy detects the JSONB mutation).
+        if "ai_config" in data and data["ai_config"] is not None:
+            inst.ai_config = apply_ai_config_update(inst.ai_config, data["ai_config"])
         # Shared per-user prefs (theme/locale/timezone/accessibility) live in
         # user_settings — same store + behaviour as students.
         pref_keys = ("theme", "locale", "timezone", "dyslexia_mode", "font_size", "reduced_motion")

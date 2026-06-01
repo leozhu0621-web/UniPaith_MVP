@@ -25,6 +25,9 @@ export async function scoreApplication(applicationId: string, payload: {
   rubric_id: string
   criterion_scores: Record<string, number>
   reviewer_notes?: string | null
+  // Spec 37 §3 — when scoring started from an AI pre-fill, pass its token so the
+  // human<->AI edit diff is captured server-side.
+  ai_draft_token?: string | null
 }): Promise<ApplicationScore> {
   const { data } = await apiClient.post(`/reviews/applications/${applicationId}/score`, payload)
   return data
@@ -53,7 +56,7 @@ export async function getAIPacketSummary(applicationId: string, rubricId?: strin
   return data
 }
 
-export async function regenerateAIPacketSummary(applicationId: string, rubricId?: string): Promise<AIPacketSummary> {
+export async function regenerateAIPacketSummary(applicationId: string, rubricId?: string): Promise<AIPacketSummary & { disabled?: boolean }> {
   const params = rubricId ? { rubric_id: rubricId } : undefined
   const { data } = await apiClient.post(`/reviews/applications/${applicationId}/ai-packet/regenerate`, null, { params })
   return data
@@ -109,6 +112,12 @@ export async function getAIPrefill(applicationId: string, rubricId: string): Pro
   application_id: string; rubric_id: string;
   prefill: Record<string, { suggested_score: number | null; suggested_note: string }>;
   overall_note: string; recommended_score: number | null
+  // Spec 37 §3/§5 — capture token, confidence gate state, and disabled flag.
+  draft_token?: string
+  confidence?: number
+  min_confidence?: number
+  withheld_low_confidence?: boolean
+  disabled?: boolean
 }> {
   const { data } = await apiClient.post(`/reviews/applications/${applicationId}/ai-prefill`, null, { params: { rubric_id: rubricId } })
   return data
