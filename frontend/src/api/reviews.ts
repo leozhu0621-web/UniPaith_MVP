@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AIPacketSummary, BatchOperationResult, CohortComparisonData, IntegritySignal, InstitutionMatchRationale, PrioritizedApplication, Rubric, ApplicationScore, ReviewAssignment, AIReviewSummary, PipelineData } from '../types'
+import type { AIPacketSummary, BatchOperationResult, CohortComparisonData, IntegritySignal, IntegrityResolution, InstitutionMatchRationale, PrioritizedApplication, Rubric, ApplicationScore, ReviewAssignment, AIReviewSummary, PipelineData } from '../types'
 
 export async function getRubrics(programId?: string): Promise<Rubric[]> {
   const params = programId ? { program_id: programId } : {}
@@ -81,9 +81,17 @@ export async function getIntegritySignals(applicationId?: string, signalStatus?:
   return data
 }
 
-export async function resolveIntegritySignal(signalId: string, notes?: string): Promise<{ id: string; status: string }> {
-  const params = notes ? { notes } : undefined
-  const { data } = await apiClient.post(`/reviews/integrity-signals/${signalId}/resolve`, null, { params })
+export async function resolveIntegritySignal(
+  signalId: string,
+  resolution?: IntegrityResolution,
+  notes?: string,
+): Promise<{ id: string; status: string; resolution: string | null }> {
+  const params: Record<string, string> = {}
+  if (resolution) params.resolution = resolution
+  if (notes) params.notes = notes
+  const { data } = await apiClient.post(`/reviews/integrity-signals/${signalId}/resolve`, null, {
+    params: Object.keys(params).length ? params : undefined,
+  })
   return data
 }
 

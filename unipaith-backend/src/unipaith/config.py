@@ -312,6 +312,14 @@ class Settings(BaseSettings):
     # On by default — pure-Python, no LLM cost, degrades gracefully to null.
     ai_probability_bands_enabled: bool = True
 
+    # Spec 31 §9 / §11 — Intelligence-digest narrator on the institution
+    # dashboard. When True a Sonnet-tier agent (45 §11 migrate-to-Claude) writes
+    # the plain-English daily digest from a pre-computed, non-PII applicant-
+    # landscape stat block; on any failure (flag off / mock / parse / provider)
+    # the DashboardIntelligenceService falls back to a deterministic rule-based
+    # narrator so the endpoint never 5xxes (the spec 31 integration invariant).
+    ai_intelligence_digest_v2_enabled: bool = False
+
     # GPU infrastructure (cloud-first)
     gpu_mode: str = "openai"  # "openai" | "aws" | "local" | "mock"
     gpu_8b_instance_id: str = ""

@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Inbox, MessageSquare, CheckCircle2, Clock, User } from 'lucide-react'
-import { getInquiries, updateInquiry } from '../../api/institutions'
+import { Inbox, MessageSquare, CheckCircle2, Clock, User, UserPlus } from 'lucide-react'
+import { getInquiries, updateInquiry, getTemplates } from '../../api/institutions'
+import { getTeam } from '../../api/settings'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
+import Select from '../../components/ui/Select'
 import Modal from '../../components/ui/Modal'
 import Textarea from '../../components/ui/Textarea'
 import Tabs from '../../components/ui/Tabs'
@@ -14,6 +16,13 @@ import InstitutionPageHeader from '../../components/institution/InstitutionPageH
 import { showToast } from '../../stores/toast-store'
 import { formatDateTime } from '../../utils/format'
 import type { Inquiry } from '../../types'
+
+// Spec 31 §7 — an inquiry left unanswered ≥ 4h is flagged for SLA visibility.
+const FOUR_HOURS_MS = 4 * 60 * 60 * 1000
+function isOverdue(inq: Inquiry): boolean {
+  if (inq.status !== 'new' && inq.status !== 'in_progress') return false
+  return Date.now() - new Date(inq.created_at).getTime() >= FOUR_HOURS_MS
+}
 
 const STATUS_BADGE: Record<string, 'neutral' | 'info' | 'success' | 'warning'> = {
   new: 'warning',
@@ -62,6 +71,31 @@ export default function InquiriesPage() {
       showToast('Status updated', 'success')
     },
   })
+
+  // Spec 31 §7 — response templates (Spec 25) + assign-to-staff.
+  const templatesQ = useQuery({ queryKey: ['inquiry-templates'], queryFn: () => getTemplates() })
+  const templates = Array.isArray(templatesQ.data) ? templatesQ.data : []
+  const teamQ = useQuery({ queryKey: ['institution-team'], queryFn: getTeam })
+  // Only active members are real users assignable to an inquiry (pending invites are not).
+  const assignableStaff = (Array.isArray(teamQ.data) ? teamQ.data : []).filter(m => m.status === 'active')
+  const staffEmail = (id: string | null) =>
+    id ? assignableStaff.find(m => m.id === id)?.email ?? null : null
+
+  const assignMut = useMutation({
+    mutationFn: (p: { id: string; assigned_to: string }) =>
+      updateInquiry(p.id, { assigned_to: p.assigned_to }),
+    onSuccess: (updated: Inquiry) => {
+      queryClient.invalidateQueries({ queryKey: ['inquiries'] })
+      showToast('Inquiry assigned', 'success')
+      setSelected(updated)
+    },
+    onError: () => showToast('Failed to assign inquiry', 'error'),
+  })
+
+  const applyTemplate = (templateId: string) => {
+    const t = templates.find(tpl => tpl.id === templateId)
+    if (t) setResponseText(t.body)
+  }
 
   const openDetail = (inq: Inquiry) => {
     setSelected(inq)
@@ -116,13 +150,17 @@ export default function InquiriesPage() {
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-gray-900 text-sm">{inq.subject}</h3>
                   <Badge variant={STATUS_BADGE[inq.status] ?? 'neutral'}>{inq.status.replace('_', ' ')}</Badge>
+                  {isOverdue(inq) && <Badge variant="warning">Unanswered ≥ 4h</Badge>}
                 </div>
                 {inq.program_name && <Badge variant="info">{inq.program_name}</Badge>}
               </div>
-              <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
+              <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mt-1">
                 <span className="flex items-center gap-1"><User size={12} /> {inq.student_name}</span>
                 <span>{inq.student_email}</span>
                 <span className="flex items-center gap-1"><Clock size={12} /> {formatDateTime(inq.created_at)}</span>
+                {staffEmail(inq.assigned_to) && (
+                  <span className="flex items-center gap-1 text-secondary"><UserPlus size={12} /> {staffEmail(inq.assigned_to)}</span>
+                )}
               </div>
               <p className="text-sm text-gray-600 mt-2 line-clamp-2">{inq.message}</p>
             </Card>
@@ -154,6 +192,25 @@ export default function InquiriesPage() {
                 <p className="text-sm text-gray-800 whitespace-pre-wrap">{selected.response_text}</p>
               </Card>
             )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Select
+                label="Assign to staff"
+                options={assignableStaff.map(m => ({ value: m.id, label: m.email }))}
+                placeholder={assignableStaff.length ? 'Assign…' : 'No staff available'}
+                value={selected.assigned_to ?? ''}
+                onChange={e => e.target.value && assignMut.mutate({ id: selected.id, assigned_to: e.target.value })}
+                disabled={!assignableStaff.length || assignMut.isPending}
+              />
+              <Select
+                label="Insert response template"
+                options={templates.map(t => ({ value: t.id, label: t.name }))}
+                placeholder={templates.length ? 'Choose a template…' : 'No templates yet'}
+                value=""
+                onChange={e => { if (e.target.value) applyTemplate(e.target.value) }}
+                disabled={!templates.length}
+              />
+            </div>
 
             <Textarea
               label="Your Response"

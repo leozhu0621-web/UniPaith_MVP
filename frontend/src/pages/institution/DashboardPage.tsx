@@ -129,32 +129,36 @@ export default function DashboardPage() {
 
   if (!institution) return null
 
+  // Spec 31 §2 — executive KPI row: Total apps · Conversion · Avg match · Yield (proj).
+  const conversionVal = summary?.conversion_pct ?? summary?.acceptance_rate
+  const projYieldVal = summary?.projected_yield_pct ?? summary?.yield_rate
   const executiveKpis = [
     {
-      label: 'Applications',
+      label: 'Total apps',
       value: summary?.total_applications ?? 0,
       icon: Users,
       color: 'text-brand-slate-600 bg-brand-slate-100',
     },
     {
-      label: 'Acceptance Rate',
-      value: summary?.acceptance_rate != null ? formatPercent(summary.acceptance_rate) : '-',
+      label: 'Conversion',
+      value: conversionVal != null ? formatPercent(conversionVal) : '—',
       icon: Target,
       color: 'text-emerald-600 bg-emerald-100',
     },
     {
-      label: 'Yield Rate',
-      value: summary?.yield_rate != null ? formatPercent(summary.yield_rate) : '-',
+      label: 'Avg match',
+      value: summary?.avg_match != null ? summary.avg_match : '—',
+      icon: Brain,
+      color: 'text-brand-slate-600 bg-brand-slate-100',
+    },
+    {
+      label: 'Yield (proj)',
+      value: projYieldVal != null ? formatPercent(projYieldVal) : '—',
       icon: TrendingUp,
       color: 'text-purple-600 bg-purple-100',
     },
-    {
-      label: 'Needs Review',
-      value: summary?.pending_review_count ?? 0,
-      icon: ClipboardCheck,
-      color: 'text-amber-600 bg-amber-100',
-    },
   ]
+  const priorityQueue = summary?.priority_queue ?? []
 
   const operationalKpis = [
     {
@@ -176,27 +180,6 @@ export default function DashboardPage() {
       color: 'text-slate-600 bg-slate-100',
     },
   ]
-  const priorityItems = [
-    {
-      label: 'Applications waiting for review',
-      value: summary?.pending_review_count ?? 0,
-      actionLabel: 'Open Queue',
-      onClick: () => navigate('/i/pipeline?tab=review'),
-    },
-    {
-      label: 'Unread applicant conversations',
-      value: summary?.unread_messages_count ?? 0,
-      actionLabel: 'Open Inbox',
-      onClick: () => navigate('/i/messages'),
-    },
-    {
-      label: 'Programs still in draft',
-      value: (summary?.program_count ?? programs.length) - (summary?.published_program_count ?? 0),
-      actionLabel: 'Publish Programs',
-      onClick: () => navigate('/i/programs'),
-    },
-  ]
-
   const programColumns = [
     { key: 'program_name', label: 'Program' },
     {
@@ -263,11 +246,63 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6 p-6">
       <div>
+        {summary?.cycle && (
+          <p className="up-eyebrow mb-1">{institution.name} · {summary.cycle} cycle</p>
+        )}
         <h1 className="text-2xl font-bold text-gray-900">Welcome back, {institution.name}</h1>
         <p className="text-sm text-gray-500 mt-1">
           Run today&apos;s admissions workload, track outcomes, and take next actions from one place.
         </p>
       </div>
+
+      {/* Executive KPI row — Spec 31 §2 (Total apps · Conversion · Avg match · Yield proj). */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+        {executiveKpis.map(kpi => (
+          <Card key={kpi.label} className="p-5">
+            <div className="flex items-center gap-3">
+              <div className={`p-2.5 rounded-lg ${kpi.color}`}>
+                <kpi.icon size={20} />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">{kpi.label}</p>
+                <p className="text-3xl font-bold text-gray-900">{kpi.value}</p>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {/* Priority Queue — Spec 31 §2: categorized, actionable, with deep links. */}
+      {priorityQueue.length > 0 && (
+        <Card className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-900">Priority Queue</h3>
+            <Badge variant="info">{priorityQueue.length} to triage</Badge>
+          </div>
+          <div className="space-y-2">
+            {priorityQueue.map(item => (
+              <button
+                key={item.category}
+                onClick={() => navigate(item.deep_link)}
+                className="flex w-full items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 text-left transition-colors hover:bg-muted"
+              >
+                <span className="flex items-center gap-2 text-sm text-foreground">
+                  <span
+                    className="inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded px-1.5 text-xs font-bold"
+                    style={{ backgroundColor: 'hsl(var(--warning-soft))', color: 'hsl(var(--warning))' }}
+                  >
+                    {item.count}
+                  </span>
+                  {item.category}
+                </span>
+                <span className="flex items-center gap-1 text-xs font-medium text-secondary">
+                  See all <ArrowRight size={13} />
+                </span>
+              </button>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Setup nudges — Spec 30 §4. Shown until the optional steps are done. */}
       {setupNudges.length > 0 && (
@@ -308,7 +343,7 @@ export default function DashboardPage() {
             <>
               <p className="text-2xl font-bold text-amber-700">{openAlerts.length}</p>
               <p className="text-xs text-amber-600 mb-2">open alerts need review</p>
-              <Button size="sm" variant="secondary" onClick={() => navigate('/i/pipeline?tab=board')} className="flex items-center gap-1">
+              <Button size="sm" variant="secondary" onClick={() => navigate('/i/admissions?tab=integrity')} className="flex items-center gap-1">
                 <Shield size={12} /> Review Alerts
               </Button>
             </>
@@ -389,6 +424,22 @@ export default function DashboardPage() {
         </Card>
       )}
 
+      {/* Fairness signal — Spec 31 §11 (G-D4 / G-I5). Advisory representation check. */}
+      {summary?.fairness && summary.fairness.status !== 'insufficient_data' && (
+        <Card className={`p-4 ${summary.fairness.status === 'warning' ? 'border-amber-200 bg-amber-50/30' : ''}`}>
+          <div className="flex items-center gap-2 mb-1">
+            <Users size={16} className={summary.fairness.status === 'warning' ? 'text-amber-600' : 'text-green-600'} />
+            <h3 className="text-sm font-semibold text-gray-900">Fairness Signal</h3>
+            {summary.fairness.status === 'warning' ? (
+              <Badge variant="warning">Review{summary.fairness.dimension ? ` · ${summary.fairness.dimension}` : ''}</Badge>
+            ) : (
+              <Badge variant="success">All clear</Badge>
+            )}
+          </div>
+          <p className="text-sm text-gray-600">{summary.fairness.message}</p>
+        </Card>
+      )}
+
       {/* AI Priority Queue Preview */}
       {topPriority.length > 0 && (
         <Card className="p-4">
@@ -440,45 +491,6 @@ export default function DashboardPage() {
           </Button>
         </div>
       </Card>
-
-      <Card className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-900">Operational Priorities</h3>
-          <Badge variant="info">Operations</Badge>
-        </div>
-        <div className="space-y-2">
-          {priorityItems.map(item => (
-            <div key={item.label} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-lg border border-gray-200 px-3 py-2">
-              <div>
-                <p className="text-sm text-gray-700">{item.label}</p>
-                <p className="text-xs text-gray-500">Current count: {item.value}</p>
-              </div>
-              <Button size="sm" variant="secondary" onClick={item.onClick} className="self-start sm:self-auto">
-                {item.actionLabel}
-              </Button>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      <div>
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">Executive KPIs</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-          {executiveKpis.map(kpi => (
-            <Card key={kpi.label} className="p-5">
-              <div className="flex items-center gap-3">
-                <div className={`p-2.5 rounded-lg ${kpi.color}`}>
-                  <kpi.icon size={20} />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">{kpi.label}</p>
-                  <p className="text-2xl font-semibold text-gray-900">{kpi.value}</p>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </div>
 
       <div>
         <h3 className="text-sm font-semibold text-gray-900 mb-3">Operational KPIs</h3>

@@ -1292,11 +1292,14 @@ export interface IntegritySignal {
   description: string
   evidence: Record<string, unknown> | null
   status: 'open' | 'resolved' | 'dismissed'
+  resolution?: 'acceptable' | 'requires_clarification' | 'reject_application' | null
   resolved_by: string | null
   resolved_at: string | null
   resolution_notes: string | null
   created_at: string
 }
+
+export type IntegrityResolution = 'acceptable' | 'requires_clarification' | 'reject_application'
 
 export interface AIPacketSummary {
   id: string | null
@@ -1340,6 +1343,19 @@ export interface PrioritizedApplication {
 }
 
 // ============ DASHBOARD & ANALYTICS ============
+export interface PriorityQueueItem {
+  category: string
+  count: number
+  deep_link: string
+}
+
+export interface FairnessSignal {
+  status: 'ok' | 'warning' | 'insufficient_data'
+  message: string
+  dimension?: string
+  pool?: number
+}
+
 export interface DashboardSummary {
   program_count: number
   published_program_count: number
@@ -1349,6 +1365,16 @@ export interface DashboardSummary {
   unread_messages_count: number
   acceptance_rate: number | null
   yield_rate: number | null
+  // Spec 31 · Admissions Intake contract (§2 / §8)
+  cycle?: string | null
+  avg_match?: number | null
+  conversion_pct?: number | null
+  projected_yield_pct?: number | null
+  new_inquiries_24h?: number
+  unanswered_inquiries_4h?: number
+  integrity_signals_count?: number
+  priority_queue?: PriorityQueueItem[]
+  fairness?: FairnessSignal | null
 }
 
 export interface ProgramApplicationCount {

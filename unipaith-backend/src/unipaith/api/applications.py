@@ -365,8 +365,10 @@ async def batch_request_missing_items(
     from sqlalchemy import select
 
     from unipaith.models.application import Application
+    from unipaith.services.audit_service import AuditService
 
-    await InstitutionService(db).get_institution(user.id)  # auth check
+    inst = await InstitutionService(db).get_institution(user.id)  # auth check
+    audit = AuditService(db)
     result = BatchOperationResult(
         success_count=0,
         failed_ids=[],
@@ -382,6 +384,17 @@ async def batch_request_missing_items(
                 continue
             app.missing_items = {"items": body.items}
             app.completeness_status = "incomplete"
+            # Spec 31 §5 — audit-log per application in a batch action.
+            await audit.log(
+                institution_id=inst.id,
+                actor_user_id=user.id,
+                action="batch_request_missing_items",
+                entity_type="application",
+                entity_id=str(app_id),
+                application_id=app_id,
+                description="Batch request for missing items.",
+                new_value={"items": body.items},
+            )
             result.success_count += 1
         except Exception as e:
             result.failed_ids.append(app_id)
@@ -398,6 +411,9 @@ async def batch_update_status(
 ):
     inst = await InstitutionService(db).get_institution(user.id)
     svc = ApplicationService(db)
+    from unipaith.services.audit_service import AuditService
+
+    audit = AuditService(db)
     result = BatchOperationResult(
         success_count=0,
         failed_ids=[],
@@ -406,6 +422,17 @@ async def batch_update_status(
     for app_id in body.application_ids:
         try:
             await svc.update_status(inst.id, app_id, body.status)
+            # Spec 31 §5 — audit-log per application in a batch action.
+            await audit.log(
+                institution_id=inst.id,
+                actor_user_id=user.id,
+                action="batch_update_status",
+                entity_type="application",
+                entity_id=str(app_id),
+                application_id=app_id,
+                description=f"Batch status update to '{body.status}'.",
+                new_value={"status": body.status},
+            )
             result.success_count += 1
         except Exception as e:
             result.failed_ids.append(app_id)
@@ -421,6 +448,9 @@ async def batch_release_decision(
 ):
     inst = await InstitutionService(db).get_institution(user.id)
     svc = ApplicationService(db)
+    from unipaith.services.audit_service import AuditService
+
+    audit = AuditService(db)
     result = BatchOperationResult(
         success_count=0,
         failed_ids=[],
@@ -433,6 +463,17 @@ async def batch_release_decision(
                 app_id,
                 body.decision,
                 body.decision_notes,
+            )
+            # Spec 31 §5 — audit-log per application in a batch action.
+            await audit.log(
+                institution_id=inst.id,
+                actor_user_id=user.id,
+                action="batch_release_decision",
+                entity_type="application",
+                entity_id=str(app_id),
+                application_id=app_id,
+                description=f"Batch decision released: '{body.decision}'.",
+                new_value={"decision": body.decision},
             )
             result.success_count += 1
         except Exception as e:

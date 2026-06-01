@@ -376,6 +376,9 @@ class IntegritySignal(Base):
         DateTime(timezone=True),
     )
     resolution_notes: Mapped[str | None] = mapped_column(Text)
+    # Spec 31 §6 — resolution outcome chosen by the reviewer:
+    # acceptable | requires_clarification | reject_application.
+    resolution: Mapped[str | None] = mapped_column(String(30))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

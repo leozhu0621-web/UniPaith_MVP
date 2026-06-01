@@ -123,6 +123,8 @@ def test_each_agent_declares_consent_requirement():
         # Spec 29 §8 — institution messaging agents (Haiku).
         "institution_reply_drafter",
         "inbound_intent_classifier",
+        # Spec 31 §9 / §11 — admissions-intake dashboard digest narrator (Sonnet).
+        "intelligence_digest",
     }
     assert set(AGENT_REQUIRES.keys()) == expected_agents
 

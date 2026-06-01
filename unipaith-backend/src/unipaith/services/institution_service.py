@@ -5,7 +5,7 @@ import logging
 import math
 import re
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import func, or_, select, update
@@ -18,7 +18,13 @@ from unipaith.core.exceptions import (
     UnprocessableEntityException,
 )
 from unipaith.core.media_urls import resolve_media_urls
-from unipaith.models.application import Application, OfferLetter
+from unipaith.models.application import (
+    Application,
+    IntegritySignal,
+    Interview,
+    OfferLetter,
+    ReviewAssignment,
+)
 from unipaith.models.engagement import Conversation, Message, StudentEngagementSignal
 from unipaith.models.institution import (
     Campaign,
@@ -31,6 +37,7 @@ from unipaith.models.institution import (
     Institution,
     InstitutionDataset,
     InstitutionPost,
+    IntakeRound,
     Program,
     Promotion,
     School,
@@ -66,6 +73,7 @@ from unipaith.schemas.institution import (
     PaginatedResponse,
     PostMediaUploadResponse,
     PostResponse,
+    PriorityQueueItem,
     ProgramApplicationCount,
     ProgramSummaryResponse,
     PromotionResponse,
@@ -825,6 +833,140 @@ class InstitutionService:
             yield_row.accepted / yield_row.total_offers if yield_row.total_offers > 0 else None
         )
 
+        # --- Spec 31 · Admissions Intake contract (§2 / §8) ---
+        day_ago = now - timedelta(days=1)
+        four_h_ago = now - timedelta(hours=4)
+
+        # Avg match (fitness) across the institution's applicant pool, 0–100.
+        avg_fit_val = (
+            await self.db.execute(
+                select(func.avg(MatchResult.fitness_score))
+                .select_from(MatchResult)
+                .join(Program, MatchResult.program_id == Program.id)
+                .where(Program.institution_id == institution_id)
+            )
+        ).scalar_one_or_none()
+        avg_match = round(float(avg_fit_val) * 100) if avg_fit_val is not None else None
+
+        # New inquiries (24h) + those still unanswered after 4h (§2 "3 unanswered ≥ 4h").
+        new_inquiries_24h = (
+            await self.db.execute(
+                select(func.count())
+                .select_from(Inquiry)
+                .where(
+                    Inquiry.institution_id == institution_id,
+                    Inquiry.created_at >= day_ago,
+                )
+            )
+        ).scalar_one() or 0
+        unanswered_inquiries_4h = (
+            await self.db.execute(
+                select(func.count())
+                .select_from(Inquiry)
+                .where(
+                    Inquiry.institution_id == institution_id,
+                    Inquiry.status.in_(("new", "in_progress")),
+                    Inquiry.created_at <= four_h_ago,
+                )
+            )
+        ).scalar_one() or 0
+
+        # Categorized priority queue (§2), each with a deep link.
+        needs_assign = (
+            await self.db.execute(
+                select(func.count(func.distinct(Application.id)))
+                .select_from(Application)
+                .join(Program, Application.program_id == Program.id)
+                .outerjoin(ReviewAssignment, ReviewAssignment.application_id == Application.id)
+                .where(
+                    Program.institution_id == institution_id,
+                    Application.status.in_(("submitted", "under_review")),
+                    Application.decision.is_(None),
+                    ReviewAssignment.id.is_(None),
+                )
+            )
+        ).scalar_one() or 0
+        integrity_apps = (
+            await self.db.execute(
+                select(func.count(func.distinct(IntegritySignal.application_id))).where(
+                    IntegritySignal.institution_id == institution_id,
+                    IntegritySignal.status == "open",
+                )
+            )
+        ).scalar_one() or 0
+        integrity_signals_count = (
+            await self.db.execute(
+                select(func.count())
+                .select_from(IntegritySignal)
+                .where(
+                    IntegritySignal.institution_id == institution_id,
+                    IntegritySignal.status == "open",
+                )
+            )
+        ).scalar_one() or 0
+        interviews_pending = (
+            await self.db.execute(
+                select(func.count())
+                .select_from(Interview)
+                .join(Application, Interview.application_id == Application.id)
+                .join(Program, Application.program_id == Program.id)
+                .where(
+                    Program.institution_id == institution_id,
+                    Interview.confirmed_time.is_(None),
+                    or_(
+                        Interview.status.is_(None),
+                        Interview.status.not_in(("completed", "cancelled", "declined")),
+                    ),
+                )
+            )
+        ).scalar_one() or 0
+
+        priority_queue: list[PriorityQueueItem] = []
+        if needs_assign:
+            priority_queue.append(
+                PriorityQueueItem(
+                    category=(
+                        f"{needs_assign} application"
+                        f"{'s' if needs_assign != 1 else ''} need reviewer assignment"
+                    ),
+                    count=int(needs_assign),
+                    deep_link="/i/admissions?tab=pipeline",
+                )
+            )
+        if integrity_apps:
+            priority_queue.append(
+                PriorityQueueItem(
+                    category=(
+                        f"{integrity_apps} application"
+                        f"{'s' if integrity_apps != 1 else ''} with integrity flags"
+                    ),
+                    count=int(integrity_apps),
+                    deep_link="/i/admissions?tab=integrity",
+                )
+            )
+        if interviews_pending:
+            priority_queue.append(
+                PriorityQueueItem(
+                    category=(
+                        f"{interviews_pending} interview confirmation"
+                        f"{'s' if interviews_pending != 1 else ''} pending"
+                    ),
+                    count=int(interviews_pending),
+                    deep_link="/i/admissions?tab=interviews",
+                )
+            )
+
+        cycle = await self._derive_cycle(institution_id)
+        try:
+            from unipaith.services.dashboard_intelligence_service import (
+                DashboardIntelligenceService,
+            )
+
+            fairness = await DashboardIntelligenceService(self.db).fairness_signal(institution_id)
+        except Exception:  # noqa: BLE001 — fairness is advisory; never block the dashboard
+            logger.exception("fairness signal failed; omitting")
+            fairness = None
+
         return DashboardSummaryResponse(
             program_count=prog_row.total,
             published_program_count=prog_row.published,
@@ -834,7 +976,58 @@ class InstitutionService:
             unread_messages_count=unread_messages,
             acceptance_rate=acceptance_rate,
             yield_rate=yield_rate,
+            cycle=cycle,
+            avg_match=avg_match,
+            conversion_pct=acceptance_rate,
+            projected_yield_pct=yield_rate,
+            new_inquiries_24h=int(new_inquiries_24h),
+            unanswered_inquiries_4h=int(unanswered_inquiries_4h),
+            integrity_signals_count=int(integrity_signals_count),
+            priority_queue=priority_queue,
+            fairness=fairness,
         )
+
+    async def _derive_cycle(self, institution_id: UUID) -> str | None:
+        """Derive an admissions-cycle label (e.g. "Fall 2027"). Prefers the
+        dominant active intake term; else the soonest upcoming program start;
+        else next fall. Best-effort — never raises."""
+        try:
+            row = (
+                await self.db.execute(
+                    select(IntakeRound.intake_term, func.count().label("n"))
+                    .join(Program, IntakeRound.program_id == Program.id)
+                    .where(
+                        Program.institution_id == institution_id,
+                        IntakeRound.intake_term.isnot(None),
+                        IntakeRound.is_active.is_(True),
+                    )
+                    .group_by(IntakeRound.intake_term)
+                    .order_by(func.count().desc())
+                    .limit(1)
+                )
+            ).first()
+            if row and row[0]:
+                return str(row[0])
+
+            today = datetime.now(UTC).date()
+            start = (
+                await self.db.execute(
+                    select(Program.program_start_date)
+                    .where(
+                        Program.institution_id == institution_id,
+                        Program.program_start_date.isnot(None),
+                        Program.program_start_date >= today,
+                    )
+                    .order_by(Program.program_start_date.asc())
+                    .limit(1)
+                )
+            ).scalar_one_or_none()
+            if start:
+                season = "Spring" if start.month <= 4 else "Summer" if start.month <= 8 else "Fall"
+                return f"{season} {start.year}"
+        except Exception:  # noqa: BLE001
+            logger.exception("cycle derivation failed; using fallback")
+        return f"Fall {datetime.now(UTC).year + 1}"
 
     # --- Analytics ---
 
