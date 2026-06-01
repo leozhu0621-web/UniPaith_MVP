@@ -276,7 +276,14 @@ class ConnectService:
     def _deadline_items(
         self, engagement: dict[UUID, dict], visible_insts: set[UUID], inst_names: dict[UUID, str]
     ) -> list[dict]:
-        today = datetime.now(UTC).date()
+        # `application_deadline` is a naive calendar date (stored / created via
+        # `date.today()`), so compare it against a naive `date.today()` reference
+        # for a timezone-stable `days_until`. Using `datetime.now(UTC).date()`
+        # here made the value flake by a day when the server's local date is
+        # behind UTC (negative-offset zones, evening) — see
+        # tests/test_connect_feed.py::test_deadline_item_from_saved_program.
+        # Prod containers run in UTC, so local == UTC date there: no change.
+        today = date.today()
         horizon = today + timedelta(days=_DEADLINE_WINDOW_DAYS)
         out: list[dict] = []
         for prog_id, e in engagement.items():
