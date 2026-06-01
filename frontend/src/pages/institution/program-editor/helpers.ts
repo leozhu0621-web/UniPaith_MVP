@@ -71,6 +71,7 @@ export const SECTIONS = [
   { id: 'identity', label: 'Identity' },
   { id: 'overview', label: 'Overview & structure' },
   { id: 'requirements', label: 'Requirements' },
+  { id: 'english', label: 'English proficiency' },
   { id: 'deadlines', label: 'Deadlines & rounds' },
   { id: 'costs', label: 'Costs' },
   { id: 'outcomes', label: 'Outcomes' },
@@ -103,6 +104,8 @@ export interface EditorDraft {
   application_requirements: ProgramApplicationRequirements
   requirements_kv: { key: string; value: string }[]
   acceptance_rate_pct: string
+  // English proficiency (Spec 38 §2.2)
+  english_policy: EnglishPolicyForm
   // Deadlines & rounds
   intake_rounds: IntakeRoundForm[]
   application_deadline: string
@@ -115,6 +118,29 @@ export interface EditorDraft {
   media_urls: string[]
   // Promotion
   promotion_categories: string[]
+}
+
+// English proficiency policy (Spec 38 §2.2) — accepted tests + minimum scores +
+// waiver rules. Stored on `programs.english_policy`.
+export interface EnglishPolicyForm {
+  accepted_tests: { test: string; min_score: string }[]
+  waiver_native_english_countries: string[]
+  waiver_prior_degree_in_english: boolean
+}
+
+export const ENGLISH_TEST_OPTIONS = [
+  { value: 'TOEFL', label: 'TOEFL' },
+  { value: 'IELTS', label: 'IELTS' },
+  { value: 'DET', label: 'Duolingo (DET)' },
+  { value: 'PTE', label: 'PTE' },
+]
+
+export function defaultEnglishPolicy(): EnglishPolicyForm {
+  return {
+    accepted_tests: [],
+    waiver_native_english_countries: [],
+    waiver_prior_degree_in_english: true,
+  }
 }
 
 // ── Default factories ────────────────────────────────────────────────────────
@@ -389,6 +415,16 @@ export function fromProgram(p: Program): EditorDraft {
       role: str(f.role),
     })),
     application_requirements: hydrateAppReqs(p.application_requirements),
+    english_policy: {
+      accepted_tests: arr<Record<string, any>>(p.english_policy?.accepted_tests).map(t => ({
+        test: str(t.test),
+        min_score: t.min_score != null ? String(t.min_score) : '',
+      })),
+      waiver_native_english_countries: arr<string>(
+        p.english_policy?.waiver_native_english_countries,
+      ).map(str),
+      waiver_prior_degree_in_english: p.english_policy?.waiver_prior_degree_in_english ?? true,
+    },
     requirements_kv: isObj(p.requirements)
       ? Object.entries(p.requirements).map(([key, value]) => ({ key, value: str(value) }))
       : [],
@@ -420,6 +456,7 @@ export function emptyDraft(): EditorDraft {
     highlights: [],
     faculty_contacts: [],
     application_requirements: defaultAppReqs(),
+    english_policy: defaultEnglishPolicy(),
     requirements_kv: [],
     acceptance_rate_pct: '',
     intake_rounds: [],
@@ -465,6 +502,14 @@ export function toPayload(d: EditorDraft): Record<string, any> {
     recommendations: d.application_requirements.recommendations,
   }
 
+  const englishPolicy = {
+    accepted_tests: d.english_policy.accepted_tests
+      .filter(t => t.test.trim())
+      .map(t => ({ test: t.test, min_score: numOrNull(t.min_score) ?? 0 })),
+    waiver_native_english_countries: clean(d.english_policy.waiver_native_english_countries),
+    waiver_prior_degree_in_english: d.english_policy.waiver_prior_degree_in_english,
+  }
+
   const intakeRounds = d.intake_rounds
     .filter(r => r.name.trim() || r.deadline)
     .map(r => ({ ...r, capacity: r.capacity }))
@@ -497,6 +542,7 @@ export function toPayload(d: EditorDraft): Record<string, any> {
     highlights: clean(d.highlights),
     faculty_contacts: d.faculty_contacts.filter(f => f.name.trim()),
     application_requirements: appReqs,
+    english_policy: englishPolicy,
     requirements: Object.keys(requirements).length ? requirements : undefined,
     acceptance_rate: acceptanceRate != null ? acceptanceRate / 100 : undefined,
     intake_rounds: intakeRounds,

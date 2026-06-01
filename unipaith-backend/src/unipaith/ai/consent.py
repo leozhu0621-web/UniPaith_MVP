@@ -136,6 +136,13 @@ AGENT_REQUIRES: dict[str, str | None] = {
     # selection (§4 / 46 §6); on any failure the services fall back to counts.
     "yield_risk_scorer": None,
     "next_best_action_yield": None,
+    # Spec 38 §5 — international-admissions agents are institution-initiated and
+    # role-gated at the API layer (like document_parse_triage / review_*). They
+    # operate on the institution's own application record, so no student-consent
+    # lever here. Both fall back to deterministic logic on any failure, and AI
+    # never decides feasibility (§5 / 46 §6).
+    "credential_normalizer": None,
+    "country_requirement_advisor": None,
 }
 
 

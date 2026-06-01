@@ -33,6 +33,7 @@ import {
   TEST_STANCE_OPTIONS,
   REC_TYPE_OPTIONS,
   PROMOTION_CATEGORY_OPTIONS,
+  ENGLISH_TEST_OPTIONS,
   emptyDraft,
   fromProgram,
   toPayload,
@@ -105,6 +106,8 @@ export default function ProgramEditorPage() {
         test_policy: { ...d.application_requirements.test_policy, ...patch },
       },
     }))
+  const setEnglish = (patch: Partial<EditorDraft['english_policy']>) =>
+    setDraft(d => ({ ...d, english_policy: { ...d.english_policy, ...patch } }))
 
   // ── Mutations ────────────────────────────────────────────────────────────────
   const invalidate = () => {
@@ -446,6 +449,86 @@ export default function ProgramEditorPage() {
                 )}
               />
             </div>
+          </SectionCard>
+
+          {/* 04 · English proficiency (Spec 38 §2.2) */}
+          <SectionCard
+            id="english"
+            index={idx('english')}
+            title="English proficiency"
+            description="Accepted English tests + minimum scores for international applicants, plus waiver rules. Used by the international-admissions workspace."
+            open={isOpen('english')}
+            onToggle={() => toggleSection('english')}
+            invalid={invalidSections.has('english')}
+            rawValue={draft.english_policy}
+            onApplyRaw={parsed =>
+              parsed && setDraft(d => ({ ...d, english_policy: { ...d.english_policy, ...parsed } }))
+            }
+          >
+            <div>
+              <MiniLabel>Accepted tests &amp; minimum scores</MiniLabel>
+              <Repeatable
+                items={draft.english_policy.accepted_tests}
+                addLabel="Add test"
+                emptyHint="e.g. TOEFL → 100, IELTS → 7.0"
+                onAdd={() =>
+                  setEnglish({
+                    accepted_tests: [
+                      ...draft.english_policy.accepted_tests,
+                      { test: 'TOEFL', min_score: '' },
+                    ],
+                  })
+                }
+                onRemove={i =>
+                  setEnglish({
+                    accepted_tests: draft.english_policy.accepted_tests.filter((_, x) => x !== i),
+                  })
+                }
+                renderRow={(t, i) => (
+                  <div className="flex gap-2">
+                    <div className="w-44">
+                      <Select
+                        options={ENGLISH_TEST_OPTIONS}
+                        value={t.test}
+                        onChange={e =>
+                          setEnglish({
+                            accepted_tests: draft.english_policy.accepted_tests.map((x, j) =>
+                              j === i ? { ...x, test: e.target.value } : x,
+                            ),
+                          })
+                        }
+                      />
+                    </div>
+                    <Input
+                      className="flex-1"
+                      type="number"
+                      value={t.min_score}
+                      onChange={e =>
+                        setEnglish({
+                          accepted_tests: draft.english_policy.accepted_tests.map((x, j) =>
+                            j === i ? { ...x, min_score: e.target.value } : x,
+                          ),
+                        })
+                      }
+                      placeholder="Min score"
+                    />
+                  </div>
+                )}
+              />
+            </div>
+            <div>
+              <MiniLabel>Native-English-country waiver list</MiniLabel>
+              <ChipsInput
+                values={draft.english_policy.waiver_native_english_countries}
+                onChange={v => setEnglish({ waiver_native_english_countries: v })}
+                placeholder="e.g. US, GB, AU · press Enter"
+              />
+            </div>
+            <Toggle
+              checked={draft.english_policy.waiver_prior_degree_in_english}
+              onChange={v => setEnglish({ waiver_prior_degree_in_english: v })}
+              label="Waive for a prior degree completed in English"
+            />
           </SectionCard>
 
           {/* 04 · Deadlines & rounds */}

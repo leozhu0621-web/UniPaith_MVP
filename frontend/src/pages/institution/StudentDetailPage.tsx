@@ -14,6 +14,7 @@ import {
 } from '../../api/reviews'
 import DecisionPanel from './pipeline/DecisionPanel'
 import EnrollmentTab from './pipeline/EnrollmentTab'
+import InternationalTab from './international/InternationalTab'
 import InstitutionPageHeader from '../../components/institution/InstitutionPageHeader'
 import { getInterviewsByApplication } from '../../api/interviews-admin'
 import Card from '../../components/ui/Card'
@@ -220,6 +221,8 @@ export default function StudentDetailPage() {
     { id: 'integrity', label: `Integrity${openSignals ? ` (${openSignals})` : ''}` },
     { id: 'decision', label: 'Decision' },
     { id: 'enrollment', label: 'Enrollment' },
+    // Spec 38 — only for international applicants (hidden for domestic, §6).
+    ...(packet.is_international ? [{ id: 'international', label: 'International' }] : []),
     { id: 'documents', label: 'Documents' },
     { id: 'essays', label: 'Essays' },
     { id: 'interview', label: 'Interviews' },
@@ -349,6 +352,7 @@ export default function StudentDetailPage() {
                 : <DecisionPanel applicationId={applicationId!} app={appDetailQ.data} prefillDecision={(['admitted','conditional_admission','waitlisted','deferred','rejected'] as const).includes(searchParams.get('decision') as InstitutionDecision) ? searchParams.get('decision') as InstitutionDecision : null} />
             )}
             {activeTab === 'enrollment' && <EnrollmentTab applicationId={applicationId!} />}
+            {activeTab === 'international' && <InternationalTab applicationId={applicationId!} />}
             {activeTab === 'documents' && <DocumentsTab packet={packet} />}
             {activeTab === 'essays' && <EssaysTab packet={packet} />}
             {activeTab === 'interview' && (

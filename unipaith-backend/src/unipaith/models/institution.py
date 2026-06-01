@@ -191,6 +191,11 @@ class Program(Base):
     # The actual promoted campaigns/auction live in Spec 25 (`promotions`); this
     # is just the program's declared participation set.
     promotion_categories: Mapped[list | None] = mapped_column(JSONB)
+    # Spec 38 §2.2 — English-proficiency policy for international applicants.
+    # Shape: {accepted_tests: [{test, min_score}], waiver_native_english_countries:
+    # [iso2...], waiver_prior_degree_in_english: bool}. Distinct from the general
+    # GRE/GMAT test policy in application_requirements (Spec 23 §3.3).
+    english_policy: Mapped[dict | None] = mapped_column(JSONB)
     # Spec 06 §5.4 — bumped on any published-program edit so the rationale
     # cache (keyed by program_version) invalidates. Was a dead no-op before:
     # the column didn't exist and call sites read getattr(...,1) → always 1.

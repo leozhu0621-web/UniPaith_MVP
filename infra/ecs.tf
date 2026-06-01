@@ -216,6 +216,11 @@ resource "aws_ecs_task_definition" "backend" {
       # to deterministic counts on failure, so the dashboard works with it off
       # too. YieldRiskScorer is a deterministic heuristic regardless.
       { name = "AI_YIELD_INTELLIGENCE_V2_ENABLED", value = "true" },
+      # Spec 38 §5 — international-admissions agents (CredentialNormalizer +
+      # CountryRequirementAdvisor). Both Haiku and always fall back to
+      # deterministic logic (grading-scale mapper / default country pack), so
+      # the workspace functions with it off too. AI never decides feasibility.
+      { name = "AI_INTERNATIONAL_V2_ENABLED", value = "true" },
       # Pin Claude model IDs — config.py defaults match, but pinning here
       # makes the prod surface auditable (and trivial to roll a single
       # agent class to a different model without a code deploy).

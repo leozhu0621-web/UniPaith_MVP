@@ -1320,6 +1320,7 @@ class ReviewPipelineService:
                     selectinload(StudentProfile.activities),
                     selectinload(StudentProfile.languages),
                     selectinload(StudentProfile.documents),
+                    selectinload(StudentProfile.visa_info),
                 )
             )
         ).scalar_one_or_none()
@@ -1515,9 +1516,18 @@ class ReviewPipelineService:
             },
         )
 
+        # --- international signals (Spec 38 §3) — operational only, never scored ---
+        from unipaith.services.international_service import InternationalService
+
+        international = await InternationalService(self.db).packet_summary(
+            app, program, profile, inst
+        )
+
         return {
             "application_id": str(application_id),
             "student": student_summary,
+            "international": international,
+            "is_international": international["is_international"],
             "program": {
                 "id": str(program.id),
                 "program_name": program.program_name,
