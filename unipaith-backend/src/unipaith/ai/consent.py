@@ -104,6 +104,14 @@ AGENT_REQUIRES: dict[str, str | None] = {
     # The resulting audience preview still honors each student's outreach
     # suppression in SegmentService.
     "segment_builder_nl": None,
+    # Spec 29 §8 — institution messaging agents are institution-initiated and
+    # role-gated at the API layer (like campaign_copy / review_summarizer), so
+    # they carry no student-consent lever here. The InstitutionReplyDrafter
+    # additionally checks the *applicant's* matching consent in-service before
+    # enriching the draft with profile context — denial degrades to thread-text
+    # only rather than blocking the call.
+    "institution_reply_drafter": None,
+    "inbound_intent_classifier": None,
 }
 
 

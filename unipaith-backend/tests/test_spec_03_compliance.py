@@ -120,6 +120,9 @@ def test_each_agent_declares_consent_requirement():
         "document_parse_triage",
         # Spec 26 §6 / 45 §17 — audience-segmentation NL bridge (Sonnet).
         "segment_builder_nl",
+        # Spec 29 §8 — institution messaging agents (Haiku).
+        "institution_reply_drafter",
+        "inbound_intent_classifier",
     }
     assert set(AGENT_REQUIRES.keys()) == expected_agents
 

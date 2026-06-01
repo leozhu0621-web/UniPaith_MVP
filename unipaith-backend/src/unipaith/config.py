@@ -291,6 +291,20 @@ class Settings(BaseSettings):
     # parser so the institution always gets editable rules (never a 5xx).
     ai_segment_builder_v2_enabled: bool = False
 
+    # Spec 29 §8 / 45 — InstitutionReplyDrafter. When True the institution inbox
+    # "AI draft" button routes a thread + applicant context (checklist + reason
+    # code) through the Haiku-tier agent. It respects the applicant's `matching`
+    # consent for profile context (degrading to thread-text only on denial) and
+    # returns null on any failure (parse / provider / mock) — the UI hides the
+    # card and staff types from scratch (mirrors the student inbox, spec 17 §7).
+    ai_institution_reply_v2_enabled: bool = False
+
+    # Spec 29 §8 / 45 — InboundIntentClassifier (optional). When True a new
+    # inbound applicant message gets a Haiku-tier *suggested* reason code +
+    # routing hint; suggestion-only (never auto-assigns, §14) and always falls
+    # back to no suggestion on failure.
+    ai_inbound_intent_v2_enabled: bool = False
+
     # Spec 09 §4A — probability bands (admit / scholarship / waitlist) on the
     # Match surface + program detail. Rule-based + calibrated heuristic
     # (unipaith.ai.probability); honest ranges, "not enough data yet" when a
