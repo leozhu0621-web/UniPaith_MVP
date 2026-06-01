@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import {
   GraduationCap, MapPin, Clock, DollarSign, CalendarDays,
   Users, Globe, ExternalLink, BookOpen, CheckCircle2, ArrowLeft, MessageSquare, Sparkles,
+  Briefcase, TrendingUp,
 } from 'lucide-react'
 import { getProgram } from '../../api/programs'
 import { getPublicInstitution, submitInquiry } from '../../api/institutions'
@@ -20,6 +21,19 @@ import EmptyState from '../../components/ui/EmptyState'
 import { showToast } from '../../stores/toast-store'
 import { formatCurrency, formatDate, formatPercent } from '../../utils/format'
 import { DEGREE_LABELS, DELIVERY_FORMAT_LABELS, CAMPUS_SETTING_LABELS } from '../../utils/constants'
+import {
+  normalizeCostData,
+  normalizeOutcomes,
+  normalizeRequirements,
+  intakeDeadlineFromArray,
+  intakeTimelineFromArray,
+  extractTracksMeta,
+  extractPrerequisites,
+  extractTestPolicy,
+  extractRecommendations,
+  extractFundingSignals,
+  extractSalaryBands,
+} from '../../utils/programNormalize'
 import type { Program, Institution, EventItem } from '../../types'
 
 export default function ProgramDetailPage() {
@@ -64,21 +78,33 @@ export default function ProgramDetailPage() {
 
   const inst: Institution | undefined = instQ.data
   const events: EventItem[] = Array.isArray(eventsQ.data) ? eventsQ.data : []
-  const tracks: string[] = Array.isArray(p?.tracks) ? p.tracks : []
+
+  // Spec 23 → Spec 11 bridge (same helpers as the authenticated student page).
+  const cd = normalizeCostData(p?.cost_data)
+  const odn = normalizeOutcomes(p?.outcomes_data)
+  const tracksMeta = extractTracksMeta(p?.tracks)
+  const appMaterials = normalizeRequirements(p?.application_requirements)
+  const prerequisites = extractPrerequisites(p?.application_requirements)
+  const testPolicy = extractTestPolicy(p?.application_requirements)
+  const recommendations = extractRecommendations(p?.application_requirements)
+  const fundingSignals = extractFundingSignals(p?.cost_data)
+  const salaryBands = extractSalaryBands(p?.outcomes_data)
+  const admissionTimeline = intakeTimelineFromArray(p?.intake_rounds)
+  const effectiveDeadline = p?.application_deadline ?? intakeDeadlineFromArray(p?.intake_rounds)
+  const effectiveTuition = p?.tuition ?? cd.tuition_annual ?? null
   const highlights: string[] = Array.isArray(p?.highlights) ? p.highlights : []
   const faculty: Record<string, any>[] = Array.isArray(p?.faculty_contacts) ? p.faculty_contacts : []
-  const appReqs: Record<string, any>[] = Array.isArray(p?.application_requirements) ? p.application_requirements : []
-  const intakeRounds: Record<string, any>[] = Array.isArray(p?.intake_rounds) ? p.intake_rounds : []
-  const outcomes: Record<string, any> = p?.outcomes_data && typeof p.outcomes_data === 'object' ? p.outcomes_data : {}
+  const costBandMin = cd.estimated_total_cost_band?.min != null ? Number(cd.estimated_total_cost_band.min) : null
+  const costBandMax = cd.estimated_total_cost_band?.max != null ? Number(cd.estimated_total_cost_band.max) : cd.total_cost_attendance != null ? Number(cd.total_cost_attendance) : null
 
   const tabs = [
     { id: 'overview', label: 'Overview' },
     { id: 'admissions', label: 'Admissions' },
-    { id: 'cost', label: 'Cost & Outcomes' },
+    { id: 'costs', label: 'Costs & Aid' },
+    { id: 'outcomes', label: 'Outcomes' },
     ...(events.length > 0 ? [{ id: 'events', label: `Events (${events.length})` }] : []),
   ]
 
-  // --- Loading ---
   if (programQ.isLoading) {
     return (
       <div className="max-w-5xl mx-auto px-6 py-10 space-y-6">
@@ -89,7 +115,6 @@ export default function ProgramDetailPage() {
     )
   }
 
-  // --- Not found ---
   if (!p) {
     return (
       <div className="max-w-5xl mx-auto px-6 py-16 text-center">
@@ -101,17 +126,32 @@ export default function ProgramDetailPage() {
     )
   }
 
+  const hasAdmissions =
+    appMaterials.length > 0 ||
+    prerequisites.length > 0 ||
+    !!testPolicy ||
+    !!recommendations ||
+    !!admissionTimeline ||
+    !!effectiveDeadline ||
+    (p.requirements && Object.keys(p.requirements).length > 0)
+
+  const hasOutcomes =
+    odn.median_salary != null ||
+    odn.employment_rate != null ||
+    odn.internship_conversion_rate != null ||
+    (odn.top_employers?.length ?? 0) > 0 ||
+    (odn.top_industries?.length ?? 0) > 0 ||
+    salaryBands.length > 0
+
   return (
     <>
       <div className="max-w-5xl mx-auto px-6 py-8">
-        {/* Back link */}
         {inst && (
           <Link to={`/school/${p.institution_id}`} className="inline-flex items-center gap-1 text-sm text-student-text/70 hover:text-student-ink mb-4">
             <ArrowLeft size={14} /> {inst.name}
           </Link>
         )}
 
-        {/* Hero */}
         <div className="bg-white rounded-lg border border-divider p-6 mb-6">
           <div className="flex items-start justify-between gap-6">
             <div className="flex-1 min-w-0">
@@ -126,10 +166,9 @@ export default function ProgramDetailPage() {
                 </Link>
               )}
 
-              {/* Quick stats */}
               <div className="flex flex-wrap gap-4 mt-4 text-sm text-student-text">
-                {p.tuition != null && (
-                  <span className="flex items-center gap-1.5"><DollarSign size={14} /> {formatCurrency(p.tuition)}</span>
+                {effectiveTuition != null && (
+                  <span className="flex items-center gap-1.5"><DollarSign size={14} /> {formatCurrency(effectiveTuition)}</span>
                 )}
                 {p.duration_months != null && (
                   <span className="flex items-center gap-1.5"><Clock size={14} /> {p.duration_months} months</span>
@@ -145,15 +184,13 @@ export default function ProgramDetailPage() {
                 )}
               </div>
 
-              {/* Deadline callout */}
-              {p.application_deadline && (
+              {effectiveDeadline && (
                 <div className="flex items-center gap-2 mt-3 text-sm">
                   <CalendarDays size={14} className="text-warning" />
-                  <span className="text-warning font-medium">Application deadline: {formatDate(p.application_deadline)}</span>
+                  <span className="text-warning font-medium">Application deadline: {formatDate(effectiveDeadline)}</span>
                 </div>
               )}
 
-              {/* Spec 11 §6 — public visitor: DualRing hidden; sign-in CTA in the fact strip */}
               <Link
                 to="/login"
                 className="inline-flex items-center gap-2 mt-4 px-3 py-2 rounded-lg border border-cobalt/30 bg-cobalt/5 text-cobalt text-sm font-semibold hover:bg-cobalt/10 transition-colors"
@@ -162,7 +199,6 @@ export default function ProgramDetailPage() {
               </Link>
             </div>
 
-            {/* Actions */}
             <div className="flex flex-col gap-2 shrink-0">
               <Link to="/signup?role=student">
                 <Button className="w-full">Apply Now</Button>
@@ -184,11 +220,9 @@ export default function ProgramDetailPage() {
           </div>
         </div>
 
-        {/* Tabs */}
         <Tabs tabs={tabs} activeTab={tab} onChange={setTab} />
 
         <div className="mt-6">
-          {/* ===== OVERVIEW ===== */}
           {tab === 'overview' && (
             <div className="space-y-6">
               {p.description_text && (
@@ -200,19 +234,25 @@ export default function ProgramDetailPage() {
 
               {p.who_its_for && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-student-ink mb-2">Who it's for</h3>
+                  <h3 className="text-sm font-semibold text-student-ink mb-2">Who it&apos;s for</h3>
                   <p className="text-sm text-student-text whitespace-pre-wrap">{p.who_its_for}</p>
                 </Card>
               )}
 
-              {tracks.length > 0 && (
+              {(tracksMeta.concentrations.length > 0 || tracksMeta.note || tracksMeta.learning_format) && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-student-ink mb-3">Tracks & Concentrations</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {tracks.map((t, i) => (
-                      <Badge key={i} variant="info">{t}</Badge>
-                    ))}
-                  </div>
+                  <h3 className="text-sm font-semibold text-student-ink mb-3">Tracks & Structure</h3>
+                  {tracksMeta.concentrations.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {tracksMeta.concentrations.map((t, i) => (
+                        <Badge key={i} variant="info">{t}</Badge>
+                      ))}
+                    </div>
+                  )}
+                  {tracksMeta.note && <p className="text-sm text-student-text mb-2">{tracksMeta.note}</p>}
+                  {tracksMeta.learning_format && (
+                    <p className="text-sm text-student-text"><span className="font-semibold text-student-ink">Learning format:</span> {tracksMeta.learning_format}</p>
+                  )}
                 </Card>
               )}
 
@@ -250,7 +290,6 @@ export default function ProgramDetailPage() {
                 </Card>
               )}
 
-              {/* Quick facts */}
               <Card className="p-5">
                 <h3 className="text-sm font-semibold text-student-ink mb-3">Quick Facts</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
@@ -259,38 +298,129 @@ export default function ProgramDetailPage() {
                   {p.delivery_format && <div><span className="text-student-text/70">Format:</span> <span className="font-medium">{DELIVERY_FORMAT_LABELS[p.delivery_format] ?? p.delivery_format}</span></div>}
                   {p.campus_setting && <div><span className="text-student-text/70">Setting:</span> <span className="font-medium">{CAMPUS_SETTING_LABELS[p.campus_setting] ?? p.campus_setting}</span></div>}
                   {p.program_start_date && <div><span className="text-student-text/70">Start Date:</span> <span className="font-medium">{formatDate(p.program_start_date)}</span></div>}
-                  {p.application_deadline && <div><span className="text-student-text/70">Deadline:</span> <span className="font-medium">{formatDate(p.application_deadline)}</span></div>}
+                  {effectiveDeadline && <div><span className="text-student-text/70">Deadline:</span> <span className="font-medium">{formatDate(effectiveDeadline)}</span></div>}
                 </div>
               </Card>
             </div>
           )}
 
-          {/* ===== ADMISSIONS ===== */}
           {tab === 'admissions' && (
             <div className="space-y-6">
-              {/* Deadline + start date */}
-              <Card className="p-5">
-                <h3 className="text-sm font-semibold text-student-ink mb-3">Key Dates</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  {p.application_deadline && (
-                    <div className="flex items-center gap-2">
-                      <CalendarDays size={16} className="text-warning" />
-                      <div><span className="text-student-text/70">Deadline:</span> <span className="font-medium">{formatDate(p.application_deadline)}</span></div>
-                    </div>
-                  )}
-                  {p.program_start_date && (
-                    <div className="flex items-center gap-2">
-                      <CalendarDays size={16} className="text-cobalt" />
-                      <div><span className="text-student-text/70">Start Date:</span> <span className="font-medium">{formatDate(p.program_start_date)}</span></div>
-                    </div>
-                  )}
-                </div>
-              </Card>
+              {(effectiveDeadline || p.program_start_date) && (
+                <Card className="p-5">
+                  <h3 className="text-sm font-semibold text-student-ink mb-3">Key Dates</h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    {effectiveDeadline && (
+                      <div className="flex items-center gap-2">
+                        <CalendarDays size={16} className="text-warning" />
+                        <div><span className="text-student-text/70">Deadline:</span> <span className="font-medium">{formatDate(effectiveDeadline)}</span></div>
+                      </div>
+                    )}
+                    {p.program_start_date && (
+                      <div className="flex items-center gap-2">
+                        <CalendarDays size={16} className="text-cobalt" />
+                        <div><span className="text-student-text/70">Start Date:</span> <span className="font-medium">{formatDate(p.program_start_date)}</span></div>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              )}
 
-              {/* Requirements */}
+              {appMaterials.length > 0 && (
+                <Card className="p-5">
+                  <h3 className="text-sm font-semibold text-student-ink mb-3">Application Materials</h3>
+                  <ul className="space-y-2">
+                    {appMaterials.map((req, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm">
+                        <CheckCircle2 size={16} className={`mt-0.5 shrink-0 ${req.required !== false ? 'text-cobalt' : 'text-student-text/30'}`} />
+                        <div>
+                          <span className="text-student-ink">{req.label}</span>
+                          {req.required !== false && <Badge variant="warning" className="ml-2 text-[10px]">Required</Badge>}
+                          {req.note && <p className="text-xs text-student-text/60 mt-0.5">{req.note}</p>}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              )}
+
+              {prerequisites.length > 0 && (
+                <Card className="p-5">
+                  <h3 className="text-sm font-semibold text-student-ink mb-3">Prerequisites</h3>
+                  <ul className="space-y-2 text-sm">
+                    {prerequisites.map((pr, i) => (
+                      <li key={i} className="rounded-lg border border-divider px-3 py-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium text-student-ink">{pr.name}</span>
+                          <Badge variant={pr.required ? 'warning' : 'neutral'} size="sm">{pr.required ? 'Required' : 'Recommended'}</Badge>
+                        </div>
+                        {pr.allowed_substitutes.length > 0 && (
+                          <p className="text-xs text-student-text/60 mt-1">Substitutes: {pr.allowed_substitutes.join(', ')}</p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              )}
+
+              {testPolicy && (
+                <Card className="p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <h3 className="text-sm font-semibold text-student-ink">Test Policy</h3>
+                    {testPolicy.stance_label && <Badge variant="info" size="sm">{testPolicy.stance_label}</Badge>}
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    {testPolicy.required.length > 0 && (
+                      <p><span className="text-student-text/70">Required:</span> {testPolicy.required.join(', ')}</p>
+                    )}
+                    {testPolicy.optional.length > 0 && (
+                      <p><span className="text-student-text/70">Optional:</span> {testPolicy.optional.join(', ')}</p>
+                    )}
+                    {testPolicy.typical_ranges.length > 0 && (
+                      <div>
+                        <p className="text-student-text/70 mb-1">Typical ranges:</p>
+                        {testPolicy.typical_ranges.map(r => (
+                          <p key={r.test} className="text-student-ink">{r.test}: {r.low}–{r.high}</p>
+                        ))}
+                      </div>
+                    )}
+                    {testPolicy.waived_rules && <p className="text-student-text">{testPolicy.waived_rules}</p>}
+                  </div>
+                </Card>
+              )}
+
+              {recommendations && (
+                <Card className="p-5">
+                  <h3 className="text-sm font-semibold text-student-ink mb-2">Recommendations</h3>
+                  <p className="text-sm text-student-text">
+                    {recommendations.required_count > 0
+                      ? `${recommendations.required_count} letter${recommendations.required_count === 1 ? '' : 's'} required`
+                      : 'Recommendations may be requested'}
+                    {recommendations.types.length > 0 && ` · ${recommendations.types.join(', ')}`}
+                  </p>
+                </Card>
+              )}
+
+              {admissionTimeline && (
+                <Card className="p-5">
+                  <h3 className="text-sm font-semibold text-student-ink mb-3">Intake Rounds — {admissionTimeline.term}</h3>
+                  <div className="space-y-2">
+                    {admissionTimeline.rounds.map((round: any, i: number) => (
+                      <div key={i} className="p-3 rounded-lg bg-student-mist/50 border border-divider text-sm">
+                        <p className="font-medium text-student-ink">{round.name}</p>
+                        <p className="text-xs text-student-text/70 mt-1">
+                          Deadline: {formatDate(round.deadline)}
+                          {round.decision_release && ` · Decision: ${formatDate(round.decision_release)}`}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+
               {p.requirements && Object.keys(p.requirements).length > 0 && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-student-ink mb-3">Requirements</h3>
+                  <h3 className="text-sm font-semibold text-student-ink mb-3">Other Requirements</h3>
                   <dl className="space-y-2 text-sm">
                     {Object.entries(p.requirements).map(([k, v]) => (
                       <div key={k} className="flex justify-between border-b border-divider pb-2">
@@ -302,86 +432,128 @@ export default function ProgramDetailPage() {
                 </Card>
               )}
 
-              {/* Application requirements checklist */}
-              {appReqs.length > 0 && (
-                <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-student-ink mb-3">Application Materials</h3>
-                  <ul className="space-y-2">
-                    {appReqs.map((req, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm">
-                        <CheckCircle2 size={16} className={`mt-0.5 shrink-0 ${req.required ? 'text-warning' : 'text-student-text/30'}`} />
-                        <div>
-                          <span className="text-student-ink">{req.item || req.name || JSON.stringify(req)}</span>
-                          {req.required && <Badge variant="warning" className="ml-2 text-[10px]">Required</Badge>}
-                          {req.format && <span className="text-xs text-student-text/50 ml-2">{req.format}</span>}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
-              )}
-
-              {/* Intake rounds */}
-              {intakeRounds.length > 0 && (
-                <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-student-ink mb-3">Intake Rounds</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {intakeRounds.map((round, i) => (
-                      <div key={i} className="p-3 rounded-lg bg-student-mist/50 border border-divider">
-                        <p className="text-sm font-medium text-student-ink">{round.round_name || `Round ${i + 1}`}</p>
-                        {round.deadline && <p className="text-xs text-student-text/70 mt-1">Deadline: {formatDate(round.deadline)}</p>}
-                        {round.capacity && <p className="text-xs text-student-text/50">Capacity: {round.capacity}</p>}
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              )}
-
-              {/* Empty state */}
-              {!p.requirements && appReqs.length === 0 && intakeRounds.length === 0 && (
+              {!hasAdmissions && (
                 <EmptyState icon={<BookOpen size={40} />} title="No admissions details" description="This program has not published admissions requirements yet." />
               )}
             </div>
           )}
 
-          {/* ===== COST & OUTCOMES ===== */}
-          {tab === 'cost' && (
+          {tab === 'costs' && (
             <div className="space-y-6">
               <Card className="p-5">
-                <h3 className="text-sm font-semibold text-student-ink mb-3">Cost</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-student-text/70">Tuition</p>
-                    <p className="text-2xl font-semibold text-student-ink mt-1">{p.tuition != null ? formatCurrency(p.tuition) : 'Not published'}</p>
+                <h3 className="text-sm font-semibold text-student-ink mb-3">Tuition & Fees</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-student-text/70">Tuition</span>
+                    <span className="font-medium text-student-ink">{effectiveTuition != null ? formatCurrency(effectiveTuition) : 'Not published'}</span>
                   </div>
-                  <div>
-                    <p className="text-student-text/70">Acceptance Rate</p>
-                    <p className="text-2xl font-semibold text-student-ink mt-1">{p.acceptance_rate != null ? formatPercent(p.acceptance_rate, 1) : 'Not published'}</p>
-                  </div>
+                  {Object.entries(cd.fees || {}).map(([name, amount]) => (
+                    <div key={name} className="flex justify-between">
+                      <span className="text-student-text/70">{name}</span>
+                      <span className="text-student-ink">{formatCurrency(Number(amount))}</span>
+                    </div>
+                  ))}
                 </div>
               </Card>
 
-              {Object.keys(outcomes).length > 0 ? (
+              {(costBandMin != null || costBandMax != null) && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-student-ink mb-3">Outcomes</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {Object.entries(outcomes).map(([key, value]) => (
-                      <div key={key} className="p-3 rounded-lg bg-student-mist/50">
-                        <p className="text-xs text-student-text/70 capitalize">{key.replace(/_/g, ' ')}</p>
-                        <p className="text-lg font-semibold text-student-ink mt-1">{typeof value === 'number' && value < 1 ? formatPercent(value, 0) : String(value)}</p>
-                      </div>
-                    ))}
-                  </div>
+                  <h3 className="text-sm font-semibold text-student-ink mb-2">Estimated Total Cost</h3>
+                  <p className="text-lg font-semibold text-student-ink">
+                    {costBandMin != null && costBandMax != null
+                      ? `${formatCurrency(costBandMin)} – ${formatCurrency(costBandMax)}`
+                      : formatCurrency(costBandMax ?? costBandMin ?? 0)}
+                  </p>
                 </Card>
-              ) : (
+              )}
+
+              {fundingSignals && (
+                <Card className="p-5">
+                  <h3 className="text-sm font-semibold text-student-ink mb-3">Funding & Aid Signals</h3>
+                  <ul className="space-y-1.5 text-sm text-student-text">
+                    {fundingSignals.ta_funded && <li>TA funding available</li>}
+                    {fundingSignals.ra_funded && <li>RA funding available</li>}
+                    {fundingSignals.merit_scholarship_available && <li>Merit scholarships</li>}
+                    {fundingSignals.need_based_available && <li>Need-based aid</li>}
+                  </ul>
+                </Card>
+              )}
+
+              {effectiveTuition == null && !costBandMin && !fundingSignals && (
                 <Card className="p-5 text-center">
-                  <p className="text-sm text-student-text/70">Outcomes data has not been published for this program yet.</p>
+                  <p className="text-sm text-student-text/70">Cost data has not been published for this program yet.</p>
                 </Card>
               )}
             </div>
           )}
 
-          {/* ===== EVENTS ===== */}
+          {tab === 'outcomes' && (
+            <div className="space-y-6">
+              {!hasOutcomes ? (
+                <Card className="p-5 text-center">
+                  <TrendingUp size={32} className="text-student-text/30 mx-auto mb-3" />
+                  <p className="text-sm text-student-text/70">Outcomes data has not been published for this program yet.</p>
+                </Card>
+              ) : (
+                <>
+                  {(odn.median_salary != null || salaryBands.length > 0) && (
+                    <Card className="p-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <DollarSign size={14} className="text-cobalt" />
+                        <h3 className="text-sm font-semibold text-student-ink">Salary</h3>
+                      </div>
+                      {salaryBands.length > 0 ? (
+                        <div className="space-y-2">
+                          {salaryBands.map(b => (
+                            <div key={b.band_label} className="flex justify-between text-sm">
+                              <span className="text-student-text">{b.band_label}</span>
+                              <span className="font-medium text-student-ink">{b.percent}%</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : odn.median_salary != null ? (
+                        <p className="text-2xl font-bold text-student-ink">{formatCurrency(Number(odn.median_salary))}</p>
+                      ) : null}
+                    </Card>
+                  )}
+
+                  {(odn.employment_rate != null || odn.internship_conversion_rate != null) && (
+                    <Card className="p-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Briefcase size={14} className="text-cobalt" />
+                        <h3 className="text-sm font-semibold text-student-ink">Employment & Placement</h3>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        {odn.employment_rate != null && (
+                          <div>
+                            <p className="text-student-text/70">Employment rate</p>
+                            <p className="text-xl font-bold text-student-ink">{(Number(odn.employment_rate) * 100).toFixed(0)}%</p>
+                            {odn.employment_timeframe && <p className="text-xs text-student-text/60">Within {odn.employment_timeframe}</p>}
+                          </div>
+                        )}
+                        {odn.internship_conversion_rate != null && (
+                          <div>
+                            <p className="text-student-text/70">Internship conversion</p>
+                            <p className="text-xl font-bold text-student-ink">{(Number(odn.internship_conversion_rate) * 100).toFixed(0)}%</p>
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+                  )}
+
+                  {(odn.top_employers?.length ?? 0) > 0 && (
+                    <Card className="p-5">
+                      <h3 className="text-sm font-semibold text-student-ink mb-3">Top Employers</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {odn.top_employers.map((e: string) => <Badge key={e} variant="neutral" size="sm">{e}</Badge>)}
+                      </div>
+                    </Card>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
           {tab === 'events' && (
             <div className="space-y-3">
               {events.length === 0 ? (
@@ -391,7 +563,7 @@ export default function ProgramDetailPage() {
                   <Card key={e.id} className="p-4 flex items-center justify-between">
                     <div>
                       <h4 className="font-medium text-student-ink">{e.event_name}</h4>
-                      <p className="text-sm text-student-text/70">{formatDate(e.start_time)}{e.location ? ` \u00B7 ${e.location}` : ''}</p>
+                      <p className="text-sm text-student-text/70">{formatDate(e.start_time)}{e.location ? ` · ${e.location}` : ''}</p>
                       {e.event_type && <Badge variant="neutral" className="mt-1">{e.event_type}</Badge>}
                     </div>
                     {e.capacity != null && (
@@ -402,11 +574,9 @@ export default function ProgramDetailPage() {
               )}
             </div>
           )}
-
         </div>
       </div>
 
-      {/* Request Info Modal */}
       <Modal isOpen={showInquiryModal} onClose={() => setShowInquiryModal(false)} title={`Request Info — ${p?.program_name ?? ''}`}>
         <div className="space-y-4">
           <Input label="Subject" value={inquirySubject} onChange={e => setInquirySubject(e.target.value)} placeholder="What would you like to know about this program?" />
