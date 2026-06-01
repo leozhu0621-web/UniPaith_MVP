@@ -57,7 +57,7 @@ export default function InstSuggestedReplyCard({
         value={text}
         onChange={e => setText(e.target.value)}
         rows={4}
-        className="w-full resize-y rounded-lg border border-border bg-surface px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary"
+        className="w-full resize-y rounded-lg border border-border bg-card px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary"
         aria-label="AI-drafted reply"
       />
 

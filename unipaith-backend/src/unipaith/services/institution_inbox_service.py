@@ -190,7 +190,8 @@ class InstitutionInboxService:
         staff_name: dict[UUID, str] = {}
         if staff_ids:
             rows = await self.db.execute(select(User.id, User.email).where(User.id.in_(staff_ids)))
-            staff_name = {uid: (email or "Staff") for uid, email in rows.all()}
+            # Display the email local-part (consistent with the staff roster).
+            staff_name = {uid: ((email or "Staff").split("@")[0]) for uid, email in rows.all()}
 
         return program_name, student_name, staff_name
 

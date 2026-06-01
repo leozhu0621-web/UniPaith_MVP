@@ -14,7 +14,7 @@ export default function ApplicantContextPanel({
   const hasChecklist = context.checklist_total > 0
 
   return (
-    <aside className="rounded-xl border border-border bg-surface p-3 shadow-sm">
+    <aside className="rounded-xl border border-border bg-card p-3 shadow-sm">
       <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
         Applicant context
       </p>
