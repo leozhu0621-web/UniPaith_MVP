@@ -2078,20 +2078,31 @@ export interface TemplatePreview {
 }
 
 // ============ AUDIT LOG ============
+// Spec 36 — list-row shape (lightweight; full diff lives on AuditEventDetail).
 export interface AuditLogEntry {
   id: string
-  institution_id: string
+  institution_id: string | null
   application_id: string | null
   actor_user_id: string | null
+  actor_role: string | null
+  category: string | null
   action: string
   entity_type: string
   entity_id: string
   description: string | null
+  reason: string | null
+  created_at: string
+  occurred_at: string | null
+  actor_email: string | null
+}
+
+// Spec 36 §5 — single-event detail with full before/after diff + provenance.
+export interface AuditEventDetail extends AuditLogEntry {
   old_value: Record<string, unknown> | null
   new_value: Record<string, unknown> | null
   metadata_json: Record<string, unknown> | null
-  created_at: string
-  actor_email: string | null
+  ip_address: string | null
+  user_agent: string | null
 }
 
 export interface AuditLogList {

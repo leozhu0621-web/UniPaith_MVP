@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -814,6 +814,7 @@ async def get_peer_comparison(
 
 @router.get("/me/export")
 async def export_profile(
+    request: Request,
     user: User = Depends(require_student),
     db: AsyncSession = Depends(get_db),
 ):
@@ -826,6 +827,21 @@ async def export_profile(
     resp = StudentProfileResponse.model_validate(profile)
     resp.onboarding = onboarding
     data = resp.model_dump(mode="json")
+    # Spec 36 §2 — data_export is an audited event.
+    from unipaith.services.audit_service import AuditService
+
+    await AuditService(db).log(
+        institution_id=None,
+        actor_user_id=user.id,
+        actor_role="student",
+        action="data_export",
+        category="data_export",
+        entity_type="consent",
+        entity_id="profile_json",
+        description="Exported full profile as JSON",
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
     return JSONResponse(
         content=data,
         headers={
@@ -850,12 +866,19 @@ async def get_data_rights(
 @router.put("/me/data-rights", response_model=DataConsentResponse)
 async def upsert_data_rights(
     body: UpsertDataConsentRequest,
+    request: Request,
     user: User = Depends(require_student),
     db: AsyncSession = Depends(get_db),
 ):
     svc = _svc(db)
     profile = await svc._get_student_profile(user.id)
-    return await svc.upsert_data_consent(profile.id, body)
+    return await svc.upsert_data_consent(
+        profile.id,
+        body,
+        actor_user_id=user.id,
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
 
 
 @router.get("/me/access-log")

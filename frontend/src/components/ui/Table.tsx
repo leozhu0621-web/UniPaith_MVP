@@ -17,9 +17,12 @@ interface TableProps {
   onRowClick?: (row: any) => void
   isLoading?: boolean
   emptyMessage?: string
+  // Optional per-row class (e.g. tint override events). Applied last so it
+  // can override the alternating-row background.
+  rowClassName?: (row: any) => string | undefined
 }
 
-export default function Table({ columns, data, onRowClick, isLoading, emptyMessage = 'No records match' }: TableProps) {
+export default function Table({ columns, data, onRowClick, isLoading, emptyMessage = 'No records match', rowClassName }: TableProps) {
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -60,7 +63,8 @@ export default function Table({ columns, data, onRowClick, isLoading, emptyMessa
               className={clsx(
                 'border-t border-border',
                 i % 2 === 1 && 'bg-muted/30',
-                onRowClick && 'cursor-pointer hover:bg-muted transition-colors'
+                onRowClick && 'cursor-pointer hover:bg-muted transition-colors',
+                rowClassName?.(row)
               )}
             >
               {columns.map(col => (

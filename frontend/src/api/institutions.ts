@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { AnalyticsData, AnalyticsFilters, AttributionReport, AuditLogList, Campaign, CommunicationTemplate, FunnelReport, IntakeRound, OverviewReport, ProgramChecklistItem, CampaignAttributionDetail, CampaignLink, CampaignMetrics, CampaignObjective, CampaignDestinationType, CampaignCtaType, CampaignChannel, AudiencePreview, DraftCampaignCopy, UploadedList, CampaignSuppression, DashboardSummary, DatasetMappingTemplate, DatasetPreview, DatasetVersion, Inquiry, Institution, InstitutionDataset, InstitutionPost, InstitutionSetupState, NLBridgeResult, PostCTA, PostVisibility, Program, Promotion, Segment, SegmentPreview, SegmentRuleTree, SetupStepPatch, SignalDictionary, ValidationReport } from '../types'
+import type { AnalyticsData, AnalyticsFilters, AttributionReport, AuditEventDetail, AuditLogList, Campaign, CommunicationTemplate, FunnelReport, IntakeRound, OverviewReport, ProgramChecklistItem, CampaignAttributionDetail, CampaignLink, CampaignMetrics, CampaignObjective, CampaignDestinationType, CampaignCtaType, CampaignChannel, AudiencePreview, DraftCampaignCopy, UploadedList, CampaignSuppression, DashboardSummary, DatasetMappingTemplate, DatasetPreview, DatasetVersion, Inquiry, Institution, InstitutionDataset, InstitutionPost, InstitutionSetupState, NLBridgeResult, PostCTA, PostVisibility, Program, Promotion, Segment, SegmentPreview, SegmentRuleTree, SetupStepPatch, SignalDictionary, ValidationReport } from '../types'
 
 export async function getInstitution(): Promise<Institution> {
   const { data } = await apiClient.get('/institutions/me')
@@ -574,12 +574,44 @@ export async function generateAIDraft(applicationId: string, messageType: string
   return data
 }
 
-// --- Audit Log ---
+// --- Audit Log (Spec 36) ---
 
-export async function getAuditLog(params?: {
-  application_id?: string; action?: string; entity_type?: string; limit?: number; offset?: number
-}): Promise<AuditLogList> {
+export interface AuditLogParams {
+  application_id?: string
+  action?: string
+  entity_type?: string
+  category?: string
+  actor_id?: string
+  date_from?: string
+  date_to?: string
+  limit?: number
+  offset?: number
+}
+
+export async function getAuditLog(params?: AuditLogParams): Promise<AuditLogList> {
   const { data } = await apiClient.get('/institutions/me/audit-log', { params })
+  return data
+}
+
+export async function getAuditEvent(id: string): Promise<AuditEventDetail> {
+  const { data } = await apiClient.get(`/institutions/me/audit-log/${id}`)
+  return data
+}
+
+export async function exportAuditCsv(params?: AuditLogParams): Promise<Blob> {
+  const { data } = await apiClient.get('/institutions/me/audit-log', {
+    params: { ...params, format: 'csv' },
+    responseType: 'blob',
+  })
+  return data as Blob
+}
+
+export async function overrideFairnessSignal(body: {
+  signal_key: string
+  action?: 'acknowledge' | 'override'
+  reason: string
+}): Promise<AuditEventDetail> {
+  const { data } = await apiClient.post('/institutions/me/intelligence/fairness/override', body)
   return data
 }
 

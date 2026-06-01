@@ -114,9 +114,7 @@ class AiFeedbackService:
         Repeated submissions on the same target update in place.
         """
         if vote not in ALLOWED_VOTES:
-            raise ValueError(
-                f"vote={vote!r} not in {ALLOWED_VOTES} — DB CHECK would reject"
-            )
+            raise ValueError(f"vote={vote!r} not in {ALLOWED_VOTES} — DB CHECK would reject")
         if surface not in ALLOWED_SURFACES:
             raise ValueError(
                 f"surface={surface!r} not in {ALLOWED_SURFACES} — DB CHECK would reject"
@@ -148,13 +146,36 @@ class AiFeedbackService:
         result = await self.db.execute(stmt)
         row = result.scalar_one()
         await self.db.flush()
+
+        # Spec 36 §2 — record the human verdict on the AI artifact (accept /
+        # reject / regenerate). Append-only; student-scoped.
+        from unipaith.services.audit_service import AuditService
+
+        _vote_action = {
+            "up": "ai_artifact_accepted",
+            "down": "ai_artifact_rejected",
+            "not_right": "ai_artifact_rejected",
+            "regenerate": "ai_artifact_regenerated",
+        }
+        await AuditService(self.db).log(
+            institution_id=None,
+            actor_user_id=None,
+            actor_role="student",
+            action=_vote_action.get(vote, "ai_artifact_reviewed"),
+            category="ai_generated",
+            entity_type="ai_artifact",
+            entity_id=str(target_id),
+            metadata_json={
+                "surface": surface,
+                "vote": vote,
+                "student_profile_id": str(student_id),
+            },
+        )
         return row
 
     # ── Read paths ────────────────────────────────────────────────────
 
-    async def list_for_student(
-        self, student_id: UUID, *, limit: int = 50
-    ) -> list[AiTurnFeedback]:
+    async def list_for_student(self, student_id: UUID, *, limit: int = 50) -> list[AiTurnFeedback]:
         result = await self.db.execute(
             select(AiTurnFeedback)
             .where(AiTurnFeedback.student_id == student_id)
@@ -165,9 +186,7 @@ class AiFeedbackService:
 
     # ── Weekly digest ─────────────────────────────────────────────────
 
-    async def weekly_digest(
-        self, *, days: int = 7, top_n_examples: int = 10
-    ) -> WeeklyDigest:
+    async def weekly_digest(self, *, days: int = 7, top_n_examples: int = 10) -> WeeklyDigest:
         """Aggregate signal from the last `days` days into a structured
         digest. The admin UI iterates over the breakdowns + examples;
         labelers harvest top-negative turns into the eval fixtures.
