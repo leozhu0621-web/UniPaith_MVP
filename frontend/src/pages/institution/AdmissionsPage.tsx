@@ -40,7 +40,7 @@ export default function AdmissionsPage() {
       <Tabs tabs={tabs} activeTab={activeTab} onChange={handleTabChange} />
       {activeTab === 'pipeline' && <PipelinePage />}
       {activeTab === 'integrity' && <IntegrityQueuePage />}
-      {activeTab === 'interviews' && <InterviewsPage />}
+      {activeTab === 'interviews' && <InterviewsPage embedded />}
       {activeTab === 'inquiries' && <InquiriesPage />}
       {activeTab === 'cohort' && <CohortComparisonPage />}
     </div>

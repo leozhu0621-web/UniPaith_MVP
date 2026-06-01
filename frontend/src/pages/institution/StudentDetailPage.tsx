@@ -13,6 +13,7 @@ import {
   reviewAssistantChat, revealApplicantIdentity, actOnIntegritySignal,
 } from '../../api/reviews'
 import DecisionPanel from './pipeline/DecisionPanel'
+import { getInterviewsByApplication } from '../../api/interviews-admin'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -25,10 +26,10 @@ import Skeleton from '../../components/ui/Skeleton'
 import AIBadge from '../../components/ui/AIBadge'
 import RubricSlider from '../../components/ui/RubricSlider'
 import { showToast } from '../../stores/toast-store'
-import { formatDate } from '../../utils/format'
-import { STATUS_COLORS } from '../../utils/constants'
+import { formatDate, formatDateTime } from '../../utils/format'
+import { STATUS_COLORS, INTERVIEW_TYPE_LABELS } from '../../utils/constants'
 import type {
-  Rubric, ReviewPacket, ReviewSynthesis, InstitutionMatchRationale, IntegrityAction,
+  Rubric, ReviewPacket, ReviewSynthesis, InstitutionMatchRationale, IntegrityAction, Interview,
 } from '../../types'
 
 const SEVERITY_DOT: Record<string, string> = { high: 'bg-error', medium: 'bg-warning', low: 'bg-cobalt' }
@@ -96,6 +97,14 @@ export default function StudentDetailPage() {
     queryFn: () => getMatchRationaleFull(applicationId!),
     enabled: !!applicationId && activeTab === 'ai',
   })
+
+  // Spec 33 §3 step 6 — interview results feed the review packet.
+  const interviewsQ = useQuery({
+    queryKey: ['application-interviews', applicationId],
+    queryFn: () => getInterviewsByApplication(applicationId!),
+    enabled: !!applicationId && activeTab === 'interview',
+  })
+  const interviews: Interview[] = Array.isArray(interviewsQ.data) ? interviewsQ.data : []
 
   const invalidatePacket = () => queryClient.invalidateQueries({ queryKey: ['review-packet', applicationId] })
 
@@ -168,6 +177,7 @@ export default function StudentDetailPage() {
     { id: 'decision', label: 'Decision' },
     { id: 'documents', label: 'Documents' },
     { id: 'essays', label: 'Essays' },
+    { id: 'interview', label: 'Interviews' },
     { id: 'timeline', label: 'Timeline' },
   ]
   const currentRubric = rubrics.find(r => r.id === selectedRubric)
@@ -291,6 +301,78 @@ export default function StudentDetailPage() {
             )}
             {activeTab === 'documents' && <DocumentsTab packet={packet} />}
             {activeTab === 'essays' && <EssaysTab packet={packet} />}
+            {activeTab === 'interview' && (
+              <Card className="p-5">
+                <h3 className="font-semibold text-foreground mb-3">Interviews</h3>
+                {interviewsQ.isLoading ? (
+                  <Skeleton className="h-24" />
+                ) : interviews.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No interviews yet. Propose one from <span className="font-medium">Admissions → Interviews</span>.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {interviews.map(iv => (
+                      <div key={iv.id} className="rounded-lg border border-border p-4">
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="info">
+                              {INTERVIEW_TYPE_LABELS[iv.interview_type] || iv.interview_type}
+                            </Badge>
+                            {iv.async_expired ? (
+                              <Badge variant="danger">No submission received</Badge>
+                            ) : iv.status === 'proposed' ? (
+                              <Badge variant="warning">Awaiting student</Badge>
+                            ) : (
+                              <Badge variant={(STATUS_COLORS[iv.status] as 'neutral') ?? 'neutral'}>
+                                {iv.status.replace(/_/g, ' ')}
+                              </Badge>
+                            )}
+                          </div>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">
+                            {iv.scheduled_at
+                              ? formatDateTime(iv.scheduled_at)
+                              : iv.async_window_end
+                                ? `By ${formatDateTime(iv.async_window_end)}`
+                                : ''}
+                          </span>
+                        </div>
+                        {iv.recommendation && (
+                          <p className="text-sm text-foreground">
+                            Recommendation:{' '}
+                            <span className="font-medium">{iv.recommendation.replace(/_/g, ' ')}</span>
+                          </p>
+                        )}
+                        {iv.scores.length > 0 && (
+                          <div className="mt-2 space-y-1.5">
+                            {iv.scores.map((s, i) => (
+                              <div key={i} className="text-sm text-muted-foreground">
+                                {s.total_weighted_score != null && (
+                                  <span className="text-foreground font-medium">
+                                    Score {s.total_weighted_score}
+                                  </span>
+                                )}
+                                {s.notes && <span className="block text-xs">{s.notes}</span>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {iv.recording_url && (
+                          <a
+                            href={iv.recording_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-sm text-cobalt hover:underline mt-2 inline-block"
+                          >
+                            View recording
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            )}
             {activeTab === 'timeline' && <TimelineTab packet={packet} />}
           </div>
         </div>
