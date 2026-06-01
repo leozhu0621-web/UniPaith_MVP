@@ -420,7 +420,7 @@ async def test_segment_preview_and_nl_bridge(
     assert resp.status_code == 200
     body = resp.json()
     assert "audience_count" in body
-    assert "preview_audience_sample" in body
+    assert "sample" in body
 
     resp = await institution_client.post(
         "/api/v1/institutions/me/segments/nl-bridge",
