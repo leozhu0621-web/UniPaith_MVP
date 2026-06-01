@@ -1041,6 +1041,12 @@ export interface TeamMember {
   invited_at: string | null
 }
 
+export interface ReviewConfig {
+  blind_review_default: boolean
+  calibration_enabled: boolean
+  reviewer_assignment_mode: 'round_robin' | 'load_balanced' | 'manual'
+}
+
 export interface InstitutionSettings {
   account: {
     institution_id: string | null
@@ -1057,6 +1063,7 @@ export interface InstitutionSettings {
   email_frequency: EmailFrequency
   team: TeamMember[]
   deletion: DeletionInfo | null
+  review_config: ReviewConfig
 }
 
 // ============ RECOMMENDATIONS ============
@@ -1093,6 +1100,7 @@ export interface Institution {
   student_body_size: number | null
   founded_year: number | null
   contact_email: string | null
+  contact_phone: string | null
   logo_url: string | null
   website_url: string | null
   media_gallery: string[] | null
@@ -1538,7 +1546,15 @@ export interface InterviewScore {
 }
 
 // ============ INSTITUTION DATASETS ============
+export type DatasetType = 'admissions_history' | 'prospect_list' | 'outcomes_summary'
 export type DatasetStatus = 'uploaded' | 'validated' | 'processed' | 'failed' | 'pending' | 'active' | 'archived'
+
+export interface DatasetHistogramColumn {
+  top: { value: string; count: number }[]
+  null_count: number
+  distinct: number
+}
+export type DatasetHistogram = Record<string, DatasetHistogramColumn>
 
 export interface InstitutionDataset {
   id: string
@@ -1568,6 +1584,19 @@ export interface ValidationReport {
   invalid_dates?: { row: number; field: string; value: string }[]
   unmappable_programs?: { row: number; value: string; suggestions?: string[] }[]
   error_count?: number
+  total_rows?: number
+  valid_rows?: number
+  summary?: string
+}
+
+/** Legacy alias for Spec 24 data-upload modules. */
+export type DatasetValidationReport = ValidationReport
+
+export interface DatasetInspect {
+  columns: string[]
+  rows: Record<string, string>[]
+  total_rows: number
+  histogram: DatasetHistogram
 }
 
 export interface DatasetPreview {
