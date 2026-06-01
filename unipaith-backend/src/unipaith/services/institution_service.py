@@ -19,7 +19,7 @@ from unipaith.core.exceptions import (
 )
 from unipaith.core.media_urls import resolve_media_urls
 from unipaith.models.application import Application, OfferLetter
-from unipaith.models.engagement import Conversation, Message
+from unipaith.models.engagement import Conversation, Message, StudentEngagementSignal
 from unipaith.models.institution import (
     Campaign,
     CampaignAction,
@@ -36,6 +36,7 @@ from unipaith.models.institution import (
     School,
     TargetSegment,
 )
+from unipaith.models.matching import MatchResult
 from unipaith.models.student import StudentProfile
 from unipaith.models.user import User
 from unipaith.models.workflow import Notification
@@ -43,10 +44,6 @@ from unipaith.schemas.institution import (
     AnalyticsResponse,
     CampaignAttribution,
     CampaignAttributionDetail,
-    CampaignAudiencePreviewResponse,
-    CampaignAudienceSampleRow,
-    CampaignDraftCopyRequest,
-    CampaignDraftCopyResponse,
     CampaignLinkResponse,
     CreateCampaignLinkRequest,
     CreateDatasetRequest,
@@ -414,9 +411,20 @@ class InstitutionService:
         institution_id: UUID,
         segment_id: UUID,
     ) -> list[UUID]:
-        """Execute segment criteria and return matching student IDs."""
-        from unipaith.services.segment_resolver import resolve_criteria_members
+        """Execute segment criteria and return matching student IDs.
 
+        Supported criteria keys (all AND-combined):
+            statuses        - string[]  : Application.status IN values
+            decisions       - string[]  : Application.decision IN values
+            min_match_score - number    : MatchResult.match_score >= value/100
+            max_match_score - number    : MatchResult.match_score <= value/100
+            match_tiers     - number[]  : MatchResult.match_tier IN values
+            min_engagement_signals - number : COUNT(StudentEngagementSignal) >= value
+            engagement_types - string[] : StudentEngagementSignal.signal_type IN values
+            nationalities   - string[]  : StudentProfile.nationality IN values
+            has_applied     - boolean   : EXISTS / NOT EXISTS Application
+            applied_after   - string    : Application.submitted_at >= ISO date
+        """
         result = await self.db.execute(
             select(TargetSegment).where(
                 TargetSegment.id == segment_id,
@@ -449,62 +457,108 @@ class InstitutionService:
         if not program_ids:
             return []
 
-        return await resolve_criteria_members(
-            self.db,
-            institution_id=institution_id,
-            program_ids=program_ids,
-            criteria=segment.criteria or {},
-        )
+        # Track whether any criteria key was actually specified
+        has_criteria = False
 
-    async def preview_segment_audience(
-        self,
-        institution_id: UUID,
-        *,
-        segment_id: UUID | None = None,
-        program_id: UUID | None = None,
-        criteria: dict | None = None,
-    ) -> dict:
-        from unipaith.services.segment_resolver import preview_sample_rows, resolve_criteria_members
+        stmt = select(StudentProfile.id).distinct()
 
-        programs = await self.list_programs(institution_id)
-        program_ids = [p.id for p in programs]
-        crit: dict = {}
+        # --- Application-based criteria (statuses, decisions, applied_after) ---
+        statuses = criteria.get("statuses")
+        decisions = criteria.get("decisions")
+        applied_after = criteria.get("applied_after")
+        has_applied = criteria.get("has_applied")
 
-        if segment_id:
-            result = await self.db.execute(
-                select(TargetSegment).where(
-                    TargetSegment.id == segment_id,
-                    TargetSegment.institution_id == institution_id,
+        need_app_join = bool(statuses or decisions or applied_after or (has_applied is True))
+
+        if need_app_join:
+            has_criteria = True
+            app_conditions = [
+                Application.program_id.in_(program_ids),
+            ]
+            if statuses:
+                app_conditions.append(Application.status.in_(statuses))
+            if decisions:
+                app_conditions.append(Application.decision.in_(decisions))
+            if applied_after:
+                app_conditions.append(
+                    Application.submitted_at >= datetime.fromisoformat(applied_after)
                 )
+            stmt = stmt.join(Application, Application.student_id == StudentProfile.id).where(
+                *app_conditions
             )
-            segment = result.scalar_one_or_none()
-            if not segment:
-                raise NotFoundException("Segment not found")
-            crit = segment.criteria or {}
-            if segment.program_id:
-                program_ids = [segment.program_id]
-        else:
-            crit = criteria or {}
-            if program_id:
-                program_ids = [program_id]
+        elif has_applied is False:
+            # Exclude students who have any application for these programs
+            has_criteria = True
+            app_exists = (
+                select(Application.id)
+                .where(
+                    Application.student_id == StudentProfile.id,
+                    Application.program_id.in_(program_ids),
+                )
+                .correlate(StudentProfile)
+                .exists()
+            )
+            stmt = stmt.where(~app_exists)
 
-        if not program_ids:
-            return {"audience_count": 0, "preview_audience_sample": []}
+        # --- Match-based criteria (min/max score, tiers) ---
+        min_match_score = criteria.get("min_match_score")
+        max_match_score = criteria.get("max_match_score")
+        match_tiers = criteria.get("match_tiers")
 
-        student_ids = await resolve_criteria_members(
-            self.db,
-            institution_id=institution_id,
-            program_ids=program_ids,
-            criteria=crit,
-        )
-        sample = await preview_sample_rows(self.db, student_ids, limit=10)
-        out = {
-            "audience_count": len(student_ids),
-            "preview_audience_sample": sample,
-        }
-        if segment_id:
-            out["segment_id"] = str(segment_id)
-        return out
+        if min_match_score is not None or max_match_score is not None or match_tiers:
+            has_criteria = True
+            match_conditions = [
+                MatchResult.program_id.in_(program_ids),
+                MatchResult.is_stale.is_(False),
+            ]
+            if min_match_score is not None:
+                match_conditions.append(MatchResult.match_score >= min_match_score / 100)
+            if max_match_score is not None:
+                match_conditions.append(MatchResult.match_score <= max_match_score / 100)
+            if match_tiers:
+                match_conditions.append(MatchResult.match_tier.in_(match_tiers))
+
+            stmt = stmt.outerjoin(MatchResult, MatchResult.student_id == StudentProfile.id).where(
+                *match_conditions
+            )
+
+        # --- Engagement criteria (min count, signal types) ---
+        min_engagement = criteria.get("min_engagement_signals")
+        engagement_types = criteria.get("engagement_types")
+
+        if min_engagement is not None or engagement_types:
+            has_criteria = True
+            eng_conditions = [
+                StudentEngagementSignal.student_id == StudentProfile.id,
+                StudentEngagementSignal.program_id.in_(program_ids),
+            ]
+            if engagement_types:
+                eng_conditions.append(StudentEngagementSignal.signal_type.in_(engagement_types))
+            eng_subq = (
+                select(StudentEngagementSignal.student_id)
+                .where(*eng_conditions)
+                .correlate(StudentProfile)
+                .group_by(StudentEngagementSignal.student_id)
+            )
+            if min_engagement is not None:
+                eng_subq = eng_subq.having(func.count() >= min_engagement)
+            stmt = stmt.where(StudentProfile.id.in_(eng_subq))
+
+        # --- Nationality filter ---
+        nationalities = criteria.get("nationalities")
+        if nationalities:
+            has_criteria = True
+            stmt = stmt.where(StudentProfile.nationality.in_(nationalities))
+
+        # --- Fallback: if NO criteria at all, return all non-draft applicants ---
+        if not has_criteria:
+            stmt = stmt.join(Application, Application.student_id == StudentProfile.id).where(
+                Application.program_id.in_(program_ids),
+                Application.status != "draft",
+            )
+
+        result = await self.db.execute(stmt)
+        return [row[0] for row in result.all()]
 
     # --- Dashboard Summary ---
 
@@ -1354,6 +1408,7 @@ class InstitutionService:
             title=data.title,
             description=data.description,
             targeting=targeting_dict,
+            status=status,
             starts_at=data.starts_at,
             ends_at=data.ends_at,
             target_kind=data.target_kind,
@@ -2193,7 +2248,6 @@ class InstitutionService:
         return post
 
     async def _enrich_post(self, post: InstitutionPost) -> PostResponse:
-        from unipaith.models.user import User
 
         author_email: str | None = None
         if post.author_id:

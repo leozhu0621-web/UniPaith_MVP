@@ -26,9 +26,6 @@ from unipaith.schemas.institution import (
     AnalyticsResponse,
     AudiencePreviewResponse,
     CampaignAttributionDetail,
-    CampaignAudiencePreviewResponse,
-    CampaignDraftCopyRequest,
-    CampaignDraftCopyResponse,
     CampaignLinkResponse,
     CampaignMetricsResponse,
     CampaignResponse,
@@ -375,17 +372,6 @@ async def delete_campaign(
 
 
 @router.get("/me/segments/{segment_id}/preview")
-async def preview_segment_audience_get(
-    segment_id: UUID,
-    user: User = Depends(require_institution_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    svc = _svc(db)
-    inst = await svc.get_institution(user.id)
-    return await svc.preview_segment_audience(inst.id, segment_id=segment_id)
-
-
-@router.post("/me/segments/{segment_id}/preview")
 async def preview_segment_audience(
     segment_id: UUID,
     user: User = Depends(require_institution_admin),
@@ -394,7 +380,8 @@ async def preview_segment_audience(
     """Preview how many students match this segment's criteria (legacy count-only)."""
     svc = _svc(db)
     inst = await svc.get_institution(user.id)
-    return await svc.preview_segment_audience(inst.id, segment_id=segment_id)
+    student_ids = await svc.resolve_segment_members(inst.id, segment_id)
+    return {"segment_id": str(segment_id), "audience_count": len(student_ids)}
 
 
 @router.get("/me/segments/signal-dictionary", response_model=SignalDictionaryResponse)
