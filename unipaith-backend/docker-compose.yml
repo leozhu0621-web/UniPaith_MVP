@@ -5,6 +5,8 @@ services:
       POSTGRES_DB: unipaith
       POSTGRES_USER: unipaith
       POSTGRES_PASSWORD: unipaith
+      # Dev-only: allow host-side pytest/asyncpg from Docker Desktop (Mac).
+      POSTGRES_HOST_AUTH_METHOD: trust
     ports:
       - "5432:5432"
     volumes:

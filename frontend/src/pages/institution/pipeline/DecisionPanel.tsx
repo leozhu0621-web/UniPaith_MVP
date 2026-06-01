@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Award, Brain, CalendarClock, CheckCircle2, Clock, XCircle } from 'lucide-react'
 import {
@@ -17,17 +17,14 @@ import Textarea from '../../../components/ui/Textarea'
 import Skeleton from '../../../components/ui/Skeleton'
 import { showToast } from '../../../stores/toast-store'
 import { formatDate } from '../../../utils/format'
-import type { Application, InstitutionDecision, OfferType } from '../../../types'
-
-// Decision vocabulary (spec 34 §2). Color-coded but restrained — no celebratory
-// gold on the institution side; the student sees the celebration (§10).
-const DECISIONS: { value: InstitutionDecision; label: string; tone: 'success' | 'info' | 'danger' | 'warning' | 'neutral' }[] = [
-  { value: 'admitted', label: 'Admit', tone: 'success' },
-  { value: 'conditional_admission', label: 'Conditional admit', tone: 'info' },
-  { value: 'waitlisted', label: 'Waitlist', tone: 'warning' },
-  { value: 'deferred', label: 'Defer', tone: 'neutral' },
-  { value: 'rejected', label: 'Reject', tone: 'danger' },
-]
+import type { Application, InstitutionDecision, OfferType, ReleaseOfferTerms } from '../../../types'
+import ReleaseConfirmModal from './ReleaseConfirmModal'
+import {
+  INSTITUTION_DECISIONS,
+  decisionLabel,
+  formatOfferTermsSummary,
+  isOfferDecision,
+} from './decisionUtils'
 
 const OFFER_TYPES: { value: OfferType; label: string }[] = [
   { value: 'full_admission', label: 'Full admission' },
@@ -55,7 +52,15 @@ const AI_DRAFT_TYPE: Record<InstitutionDecision, string> = {
 
 const num = (s: string): number | null => (s.trim() === '' ? null : Number(s))
 
-export default function DecisionPanel({ applicationId, app }: { applicationId: string; app: Application }) {
+export default function DecisionPanel({
+  applicationId,
+  app,
+  prefillDecision,
+}: {
+  applicationId: string
+  app: Application
+  prefillDecision?: InstitutionDecision | null
+}) {
   const queryClient = useQueryClient()
   const statusQ = useQuery({
     queryKey: ['offer-status', applicationId],
@@ -63,9 +68,15 @@ export default function DecisionPanel({ applicationId, app }: { applicationId: s
   })
   const status = statusQ.data
 
-  const initialDecision = (DECISIONS.find(d => d.value === app.decision)?.value
+  const initialDecision = (INSTITUTION_DECISIONS.find(d => d.value === (prefillDecision || app.decision))?.value
     ?? (app.decision === 'accepted' ? 'admitted' : 'admitted')) as InstitutionDecision
   const [decision, setDecision] = useState<InstitutionDecision>(initialDecision)
+
+  useEffect(() => {
+    if (prefillDecision && INSTITUTION_DECISIONS.some(d => d.value === prefillDecision)) {
+      setDecision(prefillDecision)
+    }
+  }, [prefillDecision])
   const [notes, setNotes] = useState('')
   const [offerType, setOfferType] = useState<OfferType>('full_admission')
   const [scholarship, setScholarship] = useState('')
@@ -75,38 +86,46 @@ export default function DecisionPanel({ applicationId, app }: { applicationId: s
   const [season, setSeason] = useState('Fall')
   const [year, setYear] = useState('')
   const [conditions, setConditions] = useState('')
+  const [waitlistRank, setWaitlistRank] = useState('')
   const [message, setMessage] = useState('')
   const [drafting, setDrafting] = useState(false)
   const [extendDate, setExtendDate] = useState('')
+  const [showConfirm, setShowConfirm] = useState(false)
 
-  const isOfferDecision = decision === 'admitted' || decision === 'conditional_admission'
+  const offerTerms = useMemo((): ReleaseOfferTerms | null => {
+    if (!isOfferDecision(decision)) return null
+    return {
+      offer_type: decision === 'conditional_admission' ? 'conditional' : offerType,
+      scholarship_amount: num(scholarship),
+      tuition_estimate: num(tuitionEst),
+      total_cost_estimate: num(totalCost),
+      response_deadline: deadline || null,
+      start_term: { season, year: num(year) },
+      conditions: conditions ? { summary: conditions } : null,
+    }
+  }, [decision, offerType, scholarship, tuitionEst, totalCost, deadline, season, year, conditions])
+
   const studentResponded = status?.response_state === 'accepted' || status?.response_state === 'declined'
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['offer-status', applicationId] })
     queryClient.invalidateQueries({ queryKey: ['application-review', applicationId] })
+    queryClient.invalidateQueries({ queryKey: ['pipeline-applications'] })
   }
 
   const releaseMut = useMutation({
     mutationFn: () =>
       releaseDecision(applicationId, {
         decision,
-        decision_notes: notes || null,
+        decision_notes: [notes, decision === 'waitlisted' && waitlistRank.trim() ? `Waitlist rank: ${waitlistRank.trim()}` : '']
+          .filter(Boolean)
+          .join('\n') || null,
         message: message || null,
-        offer: isOfferDecision
-          ? {
-              offer_type: decision === 'conditional_admission' ? 'conditional' : offerType,
-              scholarship_amount: num(scholarship),
-              tuition_estimate: num(tuitionEst),
-              total_cost_estimate: num(totalCost),
-              response_deadline: deadline || null,
-              start_term: { season, year: num(year) },
-              conditions: conditions ? { summary: conditions } : null,
-            }
-          : null,
+        offer: offerTerms,
       }),
     onSuccess: () => {
       showToast('Decision released — the applicant has been notified', 'success')
+      setShowConfirm(false)
       invalidate()
     },
     onError: () => showToast('Failed to release decision', 'error'),
@@ -149,15 +168,16 @@ export default function DecisionPanel({ applicationId, app }: { applicationId: s
     [status],
   )
 
+  const confirmPreviewLines = formatOfferTermsSummary(offerTerms)
+
   return (
     <div className="space-y-4">
-      {/* --- Current decision + offer status (§7/§8) --- */}
       <Card className="p-5 space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-gray-900">Current decision</h3>
           {app.decision ? (
-            <Badge variant={(DECISIONS.find(d => d.value === app.decision)?.tone as any) ?? 'neutral'}>
-              {DECISIONS.find(d => d.value === app.decision)?.label ?? app.decision}
+            <Badge variant={(INSTITUTION_DECISIONS.find(d => d.value === app.decision)?.tone as 'neutral') ?? 'neutral'}>
+              {decisionLabel(app.decision)}
             </Badge>
           ) : (
             <Badge variant="neutral">Not released</Badge>
@@ -171,7 +191,7 @@ export default function DecisionPanel({ applicationId, app }: { applicationId: s
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
               <div className="flex items-center gap-2">
                 <span className="text-gray-500">Response</span>
-                <Badge variant={(stateMeta?.tone as any) ?? 'neutral'}>{stateMeta?.label}</Badge>
+                <Badge variant={(stateMeta?.tone as 'neutral') ?? 'neutral'}>{stateMeta?.label}</Badge>
               </div>
               {status.response_deadline && (
                 <div className="flex items-center gap-1.5 text-gray-600">
@@ -209,7 +229,7 @@ export default function DecisionPanel({ applicationId, app }: { applicationId: s
                 </Button>
                 {status.deadline_passed && (
                   <Button
-                    variant="danger"
+                    variant="destructive"
                     size="sm"
                     disabled={rescindMut.isPending}
                     onClick={() => rescindMut.mutate()}
@@ -228,7 +248,6 @@ export default function DecisionPanel({ applicationId, app }: { applicationId: s
         )}
       </Card>
 
-      {/* --- Release / re-release (§3) --- */}
       <Card className="p-5 space-y-4">
         <div className="flex items-center gap-2">
           <Award size={18} className="text-cobalt" />
@@ -245,7 +264,7 @@ export default function DecisionPanel({ applicationId, app }: { applicationId: s
         ) : (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-              {DECISIONS.map(d => (
+              {INSTITUTION_DECISIONS.map(d => (
                 <button
                   key={d.value}
                   type="button"
@@ -261,7 +280,7 @@ export default function DecisionPanel({ applicationId, app }: { applicationId: s
               ))}
             </div>
 
-            {isOfferDecision && (
+            {isOfferDecision(decision) && (
               <div className="space-y-3 rounded-lg border border-border p-3">
                 <p className="text-xs font-medium text-gray-500">Offer terms</p>
                 {decision === 'admitted' && (
@@ -281,7 +300,12 @@ export default function DecisionPanel({ applicationId, app }: { applicationId: s
                   <Input label="Response deadline" type="date" value={deadline} onChange={e => setDeadline(e.target.value)} />
                   <Select
                     label="Start term"
-                    options={[{ value: 'Fall', label: 'Fall' }, { value: 'Spring', label: 'Spring' }, { value: 'Summer', label: 'Summer' }, { value: 'Winter', label: 'Winter' }]}
+                    options={[
+                      { value: 'Fall', label: 'Fall' },
+                      { value: 'Spring', label: 'Spring' },
+                      { value: 'Summer', label: 'Summer' },
+                      { value: 'Winter', label: 'Winter' },
+                    ]}
                     value={season}
                     onChange={e => setSeason(e.target.value)}
                   />
@@ -297,6 +321,17 @@ export default function DecisionPanel({ applicationId, app }: { applicationId: s
                   />
                 )}
               </div>
+            )}
+
+            {decision === 'waitlisted' && (
+              <Input
+                label="Waitlist rank (optional)"
+                type="number"
+                min={1}
+                value={waitlistRank}
+                onChange={e => setWaitlistRank(e.target.value)}
+                placeholder="e.g. 12"
+              />
             )}
 
             <Textarea label="Internal decision notes (not sent)" value={notes} onChange={e => setNotes(e.target.value)} rows={2} />
@@ -317,20 +352,41 @@ export default function DecisionPanel({ applicationId, app }: { applicationId: s
               />
             </div>
 
+            {confirmPreviewLines.length > 0 && (
+              <div className="rounded-lg bg-muted/50 border border-border px-3 py-2 text-xs text-gray-600">
+                <p className="font-medium text-gray-700 mb-1">Release preview</p>
+                <ul className="list-disc list-inside space-y-0.5">
+                  {confirmPreviewLines.map(line => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <div className="flex justify-end">
               <Button
                 variant="secondary"
                 disabled={releaseMut.isPending}
-                onClick={() => releaseMut.mutate()}
+                onClick={() => setShowConfirm(true)}
                 className="flex items-center gap-2"
               >
                 <Award size={16} />
-                {releaseMut.isPending ? 'Releasing…' : 'Release decision'}
+                {app.decision ? 'Re-release decision' : 'Release decision'}
               </Button>
             </div>
           </>
         )}
       </Card>
+
+      <ReleaseConfirmModal
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        decision={decision}
+        offer={offerTerms}
+        message={message}
+        releasing={releaseMut.isPending}
+        onConfirm={() => releaseMut.mutate()}
+      />
     </div>
   )
 }

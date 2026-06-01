@@ -1,4 +1,5 @@
 import { useState, useEffect, type ReactNode } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -101,18 +102,36 @@ function Field({ title, hint, children }: { title: string; hint?: string; childr
 export default function SettingsPage() {
   const queryClient = useQueryClient()
   const authUser = useAuthStore(s => s.user)
+  const [searchParams, setSearchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState('account')
 
   const tabs = [
     { id: 'account', label: 'Account' },
     { id: 'profile', label: 'Public profile' },
     { id: 'team', label: 'Team' },
-    { id: 'review', label: 'Review' },
+    { id: 'review', label: 'Rubrics' },
     { id: 'integrations', label: 'Integrations' },
     { id: 'notifications', label: 'Notifications' },
     { id: 'billing', label: 'Billing' },
     { id: 'security', label: 'Security' },
   ]
+
+  // Spec 32 §3 — `/i/settings?tab=rubrics` maps to the review/rubrics panel.
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab === 'rubrics') setActiveTab('review')
+    else if (tab && tabs.some(t => t.id === tab)) setActiveTab(tab)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab)
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.set('tab', tab === 'review' ? 'rubrics' : tab)
+      return next
+    })
+  }
 
   // Shared per-user settings (security / preferences / notifications / account).
   const settingsQ = useQuery({ queryKey: ['institution-settings'], queryFn: getInstitutionSettings })
@@ -230,7 +249,7 @@ export default function SettingsPage() {
         <h1 className="text-2xl font-bold text-foreground">Settings</h1>
       </header>
 
-      <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+      <Tabs tabs={tabs} activeTab={activeTab} onChange={handleTabChange} />
 
       {activeTab === 'account' && (
         settingsQ.isLoading || !settingsQ.data ? (

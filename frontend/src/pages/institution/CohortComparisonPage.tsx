@@ -9,6 +9,7 @@ import Badge from '../../components/ui/Badge'
 import Select from '../../components/ui/Select'
 import Skeleton from '../../components/ui/Skeleton'
 import EmptyState from '../../components/ui/EmptyState'
+import Button from '../../components/ui/Button'
 import InstitutionPageHeader from '../../components/institution/InstitutionPageHeader'
 import { formatScore } from '../../utils/format'
 import type { Application, CohortApplicant, Program } from '../../types'
@@ -24,7 +25,7 @@ const DECISION_COLORS: Record<string, string> = {
 const applicantLabel = (a: { student_name?: string | null; student_id: string }) =>
   a.student_name ?? `Applicant ${a.student_id.slice(0, 8)}`
 
-export default function CohortComparisonPage() {
+export default function CohortComparisonPage({ embedded = false }: { embedded?: boolean }) {
   const [selectedProgram, setSelectedProgram] = useState('')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [sortBy, setSortBy] = useState<'avg_score' | 'match_score' | 'student_name'>('avg_score')
@@ -87,6 +88,9 @@ export default function CohortComparisonPage() {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
   }
 
+  const selectAll = () => setSelectedIds(allApps.map(a => a.id))
+  const clearSelection = () => setSelectedIds([])
+
   const toggleSort = (col: typeof sortBy) => {
     if (sortBy === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
     else { setSortBy(col); setSortDir('desc') }
@@ -97,12 +101,14 @@ export default function CohortComparisonPage() {
     return sortDir === 'desc' ? <ChevronDown size={12} /> : <ChevronUp size={12} />
   }
 
-  return (
-    <div className="p-6 space-y-4">
-      <InstitutionPageHeader
-        title="Cohort Comparison"
-        description="Side-by-side comparison of applicants on rubric scores and key fields for calibration."
-      />
+  const inner = (
+    <div className="space-y-4">
+      {!embedded && (
+        <InstitutionPageHeader
+          title="Cohort Comparison"
+          description="Side-by-side comparison of applicants on rubric scores and key fields for calibration."
+        />
+      )}
 
       {/* Program selector */}
       <Card className="p-4">
@@ -169,13 +175,20 @@ export default function CohortComparisonPage() {
       {/* Application picker */}
       {selectedProgram && (
         <Card className="p-4">
-          <p className="text-sm font-medium text-gray-700 mb-2">Select 2+ applicants to compare:</p>
+          <p className="text-sm font-medium text-foreground mb-2">Select 2+ applicants to compare:</p>
           {appsQ.isLoading ? (
             <Skeleton className="h-20" />
           ) : allApps.length === 0 ? (
-            <p className="text-sm text-gray-500">No applications for this program.</p>
+            <p className="text-sm text-muted-foreground">No applications for this program.</p>
           ) : (
-            <div className="flex flex-wrap gap-2">
+            <>
+              <div className="flex flex-wrap gap-2 mb-3">
+                <Button variant="tertiary" size="sm" onClick={selectAll}>Select all ({allApps.length})</Button>
+                {selectedIds.length > 0 && (
+                  <Button variant="ghost" size="sm" onClick={clearSelection}>Clear</Button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
               {allApps.map(app => (
                 <button
                   key={app.id}
@@ -189,7 +202,8 @@ export default function CohortComparisonPage() {
                   {applicantLabel(app)} {app.match_score != null && `(${formatScore(app.match_score)})`}
                 </button>
               ))}
-            </div>
+              </div>
+            </>
           )}
         </Card>
       )}
@@ -205,10 +219,10 @@ export default function CohortComparisonPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead>
-              <tr className="border-b bg-gray-50">
-                <th className="text-left px-3 py-2 font-medium text-gray-600 sticky left-0 bg-gray-50 z-10">Field</th>
+              <tr className="border-b bg-muted/50">
+                <th className="text-left px-3 py-2 font-medium text-muted-foreground sticky left-0 bg-muted/50 z-10">Field</th>
                 {sorted.map(a => (
-                  <th key={a.application_id} className="text-center px-4 py-2 font-medium text-gray-900 min-w-[140px]">
+                  <th key={a.application_id} className="text-center px-4 py-2 font-medium text-foreground min-w-[140px]">
                     {a.student_name || a.student_id.slice(0, 8)}
                   </th>
                 ))}
@@ -217,7 +231,7 @@ export default function CohortComparisonPage() {
             <tbody>
               {/* Status */}
               <tr className="border-b">
-                <td className="px-3 py-2 font-medium text-gray-500 sticky left-0 bg-white">Status</td>
+                <td className="px-3 py-2 font-medium text-muted-foreground sticky left-0 bg-card">Status</td>
                 {sorted.map(a => (
                   <td key={a.application_id} className="text-center px-4 py-2">
                     <Badge variant="info">{a.status ?? '—'}</Badge>
@@ -226,7 +240,7 @@ export default function CohortComparisonPage() {
               </tr>
               {/* Decision */}
               <tr className="border-b">
-                <td className="px-3 py-2 font-medium text-gray-500 sticky left-0 bg-white">Decision</td>
+                <td className="px-3 py-2 font-medium text-muted-foreground sticky left-0 bg-card">Decision</td>
                 {sorted.map(a => (
                   <td key={a.application_id} className="text-center px-4 py-2">
                     {a.decision ? (
@@ -236,8 +250,8 @@ export default function CohortComparisonPage() {
                 ))}
               </tr>
               {/* Match Score */}
-              <tr className="border-b hover:bg-gray-50 cursor-pointer" onClick={() => toggleSort('match_score')}>
-                <td className="px-3 py-2 font-medium text-gray-500 sticky left-0 bg-white flex items-center gap-1">
+              <tr className="border-b hover:bg-muted/40 cursor-pointer" onClick={() => toggleSort('match_score')}>
+                <td className="px-3 py-2 font-medium text-muted-foreground sticky left-0 bg-card flex items-center gap-1">
                   Match Score <SortIcon col="match_score" />
                 </td>
                 {sorted.map(a => (
@@ -248,11 +262,11 @@ export default function CohortComparisonPage() {
               </tr>
               {/* Avg Rubric Score */}
               <tr className="border-b bg-cobalt/5 hover:bg-cobalt/10 cursor-pointer" onClick={() => toggleSort('avg_score')}>
-                <td className="px-3 py-2 font-semibold text-gray-700 sticky left-0 bg-cobalt/5 flex items-center gap-1">
+                <td className="px-3 py-2 font-semibold text-foreground sticky left-0 bg-cobalt/5 flex items-center gap-1">
                   Avg Rubric Score <SortIcon col="avg_score" />
                 </td>
                 {sorted.map(a => (
-                  <td key={a.application_id} className="text-center px-4 py-2 font-bold text-gray-900">
+                  <td key={a.application_id} className="text-center px-4 py-2 font-bold text-foreground">
                     {a.avg_score != null ? a.avg_score.toFixed(1) : '—'}
                   </td>
                 ))}
@@ -260,14 +274,14 @@ export default function CohortComparisonPage() {
               {/* Per-criterion scores */}
               {allCriteria.length > 0 && (
                 <>
-                  <tr className="border-b cursor-pointer hover:bg-gray-50" onClick={() => setExpandedCriteria(expandedCriteria ? null : 'all')}>
-                    <td colSpan={sorted.length + 1} className="px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <tr className="border-b cursor-pointer hover:bg-muted/40" onClick={() => setExpandedCriteria(expandedCriteria ? null : 'all')}>
+                    <td colSpan={sorted.length + 1} className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       {expandedCriteria ? '▼' : '▶'} Rubric Criteria ({allCriteria.length})
                     </td>
                   </tr>
                   {expandedCriteria && allCriteria.map(criterion => (
                     <tr key={criterion} className="border-b">
-                      <td className="px-3 py-1.5 text-gray-500 text-xs pl-6 sticky left-0 bg-white">{criterion}</td>
+                      <td className="px-3 py-1.5 text-muted-foreground text-xs pl-6 sticky left-0 bg-card">{criterion}</td>
                       {sorted.map(a => {
                         const latest = a.scores[0]
                         const val = latest?.criterion_scores?.[criterion]
@@ -283,7 +297,7 @@ export default function CohortComparisonPage() {
               )}
               {/* Completeness */}
               <tr className="border-b">
-                <td className="px-3 py-2 font-medium text-gray-500 sticky left-0 bg-white">Completeness</td>
+                <td className="px-3 py-2 font-medium text-muted-foreground sticky left-0 bg-card">Completeness</td>
                 {sorted.map(a => (
                   <td key={a.application_id} className="text-center px-4 py-2">
                     <Badge variant={a.completeness_status === 'complete' ? 'success' : a.completeness_status === 'incomplete' ? 'warning' : 'neutral'}>
@@ -294,7 +308,7 @@ export default function CohortComparisonPage() {
               </tr>
               {/* GPA */}
               <tr className="border-b">
-                <td className="px-3 py-2 font-medium text-gray-500 sticky left-0 bg-white">GPA</td>
+                <td className="px-3 py-2 font-medium text-muted-foreground sticky left-0 bg-card">GPA</td>
                 {sorted.map(a => (
                   <td key={a.application_id} className="text-center px-4 py-2 font-mono">
                     {a.gpa != null ? a.gpa.toFixed(2) : '—'}
@@ -303,7 +317,7 @@ export default function CohortComparisonPage() {
               </tr>
               {/* Nationality */}
               <tr className="border-b">
-                <td className="px-3 py-2 font-medium text-gray-500 sticky left-0 bg-white">Nationality</td>
+                <td className="px-3 py-2 font-medium text-muted-foreground sticky left-0 bg-card">Nationality</td>
                 {sorted.map(a => (
                   <td key={a.application_id} className="text-center px-4 py-2">
                     {a.nationality ?? '—'}
@@ -316,6 +330,9 @@ export default function CohortComparisonPage() {
       )}
     </div>
   )
+
+  if (embedded) return inner
+  return <div className="p-6">{inner}</div>
 }
 
 function pctRate(r: number | null): string {

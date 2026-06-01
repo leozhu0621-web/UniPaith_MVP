@@ -46,7 +46,7 @@ import DashboardPage from './pages/institution/DashboardPage'
 import SetupPage from './pages/institution/SetupPage'
 import ProgramsPage from './pages/institution/ProgramsPage'
 import ProgramEditorPage from './pages/institution/ProgramEditorPage'
-import PipelinePage from './pages/institution/PipelinePage'
+import { LegacyApplicantRedirect, LegacyPipelineRedirect } from './pages/institution/LegacyPipelineRedirect'
 import StudentDetailPage from './pages/institution/StudentDetailPage'
 import InterviewsPage from './pages/institution/InterviewsPage'
 import SegmentsPage from './pages/institution/SegmentsPage'
@@ -163,11 +163,12 @@ const router = createBrowserRouter([
       { path: 'programs/new', element: <ProgramEditorPage /> },
       { path: 'programs/:id/edit', element: <ProgramEditorPage /> },
       { path: 'admissions', element: <AdmissionsPage /> },
+      { path: 'admissions/applicant/:appId', element: <StudentDetailPage /> },
       { path: 'outreach', element: <OutreachPage /> },
       { path: 'communications', element: <CommunicationsPage /> },
-      // Legacy routes (still work via direct URL)
-      { path: 'pipeline', element: <PipelinePage /> },
-      { path: 'pipeline/:studentId', element: <StudentDetailPage /> },
+      // Spec 31 — legacy pipeline URLs redirect into admissions intake
+      { path: 'pipeline', element: <LegacyPipelineRedirect /> },
+      { path: 'pipeline/:studentId', element: <LegacyApplicantRedirect /> },
       { path: 'interviews', element: <InterviewsPage /> },
       { path: 'messages', element: <Navigate to="/i/communications?tab=inbox" replace /> },
       { path: 'segments', element: <SegmentsPage /> },

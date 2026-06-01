@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode, type KeyboardEvent } from 'react'
+import { useState, useEffect, type ReactNode, type KeyboardEvent, Fragment } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -13,6 +13,7 @@ import {
   reviewAssistantChat, revealApplicantIdentity, actOnIntegritySignal,
 } from '../../api/reviews'
 import DecisionPanel from './pipeline/DecisionPanel'
+import InstitutionPageHeader from '../../components/institution/InstitutionPageHeader'
 import { getInterviewsByApplication } from '../../api/interviews-admin'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -29,7 +30,7 @@ import { showToast } from '../../stores/toast-store'
 import { formatDate, formatDateTime } from '../../utils/format'
 import { STATUS_COLORS, INTERVIEW_TYPE_LABELS } from '../../utils/constants'
 import type {
-  Rubric, ReviewPacket, ReviewSynthesis, InstitutionMatchRationale, IntegrityAction, Interview,
+  Rubric, ReviewPacket, ReviewSynthesis, InstitutionMatchRationale, IntegrityAction, Interview, InstitutionDecision,
 } from '../../types'
 
 const SEVERITY_DOT: Record<string, string> = { high: 'bg-error', medium: 'bg-warning', low: 'bg-cobalt' }
@@ -95,7 +96,7 @@ export default function StudentDetailPage() {
   const matchRationaleQ = useQuery({
     queryKey: ['match-rationale-full', applicationId],
     queryFn: () => getMatchRationaleFull(applicationId!),
-    enabled: !!applicationId && activeTab === 'ai',
+    enabled: !!applicationId,
   })
 
   // Spec 33 §3 step 6 — interview results feed the review packet.
@@ -139,9 +140,28 @@ export default function StudentDetailPage() {
     onError: () => showToast('Assistant request failed', 'error'),
   })
 
+  const markForCommittee = () => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.set('tab', 'decision')
+      next.set('decision', 'deferred')
+      return next
+    })
+    setActiveTab('decision')
+    showToast('Marked for committee — defer when ready', 'info')
+  }
+
   const composeNotes = () => {
     const perCrit = Object.entries(criterionNotes).filter(([, v]) => v?.trim()).map(([k, v]) => `${k}: ${v.trim()}`).join(' · ')
     return [reviewerNotes.trim(), perCrit].filter(Boolean).join('\n')
+  }
+
+  const criteriaFullyScored = (rubric: Rubric | undefined, scores: Record<string, number>) => {
+    if (!rubric?.criteria?.length) return false
+    return rubric.criteria.every(c => {
+      const s = scores[c.name]
+      return s != null && s >= 1
+    })
   }
 
   const doReveal = async () => {
@@ -158,6 +178,13 @@ export default function StudentDetailPage() {
     catch { showToast('Synthesis failed', 'error') }
     finally { setSynthLoading(false) }
   }
+
+  useEffect(() => {
+    const p = packetQ.data
+    if (activeTab !== 'scores' || !p || p.reviewer_count < 2 || synthesis || synthLoading) return
+    void runSynthesis()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, packetQ.data?.reviewer_count, applicationId])
 
   if (packetQ.isLoading) {
     return <div className="p-6 space-y-4"><Skeleton className="h-12 w-80" /><Skeleton className="h-64" /></div>
@@ -181,27 +208,26 @@ export default function StudentDetailPage() {
     { id: 'timeline', label: 'Timeline' },
   ]
   const currentRubric = rubrics.find(r => r.id === selectedRubric)
-  const fitness = packet.match_score
+  const matchRationale = matchRationaleQ.data
+  const fitness = matchRationale?.fitness_score ?? packet.match_score
+  const confidence = matchRationale?.confidence_score
 
   return (
     <div className="p-6 space-y-4">
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-xs uppercase tracking-wide text-muted-foreground">Applicant</div>
-          <h1 className="text-2xl font-bold text-foreground truncate flex items-center gap-2">
-            {blind && <EyeOff size={18} className="text-warning shrink-0" />}
-            {packet.student.display_name}
-          </h1>
-          <p className="text-sm text-muted-foreground">{packet.program.label}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant={(STATUS_COLORS[packet.status ?? ''] as 'success' | 'warning' | 'info' | 'neutral') ?? 'neutral'}>{(packet.status ?? 'unknown').replace(/_/g, ' ')}</Badge>
-          {packet.decision?.decision && (
-            <Badge variant={packet.decision.decision === 'admitted' ? 'success' : packet.decision.decision === 'rejected' ? 'error' : 'warning'}>{packet.decision.decision}</Badge>
-          )}
-        </div>
-      </div>
+      <InstitutionPageHeader
+        title={packet.student.display_name}
+        description={packet.program.label}
+        badge={
+          <div className="flex items-center gap-2">
+            {blind && <EyeOff size={16} className="text-warning" />}
+            <Badge variant={(STATUS_COLORS[packet.status ?? ''] as 'success' | 'warning' | 'info' | 'neutral') ?? 'neutral'}>{(packet.status ?? 'unknown').replace(/_/g, ' ')}</Badge>
+            {packet.decision?.decision && (
+              <Badge variant={packet.decision.decision === 'admitted' ? 'success' : packet.decision.decision === 'rejected' ? 'error' : 'warning'}>{packet.decision.decision}</Badge>
+            )}
+          </div>
+        }
+      />
+      <p className="text-xs uppercase tracking-wide text-muted-foreground -mt-2">Applicant review packet</p>
 
       {/* Banners */}
       {blind && (
@@ -231,14 +257,9 @@ export default function StudentDetailPage() {
               </div>
             </div>
             {fitness != null && (
-              <div className="flex items-center justify-center mb-4">
-                <div className="relative w-20 h-20">
-                  <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" className="text-muted" strokeWidth="3" />
-                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#2A6BD4" strokeWidth="3" strokeDasharray={`${pctScore(fitness)}, 100`} strokeLinecap="round" />
-                  </svg>
-                  <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-cobalt">{pctScore(fitness)}</span>
-                </div>
+              <div className="flex items-center justify-center gap-4 mb-4">
+                <ScoreRing label="Fit" value={fitness} />
+                {confidence != null && <ScoreRing label="Confidence" value={confidence} />}
               </div>
             )}
             <div className="space-y-2 text-sm">
@@ -259,6 +280,16 @@ export default function StudentDetailPage() {
                 ))}
               </div>
             )}
+            {packet.holistic_context.high_sensitivity.length > 0 && (
+              <div className="rounded-md border border-warning/30 bg-warning-soft/40 p-2 space-y-1">
+                <p className="text-[11px] font-medium text-warning">Policy-gated context</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {packet.holistic_context.high_sensitivity.map(f => (
+                    <span key={f.key} className="inline-flex items-center rounded-full border border-warning/30 bg-warning-soft px-2 py-0.5 text-xs text-warning" title={`${f.label}: ${f.value}`}>{f.label}</span>
+                  ))}
+                </div>
+              </div>
+            )}
             <p className="text-[11px] leading-snug text-muted-foreground">{packet.holistic_context.note}</p>
           </Card>
 
@@ -273,7 +304,7 @@ export default function StudentDetailPage() {
             <Button variant="secondary" className="w-full flex items-center justify-center gap-2" onClick={() => assignMut.mutate()} disabled={assignMut.isPending}><ClipboardCheck size={16} /> Assign reviewer</Button>
             <Button variant="secondary" className="w-full flex items-center justify-center gap-2" onClick={() => setShowScoringModal(true)} disabled={locked} title={locked ? 'Scoring is read-only after a decision' : undefined}><Star size={16} /> Score this applicant</Button>
             <Button variant="secondary" className="w-full flex items-center justify-center gap-2" onClick={() => setShowDraftModal(true)}><Brain size={16} /> Generate AI message</Button>
-            <Button variant="tertiary" className="w-full flex items-center justify-center gap-2" onClick={() => handleTabChange('decision')}><Clock size={16} /> Mark for committee</Button>
+            <Button variant="tertiary" className="w-full flex items-center justify-center gap-2" onClick={markForCommittee}><Clock size={16} /> Mark for committee</Button>
             <Button className="w-full flex items-center justify-center gap-2" onClick={() => handleTabChange('decision')}><Award size={16} /> Decision &amp; offer</Button>
           </Card>
         </div>
@@ -297,7 +328,7 @@ export default function StudentDetailPage() {
             {activeTab === 'decision' && (
               appDetailQ.isLoading || !appDetailQ.data
                 ? <Skeleton className="h-64" />
-                : <DecisionPanel applicationId={applicationId!} app={appDetailQ.data} />
+                : <DecisionPanel applicationId={applicationId!} app={appDetailQ.data} prefillDecision={(['admitted','conditional_admission','waitlisted','deferred','rejected'] as const).includes(searchParams.get('decision') as InstitutionDecision) ? searchParams.get('decision') as InstitutionDecision : null} />
             )}
             {activeTab === 'documents' && <DocumentsTab packet={packet} />}
             {activeTab === 'essays' && <EssaysTab packet={packet} />}
@@ -449,7 +480,7 @@ export default function StudentDetailPage() {
                     <div className="flex items-center justify-between mb-2 gap-2">
                       <span className="text-sm font-medium text-foreground">{c.name}{c.weight != null ? <span className="text-muted-foreground"> · {Math.round(c.weight * 100)}%</span> : null}</span>
                     </div>
-                    <RubricSlider value={criterionScores[c.name] ?? null} max={max} label={c.name} onChange={v => setCriterionScores({ ...criterionScores, [c.name]: v })} />
+                    <RubricSlider value={criterionScores[c.name] ?? null} min={1} max={max} label={c.name} onChange={v => setCriterionScores({ ...criterionScores, [c.name]: v })} />
                     <Textarea label="" value={criterionNotes[c.name] ?? ''} onChange={e => setCriterionNotes({ ...criterionNotes, [c.name]: e.target.value })} rows={2} placeholder={`Notes for ${c.name}…`} className="mt-2 text-xs" />
                   </div>
                 )
@@ -457,7 +488,7 @@ export default function StudentDetailPage() {
             </div>
           )}
           <Textarea label="Overall reviewer notes" value={reviewerNotes} onChange={e => setReviewerNotes(e.target.value)} rows={3} />
-          <div className="flex justify-end gap-2"><Button variant="ghost" onClick={() => setShowScoringModal(false)}>Cancel</Button><Button onClick={() => scoreMut.mutate()} disabled={!selectedRubric || scoreMut.isPending}>{scoreMut.isPending ? 'Submitting…' : 'Submit score'}</Button></div>
+          <div className="flex justify-end gap-2"><Button variant="ghost" onClick={() => setShowScoringModal(false)}>Cancel</Button><Button onClick={() => scoreMut.mutate()} disabled={!selectedRubric || !criteriaFullyScored(currentRubric, criterionScores) || scoreMut.isPending}>{scoreMut.isPending ? 'Submitting…' : 'Submit score'}</Button></div>
         </div>
       </Modal>
     </div>
@@ -467,6 +498,22 @@ export default function StudentDetailPage() {
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 function pctScore(v: number): number { const n = v > 1 ? v : v * 100; return Math.round(Math.max(0, Math.min(100, n))) }
+
+function ScoreRing({ label, value }: { label: string; value: number }) {
+  const pct = pctScore(value)
+  return (
+    <div className="text-center">
+      <div className="relative w-16 h-16 mx-auto">
+        <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+          <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" className="text-muted" strokeWidth="3" />
+          <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#2A6BD4" strokeWidth="3" strokeDasharray={`${pct}, 100`} strokeLinecap="round" />
+        </svg>
+        <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-cobalt">{pct}</span>
+      </div>
+      <p className="text-[10px] text-muted-foreground mt-1">{label}</p>
+    </div>
+  )
+}
 function clampScore(v: number, rubric: Rubric | undefined, name: string): number {
   const max = rubric?.criteria?.find(c => c.name === name)?.max_score ?? rubric?.criteria?.find(c => c.name === name)?.scale_max ?? 5
   return Math.max(0, Math.min(max, Math.round(v)))
@@ -534,6 +581,7 @@ function OverviewTab({ packet }: { packet: ReviewPacket }) {
 function ScoresTab({ packet, synthesis, onSynthesize, synthLoading }: { packet: ReviewPacket; synthesis: ReviewSynthesis | null; onSynthesize: () => void; synthLoading: boolean }) {
   const rows = packet.rubric_scores
   const reviewers = packet.reviewer_notes
+  const [expandedCriterion, setExpandedCriterion] = useState<string | null>(null)
   if (packet.reviewer_count === 0) {
     return <Card className="p-6"><p className="text-sm text-muted-foreground text-center">No one has scored this applicant yet.</p></Card>
   }
@@ -550,22 +598,43 @@ function ScoresTab({ packet, synthesis, onSynthesize, synthLoading }: { packet: 
           </thead>
           <tbody>
             {rows.map(row => (
-              <tr key={row.criterion} className={`border-b border-border ${row.divergent ? 'bg-warning-soft/50' : ''}`}>
-                <td className="px-3 py-2 sticky left-0 bg-card">
-                  <span className="font-medium text-foreground">{row.criterion}</span>
-                  {row.weight != null && <span className="text-muted-foreground"> · {Math.round(row.weight * 100)}%</span>}
-                </td>
-                {reviewers.map(rv => {
-                  const cell = row.per_reviewer.find(p => p.reviewer_id === rv.reviewer_id)
-                  const isMax = cell && cell.score === row.max_score
-                  return <td key={rv.reviewer_id} className={`text-center px-3 py-2 font-semibold tabular-nums ${isMax ? 'text-gold-hover' : 'text-cobalt'}`}>{cell ? cell.score : '—'}</td>
-                })}
-                <td className="text-center px-3 py-2">
-                  {row.divergent
-                    ? <span className="inline-flex items-center gap-1 text-warning text-xs font-medium"><AlertTriangle size={12} />{row.variance}</span>
-                    : <span className="text-muted-foreground text-xs tabular-nums">{row.variance}</span>}
-                </td>
-              </tr>
+              <Fragment key={row.criterion}>
+                <tr className={`border-b border-border ${row.divergent ? 'bg-warning-soft/50' : ''}`}>
+                  <td className="px-3 py-2 sticky left-0 bg-card">
+                    <button type="button" onClick={() => setExpandedCriterion(expandedCriterion === row.criterion ? null : row.criterion)} className="text-left">
+                      <span className="font-medium text-foreground">{row.criterion}</span>
+                      {row.weight != null && <span className="text-muted-foreground"> · {Math.round(row.weight * 100)}%</span>}
+                      {row.per_reviewer.some(p => p.note) && (
+                        <span className="ml-1 text-[10px] text-cobalt">{expandedCriterion === row.criterion ? '▼ notes' : '▶ notes'}</span>
+                      )}
+                    </button>
+                  </td>
+                  {reviewers.map(rv => {
+                    const cell = row.per_reviewer.find(p => p.reviewer_id === rv.reviewer_id)
+                    const isMax = cell && cell.score === row.max_score
+                    return <td key={rv.reviewer_id} className={`text-center px-3 py-2 font-semibold tabular-nums ${isMax ? 'text-gold-hover' : 'text-cobalt'}`}>{cell ? cell.score : '—'}</td>
+                  })}
+                  <td className="text-center px-3 py-2">
+                    {row.divergent
+                      ? <span className="inline-flex items-center gap-1 text-warning text-xs font-medium"><AlertTriangle size={12} />{row.variance}</span>
+                      : <span className="text-muted-foreground text-xs tabular-nums">{row.variance}</span>}
+                  </td>
+                </tr>
+                {expandedCriterion === row.criterion && row.per_reviewer.some(p => p.note) && (
+                  <tr key={`${row.criterion}-notes`} className="border-b border-border bg-muted/30">
+                    <td colSpan={reviewers.length + 2} className="px-3 py-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {row.per_reviewer.filter(p => p.note).map(p => (
+                          <div key={p.reviewer_id} className="text-xs">
+                            <span className="font-medium text-foreground">{p.reviewer_name}:</span>{' '}
+                            <span className="text-muted-foreground">{p.note}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
             ))}
           </tbody>
         </table>

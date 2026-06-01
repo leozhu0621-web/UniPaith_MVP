@@ -19,10 +19,12 @@ import Select from '../../components/ui/Select'
 import ProgressBar from '../../components/ui/ProgressBar'
 import Skeleton from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
+import type { Interview } from '../../types'
 import { STATUS_COLORS } from '../../utils/constants'
 import { getMyInterviews } from '../../api/interviews'
+import InterviewRespondPanel from './interviews/InterviewRespondPanel'
 import {
-  ArrowLeft, Check, Circle, Upload, Sparkles, AlertCircle, FileCheck, ListChecks, Video, Phone,
+  ArrowLeft, Check, Circle, Upload, Sparkles, AlertCircle, FileCheck, ListChecks,
   Users, AlertTriangle, ShieldCheck, Award, Send, Building2,
 } from 'lucide-react'
 import Breadcrumbs from '../../components/ui/Breadcrumbs'
@@ -547,41 +549,22 @@ export default function ApplicationDetailPage() {
             )}
 
             {tab === 'interviews' && (() => {
-              const interviewList: any[] = Array.isArray(interviews) ? interviews.filter((i: any) => i.application_id === appId) : []
-              const TYPE_ICONS: Record<string, typeof Video> = { video: Video, phone: Phone, in_person: Users }
+              const interviewList = Array.isArray(interviews)
+                ? interviews.filter((i: { application_id: string }) => i.application_id === appId)
+                : []
               return (
                 <div className="space-y-4">
-                  {interviewList.length > 0 ? interviewList.map((iv: any) => {
-                    const Icon = TYPE_ICONS[iv.interview_type] || Users
-                    return (
-                      <Card key={iv.id} className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-student-mist flex items-center justify-center"><Icon size={18} className="text-cobalt" /></div>
-                            <div>
-                              <p className="text-sm font-medium text-student-ink capitalize">{(iv.interview_type || 'interview').replace(/_/g, ' ')}</p>
-                              <p className="text-xs text-student-text">{iv.scheduled_at ? new Date(iv.scheduled_at).toLocaleString() : 'Not yet scheduled'}</p>
-                            </div>
-                          </div>
-                          <Badge variant={iv.status === 'completed' ? 'success' : iv.status === 'scheduled' ? 'info' : 'warning'}>{iv.status || 'pending'}</Badge>
-                        </div>
-                        {iv.status === 'scheduled' && (
-                          <Card className="mt-3 p-3 bg-student-mist">
-                            <p className="text-xs font-medium text-student-ink mb-1">Prep checklist</p>
-                            <ul className="text-xs text-student-text space-y-1">
-                              <li className="flex items-center gap-1"><Check size={10} /> Research the program</li>
-                              <li className="flex items-center gap-1"><Check size={10} /> Prepare key talking points</li>
-                              <li className="flex items-center gap-1"><Check size={10} /> {iv.interview_type === 'video' ? 'Test camera & microphone' : 'Plan arrival logistics'}</li>
-                            </ul>
-                          </Card>
-                        )}
-                      </Card>
-                    )
-                  }) : (
+                  {interviewList.length > 0 ? (
+                    interviewList.map((iv: Interview) => (
+                      <InterviewRespondPanel key={iv.id} interview={iv} />
+                    ))
+                  ) : (
                     <Card className="p-6 text-center">
                       <Users size={32} className="text-muted-foreground mx-auto mb-3" />
                       <p className="text-sm text-student-text">No interviews scheduled yet.</p>
-                      <p className="text-xs text-muted-foreground mt-1">You'll be notified when an interview is requested.</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        You'll be notified when an interview is requested.
+                      </p>
                     </Card>
                   )}
                 </div>

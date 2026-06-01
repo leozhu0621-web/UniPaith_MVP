@@ -8,6 +8,7 @@ const QUALITATIVE = ['Not scored', 'Poor', 'Fair', 'Good', 'Strong', 'Excellent'
 
 interface RubricSliderProps {
   value: number | null
+  min?: number
   max?: number
   onChange: (value: number) => void
   disabled?: boolean
@@ -18,31 +19,34 @@ interface RubricSliderProps {
 export default function RubricSlider({
   value,
   max = 5,
+  min = 0,
   onChange,
   disabled = false,
   label,
   id,
 }: RubricSliderProps) {
   const v = value ?? 0
-  const isMax = value === max
-  const pct = max > 0 ? (v / max) * 100 : 0
+  const isMax = value === max && value != null
+  const pct = max > 0 && value != null ? (v / max) * 100 : 0
   // Cobalt fill; gold once the reviewer marks the top of the scale (§10).
   const fillColor = isMax ? '#FFD60A' : '#2A6BD4'
-  const trackBg = `linear-gradient(to right, ${fillColor} 0%, ${fillColor} ${pct}%, var(--track-muted, #E8EDF5) ${pct}%, var(--track-muted, #E8EDF5) 100%)`
-  const qualitative = QUALITATIVE[Math.round(v)] ?? ''
+  const trackBg = value == null
+    ? 'var(--track-muted, #E8EDF5)'
+    : `linear-gradient(to right, ${fillColor} 0%, ${fillColor} ${pct}%, var(--track-muted, #E8EDF5) ${pct}%, var(--track-muted, #E8EDF5) 100%)`
+  const qualitative = value == null ? QUALITATIVE[0] : (QUALITATIVE[Math.round(v)] ?? '')
 
   return (
     <div className="flex items-center gap-3">
       <input
         id={id}
         type="range"
-        min={0}
+        min={min}
         max={max}
         step={1}
-        value={v}
+        value={value ?? min}
         disabled={disabled}
         aria-label={label ? `${label} score` : 'Score'}
-        aria-valuetext={`${value ?? 0} of ${max} — ${qualitative}`}
+        aria-valuetext={value == null ? 'Not scored' : `${value} of ${max} — ${qualitative}`}
         onChange={(e) => onChange(Number(e.target.value))}
         style={{ background: trackBg }}
         className={clsx(

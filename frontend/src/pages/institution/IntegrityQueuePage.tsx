@@ -15,6 +15,7 @@ import InstitutionPageHeader from '../../components/institution/InstitutionPageH
 import { showToast } from '../../stores/toast-store'
 import { formatRelative } from '../../utils/format'
 import type { IntegritySignal, IntegrityResolution } from '../../types'
+import { applicantUrl } from '../../utils/institution-routes'
 
 const SEVERITY_BADGE: Record<string, 'danger' | 'warning' | 'neutral'> = {
   high: 'danger',
@@ -57,7 +58,7 @@ function EvidenceChips({ signal }: { signal: IntegritySignal }) {
   )
 }
 
-export default function IntegrityQueuePage() {
+export default function IntegrityQueuePage({ embedded = false }: { embedded?: boolean }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState('open')
@@ -102,12 +103,14 @@ export default function IntegrityQueuePage() {
   const openCount = signals.filter(s => s.status === 'open').length
   const highCount = signals.filter(s => s.status === 'open' && s.severity === 'high').length
 
-  return (
-    <div className="p-6 space-y-4">
-      <InstitutionPageHeader
-        title="Integrity Signals"
-        description="Review document-authenticity, duplicate-identity, and anomaly flags. Resolve each as acceptable, needing clarification, or recommending rejection."
-      />
+  const inner = (
+    <div className="space-y-4">
+      {!embedded && (
+        <InstitutionPageHeader
+          title="Integrity Signals"
+          description="Review document-authenticity, duplicate-identity, and anomaly flags. Resolve each as acceptable, needing clarification, or recommending rejection."
+        />
+      )}
 
       {signals.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -155,7 +158,7 @@ export default function IntegrityQueuePage() {
                   <EvidenceChips signal={sig} />
                   <div className="mt-2 flex items-center gap-3 text-xs text-gray-400">
                     <button
-                      onClick={() => navigate(`/i/pipeline/${sig.application_id}`)}
+                      onClick={() => navigate(applicantUrl(sig.application_id))}
                       className="inline-flex items-center gap-1 text-secondary hover:underline"
                     >
                       <ExternalLink size={12} /> View applicant
@@ -212,7 +215,7 @@ export default function IntegrityQueuePage() {
                 onClick={() => resolveMut.mutate({ id: selected.id, resolution, notes: notes || undefined })}
                 disabled={resolveMut.isPending}
               >
-                {resolveMut.isPending ? 'Resolving…' : 'Confirm resolution'}
+                {resolveMut.isPending ? 'Resolving…' : 'Resolve'}
               </Button>
             </div>
           </div>
@@ -220,4 +223,7 @@ export default function IntegrityQueuePage() {
       </Modal>
     </div>
   )
+
+  if (embedded) return inner
+  return <div className="p-6">{inner}</div>
 }
