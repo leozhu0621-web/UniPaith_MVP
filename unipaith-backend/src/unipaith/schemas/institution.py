@@ -620,6 +620,32 @@ class CampaignMetricsResponse(CampaignMetrics):
     campaign_id: UUID
 
 
+class CampaignAudienceSampleRow(BaseModel):
+    student_id: UUID
+    first_name: str | None = None
+    email: str | None = None
+
+
+class CampaignAudiencePreviewResponse(BaseModel):
+    campaign_id: UUID
+    audience_count: int
+    sample: list[CampaignAudienceSampleRow] = Field(default_factory=list)
+
+
+class CampaignDraftCopyRequest(BaseModel):
+    objective: str = Field(default="general")
+    cta_type: str | None = Field(default="learn_more")
+    campaign_name: str | None = None
+    program_name: str | None = None
+
+
+class CampaignDraftCopyResponse(BaseModel):
+    subject: str
+    body: str
+    alternate_subjects: list[str] = Field(default_factory=list)
+    preview_text: str = ""
+
+
 # --- Campaign Links & Attribution ---
 
 

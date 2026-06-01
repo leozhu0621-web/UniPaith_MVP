@@ -28,7 +28,7 @@ export default function OutreachPage() {
   return (
     <div className="p-6 space-y-4">
       <Tabs tabs={tabs} activeTab={activeTab} onChange={handleTabChange} />
-      {activeTab === 'campaigns' && <CampaignsPage />}
+      {activeTab === 'campaigns' && <CampaignsPage embedded />}
       {activeTab === 'promotions' && <PromotionsPage />}
       {activeTab === 'events' && <EventsPage />}
       {activeTab === 'posts' && <PostsPage />}

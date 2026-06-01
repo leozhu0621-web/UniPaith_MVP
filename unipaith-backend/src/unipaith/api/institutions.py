@@ -2199,6 +2199,16 @@ async def get_featured_promotions(
     return await svc.get_active_promotions(region, country, degree_type)
 
 
+@router.post("/promotions/{promotion_id}/click", status_code=status.HTTP_204_NO_CONTENT)
+async def record_promotion_click(
+    promotion_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Public — record a student click on a featured promotion."""
+    svc = _svc(db)
+    await svc.record_promotion_click(promotion_id)
+
+
 # --- Institution Intelligence ---
 
 
