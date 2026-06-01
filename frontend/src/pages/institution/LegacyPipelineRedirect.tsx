@@ -1,11 +1,14 @@
 import { Navigate, useParams, useSearchParams } from 'react-router-dom'
-import { admissionsUrl, applicantUrl } from '../../utils/institution-routes'
+import { admissionsUrl, applicantUrl, type PipelineView } from '../../utils/institution-routes'
+
+const PIPELINE_VIEWS: PipelineView[] = ['board', 'list', 'review', 'priority']
 
 /** Legacy `/i/pipeline` → Spec 31 `/i/admissions?tab=pipeline&view=…` */
 export function LegacyPipelineRedirect() {
   const [searchParams] = useSearchParams()
-  const view = searchParams.get('tab') || 'board'
-  return <Navigate to={admissionsUrl('pipeline', view as 'board')} replace />
+  const raw = searchParams.get('tab') || 'board'
+  const view: PipelineView = PIPELINE_VIEWS.includes(raw as PipelineView) ? (raw as PipelineView) : 'board'
+  return <Navigate to={admissionsUrl('pipeline', view)} replace />
 }
 
 /** Legacy `/i/pipeline/:id` → `/i/admissions/applicant/:id` */
