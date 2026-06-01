@@ -311,4 +311,29 @@ describe('Spec 11 §10 — ProgramDetailPage integration', () => {
     fireEvent.click(applyBtn)
     await waitFor(() => expect(h.createApplicationMock).toHaveBeenCalledWith('prog-1'))
   })
+
+  it('renders Spec 23 structured admissions (test policy, prerequisites) on Admissions tab', async () => {
+    const { getProgram } = await import('../api/programs')
+    vi.mocked(getProgram).mockResolvedValueOnce({
+      ...h.program,
+      application_requirements: {
+        materials: [{ name: 'Essay', required: true }],
+        prerequisites: [{ name: 'Calculus', required: true, allowed_substitutes: [] }],
+        test_policy: {
+          stance: 'test_optional',
+          required: ['GRE'],
+          optional: [],
+          accepted_tests: ['GRE'],
+          superscore_enabled: false,
+          waived_rules: '',
+          typical_ranges: [],
+        },
+        recommendations: { required_count: 2, types: ['academic'] },
+      },
+    } as any)
+    renderPage('/s/programs/prog-1?tab=admissions')
+    expect(await screen.findByText('Test Policy')).toBeInTheDocument()
+    expect(screen.getByText('Prerequisites')).toBeInTheDocument()
+    expect(screen.getByText('Calculus')).toBeInTheDocument()
+  })
 })
