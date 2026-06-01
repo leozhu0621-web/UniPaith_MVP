@@ -268,7 +268,7 @@ export default function DataTab() {
       <section>
         <SectionHeader title="Access log" description="Who and what touched your data, and when." />
         {logEntries.length === 0 ? (
-          <Card className="p-5"><p className="text-sm text-muted-foreground">No access recorded yet. AI actions on your data will appear here.</p></Card>
+          <Card className="p-5"><p className="text-sm text-muted-foreground">No access recorded yet. Activity on your data — by you, the institutions you apply to, and AI — will appear here.</p></Card>
         ) : (
           <Card className="p-0 overflow-x-auto">
             <table className="w-full text-sm">

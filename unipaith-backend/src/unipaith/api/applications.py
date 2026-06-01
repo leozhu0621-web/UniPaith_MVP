@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.database import get_db
@@ -242,14 +242,32 @@ async def check_readiness(
 async def toggle_checklist_item(
     application_id: UUID,
     body: ChecklistToggleRequest,
+    request: Request,
     user: User = Depends(require_student),
     db: AsyncSession = Depends(get_db),
 ):
     """Manually mark a checklist item complete/incomplete (external mode, spec 15 §7)."""
     profile = await StudentService(db)._get_student_profile(user.id)
-    return await ChecklistService(db).toggle_item(
+    result = await ChecklistService(db).toggle_item(
         profile.id, application_id, body.item_key, body.completed
     )
+    # Spec 36 §2 — checklist_change is an audited event.
+    from unipaith.services.audit_service import AuditService
+
+    await AuditService(db).log(
+        institution_id=None,
+        actor_user_id=user.id,
+        actor_role="student",
+        action="checklist_completed" if body.completed else "checklist_uncompleted",
+        category="checklist_change",
+        entity_type="checklist_item",
+        entity_id=body.item_key,
+        application_id=application_id,
+        new_value={"completed": body.completed},
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+    return result
 
 
 # --- Institution-facing ---

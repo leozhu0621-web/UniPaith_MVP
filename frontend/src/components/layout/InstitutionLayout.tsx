@@ -9,7 +9,7 @@ import Wordmark from '../ui/Wordmark'
 import Dropdown from '../ui/Dropdown'
 import Sheet from '../ui/Sheet'
 import {
-  Bell, LogOut, Settings, Menu, ChevronDown,
+  Bell, LogOut, Settings, Menu, ChevronDown, ScrollText,
 } from 'lucide-react'
 
 const TOP_NAV = [
@@ -97,6 +97,7 @@ export default function InstitutionLayout() {
     ...(showSetup ? [{ to: '/i/setup', label: 'Continue setup' }] : []),
     ...TOP_NAV,
     { to: '/i/analytics', label: 'Analytics' },
+    { to: '/i/audit-log', label: 'Audit log' },
     { to: '/i/settings', label: 'Settings' },
   ]
 
@@ -153,6 +154,7 @@ export default function InstitutionLayout() {
             }
             items={[
               { label: 'Institution settings', onClick: () => navigate('/i/settings'), icon: <Settings size={14} /> },
+              { label: 'Audit log', onClick: () => navigate('/i/audit-log'), icon: <ScrollText size={14} /> },
               { label: 'Sign out', onClick: logout, icon: <LogOut size={14} />, variant: 'danger' },
             ]}
           />

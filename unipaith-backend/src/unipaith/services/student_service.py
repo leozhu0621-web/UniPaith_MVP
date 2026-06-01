@@ -1053,6 +1053,9 @@ class StudentService:
         self,
         student_id: UUID,
         data: UpsertDataConsentRequest,
+        actor_user_id: UUID | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
     ) -> StudentDataConsent:
         from datetime import datetime as dt
 
@@ -1069,6 +1072,22 @@ class StudentService:
         prior_matching = bool(record.consent_matching) if record is not None else True
         prior_peer = bool(record.consent_peer_connect) if record is not None else False
 
+        # Spec 36 §2 — snapshot consent levers before the patch so we can audit
+        # exactly which toggles flipped (consent_change / data_deletion).
+        audit_levers = (
+            "consent_matching",
+            "consent_outreach",
+            "consent_research",
+            "consent_training",
+            "consent_peer_connect",
+        )
+        _audit_priors = {
+            k: (getattr(record, k) if record is not None else None) for k in audit_levers
+        }
+        _audit_priors["deletion_requested"] = (
+            bool(record.deletion_requested) if record is not None else False
+        )
+
         if record is None:
             record = StudentDataConsent(student_id=student_id, **update_data)
             self.db.add(record)
@@ -1083,6 +1102,43 @@ class StudentService:
             record.deletion_requested_at = None
 
         await self.db.flush()
+
+        # Spec 36 §2 — audit each consent toggle that flipped + deletion
+        # request/cancel from the Data tab. Student-scoped (no institution).
+        from unipaith.services.audit_service import AuditService
+
+        _audit = AuditService(self.db)
+        for k in audit_levers:
+            if k in update_data and bool(getattr(record, k)) != bool(_audit_priors[k]):
+                await _audit.log(
+                    institution_id=None,
+                    actor_user_id=actor_user_id,
+                    actor_role="student",
+                    action="consent_change",
+                    category="consent_change",
+                    entity_type="consent",
+                    entity_id=k,
+                    old_value={k: _audit_priors[k]},
+                    new_value={k: bool(getattr(record, k))},
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                )
+        if "deletion_requested" in update_data and bool(record.deletion_requested) != bool(
+            _audit_priors["deletion_requested"]
+        ):
+            _requested = bool(record.deletion_requested)
+            await _audit.log(
+                institution_id=None,
+                actor_user_id=actor_user_id,
+                actor_role="student",
+                action="account_deletion_requested" if _requested else "account_deletion_cancelled",
+                category="data_deletion",
+                entity_type="consent",
+                entity_id="account",
+                new_value={"deletion_requested": _requested},
+                ip_address=ip_address,
+                user_agent=user_agent,
+            )
 
         # After flush, invalidate downstream caches when consent.matching
         # changed in either direction. Opt-out drops them so the student
@@ -1195,6 +1251,68 @@ class StudentService:
                             "model": None,
                         }
                     )
+
+        # Spec 36 §5 — institution-side access to your data. Surface audit
+        # events on your applications so you can see who at an institution
+        # touched your record and when ("who saw your data").
+        from unipaith.models.audit import AdmissionsAuditLog
+        from unipaith.models.institution import Institution
+
+        app_ids = (
+            (
+                await self.db.execute(
+                    select(Application.id).where(Application.student_id == student_id)
+                )
+            )
+            .scalars()
+            .all()
+        )
+        if app_ids:
+            audit_map = {
+                "decision_release": ("Released an admissions decision", "Application"),
+                "reviewer_assigned": ("Assigned a reviewer to your application", "Application"),
+                "status_change": ("Updated your application status", "Application"),
+                "document_replaced": ("Updated a document on your application", "Documents"),
+                "ai_generated": ("Reviewed an AI artifact on your application", "Application"),
+            }
+            audit_rows = (
+                (
+                    await self.db.execute(
+                        select(AdmissionsAuditLog)
+                        .where(
+                            AdmissionsAuditLog.application_id.in_(app_ids),
+                            AdmissionsAuditLog.category.in_(list(audit_map.keys())),
+                        )
+                        .order_by(AdmissionsAuditLog.created_at.desc())
+                        .limit(limit)
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            inst_ids = {r.institution_id for r in audit_rows if r.institution_id}
+            inst_names: dict = {}
+            if inst_ids:
+                name_rows = (
+                    await self.db.execute(
+                        select(Institution.id, Institution.name).where(Institution.id.in_(inst_ids))
+                    )
+                ).all()
+                inst_names = {iid: nm for iid, nm in name_rows}
+            for r in audit_rows:
+                action_label, fields = audit_map.get(
+                    r.category, ("Accessed your application", "Application")
+                )
+                entries.append(
+                    {
+                        "timestamp": r.created_at.isoformat(),
+                        "actor": inst_names.get(r.institution_id, "Admissions office"),
+                        "action": action_label,
+                        "fields": fields,
+                        "provider": None,
+                        "model": None,
+                    }
+                )
 
         entries.sort(key=lambda e: e["timestamp"], reverse=True)
         return entries[:limit]

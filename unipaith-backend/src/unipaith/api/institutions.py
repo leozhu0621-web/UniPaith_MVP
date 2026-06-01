@@ -1,7 +1,8 @@
-from datetime import date
+from datetime import date, datetime, time
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Request, status
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -2161,55 +2162,122 @@ async def generate_ai_communication_draft(
 # --- Audit Log ---
 
 
+def _audit_date_bounds(
+    date_from: date | None, date_to: date | None
+) -> tuple[datetime | None, datetime | None]:
+    """Inclusive day bounds: from start-of-day to end-of-day."""
+    df = datetime.combine(date_from, time.min) if date_from else None
+    dt = datetime.combine(date_to, time.max) if date_to else None
+    return df, dt
+
+
 @router.get("/me/audit-log")
 async def get_audit_log(
     application_id: UUID | None = Query(None),
     action: str | None = Query(None),
     entity_type: str | None = Query(None),
+    category: str | None = Query(None),
+    actor_id: UUID | None = Query(None),
+    date_from: date | None = Query(None),
+    date_to: date | None = Query(None),
+    format: str = Query("json", pattern="^(json|csv)$"),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
+    """Spec 36 §4/§5 — filterable, paginated institution audit log.
+
+    Filters: action · entity · actor · category · date range. ``format=csv``
+    streams the filtered range as a download (§13)."""
     from unipaith.schemas.audit import AuditLogListResponse, AuditLogResponse
     from unipaith.services.audit_service import AuditService
 
     svc = _svc(db)
     inst = await svc.get_institution(user.id)
     audit = AuditService(db)
-    logs = await audit.list_logs(
-        inst.id,
+    df, dt = _audit_date_bounds(date_from, date_to)
+    common = dict(
         application_id=application_id,
         action=action,
         entity_type=entity_type,
-        limit=limit,
-        offset=offset,
+        category=category,
+        actor_user_id=actor_id,
+        date_from=df,
+        date_to=dt,
     )
-    total = await audit.count_logs(inst.id, application_id)
 
-    items = []
-    for entry in logs:
-        actor_email = None
-        if entry.actor_user and hasattr(entry.actor_user, "email"):
-            actor_email = entry.actor_user.email
-        items.append(
-            AuditLogResponse(
-                id=entry.id,
-                institution_id=entry.institution_id,
-                application_id=entry.application_id,
-                actor_user_id=entry.actor_user_id,
-                action=entry.action,
-                entity_type=entry.entity_type,
-                entity_id=entry.entity_id,
-                description=entry.description,
-                old_value=entry.old_value,
-                new_value=entry.new_value,
-                metadata_json=entry.metadata_json,
-                created_at=entry.created_at,
-                actor_email=actor_email,
-            )
+    if format == "csv":
+        rows = await audit.list_logs(inst.id, **common, limit=10000, offset=0)
+        csv_str = AuditService.to_csv(rows)
+        stamp = datetime.now().strftime("%Y%m%d")  # noqa: DTZ005 — filename only
+        return Response(
+            content=csv_str,
+            media_type="text/csv",
+            headers={"Content-Disposition": f'attachment; filename="audit-log-{stamp}.csv"'},
         )
+
+    logs = await audit.list_logs(inst.id, **common, limit=limit, offset=offset)
+    total = await audit.count_logs(inst.id, **common)
+    items = [AuditLogResponse.model_validate(entry) for entry in logs]
     return AuditLogListResponse(items=items, total=total)
+
+
+@router.get("/me/audit-log/{event_id}")
+async def get_audit_event(
+    event_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 36 §5 `GET /audit-log/:id` — single event with full before/after
+    diff + reason. Scoped to the caller's institution (tenant-isolated)."""
+    from fastapi import HTTPException
+
+    from unipaith.schemas.audit import AuditEventDetailResponse
+    from unipaith.services.audit_service import AuditService
+
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    entry = await AuditService(db).get_event(inst.id, event_id)
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Audit event not found")
+    return AuditEventDetailResponse.model_validate(entry)
+
+
+class FairnessOverrideRequest(BaseModel):
+    signal_key: str = Field(..., min_length=1, max_length=128)
+    action: str = Field("override", pattern="^(acknowledge|override)$")
+    reason: str = Field(..., min_length=3, max_length=2000)
+
+
+@router.post("/me/intelligence/fairness/override")
+async def override_fairness_signal(
+    body: FairnessOverrideRequest,
+    request: Request,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 36 §2 (`fairness_signal_override`, per 46 §6) — an institution admin
+    acknowledges or overrides a flagged fairness signal. A free-text reason is
+    required; the action is audit-logged."""
+    from unipaith.schemas.audit import AuditEventDetailResponse
+    from unipaith.services.audit_service import AuditService
+
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    entry = await AuditService(db).log(
+        institution_id=inst.id,
+        actor_user_id=user.id,
+        action=f"fairness_signal_{body.action}",
+        category="fairness_signal_override",
+        entity_type="review",
+        entity_id=body.signal_key,
+        reason=body.reason,
+        new_value={"signal_key": body.signal_key, "action": body.action},
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+    return AuditEventDetailResponse.model_validate(entry)
 
 
 # --- Promotions ---
