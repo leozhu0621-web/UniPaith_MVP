@@ -20,18 +20,6 @@ import Select from '../../components/ui/Select'
 import Textarea from '../../components/ui/Textarea'
 import EmptyState from '../../components/ui/EmptyState'
 import Skeleton from '../../components/ui/Skeleton'
-import ConstraintChip from '../../components/ui/ConstraintChip'
-import SegmentRuleEditor from './segments/SegmentRuleEditor'
-import {
-  criteriaToPayload,
-  payloadToCriteria,
-  flattenRules,
-  plainLanguageRule,
-  defaultIncludeTree,
-  defaultExcludeTree,
-  type SegmentCriteriaPayload,
-  type SegmentRule,
-} from './segments/segmentRules'
 import { showToast } from '../../stores/toast-store'
 import type { NLBridgeResult, Program, Segment, SegmentPreview, SegmentRuleTree } from '../../types'
 import RuleBranch from './segments/RuleBranch'
@@ -102,7 +90,6 @@ export default function SegmentsPage() {
   }
 
   const openEdit = (seg: Segment) => {
-    const parsed = payloadToCriteria(seg.criteria ?? {})
     setEditId(seg.id)
     setName(seg.segment_name)
     setDescription(seg.description ?? '')

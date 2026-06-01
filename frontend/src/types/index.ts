@@ -909,10 +909,9 @@ export interface EventItem {
   institution_id: string
   program_id: string | null
   event_name: string
-  event_type: string
+  event_type: 'webinar' | 'campus_visit' | 'info_session' | 'workshop'
   description: string | null
   location: string | null
-  meeting_link?: string | null
   start_time: string
   end_time: string
   meeting_link?: string | null
