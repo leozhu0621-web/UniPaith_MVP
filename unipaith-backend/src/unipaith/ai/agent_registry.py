@@ -55,6 +55,9 @@ AGENT_TIERS: dict[str, str] = {
     # ── Institution messaging (spec 29 §8 / 45) — Haiku, always falls back ──
     "institution_reply_drafter": "batch",  # InstitutionReplyDrafter — per-thread reply
     "inbound_intent_classifier": "batch",  # InboundIntentClassifier — reason-code suggestion
+    # ── Interviews (spec 33 §9) — Haiku invite drafter + Sonnet score prefill ──
+    "interview_invite_drafter": "batch",  # InterviewInviteDrafter — invite message
+    "interview_score_prefill": "workhorse",  # InterviewScorePrefill — rubric prefill
 }
 
 

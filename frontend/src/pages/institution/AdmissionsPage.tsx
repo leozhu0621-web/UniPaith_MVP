@@ -29,7 +29,7 @@ export default function AdmissionsPage() {
     <div className="p-6 space-y-4">
       <Tabs tabs={tabs} activeTab={activeTab} onChange={handleTabChange} />
       {activeTab === 'pipeline' && <PipelinePage />}
-      {activeTab === 'interviews' && <InterviewsPage />}
+      {activeTab === 'interviews' && <InterviewsPage embedded />}
       {activeTab === 'inquiries' && <InquiriesPage />}
       {activeTab === 'cohort' && <CohortComparisonPage />}
     </div>

@@ -305,6 +305,14 @@ class Settings(BaseSettings):
     # back to no suggestion on failure.
     ai_inbound_intent_v2_enabled: bool = False
 
+    # Spec 33 §9 — interview AI helpers. When True the Propose modal's "AI draft"
+    # button routes interview context through the Haiku InterviewInviteDrafter,
+    # and the Score modal's "AI prefill" button routes the rubric + transcript
+    # through the Sonnet InterviewScorePrefill. Both are institution-initiated,
+    # role-gated, and return null on any failure (parse / provider / mock) — the
+    # UI simply omits the AI affordance and staff fill in manually.
+    ai_interview_v2_enabled: bool = False
+
     # Spec 09 §4A — probability bands (admit / scholarship / waitlist) on the
     # Match surface + program detail. Rule-based + calibrated heuristic
     # (unipaith.ai.probability); honest ranges, "not enough data yet" when a
