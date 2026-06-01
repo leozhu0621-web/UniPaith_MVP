@@ -57,19 +57,23 @@ export default function ApplicantContextPanel({
       )}
 
       <div className="mt-3 flex flex-col gap-1.5 border-t border-border pt-3">
-        <button
-          onClick={() => onNavigate(`/i/pipeline/${thread.student.id}`)}
-          className="inline-flex items-center gap-1 text-xs font-medium text-cobalt hover:underline"
-        >
-          Open applicant <ExternalLink size={11} />
-        </button>
-        {thread.application_id && (
-          <button
-            onClick={() => onNavigate(`/i/pipeline/${thread.student.id}`)}
-            className="inline-flex items-center gap-1 text-xs font-medium text-cobalt hover:underline"
-          >
-            Open checklist <ExternalLink size={11} />
-          </button>
+        {thread.application_id ? (
+          <>
+            <button
+              onClick={() => onNavigate(`/i/pipeline/${thread.application_id}`)}
+              className="inline-flex items-center gap-1 text-xs font-medium text-cobalt hover:underline"
+            >
+              Open review workspace <ExternalLink size={11} />
+            </button>
+            <button
+              onClick={() => onNavigate(`/i/pipeline/${thread.application_id}?tab=documents`)}
+              className="inline-flex items-center gap-1 text-xs font-medium text-cobalt hover:underline"
+            >
+              View documents <ExternalLink size={11} />
+            </button>
+          </>
+        ) : (
+          <p className="text-xs text-muted-foreground">No linked application for this thread.</p>
         )}
       </div>
     </aside>
