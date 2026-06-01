@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 
 const TOP_NAV = [
+  { to: '/i/recruitment', label: 'Recruitment' },
   { to: '/i/admissions', label: 'Admissions' },
   { to: '/i/outreach', label: 'Outreach' },
   { to: '/i/communications', label: 'Communications' },
