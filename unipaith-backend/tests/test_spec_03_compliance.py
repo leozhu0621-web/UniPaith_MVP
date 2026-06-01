@@ -131,6 +131,9 @@ def test_each_agent_declares_consent_requirement():
         # Spec 33 §9 — interview invite drafter (Haiku) + score prefill (Sonnet).
         "interview_invite_drafter",
         "interview_score_prefill",
+        # Spec 35 §6 — enrollment/yield intelligence agents.
+        "yield_risk_scorer",
+        "next_best_action_yield",
     }
     assert set(AGENT_REQUIRES.keys()) == expected_agents
 

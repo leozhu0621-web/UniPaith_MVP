@@ -129,6 +129,13 @@ AGENT_REQUIRES: dict[str, str | None] = {
     # carry no student-consent lever here. Both degrade to no-AI on any failure.
     "interview_invite_drafter": None,
     "interview_score_prefill": None,
+    # Spec 35 §6 — enrollment/yield intelligence agents are institution-initiated
+    # and role-gated at the API layer (like review_summarizer / campaign_copy).
+    # They operate on the institution's own admit pool aggregate, so no
+    # student-consent lever here. Fairness disparities surface but never drive
+    # selection (§4 / 46 §6); on any failure the services fall back to counts.
+    "yield_risk_scorer": None,
+    "next_best_action_yield": None,
 }
 
 

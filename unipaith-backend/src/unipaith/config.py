@@ -313,6 +313,14 @@ class Settings(BaseSettings):
     # UI simply omits the AI affordance and staff fill in manually.
     ai_interview_v2_enabled: bool = False
 
+    # Spec 35 §6 / 45 — enrollment-yield intelligence (YieldRiskScorer +
+    # NextBestActionForYield). When True, NextBestActionForYield (Sonnet) refines
+    # the dashboard's ranked actions; YieldRiskScorer stays a deterministic
+    # calibrated heuristic either way. Always falls back to deterministic counts
+    # on any failure (§6 fairness gate: surfaces disparities, never drives
+    # selection). Off in code, enabled per-env via ECS.
+    ai_yield_intelligence_v2_enabled: bool = False
+
     # Spec 09 §4A — probability bands (admit / scholarship / waitlist) on the
     # Match surface + program detail. Rule-based + calibrated heuristic
     # (unipaith.ai.probability); honest ranges, "not enough data yet" when a

@@ -8,6 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from unipaith.database import get_db
 from unipaith.dependencies import require_institution_admin, require_student
 from unipaith.models.user import User
+from unipaith.schemas.application import (
+    WaitlistBulkOfferRequest,
+    WaitlistOfferNextRequest,
+)
 from unipaith.schemas.checklist import (
     BulkChecklistRequest,
     CreateProgramChecklistItemRequest,
@@ -2320,3 +2324,66 @@ async def institution_yield_risks(
 
     inst = await InstitutionService(db).get_institution(user.id)
     return await ApplicationService(db).get_yield_risk_alerts(inst.id)
+
+
+# --- Spec 35 · Yield analytics + waitlist movement (institution) ---
+
+
+@router.get("/me/yield")
+async def institution_yield(
+    program_id: UUID | None = Query(None),
+    intake_id: UUID | None = Query(None),
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Yield analytics — rate, funnel tail, melt, time-to-confirm, waitlist
+    conversion, predicted-vs-target, cohort fairness lens, next-best-action
+    (spec 35 §4). Falls back to deterministic counts when AI is off/fails."""
+    from unipaith.services.yield_service import YieldService
+
+    inst = await InstitutionService(db).get_institution(user.id)
+    return await YieldService(db).get_yield(inst.id, program_id=program_id, intake_id=intake_id)
+
+
+@router.get("/me/waitlist")
+async def institution_waitlist(
+    program_id: UUID | None = Query(None),
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Ranked waitlist + "N seats open, M on waitlist" headline (spec 35 §3.3)."""
+    from unipaith.services.enrollment_service import EnrollmentService
+
+    inst = await InstitutionService(db).get_institution(user.id)
+    return await EnrollmentService(db).get_waitlist(inst.id, program_id)
+
+
+@router.post("/me/waitlist/offer-next")
+async def institution_waitlist_offer_next(
+    body: WaitlistOfferNextRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Promote the top-ranked waitlisted applicant → admit + offer, notified +
+    audited (spec 35 §3.3)."""
+    from unipaith.services.enrollment_service import EnrollmentService
+
+    inst = await InstitutionService(db).get_institution(user.id)
+    return await EnrollmentService(db).offer_to_next(
+        inst.id, body.program_id, offer_terms=body.offer, actor_user_id=user.id
+    )
+
+
+@router.post("/me/waitlist/bulk-offer")
+async def institution_waitlist_bulk_offer(
+    body: WaitlistBulkOfferRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Release places to the next N waitlisted applicants, each audited (§3.3)."""
+    from unipaith.services.enrollment_service import EnrollmentService
+
+    inst = await InstitutionService(db).get_institution(user.id)
+    return await EnrollmentService(db).bulk_offer(
+        inst.id, body.program_id, body.count, actor_user_id=user.id
+    )
