@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Megaphone, Plus, Send, Edit2, Trash2, BarChart3, Clock, Users, Link2, Copy, ExternalLink } from 'lucide-react'
 import {
@@ -81,6 +82,19 @@ export default function CampaignsPage() {
 
   const segmentsQ = useQuery({ queryKey: ['segments'], queryFn: getSegments })
   const segments: Segment[] = Array.isArray(segmentsQ.data) ? segmentsQ.data : []
+
+  // Spec 26 "Use in campaign →": preselect a segment passed via ?segment=<id>.
+  const [searchParams, setSearchParams] = useSearchParams()
+  useEffect(() => {
+    const segParam = searchParams.get('segment')
+    if (segParam && segments.some((s) => s.id === segParam)) {
+      setSegmentId(segParam)
+      setShowCreateModal(true)
+      const next = new URLSearchParams(searchParams)
+      next.delete('segment')
+      setSearchParams(next, { replace: true })
+    }
+  }, [searchParams, segments, setSearchParams])
 
   const metricsQ = useQuery({
     queryKey: ['campaign-metrics', metricsTarget],

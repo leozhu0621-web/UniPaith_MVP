@@ -344,13 +344,36 @@ class InstitutionService:
         return list(result.scalars().all())
 
     async def create_segment(
-        self, institution_id: UUID, data: CreateSegmentRequest
+        self, institution_id: UUID, data: CreateSegmentRequest, created_by: UUID | None = None
     ) -> TargetSegment:
-        segment = TargetSegment(institution_id=institution_id, **data.model_dump())
+        segment = TargetSegment(
+            institution_id=institution_id, created_by_user_id=created_by, **data.model_dump()
+        )
         self.db.add(segment)
         await self.db.flush()
         await self.db.refresh(segment)
         return segment
+
+    async def get_segment(self, institution_id: UUID, segment_id: UUID) -> TargetSegment:
+        result = await self.db.execute(
+            select(TargetSegment).where(
+                TargetSegment.id == segment_id,
+                TargetSegment.institution_id == institution_id,
+            )
+        )
+        segment = result.scalar_one_or_none()
+        if not segment:
+            raise NotFoundException("Segment not found")
+        return segment
+
+    async def cache_segment_preview(
+        self, institution_id: UUID, segment_id: UUID, count: int
+    ) -> None:
+        """Spec 26 §7 — persist the last preview audience size on the segment."""
+        segment = await self.get_segment(institution_id, segment_id)
+        segment.preview_audience_count = count
+        segment.preview_generated_at = datetime.now(UTC)
+        await self.db.flush()
 
     async def update_segment(
         self, institution_id: UUID, segment_id: UUID, data: UpdateSegmentRequest
@@ -412,6 +435,20 @@ class InstitutionService:
         segment = result.scalar_one_or_none()
         if not segment:
             raise NotFoundException("Segment not found")
+
+        # Spec 26 — when the segment carries a nested rule tree, evaluate it via
+        # the SegmentService engine (with outreach suppression) and return that.
+        # Older segments with only flat `criteria` fall through to the legacy
+        # AND-combined path below, keeping existing campaign wiring intact.
+        if segment.rules:
+            from unipaith.services.segment_service import SegmentService
+
+            seg_svc = SegmentService(self.db)
+            members = await seg_svc.evaluate_rules(
+                institution_id, segment.rules, segment.program_id
+            )
+            members = await seg_svc.apply_suppression(members)
+            return list(members)
 
         criteria = segment.criteria or {}
         programs = await self.list_programs(institution_id)

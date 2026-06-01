@@ -46,6 +46,8 @@ AGENT_TIERS: dict[str, str] = {
     "event_recommender": "batch",
     # ── Data upload parse triage (spec 24 §9 / 45 §19) — Haiku, always falls back ──
     "document_parse_triage": "batch",
+    # ── Audience segmentation NL bridge (spec 26 §6 / 45 §17) — Sonnet, keyword fallback ──
+    "segment_builder_nl": "workhorse",
 }
 
 

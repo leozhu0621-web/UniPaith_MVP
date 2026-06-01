@@ -93,6 +93,12 @@ AGENT_REQUIRES: dict[str, str | None] = {
     # like review_summarizer / authenticity_risk. Access is gated by the
     # institution_admin role at the API layer.
     "document_parse_triage": None,
+    # Spec 26 §6 / 45 §17 — SegmentBuilderNLBridge converts the institution's own
+    # natural-language description into rules; no individual student is in scope,
+    # so no student-consent gate (institution_admin role-gated at the API layer).
+    # The resulting audience preview still honors each student's outreach
+    # suppression in SegmentService.
+    "segment_builder_nl": None,
 }
 
 

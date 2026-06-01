@@ -16,6 +16,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -263,7 +264,23 @@ class TargetSegment(Base):
         UUID(as_uuid=True), ForeignKey("programs.id", ondelete="SET NULL")
     )
     segment_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    # Spec 26 §7 — legacy flat AND criteria kept for campaign back-compat; the
+    # nested include/exclude rule tree supersedes it when `rules` is set.
     criteria: Mapped[dict | None] = mapped_column(JSONB)
+    rules: Mapped[dict | None] = mapped_column(JSONB)
+    # Spec 26 §2.5 — uploaded prospect-list dataset ids merged into the audience.
+    uploaded_list_ids: Mapped[list] = mapped_column(
+        JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb")
+    )
+    # Spec 26 §5 — optional per-segment send cap.
+    frequency_cap_per_week: Mapped[int | None] = mapped_column(Integer)
+    created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    # Spec 26 §7 — cached audience size from the last preview.
+    preview_audience_count: Mapped[int | None] = mapped_column(Integer)
+    preview_generated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
