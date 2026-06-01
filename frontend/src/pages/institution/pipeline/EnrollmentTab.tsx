@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   CheckCircle2,
@@ -8,6 +9,7 @@ import {
   GraduationCap,
   CalendarClock,
   Clock,
+  Send,
 } from 'lucide-react'
 import {
   getApplicantEnrollment,
@@ -44,6 +46,7 @@ const DEPOSIT_OPTIONS: { value: DepositStatus; label: string }[] = [
 
 export default function EnrollmentTab({ applicationId }: { applicationId: string }) {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const { data: enr, isLoading } = useQuery({
     queryKey: ['applicant-enrollment', applicationId],
     queryFn: () => getApplicantEnrollment(applicationId),
@@ -222,7 +225,19 @@ export default function EnrollmentTab({ applicationId }: { applicationId: string
                 </Button>
               </>
             )}
+            {/* Reason-coded nudge (§3.1) — routes to the Spec 29 inbox where the
+                InstitutionReplyDrafter composes the reminder. */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/i/communications?tab=inbox')}
+            >
+              <Send size={14} className="mr-1" /> Send nudge
+            </Button>
           </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            Send a confirmation reminder from the inbox (reason-coded, AI-draftable).
+          </p>
           {deferralPending && e.deferral?.to_term && (
             <p className="text-xs text-muted-foreground mt-2">
               Requested term: {e.deferral.to_term.season} {e.deferral.to_term.year}
