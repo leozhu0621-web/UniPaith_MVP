@@ -17,8 +17,9 @@ from unipaith.core.exceptions import (
     NotFoundException,
     UnprocessableEntityException,
 )
+from unipaith.core.media_urls import resolve_media_urls
 from unipaith.models.application import Application, OfferLetter
-from unipaith.models.engagement import Conversation, Message, StudentEngagementSignal
+from unipaith.models.engagement import Conversation, Message
 from unipaith.models.institution import (
     Campaign,
     CampaignAction,
@@ -35,13 +36,17 @@ from unipaith.models.institution import (
     School,
     TargetSegment,
 )
-from unipaith.models.matching import MatchResult
 from unipaith.models.student import StudentProfile
+from unipaith.models.user import User
 from unipaith.models.workflow import Notification
 from unipaith.schemas.institution import (
     AnalyticsResponse,
     CampaignAttribution,
     CampaignAttributionDetail,
+    CampaignAudiencePreviewResponse,
+    CampaignAudienceSampleRow,
+    CampaignDraftCopyRequest,
+    CampaignDraftCopyResponse,
     CampaignLinkResponse,
     CampaignMetricsResponse,
     CreateCampaignLinkRequest,
@@ -389,20 +394,9 @@ class InstitutionService:
         institution_id: UUID,
         segment_id: UUID,
     ) -> list[UUID]:
-        """Execute segment criteria and return matching student IDs.
+        """Execute segment criteria and return matching student IDs."""
+        from unipaith.services.segment_resolver import resolve_criteria_members
 
-        Supported criteria keys (all AND-combined):
-            statuses        - string[]  : Application.status IN values
-            decisions       - string[]  : Application.decision IN values
-            min_match_score - number    : MatchResult.match_score >= value/100
-            max_match_score - number    : MatchResult.match_score <= value/100
-            match_tiers     - number[]  : MatchResult.match_tier IN values
-            min_engagement_signals - number : COUNT(StudentEngagementSignal) >= value
-            engagement_types - string[] : StudentEngagementSignal.signal_type IN values
-            nationalities   - string[]  : StudentProfile.nationality IN values
-            has_applied     - boolean   : EXISTS / NOT EXISTS Application
-            applied_after   - string    : Application.submitted_at >= ISO date
-        """
         result = await self.db.execute(
             select(TargetSegment).where(
                 TargetSegment.id == segment_id,
@@ -413,7 +407,6 @@ class InstitutionService:
         if not segment:
             raise NotFoundException("Segment not found")
 
-        criteria = segment.criteria or {}
         programs = await self.list_programs(institution_id)
         program_ids = [p.id for p in programs]
         if segment.program_id:
@@ -421,108 +414,62 @@ class InstitutionService:
         if not program_ids:
             return []
 
-        # Track whether any criteria key was actually specified
-        has_criteria = False
+        return await resolve_criteria_members(
+            self.db,
+            institution_id=institution_id,
+            program_ids=program_ids,
+            criteria=segment.criteria or {},
+        )
 
-        stmt = select(StudentProfile.id).distinct()
+    async def preview_segment_audience(
+        self,
+        institution_id: UUID,
+        *,
+        segment_id: UUID | None = None,
+        program_id: UUID | None = None,
+        criteria: dict | None = None,
+    ) -> dict:
+        from unipaith.services.segment_resolver import preview_sample_rows, resolve_criteria_members
 
-        # --- Application-based criteria (statuses, decisions, applied_after) ---
-        statuses = criteria.get("statuses")
-        decisions = criteria.get("decisions")
-        applied_after = criteria.get("applied_after")
-        has_applied = criteria.get("has_applied")
+        programs = await self.list_programs(institution_id)
+        program_ids = [p.id for p in programs]
+        crit: dict = {}
 
-        need_app_join = bool(statuses or decisions or applied_after or (has_applied is True))
-
-        if need_app_join:
-            has_criteria = True
-            app_conditions = [
-                Application.program_id.in_(program_ids),
-            ]
-            if statuses:
-                app_conditions.append(Application.status.in_(statuses))
-            if decisions:
-                app_conditions.append(Application.decision.in_(decisions))
-            if applied_after:
-                app_conditions.append(
-                    Application.submitted_at >= datetime.fromisoformat(applied_after)
+        if segment_id:
+            result = await self.db.execute(
+                select(TargetSegment).where(
+                    TargetSegment.id == segment_id,
+                    TargetSegment.institution_id == institution_id,
                 )
-            stmt = stmt.join(Application, Application.student_id == StudentProfile.id).where(
-                *app_conditions
             )
-        elif has_applied is False:
-            # Exclude students who have any application for these programs
-            has_criteria = True
-            app_exists = (
-                select(Application.id)
-                .where(
-                    Application.student_id == StudentProfile.id,
-                    Application.program_id.in_(program_ids),
-                )
-                .correlate(StudentProfile)
-                .exists()
-            )
-            stmt = stmt.where(~app_exists)
+            segment = result.scalar_one_or_none()
+            if not segment:
+                raise NotFoundException("Segment not found")
+            crit = segment.criteria or {}
+            if segment.program_id:
+                program_ids = [segment.program_id]
+        else:
+            crit = criteria or {}
+            if program_id:
+                program_ids = [program_id]
 
-        # --- Match-based criteria (min/max score, tiers) ---
-        min_match_score = criteria.get("min_match_score")
-        max_match_score = criteria.get("max_match_score")
-        match_tiers = criteria.get("match_tiers")
+        if not program_ids:
+            return {"audience_count": 0, "preview_audience_sample": []}
 
-        if min_match_score is not None or max_match_score is not None or match_tiers:
-            has_criteria = True
-            match_conditions = [
-                MatchResult.program_id.in_(program_ids),
-                MatchResult.is_stale.is_(False),
-            ]
-            if min_match_score is not None:
-                match_conditions.append(MatchResult.match_score >= min_match_score / 100)
-            if max_match_score is not None:
-                match_conditions.append(MatchResult.match_score <= max_match_score / 100)
-            if match_tiers:
-                match_conditions.append(MatchResult.match_tier.in_(match_tiers))
-
-            stmt = stmt.outerjoin(MatchResult, MatchResult.student_id == StudentProfile.id).where(
-                *match_conditions
-            )
-
-        # --- Engagement criteria (min count, signal types) ---
-        min_engagement = criteria.get("min_engagement_signals")
-        engagement_types = criteria.get("engagement_types")
-
-        if min_engagement is not None or engagement_types:
-            has_criteria = True
-            eng_conditions = [
-                StudentEngagementSignal.student_id == StudentProfile.id,
-                StudentEngagementSignal.program_id.in_(program_ids),
-            ]
-            if engagement_types:
-                eng_conditions.append(StudentEngagementSignal.signal_type.in_(engagement_types))
-            eng_subq = (
-                select(StudentEngagementSignal.student_id)
-                .where(*eng_conditions)
-                .correlate(StudentProfile)
-                .group_by(StudentEngagementSignal.student_id)
-            )
-            if min_engagement is not None:
-                eng_subq = eng_subq.having(func.count() >= min_engagement)
-            stmt = stmt.where(StudentProfile.id.in_(eng_subq))
-
-        # --- Nationality filter ---
-        nationalities = criteria.get("nationalities")
-        if nationalities:
-            has_criteria = True
-            stmt = stmt.where(StudentProfile.nationality.in_(nationalities))
-
-        # --- Fallback: if NO criteria at all, return all non-draft applicants ---
-        if not has_criteria:
-            stmt = stmt.join(Application, Application.student_id == StudentProfile.id).where(
-                Application.program_id.in_(program_ids),
-                Application.status != "draft",
-            )
-
-        result = await self.db.execute(stmt)
-        return [row[0] for row in result.all()]
+        student_ids = await resolve_criteria_members(
+            self.db,
+            institution_id=institution_id,
+            program_ids=program_ids,
+            criteria=crit,
+        )
+        sample = await preview_sample_rows(self.db, student_ids, limit=10)
+        out = {
+            "audience_count": len(student_ids),
+            "preview_audience_sample": sample,
+        }
+        if segment_id:
+            out["segment_id"] = str(segment_id)
+        return out
 
     # --- Dashboard Summary ---
 
@@ -885,11 +832,22 @@ class InstitutionService:
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
 
+    @staticmethod
+    def _campaign_status_for_schedule(scheduled_at: datetime | None) -> str | None:
+        if scheduled_at and scheduled_at > datetime.now(UTC):
+            return "scheduled"
+        return None
+
     async def create_campaign(self, institution_id: UUID, data: CreateCampaignRequest) -> Campaign:
+        payload = data.model_dump()
+        status = "draft"
+        scheduled_status = self._campaign_status_for_schedule(payload.get("scheduled_send_at"))
+        if scheduled_status:
+            status = scheduled_status
         campaign = Campaign(
             institution_id=institution_id,
-            status="draft",
-            **data.model_dump(),
+            status=status,
+            **payload,
         )
         self.db.add(campaign)
         await self.db.flush()
@@ -901,6 +859,18 @@ class InstitutionService:
     ) -> Campaign:
         campaign = await self._verify_campaign_ownership(institution_id, campaign_id)
         update_data = data.model_dump(exclude_unset=True)
+        if campaign.status not in ("sent",):
+            scheduled_status = self._campaign_status_for_schedule(
+                update_data.get("scheduled_send_at", campaign.scheduled_send_at)
+            )
+            if scheduled_status and update_data.get("status") is None:
+                update_data["status"] = scheduled_status
+            elif (
+                "scheduled_send_at" in update_data
+                and update_data["scheduled_send_at"] is None
+                and campaign.status == "scheduled"
+            ):
+                update_data.setdefault("status", "draft")
         for key, value in update_data.items():
             setattr(campaign, key, value)
         await self.db.flush()
@@ -914,31 +884,118 @@ class InstitutionService:
         await self.db.delete(campaign)
         await self.db.flush()
 
-    async def preview_campaign_audience(
+    async def _resolve_campaign_student_ids(
         self,
         institution_id: UUID,
-        campaign_id: UUID,
-    ) -> int:
-        """Return the number of students that would receive this campaign."""
-        campaign = await self._verify_campaign_ownership(institution_id, campaign_id)
+        campaign: Campaign,
+    ) -> list[UUID]:
         if campaign.segment_id:
-            student_ids = await self.resolve_segment_members(
+            return await self.resolve_segment_members(
                 institution_id,
                 campaign.segment_id,
             )
-            return len(student_ids)
-        # No segment — count all non-draft applicants for the campaign's program(s)
         programs = await self.list_programs(institution_id)
         program_ids = [campaign.program_id] if campaign.program_id else [p.id for p in programs]
         if not program_ids:
-            return 0
+            return []
         result = await self.db.execute(
-            select(func.count(Application.student_id.distinct())).where(
+            select(Application.student_id)
+            .distinct()
+            .where(
                 Application.program_id.in_(program_ids),
                 Application.status != "draft",
             )
         )
-        return result.scalar_one() or 0
+        return [row[0] for row in result.all()]
+
+    async def preview_campaign_audience(
+        self,
+        institution_id: UUID,
+        campaign_id: UUID,
+    ) -> CampaignAudiencePreviewResponse:
+        campaign = await self._verify_campaign_ownership(institution_id, campaign_id)
+        student_ids = await self._resolve_campaign_student_ids(institution_id, campaign)
+        seen: set[UUID] = set()
+        unique_ids: list[UUID] = []
+        for sid in student_ids:
+            if sid not in seen:
+                seen.add(sid)
+                unique_ids.append(sid)
+
+        sample: list[CampaignAudienceSampleRow] = []
+        if unique_ids:
+            rows = await self.db.execute(
+                select(StudentProfile.id, StudentProfile.first_name, User.email)
+                .join(User, User.id == StudentProfile.user_id)
+                .where(StudentProfile.id.in_(unique_ids[:10]))
+            )
+            for sid, first_name, email in rows.all():
+                sample.append(
+                    CampaignAudienceSampleRow(
+                        student_id=sid,
+                        first_name=first_name,
+                        email=email,
+                    )
+                )
+
+        return CampaignAudiencePreviewResponse(
+            campaign_id=campaign_id,
+            audience_count=len(unique_ids),
+            sample=sample,
+        )
+
+    async def draft_campaign_copy(
+        self,
+        institution_name: str,
+        data: CampaignDraftCopyRequest,
+    ) -> CampaignDraftCopyResponse:
+        objective = data.objective or "general"
+        templates: dict[str, tuple[str, str, list[str]]] = {
+            "application_open": (
+                f"Applications are open at {institution_name}",
+                (
+                    f"Hi {{{{first_name}}}},\n\n{institution_name} has opened applications"
+                    f" for {{{{program_name}}}}."
+                ),
+                ["Ready to apply to {{program_name}}?"],
+            ),
+            "event_promotion": (
+                f"You are invited — {institution_name}",
+                (
+                    "Hi {{first_name}},\n\nJoin us for a session about {{program_name}}."
+                    " Reserve your spot: {{event_link}}."
+                ),
+                [],
+            ),
+            "deadline_reminder": (
+                "Deadline reminder — {{program_name}}",
+                (
+                    f"Hi {{{{first_name}}}},\n\nA key deadline for {{{{program_name}}}} at"
+                    f" {institution_name} is approaching."
+                ),
+                [],
+            ),
+        }
+        subject, body, alternates = templates.get(
+            objective,
+            (
+                f"{data.campaign_name or 'Outreach'} — {institution_name}",
+                (
+                    f"Hi {{{{first_name}}}},\n\n"
+                    f"{institution_name} has an update about {{{{program_name}}}}."
+                ),
+                [],
+            ),
+        )
+        if data.program_name:
+            subject = subject.replace("{{program_name}}", data.program_name)
+            body = body.replace("{{program_name}}", data.program_name)
+        return CampaignDraftCopyResponse(
+            subject=subject,
+            body=body,
+            alternate_subjects=alternates[:3],
+            preview_text=body.split("\n")[0][:120],
+        )
 
     async def send_campaign(self, institution_id: UUID, campaign_id: UUID) -> Campaign:
         campaign = await self._verify_campaign_ownership(institution_id, campaign_id)
@@ -947,29 +1004,14 @@ class InstitutionService:
         if not campaign.message_subject and not campaign.message_body:
             raise BadRequestException("Campaign must have subject or body")
 
-        # Resolve recipients from segment
-        student_ids: list[UUID] = []
-        if campaign.segment_id:
-            student_ids = await self.resolve_segment_members(
-                institution_id,
-                campaign.segment_id,
-            )
-        else:
-            # No segment — target all non-draft applicants for the campaign's program(s)
-            programs = await self.list_programs(institution_id)
-            program_ids = [campaign.program_id] if campaign.program_id else [p.id for p in programs]
-            if program_ids:
-                result = await self.db.execute(
-                    select(Application.student_id)
-                    .distinct()
-                    .where(
-                        Application.program_id.in_(program_ids),
-                        Application.status != "draft",
-                    )
-                )
-                student_ids = [row[0] for row in result.all()]
+        student_ids = await self._resolve_campaign_student_ids(institution_id, campaign)
+        if not student_ids:
+            raise BadRequestException("0 recipients after filtering. Adjust your audience.")
 
-        # Create CampaignRecipient rows and in-app notifications
+        channel = campaign.campaign_type or "both"
+        send_in_app = channel in ("in_app", "both", None)
+        send_email = channel in ("email", "both", None)
+
         now = datetime.now(UTC)
         for sid in student_ids:
             # Deduplicate
@@ -988,27 +1030,26 @@ class InstitutionService:
             )
             self.db.add(recipient)
 
-            # Create in-app notification (map student_profile.id → user_id)
-            profile_result = await self.db.execute(
-                select(StudentProfile.user_id).where(StudentProfile.id == sid)
-            )
-            user_id = profile_result.scalar_one_or_none()
-            if user_id:
-                notification = Notification(
-                    user_id=user_id,
-                    title=campaign.message_subject or campaign.campaign_name,
-                    body=campaign.message_body or "",
-                    notification_type="campaign",
-                    action_url="/s/messages",
+            if send_in_app:
+                profile_result = await self.db.execute(
+                    select(StudentProfile.user_id).where(StudentProfile.id == sid)
                 )
-                self.db.add(notification)
+                user_id = profile_result.scalar_one_or_none()
+                if user_id:
+                    notification = Notification(
+                        user_id=user_id,
+                        title=campaign.message_subject or campaign.campaign_name,
+                        body=campaign.message_body or "",
+                        notification_type="campaign",
+                        action_url="/s/messages",
+                    )
+                    self.db.add(notification)
 
         campaign.status = "sent"
         campaign.sent_at = now
         await self.db.flush()
 
-        # Send emails for email-type campaigns
-        if campaign.campaign_type in ("email", None):
+        if send_email:
             from unipaith.services.campaign_email_service import CampaignEmailService
 
             inst_result = await self.db.execute(
@@ -1485,7 +1526,38 @@ class InstitutionService:
             .where(Promotion.institution_id == institution_id)
             .order_by(Promotion.created_at.desc())
         )
-        return [await self._enrich_promotion(p) for p in result.scalars().all()]
+        promos = list(result.scalars().all())
+        await self._sync_promotion_statuses(promos)
+        return [await self._enrich_promotion(p) for p in promos]
+
+    async def _sync_promotion_statuses(self, promos: list[Promotion]) -> None:
+        """Advance scheduled/active promotions based on their date window."""
+        now = datetime.now(UTC)
+        changed = False
+        for promo in promos:
+            if promo.ends_at and promo.ends_at < now and promo.status in ("active", "scheduled"):
+                promo.status = "expired"
+                changed = True
+            elif promo.starts_at and promo.starts_at > now and promo.status == "active":
+                promo.status = "scheduled"
+                changed = True
+            elif (
+                promo.starts_at
+                and promo.starts_at <= now
+                and promo.status == "scheduled"
+                and (promo.ends_at is None or promo.ends_at >= now)
+            ):
+                promo.status = "active"
+                changed = True
+        if changed:
+            await self.db.flush()
+
+    async def record_promotion_click(self, promotion_id: UUID) -> None:
+        promo = await self.db.get(Promotion, promotion_id)
+        if promo is None:
+            raise NotFoundException("Promotion not found")
+        promo.click_count = (promo.click_count or 0) + 1
+        await self.db.flush()
 
     async def create_promotion(
         self,
@@ -1493,6 +1565,10 @@ class InstitutionService:
         data: CreatePromotionRequest,
     ) -> PromotionResponse:
         targeting_dict = data.targeting.model_dump() if data.targeting else None
+        now = datetime.now(UTC)
+        status = "draft"
+        if data.starts_at:
+            status = "scheduled" if data.starts_at > now else "active"
         promo = Promotion(
             institution_id=institution_id,
             program_id=data.program_id,
@@ -1502,6 +1578,7 @@ class InstitutionService:
             targeting=targeting_dict,
             starts_at=data.starts_at,
             ends_at=data.ends_at,
+            status=status,
         )
         self.db.add(promo)
         await self.db.flush()
@@ -2104,6 +2181,7 @@ class InstitutionService:
         institution_id: UUID,
         include_drafts: bool = True,
     ) -> list[PostResponse]:
+        await self._publish_due_scheduled_posts(institution_id)
         q = select(InstitutionPost).where(InstitutionPost.institution_id == institution_id)
         if not include_drafts:
             q = q.where(InstitutionPost.status == "published")
@@ -2115,6 +2193,25 @@ class InstitutionService:
         result = await self.db.execute(q)
         posts = list(result.scalars().all())
         return [await self._enrich_post(p) for p in posts]
+
+    async def _publish_due_scheduled_posts(self, institution_id: UUID | None = None) -> None:
+        """Promote scheduled posts whose send time has passed (Spec 27 §2.2)."""
+        now = datetime.now(UTC)
+        q = select(InstitutionPost).where(
+            InstitutionPost.status == "scheduled",
+            InstitutionPost.scheduled_for.isnot(None),
+            InstitutionPost.scheduled_for <= now,
+        )
+        if institution_id is not None:
+            q = q.where(InstitutionPost.institution_id == institution_id)
+        result = await self.db.execute(q)
+        changed = False
+        for post in result.scalars().all():
+            post.status = "published"
+            post.published_at = now
+            changed = True
+        if changed:
+            await self.db.flush()
 
     async def create_post(
         self,
@@ -2140,6 +2237,7 @@ class InstitutionService:
             scheduled_for=data.scheduled_for,
             is_template=data.is_template,
             template_name=data.template_name,
+            ctas=data.ctas,
         )
         if data.status == "published":
             post.published_at = datetime.now(UTC)
@@ -2160,6 +2258,8 @@ class InstitutionService:
             update_data["tagged_program_ids"] = [
                 str(pid) for pid in update_data["tagged_program_ids"]
             ]
+        if "ctas" in update_data and update_data["ctas"] is not None:
+            update_data["ctas"] = list(update_data["ctas"])
         was_published = post.status == "published"
         for key, value in update_data.items():
             setattr(post, key, value)
@@ -2232,6 +2332,7 @@ class InstitutionService:
         self,
         institution_id: UUID,
     ) -> list[PostResponse]:
+        await self._publish_due_scheduled_posts(institution_id)
         result = await self.db.execute(
             select(InstitutionPost)
             .where(
@@ -2284,7 +2385,7 @@ class InstitutionService:
             author_id=post.author_id,
             title=post.title,
             body=post.body,
-            media_urls=post.media_urls,
+            media_urls=resolve_media_urls(post.media_urls),
             pinned=post.pinned,
             tagged_program_ids=post.tagged_program_ids,
             tagged_intake=post.tagged_intake,
@@ -2294,6 +2395,7 @@ class InstitutionService:
             is_template=post.is_template,
             template_name=post.template_name,
             view_count=post.view_count,
+            ctas=post.ctas if isinstance(post.ctas, list) else None,
             created_at=post.created_at,
             updated_at=post.updated_at,
             author_email=author_email,

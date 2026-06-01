@@ -25,6 +25,9 @@ from unipaith.schemas.communication import (
 from unipaith.schemas.institution import (
     AnalyticsResponse,
     CampaignAttributionDetail,
+    CampaignAudiencePreviewResponse,
+    CampaignDraftCopyRequest,
+    CampaignDraftCopyResponse,
     CampaignLinkResponse,
     CampaignMetricsResponse,
     CampaignResponse,
@@ -53,6 +56,9 @@ from unipaith.schemas.institution import (
     PromotionResponse,
     RecordActionRequest,
     SaveMappingTemplateRequest,
+    SegmentNlBridgeRequest,
+    SegmentNlBridgeResponse,
+    SegmentPreviewRequest,
     SegmentResponse,
     SubmitInquiryRequest,
     UpdateCampaignRequest,
@@ -344,29 +350,78 @@ async def delete_campaign(
 
 
 @router.get("/me/segments/{segment_id}/preview")
+async def preview_segment_audience_get(
+    segment_id: UUID,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.preview_segment_audience(inst.id, segment_id=segment_id)
+
+
+@router.post("/me/segments/{segment_id}/preview")
 async def preview_segment_audience(
     segment_id: UUID,
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    """Preview how many students match this segment's criteria."""
     svc = _svc(db)
     inst = await svc.get_institution(user.id)
-    student_ids = await svc.resolve_segment_members(inst.id, segment_id)
-    return {"segment_id": str(segment_id), "audience_count": len(student_ids)}
+    return await svc.preview_segment_audience(inst.id, segment_id=segment_id)
 
 
-@router.get("/me/campaigns/{campaign_id}/audience")
+@router.post("/me/segments/preview")
+async def preview_segment_audience_draft(
+    body: SegmentPreviewRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.preview_segment_audience(
+        inst.id,
+        program_id=body.program_id,
+        criteria=body.criteria,
+    )
+
+
+@router.post("/me/segments/nl-bridge", response_model=SegmentNlBridgeResponse)
+async def segment_nl_bridge(
+    body: SegmentNlBridgeRequest,
+    user: User = Depends(require_institution_admin),
+):
+    from unipaith.ai.segment_builder import build_rules_from_nl
+
+    result = await build_rules_from_nl(body.description)
+    return SegmentNlBridgeResponse(**result)
+
+
+@router.get(
+    "/me/campaigns/{campaign_id}/audience",
+    response_model=CampaignAudiencePreviewResponse,
+)
 async def preview_campaign_audience(
     campaign_id: UUID,
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    """Preview the audience that will receive this campaign when sent."""
+    """Preview deduped audience count and sample rows (Spec 25 §9)."""
     svc = _svc(db)
     inst = await svc.get_institution(user.id)
-    count = await svc.preview_campaign_audience(inst.id, campaign_id)
-    return {"campaign_id": str(campaign_id), "audience_count": count}
+    return await svc.preview_campaign_audience(inst.id, campaign_id)
+
+
+@router.post("/me/campaigns/draft-copy", response_model=CampaignDraftCopyResponse)
+async def draft_campaign_copy(
+    body: CampaignDraftCopyRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """CampaignAudienceCopySuggester fallback (Spec 25 §10)."""
+    svc = _svc(db)
+    inst = await svc.get_institution(user.id)
+    return await svc.draft_campaign_copy(inst.name, body)
 
 
 @router.post("/me/campaigns/{campaign_id}/send", response_model=CampaignResponse)
@@ -1906,6 +1961,16 @@ async def get_featured_promotions(
     """Public — get currently active featured promotions."""
     svc = _svc(db)
     return await svc.get_active_promotions(region, country, degree_type)
+
+
+@router.post("/promotions/{promotion_id}/click", status_code=status.HTTP_204_NO_CONTENT)
+async def record_promotion_click(
+    promotion_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Public — record a student click on a featured promotion."""
+    svc = _svc(db)
+    await svc.record_promotion_click(promotion_id)
 
 
 # --- Institution Intelligence ---

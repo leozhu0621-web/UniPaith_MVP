@@ -387,6 +387,49 @@ async def test_segment_crud(
     assert resp.status_code == 204
 
 
+@pytest.mark.asyncio
+async def test_segment_preview_and_nl_bridge(
+    institution_client: AsyncClient,
+    db_session: AsyncSession,
+    mock_institution_user: User,
+):
+    await _ensure_institution(db_session, mock_institution_user)
+
+    resp = await institution_client.post(
+        "/api/v1/institutions/me/segments",
+        json={
+            "segment_name": "Engaged viewers",
+            "criteria": {
+                "include": {
+                    "op": "AND",
+                    "rules": [
+                        {
+                            "field": "engagement.viewed_institution",
+                            "operator": "within_days",
+                            "value": 30,
+                        }
+                    ],
+                }
+            },
+        },
+    )
+    assert resp.status_code == 201
+    sid = resp.json()["id"]
+
+    resp = await institution_client.post(f"/api/v1/institutions/me/segments/{sid}/preview")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert "audience_count" in body
+    assert "preview_audience_sample" in body
+
+    resp = await institution_client.post(
+        "/api/v1/institutions/me/segments/nl-bridge",
+        json={"description": "students who saved programs and have not started an app"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["rules"]
+
+
 # --- Spec 23 · Program editor: version, optimistic lock, blast-radius ---
 
 

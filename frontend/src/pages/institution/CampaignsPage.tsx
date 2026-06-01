@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Megaphone, Plus, Send, Edit2, Trash2, BarChart3, Clock, Users, Link2, Copy, ExternalLink } from 'lucide-react'
 import {
@@ -36,6 +37,8 @@ const STATUS_BADGE: Record<string, 'neutral' | 'info' | 'success' | 'warning'> =
 
 export default function CampaignsPage() {
   const queryClient = useQueryClient()
+  const [searchParams] = useSearchParams()
+  const preselectedSegmentId = searchParams.get('segmentId') ?? ''
   const [activeTab, setActiveTab] = useState('all')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showMetricsModal, setShowMetricsModal] = useState(false)
@@ -81,6 +84,12 @@ export default function CampaignsPage() {
 
   const segmentsQ = useQuery({ queryKey: ['segments'], queryFn: getSegments })
   const segments: Segment[] = Array.isArray(segmentsQ.data) ? segmentsQ.data : []
+
+  useEffect(() => {
+    if (!preselectedSegmentId || !segments.some(s => s.id === preselectedSegmentId)) return
+    setSegmentId(preselectedSegmentId)
+    setShowCreateModal(true)
+  }, [preselectedSegmentId, segments])
 
   const metricsQ = useQuery({
     queryKey: ['campaign-metrics', metricsTarget],

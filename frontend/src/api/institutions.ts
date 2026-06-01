@@ -200,8 +200,24 @@ export async function getCampaignMetrics(campaignId: string): Promise<CampaignMe
   return data
 }
 
-export async function previewCampaignAudience(campaignId: string): Promise<{ campaign_id: string; audience_count: number }> {
+export type CampaignAudiencePreview = {
+  campaign_id: string
+  audience_count: number
+  sample: { student_id: string; first_name: string | null; email: string | null }[]
+}
+
+export async function previewCampaignAudience(campaignId: string): Promise<CampaignAudiencePreview> {
   const { data } = await apiClient.get(`/institutions/me/campaigns/${campaignId}/audience`)
+  return data
+}
+
+export async function draftCampaignCopy(payload: {
+  objective: string
+  cta_type?: string
+  campaign_name?: string
+  program_name?: string
+}): Promise<{ subject: string; body: string; alternate_subjects: string[]; preview_text: string }> {
+  const { data } = await apiClient.post('/institutions/me/campaigns/draft-copy', payload)
   return data
 }
 
@@ -441,6 +457,10 @@ export async function getFeaturedPromotions(params?: {
   return data
 }
 
+export async function recordPromotionClick(promotionId: string): Promise<void> {
+  await apiClient.post(`/institutions/promotions/${promotionId}/click`)
+}
+
 // --- AI Intelligence ---
 
 export async function getIntelligenceDigest(): Promise<{
@@ -609,6 +629,7 @@ export async function createPost(payload: {
   tagged_program_ids?: string[]; tagged_intake?: string;
   status?: string; scheduled_for?: string;
   is_template?: boolean; template_name?: string;
+  ctas?: { type: string; label: string; target: string }[];
 }): Promise<InstitutionPost> {
   const { data } = await apiClient.post('/institutions/me/posts', payload)
   return data
@@ -619,6 +640,7 @@ export async function updatePost(postId: string, payload: Partial<{
   tagged_program_ids: string[]; tagged_intake: string;
   status: string; scheduled_for: string;
   is_template: boolean; template_name: string;
+  ctas: { type: string; label: string; target: string }[];
 }>): Promise<InstitutionPost> {
   const { data } = await apiClient.put(`/institutions/me/posts/${postId}`, payload)
   return data

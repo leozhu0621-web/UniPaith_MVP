@@ -909,9 +909,10 @@ export interface EventItem {
   institution_id: string
   program_id: string | null
   event_name: string
-  event_type: 'webinar' | 'campus_visit' | 'info_session' | 'workshop'
+  event_type: string
   description: string | null
   location: string | null
+  meeting_link?: string | null
   start_time: string
   end_time: string
   capacity: number | null
@@ -926,6 +927,8 @@ export interface RSVP {
   rsvp_status: string
   registered_at: string
   attended_at: string | null
+  student_name?: string | null
+  student_email?: string | null
 }
 
 // ============ INTERVIEWS ============
@@ -1643,6 +1646,7 @@ export interface InstitutionPost {
   is_template: boolean
   template_name: string | null
   view_count: number
+  ctas?: { type: string; label: string; target: string }[] | null
   created_at: string
   updated_at: string
   author_email?: string

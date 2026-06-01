@@ -1,7 +1,18 @@
-import { useState, useCallback } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Layers, Plus, Edit2, Trash2, ToggleLeft, ToggleRight, ChevronDown, ChevronUp } from 'lucide-react'
-import { getSegments, createSegment, updateSegment, deleteSegment, getInstitutionPrograms, previewSegmentAudience } from '../../api/institutions'
+import { Link } from 'react-router-dom'
+import { Layers, Plus, Edit2, Trash2, ToggleLeft, ToggleRight, Sparkles, Loader2, ArrowRight } from 'lucide-react'
+import {
+  getSegments,
+  createSegment,
+  updateSegment,
+  deleteSegment,
+  getInstitutionPrograms,
+  previewSegmentAudience,
+  previewSegmentAudienceDraft,
+  segmentNlBridge,
+  getDatasets,
+} from '../../api/institutions'
 import InstitutionPageHeader from '../../components/institution/InstitutionPageHeader'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -12,28 +23,30 @@ import Select from '../../components/ui/Select'
 import Textarea from '../../components/ui/Textarea'
 import EmptyState from '../../components/ui/EmptyState'
 import Skeleton from '../../components/ui/Skeleton'
+import ConstraintChip from '../../components/ui/ConstraintChip'
+import SegmentRuleEditor from './segments/SegmentRuleEditor'
+import {
+  criteriaToPayload,
+  payloadToCriteria,
+  flattenRules,
+  plainLanguageRule,
+  defaultIncludeTree,
+  defaultExcludeTree,
+  type SegmentCriteriaPayload,
+  type SegmentRule,
+} from './segments/segmentRules'
 import { showToast } from '../../stores/toast-store'
 import { formatDate } from '../../utils/format'
-import type { Segment, Program } from '../../types'
+import type { InstitutionDataset, Segment, Program, SegmentAudiencePreview, SegmentNlBridgeResult } from '../../types'
 
-/* ------------------------------------------------------------------ */
-/*  Criteria types                                                     */
-/* ------------------------------------------------------------------ */
+type ActiveFilter = 'all' | 'active' | 'inactive'
 
-interface CriteriaState {
-  statuses: string[]
-  decisions: string[]
-  min_match_score: number | null
-  max_match_score: number | null
-  match_tiers: number[]
-  min_engagement_signals: number | null
-  engagement_types: string[]
-  nationalities: string[]
-  has_applied: boolean | null
-  applied_after: string
-}
-
-const EMPTY_CRITERIA: CriteriaState = {
+const EMPTY_CRITERIA: SegmentCriteriaPayload = {
+  description: '',
+  frequency_cap_per_week: null,
+  uploaded_list_ids: [],
+  include: defaultIncludeTree(),
+  exclude: defaultExcludeTree(),
   statuses: [],
   decisions: [],
   min_match_score: null,
@@ -46,305 +59,10 @@ const EMPTY_CRITERIA: CriteriaState = {
   applied_after: '',
 }
 
-/** Convert CriteriaState to a clean JSON object (omit null / empty). */
-function criteriaStateToJson(c: CriteriaState): Record<string, unknown> {
-  const out: Record<string, unknown> = {}
-  if (c.statuses.length) out.statuses = c.statuses
-  if (c.decisions.length) out.decisions = c.decisions
-  if (c.min_match_score != null) out.min_match_score = c.min_match_score
-  if (c.max_match_score != null) out.max_match_score = c.max_match_score
-  if (c.match_tiers.length) out.match_tiers = c.match_tiers
-  if (c.min_engagement_signals != null) out.min_engagement_signals = c.min_engagement_signals
-  if (c.engagement_types.length) out.engagement_types = c.engagement_types
-  if (c.nationalities.length) out.nationalities = c.nationalities
-  if (c.has_applied != null) out.has_applied = c.has_applied
-  if (c.applied_after) out.applied_after = c.applied_after
-  return out
+function allRulesFromCriteria(criteria: Record<string, unknown> | null | undefined): SegmentRule[] {
+  const parsed = payloadToCriteria(criteria ?? {})
+  return [...flattenRules(parsed.include), ...flattenRules(parsed.exclude)]
 }
-
-/** Parse a raw JSON object into CriteriaState (best-effort). */
-function jsonToCriteriaState(obj: Record<string, unknown>): CriteriaState {
-  return {
-    statuses: Array.isArray(obj.statuses) ? obj.statuses : [],
-    decisions: Array.isArray(obj.decisions) ? obj.decisions : [],
-    min_match_score: typeof obj.min_match_score === 'number' ? obj.min_match_score : null,
-    max_match_score: typeof obj.max_match_score === 'number' ? obj.max_match_score : null,
-    match_tiers: Array.isArray(obj.match_tiers) ? obj.match_tiers : [],
-    min_engagement_signals: typeof obj.min_engagement_signals === 'number' ? obj.min_engagement_signals : null,
-    engagement_types: Array.isArray(obj.engagement_types) ? obj.engagement_types : [],
-    nationalities: Array.isArray(obj.nationalities) ? obj.nationalities : [],
-    has_applied: typeof obj.has_applied === 'boolean' ? obj.has_applied : null,
-    applied_after: typeof obj.applied_after === 'string' ? obj.applied_after : '',
-  }
-}
-
-/* ------------------------------------------------------------------ */
-/*  Human-readable criteria badges                                     */
-/* ------------------------------------------------------------------ */
-
-function criteriaToBadges(criteria: Record<string, unknown> | null | undefined): string[] {
-  if (!criteria || Object.keys(criteria).length === 0) return []
-  const badges: string[] = []
-  const c = criteria as Record<string, unknown>
-  if (Array.isArray(c.statuses) && c.statuses.length)
-    badges.push(`Status: ${c.statuses.join(', ')}`)
-  if (Array.isArray(c.decisions) && c.decisions.length)
-    badges.push(`Decision: ${c.decisions.join(', ')}`)
-  if (typeof c.min_match_score === 'number' && typeof c.max_match_score === 'number')
-    badges.push(`Match: ${c.min_match_score}-${c.max_match_score}`)
-  else if (typeof c.min_match_score === 'number')
-    badges.push(`Match: ${c.min_match_score}+`)
-  else if (typeof c.max_match_score === 'number')
-    badges.push(`Match: <=${c.max_match_score}`)
-  if (Array.isArray(c.match_tiers) && c.match_tiers.length) {
-    const tierLabels: Record<number, string> = { 1: 'Reach', 2: 'Match', 3: 'Safety' }
-    badges.push(`Tier: ${(c.match_tiers as number[]).map(t => tierLabels[t] ?? t).join(', ')}`)
-  }
-  if (typeof c.min_engagement_signals === 'number')
-    badges.push(`Engagement: >=${c.min_engagement_signals}`)
-  if (Array.isArray(c.engagement_types) && c.engagement_types.length)
-    badges.push(`Signal: ${c.engagement_types.join(', ')}`)
-  if (Array.isArray(c.nationalities) && c.nationalities.length)
-    badges.push(`Nationality: ${c.nationalities.join(', ')}`)
-  if (c.has_applied === true) badges.push('Has applied')
-  if (c.has_applied === false) badges.push('No application')
-  if (typeof c.applied_after === 'string' && c.applied_after)
-    badges.push(`Applied after: ${c.applied_after}`)
-  return badges
-}
-
-/* ------------------------------------------------------------------ */
-/*  Constants                                                          */
-/* ------------------------------------------------------------------ */
-
-const APPLICATION_STATUSES = ['submitted', 'under_review', 'interview', 'decision_made'] as const
-const DECISION_VALUES = ['admitted', 'rejected', 'waitlisted', 'deferred'] as const
-const TIER_OPTIONS = [
-  { value: 1, label: 'Reach' },
-  { value: 2, label: 'Match' },
-  { value: 3, label: 'Safety' },
-] as const
-
-const SEGMENT_TEMPLATES = [
-  { value: '', label: 'Custom segment', criteria: {} },
-  { value: 'high_match', label: 'High match score (80+)', criteria: { min_match_score: 80 } },
-  { value: 'under_review', label: 'Applications under review', criteria: { statuses: ['submitted', 'under_review'] } },
-  { value: 'interview_ready', label: 'Interview stage candidates', criteria: { statuses: ['interview'] } },
-  { value: 'admitted_yield_risk', label: 'Admitted -- yield risk', criteria: { decisions: ['admitted'], statuses: ['decision_made'] } },
-  { value: 'high_engagement_no_app', label: 'High engagement, no application', criteria: { min_engagement_signals: 3, has_applied: false } },
-  { value: 'recent_applicants', label: 'Applied in last 30 days', criteria: { applied_after: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] } },
-]
-
-/* ------------------------------------------------------------------ */
-/*  Checkbox group helpers                                             */
-/* ------------------------------------------------------------------ */
-
-function CheckboxGroup({ label, options, selected, onChange }: {
-  label: string
-  options: readonly string[]
-  selected: string[]
-  onChange: (next: string[]) => void
-}) {
-  const toggle = (v: string) => {
-    onChange(selected.includes(v) ? selected.filter(s => s !== v) : [...selected, v])
-  }
-  return (
-    <div>
-      <span className="block text-sm font-medium text-gray-700 mb-1">{label}</span>
-      <div className="flex flex-wrap gap-2">
-        {options.map(o => (
-          <label key={o} className="flex items-center gap-1 text-sm cursor-pointer select-none">
-            <input type="checkbox" checked={selected.includes(o)} onChange={() => toggle(o)} className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-            <span className="text-gray-700">{o.replace(/_/g, ' ')}</span>
-          </label>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function NumberCheckboxGroup({ label, options, selected, onChange }: {
-  label: string
-  options: readonly { value: number; label: string }[]
-  selected: number[]
-  onChange: (next: number[]) => void
-}) {
-  const toggle = (v: number) => {
-    onChange(selected.includes(v) ? selected.filter(s => s !== v) : [...selected, v])
-  }
-  return (
-    <div>
-      <span className="block text-sm font-medium text-gray-700 mb-1">{label}</span>
-      <div className="flex flex-wrap gap-2">
-        {options.map(o => (
-          <label key={o.value} className="flex items-center gap-1 text-sm cursor-pointer select-none">
-            <input type="checkbox" checked={selected.includes(o.value)} onChange={() => toggle(o.value)} className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-            <span className="text-gray-700">{o.label}</span>
-          </label>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  CriteriaBuilder component                                          */
-/* ------------------------------------------------------------------ */
-
-function CriteriaBuilder({ criteria, onChange }: { criteria: CriteriaState; onChange: (c: CriteriaState) => void }) {
-  const [showAdvanced, setShowAdvanced] = useState(false)
-  const [rawJson, setRawJson] = useState('')
-
-  const openAdvanced = () => {
-    setRawJson(JSON.stringify(criteriaStateToJson(criteria), null, 2))
-    setShowAdvanced(true)
-  }
-
-  const applyRawJson = () => {
-    try {
-      const parsed = JSON.parse(rawJson)
-      onChange(jsonToCriteriaState(parsed))
-      setShowAdvanced(false)
-    } catch {
-      showToast('Invalid JSON', 'error')
-    }
-  }
-
-  return (
-    <div className="space-y-4 border rounded-lg p-4 bg-gray-50">
-      {/* Application Status */}
-      <CheckboxGroup
-        label="Application Status"
-        options={APPLICATION_STATUSES}
-        selected={criteria.statuses}
-        onChange={statuses => onChange({ ...criteria, statuses })}
-      />
-
-      {/* Decision */}
-      <CheckboxGroup
-        label="Decision"
-        options={DECISION_VALUES}
-        selected={criteria.decisions}
-        onChange={decisions => onChange({ ...criteria, decisions })}
-      />
-
-      {/* Match Score Range */}
-      <div>
-        <span className="block text-sm font-medium text-gray-700 mb-1">Match Score Range (0-100)</span>
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            min={0}
-            max={100}
-            placeholder="Min"
-            value={criteria.min_match_score ?? ''}
-            onChange={e => onChange({ ...criteria, min_match_score: e.target.value ? Number(e.target.value) : null })}
-            className="w-24 rounded-md border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-          <span className="text-gray-400">to</span>
-          <input
-            type="number"
-            min={0}
-            max={100}
-            placeholder="Max"
-            value={criteria.max_match_score ?? ''}
-            onChange={e => onChange({ ...criteria, max_match_score: e.target.value ? Number(e.target.value) : null })}
-            className="w-24 rounded-md border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-      </div>
-
-      {/* Match Tier */}
-      <NumberCheckboxGroup
-        label="Match Tier"
-        options={TIER_OPTIONS}
-        selected={criteria.match_tiers}
-        onChange={match_tiers => onChange({ ...criteria, match_tiers })}
-      />
-
-      {/* Min Engagement Signals */}
-      <div>
-        <span className="block text-sm font-medium text-gray-700 mb-1">Min Engagement Signals</span>
-        <input
-          type="number"
-          min={0}
-          placeholder="e.g. 3"
-          value={criteria.min_engagement_signals ?? ''}
-          onChange={e => onChange({ ...criteria, min_engagement_signals: e.target.value ? Number(e.target.value) : null })}
-          className="w-32 rounded-md border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500"
-        />
-      </div>
-
-      {/* Nationality */}
-      <div>
-        <span className="block text-sm font-medium text-gray-700 mb-1">Nationality (comma-separated)</span>
-        <input
-          type="text"
-          placeholder="e.g. US, CN, IN"
-          value={criteria.nationalities.join(', ')}
-          onChange={e => onChange({ ...criteria, nationalities: e.target.value ? e.target.value.split(',').map(s => s.trim()).filter(Boolean) : [] })}
-          className="w-full rounded-md border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500"
-        />
-      </div>
-
-      {/* Has Applied */}
-      <div>
-        <span className="block text-sm font-medium text-gray-700 mb-1">Application Requirement</span>
-        <div className="flex gap-4">
-          {([null, true, false] as const).map(val => (
-            <label key={String(val)} className="flex items-center gap-1 text-sm cursor-pointer select-none">
-              <input
-                type="radio"
-                name="has_applied"
-                checked={criteria.has_applied === val}
-                onChange={() => onChange({ ...criteria, has_applied: val })}
-                className="text-indigo-600 focus:ring-indigo-500"
-              />
-              <span className="text-gray-700">{val === null ? 'Any' : val ? 'Has applied' : 'No application'}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Applied After */}
-      <div>
-        <span className="block text-sm font-medium text-gray-700 mb-1">Applied After</span>
-        <input
-          type="date"
-          value={criteria.applied_after}
-          onChange={e => onChange({ ...criteria, applied_after: e.target.value })}
-          className="rounded-md border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-indigo-500"
-        />
-      </div>
-
-      {/* Advanced JSON toggle */}
-      <div className="border-t pt-3">
-        {!showAdvanced ? (
-          <button onClick={openAdvanced} className="flex items-center gap-1 text-sm text-indigo-600 hover:underline">
-            <ChevronDown size={14} /> Advanced (raw JSON)
-          </button>
-        ) : (
-          <div className="space-y-2">
-            <button onClick={() => setShowAdvanced(false)} className="flex items-center gap-1 text-sm text-indigo-600 hover:underline">
-              <ChevronUp size={14} /> Hide JSON
-            </button>
-            <Textarea
-              label=""
-              value={rawJson}
-              onChange={e => setRawJson(e.target.value)}
-              rows={6}
-            />
-            <Button size="sm" variant="ghost" onClick={applyRawJson}>Apply JSON</Button>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Main page component                                                */
-/* ------------------------------------------------------------------ */
 
 export default function SegmentsPage() {
   const queryClient = useQueryClient()
@@ -352,42 +70,60 @@ export default function SegmentsPage() {
   const [editId, setEditId] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [programId, setProgramId] = useState('')
-  const [criteriaState, setCriteriaState] = useState<CriteriaState>({ ...EMPTY_CRITERIA })
-  const [templateKey, setTemplateKey] = useState('')
+  const [criteria, setCriteria] = useState<SegmentCriteriaPayload>({ ...EMPTY_CRITERIA })
   const [isActive, setIsActive] = useState(true)
+  const [activeFilter, setActiveFilter] = useState<ActiveFilter>('active')
   const [audienceCounts, setAudienceCounts] = useState<Record<string, number>>({})
-
-  const loadAudienceCount = async (segId: string) => {
-    try {
-      const res = await previewSegmentAudience(segId)
-      setAudienceCounts(prev => ({ ...prev, [segId]: res.audience_count }))
-    } catch { /* ignore */ }
-  }
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const [draftPreview, setDraftPreview] = useState<SegmentAudiencePreview | null>(null)
+  const [nlInput, setNlInput] = useState('')
+  const [nlLoading, setNlLoading] = useState(false)
+  const [nlResult, setNlResult] = useState<SegmentNlBridgeResult | null>(null)
+  const [rawJson, setRawJson] = useState('')
 
   const segmentsQ = useQuery({ queryKey: ['segments'], queryFn: getSegments })
   const segments: Segment[] = Array.isArray(segmentsQ.data) ? segmentsQ.data : []
 
   const programsQ = useQuery({ queryKey: ['institution-programs'], queryFn: getInstitutionPrograms })
   const programs: Program[] = Array.isArray(programsQ.data) ? programsQ.data : []
-  const programOptions = [{ value: '', label: 'None' }, ...programs.map(p => ({ value: p.id, label: p.program_name }))]
+  const programOptions = [{ value: '', label: 'All programs' }, ...programs.map(p => ({ value: p.id, label: p.program_name }))]
+
+  const datasetsQ = useQuery({ queryKey: ['institution-datasets'], queryFn: getDatasets })
+  const prospectLists: InstitutionDataset[] = (Array.isArray(datasetsQ.data) ? datasetsQ.data : []).filter(
+    d => d.dataset_type === 'prospect_list' && (d.status === 'processed' || d.status === 'active')
+  )
+
+  const filteredSegments = useMemo(() => {
+    if (activeFilter === 'all') return segments
+    if (activeFilter === 'active') return segments.filter(s => s.is_active)
+    return segments.filter(s => !s.is_active)
+  }, [segments, activeFilter])
 
   const resetForm = useCallback(() => {
     setEditId(null)
     setName('')
     setProgramId('')
-    setCriteriaState({ ...EMPTY_CRITERIA })
-    setTemplateKey('')
+    setCriteria({ ...EMPTY_CRITERIA, include: defaultIncludeTree(), exclude: defaultExcludeTree() })
     setIsActive(true)
+    setDraftPreview(null)
+    setNlInput('')
+    setNlResult(null)
+    setRawJson('')
   }, [])
 
   const openCreate = () => { resetForm(); setShowModal(true) }
+
   const openEdit = (seg: Segment) => {
+    const parsed = payloadToCriteria(seg.criteria ?? {})
     setEditId(seg.id)
     setName(seg.segment_name)
     setProgramId(seg.program_id ?? '')
-    setCriteriaState(jsonToCriteriaState(seg.criteria ?? {}))
-    setTemplateKey('')
+    setCriteria(parsed)
     setIsActive(seg.is_active)
+    setDraftPreview(null)
+    setNlInput('')
+    setNlResult(null)
+    setRawJson(JSON.stringify(criteriaToPayload(parsed), null, 2))
     setShowModal(true)
   }
 
@@ -395,20 +131,20 @@ export default function SegmentsPage() {
     mutationFn: createSegment,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['segments'] })
-      showToast('Segment created', 'success')
+      showToast('Segment saved', 'success')
       setShowModal(false)
     },
-    onError: () => showToast('Failed to create segment', 'error'),
+    onError: () => showToast('Failed to save segment', 'error'),
   })
 
   const updateMut = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: any }) => updateSegment(id, payload),
+    mutationFn: ({ id, payload }: { id: string; payload: Record<string, unknown> }) => updateSegment(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['segments'] })
-      showToast('Segment updated', 'success')
+      showToast('Segment saved', 'success')
       setShowModal(false)
     },
-    onError: () => showToast('Failed to update segment', 'error'),
+    onError: () => showToast('Failed to save segment', 'error'),
   })
 
   const deleteMut = useMutation({
@@ -420,93 +156,148 @@ export default function SegmentsPage() {
     onError: () => showToast('Failed to delete segment', 'error'),
   })
 
-  const handleSubmit = () => {
-    if (!name.trim()) { showToast('Name is required', 'warning'); return }
-    const criteria = criteriaStateToJson(criteriaState)
-
-    const payload = {
-      segment_name: name,
-      program_id: programId || null,
-      criteria,
-      is_active: isActive,
-    }
-
-    if (editId) {
-      updateMut.mutate({ id: editId, payload })
-    } else {
-      createMut.mutate(payload)
+  const loadAudienceCount = async (segId: string) => {
+    try {
+      const res = await previewSegmentAudience(segId)
+      setAudienceCounts(prev => ({ ...prev, [segId]: res.audience_count }))
+    } catch {
+      showToast('Could not preview audience', 'error')
     }
   }
+
+  const runDraftPreview = async () => {
+    setPreviewLoading(true)
+    setDraftPreview(null)
+    try {
+      const payload = { program_id: programId || null, criteria: criteriaToPayload(criteria) }
+      const res = editId ? await previewSegmentAudience(editId) : await previewSegmentAudienceDraft(payload)
+      setDraftPreview(res)
+    } catch {
+      showToast('Could not preview audience', 'error')
+    } finally {
+      setPreviewLoading(false)
+    }
+  }
+
+  const runNlBridge = async () => {
+    if (!nlInput.trim()) return
+    setNlLoading(true)
+    setNlResult(null)
+    try {
+      const res = await segmentNlBridge(nlInput.trim())
+      setNlResult(res)
+      const includeRules: SegmentRule[] = res.rules.map(r => ({
+        field: r.field,
+        operator: r.operator as SegmentRule['operator'],
+        value: r.value,
+        ambiguous: res.ambiguity_notes.some(n => n.toLowerCase().includes(r.field)),
+      }))
+      setCriteria(prev => ({
+        ...prev,
+        include: { op: 'AND', rules: [...flattenRules(prev.include), ...includeRules] },
+      }))
+      showToast('Rules added — review before saving', 'success')
+    } catch {
+      showToast('AI assist unavailable — try adjusting your description', 'error')
+    } finally {
+      setNlLoading(false)
+    }
+  }
+
+  const applyRawJson = () => {
+    try {
+      setCriteria(payloadToCriteria(JSON.parse(rawJson) as Record<string, unknown>))
+      showToast('Rules applied from JSON', 'success')
+    } catch {
+      showToast('Invalid JSON', 'error')
+    }
+  }
+
+  const handleSubmit = () => {
+    if (!name.trim()) { showToast('Name is required', 'warning'); return }
+    const payload = {
+      segment_name: name.trim(),
+      program_id: programId || null,
+      criteria: criteriaToPayload(criteria),
+      is_active: isActive,
+    }
+    if (editId) updateMut.mutate({ id: editId, payload })
+    else createMut.mutate(payload)
+  }
+
+  const filterOptions = [
+    { value: 'active', label: 'Active' },
+    { value: 'inactive', label: 'Inactive' },
+    { value: 'all', label: 'All' },
+  ]
+
+  const previewCount = draftPreview?.audience_count
+  const showZeroMatch = previewCount === 0
 
   return (
     <div className="p-6 space-y-4">
       <InstitutionPageHeader
-        title="Recruitment Segments"
-        description="Group applicants by shared traits to run targeted outreach."
+        title="Segments"
+        description="Build reusable audiences for campaigns, event invites, and follow-ups."
         actions={(
-          <Button onClick={openCreate} className="flex items-center gap-2">
-            <Plus size={16} /> New Segment
+          <Button variant="secondary" onClick={openCreate} className="flex items-center gap-2">
+            <Plus size={16} /> New segment
           </Button>
         )}
       />
 
+      <Select label="" options={filterOptions} value={activeFilter} onChange={e => setActiveFilter(e.target.value as ActiveFilter)} className="w-40" />
+
       {segmentsQ.isLoading ? (
-        <div className="grid grid-cols-2 gap-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-32" />)}</div>
-      ) : segments.length === 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-36" />)}
+        </div>
+      ) : filteredSegments.length === 0 ? (
         <EmptyState
           icon={<Layers size={40} />}
-          title="No segments"
-          description="Create segments to target specific student populations."
-          action={{ label: 'New Segment', onClick: openCreate }}
+          title="No segments yet"
+          description="Build one to target campaigns and events."
+          action={{ label: 'New segment', onClick: openCreate }}
         />
       ) : (
-        <div className="grid grid-cols-2 gap-4">
-          {segments.map(seg => {
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filteredSegments.map(seg => {
             const prog = programs.find(p => p.id === seg.program_id)
-            const badges = criteriaToBadges(seg.criteria)
+            const rules = allRulesFromCriteria(seg.criteria)
             return (
-              <Card key={seg.id} className="p-4">
-                <div className="flex items-start justify-between mb-2">
+              <Card key={seg.id} className="p-4 flex flex-col gap-3">
+                <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h3 className="font-semibold text-gray-900">{seg.segment_name}</h3>
-                    {prog && <p className="text-xs text-gray-500">{prog.program_name}</p>}
+                    <h3 className="font-semibold text-foreground">{seg.segment_name}</h3>
+                    {prog && <p className="text-xs text-muted-foreground">{prog.program_name}</p>}
                   </div>
-                  <Badge variant={seg.is_active ? 'success' : 'neutral'}>
-                    {seg.is_active ? 'Active' : 'Inactive'}
-                  </Badge>
+                  <Badge variant={seg.is_active ? 'success' : 'neutral'}>{seg.is_active ? 'Active' : 'Inactive'}</Badge>
                 </div>
-                <p className="text-xs text-gray-400 mb-2">Created {formatDate(seg.created_at)}</p>
-                <div className="flex items-center gap-2 mb-3 text-sm">
-                  <span className="text-gray-500">Audience:</span>
+                <p className="text-xs text-muted-foreground">Updated {formatDate(seg.updated_at ?? seg.created_at)}</p>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-muted-foreground">Audience:</span>
                   {audienceCounts[seg.id] != null ? (
-                    <span className="font-semibold text-gray-900">{audienceCounts[seg.id]} students</span>
+                    <span className="font-semibold text-accent">~{audienceCounts[seg.id]} students</span>
                   ) : (
-                    <button onClick={() => loadAudienceCount(seg.id)} className="text-indigo-600 hover:underline text-xs">
-                      Preview
-                    </button>
+                    <button type="button" onClick={() => loadAudienceCount(seg.id)} className="text-secondary text-xs hover:underline">Preview audience</button>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {badges.length === 0 ? (
-                    <Badge variant="neutral">All applicants</Badge>
+                <div className="flex flex-wrap gap-1.5">
+                  {rules.length === 0 ? (
+                    <Badge variant="neutral">All prospects</Badge>
                   ) : (
-                    <>
-                      {badges.slice(0, 4).map((b, i) => (
-                        <Badge key={i} variant="info">{b}</Badge>
-                      ))}
-                      {badges.length > 4 && (
-                        <Badge variant="neutral">+{badges.length - 4} more</Badge>
-                      )}
-                    </>
+                    rules.slice(0, 4).map((rule, i) => (
+                      <ConstraintChip key={i} category="Rule" value={plainLanguageRule(rule)} />
+                    ))
                   )}
+                  {rules.length > 4 && <Badge variant="neutral">+{rules.length - 4} more</Badge>}
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => openEdit(seg)} className="flex items-center gap-1">
-                    <Edit2 size={14} /> Edit
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => deleteMut.mutate(seg.id)} className="flex items-center gap-1 text-red-600">
-                    <Trash2 size={14} /> Delete
-                  </Button>
+                <div className="flex flex-wrap gap-2 mt-auto pt-2 border-t border-border">
+                  <Button variant="ghost" size="sm" onClick={() => openEdit(seg)} className="flex items-center gap-1"><Edit2 size={14} /> Edit</Button>
+                  <Button variant="ghost" size="sm" onClick={() => deleteMut.mutate(seg.id)} className="flex items-center gap-1 text-destructive"><Trash2 size={14} /> Delete</Button>
+                  <Link to={`/i/campaigns?segmentId=${seg.id}`} className="ml-auto">
+                    <Button variant="secondary" size="sm" className="flex items-center gap-1">Use in campaign <ArrowRight size={14} /></Button>
+                  </Link>
                 </div>
               </Card>
             )
@@ -514,33 +305,109 @@ export default function SegmentsPage() {
         </div>
       )}
 
-      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editId ? 'Edit Segment' : 'New Segment'}>
-        <div className="space-y-4">
-          <Input label="Segment Name *" value={name} onChange={e => setName(e.target.value)} />
-          <Select label="Program" options={programOptions} value={programId} onChange={e => setProgramId(e.target.value)} />
-          <Select
-            label="Template"
-            options={SEGMENT_TEMPLATES.map(t => ({ value: t.value, label: t.label }))}
-            value={templateKey}
-            onChange={e => {
-              const next = e.target.value
-              setTemplateKey(next)
-              const template = SEGMENT_TEMPLATES.find(t => t.value === next)
-              if (template) setCriteriaState(jsonToCriteriaState(template.criteria))
-            }}
-          />
-          <CriteriaBuilder criteria={criteriaState} onChange={setCriteriaState} />
-          <div className="flex items-center gap-2">
-            <button onClick={() => setIsActive(!isActive)} className="text-gray-600">
-              {isActive ? <ToggleRight size={24} className="text-green-500" /> : <ToggleLeft size={24} className="text-gray-400" />}
-            </button>
-            <span className="text-sm text-gray-700">{isActive ? 'Active' : 'Inactive'}</span>
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editId ? 'Edit segment' : 'New segment'}>
+        <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+          <Input label="Segment name *" value={name} onChange={e => setName(e.target.value)} placeholder="High-interest CS prospects who have not started an app" />
+          <Textarea label="Description" value={criteria.description ?? ''} onChange={e => setCriteria(prev => ({ ...prev, description: e.target.value }))} rows={2} />
+          <Select label="Program scope" options={programOptions} value={programId} onChange={e => setProgramId(e.target.value)} />
+
+          {prospectLists.length > 0 && (
+            <div>
+              <span className="block text-sm font-medium text-foreground mb-1">Uploaded prospect lists</span>
+              <div className="flex flex-wrap gap-2">
+                {prospectLists.map(list => {
+                  const selected = criteria.uploaded_list_ids?.includes(list.id)
+                  return (
+                    <button
+                      key={list.id}
+                      type="button"
+                      onClick={() => setCriteria(prev => {
+                        const ids = prev.uploaded_list_ids ?? []
+                        return { ...prev, uploaded_list_ids: selected ? ids.filter(id => id !== list.id) : [...ids, list.id] }
+                      })}
+                      className={`text-xs px-3 py-1 rounded-pill border ${selected ? 'border-secondary bg-secondary/10 text-secondary' : 'border-border text-muted-foreground'}`}
+                    >
+                      {list.dataset_name}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="rounded-lg border border-border p-3 bg-card space-y-2">
+            <p className="text-sm font-medium text-foreground flex items-center gap-2">
+              <Sparkles size={16} className="text-accent" /> Try AI assist: type what audience you want →
+            </p>
+            <div className="flex gap-2">
+              <Input label="" value={nlInput} onChange={e => setNlInput(e.target.value)} placeholder="students who saved Engineering programs in California with budget ≤ $40k" />
+              <Button variant="secondary" onClick={runNlBridge} disabled={nlLoading || !nlInput.trim()} loading={nlLoading}>Generate</Button>
+            </div>
+            {nlResult && (
+              <p className="text-xs text-muted-foreground">
+                Confidence {nlResult.confidence_overall}%
+                {nlResult.ambiguity_notes.length > 0 && ` · ${nlResult.ambiguity_notes.join('; ')}`}
+              </p>
+            )}
           </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setShowModal(false)}>Cancel</Button>
-            <Button onClick={handleSubmit} disabled={createMut.isPending || updateMut.isPending}>
-              {(createMut.isPending || updateMut.isPending) ? 'Saving...' : 'Save'}
-            </Button>
+
+          <SegmentRuleEditor
+            include={criteria.include ?? defaultIncludeTree()}
+            exclude={criteria.exclude ?? defaultExcludeTree()}
+            onIncludeChange={include => setCriteria(prev => ({ ...prev, include }))}
+            onExcludeChange={exclude => setCriteria(prev => ({ ...prev, exclude }))}
+            rawJson={rawJson}
+            onRawJsonChange={setRawJson}
+            onApplyRawJson={applyRawJson}
+          />
+
+          <Input
+            label="Max sends per week (optional)"
+            type="number"
+            min={0}
+            value={criteria.frequency_cap_per_week ?? ''}
+            onChange={e => setCriteria(prev => ({ ...prev, frequency_cap_per_week: e.target.value ? Number(e.target.value) : null }))}
+          />
+
+          <div className="rounded-lg border border-border p-4 bg-muted/20 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-foreground">Audience preview</span>
+              <Button variant="tertiary" size="sm" onClick={runDraftPreview} disabled={previewLoading}>Preview audience</Button>
+            </div>
+            {previewLoading && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 size={16} className="animate-spin text-accent" /> Calculating…
+              </div>
+            )}
+            {!previewLoading && previewCount != null && (
+              <>
+                <p className={`text-lg font-semibold ${showZeroMatch ? 'text-muted-foreground' : 'text-accent'}`}>
+                  {showZeroMatch ? '0 students match these rules. Try widening criteria.' : `~${previewCount} students`}
+                </p>
+                {draftPreview?.preview_audience_sample && draftPreview.preview_audience_sample.length > 0 && (
+                  <ul className="text-sm space-y-1 border-t border-border pt-2">
+                    {draftPreview.preview_audience_sample.map(row => (
+                      <li key={row.id} className="flex justify-between text-muted-foreground">
+                        <span>{row.display_name || 'Student'}</span>
+                        {row.nationality && <span className="text-xs">{row.nationality}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setIsActive(!isActive)} className="text-muted-foreground" aria-label="Toggle active">
+              {isActive ? <ToggleRight size={24} className="text-success" /> : <ToggleLeft size={24} />}
+            </button>
+            <span className="text-sm text-foreground">{isActive ? 'Active' : 'Inactive'}</span>
+          </div>
+
+          <div className="flex justify-end gap-2 sticky bottom-0 bg-card pt-2">
+            <Button variant="tertiary" onClick={() => setShowModal(false)}>Cancel</Button>
+            <Button variant="secondary" onClick={handleSubmit} disabled={createMut.isPending || updateMut.isPending} loading={createMut.isPending || updateMut.isPending}>Save segment</Button>
           </div>
         </div>
       </Modal>

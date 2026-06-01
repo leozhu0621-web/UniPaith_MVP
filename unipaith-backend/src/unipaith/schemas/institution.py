@@ -292,6 +292,21 @@ class SegmentResponse(BaseModel):
     updated_at: datetime
 
 
+class SegmentPreviewRequest(BaseModel):
+    program_id: UUID | None = None
+    criteria: dict = Field(default_factory=dict)
+
+
+class SegmentNlBridgeRequest(BaseModel):
+    description: str = Field(min_length=3, max_length=2000)
+
+
+class SegmentNlBridgeResponse(BaseModel):
+    rules: list[dict]
+    confidence_overall: int
+    ambiguity_notes: list[str]
+
+
 # --- Dashboard Summary ---
 
 
@@ -405,6 +420,32 @@ class CampaignMetricsResponse(BaseModel):
     opened: int
     clicked: int
     responded: int
+
+
+class CampaignAudienceSampleRow(BaseModel):
+    student_id: UUID
+    first_name: str | None = None
+    email: str | None = None
+
+
+class CampaignAudiencePreviewResponse(BaseModel):
+    campaign_id: UUID
+    audience_count: int
+    sample: list[CampaignAudienceSampleRow] = Field(default_factory=list)
+
+
+class CampaignDraftCopyRequest(BaseModel):
+    objective: str = Field(default="general")
+    cta_type: str | None = Field(default="learn_more")
+    campaign_name: str | None = None
+    program_name: str | None = None
+
+
+class CampaignDraftCopyResponse(BaseModel):
+    subject: str
+    body: str
+    alternate_subjects: list[str] = Field(default_factory=list)
+    preview_text: str = ""
 
 
 # --- Campaign Links & Attribution ---
@@ -553,7 +594,7 @@ class UpdatePromotionRequest(BaseModel):
     targeting: TargetingScope | None = None
     status: str | None = Field(
         None,
-        pattern=r"^(draft|active|paused|expired)$",
+        pattern=r"^(draft|scheduled|active|paused|expired)$",
     )
     starts_at: datetime | None = None
     ends_at: datetime | None = None
@@ -707,6 +748,7 @@ class CreatePostRequest(BaseModel):
     scheduled_for: datetime | None = None
     is_template: bool = False
     template_name: str | None = None
+    ctas: list[dict] | None = None
 
 
 class UpdatePostRequest(BaseModel):
@@ -719,6 +761,7 @@ class UpdatePostRequest(BaseModel):
     scheduled_for: datetime | None = None
     is_template: bool | None = None
     template_name: str | None = None
+    ctas: list[dict] | None = None
 
 
 class PostResponse(BaseModel):
@@ -738,6 +781,7 @@ class PostResponse(BaseModel):
     is_template: bool
     template_name: str | None
     view_count: int
+    ctas: list | dict | None = None
     created_at: datetime
     updated_at: datetime
     author_email: str | None = None
