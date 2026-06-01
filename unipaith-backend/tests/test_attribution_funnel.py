@@ -301,6 +301,37 @@ async def test_backfill_from_applications_idempotent(db_session: AsyncSession):
     assert count1 == count2 == 3
 
 
+# ── Overview KPIs: all-time window has no bogus prior comparison ──────────────
+
+
+@pytest.mark.asyncio
+async def test_overview_all_time_has_no_prior_comparison(db_session: AsyncSession):
+    inst = await _institution(db_session)
+    prog = await _program(db_session, inst)
+    student = await _student(db_session)
+    db_session.add(
+        Application(
+            student_id=student.id,
+            program_id=prog.id,
+            status="submitted",
+            submitted_at=datetime.now(UTC),
+            created_at=datetime.now(UTC),
+        )
+    )
+    await db_session.flush()
+
+    svc = AttributionService(db_session)
+    rep = await svc.get_overview(inst.id, AppliedFilters(time_window="all"))
+    assert rep.total_applications.value == 1
+    # All-time has no prior window → no comparison (not a misleading +0%).
+    assert rep.total_applications.prior is None
+    assert rep.total_applications.delta_pct is None
+
+    # A bounded window still computes a comparison cohort.
+    rep30 = await svc.get_overview(inst.id, AppliedFilters(time_window="30d"))
+    assert rep30.total_applications.value == 1
+
+
 # ── §13.7 CSV export shape ───────────────────────────────────────────────────
 
 

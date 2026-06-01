@@ -616,7 +616,12 @@ class AttributionService:
         student_ids = await self._segment_students(institution_id, flt.segment_id)
 
         cur = await self._overview_kpis(institution_id, flt, student_ids, start, end)
-        prior = await self._overview_kpis(institution_id, flt, student_ids, p_start, p_end)
+        if p_start is None and p_end is None:
+            # No prior window (all-time / open-ended range) → no comparison, so the
+            # KPI cards read "No prior-period comparison" rather than a bogus +0%.
+            prior = {"total": None, "acceptance": None, "avg_match": None, "yield": None}
+        else:
+            prior = await self._overview_kpis(institution_id, flt, student_ids, p_start, p_end)
 
         def kpi(field: str, unit: str) -> KpiMetric:
             v = cur[field]
@@ -669,10 +674,6 @@ class AttributionService:
         start: datetime | None,
         end: datetime | None,
     ) -> dict:
-        if start is None and end is None and flt.time_window not in ("all", "alltime", ""):
-            # All-time KPIs only when explicitly all-time; a prior window with no
-            # range yields an empty comparison cohort.
-            pass
         conds = self._app_conditions(institution_id, flt, student_ids, start, end)
 
         total = (
