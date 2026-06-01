@@ -119,8 +119,8 @@ export default function ProposeInterviewModal({ isOpen, onClose, onProposed, pro
       return
     }
     const validSlots = slots.filter(Boolean).map(toIso)
-    if (!isAsync && validSlots.length === 0) {
-      showToast('Add at least one proposed time', 'warning')
+    if (!isAsync && validSlots.length < 3) {
+      showToast('Offer at least three proposed times for live interviews', 'warning')
       return
     }
     if (isAsync && !windowEnd) {

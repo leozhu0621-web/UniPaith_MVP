@@ -47,7 +47,9 @@ class ProposeInterviewRequest(BaseModel):
 
 
 class ConfirmInterviewRequest(BaseModel):
-    confirmed_time: str
+    # Required for live interviews (must match a proposed slot); optional for async
+    # types where accepting the submission window is enough (§3 step 3).
+    confirmed_time: str | None = None
 
 
 class ScoreInterviewRequest(BaseModel):

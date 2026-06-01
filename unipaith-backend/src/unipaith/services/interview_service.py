@@ -50,6 +50,8 @@ logger = logging.getLogger(__name__)
 # Reason-code wiring shared with the institution inbox (Spec 29 §4).
 _INVITE_REASON = "interview_invite"
 _INVITE_ACTION = "interview_invite"
+# Spec 33 §5 — live interviews need three or more proposed slots.
+MIN_LIVE_PROPOSED_SLOTS = 3
 
 # A sensible interviewing rubric (§6) used when an institution hasn't authored a
 # custom one yet, so the Score modal always has criteria to score against.
@@ -152,8 +154,10 @@ class InterviewService:
         require a submission window instead.
         """
         is_async = interview_type in ASYNC_INTERVIEW_TYPES
-        if not is_async and not proposed_times:
-            raise BadRequestException("At least one proposed time is required")
+        if not is_async and len(proposed_times or []) < MIN_LIVE_PROPOSED_SLOTS:
+            raise BadRequestException(
+                f"Live interviews require at least {MIN_LIVE_PROPOSED_SLOTS} proposed time slots"
+            )
         if is_async and not async_window_end:
             raise BadRequestException(
                 "A submission window deadline is required for async interviews"
@@ -593,20 +597,26 @@ class InterviewService:
     # ------------------------------------------------------------------
 
     async def confirm_time(
-        self, student_id: UUID, interview_id: UUID, confirmed_time: str
+        self, student_id: UUID, interview_id: UUID, confirmed_time: str | None = None
     ) -> Interview:
-        """Student confirms one of the proposed interview times."""
+        """Student confirms one of the proposed interview times (or accepts an async window)."""
         interview = await self._get_student_interview(student_id, interview_id)
 
         if interview.status != "proposed":
             raise BadRequestException("Only proposed interviews can be confirmed")
 
-        proposed: list[str] = interview.proposed_times or []
-        if confirmed_time not in proposed:
-            raise BadRequestException("Selected time is not among the proposed options")
-
-        interview.status = "confirmed"
-        interview.confirmed_time = _parse_iso(confirmed_time)
+        is_async = (interview.interview_type or "") in ASYNC_INTERVIEW_TYPES
+        if is_async:
+            interview.status = "confirmed"
+            interview.confirmed_time = _aware(interview.async_window_end) or datetime.now(UTC)
+        else:
+            if not confirmed_time:
+                raise BadRequestException("Select one of the proposed times")
+            proposed: list[str] = interview.proposed_times or []
+            if confirmed_time not in proposed:
+                raise BadRequestException("Selected time is not among the proposed options")
+            interview.status = "confirmed"
+            interview.confirmed_time = _parse_iso(confirmed_time)
 
         app_result = await self.db.execute(
             select(Application).where(Application.id == interview.application_id)
@@ -686,8 +696,11 @@ class InterviewService:
                 raise BadRequestException("A new submission window deadline is required")
             interview.async_window_end = _parse_iso(async_window_end)
         else:
-            if not proposed_times:
-                raise BadRequestException("At least one new proposed time is required")
+            if len(proposed_times or []) < MIN_LIVE_PROPOSED_SLOTS:
+                raise BadRequestException(
+                    "Live interviews require at least "
+                    f"{MIN_LIVE_PROPOSED_SLOTS} proposed time slots"
+                )
             interview.proposed_times = proposed_times
 
         if duration_minutes is not None:

@@ -26,6 +26,7 @@ const RECOMMENDATIONS = [
 export default function ScoreInterviewModal({ isOpen, onClose, onScored, interview }: Props) {
   const [rubricIdx, setRubricIdx] = useState(0)
   const [scores, setScores] = useState<Record<string, number>>({})
+  const [criterionNotes, setCriterionNotes] = useState<Record<string, string>>({})
   const [notes, setNotes] = useState('')
   const [recommendation, setRecommendation] = useState('')
   const [transcript, setTranscript] = useState('')
@@ -46,6 +47,7 @@ export default function ScoreInterviewModal({ isOpen, onClose, onScored, intervi
     if (isOpen) {
       setRubricIdx(0)
       setScores({})
+      setCriterionNotes({})
       setNotes('')
       setRecommendation('')
       setTranscript('')
@@ -93,10 +95,17 @@ export default function ScoreInterviewModal({ isOpen, onClose, onScored, intervi
     }
     setSubmitting(true)
     try {
+      const rubricNotes = (rubric?.criteria || [])
+        .map(c => {
+          const n = criterionNotes[c.key]?.trim()
+          return n ? `${c.label}: ${n}` : ''
+        })
+        .filter(Boolean)
+      const combinedNotes = [notes.trim(), ...rubricNotes].filter(Boolean).join('\n\n') || null
       await scoreInterview(interview.id, {
         criterion_scores: scores,
         total_weighted_score: total,
-        interviewer_notes: notes || null,
+        interviewer_notes: combinedNotes,
         recommendation,
         rubric_id: rubric?.id ?? null,
       })
@@ -167,24 +176,35 @@ export default function ScoreInterviewModal({ isOpen, onClose, onScored, intervi
           ) : (
             <div className="space-y-3">
               {(rubric?.criteria || []).map(c => (
-                <div key={c.key} className="flex items-start gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground">{c.label}</p>
-                    {c.description && (
-                      <p className="text-xs text-muted-foreground">{c.description}</p>
-                    )}
+                <div key={c.key} className="rounded-md border border-border p-3 space-y-2">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-foreground">{c.label}</p>
+                      {c.description && (
+                        <p className="text-xs text-muted-foreground">{c.description}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <input
+                        type="number"
+                        min={0}
+                        max={c.max}
+                        value={scores[c.key] ?? ''}
+                        onChange={e => setCriterion(c.key, e.target.value, c.max)}
+                        className="w-16 px-2 py-1.5 text-sm text-right rounded-md border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                      <span className="text-xs text-muted-foreground">/ {c.max}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <input
-                      type="number"
-                      min={0}
-                      max={c.max}
-                      value={scores[c.key] ?? ''}
-                      onChange={e => setCriterion(c.key, e.target.value, c.max)}
-                      className="w-16 px-2 py-1.5 text-sm text-right rounded-md border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                    <span className="text-xs text-muted-foreground">/ {c.max}</span>
-                  </div>
+                  <input
+                    type="text"
+                    value={criterionNotes[c.key] ?? ''}
+                    onChange={e =>
+                      setCriterionNotes(prev => ({ ...prev, [c.key]: e.target.value }))
+                    }
+                    placeholder="Optional note for this criterion"
+                    className="w-full px-2 py-1.5 text-xs rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
                 </div>
               ))}
               <div className="flex items-center justify-between pt-2 border-t border-border">
