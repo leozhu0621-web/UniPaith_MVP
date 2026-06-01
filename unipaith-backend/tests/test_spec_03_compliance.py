@@ -114,6 +114,8 @@ def test_each_agent_declares_consent_requirement():
         # Spec 20 §8 — Connect feed ranker + event recommender (Haiku).
         "connect_ranker",
         "event_recommender",
+        # Spec 25 §10 / 45 §16 — institution campaign copy suggester.
+        "campaign_copy",
     }
     assert set(AGENT_REQUIRES.keys()) == expected_agents
 

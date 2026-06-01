@@ -88,6 +88,11 @@ AGENT_REQUIRES: dict[str, str | None] = {
     # on deny the agent returns None and the feed falls back to its heuristic.
     "connect_ranker": "matching",
     "event_recommender": "matching",
+    # Spec 25 §10 / 45 §16 — institution-side campaign copy suggester. Operates
+    # on an aggregate audience summary, not any individual student's protected
+    # data, so it sits behind no student-consent lever (institution role gates
+    # it). Declared here so the spec-03 agent registry stays consistent.
+    "campaign_copy": None,
 }
 
 

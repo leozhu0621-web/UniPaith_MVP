@@ -121,7 +121,8 @@ class AiTurn(Base, UUIDPrimaryKeyMixin):
             "agent IN ('orchestrator','extractor','validator','feature_emitter',"
             "'rationale','workshop_coach','workshop_judge','embedding',"
             "'review_summarizer','authenticity_risk','matcher','query_interpreter',"
-            "'inbox_reply_drafter','connect_ranker','event_recommender')",
+            "'inbox_reply_drafter','connect_ranker','event_recommender',"
+            "'campaign_copy')",
             name="ck_ai_turns_agent",
         ),
         # Spec 03 §8: provider tracked per call so the cost ledger splits

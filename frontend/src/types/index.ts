@@ -1103,6 +1103,7 @@ export interface Institution {
   international_info: Record<string, any> | null
   school_outcomes: Record<string, any> | null
   is_verified: boolean
+  require_campaign_approval?: boolean
   created_at: string
   updated_at: string
   program_count?: number
@@ -1272,29 +1273,128 @@ export interface AnalyticsData {
 }
 
 // ============ CAMPAIGNS ============
+// ============ CAMPAIGNS (Spec 25) ============
+export type CampaignObjective =
+  | 'application_open'
+  | 'event_promotion'
+  | 'scholarship_announcement'
+  | 'deadline_reminder'
+  | 'nurture'
+  | 'general'
+export type CampaignDestinationType =
+  | 'institution_page'
+  | 'program_page'
+  | 'campaign_landing_page'
+  | 'external_url'
+export type CampaignCtaType = 'learn_more' | 'rsvp_event' | 'request_info' | 'start_application'
+export type CampaignChannel = 'internal_messaging' | 'external_email'
+export type CampaignStatus =
+  | 'draft'
+  | 'pending_approval'
+  | 'scheduled'
+  | 'active'
+  | 'paused'
+  | 'completed'
+export type AttributionAction =
+  | 'view'
+  | 'save'
+  | 'rsvp'
+  | 'request_info'
+  | 'apply_started'
+  | 'apply_submitted'
+  | 'decision'
+
+export interface CampaignAudience {
+  segment_ids: string[]
+  uploaded_list_ids: string[]
+  deduped_count: number | null
+}
+
+export interface CampaignMetrics {
+  campaign_id?: string
+  sent: number
+  delivered: number
+  opens: number
+  clicks: number
+  conversions: Record<string, number>
+  unsubscribes: number
+  bounces: number
+}
+
 export interface Campaign {
   id: string
   institution_id: string
-  program_id: string | null
-  segment_id: string | null
-  campaign_name: string
-  campaign_type: string | null
-  message_subject: string | null
-  message_body: string | null
-  status: string | null
-  scheduled_send_at: string | null
+  name: string
+  objective: CampaignObjective | null
+  owner_id: string | null
+  status: CampaignStatus
+  associate_program_ids: string[]
+  associate_intake_round_id: string | null
+  destination_type: CampaignDestinationType | null
+  destination_id: string | null
+  destination_url: string | null
+  cta_type: CampaignCtaType | null
+  channels: CampaignChannel[]
+  audience: CampaignAudience
+  subject: string | null
+  body: string | null
+  scheduled_at: string | null
   sent_at: string | null
+  sent_count: number | null
+  metrics: CampaignMetrics | null
+  submitted_for_approval_at: string | null
+  approved_by: string | null
+  approved_at: string | null
+  rejection_comment: string | null
+  requires_approval: boolean
   created_at: string
   updated_at: string
 }
 
-export interface CampaignMetrics {
-  campaign_id: string
-  total_recipients: number
-  delivered: number
-  opened: number
-  clicked: number
-  responded: number
+export interface AudienceSamplePerson {
+  student_id: string | null
+  name: string | null
+  email: string | null
+  source: string
+  channel: string
+}
+
+export interface AudiencePreview {
+  campaign_id?: string | null
+  deduped_count: number
+  platform_count: number
+  uploaded_count: number
+  suppressed_count: number
+  consent_excluded_count: number
+  sample: AudienceSamplePerson[]
+}
+
+export interface UploadedList {
+  id: string
+  institution_id: string
+  name: string
+  description: string | null
+  source: string
+  source_consent_confirmed: boolean
+  contact_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface CampaignSuppression {
+  id: string
+  institution_id: string
+  email: string
+  reason: string | null
+  created_at: string
+}
+
+export interface DraftCampaignCopy {
+  subject: string
+  body: string
+  alternate_subjects: string[]
+  preview_text: string
+  source: string
 }
 
 // ============ CAMPAIGN LINKS & ATTRIBUTION ============
@@ -1520,7 +1620,10 @@ export interface Segment {
   institution_id: string
   program_id: string | null
   segment_name: string
+  description?: string | null
   criteria: Record<string, any> | null
+  uploaded_list_ids?: string[] | null
+  frequency_cap_per_week?: number | null
   is_active: boolean
   created_at: string
   updated_at: string

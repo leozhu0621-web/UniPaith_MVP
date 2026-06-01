@@ -44,6 +44,8 @@ AGENT_TIERS: dict[str, str] = {
     # ── Connect feed (spec 20 §8) — cheap Haiku ranking, always falls back ──
     "connect_ranker": "batch",
     "event_recommender": "batch",
+    # ── Campaign copy (spec 25 §10 / 45 §16) — Sonnet, template fallback ──
+    "campaign_copy": "workhorse",
 }
 
 

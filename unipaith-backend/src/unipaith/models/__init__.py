@@ -47,6 +47,7 @@ from unipaith.models.institution import (
     CampaignAction,
     CampaignLink,
     CampaignRecipient,
+    CampaignSuppression,
     CommunicationTemplate,
     EmployerFeedback,
     Event,
@@ -63,6 +64,8 @@ from unipaith.models.institution import (
     School,
     StudentProgramReview,
     TargetSegment,
+    UploadedContact,
+    UploadedList,
 )
 from unipaith.models.knowledge import (
     AdvisorPersona,
@@ -176,6 +179,9 @@ __all__ = [
     "CampaignLink",
     "CampaignAction",
     "CampaignRecipient",
+    "CampaignSuppression",
+    "UploadedList",
+    "UploadedContact",
     "CommunicationTemplate",
     "Event",
     "EventRSVP",

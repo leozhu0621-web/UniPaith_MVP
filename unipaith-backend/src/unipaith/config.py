@@ -264,6 +264,13 @@ class Settings(BaseSettings):
     # order — the feed never errors (Spec 20 §9 "AI rank failure").
     ai_connect_ranker_v2_enabled: bool = False
 
+    # Spec 25 §10 / 45 §16 — CampaignAudienceCopySuggester. When True, the
+    # institution campaign editor's "Draft with AI" button routes through the
+    # Sonnet copy agent (forced tool-use). On any failure (parse / provider /
+    # mock) it falls back to a deterministic objective-keyed template stub, also
+    # the flag-off default — so the button always returns usable copy.
+    ai_campaign_copy_v2_enabled: bool = False
+
     # Spec 20 §6 / §14 — Peers tab (opt-in, privacy-gated). The spec ships
     # Updates + Events for MVP and gates Peers behind this flag as a
     # fast-follow. When False the Peers tab shows the opt-in explainer only and
