@@ -20,7 +20,6 @@ from uuid import uuid4
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from unipaith.models.application import (
     Application,
     EnrollmentRecord,
@@ -29,7 +28,7 @@ from unipaith.models.application import (
 from unipaith.models.confidence_outcome import ConfidenceOutcomePair
 from unipaith.models.institution import Institution, Program
 from unipaith.models.matching import MatchResult
-from unipaith.models.student import StudentProfile
+from unipaith.models.student import StudentDataConsent, StudentProfile
 from unipaith.models.user import User, UserRole
 from unipaith.services.confidence_outcome_service import (
     VALID_OUTCOME_KINDS,
@@ -137,6 +136,60 @@ async def test_record_outcome_inserts_with_matchresult_confidence(
     assert pair.outcome == 1
     assert pair.outcome_kind == "applied"
     assert pair.predicted_confidence == Decimal("0.8300")
+
+
+@pytest.mark.asyncio
+async def test_record_outcome_excluded_when_training_consent_false(
+    db_session: AsyncSession,
+):
+    """G-AI3 / G-T2: a student who opted out of model training
+    (consent_training=False) must not enter the calibrator training corpus."""
+    student = await _seed_student(db_session)
+    program = await _seed_program(db_session)
+    await _seed_match(db_session, student.id, program.id, confidence="0.83")
+    db_session.add(StudentDataConsent(student_id=student.id, consent_training=False))
+    await db_session.commit()
+
+    pair = await record_outcome(
+        db_session,
+        student_id=student.id,
+        program_id=program.id,
+        outcome_kind="applied",
+    )
+    await db_session.commit()
+    assert pair is None
+    # And nothing was written to the training table.
+    rows = (
+        (
+            await db_session.execute(
+                select(ConfidenceOutcomePair).where(ConfidenceOutcomePair.student_id == student.id)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert rows == []
+
+
+@pytest.mark.asyncio
+async def test_record_outcome_recorded_when_training_consent_true(
+    db_session: AsyncSession,
+):
+    """Opted-in students (or those with no consent row) are recorded normally."""
+    student = await _seed_student(db_session)
+    program = await _seed_program(db_session)
+    await _seed_match(db_session, student.id, program.id, confidence="0.83")
+    db_session.add(StudentDataConsent(student_id=student.id, consent_training=True))
+    await db_session.commit()
+
+    pair = await record_outcome(
+        db_session,
+        student_id=student.id,
+        program_id=program.id,
+        outcome_kind="applied",
+    )
+    await db_session.commit()
+    assert pair is not None
 
 
 @pytest.mark.asyncio
@@ -345,12 +398,8 @@ async def test_on_application_submitted_records_applied_outcome(
     # student-user + the institution that owns the program so the FK
     # constraints on touchpoints are satisfied — otherwise the parent
     # try/except swallows the recording too.
-    student_user = await db_session.scalar(
-        select(User).where(User.id == student.user_id)
-    )
-    program_row = await db_session.scalar(
-        select(Program).where(Program.id == program.id)
-    )
+    student_user = await db_session.scalar(select(User).where(User.id == student.user_id))
+    program_row = await db_session.scalar(select(Program).where(Program.id == program.id))
     inst = await db_session.scalar(
         select(Institution).where(Institution.id == program_row.institution_id)
     )

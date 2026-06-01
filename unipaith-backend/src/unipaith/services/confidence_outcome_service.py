@@ -38,6 +38,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.models.confidence_outcome import ConfidenceOutcomePair
 from unipaith.models.matching import MatchResult
+from unipaith.models.student import StudentDataConsent
 from unipaith.services.confidence_calibrator import (
     CalibratorState,
     fit_calibrator,
@@ -77,11 +78,26 @@ async def record_outcome(
     outcome_kind).
     """
     if outcome_kind not in VALID_OUTCOME_KINDS:
-        raise ValueError(
-            f"outcome_kind={outcome_kind!r} not in {VALID_OUTCOME_KINDS}"
-        )
+        raise ValueError(f"outcome_kind={outcome_kind!r} not in {VALID_OUTCOME_KINDS}")
     if outcome not in (0, 1):
         raise ValueError(f"outcome={outcome!r} must be 0 or 1")
+
+    # G-AI3 enforcement: when the student has opted out of model training
+    # (consent_training=False) their (confidence, outcome) pair must not enter
+    # the calibrator's training corpus. A missing consent row means default-
+    # allow, so only an explicit False suppresses.
+    training_consent = await db.scalar(
+        select(StudentDataConsent.consent_training).where(
+            StudentDataConsent.student_id == student_id
+        )
+    )
+    if training_consent is False:
+        logger.info(
+            "record_outcome: student=%s consent_training=False; pair excluded "
+            "from the calibrator training corpus",
+            student_id,
+        )
+        return None
 
     match = await db.scalar(
         select(MatchResult).where(
@@ -135,11 +151,7 @@ async def backfill_aged_out_negatives(
 
     # Read every aged-out match.
     matches = list(
-        (
-            await db.execute(
-                select(MatchResult).where(MatchResult.computed_at <= cutoff)
-            )
-        )
+        (await db.execute(select(MatchResult).where(MatchResult.computed_at <= cutoff)))
         .scalars()
         .all()
     )
@@ -219,9 +231,7 @@ async def refit_calibrator_from_outcomes(
     Below MIN_PAIRS_FOR_CALIBRATION the saved state stays unfitted,
     which the matcher already handles as identity.
     """
-    pairs = await load_pairs_for_calibrator(
-        db, outcome_kind=outcome_kind, window_days=window_days
-    )
+    pairs = await load_pairs_for_calibrator(db, outcome_kind=outcome_kind, window_days=window_days)
     state = fit_calibrator(pairs)
     await save_calibrator_state(db, state)
     logger.info(

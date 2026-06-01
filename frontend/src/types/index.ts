@@ -136,6 +136,7 @@ export interface StudentDataConsent {
   consent_matching: boolean
   consent_outreach: boolean
   consent_research: boolean
+  consent_training: boolean
   data_retention_preference: string | null
   deletion_requested: boolean
   deletion_requested_at: string | null

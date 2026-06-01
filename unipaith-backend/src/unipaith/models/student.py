@@ -679,6 +679,9 @@ class StudentDataConsent(Base):
     consent_matching: Mapped[bool] = mapped_column(Boolean, default=True)
     consent_outreach: Mapped[bool] = mapped_column(Boolean, default=True)
     consent_research: Mapped[bool] = mapped_column(Boolean, default=True)
+    # 4th consent dimension (Master Paper Appendix A / gap audit G-AI3): when
+    # False, the student's data must be excluded from any model-training corpus.
+    consent_training: Mapped[bool] = mapped_column(Boolean, default=True)
     data_retention_preference: Mapped[str | None] = mapped_column(String(30))
     deletion_requested: Mapped[bool] = mapped_column(Boolean, default=False)
     deletion_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

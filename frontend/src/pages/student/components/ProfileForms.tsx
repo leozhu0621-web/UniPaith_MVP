@@ -298,7 +298,7 @@ export function VisaInfoForm({ defaultValues, onSubmit, loading }: FormProps) {
 }
 
 export function DataRightsForm({ defaultValues, onSubmit, loading }: FormProps) {
-  const { register, handleSubmit } = useForm({ defaultValues: { consent_matching: defaultValues?.consent_matching ?? true, consent_outreach: defaultValues?.consent_outreach ?? true, consent_research: defaultValues?.consent_research ?? true, data_retention_preference: defaultValues?.data_retention_preference || 'standard', deletion_requested: defaultValues?.deletion_requested || false } })
+  const { register, handleSubmit } = useForm({ defaultValues: { consent_matching: defaultValues?.consent_matching ?? true, consent_outreach: defaultValues?.consent_outreach ?? true, consent_research: defaultValues?.consent_research ?? true, consent_training: defaultValues?.consent_training ?? true, data_retention_preference: defaultValues?.data_retention_preference || 'standard', deletion_requested: defaultValues?.deletion_requested || false } })
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
@@ -307,7 +307,9 @@ export function DataRightsForm({ defaultValues, onSubmit, loading }: FormProps) 
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('consent_matching')} /> Allow use for program matching</label>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('consent_outreach')} /> Allow use for outreach and marketing</label>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('consent_research')} /> Allow use for research and analytics</label>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('consent_training')} /> Allow use for AI model training</label>
         </div>
+        <p className="text-xs text-gray-400 mt-1.5">Turning off model training excludes your data from any future AI training set. It does not affect your matches or recommendations.</p>
       </div>
       <Select label="Data Retention" options={DATA_RETENTION_OPTIONS} {...register('data_retention_preference')} />
       <div className="border-t border-gray-100 pt-3">
