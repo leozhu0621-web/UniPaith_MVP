@@ -16,6 +16,7 @@ from unipaith.schemas.interview import (
     InterviewResponse,
     InterviewScoreResponse,
     ProposeInterviewRequest,
+    RescheduleInterviewRequest,
     ScoreInterviewRequest,
     ScorePrefillRequest,
     ScorePrefillResponse,
@@ -130,6 +131,26 @@ async def mark_no_show(
     return await svc.build_view(interview)
 
 
+@router.post("/{interview_id}/reschedule", response_model=InterviewResponse)
+async def reschedule_interview(
+    interview_id: UUID,
+    body: RescheduleInterviewRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    await InstitutionService(db).get_institution(user.id)
+    svc = InterviewService(db)
+    interview = await svc.reschedule_interview(
+        interview_id,
+        actor_user_id=user.id,
+        proposed_times=body.proposed_times,
+        async_window_end=body.async_window_end,
+        duration_minutes=body.duration_minutes,
+        location_or_link=body.location_or_link,
+    )
+    return await svc.build_view(interview)
+
+
 @router.post("/{interview_id}/score", response_model=InterviewScoreResponse)
 async def score_interview(
     interview_id: UUID,
@@ -228,6 +249,20 @@ async def decline_interview(
     profile = await StudentService(db)._get_student_profile(user.id)
     svc = InterviewService(db)
     result = await svc.decline_interview(profile.id, interview_id)
+    view = await svc.build_view(result)
+    await db.commit()
+    return view
+
+
+@router.post("/{interview_id}/request-reschedule", response_model=InterviewResponse)
+async def request_reschedule(
+    interview_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    profile = await StudentService(db)._get_student_profile(user.id)
+    svc = InterviewService(db)
+    result = await svc.request_reschedule(profile.id, interview_id)
     view = await svc.build_view(result)
     await db.commit()
     return view

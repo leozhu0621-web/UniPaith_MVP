@@ -660,6 +660,72 @@ class InterviewService:
         await self.db.flush()
         return interview
 
+    async def reschedule_interview(
+        self,
+        interview_id: UUID,
+        *,
+        actor_user_id: UUID,
+        proposed_times: list[str] | None = None,
+        async_window_end: str | None = None,
+        duration_minutes: int | None = None,
+        location_or_link: str | None = None,
+    ) -> Interview:
+        """Institution reschedules an interview (§13 "Reschedule").
+
+        Resets the interview to ``proposed`` with new times (live) or a new
+        window (async), clears the confirmed time, and re-sends the invite so
+        the student re-confirms.
+        """
+        interview = await self._get_interview(interview_id)
+        if interview.status in ("completed", "cancelled"):
+            raise BadRequestException("Cannot reschedule a completed or cancelled interview")
+
+        is_async = (interview.interview_type or "") in ASYNC_INTERVIEW_TYPES
+        if is_async:
+            if not async_window_end:
+                raise BadRequestException("A new submission window deadline is required")
+            interview.async_window_end = _parse_iso(async_window_end)
+        else:
+            if not proposed_times:
+                raise BadRequestException("At least one new proposed time is required")
+            interview.proposed_times = proposed_times
+
+        if duration_minutes is not None:
+            interview.duration_minutes = duration_minutes
+        if location_or_link is not None:
+            interview.location_or_link = location_or_link
+        interview.confirmed_time = None
+        interview.status = "proposed"
+        await self.db.flush()
+
+        # Re-send the invite so the student re-confirms the new time(s).
+        ctx = await self._load_interview_context(interview.application_id)
+        if ctx is not None:
+            application, program, institution, profile = ctx
+            await self._send_interview_invite(
+                actor_user_id=actor_user_id,
+                interview=interview,
+                application=application,
+                program=program,
+                institution=institution,
+                profile=profile,
+                ai_draft_used=False,
+            )
+        return interview
+
+    async def request_reschedule(self, student_id: UUID, interview_id: UUID) -> Interview:
+        """Student requests a reschedule (§8 "Reschedule requested → notify staff").
+
+        Keeps the interview but flags the thread back to the institution and
+        notifies staff so they can re-propose times.
+        """
+        interview = await self._get_student_interview(student_id, interview_id)
+        if interview.status not in ("proposed", "confirmed"):
+            raise BadRequestException("Only proposed or confirmed interviews can be rescheduled")
+        await self.db.flush()
+        await self._notify_institution_reschedule(interview)
+        return interview
+
     async def score_interview(
         self,
         interview_id: UUID,
@@ -820,6 +886,38 @@ class InterviewService:
             )
         except Exception as e:  # noqa: BLE001
             logger.warning("interview status notify failed for %s: %s", interview.id, e)
+
+    async def _load_interview_context(self, application_id: UUID):
+        """Load (application, program, institution, profile) for an interview."""
+        row = await self.db.execute(
+            select(Application, Program, Institution, StudentProfile)
+            .join(Program, Application.program_id == Program.id)
+            .join(Institution, Program.institution_id == Institution.id)
+            .join(StudentProfile, Application.student_id == StudentProfile.id)
+            .where(Application.id == application_id)
+        )
+        return row.first()
+
+    async def _notify_institution_reschedule(self, interview: Interview) -> None:
+        """Notify the institution's admin that the student asked to reschedule (§8)."""
+        try:
+            ctx = await self._load_interview_context(interview.application_id)
+            if ctx is None:
+                return
+            _app, program, institution, profile = ctx
+            name = self._display_name(profile, None)
+            if not institution.admin_user_id:
+                return
+            await self.notifications.notify(
+                institution.admin_user_id,
+                "interview_invites",
+                title=f"{name}: reschedule requested",
+                body=f"{name} asked to reschedule their {program.program_name} interview.",
+                action_url="/i/interviews",
+                metadata={"interview_id": str(interview.id)},
+            )
+        except Exception as e:  # noqa: BLE001
+            logger.warning("reschedule notify failed for %s: %s", interview.id, e)
 
     async def _get_interview(self, interview_id: UUID) -> Interview:
         result = await self.db.execute(select(Interview).where(Interview.id == interview_id))
