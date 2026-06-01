@@ -736,9 +736,28 @@ async def draft_campaign_copy(
     Falls back to an objective-keyed template stub when the LLM path is disabled
     or fails (never 5xxes)."""
     inst = await _svc(db).get_institution(user.id)
+    from unipaith.services.ai_config_service import AIConfigService
+    from unipaith.services.ai_surface_service import AISurfaceService
     from unipaith.services.campaign_copy_service import draft_campaign_copy as _draft
 
-    return await _draft(db, inst, body)
+    cfgsvc = AIConfigService(db)
+    if not await cfgsvc.is_surface_enabled(inst.id, "campaign_copy"):
+        return DraftCampaignCopyResponse(subject="", body="", source="fallback", disabled=True)
+    result = await _draft(db, inst, body)
+    # Spec 37 §3 — record the AI-generated campaign copy; token lets the save
+    # action capture the human edit diff.
+    no_training = await cfgsvc.is_no_training(inst.id)
+    token = await AISurfaceService(db).record_generated(
+        institution_id=inst.id,
+        actor_user_id=user.id,
+        surface="campaign_copy",
+        agent="campaign_copy",
+        ai_output={"subject": result.subject, "body": result.body},
+        model=result.source,
+        no_training=no_training,
+    )
+    result.draft_token = str(token)
+    return result
 
 
 # --- Campaign Links & Attribution ---
@@ -2147,16 +2166,38 @@ async def generate_ai_communication_draft(
     user: User = Depends(require_institution_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    """AI-generate a context-aware message draft for an applicant."""
+    """AI-generate a context-aware message draft for an applicant (Spec 37
+    §2.1). Staff edit before sending; the human edit diff is captured when the
+    message is sent (frontend → /institutions/me/ai-surface/commit)."""
+    from unipaith.services.ai_config_service import AIConfigService
+    from unipaith.services.ai_surface_service import AISurfaceService
     from unipaith.services.communication_service import CommunicationService
 
     inst = await _svc(db).get_institution(user.id)
-    return await CommunicationService(db).generate_ai_draft(
+    cfgsvc = AIConfigService(db)
+    if not await cfgsvc.is_surface_enabled(inst.id, "message_draft"):
+        return {"disabled": True, "message_type": message_type}
+    draft = await CommunicationService(db).generate_ai_draft(
         inst.id,
         application_id,
         message_type,
         context_notes,
     )
+    # Spec 37 §3 — record the AI-generated draft; return its token so the send
+    # action can capture the human edit diff.
+    no_training = await cfgsvc.is_no_training(inst.id)
+    token = await AISurfaceService(db).record_generated(
+        institution_id=inst.id,
+        actor_user_id=user.id,
+        surface="message_draft",
+        agent="institution_reply_drafter",
+        ai_output={"subject": draft.get("subject", ""), "body": draft.get("body", "")},
+        application_id=application_id,
+        model=draft.get("source"),
+        no_training=no_training,
+    )
+    draft["draft_token"] = str(token)
+    return draft
 
 
 # --- Audit Log ---

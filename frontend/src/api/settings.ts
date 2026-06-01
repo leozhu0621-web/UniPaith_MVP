@@ -63,11 +63,17 @@ export const cancelDeletion = () =>
 
 // ── Institution settings + team ─────────────────────────────────────────────
 
+export interface UpdateAIConfigPayload {
+  surfaces?: Record<string, { enabled?: boolean; min_confidence?: number }>
+  no_training?: boolean
+}
+
 export interface UpdateInstitutionSettingsPayload {
   name?: string
   contact_email?: string
   website_url?: string
   review_config?: Partial<ReviewConfig>
+  ai_config?: UpdateAIConfigPayload
   theme?: 'light' | 'dark' | 'system'
   locale?: string
   timezone?: string

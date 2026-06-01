@@ -567,6 +567,10 @@ export async function previewTemplate(templateId: string, applicationId?: string
 
 export async function generateAIDraft(applicationId: string, messageType: string, contextNotes?: string): Promise<{
   subject: string; body: string; message_type: string; editable: boolean
+  // Spec 37 §3/§5 — capture token, AI-vs-rule-based source, and disabled flag.
+  source?: 'ai' | 'rule_based'
+  draft_token?: string
+  disabled?: boolean
 }> {
   const params: Record<string, string> = { application_id: applicationId, message_type: messageType }
   if (contextNotes) params.context_notes = contextNotes

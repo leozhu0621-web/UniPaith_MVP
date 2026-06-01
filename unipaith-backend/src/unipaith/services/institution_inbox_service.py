@@ -670,6 +670,11 @@ class InstitutionInboxService:
         if not settings.ai_institution_reply_v2_enabled:
             return None
         inst = await self._require_institution(user_id)
+        # Spec 37 §5 — respect the institution's message-draft AI toggle.
+        from unipaith.services.ai_config_service import AIConfigService
+
+        if not await AIConfigService(self.db).is_surface_enabled(inst.id, "message_draft"):
+            return None
         conv = await self._owned_thread(inst.id, thread_id)
         thread = await self.get_thread(user_id, thread_id)
 
@@ -709,11 +714,26 @@ class InstitutionInboxService:
         result = await self._drafter.draft(input_view=input_view, db=self.db)
         if result is None:
             return None
+        # Spec 37 §3 — record the AI-generated reply; token lets the send action
+        # capture the human edit diff.
+        from unipaith.services.ai_config_service import AIConfigService
+        from unipaith.services.ai_surface_service import AISurfaceService
+
+        no_training = await AIConfigService(self.db).is_no_training(inst.id)
+        token = await AISurfaceService(self.db).record_generated(
+            institution_id=inst.id,
+            actor_user_id=user_id,
+            surface="message_draft",
+            agent="institution_reply_drafter",
+            ai_output={"body": result.draft},
+            no_training=no_training,
+        )
         return InstSuggestedReplyResponse(
             draft=result.draft,
             tone=result.tone,
             length=result.length,
             alternate_drafts=result.alternate_drafts,
+            draft_token=str(token),
         )
 
     async def intent_suggestion(

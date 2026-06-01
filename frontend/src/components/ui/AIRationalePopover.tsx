@@ -2,23 +2,15 @@ import { Sparkles, RefreshCw } from 'lucide-react'
 import clsx from 'clsx'
 import Popover from './Popover'
 import ConfidenceDots from './ConfidenceDots'
+import FallbackNote from './FallbackNote'
 
 // AI surfaces — Spec/02-design-system.md §6 (AI Rationale Popover anatomy) + §15.
 // Every score/ranking/recommendation gets a "Why" affordance that opens this.
 
-export function AIBadge({ label = 'AI assist', className }: { label?: string; className?: string }) {
-  return (
-    <span
-      className={clsx(
-        'inline-flex items-center gap-1 rounded-pill border border-accent bg-card px-2 py-0.5 text-[11px] font-semibold text-accent',
-        className
-      )}
-    >
-      <Sparkles size={11} />
-      {label}
-    </span>
-  )
-}
+// Spec 37 §6 — one canonical AI attribution badge across student + institution
+// surfaces. Re-exported here so existing `import { AIBadge } from
+// '.../AIRationalePopover'` consumers stay pointed at the single source of truth.
+export { default as AIBadge } from './AIBadge'
 
 export interface RationaleContentProps {
   title?: string
@@ -98,9 +90,7 @@ export function RationaleContent({
         </div>
       )}
 
-      {isFallback && (
-        <p className="text-xs text-muted-foreground italic">Showing rule-based result.</p>
-      )}
+      {isFallback && <FallbackNote />}
       {lastRunAt && (
         <p className="text-[11px] text-muted-foreground">Updated {lastRunAt}</p>
       )}

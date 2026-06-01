@@ -1256,6 +1256,18 @@ export interface ReviewConfig {
   reviewer_assignment_mode: 'round_robin' | 'load_balanced' | 'manual'
 }
 
+// Spec 37 §5 — per-institution AI controls (per-surface on/off + confidence
+// thresholds) plus the 46 §9 no-training tier override.
+export interface AISurfaceConfig {
+  enabled: boolean
+  min_confidence: number
+}
+
+export interface AIConfig {
+  surfaces: Record<string, AISurfaceConfig>
+  no_training: boolean
+}
+
 export interface InstitutionSettings {
   account: {
     institution_id: string | null
@@ -1273,6 +1285,7 @@ export interface InstitutionSettings {
   team: TeamMember[]
   deletion: DeletionInfo | null
   review_config: ReviewConfig
+  ai_config: AIConfig
 }
 
 // ============ RECOMMENDATIONS ============

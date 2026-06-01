@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import random
 import string
 from datetime import UTC, date, datetime, timedelta
@@ -25,6 +26,8 @@ from unipaith.models.matching import MatchResult
 from unipaith.models.needs import StudentNeed
 from unipaith.models.student import StudentProfile
 from unipaith.services.guardrail_service import validate_intent
+
+logger = logging.getLogger(__name__)
 
 # Spec 18 §2 — institution decision → student-facing decision-state mapping.
 _INSTITUTION_DECISION_STATE = {
@@ -544,11 +547,31 @@ class ApplicationService:
             app.submitted_at = now
             app.completeness_status = "complete"
             await self.db.flush()
+            await self._post_submit_integrity_scan(app)
             await self.db.refresh(app)
             return app
 
         # Internal: enforce the readiness gate + freeze a submission snapshot.
         return await self.submit_application_with_guardrails(student_id, application_id)
+
+    async def _post_submit_integrity_scan(self, app: Application) -> None:
+        """Spec 37 G-AI4 — auto-run the AI integrity / authenticity scan on
+        submit so flagged essays surface in the institution's integrity queue
+        for human review. Best-effort: a savepoint isolates any failure so a
+        submission never 5xxes (Spec 37 §1.3), and the scan is idempotent so a
+        later manual rescan won't duplicate signals."""
+        try:
+            institution_id = await self.db.scalar(
+                select(Program.institution_id).where(Program.id == app.program_id)
+            )
+            if institution_id is None:
+                return
+            from unipaith.services.review_pipeline_service import ReviewPipelineService
+
+            async with self.db.begin_nested():
+                await ReviewPipelineService(self.db).scan_integrity(institution_id, app.id)
+        except Exception as exc:  # noqa: BLE001 — submission must never fail on the scan
+            logger.info("post-submit integrity scan skipped for app=%s: %s", app.id, exc)
 
     async def withdraw_application(self, student_id: UUID, application_id: UUID) -> None:
         app = await self._get_application_for_student(student_id, application_id)
@@ -1591,6 +1614,7 @@ class ApplicationService:
         )
         self.db.add(submission)
         await self.db.flush()
+        await self._post_submit_integrity_scan(app)
         await self.db.refresh(app)
         return app
 

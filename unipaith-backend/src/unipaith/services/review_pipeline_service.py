@@ -30,6 +30,11 @@ from unipaith.models.student import StudentProfile
 logger = logging.getLogger(__name__)
 
 
+class _SkipAuthenticityError(Exception):
+    """Internal sentinel — the institution disabled the authenticity-risk
+    surface (Spec 37 §5); skip the scan without logging a warning."""
+
+
 class ReviewPipelineService:
     """Manages the admissions review pipeline for an institution."""
 
@@ -820,6 +825,14 @@ class ReviewPipelineService:
         try:
             from unipaith.ai.authenticity import get_authenticity_scorer
             from unipaith.models.engagement import StudentEssay
+            from unipaith.services.ai_config_service import AIConfigService
+
+            # Spec 37 §5 — respect the institution's authenticity-risk toggle +
+            # confidence floor (a flag below the floor is suppressed).
+            cfgsvc = AIConfigService(self.db)
+            if not await cfgsvc.is_surface_enabled(institution_id, "authenticity_risk"):
+                raise _SkipAuthenticityError()
+            min_conf = await cfgsvc.min_confidence(institution_id, "authenticity_risk")
 
             essays_r = await self.db.execute(
                 select(StudentEssay).where(
@@ -834,7 +847,7 @@ class ReviewPipelineService:
                 risk = await scorer.score(
                     essay_text=essay.content, student_id=app.student_id, db=self.db
                 )
-                if risk.is_flag:
+                if risk.is_flag and int(risk.confidence or 0) >= min_conf:
                     signals.append(
                         {
                             "signal_type": "essay_authenticity",
@@ -853,13 +866,31 @@ class ReviewPipelineService:
                             },
                         }
                     )
+        except _SkipAuthenticityError:
+            pass  # institution disabled the authenticity-risk surface
         except Exception as exc:  # noqa: BLE001 — integrity scan must not 5xx
             logger.info("authenticity scan skipped for app=%s: %s", application_id, exc)
 
-        # Persist signals
+        # Persist signals — idempotent so the auto-scan on submit and a later
+        # manual rescan don't pile up duplicates (Spec 37 G-AI4 wires this onto
+        # the submit path). An open signal of the same kind (and same essay for
+        # authenticity) is left as-is.
+        existing_r = await self.db.execute(
+            select(IntegritySignal).where(
+                IntegritySignal.application_id == application_id,
+                IntegritySignal.status == "open",
+            )
+        )
+        existing_keys = {
+            (s.signal_type, (s.evidence or {}).get("essay_id")) for s in existing_r.scalars().all()
+        }
         now = datetime.now(UTC)
         persisted: list[dict] = []
         for sig in signals:
+            key = (sig["signal_type"], (sig.get("evidence") or {}).get("essay_id"))
+            if key in existing_keys:
+                continue
+            existing_keys.add(key)
             entry = IntegritySignal(
                 application_id=application_id,
                 institution_id=institution_id,

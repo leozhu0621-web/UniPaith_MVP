@@ -1,4 +1,5 @@
 """Communication template service — CRUD, personalization, and delivery."""
+
 from __future__ import annotations
 
 import re
@@ -36,6 +37,62 @@ def _extract_variables(text: str) -> list[str]:
     return list(set(re.findall(r"\{\{(\w+)\}\}", text)))
 
 
+# Spec 37 §2.1 — message-draft kinds → InstitutionReplyDrafter reason codes.
+_REASON_BY_TYPE = {
+    "decision": "decision_notice",
+    "decision_notice": "decision_notice",
+    "missing_items": "missing_items",
+    "missing_documents": "missing_items",
+    "interview_invite": "interview_invite",
+    "interview": "interview_invite",
+    "clarification": "clarification_request",
+    "clarification_request": "clarification_request",
+}
+
+
+def _rule_based_message_draft(
+    message_type: str,
+    applicant: str,
+    program: str,
+    institution: str,
+    context_notes: str | None,
+) -> dict[str, str]:
+    """Deterministic structured draft per message kind — the graceful fallback
+    (Spec 37 §1.3) used whenever the AI drafter is unavailable. Staff edit
+    before sending; nothing is sent automatically."""
+    signoff = f"\n\nWarm regards,\n{institution or 'Admissions'}"
+    note = f"\n\nNote from your reviewer: {context_notes}" if context_notes else ""
+    drafts = {
+        "decision_notice": (
+            f"An update on your application to {program}",
+            f"Dear {applicant},\n\nThank you for applying to {program}. We have completed our "
+            f"review of your application and have an update to share regarding your admission "
+            f"decision. Please review the details and reach out with any questions.{note}{signoff}",
+        ),
+        "missing_items": (
+            f"Action needed to complete your application to {program}",
+            f"Dear {applicant},\n\nThank you for your application to {program}. To continue our "
+            f"review, we still need a few outstanding items from you. Please complete them at your "
+            f"earliest convenience so we can move your application forward.{note}{signoff}",
+        ),
+        "interview_invite": (
+            f"Interview invitation — {program}",
+            f"Dear {applicant},\n\nWe enjoyed reviewing your application to {program} and would "
+            f"like to invite you to an interview. Please let us know your availability and we will "
+            f"share scheduling options.{note}{signoff}",
+        ),
+        "clarification_request": (
+            f"A question about your application to {program}",
+            f"Dear {applicant},\n\nThank you for your application to {program}. As part of our "
+            f"review we have a brief question and would appreciate a clarification from "
+            f"you.{note}{signoff}",
+        ),
+    }
+    reason = _REASON_BY_TYPE.get(message_type, "clarification_request")
+    subject, body = drafts.get(reason, drafts["clarification_request"])
+    return {"subject": subject, "body": body}
+
+
 class CommunicationService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -59,7 +116,9 @@ class CommunicationService:
         return [await self._enrich(t) for t in result.scalars().all()]
 
     async def create_template(
-        self, institution_id: UUID, data: CreateTemplateRequest,
+        self,
+        institution_id: UUID,
+        data: CreateTemplateRequest,
     ) -> TemplateResponse:
         # If setting as default, unset existing default of same type
         if data.is_default:
@@ -72,7 +131,8 @@ class CommunicationService:
             name=data.name,
             subject=data.subject,
             body=data.body,
-            variables=data.variables or _extract_variables(
+            variables=data.variables
+            or _extract_variables(
                 data.subject + " " + data.body,
             ),
             is_default=data.is_default,
@@ -109,7 +169,9 @@ class CommunicationService:
         return await self._enrich(tmpl)
 
     async def delete_template(
-        self, institution_id: UUID, template_id: UUID,
+        self,
+        institution_id: UUID,
+        template_id: UUID,
     ) -> None:
         tmpl = await self._get(institution_id, template_id)
         await self.db.delete(tmpl)
@@ -123,7 +185,8 @@ class CommunicationService:
     ) -> TemplatePreviewResponse:
         tmpl = await self._get(institution_id, template_id)
         variables = await self._resolve_variables(
-            institution_id, application_id,
+            institution_id,
+            application_id,
         )
         return TemplatePreviewResponse(
             rendered_subject=_personalize(tmpl.subject, variables),
@@ -149,7 +212,8 @@ class CommunicationService:
         for app_id in application_ids:
             try:
                 variables = await self._resolve_variables(
-                    institution_id, app_id,
+                    institution_id,
+                    app_id,
                 )
                 if overrides:
                     variables.update(overrides)
@@ -198,7 +262,9 @@ class CommunicationService:
     # --- Helpers ---
 
     async def _get(
-        self, institution_id: UUID, template_id: UUID,
+        self,
+        institution_id: UUID,
+        template_id: UUID,
     ) -> CommunicationTemplate:
         r = await self.db.execute(
             select(CommunicationTemplate).where(
@@ -212,7 +278,9 @@ class CommunicationService:
         return tmpl
 
     async def _unset_defaults(
-        self, institution_id: UUID, template_type: str,
+        self,
+        institution_id: UUID,
+        template_type: str,
     ) -> None:
         from sqlalchemy import update
 
@@ -235,9 +303,7 @@ class CommunicationService:
         variables: dict[str, str] = {}
 
         # Institution info
-        ir = await self.db.execute(
-            select(Institution).where(Institution.id == institution_id)
-        )
+        ir = await self.db.execute(select(Institution).where(Institution.id == institution_id))
         inst = ir.scalar_one_or_none()
         if inst:
             variables["institution_name"] = inst.name
@@ -250,9 +316,7 @@ class CommunicationService:
             return variables
 
         # Application + student + program
-        ar = await self.db.execute(
-            select(Application).where(Application.id == application_id)
-        )
+        ar = await self.db.execute(select(Application).where(Application.id == application_id))
         app = ar.scalar_one_or_none()
         if app:
             # Program
@@ -284,7 +348,8 @@ class CommunicationService:
         return variables
 
     async def _enrich(
-        self, tmpl: CommunicationTemplate,
+        self,
+        tmpl: CommunicationTemplate,
     ) -> TemplateResponse:
         prog_name = None
         if tmpl.program_id:
@@ -320,19 +385,51 @@ class CommunicationService:
         message_type: str,
         context_notes: str | None = None,
     ) -> dict:
-        """Generate a context-aware message draft using AI."""
-        variables = await self._resolve_variables(
-            institution_id, application_id,
+        """Spec 37 §2.1 — AI-generate a context-aware message draft (decision /
+        missing-items / interview-invite / clarification) that staff edit before
+        sending. Graceful per Spec 37 §1.3: an AI failure falls back to a
+        rule-based template (never 5xx). ``source`` tells the UI whether to show
+        the "Showing rule-based result" note; nothing is ever sent automatically."""
+        variables = await self._resolve_variables(institution_id, application_id)
+        applicant = (
+            f"{variables.get('first_name', '')} {variables.get('last_name', '')}".strip()
+            or "Applicant"
+        )
+        program = variables.get("program_name", "our program")
+        institution = variables.get("institution_name", "")
+        base = _rule_based_message_draft(
+            message_type, applicant, program, institution, context_notes
         )
 
-        # AI engine is being rebuilt — return a placeholder draft
+        subject, body, source = base["subject"], base["body"], "rule_based"
+        try:
+            from unipaith.ai.institution_reply import (
+                InstitutionReplyInput,
+                get_institution_reply_drafter,
+            )
+
+            result = await get_institution_reply_drafter().draft(
+                input_view=InstitutionReplyInput(
+                    institution_name=institution,
+                    applicant_name=applicant,
+                    reason_code=_REASON_BY_TYPE.get(message_type, "clarification_request"),
+                    thread_subject=subject,
+                    application={"program_name": program},
+                    context={"notes": context_notes} if context_notes else {},
+                ),
+                db=self.db,
+            )
+            if result and result.draft:
+                body = result.draft
+                source = "ai"
+        except Exception:  # noqa: BLE001 — any failure → rule-based draft (graceful)
+            pass
+
         return {
-            "subject": (
-                "Regarding your application to "
-                f"{variables.get('program_name', 'our program')}"
-            ),
-            "body": "AI draft generation is temporarily unavailable (engine being rebuilt).",
+            "subject": subject,
+            "body": body,
             "message_type": message_type,
             "variables_used": variables,
             "editable": True,
+            "source": source,
         }
