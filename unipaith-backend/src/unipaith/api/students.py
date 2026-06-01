@@ -9,6 +9,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.core.exceptions import NotFoundException
+from unipaith.core.media_urls import resolve_media_urls
 from unipaith.database import get_db
 from unipaith.dependencies import require_student
 from unipaith.models.engagement import StudentEngagementSignal
@@ -1916,7 +1917,7 @@ async def get_student_feed(
                     "institution_name": inst_name,
                     "title": post.title,
                     "body": post.body,
-                    "media_urls": post.media_urls,
+                    "media_urls": resolve_media_urls(post.media_urls),
                     "date": post.created_at.isoformat(),
                 }
             )
