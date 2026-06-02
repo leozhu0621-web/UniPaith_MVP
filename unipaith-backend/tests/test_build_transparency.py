@@ -436,10 +436,11 @@ async def test_overview_endpoint(client: AsyncClient):
         "acceptance",
         "production",
         "search",
+        "chatbot_eval",
         "surfaces",
     ):
         assert key in body
-    assert len(body["surfaces"]) == 10
+    assert len(body["surfaces"]) == 11
     assert {s["key"] for s in body["surfaces"]} == {
         "claude-api",
         "roadmap",
@@ -451,6 +452,7 @@ async def test_overview_endpoint(client: AsyncClient):
         "frontend",
         "backend",
         "search",
+        "chatbot-eval",
     }
     fe = next(s for s in body["surfaces"] if s["key"] == "frontend")
     assert fe["path"] == "/goal/frontend" and fe["spec"] == "54"
@@ -466,6 +468,11 @@ async def test_overview_endpoint(client: AsyncClient):
     assert search["stat"] == (
         f"{body['search']['capabilities_live']}/{body['search']['capability_count']}"
     )
+    # Spec 61 — the chatbot-eval surface carries the live golden-case count read from the run.
+    chatbot = next(s for s in body["surfaces"] if s["key"] == "chatbot-eval")
+    assert chatbot["spec"] == "61"
+    assert chatbot["path"] == "/goal/chatbot-eval"
+    assert chatbot["stat"] == body["chatbot_eval"]["golden_case_total"]
 
 
 @pytest.mark.asyncio

@@ -1,4 +1,4 @@
-"""Specs 48/49/50/51/52/53/54/55 — the build-transparency surface.
+"""Specs 48/49/50/51/52/53/54/55/56/61 — the build-transparency surface.
 
 A read-only metadata layer that turns the build-integration / standards docs into
 queryable data, the same way ``ai.catalog`` turns spec 45 into ``GET /ai/agents``:
@@ -24,6 +24,14 @@ queryable data, the same way ``ai.catalog`` turns spec 45 into ``GET /ai/agents`
   running ``settings``**, the middleware count off the running app, the health
   probes **resolved from the live route table**, and the read-cache hit-rate from
   the running ``core.cache``.
+- ``chatbot_eval`` — spec 61's chatbot training & evaluation loop: the per-agent
+  behavior constitution (the versioned rubric), the always-on safety / crisis
+  floor, the deterministic pre-judge checks, the chatbot eval adapter, and the
+  golden set + red-team battery — with the constitution dimensions + version
+  parsed from the live rubric files, the golden-set / red-team / crisis case
+  counts read off disk through the runner's loaders, the eval suites confirmed
+  against the live ``runner.SUITES`` map, and the agent tiers + provider + flags
+  read from the registry and the running ``settings``.
 
 All back the public ``/build/*`` endpoints and the ``/goal`` hub. They are DB-free
 and expose only build *architecture* — never any user data.

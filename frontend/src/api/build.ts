@@ -7,6 +7,7 @@ import type {
   Acceptance,
   ApiContract,
   BuildOverview,
+  ChatbotEval,
   DataModel,
   FeatureCatalog,
   FrontendStandards,
@@ -63,5 +64,10 @@ export async function getProduction(): Promise<Production> {
 
 export async function getSearchBuild(): Promise<SearchBuild> {
   const { data } = await apiClient.get<SearchBuild>('/build/search')
+  return data
+}
+
+export async function getChatbotEval(): Promise<ChatbotEval> {
+  const { data } = await apiClient.get<ChatbotEval>('/build/chatbot-eval')
   return data
 }
