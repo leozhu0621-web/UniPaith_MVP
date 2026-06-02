@@ -271,14 +271,72 @@ class MatchService:
         reranker_state = await self._reranker_state_cached()
         ranked = get_reranker(state=reranker_state).rerank(sfv, ranked)
 
+        # Spec 46 §6 — fairness auto-halt gate. A halted cohort stops scoring
+        # NEW applicants for that program; students already scored keep their
+        # score ("existing scores remain"). Snapshot existing scores for halted
+        # programs as plain values before the delete, then preserve them.
+        from unipaith.config import settings as _settings
+
+        halted_ids: set[UUID] = set()
+        preserved: dict[UUID, dict] = {}
+        if _settings.fairness_autohalt_v2_enabled:
+            from unipaith.services.fairness_service import FairnessService
+
+            halted_ids = await FairnessService(self.db).halted_program_ids()
+            if halted_ids and replace_existing:
+                existing_rows = (
+                    (
+                        await self.db.execute(
+                            select(MatchResult).where(
+                                MatchResult.student_id == student_id,
+                                MatchResult.program_id.in_(halted_ids),
+                            )
+                        )
+                    )
+                    .scalars()
+                    .all()
+                )
+                preserved = {
+                    r.program_id: {
+                        "fitness_score": r.fitness_score,
+                        "confidence_score": r.confidence_score,
+                        "fitness_breakdown": r.fitness_breakdown,
+                        "confidence_breakdown": r.confidence_breakdown,
+                        "match_score": r.match_score
+                        if r.match_score is not None
+                        else r.fitness_score,
+                    }
+                    for r in existing_rows
+                }
+
         if replace_existing:
             await self.db.execute(delete(MatchResult).where(MatchResult.student_id == student_id))
 
         out: list[MatchRow] = []
+        added_program_ids: set[UUID] = set()
         for rank, (program, scored) in enumerate(ranked[:top_n], start=1):
+            pid = program.program_id
+            if pid in halted_ids:
+                prev = preserved.get(pid)
+                if prev is None:
+                    # New applicant for a halted cohort — do not score.
+                    continue
+                self.db.add(MatchResult(student_id=student_id, program_id=pid, **prev))
+                added_program_ids.add(pid)
+                out.append(
+                    MatchRow(
+                        program_id=pid,
+                        fitness=prev["fitness_score"],
+                        confidence=prev["confidence_score"],
+                        fitness_breakdown=prev["fitness_breakdown"] or {},
+                        confidence_breakdown=prev["confidence_breakdown"] or {},
+                        rank=rank,
+                    )
+                )
+                continue
             row = MatchResult(
                 student_id=student_id,
-                program_id=program.program_id,
+                program_id=pid,
                 # New canonical fields (Phase A PR 4 + this PR).
                 fitness_score=scored.fitness,
                 confidence_score=scored.confidence,
@@ -289,9 +347,10 @@ class MatchService:
                 match_score=scored.fitness,
             )
             self.db.add(row)
+            added_program_ids.add(pid)
             out.append(
                 MatchRow(
-                    program_id=program.program_id,
+                    program_id=pid,
                     fitness=scored.fitness,
                     confidence=scored.confidence,
                     fitness_breakdown=scored.fitness_breakdown,
@@ -299,6 +358,11 @@ class MatchService:
                     rank=rank,
                 )
             )
+        # Re-insert any preserved halted-cohort scores that fell outside the
+        # ranked top-N, so the delete never loses an existing applicant's score.
+        for pid, prev in preserved.items():
+            if pid not in added_program_ids:
+                self.db.add(MatchResult(student_id=student_id, program_id=pid, **prev))
         await self.db.flush()
         # Spec 06 §5.3 — audit the L3 scoring event.
         await self._log_ml_turn(

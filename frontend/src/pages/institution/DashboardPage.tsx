@@ -27,6 +27,9 @@ import { getInstitution, getInstitutionPrograms, getDashboardSummary, getIntelli
 import { getTeam } from '../../api/settings'
 import { getReviewPriorityQueue, getIntegritySignals } from '../../api/reviews'
 import { getNotifications, getUnreadCount } from '../../api/notifications'
+import { getFairnessStatus } from '../../api/fairness'
+import { Line, LineChart, ResponsiveContainer } from 'recharts'
+import { CHART } from './analytics/constants'
 import { admissionsUrl, applicantUrl, INQUIRIES_URL } from '../../utils/institution-routes'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -89,6 +92,13 @@ export default function DashboardPage() {
     queryFn: getYieldRiskAlerts,
     enabled: !!institutionQ.data,
     staleTime: 1000 * 60 * 15,
+  })
+  // Spec 46 §6.4 — fairness auto-halt status (halt + 4-week DI trend).
+  const fairnessStatusQ = useQuery({
+    queryKey: ['fairness-status'],
+    queryFn: getFairnessStatus,
+    enabled: !!institutionQ.data,
+    staleTime: 1000 * 60 * 10,
   })
   // Spec 30 §4 — post-setup nudges for anything skipped during onboarding.
   const datasetsQ = useQuery({
@@ -460,6 +470,73 @@ export default function DashboardPage() {
           <p className="text-sm text-muted-foreground">{summary.fairness.message}</p>
         </Card>
       )}
+
+      {/* Matching fairness — Spec 46 §6.4: halt status + 4-week DI sparkline. */}
+      {fairnessStatusQ.data &&
+        (() => {
+          const fs = fairnessStatusQ.data
+          const halted = fs.programs.filter(p => p.matching_halted).length
+          const spark = fs.weeks.map(w => ({
+            week: w,
+            delta: fs.programs.reduce((m, p) => {
+              const pt = p.trend.find(t => t.week_start === w)
+              return pt && pt.delta > m ? pt.delta : m
+            }, 0),
+          }))
+          const iconCls =
+            fs.overall_status === 'halted'
+              ? 'text-error'
+              : fs.overall_status === 'warning'
+                ? 'text-warning'
+                : 'text-success'
+          return (
+            <Card
+              className={`p-4 ${fs.overall_status === 'halted' ? 'border-error/40' : fs.overall_status === 'warning' ? 'border-warning/30' : ''}`}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Shield size={16} className={iconCls} />
+                  <h3 className="text-sm font-semibold text-foreground">Matching fairness</h3>
+                  {fs.overall_status === 'halted' ? (
+                    <Badge variant="danger">Halted</Badge>
+                  ) : fs.overall_status === 'warning' ? (
+                    <Badge variant="warning">Watch</Badge>
+                  ) : (
+                    <Badge variant="success">Clear</Badge>
+                  )}
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => navigate(admissionsUrl('fairness'))}
+                  className="flex items-center gap-1"
+                >
+                  Open Fairness page <ArrowRight size={14} />
+                </Button>
+              </div>
+              <div className="flex items-center gap-4 mt-2">
+                <div className="h-10 w-28 shrink-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={spark}>
+                      <Line
+                        type="monotone"
+                        dataKey="delta"
+                        stroke={CHART.cobalt}
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {halted > 0
+                    ? `${halted} cohort${halted === 1 ? '' : 's'} halted — review and override if warranted.`
+                    : 'All cohorts within the fairness threshold. Audited every week.'}
+                </p>
+              </div>
+            </Card>
+          )
+        })()}
 
       {/* AI Priority Queue Preview */}
       {topPriority.length > 0 && (

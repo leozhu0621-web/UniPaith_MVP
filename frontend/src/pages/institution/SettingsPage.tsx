@@ -38,6 +38,7 @@ import OrgAccountCard from './settings/OrgAccountCard'
 import ReviewConfigCard from './settings/ReviewConfigCard'
 import AIConfigCard from './settings/AIConfigCard'
 import FeeConfigCard from './settings/FeeConfigCard'
+import DataGovernanceCard from './settings/DataGovernanceCard'
 
 const CAMPUS_SETTING_OPTIONS = [
   { value: '', label: 'Not specified' },
@@ -113,6 +114,8 @@ export default function SettingsPage() {
     { id: 'team', label: 'Team' },
     { id: 'review', label: 'Rubrics' },
     { id: 'ai', label: 'AI' },
+    // Spec 46 §9/§10 — data rights, fairness governance, sub-processors.
+    { id: 'data', label: 'Data & Privacy' },
     { id: 'integrations', label: 'Integrations' },
     { id: 'notifications', label: 'Notifications' },
     { id: 'billing', label: 'Billing' },
@@ -417,6 +420,9 @@ export default function SettingsPage() {
           <AIConfigCard config={settingsQ.data.ai_config} onChanged={refetchSettings} />
         )
       )}
+
+      {/* Data rights, fairness governance, sub-processors (Spec 46 §9/§10) */}
+      {activeTab === 'data' && <DataGovernanceCard />}
 
       {/* Integrations */}
       {activeTab === 'integrations' && (

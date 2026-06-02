@@ -88,6 +88,14 @@ class Institution(Base):
     #    "stripe_connect_account_id": str | null}
     # Effective amounts: program override (cost_data) → this config → none.
     payment_config: Mapped[dict | None] = mapped_column(JSONB)
+    # Spec 46 §9 — institution data-governance config, edited at
+    # /i/settings?tab=data. NULL = platform defaults (see
+    # services/data_governance.DEFAULT_DATA_GOVERNANCE):
+    #   {"override_expiry_weeks_default": int (1–4),
+    #    "protected_attributes_tracked": [str],   # subset of the §6.1 set
+    #    "no_training_tier": bool,                # force consent.training=false
+    #    "data_residency": "us" | "canada" | "eu"}  # Phase 14 deferred, US only
+    data_governance: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -219,6 +227,23 @@ class Program(Base):
     # the column didn't exist and call sites read getattr(...,1) → always 1.
     feature_version: Mapped[int] = mapped_column(
         Integer, nullable=False, default=1, server_default="1"
+    )
+    # Spec 46 §6 — fairness auto-halt. When disparate-impact Δ exceeds this
+    # program's threshold for two consecutive weeks, the matching service stops
+    # scoring NEW applicants for this cohort (existing scores remain). An
+    # institution admin can lift the halt with a logged rationale (§6.3), which
+    # sets fairness_override_active + override_expires_at; expiry re-arms the
+    # halt on the next weekly compute.
+    matching_halted: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    fairness_override_active: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    override_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # §9 — tunable per program (default 0.20, range 0.05–0.40).
+    fairness_threshold: Mapped[Decimal] = mapped_column(
+        Numeric(3, 2), nullable=False, default=Decimal("0.20"), server_default="0.20"
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

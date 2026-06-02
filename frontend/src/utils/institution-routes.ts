@@ -1,6 +1,12 @@
 /** Spec 31 — canonical institution admissions intake routes. */
 
-export type AdmissionsTab = 'pipeline' | 'integrity' | 'interviews' | 'inquiries' | 'cohort'
+export type AdmissionsTab =
+  | 'pipeline'
+  | 'integrity'
+  | 'interviews'
+  | 'inquiries'
+  | 'cohort'
+  | 'fairness'
 export type PipelineView = 'board' | 'list' | 'review' | 'priority'
 
 export function admissionsUrl(tab: AdmissionsTab = 'pipeline', view?: PipelineView): string {

@@ -252,6 +252,12 @@ resource "aws_ecs_task_definition" "backend" {
       # is fully functional, so the engine never depends on the LLM to gate the
       # journey and never 5xxes.
       { name = "AI_INTAKE_ENGINE_V2_ENABLED", value = "true" },
+      # Spec 46 §6 — fairness auto-halt. When true, a cohort whose disparate-impact
+      # Δ exceeds the program threshold for two consecutive weeks halts matching
+      # for NEW applicants until an admin overrides (§6.3). When false the engine
+      # still records weekly signals but never halts (safe rollout). Contractual
+      # commitment → enabled in prod.
+      { name = "FAIRNESS_AUTOHALT_V2_ENABLED", value = "true" },
       # Pin Claude model IDs — config.py defaults match, but pinning here
       # makes the prod surface auditable (and trivial to roll a single
       # agent class to a different model without a code deploy).

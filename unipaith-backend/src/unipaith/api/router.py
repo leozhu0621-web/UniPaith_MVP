@@ -18,6 +18,7 @@ from unipaith.api.discovery import router as discovery_router
 from unipaith.api.documents import router as documents_router
 from unipaith.api.events import router as events_router
 from unipaith.api.goals import router as goals_router
+from unipaith.api.governance import router as governance_router
 from unipaith.api.graduate import router as graduate_router
 from unipaith.api.identity import router as identity_router
 from unipaith.api.inbox import router as inbox_router
@@ -89,6 +90,10 @@ api_router.include_router(recruitment_router)
 # `/students/me/applications/:id/graduate-intent`); before institutions_router so
 # the literal path wins over `/institutions/{id}`.
 api_router.include_router(graduate_router)
+# Spec 46 — data-rights & fairness governance under `/institutions/me/fairness/*`
+# and `/institutions/me/data/*`; before institutions_router so the literal paths
+# win over `/institutions/{id}`.
+api_router.include_router(governance_router)
 api_router.include_router(institutions_router)
 api_router.include_router(programs_router)
 api_router.include_router(applications_router)

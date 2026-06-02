@@ -40,6 +40,7 @@ from unipaith.models.engagement import (
     StudentEssay,
     StudentResume,
 )
+from unipaith.models.fairness import FairnessOverride, FairnessSignal
 from unipaith.models.follow import InstitutionFollow
 from unipaith.models.goals import StudentGoal
 from unipaith.models.graduate import (
@@ -296,6 +297,9 @@ __all__ = [
     "FairnessReport",
     "AdminAuditEvent",
     "AdmissionsAuditLog",
+    # Fairness auto-halt governance (Spec 46 §6)
+    "FairnessSignal",
+    "FairnessOverride",
     # International admissions (Spec 38)
     "InternationalProcessing",
     "CountryRequirementPack",

@@ -10,6 +10,7 @@ import YieldPage from './yield/YieldPage'
 import InternationalPage from './international/InternationalPage'
 import GraduatePage from './graduate/GraduatePage'
 import WaiverQueuePage from './WaiverQueuePage'
+import FairnessPage from './fairness/FairnessPage'
 
 type AdmissionsTab =
   | 'pipeline'
@@ -21,6 +22,7 @@ type AdmissionsTab =
   | 'international'
   | 'graduate'
   | 'waivers'
+  | 'fairness'
 
 const tabs = [
   { id: 'pipeline', label: 'Pipeline' },
@@ -34,18 +36,26 @@ const tabs = [
   { id: 'graduate', label: 'Graduate' },
   // Spec 39 §2.3 / §5 — fee-waiver queue + payments & refunds.
   { id: 'waivers', label: 'Fees & Waivers' },
+  // Spec 46 §6 — fairness auto-halt governance (+ ?tab=fairness-overrides).
+  { id: 'fairness', label: 'Fairness' },
 ]
+
+// `?tab=fairness-overrides` (§6.3) is the override-focused view of the Fairness tab.
+function normalizeTab(raw: string | null): AdmissionsTab {
+  if (raw === 'fairness-overrides') return 'fairness'
+  return (raw as AdmissionsTab) || 'pipeline'
+}
 
 export default function AdmissionsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const initialTab = (searchParams.get('tab') as AdmissionsTab) || 'pipeline'
-  const [activeTab, setActiveTab] = useState<AdmissionsTab>(initialTab)
+  const rawTab = searchParams.get('tab')
+  const [activeTab, setActiveTab] = useState<AdmissionsTab>(normalizeTab(rawTab))
 
   // Keep the active tab in sync with the URL so deep links (e.g. the dashboard's
   // "Review Alerts" → ?tab=integrity) and browser back/forward switch tabs even
   // when AdmissionsPage is already mounted.
   useEffect(() => {
-    const t = (searchParams.get('tab') as AdmissionsTab) || 'pipeline'
+    const t = normalizeTab(searchParams.get('tab'))
     setActiveTab(prev => (prev !== t ? t : prev))
   }, [searchParams])
 
@@ -66,6 +76,7 @@ export default function AdmissionsPage() {
       {activeTab === 'international' && <InternationalPage embedded />}
       {activeTab === 'graduate' && <GraduatePage />}
       {activeTab === 'waivers' && <WaiverQueuePage />}
+      {activeTab === 'fairness' && <FairnessPage focusOverrides={rawTab === 'fairness-overrides'} />}
     </div>
   )
 }

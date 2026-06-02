@@ -392,6 +392,15 @@ class Settings(BaseSettings):
     # per-env via ECS.
     ai_intake_engine_v2_enabled: bool = False
 
+    # Spec 46 §6 — Fairness auto-halt. When True, a cohort whose disparate-impact
+    # Δ exceeds the program threshold for two consecutive weeks has
+    # `programs.matching_halted` set, and the matching service stops scoring NEW
+    # applicants for that cohort until an admin overrides (§6.3). When False, the
+    # engine still RECORDS weekly fairness signals (so the dashboard/heatmap and
+    # audit trail stay populated) but never halts scoring — a safe rollout
+    # default. Enabled per-env via ECS.
+    fairness_autohalt_v2_enabled: bool = False
+
     # GPU infrastructure (cloud-first)
     gpu_mode: str = "openai"  # "openai" | "aws" | "local" | "mock"
     gpu_8b_instance_id: str = ""
