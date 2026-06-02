@@ -120,6 +120,17 @@ async def stripe_webhook(
     except Exception as exc:  # noqa: BLE001 — bad signature / malformed payload → 400
         raise BadRequestException("Invalid Stripe webhook signature") from exc
     await svc.handle_provider_event(event)
+    # Subscription lifecycle (Spec 07 §4.1) → reconcile the student subscription
+    # (renewals, failures, cancellations). Fee/deposit events are a no-op here.
+    if event.type in (
+        "invoice.payment_succeeded",
+        "invoice.payment_failed",
+        "customer.subscription.updated",
+        "customer.subscription.deleted",
+    ):
+        from unipaith.services.billing_service import BillingService
+
+        await BillingService(db).handle_subscription_event(event)
     return {"status": "ok", "event": event.type}
 
 

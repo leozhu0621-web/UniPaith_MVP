@@ -25,6 +25,11 @@ from uuid import UUID
 from unipaith.config import settings
 
 
+class PaymentError(Exception):
+    """Provider-level failure (declined card, misconfiguration). The service
+    layer maps this to a 400 with the message so the UI can show it."""
+
+
 @dataclass
 class PaymentMethod:
     """A card-on-file summary for subscription billing (Spec 21 §2.7)."""
@@ -62,10 +67,13 @@ class RefundResult:
 class ProviderEvent:
     """Normalized webhook event the service can act on without provider details."""
 
-    type: str  # 'checkout.session.completed' | 'charge.refunded' | other (ignored)
+    type: str  # 'checkout.session.completed' | 'charge.refunded' | subscription.* | other
     session_id: str | None = None
     charge_id: str | None = None
     amount_cents: int | None = None
+    # Subscription lifecycle (Spec 07 §4.1) — set for invoice.* / customer.subscription.*.
+    subscription_id: str | None = None
+    subscription_status: str | None = None  # stripe sub status (active/past_due/canceled/...)
     metadata: dict = field(default_factory=dict)
 
 
@@ -75,7 +83,29 @@ class PaymentProvider(ABC):
     name: str = "base"
 
     @abstractmethod
-    def attach_payment_method(self, user_id: UUID) -> PaymentMethod: ...
+    def attach_payment_method(
+        self,
+        user_id: UUID,
+        *,
+        payment_method_token: str | None = None,
+        email: str | None = None,
+    ) -> PaymentMethod:
+        """Capture a card on file for the $15/mo subscription (Spec 07 §4.1).
+
+        ``payment_method_token`` is a provider token from client-side tokenization
+        (Stripe Elements → ``pm_...``); the mock ignores it. Returns the
+        card-on-file summary + provider customer/subscription ids."""
+        ...
+
+    # Subscription lifecycle — concrete no-op defaults so a provider that models
+    # the subscription as local-state-only (mock) needs no override.
+    def cancel_subscription(self, *, subscription_id: str, at_period_end: bool = True) -> None:
+        """Cancel the recurring subscription at the provider."""
+        return None
+
+    def set_subscription_ad_free(self, *, subscription_id: str, enabled: bool) -> None:
+        """Add/remove the $5/mo ad-free add-on item on the subscription."""
+        return None
 
     @abstractmethod
     def create_checkout_session(
@@ -107,7 +137,13 @@ class MockPaymentProvider(PaymentProvider):
 
     name = "mock"
 
-    def attach_payment_method(self, user_id: UUID) -> PaymentMethod:
+    def attach_payment_method(
+        self,
+        user_id: UUID,
+        *,
+        payment_method_token: str | None = None,
+        email: str | None = None,
+    ) -> PaymentMethod:
         token = uuid.uuid4().hex
         return PaymentMethod(
             brand="Visa",
@@ -162,10 +198,87 @@ class StripePaymentProvider(PaymentProvider):
         stripe.api_key = settings.stripe_secret_key
         self._stripe = stripe
 
-    def attach_payment_method(self, user_id: UUID) -> PaymentMethod:
-        # Subscription card capture is out of Spec 39's transactional scope;
-        # mirror the deterministic mock so existing billing UI is unaffected.
-        return MockPaymentProvider().attach_payment_method(user_id)
+    def attach_payment_method(
+        self,
+        user_id: UUID,
+        *,
+        payment_method_token: str | None = None,
+        email: str | None = None,
+    ) -> PaymentMethod:
+        """Real card-on-file + recurring subscription (Spec 07 §4.1). The card is
+        tokenized client-side (Stripe Elements → ``pm_...``); only the token
+        reaches us (PCI). Creates a customer, attaches the card as default, and
+        opens the $15/mo subscription — charging now and raising on decline."""
+        if not payment_method_token:
+            raise PaymentError(
+                "A tokenized card is required. Capture it with Stripe Elements and "
+                "send the resulting payment_method token."
+            )
+        s = self._stripe
+        try:
+            customer = s.Customer.create(email=email, metadata={"user_id": str(user_id)})
+            s.PaymentMethod.attach(payment_method_token, customer=customer.id)
+            s.Customer.modify(
+                customer.id,
+                invoice_settings={"default_payment_method": payment_method_token},
+            )
+            if settings.stripe_price_id:
+                item: dict = {"price": settings.stripe_price_id}
+            else:
+                item = {
+                    "price_data": {
+                        "currency": "usd",
+                        "product_data": {"name": "UniPaith Plus"},
+                        "recurring": {"interval": "month"},
+                        "unit_amount": settings.student_plan_price_usd * 100,
+                    }
+                }
+            sub = s.Subscription.create(
+                customer=customer.id,
+                items=[item],
+                default_payment_method=payment_method_token,
+                # Charge now; raise immediately on a declined card.
+                payment_behavior="error_if_incomplete",
+                expand=["latest_invoice.payment_intent"],
+                metadata={"user_id": str(user_id)},
+            )
+            pm = s.PaymentMethod.retrieve(payment_method_token)
+            return PaymentMethod(
+                brand=pm.card.brand,
+                last4=pm.card.last4,
+                customer_id=customer.id,
+                subscription_id=sub.id,
+            )
+        except s.error.CardError as e:  # type: ignore[attr-defined]
+            raise PaymentError(getattr(e, "user_message", None) or "Your card was declined.") from e
+        except s.error.StripeError as e:  # type: ignore[attr-defined]
+            raise PaymentError(f"Payment error: {e}") from e
+
+    def cancel_subscription(self, *, subscription_id: str, at_period_end: bool = True) -> None:
+        try:
+            if at_period_end:
+                self._stripe.Subscription.modify(subscription_id, cancel_at_period_end=True)
+            else:
+                self._stripe.Subscription.cancel(subscription_id)
+        except self._stripe.error.StripeError as e:  # type: ignore[attr-defined]
+            raise PaymentError(f"Payment error: {e}") from e
+
+    def set_subscription_ad_free(self, *, subscription_id: str, enabled: bool) -> None:
+        price_id = settings.stripe_adfree_price_id
+        if not price_id:
+            raise PaymentError(
+                "STRIPE_ADFREE_PRICE_ID is not configured; cannot manage the ad-free add-on."
+            )
+        s = self._stripe
+        try:
+            items = s.SubscriptionItem.list(subscription=subscription_id)
+            existing = next((i for i in items.data if i.price.id == price_id), None)
+            if enabled and existing is None:
+                s.SubscriptionItem.create(subscription=subscription_id, price=price_id)
+            elif not enabled and existing is not None:
+                s.SubscriptionItem.delete(existing.id)
+        except s.error.StripeError as e:  # type: ignore[attr-defined]
+            raise PaymentError(f"Payment error: {e}") from e
 
     def create_checkout_session(
         self,
@@ -249,6 +362,22 @@ class StripePaymentProvider(PaymentProvider):
                 type="charge.refunded",
                 charge_id=data.get("id") or data.get("charge"),
                 amount_cents=data.get("amount_refunded"),
+                metadata=data.get("metadata") or {},
+            )
+        # Subscription lifecycle (Spec 07 §4.1) — failed renewals gate access;
+        # deletion expires the plan; payment success keeps it active.
+        if etype in ("invoice.payment_succeeded", "invoice.payment_failed"):
+            return ProviderEvent(
+                type=etype,
+                subscription_id=data.get("subscription"),
+                amount_cents=data.get("amount_paid") or data.get("amount_due"),
+                metadata=data.get("metadata") or {},
+            )
+        if etype in ("customer.subscription.updated", "customer.subscription.deleted"):
+            return ProviderEvent(
+                type=etype,
+                subscription_id=data.get("id"),
+                subscription_status=data.get("status"),
                 metadata=data.get("metadata") or {},
             )
         return ProviderEvent(type=etype)

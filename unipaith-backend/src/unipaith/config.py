@@ -522,6 +522,13 @@ class Settings(BaseSettings):
     stripe_secret_key: str = ""
     stripe_publishable_key: str = ""
     stripe_webhook_secret: str = ""
+    # Recurring Price ids for the student subscription (Spec 07 §4.1), created in
+    # the Stripe dashboard or by scripts/setup_stripe_products.py. When empty the
+    # provider builds an inline price_data from student_plan_price_usd, so Stripe
+    # still works without pre-created Prices.
+    stripe_price_id: str = ""  # $15/mo Plus
+    stripe_adfree_price_id: str = ""  # $5/mo ad-free add-on
+    stripe_api_version: str = "2024-06-20"
     # Base URL used to build Stripe Checkout success/cancel return links.
     payments_app_base_url: str = "https://app.unipaith.co"
 

@@ -35,10 +35,22 @@ class StudentBillingResponse(BaseModel):
     is_premium: bool = True
     paywall_enforced: bool = False
     invoices: list[InvoiceItem] = []
+    # Active payment provider ("mock" | "stripe") + the client-safe publishable
+    # key (present only in stripe mode) so the UI knows whether to capture the
+    # card with Stripe Elements.
+    provider: str = "mock"
+    publishable_key: str | None = None
 
 
 class AdFreeRequest(BaseModel):
     enabled: bool
+
+
+class UpgradeRequest(BaseModel):
+    """Optional payload for /upgrade. In stripe mode the client sends the
+    tokenized card (Stripe Elements ``pm_...``); the mock needs no body."""
+
+    payment_method_token: str | None = None
 
 
 class InstitutionBillingResponse(BaseModel):
