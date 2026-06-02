@@ -7,8 +7,15 @@ import GoalHubPage from '../pages/public/GoalHubPage'
 import BuildRoadmapPage from '../pages/public/BuildRoadmapPage'
 import FeatureBacklogPage from '../pages/public/FeatureBacklogPage'
 import ApiContractPage from '../pages/public/ApiContractPage'
+import ExperienceStandardsPage from '../pages/public/ExperienceStandardsPage'
 import * as buildApi from '../api/build'
-import type { ApiContract, BuildOverview, FeatureCatalog, Roadmap } from '../types/build'
+import type {
+  ApiContract,
+  BuildOverview,
+  FeatureCatalog,
+  Roadmap,
+  UxBenchmark,
+} from '../types/build'
 
 // Specs 48/49/50 — the public /goal transparency surfaces. Each renders live
 // build data from the /build/* endpoints and lets the visitor filter it.
@@ -51,6 +58,7 @@ const OVERVIEW: BuildOverview = {
     { key: 'roadmap', title: 'Build roadmap', spec: '48', blurb: 'Phased path to spec.', path: '/goal/roadmap', stat: '13/14', stat_label: 'phases shipped' },
     { key: 'features', title: 'Feature coverage', spec: '49', blurb: 'Every feature mapped.', path: '/goal/features', stat: 60, stat_label: 'features mapped' },
     { key: 'api', title: 'API contract', spec: '50', blurb: 'Read live from routes.', path: '/goal/api', stat: 553, stat_label: 'live routes' },
+    { key: 'experience', title: 'Experience standards', spec: '53', blurb: 'The interaction bar.', path: '/goal/experience', stat: 8, stat_label: 'benchmarked surfaces' },
   ],
 }
 
@@ -129,6 +137,32 @@ const CONTRACT: ApiContract = {
   access_note: 'Conservative read; live source of truth.',
 }
 
+const UX: UxBenchmark = {
+  the_bar: { statement: 'Built to the LinkedIn / Handshake bar.', benchmarks: ['LinkedIn', 'Handshake'] },
+  summary: {
+    surface_count: 2,
+    standard_count: 1,
+    acceptance_count: 1,
+    benchmarks: ['LinkedIn', 'Handshake'],
+    benchmark_keys: ['handshake', 'linkedin'],
+    backed_route_total: 12,
+    surfaces_backed: 2,
+  },
+  surfaces: [
+    { key: 'profile', name: 'Profile', specs: ['08'], files: ['student/ProfilePage.tsx'], benchmark: 'LinkedIn profile', benchmark_key: 'linkedin', build_contract: ['Inline-edit per section'], backed_route_count: 7, sample_paths: ['/api/v1/students/me/profile'] },
+    { key: 'match', name: 'Match / Explore', specs: ['09', '10'], files: ['student/ExplorePage.tsx'], benchmark: 'Handshake search', benchmark_key: 'handshake', build_contract: ['Typeahead'], backed_route_count: 5, sample_paths: ['/api/v1/students/me/matches'] },
+  ],
+  standards: [{ title: 'Optimistic UI', body: 'Apply instantly.', mechanism: '54 §4' }],
+  empty_state: {
+    rule: 'Instructional empty states, never a generic no-data.',
+    first_run: [
+      { side: 'student', to: 'Discover chat', file: 'student/DiscoverHomePage.tsx' },
+      { side: 'institution', to: 'Setup wizard', file: 'institution/SetupPage.tsx' },
+    ],
+  },
+  acceptance: ['Every mutation optimistic or ≤1 skeleton.'],
+}
+
 function renderPage(ui: React.ReactElement, route = '/goal') {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
@@ -151,6 +185,7 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     await waitFor(() => expect(screen.getByText('Build roadmap')).toBeInTheDocument())
     expect(screen.getByText('Feature coverage')).toBeInTheDocument()
     expect(screen.getByText('API contract')).toBeInTheDocument()
+    expect(screen.getByText('Experience standards')).toBeInTheDocument()
     // Live route count from the overview appears (stat band + surface card).
     expect(screen.getAllByText('553').length).toBeGreaterThan(0)
     // The MVP-complete gold beat shows.
@@ -199,5 +234,23 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Public' }))
     await waitFor(() => expect(screen.queryByText('institutions')).not.toBeInTheDocument())
     expect(screen.getByText('build-transparency')).toBeInTheDocument()
+  })
+
+  it('experience page renders surfaces + standards and filters by benchmark', async () => {
+    vi.spyOn(buildApi, 'getUxBenchmark').mockResolvedValue(UX)
+    renderPage(<ExperienceStandardsPage />, '/goal/experience')
+
+    await waitFor(() => expect(screen.getByText('Profile')).toBeInTheDocument())
+    expect(screen.getByText('Match / Explore')).toBeInTheDocument()
+    // §3 standard + §5 acceptance render.
+    expect(screen.getByText('Optimistic UI')).toBeInTheDocument()
+    expect(screen.getByText(/Every mutation optimistic/i)).toBeInTheDocument()
+    // The live-route backing beat (read from the running system) shows.
+    expect(screen.getByText(/12 live routes back these surfaces/i)).toBeInTheDocument()
+
+    // Filter to Handshake → the LinkedIn-benchmarked Profile drops out.
+    fireEvent.click(screen.getByRole('button', { name: 'Handshake' }))
+    await waitFor(() => expect(screen.queryByText('Profile')).not.toBeInTheDocument())
+    expect(screen.getByText('Match / Explore')).toBeInTheDocument()
   })
 })

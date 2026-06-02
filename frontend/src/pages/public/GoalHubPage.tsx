@@ -4,6 +4,7 @@ import {
   ArrowRight,
   CircleCheck,
   Cpu,
+  Gauge,
   ListChecks,
   Map as MapIcon,
   Network,
@@ -27,6 +28,7 @@ const SURFACE_ICONS: Record<string, typeof MapIcon> = {
   roadmap: MapIcon,
   features: ListChecks,
   api: Network,
+  experience: Gauge,
 }
 
 const PRINCIPLES: { title: string; body: string; icon: typeof ShieldCheck }[] = [
@@ -141,7 +143,7 @@ export default function GoalHubPage() {
       <section id="surfaces" className="mt-16 scroll-mt-20">
         <SectionHeading
           icon={MapIcon}
-          title="Four ways to read the build"
+          title="Five ways to read the build"
           sub="Each surface is a public page backed by a DB-free endpoint. Open one to see the detail."
         />
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

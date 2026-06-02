@@ -1,5 +1,5 @@
-// Spec 48/49/50 — types for the public build-transparency surface.
-// Mirror unipaith-backend/src/unipaith/build/{roadmap,features,api_contract}.py
+// Spec 48/49/50/53 — types for the public build-transparency surface.
+// Mirror unipaith-backend/src/unipaith/transparency/{roadmap,features,api_contract,ux_benchmark}.py
 // and api/build.py field-for-field.
 
 // ── Roadmap (spec 48) ───────────────────────────────────────────────────────
@@ -134,4 +134,58 @@ export interface BuildOverview {
   agents: AgentsSummary
   provider: string
   surfaces: OverviewSurface[]
+}
+
+// ── UX benchmark / interaction standards (spec 53) ──────────────────────────
+export interface UxSurface {
+  key: string
+  name: string
+  specs: string[]
+  files: string[]
+  benchmark: string
+  benchmark_key: string // linkedin | handshake | chatgpt | ats
+  build_contract: string[]
+  backed_route_count: number // resolved live from the running route table
+  sample_paths: string[]
+}
+
+export interface InteractionStandard {
+  title: string
+  body: string
+  mechanism: string // the 54 / 56 / 57 mechanism it maps to
+}
+
+export interface EmptyStateFirstRun {
+  side: string
+  to: string
+  file: string
+}
+
+export interface EmptyStatePolicy {
+  rule: string
+  first_run: EmptyStateFirstRun[]
+}
+
+export interface UxTheBar {
+  statement: string
+  benchmarks: string[]
+}
+
+export interface UxBenchmarkSummary {
+  surface_count: number
+  standard_count: number
+  acceptance_count: number
+  benchmarks: string[]
+  benchmark_keys: string[]
+  backed_route_total: number
+  surfaces_backed: number
+}
+
+export interface UxBenchmark {
+  the_bar: UxTheBar
+  summary: UxBenchmarkSummary
+  surfaces: UxSurface[]
+  standards: InteractionStandard[]
+  empty_state: EmptyStatePolicy
+  acceptance: string[]
 }

@@ -2,7 +2,13 @@
 // endpoints expose only build architecture (phases, feature coverage, the live
 // route map), never user data.
 import apiClient from './client'
-import type { ApiContract, BuildOverview, FeatureCatalog, Roadmap } from '../types/build'
+import type {
+  ApiContract,
+  BuildOverview,
+  FeatureCatalog,
+  Roadmap,
+  UxBenchmark,
+} from '../types/build'
 
 export async function getBuildOverview(): Promise<BuildOverview> {
   const { data } = await apiClient.get<BuildOverview>('/build/overview')
@@ -21,5 +27,10 @@ export async function getFeatureCatalog(): Promise<FeatureCatalog> {
 
 export async function getApiContract(): Promise<ApiContract> {
   const { data } = await apiClient.get<ApiContract>('/build/api-contract')
+  return data
+}
+
+export async function getUxBenchmark(): Promise<UxBenchmark> {
+  const { data } = await apiClient.get<UxBenchmark>('/build/ux-benchmark')
   return data
 }
