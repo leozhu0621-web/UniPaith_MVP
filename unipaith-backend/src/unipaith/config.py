@@ -354,6 +354,16 @@ class Settings(BaseSettings):
     # only, never selection (46 §6). Off in code, enabled per-env via ECS.
     ai_recruitment_v2_enabled: bool = False
 
+    # Spec 42 §4.17 — Prompt Library behavioral coach (PromptCoach). When True,
+    # the /students/me/prompt-library/summary endpoint attaches the inference
+    # overlay (interview-readiness band+score, competency coverage/gaps,
+    # story↔prompt matching, revision priorities, suggested practice plan)
+    # computed by the deterministic engine; the tier documents the future LLM
+    # swap-in. Off → the summary returns raw counts only. STAR auto-detection on
+    # response save is rule-based and always runs (system-derived, §5). The
+    # engine never 5xxes either way. Off in code, enabled per-env via ECS.
+    ai_prompt_library_v2_enabled: bool = False
+
     # GPU infrastructure (cloud-first)
     gpu_mode: str = "openai"  # "openai" | "aws" | "local" | "mock"
     gpu_8b_instance_id: str = ""

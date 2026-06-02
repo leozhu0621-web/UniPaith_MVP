@@ -110,6 +110,11 @@ from unipaith.models.pipeline import (
     PipelineConfig,
     PipelineStageSnapshot,
 )
+from unipaith.models.prompt_library import (
+    BehavioralPrompt,
+    StudentBehavioralResponse,
+    StudentStory,
+)
 from unipaith.models.recruitment import (
     Prospect,
     RecruitmentFair,
@@ -180,6 +185,9 @@ __all__ = [
     "StudentIdentity",
     "StudentStrategy",
     "WorkshopFeedbackRun",
+    "BehavioralPrompt",
+    "StudentBehavioralResponse",
+    "StudentStory",
     # LLM-only artifacts (Phase A1)
     "StudentFeatureVector",
     "AiTurn",

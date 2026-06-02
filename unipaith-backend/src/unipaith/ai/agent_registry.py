@@ -71,6 +71,11 @@ AGENT_TIERS: dict[str, str] = {
     "prospect_prioritizer": "batch",  # ProspectPrioritizer — apply-likelihood ranking (Haiku)
     # TerritoryOptimizer — high-yield school/fair suggestions (Sonnet).
     "territory_optimizer": "workhorse",
+    # ── Prompt Library behavioral coach (spec 42 §4.17) — deterministic engine
+    #    (STAR / readiness / story-matching / practice plan). The tier documents
+    #    the future LLM swap-in (richer question generation); it always falls
+    #    back to the rule-based engine. ──
+    "prompt_coach": "workhorse",
 }
 
 

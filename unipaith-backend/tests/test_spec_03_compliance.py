@@ -140,6 +140,8 @@ def test_each_agent_declares_consent_requirement():
         # Spec 40 §5 — recruitment CRM agents.
         "prospect_prioritizer",
         "territory_optimizer",
+        # Spec 42 §4.17 — Prompt Library behavioral coach (deterministic).
+        "prompt_coach",
     }
     assert set(AGENT_REQUIRES.keys()) == expected_agents
 

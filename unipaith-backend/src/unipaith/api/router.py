@@ -27,6 +27,7 @@ from unipaith.api.needs import router as needs_router
 from unipaith.api.notifications import router as notifications_router
 from unipaith.api.payments import router as payments_router
 from unipaith.api.programs import router as programs_router
+from unipaith.api.prompt_library import router as prompt_library_router
 from unipaith.api.recommendations import router as recommendations_router
 from unipaith.api.recruitment import router as recruitment_router
 from unipaith.api.reviews import router as reviews_router
@@ -52,6 +53,9 @@ api_router.include_router(settings_router)
 # Analytics (Spec 28) before institutions so `/institutions/me/analytics/*` is
 # matched ahead of the param route `/institutions/{id}`.
 api_router.include_router(analytics_router)
+# Spec 42 — Prompt Library under `/students/me/prompt-library/*`; before
+# students_router so its literal sub-paths win over any `/students/me/*` route.
+api_router.include_router(prompt_library_router)
 api_router.include_router(students_router)
 api_router.include_router(discovery_router)
 api_router.include_router(goals_router)
