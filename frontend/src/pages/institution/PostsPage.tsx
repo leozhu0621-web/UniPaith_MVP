@@ -228,7 +228,7 @@ export default function PostsPage() {
             <Button variant="secondary" size="sm" onClick={() => setShowTemplatesModal(true)}>
               <Copy size={16} className="mr-1" /> Templates
             </Button>
-            <Button size="sm" onClick={openCreate}>
+            <Button variant="secondary" size="sm" onClick={openCreate}>
               <Plus size={16} className="mr-1" /> New Post
             </Button>
           </div>
@@ -511,7 +511,7 @@ export default function PostsPage() {
           </div>
 
           <div className="flex justify-end gap-2 pt-2 border-t border-border">
-            <Button variant="secondary" onClick={() => setShowCreateModal(false)}>Cancel</Button>
+            <Button variant="tertiary" onClick={() => setShowCreateModal(false)}>Cancel</Button>
             <Button
               variant="secondary"
               onClick={() => handleSubmit('draft')}
@@ -527,6 +527,7 @@ export default function PostsPage() {
               Schedule post
             </Button>
             <Button
+              variant="secondary"
               onClick={() => handleSubmit('published')}
               disabled={!title.trim() || !body.trim() || createM.isPending || updateM.isPending}
             >
@@ -542,7 +543,7 @@ export default function PostsPage() {
           Are you sure you want to delete &ldquo;{deleteTarget?.title}&rdquo;? This cannot be undone.
         </p>
         <div className="flex justify-end gap-2">
-          <Button variant="secondary" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+          <Button variant="tertiary" onClick={() => setDeleteTarget(null)}>Cancel</Button>
           <Button variant="danger" onClick={() => deleteTarget && deleteM.mutate(deleteTarget.id)} disabled={deleteM.isPending}>
             {deleteM.isPending ? 'Deleting...' : 'Delete'}
           </Button>

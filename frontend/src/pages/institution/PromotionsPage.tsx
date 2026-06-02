@@ -155,7 +155,7 @@ export default function PromotionsPage() {
         title="Promotions"
         description="Spotlight programs with featured placements, targeting scopes, and time-boxed visibility."
         actions={(
-          <Button onClick={openCreate} className="flex items-center gap-2">
+          <Button variant="secondary" onClick={openCreate} className="flex items-center gap-2">
             <Plus size={16} /> New Promotion
           </Button>
         )}
@@ -286,7 +286,7 @@ export default function PromotionsPage() {
 
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => { setShowModal(false); resetForm() }}>Cancel</Button>
-            <Button onClick={handleSubmit} disabled={createMut.isPending || updateMut.isPending}>
+            <Button variant="secondary" onClick={handleSubmit} disabled={createMut.isPending || updateMut.isPending}>
               {(createMut.isPending || updateMut.isPending) ? 'Saving...' : 'Save'}
             </Button>
           </div>

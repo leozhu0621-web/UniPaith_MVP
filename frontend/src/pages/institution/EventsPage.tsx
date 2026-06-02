@@ -156,7 +156,7 @@ export default function EventsPage() {
         title="Recruitment Events"
         description="Manage event logistics and track RSVP engagement by program."
         actions={(
-          <Button onClick={() => { resetForm(); setShowCreateModal(true) }} className="flex items-center gap-2">
+          <Button variant="secondary" onClick={() => { resetForm(); setShowCreateModal(true) }} className="flex items-center gap-2">
             <Plus size={16} /> New Event
           </Button>
         )}
@@ -268,7 +268,7 @@ export default function EventsPage() {
           <Select label="Program" options={programOptions} value={programId} onChange={e => setProgramId(e.target.value)} />
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => { setShowCreateModal(false); resetForm() }}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={createMut.isPending || updateMut.isPending}>
+            <Button variant="secondary" onClick={handleCreate} disabled={createMut.isPending || updateMut.isPending}>
               {(createMut.isPending || updateMut.isPending) ? 'Saving...' : editTarget ? 'Update Event' : 'Create Event'}
             </Button>
           </div>

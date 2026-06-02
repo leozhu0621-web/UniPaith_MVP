@@ -38,7 +38,7 @@ import type { Application, BatchOperationResult, PrioritizedApplication, Program
 const PIPELINE_COLUMNS = [
   { id: 'submitted', label: 'Applied', color: 'bg-cobalt' },
   { id: 'under_review', label: 'Under Review', color: 'bg-warning' },
-  { id: 'interview', label: 'Interview', color: 'bg-gold-hover' },
+  { id: 'interview', label: 'Interview', color: 'bg-cobalt-dark' },
   { id: 'decision_made', label: 'Decision', color: 'bg-success' },
 ] as const
 
@@ -64,7 +64,7 @@ function DraggableCard({ app, onClick, selected, onToggleSelect, onGenerateOffer
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-white border rounded-lg p-3 cursor-pointer hover:shadow-md transition-shadow ${isDragging ? 'opacity-50' : ''} ${selected ? 'ring-2 ring-brand-slate-500 border-brand-slate-300' : ''}`}
+      className={`bg-card border rounded-lg p-3 cursor-pointer hover:shadow-md transition-shadow ${isDragging ? 'opacity-50' : ''} ${selected ? 'ring-2 ring-secondary border-secondary' : ''}`}
       onClick={onClick}
     >
       <div className="flex items-start justify-between">
@@ -89,7 +89,7 @@ function DraggableCard({ app, onClick, selected, onToggleSelect, onGenerateOffer
       </div>
       <div className="flex items-center justify-between mt-2">
         {app.match_score != null && (
-          <span className="text-xs font-medium text-brand-slate-600">{formatScore(app.match_score)}</span>
+          <span className="text-xs font-medium text-secondary">{formatScore(app.match_score)}</span>
         )}
         <span className="text-xs text-muted-foreground/70">{formatRelative(app.updated_at)}</span>
       </div>
@@ -131,7 +131,7 @@ function DroppableColumn({ id, label, color, children }: { id: string; label: st
 
 function PipelineCardOverlay({ app }: { app: Application }) {
   return (
-    <div className="bg-white border rounded-lg p-3 shadow-lg w-[240px]">
+    <div className="bg-card border rounded-lg p-3 shadow-lg w-[240px]">
       <p className="text-sm font-medium text-foreground">{applicantLabel(app)}</p>
       <p className="text-xs text-muted-foreground mt-0.5">{app.program?.program_name ?? 'Program'}</p>
     </div>
@@ -315,7 +315,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
       render: (row: Application) => (
         <button
           onClick={() => goApplicant(row.id)}
-          className="text-brand-slate-600 hover:underline font-medium"
+          className="text-secondary hover:underline font-medium"
         >
           {applicantLabel(row)}
         </button>
@@ -483,8 +483,9 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
                 prioritized.map((p, i) => (
                   <Card key={p.application_id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => goApplicant(p.application_id)}>
                     <div className="flex items-center gap-4">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full shrink-0 font-bold text-white text-sm"
-                        style={{ backgroundColor: p.priority_score >= 70 ? '#B5321F' : p.priority_score >= 40 ? '#B8741D' : '#1F6B2E' }}>
+                      <div className={`flex items-center justify-center w-10 h-10 rounded-full shrink-0 font-bold text-white text-sm ${
+                        p.priority_score >= 70 ? 'bg-error' : p.priority_score >= 40 ? 'bg-warning' : 'bg-success'
+                      }`}>
                         {Math.round(p.priority_score)}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -531,9 +532,9 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
 
       {/* Batch Action Bar */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg px-6 py-3 flex items-center justify-between z-50">
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t shadow-lg px-6 py-3 flex items-center justify-between z-50">
           <span className="text-sm font-medium flex items-center gap-2">
-            <CheckSquare size={16} className="text-brand-slate-600" />
+            <CheckSquare size={16} className="text-secondary" />
             {selectedIds.size} selected
           </span>
           <div className="flex gap-2">

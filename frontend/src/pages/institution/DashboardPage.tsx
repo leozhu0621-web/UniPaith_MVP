@@ -465,8 +465,9 @@ export default function DashboardPage() {
           <div className="space-y-1.5">
             {topPriority.map((p, i) => (
               <div key={p.application_id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted cursor-pointer" onClick={() => navigate(applicantUrl(p.application_id))}>
-                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                  style={{ backgroundColor: p.priority_score >= 70 ? '#ef4444' : p.priority_score >= 40 ? '#f59e0b' : '#22c55e' }}>
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 ${
+                  p.priority_score >= 70 ? 'bg-error' : p.priority_score >= 40 ? 'bg-warning' : 'bg-success'
+                }`}>
                   {Math.round(p.priority_score)}
                 </div>
                 <div className="flex-1 min-w-0">
