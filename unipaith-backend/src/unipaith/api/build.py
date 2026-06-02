@@ -22,6 +22,7 @@ from unipaith.transparency.data_model import build_data_model
 from unipaith.transparency.features import build_features
 from unipaith.transparency.production import build_production
 from unipaith.transparency.roadmap import build_roadmap
+from unipaith.transparency.search import build_search
 from unipaith.transparency.ux_benchmark import build_ux_benchmark
 
 router = APIRouter(prefix="/build", tags=["build-transparency"])
@@ -50,6 +51,7 @@ def _assemble_overview(request: Request) -> dict:
     blockers_stat = f"{acceptance['launch_blockers_cleared']}/{acceptance['launch_blockers_total']}"
     ux = build_ux_benchmark(request.app.routes)["summary"]
     production = build_production(request.app)["summary"]
+    search = build_search(request.app.routes)["summary"]
     return {
         "roadmap": roadmap,
         "features": features,
@@ -58,6 +60,7 @@ def _assemble_overview(request: Request) -> dict:
         "data_model": data_model,
         "acceptance": acceptance,
         "production": production,
+        "search": search,
         "provider": settings.ai_provider_default,
         "surfaces": [
             {
@@ -133,6 +136,16 @@ def _assemble_overview(request: Request) -> dict:
                 "stat": production["pillar_count"],
                 "stat_label": "readiness pillars",
             },
+            {
+                "key": "search",
+                "title": "Search, feed & recs",
+                "spec": "56",
+                "blurb": "The discovery substrate — full-text search, the ranked Connect "
+                "feed, recommendations and saved-search alerts.",
+                "path": "/goal/search",
+                "stat": f"{search['capabilities_live']}/{search['capability_count']}",
+                "stat_label": "capabilities live",
+            },
         ],
     }
 
@@ -186,3 +199,15 @@ async def get_production(request: Request) -> dict:
     table, and the read-cache hit-rate from the running ``core.cache`` — so the page
     mirrors the deployed backend and can't claim what isn't wired."""
     return build_production(request.app)
+
+
+@router.get("/search", summary="The search, feed & recommendations substrate (spec 56)")
+async def get_search(request: Request) -> dict:
+    """Spec 56's discovery substrate: full-text search, faceted filters, the
+    ranked Connect feed, recommendations and saved-search alerts — each capability
+    honestly classified live·partial·planned. The backing-route counts are
+    resolved from the live route table, the saved-searches table presence is read
+    from the running SQLAlchemy metadata, and the NL-interpreter / connect-ranker
+    flags plus the saved-search alert caps are read straight off ``settings`` — so
+    the page can't claim a surface the deployed app doesn't serve."""
+    return build_search(request.app.routes)

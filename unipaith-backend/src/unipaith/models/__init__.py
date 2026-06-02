@@ -140,6 +140,7 @@ from unipaith.models.recruitment import (
     Territory,
     TripVisit,
 )
+from unipaith.models.saved_search import SavedSearch
 from unipaith.models.settings import InstitutionTeamInvite, UserSettings
 from unipaith.models.strategy import StudentStrategy
 from unipaith.models.student import (
@@ -316,6 +317,8 @@ __all__ = [
     "StudentSubscription",
     # Payments (Spec 39)
     "Payment",
+    # Saved searches + alerts (Spec 56)
+    "SavedSearch",
     # Recruitment CRM (Spec 40)
     "Prospect",
     "RecruitmentTrip",

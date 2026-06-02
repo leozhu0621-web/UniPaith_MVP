@@ -85,6 +85,18 @@ def setup_scheduler() -> None:
             **_job_defaults(),
         )
 
+    # Saved-search alert loop (Spec 56 §6) — re-run alert-enabled saved searches
+    # and notify on new matches. Consent-gated + per-user-per-day capped.
+    if settings.saved_search_alerts_enabled:
+        scheduler.add_job(
+            _run_saved_search_alerts,
+            "interval",
+            minutes=settings.saved_search_alert_interval_minutes,
+            id="saved_search_alerts",
+            name="Saved-Search Alert Loop",
+            **_job_defaults(),
+        )
+
     # Knowledge engine tick: now handled by ContinuousPipeline Stages 1+2.
     if not settings.pipeline_enabled and settings.engine_loop_enabled:
         scheduler.add_job(
@@ -139,3 +151,22 @@ async def _run_self_driving_loop() -> None:
     """Run one autonomous AI control-plane tick."""
     # AI control plane skipped (engine being rebuilt)
     logger.info("Self-driving AI loop skipped (engine being rebuilt)")
+
+
+async def _run_saved_search_alerts() -> None:
+    """Re-run alert-enabled saved searches and notify on new matches (Spec 56 §6).
+
+    Opens its own session; a failed tick logs and is retried next interval — a
+    scheduled job must never crash the loop.
+    """
+    from unipaith.database import async_session
+    from unipaith.services.saved_search_service import SavedSearchService
+
+    try:
+        async with async_session() as session:
+            emitted = await SavedSearchService(session).run_alerts()
+            await session.commit()
+        if emitted:
+            logger.info("Saved-search alert loop emitted %d alert(s)", emitted)
+    except Exception as exc:  # noqa: BLE001 — never let a tick break the scheduler
+        logger.warning("Saved-search alert loop failed: %s", exc)

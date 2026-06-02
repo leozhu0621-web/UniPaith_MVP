@@ -11,6 +11,7 @@ import type {
   FeatureCatalog,
   Production,
   Roadmap,
+  SearchBuild,
   UxBenchmark,
 } from '../types/build'
 
@@ -51,5 +52,10 @@ export async function getUxBenchmark(): Promise<UxBenchmark> {
 
 export async function getProduction(): Promise<Production> {
   const { data } = await apiClient.get<Production>('/build/production')
+  return data
+}
+
+export async function getSearchBuild(): Promise<SearchBuild> {
+  const { data } = await apiClient.get<SearchBuild>('/build/search')
   return data
 }
