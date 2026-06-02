@@ -144,6 +144,8 @@ def test_each_agent_declares_consent_requirement():
         "advisor_matcher",
         "sop_interest_extractor",
         "funding_scenario_helper",
+        # Spec 42 §4.17 — Prompt Library behavioral coach (deterministic).
+        "prompt_coach",
     }
     assert set(AGENT_REQUIRES.keys()) == expected_agents
 

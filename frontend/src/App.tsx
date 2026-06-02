@@ -144,6 +144,8 @@ const router = createBrowserRouter([
       // Phase D — Workshops moved from Profile to Apply > Workshops (feedback-only).
       { path: 'resume-workshop', element: <Navigate to="/s/manage?tab=workshops" replace /> },
       { path: 'essay-workshop', element: <Navigate to="/s/manage?tab=workshops" replace /> },
+      // Spec 42 — Prompt Library deep-link → Apply > Prompts tab.
+      { path: 'prompts', element: <Navigate to="/s/manage?tab=prompts" replace /> },
       { path: 'test-scores', element: <Navigate to="/s/profile?tab=academics" replace /> },
       { path: 'decisions', element: <Navigate to="/s/manage" replace /> },
       { path: 'intake', element: <Navigate to="/s" replace /> },
