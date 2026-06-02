@@ -137,6 +137,7 @@ export interface BuildOverview {
   production: ProductionSummary
   search: SearchBuildSummary
   realtime: RealtimeBuildSummary
+  chatbot_eval: ChatbotEvalSummary
   provider: string
   surfaces: OverviewSurface[]
 }
@@ -739,5 +740,143 @@ export interface RealtimeBuild {
   routes: RealtimeRoutes
   catalog: RealtimeCatalogEntry[]
   broker: RealtimeBrokerInfo
+  open_questions: OpenQuestion[]
+}
+
+// ── Chatbot training & evaluation (spec 61) ─────────────────────────────────
+export interface ChatbotEvalSummary {
+  agent_count: number
+  constitution_count: number
+  constitutions_present: boolean
+  constitution_version: string | null
+  dimension_count: number
+  hard_floor_count: number
+  suite_count: number
+  suites_live: number
+  hard_floor_suite_count: number
+  golden_case_total: number
+  deterministic_check_count: number
+  loop_stage_count: number
+  loop_stages_live: number
+  build_task_count: number
+  tasks_live: number
+  tasks_partial: number
+  tasks_planned: number
+  acceptance_count: number
+  acceptance_live: number
+  safety_crisis_subtype_count: number
+  safety_harmful_subtype_count: number
+  backing_route_count: number
+  config_knob_count: number
+  open_question_count: number
+  provider: string
+  all_agents_claude: boolean
+  live_is_source_of_truth: boolean
+}
+
+export interface ChatbotConstitutionDimension {
+  key: string
+  label: string
+  hard_floor: boolean
+  summary: string
+}
+
+export interface ChatbotConstitution {
+  agent: string
+  present: boolean
+  version?: string
+  dimension_count?: number
+  hard_floor_keys?: string[]
+  dimensions?: ChatbotConstitutionDimension[]
+}
+
+export interface ChatbotAgent {
+  key: string
+  title: string
+  spec: string
+  file: string
+  surface: string
+  agent_name: string
+  tier: string
+  provider: string
+  role: string
+  blurb: string
+}
+
+export interface ChatbotLoopStage {
+  n: number
+  key: string
+  title: string
+  blurb: string
+  status: ReadinessStatus
+}
+
+export interface ChatbotEvalSuite {
+  key: string
+  title: string
+  section: string
+  status: ReadinessStatus
+  hard_floor: boolean
+  blurb: string
+  case_count: number
+  in_runner: boolean
+}
+
+export interface ChatbotSafety {
+  always_on: boolean
+  status: ReadinessStatus
+  crisis_subtypes: string[]
+  harmful_subtypes: string[]
+  crisis_pattern_count: number
+  harmful_pattern_count: number
+  note: string
+}
+
+export interface ChatbotDeterministicCheck {
+  name: string
+  blurb: string
+}
+
+export interface ChatbotBuildTask {
+  section: string
+  status: ReadinessStatus
+  text: string
+  evidence: string
+}
+
+export interface ChatbotAcceptanceItem {
+  status: ReadinessStatus
+  text: string
+}
+
+export interface ChatbotConfigKnob {
+  name: string
+  value: string | number | boolean
+  section: string
+}
+
+export interface ChatbotEvalRoutes {
+  discovery: string[]
+  institution_reply: string[]
+}
+
+export interface ChatbotTheBar {
+  statement: string
+  principle: string
+}
+
+export interface ChatbotEval {
+  the_bar: ChatbotTheBar
+  summary: ChatbotEvalSummary
+  constitutions: ChatbotConstitution[]
+  agents: ChatbotAgent[]
+  loop_stages: ChatbotLoopStage[]
+  eval_suites: ChatbotEvalSuite[]
+  safety: ChatbotSafety
+  deterministic_checks: ChatbotDeterministicCheck[]
+  build_tasks: ChatbotBuildTask[]
+  acceptance: ChatbotAcceptanceItem[]
+  config_knobs: ChatbotConfigKnob[]
+  routes: ChatbotEvalRoutes
   open_questions: OpenQuestion[]
 }

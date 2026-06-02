@@ -383,11 +383,11 @@ function FilterDropdown({ label, active, options, selected, onToggle }: Dropdown
                       className={`w-full flex items-center gap-2 px-3 py-1.5 text-[12px] text-left transition-colors ${
                         isSelected
                           ? 'bg-student-mist text-student'
-                          : 'hover:bg-slate-50 text-student-ink'
+                          : 'hover:bg-muted text-student-ink'
                       }`}
                     >
                       <span className={`w-3.5 h-3.5 rounded border flex-shrink-0 flex items-center justify-center ${
-                        isSelected ? 'bg-student border-student' : 'bg-white border-slate-300'
+                        isSelected ? 'bg-student border-student' : 'bg-card border-stone'
                       }`}>
                         {isSelected && (
                           <svg width="9" height="9" viewBox="0 0 20 20" fill="white">

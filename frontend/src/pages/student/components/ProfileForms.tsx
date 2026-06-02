@@ -263,8 +263,8 @@ export function AccommodationForm({ defaultValues, onSubmit, loading }: FormProp
       <Select label="Category (optional)" options={[{ value: '', label: 'Select...' }, ...ACCOMMODATION_CATEGORIES]} {...register('category')} />
       <Textarea label="Details (optional)" placeholder="Describe your accommodation needs..." {...register('details_text')} />
       <Select label="Documentation Status" options={DOC_STATUS_OPTIONS} {...register('documentation_status')} />
-      <div className="border-t border-stone-100 pt-3 mt-3">
-        <p className="text-xs text-stone-500 mb-2">Display preferences</p>
+      <div className="border-t border-divider pt-3 mt-3">
+        <p className="text-xs text-muted-foreground mb-2">Display preferences</p>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('dyslexia_friendly_mode')} /> Dyslexia-friendly mode</label>
         <Select label="Font Size" options={FONT_SIZE_OPTIONS} {...register('font_size_pref')} />
       </div>

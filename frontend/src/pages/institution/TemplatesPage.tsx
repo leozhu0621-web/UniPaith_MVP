@@ -144,7 +144,7 @@ export default function TemplatesPage() {
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-foreground">{t.name}</h3>
-                  {t.is_default && <Star size={14} className="text-warning fill-amber-500" />}
+                  {t.is_default && <Star size={14} className="text-warning fill-warning" />}
                 </div>
                 <div className="flex items-center gap-1">
                   <Badge variant={TYPE_BADGE[t.template_type] ?? 'neutral'}>{t.template_type.replace(/_/g, ' ')}</Badge>
