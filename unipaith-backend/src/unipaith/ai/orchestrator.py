@@ -57,15 +57,27 @@ def _load_prompt(name: str) -> str:
 # files at runtime (test fixtures), use `Orchestrator(system_prompt=...)`.
 _FRAMEWORKS_TEXT = _load_prompt("_shared/frameworks.md")
 _DISCOVERY_PROMPT_TEXT = _load_prompt("orchestrator_discovery.md")
+# Spec 61 §3 — the behavior constitution. Loaded verbatim from the same file
+# the spec-62 judge uses as its rubric (`ai/evals/constitution.py`), so the
+# agent is steered by the exact standard it is graded against — one source of
+# truth, no drift.
+_CONSTITUTION_TEXT = _load_prompt("_shared/constitution_student.md")
 
 
 def _build_discovery_system_prompt() -> str:
-    """Concatenate the discovery prompt with the shared frameworks file.
+    """Concatenate the discovery prompt, the shared frameworks, and the
+    behavior constitution.
 
-    Frameworks live at the bottom (where the prompt references them) so
-    the cache breakpoint covers both as a single ephemeral block.
+    Frameworks live where the prompt references them; the constitution (spec
+    61 §3) is appended last. All three sit inside the single cached system
+    block — no extra cache breakpoint — so the 1h cache keeps hitting and the
+    agent reads the same versioned rubric the judge grades it on.
     """
-    return f"{_DISCOVERY_PROMPT_TEXT}\n\n---\n\n# Frameworks reference\n\n{_FRAMEWORKS_TEXT}"
+    return (
+        f"{_DISCOVERY_PROMPT_TEXT}\n\n---\n\n"
+        f"# Frameworks reference\n\n{_FRAMEWORKS_TEXT}\n\n---\n\n"
+        f"{_CONSTITUTION_TEXT}"
+    )
 
 
 _DISCOVERY_SYSTEM_PROMPT = _build_discovery_system_prompt()
