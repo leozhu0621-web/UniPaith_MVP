@@ -79,6 +79,11 @@ AGENT_TIERS: dict[str, str] = {
     "advisor_matcher": "batch",  # AdvisorMatcher — research-fit ranking
     "sop_interest_extractor": "batch",  # SoPInterestExtractor — SoP → interest tags
     "funding_scenario_helper": "workhorse",  # FundingScenarioHelper — over-commit + mixes
+    # ── Prompt Library behavioral coach (spec 42 §4.17) — deterministic engine
+    #    (STAR / readiness / story-matching / practice plan). The tier documents
+    #    the future LLM swap-in (richer question generation); it always falls
+    #    back to the rule-based engine. ──
+    "prompt_coach": "workhorse",
 }
 
 
