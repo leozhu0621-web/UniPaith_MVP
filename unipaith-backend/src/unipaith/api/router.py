@@ -12,6 +12,7 @@ from unipaith.api.analytics import router as analytics_router
 from unipaith.api.applications import router as applications_router
 from unipaith.api.auth import router as auth_router
 from unipaith.api.billing import router as billing_router
+from unipaith.api.build import router as build_router
 from unipaith.api.calendar import router as calendar_router
 from unipaith.api.connect import router as connect_router
 from unipaith.api.discovery import router as discovery_router
@@ -54,6 +55,10 @@ api_router.include_router(auth_router)
 # Spec 45 — public AI-agent catalog at `/ai/agents` (backs /goal/claude-api).
 # No auth, DB-free; exposes only the agent architecture, never user data.
 api_router.include_router(ai_agents_router)
+# Spec 48/49/50 — public build-transparency surface at `/build/*` (backs the
+# /goal hub + roadmap/features/api pages). No auth, DB-free; the api-contract
+# map is derived live from the running route table.
+api_router.include_router(build_router)
 api_router.include_router(billing_router)
 # Settings before students/institutions so literal `/institutions/settings` and
 # `/students/me/settings` win over param routes like `/institutions/{id}`.

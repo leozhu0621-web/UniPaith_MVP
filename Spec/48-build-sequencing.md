@@ -2,7 +2,9 @@
 
 > The order in which to build, with dependencies and parallelization opportunities called out. Each phase = one Claude Code session (or one engineer-sprint), scoped to ~5–10 engineering days.
 >
-> Status: **draft v1.0** · 2026-05-29 · Depends on `47-current-vs-spec-gap-audit.md` for gap detail.
+> Status: **draft v1.1** · 2026-06-02 · Depends on `47-current-vs-spec-gap-audit.md` for gap detail.
+>
+> **Now a live surface.** This roadmap is published, with per-phase status read against the running build, at **`/goal/roadmap`** (public; `GET /api/v1/build/roadmap`). As of 2026-06-02, **phases 1–13 (the MVP) have shipped** across PRs up to #250; **phase 14 is the deferred bucket** (§17). See the `/goal` transparency hub for the live roadmap, feature-coverage (spec 49) and API-contract (spec 50) surfaces.
 
 ---
 
