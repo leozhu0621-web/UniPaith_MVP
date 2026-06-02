@@ -7,8 +7,53 @@ import GoalHubPage from '../pages/public/GoalHubPage'
 import BuildRoadmapPage from '../pages/public/BuildRoadmapPage'
 import FeatureBacklogPage from '../pages/public/FeatureBacklogPage'
 import ApiContractPage from '../pages/public/ApiContractPage'
+import DataModelPage from '../pages/public/DataModelPage'
+import AcceptancePage from '../pages/public/AcceptancePage'
 import * as buildApi from '../api/build'
-import type { ApiContract, BuildOverview, FeatureCatalog, Roadmap } from '../types/build'
+import type {
+  Acceptance,
+  ApiContract,
+  BuildOverview,
+  DataModel,
+  FeatureCatalog,
+  Roadmap,
+} from '../types/build'
+
+const DATA_MODEL_SUMMARY = {
+  table_count: 147,
+  column_count: 1921,
+  jsonb_column_count: 183,
+  fk_count: 253,
+  vector_table_count: 2,
+  module_count: 34,
+  uuid_pk_table_count: 144,
+  timestamp_table_count: 86,
+  domain_count: 5,
+  doc_claimed_tables: 107,
+  doc_claimed_model_files: 23,
+  planned_total: 8,
+  planned_now_live: 3,
+  live_is_source_of_truth: true,
+}
+
+const ACCEPTANCE_SUMMARY = {
+  boots: true,
+  critical_paths_total: 2,
+  launch_blockers_total: 10,
+  launch_blockers_cleared: 10,
+  launch_ready: true,
+  core_areas_total: 6,
+  core_areas_green: 6,
+  mvp_features_complete: true,
+  route_count: 555,
+  ai_endpoint_count: 10,
+  agent_count: 40,
+  table_count: 147,
+  mvp_delivered: 40,
+  mvp_scope_count: 40,
+  phases_shipped: 13,
+  phase_count: 14,
+}
 
 // Specs 48/49/50 — the public /goal transparency surfaces. Each renders live
 // build data from the /build/* endpoints and lets the visitor filter it.
@@ -45,12 +90,16 @@ const OVERVIEW: BuildOverview = {
     provider: 'anthropic',
     tier_counts: { flagship: 2, workhorse: 20, batch: 6, rule_based: 12 },
   },
+  data_model: DATA_MODEL_SUMMARY,
+  acceptance: ACCEPTANCE_SUMMARY,
   provider: 'anthropic',
   surfaces: [
     { key: 'claude-api', title: 'AI agents', spec: '45', blurb: 'The live agent fleet.', path: '/goal/claude-api', stat: 40, stat_label: 'AI agents' },
     { key: 'roadmap', title: 'Build roadmap', spec: '48', blurb: 'Phased path to spec.', path: '/goal/roadmap', stat: '13/14', stat_label: 'phases shipped' },
     { key: 'features', title: 'Feature coverage', spec: '49', blurb: 'Every feature mapped.', path: '/goal/features', stat: 60, stat_label: 'features mapped' },
     { key: 'api', title: 'API contract', spec: '50', blurb: 'Read live from routes.', path: '/goal/api', stat: 553, stat_label: 'live routes' },
+    { key: 'data-model', title: 'Data model', spec: '51', blurb: 'Introspected live.', path: '/goal/data-model', stat: 147, stat_label: 'live tables' },
+    { key: 'acceptance', title: 'Acceptance & runbook', spec: '52', blurb: 'Definition of done.', path: '/goal/acceptance', stat: '10/10', stat_label: 'launch blockers cleared' },
   ],
 }
 
@@ -129,6 +178,70 @@ const CONTRACT: ApiContract = {
   access_note: 'Conservative read; live source of truth.',
 }
 
+const DATA_MODEL: DataModel = {
+  summary: DATA_MODEL_SUMMARY,
+  conventions: [{ title: 'UUID keys + timestamps', body: 'Almost every table carries a UUID PK.' }],
+  domains: [
+    {
+      key: 'profile',
+      title: 'Student identity & profile',
+      section: '§2',
+      spec: '08',
+      blurb: 'The profile is fully relational.',
+      table_count: 1,
+      modules: ['student'],
+      tables: [
+        { table: 'student_profiles', module: 'student', spec: '08', note: 'The hub.', column_count: 20, jsonb_count: 2, fk_count: 1, fk_targets: ['users'], is_vector: false, has_uuid_pk: true, has_timestamps: true },
+      ],
+    },
+    {
+      key: 'institution',
+      title: 'Institution & engagement',
+      section: '§5',
+      spec: '22',
+      blurb: 'The institution stack.',
+      table_count: 1,
+      modules: ['institution'],
+      tables: [
+        { table: 'programs', module: 'institution', spec: '23', note: 'JSONB read by exact key.', column_count: 30, jsonb_count: 5, fk_count: 1, fk_targets: ['institutions'], is_vector: false, has_uuid_pk: true, has_timestamps: true },
+      ],
+    },
+  ],
+  modules: [{ module: 'institution', table_count: 25, domain: 'institution' }],
+  already_built: [{ capability: 'Consent', table: 'student_data_consent', spec: '46 §2', note: 'The 4-lever record.', live: true }],
+  planned: [
+    { table: 'payments', spec: '39', note: 'Shipped since the doc.', covered_by: '', live: true, covered_by_live: false },
+    { table: 'student_follows', spec: '20', note: 'Absent as named.', covered_by: 'institution_follows', live: false, covered_by_live: true },
+  ],
+  note: 'Introspected live — the source of truth.',
+}
+
+const ACCEPTANCE: Acceptance = {
+  summary: ACCEPTANCE_SUMMARY,
+  levels: [
+    { order: 1, key: 'boots', title: 'Boots', status: 'green', body: 'Backend serves; the DB migrates.', evidence: 'Live route table.' },
+    { order: 2, key: 'critical_paths', title: 'Critical paths pass', status: 'green', body: 'Two journeys complete.', evidence: 'Every surface is live.' },
+    { order: 3, key: 'quality_gates', title: 'Quality gates pass', status: 'green', body: 'No blocker open.', evidence: 'All clear.' },
+  ],
+  journeys: [
+    { key: 'student', title: 'Student journey — Discover → Apply → Decide', actor: 'student', spec: '08–21', blurb: 'Sign-up to decision.', steps: [{ n: 1, title: 'Sign up & land on Discover', spec: '19', detail: 'First-run Discover.' }] },
+    { key: 'institution', title: 'Institution journey — Setup → Review → Decide', actor: 'institution_admin', spec: '22–37', blurb: 'Setup to decision.', steps: [{ n: 1, title: 'Sign in', spec: '05', detail: 'To the dashboard.' }] },
+  ],
+  acceptance_bar: 'Both journeys complete with zero 5xx.',
+  dod: [{ text: 'Renders with the correct role guard.', spec: '05' }],
+  integration_gates: [{ title: 'api-module parity', body: 'Maps to a real router.', spec: '50 §4' }],
+  launch_blockers: [
+    { title: 'Europa Typekit loads', spec: '47 G-B1', status: 'cleared', evidence: 'Phase 1 shipped.' },
+    { title: 'AI never 5xx', spec: '50 §6', status: 'cleared', evidence: 'Fallback path.' },
+  ],
+  seed: { intro: 'A clicker needs populated accounts.', items: [{ label: '2 students', detail: 'Mid + fresh.' }] },
+  signoff: [
+    { area: 'Student: Discover / Match', klass: 'core', path_ref: '2.1', boots: true, critical_path: true, dod: true },
+    { area: 'Phase-2 (38–41)', klass: 'excluded', path_ref: '—', boots: false, critical_path: false, dod: false },
+  ],
+  note: 'Readiness read from the running system.',
+}
+
 function renderPage(ui: React.ReactElement, route = '/goal') {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
@@ -143,7 +256,7 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     vi.restoreAllMocks()
   })
 
-  it('hub renders the live stats and links to all four surfaces', async () => {
+  it('hub renders the live stats and links to all six surfaces', async () => {
     vi.spyOn(buildApi, 'getBuildOverview').mockResolvedValue(OVERVIEW)
     renderPage(<GoalHubPage />)
 
@@ -151,6 +264,9 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     await waitFor(() => expect(screen.getByText('Build roadmap')).toBeInTheDocument())
     expect(screen.getByText('Feature coverage')).toBeInTheDocument()
     expect(screen.getByText('API contract')).toBeInTheDocument()
+    // The two new surfaces (specs 51 + 52) appear.
+    expect(screen.getByText('Data model')).toBeInTheDocument()
+    expect(screen.getByText('Acceptance & runbook')).toBeInTheDocument()
     // Live route count from the overview appears (stat band + surface card).
     expect(screen.getAllByText('553').length).toBeGreaterThan(0)
     // The MVP-complete gold beat shows.
@@ -199,5 +315,43 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Public' }))
     await waitFor(() => expect(screen.queryByText('institutions')).not.toBeInTheDocument())
     expect(screen.getByText('build-transparency')).toBeInTheDocument()
+  })
+
+  it('data model renders the live table map, the doc drift and filters by domain', async () => {
+    vi.spyOn(buildApi, 'getDataModel').mockResolvedValue(DATA_MODEL)
+    renderPage(<DataModelPage />, '/goal/data-model')
+
+    await waitFor(() => expect(screen.getByText('student_profiles')).toBeInTheDocument())
+    expect(screen.getByText('programs')).toBeInTheDocument()
+    // The "can't drift" gold beat + the 107→live correction.
+    expect(screen.getByText(/Introspected live — can't drift/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/107 tables/i).length).toBeGreaterThan(0)
+    // §8 'payments' shipped since the doc → "Now live".
+    expect(screen.getByText('payments')).toBeInTheDocument()
+    expect(screen.getAllByText(/Now live/i).length).toBeGreaterThan(0)
+
+    // Filter to the institution domain → student_profiles drops out.
+    fireEvent.click(screen.getByRole('button', { name: 'Institution & engagement' }))
+    await waitFor(() => expect(screen.queryByText('student_profiles')).not.toBeInTheDocument())
+    expect(screen.getByText('programs')).toBeInTheDocument()
+  })
+
+  it('acceptance renders the readiness levels, journeys and launch blockers', async () => {
+    vi.spyOn(buildApi, 'getAcceptance').mockResolvedValue(ACCEPTANCE)
+    renderPage(<AcceptancePage />, '/goal/acceptance')
+
+    await waitFor(() =>
+      expect(screen.getByText(/Student journey — Discover/i)).toBeInTheDocument(),
+    )
+    expect(screen.getByText(/Institution journey — Setup/i)).toBeInTheDocument()
+    // 'Boots' renders as a level title and as a sign-off matrix column header.
+    expect(screen.getAllByText('Boots').length).toBeGreaterThan(0)
+    // A launch blocker + its cleared chip.
+    expect(screen.getByText('AI never 5xx')).toBeInTheDocument()
+    expect(screen.getAllByText('Cleared').length).toBeGreaterThan(0)
+    // The MVP-ready gold beat shows when launch_ready is true.
+    expect(screen.getByText(/MVP-ready — all gates clear/i)).toBeInTheDocument()
+    // The sign-off matrix row.
+    expect(screen.getByText('Student: Discover / Match')).toBeInTheDocument()
   })
 })

@@ -16,7 +16,10 @@ import pytest
 from httpx import AsyncClient
 
 from unipaith.main import app
+from unipaith.models.base import Base
+from unipaith.transparency.acceptance import BLOCKERS, JOURNEYS, build_acceptance
 from unipaith.transparency.api_contract import build_api_contract
+from unipaith.transparency.data_model import PLANNED, build_data_model
 from unipaith.transparency.features import ALL_FEATURES, build_features
 from unipaith.transparency.roadmap import PHASES, build_roadmap
 
@@ -95,6 +98,11 @@ def _live_route_count() -> int:
     return total
 
 
+def _live_table_count() -> int:
+    """Independent recount of the live SQLAlchemy metadata tables."""
+    return len(Base.metadata.tables)
+
+
 def test_api_contract_route_count_matches_live_table():
     """The reported route count must equal an independent recount — the map is
     generated from the running app, so it can never drift from what's deployed."""
@@ -137,6 +145,88 @@ def test_api_contract_ai_endpoints_are_the_spec_set():
         ), f"{path} is not an expected AI endpoint"
 
 
+# ── Data model (spec 51) — the live, can't-drift table map ──────────────────
+
+
+def test_data_model_table_count_matches_live_metadata():
+    """The reported table count must equal an independent recount of the live
+    SQLAlchemy metadata — the map is introspected from the running models, so it
+    can never drift from the deployed schema."""
+    dm = build_data_model()
+    assert dm["summary"]["table_count"] == _live_table_count()
+
+
+def test_data_model_domains_partition_every_table():
+    dm = build_data_model()
+    # Every live table lands in exactly one domain.
+    assert sum(d["table_count"] for d in dm["domains"]) == dm["summary"]["table_count"]
+    for d in dm["domains"]:
+        for row in d["tables"]:
+            assert row["table"] and row["module"]
+            assert row["column_count"] > 0
+
+
+def test_data_model_surfaces_doc_drift():
+    dm = build_data_model()
+    s = dm["summary"]
+    # Spec 51 was drafted at 107 tables; the live schema has more.
+    assert s["doc_claimed_tables"] == 107
+    assert s["table_count"] > s["doc_claimed_tables"]
+    assert s["jsonb_column_count"] > 0 and s["fk_count"] > 0
+
+
+def test_data_model_planned_presence_is_computed_live():
+    dm = build_data_model()
+    s = dm["summary"]
+    assert s["planned_total"] == len(PLANNED)
+    # Some §8 'not built' items shipped since the doc (payments, story-bank).
+    assert s["planned_now_live"] >= 2
+    by_table = {p["table"]: p for p in dm["planned"]}
+    assert by_table["payments"]["live"] is True
+    assert by_table["student_follows"]["live"] is False
+    assert by_table["student_follows"]["covered_by_live"] is True  # institution_follows
+
+
+def test_data_model_already_built_items_are_live():
+    dm = build_data_model()
+    for b in dm["already_built"]:
+        assert b["live"] is True, f"{b['table']} should be live"
+
+
+# ── Acceptance & runbook (spec 52) — readiness read from the running system ──
+
+
+def test_acceptance_readiness_reads_the_live_system():
+    acc = build_acceptance(app.routes)
+    s = acc["summary"]
+    assert s["route_count"] == _live_route_count()
+    assert s["table_count"] == _live_table_count()
+    assert s["agent_count"] > 0
+    assert s["boots"] is True
+    assert s["launch_blockers_total"] == len(BLOCKERS)
+
+
+def test_acceptance_has_two_journeys_with_steps():
+    acc = build_acceptance(app.routes)
+    assert len(acc["journeys"]) == len(JOURNEYS) == 2
+    assert {j["key"] for j in acc["journeys"]} == {"student", "institution"}
+    for j in acc["journeys"]:
+        assert j["steps"] and all(st["title"] and st["detail"] for st in j["steps"])
+
+
+def test_acceptance_blockers_well_formed_and_gate_launch_ready():
+    acc = build_acceptance(app.routes)
+    for b in acc["launch_blockers"]:
+        assert b["status"] in ("cleared", "deferred")
+        assert b["title"] and b["evidence"]
+    s = acc["summary"]
+    assert s["launch_ready"] == (
+        s["boots"]
+        and s["launch_blockers_cleared"] == s["launch_blockers_total"]
+        and s["mvp_features_complete"]
+    )
+
+
 # ── Public endpoints ────────────────────────────────────────────────────────
 
 
@@ -145,10 +235,17 @@ async def test_overview_endpoint(client: AsyncClient):
     resp = await client.get("/api/v1/build/overview")
     assert resp.status_code == 200
     body = resp.json()
-    for key in ("roadmap", "features", "api", "agents", "surfaces"):
+    for key in ("roadmap", "features", "api", "agents", "data_model", "acceptance", "surfaces"):
         assert key in body
-    assert len(body["surfaces"]) == 4
-    assert {s["key"] for s in body["surfaces"]} == {"claude-api", "roadmap", "features", "api"}
+    assert len(body["surfaces"]) == 6
+    assert {s["key"] for s in body["surfaces"]} == {
+        "claude-api",
+        "roadmap",
+        "features",
+        "api",
+        "data-model",
+        "acceptance",
+    }
 
 
 @pytest.mark.asyncio
@@ -172,3 +269,23 @@ async def test_api_contract_endpoint(client: AsyncClient):
     body = resp.json()
     assert body["summary"]["route_count"] > 0
     assert body["conventions"] and body["status_taxonomy"] and body["groups"]
+
+
+@pytest.mark.asyncio
+async def test_data_model_endpoint(client: AsyncClient):
+    resp = await client.get("/api/v1/build/data-model")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["summary"]["table_count"] > 0
+    assert body["domains"] and body["conventions"]
+    assert body["already_built"] and body["planned"]
+
+
+@pytest.mark.asyncio
+async def test_acceptance_endpoint(client: AsyncClient):
+    resp = await client.get("/api/v1/build/acceptance")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["summary"]["launch_blockers_total"] == len(BLOCKERS)
+    assert len(body["journeys"]) == 2
+    assert body["dod"] and body["integration_gates"] and body["signoff"]
