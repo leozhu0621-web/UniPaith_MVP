@@ -157,6 +157,8 @@ describe('Spec 23 — program editor', () => {
         screen.queryByText('This program is missing required fields. Resolve to publish.'),
       ).not.toBeInTheDocument(),
     )
-    expect(Element.prototype.scrollIntoView).toHaveBeenCalled()
+    // goToSection scrolls via setTimeout(...), so the call lands on a later tick —
+    // await it rather than asserting synchronously (avoids a CI timing flake).
+    await waitFor(() => expect(Element.prototype.scrollIntoView).toHaveBeenCalled())
   })
 })

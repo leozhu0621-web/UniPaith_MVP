@@ -3356,3 +3356,152 @@ export interface IntlNormalizeResult {
   course_map_note: string | null
   ai_used: boolean
 }
+
+// ── Spec 40 · Recruitment CRM (Pre-Applicant) ────────────────────────────────
+
+export type ProspectSource = 'fair' | 'list' | 'inquiry' | 'referral' | 'web' | 'visit'
+export type ProspectStage = 'suspect' | 'prospect' | 'engaged' | 'inquiry' | 'applicant'
+
+export interface Prospect {
+  id: string
+  name: string
+  email: string | null
+  phone: string | null
+  city: string | null
+  region: string | null
+  country: string | null
+  interests: string[] | null
+  source: ProspectSource
+  source_detail: string | null
+  stage: ProspectStage
+  territory_id: string | null
+  owner_user_id: string | null
+  owner_name: string | null
+  converted_application_id: string | null
+  consent_outreach: boolean
+  apply_likelihood: number | null
+  priority_reason: string | null
+  priority_band: 'hot' | 'warm' | 'cold' | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ProspectList {
+  items: Prospect[]
+  total: number
+  prioritized: boolean
+  stage_counts: Record<string, number>
+}
+
+export interface ProspectImportResult {
+  imported: number
+  deduped: number
+  suppressed: number
+  total_rows: number
+}
+
+export interface ProspectToSegmentResult {
+  list_id: string
+  list_name: string
+  added: number
+  skipped_no_consent: number
+  skipped_no_email: number
+}
+
+export interface TripVisit {
+  id: string
+  trip_id: string
+  kind: 'school' | 'fair'
+  name: string
+  fair_id: string | null
+  visit_date: string | null
+  prospects_met: number
+  status: 'planned' | 'confirmed' | 'done'
+  notes: string | null
+}
+
+export interface RecruitmentTrip {
+  id: string
+  name: string
+  region: string | null
+  start_date: string
+  end_date: string
+  recruiter_user_id: string | null
+  recruiter_name: string | null
+  budget: number | null
+  spend: number
+  status: 'planned' | 'active' | 'done' | 'cancelled'
+  notes: string | null
+  visits: TripVisit[]
+  over_budget: boolean
+  conflict: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface RecruitmentFair {
+  id: string
+  name: string
+  kind: 'fair' | 'high_school'
+  city: string | null
+  region: string | null
+  country: string | null
+  contact_name: string | null
+  contact_email: string | null
+  prior_year_yield: number | null
+  event_date: string | null
+  status: 'prospective' | 'registered' | 'confirmed' | 'attended' | 'skipped'
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface Territory {
+  id: string
+  name: string
+  geo: { regions?: string[]; countries?: string[]; cities?: string[] } | null
+  owner_user_id: string | null
+  owner_name: string | null
+  notes: string | null
+  prospect_count: number
+  applicant_count: number
+  conversion_rate: number
+  unassigned: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface TerritoryDashboard {
+  territories: Territory[]
+  total_prospects: number
+  total_applicants: number
+  overall_conversion_rate: number
+  unassigned_count: number
+}
+
+export interface TerritorySuggestion {
+  kind: string
+  label: string
+  rationale: string
+  candidate_name: string | null
+}
+
+export interface TerritoryOptimize {
+  territory_id: string
+  suggestions: TerritorySuggestion[]
+  ai_generated: boolean
+}
+
+export interface RecruitmentSummary {
+  prospect_count: number
+  applicant_count: number
+  trip_count: number
+  fair_count: number
+  territory_count: number
+  unassigned_territory_count: number
+  over_budget_trip_count: number
+  stage_counts: Record<string, number>
+  source_counts: Record<string, number>
+  is_empty: boolean
+}
