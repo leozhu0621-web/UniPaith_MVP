@@ -91,7 +91,7 @@ export default function ProgramsPage() {
       label: '',
       render: (row: Program) => (
         <Dropdown
-          trigger={<button className="p-1 rounded hover:bg-gray-100"><MoreVertical size={16} className="text-gray-500" /></button>}
+          trigger={<button className="p-1 rounded hover:bg-muted"><MoreVertical size={16} className="text-muted-foreground" /></button>}
           items={[
             { label: 'Edit', icon: <Edit2 size={14} />, onClick: () => navigate(`/i/programs/${row.id}/edit`) },
             row.is_published
@@ -119,16 +119,16 @@ export default function ProgramsPage() {
       {programs.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Card className="p-3">
-            <p className="text-xs text-gray-500">Total Programs</p>
-            <p className="text-xl font-semibold text-gray-900">{programs.length}</p>
+            <p className="text-xs text-muted-foreground">Total Programs</p>
+            <p className="text-xl font-semibold text-foreground">{programs.length}</p>
           </Card>
           <Card className="p-3">
-            <p className="text-xs text-gray-500">Published</p>
-            <p className="text-xl font-semibold text-emerald-700">{programs.filter(p => p.is_published).length}</p>
+            <p className="text-xs text-muted-foreground">Published</p>
+            <p className="text-xl font-semibold text-success">{programs.filter(p => p.is_published).length}</p>
           </Card>
           <Card className="p-3">
-            <p className="text-xs text-gray-500">Drafts to Publish</p>
-            <p className="text-xl font-semibold text-amber-700">{programs.filter(p => !p.is_published).length}</p>
+            <p className="text-xs text-muted-foreground">Drafts to Publish</p>
+            <p className="text-xl font-semibold text-warning">{programs.filter(p => !p.is_published).length}</p>
           </Card>
         </div>
       )}
@@ -150,7 +150,7 @@ export default function ProgramsPage() {
 
       {/* Delete Confirmation */}
       <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Delete Program">
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm text-muted-foreground mb-4">
           Are you sure you want to delete <strong>{deleteTarget?.program_name}</strong>? This action cannot be undone.
         </p>
         <div className="flex justify-end gap-2">

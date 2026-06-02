@@ -18,7 +18,7 @@ export default function NextStepActionsEditor({
 
   return (
     <div className="space-y-2">
-      <p className="text-xs font-medium text-gray-500">Next steps (optional)</p>
+      <p className="text-xs font-medium text-muted-foreground">Next steps (optional)</p>
       {rows.map((row, i) => (
         <div key={i} className="flex flex-wrap items-end gap-2">
           <Input

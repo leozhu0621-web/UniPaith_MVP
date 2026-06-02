@@ -136,8 +136,8 @@ export default function DashboardPage() {
       <div className="p-6">
         <Card className="p-8 text-center border-dashed border-2 border-brand-slate-300 bg-brand-slate-50/30">
           <LayoutDashboard size={48} className="mx-auto text-brand-slate-400 mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Welcome to UniPaith</h2>
-          <p className="text-gray-600 mb-6 max-w-md mx-auto">
+          <h2 className="text-xl font-semibold text-foreground mb-2">Welcome to UniPaith</h2>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
             Set up your institution profile and create your first program to start receiving applications.
           </p>
           <Button onClick={() => navigate('/i/setup')}>Get Started</Button>
@@ -174,7 +174,7 @@ export default function DashboardPage() {
       label: 'Yield (proj)',
       value: projYieldVal != null ? formatPercent(projYieldVal) : '—',
       icon: TrendingUp,
-      color: 'text-purple-600 bg-purple-100',
+      color: 'text-secondary bg-secondary/10',
     },
   ]
   const priorityQueue = summary?.priority_queue ?? []
@@ -184,13 +184,13 @@ export default function DashboardPage() {
       label: 'Programs Published',
       value: `${summary?.published_program_count ?? 0}/${summary?.program_count ?? programs.length}`,
       icon: BookOpen,
-      color: 'text-blue-600 bg-blue-100',
+      color: 'text-secondary bg-secondary/10',
     },
     {
       label: 'Active Events',
       value: summary?.active_events_count ?? 0,
       icon: Calendar,
-      color: 'text-pink-600 bg-pink-100',
+      color: 'text-warning bg-warning-soft',
     },
     {
       label: 'Unread Inbox',
@@ -268,7 +268,7 @@ export default function DashboardPage() {
         <p className="up-eyebrow mb-1">
           {institution.name}{summary?.cycle ? ` · ${summary.cycle} cycle` : ''}
         </p>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Admissions intake for the active cycle — queues, integrity, inquiries, and yield at a glance.
         </p>
@@ -283,8 +283,8 @@ export default function DashboardPage() {
                 <kpi.icon size={20} />
               </div>
               <div>
-                <p className="text-sm text-gray-500">{kpi.label}</p>
-                <p className="text-3xl font-bold text-gray-900">{kpi.value}</p>
+                <p className="text-sm text-muted-foreground">{kpi.label}</p>
+                <p className="text-3xl font-bold text-foreground">{kpi.value}</p>
               </div>
             </div>
           </Card>
@@ -295,7 +295,7 @@ export default function DashboardPage() {
       {priorityQueue.length > 0 && (
         <Card className="p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-900">Priority Queue</h3>
+            <h3 className="text-sm font-semibold text-foreground">Priority Queue</h3>
             <Badge variant="info">{priorityQueue.length} to triage</Badge>
           </div>
           <div className="space-y-2">
@@ -355,13 +355,13 @@ export default function DashboardPage() {
         <Card className="p-4 border-border bg-card">
           <div className="flex items-center gap-2 mb-3">
             <Brain size={18} className="text-brand-slate-600" />
-            <h3 className="text-sm font-semibold text-gray-900">Intelligence Digest</h3>
+            <h3 className="text-sm font-semibold text-foreground">Intelligence Digest</h3>
             <Badge variant="info">Auto-generated</Badge>
           </div>
-          <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+          <div className="text-sm text-foreground leading-relaxed whitespace-pre-line">
             {digestQ.data.digest}
           </div>
-          <p className="text-xs text-gray-400 mt-2">Generated {formatRelative(digestQ.data.generated_at)}</p>
+          <p className="text-xs text-muted-foreground/70 mt-2">Generated {formatRelative(digestQ.data.generated_at)}</p>
         </Card>
       )}
 
@@ -370,7 +370,7 @@ export default function DashboardPage() {
         <Card className="p-4 border-warning/30 bg-warning-soft/20">
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp size={16} className="text-warning" />
-            <h3 className="text-sm font-semibold text-gray-900">Yield-Risk Alerts</h3>
+            <h3 className="text-sm font-semibold text-foreground">Yield-Risk Alerts</h3>
             <Badge variant="warning">{yieldRiskQ.data!.count ?? yieldRiskQ.data!.alerts.length} at risk</Badge>
           </div>
           {yieldRiskQ.data!.alerts.length >= 3 && (
@@ -407,7 +407,7 @@ export default function DashboardPage() {
         <Card className={`p-4 ${openAlerts.length > 0 ? 'border-warning/40' : ''}`}>
           <div className="flex items-center gap-2 mb-2">
             <Shield size={18} className={openAlerts.length > 0 ? 'text-warning' : 'text-success'} />
-            <h3 className="text-sm font-semibold text-gray-900">Integrity Signals</h3>
+            <h3 className="text-sm font-semibold text-foreground">Integrity Signals</h3>
           </div>
           {integrityBreakdown.length > 0 ? (
             <ul className="space-y-1.5 mb-3">
@@ -431,9 +431,9 @@ export default function DashboardPage() {
         <Card className={`p-4 ${(summary?.new_inquiries_24h ?? 0) > 0 ? 'border-secondary/30' : ''}`}>
           <div className="flex items-center gap-2 mb-2">
             <Inbox size={18} className={(summary?.new_inquiries_24h ?? 0) > 0 ? 'text-secondary' : 'text-muted-foreground'} />
-            <h3 className="text-sm font-semibold text-gray-900">New Inquiries</h3>
+            <h3 className="text-sm font-semibold text-foreground">New Inquiries</h3>
           </div>
-          <p className="text-2xl font-bold text-gray-900">
+          <p className="text-2xl font-bold text-foreground">
             Last 24h: {summary?.new_inquiries_24h ?? 0}
             {(summary?.unanswered_inquiries_4h ?? 0) > 0 && (
               <span className="text-base font-bold text-warning"> ({summary!.unanswered_inquiries_4h} unanswered ≥ 4h)</span>
@@ -447,17 +447,17 @@ export default function DashboardPage() {
 
       {/* Fairness signal — Spec 31 §11 (G-D4 / G-I5). Advisory representation check. */}
       {summary?.fairness && summary.fairness.status !== 'insufficient_data' && (
-        <Card className={`p-4 ${summary.fairness.status === 'warning' ? 'border-amber-200 bg-amber-50/30' : ''}`}>
+        <Card className={`p-4 ${summary.fairness.status === 'warning' ? 'border-warning-soft bg-warning-soft/30' : ''}`}>
           <div className="flex items-center gap-2 mb-1">
-            <Users size={16} className={summary.fairness.status === 'warning' ? 'text-amber-600' : 'text-green-600'} />
-            <h3 className="text-sm font-semibold text-gray-900">Fairness Signal</h3>
+            <Users size={16} className={summary.fairness.status === 'warning' ? 'text-warning' : 'text-success'} />
+            <h3 className="text-sm font-semibold text-foreground">Fairness Signal</h3>
             {summary.fairness.status === 'warning' ? (
               <Badge variant="warning">Review{summary.fairness.dimension ? ` · ${summary.fairness.dimension}` : ''}</Badge>
             ) : (
               <Badge variant="success">All clear</Badge>
             )}
           </div>
-          <p className="text-sm text-gray-600">{summary.fairness.message}</p>
+          <p className="text-sm text-muted-foreground">{summary.fairness.message}</p>
         </Card>
       )}
 
@@ -466,26 +466,26 @@ export default function DashboardPage() {
         <Card className="p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Zap size={16} className="text-amber-500" />
-              <h3 className="text-sm font-semibold text-gray-900">Priority Review Queue</h3>
+              <Zap size={16} className="text-warning" />
+              <h3 className="text-sm font-semibold text-foreground">Priority Review Queue</h3>
               <Badge variant="warning">{topPriority.length} urgent</Badge>
             </div>
             <Button size="sm" variant="ghost" onClick={() => navigate(admissionsUrl('pipeline', 'priority'))}>View All</Button>
           </div>
           <div className="space-y-1.5">
             {topPriority.map((p, i) => (
-              <div key={p.application_id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer" onClick={() => navigate(applicantUrl(p.application_id))}>
+              <div key={p.application_id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted cursor-pointer" onClick={() => navigate(applicantUrl(p.application_id))}>
                 <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
                   style={{ backgroundColor: p.priority_score >= 70 ? '#ef4444' : p.priority_score >= 40 ? '#f59e0b' : '#22c55e' }}>
                   {Math.round(p.priority_score)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className="text-sm text-gray-900">#{i + 1} Applicant {p.student_id.slice(0, 8)}</span>
-                  <span className="text-xs text-gray-400 ml-2">{p.program_name}</span>
+                  <span className="text-sm text-foreground">#{i + 1} Applicant {p.student_id.slice(0, 8)}</span>
+                  <span className="text-xs text-muted-foreground/70 ml-2">{p.program_name}</span>
                 </div>
                 <div className="flex gap-1">
                   {p.priority_reasons.slice(0, 2).map((r, j) => (
-                    <span key={j} className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{r}</span>
+                    <span key={j} className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded">{r}</span>
                   ))}
                 </div>
               </div>
@@ -496,7 +496,7 @@ export default function DashboardPage() {
 
       {/* Quick Actions */}
       <Card className="p-4">
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">Quick Actions</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-3">Quick Actions</h3>
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => navigate('/i/programs/new')} className="flex items-center gap-2">
             <Plus size={16} /> Add Program
@@ -514,7 +514,7 @@ export default function DashboardPage() {
       </Card>
 
       <div>
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">Operational KPIs</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-3">Operational KPIs</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {operationalKpis.map(kpi => (
             <Card key={kpi.label} className="p-5">
@@ -523,8 +523,8 @@ export default function DashboardPage() {
                   <kpi.icon size={20} />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">{kpi.label}</p>
-                  <p className="text-2xl font-semibold text-gray-900">{kpi.value}</p>
+                  <p className="text-sm text-muted-foreground">{kpi.label}</p>
+                  <p className="text-2xl font-semibold text-foreground">{kpi.value}</p>
                 </div>
               </div>
             </Card>
@@ -535,19 +535,19 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="p-4 lg:col-span-1">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
+            <h3 className="text-sm font-semibold text-foreground">Notifications</h3>
             {unreadNotifications > 0 && <Badge variant="info">{unreadNotifications} unread</Badge>}
           </div>
           {notifications.length === 0 ? (
-            <p className="text-sm text-gray-500 py-4 text-center">No recent activity</p>
+            <p className="text-sm text-muted-foreground py-4 text-center">No recent activity</p>
           ) : (
             <div className="space-y-3">
               {notifications.slice(0, 8).map(n => (
                 <div key={n.id} className="flex items-start gap-2">
-                  <div className={`w-2 h-2 mt-1.5 rounded-full flex-shrink-0 ${n.is_read ? 'bg-gray-300' : 'bg-brand-slate-500'}`} />
+                  <div className={`w-2 h-2 mt-1.5 rounded-full flex-shrink-0 ${n.is_read ? 'bg-muted-foreground/40' : 'bg-secondary'}`} />
                   <div className="min-w-0">
-                    <p className="text-sm text-gray-800 truncate">{n.title}</p>
-                    <p className="text-xs text-gray-400">{formatRelative(n.created_at)}</p>
+                    <p className="text-sm text-foreground truncate">{n.title}</p>
+                    <p className="text-xs text-muted-foreground/70">{formatRelative(n.created_at)}</p>
                   </div>
                 </div>
               ))}
@@ -557,7 +557,7 @@ export default function DashboardPage() {
 
         <Card className="p-4 lg:col-span-2">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-900">Program Readiness</h3>
+            <h3 className="text-sm font-semibold text-foreground">Program Readiness</h3>
             <Button variant="ghost" size="sm" onClick={() => navigate('/i/programs')}>View All</Button>
           </div>
           {programs.length === 0 ? (

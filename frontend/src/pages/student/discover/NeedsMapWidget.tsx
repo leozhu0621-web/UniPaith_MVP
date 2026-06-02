@@ -97,7 +97,7 @@ export default function NeedsMapWidget() {
                 <span className="text-[10px] text-student-text">
                   {items.length}
                   {mustHaves > 0 && (
-                    <span className="ml-1.5 text-red-600">• {mustHaves} must-have</span>
+                    <span className="ml-1.5 text-destructive">• {mustHaves} must-have</span>
                   )}
                 </span>
               </div>
