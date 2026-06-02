@@ -28,6 +28,8 @@ import GoalHubPage from './pages/public/GoalHubPage'
 import BuildRoadmapPage from './pages/public/BuildRoadmapPage'
 import FeatureBacklogPage from './pages/public/FeatureBacklogPage'
 import ApiContractPage from './pages/public/ApiContractPage'
+import DataModelPage from './pages/public/DataModelPage'
+import AcceptancePage from './pages/public/AcceptancePage'
 
 // Student pages — 4 main + profile/saved/settings from avatar
 // Discover (Stage 1) is the new student home — replaces CounselorHomePage
@@ -115,6 +117,10 @@ const router = createBrowserRouter([
   { path: '/goal/features', element: <PublicLayout><FeatureBacklogPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 50 — front↔back API contract (router map read live from the routes).
   { path: '/goal/api', element: <PublicLayout><ApiContractPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  // Spec 51 — persisted data model (table map introspected live from the models).
+  { path: '/goal/data-model', element: <PublicLayout><DataModelPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  // Spec 52 — MVP acceptance & runbook (readiness read live from the running system).
+  { path: '/goal/acceptance', element: <PublicLayout><AcceptancePage /></PublicLayout>, errorElement: <RouteErrorPage /> },
 
   { path: '/login', element: <AuthLayout><LoginPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
   { path: '/signup', element: <AuthLayout><SignupPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
