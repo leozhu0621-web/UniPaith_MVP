@@ -104,6 +104,7 @@ from unipaith.models.ml_loop import (
     TrainingRun,
 )
 from unipaith.models.needs import StudentNeed
+from unipaith.models.payment import Payment
 from unipaith.models.peer import PeerConnection, PeerProfile, PeerReport
 from unipaith.models.pipeline import (
     PipelineConfig,
@@ -270,4 +271,6 @@ __all__ = [
     "PipelineStageSnapshot",
     "PipelineConfig",
     "StudentSubscription",
+    # Payments (Spec 39)
+    "Payment",
 ]

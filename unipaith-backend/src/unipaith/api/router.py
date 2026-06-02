@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Header, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,6 +25,7 @@ from unipaith.api.interviews import router as interviews_router
 from unipaith.api.messaging import router as messaging_router
 from unipaith.api.needs import router as needs_router
 from unipaith.api.notifications import router as notifications_router
+from unipaith.api.payments import router as payments_router
 from unipaith.api.programs import router as programs_router
 from unipaith.api.recommendations import router as recommendations_router
 from unipaith.api.reviews import router as reviews_router
@@ -65,6 +66,8 @@ api_router.include_router(ai_surface_router)
 api_router.include_router(institutions_router)
 api_router.include_router(programs_router)
 api_router.include_router(applications_router)
+# Spec 39 — fees & payments (student checkout/waiver + institution config/refunds).
+api_router.include_router(payments_router)
 api_router.include_router(documents_router)
 api_router.include_router(saved_lists_router)
 api_router.include_router(search_router)
@@ -85,6 +88,35 @@ api_router.include_router(connect_router)
 @api_router.get("/health", tags=["health"])
 async def health_check():
     return {"status": "ok", "version": "0.1.0"}
+
+
+@api_router.post("/webhooks/stripe", tags=["payments"])
+async def stripe_webhook(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    stripe_signature: str | None = Header(None, alias="Stripe-Signature"),
+):
+    """Public — Stripe posts payment/refund events here (Spec 39 §4).
+
+    Signature-verified in stripe mode; a no-op in mock mode (the in-app confirm
+    endpoint drives success instead). Updates fee/deposit status + advances any
+    downstream enrollment state. ``get_db`` commits on success.
+    """
+    from unipaith.config import settings
+    from unipaith.core.exceptions import BadRequestException
+    from unipaith.services.payment_service import PaymentService
+
+    if settings.payments_provider != "stripe":
+        return {"status": "ignored", "reason": "payments_provider is not stripe"}
+
+    payload = await request.body()
+    svc = PaymentService(db)
+    try:
+        event = svc.provider.verify_and_parse_webhook(payload, stripe_signature)
+    except Exception as exc:  # noqa: BLE001 — bad signature / malformed payload → 400
+        raise BadRequestException("Invalid Stripe webhook signature") from exc
+    await svc.handle_provider_event(event)
+    return {"status": "ok", "event": event.type}
 
 
 @api_router.get("/t/{short_code}", tags=["tracking"])

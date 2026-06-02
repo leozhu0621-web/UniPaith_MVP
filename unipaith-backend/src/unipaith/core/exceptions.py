@@ -36,6 +36,15 @@ class ConflictException(UniPaithException):
         super().__init__(status_code=409, detail=detail, error_code="CONFLICT")
 
 
+class PaymentRequiredException(UniPaithException):
+    """402 — submission is gated on an unpaid/unwaived application fee (Spec 39
+    §2.2/§7). ``detail`` is a structured payload so the UI can route to the pay/
+    waiver step: {"message", "amount", "currency", "waiver_allowed"}."""
+
+    def __init__(self, detail: Any):
+        super().__init__(status_code=402, detail=detail, error_code="PAYMENT_REQUIRED")
+
+
 class UnprocessableEntityException(UniPaithException):
     """422 with a structured detail payload. Used by the program-publish
     validator so the editor can list every missing field and scroll to its

@@ -9,9 +9,6 @@ swap in without touching call sites; the MVP uses ``MockPaymentProvider``.
 from __future__ import annotations
 
 import math
-import uuid
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
@@ -29,34 +26,15 @@ from unipaith.schemas.billing import (
     StudentBillingResponse,
 )
 
+# Provider-portability seam — shared with the Spec 39 fee/deposit layer
+# (Spec 39 §12 "same PaymentProvider"). Re-exported for back-compat.
+from unipaith.services.payments.provider import (  # noqa: E402
+    MockPaymentProvider,
+    PaymentMethod,
+    PaymentProvider,
+)
 
-@dataclass
-class PaymentMethod:
-    brand: str
-    last4: str
-    customer_id: str
-    subscription_id: str
-
-
-class PaymentProvider(ABC):
-    """Provider-portability seam (mirrors the LLM provider pattern, Spec 39 §4)."""
-
-    @abstractmethod
-    def attach_payment_method(self, user_id: UUID) -> PaymentMethod: ...
-
-
-class MockPaymentProvider(PaymentProvider):
-    """No real charge — returns a deterministic test card so the UI can show
-    plan state + a managed card on file (Spec 21 §2.7 MVP scope)."""
-
-    def attach_payment_method(self, user_id: UUID) -> PaymentMethod:
-        token = uuid.uuid4().hex
-        return PaymentMethod(
-            brand="Visa",
-            last4="4242",
-            customer_id=f"mock_cus_{token[:14]}",
-            subscription_id=f"mock_sub_{token[14:]}",
-        )
+__all__ = ["BillingService", "PaymentProvider", "MockPaymentProvider", "PaymentMethod"]
 
 
 def _period_after(start: datetime, days: int = 30) -> datetime:

@@ -14,6 +14,7 @@ from unipaith.core.exceptions import (
     BadRequestException,
     ConflictException,
     NotFoundException,
+    PaymentRequiredException,
 )
 from unipaith.models.application import (
     Application,
@@ -1593,6 +1594,9 @@ class ApplicationService:
                 f"Application is not ready for submission. Missing: {missing}"
             )
 
+        # Spec 39 §2.2/§7 — gate internal submission on the application fee.
+        await self._assert_fee_clear_for_submit(app)
+
         # Build frozen snapshot
         snapshot = await self._build_submission_snapshot(student_id, application_id, app.program_id)
 
@@ -1617,6 +1621,44 @@ class ApplicationService:
         await self._post_submit_integrity_scan(app)
         await self.db.refresh(app)
         return app
+
+    async def _assert_fee_clear_for_submit(self, app: Application) -> None:
+        """Spec 39 §2.2/§7 — block internal submission until the application fee
+        is paid or waived. Under ``allow_and_reconcile`` (the equity default) a
+        *requested* waiver lets submission proceed (``pending_waiver``); under
+        ``block_until_approved`` the waiver must be approved first. No-op when
+        payments are disabled or the program has no fee."""
+        from unipaith.config import settings as _cfg
+
+        if not _cfg.payments_enabled:
+            return
+        from unipaith.models.payment import Payment
+        from unipaith.services.payments import config as fees
+
+        program = await self.db.get(Program, app.program_id)
+        institution = await self.db.get(Institution, program.institution_id) if program else None
+        fee_cfg = fees.fee_config(institution)
+        if not fee_cfg["enabled"]:
+            return
+        waiver_cfg = fees.waiver_config(institution)
+        payment = (
+            await self.db.execute(
+                select(Payment).where(
+                    Payment.application_id == app.id,
+                    Payment.kind == "application_fee",
+                )
+            )
+        ).scalar_one_or_none()
+        if fees.is_fee_clear(payment, waiver_cfg["policy"]):
+            return
+        raise PaymentRequiredException(
+            {
+                "message": "Pay the application fee or request a waiver to submit.",
+                "amount": round(fee_cfg["amount_cents"] / 100, 2),
+                "currency": fee_cfg["currency"],
+                "waiver_allowed": True,
+            }
+        )
 
     async def _build_submission_snapshot(
         self, student_id: UUID, application_id: UUID, program_id: UUID

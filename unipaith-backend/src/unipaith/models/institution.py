@@ -77,6 +77,17 @@ class Institution(Base):
     # no-training tier override. NULL = all defaults (see
     # services/ai_config_service.DEFAULT_AI_CONFIG).
     ai_config: Mapped[dict | None] = mapped_column(JSONB)
+    # Spec 39 (Fees & Payments) §2.1 — applicant-facing fee/deposit collection
+    # config, edited at /i/settings?tab=billing. NULL = no fee, no deposit.
+    #   {"application_fee": {"enabled": bool, "amount_cents": int, "currency": "USD"},
+    #    "waiver": {"policy": "allow_and_reconcile" | "block_until_approved",
+    #               "auto_rules": ["fee_waiver_code", "first_gen", "income_band", "nacac_sram"]},
+    #    "enrollment_deposit": {"enabled": bool, "amount_cents": int, "currency": "USD",
+    #                           "deadline_days": int, "refundable": bool,
+    #                           "non_refundable_cents": int},
+    #    "stripe_connect_account_id": str | null}
+    # Effective amounts: program override (cost_data) → this config → none.
+    payment_config: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

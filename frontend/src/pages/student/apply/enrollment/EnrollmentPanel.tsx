@@ -15,6 +15,13 @@ import {
   requestDeferral,
   toggleEnrollmentChecklistItem,
 } from '../../../../api/enrollment'
+import {
+  getCostTracker,
+  payEnrollmentDeposit,
+  formatMoney,
+  type CheckoutSession,
+} from '../../../../api/payments'
+import PaymentCheckout from '../../../../components/student/PaymentCheckout'
 import { formatTermDate, daysUntil } from '../offer/offerFormat'
 import type {
   Application,
@@ -32,6 +39,7 @@ import {
   CalendarClock,
   Wallet,
   ArrowRight,
+  Receipt,
 } from 'lucide-react'
 
 const CONFIRMED_STATES = ['intent_confirmed', 'deposit_recorded', 'enrollment_confirmed', 'enrolled']
@@ -125,16 +133,32 @@ export default function EnrollmentPanel({ application }: { application: Applicat
   const [deferSeason, setDeferSeason] = useState('Fall')
   const [deferYear, setDeferYear] = useState(new Date().getFullYear() + 1)
 
+  const [depositCheckout, setDepositCheckout] = useState<CheckoutSession | null>(null)
+
   const { data: enr, isLoading } = useQuery({
     queryKey: ['enrollment', appId],
     queryFn: () => getMyEnrollment(appId),
+  })
+  // Spec 39 §3 — deposit config (amount/currency/payable) lives on the cost tracker.
+  const { data: cost } = useQuery({
+    queryKey: ['payment', appId],
+    queryFn: () => getCostTracker(appId),
+    enabled: !!appId,
   })
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['enrollment', appId] })
     queryClient.invalidateQueries({ queryKey: ['application', appId] })
+    queryClient.invalidateQueries({ queryKey: ['payment', appId] })
     queryClient.invalidateQueries({ queryKey: ['my-applications'] })
   }
+
+  const payDepositMut = useMutation({
+    mutationFn: () => payEnrollmentDeposit(appId),
+    onSuccess: session => setDepositCheckout(session),
+    onError: (err: { response?: { data?: { detail?: string } } }) =>
+      showToast(err.response?.data?.detail || 'Could not start deposit checkout', 'error'),
+  })
 
   const confirmMut = useMutation({
     mutationFn: () => confirmEnrollment(appId),
@@ -373,25 +397,56 @@ export default function EnrollmentPanel({ application }: { application: Applicat
         </div>
       </Card>
 
-      {/* ── Deposit + status row ── */}
-      <Card className="p-5">
-        <div className="flex items-center gap-2 mb-2">
-          <Wallet size={16} className="text-student-text" />
-          <p className="text-sm font-medium text-student-ink">Enrollment deposit</p>
-        </div>
-        <p className="text-sm text-student-text">
-          Status:{' '}
-          <span className="font-semibold text-student-ink">
-            {DEPOSIT_LABEL[e.deposit_status || 'none']}
-          </span>
-          {e.deposit_amount ? ` · ${e.deposit_amount.toLocaleString()}` : ''}
-        </p>
-        <p className="text-xs text-student-text mt-1">
-          {e.deposit_status === 'paid' || e.deposit_status === 'waived'
-            ? 'Recorded by your school.'
-            : 'Your school records your deposit once received. (No payment is collected here yet.)'}
-        </p>
-      </Card>
+      {/* ── Enrollment deposit (Spec 39 §3 — real collection; cobalt, never gold) ── */}
+      {(() => {
+        const deposit = cost?.deposit
+        const settled = e.deposit_status === 'paid' || e.deposit_status === 'waived'
+        return (
+          <Card className="p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <Wallet size={16} className="text-student-text" />
+              <p className="text-sm font-medium text-student-ink">Enrollment deposit</p>
+            </div>
+            {settled ? (
+              <div className="rounded-lg bg-success-soft px-3 py-2 text-xs text-success flex items-start gap-1.5">
+                <Receipt size={14} className="mt-0.5 shrink-0" />
+                <span>
+                  Deposit {e.deposit_status === 'waived' ? 'waived' : 'paid'}
+                  {deposit?.paid_at ? ` on ${new Date(deposit.paid_at).toLocaleDateString()}` : ''}. Your spot is confirmed.
+                  {deposit?.refunded_amount
+                    ? ` Refunded ${formatMoney(deposit.refunded_amount, deposit.currency)}.`
+                    : ''}
+                </span>
+              </div>
+            ) : deposit?.required ? (
+              <>
+                <p className="text-2xl font-bold text-student-ink tabular-nums mb-1">
+                  {formatMoney(deposit.amount, deposit.currency)}
+                </p>
+                <p className="text-xs text-student-text mb-3">
+                  Pay your enrollment deposit to confirm your spot
+                  {deposit.refundable ? '' : ' (non-refundable)'}.
+                </p>
+                <Button
+                  variant="secondary"
+                  loading={payDepositMut.isPending}
+                  onClick={() => payDepositMut.mutate()}
+                >
+                  Pay enrollment deposit
+                </Button>
+              </>
+            ) : (
+              <p className="text-sm text-student-text">
+                Status:{' '}
+                <span className="font-semibold text-student-ink">
+                  {DEPOSIT_LABEL[e.deposit_status || 'none']}
+                </span>
+                {e.deposit_amount ? ` · ${e.deposit_amount.toLocaleString()}` : ''}
+              </p>
+            )}
+          </Card>
+        )
+      })()}
 
       {/* ── Still-decidable actions while confirmed (until enrolled) ── */}
       {confirmed && !enrolled && (
@@ -426,6 +481,18 @@ export default function EnrollmentPanel({ application }: { application: Applicat
           </div>
         </Card>
       )}
+
+      {/* Spec 39 §3 — deposit checkout (calm, cobalt) */}
+      <PaymentCheckout
+        session={depositCheckout}
+        label="Pay enrollment deposit"
+        onClose={() => setDepositCheckout(null)}
+        onPaid={() => {
+          setDepositCheckout(null)
+          invalidate()
+          showToast('Deposit received — your spot is confirmed. 🎓', 'success')
+        }}
+      />
     </div>
   )
 }

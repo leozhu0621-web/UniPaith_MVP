@@ -498,6 +498,24 @@ class Settings(BaseSettings):
     # flip per-environment once Stripe is wired (Spec 39, Phase-2).
     paywall_enforced: bool = False
 
+    # --- Payments / fees (Spec 39 — Fees & Payments) ---
+    # Master switch for the applicant-facing transactional layer (application
+    # fees + enrollment deposits + waivers + refunds). When False, fee surfaces
+    # are hidden and submission is never fee-gated (degrades to the status-only
+    # behaviour of Spec 15/35).
+    payments_enabled: bool = True
+    # Provider behind the PaymentProvider seam (Spec 39 §4): "mock" | "stripe".
+    # Default "mock" — a deterministic in-app checkout that moves no real money,
+    # so the flow is fully live/demoable without Stripe keys. Flip to "stripe"
+    # per-environment once Stripe Connect onboarding + keys are in place.
+    payments_provider: str = "mock"
+    # Stripe credentials (only read when payments_provider == "stripe").
+    stripe_secret_key: str = ""
+    stripe_publishable_key: str = ""
+    stripe_webhook_secret: str = ""
+    # Base URL used to build Stripe Checkout success/cancel return links.
+    payments_app_base_url: str = "https://app.unipaith.co"
+
 
 settings = Settings()
 
