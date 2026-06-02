@@ -311,7 +311,7 @@ export function DataRightsForm({ defaultValues, onSubmit, loading }: FormProps) 
   return (
     <form onSubmit={handleSubmit(d => onSubmit(sanitizePayload(d)))} className="space-y-4">
       <div>
-        <p className="text-sm font-medium text-gray-700 mb-2">Data Usage Consent</p>
+        <p className="text-sm font-medium text-foreground mb-2">Data Usage Consent</p>
         <div className="space-y-2">
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('consent_matching')} /> Allow use for program matching</label>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" {...register('consent_outreach')} /> Allow use for outreach and marketing</label>
@@ -319,9 +319,9 @@ export function DataRightsForm({ defaultValues, onSubmit, loading }: FormProps) 
         </div>
       </div>
       <Select label="Data Retention" options={DATA_RETENTION_OPTIONS} {...register('data_retention_preference')} />
-      <div className="border-t border-gray-100 pt-3">
-        <label className="flex items-center gap-2 text-sm text-rose-600"><input type="checkbox" {...register('deletion_requested')} /> Request data deletion</label>
-        <p className="text-xs text-gray-400 mt-1">This will flag your account for data removal. The process may take up to 30 days.</p>
+      <div className="border-t border-border pt-3">
+        <label className="flex items-center gap-2 text-sm text-destructive"><input type="checkbox" {...register('deletion_requested')} /> Request data deletion</label>
+        <p className="text-xs text-muted-foreground/70 mt-1">This will flag your account for data removal. The process may take up to 30 days.</p>
       </div>
       <Button type="submit" loading={loading} className="w-full">Save</Button>
     </form>
