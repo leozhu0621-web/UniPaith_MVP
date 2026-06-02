@@ -4,10 +4,12 @@ import {
   ArrowRight,
   CircleCheck,
   Cpu,
+  Database,
   Gauge,
   ListChecks,
   Map as MapIcon,
   Network,
+  Rocket,
   ShieldCheck,
   Sparkles,
 } from 'lucide-react'
@@ -19,15 +21,18 @@ import Card from '../../components/ui/Card'
 import usePageTitle from '../../hooks/usePageTitle'
 import { GoalShell, Hero, SectionHeading, Stat, StatBand, StatSkeleton } from './goalUi'
 
-// Spec 48/49/50 — the /goal transparency hub. One landing that links the four
-// public build surfaces (AI agents · roadmap · feature coverage · API contract)
-// and shows the live headline numbers, read from GET /api/v1/build/overview.
+// Specs 48–53 — the /goal transparency hub. One landing that links the public
+// build surfaces (AI agents · roadmap · feature coverage · API contract · data
+// model · acceptance · experience) and shows the live headline numbers, read
+// from GET /api/v1/build/overview.
 
 const SURFACE_ICONS: Record<string, typeof MapIcon> = {
   'claude-api': Sparkles,
   roadmap: MapIcon,
   features: ListChecks,
   api: Network,
+  'data-model': Database,
+  acceptance: Rocket,
   experience: Gauge,
 }
 
@@ -93,9 +98,9 @@ export default function GoalHubPage() {
   return (
     <GoalShell>
       <Hero
-        eyebrow="Build transparency · Specs 48 · 49 · 50"
+        eyebrow="Build transparency · Specs 48 · 49 · 50 · 51 · 52"
         title="How UniPaith is built — in the open."
-        lede="The roadmap, the feature coverage map, the API contract and the AI agent fleet — surfaced as live, self-verifying pages. Where a page shows a number, it's read straight from the running system, not asserted in a doc."
+        lede="The roadmap, the feature coverage map, the API contract, the data model, the acceptance runbook and the AI agent fleet — surfaced as live, self-verifying pages. Where a page shows a number, it's read straight from the running system, not asserted in a doc."
       >
         {mvpComplete && (
           <span className="inline-flex items-center gap-1.5 rounded-pill border border-primary/40 px-3 py-1 text-[13px] font-semibold text-foreground">
@@ -143,13 +148,13 @@ export default function GoalHubPage() {
       <section id="surfaces" className="mt-16 scroll-mt-20">
         <SectionHeading
           icon={MapIcon}
-          title="Five ways to read the build"
+          title="Seven ways to read the build"
           sub="Each surface is a public page backed by a DB-free endpoint. Open one to see the detail."
         />
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data
             ? data.surfaces.map(s => <SurfaceCard key={s.key} surface={s} />)
-            : [0, 1, 2, 3].map(i => (
+            : [0, 1, 2, 3, 4, 5].map(i => (
                 <div key={i} className="h-48 rounded-lg border border-border bg-card animate-pulse" />
               ))}
         </div>

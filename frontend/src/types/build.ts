@@ -1,6 +1,6 @@
-// Spec 48/49/50/53 — types for the public build-transparency surface.
-// Mirror unipaith-backend/src/unipaith/transparency/{roadmap,features,api_contract,ux_benchmark}.py
-// and api/build.py field-for-field.
+// Specs 48–53 — types for the public build-transparency surface.
+// Mirror unipaith-backend/src/unipaith/transparency/*.py and api/build.py
+// field-for-field.
 
 // ── Roadmap (spec 48) ───────────────────────────────────────────────────────
 export type PhaseStatus = 'shipped' | 'deferred'
@@ -132,8 +132,181 @@ export interface BuildOverview {
   features: FeatureSummary
   api: ApiContractSummary
   agents: AgentsSummary
+  data_model: DataModelSummary
+  acceptance: AcceptanceSummary
   provider: string
   surfaces: OverviewSurface[]
+}
+
+// ── Data model (spec 51) ────────────────────────────────────────────────────
+export interface DataModelSummary {
+  table_count: number
+  column_count: number
+  jsonb_column_count: number
+  fk_count: number
+  vector_table_count: number
+  module_count: number
+  uuid_pk_table_count: number
+  timestamp_table_count: number
+  domain_count: number
+  doc_claimed_tables: number
+  doc_claimed_model_files: number
+  planned_total: number
+  planned_now_live: number
+  live_is_source_of_truth: boolean
+}
+
+export interface DataModelTable {
+  table: string
+  module: string
+  spec: string
+  note: string
+  column_count: number
+  jsonb_count: number
+  fk_count: number
+  fk_targets: string[]
+  is_vector: boolean
+  has_uuid_pk: boolean
+  has_timestamps: boolean
+}
+
+export interface DataModelDomain {
+  key: string
+  title: string
+  section: string
+  spec: string
+  blurb: string
+  table_count: number
+  modules: string[]
+  tables: DataModelTable[]
+}
+
+export interface DataModelModule {
+  module: string
+  table_count: number
+  domain: string
+}
+
+export interface AlreadyBuiltItem {
+  capability: string
+  table: string
+  spec: string
+  note: string
+  live: boolean
+}
+
+export interface PlannedTableItem {
+  table: string
+  spec: string
+  note: string
+  covered_by: string
+  live: boolean
+  covered_by_live: boolean
+}
+
+export interface DataModel {
+  summary: DataModelSummary
+  conventions: ContractConvention[]
+  domains: DataModelDomain[]
+  modules: DataModelModule[]
+  already_built: AlreadyBuiltItem[]
+  planned: PlannedTableItem[]
+  note: string
+}
+
+// ── Acceptance & runbook (spec 52) ──────────────────────────────────────────
+export interface AcceptanceSummary {
+  boots: boolean
+  critical_paths_total: number
+  launch_blockers_total: number
+  launch_blockers_cleared: number
+  launch_ready: boolean
+  core_areas_total: number
+  core_areas_green: number
+  mvp_features_complete: boolean
+  route_count: number
+  ai_endpoint_count: number
+  agent_count: number
+  table_count: number
+  mvp_delivered: number
+  mvp_scope_count: number
+  phases_shipped: number
+  phase_count: number
+}
+
+export interface AcceptanceLevel {
+  order: number
+  key: string
+  title: string
+  status: 'green' | 'amber' | 'red'
+  body: string
+  evidence: string
+}
+
+export interface JourneyStep {
+  n: number
+  title: string
+  spec: string
+  detail: string
+}
+
+export interface AcceptanceJourney {
+  key: string
+  title: string
+  actor: string
+  spec: string
+  blurb: string
+  steps: JourneyStep[]
+}
+
+export interface DodItem {
+  text: string
+  spec: string
+}
+
+export interface IntegrationGate {
+  title: string
+  body: string
+  spec: string
+}
+
+export interface LaunchBlocker {
+  title: string
+  spec: string
+  status: 'cleared' | 'deferred'
+  evidence: string
+}
+
+export interface SeedItem {
+  label: string
+  detail: string
+}
+
+export interface AcceptanceSeed {
+  intro: string
+  items: SeedItem[]
+}
+
+export interface SignoffArea {
+  area: string
+  klass: 'core' | 'extend' | 'excluded'
+  path_ref: string
+  boots: boolean
+  critical_path: boolean
+  dod: boolean
+}
+
+export interface Acceptance {
+  summary: AcceptanceSummary
+  levels: AcceptanceLevel[]
+  journeys: AcceptanceJourney[]
+  acceptance_bar: string
+  dod: DodItem[]
+  integration_gates: IntegrationGate[]
+  launch_blockers: LaunchBlocker[]
+  seed: AcceptanceSeed
+  signoff: SignoffArea[]
+  note: string
 }
 
 // ── UX benchmark / interaction standards (spec 53) ──────────────────────────

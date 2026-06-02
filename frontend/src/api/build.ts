@@ -1,10 +1,13 @@
-// Spec 48/49/50 — public build-transparency client. No auth required; the
+// Specs 48–53 — public build-transparency client. No auth required; the
 // endpoints expose only build architecture (phases, feature coverage, the live
-// route map), never user data.
+// route map, the live table map, the acceptance gates, the UX interaction bar),
+// never user data.
 import apiClient from './client'
 import type {
+  Acceptance,
   ApiContract,
   BuildOverview,
+  DataModel,
   FeatureCatalog,
   Roadmap,
   UxBenchmark,
@@ -27,6 +30,16 @@ export async function getFeatureCatalog(): Promise<FeatureCatalog> {
 
 export async function getApiContract(): Promise<ApiContract> {
   const { data } = await apiClient.get<ApiContract>('/build/api-contract')
+  return data
+}
+
+export async function getDataModel(): Promise<DataModel> {
+  const { data } = await apiClient.get<DataModel>('/build/data-model')
+  return data
+}
+
+export async function getAcceptance(): Promise<Acceptance> {
+  const { data } = await apiClient.get<Acceptance>('/build/acceptance')
   return data
 }
 
