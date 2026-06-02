@@ -24,6 +24,7 @@ import type {
   Roadmap,
   SearchBuild,
   SearchBuildSummary,
+  RealtimeBuildSummary,
   UxBenchmark,
 } from '../types/build'
 
@@ -109,6 +110,31 @@ const SEARCH_SUMMARY: SearchBuildSummary = {
   live_is_source_of_truth: true,
 }
 
+const REALTIME_SUMMARY: RealtimeBuildSummary = {
+  capability_count: 9,
+  capabilities_live: 6,
+  capabilities_partial: 3,
+  capabilities_planned: 0,
+  build_task_count: 9,
+  tasks_live: 6,
+  tasks_partial: 3,
+  tasks_planned: 0,
+  acceptance_count: 6,
+  acceptance_live: 6,
+  sse_route_count: 1,
+  ws_route_count: 1,
+  notification_route_count: 6,
+  backing_route_count: 8,
+  event_type_count: 16,
+  broker_backend: 'memory',
+  distributed_ready: false,
+  notifications_table_present: true,
+  idempotency_wired: true,
+  config_knob_count: 6,
+  open_question_count: 3,
+  live_is_source_of_truth: true,
+}
+
 // Specs 48/49/50 — the public /goal transparency surfaces. Each renders live
 // build data from the /build/* endpoints and lets the visitor filter it.
 
@@ -148,6 +174,7 @@ const OVERVIEW: BuildOverview = {
   acceptance: ACCEPTANCE_SUMMARY,
   production: PRODUCTION_SUMMARY,
   search: SEARCH_SUMMARY,
+  realtime: REALTIME_SUMMARY,
   provider: 'anthropic',
   surfaces: [
     { key: 'claude-api', title: 'AI agents', spec: '45', blurb: 'The live agent fleet.', path: '/goal/claude-api', stat: 40, stat_label: 'AI agents' },
@@ -160,6 +187,7 @@ const OVERVIEW: BuildOverview = {
     { key: 'frontend', title: 'Frontend engineering', spec: '54', blurb: 'The React build spec.', path: '/goal/frontend', stat: '6/10', stat_label: 'build tasks complete' },
     { key: 'backend', title: 'Production readiness', spec: '55', blurb: 'The backend hardening posture.', path: '/goal/backend', stat: 7, stat_label: 'readiness pillars' },
     { key: 'search', title: 'Search, feed & recs', spec: '56', blurb: 'The discovery substrate.', path: '/goal/search', stat: '4/8', stat_label: 'capabilities live' },
+    { key: 'realtime', title: 'Realtime & notifications', spec: '57', blurb: 'Live SSE + WebSocket.', path: '/goal/realtime', stat: 16, stat_label: 'notification events' },
   ],
 }
 
@@ -487,7 +515,7 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     vi.restoreAllMocks()
   })
 
-  it('hub renders the live stats and links to all ten surfaces', async () => {
+  it('hub renders the live stats and links to all eleven surfaces', async () => {
     vi.spyOn(buildApi, 'getBuildOverview').mockResolvedValue(OVERVIEW)
     renderPage(<GoalHubPage />)
 

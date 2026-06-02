@@ -11,6 +11,7 @@ import type {
   FeatureCatalog,
   FrontendStandards,
   Production,
+  RealtimeBuild,
   Roadmap,
   SearchBuild,
   UxBenchmark,
@@ -63,5 +64,10 @@ export async function getProduction(): Promise<Production> {
 
 export async function getSearchBuild(): Promise<SearchBuild> {
   const { data } = await apiClient.get<SearchBuild>('/build/search')
+  return data
+}
+
+export async function getRealtimeBuild(): Promise<RealtimeBuild> {
+  const { data } = await apiClient.get<RealtimeBuild>('/build/realtime')
   return data
 }

@@ -3,13 +3,13 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../stores/auth-store'
 import { useUIStore } from '../../stores/ui-store'
-import { getUnreadCount } from '../../api/notifications'
 import { getInstitutionPrograms, getSetupState } from '../../api/institutions'
 import Wordmark from '../ui/Wordmark'
 import Dropdown from '../ui/Dropdown'
 import Sheet from '../ui/Sheet'
+import NotificationBell from '../notifications/NotificationBell'
 import {
-  Bell, LogOut, Settings, Menu, ChevronDown, ScrollText,
+  LogOut, Settings, Menu, ChevronDown, ScrollText,
 } from 'lucide-react'
 
 const TOP_NAV = [
@@ -29,11 +29,6 @@ export default function InstitutionLayout() {
   const [showProgramList, setShowProgramList] = useState(false)
   const { selectedProgramId, selectedProgramName, setSelectedProgram } = useUIStore()
 
-  const { data: unreadCount } = useQuery({
-    queryKey: ['unread-count'],
-    queryFn: getUnreadCount,
-    refetchInterval: 30000,
-  })
   // Spec 30 §2/§4 — first-run gating. While setup is incomplete the institution
   // is forced to /i/setup (and /i/data for step 3 upload) and the rest of the nav is dimmed.
   const setupQ = useQuery({ queryKey: ['institution-setup'], queryFn: getSetupState })
@@ -133,18 +128,7 @@ export default function InstitutionLayout() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => navigate('/i/messages')}
-            aria-label="Notifications"
-            className="ui-btn relative p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Bell size={19} />
-            {(unreadCount?.count ?? 0) > 0 && (
-              <span className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-error text-white text-[10px] flex items-center justify-center">
-                {unreadCount!.count > 9 ? '9+' : unreadCount!.count}
-              </span>
-            )}
-          </button>
+          <NotificationBell />
           <Dropdown
             trigger={
               <button aria-label="Account menu" className="ui-btn p-1 rounded-lg hover:bg-muted transition-colors">
@@ -169,9 +153,7 @@ export default function InstitutionLayout() {
         <NavLink to="/i/dashboard" aria-label="Institution home" className="leading-none">
           <img src="/favicon.svg" alt="UniPaith" className="h-9 w-9 rounded-md" />
         </NavLink>
-        <button onClick={() => navigate('/i/messages')} aria-label="Notifications" className="ui-btn relative p-2 rounded-lg hover:bg-muted text-muted-foreground">
-          <Bell size={20} />
-        </button>
+        <NotificationBell />
       </header>
 
       <Sheet isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} side="right" title="Menu">
