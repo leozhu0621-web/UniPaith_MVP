@@ -74,7 +74,7 @@ export default function MessagesPage({ initialThreadId }: { initialThreadId?: st
     refetchInterval: 60000,
   })
 
-  const { data: thread, isLoading: threadLoading } = useQuery({
+  const { data: thread, isLoading: threadLoading, isError: threadError, refetch: refetchThread } = useQuery({
     queryKey: ['inbox-thread', selectedId],
     queryFn: () => getThread(selectedId!),
     enabled: !!selectedId,
@@ -170,8 +170,15 @@ export default function MessagesPage({ initialThreadId }: { initialThreadId?: st
           <div className="flex flex-1 items-center justify-center px-6 text-center text-sm text-muted-foreground">
             Pick a conversation to see it here.
           </div>
-        ) : threadLoading || !thread ? (
+        ) : threadLoading ? (
           <ThreadSkeleton />
+        ) : threadError || !thread ? (
+          <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
+            <p className="mb-2 text-sm text-error">This conversation couldn’t be loaded.</p>
+            <button onClick={() => refetchThread()} className="text-secondary hover:underline text-sm">
+              Retry
+            </button>
+          </div>
         ) : (
           <ThreadView
             thread={thread}

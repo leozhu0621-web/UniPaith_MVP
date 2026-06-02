@@ -553,7 +553,7 @@ function ScoreRing({ label, value }: { label: string; value: number }) {
       <div className="relative w-16 h-16 mx-auto">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
           <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" className="text-muted" strokeWidth="3" />
-          <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#2A6BD4" strokeWidth="3" strokeDasharray={`${pct}, 100`} strokeLinecap="round" />
+          <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" className="text-cobalt" strokeWidth="3" strokeDasharray={`${pct}, 100`} strokeLinecap="round" />
         </svg>
         <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-cobalt">{pct}</span>
       </div>

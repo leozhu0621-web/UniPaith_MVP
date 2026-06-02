@@ -207,7 +207,7 @@ export default function DataTab() {
     <div className="space-y-10">
       {/* Consent levers */}
       <section>
-        <SectionHeader title="Consent" description="Four independent controls over how your data is used." />
+        <SectionHeader title="Consent" description="Independent controls over how your data is used." />
         <Card className="divide-y divide-border">
           {LEVERS.map(lever => (
             <div key={lever.key} className="flex items-start justify-between gap-4 p-4">

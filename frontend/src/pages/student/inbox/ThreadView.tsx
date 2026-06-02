@@ -334,7 +334,7 @@ export default function ThreadView({
               }}
               rows={1}
               placeholder="Type a reply…"
-              className="max-h-32 min-h-[40px] flex-1 resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="max-h-32 min-h-[40px] flex-1 resize-none rounded-lg border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
             {/* Send is cobalt — no gold (§10): the school is the celebrant, not you. */}
             <Button variant="secondary" size="md" loading={sending} disabled={!reply.trim()} onClick={sendManual}>
