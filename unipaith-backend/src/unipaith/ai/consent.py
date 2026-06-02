@@ -166,6 +166,11 @@ AGENT_REQUIRES: dict[str, str | None] = {
     # the prompt library is the consent signal, so no matching/outreach lever
     # here. The deterministic engine never 5xxes regardless.
     "prompt_coach": None,
+    # Spec 43 §4.18 — the major-specific readiness coach scores the student's own
+    # per-track self-ratings (their data, their request), same stance as the
+    # prompt/workshop coaches; no matching/outreach lever. Deterministic, never
+    # 5xxes.
+    "major_track_coach": None,
 }
 
 

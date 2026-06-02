@@ -84,6 +84,11 @@ AGENT_TIERS: dict[str, str] = {
     #    the future LLM swap-in (richer question generation); it always falls
     #    back to the rule-based engine. ──
     "prompt_coach": "workhorse",
+    # ── Major-specific readiness coach (spec 43 §4.18) — deterministic engine
+    #    (per-track fit score / readiness band / coverage map / suggested
+    #    artifacts / bridge plan). Tier documents the future LLM swap-in (richer
+    #    bridge-plan narration); always falls back to the rule-based engine. ──
+    "major_track_coach": "workhorse",
 }
 
 

@@ -373,6 +373,15 @@ class Settings(BaseSettings):
     # engine never 5xxes either way. Off in code, enabled per-env via ECS.
     ai_prompt_library_v2_enabled: bool = False
 
+    # Spec 43 §4.18 — major-specific readiness coach (MajorTrackCoach). When True,
+    # the /students/me/major-specific/{tracks,summary} endpoints attach the §4.18
+    # overlay (per-track fit score, readiness band, coverage map, skill-gap
+    # severity, specialization tags, suggested artifacts, bridge plan, track
+    # recommendation) computed by the deterministic engine; the tier documents the
+    # future LLM swap-in. Off → tracks/summary return raw signals + counts only.
+    # The engine never 5xxes either way. Off in code, enabled per-env via ECS.
+    ai_major_specific_v2_enabled: bool = False
+
     # GPU infrastructure (cloud-first)
     gpu_mode: str = "openai"  # "openai" | "aws" | "local" | "mock"
     gpu_8b_instance_id: str = ""

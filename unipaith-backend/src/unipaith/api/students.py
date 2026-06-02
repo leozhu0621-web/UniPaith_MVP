@@ -1955,6 +1955,10 @@ async def get_student_feed(
 
 
 # --- Package A: Major readiness (per-track self-rating blob) -----------
+# Superseded by Spec 43's /students/me/major-specific/* (canonical
+# `student_major_specific_signals` store with §5 provenance + 15-track registry
+# + §4.18 scoring). These two endpoints are kept as back-compat shims that
+# delegate to MajorSpecificService over the same store (track-name remap).
 
 
 @router.get("/me/major-readiness", response_model=list[MajorReadinessResponse])
@@ -1963,15 +1967,10 @@ async def list_major_readiness(
     db: AsyncSession = Depends(get_db),
 ):
     """List all track-level readiness rows for the logged-in student."""
-    from sqlalchemy import select
+    from unipaith.services.major_specific_service import MajorSpecificService
 
-    from unipaith.models.student import StudentMajorReadiness
-
-    profile = await _svc(db)._get_student_profile(user.id)
-    result = await db.execute(
-        select(StudentMajorReadiness).where(StudentMajorReadiness.student_id == profile.id)
-    )
-    return [MajorReadinessResponse.model_validate(r) for r in result.scalars().all()]
+    rows = await MajorSpecificService(db).list_legacy(user.id)
+    return [MajorReadinessResponse.model_validate(r) for r in rows]
 
 
 @router.put("/me/major-readiness", response_model=MajorReadinessResponse)
@@ -1981,29 +1980,10 @@ async def upsert_major_readiness(
     db: AsyncSession = Depends(get_db),
 ):
     """Upsert a track-level readiness row. Unique on (student_id, track)."""
-    from sqlalchemy import select
+    from unipaith.services.major_specific_service import MajorSpecificService
 
-    from unipaith.models.student import StudentMajorReadiness
-
-    profile = await _svc(db)._get_student_profile(user.id)
-    result = await db.execute(
-        select(StudentMajorReadiness).where(
-            StudentMajorReadiness.student_id == profile.id,
-            StudentMajorReadiness.track == body.track,
-        )
-    )
-    row = result.scalar_one_or_none()
-    if row is None:
-        row = StudentMajorReadiness(
-            student_id=profile.id,
-            track=body.track,
-            readiness_data=body.readiness_data,
-        )
-        db.add(row)
-    else:
-        row.readiness_data = body.readiness_data
+    row = await MajorSpecificService(db).upsert_legacy(user.id, body.track, body.readiness_data)
     await db.commit()
-    await db.refresh(row)
     return MajorReadinessResponse.model_validate(row)
 
 
