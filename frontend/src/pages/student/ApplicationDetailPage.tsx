@@ -31,6 +31,7 @@ import Breadcrumbs from '../../components/ui/Breadcrumbs'
 import usePageTitle from '../../hooks/usePageTitle'
 import OfferPanel from './apply/offer/OfferPanel'
 import GraduateIntentCard from './apply/GraduateIntentCard'
+import StudentAdvisorFit from './apply/StudentAdvisorFit'
 import EnrollmentPanel from './apply/enrollment/EnrollmentPanel'
 import { DECISION_STATE_LABEL } from './apply/offer/offerFormat'
 import PaymentCheckout from '../../components/student/PaymentCheckout'
@@ -508,6 +509,7 @@ export default function ApplicationDetailPage() {
             {tab === 'checklist' && (
               <>
                 <GraduateIntentCard applicationId={appId!} />
+                <StudentAdvisorFit applicationId={appId!} />
                 <ChecklistTab
                   items={checklistItems}
                   completionPct={completionPct}

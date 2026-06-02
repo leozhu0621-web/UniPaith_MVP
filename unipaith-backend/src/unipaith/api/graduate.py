@@ -501,3 +501,15 @@ async def student_put_graduate_intent(
         profile.id, application_id, body.model_dump(exclude_unset=True)
     )
     return svc._intent_dict(intent)
+
+
+@router.get("/students/me/applications/{application_id}/advisor-matches")
+async def student_advisor_matches(
+    application_id: UUID,
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 41 §2.1 — "Advisors who fit your research" (student-facing, read-only)."""
+    svc = _svc(db)
+    profile = await StudentService(db)._get_student_profile(user.id)
+    return await svc.student_advisor_matches(profile.id, application_id)
