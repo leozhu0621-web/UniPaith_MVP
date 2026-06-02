@@ -25,7 +25,7 @@ import { getMyInterviews } from '../../api/interviews'
 import InterviewRespondPanel from './interviews/InterviewRespondPanel'
 import {
   ArrowLeft, Check, Circle, Upload, Sparkles, AlertCircle, FileCheck, ListChecks,
-  Users, AlertTriangle, ShieldCheck, Award, Send, Building2, CreditCard, Receipt, HandCoins,
+  Users, AlertTriangle, ShieldCheck, Award, Send, Building2, CreditCard, Receipt, HandCoins, Download,
 } from 'lucide-react'
 import Breadcrumbs from '../../components/ui/Breadcrumbs'
 import usePageTitle from '../../hooks/usePageTitle'
@@ -34,7 +34,7 @@ import EnrollmentPanel from './apply/enrollment/EnrollmentPanel'
 import { DECISION_STATE_LABEL } from './apply/offer/offerFormat'
 import PaymentCheckout from '../../components/student/PaymentCheckout'
 import {
-  getCostTracker, payApplicationFee, requestFeeWaiver, isFeeClear, formatMoney,
+  getCostTracker, payApplicationFee, requestFeeWaiver, isFeeClear, formatMoney, downloadReceipt,
   type CheckoutSession, type FeeView,
 } from '../../api/payments'
 import type { Application, Essay, Resume, ChecklistItem } from '../../types'
@@ -468,6 +468,8 @@ export default function ApplicationDetailPage() {
               payPending={payFeeMut.isPending}
               onPay={() => payFeeMut.mutate()}
               onRequestWaiver={() => setWaiverOpen(true)}
+              programName={application.program?.program_name ?? undefined}
+              institutionName={application.program?.institution_name ?? undefined}
             />
           )}
 
@@ -857,12 +859,14 @@ export default function ApplicationDetailPage() {
 }
 
 // --- Application fee + cost tracker (Spec 39 §2.2 / §2A) ---
-function FeeCard({ fee, isDraft, payPending, onPay, onRequestWaiver }: {
+function FeeCard({ fee, isDraft, payPending, onPay, onRequestWaiver, programName, institutionName }: {
   fee: FeeView
   isDraft: boolean
   payPending: boolean
   onPay: () => void
   onRequestWaiver: () => void
+  programName?: string
+  institutionName?: string
 }) {
   const money = formatMoney(fee.amount, fee.currency)
   const paid = fee.status === 'paid'
@@ -870,8 +874,25 @@ function FeeCard({ fee, isDraft, payPending, onPay, onRequestWaiver }: {
   const waiverPending = fee.status === 'waiver_pending'
   const waiverDenied = fee.status === 'waiver_denied'
   const processing = fee.status === 'processing'
+  const failed = fee.status === 'failed'
   const refunded = fee.status === 'refunded' || fee.status === 'partially_refunded'
-  const actionable = isDraft && (fee.status === 'due' || waiverDenied)
+  // §7 — retry from processing/failed too, so a closed/failed checkout never strands the student.
+  const canPay = isDraft && ['due', 'processing', 'failed', 'waiver_denied'].includes(fee.status)
+  const canWaive = isDraft && ['due', 'failed'].includes(fee.status)
+  const payLabel = processing ? 'Resume payment' : failed ? `Try again — pay ${money}` : `Pay application fee (${money})`
+
+  const receipt = () =>
+    downloadReceipt({
+      kind: 'application_fee',
+      amount: fee.amount,
+      currency: fee.currency,
+      status: fee.status,
+      paidAt: fee.paid_at,
+      refundedAmount: fee.refunded_amount,
+      programName,
+      institutionName,
+      reference: fee.payment_id,
+    })
 
   return (
     <Card className="p-4">
@@ -881,22 +902,31 @@ function FeeCard({ fee, isDraft, payPending, onPay, onRequestWaiver }: {
       </div>
       <p className="text-2xl font-bold text-student-ink tabular-nums mb-2">{money}</p>
 
-      {paid && (
-        <div className="rounded-lg bg-success-soft px-3 py-2 text-xs text-success flex items-start gap-1.5">
-          <Receipt size={14} className="mt-0.5 shrink-0" />
-          <span>
-            Fee paid{fee.paid_at ? ` on ${new Date(fee.paid_at).toLocaleDateString()}` : ''}. Receipt saved to your record.
-            {fee.refunded_amount ? ` Refunded ${formatMoney(fee.refunded_amount, fee.currency)}.` : ''}
-          </span>
+      {(paid || refunded) && (
+        <div className="space-y-2">
+          {paid ? (
+            <div className="rounded-lg bg-success-soft px-3 py-2 text-xs text-success flex items-start gap-1.5">
+              <Receipt size={14} className="mt-0.5 shrink-0" />
+              <span>
+                Fee paid{fee.paid_at ? ` on ${new Date(fee.paid_at).toLocaleDateString()}` : ''}. Receipt saved to your record.
+                {fee.refunded_amount ? ` Refunded ${formatMoney(fee.refunded_amount, fee.currency)}.` : ''}
+              </span>
+            </div>
+          ) : (
+            <div className="rounded-lg bg-student-mist px-3 py-2 text-xs text-student-text">
+              Refunded {formatMoney(fee.refunded_amount || 0, fee.currency)} of {money}.
+            </div>
+          )}
+          <button onClick={receipt} className="text-xs text-cobalt hover:underline inline-flex items-center gap-1">
+            <Download size={12} /> Download receipt
+          </button>
         </div>
       )}
       {waived && <Badge variant="info">Fee waived</Badge>}
-      {refunded && (
-        <div className="rounded-lg bg-student-mist px-3 py-2 text-xs text-student-text">
-          Refunded {formatMoney(fee.refunded_amount || 0, fee.currency)} of {money}.
-        </div>
-      )}
       {processing && <p className="text-xs text-student-text">Confirming your payment…</p>}
+      {failed && (
+        <p className="text-xs text-warning">That payment didn't go through. Try again or request a waiver.</p>
+      )}
       {waiverPending && (
         <div className="space-y-1.5">
           <Badge variant="warning">Waiver requested — the school will review it</Badge>
@@ -906,16 +936,16 @@ function FeeCard({ fee, isDraft, payPending, onPay, onRequestWaiver }: {
         </div>
       )}
 
-      {actionable && (
+      {canPay && (
         <div className="mt-3 space-y-2">
           {waiverDenied && (
             <p className="text-xs text-warning">Your waiver wasn't approved. You can pay the fee to submit.</p>
           )}
           {/* Equal prominence (Spec 39 §8): pay (cobalt) beside waiver (outline), never gold. */}
           <Button variant="secondary" size="sm" className="w-full" loading={payPending} onClick={onPay}>
-            <CreditCard size={14} className="mr-1" /> Pay application fee ({money})
+            <CreditCard size={14} className="mr-1" /> {payLabel}
           </Button>
-          {!waiverDenied && (
+          {canWaive && (
             <Button variant="tertiary" size="sm" className="w-full" onClick={onRequestWaiver}>
               Request a fee waiver instead
             </Button>

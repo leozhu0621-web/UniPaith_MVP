@@ -249,6 +249,41 @@ async def test_deny_waiver_keeps_fee_due(db_session, mock_institution_user):
         await apps._assert_fee_clear_for_submit(app)
 
 
+# ── §2.1 per-program fee override + §7 pending/failed still gate ─────────────
+
+
+@pytest.mark.asyncio
+async def test_program_cost_data_fee_overrides_default(db_session, mock_institution_user):
+    inst, program, su, profile, app = await _seed(db_session, mock_institution_user, fee_cents=7500)
+    # Per-program override via cost_data (whole currency units) — Spec 39 §2.1.
+    program.cost_data = {"application_fee": 120}
+    await db_session.flush()
+    svc = PaymentService(db_session)
+    tracker = await svc.cost_tracker(su, app.id)
+    assert tracker["fee"]["amount"] == 120.0  # program override wins over the $75 default
+    checkout = await svc.create_fee_checkout(su, app.id)
+    assert checkout["amount"] == 120.0
+
+
+@pytest.mark.asyncio
+async def test_pending_or_failed_fee_still_blocks_submit(db_session, mock_institution_user):
+    inst, program, su, profile, app = await _seed(db_session, mock_institution_user, fee_cents=7500)
+    apps = ApplicationService(db_session)
+    svc = PaymentService(db_session)
+    # An open (pending) checkout does not clear the gate (§7 — submission held).
+    await svc.create_fee_checkout(su, app.id)
+    with pytest.raises(PaymentRequiredException):
+        await apps._assert_fee_clear_for_submit(app)
+    # A failed payment also keeps it blocked (the student retries).
+    payment = (
+        await db_session.execute(select(Payment).where(Payment.application_id == app.id))
+    ).scalar_one()
+    payment.status = "failed"
+    await db_session.flush()
+    with pytest.raises(PaymentRequiredException):
+        await apps._assert_fee_clear_for_submit(app)
+
+
 # ── §10.3 — deposit payment advances enrollment + feeds yield ────────────────
 
 

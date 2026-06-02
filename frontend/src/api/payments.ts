@@ -121,6 +121,45 @@ export const formatMoney = (amount: number, currency: string): string => {
   }
 }
 
+// Spec 39 §8 — "Receipts plain + exportable". Builds a plain-text receipt and
+// triggers a download. No PII beyond what the student already sees.
+export function downloadReceipt(opts: {
+  kind: string
+  amount: number
+  currency: string
+  status: string
+  paidAt: string | null
+  refundedAmount?: number | null
+  programName?: string
+  institutionName?: string
+  reference?: string | null
+}): void {
+  const label = opts.kind === 'application_fee' ? 'Application fee' : 'Enrollment deposit'
+  const lines = [
+    'UniPaith — Payment Receipt',
+    '==========================',
+    `Item:        ${label}`,
+    opts.programName ? `Program:     ${opts.programName}` : '',
+    opts.institutionName ? `Institution: ${opts.institutionName}` : '',
+    `Amount:      ${formatMoney(opts.amount, opts.currency)} ${opts.currency}`,
+    `Status:      ${opts.status.replace(/_/g, ' ')}`,
+    opts.paidAt ? `Paid:        ${new Date(opts.paidAt).toLocaleString()}` : '',
+    opts.refundedAmount ? `Refunded:    ${formatMoney(opts.refundedAmount, opts.currency)}` : '',
+    opts.reference ? `Reference:   ${opts.reference}` : '',
+    '',
+    'Keep this receipt for your records.',
+  ].filter(Boolean)
+  const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `unipaith-receipt-${opts.kind}.txt`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+
 // ── Student ──────────────────────────────────────────────────────────────
 
 export const getCostTracker = (appId: string) =>
