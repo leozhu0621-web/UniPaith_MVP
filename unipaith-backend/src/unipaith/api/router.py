@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from unipaith.api.ai_agents import router as ai_agents_router
 from unipaith.api.ai_feedback import router as ai_feedback_router
 from unipaith.api.ai_surface import router as ai_surface_router
 from unipaith.api.analytics import router as analytics_router
@@ -49,6 +50,9 @@ from unipaith.services.institution_service import InstitutionService
 api_router = APIRouter()
 
 api_router.include_router(auth_router)
+# Spec 45 — public AI-agent catalog at `/ai/agents` (backs /goal/claude-api).
+# No auth, DB-free; exposes only the agent architecture, never user data.
+api_router.include_router(ai_agents_router)
 api_router.include_router(billing_router)
 # Settings before students/institutions so literal `/institutions/settings` and
 # `/students/me/settings` win over param routes like `/institutions/{id}`.

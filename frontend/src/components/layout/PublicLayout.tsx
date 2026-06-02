@@ -29,6 +29,12 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             About
           </Link>
           <Link
+            to="/goal/claude-api"
+            className="hidden md:inline text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            AI agents
+          </Link>
+          <Link
             to="/login"
             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >

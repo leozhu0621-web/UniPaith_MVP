@@ -23,6 +23,7 @@ import InstitutionPage from './pages/public/InstitutionPage'
 import ProgramDetailPage from './pages/public/ProgramDetailPage'
 import PricingPage from './pages/public/PricingPage'
 import AboutPage from './pages/public/AboutPage'
+import ClaudeApiGoalPage from './pages/public/ClaudeApiGoalPage'
 
 // Student pages — 4 main + profile/saved/settings from avatar
 // Discover (Stage 1) is the new student home — replaces CounselorHomePage
@@ -100,6 +101,9 @@ const router = createBrowserRouter([
   // Spec 07 — public monetization + positioning surfaces.
   { path: '/pricing', element: <PublicLayout><PricingPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
   { path: '/about', element: <PublicLayout><AboutPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  // Spec 45 — public "Claude API" AI-agent transparency surface (live registry).
+  { path: '/goal/claude-api', element: <PublicLayout><ClaudeApiGoalPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/goal', element: <Navigate to="/goal/claude-api" replace />, errorElement: <RouteErrorPage /> },
 
   { path: '/login', element: <AuthLayout><LoginPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
   { path: '/signup', element: <AuthLayout><SignupPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
