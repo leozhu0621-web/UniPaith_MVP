@@ -21,7 +21,14 @@ from unipaith.transparency.acceptance import BLOCKERS, JOURNEYS, build_acceptanc
 from unipaith.transparency.api_contract import build_api_contract
 from unipaith.transparency.data_model import PLANNED, build_data_model
 from unipaith.transparency.features import ALL_FEATURES, build_features
-from unipaith.transparency.production import BUILD_TASKS, PILLARS, SLOS, build_production
+from unipaith.transparency.frontend_standards import (
+    BUILD_TASKS as FE_BUILD_TASKS,
+)
+from unipaith.transparency.frontend_standards import build_frontend_standards
+from unipaith.transparency.production import (
+    BUILD_TASKS as PROD_BUILD_TASKS,
+)
+from unipaith.transparency.production import PILLARS, SLOS, build_production
 from unipaith.transparency.roadmap import PHASES, build_roadmap
 from unipaith.transparency.ux_benchmark import (
     ACCEPTANCE,
@@ -288,6 +295,46 @@ def test_ux_benchmark_backing_resolves_live():
     assert payload["summary"]["backed_route_total"] <= len(rows)
 
 
+# ── Frontend standards (spec 54) — narrative authored, parity resolved live ──
+
+
+def test_frontend_standards_shape_and_counts():
+    p = build_frontend_standards(app.routes)
+    s = p["summary"]
+    assert s["build_task_count"] == len(FE_BUILD_TASKS) == len(p["build_tasks"])
+    assert s["build_tasks_done"] + s["build_tasks_partial"] + s["build_tasks_planned"] == len(
+        FE_BUILD_TASKS
+    )
+    assert s["state_rule_count"] == len(p["state_rules"]) == 4
+    assert p["the_standard"] and p["state_build_rule"]
+    assert p["perf_budgets"] and p["acceptance"] and p["open_questions"]
+    assert p["query_key"]["example"] and p["mutation"]["shape"]
+    assert p["realtime"]["transports"] and p["analytics"]["rules"]
+
+
+def test_frontend_standards_build_tasks_well_formed():
+    p = build_frontend_standards(app.routes)
+    for t in p["build_tasks"]:
+        assert t["key"] and t["title"] and t["evidence"]
+        assert t["status"] in ("done", "partial", "planned")
+        # Anything the page claims it can verify live must name a src/ artifact.
+        if t["fe_verifiable"]:
+            assert t["artifact"] and t["artifact"].startswith("src/"), t
+
+
+def test_frontend_standards_parity_reads_live():
+    """The §5 api-module ↔ router parity counts must equal an independent recount
+    of the live route table — the backend half of the contract is read from the
+    running app, never asserted."""
+    p = build_frontend_standards(app.routes)
+    contract = build_api_contract(app.routes)["summary"]
+    assert p["summary"]["live_route_count"] == _live_route_count()
+    assert p["summary"]["live_router_count"] == contract["router_count"]
+    assert p["parity"]["live_router_count"] == contract["router_count"]
+    # The live tree has grown past the spec-doc figures (drift surfaced).
+    assert p["summary"]["live_router_count"] > p["summary"]["doc_claimed_routers"]
+
+
 # ── Production readiness (spec 55) — narrative authored, posture read live ───
 
 
@@ -297,7 +344,7 @@ def test_production_shape_and_classifications():
     valid = {"live", "partial", "planned"}
 
     assert s["pillar_count"] == len(PILLARS) == len(p["pillars"])
-    assert s["build_task_count"] == len(BUILD_TASKS) == len(p["build_tasks"])
+    assert s["build_task_count"] == len(PROD_BUILD_TASKS) == len(p["build_tasks"])
     assert s["slo_count"] == len(SLOS) == len(p["slos"])
     assert p["the_bar"]["statement"] and p["the_bar"]["slo_headline"]
 
@@ -392,7 +439,7 @@ async def test_overview_endpoint(client: AsyncClient):
         "surfaces",
     ):
         assert key in body
-    assert len(body["surfaces"]) == 9
+    assert len(body["surfaces"]) == 10
     assert {s["key"] for s in body["surfaces"]} == {
         "claude-api",
         "roadmap",
@@ -401,9 +448,12 @@ async def test_overview_endpoint(client: AsyncClient):
         "data-model",
         "acceptance",
         "experience",
+        "frontend",
         "backend",
         "search",
     }
+    fe = next(s for s in body["surfaces"] if s["key"] == "frontend")
+    assert fe["path"] == "/goal/frontend" and fe["spec"] == "54"
     # Spec 55 — the backend surface carries the pillar count read from the run.
     backend = next(s for s in body["surfaces"] if s["key"] == "backend")
     assert backend["spec"] == "55"
@@ -471,3 +521,25 @@ async def test_ux_benchmark_endpoint(client: AsyncClient):
     # Every benchmarked surface is wired to live endpoints (the self-verifying claim).
     assert body["summary"]["surfaces_backed"] == body["summary"]["surface_count"]
     assert all(s["backed_route_count"] > 0 for s in body["surfaces"])
+
+
+@pytest.mark.asyncio
+async def test_frontend_standards_endpoint(client: AsyncClient):
+    resp = await client.get("/api/v1/build/frontend-standards")
+    assert resp.status_code == 200
+    body = resp.json()
+    for key in (
+        "summary",
+        "the_standard",
+        "state_rules",
+        "query_key",
+        "mutation",
+        "parity",
+        "perf_budgets",
+        "build_tasks",
+        "acceptance",
+    ):
+        assert key in body
+    # The §5 parity count is read live (> the spec-doc figure).
+    assert body["summary"]["live_router_count"] > body["summary"]["doc_claimed_routers"]
+    assert body["build_tasks"] and body["summary"]["build_task_count"] == len(body["build_tasks"])
