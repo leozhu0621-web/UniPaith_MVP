@@ -313,21 +313,26 @@ export default function DataUploadPage() {
       const staging = stagingKey
 
       if (wizardMode === 'create') {
-        const init = await requestDatasetUpload({
-          dataset_name: name.trim(),
-          dataset_type: type,
-          file_name: selectedFile.name,
-          content_type: selectedFile.type || 'text/csv',
-          file_size_bytes: selectedFile.size,
-          description: description || undefined,
-          usage_scope: scope,
-          coverage_start: coverageStart || undefined,
-          coverage_end: coverageEnd || undefined,
-          update_mode: updateMode,
-        })
-        datasetId = init.dataset_id
-        setUploadProgress(45)
-        await uploadFileToUrl(init.upload_url, selectedFile)
+        // The file was already staged in handleFileStepNext (dataset created +
+        // uploaded). Reuse that pending dataset and only confirm — re-creating
+        // here double-uploaded and orphaned a phantom dataset every create (Spec 24 §4).
+        if (!datasetId) {
+          const init = await requestDatasetUpload({
+            dataset_name: name.trim(),
+            dataset_type: type,
+            file_name: selectedFile.name,
+            content_type: selectedFile.type || 'text/csv',
+            file_size_bytes: selectedFile.size,
+            description: description || undefined,
+            usage_scope: scope,
+            coverage_start: coverageStart || undefined,
+            coverage_end: coverageEnd || undefined,
+            update_mode: updateMode,
+          })
+          datasetId = init.dataset_id
+          setUploadProgress(45)
+          await uploadFileToUrl(init.upload_url, selectedFile)
+        }
         setUploadProgress(70)
         await confirmDatasetUpload(datasetId, {
           column_mapping: columnMap,
@@ -385,6 +390,7 @@ export default function DataUploadPage() {
           usage_scope: scope,
           coverage_start: coverageStart || undefined,
           coverage_end: coverageEnd || undefined,
+          update_mode: updateMode,
         })
         await uploadFileToUrl(init.upload_url, selectedFile)
         setPendingDatasetId(init.dataset_id)
@@ -711,7 +717,7 @@ export default function DataUploadPage() {
                 if (wizardMode === 'create' && wizardStep === 2) {
                   void handleFileStepNext()
                 } else if (wizardMode !== 'create' && wizardStep === 0) {
-                  setWizardStep(1)
+                  void handleFileStepNext()
                 } else {
                   setWizardStep(s => s + 1)
                 }

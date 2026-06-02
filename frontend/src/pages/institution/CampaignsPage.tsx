@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Megaphone, Plus, Send, Edit2, Trash2, BarChart3, Clock, Users, Link2, Copy,
@@ -48,6 +49,8 @@ export default function CampaignsPage() {
   const [tab, setTab] = useState('all')
   const [showEditor, setShowEditor] = useState(false)
   const [editTarget, setEditTarget] = useState<Campaign | null>(null)
+  const [seedSegmentId, setSeedSegmentId] = useState<string | undefined>(undefined)
+  const [searchParams, setSearchParams] = useSearchParams()
   const [showAudienceMgr, setShowAudienceMgr] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Campaign | null>(null)
   const [sendTarget, setSendTarget] = useState<Campaign | null>(null)
@@ -127,7 +130,20 @@ export default function CampaignsPage() {
 
   const copy = (t: string) => { navigator.clipboard.writeText(t); showToast('Copied', 'success') }
   const openEdit = (c: Campaign) => { setEditTarget(c); setShowEditor(true) }
-  const openNew = () => { setEditTarget(null); setShowEditor(true) }
+  const openNew = () => { setEditTarget(null); setSeedSegmentId(undefined); setShowEditor(true) }
+
+  // Deep link from Segments → "Use in campaign": open a new campaign editor
+  // pre-seeded with the chosen segment, then strip the param (Spec 26 §3/§9).
+  useEffect(() => {
+    const seg = searchParams.get('segment')
+    if (!seg) return
+    setSeedSegmentId(seg)
+    setEditTarget(null)
+    setShowEditor(true)
+    const next = new URLSearchParams(searchParams)
+    next.delete('segment')
+    setSearchParams(next, { replace: true })
+  }, [searchParams, setSearchParams])
 
   const stat = (s: string) => allCampaigns.filter((c) => c.status === s).length
 
@@ -204,8 +220,9 @@ export default function CampaignsPage() {
 
       <CampaignEditorModal
         isOpen={showEditor}
-        onClose={() => setShowEditor(false)}
+        onClose={() => { setShowEditor(false); setSeedSegmentId(undefined) }}
         editTarget={editTarget}
+        initialSegmentId={seedSegmentId}
         programs={programs}
         segments={segments}
         uploadedLists={uploadedLists}
