@@ -1,6 +1,7 @@
-// Specs 48–52 — public build-transparency client. No auth required; the
+// Specs 48–53 — public build-transparency client. No auth required; the
 // endpoints expose only build architecture (phases, feature coverage, the live
-// route map, the live table map, the acceptance gates), never user data.
+// route map, the live table map, the acceptance gates, the UX interaction bar),
+// never user data.
 import apiClient from './client'
 import type {
   Acceptance,
@@ -9,6 +10,7 @@ import type {
   DataModel,
   FeatureCatalog,
   Roadmap,
+  UxBenchmark,
 } from '../types/build'
 
 export async function getBuildOverview(): Promise<BuildOverview> {
@@ -38,5 +40,10 @@ export async function getDataModel(): Promise<DataModel> {
 
 export async function getAcceptance(): Promise<Acceptance> {
   const { data } = await apiClient.get<Acceptance>('/build/acceptance')
+  return data
+}
+
+export async function getUxBenchmark(): Promise<UxBenchmark> {
+  const { data } = await apiClient.get<UxBenchmark>('/build/ux-benchmark')
   return data
 }

@@ -22,6 +22,12 @@ from unipaith.transparency.api_contract import build_api_contract
 from unipaith.transparency.data_model import PLANNED, build_data_model
 from unipaith.transparency.features import ALL_FEATURES, build_features
 from unipaith.transparency.roadmap import PHASES, build_roadmap
+from unipaith.transparency.ux_benchmark import (
+    ACCEPTANCE,
+    INTERACTION_STANDARDS,
+    SURFACES,
+    build_ux_benchmark,
+)
 
 _API_PREFIX = "/api/v1"
 _SKIP = {"HEAD", "OPTIONS"}
@@ -227,6 +233,60 @@ def test_acceptance_blockers_well_formed_and_gate_launch_ready():
     )
 
 
+# ── UX benchmark (spec 53) — narrative authored, backing resolved live ──────
+
+
+def test_ux_benchmark_shape_and_classifications():
+    p = build_ux_benchmark(app.routes)
+    s = p["summary"]
+    assert s["surface_count"] == len(SURFACES) == len(p["surfaces"])
+    assert s["standard_count"] == len(INTERACTION_STANDARDS) == len(p["standards"])
+    assert s["acceptance_count"] == len(ACCEPTANCE) == len(p["acceptance"])
+    assert p["the_bar"]["statement"]
+    assert set(p["the_bar"]["benchmarks"]) == {"LinkedIn", "Handshake"}
+
+    valid_benchmarks = {"linkedin", "handshake", "chatgpt", "ats"}
+    for surface in p["surfaces"]:
+        assert surface["name"] and surface["benchmark"] and surface["files"]
+        assert surface["build_contract"], f"{surface['key']} has no build contract"
+        assert surface["benchmark_key"] in valid_benchmarks
+        for spec in surface["specs"]:
+            assert _SPEC_RE.match(spec), f"surface {surface['key']} spec {spec!r} malformed"
+    for standard in p["standards"]:
+        assert standard["title"] and standard["body"] and standard["mechanism"]
+    assert p["empty_state"]["rule"]
+    assert len(p["empty_state"]["first_run"]) == 2
+
+
+def test_ux_benchmark_backing_resolves_live():
+    """Every surface's backing count is an independent recount of the live route
+    table — so the page can't claim a surface the deployed app doesn't serve."""
+    rows = [
+        (getattr(r, "path", ""), m)
+        for r in app.routes
+        for m in (getattr(r, "methods", None) or set())
+        if getattr(r, "path", "").startswith(_API_PREFIX) and m not in _SKIP
+    ]
+    live_paths = {p for (p, _) in rows}
+    payload = build_ux_benchmark(app.routes)
+    by_key = {s["key"]: s for s in payload["surfaces"]}
+
+    union: set[tuple[str, str]] = set()
+    for surface in SURFACES:
+        matched = [(p, m) for (p, m) in rows if any(mk in p for mk in surface.route_markers)]
+        union.update(matched)
+        # Every benchmarked surface is actually wired to live endpoints.
+        assert matched, f"surface {surface.key} backs zero live routes"
+        assert by_key[surface.key]["backed_route_count"] == len(matched)
+        # The sample paths shown on the page are real, live routes.
+        for sample in by_key[surface.key]["sample_paths"]:
+            assert sample in live_paths
+
+    assert payload["summary"]["backed_route_total"] == len(union)
+    assert payload["summary"]["surfaces_backed"] == len(SURFACES)
+    assert payload["summary"]["backed_route_total"] <= len(rows)
+
+
 # ── Public endpoints ────────────────────────────────────────────────────────
 
 
@@ -237,7 +297,7 @@ async def test_overview_endpoint(client: AsyncClient):
     body = resp.json()
     for key in ("roadmap", "features", "api", "agents", "data_model", "acceptance", "surfaces"):
         assert key in body
-    assert len(body["surfaces"]) == 6
+    assert len(body["surfaces"]) == 7
     assert {s["key"] for s in body["surfaces"]} == {
         "claude-api",
         "roadmap",
@@ -245,6 +305,7 @@ async def test_overview_endpoint(client: AsyncClient):
         "api",
         "data-model",
         "acceptance",
+        "experience",
     }
 
 
@@ -289,3 +350,15 @@ async def test_acceptance_endpoint(client: AsyncClient):
     assert body["summary"]["launch_blockers_total"] == len(BLOCKERS)
     assert len(body["journeys"]) == 2
     assert body["dod"] and body["integration_gates"] and body["signoff"]
+
+
+@pytest.mark.asyncio
+async def test_ux_benchmark_endpoint(client: AsyncClient):
+    resp = await client.get("/api/v1/build/ux-benchmark")
+    assert resp.status_code == 200
+    body = resp.json()
+    for key in ("the_bar", "summary", "surfaces", "standards", "empty_state", "acceptance"):
+        assert key in body
+    # Every benchmarked surface is wired to live endpoints (the self-verifying claim).
+    assert body["summary"]["surfaces_backed"] == body["summary"]["surface_count"]
+    assert all(s["backed_route_count"] > 0 for s in body["surfaces"])

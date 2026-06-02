@@ -5,6 +5,7 @@ import {
   CircleCheck,
   Cpu,
   Database,
+  Gauge,
   ListChecks,
   Map as MapIcon,
   Network,
@@ -20,9 +21,10 @@ import Card from '../../components/ui/Card'
 import usePageTitle from '../../hooks/usePageTitle'
 import { GoalShell, Hero, SectionHeading, Stat, StatBand, StatSkeleton } from './goalUi'
 
-// Spec 48/49/50 — the /goal transparency hub. One landing that links the four
-// public build surfaces (AI agents · roadmap · feature coverage · API contract)
-// and shows the live headline numbers, read from GET /api/v1/build/overview.
+// Specs 48–53 — the /goal transparency hub. One landing that links the public
+// build surfaces (AI agents · roadmap · feature coverage · API contract · data
+// model · acceptance · experience) and shows the live headline numbers, read
+// from GET /api/v1/build/overview.
 
 const SURFACE_ICONS: Record<string, typeof MapIcon> = {
   'claude-api': Sparkles,
@@ -31,6 +33,7 @@ const SURFACE_ICONS: Record<string, typeof MapIcon> = {
   api: Network,
   'data-model': Database,
   acceptance: Rocket,
+  experience: Gauge,
 }
 
 const PRINCIPLES: { title: string; body: string; icon: typeof ShieldCheck }[] = [
@@ -145,7 +148,7 @@ export default function GoalHubPage() {
       <section id="surfaces" className="mt-16 scroll-mt-20">
         <SectionHeading
           icon={MapIcon}
-          title="Six ways to read the build"
+          title="Seven ways to read the build"
           sub="Each surface is a public page backed by a DB-free endpoint. Open one to see the detail."
         />
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
