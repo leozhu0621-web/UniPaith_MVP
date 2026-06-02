@@ -132,6 +132,7 @@ const OVERVIEW: BuildOverview = {
     { key: 'data-model', title: 'Data model', spec: '51', blurb: 'Introspected live.', path: '/goal/data-model', stat: 147, stat_label: 'live tables' },
     { key: 'acceptance', title: 'Acceptance & runbook', spec: '52', blurb: 'Definition of done.', path: '/goal/acceptance', stat: '10/10', stat_label: 'launch blockers cleared' },
     { key: 'experience', title: 'Experience standards', spec: '53', blurb: 'The interaction bar.', path: '/goal/experience', stat: 8, stat_label: 'benchmarked surfaces' },
+    { key: 'frontend', title: 'Frontend engineering', spec: '54', blurb: 'The React build spec.', path: '/goal/frontend', stat: '6/10', stat_label: 'build tasks complete' },
     { key: 'backend', title: 'Production readiness', spec: '55', blurb: 'The backend hardening posture.', path: '/goal/backend', stat: 7, stat_label: 'readiness pillars' },
   ],
 }
@@ -393,7 +394,7 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     vi.restoreAllMocks()
   })
 
-  it('hub renders the live stats and links to all eight surfaces', async () => {
+  it('hub renders the live stats and links to all nine surfaces', async () => {
     vi.spyOn(buildApi, 'getBuildOverview').mockResolvedValue(OVERVIEW)
     renderPage(<GoalHubPage />)
 
@@ -401,10 +402,11 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     await waitFor(() => expect(screen.getByText('Build roadmap')).toBeInTheDocument())
     expect(screen.getByText('Feature coverage')).toBeInTheDocument()
     expect(screen.getByText('API contract')).toBeInTheDocument()
-    // The new surfaces (specs 51 + 52 + 53 + 55) appear.
+    // The new surfaces (specs 51–55) appear.
     expect(screen.getByText('Data model')).toBeInTheDocument()
     expect(screen.getByText('Acceptance & runbook')).toBeInTheDocument()
     expect(screen.getByText('Experience standards')).toBeInTheDocument()
+    expect(screen.getByText('Frontend engineering')).toBeInTheDocument()
     expect(screen.getByText('Production readiness')).toBeInTheDocument()
     // Live route count from the overview appears (stat band + surface card).
     expect(screen.getAllByText('553').length).toBeGreaterThan(0)

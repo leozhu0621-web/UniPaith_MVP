@@ -6,6 +6,7 @@ import {
   Cpu,
   Database,
   Gauge,
+  Layers,
   ListChecks,
   Map as MapIcon,
   Network,
@@ -16,6 +17,7 @@ import {
 } from 'lucide-react'
 
 import { getBuildOverview } from '../../api/build'
+import { qk } from '../../api/queryKeys'
 import type { OverviewSurface } from '../../types/build'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
@@ -35,6 +37,7 @@ const SURFACE_ICONS: Record<string, typeof MapIcon> = {
   'data-model': Database,
   acceptance: Rocket,
   experience: Gauge,
+  frontend: Layers,
   backend: Server,
 }
 
@@ -90,7 +93,7 @@ function SurfaceCard({ surface }: { surface: OverviewSurface }) {
 export default function GoalHubPage() {
   usePageTitle('How UniPaith is built')
   const { data, isLoading } = useQuery({
-    queryKey: ['build-overview'],
+    queryKey: qk.buildOverview(),
     queryFn: getBuildOverview,
     staleTime: 5 * 60_000,
   })
@@ -100,9 +103,9 @@ export default function GoalHubPage() {
   return (
     <GoalShell>
       <Hero
-        eyebrow="Build transparency · Specs 45 · 48–53 · 55"
+        eyebrow="Build transparency · Specs 45 · 48–55"
         title="How UniPaith is built — in the open."
-        lede="The roadmap, the feature coverage map, the API contract, the data model, the acceptance runbook, the experience standards, the AI agent fleet and the backend production posture — surfaced as live, self-verifying pages. Where a page shows a number, it's read straight from the running system, not asserted in a doc."
+        lede="The roadmap, the feature coverage map, the API contract, the data model, the acceptance runbook, the experience standards, the frontend engineering spec, the AI agent fleet and the backend production posture — surfaced as live, self-verifying pages. Where a page shows a number, it's read straight from the running system, not asserted in a doc."
       >
         {mvpComplete && (
           <span className="inline-flex items-center gap-1.5 rounded-pill border border-primary/40 px-3 py-1 text-[13px] font-semibold text-foreground">
@@ -150,7 +153,7 @@ export default function GoalHubPage() {
       <section id="surfaces" className="mt-16 scroll-mt-20">
         <SectionHeading
           icon={MapIcon}
-          title="Eight ways to read the build"
+          title="Nine ways to read the build"
           sub="Each surface is a public page backed by a DB-free endpoint. Open one to see the detail."
         />
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
