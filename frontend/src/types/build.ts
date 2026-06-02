@@ -135,6 +135,7 @@ export interface BuildOverview {
   data_model: DataModelSummary
   acceptance: AcceptanceSummary
   production: ProductionSummary
+  search: SearchBuildSummary
   provider: string
   surfaces: OverviewSurface[]
 }
@@ -571,5 +572,79 @@ export interface Production {
   cache: CacheStats
   build_tasks: ProductionBuildTask[]
   slos: Slo[]
+  open_questions: OpenQuestion[]
+}
+
+// ── Search, feed & recommendations (spec 56) ────────────────────────────────
+export interface SearchCapability {
+  key: string
+  title: string
+  section: string // spec 56 section, e.g. "§2"
+  status: ReadinessStatus
+  blurb: string
+  built: string[]
+  planned: string[]
+}
+
+export interface SearchConfigKnob {
+  name: string
+  value: string | number | boolean
+  section: string
+}
+
+export interface SearchBuildTask {
+  section: string
+  status: ReadinessStatus
+  text: string
+  evidence: string
+}
+
+export interface SearchAcceptanceItem {
+  status: ReadinessStatus
+  text: string
+}
+
+export interface SearchTheBar {
+  statement: string
+  principle: string
+}
+
+export interface SearchRoutes {
+  search: string[]
+  feed: string[]
+  saved_search: string[]
+  events: string[]
+}
+
+export interface SearchBuildSummary {
+  capability_count: number
+  capabilities_live: number
+  capabilities_partial: number
+  capabilities_planned: number
+  build_task_count: number
+  tasks_live: number
+  tasks_partial: number
+  tasks_planned: number
+  acceptance_count: number
+  acceptance_live: number
+  search_route_count: number
+  feed_route_count: number
+  saved_search_route_count: number
+  backing_route_count: number
+  saved_searches_table_present: boolean
+  config_knob_count: number
+  open_question_count: number
+  live_is_source_of_truth: boolean
+}
+
+export interface SearchBuild {
+  the_bar: SearchTheBar
+  summary: SearchBuildSummary
+  capabilities: SearchCapability[]
+  build_tasks: SearchBuildTask[]
+  acceptance: SearchAcceptanceItem[]
+  config_knobs: SearchConfigKnob[]
+  routes: SearchRoutes
+  saved_searches_table_present: boolean
   open_questions: OpenQuestion[]
 }

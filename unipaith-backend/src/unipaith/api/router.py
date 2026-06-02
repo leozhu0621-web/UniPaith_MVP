@@ -39,6 +39,7 @@ from unipaith.api.recommendations import router as recommendations_router
 from unipaith.api.recruitment import router as recruitment_router
 from unipaith.api.reviews import router as reviews_router
 from unipaith.api.saved_lists import router as saved_lists_router
+from unipaith.api.saved_search import router as saved_search_router
 from unipaith.api.search import router as search_router
 from unipaith.api.settings import router as settings_router
 from unipaith.api.strategy import router as strategy_router
@@ -110,6 +111,7 @@ api_router.include_router(applications_router)
 api_router.include_router(payments_router)
 api_router.include_router(documents_router)
 api_router.include_router(saved_lists_router)
+api_router.include_router(saved_search_router)
 api_router.include_router(search_router)
 api_router.include_router(workshops_router)
 api_router.include_router(workshop_feedback_router)

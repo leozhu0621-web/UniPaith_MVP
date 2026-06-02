@@ -252,6 +252,10 @@ resource "aws_ecs_task_definition" "backend" {
       # is fully functional, so the engine never depends on the LLM to gate the
       # journey and never 5xxes.
       { name = "AI_INTAKE_ENGINE_V2_ENABLED", value = "true" },
+      # Spec 56 §6 — saved-search alert loop. The scheduler re-runs alert-enabled
+      # saved searches and notifies on new matches; consent-gated (consent_outreach)
+      # and per-user-per-day capped. Deterministic (no LLM), so no agent flag.
+      { name = "SAVED_SEARCH_ALERTS_ENABLED", value = "true" },
       # Pin Claude model IDs — config.py defaults match, but pinning here
       # makes the prod surface auditable (and trivial to roll a single
       # agent class to a different model without a code deploy).

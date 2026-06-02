@@ -12,6 +12,7 @@ import type {
   FrontendStandards,
   Production,
   Roadmap,
+  SearchBuild,
   UxBenchmark,
 } from '../types/build'
 
@@ -57,5 +58,10 @@ export async function getFrontendStandards(): Promise<FrontendStandards> {
 
 export async function getProduction(): Promise<Production> {
   const { data } = await apiClient.get<Production>('/build/production')
+  return data
+}
+
+export async function getSearchBuild(): Promise<SearchBuild> {
+  const { data } = await apiClient.get<SearchBuild>('/build/search')
   return data
 }

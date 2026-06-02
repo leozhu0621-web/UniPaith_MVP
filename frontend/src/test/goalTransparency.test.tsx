@@ -11,6 +11,7 @@ import DataModelPage from '../pages/public/DataModelPage'
 import AcceptancePage from '../pages/public/AcceptancePage'
 import ExperienceStandardsPage from '../pages/public/ExperienceStandardsPage'
 import ProductionReadinessPage from '../pages/public/ProductionReadinessPage'
+import SearchFeedRecsPage from '../pages/public/SearchFeedRecsPage'
 import * as buildApi from '../api/build'
 import type {
   Acceptance,
@@ -21,6 +22,8 @@ import type {
   Production,
   ProductionSummary,
   Roadmap,
+  SearchBuild,
+  SearchBuildSummary,
   UxBenchmark,
 } from '../types/build'
 
@@ -85,6 +88,27 @@ const PRODUCTION_SUMMARY: ProductionSummary = {
   live_is_source_of_truth: true,
 }
 
+const SEARCH_SUMMARY: SearchBuildSummary = {
+  capability_count: 8,
+  capabilities_live: 4,
+  capabilities_partial: 2,
+  capabilities_planned: 2,
+  build_task_count: 7,
+  tasks_live: 2,
+  tasks_partial: 3,
+  tasks_planned: 2,
+  acceptance_count: 5,
+  acceptance_live: 1,
+  search_route_count: 8,
+  feed_route_count: 12,
+  saved_search_route_count: 3,
+  backing_route_count: 33,
+  saved_searches_table_present: true,
+  config_knob_count: 6,
+  open_question_count: 3,
+  live_is_source_of_truth: true,
+}
+
 // Specs 48/49/50 — the public /goal transparency surfaces. Each renders live
 // build data from the /build/* endpoints and lets the visitor filter it.
 
@@ -123,6 +147,7 @@ const OVERVIEW: BuildOverview = {
   data_model: DATA_MODEL_SUMMARY,
   acceptance: ACCEPTANCE_SUMMARY,
   production: PRODUCTION_SUMMARY,
+  search: SEARCH_SUMMARY,
   provider: 'anthropic',
   surfaces: [
     { key: 'claude-api', title: 'AI agents', spec: '45', blurb: 'The live agent fleet.', path: '/goal/claude-api', stat: 40, stat_label: 'AI agents' },
@@ -134,6 +159,7 @@ const OVERVIEW: BuildOverview = {
     { key: 'experience', title: 'Experience standards', spec: '53', blurb: 'The interaction bar.', path: '/goal/experience', stat: 8, stat_label: 'benchmarked surfaces' },
     { key: 'frontend', title: 'Frontend engineering', spec: '54', blurb: 'The React build spec.', path: '/goal/frontend', stat: '6/10', stat_label: 'build tasks complete' },
     { key: 'backend', title: 'Production readiness', spec: '55', blurb: 'The backend hardening posture.', path: '/goal/backend', stat: 7, stat_label: 'readiness pillars' },
+    { key: 'search', title: 'Search, feed & recs', spec: '56', blurb: 'The discovery substrate.', path: '/goal/search', stat: '4/8', stat_label: 'capabilities live' },
   ],
 }
 
@@ -380,6 +406,73 @@ const PRODUCTION: Production = {
   open_questions: [{ q: 'Queue engine', a: 'arq — async-native, Redis-backed.' }],
 }
 
+const SEARCH_BUILD: SearchBuild = {
+  the_bar: {
+    statement: 'Discovery is good when a student can describe what they want.',
+    principle: 'Built on the real substrate that already exists.',
+  },
+  summary: SEARCH_SUMMARY,
+  capabilities: [
+    {
+      key: 'fts',
+      title: 'Full-text search',
+      section: '§2',
+      status: 'live',
+      blurb: 'Postgres FTS over programs.',
+      built: ['tsvector + plainto_tsquery', 'Constraint chips → filters'],
+      planned: ['pg_trgm fuzzy ranking'],
+    },
+    {
+      key: 'saved_search',
+      title: 'Saved searches + alerts',
+      section: '§6',
+      status: 'live',
+      blurb: 'The net-new build — save a search; it keeps watching.',
+      built: ['saved_searches table + model', 'Scheduled alert loop'],
+      planned: ['Scholarship / school entity search'],
+    },
+    {
+      key: 'hybrid',
+      title: 'Hybrid semantic fusion',
+      section: '§2B',
+      status: 'planned',
+      blurb: 'Semantic recall fused with keyword precision.',
+      built: ['Reranker scaffold'],
+      planned: ['Qwen embeddings + pgvector ANN', 'Reciprocal-rank fusion'],
+    },
+  ],
+  build_tasks: [
+    {
+      section: '§8',
+      status: 'live',
+      text: 'saved_searches table/model/service + alert job + endpoints + caps',
+      evidence: 'Built here: model + migration + service + API + scheduler loop.',
+    },
+    {
+      section: '§8',
+      status: 'planned',
+      text: 'Hybrid fusion (pgvector + keyword RRF) + reranker → Qwen3-Reranker',
+      evidence: 'Reranker scaffold exists; embeddings depend on 63.',
+    },
+  ],
+  acceptance: [
+    { status: 'live', text: 'Saved searches fire alerts via 57, consent + cap respected.' },
+    { status: 'planned', text: 'Ranking changes A/B-gated via 62.' },
+  ],
+  config_knobs: [
+    { name: 'saved_search_alerts_enabled', value: true, section: '§6' },
+    { name: 'saved_search_alert_cap_per_day', value: 5, section: '§6' },
+  ],
+  routes: {
+    search: ['/api/v1/students/me/search/programs'],
+    feed: ['/api/v1/connect/feed'],
+    saved_search: ['/api/v1/students/me/saved-searches'],
+    events: ['/api/v1/events'],
+  },
+  saved_searches_table_present: true,
+  open_questions: [{ q: 'OpenSearch trigger threshold', a: 'Stay on Postgres FTS until measured.' }],
+}
+
 function renderPage(ui: React.ReactElement, route = '/goal') {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
@@ -394,7 +487,7 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     vi.restoreAllMocks()
   })
 
-  it('hub renders the live stats and links to all nine surfaces', async () => {
+  it('hub renders the live stats and links to all ten surfaces', async () => {
     vi.spyOn(buildApi, 'getBuildOverview').mockResolvedValue(OVERVIEW)
     renderPage(<GoalHubPage />)
 
@@ -408,6 +501,8 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     expect(screen.getByText('Experience standards')).toBeInTheDocument()
     expect(screen.getByText('Frontend engineering')).toBeInTheDocument()
     expect(screen.getByText('Production readiness')).toBeInTheDocument()
+    // Spec 56 — the search/feed/recs surface card appears.
+    expect(screen.getByText('Search, feed & recs')).toBeInTheDocument()
     // Live route count from the overview appears (stat band + surface card).
     expect(screen.getAllByText('553').length).toBeGreaterThan(0)
     // The MVP-complete gold beat shows.
@@ -533,5 +628,25 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Live' }))
     await waitFor(() => expect(screen.queryByText('Observability')).not.toBeInTheDocument())
     expect(screen.getByText('Health, deploy & SLOs')).toBeInTheDocument()
+  })
+
+  it('search page renders capabilities, live routes + config and filters by status', async () => {
+    vi.spyOn(buildApi, 'getSearchBuild').mockResolvedValue(SEARCH_BUILD)
+    renderPage(<SearchFeedRecsPage />, '/goal/search')
+
+    await waitFor(() => expect(screen.getByText('Full-text search')).toBeInTheDocument())
+    expect(screen.getByText('Saved searches + alerts')).toBeInTheDocument()
+    expect(screen.getByText('Hybrid semantic fusion')).toBeInTheDocument()
+    // The live, route-table-resolved backing paths show.
+    expect(screen.getByText('/api/v1/students/me/saved-searches')).toBeInTheDocument()
+    // A live config knob (read off settings) renders.
+    expect(screen.getByText('saved_search_alerts_enabled')).toBeInTheDocument()
+    // The saved-search hero beat (table wired + live endpoints) shows.
+    expect(screen.getByText(/Saved-search alerts wired/i)).toBeInTheDocument()
+
+    // Filter to Planned → the live Full-text-search capability drops out.
+    fireEvent.click(screen.getByRole('button', { name: 'Planned' }))
+    await waitFor(() => expect(screen.queryByText('Full-text search')).not.toBeInTheDocument())
+    expect(screen.getByText('Hybrid semantic fusion')).toBeInTheDocument()
   })
 })

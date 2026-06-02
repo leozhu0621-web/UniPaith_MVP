@@ -435,10 +435,11 @@ async def test_overview_endpoint(client: AsyncClient):
         "data_model",
         "acceptance",
         "production",
+        "search",
         "surfaces",
     ):
         assert key in body
-    assert len(body["surfaces"]) == 9
+    assert len(body["surfaces"]) == 10
     assert {s["key"] for s in body["surfaces"]} == {
         "claude-api",
         "roadmap",
@@ -449,6 +450,7 @@ async def test_overview_endpoint(client: AsyncClient):
         "experience",
         "frontend",
         "backend",
+        "search",
     }
     fe = next(s for s in body["surfaces"] if s["key"] == "frontend")
     assert fe["path"] == "/goal/frontend" and fe["spec"] == "54"
@@ -457,6 +459,13 @@ async def test_overview_endpoint(client: AsyncClient):
     assert backend["spec"] == "55"
     assert backend["path"] == "/goal/backend"
     assert backend["stat"] == body["production"]["pillar_count"]
+    # Spec 56 — the search surface carries the live-capability count read from the run.
+    search = next(s for s in body["surfaces"] if s["key"] == "search")
+    assert search["spec"] == "56"
+    assert search["path"] == "/goal/search"
+    assert search["stat"] == (
+        f"{body['search']['capabilities_live']}/{body['search']['capability_count']}"
+    )
 
 
 @pytest.mark.asyncio

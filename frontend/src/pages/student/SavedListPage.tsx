@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   listSaved,
@@ -8,7 +8,9 @@ import {
   patchSavedProgram,
   startApplicationFromSaved,
 } from '../../api/saved-lists'
+import { listSavedSearches } from '../../api/savedSearches'
 import { getMyFollows, unfollowInstitution } from '../../api/events'
+import SavedSearchesPanel from './saved/SavedSearchesPanel'
 import Button from '../../components/ui/Button'
 import EmptyState from '../../components/ui/EmptyState'
 import BandBadge from '../../components/ui/BandBadge'
@@ -22,7 +24,7 @@ import SavedProgramRow, { PRIORITY_CONFIG, PRIORITY_ORDER } from './saved/SavedP
 import SavedSchoolCard from './saved/SavedSchoolCard'
 import { programSummaryOf, sortSavedPrograms, type SortKey } from './saved/savedUtils'
 
-type Tab = 'programs' | 'schools'
+type Tab = 'programs' | 'schools' | 'searches'
 type ViewMode = 'tier' | 'priority' | 'flat'
 type FilterKey = 'all' | SavedPriority
 
@@ -37,8 +39,19 @@ export default function SavedListPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const compareStore = useCompareStore()
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const [tab, setTab] = useState<Tab>('programs')
+  const tabParam = searchParams.get('tab')
+  const [tab, setTab] = useState<Tab>(
+    tabParam === 'schools' || tabParam === 'searches' ? tabParam : 'programs',
+  )
+  const selectTab = (t: Tab) => {
+    setTab(t)
+    const p = new URLSearchParams(searchParams)
+    if (t === 'programs') p.delete('tab')
+    else p.set('tab', t)
+    setSearchParams(p, { replace: true })
+  }
   const [viewMode, setViewMode] = useState<ViewMode>('tier')
   const [sortKey, setSortKey] = useState<SortKey>('match_score')
   const [filterKey, setFilterKey] = useState<FilterKey>('all')
@@ -55,6 +68,10 @@ export default function SavedListPage() {
     queryFn: listSavedTagSuggestions,
   })
   const { data: follows = [] } = useQuery({ queryKey: ['my-follows'], queryFn: getMyFollows })
+  const { data: savedSearches = [] } = useQuery({
+    queryKey: ['saved-searches'],
+    queryFn: listSavedSearches,
+  })
 
   usePageTitle('Saved')
 
@@ -249,7 +266,7 @@ export default function SavedListPage() {
       <div className="flex gap-1 border-b border-divider mb-5">
         <button
           type="button"
-          onClick={() => setTab('programs')}
+          onClick={() => selectTab('programs')}
           className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
             tab === 'programs'
               ? 'border-secondary text-secondary'
@@ -260,7 +277,7 @@ export default function SavedListPage() {
         </button>
         <button
           type="button"
-          onClick={() => setTab('schools')}
+          onClick={() => selectTab('schools')}
           className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
             tab === 'schools'
               ? 'border-secondary text-secondary'
@@ -269,9 +286,22 @@ export default function SavedListPage() {
         >
           Schools ({follows.length})
         </button>
+        <button
+          type="button"
+          onClick={() => selectTab('searches')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+            tab === 'searches'
+              ? 'border-secondary text-secondary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Searches ({savedSearches.length})
+        </button>
       </div>
 
-      {tab === 'schools' ? (
+      {tab === 'searches' ? (
+        <SavedSearchesPanel />
+      ) : tab === 'schools' ? (
         follows.length === 0 ? (
           <EmptyState
             icon={<GraduationCap size={48} />}

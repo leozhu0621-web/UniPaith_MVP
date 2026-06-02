@@ -33,6 +33,7 @@ import AcceptancePage from './pages/public/AcceptancePage'
 import ExperienceStandardsPage from './pages/public/ExperienceStandardsPage'
 import FrontendStandardsPage from './pages/public/FrontendStandardsPage'
 import ProductionReadinessPage from './pages/public/ProductionReadinessPage'
+import SearchFeedRecsPage from './pages/public/SearchFeedRecsPage'
 
 // Student pages — 4 main + profile/saved/settings from avatar
 // Discover (Stage 1) is the new student home — replaces CounselorHomePage
@@ -130,6 +131,8 @@ const router = createBrowserRouter([
   { path: '/goal/frontend', element: <PublicLayout><FrontendStandardsPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 55 — backend production readiness (config / middleware / health read live).
   { path: '/goal/backend', element: <PublicLayout><ProductionReadinessPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  // Spec 56 — search / feed / recommendations substrate (routes / flags / table read live).
+  { path: '/goal/search', element: <PublicLayout><SearchFeedRecsPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
 
   { path: '/login', element: <AuthLayout><LoginPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
   { path: '/signup', element: <AuthLayout><SignupPage /></AuthLayout>, errorElement: <RouteErrorPage /> },

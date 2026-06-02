@@ -13,6 +13,7 @@ import ProgramCard from '../cards/ProgramCard'
 import ConstraintChips from './ConstraintChips'
 import FiltersPanel from './FiltersPanel'
 import GenreTiles from './GenreTiles'
+import SaveSearchButton from './SaveSearchButton'
 import SortMenu from './SortMenu'
 import { encodeChipsParam, parseChipsParam, withChipId } from './chipUtils'
 import { encodeFiltersParam, hasActiveFilters, normalizeFilters, parseFiltersParam } from './filterUtils'
@@ -251,7 +252,12 @@ export default function DiscoverySearch() {
             </p>
           )}
         </div>
-        {active && <SortMenu value={sort} onChange={setSort} />}
+        {active && (
+          <div className="flex items-center gap-2">
+            <SaveSearchButton query={urlQuery} chips={chips} filters={filters} sort={sort} />
+            <SortMenu value={sort} onChange={setSort} />
+          </div>
+        )}
       </div>
 
       {active ? (

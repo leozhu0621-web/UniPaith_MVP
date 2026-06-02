@@ -103,6 +103,15 @@ class Settings(BaseSettings):
     scheduler_self_driving_enabled: bool = True
     scheduler_self_driving_interval_minutes: int = 30
 
+    # Saved-search alerts (Spec 56 §6). The loop re-runs alert-enabled saved
+    # searches and notifies on new matches; off by default, flipped on per
+    # environment (prod sets SAVED_SEARCH_ALERTS_ENABLED=true). The per-day cap
+    # batches low-urgency hits into the digest; max_per_user bounds the table.
+    saved_search_alerts_enabled: bool = False
+    saved_search_alert_interval_minutes: int = 360
+    saved_search_alert_cap_per_day: int = 5
+    saved_search_max_per_user: int = 50
+
     # Knowledge engine loop (legacy — replaced by pipeline, kept for backward compat)
     engine_loop_enabled: bool = True
     engine_loop_interval_minutes: int = 5
