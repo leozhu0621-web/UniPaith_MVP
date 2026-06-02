@@ -234,6 +234,12 @@ resource "aws_ecs_task_definition" "backend" {
       # + the hard over-commit block) is always on; AI never decides — matching
       # informs humans, faculty decide.
       { name = "AI_GRADUATE_V2_ENABLED", value = "true" },
+      # Spec 42 §4.17 — Prompt Library behavioral coach. Attaches the inference
+      # overlay (interview-readiness, competency coverage, story↔prompt matching,
+      # revision priorities, practice plan) to the prompt-library summary. The
+      # engine is deterministic and never 5xxes; STAR auto-detection on save runs
+      # regardless. Tier documents the future LLM swap-in.
+      { name = "AI_PROMPT_LIBRARY_V2_ENABLED", value = "true" },
       # Pin Claude model IDs — config.py defaults match, but pinning here
       # makes the prod surface auditable (and trivial to roll a single
       # agent class to a different model without a code deploy).

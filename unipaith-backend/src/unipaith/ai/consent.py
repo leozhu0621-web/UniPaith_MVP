@@ -160,6 +160,12 @@ AGENT_REQUIRES: dict[str, str | None] = {
     "advisor_matcher": None,
     "sop_interest_extractor": None,
     "funding_scenario_helper": None,
+    # Spec 42 §4.17 — the Prompt Library behavioral coach is a student-facing
+    # self-improvement tool over the student's *own* responses + story bank
+    # (their data, their request), like the workshop coaches. The act of using
+    # the prompt library is the consent signal, so no matching/outreach lever
+    # here. The deterministic engine never 5xxes regardless.
+    "prompt_coach": None,
 }
 
 

@@ -1,19 +1,29 @@
 import { useState, lazy, Suspense, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { FolderKanban, Calendar, MessageSquare, GraduationCap } from 'lucide-react'
+import {
+  FolderKanban,
+  Calendar,
+  MessageSquare,
+  GraduationCap,
+  NotebookPen,
+} from 'lucide-react'
 
 // Lazy-load sub-pages
 const ApplicationsPage = lazy(() => import('./ApplicationsPage'))
 const CalendarPage = lazy(() => import('./CalendarPage'))
 const MessagesPage = lazy(() => import('./MessagesPage'))
+const PromptLibraryTab = lazy(() => import('./apply/promptlibrary/PromptLibraryTab'))
 const WorkshopsTab = lazy(() => import('./apply/WorkshopsTab'))
 
-type Tab = 'applications' | 'calendar' | 'messages' | 'workshops'
+type Tab = 'applications' | 'calendar' | 'messages' | 'prompts' | 'workshops'
 
 const TABS: { key: Tab; label: string; icon: typeof FolderKanban }[] = [
   { key: 'applications', label: 'Applications', icon: FolderKanban },
   { key: 'calendar', label: 'Calendar', icon: Calendar },
   { key: 'messages', label: 'Messages', icon: MessageSquare },
+  // Spec 42 — Prompt Library (behavioral practice + story bank), before
+  // Workshops (which give feedback on a finished draft).
+  { key: 'prompts', label: 'Prompts', icon: NotebookPen },
   // Phase D — Workshops moved here from Profile (feedback-only).
   { key: 'workshops', label: 'Workshops', icon: GraduationCap },
 ]
@@ -74,6 +84,7 @@ export default function ManagementPage() {
               <MessagesPage initialThreadId={threadId} />
             </div>
           )}
+          {tab === 'prompts' && <PromptLibraryTab />}
           {tab === 'workshops' && <WorkshopsTab />}
         </Suspense>
       </div>
