@@ -146,6 +146,8 @@ def test_each_agent_declares_consent_requirement():
         "funding_scenario_helper",
         # Spec 42 §4.17 — Prompt Library behavioral coach (deterministic).
         "prompt_coach",
+        # Spec 43 §4.18 — major-specific readiness coach (deterministic).
+        "major_track_coach",
     }
     assert set(AGENT_REQUIRES.keys()) == expected_agents
 

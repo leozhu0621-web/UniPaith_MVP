@@ -240,6 +240,12 @@ resource "aws_ecs_task_definition" "backend" {
       # engine is deterministic and never 5xxes; STAR auto-detection on save runs
       # regardless. Tier documents the future LLM swap-in.
       { name = "AI_PROMPT_LIBRARY_V2_ENABLED", value = "true" },
+      # Spec 43 §4.18 — attach the major-specific readiness overlay (per-track fit
+      # score, readiness band, coverage map, suggested artifacts, bridge plan,
+      # track recommendation) to the major-specific tracks/summary endpoints. The
+      # engine is deterministic and never 5xxes. Tier documents the future LLM
+      # swap-in.
+      { name = "AI_MAJOR_SPECIFIC_V2_ENABLED", value = "true" },
       # Pin Claude model IDs — config.py defaults match, but pinning here
       # makes the prod surface auditable (and trivial to roll a single
       # agent class to a different model without a code deploy).

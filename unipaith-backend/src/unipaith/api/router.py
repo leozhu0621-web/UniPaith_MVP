@@ -23,6 +23,7 @@ from unipaith.api.inbox import router as inbox_router
 from unipaith.api.institution_inbox import router as institution_inbox_router
 from unipaith.api.institutions import router as institutions_router
 from unipaith.api.interviews import router as interviews_router
+from unipaith.api.major_specific import router as major_specific_router
 from unipaith.api.messaging import router as messaging_router
 from unipaith.api.needs import router as needs_router
 from unipaith.api.notifications import router as notifications_router
@@ -57,6 +58,9 @@ api_router.include_router(analytics_router)
 # Spec 42 — Prompt Library under `/students/me/prompt-library/*`; before
 # students_router so its literal sub-paths win over any `/students/me/*` route.
 api_router.include_router(prompt_library_router)
+# Spec 43 — Major-Specific catalog under `/students/me/major-specific/*`; before
+# students_router for the same literal-path-precedence reason.
+api_router.include_router(major_specific_router)
 api_router.include_router(students_router)
 api_router.include_router(discovery_router)
 api_router.include_router(goals_router)

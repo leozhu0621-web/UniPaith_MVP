@@ -94,6 +94,7 @@ from unipaith.models.knowledge import (
     KnowledgeLink,
     PersonInsight,
 )
+from unipaith.models.major_specific import StudentMajorSpecificSignals
 from unipaith.models.matching import (
     DataSource,
     Embedding,
@@ -198,6 +199,8 @@ __all__ = [
     "BehavioralPrompt",
     "StudentBehavioralResponse",
     "StudentStory",
+    # Spec 43 — major-specific field catalog
+    "StudentMajorSpecificSignals",
     # LLM-only artifacts (Phase A1)
     "StudentFeatureVector",
     "AiTurn",

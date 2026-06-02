@@ -15,7 +15,6 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
-    UniqueConstraint,
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -765,37 +764,8 @@ class StudentPlatformEvent(Base):
     )
 
 
-class StudentMajorReadiness(Base):
-    """Track-level self-rating rollup for major-specific appendix fields.
-
-    One row per (student, track) where track is one of:
-    ``cs``, ``engineering``, ``business``, ``health``, ``arts``, ``humanities``.
-
-    ``readiness_data`` is a JSONB blob holding the per-track fields from the
-    appendix (e.g., CS track has ~73 fields: CS fundamentals self-ratings,
-    data/ML readiness, programming languages, tools, etc.). We keep them as
-    JSONB because the field set varies by track and evolves; the blob is the
-    authoritative store, the individual fields are validated at the Pydantic
-    schema layer and scored in the inference pipeline.
-    """
-
-    __tablename__ = "student_major_readiness"
-    __table_args__ = (
-        UniqueConstraint("student_id", "track", name="uq_major_readiness_student_track"),
-    )
-
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    student_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("student_profiles.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True,
-    )
-    track: Mapped[str] = mapped_column(String(30), nullable=False)
-    readiness_data: Mapped[dict] = mapped_column(JSONB, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
-    )
+# NOTE: the pre-spec ``StudentMajorReadiness`` (raw 6-track ``student_major_readiness``
+# store) is superseded by Spec 43's ``StudentMajorSpecificSignals``
+# (``models/major_specific.py`` — §5 provenance + 15-track registry + §4.18
+# scoring). Its rows are migrated and the table dropped by ``m43a1b2c3d4e``; the
+# legacy ``/me/major-readiness`` endpoints now shim onto the new store.

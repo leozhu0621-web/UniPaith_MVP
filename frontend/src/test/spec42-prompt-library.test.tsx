@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import {
@@ -94,7 +95,11 @@ import PromptLibraryTab from '../pages/student/apply/promptlibrary/PromptLibrary
 
 function renderTab(ui: ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>)
+  return render(
+    <QueryClientProvider client={qc}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </QueryClientProvider>,
+  )
 }
 
 describe('Spec 42 — Prompt Library tab renders, never ghost-writes', () => {
