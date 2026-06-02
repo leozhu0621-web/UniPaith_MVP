@@ -13,6 +13,7 @@ import type {
   Production,
   Roadmap,
   SearchBuild,
+  SecurityTrust,
   UxBenchmark,
 } from '../types/build'
 
@@ -63,5 +64,10 @@ export async function getProduction(): Promise<Production> {
 
 export async function getSearchBuild(): Promise<SearchBuild> {
   const { data } = await apiClient.get<SearchBuild>('/build/search')
+  return data
+}
+
+export async function getSecurity(): Promise<SecurityTrust> {
+  const { data } = await apiClient.get<SecurityTrust>('/build/security')
   return data
 }

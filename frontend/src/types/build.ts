@@ -136,6 +136,7 @@ export interface BuildOverview {
   acceptance: AcceptanceSummary
   production: ProductionSummary
   search: SearchBuildSummary
+  security: SecuritySummary
   provider: string
   surfaces: OverviewSurface[]
 }
@@ -646,5 +647,136 @@ export interface SearchBuild {
   config_knobs: SearchConfigKnob[]
   routes: SearchRoutes
   saved_searches_table_present: boolean
+  open_questions: OpenQuestion[]
+}
+
+// ── Security, trust & compliance (spec 58) ──────────────────────────────────
+export interface SecurityControl {
+  key: string
+  title: string
+  section: string // spec 58 section, e.g. "§2"
+  status: ReadinessStatus
+  module: string // the real file the control lives in
+  blurb: string
+  built: string[]
+  planned: string[]
+}
+
+export interface SecurityConfigKnob {
+  name: string
+  value: string | number | boolean
+  section: string
+}
+
+export interface SecurityBuildTask {
+  section: string
+  status: ReadinessStatus
+  text: string
+  evidence: string
+}
+
+export interface SecurityAcceptanceItem {
+  status: ReadinessStatus
+  text: string
+}
+
+export interface SecurityComplianceItem {
+  regime: string // FERPA | GDPR/CCPA | Retention
+  control: string
+  status: ReadinessStatus
+  module: string
+}
+
+export interface ConsentLeverCount {
+  lever: string
+  agent_count: number
+}
+
+export interface ConsentPosture {
+  levers: string[]
+  lever_counts: ConsentLeverCount[]
+  agent_count: number
+  default_permissive: boolean
+  redaction_map_size: number
+  note: string
+}
+
+export interface PiiClassRow {
+  key: string
+  label: string
+  description: string
+  count: number
+  encryption_target: boolean
+}
+
+export interface PiiPosture {
+  field_count: number
+  class_count: number
+  encryption_target_count: number
+  model_count: number
+  classes: PiiClassRow[]
+}
+
+export interface SecurityHeaders {
+  count: number
+  names: string[]
+  hsts_in_production: boolean
+  note: string
+}
+
+export interface AuthPosture {
+  environment: string
+  cognito_bypass: boolean
+  bypass_safe: boolean
+  pool_configured: boolean
+  note: string
+}
+
+export interface SecurityTheBar {
+  statement: string
+  principle: string
+}
+
+export interface SecuritySummary {
+  control_count: number
+  controls_live: number
+  controls_partial: number
+  controls_planned: number
+  build_task_count: number
+  tasks_live: number
+  tasks_partial: number
+  tasks_planned: number
+  acceptance_count: number
+  acceptance_live: number
+  consent_agent_count: number
+  consent_lever_count: number
+  consent_default_permissive: boolean
+  redaction_map_size: number
+  pii_field_count: number
+  pii_class_count: number
+  pii_encryption_target_count: number
+  security_header_count: number
+  cors_allowlist_size: number
+  environment: string
+  cognito_bypass: boolean
+  auth_bypass_safe: boolean
+  prod_bypass_guarded: boolean
+  compliance_count: number
+  open_question_count: number
+  live_is_source_of_truth: boolean
+}
+
+export interface SecurityTrust {
+  the_bar: SecurityTheBar
+  summary: SecuritySummary
+  controls: SecurityControl[]
+  consent: ConsentPosture
+  pii: PiiPosture
+  headers: SecurityHeaders
+  auth: AuthPosture
+  config_knobs: SecurityConfigKnob[]
+  compliance: SecurityComplianceItem[]
+  build_tasks: SecurityBuildTask[]
+  acceptance: SecurityAcceptanceItem[]
   open_questions: OpenQuestion[]
 }

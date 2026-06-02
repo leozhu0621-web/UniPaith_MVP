@@ -11,6 +11,7 @@ from unipaith.core.data_safety import assert_core_role_coverage
 from unipaith.core.middleware import setup_middleware
 from unipaith.core.observability import ContextJsonFormatter
 from unipaith.core.scheduler import setup_scheduler, shutdown_scheduler
+from unipaith.core.security import assert_secure_auth_config
 from unipaith.database import async_session
 
 
@@ -195,6 +196,11 @@ async def _ensure_saved_list_schema(db) -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):  # noqa: ARG001
+    # Spec 58 §2 — refuse to boot with the dev auth bypass enabled in a deployed
+    # environment. Deliberately OUTSIDE a try/except: this MUST fail boot, not be
+    # swallowed like the best-effort schema bootstraps below.
+    assert_secure_auth_config()
+
     # Ensure schools table exists (bypasses broken Alembic chain)
     try:
         async with async_session() as db:
