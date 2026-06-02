@@ -134,7 +134,14 @@ export default function ProgramsPage() {
       )}
 
       <Card>
-        {programs.length === 0 && !programsQ.isLoading ? (
+        {programsQ.isError ? (
+          <div className="p-8 text-center">
+            <p className="mb-2 text-sm text-error">Couldn’t load programs.</p>
+            <button onClick={() => programsQ.refetch()} className="text-secondary hover:underline text-sm">
+              Retry
+            </button>
+          </div>
+        ) : programs.length === 0 && !programsQ.isLoading ? (
           <EmptyState
             icon={<BookOpen size={40} />}
             title="No programs yet"

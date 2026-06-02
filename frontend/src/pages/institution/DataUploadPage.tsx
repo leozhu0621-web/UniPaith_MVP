@@ -550,7 +550,12 @@ export default function DataUploadPage() {
       </header>
 
       <Card>
-        {datasetsQ.isLoading ? (
+        {datasetsQ.isError ? (
+          <div className="p-8 text-center">
+            <p className="mb-2 text-sm text-error">Couldn’t load datasets.</p>
+            <button onClick={() => datasetsQ.refetch()} className="text-secondary hover:underline text-sm">Retry</button>
+          </div>
+        ) : datasetsQ.isLoading ? (
           <div className="p-4 space-y-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12" />)}</div>
         ) : filtered.length === 0 ? (
           <EmptyState

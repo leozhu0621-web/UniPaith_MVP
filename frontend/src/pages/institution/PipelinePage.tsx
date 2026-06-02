@@ -379,6 +379,11 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
 
       {!selectedProgram ? (
         <EmptyState title="Select a program" description="Choose a program above to manage its full admissions workflow." />
+      ) : applicationsQ.isError ? (
+        <div className="p-8 text-center">
+          <p className="mb-2 text-sm text-error">Couldn’t load applications.</p>
+          <button onClick={() => applicationsQ.refetch()} className="text-secondary hover:underline text-sm">Retry</button>
+        </div>
       ) : applicationsQ.isLoading ? (
         <div className="flex gap-4">
           {PIPELINE_COLUMNS.map(col => (
@@ -475,7 +480,12 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
 
           {activeView === 'priority' && (
             <div className="space-y-2">
-              {priorityQ.isLoading ? (
+              {priorityQ.isError ? (
+                <div className="p-8 text-center">
+                  <p className="mb-2 text-sm text-error">Couldn’t load the priority queue.</p>
+                  <button onClick={() => priorityQ.refetch()} className="text-secondary hover:underline text-sm">Retry</button>
+                </div>
+              ) : priorityQ.isLoading ? (
                 <Skeleton className="h-40" />
               ) : prioritized.length === 0 ? (
                 <EmptyState icon={<Zap size={40} />} title="No applications to prioritize" description="Applications needing review will be ranked here by urgency." />

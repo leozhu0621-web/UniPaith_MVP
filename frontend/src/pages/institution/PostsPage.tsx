@@ -237,7 +237,12 @@ export default function PostsPage() {
 
       <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
-      {postsQ.isLoading ? (
+      {postsQ.isError ? (
+        <div className="p-8 text-center">
+          <p className="mb-2 text-sm text-error">Couldn’t load posts.</p>
+          <button onClick={() => postsQ.refetch()} className="text-secondary hover:underline text-sm">Retry</button>
+        </div>
+      ) : postsQ.isLoading ? (
         <div className="space-y-4">{[1, 2, 3].map(i => <Skeleton key={i} className="h-32" />)}</div>
       ) : filtered.length === 0 ? (
         <EmptyState

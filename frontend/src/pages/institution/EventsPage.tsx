@@ -197,7 +197,12 @@ export default function EventsPage() {
         <Select options={statusOptions} value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="w-48" />
       </div>
 
-      {eventsQ.isLoading ? (
+      {eventsQ.isError ? (
+        <div className="p-8 text-center">
+          <p className="mb-2 text-sm text-error">Couldn’t load events.</p>
+          <button onClick={() => eventsQ.refetch()} className="text-secondary hover:underline text-sm">Retry</button>
+        </div>
+      ) : eventsQ.isLoading ? (
         <div className="grid grid-cols-2 gap-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-40" />)}</div>
       ) : events.length === 0 ? (
         <EmptyState
