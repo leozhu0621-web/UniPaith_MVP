@@ -220,6 +220,22 @@ class Program(Base):
     feature_version: Mapped[int] = mapped_column(
         Integer, nullable=False, default=1, server_default="1"
     )
+    # Spec 46 §6 — fairness auto-halt state. The disparate-impact compute lives
+    # in `services/fairness_service`; these columns are the single row the match
+    # service reads to decide whether to keep scoring new applicants for this
+    # cohort. `matching_halted=true` stops new scoring (existing scores remain);
+    # an admin override flips it back with an expiry. `fairness_threshold` is the
+    # per-program Δ ceiling (default 0.20, §9 range 0.05–0.40).
+    matching_halted: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default="false", default=False
+    )
+    fairness_override_active: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default="false", default=False
+    )
+    fairness_override_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    fairness_threshold: Mapped[Decimal] = mapped_column(
+        Numeric(3, 2), nullable=False, server_default="0.20", default=Decimal("0.20")
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

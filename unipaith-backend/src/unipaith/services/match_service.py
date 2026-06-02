@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
+from datetime import UTC
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
@@ -152,6 +153,36 @@ class MatchService:
         mask = await get_consent_mask(self.db, student_id)
         return bool(mask.get("matching", True)), mask
 
+    async def _halted_program_ids(self, program_ids: list[UUID]) -> set[UUID]:
+        """Spec 46 §6.2 — program ids whose cohort is fairness-halted and not
+        under an active, unexpired override. Used to skip scoring new applicants
+        for a halted cohort (existing scores are left untouched)."""
+        if not program_ids:
+            return set()
+        from datetime import datetime
+
+        from unipaith.models.institution import Program
+
+        now = datetime.now(UTC)
+        rows = (
+            await self.db.execute(
+                select(
+                    Program.id,
+                    Program.matching_halted,
+                    Program.fairness_override_active,
+                    Program.fairness_override_expires_at,
+                ).where(Program.id.in_(program_ids))
+            )
+        ).all()
+        halted: set[UUID] = set()
+        for pid, matching_halted, override_active, override_expires_at in rows:
+            override_ok = bool(
+                override_active and override_expires_at is not None and override_expires_at > now
+            )
+            if matching_halted and not override_ok:
+                halted.add(pid)
+        return halted
+
     async def _log_ml_turn(
         self,
         *,
@@ -270,6 +301,14 @@ class MatchService:
         # actually reorders.
         reranker_state = await self._reranker_state_cached()
         ranked = get_reranker(state=reranker_state).rerank(sfv, ranked)
+
+        # Spec 46 §6.2 — fairness auto-halt. A halted cohort stops scoring new
+        # applicants (existing scores remain). Drop halted programs before the
+        # top-N slice so the student still receives a full set of eligible
+        # matches.
+        halted = await self._halted_program_ids([p.program_id for p, _ in ranked])
+        if halted:
+            ranked = [(p, s) for (p, s) in ranked if p.program_id not in halted]
 
         if replace_existing:
             await self.db.execute(delete(MatchResult).where(MatchResult.student_id == student_id))
