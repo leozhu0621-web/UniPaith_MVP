@@ -142,7 +142,7 @@ class PaymentService:
         _app, program, institution = await self._ctx(app.id)
         if not settings.payments_enabled:
             raise BadRequestException("Payments are not enabled")
-        fee = fees.fee_config(institution)
+        fee = fees.fee_config(institution, program)
         if not fee["enabled"]:
             raise BadRequestException("No application fee is required for this program")
 
@@ -233,7 +233,7 @@ class PaymentService:
         student_id = await self._student_profile_id(user)
         app = await self._apps._get_application_for_student(student_id, application_id)
         _app, program, institution = await self._ctx(app.id)
-        fee = fees.fee_config(institution)
+        fee = fees.fee_config(institution, program)
         if not fee["enabled"]:
             raise BadRequestException("No application fee to waive for this program")
         if basis not in fees.WAIVER_BASES:
@@ -289,7 +289,7 @@ class PaymentService:
         student_id = await self._student_profile_id(user)
         app = await self._apps._get_application_for_student(student_id, application_id)
         _app, program, institution = await self._ctx(app.id)
-        fee_cfg = fees.fee_config(institution)
+        fee_cfg = fees.fee_config(institution, program)
         waiver_cfg = fees.waiver_config(institution)
         dep_cfg = fees.deposit_config(institution, program)
         fee_payment = await self._payment_for(app.id, "application_fee")

@@ -202,6 +202,9 @@ class StripePaymentProvider(PaymentProvider):
         }
         if customer_email:
             params["customer_email"] = customer_email
+        if kind == "enrollment_deposit":
+            # ACH for larger deposits (Spec 39 §4) — card + US bank debit.
+            params["payment_method_types"] = ["card", "us_bank_account"]
         request_opts: dict = {}
         if connected_account_id:
             # Stripe Connect direct charge — funds settle on the institution's

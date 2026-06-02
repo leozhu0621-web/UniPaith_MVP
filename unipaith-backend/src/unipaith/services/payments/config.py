@@ -23,14 +23,36 @@ def _pc(institution: Any) -> dict:
     return getattr(institution, "payment_config", None) or {}
 
 
-def fee_config(institution: Any) -> dict:
-    """Effective application-fee config for an institution."""
+def _program_fee_cents(program: Any) -> int | None:
+    """Per-program application-fee override (whole currency units in cost_data →
+    cents). Spec 39 §2.1 "per program/intake" — mirrors the deposit override, so
+    a program can set its own fee via cost_data without an institution-wide one."""
+    cost = getattr(program, "cost_data", None) if program else None
+    if isinstance(cost, dict):
+        for k in ("application_fee", "app_fee", "application_fee_amount"):
+            v = cost.get(k)
+            if isinstance(v, (int, float)) and v > 0:
+                return int(v) * 100
+    return None
+
+
+def fee_config(institution: Any, program: Any = None) -> dict:
+    """Effective application-fee config. A per-program override (cost_data) wins
+    over the institution default (Spec 39 §2.1)."""
     cfg = _pc(institution).get("application_fee") or {}
     amount_cents = int(cfg.get("amount_cents") or 0)
+    currency = (cfg.get("currency") or "USD").upper()
+    enabled = bool(cfg.get("enabled")) and amount_cents > 0
+
+    prog_cents = _program_fee_cents(program)
+    if prog_cents:
+        amount_cents = prog_cents
+        enabled = True
+
     return {
-        "enabled": bool(cfg.get("enabled")) and amount_cents > 0,
+        "enabled": enabled and amount_cents > 0,
         "amount_cents": amount_cents,
-        "currency": (cfg.get("currency") or "USD").upper(),
+        "currency": currency,
     }
 
 
@@ -150,7 +172,7 @@ def fee_view(payment: Any | None, fee_cfg: dict, waiver_cfg: dict) -> dict:
 def deposit_view(payment: Any | None, dep_cfg: dict) -> dict:
     state = display_status(payment)
     refunded = getattr(payment, "refunded_cents", 0) if payment else 0
-    payable = bool(dep_cfg["enabled"]) and state in ("due", "processing", "waiver_denied")
+    payable = bool(dep_cfg["enabled"]) and state in ("due", "processing", "failed", "waiver_denied")
     return {
         "kind": "enrollment_deposit",
         "required": bool(dep_cfg["enabled"]),

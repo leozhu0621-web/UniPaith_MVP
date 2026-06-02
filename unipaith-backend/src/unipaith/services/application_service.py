@@ -1637,7 +1637,7 @@ class ApplicationService:
 
         program = await self.db.get(Program, app.program_id)
         institution = await self.db.get(Institution, program.institution_id) if program else None
-        fee_cfg = fees.fee_config(institution)
+        fee_cfg = fees.fee_config(institution, program)
         if not fee_cfg["enabled"]:
             return
         waiver_cfg = fees.waiver_config(institution)

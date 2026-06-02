@@ -19,6 +19,7 @@ import {
   getCostTracker,
   payEnrollmentDeposit,
   formatMoney,
+  downloadReceipt,
   type CheckoutSession,
 } from '../../../../api/payments'
 import PaymentCheckout from '../../../../components/student/PaymentCheckout'
@@ -40,6 +41,7 @@ import {
   Wallet,
   ArrowRight,
   Receipt,
+  Download,
 } from 'lucide-react'
 
 const CONFIRMED_STATES = ['intent_confirmed', 'deposit_recorded', 'enrollment_confirmed', 'enrolled']
@@ -408,15 +410,37 @@ export default function EnrollmentPanel({ application }: { application: Applicat
               <p className="text-sm font-medium text-student-ink">Enrollment deposit</p>
             </div>
             {settled ? (
-              <div className="rounded-lg bg-success-soft px-3 py-2 text-xs text-success flex items-start gap-1.5">
-                <Receipt size={14} className="mt-0.5 shrink-0" />
-                <span>
-                  Deposit {e.deposit_status === 'waived' ? 'waived' : 'paid'}
-                  {deposit?.paid_at ? ` on ${new Date(deposit.paid_at).toLocaleDateString()}` : ''}. Your spot is confirmed.
-                  {deposit?.refunded_amount
-                    ? ` Refunded ${formatMoney(deposit.refunded_amount, deposit.currency)}.`
-                    : ''}
-                </span>
+              <div className="space-y-2">
+                <div className="rounded-lg bg-success-soft px-3 py-2 text-xs text-success flex items-start gap-1.5">
+                  <Receipt size={14} className="mt-0.5 shrink-0" />
+                  <span>
+                    Deposit {e.deposit_status === 'waived' ? 'waived' : 'paid'}
+                    {deposit?.paid_at ? ` on ${new Date(deposit.paid_at).toLocaleDateString()}` : ''}. Your spot is confirmed.
+                    {deposit?.refunded_amount
+                      ? ` Refunded ${formatMoney(deposit.refunded_amount, deposit.currency)}.`
+                      : ''}
+                  </span>
+                </div>
+                {deposit?.paid_at && (
+                  <button
+                    onClick={() =>
+                      downloadReceipt({
+                        kind: 'enrollment_deposit',
+                        amount: deposit.amount,
+                        currency: deposit.currency,
+                        status: deposit.status,
+                        paidAt: deposit.paid_at,
+                        refundedAmount: deposit.refunded_amount,
+                        programName: e.program_name || application.program?.program_name,
+                        institutionName: institutionName,
+                        reference: deposit.payment_id,
+                      })
+                    }
+                    className="text-xs text-cobalt hover:underline inline-flex items-center gap-1"
+                  >
+                    <Download size={12} /> Download receipt
+                  </button>
+                )}
               </div>
             ) : deposit?.required ? (
               <>
