@@ -9,6 +9,7 @@ import type {
   BuildOverview,
   DataModel,
   FeatureCatalog,
+  FrontendStandards,
   Roadmap,
   UxBenchmark,
 } from '../types/build'
@@ -45,5 +46,10 @@ export async function getAcceptance(): Promise<Acceptance> {
 
 export async function getUxBenchmark(): Promise<UxBenchmark> {
   const { data } = await apiClient.get<UxBenchmark>('/build/ux-benchmark')
+  return data
+}
+
+export async function getFrontendStandards(): Promise<FrontendStandards> {
+  const { data } = await apiClient.get<FrontendStandards>('/build/frontend-standards')
   return data
 }

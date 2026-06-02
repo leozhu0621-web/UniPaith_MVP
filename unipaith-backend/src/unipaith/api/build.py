@@ -19,6 +19,7 @@ from unipaith.transparency.acceptance import build_acceptance
 from unipaith.transparency.api_contract import build_api_contract
 from unipaith.transparency.data_model import build_data_model
 from unipaith.transparency.features import build_features
+from unipaith.transparency.frontend_standards import build_frontend_standards
 from unipaith.transparency.roadmap import build_roadmap
 from unipaith.transparency.ux_benchmark import build_ux_benchmark
 
@@ -38,6 +39,8 @@ async def get_overview(request: Request) -> dict:
     acceptance = build_acceptance(request.app.routes)["summary"]
     blockers_stat = f"{acceptance['launch_blockers_cleared']}/{acceptance['launch_blockers_total']}"
     ux = build_ux_benchmark(request.app.routes)["summary"]
+    frontend = build_frontend_standards(request.app.routes)["summary"]
+    fe_stat = f"{frontend['build_tasks_done']}/{frontend['build_task_count']}"
     return {
         "roadmap": roadmap,
         "features": features,
@@ -110,6 +113,16 @@ async def get_overview(request: Request) -> dict:
                 "stat": ux["surface_count"],
                 "stat_label": "benchmarked surfaces",
             },
+            {
+                "key": "frontend",
+                "title": "Frontend engineering",
+                "spec": "54",
+                "blurb": "The React build spec — state layering, query keys, optimistic UI, "
+                "perf budgets — with the api↔router parity read live.",
+                "path": "/goal/frontend",
+                "stat": fe_stat,
+                "stat_label": "build tasks complete",
+            },
         ],
     }
 
@@ -152,3 +165,16 @@ async def get_ux_benchmark(request: Request) -> dict:
     count of endpoints backing each surface, so the page can't claim a surface
     the deployed app doesn't serve."""
     return build_ux_benchmark(request.app.routes)
+
+
+@router.get(
+    "/frontend-standards",
+    summary="The frontend engineering build spec (spec 54)",
+)
+async def get_frontend_standards(request: Request) -> dict:
+    """Spec 54's frontend build spec: the state-layering rules, the query-key +
+    optimistic-mutation conventions, perf budgets, the realtime / analytics
+    clients, and the §12 build-task checklist. The §5 api-module ↔ router parity
+    counts are resolved live from ``request.app.routes``, so the backend half of
+    the contract is read from the running app, never asserted."""
+    return build_frontend_standards(request.app.routes)

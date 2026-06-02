@@ -31,6 +31,23 @@ jobs:
               - 'unipaith-backend/src/unipaith/ai/**'
               - '.github/workflows/pr-checks.yml'
 
+  # Spec 54 §12 — repo hygiene. Always runs (cheap, no deps): rejects the
+  # iCloud-style duplicate filenames ("foo 2.ts") that have repeatedly slipped
+  # into working trees and produced dual Alembic heads / phantom imports.
+  hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No iCloud-duplicate filenames
+        run: |
+          strays=$(git ls-files | grep -E ' [0-9]+\.[A-Za-z0-9]+$' || true)
+          if [ -n "$strays" ]; then
+            echo "$strays"
+            echo "::error::iCloud-style duplicate filenames detected (e.g. 'foo 2.ts'). Delete them; never import."
+            exit 1
+          fi
+          echo "Tree is clean of '* N.<ext>' duplicates."
+
   backend:
     needs: changes
     if: needs.changes.outputs.backend == 'true'
@@ -106,6 +123,22 @@ jobs:
       - name: Install
         working-directory: frontend
         run: npm ci
+      - name: Guard — no apiClient/fetch in pages (Spec 54 §12/§13)
+        working-directory: frontend
+        run: |
+          # A screen reads data only through a typed api/<domain>.ts module.
+          if grep -rn "apiClient\." src/pages; then
+            echo "::error::apiClient. used inside src/pages — call a typed api/ module instead."
+            exit 1
+          fi
+          # Raw fetch( bypasses the api layer. \bfetch\( does not match refetch/prefetch.
+          raw=$(grep -rnE "\bfetch\(" src/pages || true)
+          if [ -n "$raw" ]; then
+            echo "$raw"
+            echo "::error::raw fetch( in src/pages — move it to an api/ module (see api/uploads.ts)."
+            exit 1
+          fi
+          echo "pages/ talk only through the api layer."
       - name: Lint
         working-directory: frontend
         run: npm run lint
@@ -117,3 +150,30 @@ jobs:
       - name: Tests
         working-directory: frontend
         run: npx vitest run
+
+  # Spec 54 §8 — Core Web Vitals budgets via Lighthouse-CI. Soft-fail first
+  # (continue-on-error): it reports but never blocks, until the budgets soak on
+  # staging and we flip lighthouserc.json assertions from 'warn' to 'error'.
+  lighthouse:
+    needs: [changes, frontend]
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install
+        working-directory: frontend
+        run: npm ci
+      - name: Build
+        working-directory: frontend
+        env:
+          VITE_API_URL: https://api.unipaith.co/api/v1
+        run: npm run build
+      - name: Lighthouse CI (soft)
+        working-directory: frontend
+        continue-on-error: true
+        run: npx --yes @lhci/cli autorun

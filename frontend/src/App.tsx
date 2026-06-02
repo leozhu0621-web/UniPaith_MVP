@@ -31,6 +31,7 @@ import ApiContractPage from './pages/public/ApiContractPage'
 import DataModelPage from './pages/public/DataModelPage'
 import AcceptancePage from './pages/public/AcceptancePage'
 import ExperienceStandardsPage from './pages/public/ExperienceStandardsPage'
+import FrontendStandardsPage from './pages/public/FrontendStandardsPage'
 
 // Student pages — 4 main + profile/saved/settings from avatar
 // Discover (Stage 1) is the new student home — replaces CounselorHomePage
@@ -124,6 +125,8 @@ const router = createBrowserRouter([
   { path: '/goal/acceptance', element: <PublicLayout><AcceptancePage /></PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 53 — UX benchmark & interaction standards (per-surface backing read live).
   { path: '/goal/experience', element: <PublicLayout><ExperienceStandardsPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  // Spec 54 — frontend engineering build spec (api↔router parity read live).
+  { path: '/goal/frontend', element: <PublicLayout><FrontendStandardsPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
 
   { path: '/login', element: <AuthLayout><LoginPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
   { path: '/signup', element: <AuthLayout><SignupPage /></AuthLayout>, errorElement: <RouteErrorPage /> },

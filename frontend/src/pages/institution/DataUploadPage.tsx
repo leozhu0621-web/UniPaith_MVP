@@ -18,6 +18,7 @@ import {
   rollbackDatasetVersion,
   updateDataset,
 } from '../../api/institutions'
+import { putFileToPresignedUrl } from '../../api/uploads'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -83,11 +84,8 @@ function typeLabel(t: string) {
 }
 
 function uploadFileToUrl(url: string, file: File) {
-  return fetch(url, {
-    method: 'PUT',
-    body: file,
-    headers: { 'Content-Type': file.type || 'text/csv' },
-  })
+  // Presigned-PUT to object storage (S3), not our API — see api/uploads.ts.
+  return putFileToPresignedUrl(url, file, file.type || 'text/csv')
 }
 
 async function parseLocalCsvColumns(file: File): Promise<string[]> {

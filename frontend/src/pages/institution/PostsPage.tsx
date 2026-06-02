@@ -8,6 +8,7 @@ import {
   getPosts, createPost, updatePost, deletePost, publishPost, pinPost,
   requestPostMediaUpload, getPostTemplates, getInstitutionPrograms,
 } from '../../api/institutions'
+import { putFileToPresignedUrl } from '../../api/uploads'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -169,7 +170,7 @@ export default function PostsPage() {
     setUploading(true)
     try {
       const { upload_url, media_key } = await requestPostMediaUpload(file.type)
-      await fetch(upload_url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })
+      await putFileToPresignedUrl(upload_url, file)
       const fileUrl = media_key
       setMediaUrls(prev => [...prev, { url: fileUrl, type: file.type.startsWith('image/') ? 'image' : 'file' }])
       showToast('Media uploaded', 'success')

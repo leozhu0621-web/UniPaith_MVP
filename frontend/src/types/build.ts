@@ -362,3 +362,106 @@ export interface UxBenchmark {
   empty_state: EmptyStatePolicy
   acceptance: string[]
 }
+
+// ── Frontend engineering standards (spec 54) ─────────────────────────────────
+export type BuildTaskStatus = 'done' | 'partial' | 'planned'
+
+export interface FrontendStandardsSummary {
+  live_router_count: number // resolved live from the running route table
+  live_route_count: number
+  doc_claimed_api_modules: number
+  doc_claimed_routers: number
+  doc_claimed_stores: number
+  doc_claimed_hooks: number
+  state_rule_count: number
+  build_task_count: number
+  build_tasks_done: number
+  build_tasks_partial: number
+  build_tasks_planned: number
+  perf_budget_count: number
+  acceptance_count: number
+  live_is_source_of_truth: boolean
+}
+
+export interface StateRule {
+  kind: string
+  tool: string
+  where: string
+  rule: string
+}
+
+export interface QueryKeyConvention {
+  rule: string
+  example: string
+  stale_time: string
+}
+
+export interface MutationConvention {
+  shape: string
+  rule: string
+  surfaces: string[]
+}
+
+export interface ApiRouterParity {
+  statement: string
+  live_router_count: number
+  live_route_count: number
+  doc_claimed_api_modules: number
+  doc_claimed_routers: number
+}
+
+export interface ErrorHandling {
+  interceptor: string
+  ai_fallback: string
+}
+
+export interface PerfBudget {
+  metric: string
+  target: string
+  note: string
+}
+
+export interface RealtimeContract {
+  summary: string
+  transports: string[]
+  status: string
+}
+
+export interface AnalyticsContract {
+  summary: string
+  rules: string[]
+}
+
+export interface FrontendBuildTask {
+  key: string
+  title: string
+  status: BuildTaskStatus
+  evidence: string
+  artifact: string | null // a src/ path the page confirms live via import.meta.glob
+  fe_verifiable: boolean
+}
+
+export interface OpenQuestion {
+  question: string
+  recommendation: string
+}
+
+export interface FrontendStandards {
+  summary: FrontendStandardsSummary
+  the_standard: string
+  state_rules: StateRule[]
+  state_build_rule: string
+  query_key: QueryKeyConvention
+  mutation: MutationConvention
+  parity: ApiRouterParity
+  routing: string[]
+  error_handling: ErrorHandling
+  perf_budgets: PerfBudget[]
+  perf_tactics: string[]
+  realtime: RealtimeContract
+  analytics: AnalyticsContract
+  testing: string[]
+  build_tasks: FrontendBuildTask[]
+  acceptance: string[]
+  open_questions: OpenQuestion[]
+}
