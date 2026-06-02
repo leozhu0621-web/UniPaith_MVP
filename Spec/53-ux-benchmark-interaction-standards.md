@@ -1,66 +1,68 @@
-# 53 · UX Benchmark & Interaction Standards
+# 53 · UX Benchmark & Interaction — Build Spec
 
-> Raises every surface to market-grade by benchmarking against the platforms users already compare us to — **LinkedIn** (profile, feed, messaging, notifications) and **Handshake** (the student↔institution two-sided early-career rail). Companion to `02`/`03` (component + responsive rules) and `54` (the FE engineering that delivers these).
+> Buildable interaction spec: each surface gets a concrete benchmark, the real page file it lives in, the interaction contract to implement, and acceptance. Benchmarked against **LinkedIn** (profile, feed, messaging, notifications) and **Handshake** (two-sided early-career rail). Companion to `02`/`03` (components/responsive), `54` (the FE engineering that delivers these).
 >
-> Status: **draft v1.0** · 2026-05-30 · Production-parity track. Sets the *experience bar*; `54` sets the *engineering bar* that meets it.
+> Status: **draft v2.0** · 2026-05-30 · v2 ties the experience bar to real page files + build contracts. Sets the *experience* bar; `54` sets the *engineering* bar.
 
 ---
 
 ## 1. The bar
 
-A UniPaith surface is "market-grade" when a user coming from LinkedIn/Handshake notices **no drop** in responsiveness, polish, or affordance richness. Concretely: instant feedback (optimistic), no dead/blank states, smooth motion, forgiving inputs, "the app already knew what I wanted."
+A surface is "market-grade" when a user from LinkedIn/Handshake notices **no drop** in responsiveness or polish: instant (optimistic) feedback, no blank states, smooth motion, forgiving inputs, "the app already knew what I wanted."
 
 ---
 
-## 2. Per-surface benchmark
+## 2. Per-surface build contract (real files)
 
-| UniPaith surface | Benchmarked against | The bar to hit |
-|---|---|---|
-| Profile (`08`) | LinkedIn profile | Inline-edit each section, completeness meter + nudges, autosave, reorder, instant validation. |
-| Discover chat (`19`) | ChatGPT / LinkedIn msg | Streaming tokens, typing indicator, retry, message persistence, artifact rail updates live. |
-| Match / Explore (`09`/`10`) | Handshake job search | Typeahead, faceted filters that update counts live, infinite scroll, saved searches + alerts, compare tray. |
-| Program/School detail (`11`/`12`) | LinkedIn company page | Sticky section nav, skeleton load, "save" optimistic, related-items rail. |
-| Connect feed (`20`) | LinkedIn feed | Ranked, infinite scroll, optimistic react/RSVP, "new posts" pill, seen-state. |
-| Inbox/Messaging (`17`/`29`) | LinkedIn messaging | Real-time delivery, unread badges, typing, optimistic send, thread search. |
-| Notifications (`21`/`57`) | LinkedIn notifications | Real-time bell, grouped, mark-all-read, deep-link, digest prefs. |
-| Pipeline/Review (`31`/`32`) | Greenhouse/Lever ATS | Dense table, bulk select, keyboard nav, saved views, optimistic stage moves. |
+Each row: the real page file (`frontend/src/pages/...`), the benchmark, and the concrete interaction work.
 
----
-
-## 3. Interaction standards (apply everywhere)
-
-- **Optimistic UI**: mutations reflect instantly; reconcile/rollback on server response (`54` TanStack patterns). Save, react, RSVP, stage-move, mark-read.
-- **No blank states**: every async region shows skeleton (load) → content / empty / error. Empty states are instructional with a CTA (`02`).
-- **Motion**: `02` tokens; 120/200/360ms; respect `prefers-reduced-motion`. Enter/exit on lists, sheets, toasts; never gratuitous.
-- **Autosave** on long forms (profile, program editor, essays) with a "saved ·/saving…" indicator; never a lone "Save" that can lose work.
-- **Infinite scroll + "jump to top"** for feeds/lists > one page; cursor-paginated (`50` §5); preserve scroll on back.
-- **Typeahead** on search + entity pickers (program, major CIP, country) — debounced 200ms, keyboarded, ≤150ms perceived.
-- **Forgiving inputs**: inline validation on blur, scroll-to-first-error on submit, correct `inputmode`/keyboard, paste-friendly.
-- **Completeness gamification** (profile, application): ring + "what's next" queue (LinkedIn-style) — drives the activation loop.
-- **Saved searches + alerts** (`56`): any filter set is saveable; new matches notify (`57`).
-- **Keyboard**: focus rings, tab order, ⌘K command palette (institution power users), table arrow-nav.
+| Surface | Real file(s) | Benchmark | Build contract |
+|---|---|---|---|
+| Profile (`08`) | `student/ProfilePage.tsx`, `profile/*Tab.tsx` | LinkedIn profile | Inline-edit per section; completeness ring + "what's next"; **autosave** w/ "saving…/saved" (`54` §4 optimistic); reorder; inline validation. |
+| Discover chat (`19`) | `student/DiscoverHomePage.tsx`, `discover/ChatPanel.tsx`, `ArtifactRail.tsx` | ChatGPT / LinkedIn msg | **Token streaming** (SSE `57`); typing indicator; retry; persisted turns; artifact rail patches live on each extracted signal. |
+| Match / Explore (`09`/`10`) | `student/ExplorePage.tsx`, `match/*`, `explore/*` | Handshake search | Typeahead; facet filters w/ **live counts**; `useInfiniteQuery` scroll; saved searches+alerts (`56`); compare tray (`compare-store`). |
+| Program/School detail (`11`/`12`) | `student/ProgramDetailPage.tsx`, `program/*`, `InstitutionDetailPage.tsx` | LinkedIn company page | Sticky section nav; **skeleton** load (not spinner); optimistic Save; related-items rail; provenance captions (`60`). |
+| Connect feed (`20`) | `student/PostsPage.tsx`, `explore/cards/*` | LinkedIn feed | Ranked (`56`), infinite scroll, **optimistic react/RSVP**, "new posts" pill, seen-state. |
+| Inbox / Messaging (`17`/`29`) | `student/MessagesPage.tsx`, `institution/MessagingPage.tsx` | LinkedIn messaging | **Real-time** delivery (WS `57`), unread badges, typing, optimistic send, thread search; list↔thread are full-screens on mobile (`03`). |
+| Notifications (`21`/`57`) | bell component + center | LinkedIn notifications | Real-time bell (SSE), grouped, mark-all-read (syncs tabs), deep-link, digest prefs. |
+| Pipeline / Review (`31`/`32`) | `institution/PipelinePage.tsx`, `StudentDetailPage.tsx` | Greenhouse/Lever ATS | Dense **virtualized** table (`54` §8), bulk-select, keyboard nav, saved views, **optimistic stage moves**, ⌘K (institution). |
 
 ---
 
-## 4. Empty / first-run polish
+## 3. Interaction standards (apply everywhere — each is a `54` mechanism)
 
-First-run is the highest-churn moment. Each surface defines: an instructional empty state, a seeded "try this" affordance, and a path to value in ≤2 clicks. Student first-run → Discover chat (`19`); institution first-run → setup wizard (`30`).
+- **Optimistic UI** → `54` §4 `useOptimisticMutation` (save, react, RSVP, stage-move, mark-read).
+- **No blank states** → every async region: skeleton → content/empty/error; empty states instructional w/ CTA (`02`). Suspense fallback = the skeleton (`54` §6).
+- **Motion** → `02` tokens (120/200/360ms), `prefers-reduced-motion` honored; enter/exit on lists/sheets/toasts.
+- **Autosave** on long forms (profile, program editor `23`, essays `14`) w/ status indicator; never a lone Save that can lose work.
+- **Infinite scroll + restore position** for any list > 1 page; cursor-paginated (`50` §5, `54` §3).
+- **Typeahead** on search + entity pickers (program, CIP major, country) — debounced 200ms, keyboarded, ≤150ms perceived.
+- **Forgiving inputs** — inline validation on blur, scroll-to-first-error, correct `inputmode`, paste-friendly (`54` §7 422 mapping).
+- **Completeness gamification** (profile, application) — ring + "what's next" queue.
+- **Saved searches + alerts** (`56`) — any filter set saveable; new matches notify (`57`).
+- **Keyboard** — focus rings, tab order, ⌘K palette (institution; `cmdk`), table arrow-nav.
 
 ---
 
-## 5. Acceptance
+## 4. Empty / first-run polish (highest-churn moment)
 
-- [ ] Every mutation is optimistic or shows ≤1 spinner with skeleton, never a blank flash.
-- [ ] Every list > 1 page: infinite scroll + restored scroll position.
+Each surface defines: an instructional empty state, a seeded "try this" affordance, path to value in ≤2 clicks. Student first-run → Discover chat (`19`); institution first-run → setup wizard (`30`, `institution/SetupPage.tsx`). Build task: an empty-state component per surface, not a generic "no data".
+
+---
+
+## 5. Acceptance (side-by-side click test vs the named competitor)
+
+- [ ] Every mutation optimistic or ≤1 skeleton, never a blank flash.
+- [ ] Every list > 1 page: infinite scroll + restored scroll on back.
 - [ ] Search + every entity picker has debounced typeahead.
 - [ ] Long forms autosave with status.
 - [ ] Feeds/messaging/notifications update in real time (`57`).
 - [ ] `prefers-reduced-motion` honored; motion uses `02` tokens.
-- [ ] Each surface passes its row-3 benchmark in a side-by-side click test vs the named competitor.
+- [ ] Each §2 surface passes its benchmark in a side-by-side click test vs the named competitor.
 
 ---
 
 ## 6. Open questions
 
-- ⌘K command palette scope (institution-only vs both) — recommend institution Phase-A, student later.
-- Feed ranking ownership lives in `56`; this doc only sets the *interaction* bar.
+- ⌘K scope (institution-only vs both) — institution Phase-A.
+- Feed ranking lives in `56`; this doc sets only the interaction bar.

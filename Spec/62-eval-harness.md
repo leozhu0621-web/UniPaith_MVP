@@ -2,7 +2,9 @@
 
 > One evaluation harness, several consumers. The chatbot improvement loop (`61`) and the crawler extraction loop (`60` §13B) both need the *same* machinery: a versioned golden set, an LLM-as-judge calibrated to humans, an offline+CI eval runner, regression gating, A/B comparison, drift detection, and a metrics surface. Build it **once** as a shared internal service any AI surface plugs into.
 >
-> Status: **draft v1.0** · 2026-05-30 · Resolves the `61` §10 shared-harness question and unifies the golden-set/judge discipline `60` §13B describes. Reuses `ml_loop` tables (`evaluation_runs`, `training_runs`, `drift_snapshots`, `ab_test_assignments`, `fairness_reports`) + `ai_turns`/`ai_turn_feedback`. Pairs with `45`, `55`, `46`, `60`/`61`/`63`.
+> Status: **draft v1.1** · 2026-05-30 · Resolves the `61` §10 shared-harness question and unifies the golden-set/judge discipline `60` §13B describes. **Builds on the real seed already in the repo:** `ai/evals/runner.py` + `ai/evals/fixtures/` (extend this into the shared harness — don't start fresh) and `ai/agent_registry.py` (the agent→tier map). Reuses `ml_loop` tables (`evaluation_runs`, `training_runs`, `drift_snapshots`, `ab_test_assignments`, `fairness_reports`) + `ai_turns`/`ai_turn_feedback`. Pairs with `45`, `55`, `46`, `60`/`61`/`63`.
+>
+> **Build anchor:** the harness service = `ai/evals/runner.py` extended with (a) a versioned case store backed by `ai/evals/fixtures/<consumer>/` + `eval_cases`/`eval_results` tables, (b) per-consumer adapters (§5), (c) the calibrated judge (§4), (d) CI gate + A/B + drift modes (§6). Golden sets live as fixtures in-repo; runs persist to `evaluation_runs`.
 
 ---
 
