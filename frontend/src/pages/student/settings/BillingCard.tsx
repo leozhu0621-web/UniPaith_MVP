@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { CreditCard, Sparkles } from 'lucide-react'
 import Button from '../../../components/ui/Button'
 import Badge from '../../../components/ui/Badge'
 import Toggle from '../../../components/ui/Toggle'
+import StripeSubscriptionForm from '../../../components/student/StripeSubscriptionForm'
 import SettingsSection from './SettingsSection'
 import {
   cancelStudentBilling,
@@ -20,6 +22,7 @@ import { formatDate } from '../../../utils/format'
 export default function BillingCard() {
   const queryClient = useQueryClient()
   const { data: billing, isLoading } = useStudentBilling()
+  const [capturing, setCapturing] = useState(false)
 
   const refresh = (next: StudentBilling) => {
     queryClient.setQueryData(['student-billing'], next)
@@ -27,12 +30,18 @@ export default function BillingCard() {
   }
 
   const upgradeMut = useMutation({
-    mutationFn: upgradeStudentBilling,
+    mutationFn: (token?: string) => upgradeStudentBilling(token),
     onSuccess: d => {
       refresh(d)
+      setCapturing(false)
       showToast('You’re on UniPaith Plus', 'success')
     },
-    onError: () => showToast('Could not update your plan', 'error'),
+    onError: (e: unknown) => {
+      const msg =
+        (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
+        'Could not update your plan'
+      showToast(msg, 'error')
+    },
   })
   const adFreeMut = useMutation({
     mutationFn: (enabled: boolean) => setAdFree(enabled),
@@ -113,27 +122,46 @@ export default function BillingCard() {
             </div>
           )}
 
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            {(billing.status === 'trialing' || billing.status === 'expired') && (
-              <Button variant="secondary" size="sm" onClick={() => upgradeMut.mutate()} loading={upgradeMut.isPending}>
-                {billing.status === 'expired' ? 'Reactivate — $15/mo' : 'Upgrade to Plus — $15/mo'}
-              </Button>
-            )}
-            {billing.status === 'active' && (
-              <Button variant="ghost" size="sm" onClick={() => cancelMut.mutate()} loading={cancelMut.isPending} disabled={busy}>
-                Cancel plan
-              </Button>
-            )}
-            {billing.status === 'canceled' && (
-              <Button variant="secondary" size="sm" onClick={() => resumeMut.mutate()} loading={resumeMut.isPending} disabled={busy}>
-                Resume plan
-              </Button>
-            )}
-          </div>
+          {capturing && isStripe(billing) ? (
+            <StripeSubscriptionForm
+              publishableKey={billing.publishable_key as string}
+              submitLabel={`Subscribe — $${billing.plan_price_usd}/mo`}
+              loading={upgradeMut.isPending}
+              onToken={token => upgradeMut.mutate(token)}
+              onCancel={() => setCapturing(false)}
+            />
+          ) : (
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              {(billing.status === 'trialing' || billing.status === 'expired') && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => (isStripe(billing) ? setCapturing(true) : upgradeMut.mutate(undefined))}
+                  loading={upgradeMut.isPending}
+                >
+                  {billing.status === 'expired' ? 'Reactivate — $15/mo' : 'Upgrade to Plus — $15/mo'}
+                </Button>
+              )}
+              {billing.status === 'active' && (
+                <Button variant="ghost" size="sm" onClick={() => cancelMut.mutate()} loading={cancelMut.isPending} disabled={busy}>
+                  Cancel plan
+                </Button>
+              )}
+              {billing.status === 'canceled' && (
+                <Button variant="secondary" size="sm" onClick={() => resumeMut.mutate()} loading={resumeMut.isPending} disabled={busy}>
+                  Resume plan
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       )}
     </SettingsSection>
   )
+}
+
+function isStripe(b: StudentBilling): boolean {
+  return b.provider === 'stripe' && !!b.publishable_key
 }
 
 function PlanBadge({ billing }: { billing: StudentBilling }) {

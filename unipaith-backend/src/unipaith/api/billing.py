@@ -17,6 +17,7 @@ from unipaith.schemas.billing import (
     AdFreeRequest,
     InstitutionBillingResponse,
     StudentBillingResponse,
+    UpgradeRequest,
 )
 from unipaith.services.billing_service import BillingService
 
@@ -38,10 +39,12 @@ async def get_student_billing(
 
 @router.post("/students/me/billing/upgrade", response_model=StudentBillingResponse)
 async def upgrade_student_billing(
+    body: UpgradeRequest | None = None,
     user: User = Depends(require_student),
     db: AsyncSession = Depends(get_db),
 ):
-    return await _svc(db).upgrade(user.id)
+    token = body.payment_method_token if body else None
+    return await _svc(db).upgrade(user.id, payment_method_token=token, email=user.email)
 
 
 @router.post("/students/me/billing/ad-free", response_model=StudentBillingResponse)

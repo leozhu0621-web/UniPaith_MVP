@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Check, Compass, MessageSquareText, ShieldCheck, Sparkles } from 'lucide-react'
 
@@ -7,6 +8,7 @@ import { useAuthStore } from '../../stores/auth-store'
 import { showToast } from '../../stores/toast-store'
 import Button from '../ui/Button'
 import Wordmark from '../ui/Wordmark'
+import StripeSubscriptionForm from './StripeSubscriptionForm'
 
 // The four brand values (Spec 07 §2 / §6) framed as what UniPaith Plus delivers.
 const VALUES = [
@@ -23,17 +25,26 @@ export default function Paywall() {
   const { data: billing } = useStudentBilling()
   const queryClient = useQueryClient()
   const logout = useAuthStore(s => s.logout)
+  const [capturing, setCapturing] = useState(false)
 
   const upgradeMut = useMutation({
-    mutationFn: upgradeStudentBilling,
+    mutationFn: (token?: string) => upgradeStudentBilling(token),
     onSuccess: (d: StudentBilling) => {
       queryClient.setQueryData(['student-billing'], d)
+      setCapturing(false)
       showToast('Welcome to UniPaith Plus', 'success')
     },
-    onError: () => showToast('Could not start your plan', 'error'),
+    onError: (e: unknown) => {
+      const msg =
+        (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
+        'Could not start your plan'
+      showToast(msg, 'error')
+    },
   })
 
   if (!billing || !billing.paywall_enforced || billing.is_premium) return null
+
+  const stripeMode = billing.provider === 'stripe' && !!billing.publishable_key
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ background: 'rgba(10, 20, 40, 0.6)' }}>
@@ -62,9 +73,23 @@ export default function Paywall() {
         </ul>
 
         <div className="mt-6 space-y-2">
-          <Button className="w-full" onClick={() => upgradeMut.mutate()} loading={upgradeMut.isPending}>
-            Continue with Plus — ${billing.plan_price_usd}/mo
-          </Button>
+          {capturing && stripeMode ? (
+            <StripeSubscriptionForm
+              publishableKey={billing.publishable_key as string}
+              submitLabel={`Continue with Plus — $${billing.plan_price_usd}/mo`}
+              loading={upgradeMut.isPending}
+              onToken={t => upgradeMut.mutate(t)}
+              onCancel={() => setCapturing(false)}
+            />
+          ) : (
+            <Button
+              className="w-full"
+              onClick={() => (stripeMode ? setCapturing(true) : upgradeMut.mutate(undefined))}
+              loading={upgradeMut.isPending}
+            >
+              Continue with Plus — ${billing.plan_price_usd}/mo
+            </Button>
+          )}
           <button onClick={logout} className="ui-btn w-full text-center text-sm text-slate hover:text-charcoal py-1.5">
             Sign out
           </button>

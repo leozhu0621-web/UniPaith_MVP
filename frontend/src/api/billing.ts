@@ -28,6 +28,10 @@ export interface StudentBilling {
   is_premium: boolean
   paywall_enforced: boolean
   invoices: InvoiceItem[]
+  /** "mock" | "stripe" — which provider services payments. */
+  provider: string
+  /** Stripe publishable key (client-safe); present only when provider="stripe". */
+  publishable_key: string | null
 }
 
 export interface InstitutionBilling {
@@ -46,8 +50,13 @@ export interface InstitutionBilling {
 export const getStudentBilling = (): Promise<StudentBilling> =>
   apiClient.get('/students/me/billing').then(r => r.data)
 
-export const upgradeStudentBilling = (): Promise<StudentBilling> =>
-  apiClient.post('/students/me/billing/upgrade').then(r => r.data)
+export const upgradeStudentBilling = (paymentMethodToken?: string): Promise<StudentBilling> =>
+  apiClient
+    .post(
+      '/students/me/billing/upgrade',
+      paymentMethodToken ? { payment_method_token: paymentMethodToken } : {}
+    )
+    .then(r => r.data)
 
 export const setAdFree = (enabled: boolean): Promise<StudentBilling> =>
   apiClient.post('/students/me/billing/ad-free', { enabled }).then(r => r.data)
