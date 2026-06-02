@@ -2368,6 +2368,156 @@ async def override_fairness_signal(
     return AuditEventDetailResponse.model_validate(entry)
 
 
+# --- Fairness governance (Spec 46 §6 — disparate-impact auto-halt) ---
+
+
+class FairnessOverrideApplyRequest(BaseModel):
+    program_id: UUID
+    # §6.3 — a written rationale (≥100 chars) is required to resume scoring.
+    rationale: str = Field(..., min_length=100, max_length=2000)
+    # §6.3 — override window: default 1 week, max 4.
+    weeks: int = Field(1, ge=1, le=4)
+    signal_id: UUID | None = None
+
+
+class FairnessProgramRequest(BaseModel):
+    program_id: UUID
+
+
+class FairnessThresholdRequest(BaseModel):
+    program_id: UUID
+    # §9 — per-program Δ ceiling, range 0.05–0.40.
+    threshold: float = Field(..., ge=0.05, le=0.40)
+
+
+class FairnessRecomputeRequest(BaseModel):
+    weeks_back: int = Field(4, ge=1, le=12)
+
+
+async def _owned_program_or_404(db: AsyncSession, institution_id: UUID, program_id: UUID):
+    from fastapi import HTTPException
+
+    from unipaith.models.institution import Program
+
+    program = await db.get(Program, program_id)
+    if program is None or program.institution_id != institution_id:
+        raise HTTPException(status_code=404, detail="Program not found")
+    return program
+
+
+@router.get("/me/fairness/overview")
+async def fairness_overview(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 46 §6.4 — compact panel payload for the dashboard fairness card."""
+    from unipaith.services.fairness_service import FairnessService
+
+    inst = await _svc(db).get_institution(user.id)
+    return await FairnessService(db).get_overview(inst.id)
+
+
+@router.get("/me/fairness/cohorts")
+async def fairness_cohorts(
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 46 §6.4 — full-page payload: per program×attribute 4-week trend,
+    halt status, override history, and threshold config."""
+    from unipaith.services.fairness_service import FairnessService
+
+    inst = await _svc(db).get_institution(user.id)
+    return await FairnessService(db).get_cohorts(inst.id)
+
+
+@router.post("/me/fairness/override")
+async def fairness_apply_override(
+    body: FairnessOverrideApplyRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 46 §6.3 — resume scoring for a halted program (audit-logged)."""
+    from fastapi import HTTPException
+
+    from unipaith.services.fairness_service import FairnessService
+
+    inst = await _svc(db).get_institution(user.id)
+    await _owned_program_or_404(db, inst.id, body.program_id)
+    try:
+        override = await FairnessService(db).apply_override(
+            body.program_id,
+            admin_user_id=user.id,
+            rationale=body.rationale,
+            weeks=body.weeks,
+            signal_id=body.signal_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {
+        "program_id": str(body.program_id),
+        "matching_halted": False,
+        "fairness_override_active": True,
+        "override_expires_at": override.override_expires_at.isoformat(),
+    }
+
+
+@router.post("/me/fairness/revoke")
+async def fairness_revoke_override(
+    body: FairnessProgramRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Cancel an active override and re-halt the program (Spec 46 §6.3)."""
+    from unipaith.services.fairness_service import FairnessService
+
+    inst = await _svc(db).get_institution(user.id)
+    await _owned_program_or_404(db, inst.id, body.program_id)
+    await FairnessService(db).revoke_override(body.program_id, admin_user_id=user.id)
+    return {"program_id": str(body.program_id), "matching_halted": True}
+
+
+@router.patch("/me/fairness/threshold")
+async def fairness_set_threshold(
+    body: FairnessThresholdRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Spec 46 §9 — set the per-program disparate-impact threshold."""
+    from fastapi import HTTPException
+
+    from unipaith.services.fairness_service import FairnessService
+
+    inst = await _svc(db).get_institution(user.id)
+    await _owned_program_or_404(db, inst.id, body.program_id)
+    try:
+        program = await FairnessService(db).set_threshold(
+            body.program_id, threshold=body.threshold, admin_user_id=user.id
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {
+        "program_id": str(body.program_id),
+        "fairness_threshold": float(program.fairness_threshold),
+    }
+
+
+@router.post("/me/fairness/recompute")
+async def fairness_recompute(
+    body: FairnessRecomputeRequest,
+    user: User = Depends(require_institution_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """On-demand recompute of the last N completed weeks for this institution's
+    programs (the standing Monday-00:00-UTC scheduler is a deferred infra item)."""
+    from unipaith.services.fairness_service import FairnessService
+
+    inst = await _svc(db).get_institution(user.id)
+    count = await FairnessService(db).run_weekly_compute(
+        institution_id=inst.id, weeks_back=body.weeks_back
+    )
+    return {"computations": count}
+
+
 # --- Promotions ---
 
 

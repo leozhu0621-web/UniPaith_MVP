@@ -34,6 +34,7 @@ import Button from '../../components/ui/Button'
 import Skeleton from '../../components/ui/Skeleton'
 import EmptyState from '../../components/ui/EmptyState'
 import Table from '../../components/ui/Table'
+import FairnessPanel from './fairness/FairnessPanel'
 import { formatDate, formatRelative, formatCurrency, formatPercent } from '../../utils/format'
 import { DEGREE_LABELS } from '../../utils/constants'
 import type { Notification, PrioritizedApplication, IntegritySignal, Program, DashboardSummary } from '../../types'
@@ -445,21 +446,10 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Fairness signal — Spec 31 §11 (G-D4 / G-I5). Advisory representation check. */}
-      {summary?.fairness && summary.fairness.status !== 'insufficient_data' && (
-        <Card className={`p-4 ${summary.fairness.status === 'warning' ? 'border-warning-soft bg-warning-soft/30' : ''}`}>
-          <div className="flex items-center gap-2 mb-1">
-            <Users size={16} className={summary.fairness.status === 'warning' ? 'text-warning' : 'text-success'} />
-            <h3 className="text-sm font-semibold text-foreground">Fairness Signal</h3>
-            {summary.fairness.status === 'warning' ? (
-              <Badge variant="warning">Review{summary.fairness.dimension ? ` · ${summary.fairness.dimension}` : ''}</Badge>
-            ) : (
-              <Badge variant="success">All clear</Badge>
-            )}
-          </div>
-          <p className="text-sm text-muted-foreground">{summary.fairness.message}</p>
-        </Card>
-      )}
+      {/* Fairness — Spec 46 §6 (G-I5 / G-D4): disparate-impact auto-halt panel.
+          Supersedes the Spec 31 §11 advisory representation check with the
+          authoritative halt-status surface (per-cohort signals + override link). */}
+      <FairnessPanel />
 
       {/* AI Priority Queue Preview */}
       {topPriority.length > 0 && (

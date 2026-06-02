@@ -10,6 +10,7 @@ import YieldPage from './yield/YieldPage'
 import InternationalPage from './international/InternationalPage'
 import GraduatePage from './graduate/GraduatePage'
 import WaiverQueuePage from './WaiverQueuePage'
+import FairnessPage from './fairness/FairnessPage'
 
 type AdmissionsTab =
   | 'pipeline'
@@ -21,6 +22,7 @@ type AdmissionsTab =
   | 'international'
   | 'graduate'
   | 'waivers'
+  | 'fairness'
 
 const tabs = [
   { id: 'pipeline', label: 'Pipeline' },
@@ -34,6 +36,8 @@ const tabs = [
   { id: 'graduate', label: 'Graduate' },
   // Spec 39 §2.3 / §5 — fee-waiver queue + payments & refunds.
   { id: 'waivers', label: 'Fees & Waivers' },
+  // Spec 46 §6 — disparate-impact monitoring + auto-halt + override.
+  { id: 'fairness', label: 'Fairness' },
 ]
 
 export default function AdmissionsPage() {
@@ -66,6 +70,7 @@ export default function AdmissionsPage() {
       {activeTab === 'international' && <InternationalPage embedded />}
       {activeTab === 'graduate' && <GraduatePage />}
       {activeTab === 'waivers' && <WaiverQueuePage />}
+      {activeTab === 'fairness' && <FairnessPage />}
     </div>
   )
 }
