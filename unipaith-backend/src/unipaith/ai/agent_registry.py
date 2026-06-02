@@ -29,6 +29,14 @@ AGENT_TIERS: dict[str, str] = {
     "strategy_first_time": "flagship",
     # ── Identity (L2) ──
     "identity_summary": "batch",
+    # ── Offer brief (L2) — spec 45 §15 / spec 18 §9 ──
+    # OutcomeBriefForOfferLetter: Sonnet forced tool-use turns an offer letter
+    # into a plain-language student brief; falls back to the rule-based
+    # `_build_structured_brief`. Audit rows already write agent="outcome_brief";
+    # documenting the tier here lets the cost dashboard label its spend and keeps
+    # the §20 registry in sync with the live agent. (consent.py intentionally
+    # leaves it unmapped → no student-consent gate, matching spec §15's input.)
+    "outcome_brief": "workhorse",
     # ── Inbox reply drafter (L2) — spec 45 §13 ──
     "inbox_reply_drafter": "workhorse",
     # ── Workshops (L2) ──
