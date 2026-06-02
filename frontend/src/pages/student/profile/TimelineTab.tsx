@@ -25,13 +25,13 @@ export default function TimelineTab() {
 
   const categories = useMemo(() => {
     const set = new Set<string>()
-    items.forEach(i => set.add(i.event_type || i.section || 'other'))
+    items.forEach(i => set.add(i.source || 'system'))
     return ['all', ...Array.from(set)]
   }, [items])
 
   if (isLoading) return <div className="space-y-4"><SkeletonCard /></div>
 
-  const shown = filter === 'all' ? items : items.filter(i => (i.event_type || i.section || 'other') === filter)
+  const shown = filter === 'all' ? items : items.filter(i => (i.source || 'system') === filter)
 
   return (
     <Card className="p-5">
@@ -61,7 +61,12 @@ export default function TimelineTab() {
           {shown.map((item, i) => (
             <div key={i} className="relative">
               <div className="absolute -left-[18px] top-1 w-3 h-3 rounded-full bg-cobalt border-2 border-card" />
-              <p className="text-sm font-medium text-charcoal">{label(item)}</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="text-sm font-medium text-charcoal">{label(item)}</p>
+                <span className="inline-flex items-center rounded-full bg-student-mist px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-cobalt">
+                  {item.source || 'system'}
+                </span>
+              </div>
               <p className="text-xs text-slate">
                 {item.date ? relativeTime(item.date) : ''}
                 {(item.section || item.event_type) ? ` · ${(item.section || item.event_type).replace(/_/g, ' ')}` : ''}

@@ -719,6 +719,38 @@ class StudentDataConsent(Base):
     student: Mapped[StudentProfile] = relationship(back_populates="data_consent")
 
 
+class StudentProfileTimelineEvent(Base):
+    """Append-only log of profile change events (spec 10 §14, §22.8).
+
+    Captures form saves / consent changes that the computed milestone feed
+    can't derive from row ``created_at``. ``StudentService.get_timeline``
+    unions these with the computed milestones for the Timeline tab.
+    """
+
+    __tablename__ = "student_profile_timeline_events"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("student_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    category: Mapped[str] = mapped_column(String(40), nullable=False)
+    event_type: Mapped[str] = mapped_column(String(60), nullable=False)
+    label: Mapped[str] = mapped_column(String(200), nullable=False)
+    detail: Mapped[str | None] = mapped_column(Text)
+    source: Mapped[str] = mapped_column(String(30), nullable=False, default="profile")
+    ref_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    occurred_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    __table_args__ = (Index("ix_profile_timeline_student_time", "student_id", "occurred_at"),)
+
+
 class StudentPlatformEvent(Base):
     """Broad analytics events (not program-scoped).
 

@@ -108,3 +108,28 @@ async def test_data_rights_blocked_for_non_students(
     await db_session.commit()
     resp = await institution_client.get(RIGHTS)
     assert resp.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_timeline_persists_profile_and_consent_events(
+    student_client: AsyncClient, db_session: AsyncSession, mock_student_user: User
+):
+    """Spec §22.8 — profile saves + consent changes persist to
+    student_profile_timeline_events and surface (with a source) in the feed."""
+    await _ensure_profile(db_session, mock_student_user)
+
+    await student_client.put(RIGHTS, json={"consent_training": True})
+    upd = await student_client.put(
+        "/api/v1/students/me/profile", json={"bio_text": "Building useful things."}
+    )
+    assert upd.status_code == 200, upd.text
+
+    feed = (await student_client.get("/api/v1/students/me/timeline")).json()
+    assert isinstance(feed, list)
+    types = {e["event_type"] for e in feed}
+    assert "consent_changed" in types
+    assert "profile_updated" in types
+    # Every entry carries a source badge (spec §14).
+    assert all(e.get("source") for e in feed)
+    consent_evt = next(e for e in feed if e["event_type"] == "consent_changed")
+    assert consent_evt["source"] == "consent"

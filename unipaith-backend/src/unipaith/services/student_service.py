@@ -24,6 +24,7 @@ from unipaith.models.student import (
     StudentPortfolioItem,
     StudentPreference,
     StudentProfile,
+    StudentProfileTimelineEvent,
     StudentResearch,
     StudentScheduling,
     StudentVisaInfo,
@@ -100,6 +101,14 @@ class StudentService:
             setattr(profile, key, value)
         await self.db.flush()
         await self._update_onboarding(profile.id)
+        if update_data:
+            await self._record_timeline_event(
+                profile.id,
+                category="personal",
+                event_type="profile_updated",
+                label="Updated personal info",
+                source="profile",
+            )
         # Re-fetch with all relationships eagerly loaded for serialization
         return await self.get_profile(user_id)
 
@@ -854,6 +863,31 @@ class StudentService:
 
     # --- Timeline ---
 
+    async def _record_timeline_event(
+        self,
+        student_id: UUID,
+        *,
+        category: str,
+        event_type: str,
+        label: str,
+        detail: str | None = None,
+        source: str = "profile",
+        ref_id: UUID | None = None,
+    ) -> None:
+        """Append a profile-change event for the Timeline tab (spec 10 §14, §22.8)."""
+        self.db.add(
+            StudentProfileTimelineEvent(
+                student_id=student_id,
+                category=category,
+                event_type=event_type,
+                label=label,
+                detail=detail,
+                source=source,
+                ref_id=ref_id,
+            )
+        )
+        await self.db.flush()
+
     async def get_timeline(self, student_id: UUID) -> list[dict]:
         """Compute a chronological list of profile milestones."""
         profile = await self.db.execute(
@@ -942,6 +976,27 @@ class StudentService:
                         "detail": None,
                     }
                 )
+
+        for m in milestones:
+            m.setdefault("source", "system")
+
+        # Persisted profile-change events (spec 10 §22.8): form saves + consent
+        # changes the computed milestones above can't derive from created_at.
+        events_result = await self.db.execute(
+            select(StudentProfileTimelineEvent).where(
+                StudentProfileTimelineEvent.student_id == student_id
+            )
+        )
+        for ev in events_result.scalars().all():
+            milestones.append(
+                {
+                    "date": ev.occurred_at.isoformat(),
+                    "event_type": ev.event_type,
+                    "label": ev.label,
+                    "detail": ev.detail,
+                    "source": ev.source,
+                }
+            )
 
         milestones.sort(key=lambda m: m["date"])
         return milestones
@@ -1105,6 +1160,20 @@ class StudentService:
             record.deletion_requested_at = None
 
         await self.db.flush()
+
+        if changes:
+            changed = ", ".join(
+                f"{c['lever'].replace('consent_', '')} {'on' if c['value'] else 'off'}"
+                for c in changes
+            )
+            await self._record_timeline_event(
+                student_id,
+                category="data",
+                event_type="consent_changed",
+                label="Updated data & privacy settings",
+                detail=changed,
+                source="consent",
+            )
 
         # After flush, invalidate downstream caches when consent.matching
         # changed in either direction. Opt-out drops them so the student
