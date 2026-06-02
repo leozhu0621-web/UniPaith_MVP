@@ -21,6 +21,7 @@ from unipaith.transparency.acceptance import BLOCKERS, JOURNEYS, build_acceptanc
 from unipaith.transparency.api_contract import build_api_contract
 from unipaith.transparency.data_model import PLANNED, build_data_model
 from unipaith.transparency.features import ALL_FEATURES, build_features
+from unipaith.transparency.production import BUILD_TASKS, PILLARS, SLOS, build_production
 from unipaith.transparency.roadmap import PHASES, build_roadmap
 from unipaith.transparency.ux_benchmark import (
     ACCEPTANCE,
@@ -287,7 +288,91 @@ def test_ux_benchmark_backing_resolves_live():
     assert payload["summary"]["backed_route_total"] <= len(rows)
 
 
+# ── Production readiness (spec 55) — narrative authored, posture read live ───
+
+
+def test_production_shape_and_classifications():
+    p = build_production(app)
+    s = p["summary"]
+    valid = {"live", "partial", "planned"}
+
+    assert s["pillar_count"] == len(PILLARS) == len(p["pillars"])
+    assert s["build_task_count"] == len(BUILD_TASKS) == len(p["build_tasks"])
+    assert s["slo_count"] == len(SLOS) == len(p["slos"])
+    assert p["the_bar"]["statement"] and p["the_bar"]["slo_headline"]
+
+    # Counts partition cleanly across the three classifications.
+    assert s["pillars_live"] + s["pillars_partial"] + s["pillars_planned"] == s["pillar_count"]
+    assert s["tasks_live"] + s["tasks_partial"] + s["tasks_planned"] == s["build_task_count"]
+
+    for pl in p["pillars"]:
+        assert pl["status"] in valid
+        assert pl["title"] and pl["blurb"] and pl["section"].startswith("§")
+        assert pl["built"], f"pillar {pl['key']} claims no shipped substance"
+    for t in p["build_tasks"]:
+        assert t["status"] in valid
+        assert t["text"] and t["evidence"] and t["section"].startswith("§")
+
+
+def test_production_config_knobs_read_live():
+    """The config knobs are read straight off the running ``settings`` — the page
+    shows the deployed values, not a doc snapshot."""
+    from unipaith.config import settings
+
+    p = build_production(app)
+    s = p["summary"]
+    assert s["config_group_count"] == len(p["config_groups"])
+    assert s["config_knob_count"] == sum(len(g["knobs"]) for g in p["config_groups"]) > 0
+    knobs = {k["name"]: k["value"] for g in p["config_groups"] for k in g["knobs"]}
+    assert knobs["db_pool_size"] == settings.db_pool_size
+    assert knobs["rate_limit_per_minute"] == settings.rate_limit_per_minute
+    assert knobs["ai_request_timeout_s"] == settings.ai_request_timeout_seconds
+
+
+def test_production_health_probes_and_middleware_resolve_live():
+    """Health probes are resolved from the live route table and the middleware
+    count is the real stack — so the page can't claim probes the app doesn't serve."""
+    found = {
+        getattr(r, "path", "")
+        for r in app.routes
+        if getattr(r, "path", "").startswith(_API_PREFIX)
+        and getattr(r, "path", "").endswith(("/health", "/ready"))
+        and any(m not in _SKIP for m in (getattr(r, "methods", None) or set()))
+    }
+    p = build_production(app)
+    assert set(p["health_probes"]["paths"]) == found
+    assert found == {f"{_API_PREFIX}/health", f"{_API_PREFIX}/ready"}
+    assert p["summary"]["health_route_count"] == p["health_probes"]["count"] == 2
+    # Middleware count equals the real stack; cache reports its live counters.
+    assert p["middleware"]["count"] == p["summary"]["middleware_count"] >= 3
+    assert p["middleware"]["classes"]
+    assert "hit_rate" in p["cache"] and p["cache"]["backend"] == "memory"
+
+
 # ── Public endpoints ────────────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_production_endpoint(client: AsyncClient):
+    resp = await client.get("/api/v1/build/production")
+    assert resp.status_code == 200
+    body = resp.json()
+    for key in (
+        "the_bar",
+        "summary",
+        "pillars",
+        "config_groups",
+        "middleware",
+        "scheduler",
+        "health_probes",
+        "cache",
+        "build_tasks",
+        "slos",
+        "open_questions",
+    ):
+        assert key in body
+    assert body["summary"]["pillar_count"] == len(PILLARS)
+    assert body["health_probes"]["count"] == 2
 
 
 @pytest.mark.asyncio
@@ -295,9 +380,18 @@ async def test_overview_endpoint(client: AsyncClient):
     resp = await client.get("/api/v1/build/overview")
     assert resp.status_code == 200
     body = resp.json()
-    for key in ("roadmap", "features", "api", "agents", "data_model", "acceptance", "surfaces"):
+    for key in (
+        "roadmap",
+        "features",
+        "api",
+        "agents",
+        "data_model",
+        "acceptance",
+        "production",
+        "surfaces",
+    ):
         assert key in body
-    assert len(body["surfaces"]) == 7
+    assert len(body["surfaces"]) == 8
     assert {s["key"] for s in body["surfaces"]} == {
         "claude-api",
         "roadmap",
@@ -306,7 +400,13 @@ async def test_overview_endpoint(client: AsyncClient):
         "data-model",
         "acceptance",
         "experience",
+        "backend",
     }
+    # Spec 55 — the backend surface carries the pillar count read from the run.
+    backend = next(s for s in body["surfaces"] if s["key"] == "backend")
+    assert backend["spec"] == "55"
+    assert backend["path"] == "/goal/backend"
+    assert backend["stat"] == body["production"]["pillar_count"]
 
 
 @pytest.mark.asyncio

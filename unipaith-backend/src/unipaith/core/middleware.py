@@ -10,31 +10,48 @@ from slowapi.errors import RateLimitExceeded
 
 from unipaith.config import settings
 from unipaith.core.exceptions import UniPaithException
+from unipaith.core.observability import bind_request_id, log_access, reset_request_id
 from unipaith.core.rate_limit import limiter, rate_limit_exceeded_handler
 
 logger = logging.getLogger("unipaith")
 
 
-async def request_id_middleware(request: Request, call_next):  # noqa: ANN001
+async def observability_middleware(request: Request, call_next):  # noqa: ANN001
+    """Spec 55 §2 — request id + structured access log in one pass.
+
+    Mints a request id, binds it to the async context (so every log emitted
+    while serving this request carries it), times the request, echoes the id on
+    ``X-Request-ID``, and emits one JSON access line with the golden-signal
+    fields. The ``finally`` block logs even when the handler raises (status 500),
+    so an errored request still produces its access record.
+    """
     request_id = str(uuid.uuid4())
     request.state.request_id = request_id
-    response: Response = await call_next(request)
-    response.headers["X-Request-ID"] = request_id
-    return response
-
-
-async def logging_middleware(request: Request, call_next):  # noqa: ANN001
+    token = bind_request_id(request_id)
     start = time.perf_counter()
-    response: Response = await call_next(request)
-    elapsed_ms = (time.perf_counter() - start) * 1000
-    logger.info(
-        "%s %s -> %s (%.1fms)",
-        request.method,
-        request.url.path,
-        response.status_code,
-        elapsed_ms,
-    )
-    return response
+    status_code = 500
+    try:
+        response: Response = await call_next(request)
+        status_code = response.status_code
+        response.headers["X-Request-ID"] = request_id
+        return response
+    finally:
+        latency_ms = (time.perf_counter() - start) * 1000
+        route = request.scope.get("route")
+        route_path = getattr(route, "path", None) or request.url.path
+        user_id = getattr(request.state, "user_id", None)
+        log_access(
+            request_id=request_id,
+            method=request.method,
+            path=request.url.path,
+            route=route_path,
+            status_code=status_code,
+            latency_ms=latency_ms,
+            client=request.client.host if request.client else None,
+            user_id=str(user_id) if user_id else None,
+            role=getattr(request.state, "role", None),
+        )
+        reset_request_id(token)
 
 
 async def security_headers_middleware(request: Request, call_next):  # noqa: ANN001
@@ -89,10 +106,11 @@ def setup_middleware(app: FastAPI) -> None:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)  # type: ignore[arg-type]
 
-    # Custom middleware stack
+    # Custom middleware stack. observability_middleware is added last so it is
+    # the OUTERMOST wrapper — it binds the request id before any other layer
+    # runs and times the full request (incl. security-header work).
     app.middleware("http")(security_headers_middleware)
-    app.middleware("http")(request_id_middleware)
-    app.middleware("http")(logging_middleware)
+    app.middleware("http")(observability_middleware)
 
     # Exception handlers
     app.add_exception_handler(UniPaithException, exception_handler)  # type: ignore[arg-type]

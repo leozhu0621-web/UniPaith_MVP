@@ -134,6 +134,7 @@ export interface BuildOverview {
   agents: AgentsSummary
   data_model: DataModelSummary
   acceptance: AcceptanceSummary
+  production: ProductionSummary
   provider: string
   surfaces: OverviewSurface[]
 }
@@ -361,4 +362,111 @@ export interface UxBenchmark {
   standards: InteractionStandard[]
   empty_state: EmptyStatePolicy
   acceptance: string[]
+}
+
+// ── Production readiness (spec 55) ──────────────────────────────────────────
+export type ReadinessStatus = 'live' | 'partial' | 'planned'
+
+export interface ProductionPillar {
+  key: string
+  title: string
+  section: string // spec 55 section, e.g. "§2"
+  status: ReadinessStatus
+  blurb: string
+  built: string[]
+  planned: string[]
+}
+
+export interface ConfigKnob {
+  name: string
+  value: string | number | boolean
+}
+
+export interface ConfigGroup {
+  key: string
+  title: string
+  section: string
+  knobs: ConfigKnob[]
+}
+
+export interface SchedulerJob {
+  id: string
+  name: string
+  cadence: string
+}
+
+export interface ProductionBuildTask {
+  section: string
+  status: ReadinessStatus
+  text: string
+  evidence: string
+}
+
+export interface Slo {
+  metric: string
+  target: string
+  note: string
+}
+
+export interface OpenQuestion {
+  q: string
+  a: string
+}
+
+export interface ProductionTheBar {
+  statement: string
+  slo_headline: string
+}
+
+export interface CacheStats {
+  backend: string
+  enabled: boolean
+  entries: number
+  hits: number
+  misses: number
+  evictions: number
+  lookups: number
+  hit_rate: number
+  default_ttl_s: number
+  distributed_ready: boolean
+  distributed_configured: boolean
+}
+
+export interface ProductionSummary {
+  pillar_count: number
+  pillars_live: number
+  pillars_partial: number
+  pillars_planned: number
+  build_task_count: number
+  tasks_live: number
+  tasks_partial: number
+  tasks_planned: number
+  health_route_count: number
+  middleware_count: number
+  config_group_count: number
+  config_knob_count: number
+  scheduler_job_count: number
+  scheduler_running: boolean
+  scheduler_live_jobs: number
+  slo_count: number
+  open_question_count: number
+  cache_hit_rate: number
+  cache_backend: string
+  cache_entries: number
+  cache_lookups: number
+  live_is_source_of_truth: boolean
+}
+
+export interface Production {
+  the_bar: ProductionTheBar
+  summary: ProductionSummary
+  pillars: ProductionPillar[]
+  config_groups: ConfigGroup[]
+  middleware: { count: number; classes: string[] }
+  scheduler: { running: boolean; jobs: SchedulerJob[] }
+  health_probes: { paths: string[]; count: number; note: string }
+  cache: CacheStats
+  build_tasks: ProductionBuildTask[]
+  slos: Slo[]
+  open_questions: OpenQuestion[]
 }

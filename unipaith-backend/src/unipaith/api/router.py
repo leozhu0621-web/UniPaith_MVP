@@ -21,6 +21,7 @@ from unipaith.api.events import router as events_router
 from unipaith.api.goals import router as goals_router
 from unipaith.api.governance import router as governance_router
 from unipaith.api.graduate import router as graduate_router
+from unipaith.api.health import router as health_router
 from unipaith.api.identity import router as identity_router
 from unipaith.api.inbox import router as inbox_router
 from unipaith.api.institution_inbox import router as institution_inbox_router
@@ -51,6 +52,9 @@ from unipaith.services.institution_service import InstitutionService
 
 api_router = APIRouter()
 
+# Spec 55 §8 — liveness (/health) + readiness (/ready) probes. Public, registered
+# first so the ALB/ECS health check resolves with minimal routing work.
+api_router.include_router(health_router)
 api_router.include_router(auth_router)
 # Spec 45 — public AI-agent catalog at `/ai/agents` (backs /goal/claude-api).
 # No auth, DB-free; exposes only the agent architecture, never user data.
@@ -119,11 +123,6 @@ api_router.include_router(notifications_router)
 api_router.include_router(recommendations_router)
 api_router.include_router(calendar_router)
 api_router.include_router(connect_router)
-
-
-@api_router.get("/health", tags=["health"])
-async def health_check():
-    return {"status": "ok", "version": "0.1.0"}
 
 
 @api_router.post("/webhooks/stripe", tags=["payments"])

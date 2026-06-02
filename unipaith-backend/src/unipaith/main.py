@@ -3,13 +3,13 @@ import sys
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from pythonjsonlogger.json import JsonFormatter
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.api.router import api_router
 from unipaith.config import settings
 from unipaith.core.data_safety import assert_core_role_coverage
 from unipaith.core.middleware import setup_middleware
+from unipaith.core.observability import ContextJsonFormatter
 from unipaith.core.scheduler import setup_scheduler, shutdown_scheduler
 from unipaith.database import async_session
 
@@ -17,8 +17,10 @@ from unipaith.database import async_session
 def _setup_logging() -> None:
     log_level = getattr(logging, settings.log_level.upper(), logging.INFO)
     handler = logging.StreamHandler(sys.stdout)
+    # Spec 55 §2 — ContextJsonFormatter injects the active request id into every
+    # JSON record, so an error log and its access line share one greppable id.
     handler.setFormatter(
-        JsonFormatter(
+        ContextJsonFormatter(
             fmt="%(asctime)s %(name)s %(levelname)s %(message)s",
             rename_fields={"asctime": "timestamp", "levelname": "level"},
         )
