@@ -15,22 +15,33 @@ from fastapi import APIRouter, Request
 
 from unipaith.ai.catalog import build_catalog
 from unipaith.config import settings
+from unipaith.core.cache import cached
 from unipaith.transparency.acceptance import build_acceptance
 from unipaith.transparency.api_contract import build_api_contract
 from unipaith.transparency.data_model import build_data_model
 from unipaith.transparency.features import build_features
 from unipaith.transparency.frontend_standards import build_frontend_standards
+from unipaith.transparency.production import build_production
 from unipaith.transparency.roadmap import build_roadmap
 from unipaith.transparency.ux_benchmark import build_ux_benchmark
 
 router = APIRouter(prefix="/build", tags=["build-transparency"])
 
 
-@router.get("/overview", summary="Headline build-transparency stats (specs 48–53)")
+@router.get("/overview", summary="Headline build-transparency stats (specs 45 · 48–55)")
 async def get_overview(request: Request) -> dict:
     """The hub summary: roadmap, feature-coverage, route / table / agent counts, the
-    UX bar and the acceptance readiness — everything the ``/goal`` landing needs in
-    one cheap, public call."""
+    UX bar, the acceptance readiness and the backend production posture — everything
+    the ``/goal`` landing needs in one cheap, public call.
+
+    Spec 55 §3 — the assembled payload is served through ``core.cache`` (version-keyed,
+    short TTL). The route table is process-stable, so this never serves stale data
+    across a deploy (a new process is a cold cache), and it makes the read-cache
+    hit-rate the page reports a genuinely live number rather than a claim."""
+    return await cached("build-overview", "v1", lambda: _assemble_overview(request), ttl=30)
+
+
+def _assemble_overview(request: Request) -> dict:
     roadmap = build_roadmap()["summary"]
     features = build_features()["summary"]
     contract = build_api_contract(request.app.routes)["summary"]
@@ -41,6 +52,7 @@ async def get_overview(request: Request) -> dict:
     ux = build_ux_benchmark(request.app.routes)["summary"]
     frontend = build_frontend_standards(request.app.routes)["summary"]
     fe_stat = f"{frontend['build_tasks_done']}/{frontend['build_task_count']}"
+    production = build_production(request.app)["summary"]
     return {
         "roadmap": roadmap,
         "features": features,
@@ -48,6 +60,7 @@ async def get_overview(request: Request) -> dict:
         "agents": agents,
         "data_model": data_model,
         "acceptance": acceptance,
+        "production": production,
         "provider": settings.ai_provider_default,
         "surfaces": [
             {
@@ -123,6 +136,16 @@ async def get_overview(request: Request) -> dict:
                 "stat": fe_stat,
                 "stat_label": "build tasks complete",
             },
+            {
+                "key": "backend",
+                "title": "Production readiness",
+                "spec": "55",
+                "blurb": "The backend hardening posture — observability, caching, health, "
+                "resilience — read live from the running config.",
+                "path": "/goal/backend",
+                "stat": production["pillar_count"],
+                "stat_label": "readiness pillars",
+            },
         ],
     }
 
@@ -178,3 +201,14 @@ async def get_frontend_standards(request: Request) -> dict:
     counts are resolved live from ``request.app.routes``, so the backend half of
     the contract is read from the running app, never asserted."""
     return build_frontend_standards(request.app.routes)
+
+
+@router.get("/production", summary="The backend production-readiness posture (spec 55)")
+async def get_production(request: Request) -> dict:
+    """Spec 55's readiness posture: the pillars (observability / cache / queue /
+    rate-limit / resilience / database / health) honestly classified live·partial·
+    planned, with the config knobs read straight off ``settings``, the middleware
+    count read from ``request.app``, the health probes resolved from the live route
+    table, and the read-cache hit-rate from the running ``core.cache`` — so the page
+    mirrors the deployed backend and can't claim what isn't wired."""
+    return build_production(request.app)

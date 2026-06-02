@@ -10,6 +10,7 @@ import type {
   DataModel,
   FeatureCatalog,
   FrontendStandards,
+  Production,
   Roadmap,
   UxBenchmark,
 } from '../types/build'
@@ -51,5 +52,10 @@ export async function getUxBenchmark(): Promise<UxBenchmark> {
 
 export async function getFrontendStandards(): Promise<FrontendStandards> {
   const { data } = await apiClient.get<FrontendStandards>('/build/frontend-standards')
+  return data
+}
+
+export async function getProduction(): Promise<Production> {
+  const { data } = await apiClient.get<Production>('/build/production')
   return data
 }

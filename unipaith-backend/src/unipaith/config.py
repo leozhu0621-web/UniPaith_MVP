@@ -84,6 +84,16 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = 60
     rate_limit_enabled: bool = True
 
+    # Caching (Spec 55 §3) — version-keyed read cache. `core/cache.py` runs an
+    # in-process TTL store by default (correct per-task) and transparently
+    # upgrades to a shared backend when `redis_url` is set AND the `redis`
+    # package is importable. Left empty in dev/CI so the cache is pure-Python and
+    # dependency-free; production points it at ElastiCache. `cache_default_ttl`
+    # is the fallback TTL (seconds) for `cached()` calls that don't pass one.
+    redis_url: str = ""
+    cache_enabled: bool = True
+    cache_default_ttl: int = 60
+
     # Scheduler
     scheduler_enabled: bool = False
     scheduler_auto_enable_non_test: bool = True

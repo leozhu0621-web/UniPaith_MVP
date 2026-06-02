@@ -10,6 +10,7 @@ import ApiContractPage from '../pages/public/ApiContractPage'
 import DataModelPage from '../pages/public/DataModelPage'
 import AcceptancePage from '../pages/public/AcceptancePage'
 import ExperienceStandardsPage from '../pages/public/ExperienceStandardsPage'
+import ProductionReadinessPage from '../pages/public/ProductionReadinessPage'
 import * as buildApi from '../api/build'
 import type {
   Acceptance,
@@ -17,6 +18,8 @@ import type {
   BuildOverview,
   DataModel,
   FeatureCatalog,
+  Production,
+  ProductionSummary,
   Roadmap,
   UxBenchmark,
 } from '../types/build'
@@ -57,6 +60,31 @@ const ACCEPTANCE_SUMMARY = {
   phase_count: 14,
 }
 
+const PRODUCTION_SUMMARY: ProductionSummary = {
+  pillar_count: 7,
+  pillars_live: 3,
+  pillars_partial: 4,
+  pillars_planned: 0,
+  build_task_count: 9,
+  tasks_live: 2,
+  tasks_partial: 4,
+  tasks_planned: 3,
+  health_route_count: 2,
+  middleware_count: 4,
+  config_group_count: 6,
+  config_knob_count: 18,
+  scheduler_job_count: 4,
+  scheduler_running: false,
+  scheduler_live_jobs: 0,
+  slo_count: 5,
+  open_question_count: 3,
+  cache_hit_rate: 0.5,
+  cache_backend: 'memory',
+  cache_entries: 1,
+  cache_lookups: 2,
+  live_is_source_of_truth: true,
+}
+
 // Specs 48/49/50 — the public /goal transparency surfaces. Each renders live
 // build data from the /build/* endpoints and lets the visitor filter it.
 
@@ -94,6 +122,7 @@ const OVERVIEW: BuildOverview = {
   },
   data_model: DATA_MODEL_SUMMARY,
   acceptance: ACCEPTANCE_SUMMARY,
+  production: PRODUCTION_SUMMARY,
   provider: 'anthropic',
   surfaces: [
     { key: 'claude-api', title: 'AI agents', spec: '45', blurb: 'The live agent fleet.', path: '/goal/claude-api', stat: 40, stat_label: 'AI agents' },
@@ -104,6 +133,7 @@ const OVERVIEW: BuildOverview = {
     { key: 'acceptance', title: 'Acceptance & runbook', spec: '52', blurb: 'Definition of done.', path: '/goal/acceptance', stat: '10/10', stat_label: 'launch blockers cleared' },
     { key: 'experience', title: 'Experience standards', spec: '53', blurb: 'The interaction bar.', path: '/goal/experience', stat: 8, stat_label: 'benchmarked surfaces' },
     { key: 'frontend', title: 'Frontend engineering', spec: '54', blurb: 'The React build spec.', path: '/goal/frontend', stat: '6/10', stat_label: 'build tasks complete' },
+    { key: 'backend', title: 'Production readiness', spec: '55', blurb: 'The backend hardening posture.', path: '/goal/backend', stat: 7, stat_label: 'readiness pillars' },
   ],
 }
 
@@ -272,6 +302,84 @@ const UX: UxBenchmark = {
   acceptance: ['Every mutation optimistic or ≤1 skeleton.'],
 }
 
+const PRODUCTION: Production = {
+  the_bar: {
+    statement: 'A backend is production-grade when it stays up, stays honest, and stays fast.',
+    slo_headline: 'p95 < 400ms (non-AI) · < 2.5s (AI cached) · errors < 0.5% · uptime ≥ 99%',
+  },
+  summary: PRODUCTION_SUMMARY,
+  pillars: [
+    {
+      key: 'observability',
+      title: 'Observability',
+      section: '§2',
+      status: 'partial',
+      blurb: 'The biggest real gap — now wired at the request layer.',
+      built: ['Structured JSON logs', 'Request-id contextvar'],
+      planned: ['/metrics via prometheus', 'OpenTelemetry tracing'],
+    },
+    {
+      key: 'health',
+      title: 'Health, deploy & SLOs',
+      section: '§8',
+      status: 'live',
+      blurb: 'Liveness + readiness probes; migration-before-serve.',
+      built: ['/health liveness', '/ready readiness'],
+      planned: ['Graceful drain'],
+    },
+  ],
+  config_groups: [
+    {
+      key: 'pool',
+      title: 'Connection pool',
+      section: '§7',
+      knobs: [
+        { name: 'db_pool_size', value: 30 },
+        { name: 'rate_limit_enabled', value: true },
+      ],
+    },
+  ],
+  middleware: { count: 4, classes: ['observability_middleware', 'CORSMiddleware'] },
+  scheduler: {
+    running: false,
+    jobs: [{ id: 'feature_refresh', name: 'Daily feature refresh', cadence: '24h' }],
+  },
+  health_probes: {
+    paths: ['/api/v1/health', '/api/v1/ready'],
+    count: 2,
+    note: 'Liveness is DB-free; readiness checks the DB.',
+  },
+  cache: {
+    backend: 'memory',
+    enabled: true,
+    entries: 1,
+    hits: 1,
+    misses: 1,
+    evictions: 0,
+    lookups: 2,
+    hit_rate: 0.5,
+    default_ttl_s: 60,
+    distributed_ready: false,
+    distributed_configured: false,
+  },
+  build_tasks: [
+    {
+      section: '§8',
+      status: 'live',
+      text: '/health + /ready; migration-before-serve entrypoint',
+      evidence: 'Probes are live and route-backed.',
+    },
+    {
+      section: '§7',
+      status: 'planned',
+      text: 'Index migration; PgBouncer; N+1 tests',
+      evidence: 'Pool is live; the index audit is planned.',
+    },
+  ],
+  slos: [{ metric: 'API latency p95 (non-AI)', target: '< 400 ms', note: 'Off the AI stack.' }],
+  open_questions: [{ q: 'Queue engine', a: 'arq — async-native, Redis-backed.' }],
+}
+
 function renderPage(ui: React.ReactElement, route = '/goal') {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
@@ -286,7 +394,7 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     vi.restoreAllMocks()
   })
 
-  it('hub renders the live stats and links to all eight surfaces', async () => {
+  it('hub renders the live stats and links to all nine surfaces', async () => {
     vi.spyOn(buildApi, 'getBuildOverview').mockResolvedValue(OVERVIEW)
     renderPage(<GoalHubPage />)
 
@@ -294,11 +402,12 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     await waitFor(() => expect(screen.getByText('Build roadmap')).toBeInTheDocument())
     expect(screen.getByText('Feature coverage')).toBeInTheDocument()
     expect(screen.getByText('API contract')).toBeInTheDocument()
-    // The new surfaces (specs 51 + 52 + 53 + 54) appear.
+    // The new surfaces (specs 51–55) appear.
     expect(screen.getByText('Data model')).toBeInTheDocument()
     expect(screen.getByText('Acceptance & runbook')).toBeInTheDocument()
     expect(screen.getByText('Experience standards')).toBeInTheDocument()
     expect(screen.getByText('Frontend engineering')).toBeInTheDocument()
+    expect(screen.getByText('Production readiness')).toBeInTheDocument()
     // Live route count from the overview appears (stat band + surface card).
     expect(screen.getAllByText('553').length).toBeGreaterThan(0)
     // The MVP-complete gold beat shows.
@@ -403,5 +512,26 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Handshake' }))
     await waitFor(() => expect(screen.queryByText('Profile')).not.toBeInTheDocument())
     expect(screen.getByText('Match / Explore')).toBeInTheDocument()
+  })
+
+  it('production page renders pillars, live config + ops and filters by status', async () => {
+    vi.spyOn(buildApi, 'getProduction').mockResolvedValue(PRODUCTION)
+    renderPage(<ProductionReadinessPage />, '/goal/backend')
+
+    await waitFor(() => expect(screen.getByText('Observability')).toBeInTheDocument())
+    expect(screen.getByText('Health, deploy & SLOs')).toBeInTheDocument()
+    // The live, introspected signals show: health probe paths + middleware classes.
+    expect(screen.getByText('/api/v1/ready')).toBeInTheDocument()
+    expect(screen.getAllByText('observability_middleware').length).toBeGreaterThan(0)
+    // Live config knob value + an SLO target render.
+    expect(screen.getByText('db_pool_size')).toBeInTheDocument()
+    expect(screen.getByText('< 400 ms')).toBeInTheDocument()
+    // The live-backed hero beat (health probes + middleware count) shows.
+    expect(screen.getByText(/2 health probes live/i)).toBeInTheDocument()
+
+    // Filter to Live → the partial Observability pillar drops out.
+    fireEvent.click(screen.getByRole('button', { name: 'Live' }))
+    await waitFor(() => expect(screen.queryByText('Observability')).not.toBeInTheDocument())
+    expect(screen.getByText('Health, deploy & SLOs')).toBeInTheDocument()
   })
 })

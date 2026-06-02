@@ -39,6 +39,7 @@ _AI_PATH_MARKERS = (
 # route's dependency; this is a best-effort label noted as such on the page.
 _PUBLIC_EXACT = {
     f"{API_PREFIX}/health",
+    f"{API_PREFIX}/ready",
     f"{API_PREFIX}/webhooks/stripe",
 }
 _PUBLIC_PREFIX = (

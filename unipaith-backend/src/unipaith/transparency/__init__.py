@@ -1,4 +1,4 @@
-"""Specs 48/49/50/51/52/53/54 — the build-transparency surface.
+"""Specs 48/49/50/51/52/53/54/55 — the build-transparency surface.
 
 A read-only metadata layer that turns the build-integration / standards docs into
 queryable data, the same way ``ai.catalog`` turns spec 45 into ``GET /ai/agents``:
@@ -18,6 +18,12 @@ queryable data, the same way ``ai.catalog`` turns spec 45 into ``GET /ai/agents`
   rules, query-key + optimistic-mutation conventions, perf budgets, the realtime
   / analytics clients, and the §12 build-task checklist, with the §5 api-module
   ↔ router parity counts **resolved live from the running route table**.
+- ``production`` — spec 55's backend production-readiness posture: the pillars
+  (observability / cache / queue / rate-limit / resilience / database / health)
+  honestly classified live·partial·planned, with the config knobs **read off the
+  running ``settings``**, the middleware count off the running app, the health
+  probes **resolved from the live route table**, and the read-cache hit-rate from
+  the running ``core.cache``.
 
 All back the public ``/build/*`` endpoints and the ``/goal`` hub. They are DB-free
 and expose only build *architecture* — never any user data.
