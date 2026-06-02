@@ -214,7 +214,7 @@ export default function BatchReleaseModal({
               </div>
             )}
 
-            <div className="max-h-64 overflow-y-auto rounded-lg border border-border divide-y divide-gray-100">
+            <div className="max-h-64 overflow-y-auto rounded-lg border border-border divide-y divide-border">
               {selectedApps.map(a => {
                 const d = decisionFor(a.id)
                 return (

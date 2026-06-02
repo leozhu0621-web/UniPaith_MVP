@@ -197,7 +197,7 @@ export default function DashboardPage() {
       label: 'Unread Inbox',
       value: summary?.unread_messages_count ?? 0,
       icon: Mail,
-      color: 'text-slate-600 bg-slate-100',
+      color: 'text-secondary bg-secondary/10',
     },
   ]
   const programColumns = [

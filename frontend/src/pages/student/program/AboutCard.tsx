@@ -97,7 +97,7 @@ export default function AboutCard({ description, institutionName, programName }:
           href={sourceUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 border border-slate-100 hover:border-student/30 hover:bg-slate-100 transition-colors group"
+          className="mt-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-muted border border-divider hover:border-student/30 hover:bg-muted/70 transition-colors group"
         >
           <img
             src={`https://www.google.com/s2/favicons?domain=${sourceDomain(sourceUrl)}&sz=32`}
