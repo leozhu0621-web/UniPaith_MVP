@@ -80,6 +80,12 @@ from unipaith.models.institution import (
     UploadedContact,
     UploadedList,
 )
+from unipaith.models.intake import (
+    RawInput,
+    SignalChangeEvent,
+    SignalClarification,
+    StudentSignal,
+)
 from unipaith.models.international import (
     CountryRequirementPack,
     InternationalProcessing,
@@ -190,6 +196,11 @@ __all__ = [
     # Discovery (Phase A — parallel session, merged in #111)
     "DiscoverySession",
     "DiscoveryMessage",
+    # Adaptive Intake Engine (Spec 44 — four-layer signal pipeline)
+    "RawInput",
+    "StudentSignal",
+    "SignalChangeEvent",
+    "SignalClarification",
     # Discovery artifacts (Phase A — parallel session, merged in #113)
     "StudentGoal",
     "StudentNeed",

@@ -30,6 +30,7 @@ import {
 import Breadcrumbs from '../../components/ui/Breadcrumbs'
 import usePageTitle from '../../hooks/usePageTitle'
 import OfferPanel from './apply/offer/OfferPanel'
+import ApplyReadyChecklist from './apply/ApplyReadyChecklist'
 import GraduateIntentCard from './apply/GraduateIntentCard'
 import StudentAdvisorFit from './apply/StudentAdvisorFit'
 import EnrollmentPanel from './apply/enrollment/EnrollmentPanel'
@@ -461,6 +462,9 @@ export default function ApplicationDetailPage() {
               <p className="text-xs text-success mt-2 flex items-center gap-1"><Check size={10} /> All required items complete</p>
             )}
           </Card>
+
+          {/* Spec 44 §4.2 — engine apply-ready (per-program signal gate) */}
+          <ApplyReadyChecklist programId={application.program_id} />
 
           {/* Application fee + cost tracker (Spec 39 §2.2 / §2A) */}
           {fee?.required && (

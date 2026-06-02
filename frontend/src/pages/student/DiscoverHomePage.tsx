@@ -20,6 +20,7 @@ import type {
 } from '../../types'
 import ArtifactRail from './discover/ArtifactRail'
 import ChatPanel from './discover/ChatPanel'
+import ReadinessRail from './discover/ReadinessRail'
 import TrackSelector from './discover/TrackSelector'
 import {
   DISCOVERY_TRACKS,
@@ -285,7 +286,10 @@ export default function DiscoverHomePage() {
             }}
           />
         </Card>
-        <ArtifactRail track={track} layer={track === 'profile' ? layer : undefined} />
+        <div className="space-y-4">
+          <ReadinessRail />
+          <ArtifactRail track={track} layer={track === 'profile' ? layer : undefined} />
+        </div>
       </div>
     </div>
   )

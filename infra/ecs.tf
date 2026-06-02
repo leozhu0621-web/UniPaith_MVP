@@ -246,6 +246,12 @@ resource "aws_ecs_task_definition" "backend" {
       # engine is deterministic and never 5xxes. Tier documents the future LLM
       # swap-in.
       { name = "AI_MAJOR_SPECIFIC_V2_ENABLED", value = "true" },
+      # Spec 44 §3/§5 — Adaptive Intake Engine LLM path (free-text normalize via
+      # DiscoveryExtractor + document triage via DocumentParseTriage). ANDed with
+      # the student's consent_matching; the deterministic normalize/validate path
+      # is fully functional, so the engine never depends on the LLM to gate the
+      # journey and never 5xxes.
+      { name = "AI_INTAKE_ENGINE_V2_ENABLED", value = "true" },
       # Pin Claude model IDs — config.py defaults match, but pinning here
       # makes the prod surface auditable (and trivial to roll a single
       # agent class to a different model without a code deploy).
