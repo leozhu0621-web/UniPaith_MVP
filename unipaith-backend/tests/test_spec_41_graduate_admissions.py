@@ -402,6 +402,51 @@ async def test_sop_extractor_populates_when_flag_on(db_session, mock_institution
     assert intent.alignment_summary
 
 
+@pytest.mark.asyncio
+async def test_student_advisor_matches_read_only(db_session, mock_institution_user):
+    """Spec 41 §2.1 — the student-facing "advisors who fit your research" view
+    ranks by research fit and is read-only (writes no AdvisorMatch rows)."""
+    from sqlalchemy import func
+    from sqlalchemy import select as _select
+
+    from unipaith.models.graduate import AdvisorMatch
+
+    admin = await _persist(db_session, mock_institution_user)
+    inst, dept, program = await _seed(db_session, admin)
+    profile, appn = await _application(db_session, program)
+    svc = GraduateService(db_session)
+
+    aligned = FacultyProfile(
+        institution_id=inst.id,
+        department_id=dept.id,
+        name="Dr Fit",
+        research_areas=["machine learning", "robotics"],
+        accepting_students=True,
+    )
+    other = FacultyProfile(
+        institution_id=inst.id,
+        department_id=dept.id,
+        name="Dr Unrelated",
+        research_areas=["poetry"],
+    )
+    db_session.add_all([aligned, other])
+    await db_session.flush()
+    # Applicant states interests via the student path.
+    await svc.student_upsert_intent(
+        profile.id, appn.id, {"research_interests": ["machine learning"]}
+    )
+
+    out = await svc.student_advisor_matches(profile.id, appn.id)
+    assert out["is_graduate"] is True
+    assert out["matches"][0]["faculty_name"] == "Dr Fit"
+    assert out["matches"][0]["alignment_score"] > out["matches"][-1]["alignment_score"]
+    # Read-only: no AdvisorMatch rows were written by the student view.
+    count = await db_session.scalar(
+        _select(func.count(AdvisorMatch.id)).where(AdvisorMatch.application_id == appn.id)
+    )
+    assert count == 0
+
+
 async def _persist(db, user: User) -> User:
     if user.id is None:
         user.id = uuid.uuid4()

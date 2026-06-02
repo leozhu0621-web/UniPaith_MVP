@@ -346,3 +346,26 @@ export const putStudentGraduateIntent = (
   apiClient
     .put(`/students/me/applications/${applicationId}/graduate-intent`, payload)
     .then(r => r.data as GraduateIntent)
+
+export interface StudentAdvisorFit {
+  faculty_name: string
+  title: string | null
+  research_areas: string[]
+  alignment_score: number
+  shared_interests: string[]
+  accepting_students: boolean
+  funding_available: boolean
+  named: boolean
+  mutual: boolean
+}
+
+export interface StudentAdvisorMatchesResponse {
+  is_graduate: boolean
+  applicant_interests: string[]
+  matches: StudentAdvisorFit[]
+}
+
+export const getStudentAdvisorMatches = (applicationId: string) =>
+  apiClient
+    .get(`/students/me/applications/${applicationId}/advisor-matches`)
+    .then(r => r.data as StudentAdvisorMatchesResponse)

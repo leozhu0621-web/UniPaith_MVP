@@ -552,6 +552,60 @@ class GraduateService:
         await self.db.refresh(intent)
         return intent
 
+    async def student_advisor_matches(self, student_id: UUID, application_id: UUID) -> dict:
+        """Spec 41 §2.1 — the *student* half of advisor matching: "advisors who fit
+        your research". Read-only (never writes AdvisorMatch rows — the student is
+        viewing, not scoring), scoped to the student's own graduate application.
+        Returns advisors ranked by research-interest fit, with the mutual-interest
+        flag when one has been established institution-side."""
+        app, program = await self._get_application_for_student(student_id, application_id)
+        if not is_graduate_degree(program.degree_type):
+            return {"is_graduate": False, "applicant_interests": [], "matches": []}
+        interests = await self._applicant_interests(application_id)
+        intent = await self.get_intent(application_id)
+        named_ids = {str(x) for x in (intent.target_advisor_ids or [])} if intent else set()
+        named_names = (
+            {s.lower().strip() for s in (intent.target_advisor_names or [])} if intent else set()
+        )
+        faculty = await self.list_faculty(
+            program.institution_id, department_id=program.department_id
+        )
+        existing = {
+            str(m.faculty_id): m
+            for m in (
+                await self.db.execute(
+                    select(AdvisorMatch).where(AdvisorMatch.application_id == application_id)
+                )
+            )
+            .scalars()
+            .all()
+        }
+        results: list[dict] = []
+        for f in faculty:
+            score, shared = research_alignment(interests, f.research_areas)
+            named = str(f.id) in named_ids or (f.name or "").lower().strip() in named_names
+            row = existing.get(str(f.id))
+            flagged = bool(row.advisor_flagged_interest) if row else False
+            results.append(
+                {
+                    "faculty_name": f.name,
+                    "title": f.title,
+                    "research_areas": f.research_areas or [],
+                    "alignment_score": score,
+                    "shared_interests": shared,
+                    "accepting_students": f.accepting_students,
+                    "funding_available": f.funding_available,
+                    "named": named,
+                    "mutual": bool(named and flagged),
+                }
+            )
+        results.sort(key=lambda r: r["alignment_score"], reverse=True)
+        return {
+            "is_graduate": True,
+            "applicant_interests": interests,
+            "matches": results,
+        }
+
     async def upsert_intent(
         self, institution_id: UUID, application_id: UUID, data: dict, *, run_extractor: bool = True
     ) -> GraduateIntent:
