@@ -382,6 +382,16 @@ class Settings(BaseSettings):
     # The engine never 5xxes either way. Off in code, enabled per-env via ECS.
     ai_major_specific_v2_enabled: bool = False
 
+    # Spec 44 §3/§5 — Adaptive Intake Engine LLM path. When True, the intake
+    # engine may call an LLM to normalize free text (DiscoveryExtractor) and to
+    # triage uploaded documents (DocumentParseTriage); when False, every channel
+    # takes the deterministic normalize/validate path. The flag is ANDed with the
+    # student's `consent_matching` — no matching consent → no LLM call regardless
+    # (§10/§11). The deterministic path is fully functional on its own, so the
+    # engine never depends on the LLM to gate the journey. Off in code, enabled
+    # per-env via ECS.
+    ai_intake_engine_v2_enabled: bool = False
+
     # GPU infrastructure (cloud-first)
     gpu_mode: str = "openai"  # "openai" | "aws" | "local" | "mock"
     gpu_8b_instance_id: str = ""
