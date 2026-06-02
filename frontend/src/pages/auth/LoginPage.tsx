@@ -78,7 +78,7 @@ export default function LoginPage() {
         </Link>
       </p>
 
-      <p className="text-center text-sm text-gray-400">
+      <p className="text-center text-sm text-muted-foreground/70">
         <Link to="/pricing" className="hover:underline">
           View plans and pricing
         </Link>

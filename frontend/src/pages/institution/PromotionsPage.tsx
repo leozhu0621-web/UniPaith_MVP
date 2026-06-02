@@ -164,20 +164,20 @@ export default function PromotionsPage() {
       {allPromos.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <Card className="p-3">
-            <p className="text-xs text-gray-500">Total</p>
-            <p className="text-xl font-semibold text-gray-900">{allPromos.length}</p>
+            <p className="text-xs text-muted-foreground">Total</p>
+            <p className="text-xl font-semibold text-foreground">{allPromos.length}</p>
           </Card>
-          <Card className="p-3 border-green-200">
-            <p className="text-xs text-green-600">Active</p>
-            <p className="text-xl font-bold text-green-600">{allPromos.filter(p => p.status === 'active').length}</p>
-          </Card>
-          <Card className="p-3">
-            <p className="text-xs text-gray-500 flex items-center gap-1"><Eye size={12} /> Impressions</p>
-            <p className="text-xl font-semibold text-gray-900">{allPromos.reduce((s, p) => s + p.impression_count, 0)}</p>
+          <Card className="p-3 border-success-soft">
+            <p className="text-xs text-success">Active</p>
+            <p className="text-xl font-bold text-success">{allPromos.filter(p => p.status === 'active').length}</p>
           </Card>
           <Card className="p-3">
-            <p className="text-xs text-gray-500 flex items-center gap-1"><MousePointerClick size={12} /> Clicks</p>
-            <p className="text-xl font-semibold text-gray-900">{allPromos.reduce((s, p) => s + p.click_count, 0)}</p>
+            <p className="text-xs text-muted-foreground flex items-center gap-1"><Eye size={12} /> Impressions</p>
+            <p className="text-xl font-semibold text-foreground">{allPromos.reduce((s, p) => s + p.impression_count, 0)}</p>
+          </Card>
+          <Card className="p-3">
+            <p className="text-xs text-muted-foreground flex items-center gap-1"><MousePointerClick size={12} /> Clicks</p>
+            <p className="text-xl font-semibold text-foreground">{allPromos.reduce((s, p) => s + p.click_count, 0)}</p>
           </Card>
         </div>
       )}
@@ -200,16 +200,16 @@ export default function PromotionsPage() {
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-gray-900">{p.title}</h3>
+                    <h3 className="font-semibold text-foreground">{p.title}</h3>
                     <Badge variant={STATUS_BADGE[p.status] ?? 'neutral'}>{p.status}</Badge>
                     <Badge variant="info">{p.promotion_type}</Badge>
                   </div>
-                  {p.program_name && <p className="text-xs text-gray-500 mt-1">Program: {p.program_name}</p>}
+                  {p.program_name && <p className="text-xs text-muted-foreground mt-1">Program: {p.program_name}</p>}
                 </div>
                 {!p.is_eligible && <Badge variant="warning">Ineligible</Badge>}
               </div>
-              {p.description && <p className="text-sm text-gray-600 line-clamp-2 mb-2">{p.description}</p>}
-              <div className="flex items-center gap-4 text-xs text-gray-400 mb-2">
+              {p.description && <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{p.description}</p>}
+              <div className="flex items-center gap-4 text-xs text-muted-foreground/70 mb-2">
                 {p.starts_at && <span>From: {formatDate(p.starts_at)}</span>}
                 {p.ends_at && <span>Until: {formatDate(p.ends_at)}</span>}
                 <span className="flex items-center gap-1"><Eye size={11} /> {p.impression_count}</span>
@@ -228,24 +228,24 @@ export default function PromotionsPage() {
                 </Button>
                 {p.status === 'draft' && (
                   <Button variant="ghost" size="sm" onClick={() => statusMut.mutate({ id: p.id, status: 'active' })}
-                    className="flex items-center gap-1 text-green-600">
+                    className="flex items-center gap-1 text-success">
                     <Play size={14} /> Activate
                   </Button>
                 )}
                 {p.status === 'active' && (
                   <Button variant="ghost" size="sm" onClick={() => statusMut.mutate({ id: p.id, status: 'paused' })}
-                    className="flex items-center gap-1 text-amber-600">
+                    className="flex items-center gap-1 text-warning">
                     <Pause size={14} /> Pause
                   </Button>
                 )}
                 {p.status === 'paused' && (
                   <Button variant="ghost" size="sm" onClick={() => statusMut.mutate({ id: p.id, status: 'active' })}
-                    className="flex items-center gap-1 text-green-600">
+                    className="flex items-center gap-1 text-success">
                     <Play size={14} /> Resume
                   </Button>
                 )}
                 <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(p)}
-                  className="flex items-center gap-1 text-red-600">
+                  className="flex items-center gap-1 text-destructive">
                   <Trash2 size={14} />
                 </Button>
               </div>
@@ -275,13 +275,13 @@ export default function PromotionsPage() {
           </div>
 
           <div className="border-t pt-3">
-            <p className="text-sm font-medium text-gray-700 mb-2">Targeting Scope</p>
+            <p className="text-sm font-medium text-foreground mb-2">Targeting Scope</p>
             <div className="space-y-2">
               <Input label="Regions (comma-separated)" value={targetRegions} onChange={e => setTargetRegions(e.target.value)} placeholder="e.g. North America, Europe" />
               <Input label="Countries (comma-separated)" value={targetCountries} onChange={e => setTargetCountries(e.target.value)} placeholder="e.g. United States, Canada" />
               <Input label="Degree Types (comma-separated)" value={targetDegrees} onChange={e => setTargetDegrees(e.target.value)} placeholder="e.g. masters, phd" />
             </div>
-            <p className="text-xs text-gray-400 mt-1">Leave blank to show to all students.</p>
+            <p className="text-xs text-muted-foreground/70 mt-1">Leave blank to show to all students.</p>
           </div>
 
           <div className="flex justify-end gap-2">
@@ -295,7 +295,7 @@ export default function PromotionsPage() {
 
       {/* Delete Confirmation */}
       <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Delete Promotion">
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm text-muted-foreground mb-4">
           Are you sure you want to delete <strong>{deleteTarget?.title}</strong>?
         </p>
         <div className="flex justify-end gap-2">

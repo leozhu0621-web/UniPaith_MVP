@@ -28,18 +28,18 @@ export default function ReleaseConfirmModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Confirm release" size="md">
       <div className="space-y-4">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           This will notify the applicant by Inbox and email. Calendar reminders are added for offer deadlines.
         </p>
         <div className="rounded-lg border border-border p-3 space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-900">Decision</span>
+            <span className="text-sm font-medium text-foreground">Decision</span>
             <Badge variant={tone as 'success'}>{decisionLabel(decision)}</Badge>
           </div>
           {offerLines.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-gray-500 mb-1">Offer terms</p>
-              <ul className="text-sm text-gray-700 space-y-0.5 list-disc list-inside">
+              <p className="text-xs font-medium text-muted-foreground mb-1">Offer terms</p>
+              <ul className="text-sm text-foreground space-y-0.5 list-disc list-inside">
                 {offerLines.map(line => (
                   <li key={line}>{line}</li>
                 ))}
@@ -48,8 +48,8 @@ export default function ReleaseConfirmModal({
           )}
           {message.trim() && (
             <div>
-              <p className="text-xs font-medium text-gray-500 mb-1">Notice to applicant</p>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{message.trim()}</p>
+              <p className="text-xs font-medium text-muted-foreground mb-1">Notice to applicant</p>
+              <p className="text-sm text-foreground whitespace-pre-wrap">{message.trim()}</p>
             </div>
           )}
         </div>

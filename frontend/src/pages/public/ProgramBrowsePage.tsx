@@ -43,13 +43,13 @@ export default function ProgramBrowsePage() {
 
         <div className="flex gap-3 mb-6">
           <div className="relative flex-1">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/70" />
             <input
               type="text"
               value={q}
               onChange={e => { setQ(e.target.value); setPage(1) }}
               placeholder="Search programs..."
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
             />
           </div>
           <input
@@ -57,12 +57,12 @@ export default function ProgramBrowsePage() {
             value={country}
             onChange={e => { setCountry(e.target.value); setPage(1) }}
             placeholder="Country"
-            className="w-40 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
+            className="w-40 px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
           />
           <select
             value={degreeType}
             onChange={e => { setDegreeType(e.target.value); setPage(1) }}
-            className="w-40 px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+            className="w-40 px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
           >
             <option value="">All Degrees</option>
             {Object.entries(DEGREE_LABELS).map(([v, l]) => (
@@ -82,7 +82,7 @@ export default function ProgramBrowsePage() {
             ))}
           </div>
         ) : programs.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">No programs found</div>
+          <div className="text-center py-16 text-muted-foreground">No programs found</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {programs.map(p => (
@@ -92,14 +92,14 @@ export default function ProgramBrowsePage() {
                 className="bg-white rounded-lg border p-4 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-gray-900 truncate">{p.program_name}</h3>
+                  <h3 className="font-semibold text-foreground truncate">{p.program_name}</h3>
                   {featuredProgramIds.has(p.id) && (
-                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">
+                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-warning-soft text-warning">
                       <Star size={10} className="fill-amber-500" /> Featured
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   <span
                     role="link"
                     tabIndex={0}
@@ -111,11 +111,11 @@ export default function ProgramBrowsePage() {
                 <div className="flex items-center gap-2 mt-3">
                   <Badge variant="info">{DEGREE_LABELS[p.degree_type] || p.degree_type}</Badge>
                   {p.tuition != null && (
-                    <span className="text-xs text-gray-500">{formatCurrency(p.tuition)}</span>
+                    <span className="text-xs text-muted-foreground">{formatCurrency(p.tuition)}</span>
                   )}
                 </div>
                 {p.application_deadline && (
-                  <p className="text-xs text-gray-400 mt-2">Deadline: {formatDate(p.application_deadline)}</p>
+                  <p className="text-xs text-muted-foreground/70 mt-2">Deadline: {formatDate(p.application_deadline)}</p>
                 )}
               </Link>
             ))}
@@ -128,7 +128,7 @@ export default function ProgramBrowsePage() {
               <button
                 key={p}
                 onClick={() => setPage(p)}
-                className={`px-3 py-1 text-sm rounded ${p === page ? 'bg-gray-900 text-white' : 'bg-white border hover:bg-gray-50'}`}
+                className={`px-3 py-1 text-sm rounded ${p === page ? 'bg-foreground text-background' : 'bg-card border border-border hover:bg-muted'}`}
               >
                 {p}
               </button>

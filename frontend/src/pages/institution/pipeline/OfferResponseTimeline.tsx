@@ -33,8 +33,8 @@ export default function OfferResponseTimeline({ status }: { status: OfferStatus 
   if (events.length === 0) return null
 
   return (
-    <div className="pt-2 border-t border-gray-100">
-      <p className="text-xs font-medium text-gray-500 mb-2">Timeline</p>
+    <div className="pt-2 border-t border-border">
+      <p className="text-xs font-medium text-muted-foreground mb-2">Timeline</p>
       <ol className="space-y-2">
         {events.map(ev => (
           <li key={`${ev.icon}-${ev.at}`} className="flex gap-2 text-sm">
@@ -42,9 +42,9 @@ export default function OfferResponseTimeline({ status }: { status: OfferStatus 
               {ev.icon === 'response' ? <CheckCircle2 size={14} /> : <Send size={14} />}
             </span>
             <div className="min-w-0">
-              <span className="font-medium text-gray-900">{ev.label}</span>
-              {ev.detail && <span className="text-gray-500"> · {ev.detail}</span>}
-              <p className="text-xs text-gray-400">{formatDateTime(ev.at)}</p>
+              <span className="font-medium text-foreground">{ev.label}</span>
+              {ev.detail && <span className="text-muted-foreground"> · {ev.detail}</span>}
+              <p className="text-xs text-muted-foreground/70">{formatDateTime(ev.at)}</p>
             </div>
           </li>
         ))}

@@ -161,7 +161,7 @@ export default function BatchReleaseModal({
       <div className="space-y-4">
         {step === 'configure' && !result && (
           <>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Confirm a decision for each applicant. Offer terms apply to admits and conditional admits.
             </p>
             {notInDecisionStage.length > 0 && (
@@ -170,7 +170,7 @@ export default function BatchReleaseModal({
               </p>
             )}
             {alreadyReleased.length > 0 && (
-              <p className="text-xs text-gray-600 rounded-lg border border-border bg-muted/50 px-3 py-2">
+              <p className="text-xs text-muted-foreground rounded-lg border border-border bg-muted/50 px-3 py-2">
                 {alreadyReleased.length} already have a released decision — confirming will re-release and re-notify.
               </p>
             )}
@@ -186,7 +186,7 @@ export default function BatchReleaseModal({
 
             {admitCount > 0 && (
               <div className="rounded-lg border border-border p-3 space-y-3">
-                <p className="text-xs font-medium text-gray-500">Standard offer — {admitCount} admit{admitCount === 1 ? '' : 's'}</p>
+                <p className="text-xs font-medium text-muted-foreground">Standard offer — {admitCount} admit{admitCount === 1 ? '' : 's'}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Input label="Scholarship ($)" type="number" value={scholarship} onChange={e => setScholarship(e.target.value)} />
                   <Input label="Response deadline" type="date" value={deadline} onChange={e => setDeadline(e.target.value)} />
@@ -197,20 +197,20 @@ export default function BatchReleaseModal({
                   value={offerTemplateId}
                   onChange={e => setOfferTemplateId(e.target.value)}
                 />
-                {offerTemplateBody && <p className="text-xs text-gray-600 line-clamp-3 whitespace-pre-wrap">{offerTemplateBody}</p>}
+                {offerTemplateBody && <p className="text-xs text-muted-foreground line-clamp-3 whitespace-pre-wrap">{offerTemplateBody}</p>}
               </div>
             )}
 
             {nonOfferCount > 0 && (
               <div className="rounded-lg border border-border p-3 space-y-2">
-                <p className="text-xs font-medium text-gray-500">Decision notice — {nonOfferCount} non-admit{nonOfferCount === 1 ? '' : 's'}</p>
+                <p className="text-xs font-medium text-muted-foreground">Decision notice — {nonOfferCount} non-admit{nonOfferCount === 1 ? '' : 's'}</p>
                 <Select
                   label="Decision notice template"
                   options={[{ value: '', label: 'Standard decision notice' }, ...decisionTemplates.map(t => ({ value: t.id, label: t.name }))]}
                   value={decisionTemplateId}
                   onChange={e => setDecisionTemplateId(e.target.value)}
                 />
-                {decisionTemplateBody && <p className="text-xs text-gray-600 line-clamp-3 whitespace-pre-wrap">{decisionTemplateBody}</p>}
+                {decisionTemplateBody && <p className="text-xs text-muted-foreground line-clamp-3 whitespace-pre-wrap">{decisionTemplateBody}</p>}
               </div>
             )}
 
@@ -220,8 +220,8 @@ export default function BatchReleaseModal({
                 return (
                   <div key={a.id} className="flex items-center justify-between gap-3 px-3 py-2">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{applicantLabel(a)}</p>
-                      <p className="text-xs text-gray-500 truncate">{a.program?.program_name ?? 'Program'}</p>
+                      <p className="text-sm font-medium text-foreground truncate">{applicantLabel(a)}</p>
+                      <p className="text-xs text-muted-foreground truncate">{a.program?.program_name ?? 'Program'}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <Badge variant={DECISION_TONE[d]}>{decisionLabel(d)}</Badge>
@@ -255,11 +255,11 @@ export default function BatchReleaseModal({
 
         {step === 'confirm' && !result && (
           <>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Release {selectedApps.length} decision{selectedApps.length === 1 ? '' : 's'}? Each is audit-logged.
             </p>
             {standardOffer && formatOfferTermsSummary(standardOffer).length > 0 && (
-              <ul className="text-sm list-disc list-inside text-gray-700">
+              <ul className="text-sm list-disc list-inside text-foreground">
                 {formatOfferTermsSummary(standardOffer).map(line => (
                   <li key={line}>{line}</li>
                 ))}

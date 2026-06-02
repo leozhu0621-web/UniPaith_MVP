@@ -54,7 +54,7 @@ function RemoveButton({ onClick }: { onClick: () => void }) {
       type="button"
       onClick={onClick}
       aria-label="Remove row"
-      className="p-1.5 text-gray-400 hover:text-red-500 flex-shrink-0"
+      className="p-1.5 text-muted-foreground/70 hover:text-destructive flex-shrink-0"
     >
       <Trash2 size={15} />
     </button>
@@ -62,7 +62,7 @@ function RemoveButton({ onClick }: { onClick: () => void }) {
 }
 
 function EmptyHint({ children }: { children: ReactNode }) {
-  return <p className="text-xs text-gray-400 italic">{children}</p>
+  return <p className="text-xs text-muted-foreground/70 italic">{children}</p>
 }
 
 function useDatalistId(): string {
@@ -227,7 +227,7 @@ export function LinkRowsEditor({
     <div className="space-y-2.5">
       {rows.length === 0 && <EmptyHint>None added yet.</EmptyHint>}
       {rows.map((r, i) => (
-        <div key={r.id} className="rounded-md border border-gray-200 bg-gray-50/40 p-2.5 space-y-2">
+        <div key={r.id} className="rounded-md border border-border bg-muted/40 p-2.5 space-y-2">
           <div className="flex items-center gap-2">
             <input
               list={nameSuggestions.length ? listId : undefined}
