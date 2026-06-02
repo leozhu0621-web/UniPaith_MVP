@@ -532,8 +532,8 @@ function AboutTab({ inst }: { inst: Institution }) {
               const url = val && typeof val === 'object' && val.url
               const inner = (
                 <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-muted/60 border border-stone/50 hover:border-cobalt transition-colors">
-                  <span className="text-sm text-charcoal truncate">{name}</span>
-                  {url && <Globe size={12} className="text-slate/50 flex-shrink-0" />}
+                  <span className="text-sm text-foreground truncate">{name}</span>
+                  {url && <Globe size={12} className="text-muted-foreground flex-shrink-0" />}
                 </div>
               )
               return url
@@ -553,8 +553,8 @@ function AboutTab({ inst }: { inst: Institution }) {
               const text = typeof val === 'object' ? (val.summary || val.note || JSON.stringify(val)) : String(val)
               return (
                 <div key={key} className="px-3 py-2 rounded-lg bg-muted/60 border border-stone/50">
-                  <p className="text-[12px] font-medium text-charcoal capitalize">{fmtKey(key)}</p>
-                  <p className="text-[12px] text-slate mt-0.5 leading-snug">{text}</p>
+                  <p className="text-[12px] font-medium text-foreground capitalize">{fmtKey(key)}</p>
+                  <p className="text-[12px] text-muted-foreground mt-0.5 leading-snug">{text}</p>
                 </div>
               )
             })}
@@ -573,10 +573,10 @@ function AboutTab({ inst }: { inst: Institution }) {
               return (
                 <div key={key} className="px-3 py-2 rounded-lg bg-muted/60 border border-stone/50">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium text-charcoal capitalize">{fmtKey(key)}</p>
+                    <p className="text-sm font-medium text-foreground capitalize">{fmtKey(key)}</p>
                     {url && <a href={url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-cobalt hover:underline flex-shrink-0">View</a>}
                   </div>
-                  {summary && <p className="text-[11.5px] text-slate leading-snug mt-0.5">{summary}</p>}
+                  {summary && <p className="text-[11.5px] text-muted-foreground leading-snug mt-0.5">{summary}</p>}
                 </div>
               )
             })}
@@ -751,7 +751,7 @@ function EventsTab({ events, institutionName, isAuthenticated, rsvpSet, onRsvp, 
             <div className="min-w-0">
               <h3 className="font-semibold text-charcoal truncate">{ev.event_name}</h3>
               <p className="text-[13px] text-slate mt-0.5">{when}{ev.location ? ` · ${ev.location}` : ''}</p>
-              {ev.event_type && <span className="inline-block mt-1.5 px-2 py-0.5 text-[10px] rounded-md bg-muted text-charcoal border border-stone/60 capitalize">{String(ev.event_type).replace(/_/g, ' ')}</span>}
+              {ev.event_type && <span className="inline-block mt-1.5 px-2 py-0.5 text-[10px] rounded-md bg-muted text-muted-foreground border border-stone/60 capitalize">{String(ev.event_type).replace(/_/g, ' ')}</span>}
               {ev.capacity != null && <span className="ml-2 text-[11px] text-slate/70">{ev.rsvp_count}/{ev.capacity} spots</span>}
             </div>
             <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
@@ -798,11 +798,13 @@ function UpdatesTab({ posts, institutionName }: { posts: InstitutionPost[]; inst
    Shared bits
    ────────────────────────────────────────────────────────────────────────── */
 function Fact({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  // Semantic foreground tokens (not fixed charcoal/slate) so the tile stays
+  // legible when bg-muted flips to dark navy in dark mode.
   return (
     <div className="px-3 py-2.5 rounded-lg bg-muted/60 border border-stone/50">
-      <p className="text-[10px] uppercase tracking-wider font-semibold text-slate/70">{label}</p>
-      <p className="text-[15px] font-bold text-charcoal tabular-nums mt-0.5 leading-tight">{value}</p>
-      {hint && <p className="text-[10.5px] text-slate/70 mt-0.5">{hint}</p>}
+      <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">{label}</p>
+      <p className="text-[15px] font-bold text-foreground tabular-nums mt-0.5 leading-tight">{value}</p>
+      {hint && <p className="text-[10.5px] text-muted-foreground mt-0.5">{hint}</p>}
     </div>
   )
 }
