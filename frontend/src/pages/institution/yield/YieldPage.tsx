@@ -142,6 +142,13 @@ export default function YieldPage() {
   })
 
   if (yieldQ.isLoading) return <Skeleton className="h-96 w-full rounded-xl" />
+  if (yieldQ.isError)
+    return (
+      <Card className="p-10 text-center">
+        <p className="mb-2 text-sm text-error">Couldn’t load yield analytics.</p>
+        <button onClick={() => yieldQ.refetch()} className="text-secondary hover:underline text-sm">Retry</button>
+      </Card>
+    )
   const y = yieldQ.data as YieldSnapshot | undefined
   const programOptions = [
     { value: '', label: 'All programs' },

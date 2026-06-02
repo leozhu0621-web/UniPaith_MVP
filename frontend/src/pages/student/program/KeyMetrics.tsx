@@ -499,14 +499,14 @@ function MetricTile({ tile }: { tile: Tile }) {
   const Icon = tile.icon
 
   return (
-    <div className="group relative rounded-xl bg-white border border-divider pl-4 pr-4 py-4 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:border-slate-300 overflow-hidden">
+    <div className="group relative rounded-xl bg-card border border-divider pl-4 pr-4 py-4 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:border-stone overflow-hidden">
       {/* Left accent bar — the only bg color on the tile */}
       <span className={`absolute left-0 top-0 bottom-0 w-[3px] ${ACCENT_BG[tile.tone]}`} aria-hidden />
 
       {/* Eyebrow: icon + label */}
       <div className="flex items-center gap-2 mb-2.5">
         <Icon size={12} className={ICON_COLOR[tile.tone]} />
-        <span className="text-[10px] uppercase tracking-[0.08em] font-semibold text-slate-500">
+        <span className="text-[10px] uppercase tracking-[0.08em] font-semibold text-muted-foreground">
           {tile.label}
         </span>
       </div>
@@ -521,7 +521,7 @@ function MetricTile({ tile }: { tile: Tile }) {
 
       {/* Context — editorial subtitle */}
       {tile.context && (
-        <p className="text-[11.5px] text-slate-500 mt-2 leading-snug line-clamp-2">
+        <p className="text-[11.5px] text-muted-foreground mt-2 leading-snug line-clamp-2">
           {tile.context}
         </p>
       )}

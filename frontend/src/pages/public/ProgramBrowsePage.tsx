@@ -49,7 +49,7 @@ export default function ProgramBrowsePage() {
               value={q}
               onChange={e => { setQ(e.target.value); setPage(1) }}
               placeholder="Search programs..."
-              className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
           <input
@@ -57,12 +57,12 @@ export default function ProgramBrowsePage() {
             value={country}
             onChange={e => { setCountry(e.target.value); setPage(1) }}
             placeholder="Country"
-            className="w-40 px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
+            className="w-40 px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
           />
           <select
             value={degreeType}
             onChange={e => { setDegreeType(e.target.value); setPage(1) }}
-            className="w-40 px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+            className="w-40 px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <option value="">All Degrees</option>
             {Object.entries(DEGREE_LABELS).map(([v, l]) => (
@@ -95,7 +95,7 @@ export default function ProgramBrowsePage() {
                   <h3 className="font-semibold text-foreground truncate">{p.program_name}</h3>
                   {featuredProgramIds.has(p.id) && (
                     <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-warning-soft text-warning">
-                      <Star size={10} className="fill-amber-500" /> Featured
+                      <Star size={10} className="fill-warning" /> Featured
                     </span>
                   )}
                 </div>

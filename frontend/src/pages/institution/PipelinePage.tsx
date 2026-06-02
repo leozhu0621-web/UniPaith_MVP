@@ -13,7 +13,7 @@ import {
   type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core'
-import { Search, GripVertical, ClipboardCheck, List, CheckSquare, Zap, Clock } from 'lucide-react'
+import { Search, GripVertical, ClipboardCheck, List, CheckSquare, Zap, Clock, Plus, Trash2 } from 'lucide-react'
 import { getInstitutionPrograms } from '../../api/institutions'
 import { getApplicationsByProgram, updateApplicationStatus, batchRequestMissingItems, batchUpdateStatus } from '../../api/applications-admin'
 import BatchReleaseModal from './pipeline/BatchReleaseModal'
@@ -38,7 +38,7 @@ import type { Application, BatchOperationResult, PrioritizedApplication, Program
 const PIPELINE_COLUMNS = [
   { id: 'submitted', label: 'Applied', color: 'bg-cobalt' },
   { id: 'under_review', label: 'Under Review', color: 'bg-warning' },
-  { id: 'interview', label: 'Interview', color: 'bg-gold-hover' },
+  { id: 'interview', label: 'Interview', color: 'bg-cobalt-dark' },
   { id: 'decision_made', label: 'Decision', color: 'bg-success' },
 ] as const
 
@@ -64,7 +64,7 @@ function DraggableCard({ app, onClick, selected, onToggleSelect, onGenerateOffer
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-white border rounded-lg p-3 cursor-pointer hover:shadow-md transition-shadow ${isDragging ? 'opacity-50' : ''} ${selected ? 'ring-2 ring-brand-slate-500 border-brand-slate-300' : ''}`}
+      className={`bg-card border rounded-lg p-3 cursor-pointer hover:shadow-md transition-shadow ${isDragging ? 'opacity-50' : ''} ${selected ? 'ring-2 ring-secondary border-secondary' : ''}`}
       onClick={onClick}
     >
       <div className="flex items-start justify-between">
@@ -89,7 +89,7 @@ function DraggableCard({ app, onClick, selected, onToggleSelect, onGenerateOffer
       </div>
       <div className="flex items-center justify-between mt-2">
         {app.match_score != null && (
-          <span className="text-xs font-medium text-brand-slate-600">{formatScore(app.match_score)}</span>
+          <span className="text-xs font-medium text-secondary">{formatScore(app.match_score)}</span>
         )}
         <span className="text-xs text-muted-foreground/70">{formatRelative(app.updated_at)}</span>
       </div>
@@ -131,7 +131,7 @@ function DroppableColumn({ id, label, color, children }: { id: string; label: st
 
 function PipelineCardOverlay({ app }: { app: Application }) {
   return (
-    <div className="bg-white border rounded-lg p-3 shadow-lg w-[240px]">
+    <div className="bg-card border rounded-lg p-3 shadow-lg w-[240px]">
       <p className="text-sm font-medium text-foreground">{applicantLabel(app)}</p>
       <p className="text-xs text-muted-foreground mt-0.5">{app.program?.program_name ?? 'Program'}</p>
     </div>
@@ -159,6 +159,9 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
   const [batchAction, setBatchAction] = useState<string | null>(null)
   const [batchItems, setBatchItems] = useState('')
   const [batchStatus, setBatchStatus] = useState('under_review')
+  const [batchSlots, setBatchSlots] = useState<string[]>(['', '', ''])
+  const [batchIvDuration, setBatchIvDuration] = useState('30')
+  const [batchIvLocation, setBatchIvLocation] = useState('')
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => {
@@ -247,6 +250,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
     clearSelection()
     setBatchAction(null)
     setBatchItems('')
+    setBatchSlots(['', '', ''])
     queryClient.invalidateQueries({ queryKey: ['pipeline-applications'] })
   }
 
@@ -263,7 +267,15 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
     onSuccess: handleBatchResult,
   })
   const batchInterviewMut = useMutation({
-    mutationFn: () => batchInviteInterviews(Array.from(selectedIds), '', 'standard', [new Date().toISOString()]),
+    mutationFn: () =>
+      batchInviteInterviews(
+        Array.from(selectedIds),
+        '',
+        'live',
+        batchSlots.filter(Boolean).map(s => new Date(s).toISOString()),
+        Number(batchIvDuration) || 30,
+        batchIvLocation || undefined,
+      ),
     onSuccess: handleBatchResult,
   })
 
@@ -303,7 +315,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
       render: (row: Application) => (
         <button
           onClick={() => goApplicant(row.id)}
-          className="text-brand-slate-600 hover:underline font-medium"
+          className="text-secondary hover:underline font-medium"
         >
           {applicantLabel(row)}
         </button>
@@ -367,6 +379,11 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
 
       {!selectedProgram ? (
         <EmptyState title="Select a program" description="Choose a program above to manage its full admissions workflow." />
+      ) : applicationsQ.isError ? (
+        <div className="p-8 text-center">
+          <p className="mb-2 text-sm text-error">Couldn’t load applications.</p>
+          <button onClick={() => applicationsQ.refetch()} className="text-secondary hover:underline text-sm">Retry</button>
+        </div>
       ) : applicationsQ.isLoading ? (
         <div className="flex gap-4">
           {PIPELINE_COLUMNS.map(col => (
@@ -463,7 +480,12 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
 
           {activeView === 'priority' && (
             <div className="space-y-2">
-              {priorityQ.isLoading ? (
+              {priorityQ.isError ? (
+                <div className="p-8 text-center">
+                  <p className="mb-2 text-sm text-error">Couldn’t load the priority queue.</p>
+                  <button onClick={() => priorityQ.refetch()} className="text-secondary hover:underline text-sm">Retry</button>
+                </div>
+              ) : priorityQ.isLoading ? (
                 <Skeleton className="h-40" />
               ) : prioritized.length === 0 ? (
                 <EmptyState icon={<Zap size={40} />} title="No applications to prioritize" description="Applications needing review will be ranked here by urgency." />
@@ -471,8 +493,9 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
                 prioritized.map((p, i) => (
                   <Card key={p.application_id} className="p-4 cursor-pointer hover:shadow-md transition-shadow" onClick={() => goApplicant(p.application_id)}>
                     <div className="flex items-center gap-4">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full shrink-0 font-bold text-white text-sm"
-                        style={{ backgroundColor: p.priority_score >= 70 ? '#B5321F' : p.priority_score >= 40 ? '#B8741D' : '#1F6B2E' }}>
+                      <div className={`flex items-center justify-center w-10 h-10 rounded-full shrink-0 font-bold text-white text-sm ${
+                        p.priority_score >= 70 ? 'bg-error' : p.priority_score >= 40 ? 'bg-warning' : 'bg-success'
+                      }`}>
                         {Math.round(p.priority_score)}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -519,9 +542,9 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
 
       {/* Batch Action Bar */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg px-6 py-3 flex items-center justify-between z-50">
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t shadow-lg px-6 py-3 flex items-center justify-between z-50">
           <span className="text-sm font-medium flex items-center gap-2">
-            <CheckSquare size={16} className="text-brand-slate-600" />
+            <CheckSquare size={16} className="text-secondary" />
             {selectedIds.size} selected
           </span>
           <div className="flex gap-2">
@@ -562,13 +585,55 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
       </Modal>
 
       {/* Batch Interview Modal */}
-      <Modal isOpen={batchAction === 'interview'} onClose={() => setBatchAction(null)} title="Batch Schedule Interviews">
+      <Modal
+        isOpen={batchAction === 'interview'}
+        onClose={() => { setBatchAction(null); setBatchSlots(['', '', '']) }}
+        title="Batch Schedule Interviews"
+      >
         <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">Schedule standard interviews for {selectedIds.size} application(s).</p>
+          <p className="text-sm text-muted-foreground">
+            Propose a live interview to {selectedIds.size} application(s). Offer at least three times so applicants can choose (Spec 33 §5).
+          </p>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">Proposed times</label>
+            {batchSlots.map((t, i) => (
+              <div key={i} className="flex items-center gap-2 mb-2">
+                <Input
+                  type="datetime-local"
+                  value={t}
+                  onChange={e => setBatchSlots(batchSlots.map((s, idx) => (idx === i ? e.target.value : s)))}
+                  className="flex-1"
+                />
+                {batchSlots.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setBatchSlots(batchSlots.filter((_, idx) => idx !== i))}
+                    className="p-1 text-muted-foreground hover:text-error transition-colors"
+                    aria-label="Remove time"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </div>
+            ))}
+            <Button variant="ghost" size="sm" onClick={() => setBatchSlots([...batchSlots, ''])} className="flex items-center gap-1">
+              <Plus size={14} /> Add time
+            </Button>
+          </div>
+          <Input label="Duration (minutes)" type="number" value={batchIvDuration} onChange={e => setBatchIvDuration(e.target.value)} />
+          <Input
+            label="Location or meeting link"
+            value={batchIvLocation}
+            onChange={e => setBatchIvLocation(e.target.value)}
+            placeholder="Zoom link, platform URL, or campus address"
+          />
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setBatchAction(null)}>Cancel</Button>
-            <Button onClick={() => batchInterviewMut.mutate()} disabled={batchInterviewMut.isPending}>
-              {batchInterviewMut.isPending ? 'Scheduling...' : `Schedule ${selectedIds.size} interviews`}
+            <Button variant="ghost" onClick={() => { setBatchAction(null); setBatchSlots(['', '', '']) }}>Cancel</Button>
+            <Button
+              onClick={() => batchInterviewMut.mutate()}
+              disabled={batchInterviewMut.isPending || batchSlots.filter(Boolean).length < 3}
+            >
+              {batchInterviewMut.isPending ? 'Scheduling...' : `Propose to ${selectedIds.size}`}
             </Button>
           </div>
         </div>

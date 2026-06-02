@@ -18,6 +18,7 @@ from unipaith.config import settings
 from unipaith.core.cache import cached
 from unipaith.transparency.acceptance import build_acceptance
 from unipaith.transparency.api_contract import build_api_contract
+from unipaith.transparency.chatbot_eval import build_chatbot_eval
 from unipaith.transparency.data_model import build_data_model
 from unipaith.transparency.features import build_features
 from unipaith.transparency.frontend_standards import build_frontend_standards
@@ -56,6 +57,7 @@ def _assemble_overview(request: Request) -> dict:
     fe_stat = f"{frontend['build_tasks_done']}/{frontend['build_task_count']}"
     production = build_production(request.app)["summary"]
     search = build_search(request.app.routes)["summary"]
+    chatbot_eval = build_chatbot_eval(request.app.routes)["summary"]
     security = build_security(request.app)["summary"]
     return {
         "roadmap": roadmap,
@@ -66,6 +68,7 @@ def _assemble_overview(request: Request) -> dict:
         "acceptance": acceptance,
         "production": production,
         "search": search,
+        "chatbot_eval": chatbot_eval,
         "security": security,
         "provider": settings.ai_provider_default,
         "surfaces": [
@@ -163,6 +166,16 @@ def _assemble_overview(request: Request) -> dict:
                 "stat_label": "capabilities live",
             },
             {
+                "key": "chatbot-eval",
+                "title": "Chatbot training & eval",
+                "spec": "61",
+                "blurb": "How the conversational Claude agents are held to a measured "
+                "behavior standard — the constitution, the safety floor, the eval loop.",
+                "path": "/goal/chatbot-eval",
+                "stat": chatbot_eval["golden_case_total"],
+                "stat_label": "graded eval cases",
+            },
+            {
                 "key": "security",
                 "title": "Security & trust",
                 "spec": "58",
@@ -250,6 +263,23 @@ async def get_search(request: Request) -> dict:
     flags plus the saved-search alert caps are read straight off ``settings`` — so
     the page can't claim a surface the deployed app doesn't serve."""
     return build_search(request.app.routes)
+
+
+@router.get("/chatbot-eval", summary="The chatbot training & evaluation loop (spec 61)")
+async def get_chatbot_eval(request: Request) -> dict:
+    """Spec 61's chatbot training & evaluation posture: the per-agent behavior
+    constitution (the versioned rubric), the always-on safety / crisis floor, the
+    deterministic pre-judge checks, the chatbot eval adapter, the golden set +
+    red-team battery, and the continuous sample→judge→curate→gate loop — each
+    capability honestly classified live·partial·planned. The constitution
+    dimensions + version are parsed from the live ``_shared/constitution_*.md``
+    files (the same files the agents' prompts and the judge load), the golden-set
+    / red-team / crisis case counts are read off disk through the runner's
+    loaders, the eval suites are confirmed present in the live ``runner.SUITES``
+    map, the safety-floor coverage is read from ``ai/safety.py``, the agent tiers
+    resolve from the registry and the flags off ``settings`` — so the page can't
+    claim a standard the deployed agents aren't held to."""
+    return build_chatbot_eval(request.app.routes)
 
 
 @router.get("/security", summary="The security, trust & compliance posture (spec 58)")

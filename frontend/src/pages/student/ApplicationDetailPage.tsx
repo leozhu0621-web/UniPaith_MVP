@@ -692,7 +692,11 @@ export default function ApplicationDetailPage() {
                   <Button
                     size="sm"
                     variant="tertiary"
-                    disabled={!intentReason && !application.intent_picker}
+                    disabled={
+                      (!intentReason && !application.intent_picker) ||
+                      (RATIONALE_REQUIRED.includes(intentReason || application.intent_picker || '') &&
+                        (rationale || application.intent_rationale || '').trim().length < 80)
+                    }
                     loading={intentMut.isPending}
                     onClick={() => intentMut.mutate()}
                   >

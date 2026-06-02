@@ -704,7 +704,7 @@ function ItemDetailModal({ item, onClose, onNavigate, onPatch, onDecline, patchi
         {/* Actions */}
         <div className="flex flex-wrap gap-2 pt-1">
           {item.link && (
-            <Button size="sm" onClick={() => onNavigate(item.link!)}>
+            <Button size="sm" variant="secondary" onClick={() => onNavigate(item.link!)}>
               <ExternalLink size={13} className="mr-1" /> Open application
             </Button>
           )}
@@ -768,7 +768,7 @@ function ReminderModal({ open, apps, onClose, onCreated }: {
         {mut.isError && <p className="text-xs text-error">Couldn’t save. Check the fields and try again.</p>}
         <div className="flex justify-end gap-2 pt-1">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => mut.mutate()} disabled={!form.title || !form.start || mut.isPending}>
+          <Button variant="secondary" onClick={() => mut.mutate()} disabled={!form.title || !form.start || mut.isPending}>
             {mut.isPending ? 'Saving…' : 'Add reminder'}
           </Button>
         </div>
@@ -805,7 +805,7 @@ function WorkBlockModal({ open, apps, onClose, onCreated }: {
         {mut.isError && <p className="text-xs text-error">Couldn’t save. Check the fields and try again.</p>}
         <div className="flex justify-end gap-2 pt-1">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => mut.mutate()} disabled={!form.title || !form.start || mut.isPending}>
+          <Button variant="secondary" onClick={() => mut.mutate()} disabled={!form.title || !form.start || mut.isPending}>
             {mut.isPending ? 'Saving…' : 'Add work block'}
           </Button>
         </div>

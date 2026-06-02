@@ -47,7 +47,7 @@ const DEPOSIT_OPTIONS: { value: DepositStatus; label: string }[] = [
 export default function EnrollmentTab({ applicationId }: { applicationId: string }) {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
-  const { data: enr, isLoading } = useQuery({
+  const { data: enr, isLoading, isError, refetch } = useQuery({
     queryKey: ['applicant-enrollment', applicationId],
     queryFn: () => getApplicantEnrollment(applicationId),
   })
@@ -84,6 +84,13 @@ export default function EnrollmentTab({ applicationId }: { applicationId: string
   })
 
   if (isLoading) return <Skeleton className="h-64" />
+  if (isError)
+    return (
+      <Card className="p-6 text-center">
+        <p className="mb-2 text-sm text-error">Couldn’t load enrollment.</p>
+        <button onClick={() => refetch()} className="text-secondary hover:underline text-sm">Retry</button>
+      </Card>
+    )
   if (!enr) return null
   const e = enr as Enrollment
 

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   ArrowRight,
+  Bot,
   CircleCheck,
   Cpu,
   Database,
@@ -41,6 +42,7 @@ const SURFACE_ICONS: Record<string, typeof MapIcon> = {
   frontend: Layers,
   backend: Server,
   search: Search,
+  'chatbot-eval': Bot,
   security: ShieldCheck,
 }
 
@@ -106,9 +108,9 @@ export default function GoalHubPage() {
   return (
     <GoalShell>
       <Hero
-        eyebrow="Build transparency · Specs 45 · 48–56 · 58"
+        eyebrow="Build transparency · Specs 45 · 48–56 · 58 · 61"
         title="How UniPaith is built — in the open."
-        lede="The roadmap, the feature coverage map, the API contract, the data model, the acceptance runbook, the experience standards, the frontend engineering spec, the AI agent fleet, the backend production posture and the security & trust controls — surfaced as live, self-verifying pages. Where a page shows a number, it's read straight from the running system, not asserted in a doc."
+        lede="The roadmap, the feature coverage map, the API contract, the data model, the acceptance runbook, the experience standards, the frontend engineering spec, the AI agent fleet, the backend production posture, the search substrate, the security & trust controls and how the chatbot is trained and evaluated — surfaced as live, self-verifying pages. Where a page shows a number, it's read straight from the running system, not asserted in a doc."
       >
         {mvpComplete && (
           <span className="inline-flex items-center gap-1.5 rounded-pill border border-primary/40 px-3 py-1 text-[13px] font-semibold text-foreground">
@@ -156,7 +158,7 @@ export default function GoalHubPage() {
       <section id="surfaces" className="mt-16 scroll-mt-20">
         <SectionHeading
           icon={MapIcon}
-          title="Eleven ways to read the build"
+          title="Twelve ways to read the build"
           sub="Each surface is a public page backed by a DB-free endpoint. Open one to see the detail."
         />
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
