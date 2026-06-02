@@ -6,7 +6,12 @@ import Badge from '../../../../components/ui/Badge'
 import Textarea from '../../../../components/ui/Textarea'
 import { showToast } from '../../../../stores/toast-store'
 import { respondToOfferV2 } from '../../../../api/offers'
-import type { Application, OfferKeyTerm, OfferNextStep } from '../../../../types'
+import type {
+  Application,
+  GraduateFundingPackageSummary,
+  OfferKeyTerm,
+  OfferNextStep,
+} from '../../../../types'
 import {
   money,
   daysUntil,
@@ -54,6 +59,70 @@ function deriveNextSteps(app: Application): OfferNextStep[] {
   return o.next_step_actions
     .filter(a => a?.action)
     .map(a => ({ action: a.action, by_date: a.by_date ?? null }))
+}
+
+// Spec 41 §2.3 / §7 — the graduate funding package, the one student-facing
+// moment restrained gold is permitted (the offer's weight). Shown only when the
+// offer carries a graduate funding package.
+const FUNDING_COMPONENT_LABEL: Record<string, string> = {
+  TA: 'Teaching assistantship',
+  RA: 'Research assistantship',
+  fellowship: 'Fellowship',
+  tuition_waiver: 'Tuition waiver',
+  stipend: 'Stipend',
+}
+
+function fundingYears(years: number[] | null | undefined): string {
+  const ys = (years ?? []).filter(Boolean)
+  if (ys.length <= 1) return `Year ${ys[0] ?? 1}`
+  const sorted = [...ys].sort((a, b) => a - b)
+  return `Years ${sorted[0]}–${sorted[sorted.length - 1]}`
+}
+
+function FundingPackageCard({
+  pkg,
+  currency,
+}: {
+  pkg: GraduateFundingPackageSummary
+  currency: string
+}) {
+  return (
+    <div className="mb-5 rounded-lg border border-student/30 bg-student/5 p-4">
+      <div className="mb-2 flex items-center justify-between">
+        <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-student-text">
+          Funding package
+        </p>
+        {pkg.multi_year && <Badge variant="neutral">Multi-year</Badge>}
+      </div>
+      <ul className="space-y-1.5">
+        {pkg.components.map((c, i) => (
+          <li key={i} className="flex items-center justify-between text-sm">
+            <span className="text-student-ink">
+              {c.label || FUNDING_COMPONENT_LABEL[c.kind] || c.kind}
+              <span className="text-student-text"> · {fundingYears(c.years)}</span>
+            </span>
+            <span className="font-semibold tabular-nums text-student-ink">
+              {money(c.amount, currency)}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-3 flex items-center justify-between border-t border-student/20 pt-2">
+        <span className="text-sm font-semibold text-student-ink">Total package</span>
+        <span className="text-base font-bold tabular-nums text-student">
+          {money(pkg.total_value, currency)}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function graduateFunding(app: Application): GraduateFundingPackageSummary | null {
+  const a = app.offer?.assistantship_details
+  if (a && typeof a === 'object' && (a as GraduateFundingPackageSummary).kind === 'graduate_funding_package') {
+    return a as GraduateFundingPackageSummary
+  }
+  return null
 }
 
 export default function OfferPanel({ application }: { application: Application }) {
@@ -119,6 +188,7 @@ export default function OfferPanel({ application }: { application: Application }
   const keyTerms: OfferKeyTerm[] = brief?.key_terms?.length ? brief.key_terms : deriveKeyTerms(application)
   const nextSteps: OfferNextStep[] =
     brief?.next_steps?.length ? brief.next_steps : deriveNextSteps(application)
+  const funding = graduateFunding(application)
   const respDays = daysUntil(offer.response_deadline)
   const tone = deadlineTone(respDays)
 
@@ -214,6 +284,14 @@ export default function OfferPanel({ application }: { application: Application }
               ))}
             </dl>
           </div>
+        )}
+
+        {/* Graduate funding package (spec 41 §2.3 / §7) */}
+        {funding && (
+          <FundingPackageCard
+            pkg={funding}
+            currency={offer.scholarship_currency || funding.currency || 'USD'}
+          />
         )}
 
         {/* Next steps */}

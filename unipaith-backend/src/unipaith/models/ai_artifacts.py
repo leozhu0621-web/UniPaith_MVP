@@ -136,7 +136,9 @@ class AiTurn(Base, UUIDPrimaryKeyMixin):
             # Spec 38 §5 — international-admissions processing agents.
             "'credential_normalizer','country_requirement_advisor',"
             # Spec 40 §5 — recruitment CRM agents (prospect ranking + territory planning).
-            "'prospect_prioritizer','territory_optimizer')",
+            "'prospect_prioritizer','territory_optimizer',"
+            # Spec 41 §5 — graduate-admissions agents (advisor fit, SoP extraction, funding mix).
+            "'advisor_matcher','sop_interest_extractor','funding_scenario_helper')",
             name="ck_ai_turns_agent",
         ),
         # Spec 03 §8: provider tracked per call so the cost ledger splits

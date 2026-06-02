@@ -1523,11 +1523,16 @@ class ReviewPipelineService:
             app, program, profile, inst
         )
 
+        # Spec 41 §6 — grad gate so the per-applicant advisor-match tab only shows
+        # for graduate programs.
+        from unipaith.services.graduate_service import is_graduate_degree
+
         return {
             "application_id": str(application_id),
             "student": student_summary,
             "international": international,
             "is_international": international["is_international"],
+            "is_graduate": is_graduate_degree(program.degree_type),
             "program": {
                 "id": str(program.id),
                 "program_name": program.program_name,

@@ -15,6 +15,7 @@ import {
 import DecisionPanel from './pipeline/DecisionPanel'
 import EnrollmentTab from './pipeline/EnrollmentTab'
 import InternationalTab from './international/InternationalTab'
+import AdvisorMatchTab from './graduate/AdvisorMatchTab'
 import InstitutionPageHeader from '../../components/institution/InstitutionPageHeader'
 import { getInterviewsByApplication } from '../../api/interviews-admin'
 import Card from '../../components/ui/Card'
@@ -223,6 +224,8 @@ export default function StudentDetailPage() {
     { id: 'enrollment', label: 'Enrollment' },
     // Spec 38 — only for international applicants (hidden for domestic, §6).
     ...(packet.is_international ? [{ id: 'international', label: 'International' }] : []),
+    // Spec 41 — only for graduate programs (hidden for undergrad, §6).
+    ...(packet.is_graduate ? [{ id: 'advisor-match', label: 'Advisor Match' }] : []),
     { id: 'documents', label: 'Documents' },
     { id: 'essays', label: 'Essays' },
     { id: 'interview', label: 'Interviews' },
@@ -353,6 +356,7 @@ export default function StudentDetailPage() {
             )}
             {activeTab === 'enrollment' && <EnrollmentTab applicationId={applicationId!} />}
             {activeTab === 'international' && <InternationalTab applicationId={applicationId!} />}
+            {activeTab === 'advisor-match' && <AdvisorMatchTab applicationId={applicationId!} />}
             {activeTab === 'documents' && <DocumentsTab packet={packet} />}
             {activeTab === 'essays' && <EssaysTab packet={packet} />}
             {activeTab === 'interview' && (

@@ -8,6 +8,7 @@ import IntegrityQueuePage from './IntegrityQueuePage'
 import CohortComparisonPage from './CohortComparisonPage'
 import YieldPage from './yield/YieldPage'
 import InternationalPage from './international/InternationalPage'
+import GraduatePage from './graduate/GraduatePage'
 import WaiverQueuePage from './WaiverQueuePage'
 
 type AdmissionsTab =
@@ -18,6 +19,7 @@ type AdmissionsTab =
   | 'cohort'
   | 'yield'
   | 'international'
+  | 'graduate'
   | 'waivers'
 
 const tabs = [
@@ -28,6 +30,8 @@ const tabs = [
   { id: 'cohort', label: 'Cohort Compare' },
   { id: 'yield', label: 'Yield' },
   { id: 'international', label: 'International' },
+  // Spec 41 — graduate & PhD admissions (faculty matching, funding, dept review).
+  { id: 'graduate', label: 'Graduate' },
   // Spec 39 §2.3 / §5 — fee-waiver queue + payments & refunds.
   { id: 'waivers', label: 'Fees & Waivers' },
 ]
@@ -60,6 +64,7 @@ export default function AdmissionsPage() {
       {activeTab === 'cohort' && <CohortComparisonPage embedded />}
       {activeTab === 'yield' && <YieldPage />}
       {activeTab === 'international' && <InternationalPage embedded />}
+      {activeTab === 'graduate' && <GraduatePage />}
       {activeTab === 'waivers' && <WaiverQueuePage />}
     </div>
   )

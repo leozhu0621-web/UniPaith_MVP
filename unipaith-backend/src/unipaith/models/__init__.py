@@ -42,6 +42,16 @@ from unipaith.models.engagement import (
 )
 from unipaith.models.follow import InstitutionFollow
 from unipaith.models.goals import StudentGoal
+from unipaith.models.graduate import (
+    AdvisorMatch,
+    Department,
+    DepartmentReview,
+    FacultyProfile,
+    FundingPackage,
+    FundingPackageComponent,
+    FundingPool,
+    GraduateIntent,
+)
 from unipaith.models.identity import StudentIdentity
 from unipaith.models.institution import (
     Campaign,
@@ -286,4 +296,13 @@ __all__ = [
     "TripVisit",
     "RecruitmentFair",
     "Territory",
+    # Graduate & PhD admissions (Spec 41)
+    "Department",
+    "FacultyProfile",
+    "GraduateIntent",
+    "AdvisorMatch",
+    "FundingPool",
+    "FundingPackage",
+    "FundingPackageComponent",
+    "DepartmentReview",
 ]

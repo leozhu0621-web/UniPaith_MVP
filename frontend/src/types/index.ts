@@ -568,7 +568,22 @@ export interface ApplicationOffer {
   start_term_year?: number | null
   next_step_actions?: OfferNextStep[] | null
   plain_language_brief?: PlainLanguageBrief | null
+  // Spec 41 §2.3 — graduate funding package mirrored onto the offer.
+  assistantship_details?: GraduateFundingPackageSummary | Record<string, unknown> | null
   generated_letter_url?: string | null
+}
+
+export interface GraduateFundingPackageSummary {
+  kind: 'graduate_funding_package'
+  total_value: number
+  currency: string
+  multi_year: boolean
+  components: Array<{
+    kind: 'TA' | 'RA' | 'fellowship' | 'tuition_waiver' | 'stipend'
+    amount: number
+    years: number[]
+    label: string | null
+  }>
 }
 
 export interface OfferComparisonItem {
@@ -1548,6 +1563,8 @@ export interface ReviewPacket {
   blind_review: BlindReviewState
   holistic_context: HolisticContext
   test_optional: TestOptionalAnalysis
+  // Spec 41 — graduate gate (shows the advisor-match tab for graduate programs).
+  is_graduate?: boolean
   // Spec 38 — international signals (operational only; never a selection criterion).
   is_international: boolean
   international: {

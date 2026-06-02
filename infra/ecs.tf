@@ -227,6 +227,13 @@ resource "aws_ecs_task_definition" "backend" {
       # a deterministic apply-likelihood heuristic regardless. Prioritization +
       # planning only, never selection.
       { name = "AI_RECRUITMENT_V2_ENABLED", value = "true" },
+      # Spec 41 §5 — graduate-admissions intelligence (AdvisorMatcher +
+      # SoPInterestExtractor + FundingScenarioHelper). Auto-tags SoP interests,
+      # adds advisor-fit rationale, and surfaces funding over-commit warnings +
+      # re-mix suggestions. The deterministic baseline (advisor alignment ranking
+      # + the hard over-commit block) is always on; AI never decides — matching
+      # informs humans, faculty decide.
+      { name = "AI_GRADUATE_V2_ENABLED", value = "true" },
       # Pin Claude model IDs — config.py defaults match, but pinning here
       # makes the prod surface auditable (and trivial to roll a single
       # agent class to a different model without a code deploy).

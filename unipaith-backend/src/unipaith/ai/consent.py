@@ -152,6 +152,14 @@ AGENT_REQUIRES: dict[str, str | None] = {
     # sorting on any failure.
     "prospect_prioritizer": None,
     "territory_optimizer": None,
+    # Spec 41 §5 — graduate-admissions agents are institution-initiated and
+    # role-gated at the API layer (faculty / institution_admin), operating on the
+    # institution's own applicant pool + department research vocabulary, so no
+    # student-consent lever here. All three fall back to deterministic logic and
+    # AI never decides — matching informs humans, faculty decide (§5 / 46 §6).
+    "advisor_matcher": None,
+    "sop_interest_extractor": None,
+    "funding_scenario_helper": None,
 }
 
 

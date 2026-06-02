@@ -178,7 +178,14 @@ class Program(Base):
     )
     program_name: Mapped[str] = mapped_column(String(255), nullable=False)
     degree_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    # Free-text department label (legacy, kept for back-compat).
     department: Mapped[str | None] = mapped_column(String(255))
+    # Spec 41 §2.4 — link to the reviewing Department (graduate review portal +
+    # funding pools). Nullable: undergrad programs and unmapped programs leave it
+    # null. SET NULL so deleting a department doesn't cascade to programs.
+    department_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("departments.id", ondelete="SET NULL")
+    )
     duration_months: Mapped[int | None] = mapped_column(Integer)
     tuition: Mapped[int | None] = mapped_column(Integer)
     acceptance_rate: Mapped[Decimal | None] = mapped_column(Numeric(5, 4))

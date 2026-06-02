@@ -104,6 +104,9 @@ class OfferLetterResponse(BaseModel):
     start_term_year: int | None = None
     next_step_actions: list | None = None
     plain_language_brief: dict | None = None
+    # Spec 41 §2.3 — graduate funding package mirrored onto the offer so the
+    # student sees the TA/RA/fellowship/waiver/stipend breakdown in their offer.
+    assistantship_details: dict | None = None
     generated_letter_url: str | None = None
     created_at: datetime
     updated_at: datetime
