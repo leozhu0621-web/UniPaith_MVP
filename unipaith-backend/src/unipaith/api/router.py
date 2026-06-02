@@ -17,6 +17,7 @@ from unipaith.api.discovery import router as discovery_router
 from unipaith.api.documents import router as documents_router
 from unipaith.api.events import router as events_router
 from unipaith.api.goals import router as goals_router
+from unipaith.api.graduate import router as graduate_router
 from unipaith.api.identity import router as identity_router
 from unipaith.api.inbox import router as inbox_router
 from unipaith.api.institution_inbox import router as institution_inbox_router
@@ -67,6 +68,10 @@ api_router.include_router(ai_surface_router)
 # Spec 40 — recruitment CRM under `/institutions/me/recruitment/*`; before
 # institutions_router so the literal path wins over `/institutions/{id}`.
 api_router.include_router(recruitment_router)
+# Spec 41 — graduate admissions under `/institutions/me/graduate/*` (+ the student
+# `/students/me/applications/:id/graduate-intent`); before institutions_router so
+# the literal path wins over `/institutions/{id}`.
+api_router.include_router(graduate_router)
 api_router.include_router(institutions_router)
 api_router.include_router(programs_router)
 api_router.include_router(applications_router)

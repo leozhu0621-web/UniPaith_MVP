@@ -67,6 +67,7 @@ import AdmissionsPage from './pages/institution/AdmissionsPage'
 import OutreachPage from './pages/institution/OutreachPage'
 import CommunicationsPage from './pages/institution/CommunicationsPage'
 import RecruitmentPage from './pages/institution/RecruitmentPage'
+import DepartmentPortalPage from './pages/institution/graduate/DepartmentPortalPage'
 
 import RouteErrorPage from './pages/system/RouteErrorPage'
 
@@ -166,6 +167,8 @@ const router = createBrowserRouter([
       { path: 'admissions', element: <AdmissionsPage /> },
       { path: 'admissions/applicant/:appId', element: <StudentDetailPage /> },
       { path: 'recruitment', element: <RecruitmentPage /> },
+      // Spec 41 — graduate department review portal (scoped review + faculty + funding)
+      { path: 'departments/:deptId', element: <DepartmentPortalPage /> },
       { path: 'outreach', element: <OutreachPage /> },
       { path: 'communications', element: <CommunicationsPage /> },
       // Spec 31 — legacy pipeline URLs redirect into admissions intake

@@ -354,6 +354,16 @@ class Settings(BaseSettings):
     # only, never selection (46 §6). Off in code, enabled per-env via ECS.
     ai_recruitment_v2_enabled: bool = False
 
+    # Spec 41 §5 — graduate-admissions intelligence (AdvisorMatcher +
+    # SoPInterestExtractor + FundingScenarioHelper). When True the SoP extractor
+    # auto-tags research interests, advisor matches carry an AI rationale, and the
+    # funding builder surfaces over-commit warnings + re-mix suggestions. The
+    # deterministic baseline (advisor alignment ranking + the hard over-commit
+    # block, §9) is always on regardless of this flag. Both never decide —
+    # matching informs humans, faculty decide (§5 / 46 §6). Off in code, enabled
+    # per-env via ECS.
+    ai_graduate_v2_enabled: bool = False
+
     # GPU infrastructure (cloud-first)
     gpu_mode: str = "openai"  # "openai" | "aws" | "local" | "mock"
     gpu_8b_instance_id: str = ""

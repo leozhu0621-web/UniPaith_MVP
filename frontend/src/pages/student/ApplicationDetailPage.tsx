@@ -30,6 +30,7 @@ import {
 import Breadcrumbs from '../../components/ui/Breadcrumbs'
 import usePageTitle from '../../hooks/usePageTitle'
 import OfferPanel from './apply/offer/OfferPanel'
+import GraduateIntentCard from './apply/GraduateIntentCard'
 import EnrollmentPanel from './apply/enrollment/EnrollmentPanel'
 import { DECISION_STATE_LABEL } from './apply/offer/offerFormat'
 import PaymentCheckout from '../../components/student/PaymentCheckout'
@@ -505,13 +506,16 @@ export default function ApplicationDetailPage() {
           <Tabs tabs={tabs} activeTab={tab} onChange={setTab} />
           <div className="mt-4">
             {tab === 'checklist' && (
-              <ChecklistTab
-                items={checklistItems}
-                completionPct={completionPct}
-                isExternal={isExternal}
-                canToggle={application.status === 'draft'}
-                onToggle={(key, completed) => toggleMut.mutate({ key, completed })}
-              />
+              <>
+                <GraduateIntentCard applicationId={appId!} />
+                <ChecklistTab
+                  items={checklistItems}
+                  completionPct={completionPct}
+                  isExternal={isExternal}
+                  canToggle={application.status === 'draft'}
+                  onToggle={(key, completed) => toggleMut.mutate({ key, completed })}
+                />
+              </>
             )}
 
             {tab === 'documents' && (

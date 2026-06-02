@@ -140,6 +140,10 @@ def test_each_agent_declares_consent_requirement():
         # Spec 40 §5 — recruitment CRM agents.
         "prospect_prioritizer",
         "territory_optimizer",
+        # Spec 41 §5 — graduate-admissions agents.
+        "advisor_matcher",
+        "sop_interest_extractor",
+        "funding_scenario_helper",
     }
     assert set(AGENT_REQUIRES.keys()) == expected_agents
 

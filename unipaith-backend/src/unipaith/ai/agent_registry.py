@@ -71,6 +71,14 @@ AGENT_TIERS: dict[str, str] = {
     "prospect_prioritizer": "batch",  # ProspectPrioritizer — apply-likelihood ranking (Haiku)
     # TerritoryOptimizer — high-yield school/fair suggestions (Sonnet).
     "territory_optimizer": "workhorse",
+    # ── Graduate & PhD admissions (spec 41 §5) — all deterministic in MVP,
+    #    always fall back. AdvisorMatcher embeds research-interest similarity
+    #    (Haiku, future embedding cosine); SoPInterestExtractor extends 45
+    #    extraction (Haiku); FundingScenarioHelper suggests viable funding mixes
+    #    (Sonnet). ──
+    "advisor_matcher": "batch",  # AdvisorMatcher — research-fit ranking
+    "sop_interest_extractor": "batch",  # SoPInterestExtractor — SoP → interest tags
+    "funding_scenario_helper": "workhorse",  # FundingScenarioHelper — over-commit + mixes
 }
 
 

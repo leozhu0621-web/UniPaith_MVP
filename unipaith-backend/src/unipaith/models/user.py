@@ -14,6 +14,12 @@ from unipaith.models.base import Base
 class UserRole(enum.StrEnum):
     student = "student"
     institution_admin = "institution_admin"
+    # Spec 41 §8 — faculty sub-role (lighter than institution_admin): reads
+    # applicants in their department, scores, recommends, and proposes funding,
+    # but cannot *release* a decision (that stays central / institution_admin).
+    # The login flow is Phase-2 auth work; faculty_profiles.user_id wires a row
+    # to this role when present.
+    faculty = "faculty"
 
 
 class User(Base):

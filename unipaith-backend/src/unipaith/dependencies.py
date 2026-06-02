@@ -79,3 +79,13 @@ async def require_institution_admin(user: User = Depends(get_current_user)) -> U
     if user.role != UserRole.institution_admin:
         raise ForbiddenException("Institution admin access required")
     return user
+
+
+async def require_faculty_or_institution_admin(user: User = Depends(get_current_user)) -> User:
+    """Spec 41 §8 — faculty *and* central admins may read their department's
+    applicants, score, recommend, and propose funding. Releasing a decision stays
+    behind ``require_institution_admin`` (the two-stage gate: faculty recommend,
+    central releases, §2.4)."""
+    if user.role not in (UserRole.institution_admin, UserRole.faculty):
+        raise ForbiddenException("Faculty or institution admin access required")
+    return user
