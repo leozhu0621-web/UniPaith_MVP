@@ -12,7 +12,7 @@ import { COMPETENCY_LABELS, COMPETENCIES } from './constants'
 
 const BAND_META: Record<string, { label: string; ring: string; text: string }> = {
   high: { label: 'Interview-ready', ring: 'text-gold', text: 'text-gold' },
-  medium: { label: 'Getting there', ring: 'text-cobalt', text: 'text-cobalt' },
+  medium: { label: 'Getting there', ring: 'text-secondary', text: 'text-secondary' },
   low: { label: 'Just starting', ring: 'text-warning', text: 'text-warning' },
 }
 
@@ -24,7 +24,7 @@ function ScoreRing({ score, band }: { score: number; band: string }) {
   return (
     <div className="relative h-[76px] w-[76px] shrink-0">
       <svg viewBox="0 0 76 76" className="h-full w-full -rotate-90">
-        <circle cx="38" cy="38" r={r} fill="none" stroke="currentColor" strokeWidth="7" className="text-student-mist" />
+        <circle cx="38" cy="38" r={r} fill="none" stroke="currentColor" strokeWidth="7" className="text-muted-foreground" />
         <circle
           cx="38"
           cy="38"
@@ -40,7 +40,7 @@ function ScoreRing({ score, band }: { score: number; band: string }) {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className={clsx('text-lg font-bold leading-none', meta.text)}>{score}</span>
-        <span className="text-[9px] uppercase tracking-wide text-student-text">score</span>
+        <span className="text-[9px] uppercase tracking-wide text-muted-foreground">score</span>
       </div>
     </div>
   )
@@ -59,11 +59,11 @@ export default function ReadinessHeader({ summary }: { summary: PromptLibrarySum
           <>
             <ScoreRing score={score} band={band} />
             <div className="min-w-[140px] flex-1">
-              <div className="flex items-center gap-1.5 text-eyebrow uppercase text-student-text">
+              <div className="flex items-center gap-1.5 text-eyebrow uppercase text-muted-foreground">
                 <Target size={13} /> Interview readiness
               </div>
               <div className={clsx('text-h3 font-bold', meta?.text)}>{meta?.label}</div>
-              <p className="mt-0.5 text-sm text-student-text">
+              <p className="mt-0.5 text-sm text-muted-foreground">
                 {summary.readiness_detail
                   ? `${summary.readiness_detail.answered}/${summary.readiness_detail.core_total} core questions answered`
                   : null}
@@ -72,8 +72,8 @@ export default function ReadinessHeader({ summary }: { summary: PromptLibrarySum
           </>
         ) : (
           <div className="flex-1">
-            <div className="text-eyebrow uppercase text-student-text">Your practice</div>
-            <div className="text-h3 font-bold text-student-ink">
+            <div className="text-eyebrow uppercase text-muted-foreground">Your practice</div>
+            <div className="text-h3 font-bold text-foreground">
               {summary.answered_count} of {summary.total_prompts} prompts answered
             </div>
           </div>
@@ -88,7 +88,7 @@ export default function ReadinessHeader({ summary }: { summary: PromptLibrarySum
 
       {summary.inference_enabled && summary.competency_coverage_map && (
         <div>
-          <div className="mb-1.5 text-eyebrow uppercase text-student-text">Competency coverage</div>
+          <div className="mb-1.5 text-eyebrow uppercase text-muted-foreground">Competency coverage</div>
           <div className="flex flex-wrap gap-1.5">
             {COMPETENCIES.map(c => {
               const covered = !gaps.has(c)
@@ -111,9 +111,9 @@ export default function ReadinessHeader({ summary }: { summary: PromptLibrarySum
       )}
 
       {summary.inference_enabled && summary.suggested_practice_plan && (
-        <div className="flex items-start gap-2 rounded-lg bg-student-moss px-3 py-2.5">
+        <div className="flex items-start gap-2 rounded-lg bg-muted px-3 py-2.5">
           <Sparkles size={15} className="mt-0.5 shrink-0 text-gold" />
-          <p className="text-sm text-student-ink">{summary.suggested_practice_plan}</p>
+          <p className="text-sm text-foreground">{summary.suggested_practice_plan}</p>
         </div>
       )}
     </Card>
@@ -123,8 +123,8 @@ export default function ReadinessHeader({ summary }: { summary: PromptLibrarySum
 function Stat({ label, value }: { label: string; value: number }) {
   return (
     <div className="text-center">
-      <div className="text-xl font-bold text-student-ink">{value}</div>
-      <div className="text-eyebrow uppercase text-student-text">{label}</div>
+      <div className="text-xl font-bold text-foreground">{value}</div>
+      <div className="text-eyebrow uppercase text-muted-foreground">{label}</div>
     </div>
   )
 }

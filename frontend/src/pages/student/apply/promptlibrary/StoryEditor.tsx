@@ -32,7 +32,7 @@ const EMPTY: StoryInput = {
 }
 
 const field =
-  'w-full rounded-md border border-divider bg-paper px-3 py-2 text-sm text-student-ink focus:border-cobalt focus:outline-none'
+  'w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-secondary focus:outline-none'
 
 export default function StoryEditor({
   story,
@@ -113,7 +113,7 @@ export default function StoryEditor({
     >
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-student-ink">
+          <label className="mb-1 block text-sm font-medium text-foreground">
             Title <span className="text-error">*</span>
           </label>
           <input
@@ -126,7 +126,7 @@ export default function StoryEditor({
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-student-ink">Summary</label>
+          <label className="mb-1 block text-sm font-medium text-foreground">Summary</label>
           <textarea
             className={`${field} min-h-[90px] resize-y`}
             value={form.summary ?? ''}
@@ -138,7 +138,7 @@ export default function StoryEditor({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-sm font-medium text-student-ink">
+            <label className="mb-1 block text-sm font-medium text-foreground">
               Primary competency
             </label>
             <select
@@ -155,7 +155,7 @@ export default function StoryEditor({
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-student-ink">Role</label>
+            <label className="mb-1 block text-sm font-medium text-foreground">Role</label>
             <select
               className={field}
               value={form.role_type ?? ''}
@@ -172,7 +172,7 @@ export default function StoryEditor({
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-student-ink">
+          <label className="mb-1 block text-sm font-medium text-foreground">
             Competency tags
           </label>
           <div className="flex flex-wrap gap-1.5">
@@ -184,7 +184,7 @@ export default function StoryEditor({
                   type="button"
                   onClick={() => toggleArr('competency_tags', c)}
                   className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                    on ? 'bg-cobalt text-white' : 'bg-student-mist text-student-text hover:bg-divider'
+                    on ? 'bg-secondary text-secondary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   {COMPETENCY_LABELS[c]}
@@ -195,7 +195,7 @@ export default function StoryEditor({
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-student-ink">Context</label>
+          <label className="mb-1 block text-sm font-medium text-foreground">Context</label>
           <div className="flex flex-wrap gap-1.5">
             {CONTEXT_TAGS.map(c => {
               const on = (form.context_tags ?? []).includes(c)
@@ -205,7 +205,7 @@ export default function StoryEditor({
                   type="button"
                   onClick={() => toggleArr('context_tags', c)}
                   className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize transition-colors ${
-                    on ? 'bg-cobalt text-white' : 'bg-student-mist text-student-text hover:bg-divider'
+                    on ? 'bg-secondary text-secondary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   {c}
@@ -226,7 +226,7 @@ export default function StoryEditor({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-sm font-medium text-student-ink">Stakeholder</label>
+            <label className="mb-1 block text-sm font-medium text-foreground">Stakeholder</label>
             <select
               className={field}
               value={form.stakeholder_type ?? ''}
@@ -241,7 +241,7 @@ export default function StoryEditor({
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-student-ink">Duration</label>
+            <label className="mb-1 block text-sm font-medium text-foreground">Duration</label>
             <input
               className={field}
               value={form.duration ?? ''}
@@ -253,7 +253,7 @@ export default function StoryEditor({
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-student-ink">
+          <label className="mb-1 block text-sm font-medium text-foreground">
             Evidence link (optional)
           </label>
           <input
@@ -265,12 +265,12 @@ export default function StoryEditor({
           />
         </div>
 
-        <label className="flex items-center gap-2 text-sm text-student-ink">
+        <label className="flex items-center gap-2 text-sm text-foreground">
           <input
             type="checkbox"
             checked={!!form.referenceable_contact_flag}
             onChange={e => set('referenceable_contact_flag', e.target.checked)}
-            className="h-4 w-4 rounded border-divider text-cobalt focus:ring-cobalt"
+            className="h-4 w-4 rounded border-border text-secondary focus:ring-cobalt"
           />
           Someone can vouch for this story
         </label>
@@ -290,7 +290,7 @@ function TierSelect({
 }) {
   return (
     <div>
-      <label className="mb-1 block text-sm font-medium text-student-ink">{label} (1–5)</label>
+      <label className="mb-1 block text-sm font-medium text-foreground">{label} (1–5)</label>
       <select
         className={field}
         value={value ?? ''}
