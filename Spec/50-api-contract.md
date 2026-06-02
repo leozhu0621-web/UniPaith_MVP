@@ -1,8 +1,10 @@
 # 50 · API Contract — Front ↔ Back Handshake
 
-> The single agreement between the React frontend (`frontend/`) and the FastAPI backend (`unipaith-backend/`). Conventions (envelope, auth, errors, pagination) + the **router map verified against the live code** (22 router files, ~285 routes, all under `/api/v1`, as of 2026-05-30). Feature docs own per-endpoint detail; this doc owns the cross-cutting contract.
+> The single agreement between the React frontend (`frontend/`) and the FastAPI backend (`unipaith-backend/`). Conventions (envelope, auth, errors, pagination) + the **router map**, all under `/api/v1`. Feature docs own per-endpoint detail; this doc owns the cross-cutting contract.
 >
-> Status: **draft v1.0** · 2026-05-30 · Build-integration doc. **Machine source of truth = the live OpenAPI at `/api/v1/openapi.json` (Swagger UI at `/docs` when `DEBUG=true`).** This doc is the human contract; when they disagree, the running code wins — fix this doc.
+> Status: **draft v1.1** · 2026-06-02 · Build-integration doc. **Machine source of truth = the live OpenAPI at `/api/v1/openapi.json` (Swagger UI at `/docs` when `DEBUG=true`), now also surfaced publicly + grouped at `GET /api/v1/build/api-contract` → the `/goal/api` page (specs 48/49/50 transparency hub), which reads the running route table so the map can never drift.** This doc is the human contract; when they disagree, the running code wins — fix this doc.
+>
+> **Live count (2026-06-02): 39 router files / ~553 routes under `/api/v1`** — up from the v1.0 draft's 22 / ~285 because specs 39–46 (billing, payments, recruitment, graduate, governance, connect, intake, …) landed afterward. The numbers below are illustrative; `GET /api/v1/build/api-contract` is authoritative.
 
 ---
 
@@ -146,6 +148,6 @@ Each backend router has a matching `frontend/src/api/*.ts` module (live today: `
 ## 10. Open questions
 
 - **`students.py`/`institutions.py` decomposition.** 73- and 81-route monoliths are hard to own; consider splitting into the feature-aligned routers the docs assume (segments, campaigns, posts…). Until then, this map is the bridge.
-- **Duplicate match/strategy paths** (`students.py` vs `strategy.py`) — pick canonical, deprecate the other so the frontend has one contract.
+- ~~**Duplicate match/strategy paths** (`students.py` vs `strategy.py`)~~ — **resolved**: `strategy.py` (`/students/me/strategy/*`) is canonical; `students.py` no longer carries `/me/strategy` routes. Match scoring stays in `students.py` `/me/matches/*` by design.
 - **Versioning.** `/api/v1` exists — good. Bump policy for v2 when external consumers appear.
 - **`messaging.py` conversations vs feature docs' "threads".** Code uses `conversations`; docs `17`/`29` say "threads" — same concept, align the vocabulary (`51` §5).

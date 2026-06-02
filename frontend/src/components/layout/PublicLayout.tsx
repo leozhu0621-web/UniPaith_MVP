@@ -29,10 +29,10 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             About
           </Link>
           <Link
-            to="/goal/claude-api"
+            to="/goal"
             className="hidden md:inline text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
-            AI agents
+            Transparency
           </Link>
           <Link
             to="/login"

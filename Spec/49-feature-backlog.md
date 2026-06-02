@@ -2,7 +2,9 @@
 
 > Every feature in `Misc./Feature List V1.docx`, mapped to the spec that covers it OR flagged net-new. Classifies each as MVP-core, MVP-extend, or defer. Nothing from the founder's feature list is silently dropped.
 >
-> Status: **draft v1.0** · 2026-05-29 · Source: `Misc./Feature List V1.docx` (+ cross-checked against `Misc./Roadmap.docx`).
+> Status: **draft v1.1** · 2026-06-02 · Source: `Misc./Feature List V1.docx` (+ cross-checked against `Misc./Roadmap.docx`).
+>
+> **Now a live surface.** This coverage map is published at **`/goal/features`** (public; `GET /api/v1/build/features`) with a second axis — `delivered` — showing what's actually in the build today. As of 2026-06-02 every **core + extend** feature is delivered, and four items the v1.0 cut marked `defer` (International §38, Fees §39, Recruitment §40, Graduate §41) shipped **ahead of plan** — so the map shows both the plan class and live reality.
 
 ---
 
