@@ -214,6 +214,13 @@ export default function DataTab() {
               <div className="min-w-0">
                 <label htmlFor={lever.key} className="font-semibold text-foreground">{lever.label}</label>
                 <p className="text-sm text-muted-foreground">{lever.help}</p>
+                {/* Spec 46 §8 — objecting to AI processing has a clear consequence. */}
+                {lever.key === 'consent_matching' && !dr.consent_matching && (
+                  <p className="text-xs text-warning mt-1.5">
+                    With matching off, no AI runs on your data — no personalized matches, no “why”
+                    explanations, and no Discovery chat. You can still browse anonymously.
+                  </p>
+                )}
                 {lastChanged && <p className="text-xs text-muted-foreground mt-1">Last changed {lastChanged}</p>}
               </div>
               <Toggle
@@ -225,6 +232,10 @@ export default function DataTab() {
             </div>
           ))}
         </Card>
+        {/* Spec 46 §2 — every consent change is logged. */}
+        <p className="text-xs text-muted-foreground mt-2">
+          Every change is recorded in your <span className="font-medium text-foreground">access log</span> below.
+        </p>
       </section>
 
       {/* Portable export */}

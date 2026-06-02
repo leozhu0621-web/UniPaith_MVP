@@ -88,6 +88,15 @@ class Institution(Base):
     #    "stripe_connect_account_id": str | null}
     # Effective amounts: program override (cost_data) → this config → none.
     payment_config: Mapped[dict | None] = mapped_column(JSONB)
+    # Spec 46 §9 — institution data-governance config, edited at
+    # /i/settings?tab=data. NULL = platform defaults (see
+    # services/data_governance.DEFAULT_DATA_GOVERNANCE):
+    #   {"override_expiry_weeks_default": int (1–4),
+    #    "protected_attributes_tracked": [str],   # subset of the §6.1 set
+    #    "no_training_tier": bool,                # force consent.training=false
+    #    "data_residency": "us" | "canada" | "eu"}  # Phase 14 deferred, US only
+    # Complements the §6 per-program fairness columns owned by fairness_service.
+    data_governance: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
