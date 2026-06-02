@@ -91,17 +91,17 @@ export default function PromptLibraryTab() {
   return (
     <div className="mx-auto max-w-5xl space-y-5 p-6">
       <header>
-        <h2 className="flex items-center gap-2 text-h3 text-student-ink">
+        <h2 className="flex items-center gap-2 text-h3 text-foreground">
           <MessagesSquare size={20} /> Prompt Library
         </h2>
-        <p className="mt-1 text-sm text-student-text">
+        <p className="mt-1 text-sm text-muted-foreground">
           Answer the questions admissions and interviewers actually ask — once — then reuse your
           best stories everywhere. We coach structure and flag gaps; we never write your answer.
         </p>
       </header>
 
       {isError && (
-        <Card className="text-sm text-student-ink">
+        <Card className="text-sm text-foreground">
           We couldn&apos;t load the prompt library just now. Please refresh in a moment.
         </Card>
       )}
@@ -117,19 +117,19 @@ export default function PromptLibraryTab() {
             <div className="relative min-w-[180px] flex-1">
               <Search
                 size={15}
-                className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-student-text"
+                className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
               />
               <input
                 value={q}
                 onChange={e => setQ(e.target.value)}
                 placeholder="Search prompts…"
-                className="w-full rounded-md border border-divider bg-paper py-2 pl-8 pr-3 text-sm text-student-ink focus:border-cobalt focus:outline-none"
+                className="w-full rounded-md border border-border bg-background py-2 pl-8 pr-3 text-sm text-foreground focus:border-secondary focus:outline-none"
               />
             </div>
             <select
               value={intent}
               onChange={e => setIntent(e.target.value)}
-              className="rounded-md border border-divider bg-paper px-3 py-2 text-sm text-student-ink focus:border-cobalt focus:outline-none"
+              className="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-secondary focus:outline-none"
             >
               <option value="">All themes</option>
               {intents.map(i => (
@@ -141,7 +141,7 @@ export default function PromptLibraryTab() {
             <select
               value={channel}
               onChange={e => setChannel(e.target.value)}
-              className="rounded-md border border-divider bg-paper px-3 py-2 text-sm text-student-ink focus:border-cobalt focus:outline-none"
+              className="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-secondary focus:outline-none"
             >
               <option value="">All formats</option>
               {Object.entries(CHANNEL_LABELS).map(([k, v]) => (
@@ -153,7 +153,7 @@ export default function PromptLibraryTab() {
             <select
               value={statusF}
               onChange={e => setStatusF(e.target.value as StatusFilter)}
-              className="rounded-md border border-divider bg-paper px-3 py-2 text-sm text-student-ink focus:border-cobalt focus:outline-none"
+              className="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-secondary focus:outline-none"
             >
               <option value="all">All</option>
               <option value="unanswered">Unanswered</option>
@@ -164,16 +164,16 @@ export default function PromptLibraryTab() {
 
           {/* Catalog grouped by theme */}
           {grouped.length === 0 ? (
-            <Card variant="card-flush" className="px-4 py-10 text-center text-sm text-student-text">
+            <Card variant="card-flush" className="px-4 py-10 text-center text-sm text-muted-foreground">
               No prompts match these filters.
             </Card>
           ) : (
             <div className="space-y-6">
               {grouped.map(([tag, items]) => (
                 <section key={tag}>
-                  <h3 className="mb-2 text-eyebrow uppercase tracking-wide text-student-text">
+                  <h3 className="mb-2 text-eyebrow uppercase tracking-wide text-muted-foreground">
                     {INTENT_LABELS[tag] ?? tag}
-                    <span className="ml-1.5 text-student-text/60">{items.length}</span>
+                    <span className="ml-1.5 text-muted-foreground/60">{items.length}</span>
                   </h3>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {items.map(p => (
@@ -190,7 +190,7 @@ export default function PromptLibraryTab() {
             </div>
           )}
 
-          <div className="border-t border-divider pt-5">
+          <div className="border-t border-border pt-5">
             <StoryBankPanel stories={stories.data ?? []} />
           </div>
         </>
@@ -210,10 +210,10 @@ export default function PromptLibraryTab() {
 function LoadingSkeleton() {
   return (
     <div className="space-y-4">
-      <div className="h-28 animate-pulse rounded-xl bg-student-mist" />
+      <div className="h-28 animate-pulse rounded-xl bg-muted" />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-28 animate-pulse rounded-xl bg-student-mist" />
+          <div key={i} className="h-28 animate-pulse rounded-xl bg-muted" />
         ))}
       </div>
     </div>

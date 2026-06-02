@@ -24,7 +24,7 @@ export default function StarChips({
             dim,
             flags[el.key]
               ? 'bg-success-soft text-success'
-              : 'bg-student-mist text-student-text/50',
+              : 'bg-muted text-muted-foreground/50',
           )}
         >
           {el.letter}

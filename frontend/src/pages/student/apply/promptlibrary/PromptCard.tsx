@@ -47,13 +47,13 @@ export default function PromptCard({
       className="flex flex-col gap-2.5"
     >
       <div className="flex items-start justify-between gap-2">
-        <h4 className="text-sm font-semibold leading-snug text-student-ink">{prompt.title}</h4>
+        <h4 className="text-sm font-semibold leading-snug text-foreground">{prompt.title}</h4>
         <Badge variant={draft.variant} size="sm">
           {draft.label}
         </Badge>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-student-text">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-1">
           <FileText size={12} /> {CHANNEL_LABELS[prompt.target_channel]}
         </span>
@@ -63,10 +63,10 @@ export default function PromptCard({
           </span>
         )}
         {prompt.format_required !== 'freeform' && (
-          <span className="font-medium text-cobalt">{prompt.format_required}</span>
+          <span className="font-medium text-secondary">{prompt.format_required}</span>
         )}
         {response?.linked_story_id && (
-          <span className="inline-flex items-center gap-1 text-cobalt">
+          <span className="inline-flex items-center gap-1 text-secondary">
             <Link2 size={12} /> Story linked
           </span>
         )}
@@ -76,11 +76,11 @@ export default function PromptCard({
         {starFlags ? (
           <StarChips flags={starFlags} size="sm" />
         ) : (
-          <span className="inline-flex items-center gap-1 text-xs text-student-text">
+          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
             <PenLine size={12} /> Not started
           </span>
         )}
-        <span className="text-xs font-medium text-cobalt">{response ? 'Edit' : 'Answer'}</span>
+        <span className="text-xs font-medium text-secondary">{response ? 'Edit' : 'Answer'}</span>
       </div>
     </Card>
   )

@@ -86,7 +86,7 @@ export default function ResponseEditor({
       widthClass="sm:max-w-[560px]"
       footer={
         <div className="flex items-center justify-between gap-3">
-          <span className="text-xs text-student-text">
+          <span className="text-xs text-muted-foreground">
             {wc} word{wc === 1 ? '' : 's'}
             {prompt.word_limit ? ` · target ${prompt.word_limit}` : ''}
           </span>
@@ -109,8 +109,8 @@ export default function ResponseEditor({
     >
       <div className="space-y-4">
         <div>
-          <h3 className="text-base font-semibold text-student-ink">{prompt.title}</h3>
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-student-text">
+          <h3 className="text-base font-semibold text-foreground">{prompt.title}</h3>
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <FileText size={12} /> {CHANNEL_LABELS[prompt.target_channel]}
             </span>
@@ -120,25 +120,25 @@ export default function ResponseEditor({
               </span>
             )}
             {prompt.format_required !== 'freeform' && (
-              <span className="font-medium text-cobalt">{prompt.format_required} format</span>
+              <span className="font-medium text-secondary">{prompt.format_required} format</span>
             )}
           </div>
         </div>
 
         {/* Live STAR coverage */}
-        <div className="rounded-lg border border-divider bg-student-moss/60 px-3 py-2.5">
+        <div className="rounded-lg border border-border bg-muted/60 px-3 py-2.5">
           <div className="mb-1.5 flex items-center justify-between">
-            <span className="text-eyebrow uppercase text-student-text">STAR coverage</span>
-            <span className="text-xs font-medium text-student-ink">{starCount(star)}/5</span>
+            <span className="text-eyebrow uppercase text-muted-foreground">STAR coverage</span>
+            <span className="text-xs font-medium text-foreground">{starCount(star)}/5</span>
           </div>
           <StarChips flags={star} />
           {missing.length > 0 && text.trim() && (
-            <p className="mt-1.5 text-xs text-student-text">Add: {missing.join(', ')}</p>
+            <p className="mt-1.5 text-xs text-muted-foreground">Add: {missing.join(', ')}</p>
           )}
         </div>
 
         <textarea
-          className="min-h-[220px] w-full resize-y rounded-md border border-divider bg-paper px-3 py-2 text-sm leading-relaxed text-student-ink focus:border-cobalt focus:outline-none"
+          className="min-h-[220px] w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-sm leading-relaxed text-foreground focus:border-secondary focus:outline-none"
           value={text}
           maxLength={20000}
           onChange={e => setText(e.target.value)}
@@ -152,7 +152,7 @@ export default function ResponseEditor({
 
         {/* Confidence self-rating */}
         <div>
-          <label className="mb-1 block text-sm font-medium text-student-ink">
+          <label className="mb-1 block text-sm font-medium text-foreground">
             How confident are you in this answer?
           </label>
           <div className="flex gap-1.5">
@@ -163,8 +163,8 @@ export default function ResponseEditor({
                 onClick={() => setConfidence(confidence === n ? null : n)}
                 className={`h-8 w-8 rounded-full text-sm font-semibold transition-colors ${
                   confidence != null && n <= confidence
-                    ? 'bg-cobalt text-white'
-                    : 'bg-student-mist text-student-text hover:bg-divider'
+                    ? 'bg-secondary text-secondary-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-muted'
                 }`}
                 aria-label={`Confidence ${n}`}
               >
@@ -176,8 +176,8 @@ export default function ResponseEditor({
 
         {/* Draft status */}
         <div>
-          <label className="mb-1 block text-sm font-medium text-student-ink">Status</label>
-          <div className="inline-flex overflow-hidden rounded-md border border-divider">
+          <label className="mb-1 block text-sm font-medium text-foreground">Status</label>
+          <div className="inline-flex overflow-hidden rounded-md border border-border">
             {STATUS_OPTIONS.map(s => (
               <button
                 key={s}
@@ -186,9 +186,9 @@ export default function ResponseEditor({
                 className={`px-3 py-1.5 text-sm font-medium capitalize transition-colors ${
                   status === s
                     ? s === 'final'
-                      ? 'bg-gold text-student-ink'
-                      : 'bg-cobalt text-white'
-                    : 'bg-paper text-student-text hover:bg-student-mist'
+                      ? 'bg-gold text-ink'
+                      : 'bg-secondary text-secondary-foreground'
+                    : 'bg-background text-muted-foreground hover:bg-muted'
                 }`}
               >
                 {s}
@@ -200,11 +200,11 @@ export default function ResponseEditor({
         {/* Link a story */}
         {stories.length > 0 && (
           <div>
-            <label className="mb-1 block text-sm font-medium text-student-ink">
+            <label className="mb-1 block text-sm font-medium text-foreground">
               Draw from a story (optional)
             </label>
             <select
-              className="w-full rounded-md border border-divider bg-paper px-3 py-2 text-sm text-student-ink focus:border-cobalt focus:outline-none"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-secondary focus:outline-none"
               value={storyId}
               onChange={e => setStoryId(e.target.value)}
             >
