@@ -12,6 +12,7 @@ import AcceptancePage from '../pages/public/AcceptancePage'
 import ExperienceStandardsPage from '../pages/public/ExperienceStandardsPage'
 import ProductionReadinessPage from '../pages/public/ProductionReadinessPage'
 import SearchFeedRecsPage from '../pages/public/SearchFeedRecsPage'
+import KnowledgeEnginePage from '../pages/public/KnowledgeEnginePage'
 import * as buildApi from '../api/build'
 import type {
   Acceptance,
@@ -19,6 +20,7 @@ import type {
   BuildOverview,
   DataModel,
   FeatureCatalog,
+  KnowledgeBuild,
   Production,
   ProductionSummary,
   Roadmap,
@@ -109,6 +111,28 @@ const SEARCH_SUMMARY: SearchBuildSummary = {
   live_is_source_of_truth: true,
 }
 
+const KNOWLEDGE_SUMMARY = {
+  capability_count: 11,
+  capabilities_live: 8,
+  capabilities_partial: 2,
+  capabilities_planned: 1,
+  acceptance_count: 9,
+  acceptance_live: 8,
+  acceptance_partial: 1,
+  reference_domain_count: 8,
+  registered_source_count: 16,
+  reference_tables_present: 9,
+  engine_tables_present: 4,
+  pipeline_stage_count: 7,
+  change_event_type_count: 8,
+  reference_route_count: 9,
+  ops_route_count: 7,
+  backing_route_count: 19,
+  config_knob_count: 8,
+  open_question_count: 6,
+  live_is_source_of_truth: true,
+}
+
 // Specs 48/49/50 — the public /goal transparency surfaces. Each renders live
 // build data from the /build/* endpoints and lets the visitor filter it.
 
@@ -148,6 +172,7 @@ const OVERVIEW: BuildOverview = {
   acceptance: ACCEPTANCE_SUMMARY,
   production: PRODUCTION_SUMMARY,
   search: SEARCH_SUMMARY,
+  knowledge: KNOWLEDGE_SUMMARY,
   provider: 'anthropic',
   surfaces: [
     { key: 'claude-api', title: 'AI agents', spec: '45', blurb: 'The live agent fleet.', path: '/goal/claude-api', stat: 40, stat_label: 'AI agents' },
@@ -160,6 +185,7 @@ const OVERVIEW: BuildOverview = {
     { key: 'frontend', title: 'Frontend engineering', spec: '54', blurb: 'The React build spec.', path: '/goal/frontend', stat: '6/10', stat_label: 'build tasks complete' },
     { key: 'backend', title: 'Production readiness', spec: '55', blurb: 'The backend hardening posture.', path: '/goal/backend', stat: 7, stat_label: 'readiness pillars' },
     { key: 'search', title: 'Search, feed & recs', spec: '56', blurb: 'The discovery substrate.', path: '/goal/search', stat: '4/8', stat_label: 'capabilities live' },
+    { key: 'knowledge', title: 'Knowledge engine', spec: '60', blurb: 'The world-side knowledge graph.', path: '/goal/knowledge', stat: 16, stat_label: 'allowlisted sources' },
   ],
 }
 
@@ -473,6 +499,67 @@ const SEARCH_BUILD: SearchBuild = {
   open_questions: [{ q: 'OpenSearch trigger threshold', a: 'Stay on Postgres FTS until measured.' }],
 }
 
+const KNOWLEDGE_BUILD: KnowledgeBuild = {
+  the_bar: { statement: 'A source-cited picture of the world.', principle: 'Public, non-personal.' },
+  summary: KNOWLEDGE_SUMMARY,
+  benchmark: [
+    {
+      dimension: 'Provenance',
+      kollegio: 'No published provenance',
+      gap: 'opaque numbers',
+      unipaith: 'Provenance on every fact',
+    },
+  ],
+  reference_graph: [
+    {
+      key: 'occupations',
+      title: 'Careers & occupations',
+      section: '§3.1',
+      table: 'ref_occupations',
+      sources: 'BLS · O*NET',
+      feeds: 'Career alignment',
+      table_present: true,
+    },
+  ],
+  pipeline: [{ n: 3, name: 'Extract', detail: 'Grounded, never invents.' }],
+  change_event_types: [
+    { type: 'deadline_moved', materiality: 'high', routes_to: 'notifications' },
+  ],
+  authority_ladder: [
+    { rank: 1, source: 'institution_verified', note: 'The ceiling.' },
+  ],
+  capabilities: [
+    {
+      key: 'reference',
+      title: 'Reference projection',
+      section: '§3',
+      status: 'live',
+      blurb: 'Typed provenance tables.',
+      built: ['8 reference tables'],
+      planned: [],
+    },
+    {
+      key: 'chatbot',
+      title: 'RAG chatbot over the graph',
+      section: '61',
+      status: 'planned',
+      blurb: 'Claude answers over the graph.',
+      built: [],
+      planned: ['Ships in 61'],
+    },
+  ],
+  phases: [{ key: 'A', title: 'Institutional core', status: 'live', detail: 'Schools/programs.' }],
+  acceptance: [{ status: 'live', text: 'No personal/individual data gathered.' }],
+  config_knobs: [{ name: 'crawler_live_fetch_enabled', value: false, section: '§11' }],
+  routes: {
+    reference: ['/api/v1/reference/occupations'],
+    crawler_ops: ['/api/v1/crawler/sources'],
+    enrichment: ['/api/v1/institutions/me/enrichments'],
+  },
+  reference_domains: ['occupations', 'tests', 'visas'],
+  open_questions: [{ q: 'Auto-apply threshold', a: 'Review-all for low-trust.' }],
+}
+
 function renderPage(ui: React.ReactElement, route = '/goal') {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
@@ -487,7 +574,7 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     vi.restoreAllMocks()
   })
 
-  it('hub renders the live stats and links to all ten surfaces', async () => {
+  it('hub renders the live stats and links to all eleven surfaces', async () => {
     vi.spyOn(buildApi, 'getBuildOverview').mockResolvedValue(OVERVIEW)
     renderPage(<GoalHubPage />)
 
@@ -503,6 +590,9 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     expect(screen.getByText('Production readiness')).toBeInTheDocument()
     // Spec 56 — the search/feed/recs surface card appears.
     expect(screen.getByText('Search, feed & recs')).toBeInTheDocument()
+    // Spec 60 — the knowledge engine surface card appears.
+    expect(screen.getByText('Knowledge engine')).toBeInTheDocument()
+    expect(screen.getByText(/Eleven ways to read the build/i)).toBeInTheDocument()
     // Live route count from the overview appears (stat band + surface card).
     expect(screen.getAllByText('553').length).toBeGreaterThan(0)
     // The MVP-complete gold beat shows.
@@ -648,5 +738,28 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Planned' }))
     await waitFor(() => expect(screen.queryByText('Full-text search')).not.toBeInTheDocument())
     expect(screen.getByText('Hybrid semantic fusion')).toBeInTheDocument()
+  })
+
+  it('knowledge engine page renders the benchmark, reference graph, capabilities and routes', async () => {
+    vi.spyOn(buildApi, 'getKnowledgeBuild').mockResolvedValue(KNOWLEDGE_BUILD)
+    renderPage(<KnowledgeEnginePage />, '/goal/knowledge')
+
+    // Wait for the data-dependent content (a reference-graph card) to resolve.
+    await waitFor(() => expect(screen.getByText('Careers & occupations')).toBeInTheDocument())
+    // The Kollegio benchmark asset (§1A) renders.
+    expect(screen.getByText('Improving on Kollegio')).toBeInTheDocument()
+    expect(screen.getByText('Provenance on every fact')).toBeInTheDocument()
+    // The reference-graph card shows its live table name.
+    expect(screen.getByText('ref_occupations')).toBeInTheDocument()
+    // A live config knob (read off settings) + a backing route render.
+    expect(screen.getByText('crawler_live_fetch_enabled')).toBeInTheDocument()
+    expect(screen.getByText('/api/v1/reference/occupations')).toBeInTheDocument()
+    // The hero beat shows the allowlisted-source count read live.
+    expect(screen.getByText(/16 allowlisted sources/i)).toBeInTheDocument()
+
+    // Filter to Planned → the live reference capability drops, the RAG chatbot stays.
+    fireEvent.click(screen.getByRole('button', { name: 'Planned' }))
+    await waitFor(() => expect(screen.queryByText('Reference projection')).not.toBeInTheDocument())
+    expect(screen.getByText('RAG chatbot over the graph')).toBeInTheDocument()
   })
 })

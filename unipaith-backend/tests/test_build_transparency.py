@@ -439,7 +439,7 @@ async def test_overview_endpoint(client: AsyncClient):
         "surfaces",
     ):
         assert key in body
-    assert len(body["surfaces"]) == 10
+    assert len(body["surfaces"]) == 11
     assert {s["key"] for s in body["surfaces"]} == {
         "claude-api",
         "roadmap",
@@ -451,6 +451,7 @@ async def test_overview_endpoint(client: AsyncClient):
         "frontend",
         "backend",
         "search",
+        "knowledge",
     }
     fe = next(s for s in body["surfaces"] if s["key"] == "frontend")
     assert fe["path"] == "/goal/frontend" and fe["spec"] == "54"
@@ -466,6 +467,11 @@ async def test_overview_endpoint(client: AsyncClient):
     assert search["stat"] == (
         f"{body['search']['capabilities_live']}/{body['search']['capability_count']}"
     )
+    # Spec 60 — the knowledge surface carries the allowlisted-source count.
+    knowledge = next(s for s in body["surfaces"] if s["key"] == "knowledge")
+    assert knowledge["spec"] == "60"
+    assert knowledge["path"] == "/goal/knowledge"
+    assert knowledge["stat"] == body["knowledge"]["registered_source_count"]
 
 
 @pytest.mark.asyncio

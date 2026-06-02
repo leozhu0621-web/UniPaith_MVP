@@ -10,6 +10,7 @@ import type {
   DataModel,
   FeatureCatalog,
   FrontendStandards,
+  KnowledgeBuild,
   Production,
   Roadmap,
   SearchBuild,
@@ -63,5 +64,10 @@ export async function getProduction(): Promise<Production> {
 
 export async function getSearchBuild(): Promise<SearchBuild> {
   const { data } = await apiClient.get<SearchBuild>('/build/search')
+  return data
+}
+
+export async function getKnowledgeBuild(): Promise<KnowledgeBuild> {
+  const { data } = await apiClient.get<KnowledgeBuild>('/build/knowledge')
   return data
 }

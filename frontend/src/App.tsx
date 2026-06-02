@@ -32,6 +32,7 @@ import DataModelPage from './pages/public/DataModelPage'
 import AcceptancePage from './pages/public/AcceptancePage'
 import ExperienceStandardsPage from './pages/public/ExperienceStandardsPage'
 import FrontendStandardsPage from './pages/public/FrontendStandardsPage'
+import KnowledgeEnginePage from './pages/public/KnowledgeEnginePage'
 import ProductionReadinessPage from './pages/public/ProductionReadinessPage'
 import SearchFeedRecsPage from './pages/public/SearchFeedRecsPage'
 
@@ -133,6 +134,7 @@ const router = createBrowserRouter([
   { path: '/goal/backend', element: <PublicLayout><ProductionReadinessPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 56 — search / feed / recommendations substrate (routes / flags / table read live).
   { path: '/goal/search', element: <PublicLayout><SearchFeedRecsPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  { path: '/goal/knowledge', element: <PublicLayout><KnowledgeEnginePage /></PublicLayout>, errorElement: <RouteErrorPage /> },
 
   { path: '/login', element: <AuthLayout><LoginPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
   { path: '/signup', element: <AuthLayout><SignupPage /></AuthLayout>, errorElement: <RouteErrorPage /> },

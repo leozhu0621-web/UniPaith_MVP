@@ -411,6 +411,14 @@ class Settings(BaseSettings):
     # per-env via ECS.
     ai_intake_engine_v2_enabled: bool = False
 
+    # Spec 60 §13 — the SourceExtractionAgent (Qwen per 63 / Claude). When False,
+    # extraction takes the deterministic rule-based per-source template path, which
+    # is fully functional on its own (and is what every domain test exercises). The
+    # LLM path is grounded + schema-strict + never-invents; the rule-based path is
+    # the safe default until the LLM extractor proves itself per-environment. Off in
+    # code, enabled per-env via ECS.
+    ai_crawler_extraction_v2_enabled: bool = False
+
     # GPU infrastructure (cloud-first)
     gpu_mode: str = "openai"  # "openai" | "aws" | "local" | "mock"
     gpu_8b_instance_id: str = ""
@@ -516,6 +524,32 @@ class Settings(BaseSettings):
 
     # Historical outcomes
     crawler_seed_historical_years: int = 3
+
+    # --- Spec 60 — Knowledge engine (governed reference enrichment) ---
+    # The §2/§11 governance posture. ``crawler_engine_enabled`` arms the
+    # scheduled tick; ``crawler_live_fetch_enabled`` is the hard gate on hitting
+    # the live network — OFF by default, so the engine runs entirely on the
+    # Tier-1 structured seed + fixture path until live fetching is deliberately
+    # enabled per-environment. ``crawler_allowlist_only`` keeps the frontier to
+    # registered allowlisted sources (the no-personal-data contract gate).
+    crawler_engine_enabled: bool = False
+    crawler_live_fetch_enabled: bool = False
+    crawler_allowlist_only: bool = True
+    crawler_tick_interval_minutes: int = 60
+    crawler_tick_batch_size: int = 25
+    # §7/§8 confidence-gated auto-apply: a crawled field auto-applies only when
+    # ≥ ``min_sources`` trusted sources corroborate it at ≥ ``min_confidence``;
+    # otherwise it queues for review. Single low-trust never auto-applies.
+    crawler_auto_apply_min_sources: int = 2
+    crawler_auto_apply_min_confidence: float = 0.75
+    # §3B routing: per-user-per-day cap on change-event notifications (deduped /
+    # batched, consent-gated). Mirrors the saved-search alert cap.
+    change_event_route_cap_per_user_per_day: int = 5
+    change_event_min_materiality_to_route: str = "medium"  # low | medium | high
+    # §9 — there is no platform-admin tier (05 §2). The internal ops API is
+    # system-guarded by a shared token (``X-Ops-Token``). Empty = locked: the ops
+    # endpoints return 403 unless a token is configured for the environment.
+    crawler_ops_token: str = ""
 
     # Notifications — Amazon SES
     ses_region: str = "us-east-1"

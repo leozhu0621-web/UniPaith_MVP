@@ -21,6 +21,7 @@ from unipaith.transparency.api_contract import build_api_contract
 from unipaith.transparency.data_model import build_data_model
 from unipaith.transparency.features import build_features
 from unipaith.transparency.frontend_standards import build_frontend_standards
+from unipaith.transparency.knowledge import build_knowledge
 from unipaith.transparency.production import build_production
 from unipaith.transparency.roadmap import build_roadmap
 from unipaith.transparency.search import build_search
@@ -55,6 +56,7 @@ def _assemble_overview(request: Request) -> dict:
     fe_stat = f"{frontend['build_tasks_done']}/{frontend['build_task_count']}"
     production = build_production(request.app)["summary"]
     search = build_search(request.app.routes)["summary"]
+    knowledge = build_knowledge(request.app.routes)["summary"]
     return {
         "roadmap": roadmap,
         "features": features,
@@ -64,6 +66,7 @@ def _assemble_overview(request: Request) -> dict:
         "acceptance": acceptance,
         "production": production,
         "search": search,
+        "knowledge": knowledge,
         "provider": settings.ai_provider_default,
         "surfaces": [
             {
@@ -159,6 +162,17 @@ def _assemble_overview(request: Request) -> dict:
                 "stat": f"{search['capabilities_live']}/{search['capability_count']}",
                 "stat_label": "capabilities live",
             },
+            {
+                "key": "knowledge",
+                "title": "Knowledge engine",
+                "spec": "60",
+                "blurb": "The world-side knowledge graph — a governed crawler that "
+                "enriches the platform with source-cited careers, tests, visas, cost, "
+                "majors, rankings and scholarships.",
+                "path": "/goal/knowledge",
+                "stat": knowledge["registered_source_count"],
+                "stat_label": "allowlisted sources",
+            },
         ],
     }
 
@@ -225,6 +239,19 @@ async def get_production(request: Request) -> dict:
     table, and the read-cache hit-rate from the running ``core.cache`` — so the page
     mirrors the deployed backend and can't claim what isn't wired."""
     return build_production(request.app)
+
+
+@router.get("/knowledge", summary="The data-crawler & knowledge-base engine (spec 60)")
+async def get_knowledge(request: Request) -> dict:
+    """Spec 60's world-side knowledge graph: the governed reference-enrichment
+    engine. Each capability is honestly classified live·partial·planned; the
+    Kollegio benchmark, reference graph, 7-stage pipeline, change-event taxonomy
+    and provenance/authority ladder are authored from the spec. The backing-route
+    counts are resolved from the live route table, the reference-table presence is
+    read from the running SQLAlchemy metadata, and the extraction / live-fetch /
+    auto-apply / change-cap knobs are read straight off ``settings`` — so the page
+    can't claim a surface the deployed app doesn't serve."""
+    return build_knowledge(request.app.routes)
 
 
 @router.get("/search", summary="The search, feed & recommendations substrate (spec 56)")

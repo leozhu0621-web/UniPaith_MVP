@@ -136,6 +136,7 @@ export interface BuildOverview {
   acceptance: AcceptanceSummary
   production: ProductionSummary
   search: SearchBuildSummary
+  knowledge: KnowledgeBuildSummary
   provider: string
   surfaces: OverviewSurface[]
 }
@@ -646,5 +647,114 @@ export interface SearchBuild {
   config_knobs: SearchConfigKnob[]
   routes: SearchRoutes
   saved_searches_table_present: boolean
+  open_questions: OpenQuestion[]
+}
+
+// ── Knowledge engine / data crawler (spec 60) ───────────────────────────────
+export interface KnowledgeBenchmark {
+  dimension: string
+  kollegio: string
+  gap: string
+  unipaith: string
+}
+
+export interface KnowledgeRefDomain {
+  key: string
+  title: string
+  section: string
+  table: string
+  sources: string
+  feeds: string
+  table_present: boolean
+}
+
+export interface KnowledgeStage {
+  n: number
+  name: string
+  detail: string
+}
+
+export interface KnowledgeChangeType {
+  type: string
+  materiality: string
+  routes_to: string
+}
+
+export interface KnowledgeAuthorityRung {
+  rank: number
+  source: string
+  note: string
+}
+
+export interface KnowledgeCapability {
+  key: string
+  title: string
+  section: string
+  status: ReadinessStatus
+  blurb: string
+  built: string[]
+  planned: string[]
+}
+
+export interface KnowledgePhase {
+  key: string
+  title: string
+  status: ReadinessStatus
+  detail: string
+}
+
+export interface KnowledgeAcceptanceItem {
+  status: ReadinessStatus
+  text: string
+}
+
+export interface KnowledgeConfigKnob {
+  name: string
+  value: string | number | boolean
+  section: string
+}
+
+export interface KnowledgeRoutes {
+  reference: string[]
+  crawler_ops: string[]
+  enrichment: string[]
+}
+
+export interface KnowledgeBuildSummary {
+  capability_count: number
+  capabilities_live: number
+  capabilities_partial: number
+  capabilities_planned: number
+  acceptance_count: number
+  acceptance_live: number
+  acceptance_partial: number
+  reference_domain_count: number
+  registered_source_count: number
+  reference_tables_present: number
+  engine_tables_present: number
+  pipeline_stage_count: number
+  change_event_type_count: number
+  reference_route_count: number
+  ops_route_count: number
+  backing_route_count: number
+  config_knob_count: number
+  open_question_count: number
+  live_is_source_of_truth: boolean
+}
+
+export interface KnowledgeBuild {
+  the_bar: SearchTheBar
+  summary: KnowledgeBuildSummary
+  benchmark: KnowledgeBenchmark[]
+  reference_graph: KnowledgeRefDomain[]
+  pipeline: KnowledgeStage[]
+  change_event_types: KnowledgeChangeType[]
+  authority_ladder: KnowledgeAuthorityRung[]
+  capabilities: KnowledgeCapability[]
+  phases: KnowledgePhase[]
+  acceptance: KnowledgeAcceptanceItem[]
+  config_knobs: KnowledgeConfigKnob[]
+  routes: KnowledgeRoutes
+  reference_domains: string[]
   open_questions: OpenQuestion[]
 }

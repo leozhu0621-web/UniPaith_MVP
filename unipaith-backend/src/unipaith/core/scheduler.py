@@ -97,6 +97,19 @@ def setup_scheduler() -> None:
             **_job_defaults(),
         )
 
+    # Spec 60 §10 — the governed knowledge-engine tick. Off by default
+    # (crawler_engine_enabled); public-non-personal reference enrichment only, and
+    # live network fetching stays separately gated by crawler_live_fetch_enabled.
+    if settings.crawler_engine_enabled:
+        scheduler.add_job(
+            _run_crawler_engine_tick,
+            "interval",
+            minutes=settings.crawler_tick_interval_minutes,
+            id="crawler_engine_tick",
+            name="Knowledge Engine Tick (spec 60)",
+            **_job_defaults(),
+        )
+
     # Knowledge engine tick: now handled by ContinuousPipeline Stages 1+2.
     if not settings.pipeline_enabled and settings.engine_loop_enabled:
         scheduler.add_job(
@@ -170,3 +183,22 @@ async def _run_saved_search_alerts() -> None:
             logger.info("Saved-search alert loop emitted %d alert(s)", emitted)
     except Exception as exc:  # noqa: BLE001 — never let a tick break the scheduler
         logger.warning("Saved-search alert loop failed: %s", exc)
+
+
+async def _run_crawler_engine_tick() -> None:
+    """Spec 60 §10 — one governed knowledge-engine tick (flag-gated, off by default).
+
+    Pulls due frontier items, runs the deterministic pipeline (live fetch stays
+    separately gated), and persists an EngineLoopSnapshot. Opens its own session;
+    a failed tick logs and retries next interval — never crashes the loop.
+    """
+    from unipaith.database import async_session
+    from unipaith.services.crawler.engine import KnowledgeEngine
+
+    try:
+        async with async_session() as session:
+            result = await KnowledgeEngine(session).tick(limit=settings.crawler_tick_batch_size)
+            await session.commit()
+        logger.info("Knowledge engine tick: %s", result)
+    except Exception as exc:  # noqa: BLE001 — never let a tick break the scheduler
+        logger.warning("Knowledge engine tick failed: %s", exc)
