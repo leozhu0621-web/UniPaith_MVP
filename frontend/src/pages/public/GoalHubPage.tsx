@@ -10,6 +10,7 @@ import {
   Map as MapIcon,
   Network,
   Rocket,
+  Server,
   ShieldCheck,
   Sparkles,
 } from 'lucide-react'
@@ -34,6 +35,7 @@ const SURFACE_ICONS: Record<string, typeof MapIcon> = {
   'data-model': Database,
   acceptance: Rocket,
   experience: Gauge,
+  backend: Server,
 }
 
 const PRINCIPLES: { title: string; body: string; icon: typeof ShieldCheck }[] = [
@@ -98,9 +100,9 @@ export default function GoalHubPage() {
   return (
     <GoalShell>
       <Hero
-        eyebrow="Build transparency · Specs 48 · 49 · 50 · 51 · 52"
+        eyebrow="Build transparency · Specs 45 · 48–53 · 55"
         title="How UniPaith is built — in the open."
-        lede="The roadmap, the feature coverage map, the API contract, the data model, the acceptance runbook and the AI agent fleet — surfaced as live, self-verifying pages. Where a page shows a number, it's read straight from the running system, not asserted in a doc."
+        lede="The roadmap, the feature coverage map, the API contract, the data model, the acceptance runbook, the experience standards, the AI agent fleet and the backend production posture — surfaced as live, self-verifying pages. Where a page shows a number, it's read straight from the running system, not asserted in a doc."
       >
         {mvpComplete && (
           <span className="inline-flex items-center gap-1.5 rounded-pill border border-primary/40 px-3 py-1 text-[13px] font-semibold text-foreground">
@@ -148,7 +150,7 @@ export default function GoalHubPage() {
       <section id="surfaces" className="mt-16 scroll-mt-20">
         <SectionHeading
           icon={MapIcon}
-          title="Seven ways to read the build"
+          title="Eight ways to read the build"
           sub="Each surface is a public page backed by a DB-free endpoint. Open one to see the detail."
         />
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
