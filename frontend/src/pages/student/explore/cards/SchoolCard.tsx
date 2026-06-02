@@ -34,12 +34,12 @@ export default function SchoolCard({ school, institutionName, onClick }: Props) 
         {school.program_names.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {school.program_names.slice(0, 6).map(name => (
-              <span key={name} className="px-2 py-0.5 text-[10px] rounded-md bg-muted text-slate border border-stone/50 truncate max-w-[120px]">
+              <span key={name} className="px-2 py-0.5 text-[10px] rounded-md bg-muted text-muted-foreground border border-stone/50 truncate max-w-[120px]">
                 {name}
               </span>
             ))}
             {school.program_names.length > 6 && (
-              <span className="px-2 py-0.5 text-[10px] rounded-md bg-muted text-slate border border-stone/50 font-medium">
+              <span className="px-2 py-0.5 text-[10px] rounded-md bg-muted text-muted-foreground border border-stone/50 font-medium">
                 +{school.program_names.length - 6} more
               </span>
             )}
