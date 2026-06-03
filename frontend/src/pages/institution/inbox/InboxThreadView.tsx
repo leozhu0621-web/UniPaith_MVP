@@ -62,7 +62,7 @@ export default function InboxThreadView({
           <ChevronLeft size={18} />
         </button>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[11px] font-medium uppercase tracking-wide text-cobalt">
+          <p className="truncate text-[11px] font-medium uppercase tracking-wide text-secondary">
             {thread.application_id ? 'Application · ' : ''}
             {thread.program_name || 'General inquiry'}
           </p>
@@ -130,7 +130,7 @@ export default function InboxThreadView({
                 <div
                   className={`whitespace-pre-wrap rounded-2xl px-4 py-2 text-sm ${
                     own
-                      ? 'rounded-br-md bg-cobalt text-white'
+                      ? 'rounded-br-md bg-secondary text-secondary-foreground'
                       : 'rounded-bl-md bg-muted text-foreground'
                   }`}
                 >
@@ -172,7 +172,7 @@ export default function InboxThreadView({
               requested_item: null,
               ai_draft_used: false,
             })}
-            className="font-medium text-cobalt hover:underline"
+            className="font-medium text-secondary hover:underline"
           >
             Reply to reopen
           </button>

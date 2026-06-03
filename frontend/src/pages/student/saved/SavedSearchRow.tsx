@@ -95,7 +95,7 @@ export default function SavedSearchRow({
         <AlertToggle enabled={search.alert_enabled} pending={togglePending} onToggle={onToggleAlert} />
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-divider pt-3">
+      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
         <Button size="sm" variant="secondary" onClick={onOpen}>
           <Search size={14} className="mr-1.5" />
           Open in Match

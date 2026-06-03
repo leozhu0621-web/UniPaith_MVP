@@ -240,7 +240,7 @@ export default function BatchReleaseModal({
 
             {releaseMut.isPending && (
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                <div className="h-full rounded-full bg-cobalt transition-all duration-300" style={{ width: `${releaseProgress}%` }} />
+                <div className="h-full rounded-full bg-secondary transition-all duration-300" style={{ width: `${releaseProgress}%` }} />
               </div>
             )}
 
@@ -275,7 +275,7 @@ export default function BatchReleaseModal({
             </ul>
             {releaseMut.isPending && (
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                <div className="h-full rounded-full bg-cobalt transition-all duration-300" style={{ width: `${Math.max(releaseProgress, 20)}%` }} />
+                <div className="h-full rounded-full bg-secondary transition-all duration-300" style={{ width: `${Math.max(releaseProgress, 20)}%` }} />
               </div>
             )}
             <div className="flex justify-end gap-2">

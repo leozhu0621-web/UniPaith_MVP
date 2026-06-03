@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { useAuthStore } from '../../stores/auth-store'
 import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
+import GoogleSignInButton from '../../components/auth/GoogleSignInButton'
 
 const schema = z.object({
   email: z.string().email('Invalid email'),
@@ -44,7 +45,11 @@ export default function LoginPage() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-center text-charcoal mb-2">Welcome back</h2>
+      <h2 className="text-xl font-semibold text-center text-foreground mb-2">Welcome back</h2>
+
+      <div className="rounded-lg border border-secondary/30 bg-secondary/5 px-4 py-2.5 text-center text-xs text-muted-foreground">
+        You're viewing a live demo. Your data resets each time you sign in.
+      </div>
 
       {error && (
         <div className="bg-error-soft border border-error/30 text-error text-sm px-4 py-2 rounded-lg">
@@ -71,16 +76,12 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-slate">
-        Don't have an account?{' '}
-        <Link to="/signup" className="text-cobalt font-semibold hover:underline">
-          Sign up
-        </Link>
-      </p>
+      <GoogleSignInButton />
 
-      <p className="text-center text-sm text-muted-foreground/70">
-        <Link to="/pricing" className="hover:underline">
-          View plans and pricing
+      <p className="text-center text-sm text-muted-foreground">
+        Don't have an account?{' '}
+        <Link to="/signup" className="text-secondary font-semibold hover:underline">
+          Sign up
         </Link>
       </p>
     </div>

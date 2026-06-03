@@ -279,7 +279,7 @@ export default function DiscoverySearch() {
             </div>
           ) : total === 0 ? (
             <div className="text-center py-16 bg-card rounded-xl border border-border">
-              <Search size={28} className="mx-auto text-stone mb-3" />
+              <Search size={28} className="mx-auto text-muted-foreground mb-3" />
               <p className="text-sm text-foreground font-semibold mb-1">No programs match.</p>
               <p className="text-xs text-muted-foreground mb-4">
                 Try removing a {chips.length ? 'chip' : 'filter'}

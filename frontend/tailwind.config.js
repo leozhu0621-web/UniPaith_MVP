@@ -12,65 +12,15 @@ export default {
     },
     extend: {
       colors: {
-        // ── Authoritative brand palette (Brand Materials/colors_and_type.css) ──
-        // Light theme: Sunlit Gold + Cobalt on warm Paper.
-        // Existing student-*/school-*/gold-*/offwhite/charcoal tokens are
-        // remapped to brand values so the ~100 component files using them
-        // pick up the brand without a global search-and-replace.
-        paper: '#FCFAF2',       // canonical warm-paper background
-        ink: '#0A1428',         // canonical deep-ink for dark surfaces
-        cobalt: {
-          DEFAULT: '#2A6BD4',   // links, eyebrows, secondary accents
-          dark: '#6FA0E8',      // lifted cobalt for ink backgrounds
-        },
-        cream: '#F5F1E8',       // dark-theme text, lowercase on dark wordmark
-        // ── Student namespace (now Sunlit Gold = brand primary) ──
-        student: {
-          DEFAULT: '#FFD60A',   // sunlit gold — primary CTA
-          hover: '#E5C000',     // darker gold for hover
-          mist: '#F2EEE0',      // warm muted layer (replaces light-blue-gray)
-          moss: '#F5F1E8',      // soft cream section background
-          ink: '#0A1428',       // editorial deep-ink for headings
-          text: '#4A4640',      // soft warm-gray body
-        },
-        // ── School namespace (Cobalt = brand secondary) ──
-        school: {
-          DEFAULT: '#2A6BD4',   // cobalt — secondary
-          hover: '#1F58B5',     // deeper cobalt
-          mist: '#F2EEE0',
-          moss: '#F5F1E8',
-          ink: '#0A1428',
-          text: '#4A4640',
-        },
-        // ── Gold accent (now matches primary Sunlit Gold) ──
-        gold: {
-          DEFAULT: '#FFD60A',   // sunlit gold
-          hover: '#E5C000',     // pressed gold
-          soft: '#FFF1B0',      // pale gold tint for backgrounds
-          pale: '#FFE680',      // accent soft
-        },
+        // ── Legacy fixed-hex brand aliases REMOVED (Spec 65 — visual unification).
+        // Every component now uses the semantic shadcn tokens below, which are
+        // dark-mode safe. The old paper/ink/cobalt/cream/student-*/school-*/
+        // gold-*/offwhite/charcoal/slate/stone/divider aliases were migrated
+        // 1:1 via codemod (140 files) and deleted so they can't be reintroduced.
         // ── Status colors (Spec/01-brand-tokens.md §2.3 / §8) ──
         success: { DEFAULT: '#1F6B2E', soft: '#DCE8DA', dark: '#6FCB95', 'dark-soft': '#1E3A2A' },
         warning: { DEFAULT: '#B8741D', soft: '#F5E6CC', dark: '#F0B964', 'dark-soft': '#3D2E18' },
         error:   { DEFAULT: '#B5321F', soft: '#F2D7D0', dark: '#FF8470', 'dark-soft': '#3D1E1A' },
-        // ── Shared neutrals (warm-paper system) ──
-        offwhite: '#FCFAF2',    // canvas — warm paper (was cool gray)
-        charcoal: '#2A2724',    // soft ink text (was charcoal ink)
-        slate: '#4A4640',       // muted body text (warm gray)
-        stone: '#C9C2A8',       // warm border (was cool stone)
-        divider: '#F2EEE0',     // warm divider tint
-        // ── Legacy brand scales (product dashboards — migrate separately) ──
-        brand: {
-          slate: {
-            50: '#F0F3F9', 100: '#E8EDF5', 200: '#C9D3E8', 300: '#A3B3D4',
-            400: '#7A91BC', 500: '#4E6A9E', 600: '#3B5998', 700: '#2C4370',
-            800: '#1E2E4D', 900: '#111B2E',
-          },
-          amber: {
-            50: '#FFF8E7', 100: '#FFEFC2', 200: '#FFE08A', 300: '#FFCF4D',
-            400: '#F5B800', 500: '#E5A100', 600: '#B8820D', 700: '#8C6310',
-          },
-        },
         // ── shadcn semantic (CSS variable based) ──
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

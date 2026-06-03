@@ -208,11 +208,11 @@ export default function GoalHubPage() {
           <Link to="/signup">
             <Button size="lg">Get started</Button>
           </Link>
-          <Link to="/about">
+          <a href="https://unipaith.co" target="_blank" rel="noreferrer">
             <Button size="lg" variant="tertiary">
               About UniPaith
             </Button>
-          </Link>
+          </a>
         </div>
       </section>
     </GoalShell>

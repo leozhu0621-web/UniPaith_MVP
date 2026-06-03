@@ -49,16 +49,16 @@ function RangeRow({
     approx != null ? `~${pct(approx)}` : `${pct(low ?? 0)}–${pct(high ?? 0)}`
   return (
     <div className="grid grid-cols-[88px_1fr_88px] items-center gap-3">
-      <span className="text-xs font-medium text-student-text">{label}</span>
+      <span className="text-xs font-medium text-foreground">{label}</span>
       <div className="relative h-2 rounded-full bg-muted overflow-hidden" aria-hidden>
         <div
-          className="absolute h-full rounded-full bg-cobalt/70"
+          className="absolute h-full rounded-full bg-secondary/70"
           style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
         />
       </div>
-      <span className="text-xs font-bold tabular-nums text-charcoal text-right">
+      <span className="text-xs font-bold tabular-nums text-foreground text-right">
         {valueText}
-        {caption && <span className="block text-[10px] font-normal text-student-text/70">{caption}</span>}
+        {caption && <span className="block text-[10px] font-normal text-foreground/70">{caption}</span>}
       </span>
     </div>
   )
@@ -103,10 +103,10 @@ export default function ProbabilityBands({
     return (
       <div className={className}>
         {!hideHeading && <Heading />}
-        <div className="flex items-start gap-2 text-xs text-student-text">
-          <Info size={13} className="mt-0.5 shrink-0 text-student-text/60" />
+        <div className="flex items-start gap-2 text-xs text-foreground">
+          <Info size={13} className="mt-0.5 shrink-0 text-foreground/60" />
           <span>
-            <span className="font-medium text-student-ink">Not enough data yet.</span> {why}
+            <span className="font-medium text-foreground">Not enough data yet.</span> {why}
           </span>
         </div>
       </div>
@@ -129,12 +129,12 @@ export default function ProbabilityBands({
           {bands.drivers.map(d => (
             <span
               key={d.signal}
-              className="inline-flex items-center gap-1 rounded-pill border border-divider bg-card px-2 py-0.5 text-[11px] text-student-text"
+              className="inline-flex items-center gap-1 rounded-pill border border-border bg-card px-2 py-0.5 text-[11px] text-foreground"
             >
               {d.direction === 'up' ? (
                 <ArrowUpRight size={11} className="text-success" />
               ) : (
-                <ArrowDownRight size={11} className="text-student-text/60" />
+                <ArrowDownRight size={11} className="text-foreground/60" />
               )}
               {d.signal}
             </span>
@@ -142,7 +142,7 @@ export default function ProbabilityBands({
         </div>
       )}
 
-      <p className="mt-2 text-[10px] text-student-text/60">
+      <p className="mt-2 text-[10px] text-foreground/60">
         Ranges, not promises — institutions decide. Based on program history and your profile fit.
       </p>
     </div>
@@ -152,9 +152,9 @@ export default function ProbabilityBands({
 function Heading({ label }: { label?: string }) {
   return (
     <div className="flex items-center justify-between mb-2">
-      <span className="text-eyebrow uppercase text-student-text">Your realistic shot</span>
+      <span className="text-eyebrow uppercase text-foreground">Your realistic shot</span>
       {label && (
-        <span className="text-[11px] font-semibold text-cobalt uppercase tracking-wide">{label}</span>
+        <span className="text-[11px] font-semibold text-secondary uppercase tracking-wide">{label}</span>
       )}
     </div>
   )

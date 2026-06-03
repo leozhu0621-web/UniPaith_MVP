@@ -15,7 +15,7 @@ const SIZE_MAP = {
 
 // On-brand, restrained tint set (duotone-derived) instead of a rainbow palette.
 const COLORS = [
-  'bg-cobalt/15 text-cobalt',
+  'bg-secondary/15 text-secondary',
   'bg-success-soft text-success',
   'bg-warning-soft text-warning',
   'bg-muted text-foreground',

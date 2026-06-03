@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import QueryError from '../../components/ui/QueryError'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -178,11 +179,8 @@ export default function MessagesPage({ initialThreadId }: { initialThreadId?: st
         ) : threadLoading ? (
           <ThreadSkeleton />
         ) : threadError || !thread ? (
-          <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-            <p className="mb-2 text-sm text-error">This conversation couldn’t be loaded.</p>
-            <button onClick={() => refetchThread()} className="text-secondary hover:underline text-sm">
-              Retry
-            </button>
+          <div className="flex flex-1 flex-col items-center justify-center">
+            <QueryError detail="This conversation couldn’t be loaded." onRetry={() => refetchThread()} />
           </div>
         ) : (
           <ThreadView

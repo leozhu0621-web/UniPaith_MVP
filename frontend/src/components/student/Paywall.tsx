@@ -50,23 +50,23 @@ export default function Paywall() {
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ background: 'rgba(10, 20, 40, 0.6)' }}>
       <div className="bg-card text-foreground w-full max-w-lg rounded-xl elev-raised max-h-[92vh] overflow-y-auto p-6 sm:p-8 animate-scale-in">
         <Wordmark className="h-7 w-auto" />
-        <h2 className="text-h2 mt-5 text-charcoal">Your free trial has ended</h2>
-        <p className="text-sm text-slate mt-1">
+        <h2 className="text-h2 mt-5 text-foreground">Your free trial has ended</h2>
+        <p className="text-sm text-muted-foreground mt-1">
           Everyone’s private college counselor. Continue for{' '}
-          <span className="font-semibold text-charcoal">${billing.plan_price_usd}/mo</span>.
+          <span className="font-semibold text-foreground">${billing.plan_price_usd}/mo</span>.
         </p>
 
         <ul className="mt-5 space-y-3">
           {VALUES.map(v => (
             <li key={v.title} className="flex gap-3">
-              <span className="mt-0.5 h-7 w-7 shrink-0 rounded-lg bg-cobalt/10 flex items-center justify-center">
-                <v.icon size={15} className="text-cobalt" />
+              <span className="mt-0.5 h-7 w-7 shrink-0 rounded-lg bg-secondary/10 flex items-center justify-center">
+                <v.icon size={15} className="text-secondary" />
               </span>
               <div>
-                <p className="text-sm font-semibold text-charcoal flex items-center gap-1.5">
+                <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
                   <Check size={13} className="text-success" /> {v.title}
                 </p>
-                <p className="text-xs text-slate">{v.body}</p>
+                <p className="text-xs text-muted-foreground">{v.body}</p>
               </div>
             </li>
           ))}
@@ -90,7 +90,7 @@ export default function Paywall() {
               Continue with Plus — ${billing.plan_price_usd}/mo
             </Button>
           )}
-          <button onClick={logout} className="ui-btn w-full text-center text-sm text-slate hover:text-charcoal py-1.5">
+          <button onClick={logout} className="ui-btn w-full text-center text-sm text-muted-foreground hover:text-foreground py-1.5">
             Sign out
           </button>
         </div>

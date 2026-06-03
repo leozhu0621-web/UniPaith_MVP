@@ -25,14 +25,14 @@ export default function GoalStackWidget() {
   })
 
   if (isLoading) {
-    return <Card className="text-sm text-student-text">Loading…</Card>
+    return <Card className="text-sm text-foreground">Loading…</Card>
   }
 
   if (goals.length === 0) {
     return (
-      <Card className="text-sm text-student-text space-y-2">
-        <div className="flex items-center gap-2 text-student-ink font-medium">
-          <Target size={14} className="text-gold" />
+      <Card className="text-sm text-foreground space-y-2">
+        <div className="flex items-center gap-2 text-foreground font-medium">
+          <Target size={14} className="text-primary" />
           Goal stack
         </div>
         <p className="italic">
@@ -52,13 +52,13 @@ export default function GoalStackWidget() {
   return (
     <Card className="space-y-3">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-student-ink font-medium text-sm">
-          <Target size={14} className="text-gold" />
+        <div className="flex items-center gap-2 text-foreground font-medium text-sm">
+          <Target size={14} className="text-primary" />
           Goal stack · {goals.length}
         </div>
         <Link
           to="/s/profile?tab=goals"
-          className="text-xs text-student inline-flex items-center gap-1 hover:underline"
+          className="text-xs text-primary inline-flex items-center gap-1 hover:underline"
         >
           Manage <ExternalLink size={11} />
         </Link>
@@ -69,21 +69,21 @@ export default function GoalStackWidget() {
         if (items.length === 0) return null
         return (
           <div key={c.key}>
-            <div className="text-[10px] uppercase tracking-wide text-student-text mb-1.5">
+            <div className="text-[10px] uppercase tracking-wide text-foreground mb-1.5">
               {c.label} · {items.length}
             </div>
             <ul className="space-y-1">
               {items.slice(0, 4).map(g => (
                 <li
                   key={g.id}
-                  className="text-xs text-student-ink flex items-start gap-1.5"
+                  className="text-xs text-foreground flex items-start gap-1.5"
                 >
-                  <span className="text-student-text mt-0.5">•</span>
+                  <span className="text-foreground mt-0.5">•</span>
                   <span className="line-clamp-2">{g.specific}</span>
                 </li>
               ))}
               {items.length > 4 && (
-                <li className="text-xs text-student-text">+{items.length - 4} more</li>
+                <li className="text-xs text-foreground">+{items.length - 4} more</li>
               )}
             </ul>
           </div>

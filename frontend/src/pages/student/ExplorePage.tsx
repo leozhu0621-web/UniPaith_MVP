@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import QueryError from '../../components/ui/QueryError'
 import { searchInstitutions, getFeaturedPromotions, recordPromotionClick } from '../../api/institutions'
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
 import UniversityCard from './explore/cards/UniversityCard'
@@ -102,7 +103,7 @@ export default function ExplorePage() {
     setSearchParams(filtersToURL(searchParams, next), { replace: true })
   }
 
-  const { data: universities, isLoading: uniLoading } = useQuery({
+  const { data: universities, isLoading: uniLoading, isError: uniError, refetch: refetchUni } = useQuery({
     queryKey: ['explore-universities'],
     queryFn: () => searchInstitutions({ page_size: 50 }),
     staleTime: 5 * 60 * 1000,
@@ -145,9 +146,9 @@ export default function ExplorePage() {
     <div className="p-6 max-w-6xl mx-auto">
       {/* Spec 09 §13 H1 + brand framing ("Fit, not fame", Spec 07 §2/§6). */}
       <div className="mb-5">
-        <p className="text-eyebrow uppercase text-cobalt font-semibold">Match</p>
-        <h1 className="text-2xl font-bold text-charcoal mt-1">Your strategy and your matches</h1>
-        <p className="text-sm text-slate mt-0.5">Ranked for fit, not fame — and every score explains itself.</p>
+        <p className="text-eyebrow uppercase text-secondary font-semibold">Match</p>
+        <h1 className="text-2xl font-bold text-foreground mt-1">Your strategy and your matches</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">Ranked for fit, not fame — and every score explains itself.</p>
       </div>
 
       {/* Spec 09 §2 — strategy lands first. */}
@@ -196,19 +197,21 @@ export default function ExplorePage() {
             <ExploreFilters universities={uniList} filters={filters} onChange={setFilters} />
           )}
 
-          {uniLoading ? (
+          {uniError ? (
+            <QueryError detail="We couldn't load universities." onRetry={() => refetchUni()} />
+          ) : uniLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map(i => <div key={i} className="h-80 bg-card rounded-xl border border-border animate-pulse" />)}
             </div>
           ) : uniList.length === 0 ? (
             <div className="text-center py-16 bg-card rounded-xl border border-border">
-              <Building2 size={32} className="mx-auto text-stone mb-3" />
+              <Building2 size={32} className="mx-auto text-muted-foreground mb-3" />
               <p className="text-sm text-foreground font-semibold mb-1">No universities yet</p>
               <p className="text-xs text-muted-foreground">Universities will appear here as they join the platform.</p>
             </div>
           ) : filteredUniList.length === 0 ? (
             <div className="text-center py-16 bg-card rounded-xl border border-border">
-              <Building2 size={32} className="mx-auto text-stone mb-3" />
+              <Building2 size={32} className="mx-auto text-muted-foreground mb-3" />
               <p className="text-sm text-foreground font-semibold mb-1">No universities match your filters</p>
               <p className="text-xs text-muted-foreground mb-4">Try removing a filter or broadening your search.</p>
               <button

@@ -6,8 +6,9 @@
  * badge (§6), a "Why this match" trigger that opens the AI Rationale Popover
  * (§4 / Spec 02 §6), and expandable probability bands (§4A).
  *
- * Brand (§10): gold appears ONLY on the DualRing fitness ring; the card body
- * is cobalt + neutral. Save / Add to compare / Open on every card (§7).
+ * Brand (§10 / Spec 76): gold appears ONLY on the DualRing fitness ring; the
+ * card body is cobalt + neutral, using semantic tokens (dark-mode safe).
+ * Save / Add to compare / Open on every card (§7).
  */
 import { useState } from 'react'
 import {
@@ -71,17 +72,17 @@ export default function MatchCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <button onClick={onView} className="min-w-0 text-left">
-              <h3 className="text-[15px] font-bold text-charcoal leading-tight line-clamp-2 hover:text-cobalt transition-colors">
+              <h3 className="text-[15px] font-bold text-foreground leading-tight line-clamp-2 hover:text-secondary transition-colors">
                 {match.program_name ?? 'Program'}
               </h3>
               {match.institution_name && (
-                <p className="text-[12px] text-slate mt-0.5 truncate">{match.institution_name}</p>
+                <p className="text-[12px] text-muted-foreground mt-0.5 truncate">{match.institution_name}</p>
               )}
             </button>
             <button
               onClick={onSave}
               className={`shrink-0 p-1.5 rounded-full transition-colors ${
-                saved ? 'text-cobalt bg-cobalt/10' : 'text-slate hover:bg-muted'
+                saved ? 'text-secondary bg-secondary/10' : 'text-muted-foreground hover:bg-muted'
               }`}
               aria-label={saved ? 'Remove from list' : 'Save to my list'}
             >
@@ -92,15 +93,15 @@ export default function MatchCard({
           <div className="flex items-center gap-1.5 mt-2 flex-wrap">
             {match.band_label && <BandBadge band={match.band_label} />}
             {degree && (
-              <span className="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-md bg-muted text-charcoal border border-stone/60">
+              <span className="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-md bg-muted text-foreground border border-border/60">
                 {degree}
               </span>
             )}
             {match.tuition != null && (
-              <span className="text-[11px] text-slate">{formatCurrency(match.tuition)}/yr</span>
+              <span className="text-[11px] text-muted-foreground">{formatCurrency(match.tuition)}/yr</span>
             )}
             {acceptPct != null && (
-              <span className="text-[11px] text-slate">· {acceptPct}% admit</span>
+              <span className="text-[11px] text-muted-foreground">· {acceptPct}% admit</span>
             )}
           </div>
         </div>
@@ -110,13 +111,13 @@ export default function MatchCard({
       <div className="px-4 pb-2 flex items-center gap-3">
         <button
           onClick={() => setRationaleOpen(true)}
-          className="inline-flex items-center gap-1 text-xs font-semibold text-cobalt hover:underline"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-secondary hover:underline"
         >
           <Sparkles size={12} /> Why this match
         </button>
         <button
           onClick={() => setShowBands(v => !v)}
-          className="inline-flex items-center gap-1 text-xs text-student-text hover:text-student-ink ml-auto"
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground ml-auto"
           aria-expanded={showBands}
         >
           Your realistic shot
@@ -125,7 +126,7 @@ export default function MatchCard({
       </div>
 
       {showBands && (
-        <div className="px-4 pb-3 pt-1 border-t border-divider">
+        <div className="px-4 pb-3 pt-1 border-t border-border">
           <ProbabilityBands
             bands={match.probability_bands ?? null}
             reason={bandsReason}
@@ -136,11 +137,11 @@ export default function MatchCard({
       )}
 
       {/* ── Actions ── */}
-      <div className="flex items-stretch border-t border-divider mt-auto">
+      <div className="flex items-stretch border-t border-border mt-auto">
         <button
           onClick={onCompare}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-medium transition-colors border-r border-divider ${
-            comparing ? 'text-cobalt bg-cobalt/10' : 'text-slate hover:bg-muted hover:text-charcoal'
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-medium transition-colors border-r border-border ${
+            comparing ? 'text-secondary bg-secondary/10' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
           }`}
           title={comparing ? 'In compare tray' : 'Add to compare'}
         >
@@ -149,7 +150,7 @@ export default function MatchCard({
         </button>
         <button
           onClick={onView}
-          className="flex-[1.5] flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-semibold text-white bg-cobalt hover:bg-cobalt-dark transition-colors group/view"
+          className="flex-[1.5] flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-semibold text-secondary-foreground bg-secondary hover:brightness-95 transition-colors group/view"
         >
           View program
           <ArrowRight size={12} className="group-hover/view:translate-x-0.5 transition-transform" />

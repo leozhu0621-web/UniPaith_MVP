@@ -473,33 +473,33 @@ export default function KeyMetrics(props: Props) {
 const ACCENT_BG: Record<Tone, string> = {
   amber: 'bg-warning',
   emerald: 'bg-success',
-  rose: 'bg-cobalt',
-  blue: 'bg-cobalt',
-  violet: 'bg-cobalt',
-  slate: 'bg-stone',
+  rose: 'bg-secondary',
+  blue: 'bg-secondary',
+  violet: 'bg-secondary',
+  slate: 'bg-muted',
 }
 const ICON_COLOR: Record<Tone, string> = {
   amber: 'text-warning',
   emerald: 'text-success',
-  rose: 'text-cobalt',
-  blue: 'text-cobalt',
-  violet: 'text-cobalt',
-  slate: 'text-slate',
+  rose: 'text-secondary',
+  blue: 'text-secondary',
+  violet: 'text-secondary',
+  slate: 'text-muted-foreground',
 }
 const VALUE_COLOR: Record<Tone, string> = {
-  amber: 'text-charcoal',
-  emerald: 'text-charcoal',
-  rose: 'text-charcoal',
-  blue: 'text-charcoal',
-  violet: 'text-charcoal',
-  slate: 'text-charcoal',
+  amber: 'text-foreground',
+  emerald: 'text-foreground',
+  rose: 'text-foreground',
+  blue: 'text-foreground',
+  violet: 'text-foreground',
+  slate: 'text-foreground',
 }
 
 function MetricTile({ tile }: { tile: Tile }) {
   const Icon = tile.icon
 
   return (
-    <div className="group relative rounded-xl bg-card border border-divider pl-4 pr-4 py-4 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:border-stone overflow-hidden">
+    <div className="group relative rounded-xl bg-card border border-border pl-4 pr-4 py-4 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:border-border overflow-hidden">
       {/* Left accent bar — the only bg color on the tile */}
       <span className={`absolute left-0 top-0 bottom-0 w-[3px] ${ACCENT_BG[tile.tone]}`} aria-hidden />
 

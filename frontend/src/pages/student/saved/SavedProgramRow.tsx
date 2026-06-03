@@ -13,8 +13,8 @@ import type { SavedPriority, SavedProgram, SavedStatus } from '../../../types'
 import { matchDualOf, programSummaryOf } from './savedUtils'
 
 export const PRIORITY_CONFIG: Record<SavedPriority, { label: string; color: string }> = {
-  considering: { label: 'Considering', color: 'bg-muted text-charcoal' },
-  planning_to_apply: { label: 'Planning to apply', color: 'bg-cobalt/10 text-cobalt' },
+  considering: { label: 'Considering', color: 'bg-muted text-foreground' },
+  planning_to_apply: { label: 'Planning to apply', color: 'bg-secondary/10 text-secondary' },
   applied: { label: 'Applied', color: 'bg-success-soft text-success' },
   dropped: { label: 'Dropped', color: 'bg-error-soft text-error' },
 }
@@ -116,7 +116,7 @@ export default function SavedProgramRow({
             checked={comparing}
             disabled={compareDisabled}
             onChange={onToggleCompare}
-            className="rounded border-stone"
+            className="rounded border-border"
             aria-label={`Compare ${sp.program_name ?? 'program'}`}
           />
           <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Compare</span>
@@ -138,7 +138,7 @@ export default function SavedProgramRow({
           </select>
           <ChevronDown
             size={10}
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate/60"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground/60"
           />
         </div>
 
@@ -151,7 +151,7 @@ export default function SavedProgramRow({
             key={tag}
             type="button"
             onClick={() => onSaveTags(sp.tags.filter(t => t !== tag))}
-            className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-slate border border-stone/50 hover:border-error/40"
+            className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/50 hover:border-error/40"
             title="Remove tag"
           >
             {tag} ×
@@ -170,12 +170,12 @@ export default function SavedProgramRow({
               }
             }}
             placeholder="Add tag…"
-            className="flex-1 text-[11px] border border-divider rounded-md px-2 py-0.5 bg-card"
+            className="flex-1 text-[11px] border border-border rounded-md px-2 py-0.5 bg-card"
           />
           <button
             type="button"
             onClick={addTag}
-            className="p-0.5 text-cobalt"
+            className="p-0.5 text-secondary"
             aria-label="Add tag"
           >
             <Plus size={12} />
@@ -249,7 +249,7 @@ export default function SavedProgramRow({
               <textarea
                 value={noteDraft}
                 onChange={e => setNoteDraft(e.target.value)}
-                className="w-full text-sm border border-divider rounded-lg px-3 py-2 min-h-[72px] focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full text-sm border border-border rounded-lg px-3 py-2 min-h-[72px] focus:outline-none focus:ring-2 focus:ring-ring"
                 placeholder="Why I saved this, things to verify…"
               />
               <div className="flex gap-2 justify-end">

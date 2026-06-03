@@ -87,9 +87,9 @@ function FundingPackageCard({
   currency: string
 }) {
   return (
-    <div className="mb-5 rounded-lg border border-student/30 bg-student/5 p-4">
+    <div className="mb-5 rounded-lg border border-primary/30 bg-primary/5 p-4">
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-student-text">
+        <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-foreground">
           Funding package
         </p>
         {pkg.multi_year && <Badge variant="neutral">Multi-year</Badge>}
@@ -97,19 +97,19 @@ function FundingPackageCard({
       <ul className="space-y-1.5">
         {pkg.components.map((c, i) => (
           <li key={i} className="flex items-center justify-between text-sm">
-            <span className="text-student-ink">
+            <span className="text-foreground">
               {c.label || FUNDING_COMPONENT_LABEL[c.kind] || c.kind}
-              <span className="text-student-text"> · {fundingYears(c.years)}</span>
+              <span className="text-foreground"> · {fundingYears(c.years)}</span>
             </span>
-            <span className="font-semibold tabular-nums text-student-ink">
+            <span className="font-semibold tabular-nums text-foreground">
               {money(c.amount, currency)}
             </span>
           </li>
         ))}
       </ul>
-      <div className="mt-3 flex items-center justify-between border-t border-student/20 pt-2">
-        <span className="text-sm font-semibold text-student-ink">Total package</span>
-        <span className="text-base font-bold tabular-nums text-student">
+      <div className="mt-3 flex items-center justify-between border-t border-primary/20 pt-2">
+        <span className="text-sm font-semibold text-foreground">Total package</span>
+        <span className="text-base font-bold tabular-nums text-primary">
           {money(pkg.total_value, currency)}
         </span>
       </div>
@@ -158,11 +158,11 @@ export default function OfferPanel({ application }: { application: Application }
     return (
       <>
         <Card className="p-6 text-center">
-          <div className="mx-auto mb-3 w-12 h-12 rounded-full bg-student-mist flex items-center justify-center">
-            <Inbox size={22} className="text-student-text" />
+          <div className="mx-auto mb-3 w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+            <Inbox size={22} className="text-foreground" />
           </div>
-          <p className="text-sm text-student-ink font-medium mb-1">No offer yet</p>
-          <p className="text-sm text-student-text max-w-sm mx-auto">
+          <p className="text-sm text-foreground font-medium mb-1">No offer yet</p>
+          <p className="text-sm text-foreground max-w-sm mx-auto">
             Decisions usually arrive within 4–8 weeks of submission. You'll be notified here.
           </p>
           <Button
@@ -196,16 +196,16 @@ export default function OfferPanel({ application }: { application: Application }
     <div className="space-y-4">
       <Card className="p-5">
         {/* Eyebrow — OFFER from <institution> (spec 18 §4) */}
-        <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-cobalt mb-1">
+        <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-secondary mb-1">
           Offer from {institutionName}
         </p>
         <div className="flex items-center gap-2 flex-wrap mb-4">
-          <h2 className="text-h3 font-bold text-student-ink">
+          <h2 className="text-h3 font-bold text-foreground">
             {OFFER_TYPE_LABEL[offer.offer_type || ''] || 'Admission offer'}
           </h2>
           {offer.received_externally && <Badge variant="neutral">Recorded by you</Badge>}
         </div>
-        <p className="text-sm text-student-text -mt-3 mb-4">
+        <p className="text-sm text-foreground -mt-3 mb-4">
           {offer.decision_date && <>Decision received {formatTermDate(offer.decision_date)}</>}
           {offer.decision_date && offer.response_deadline && ' · '}
           {offer.response_deadline && (
@@ -235,10 +235,10 @@ export default function OfferPanel({ application }: { application: Application }
         {/* Plain-language brief (body type; bold reserved for amounts/dates) */}
         {summary && (
           <div className="mb-5">
-            <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-student-text mb-1.5">
+            <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-foreground mb-1.5">
               Plain-language brief
             </p>
-            <p className="text-base leading-relaxed text-student-ink">
+            <p className="text-base leading-relaxed text-foreground">
               {briefSummaryParts(summary).map((part, i) =>
                 part.bold ? (
                   <strong key={i} className="font-semibold">
@@ -257,7 +257,7 @@ export default function OfferPanel({ application }: { application: Application }
             href={offer.generated_letter_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm text-cobalt font-medium hover:underline mb-5"
+            className="inline-flex items-center gap-1.5 text-sm text-secondary font-medium hover:underline mb-5"
           >
             <FileText size={14} />
             View offer letter
@@ -267,17 +267,17 @@ export default function OfferPanel({ application }: { application: Application }
         {/* Key terms */}
         {keyTerms.length > 0 && (
           <div className="mb-5">
-            <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-student-text mb-2">
+            <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-foreground mb-2">
               Key terms
             </p>
             <dl className="space-y-1.5">
               {keyTerms.map((t, i) => (
                 <div key={i} className="flex gap-2 text-sm">
-                  <dt className="text-student-text min-w-[7.5rem] shrink-0">{t.label}</dt>
-                  <dd className="text-student-ink">
+                  <dt className="text-foreground min-w-[7.5rem] shrink-0">{t.label}</dt>
+                  <dd className="text-foreground">
                     <span className="font-semibold">{t.value}</span>
                     {t.explanation && (
-                      <span className="text-student-text"> — {t.explanation}</span>
+                      <span className="text-foreground"> — {t.explanation}</span>
                     )}
                   </dd>
                 </div>
@@ -297,17 +297,17 @@ export default function OfferPanel({ application }: { application: Application }
         {/* Next steps */}
         {nextSteps.length > 0 && (
           <div className="mb-5">
-            <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-student-text mb-2">
+            <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-foreground mb-2">
               Next steps
             </p>
             <ul className="space-y-1.5">
               {nextSteps.map((s, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-student-ink">
-                  <Star size={13} className="text-student mt-0.5 shrink-0" fill="currentColor" />
+                <li key={i} className="flex items-start gap-2 text-sm text-foreground">
+                  <Star size={13} className="text-primary mt-0.5 shrink-0" fill="currentColor" />
                   <span>
                     {s.action}
                     {s.by_date && (
-                      <span className="text-student-text"> by {formatTermDate(s.by_date)}</span>
+                      <span className="text-foreground"> by {formatTermDate(s.by_date)}</span>
                     )}
                   </span>
                 </li>
@@ -324,7 +324,7 @@ export default function OfferPanel({ application }: { application: Application }
             </Badge>
             <button
               onClick={() => setShowCompare(true)}
-              className="text-sm text-cobalt font-medium inline-flex items-center gap-1 hover:underline"
+              className="text-sm text-secondary font-medium inline-flex items-center gap-1 hover:underline"
             >
               Compare offers <ArrowRight size={13} />
             </button>
@@ -341,7 +341,7 @@ export default function OfferPanel({ application }: { application: Application }
             </Button>
             <button
               onClick={() => setShowCompare(true)}
-              className="text-sm text-cobalt font-medium inline-flex items-center gap-1 hover:underline ml-auto"
+              className="text-sm text-secondary font-medium inline-flex items-center gap-1 hover:underline ml-auto"
             >
               Compare with my other offers <ArrowRight size={13} />
             </button>
@@ -350,7 +350,7 @@ export default function OfferPanel({ application }: { application: Application }
 
         {/* Inline decline confirmation */}
         {showDecline && !respondedState && (
-          <div className="mt-4 rounded-lg border border-divider p-3 space-y-2">
+          <div className="mt-4 rounded-lg border border-border p-3 space-y-2">
             <Textarea
               label="Reason (optional)"
               value={declineReason}

@@ -188,9 +188,9 @@ export default function DiscoverHomePage() {
   const unlockedThrough = PROFILE_LAYERS.findIndex(l => l.key === sessionLayer)
 
   const guardedSetTrack = useCallback(
-    (next: DiscoveryTrack) => {
+    async (next: DiscoveryTrack) => {
       if (next === track) return
-      if (!confirmDiscardDraft(draft, 'switch track')) return
+      if (!(await confirmDiscardDraft(draft, 'switch track'))) return
       setDraft('')
       setLayerOverride(null)
       setTrack(next)
@@ -199,9 +199,9 @@ export default function DiscoverHomePage() {
   )
 
   const guardedSetLayer = useCallback(
-    (next: DiscoveryLayer) => {
+    async (next: DiscoveryLayer) => {
       if (next === layer) return
-      if (!confirmDiscardDraft(draft, 'switch layer')) return
+      if (!(await confirmDiscardDraft(draft, 'switch layer'))) return
       setDraft('')
       setLayerOverride(next)
     },

@@ -73,7 +73,7 @@ export function SectionCard({
         aria-controls={`${id}-body`}
       >
         <span className="flex items-baseline gap-3">
-          <span className="text-eyebrow uppercase tracking-[0.22em] text-cobalt font-semibold">
+          <span className="text-eyebrow uppercase tracking-[0.22em] text-secondary font-semibold">
             {String(index).padStart(2, '0')}
           </span>
           <span className="text-h3 font-semibold text-foreground">{title}</span>
@@ -94,7 +94,7 @@ export function SectionCard({
               {crossLink ? (
                 <Link
                   to={crossLink.to}
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-cobalt hover:underline"
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-secondary hover:underline"
                 >
                   {crossLink.label} <ExternalLink size={14} />
                 </Link>
@@ -203,12 +203,12 @@ export function Toggle({
         onClick={() => onChange(!checked)}
         className={clsx(
           'relative h-5 w-9 shrink-0 rounded-full transition-colors duration-200',
-          checked ? 'bg-cobalt' : 'bg-border',
+          checked ? 'bg-secondary' : 'bg-border',
         )}
       >
         <span
           className={clsx(
-            'absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200',
+            'absolute top-0.5 h-4 w-4 rounded-full bg-card shadow-sm transition-transform duration-200',
             checked ? 'translate-x-4' : 'translate-x-0.5',
           )}
         />
@@ -240,13 +240,13 @@ export function ChipsInput({
         {values.map((v, i) => (
           <span
             key={`${v}-${i}`}
-            className="inline-flex items-center gap-1 rounded-full bg-cobalt/10 px-2.5 py-0.5 text-xs font-medium text-cobalt"
+            className="inline-flex items-center gap-1 rounded-full bg-secondary/10 px-2.5 py-0.5 text-xs font-medium text-secondary"
           >
             {v}
             <button
               type="button"
               onClick={() => onChange(values.filter((_, idx) => idx !== i))}
-              className="text-cobalt/70 hover:text-cobalt"
+              className="text-secondary/70 hover:text-secondary"
               aria-label={`Remove ${v}`}
             >
               ×

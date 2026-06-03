@@ -45,7 +45,7 @@ export default function FiltersPanel({ filters, onApply }: FiltersPanelProps) {
           Filters
           {count > 0 && (
             <span
-              className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-secondary text-white text-[11px] font-semibold"
+              className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-secondary text-secondary-foreground text-[11px] font-semibold"
               aria-label={`${count} active filters`}
             >
               {count}

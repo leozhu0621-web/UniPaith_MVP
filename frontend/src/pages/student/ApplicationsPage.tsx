@@ -199,8 +199,8 @@ export default function ApplicationsPage() {
   if (apps.length === 0)
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <h1 className="text-2xl font-semibold text-student-ink mb-1">Your portfolio</h1>
-        <p className="text-sm text-student-text mb-6">Turn saved targets into application projects.</p>
+        <h1 className="text-2xl font-semibold text-foreground mb-1">Your portfolio</h1>
+        <p className="text-sm text-foreground mb-6">Turn saved targets into application projects.</p>
         <EmptyState
           icon={<FileText size={48} />}
           title="No applications yet"
@@ -212,8 +212,8 @@ export default function ApplicationsPage() {
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-semibold text-student-ink mb-1">Your portfolio</h1>
-      <p className="text-sm text-student-text mb-5">
+      <h1 className="text-2xl font-semibold text-foreground mb-1">Your portfolio</h1>
+      <p className="text-sm text-foreground mb-5">
         {apps.length} application{apps.length !== 1 ? 's' : ''} across your journey.
       </p>
 
@@ -224,8 +224,8 @@ export default function ApplicationsPage() {
             <PartyPopper size={20} className="text-success" />
           </div>
           <div className="min-w-0">
-            <p className="text-base font-bold text-student-ink">You're in. Congrats.</p>
-            <p className="text-sm text-student-text truncate">
+            <p className="text-base font-bold text-foreground">You're in. Congrats.</p>
+            <p className="text-sm text-foreground truncate">
               You accepted {acceptedApp.program?.program_name || 'your offer'}
               {acceptedApp.program?.institution_name ? ` at ${acceptedApp.program.institution_name}` : ''}.
             </p>
@@ -235,11 +235,11 @@ export default function ApplicationsPage() {
 
       {/* Spec 18 — no offers yet, decisions pending (§8) */}
       {!acceptedApp && offerApps.length === 0 && awaitingDecisionApps.length > 0 && (
-        <Card className="p-4 mb-6 bg-student-mist border-0">
-          <p className="text-sm text-student-ink">
+        <Card className="p-4 mb-6 bg-muted border-0">
+          <p className="text-sm text-foreground">
             Decisions usually arrive within 4–8 weeks of submission. You'll be notified here.
           </p>
-          <p className="text-xs text-student-text mt-1">
+          <p className="text-xs text-foreground mt-1">
             {awaitingDecisionApps.length} application
             {awaitingDecisionApps.length !== 1 ? 's' : ''} awaiting a decision.
           </p>
@@ -249,28 +249,28 @@ export default function ApplicationsPage() {
       {/* Spec 18 — offer-received banner + compare CTA (§5/§8) */}
       {!acceptedApp && offerApps.length > 0 && (
         <Card className="p-4 mb-6 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-cobalt/10 flex items-center justify-center shrink-0">
-            <Mail size={20} className="text-cobalt" />
+          <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center shrink-0">
+            <Mail size={20} className="text-secondary" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-student-ink">
+            <p className="text-sm font-semibold text-foreground">
               {pendingOfferApps.length > 0
                 ? `You have ${pendingOfferApps.length} offer${pendingOfferApps.length !== 1 ? 's' : ''} to respond to`
                 : `${offerApps.length} offer${offerApps.length !== 1 ? 's' : ''} on the table`}
             </p>
-            <p className="text-xs text-student-text">Weigh cost, fit, and deadlines side by side.</p>
+            <p className="text-xs text-foreground">Weigh cost, fit, and deadlines side by side.</p>
           </div>
           {offerApps.length >= 2 ? (
             <button
               onClick={() => setShowCompare(true)}
-              className="text-sm text-cobalt font-medium inline-flex items-center gap-1 hover:underline shrink-0"
+              className="text-sm text-secondary font-medium inline-flex items-center gap-1 hover:underline shrink-0"
             >
               Compare your {offerApps.length} offers <ArrowRight size={14} />
             </button>
           ) : (
             <button
               onClick={() => navigate(`/s/applications/${offerApps[0].id}?tab=offer`)}
-              className="text-sm text-cobalt font-medium inline-flex items-center gap-1 hover:underline shrink-0"
+              className="text-sm text-secondary font-medium inline-flex items-center gap-1 hover:underline shrink-0"
             >
               Review your offer <ArrowRight size={14} />
             </button>
@@ -286,12 +286,12 @@ export default function ApplicationsPage() {
             onClick={() => setStatusFilter(statusFilter === b ? 'all' : b)}
             className={`rounded-xl border px-3 py-2.5 text-left transition-colors ${
               statusFilter === b
-                ? 'border-cobalt bg-cobalt/5'
-                : 'border-divider hover:border-cobalt/40'
+                ? 'border-secondary bg-secondary/5'
+                : 'border-border hover:border-secondary/40'
             }`}
           >
-            <div className="text-lg font-semibold text-student-ink">{counts[b]}</div>
-            <div className="text-[11px] leading-tight text-student-text">{BUCKET_LABELS[b]}</div>
+            <div className="text-lg font-semibold text-foreground">{counts[b]}</div>
+            <div className="text-[11px] leading-tight text-foreground">{BUCKET_LABELS[b]}</div>
           </button>
         ))}
       </div>
@@ -299,7 +299,7 @@ export default function ApplicationsPage() {
       {/* Next actions */}
       {topActions.length > 0 && (
         <Card className="p-4 mb-6">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-student-text mb-3">Next actions</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground mb-3">Next actions</h2>
           <div className="space-y-2">
             {topActions.map(a => {
               const d = daysUntil(a.program?.application_deadline)
@@ -307,18 +307,18 @@ export default function ApplicationsPage() {
                 <button
                   key={a.id}
                   onClick={() => navigate(appHref(a))}
-                  className="w-full flex items-center gap-2 text-left text-sm hover:bg-student-mist rounded-lg px-2 py-1.5"
+                  className="w-full flex items-center gap-2 text-left text-sm hover:bg-muted rounded-lg px-2 py-1.5"
                 >
-                  <Star size={14} className="text-student flex-shrink-0" fill="currentColor" />
-                  <span className="flex-1 min-w-0 truncate text-student-ink">
-                    {nextAction(a)} — <span className="text-student-text">{a.program?.program_name}</span>
+                  <Star size={14} className="text-primary flex-shrink-0" fill="currentColor" />
+                  <span className="flex-1 min-w-0 truncate text-foreground">
+                    {nextAction(a)} — <span className="text-foreground">{a.program?.program_name}</span>
                   </span>
                   {d != null && d >= 0 && d <= 30 && (
                     <span className={`text-xs flex-shrink-0 ${d <= 7 ? 'text-destructive' : 'text-warning'}`}>
                       {d === 0 ? 'today' : `${d}d`}
                     </span>
                   )}
-                  <ChevronRight size={14} className="text-student-text flex-shrink-0" />
+                  <ChevronRight size={14} className="text-foreground flex-shrink-0" />
                 </button>
               )
             })}
@@ -370,7 +370,7 @@ export default function ApplicationsPage() {
       {/* List */}
       <div className="space-y-3">
         {filtered.length === 0 ? (
-          <p className="text-sm text-student-text py-8 text-center">No applications match these filters.</p>
+          <p className="text-sm text-foreground py-8 text-center">No applications match these filters.</p>
         ) : (
           filtered.map(app => {
             const pct = app.readiness_pct ?? 0
@@ -387,11 +387,11 @@ export default function ApplicationsPage() {
               >
                 <div className="flex justify-between items-start gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-student-ink truncate">
+                    <p className="font-semibold text-sm text-foreground truncate">
                       {app.program?.program_name || 'Program'}
                     </p>
                     {app.program?.institution_name && (
-                      <p className="text-xs text-student-text mt-0.5">{app.program.institution_name}</p>
+                      <p className="text-xs text-foreground mt-0.5">{app.program.institution_name}</p>
                     )}
                     <div className="flex items-center gap-2 mt-2 flex-wrap">
                       <Badge variant={(STATUS_COLORS[app.status] || 'neutral') as never}>
@@ -404,7 +404,7 @@ export default function ApplicationsPage() {
                         <Badge variant={(STATUS_COLORS[app.decision] || 'neutral') as never}>{app.decision}</Badge>
                       )}
                       {isDraft && (
-                        <span className="text-xs text-student-text">{pct}% ready</span>
+                        <span className="text-xs text-foreground">{pct}% ready</span>
                       )}
                       {d != null && d >= 0 && d <= 30 && isDraft && (
                         <span className={`text-xs font-medium inline-flex items-center gap-1 ${d <= 7 ? 'text-destructive' : 'text-warning'}`}>
@@ -420,19 +420,19 @@ export default function ApplicationsPage() {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-student-text mt-2">Next: {nextAction(app)}</p>
+                    <p className="text-xs text-foreground mt-2">Next: {nextAction(app)}</p>
                     {app.submitted_at && (
                       <p className="text-[11px] text-muted-foreground mt-1">Submitted {formatDate(app.submitted_at)}</p>
                     )}
                   </div>
-                  <span className="text-xs text-cobalt font-medium flex-shrink-0 inline-flex items-center gap-0.5">
+                  <span className="text-xs text-secondary font-medium flex-shrink-0 inline-flex items-center gap-0.5">
                     Open <ChevronRight size={13} />
                   </span>
                 </div>
                 {isDraft && (
-                  <div className="mt-3 h-1.5 rounded-full bg-student-mist overflow-hidden">
+                  <div className="mt-3 h-1.5 rounded-full bg-muted overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${pct >= 100 ? 'bg-success' : 'bg-cobalt'}`}
+                      className={`h-full rounded-full ${pct >= 100 ? 'bg-success' : 'bg-secondary'}`}
                       style={{ width: `${pct}%` }}
                     />
                   </div>

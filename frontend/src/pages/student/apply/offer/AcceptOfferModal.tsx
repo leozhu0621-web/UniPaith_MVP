@@ -78,7 +78,7 @@ export default function AcceptOfferModal({
     >
       {step === 'confirm' && (
         <div className="space-y-4">
-          <p className="text-sm text-student-ink">
+          <p className="text-sm text-foreground">
             You're about to accept your offer from{' '}
             <span className="font-semibold">{institutionName}</span>. This confirms your decision
             and starts your enrollment steps.
@@ -97,12 +97,12 @@ export default function AcceptOfferModal({
 
       {step === 'withdraw' && (
         <div className="space-y-4">
-          <p className="text-sm text-student-ink">
+          <p className="text-sm text-foreground">
             Now that you've accepted, would you like to withdraw your other open applications? You
             can keep any you're still considering.
           </p>
           {selected.size > 0 && (
-            <p className="text-xs text-student-text rounded-lg border border-divider px-3 py-2">
+            <p className="text-xs text-foreground rounded-lg border border-border px-3 py-2">
               Are you sure? Withdrawing tells schools you're no longer pursuing those applications.
             </p>
           )}
@@ -110,20 +110,20 @@ export default function AcceptOfferModal({
             {withdrawable.map(a => (
               <label
                 key={a.id}
-                className="flex items-center gap-3 rounded-lg border border-divider px-3 py-2 cursor-pointer hover:bg-student-mist"
+                className="flex items-center gap-3 rounded-lg border border-border px-3 py-2 cursor-pointer hover:bg-muted"
               >
                 <input
                   type="checkbox"
                   checked={selected.has(a.id)}
                   onChange={() => toggle(a.id)}
-                  className="rounded border-divider text-cobalt focus:ring-cobalt"
+                  className="rounded border-border text-secondary focus:ring-secondary"
                 />
                 <span className="min-w-0">
-                  <span className="block text-sm text-student-ink truncate">
+                  <span className="block text-sm text-foreground truncate">
                     {a.program_name || 'Application'}
                   </span>
                   {a.institution_name && (
-                    <span className="block text-xs text-student-text">{a.institution_name}</span>
+                    <span className="block text-xs text-foreground">{a.institution_name}</span>
                   )}
                 </span>
               </label>
@@ -151,8 +151,8 @@ export default function AcceptOfferModal({
             <PartyPopper size={30} className="text-success" />
           </div>
           {/* The one soft moment in the app (spec 18 §13). */}
-          <h2 className="text-2xl font-bold text-student-ink mb-1">You're in. Congrats.</h2>
-          <p className="text-sm text-student-text mb-5">
+          <h2 className="text-2xl font-bold text-foreground mb-1">You're in. Congrats.</h2>
+          <p className="text-sm text-foreground mb-5">
             Your enrollment steps are on your calendar — deposit, orientation, and housing.
           </p>
           <Button variant="secondary" onClick={close} className="mx-auto">

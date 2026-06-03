@@ -3,6 +3,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useAuthStore } from './stores/auth-store'
 import ToastContainer from './components/ui/Toast'
+import ConfirmHost from './components/ui/ConfirmDialog'
+import DemoNotice from './components/system/DemoNotice'
+import FeedbackWidget from './components/system/FeedbackWidget'
 import AppErrorBoundary from './components/system/AppErrorBoundary'
 
 // Layouts
@@ -21,8 +24,6 @@ import AuthCallbackPage from './pages/auth/AuthCallbackPage'
 import ProgramBrowsePage from './pages/public/ProgramBrowsePage'
 import InstitutionPage from './pages/public/InstitutionPage'
 import ProgramDetailPage from './pages/public/ProgramDetailPage'
-import PricingPage from './pages/public/PricingPage'
-import AboutPage from './pages/public/AboutPage'
 import ClaudeApiGoalPage from './pages/public/ClaudeApiGoalPage'
 import GoalHubPage from './pages/public/GoalHubPage'
 import BuildRoadmapPage from './pages/public/BuildRoadmapPage'
@@ -87,6 +88,7 @@ import RecruitmentPage from './pages/institution/RecruitmentPage'
 import DepartmentPortalPage from './pages/institution/graduate/DepartmentPortalPage'
 
 import RouteErrorPage from './pages/system/RouteErrorPage'
+import NotFoundPage from './pages/system/NotFoundPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -105,6 +107,16 @@ function LegacyMessageRedirect() {
   return <Navigate to={`/s/manage?tab=messages&thread=${convId}`} replace />
 }
 
+// /pricing + /about moved to the marketing site (unipaith.co). Preserve the
+// previously-public app URLs by redirecting there rather than dropping them
+// to a 404 (PR #265 review).
+function ExternalRedirect({ to }: { to: string }) {
+  useEffect(() => {
+    window.location.replace(to)
+  }, [to])
+  return null
+}
+
 const router = createBrowserRouter([
   // Root → login (marketing site is at unipaith.co; this is the app at app.unipaith.co)
   { path: '/', element: <Navigate to="/login" replace />, errorElement: <RouteErrorPage /> },
@@ -114,9 +126,10 @@ const router = createBrowserRouter([
   { path: '/school/:institutionId', element: <PublicLayout><InstitutionPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
   { path: '/school/:institutionId/schools/:schoolId', element: <PublicLayout><SchoolSubunitPage isAuthenticated={false} /></PublicLayout>, errorElement: <RouteErrorPage /> },
   { path: '/program/:programId', element: <PublicLayout><ProgramDetailPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
-  // Spec 07 — public monetization + positioning surfaces.
-  { path: '/pricing', element: <PublicLayout><PricingPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
-  { path: '/about', element: <PublicLayout><AboutPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  // Spec 07 pricing/about now live on the marketing site (unipaith.co); preserve
+  // the public app URLs by redirecting there rather than 404ing (PR #265 review).
+  { path: '/pricing', element: <ExternalRedirect to="https://unipaith.co/pricing" />, errorElement: <RouteErrorPage /> },
+  { path: '/about', element: <ExternalRedirect to="https://unipaith.co/about" />, errorElement: <RouteErrorPage /> },
   // Specs 48/49/50 — public build-transparency hub + surfaces (live data).
   { path: '/goal', element: <PublicLayout><GoalHubPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 45 — public "Claude API" AI-agent transparency surface (live registry).
@@ -247,7 +260,7 @@ const router = createBrowserRouter([
   },
 
   // Catch-all → login
-  { path: '*', element: <Navigate to="/login" replace />, errorElement: <RouteErrorPage /> },
+  { path: '*', element: <NotFoundPage />, errorElement: <RouteErrorPage /> },
 ])
 
 export default function App() {
@@ -262,6 +275,9 @@ export default function App() {
       <AppErrorBoundary>
         <RouterProvider router={router} />
         <ToastContainer />
+        <ConfirmHost />
+        <DemoNotice />
+        <FeedbackWidget />
       </AppErrorBoundary>
     </QueryClientProvider>
   )

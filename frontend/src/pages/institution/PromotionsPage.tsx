@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import QueryError from '../../components/ui/QueryError'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Star, Plus, Edit2, Trash2, Play, Pause, Eye, MousePointerClick } from 'lucide-react'
 import {
@@ -185,10 +186,7 @@ export default function PromotionsPage() {
       <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
       {promosQ.isError ? (
-        <div className="p-8 text-center">
-          <p className="mb-2 text-sm text-error">Couldn’t load promotions.</p>
-          <button onClick={() => promosQ.refetch()} className="text-secondary hover:underline text-sm">Retry</button>
-        </div>
+        <QueryError detail="Couldn’t load promotions." onRetry={() => promosQ.refetch()} />
       ) : promosQ.isLoading ? (
         <div className="grid grid-cols-2 gap-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-40" />)}</div>
       ) : promos.length === 0 ? (

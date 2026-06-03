@@ -62,7 +62,7 @@ export default function ProgramBrowsePage() {
           <select
             value={degreeType}
             onChange={e => { setDegreeType(e.target.value); setPage(1) }}
-            className="w-40 px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-40 px-3 py-2 text-sm border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <option value="">All Degrees</option>
             {Object.entries(DEGREE_LABELS).map(([v, l]) => (
@@ -74,7 +74,7 @@ export default function ProgramBrowsePage() {
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-lg border p-4 space-y-3">
+              <div key={i} className="bg-card rounded-lg border p-4 space-y-3">
                 <Skeleton className="h-5 w-3/4" />
                 <Skeleton className="h-4 w-1/2" />
                 <Skeleton className="h-4 w-full" />
@@ -89,7 +89,7 @@ export default function ProgramBrowsePage() {
               <Link
                 key={p.id}
                 to={`/program/${p.id}`}
-                className="bg-white rounded-lg border p-4 hover:shadow-md transition-shadow"
+                className="bg-card rounded-lg border p-4 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-foreground truncate">{p.program_name}</h3>
@@ -105,7 +105,7 @@ export default function ProgramBrowsePage() {
                     tabIndex={0}
                     onClick={e => { e.preventDefault(); e.stopPropagation(); window.location.href = `/school/${p.institution_id}` }}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); window.location.href = `/school/${p.institution_id}` } }}
-                    className="hover:underline hover:text-brand-slate-600 cursor-pointer"
+                    className="hover:underline hover:text-muted-foreground cursor-pointer"
                   >{p.institution_name}</span> — {p.institution_country}
                 </p>
                 <div className="flex items-center gap-2 mt-3">

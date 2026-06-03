@@ -52,7 +52,7 @@ export default function UpdatesTab() {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        {[1, 2, 3].map(i => <div key={i} className="h-32 bg-white rounded-xl border border-divider animate-pulse" />)}
+        {[1, 2, 3].map(i => <div key={i} className="h-32 bg-card rounded-xl border border-border animate-pulse" />)}
       </div>
     )
   }
@@ -61,13 +61,13 @@ export default function UpdatesTab() {
   if (followedCount === 0) {
     return (
       <div className="text-center py-14">
-        <h3 className="text-base font-semibold text-student-ink mb-1">Follow a program to see updates here.</h3>
-        <p className="text-sm text-student-text mb-5 max-w-sm mx-auto">
+        <h3 className="text-base font-semibold text-foreground mb-1">Follow a program to see updates here.</h3>
+        <p className="text-sm text-foreground mb-5 max-w-sm mx-auto">
           Saving a program follows its institution automatically — their updates, deadlines, and events land here.
         </p>
         <button
           onClick={() => navigate('/s/explore')}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-cobalt text-white text-sm font-medium rounded-lg hover:bg-cobalt-dark transition-colors"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-secondary text-secondary-foreground text-sm font-medium rounded-lg hover:brightness-95 transition-colors"
         >
           <Search size={16} /> Find programs
         </button>
@@ -78,13 +78,13 @@ export default function UpdatesTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-end">
-        <div className="inline-flex rounded-full bg-student-mist p-0.5">
+        <div className="inline-flex rounded-full bg-muted p-0.5">
           {(['recent', 'relevant'] as const).map(r => (
             <button
               key={r}
               onClick={() => setRank(r)}
               className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                rank === r ? 'bg-white text-student-ink shadow-sm' : 'text-student-text'
+                rank === r ? 'bg-card text-foreground shadow-sm' : 'text-foreground'
               }`}
             >
               {r === 'recent' ? 'Recent' : 'Most relevant'}
@@ -95,7 +95,7 @@ export default function UpdatesTab() {
 
       {items.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-sm text-student-text">
+          <p className="text-sm text-foreground">
             You're following {followedCount} institution{followedCount !== 1 ? 's' : ''}. New updates will appear here.
           </p>
         </div>

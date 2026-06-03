@@ -47,6 +47,16 @@
     --warning-soft: 41 64% 88%;      /* #F5E6CC */
     --error: 9 56% 41%;              /* #B5321F */
     --error-soft: 14 53% 89%;        /* #F2D7D0 */
+
+    --scrim: 221 67% 8%;             /* modal/sheet backdrop — always deep ink, both themes (Spec 76 §3.4) */
+
+    /* Motion system (Spec 77 §2) — one easing family, three durations. */
+    --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);      /* enter / most transitions */
+    --ease-in-out: cubic-bezier(0.65, 0.05, 0.36, 1);/* reversible / move        */
+    --ease-in: cubic-bezier(0.4, 0, 1, 1);           /* exit only                */
+    --dur-fast: 120ms;   /* hover / focus / press / toggle */
+    --dur-base: 200ms;   /* cards / popovers / tab change   */
+    --dur-slow: 360ms;   /* sheets / modals / stage change  */
   }
 
   /* Dark theme — Ink canvas, lifted gold + cobalt accents. */
@@ -108,6 +118,14 @@
   h1 { letter-spacing: -0.015em; line-height: 1.08; }
   h2 { letter-spacing: 0; line-height: 1.20; }
   h3 { letter-spacing: 0; line-height: 1.30; }
+
+  /* Visible keyboard focus on every interactive element (Spec 80 / WCAG 2.4.7).
+     The floor for raw <button>/<a>/[tabindex]; components that set their own
+     ring (focus:outline-none focus:ring-*) win by utility-layer specificity. */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
 }
 
 /* ----------------------------------------------------------------
@@ -164,6 +182,11 @@ html {
     box-shadow: 0 8px 25px -5px hsl(var(--foreground) / 0.1);
   }
 
+  /* Always-dark modal/sheet/popover backdrop — does not invert in dark mode. */
+  .bg-scrim {
+    background-color: hsl(var(--scrim) / 0.5);
+  }
+
   /* ----------------------------------------------------------------
      Elevation — the only three documented shadows (Spec/01 §5).
      Ink-tinted, never gray. elev-glow is the rare gold accent moment.
@@ -193,6 +216,29 @@ html {
   background-size: 200% 100%;
   animation: up-shimmer 1.2s ease-in-out infinite;
 }
+
+/* Earned-gold success beat (Spec 77 §5) — ONE gold glow pulse on an optimistic
+   confirm. Gold here is the single earned motion (Spec 76 §2.4); student-side only. */
+@keyframes up-beat {
+  0%   { box-shadow: 0 0 0 0 hsl(var(--primary) / 0); }
+  30%  { box-shadow: 0 0 0 5px hsl(var(--primary) / 0.45); }
+  100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0); }
+}
+.animate-beat { animation: up-beat var(--dur-slow) var(--ease-out) 1; }
+
+/* Staggered list entrance (Spec 77 §3) — children enter in sequence, capped at 6. */
+@keyframes up-stagger-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+.stagger-list > * { animation: up-stagger-in var(--dur-base) var(--ease-out) both; }
+.stagger-list > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-list > *:nth-child(2) { animation-delay: 40ms; }
+.stagger-list > *:nth-child(3) { animation-delay: 80ms; }
+.stagger-list > *:nth-child(4) { animation-delay: 120ms; }
+.stagger-list > *:nth-child(5) { animation-delay: 160ms; }
+.stagger-list > *:nth-child(6) { animation-delay: 200ms; }
+.stagger-list > *:nth-child(n+7) { animation-delay: 0ms; }
 
 /* ----------------------------------------------------------------
    Accessibility — honor prefers-reduced-motion (Spec/02b §9).

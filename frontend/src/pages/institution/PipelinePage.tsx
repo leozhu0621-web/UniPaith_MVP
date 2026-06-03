@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, type ReactNode } from 'react'
+import QueryError from '../../components/ui/QueryError'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { applicantUrl, admissionsUrl, type PipelineView } from '../../utils/institution-routes'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -36,9 +37,9 @@ import Textarea from '../../components/ui/Textarea'
 import type { Application, BatchOperationResult, PrioritizedApplication, Program } from '../../types'
 
 const PIPELINE_COLUMNS = [
-  { id: 'submitted', label: 'Applied', color: 'bg-cobalt' },
+  { id: 'submitted', label: 'Applied', color: 'bg-secondary' },
   { id: 'under_review', label: 'Under Review', color: 'bg-warning' },
-  { id: 'interview', label: 'Interview', color: 'bg-cobalt-dark' },
+  { id: 'interview', label: 'Interview', color: 'bg-secondary' },
   { id: 'decision_made', label: 'Decision', color: 'bg-success' },
 ] as const
 
@@ -380,10 +381,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
       {!selectedProgram ? (
         <EmptyState title="Select a program" description="Choose a program above to manage its full admissions workflow." />
       ) : applicationsQ.isError ? (
-        <div className="p-8 text-center">
-          <p className="mb-2 text-sm text-error">Couldn’t load applications.</p>
-          <button onClick={() => applicationsQ.refetch()} className="text-secondary hover:underline text-sm">Retry</button>
-        </div>
+        <QueryError detail="Couldn’t load applications." onRetry={() => applicationsQ.refetch()} />
       ) : applicationsQ.isLoading ? (
         <div className="flex gap-4">
           {PIPELINE_COLUMNS.map(col => (
@@ -411,7 +409,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
             </Card>
             <Card className="p-3">
               <p className="text-xs text-muted-foreground">Interview Stage</p>
-              <p className="text-xl font-bold text-cobalt">{interviewStageCount}</p>
+              <p className="text-xl font-bold text-secondary">{interviewStageCount}</p>
             </Card>
           </div>
 
@@ -481,10 +479,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
           {activeView === 'priority' && (
             <div className="space-y-2">
               {priorityQ.isError ? (
-                <div className="p-8 text-center">
-                  <p className="mb-2 text-sm text-error">Couldn’t load the priority queue.</p>
-                  <button onClick={() => priorityQ.refetch()} className="text-secondary hover:underline text-sm">Retry</button>
-                </div>
+                <QueryError detail="Couldn’t load the priority queue." onRetry={() => priorityQ.refetch()} />
               ) : priorityQ.isLoading ? (
                 <Skeleton className="h-40" />
               ) : prioritized.length === 0 ? (

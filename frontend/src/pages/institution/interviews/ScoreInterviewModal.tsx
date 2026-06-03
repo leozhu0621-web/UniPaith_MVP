@@ -151,7 +151,7 @@ export default function ScoreInterviewModal({ isOpen, onClose, onScored, intervi
               size="sm"
               onClick={handlePrefill}
               loading={prefilling}
-              className="flex items-center gap-1 text-cobalt"
+              className="flex items-center gap-1 text-secondary"
             >
               <Sparkles size={14} /> AI prefill
             </Button>

@@ -25,27 +25,27 @@ export default function ManageFollowingPanel({ onClose }: { onClose: () => void 
   })
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-charcoal/40" onClick={onClose}>
-      <div className="bg-white rounded-2xl max-w-md w-full max-h-[70vh] overflow-y-auto shadow-xl" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-4 border-b border-divider sticky top-0 bg-white">
-          <h2 className="text-sm font-semibold text-student-ink">Manage following</h2>
-          <button onClick={onClose} className="text-student-text hover:text-student-ink p-1"><X size={18} /></button>
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-scrim" onClick={onClose}>
+      <div className="bg-card rounded-2xl max-w-md w-full max-h-[70vh] overflow-y-auto shadow-xl" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-card">
+          <h2 className="text-sm font-semibold text-foreground">Manage following</h2>
+          <button onClick={onClose} className="text-foreground hover:text-foreground p-1"><X size={18} /></button>
         </div>
 
         {isLoading ? (
-          <div className="p-4 space-y-2">{[1, 2, 3].map(i => <div key={i} className="h-12 bg-student-mist rounded-lg animate-pulse" />)}</div>
+          <div className="p-4 space-y-2">{[1, 2, 3].map(i => <div key={i} className="h-12 bg-muted rounded-lg animate-pulse" />)}</div>
         ) : (follows?.length ?? 0) === 0 ? (
-          <p className="p-6 text-center text-sm text-student-text">You're not following any institutions yet.</p>
+          <p className="p-6 text-center text-sm text-foreground">You're not following any institutions yet.</p>
         ) : (
-          <ul className="divide-y divide-divider">
+          <ul className="divide-y divide-border">
             {follows!.map((f: FollowDetail) => (
               <li key={f.institution_id} className="flex items-center gap-3 p-3">
-                <div className="w-8 h-8 rounded-md bg-cobalt/10 flex items-center justify-center flex-shrink-0">
-                  <GraduationCap size={15} className="text-cobalt" />
+                <div className="w-8 h-8 rounded-md bg-secondary/10 flex items-center justify-center flex-shrink-0">
+                  <GraduationCap size={15} className="text-secondary" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-student-ink truncate">{f.name}</p>
-                  <p className="text-[10px] text-student-text">
+                  <p className="text-sm font-medium text-foreground truncate">{f.name}</p>
+                  <p className="text-[10px] text-foreground">
                     {[f.city, f.country].filter(Boolean).join(', ') || `${f.program_count} program${f.program_count !== 1 ? 's' : ''}`}
                     {f.source === 'application' && ' · applying'}
                     {f.source === 'saved' && ' · saved'}
@@ -54,21 +54,21 @@ export default function ManageFollowingPanel({ onClose }: { onClose: () => void 
                 <button
                   onClick={() => muteMut.mutate({ id: f.institution_id, muted: !f.muted })}
                   title={f.muted ? 'Unmute' : 'Mute'}
-                  className={`p-1.5 rounded-lg transition-colors ${f.muted ? 'text-student-text bg-student-mist' : 'text-cobalt hover:bg-cobalt/5'}`}
+                  className={`p-1.5 rounded-lg transition-colors ${f.muted ? 'text-foreground bg-muted' : 'text-secondary hover:bg-secondary/5'}`}
                 >
                   {f.muted ? <BellOff size={15} /> : <Bell size={15} />}
                 </button>
                 {f.can_unfollow ? (
                   <button
                     onClick={() => unfollowMut.mutate(f.institution_id)}
-                    className="text-xs font-medium text-student-text hover:text-error transition-colors"
+                    className="text-xs font-medium text-foreground hover:text-error transition-colors"
                   >
                     Unfollow
                   </button>
                 ) : (
                   <span
                     title="You have an active application here. Withdraw it to unfollow."
-                    className="inline-flex items-center gap-1 text-[10px] text-student-text"
+                    className="inline-flex items-center gap-1 text-[10px] text-foreground"
                   >
                     <Lock size={11} /> Applying
                   </span>

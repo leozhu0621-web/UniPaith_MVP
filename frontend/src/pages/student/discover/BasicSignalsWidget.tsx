@@ -54,9 +54,9 @@ export default function BasicSignalsWidget() {
 
   if (rows.length === 0) {
     return (
-      <Card className="text-sm text-student-text space-y-2">
-        <div className="flex items-center gap-2 text-student-ink font-medium">
-          <GraduationCap size={14} className="text-cobalt" />
+      <Card className="text-sm text-foreground space-y-2">
+        <div className="flex items-center gap-2 text-foreground font-medium">
+          <GraduationCap size={14} className="text-secondary" />
           Basic signals
         </div>
         <p className="italic">
@@ -69,13 +69,13 @@ export default function BasicSignalsWidget() {
   return (
     <Card className="space-y-3">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-student-ink font-medium text-sm">
-          <GraduationCap size={14} className="text-cobalt" />
+        <div className="flex items-center gap-2 text-foreground font-medium text-sm">
+          <GraduationCap size={14} className="text-secondary" />
           Basic signals
         </div>
         <Link
           to="/s/profile?tab=overview"
-          className="text-xs text-cobalt inline-flex items-center gap-1 hover:underline"
+          className="text-xs text-secondary inline-flex items-center gap-1 hover:underline"
         >
           Manage <ExternalLink size={11} />
         </Link>
@@ -83,8 +83,8 @@ export default function BasicSignalsWidget() {
       <dl className="space-y-1.5 text-sm">
         {rows.map((r) => (
           <div key={r.label} className="flex justify-between gap-2">
-            <dt className="text-student-text/80">{r.label}</dt>
-            <dd className="font-medium text-student-ink text-right">{r.value}</dd>
+            <dt className="text-foreground/80">{r.label}</dt>
+            <dd className="font-medium text-foreground text-right">{r.value}</dd>
           </div>
         ))}
       </dl>

@@ -62,7 +62,7 @@ export default function WorkshopProgramPicker({
 
   return (
     <div className="space-y-2">
-      <div className="inline-flex rounded-lg border border-divider p-0.5">
+      <div className="inline-flex rounded-lg border border-border p-0.5">
         {(['general', 'program_specific'] as WorkshopMode[]).map(m => (
           <button
             key={m}
@@ -70,8 +70,8 @@ export default function WorkshopProgramPicker({
             onClick={() => setMode(m)}
             className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
               mode === m
-                ? 'bg-student/10 font-medium text-student-ink'
-                : 'text-student-text hover:text-student-ink'
+                ? 'bg-primary/10 font-medium text-foreground'
+                : 'text-foreground hover:text-foreground'
             }`}
           >
             {m === 'general' ? 'General' : 'Program-specific'}
@@ -82,9 +82,9 @@ export default function WorkshopProgramPicker({
       {mode === 'program_specific' && (
         <div>
           {isLoading ? (
-            <div className="text-xs text-student-text">Loading your programs…</div>
+            <div className="text-xs text-foreground">Loading your programs…</div>
           ) : options.length === 0 ? (
-            <div className="text-xs text-student-text">
+            <div className="text-xs text-foreground">
               Save or start an application to target a specific program — showing general feedback
               for now.
             </div>
@@ -96,7 +96,7 @@ export default function WorkshopProgramPicker({
                 const next = options.find(o => o.programId === e.target.value) ?? null
                 onProgramChange(next)
               }}
-              className="w-full rounded-md border border-divider bg-white px-3 py-2 text-sm text-student-ink"
+              className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground"
             >
               {options.map(o => (
                 <option key={o.programId} value={o.programId}>

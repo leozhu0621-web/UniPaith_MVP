@@ -34,7 +34,7 @@ function apiError(e: unknown, fallback: string): string {
 
 function AlignmentBar({ score }: { score: number }) {
   const band = alignmentBand(score)
-  const color = band === 'strong' ? 'bg-cobalt' : band === 'moderate' ? 'bg-cobalt/60' : 'bg-muted-foreground/40'
+  const color = band === 'strong' ? 'bg-secondary' : band === 'moderate' ? 'bg-secondary/60' : 'bg-muted-foreground/40'
   return (
     <div className="flex items-center gap-2">
       <div className="h-1.5 w-24 overflow-hidden rounded-full bg-muted">
@@ -63,7 +63,7 @@ function AdvisorRow({
   return (
     <div
       className={`rounded-lg border p-4 ${
-        match.mutual ? 'border-cobalt/40 bg-cobalt/5' : 'border-border bg-background'
+        match.mutual ? 'border-secondary/40 bg-secondary/5' : 'border-border bg-background'
       }`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -99,7 +99,7 @@ function AdvisorRow({
           )}
           {match.rationale && (
             <p className="mt-1.5 flex items-start gap-1 text-xs text-muted-foreground">
-              <Sparkles size={11} className="mt-0.5 shrink-0 text-cobalt" /> {match.rationale}
+              <Sparkles size={11} className="mt-0.5 shrink-0 text-secondary" /> {match.rationale}
             </p>
           )}
         </div>
@@ -205,7 +205,7 @@ export default function AdvisorMatchTab({ applicationId }: { applicationId: stri
       {/* Research intent (§2.2) */}
       <Card className="p-5">
         <div className="mb-4 flex items-center gap-2">
-          <span className="text-cobalt">
+          <span className="text-secondary">
             <GraduationCap size={16} />
           </span>
           <h3 className="text-sm font-semibold text-foreground">Research intent</h3>
@@ -253,13 +253,13 @@ export default function AdvisorMatchTab({ applicationId }: { applicationId: stri
       <Card className="p-5">
         <div className="mb-4 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="text-cobalt">
+            <span className="text-secondary">
               <UserCheck size={16} />
             </span>
             <h3 className="text-sm font-semibold text-foreground">Advisors who fit this applicant</h3>
           </div>
           {data.matches.some(m => m.mutual) && (
-            <span className="text-xs text-cobalt">
+            <span className="text-xs text-secondary">
               {data.matches.filter(m => m.mutual).length} mutual
             </span>
           )}
@@ -284,7 +284,7 @@ export default function AdvisorMatchTab({ applicationId }: { applicationId: stri
       {/* Two-stage review (§2.4) */}
       <Card className="p-5">
         <div className="mb-4 flex items-center gap-2">
-          <span className="text-cobalt">
+          <span className="text-secondary">
             <Star size={16} />
           </span>
           <h3 className="text-sm font-semibold text-foreground">Department recommendation</h3>

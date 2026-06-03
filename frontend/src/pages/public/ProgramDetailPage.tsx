@@ -118,10 +118,10 @@ export default function ProgramDetailPage() {
   if (!p) {
     return (
       <div className="max-w-5xl mx-auto px-6 py-16 text-center">
-        <GraduationCap size={48} className="mx-auto text-student-text/30 mb-4" />
-        <h2 className="text-xl font-semibold text-student-ink mb-2">Program not found</h2>
-        <p className="text-student-text/70 mb-6">This program may not be published or the link is incorrect.</p>
-        <Link to="/browse" className="text-cobalt hover:underline">Browse programs</Link>
+        <GraduationCap size={48} className="mx-auto text-foreground/30 mb-4" />
+        <h2 className="text-xl font-semibold text-foreground mb-2">Program not found</h2>
+        <p className="text-foreground/70 mb-6">This program may not be published or the link is incorrect.</p>
+        <Link to="/browse" className="text-secondary hover:underline">Browse programs</Link>
       </div>
     )
   }
@@ -147,26 +147,26 @@ export default function ProgramDetailPage() {
     <>
       <div className="max-w-5xl mx-auto px-6 py-8">
         {inst && (
-          <Link to={`/school/${p.institution_id}`} className="inline-flex items-center gap-1 text-sm text-student-text/70 hover:text-student-ink mb-4">
+          <Link to={`/school/${p.institution_id}`} className="inline-flex items-center gap-1 text-sm text-foreground/70 hover:text-foreground mb-4">
             <ArrowLeft size={14} /> {inst.name}
           </Link>
         )}
 
-        <div className="bg-white rounded-lg border border-divider p-6 mb-6">
+        <div className="bg-card rounded-lg border border-border p-6 mb-6">
           <div className="flex items-start justify-between gap-6">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-2xl font-bold text-student-ink">{p.program_name}</h1>
+                <h1 className="text-2xl font-bold text-foreground">{p.program_name}</h1>
                 <Badge variant="info">{DEGREE_LABELS[p.degree_type] || p.degree_type}</Badge>
               </div>
-              {p.department && <p className="text-student-text/70 mb-1">{p.department}</p>}
+              {p.department && <p className="text-foreground/70 mb-1">{p.department}</p>}
               {inst && (
-                <Link to={`/school/${p.institution_id}`} className="text-sm text-cobalt hover:underline">
+                <Link to={`/school/${p.institution_id}`} className="text-sm text-secondary hover:underline">
                   {inst.name}
                 </Link>
               )}
 
-              <div className="flex flex-wrap gap-4 mt-4 text-sm text-student-text">
+              <div className="flex flex-wrap gap-4 mt-4 text-sm text-foreground">
                 {effectiveTuition != null && (
                   <span className="flex items-center gap-1.5"><DollarSign size={14} /> {formatCurrency(effectiveTuition)}</span>
                 )}
@@ -193,7 +193,7 @@ export default function ProgramDetailPage() {
 
               <Link
                 to="/login"
-                className="inline-flex items-center gap-2 mt-4 px-3 py-2 rounded-lg border border-cobalt/30 bg-cobalt/5 text-cobalt text-sm font-semibold hover:bg-cobalt/10 transition-colors"
+                className="inline-flex items-center gap-2 mt-4 px-3 py-2 rounded-lg border border-secondary/30 bg-secondary/5 text-secondary text-sm font-semibold hover:bg-secondary/10 transition-colors"
               >
                 <Sparkles size={14} /> Sign in to see your match
               </Link>
@@ -227,21 +227,21 @@ export default function ProgramDetailPage() {
             <div className="space-y-6">
               {p.description_text && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-student-ink mb-2">About this program</h3>
-                  <p className="text-sm text-student-text whitespace-pre-wrap">{p.description_text}</p>
+                  <h3 className="text-sm font-semibold text-foreground mb-2">About this program</h3>
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{p.description_text}</p>
                 </Card>
               )}
 
               {p.who_its_for && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-student-ink mb-2">Who it&apos;s for</h3>
-                  <p className="text-sm text-student-text whitespace-pre-wrap">{p.who_its_for}</p>
+                  <h3 className="text-sm font-semibold text-foreground mb-2">Who it&apos;s for</h3>
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{p.who_its_for}</p>
                 </Card>
               )}
 
               {(tracksMeta.concentrations.length > 0 || tracksMeta.note || tracksMeta.learning_format) && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-student-ink mb-3">Tracks & Structure</h3>
+                  <h3 className="text-sm font-semibold text-foreground mb-3">Tracks & Structure</h3>
                   {tracksMeta.concentrations.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-3">
                       {tracksMeta.concentrations.map((t, i) => (
@@ -249,20 +249,20 @@ export default function ProgramDetailPage() {
                       ))}
                     </div>
                   )}
-                  {tracksMeta.note && <p className="text-sm text-student-text mb-2">{tracksMeta.note}</p>}
+                  {tracksMeta.note && <p className="text-sm text-foreground mb-2">{tracksMeta.note}</p>}
                   {tracksMeta.learning_format && (
-                    <p className="text-sm text-student-text"><span className="font-semibold text-student-ink">Learning format:</span> {tracksMeta.learning_format}</p>
+                    <p className="text-sm text-foreground"><span className="font-semibold text-foreground">Learning format:</span> {tracksMeta.learning_format}</p>
                   )}
                 </Card>
               )}
 
               {highlights.length > 0 && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-student-ink mb-3">Highlights</h3>
+                  <h3 className="text-sm font-semibold text-foreground mb-3">Highlights</h3>
                   <ul className="space-y-2">
                     {highlights.map((h, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-student-text">
-                        <CheckCircle2 size={16} className="text-cobalt mt-0.5 shrink-0" />
+                      <li key={i} className="flex items-start gap-2 text-sm text-foreground">
+                        <CheckCircle2 size={16} className="text-secondary mt-0.5 shrink-0" />
                         {h}
                       </li>
                     ))}
@@ -272,17 +272,17 @@ export default function ProgramDetailPage() {
 
               {faculty.length > 0 && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-student-ink mb-3">Faculty Contacts</h3>
+                  <h3 className="text-sm font-semibold text-foreground mb-3">Faculty Contacts</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {faculty.map((f, i) => (
-                      <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-student-mist/50">
-                        <div className="w-9 h-9 rounded-full bg-cobalt/10 flex items-center justify-center text-sm font-medium text-cobalt">
+                      <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                        <div className="w-9 h-9 rounded-full bg-secondary/10 flex items-center justify-center text-sm font-medium text-secondary">
                           {(f.name || '?')[0].toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-student-ink truncate">{f.name}</p>
-                          {f.role && <p className="text-xs text-student-text/70">{f.role}</p>}
-                          {f.email && <p className="text-xs text-student-text/50">{f.email}</p>}
+                          <p className="text-sm font-medium text-foreground truncate">{f.name}</p>
+                          {f.role && <p className="text-xs text-foreground/70">{f.role}</p>}
+                          {f.email && <p className="text-xs text-foreground/50">{f.email}</p>}
                         </div>
                       </div>
                     ))}
@@ -291,14 +291,14 @@ export default function ProgramDetailPage() {
               )}
 
               <Card className="p-5">
-                <h3 className="text-sm font-semibold text-student-ink mb-3">Quick Facts</h3>
+                <h3 className="text-sm font-semibold text-foreground mb-3">Quick Facts</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                  <div><span className="text-student-text/70">Degree:</span> <span className="font-medium">{DEGREE_LABELS[p.degree_type] || p.degree_type}</span></div>
-                  {p.duration_months && <div><span className="text-student-text/70">Duration:</span> <span className="font-medium">{p.duration_months} months</span></div>}
-                  {p.delivery_format && <div><span className="text-student-text/70">Format:</span> <span className="font-medium">{DELIVERY_FORMAT_LABELS[p.delivery_format] ?? p.delivery_format}</span></div>}
-                  {p.campus_setting && <div><span className="text-student-text/70">Setting:</span> <span className="font-medium">{CAMPUS_SETTING_LABELS[p.campus_setting] ?? p.campus_setting}</span></div>}
-                  {p.program_start_date && <div><span className="text-student-text/70">Start Date:</span> <span className="font-medium">{formatDate(p.program_start_date)}</span></div>}
-                  {effectiveDeadline && <div><span className="text-student-text/70">Deadline:</span> <span className="font-medium">{formatDate(effectiveDeadline)}</span></div>}
+                  <div><span className="text-foreground/70">Degree:</span> <span className="font-medium">{DEGREE_LABELS[p.degree_type] || p.degree_type}</span></div>
+                  {p.duration_months && <div><span className="text-foreground/70">Duration:</span> <span className="font-medium">{p.duration_months} months</span></div>}
+                  {p.delivery_format && <div><span className="text-foreground/70">Format:</span> <span className="font-medium">{DELIVERY_FORMAT_LABELS[p.delivery_format] ?? p.delivery_format}</span></div>}
+                  {p.campus_setting && <div><span className="text-foreground/70">Setting:</span> <span className="font-medium">{CAMPUS_SETTING_LABELS[p.campus_setting] ?? p.campus_setting}</span></div>}
+                  {p.program_start_date && <div><span className="text-foreground/70">Start Date:</span> <span className="font-medium">{formatDate(p.program_start_date)}</span></div>}
+                  {effectiveDeadline && <div><span className="text-foreground/70">Deadline:</span> <span className="font-medium">{formatDate(effectiveDeadline)}</span></div>}
                 </div>
               </Card>
             </div>
@@ -308,18 +308,18 @@ export default function ProgramDetailPage() {
             <div className="space-y-6">
               {(effectiveDeadline || p.program_start_date) && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-student-ink mb-3">Key Dates</h3>
+                  <h3 className="text-sm font-semibold text-foreground mb-3">Key Dates</h3>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     {effectiveDeadline && (
                       <div className="flex items-center gap-2">
                         <CalendarDays size={16} className="text-warning" />
-                        <div><span className="text-student-text/70">Deadline:</span> <span className="font-medium">{formatDate(effectiveDeadline)}</span></div>
+                        <div><span className="text-foreground/70">Deadline:</span> <span className="font-medium">{formatDate(effectiveDeadline)}</span></div>
                       </div>
                     )}
                     {p.program_start_date && (
                       <div className="flex items-center gap-2">
-                        <CalendarDays size={16} className="text-cobalt" />
-                        <div><span className="text-student-text/70">Start Date:</span> <span className="font-medium">{formatDate(p.program_start_date)}</span></div>
+                        <CalendarDays size={16} className="text-secondary" />
+                        <div><span className="text-foreground/70">Start Date:</span> <span className="font-medium">{formatDate(p.program_start_date)}</span></div>
                       </div>
                     )}
                   </div>
@@ -328,15 +328,15 @@ export default function ProgramDetailPage() {
 
               {appMaterials.length > 0 && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-student-ink mb-3">Application Materials</h3>
+                  <h3 className="text-sm font-semibold text-foreground mb-3">Application Materials</h3>
                   <ul className="space-y-2">
                     {appMaterials.map((req, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm">
-                        <CheckCircle2 size={16} className={`mt-0.5 shrink-0 ${req.required !== false ? 'text-cobalt' : 'text-student-text/30'}`} />
+                        <CheckCircle2 size={16} className={`mt-0.5 shrink-0 ${req.required !== false ? 'text-secondary' : 'text-foreground/30'}`} />
                         <div>
-                          <span className="text-student-ink">{req.label}</span>
+                          <span className="text-foreground">{req.label}</span>
                           {req.required !== false && <Badge variant="warning" className="ml-2 text-[10px]">Required</Badge>}
-                          {req.note && <p className="text-xs text-student-text/60 mt-0.5">{req.note}</p>}
+                          {req.note && <p className="text-xs text-foreground/60 mt-0.5">{req.note}</p>}
                         </div>
                       </li>
                     ))}
@@ -346,16 +346,16 @@ export default function ProgramDetailPage() {
 
               {prerequisites.length > 0 && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-student-ink mb-3">Prerequisites</h3>
+                  <h3 className="text-sm font-semibold text-foreground mb-3">Prerequisites</h3>
                   <ul className="space-y-2 text-sm">
                     {prerequisites.map((pr, i) => (
-                      <li key={i} className="rounded-lg border border-divider px-3 py-2">
+                      <li key={i} className="rounded-lg border border-border px-3 py-2">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-medium text-student-ink">{pr.name}</span>
+                          <span className="font-medium text-foreground">{pr.name}</span>
                           <Badge variant={pr.required ? 'warning' : 'neutral'} size="sm">{pr.required ? 'Required' : 'Recommended'}</Badge>
                         </div>
                         {pr.allowed_substitutes.length > 0 && (
-                          <p className="text-xs text-student-text/60 mt-1">Substitutes: {pr.allowed_substitutes.join(', ')}</p>
+                          <p className="text-xs text-foreground/60 mt-1">Substitutes: {pr.allowed_substitutes.join(', ')}</p>
                         )}
                       </li>
                     ))}
@@ -366,33 +366,33 @@ export default function ProgramDetailPage() {
               {testPolicy && (
                 <Card className="p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <h3 className="text-sm font-semibold text-student-ink">Test Policy</h3>
+                    <h3 className="text-sm font-semibold text-foreground">Test Policy</h3>
                     {testPolicy.stance_label && <Badge variant="info" size="sm">{testPolicy.stance_label}</Badge>}
                   </div>
                   <div className="space-y-2 text-sm">
                     {testPolicy.required.length > 0 && (
-                      <p><span className="text-student-text/70">Required:</span> {testPolicy.required.join(', ')}</p>
+                      <p><span className="text-foreground/70">Required:</span> {testPolicy.required.join(', ')}</p>
                     )}
                     {testPolicy.optional.length > 0 && (
-                      <p><span className="text-student-text/70">Optional:</span> {testPolicy.optional.join(', ')}</p>
+                      <p><span className="text-foreground/70">Optional:</span> {testPolicy.optional.join(', ')}</p>
                     )}
                     {testPolicy.typical_ranges.length > 0 && (
                       <div>
-                        <p className="text-student-text/70 mb-1">Typical ranges:</p>
+                        <p className="text-foreground/70 mb-1">Typical ranges:</p>
                         {testPolicy.typical_ranges.map(r => (
-                          <p key={r.test} className="text-student-ink">{r.test}: {r.low}–{r.high}</p>
+                          <p key={r.test} className="text-foreground">{r.test}: {r.low}–{r.high}</p>
                         ))}
                       </div>
                     )}
-                    {testPolicy.waived_rules && <p className="text-student-text">{testPolicy.waived_rules}</p>}
+                    {testPolicy.waived_rules && <p className="text-foreground">{testPolicy.waived_rules}</p>}
                   </div>
                 </Card>
               )}
 
               {recommendations && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-student-ink mb-2">Recommendations</h3>
-                  <p className="text-sm text-student-text">
+                  <h3 className="text-sm font-semibold text-foreground mb-2">Recommendations</h3>
+                  <p className="text-sm text-foreground">
                     {recommendations.required_count > 0
                       ? `${recommendations.required_count} letter${recommendations.required_count === 1 ? '' : 's'} required`
                       : 'Recommendations may be requested'}
@@ -403,12 +403,12 @@ export default function ProgramDetailPage() {
 
               {admissionTimeline && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-student-ink mb-3">Intake Rounds — {admissionTimeline.term}</h3>
+                  <h3 className="text-sm font-semibold text-foreground mb-3">Intake Rounds — {admissionTimeline.term}</h3>
                   <div className="space-y-2">
                     {admissionTimeline.rounds.map((round: any, i: number) => (
-                      <div key={i} className="p-3 rounded-lg bg-student-mist/50 border border-divider text-sm">
-                        <p className="font-medium text-student-ink">{round.name}</p>
-                        <p className="text-xs text-student-text/70 mt-1">
+                      <div key={i} className="p-3 rounded-lg bg-muted/50 border border-border text-sm">
+                        <p className="font-medium text-foreground">{round.name}</p>
+                        <p className="text-xs text-foreground/70 mt-1">
                           Deadline: {formatDate(round.deadline)}
                           {round.decision_release && ` · Decision: ${formatDate(round.decision_release)}`}
                         </p>
@@ -420,12 +420,12 @@ export default function ProgramDetailPage() {
 
               {p.requirements && Object.keys(p.requirements).length > 0 && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-student-ink mb-3">Other Requirements</h3>
+                  <h3 className="text-sm font-semibold text-foreground mb-3">Other Requirements</h3>
                   <dl className="space-y-2 text-sm">
                     {Object.entries(p.requirements).map(([k, v]) => (
-                      <div key={k} className="flex justify-between border-b border-divider pb-2">
-                        <dt className="text-student-text/70 capitalize">{k.replace(/_/g, ' ')}</dt>
-                        <dd className="font-medium text-student-ink">{String(v)}</dd>
+                      <div key={k} className="flex justify-between border-b border-border pb-2">
+                        <dt className="text-foreground/70 capitalize">{k.replace(/_/g, ' ')}</dt>
+                        <dd className="font-medium text-foreground">{String(v)}</dd>
                       </div>
                     ))}
                   </dl>
@@ -441,16 +441,16 @@ export default function ProgramDetailPage() {
           {tab === 'costs' && (
             <div className="space-y-6">
               <Card className="p-5">
-                <h3 className="text-sm font-semibold text-student-ink mb-3">Tuition & Fees</h3>
+                <h3 className="text-sm font-semibold text-foreground mb-3">Tuition & Fees</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-student-text/70">Tuition</span>
-                    <span className="font-medium text-student-ink">{effectiveTuition != null ? formatCurrency(effectiveTuition) : 'Not published'}</span>
+                    <span className="text-foreground/70">Tuition</span>
+                    <span className="font-medium text-foreground">{effectiveTuition != null ? formatCurrency(effectiveTuition) : 'Not published'}</span>
                   </div>
                   {Object.entries(cd.fees || {}).map(([name, amount]) => (
                     <div key={name} className="flex justify-between">
-                      <span className="text-student-text/70">{name}</span>
-                      <span className="text-student-ink">{formatCurrency(Number(amount))}</span>
+                      <span className="text-foreground/70">{name}</span>
+                      <span className="text-foreground">{formatCurrency(Number(amount))}</span>
                     </div>
                   ))}
                 </div>
@@ -458,8 +458,8 @@ export default function ProgramDetailPage() {
 
               {(costBandMin != null || costBandMax != null) && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-student-ink mb-2">Estimated Total Cost</h3>
-                  <p className="text-lg font-semibold text-student-ink">
+                  <h3 className="text-sm font-semibold text-foreground mb-2">Estimated Total Cost</h3>
+                  <p className="text-lg font-semibold text-foreground">
                     {costBandMin != null && costBandMax != null
                       ? `${formatCurrency(costBandMin)} – ${formatCurrency(costBandMax)}`
                       : formatCurrency(costBandMax ?? costBandMin ?? 0)}
@@ -469,8 +469,8 @@ export default function ProgramDetailPage() {
 
               {fundingSignals && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-student-ink mb-3">Funding & Aid Signals</h3>
-                  <ul className="space-y-1.5 text-sm text-student-text">
+                  <h3 className="text-sm font-semibold text-foreground mb-3">Funding & Aid Signals</h3>
+                  <ul className="space-y-1.5 text-sm text-foreground">
                     {fundingSignals.ta_funded && <li>TA funding available</li>}
                     {fundingSignals.ra_funded && <li>RA funding available</li>}
                     {fundingSignals.merit_scholarship_available && <li>Merit scholarships</li>}
@@ -481,7 +481,7 @@ export default function ProgramDetailPage() {
 
               {effectiveTuition == null && !costBandMin && !fundingSignals && (
                 <Card className="p-5 text-center">
-                  <p className="text-sm text-student-text/70">Cost data has not been published for this program yet.</p>
+                  <p className="text-sm text-foreground/70">Cost data has not been published for this program yet.</p>
                 </Card>
               )}
             </div>
@@ -491,28 +491,28 @@ export default function ProgramDetailPage() {
             <div className="space-y-6">
               {!hasOutcomes ? (
                 <Card className="p-5 text-center">
-                  <TrendingUp size={32} className="text-student-text/30 mx-auto mb-3" />
-                  <p className="text-sm text-student-text/70">Outcomes data has not been published for this program yet.</p>
+                  <TrendingUp size={32} className="text-foreground/30 mx-auto mb-3" />
+                  <p className="text-sm text-foreground/70">Outcomes data has not been published for this program yet.</p>
                 </Card>
               ) : (
                 <>
                   {(odn.median_salary != null || salaryBands.length > 0) && (
                     <Card className="p-5">
                       <div className="flex items-center gap-2 mb-3">
-                        <DollarSign size={14} className="text-cobalt" />
-                        <h3 className="text-sm font-semibold text-student-ink">Salary</h3>
+                        <DollarSign size={14} className="text-secondary" />
+                        <h3 className="text-sm font-semibold text-foreground">Salary</h3>
                       </div>
                       {salaryBands.length > 0 ? (
                         <div className="space-y-2">
                           {salaryBands.map(b => (
                             <div key={b.band_label} className="flex justify-between text-sm">
-                              <span className="text-student-text">{b.band_label}</span>
-                              <span className="font-medium text-student-ink">{b.percent}%</span>
+                              <span className="text-foreground">{b.band_label}</span>
+                              <span className="font-medium text-foreground">{b.percent}%</span>
                             </div>
                           ))}
                         </div>
                       ) : odn.median_salary != null ? (
-                        <p className="text-2xl font-bold text-student-ink">{formatCurrency(Number(odn.median_salary))}</p>
+                        <p className="text-2xl font-bold text-foreground">{formatCurrency(Number(odn.median_salary))}</p>
                       ) : null}
                     </Card>
                   )}
@@ -520,21 +520,21 @@ export default function ProgramDetailPage() {
                   {(odn.employment_rate != null || odn.internship_conversion_rate != null) && (
                     <Card className="p-5">
                       <div className="flex items-center gap-2 mb-3">
-                        <Briefcase size={14} className="text-cobalt" />
-                        <h3 className="text-sm font-semibold text-student-ink">Employment & Placement</h3>
+                        <Briefcase size={14} className="text-secondary" />
+                        <h3 className="text-sm font-semibold text-foreground">Employment & Placement</h3>
                       </div>
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         {odn.employment_rate != null && (
                           <div>
-                            <p className="text-student-text/70">Employment rate</p>
-                            <p className="text-xl font-bold text-student-ink">{(Number(odn.employment_rate) * 100).toFixed(0)}%</p>
-                            {odn.employment_timeframe && <p className="text-xs text-student-text/60">Within {odn.employment_timeframe}</p>}
+                            <p className="text-foreground/70">Employment rate</p>
+                            <p className="text-xl font-bold text-foreground">{(Number(odn.employment_rate) * 100).toFixed(0)}%</p>
+                            {odn.employment_timeframe && <p className="text-xs text-foreground/60">Within {odn.employment_timeframe}</p>}
                           </div>
                         )}
                         {odn.internship_conversion_rate != null && (
                           <div>
-                            <p className="text-student-text/70">Internship conversion</p>
-                            <p className="text-xl font-bold text-student-ink">{(Number(odn.internship_conversion_rate) * 100).toFixed(0)}%</p>
+                            <p className="text-foreground/70">Internship conversion</p>
+                            <p className="text-xl font-bold text-foreground">{(Number(odn.internship_conversion_rate) * 100).toFixed(0)}%</p>
                           </div>
                         )}
                       </div>
@@ -543,7 +543,7 @@ export default function ProgramDetailPage() {
 
                   {(odn.top_employers?.length ?? 0) > 0 && (
                     <Card className="p-5">
-                      <h3 className="text-sm font-semibold text-student-ink mb-3">Top Employers</h3>
+                      <h3 className="text-sm font-semibold text-foreground mb-3">Top Employers</h3>
                       <div className="flex flex-wrap gap-2">
                         {odn.top_employers.map((e: string) => <Badge key={e} variant="neutral" size="sm">{e}</Badge>)}
                       </div>
@@ -562,12 +562,12 @@ export default function ProgramDetailPage() {
                 events.map(e => (
                   <Card key={e.id} className="p-4 flex items-center justify-between">
                     <div>
-                      <h4 className="font-medium text-student-ink">{e.event_name}</h4>
-                      <p className="text-sm text-student-text/70">{formatDate(e.start_time)}{e.location ? ` · ${e.location}` : ''}</p>
+                      <h4 className="font-medium text-foreground">{e.event_name}</h4>
+                      <p className="text-sm text-foreground/70">{formatDate(e.start_time)}{e.location ? ` · ${e.location}` : ''}</p>
                       {e.event_type && <Badge variant="neutral" className="mt-1">{e.event_type}</Badge>}
                     </div>
                     {e.capacity != null && (
-                      <span className="text-xs text-student-text/50">{e.rsvp_count}/{e.capacity} spots</span>
+                      <span className="text-xs text-foreground/50">{e.rsvp_count}/{e.capacity} spots</span>
                     )}
                   </Card>
                 ))

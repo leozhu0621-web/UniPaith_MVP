@@ -49,7 +49,7 @@ export default function SignupPage() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-center text-charcoal mb-2">Create your account</h2>
+      <h2 className="text-xl font-semibold text-center text-foreground mb-2">Create your account</h2>
 
       {error && (
         <div className="bg-error-soft border border-error/30 text-error text-sm px-4 py-2 rounded-lg">
@@ -69,13 +69,13 @@ export default function SignupPage() {
             className={clsx(
               'flex-1 p-3 rounded-lg border text-center transition-colors',
               role === opt.value
-                ? 'border-cobalt bg-cobalt/5'
-                : 'border-stone hover:border-cobalt/40'
+                ? 'border-secondary bg-secondary/5'
+                : 'border-border hover:border-secondary/40'
             )}
           >
-            <opt.icon size={20} className={clsx('mx-auto mb-1', role === opt.value ? 'text-cobalt' : 'text-slate')} />
-            <div className="text-sm font-semibold text-charcoal">{opt.label}</div>
-            <div className="text-xs text-slate">{opt.sub}</div>
+            <opt.icon size={20} className={clsx('mx-auto mb-1', role === opt.value ? 'text-secondary' : 'text-muted-foreground')} />
+            <div className="text-sm font-semibold text-foreground">{opt.label}</div>
+            <div className="text-xs text-muted-foreground">{opt.sub}</div>
           </button>
         ))}
       </div>
@@ -107,19 +107,13 @@ export default function SignupPage() {
       </form>
 
       {role === 'student' && (
-        <p className="text-center text-xs text-slate">7 days free, then $15/mo. Cancel anytime.</p>
+        <p className="text-center text-xs text-muted-foreground">7 days free, then $15/mo. Cancel anytime.</p>
       )}
 
-      <p className="text-center text-sm text-slate">
+      <p className="text-center text-sm text-muted-foreground">
         Already have an account?{' '}
-        <Link to="/login" className="text-cobalt font-semibold hover:underline">
+        <Link to="/login" className="text-secondary font-semibold hover:underline">
           Log in
-        </Link>
-      </p>
-
-      <p className="text-center text-sm text-muted-foreground/70">
-        <Link to="/pricing" className="hover:underline">
-          View plans and pricing
         </Link>
       </p>
     </div>

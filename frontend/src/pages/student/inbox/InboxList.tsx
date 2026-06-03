@@ -46,18 +46,18 @@ function ThreadRow({
   return (
     <button
       onClick={() => onSelect(thread.id)}
-      className={`w-full border-b border-divider px-3 py-2.5 text-left transition-colors hover:bg-muted ${
+      className={`w-full border-b border-border px-3 py-2.5 text-left transition-colors hover:bg-muted ${
         selected ? 'bg-muted' : ''
       }`}
     >
       <div className="flex items-center gap-2">
-        {thread.unread && <span className="h-2 w-2 shrink-0 rounded-full bg-cobalt" aria-label="Unread" />}
+        {thread.unread && <span className="h-2 w-2 shrink-0 rounded-full bg-secondary" aria-label="Unread" />}
         <p className={`flex-1 truncate text-sm ${thread.unread ? 'font-semibold text-foreground' : 'text-foreground'}`}>
           {thread.subject || 'Conversation'}
         </p>
         <span className="shrink-0 text-[10px] text-muted-foreground">{formatRelative(thread.last_message_at)}</span>
       </div>
-      <p className="mt-0.5 truncate text-[11px] text-cobalt">{threadEyebrow(thread)}</p>
+      <p className="mt-0.5 truncate text-[11px] text-secondary">{threadEyebrow(thread)}</p>
       <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
         {action && (
           <Badge variant={action.variant} size="sm">

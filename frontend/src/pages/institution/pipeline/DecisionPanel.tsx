@@ -195,7 +195,7 @@ export default function DecisionPanel({
               </div>
               {status.response_deadline && (
                 <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <CalendarClock size={14} className="text-cobalt" />
+                  <CalendarClock size={14} className="text-secondary" />
                   <span>Respond by {formatDate(status.response_deadline)}</span>
                   {status.days_remaining != null && !studentResponded && (
                     <span className={status.deadline_passed ? 'text-error font-medium' : 'text-muted-foreground'}>
@@ -250,7 +250,7 @@ export default function DecisionPanel({
 
       <Card className="p-5 space-y-4">
         <div className="flex items-center gap-2">
-          <Award size={18} className="text-cobalt" />
+          <Award size={18} className="text-secondary" />
           <h3 className="font-semibold text-foreground">
             {app.decision ? 'Re-release decision' : 'Release decision'}
           </h3>
@@ -271,7 +271,7 @@ export default function DecisionPanel({
                   onClick={() => setDecision(d.value)}
                   className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                     decision === d.value
-                      ? 'border-cobalt bg-cobalt/10 text-cobalt'
+                      ? 'border-secondary bg-secondary/10 text-secondary'
                       : 'border-border bg-transparent text-muted-foreground hover:bg-muted'
                   }`}
                 >

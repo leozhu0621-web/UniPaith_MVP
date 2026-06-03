@@ -69,7 +69,7 @@ export default function Tabs({ tabs, activeTab, onChange, sticky }: TabsProps) {
               <span
                 className={clsx(
                   'ml-1.5 px-1.5 py-0.5 text-xs rounded-pill',
-                  active ? 'bg-cobalt/10 text-cobalt' : 'bg-muted text-muted-foreground'
+                  active ? 'bg-secondary/10 text-secondary' : 'bg-muted text-muted-foreground'
                 )}
               >
                 {tab.count}

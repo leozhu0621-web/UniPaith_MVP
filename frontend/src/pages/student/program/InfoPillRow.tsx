@@ -20,11 +20,11 @@ interface Props {
 function pillStyle(variant: 'academic' | 'logistics' | 'time' | 'deadline') {
   switch (variant) {
     case 'academic':
-      return 'bg-cobalt/10 text-cobalt border border-cobalt/20'
+      return 'bg-secondary/10 text-secondary border border-secondary/20'
     case 'logistics':
-      return 'bg-muted text-charcoal border border-stone/60'
+      return 'bg-muted text-foreground border border-border/60'
     case 'time':
-      return 'bg-muted text-charcoal border border-stone/60'
+      return 'bg-muted text-foreground border border-border/60'
     case 'deadline':
       return 'bg-warning-soft text-warning border border-warning/40'
   }

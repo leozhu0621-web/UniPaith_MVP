@@ -46,10 +46,10 @@ export function RubricScores({ scores }: { scores: Record<string, number> }) {
     <div className="grid grid-cols-1 gap-x-8 gap-y-2.5 sm:grid-cols-2">
       {entries.map(([k, v]) => (
         <div key={k} className="flex items-center justify-between gap-3 text-sm">
-          <span className="capitalize text-student-ink">{k.replace(/_/g, ' ')}</span>
+          <span className="capitalize text-foreground">{k.replace(/_/g, ' ')}</span>
           <span className="flex items-center gap-2">
             <RubricDots score={Number(v)} />
-            <span className="w-7 text-right text-xs tabular-nums text-student-text">
+            <span className="w-7 text-right text-xs tabular-nums text-foreground">
               {Number(v).toFixed(1)}
             </span>
           </span>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import QueryError from '../../components/ui/QueryError'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -128,7 +129,7 @@ export default function ProgramDetailPage() {
   }, [searchParams, setSearchParams])
 
   // Data
-  const { data: program, isLoading } = useQuery({ queryKey: ['program', programId], queryFn: () => getProgram(programId!) })
+  const { data: program, isLoading, isError, refetch } = useQuery({ queryKey: ['program', programId], queryFn: () => getProgram(programId!) })
   const { data: matchResult } = useQuery({ queryKey: ['match', programId], queryFn: () => getMatchDetail(programId!), retry: false })
   const { data: netPrice } = useQuery({ queryKey: ['net-price', programId], queryFn: () => getNetPrice(programId!), enabled: !!programId, retry: false })
   const { data: events } = useQuery({ queryKey: ['events', { program_id: programId }], queryFn: () => listEvents({ program_id: programId, limit: 5 }) })
@@ -184,10 +185,18 @@ export default function ProgramDetailPage() {
 
   if (isLoading) return <ProgramDetailSkeleton />
 
+  if (isError) {
+    return (
+      <div className="p-6 max-w-3xl mx-auto">
+        <QueryError detail="We couldn't load this program." onRetry={() => refetch()} />
+      </div>
+    )
+  }
+
   if (!program) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <p className="text-sm text-student-text mb-3">Program details are unavailable right now.</p>
+        <p className="text-sm text-foreground mb-3">Program details are unavailable right now.</p>
         <Button size="sm" variant="secondary" onClick={() => navigate('/s/explore')}>Back to Explore</Button>
       </div>
     )
@@ -300,7 +309,7 @@ export default function ProgramDetailPage() {
       {isArchived && (
         <div className="mb-4 flex items-center gap-2 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3">
           <Archive size={16} className="text-warning flex-shrink-0" />
-          <p className="text-sm text-student-ink">This program is no longer accepting applications.</p>
+          <p className="text-sm text-foreground">This program is no longer accepting applications.</p>
         </div>
       )}
 
@@ -346,7 +355,7 @@ export default function ProgramDetailPage() {
                 {match.band_label && <BandBadge band={match.band_label} />}
                 <button
                   onClick={() => setRationaleOpen(true)}
-                  className="inline-flex items-center gap-1 text-[11px] font-medium text-cobalt hover:underline"
+                  className="inline-flex items-center gap-1 text-[11px] font-medium text-secondary hover:underline"
                 >
                   <Sparkles size={11} /> Why this match?
                 </button>
@@ -358,12 +367,12 @@ export default function ProgramDetailPage() {
               className="flex items-center gap-2 text-left"
               title="We haven't computed your match for this program yet."
             >
-              <div className="w-11 h-11 rounded-full bg-student-mist flex items-center justify-center flex-shrink-0">
-                <Sparkles size={16} className="text-cobalt" />
+              <div className="w-11 h-11 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                <Sparkles size={16} className="text-secondary" />
               </div>
               <div className="leading-tight">
-                <p className="text-[9px] uppercase tracking-wider font-semibold text-slate/60">Your match</p>
-                <p className="text-[12px] font-medium text-cobalt hover:underline">See my matches</p>
+                <p className="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground/60">Your match</p>
+                <p className="text-[12px] font-medium text-secondary hover:underline">See my matches</p>
               </div>
             </button>
           )
@@ -403,7 +412,7 @@ export default function ProgramDetailPage() {
       )}
 
       {/* ── Tabs (underline in --accent) ── */}
-      <div className="border-b border-divider mb-5">
+      <div className="border-b border-border mb-5">
         <div className="flex gap-1 overflow-x-auto">
           {TABS.map(t => {
             const isActive = tab === t.id
@@ -415,15 +424,15 @@ export default function ProgramDetailPage() {
                 onClick={() => setTab(t.id)}
                 className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                   isActive
-                    ? 'border-cobalt text-cobalt'
-                    : 'border-transparent text-student-text hover:text-student-ink'
+                    ? 'border-secondary text-secondary'
+                    : 'border-transparent text-foreground hover:text-foreground'
                 }`}
               >
                 <t.icon size={14} />
                 {t.label}
                 {badge && (
                   <span className={`px-1.5 py-0.5 text-[10px] rounded-full ${
-                    isActive ? 'bg-student-mist text-cobalt' : 'bg-student-mist text-student-text'
+                    isActive ? 'bg-muted text-secondary' : 'bg-muted text-foreground'
                   }`}>{badge}</span>
                 )}
               </button>
@@ -447,22 +456,22 @@ export default function ProgramDetailPage() {
               {p.who_its_for && (
                 <Card className="p-5">
                   <div className="flex items-center gap-2 mb-2">
-                    <Users size={14} className="text-cobalt" />
-                    <h3 className="font-semibold text-student-ink">Who It's For</h3>
+                    <Users size={14} className="text-secondary" />
+                    <h3 className="font-semibold text-foreground">Who It's For</h3>
                   </div>
-                  <p className="text-sm text-student-text leading-relaxed">{p.who_its_for}</p>
+                  <p className="text-sm text-foreground leading-relaxed">{p.who_its_for}</p>
                 </Card>
               )}
 
               {(tracksMeta.concentrations.length > 0 || tracksMeta.note || tracksMeta.learning_format) && (
                 <Card className="p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <BookOpen size={14} className="text-cobalt" />
-                    <h3 className="font-semibold text-student-ink">Tracks & Structure</h3>
+                    <BookOpen size={14} className="text-secondary" />
+                    <h3 className="font-semibold text-foreground">Tracks & Structure</h3>
                   </div>
                   {tracksMeta.concentrations.length > 0 && (
                     <div className="mb-3">
-                      <p className="text-[10px] font-semibold text-student-text/70 uppercase tracking-wider mb-2">Concentrations</p>
+                      <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-2">Concentrations</p>
                       <div className="flex flex-wrap gap-2">
                         {tracksMeta.concentrations.map((t, i) => (
                           <Badge key={i} variant="neutral" size="sm">{t}</Badge>
@@ -471,12 +480,12 @@ export default function ProgramDetailPage() {
                     </div>
                   )}
                   {tracksMeta.note && (
-                    <p className="text-sm text-student-text mb-3">{tracksMeta.note}</p>
+                    <p className="text-sm text-foreground mb-3">{tracksMeta.note}</p>
                   )}
                   {tracksMeta.learning_format && (
                     <div>
-                      <p className="text-[10px] font-semibold text-student-text/70 uppercase tracking-wider mb-1">Learning format</p>
-                      <p className="text-sm text-student-text leading-relaxed">{tracksMeta.learning_format}</p>
+                      <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-1">Learning format</p>
+                      <p className="text-sm text-foreground leading-relaxed">{tracksMeta.learning_format}</p>
                     </div>
                   )}
                 </Card>
@@ -499,13 +508,13 @@ export default function ProgramDetailPage() {
               {Array.isArray(p.highlights) && p.highlights.length > 0 && (
                 <Card className="p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <Sparkles size={14} className="text-cobalt" />
-                    <h3 className="font-semibold text-student-ink">Program Highlights</h3>
+                    <Sparkles size={14} className="text-secondary" />
+                    <h3 className="font-semibold text-foreground">Program Highlights</h3>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {p.highlights.map((h: string, i: number) => (
-                      <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-cobalt/10 text-student-ink border border-cobalt/20">
-                        <Sparkles size={11} className="text-cobalt" />
+                      <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-secondary/10 text-foreground border border-secondary/20">
+                        <Sparkles size={11} className="text-secondary" />
                         {h}
                       </span>
                     ))}
@@ -524,25 +533,25 @@ export default function ProgramDetailPage() {
                 return (
                   <Card className="p-5">
                     <div className="flex items-center gap-2 mb-3">
-                      <Mail size={14} className="text-cobalt" />
-                      <h3 className="font-semibold text-student-ink">Program Contacts</h3>
+                      <Mail size={14} className="text-secondary" />
+                      <h3 className="font-semibold text-foreground">Program Contacts</h3>
                     </div>
                     <div className="space-y-2 text-sm">
                       {rows.map((c, i) => (
-                        <div key={i} className="flex justify-between items-start gap-2 border-b border-divider pb-2">
+                        <div key={i} className="flex justify-between items-start gap-2 border-b border-border pb-2">
                           <div className="flex-1">
-                            {c.name && <div className="font-medium text-student-ink">{c.name}</div>}
-                            {c.role && <div className="text-xs text-student-text">{c.role}</div>}
+                            {c.name && <div className="font-medium text-foreground">{c.name}</div>}
+                            {c.role && <div className="text-xs text-foreground">{c.role}</div>}
                           </div>
                           {c.email && (
-                            <a href={`mailto:${c.email}`} className="text-xs text-cobalt hover:underline">
+                            <a href={`mailto:${c.email}`} className="text-xs text-secondary hover:underline">
                               {c.email}
                             </a>
                           )}
                         </div>
                       ))}
                       {rows[0]?.source_url && (
-                        <p className="text-[10px] text-student-text/50 mt-2">
+                        <p className="text-[10px] text-foreground/50 mt-2">
                           Source:{' '}
                           <a href={rows[0].source_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
                             {rows[0].source_url}
@@ -575,10 +584,10 @@ export default function ProgramDetailPage() {
                 {/* Application Requirements */}
                 <Card className="p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <GraduationCap size={14} className="text-cobalt" />
-                    <h3 className="font-semibold text-student-ink">Application Requirements</h3>
+                    <GraduationCap size={14} className="text-secondary" />
+                    <h3 className="font-semibold text-foreground">Application Requirements</h3>
                     {appReqs.length > 0 && (
-                      <span className="ml-auto text-[11px] text-student-text/60">
+                      <span className="ml-auto text-[11px] text-foreground/60">
                         {requiredItems.length} required
                         {optionalItems.length > 0 && ` · ${optionalItems.length} optional`}
                       </span>
@@ -589,16 +598,16 @@ export default function ProgramDetailPage() {
                     <div className="space-y-3">
                       {requiredItems.length > 0 && (
                         <div>
-                          <p className="text-[10px] font-semibold text-student-text/70 uppercase tracking-wider mb-2">Required</p>
+                          <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-2">Required</p>
                           <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
                             {requiredItems.map((r, i) => (
-                              <li key={i} className="flex items-start gap-2 px-3 py-2 rounded-lg bg-student-mist/50 border border-divider">
+                              <li key={i} className="flex items-start gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border">
                                 <span className="w-5 h-5 rounded-full bg-success-soft text-success flex items-center justify-center flex-shrink-0 mt-0.5">
                                   <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" clipRule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-8 8a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L8 12.6l7.3-7.3a1 1 0 011.4 0z" /></svg>
                                 </span>
                                 <div className="min-w-0">
-                                  <p className="text-sm font-medium text-student-ink leading-tight">{r.label}</p>
-                                  {r.note && <p className="text-[11px] text-student-text/70 mt-0.5">{r.note}</p>}
+                                  <p className="text-sm font-medium text-foreground leading-tight">{r.label}</p>
+                                  {r.note && <p className="text-[11px] text-foreground/70 mt-0.5">{r.note}</p>}
                                 </div>
                               </li>
                             ))}
@@ -607,14 +616,14 @@ export default function ProgramDetailPage() {
                       )}
                       {optionalItems.length > 0 && (
                         <div>
-                          <p className="text-[10px] font-semibold text-student-text/70 uppercase tracking-wider mb-2">Optional / Flexible</p>
+                          <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-2">Optional / Flexible</p>
                           <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
                             {optionalItems.map((r, i) => (
-                              <li key={i} className="flex items-start gap-2 px-3 py-2 rounded-lg bg-white border border-divider">
-                                <span className="w-5 h-5 rounded-full bg-student-mist text-student-text/60 flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px]">~</span>
+                              <li key={i} className="flex items-start gap-2 px-3 py-2 rounded-lg bg-card border border-border">
+                                <span className="w-5 h-5 rounded-full bg-muted text-foreground/60 flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px]">~</span>
                                 <div className="min-w-0">
-                                  <p className="text-sm font-medium text-student-ink leading-tight">{r.label}</p>
-                                  {r.note && <p className="text-[11px] text-student-text/70 mt-0.5">{r.note}</p>}
+                                  <p className="text-sm font-medium text-foreground leading-tight">{r.label}</p>
+                                  {r.note && <p className="text-[11px] text-foreground/70 mt-0.5">{r.note}</p>}
                                 </div>
                               </li>
                             ))}
@@ -625,34 +634,34 @@ export default function ProgramDetailPage() {
                   ) : legacyReqs.length > 0 ? (
                     <dl className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                       {legacyReqs.map(([k, v]) => (
-                        <div key={k} className="flex justify-between border-b border-divider pb-2">
-                          <dt className="text-student-text capitalize">{k.replace(/_/g, ' ')}</dt>
-                          <dd className="font-medium text-student-ink">{String(v)}</dd>
+                        <div key={k} className="flex justify-between border-b border-border pb-2">
+                          <dt className="text-foreground capitalize">{k.replace(/_/g, ' ')}</dt>
+                          <dd className="font-medium text-foreground">{String(v)}</dd>
                         </div>
                       ))}
                     </dl>
                   ) : (
-                    <p className="text-sm text-student-text">Application requirements not yet listed. Contact the program for details.</p>
+                    <p className="text-sm text-foreground">Application requirements not yet listed. Contact the program for details.</p>
                   )}
                 </Card>
 
                 {prerequisites.length > 0 && (
                   <Card className="p-5">
                     <div className="flex items-center gap-2 mb-3">
-                      <GraduationCap size={14} className="text-cobalt" />
-                      <h3 className="font-semibold text-student-ink">Prerequisites</h3>
+                      <GraduationCap size={14} className="text-secondary" />
+                      <h3 className="font-semibold text-foreground">Prerequisites</h3>
                     </div>
                     <ul className="space-y-2">
                       {prerequisites.map((pr, i) => (
-                        <li key={i} className="rounded-lg border border-divider px-3 py-2 text-sm">
+                        <li key={i} className="rounded-lg border border-border px-3 py-2 text-sm">
                           <div className="flex items-center justify-between gap-2">
-                            <span className="font-medium text-student-ink">{pr.name}</span>
+                            <span className="font-medium text-foreground">{pr.name}</span>
                             <Badge variant={pr.required ? 'warning' : 'neutral'} size="sm">
                               {pr.required ? 'Required' : 'Recommended'}
                             </Badge>
                           </div>
                           {pr.allowed_substitutes.length > 0 && (
-                            <p className="text-[11px] text-student-text/70 mt-1">
+                            <p className="text-[11px] text-foreground/70 mt-1">
                               Substitutes: {pr.allowed_substitutes.join(', ')}
                             </p>
                           )}
@@ -665,8 +674,8 @@ export default function ProgramDetailPage() {
                 {testPolicy && (
                   <Card className="p-5">
                     <div className="flex items-center gap-2 mb-3">
-                      <BookOpen size={14} className="text-cobalt" />
-                      <h3 className="font-semibold text-student-ink">Test Policy</h3>
+                      <BookOpen size={14} className="text-secondary" />
+                      <h3 className="font-semibold text-foreground">Test Policy</h3>
                       {testPolicy.stance_label && (
                         <Badge variant="info" size="sm">{testPolicy.stance_label}</Badge>
                       )}
@@ -674,7 +683,7 @@ export default function ProgramDetailPage() {
                     <div className="space-y-3 text-sm">
                       {testPolicy.required.length > 0 && (
                         <div>
-                          <p className="text-[10px] font-semibold text-student-text/70 uppercase tracking-wider mb-1">Required</p>
+                          <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-1">Required</p>
                           <div className="flex flex-wrap gap-1.5">
                             {testPolicy.required.map(t => <Badge key={t} variant="neutral" size="sm">{t}</Badge>)}
                           </div>
@@ -682,7 +691,7 @@ export default function ProgramDetailPage() {
                       )}
                       {testPolicy.optional.length > 0 && (
                         <div>
-                          <p className="text-[10px] font-semibold text-student-text/70 uppercase tracking-wider mb-1">Optional</p>
+                          <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-1">Optional</p>
                           <div className="flex flex-wrap gap-1.5">
                             {testPolicy.optional.map(t => <Badge key={t} variant="neutral" size="sm">{t}</Badge>)}
                           </div>
@@ -690,7 +699,7 @@ export default function ProgramDetailPage() {
                       )}
                       {testPolicy.accepted_tests.length > 0 && (
                         <div>
-                          <p className="text-[10px] font-semibold text-student-text/70 uppercase tracking-wider mb-1">Accepted</p>
+                          <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-1">Accepted</p>
                           <div className="flex flex-wrap gap-1.5">
                             {testPolicy.accepted_tests.map(t => <Badge key={t} variant="neutral" size="sm">{t}</Badge>)}
                           </div>
@@ -698,22 +707,22 @@ export default function ProgramDetailPage() {
                       )}
                       {testPolicy.typical_ranges.length > 0 && (
                         <div>
-                          <p className="text-[10px] font-semibold text-student-text/70 uppercase tracking-wider mb-1">Typical score ranges</p>
+                          <p className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider mb-1">Typical score ranges</p>
                           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {testPolicy.typical_ranges.map(r => (
-                              <div key={r.test} className="flex justify-between border-b border-divider pb-1">
-                                <dt className="text-student-text">{r.test}</dt>
-                                <dd className="font-medium text-student-ink tabular-nums">{r.low}–{r.high}</dd>
+                              <div key={r.test} className="flex justify-between border-b border-border pb-1">
+                                <dt className="text-foreground">{r.test}</dt>
+                                <dd className="font-medium text-foreground tabular-nums">{r.low}–{r.high}</dd>
                               </div>
                             ))}
                           </dl>
                         </div>
                       )}
                       {testPolicy.superscore_enabled && (
-                        <p className="text-xs text-student-text">Superscore across attempts is accepted.</p>
+                        <p className="text-xs text-foreground">Superscore across attempts is accepted.</p>
                       )}
                       {testPolicy.waived_rules && (
-                        <p className="text-xs text-student-text"><span className="font-semibold text-student-ink">Waiver rules:</span> {testPolicy.waived_rules}</p>
+                        <p className="text-xs text-foreground"><span className="font-semibold text-foreground">Waiver rules:</span> {testPolicy.waived_rules}</p>
                       )}
                     </div>
                   </Card>
@@ -722,10 +731,10 @@ export default function ProgramDetailPage() {
                 {recommendations && (
                   <Card className="p-5">
                     <div className="flex items-center gap-2 mb-2">
-                      <Mail size={14} className="text-cobalt" />
-                      <h3 className="font-semibold text-student-ink">Recommendations</h3>
+                      <Mail size={14} className="text-secondary" />
+                      <h3 className="font-semibold text-foreground">Recommendations</h3>
                     </div>
-                    <p className="text-sm text-student-text">
+                    <p className="text-sm text-foreground">
                       {recommendations.required_count > 0
                         ? `${recommendations.required_count} letter${recommendations.required_count === 1 ? '' : 's'} required`
                         : 'Recommendations may be requested'}
@@ -740,9 +749,9 @@ export default function ProgramDetailPage() {
                 {admissionTimeline && (
                   <Card className="p-5">
                     <div className="flex items-center gap-2 mb-4">
-                      <Clock size={14} className="text-cobalt" />
-                      <h3 className="font-semibold text-student-ink">Admission Timeline</h3>
-                      <span className="ml-auto text-[11px] text-student-text/60 capitalize">{admissionTimeline.term}</span>
+                      <Clock size={14} className="text-secondary" />
+                      <h3 className="font-semibold text-foreground">Admission Timeline</h3>
+                      <span className="ml-auto text-[11px] text-foreground/60 capitalize">{admissionTimeline.term}</span>
                     </div>
                     <div className="space-y-2">
                       {admissionTimeline.rounds.map((r: any, i: number) => {
@@ -754,23 +763,23 @@ export default function ProgramDetailPage() {
                             key={i}
                             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border ${
                               isPast
-                                ? 'bg-student-mist/40 border-divider opacity-60'
+                                ? 'bg-muted/40 border-border opacity-60'
                                 : isUrgent
                                   ? 'bg-warning-soft border-warning/30'
-                                  : 'bg-white border-divider'
+                                  : 'bg-card border-border'
                             }`}
                           >
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <p className="text-sm font-semibold text-student-ink">{r.name}</p>
+                                <p className="text-sm font-semibold text-foreground">{r.name}</p>
                                 {r.binding && <Badge variant="warning" size="sm">Binding</Badge>}
                                 {isUrgent && <Badge variant="warning" size="sm">{days}d left</Badge>}
                                 {isPast && <Badge variant="neutral" size="sm">Closed</Badge>}
                               </div>
-                              <p className="text-[11px] text-student-text/70 mt-0.5">
-                                Apply by <span className="font-medium text-student-ink">{formatDate(r.deadline)}</span>
+                              <p className="text-[11px] text-foreground/70 mt-0.5">
+                                Apply by <span className="font-medium text-foreground">{formatDate(r.deadline)}</span>
                                 {r.decision_release && (
-                                  <> · Decision <span className="font-medium text-student-ink">{formatDate(r.decision_release)}</span></>
+                                  <> · Decision <span className="font-medium text-foreground">{formatDate(r.decision_release)}</span></>
                                 )}
                               </p>
                             </div>
@@ -778,11 +787,11 @@ export default function ProgramDetailPage() {
                         )
                       })}
                       {admissionTimeline.enrollment_deadline && (
-                        <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-student-mist border border-cobalt/15">
+                        <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-muted border border-secondary/15">
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-cobalt">Enrollment Deadline</p>
-                            <p className="text-[11px] text-student-text/70 mt-0.5">
-                              Commit by <span className="font-medium text-student-ink">{formatDate(admissionTimeline.enrollment_deadline)}</span>
+                            <p className="text-sm font-semibold text-secondary">Enrollment Deadline</p>
+                            <p className="text-[11px] text-foreground/70 mt-0.5">
+                              Commit by <span className="font-medium text-foreground">{formatDate(admissionTimeline.enrollment_deadline)}</span>
                             </p>
                           </div>
                         </div>
@@ -796,20 +805,20 @@ export default function ProgramDetailPage() {
                   {!admissionTimeline && (effectiveDeadline || p.program_start_date) && (
                     <Card className="p-5">
                       <div className="flex items-center gap-2 mb-3">
-                        <Clock size={14} className="text-cobalt" />
-                        <h3 className="font-semibold text-student-ink">Key Dates</h3>
+                        <Clock size={14} className="text-secondary" />
+                        <h3 className="font-semibold text-foreground">Key Dates</h3>
                       </div>
                       <div className="space-y-2 text-sm">
                         {effectiveDeadline && (
                           <div className="flex justify-between">
-                            <span className="text-student-text">Application Deadline</span>
-                            <span className="font-medium text-student-ink">{formatDate(effectiveDeadline)}</span>
+                            <span className="text-foreground">Application Deadline</span>
+                            <span className="font-medium text-foreground">{formatDate(effectiveDeadline)}</span>
                           </div>
                         )}
                         {p.program_start_date && (
                           <div className="flex justify-between">
-                            <span className="text-student-text">Program Starts</span>
-                            <span className="font-medium text-student-ink">{formatDate(p.program_start_date)}</span>
+                            <span className="text-foreground">Program Starts</span>
+                            <span className="font-medium text-foreground">{formatDate(p.program_start_date)}</span>
                           </div>
                         )}
                       </div>
@@ -819,8 +828,8 @@ export default function ProgramDetailPage() {
                   {(p.acceptance_rate ?? rd.acceptance_rate) != null && (
                     <Card className="p-5">
                       <div className="flex items-center gap-2 mb-3">
-                        <Sparkles size={14} className="text-cobalt" />
-                        <h3 className="font-semibold text-student-ink">Admissions Profile</h3>
+                        <Sparkles size={14} className="text-secondary" />
+                        <h3 className="font-semibold text-foreground">Admissions Profile</h3>
                       </div>
                       <ul className="space-y-2 text-sm">
                         {(() => {
@@ -834,8 +843,8 @@ export default function ProgramDetailPage() {
                           if (rd.sat_avg) items.push(`Middle 50% SAT: ~${rd.sat_avg - 40}–${rd.sat_avg + 40}`)
                           if (rd.act_25_75) items.push(`Middle 50% ACT: ${rd.act_25_75[0]}–${rd.act_25_75[1]}`)
                           return items.map((t, i) => (
-                            <li key={i} className="flex items-start gap-2 text-student-text">
-                              <span className="w-1 h-1 rounded-full bg-cobalt mt-2 flex-shrink-0" />
+                            <li key={i} className="flex items-start gap-2 text-foreground">
+                              <span className="w-1 h-1 rounded-full bg-secondary mt-2 flex-shrink-0" />
                               {t}
                             </li>
                           ))
@@ -881,30 +890,30 @@ export default function ProgramDetailPage() {
 
                 <Card className="p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <DollarSign size={14} className="text-cobalt" />
-                    <h3 className="font-semibold text-student-ink">Tuition & Fees</h3>
+                    <DollarSign size={14} className="text-secondary" />
+                    <h3 className="font-semibold text-foreground">Tuition & Fees</h3>
                   </div>
                   <dl className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <dt className="text-student-text">Annual Tuition</dt>
-                      <dd className="font-medium text-student-ink">{formatCurrency(annual)}</dd>
+                      <dt className="text-foreground">Annual Tuition</dt>
+                      <dd className="font-medium text-foreground">{formatCurrency(annual)}</dd>
                     </div>
                     {Object.entries(fees).map(([k, v]) => (
                       <div key={k} className="flex justify-between">
-                        <dt className="text-student-text capitalize">{k.replace(/_/g, ' ')}</dt>
-                        <dd className="text-student-ink">{formatCurrency(Number(v))}</dd>
+                        <dt className="text-foreground capitalize">{k.replace(/_/g, ' ')}</dt>
+                        <dd className="text-foreground">{formatCurrency(Number(v))}</dd>
                       </div>
                     ))}
                     {intlPremium > 0 && (
                       <div className="flex justify-between">
-                        <dt className="text-student-text">International Premium</dt>
-                        <dd className="text-student-ink">{formatCurrency(intlPremium)}</dd>
+                        <dt className="text-foreground">International Premium</dt>
+                        <dd className="text-foreground">{formatCurrency(intlPremium)}</dd>
                       </div>
                     )}
                     {feeTotal > 0 && (
-                      <div className="flex justify-between border-t border-divider pt-2 font-medium">
-                        <dt className="text-student-ink">Annual Subtotal</dt>
-                        <dd className="text-student-ink">{formatCurrency(annual + feeTotal)}</dd>
+                      <div className="flex justify-between border-t border-border pt-2 font-medium">
+                        <dt className="text-foreground">Annual Subtotal</dt>
+                        <dd className="text-foreground">{formatCurrency(annual + feeTotal)}</dd>
                       </div>
                     )}
                   </dl>
@@ -912,25 +921,25 @@ export default function ProgramDetailPage() {
 
                 <Card className="p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <GraduationCap size={14} className="text-cobalt" />
-                    <h3 className="font-semibold text-student-ink">Estimated Total Cost ({years.toFixed(1)} years)</h3>
+                    <GraduationCap size={14} className="text-secondary" />
+                    <h3 className="font-semibold text-foreground">Estimated Total Cost ({years.toFixed(1)} years)</h3>
                   </div>
                   <div className="grid grid-cols-3 gap-3 text-center">
-                    <div className="bg-student-mist/60 rounded-lg p-3">
-                      <p className="text-xs text-student-text mb-1">{costBandMin != null ? 'Low estimate' : 'Tuition Only'}</p>
-                      <p className="text-lg font-bold text-student-ink">{formatCurrency(costBandMin ?? totalTuitionOnly)}</p>
+                    <div className="bg-muted/60 rounded-lg p-3">
+                      <p className="text-xs text-foreground mb-1">{costBandMin != null ? 'Low estimate' : 'Tuition Only'}</p>
+                      <p className="text-lg font-bold text-foreground">{formatCurrency(costBandMin ?? totalTuitionOnly)}</p>
                     </div>
-                    <div className="bg-student-mist/60 rounded-lg p-3">
-                      <p className="text-xs text-student-text mb-1">{costBandMax != null ? 'Expected range' : 'With Living Costs'}</p>
-                      <p className="text-lg font-bold text-student-ink">
+                    <div className="bg-muted/60 rounded-lg p-3">
+                      <p className="text-xs text-foreground mb-1">{costBandMax != null ? 'Expected range' : 'With Living Costs'}</p>
+                      <p className="text-lg font-bold text-foreground">
                         {costBandMin != null && costBandMax != null
                           ? `${formatCurrency(costBandMin)} – ${formatCurrency(costBandMax)}`
                           : formatCurrency(totalMid)}
                       </p>
                     </div>
-                    <div className="bg-student-mist/60 rounded-lg p-3">
-                      <p className="text-xs text-student-text mb-1">{costBandMax != null ? 'High estimate' : 'High Estimate'}</p>
-                      <p className="text-lg font-bold text-student-ink">{formatCurrency(totalHigh)}</p>
+                    <div className="bg-muted/60 rounded-lg p-3">
+                      <p className="text-xs text-foreground mb-1">{costBandMax != null ? 'High estimate' : 'High Estimate'}</p>
+                      <p className="text-lg font-bold text-foreground">{formatCurrency(totalHigh)}</p>
                     </div>
                   </div>
                 </Card>
@@ -938,28 +947,28 @@ export default function ProgramDetailPage() {
                 {fundingSignals && (
                   <Card className="p-5">
                     <div className="flex items-center gap-2 mb-3">
-                      <DollarSign size={14} className="text-cobalt" />
-                      <h3 className="font-semibold text-student-ink">Funding & Aid Signals</h3>
+                      <DollarSign size={14} className="text-secondary" />
+                      <h3 className="font-semibold text-foreground">Funding & Aid Signals</h3>
                     </div>
                     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                       {fundingSignals.ta_funded && (
-                        <li className="flex items-center gap-2 text-student-text">
-                          <span className="w-1.5 h-1.5 rounded-full bg-cobalt" /> TA funding available
+                        <li className="flex items-center gap-2 text-foreground">
+                          <span className="w-1.5 h-1.5 rounded-full bg-secondary" /> TA funding available
                         </li>
                       )}
                       {fundingSignals.ra_funded && (
-                        <li className="flex items-center gap-2 text-student-text">
-                          <span className="w-1.5 h-1.5 rounded-full bg-cobalt" /> RA funding available
+                        <li className="flex items-center gap-2 text-foreground">
+                          <span className="w-1.5 h-1.5 rounded-full bg-secondary" /> RA funding available
                         </li>
                       )}
                       {fundingSignals.merit_scholarship_available && (
-                        <li className="flex items-center gap-2 text-student-text">
-                          <span className="w-1.5 h-1.5 rounded-full bg-cobalt" /> Merit scholarships
+                        <li className="flex items-center gap-2 text-foreground">
+                          <span className="w-1.5 h-1.5 rounded-full bg-secondary" /> Merit scholarships
                         </li>
                       )}
                       {fundingSignals.need_based_available && (
-                        <li className="flex items-center gap-2 text-student-text">
-                          <span className="w-1.5 h-1.5 rounded-full bg-cobalt" /> Need-based aid
+                        <li className="flex items-center gap-2 text-foreground">
+                          <span className="w-1.5 h-1.5 rounded-full bg-secondary" /> Need-based aid
                         </li>
                       )}
                     </ul>
@@ -981,10 +990,10 @@ export default function ProgramDetailPage() {
                   return (
                     <Card className="p-5">
                       <div className="flex items-center gap-2 mb-2">
-                        <DollarSign size={14} className="text-cobalt" />
-                        <h3 className="font-semibold text-student-ink">Net Price by Household Income</h3>
+                        <DollarSign size={14} className="text-secondary" />
+                        <h3 className="font-semibold text-foreground">Net Price by Household Income</h3>
                       </div>
-                      <p className="text-xs text-student-text mb-4">
+                      <p className="text-xs text-foreground mb-4">
                         Average price families actually pay after grants & scholarships, by household income band.
                       </p>
                       <div className="space-y-2">
@@ -994,13 +1003,13 @@ export default function ProgramDetailPage() {
                           return (
                             <div key={r.key} className="grid grid-cols-[90px_1fr_85px] gap-3 items-center">
                               <div>
-                                <p className="text-[11px] font-semibold text-student-ink">{r.label}</p>
-                                <p className="text-[10px] text-student-text/60">{r.range}</p>
+                                <p className="text-[11px] font-semibold text-foreground">{r.label}</p>
+                                <p className="text-[10px] text-foreground/60">{r.range}</p>
                               </div>
-                              <div className="relative h-2 rounded-pill bg-student-mist overflow-hidden">
-                                <div className="h-full rounded-pill bg-cobalt" style={{ width: `${widthPct}%` }} />
+                              <div className="relative h-2 rounded-pill bg-muted overflow-hidden">
+                                <div className="h-full rounded-pill bg-secondary" style={{ width: `${widthPct}%` }} />
                               </div>
-                              <p className="text-xs font-bold text-student-ink text-right tabular-nums">
+                              <p className="text-xs font-bold text-foreground text-right tabular-nums">
                                 {formatCurrency(price)}
                               </p>
                             </div>
@@ -1008,7 +1017,7 @@ export default function ProgramDetailPage() {
                         })}
                       </div>
                       {cd.source && (
-                        <p className="text-[10px] text-student-text/50 mt-3 italic">
+                        <p className="text-[10px] text-foreground/50 mt-3 italic">
                           Source: {cd.source}{cd.source_year ? ` · ${cd.source_year}` : ''}
                         </p>
                       )}
@@ -1017,7 +1026,7 @@ export default function ProgramDetailPage() {
                           href={rd.price_calculator_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-medium text-cobalt hover:text-cobalt-hover"
+                          className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-medium text-secondary hover:text-secondary"
                         >
                           Estimate your cost with {instName}'s calculator ↗
                         </a>
@@ -1036,10 +1045,10 @@ export default function ProgramDetailPage() {
                   return (
                     <Card className="p-5">
                       <div className="flex items-center gap-2 mb-2">
-                        <DollarSign size={14} className="text-cobalt" />
-                        <h3 className="font-semibold text-student-ink">Graduate Debt Distribution</h3>
+                        <DollarSign size={14} className="text-secondary" />
+                        <h3 className="font-semibold text-foreground">Graduate Debt Distribution</h3>
                       </div>
-                      <p className="text-xs text-student-text mb-3">
+                      <p className="text-xs text-foreground mb-3">
                         How much graduates actually borrow. Most fall between the 25th and 75th percentiles.
                       </p>
                       <div className="space-y-2">
@@ -1048,16 +1057,16 @@ export default function ProgramDetailPage() {
                           const isMiddle = r.pct === '25th' || r.pct === '75th'
                           return (
                             <div key={r.pct} className="grid grid-cols-[70px_1fr_85px] gap-3 items-center">
-                              <p className={`text-[11px] font-semibold ${isMiddle ? 'text-student-ink' : 'text-student-text'}`}>
+                              <p className={`text-[11px] font-semibold ${isMiddle ? 'text-foreground' : 'text-foreground'}`}>
                                 {r.pct} %ile
                               </p>
-                              <div className="relative h-2 rounded-pill bg-student-mist overflow-hidden">
+                              <div className="relative h-2 rounded-pill bg-muted overflow-hidden">
                                 <div
-                                  className={`h-full rounded-pill ${isMiddle ? 'bg-cobalt' : 'bg-cobalt/30'}`}
+                                  className={`h-full rounded-pill ${isMiddle ? 'bg-secondary' : 'bg-secondary/30'}`}
                                   style={{ width: `${w}%` }}
                                 />
                               </div>
-                              <p className={`text-xs font-bold tabular-nums text-right ${isMiddle ? 'text-student-ink' : 'text-student-text'}`}>
+                              <p className={`text-xs font-bold tabular-nums text-right ${isMiddle ? 'text-foreground' : 'text-foreground'}`}>
                                 {formatCurrency(r.value)}
                               </p>
                             </div>
@@ -1065,8 +1074,8 @@ export default function ProgramDetailPage() {
                         })}
                       </div>
                       {rd.median_debt_monthly != null && (
-                        <p className="text-[11px] text-student-text mt-3">
-                          Median monthly payment after graduation: <span className="font-semibold text-student-ink">${Math.round(rd.median_debt_monthly)}</span>
+                        <p className="text-[11px] text-foreground mt-3">
+                          Median monthly payment after graduation: <span className="font-semibold text-foreground">${Math.round(rd.median_debt_monthly)}</span>
                         </p>
                       )}
                     </Card>
@@ -1076,14 +1085,14 @@ export default function ProgramDetailPage() {
                 {(salary || empRate || payback) && (
                   <Card className="p-5">
                     <div className="flex items-center gap-2 mb-3">
-                      <TrendingUp size={14} className="text-cobalt" />
-                      <h3 className="font-semibold text-student-ink">ROI Snapshot</h3>
+                      <TrendingUp size={14} className="text-secondary" />
+                      <h3 className="font-semibold text-foreground">ROI Snapshot</h3>
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-sm">
-                      {salary && <div><p className="text-student-text text-xs">Median Salary</p><p className="font-bold text-student-ink text-lg">{formatCurrency(salary)}</p></div>}
-                      {empRate && <div><p className="text-student-text text-xs">Grad/Employment Rate</p><p className="font-bold text-student-ink text-lg">{(empRate * 100).toFixed(0)}%</p></div>}
-                      {payback && <div><p className="text-student-text text-xs">Payback Period</p><p className="font-medium text-student-ink">{payback} months</p></div>}
-                      {salary && totalMid > 0 && <div><p className="text-student-text text-xs">Salary-to-Cost</p><p className="font-medium text-student-ink">1:{(salary / totalMid).toFixed(1)}x</p></div>}
+                      {salary && <div><p className="text-foreground text-xs">Median Salary</p><p className="font-bold text-foreground text-lg">{formatCurrency(salary)}</p></div>}
+                      {empRate && <div><p className="text-foreground text-xs">Grad/Employment Rate</p><p className="font-bold text-foreground text-lg">{(empRate * 100).toFixed(0)}%</p></div>}
+                      {payback && <div><p className="text-foreground text-xs">Payback Period</p><p className="font-medium text-foreground">{payback} months</p></div>}
+                      {salary && totalMid > 0 && <div><p className="text-foreground text-xs">Salary-to-Cost</p><p className="font-medium text-foreground">1:{(salary / totalMid).toFixed(1)}x</p></div>}
                     </div>
                   </Card>
                 )}
@@ -1115,52 +1124,52 @@ export default function ProgramDetailPage() {
 
                 {!hasData ? (
                   <Card className="p-6 text-center">
-                    <TrendingUp size={32} className="text-student-text/30 mx-auto mb-3" />
-                    <p className="text-sm text-student-text">Outcomes data is not yet available for this program.</p>
-                    <p className="text-xs text-student-text/60 mt-1">Check back later or contact the program directly.</p>
+                    <TrendingUp size={32} className="text-foreground/30 mx-auto mb-3" />
+                    <p className="text-sm text-foreground">Outcomes data is not yet available for this program.</p>
+                    <p className="text-xs text-foreground/60 mt-1">Check back later or contact the program directly.</p>
                   </Card>
                 ) : (
                   <>
                     {salary && (
                       <Card className="p-5">
                         <div className="flex items-center gap-2 mb-3">
-                          <DollarSign size={14} className="text-cobalt" />
-                          <h3 className="font-semibold text-student-ink">Salary Distribution</h3>
+                          <DollarSign size={14} className="text-secondary" />
+                          <h3 className="font-semibold text-foreground">Salary Distribution</h3>
                         </div>
                         {salaryBands.length > 0 ? (
                           <div className="space-y-2">
                             {salaryBands.map(b => (
                               <div key={b.band_label} className="grid grid-cols-[1fr_48px_40px] gap-3 items-center">
-                                <p className="text-sm text-student-ink">{b.band_label}</p>
-                                <div className="relative h-2 rounded-pill bg-student-mist overflow-hidden">
-                                  <div className="h-full rounded-pill bg-cobalt" style={{ width: `${Math.min(100, b.percent)}%` }} />
+                                <p className="text-sm text-foreground">{b.band_label}</p>
+                                <div className="relative h-2 rounded-pill bg-muted overflow-hidden">
+                                  <div className="h-full rounded-pill bg-secondary" style={{ width: `${Math.min(100, b.percent)}%` }} />
                                 </div>
-                                <p className="text-xs font-semibold text-student-ink text-right tabular-nums">{b.percent}%</p>
+                                <p className="text-xs font-semibold text-foreground text-right tabular-nums">{b.percent}%</p>
                               </div>
                             ))}
                             {odn.outcome_reporting_window && (
-                              <p className="text-[10px] text-student-text/60 mt-2">{odn.outcome_reporting_window}</p>
+                              <p className="text-[10px] text-foreground/60 mt-2">{odn.outcome_reporting_window}</p>
                             )}
                           </div>
                         ) : (
                           <>
                             <div className="flex items-end justify-between mb-2">
                               <div className="text-center flex-1">
-                                <p className="text-xs text-student-text/60">25th %ile</p>
-                                <p className="text-sm font-medium text-student-ink">{salaryLow ? formatCurrency(salaryLow) : '—'}</p>
+                                <p className="text-xs text-foreground/60">25th %ile</p>
+                                <p className="text-sm font-medium text-foreground">{salaryLow ? formatCurrency(salaryLow) : '—'}</p>
                               </div>
                               <div className="text-center flex-1">
-                                <p className="text-xs text-student-text/60">Median</p>
-                                <p className="text-2xl font-bold text-student-ink">{formatCurrency(salary)}</p>
+                                <p className="text-xs text-foreground/60">Median</p>
+                                <p className="text-2xl font-bold text-foreground">{formatCurrency(salary)}</p>
                               </div>
                               <div className="text-center flex-1">
-                                <p className="text-xs text-student-text/60">75th %ile</p>
-                                <p className="text-sm font-medium text-student-ink">{salaryHigh ? formatCurrency(salaryHigh) : '—'}</p>
+                                <p className="text-xs text-foreground/60">75th %ile</p>
+                                <p className="text-sm font-medium text-foreground">{salaryHigh ? formatCurrency(salaryHigh) : '—'}</p>
                               </div>
                             </div>
-                            <div className="relative h-2 bg-student-mist rounded-pill mt-3">
-                              <div className="absolute h-full bg-cobalt/30 rounded-pill" style={{ left: '15%', width: '70%' }} />
-                              <div className="absolute h-full bg-cobalt rounded-pill" style={{ left: '40%', width: '20%' }} />
+                            <div className="relative h-2 bg-muted rounded-pill mt-3">
+                              <div className="absolute h-full bg-secondary/30 rounded-pill" style={{ left: '15%', width: '70%' }} />
+                              <div className="absolute h-full bg-secondary rounded-pill" style={{ left: '40%', width: '20%' }} />
                             </div>
                           </>
                         )}
@@ -1170,22 +1179,22 @@ export default function ProgramDetailPage() {
                     {(empRate || internRate) && (
                       <Card className="p-5">
                         <div className="flex items-center gap-2 mb-3">
-                          <Briefcase size={14} className="text-cobalt" />
-                          <h3 className="font-semibold text-student-ink">Employment & Placement</h3>
+                          <Briefcase size={14} className="text-secondary" />
+                          <h3 className="font-semibold text-foreground">Employment & Placement</h3>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           {empRate != null && (
                             <div>
-                              <p className="text-xs text-student-text">Employment Rate</p>
-                              <p className="text-2xl font-bold text-student-ink">{(empRate * 100).toFixed(0)}%</p>
-                              <p className="text-[10px] text-student-text/60">Within {empTimeframe}</p>
+                              <p className="text-xs text-foreground">Employment Rate</p>
+                              <p className="text-2xl font-bold text-foreground">{(empRate * 100).toFixed(0)}%</p>
+                              <p className="text-[10px] text-foreground/60">Within {empTimeframe}</p>
                             </div>
                           )}
                           {internRate != null && (
                             <div>
-                              <p className="text-xs text-student-text">Internship Conversion</p>
-                              <p className="text-2xl font-bold text-student-ink">{(internRate * 100).toFixed(0)}%</p>
-                              <p className="text-[10px] text-student-text/60">Interns → full-time offers</p>
+                              <p className="text-xs text-foreground">Internship Conversion</p>
+                              <p className="text-2xl font-bold text-foreground">{(internRate * 100).toFixed(0)}%</p>
+                              <p className="text-[10px] text-foreground/60">Interns → full-time offers</p>
                             </div>
                           )}
                         </div>
@@ -1195,8 +1204,8 @@ export default function ProgramDetailPage() {
                     {topEmployers.length > 0 && (
                       <Card className="p-5">
                         <div className="flex items-center gap-2 mb-3">
-                          <Building2 size={14} className="text-cobalt" />
-                          <h3 className="font-semibold text-student-ink">Top Employers</h3>
+                          <Building2 size={14} className="text-secondary" />
+                          <h3 className="font-semibold text-foreground">Top Employers</h3>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {topEmployers.map((e: string) => <Badge key={e} variant="neutral" size="sm">{e}</Badge>)}
@@ -1207,8 +1216,8 @@ export default function ProgramDetailPage() {
                     {topIndustries.length > 0 && (
                       <Card className="p-5">
                         <div className="flex items-center gap-2 mb-3">
-                          <Users size={14} className="text-cobalt" />
-                          <h3 className="font-semibold text-student-ink">Industry Placement</h3>
+                          <Users size={14} className="text-secondary" />
+                          <h3 className="font-semibold text-foreground">Industry Placement</h3>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {topIndustries.map((ind: string) => <Badge key={ind} variant="info" size="sm">{ind}</Badge>)}
@@ -1220,15 +1229,15 @@ export default function ProgramDetailPage() {
                     {(employerData?.total_feedback ?? 0) > 0 && (
                       <button
                         onClick={() => setTab('insights')}
-                        className="w-full text-left rounded-lg border border-divider hover:border-cobalt hover:bg-student-mist transition-colors p-4 flex items-center justify-between gap-3"
+                        className="w-full text-left rounded-lg border border-border hover:border-secondary hover:bg-muted transition-colors p-4 flex items-center justify-between gap-3"
                       >
                         <div className="flex items-center gap-2">
-                          <Briefcase size={14} className="text-cobalt" />
-                          <span className="text-sm text-student-ink">
+                          <Briefcase size={14} className="text-secondary" />
+                          <span className="text-sm text-foreground">
                             See what <span className="font-semibold">{employerData?.total_feedback}</span> employers say about graduates
                           </span>
                         </div>
-                        <span className="text-xs font-semibold text-cobalt">Insights →</span>
+                        <span className="text-xs font-semibold text-secondary">Insights →</span>
                       </button>
                     )}
                   </>

@@ -76,8 +76,8 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
   if (!school) {
     return (
       <div className="p-6 max-w-3xl mx-auto text-center py-20">
-        <GraduationCap size={32} className="mx-auto text-stone mb-3" />
-        <p className="text-sm text-charcoal mb-4">School not found.</p>
+        <GraduationCap size={32} className="mx-auto text-muted-foreground mb-3" />
+        <p className="text-sm text-foreground mb-4">School not found.</p>
         <Button size="sm" variant="secondary" onClick={() => navigate(instHref)}>Back</Button>
       </div>
     )
@@ -86,29 +86,29 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       {/* Breadcrumb / back */}
-      <button onClick={() => navigate(instHref)} className="flex items-center gap-1 text-sm text-slate hover:text-charcoal mb-4 transition-colors">
+      <button onClick={() => navigate(instHref)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
         <ArrowLeft size={14} /> Back to {institution?.name || 'university'}
       </button>
 
       {/* Header — text-only monogram tile, no images */}
-      <div className="bg-white rounded-xl border border-stone p-6 mb-5">
+      <div className="bg-card rounded-xl border border-border p-6 mb-5">
         <div className="flex items-start gap-4">
-          <div className="w-16 h-16 rounded-xl bg-muted border border-stone/60 flex items-center justify-center flex-shrink-0">
-            <span className="text-cobalt font-bold text-xl tracking-tight">{monogram(school.name)}</span>
+          <div className="w-16 h-16 rounded-xl bg-muted border border-border/60 flex items-center justify-center flex-shrink-0">
+            <span className="text-secondary font-bold text-xl tracking-tight">{monogram(school.name)}</span>
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-bold text-charcoal leading-tight">{school.name}</h1>
-            <div className="flex items-center gap-1 mt-1.5 text-[13px] text-slate flex-wrap">
-              <button onClick={() => navigate(instHref)} className="text-cobalt hover:underline font-medium">
+            <h1 className="text-2xl font-bold text-foreground leading-tight">{school.name}</h1>
+            <div className="flex items-center gap-1 mt-1.5 text-[13px] text-muted-foreground flex-wrap">
+              <button onClick={() => navigate(instHref)} className="text-secondary hover:underline font-medium">
                 {institution?.name || 'University'}
               </button>
-              <ChevronRight size={11} className="text-stone" />
+              <ChevronRight size={11} className="text-muted-foreground" />
               <span>{school.name}</span>
             </div>
-            <div className="flex items-center gap-3 mt-3 text-xs text-slate">
+            <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1">
-                <BookOpen size={11} className="text-cobalt" />
-                <span className="font-semibold text-charcoal">{school.program_count}</span> programs
+                <BookOpen size={11} className="text-secondary" />
+                <span className="font-semibold text-foreground">{school.program_count}</span> programs
               </span>
             </div>
           </div>
@@ -118,31 +118,31 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
       {/* About this school */}
       <Card className="p-5 mb-5">
         <div className="flex items-center gap-2 mb-2">
-          <BookOpen size={14} className="text-cobalt" />
-          <h2 className="font-semibold text-charcoal">About this school</h2>
+          <BookOpen size={14} className="text-secondary" />
+          <h2 className="font-semibold text-foreground">About this school</h2>
         </div>
         {school.description_text ? (
-          <p className="text-sm text-slate leading-relaxed whitespace-pre-line">{school.description_text}</p>
+          <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{school.description_text}</p>
         ) : (
-          <p className="text-sm text-slate/70 italic">A profile for this school is coming soon. Explore its programs below.</p>
+          <p className="text-sm text-muted-foreground">A full profile for this school is on the way — explore its programs below in the meantime.</p>
         )}
       </Card>
 
       {/* Programs */}
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-charcoal">Programs</h2>
-        <span className="text-xs text-slate">{programList.length} program{programList.length !== 1 ? 's' : ''}</span>
+        <h2 className="text-lg font-semibold text-foreground">Programs</h2>
+        <span className="text-xs text-muted-foreground">{programList.length} program{programList.length !== 1 ? 's' : ''}</span>
       </div>
 
       {programsLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map(i => <div key={i} className="h-64 bg-white rounded-xl border border-stone animate-pulse" />)}
+          {[1, 2, 3].map(i => <div key={i} className="h-64 bg-card rounded-xl border border-border animate-pulse" />)}
         </div>
       ) : programList.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-stone">
-          <GraduationCap size={32} className="mx-auto text-stone mb-3" />
-          <p className="text-sm text-charcoal font-medium mb-1">No programs yet</p>
-          <p className="text-xs text-slate">This school hasn&rsquo;t published any programs yet.</p>
+        <div className="text-center py-16 bg-card rounded-xl border border-border">
+          <GraduationCap size={32} className="mx-auto text-muted-foreground mb-3" />
+          <p className="text-sm text-foreground font-medium mb-1">No programs yet</p>
+          <p className="text-xs text-muted-foreground">This school hasn&rsquo;t published any programs yet.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -38,7 +38,7 @@ export default function OfferResponseTimeline({ status }: { status: OfferStatus 
       <ol className="space-y-2">
         {events.map(ev => (
           <li key={`${ev.icon}-${ev.at}`} className="flex gap-2 text-sm">
-            <span className="mt-0.5 text-cobalt shrink-0">
+            <span className="mt-0.5 text-secondary shrink-0">
               {ev.icon === 'response' ? <CheckCircle2 size={14} /> : <Send size={14} />}
             </span>
             <div className="min-w-0">

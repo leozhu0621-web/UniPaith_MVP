@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
+import QueryError from '../../components/ui/QueryError'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Eye, Pencil, RefreshCw, Plus, Trash2, Download, Database, History, FilePlus,
@@ -551,10 +552,7 @@ export default function DataUploadPage() {
 
       <Card>
         {datasetsQ.isError ? (
-          <div className="p-8 text-center">
-            <p className="mb-2 text-sm text-error">Couldn’t load datasets.</p>
-            <button onClick={() => datasetsQ.refetch()} className="text-secondary hover:underline text-sm">Retry</button>
-          </div>
+          <QueryError detail="Couldn’t load datasets." onRetry={() => datasetsQ.refetch()} />
         ) : datasetsQ.isLoading ? (
           <div className="p-4 space-y-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12" />)}</div>
         ) : filtered.length === 0 ? (
@@ -580,7 +578,7 @@ export default function DataUploadPage() {
             <span
               key={label}
               className={`text-xs px-2 py-1 rounded-pill ${
-                i === stepIndex ? 'bg-cobalt/10 text-cobalt font-semibold' : 'text-muted-foreground'
+                i === stepIndex ? 'bg-secondary/10 text-secondary font-semibold' : 'text-muted-foreground'
               }`}
             >
               {label}
@@ -592,7 +590,7 @@ export default function DataUploadPage() {
           <div className="mb-4">
             <div className="h-2 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-cobalt transition-all duration-300"
+                className="h-full bg-secondary transition-all duration-300"
                 style={{ width: `${uploadProgress}%` }}
               />
             </div>

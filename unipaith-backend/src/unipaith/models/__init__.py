@@ -48,6 +48,7 @@ from unipaith.models.engagement import (
 )
 from unipaith.models.eval_harness import EvalCase, EvalResult
 from unipaith.models.fairness import FairnessOverride, FairnessSignal
+from unipaith.models.feedback import Feedback
 from unipaith.models.follow import InstitutionFollow
 from unipaith.models.goals import StudentGoal
 from unipaith.models.graduate import (
@@ -384,4 +385,6 @@ __all__ = [
     "SchoolOutcome",
     "SchoolAdmissionsHistory",
     "ReviewThemeSummary",
+    # Demo feedback survey
+    "Feedback",
 ]

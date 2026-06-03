@@ -20,7 +20,7 @@ export default function IdentitySignalsWidget() {
   })
 
   if (isLoading) {
-    return <Card className="text-sm text-student-text">Loading…</Card>
+    return <Card className="text-sm text-foreground">Loading…</Card>
   }
 
   const values = identity?.core_values ?? []
@@ -30,9 +30,9 @@ export default function IdentitySignalsWidget() {
 
   if (total === 0) {
     return (
-      <Card className="text-sm text-student-text space-y-2">
-        <div className="flex items-center gap-2 text-student-ink font-medium">
-          <Sparkles size={14} className="text-gold" />
+      <Card className="text-sm text-foreground space-y-2">
+        <div className="flex items-center gap-2 text-foreground font-medium">
+          <Sparkles size={14} className="text-primary" />
           Identity signals
         </div>
         <p className="italic">
@@ -45,13 +45,13 @@ export default function IdentitySignalsWidget() {
   return (
     <Card className="space-y-3">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-student-ink font-medium text-sm">
-          <Sparkles size={14} className="text-gold" />
+        <div className="flex items-center gap-2 text-foreground font-medium text-sm">
+          <Sparkles size={14} className="text-primary" />
           Identity signals
         </div>
         <Link
           to="/s/profile?tab=identity"
-          className="text-xs text-student inline-flex items-center gap-1 hover:underline"
+          className="text-xs text-primary inline-flex items-center gap-1 hover:underline"
         >
           Manage <ExternalLink size={11} />
         </Link>
@@ -79,7 +79,7 @@ export default function IdentitySignalsWidget() {
       </Section>
 
       {identity?.identity_summary && (
-        <div className="text-xs text-student-text border-l-2 border-divider pl-2 italic">
+        <div className="text-xs text-foreground border-l-2 border-border pl-2 italic">
           {identity.identity_summary}
         </div>
       )}
@@ -99,7 +99,7 @@ function Section({
   if (count === 0) return null
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-wide text-student-text mb-1.5">
+      <div className="text-[10px] uppercase tracking-wide text-foreground mb-1.5">
         {title} · {count}
       </div>
       <div className="flex flex-wrap gap-1">{children}</div>
@@ -112,8 +112,8 @@ function Chip({ children, muted = false }: { children: React.ReactNode; muted?: 
     <span
       className={
         muted
-          ? 'text-[11px] px-2 py-0.5 rounded-full bg-divider text-student-text'
-          : 'text-[11px] px-2 py-0.5 rounded-full bg-student/10 text-student-ink'
+          ? 'text-[11px] px-2 py-0.5 rounded-full bg-muted text-foreground'
+          : 'text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-foreground'
       }
     >
       {children}
