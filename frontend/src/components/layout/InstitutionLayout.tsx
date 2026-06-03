@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import SkipLink from './SkipLink'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../stores/auth-store'
@@ -98,6 +99,7 @@ export default function InstitutionLayout() {
 
   return (
     <div className="flex flex-col h-screen bg-background">
+      <SkipLink />
       <header className="hidden lg:flex h-16 items-center justify-between px-8 bg-background border-b border-border flex-shrink-0 z-30">
         <NavLink to="/i/dashboard" className="leading-none" aria-label="Institution home">
           <Wordmark className="h-7 w-auto" />
@@ -198,7 +200,7 @@ export default function InstitutionLayout() {
         </nav>
       </Sheet>
 
-      <main className="flex-1 overflow-y-auto">
+      <main id="main" tabIndex={-1} className="flex-1 overflow-y-auto outline-none">
         <Outlet />
       </main>
     </div>
