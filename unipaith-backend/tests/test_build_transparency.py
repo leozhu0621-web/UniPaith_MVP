@@ -442,7 +442,7 @@ async def test_overview_endpoint(client: AsyncClient):
         "surfaces",
     ):
         assert key in body
-    assert len(body["surfaces"]) == 13
+    assert len(body["surfaces"]) == 14
     assert {s["key"] for s in body["surfaces"]} == {
         "claude-api",
         "roadmap",
@@ -454,6 +454,7 @@ async def test_overview_endpoint(client: AsyncClient):
         "frontend",
         "backend",
         "search",
+        "knowledge",
         "realtime",
         "chatbot-eval",
         "security",
@@ -472,6 +473,11 @@ async def test_overview_endpoint(client: AsyncClient):
     assert search["stat"] == (
         f"{body['search']['capabilities_live']}/{body['search']['capability_count']}"
     )
+    # Spec 60 — the knowledge surface carries the allowlisted-source count.
+    knowledge = next(s for s in body["surfaces"] if s["key"] == "knowledge")
+    assert knowledge["spec"] == "60"
+    assert knowledge["path"] == "/goal/knowledge"
+    assert knowledge["stat"] == body["knowledge"]["registered_source_count"]
     # Spec 61 — the chatbot-eval surface carries the live golden-case count read from the run.
     chatbot = next(s for s in body["surfaces"] if s["key"] == "chatbot-eval")
     assert chatbot["spec"] == "61"

@@ -15,6 +15,8 @@ from unipaith.api.billing import router as billing_router
 from unipaith.api.build import router as build_router
 from unipaith.api.calendar import router as calendar_router
 from unipaith.api.connect import router as connect_router
+from unipaith.api.crawler import enrichment_router as crawler_enrichment_router
+from unipaith.api.crawler import router as crawler_router
 from unipaith.api.discovery import router as discovery_router
 from unipaith.api.documents import router as documents_router
 from unipaith.api.events import router as events_router
@@ -38,6 +40,7 @@ from unipaith.api.prompt_library import router as prompt_library_router
 from unipaith.api.realtime import router as realtime_router
 from unipaith.api.recommendations import router as recommendations_router
 from unipaith.api.recruitment import router as recruitment_router
+from unipaith.api.reference import router as reference_router
 from unipaith.api.reviews import router as reviews_router
 from unipaith.api.saved_lists import router as saved_lists_router
 from unipaith.api.saved_search import router as saved_search_router
@@ -65,6 +68,11 @@ api_router.include_router(ai_agents_router)
 # /goal hub + roadmap/features/api pages). No auth, DB-free; the api-contract
 # map is derived live from the running route table.
 api_router.include_router(build_router)
+# Spec 60 — public reference-data API at `/reference/*` (world-reference projection
+# with provenance) + system-guarded crawler ops at `/crawler/*`. Reference is
+# DB-backed but public (reference knowledge is public-non-personal data, §1).
+api_router.include_router(reference_router)
+api_router.include_router(crawler_router)
 api_router.include_router(billing_router)
 # Settings before students/institutions so literal `/institutions/settings` and
 # `/students/me/settings` win over param routes like `/institutions/{id}`.
@@ -105,6 +113,10 @@ api_router.include_router(graduate_router)
 # `/institutions/me/data/*`; before institutions_router so the literal paths win
 # over `/institutions/{id}`. (§6 fairness endpoints live in institutions.py.)
 api_router.include_router(governance_router)
+# Spec 60 §9 — institution enrichment-review (claim & verify) under
+# `/institutions/me/enrichments/*`; before institutions_router so the literal
+# path wins over `/institutions/{id}`.
+api_router.include_router(crawler_enrichment_router)
 api_router.include_router(institutions_router)
 api_router.include_router(programs_router)
 api_router.include_router(applications_router)

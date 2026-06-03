@@ -25,6 +25,12 @@ from unipaith.models.audit import AdmissionsAuditLog
 from unipaith.models.base import Base
 from unipaith.models.billing import StudentSubscription
 from unipaith.models.confidence_outcome import ConfidenceOutcomePair
+from unipaith.models.crawler import (
+    ChangeEvent,
+    CrawlSource,
+    EntityEnrichment,
+    KnowledgeEntity,
+)
 from unipaith.models.discovery import DiscoveryMessage, DiscoverySession
 from unipaith.models.engagement import (
     CalendarItemState,
@@ -139,6 +145,17 @@ from unipaith.models.recruitment import (
     RecruitmentTrip,
     Territory,
     TripVisit,
+)
+from unipaith.models.reference import (
+    RefAccreditation,
+    ReferenceEntity,
+    RefGeoCost,
+    RefMajor,
+    RefOccupation,
+    RefRanking,
+    RefTest,
+    RefVisa,
+    Scholarship,
 )
 from unipaith.models.saved_search import SavedSearch
 from unipaith.models.settings import InstitutionTeamInvite, UserSettings
@@ -307,6 +324,20 @@ __all__ = [
     "KnowledgeDocument",
     "KnowledgeLink",
     "CrawlFrontier",
+    # Spec 60 — knowledge engine + reference projection
+    "CrawlSource",
+    "KnowledgeEntity",
+    "EntityEnrichment",
+    "ChangeEvent",
+    "Scholarship",
+    "RefOccupation",
+    "RefTest",
+    "RefVisa",
+    "RefGeoCost",
+    "RefMajor",
+    "RefRanking",
+    "RefAccreditation",
+    "ReferenceEntity",
     "EngineLoopSnapshot",
     "EngineDirective",
     "InteractionSignal",

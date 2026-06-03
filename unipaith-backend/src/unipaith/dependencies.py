@@ -91,6 +91,18 @@ async def require_institution_admin(user: User = Depends(get_current_user)) -> U
     return user
 
 
+async def require_system(x_ops_token: str | None = Header(None, alias="X-Ops-Token")) -> bool:
+    """Spec 60 §9 — system guard for the internal crawler ops API. There is no
+    platform-admin tier (05 §2); the ops endpoints are protected by a shared
+    ``X-Ops-Token`` matched against ``settings.crawler_ops_token``. An empty
+    configured token means *locked* — the endpoints 403 until a token is set for
+    the environment, so the ops surface is never accidentally open in prod."""
+    expected = settings.crawler_ops_token
+    if not expected or not x_ops_token or x_ops_token != expected:
+        raise ForbiddenException("System access required")
+    return True
+
+
 async def require_faculty_or_institution_admin(user: User = Depends(get_current_user)) -> User:
     """Spec 41 §8 — faculty *and* central admins may read their department's
     applicants, score, recommend, and propose funding. Releasing a decision stays
