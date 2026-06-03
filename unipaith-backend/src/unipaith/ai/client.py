@@ -183,6 +183,12 @@ MODEL_PRICES: dict[str, dict[str, float]] = {
     # Voyage embeddings ($/MTok input)
     "voyage-3-large": {"input": 0.18, "output": 0.0},
     "voyage-3": {"input": 0.06, "output": 0.0},
+    # Spec 63 — self-hosted Qwen ML backend. Amortized GPU-hour estimate (the
+    # real cost is tracked as GPU-hours in §14); far below the premium tiers.
+    "qwen3-32b-instruct": {"input": 0.20, "output": 0.20},
+    "qwen3-14b-instruct": {"input": 0.10, "output": 0.10},
+    "qwen3-7b-instruct": {"input": 0.05, "output": 0.05},
+    "qwen3-embedding-8b": {"input": 0.01, "output": 0.0},
 }
 
 CACHE_READ_MULTIPLIER = 0.1
@@ -688,35 +694,55 @@ class AIClient:
             vec = [max(-1.0, min(1.0, v / 1e30)) for v in vec]
             return EmbeddingResponse(embedding=vec, model=f"mock:{self.embedding_model}")
 
-        voyage = self._get_voyage()
+        # Spec 63 §8 — embedding transport seam. Try Qwen3-Embedding when it is the
+        # configured provider (Matryoshka-truncated to `embedding_dimension`), and
+        # fall back to Voyage on any failure so flipping the provider is safe and a
+        # Qwen outage never blocks featurization (§10/§16: never on a critical path).
+        provider_name = "anthropic"  # Voyage rides under the Anthropic stack
+        resp: EmbeddingResponse | None = None
         started_at = _utcnow()
-        start = time.perf_counter()
-        result = await asyncio.to_thread(
-            voyage.embed,
-            [text],
-            model=self.embedding_model,
-            input_type="document",
-        )
-        latency_ms = int((time.perf_counter() - start) * 1000)
-        completed_at = _utcnow()
-        embedding = result.embeddings[0]
-        # Voyage SDK returns total_tokens on the response object.
-        tokens = getattr(result, "total_tokens", 0)
+        completed_at: _dt.datetime | None = None
+        if settings.embedding_provider == "qwen" and settings.qwen_enabled:
+            try:
+                resp = await self._embed_qwen(text)
+                provider_name = "qwen"
+                completed_at = _utcnow()
+            except Exception as e:  # pragma: no cover — network/SDK edge
+                logger.warning("qwen embedding failed (%s); falling back to voyage", e)
+                resp = None
 
-        cost = self._compute_cost(
-            model_id=self.embedding_model,
-            input_tokens=tokens,
-            output_tokens=0,
-            cache_read_tokens=0,
-            cache_creation_tokens=0,
-        )
-        resp = EmbeddingResponse(
-            embedding=embedding,
-            model=self.embedding_model,
-            input_tokens=tokens,
-            cost_usd=cost,
-            latency_ms=latency_ms,
-        )
+        if resp is None:
+            voyage = self._get_voyage()
+            started_at = _utcnow()
+            start = time.perf_counter()
+            result = await asyncio.to_thread(
+                voyage.embed,
+                [text],
+                model=self.embedding_model,
+                input_type="document",
+            )
+            latency_ms = int((time.perf_counter() - start) * 1000)
+            completed_at = _utcnow()
+            embedding = result.embeddings[0]
+            # Voyage SDK returns total_tokens on the response object.
+            tokens = getattr(result, "total_tokens", 0)
+
+            cost = self._compute_cost(
+                model_id=self.embedding_model,
+                input_tokens=tokens,
+                output_tokens=0,
+                cache_read_tokens=0,
+                cache_creation_tokens=0,
+            )
+            resp = EmbeddingResponse(
+                embedding=embedding,
+                model=self.embedding_model,
+                input_tokens=tokens,
+                cost_usd=cost,
+                latency_ms=latency_ms,
+            )
+            provider_name = "anthropic"
+
         if db is not None:
             await self._log_embedding_turn(
                 db=db,
@@ -725,8 +751,51 @@ class AIClient:
                 consent_mask=consent_mask,
                 started_at=started_at,
                 completed_at=completed_at,
+                provider=provider_name,
             )
         return resp
+
+    async def _embed_qwen(self, text: str) -> EmbeddingResponse:
+        """Spec 63 §8 — Qwen3-Embedding via the OpenAI-compatible ``/v1/embeddings``.
+
+        Matryoshka-truncates the vector to ``settings.embedding_dimension`` so it
+        slots into the live ``Vector`` store with no migration and no re-embed.
+        Raises on any transport error — ``embed()`` catches it and falls back to
+        Voyage, keeping a Qwen outage off the featurization critical path."""
+        from openai import AsyncOpenAI
+
+        client = AsyncOpenAI(
+            api_key=settings.qwen_api_key or "EMPTY",
+            base_url=settings.qwen_base_url,
+        )
+        start = time.perf_counter()
+        result = await client.embeddings.create(
+            model=settings.qwen_embedding_model,
+            input=[text],
+        )
+        latency_ms = int((time.perf_counter() - start) * 1000)
+        vec = list(result.data[0].embedding)
+        dim = settings.embedding_dimension
+        if len(vec) > dim:
+            vec = vec[:dim]  # Matryoshka truncation → match the live column dim
+        usage = getattr(result, "usage", None)
+        tokens = 0
+        if usage is not None:
+            tokens = getattr(usage, "prompt_tokens", 0) or getattr(usage, "total_tokens", 0) or 0
+        cost = self._compute_cost(
+            model_id=settings.qwen_embedding_model,
+            input_tokens=tokens,
+            output_tokens=0,
+            cache_read_tokens=0,
+            cache_creation_tokens=0,
+        )
+        return EmbeddingResponse(
+            embedding=vec,
+            model=settings.qwen_embedding_model,
+            input_tokens=tokens,
+            cost_usd=cost,
+            latency_ms=latency_ms,
+        )
 
     # ── Internals ────────────────────────────────────────────────────────
 
@@ -941,6 +1010,7 @@ class AIClient:
         consent_mask: dict[str, bool] | None = None,
         started_at: _dt.datetime | None = None,
         completed_at: _dt.datetime | None = None,
+        provider: str = "anthropic",
     ) -> None:
         from unipaith.models.ai_artifacts import AiTurn
 
@@ -949,7 +1019,10 @@ class AIClient:
             agent="embedding",
             role="tool",
             model=response.model,
-            provider="anthropic",  # Voyage rides under the Anthropic stack
+            # Spec 63 — "qwen" when the Qwen embedder served it; else "anthropic"
+            # (Voyage rides under the Anthropic stack). Lets the cost dashboard
+            # split embedding spend by transport.
+            provider=provider,
             input_tokens=response.input_tokens,
             cost_usd=response.cost_usd,
             latency_ms=response.latency_ms,

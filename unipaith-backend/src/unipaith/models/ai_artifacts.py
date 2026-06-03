@@ -141,11 +141,13 @@ class AiTurn(Base, UUIDPrimaryKeyMixin):
             "'advisor_matcher','sop_interest_extractor','funding_scenario_helper')",
             name="ck_ai_turns_agent",
         ),
-        # Spec 03 §8: provider tracked per call so the cost ledger splits
-        # spend across anthropic / openai / bedrock / rule_based and the
-        # compliance audit can verify provider routing.
+        # Spec 03 §8 + spec 63 §16: provider tracked per call so the cost ledger
+        # splits spend across the transports and the compliance audit can verify
+        # provider routing. "qwen" is the spec-63 ML backend — its presence here
+        # is the auditable proof surface that no human-facing agent is served by
+        # Qwen (those rows always carry anthropic/openai; see ai/boundary.py).
         CheckConstraint(
-            "provider IN ('anthropic','openai','bedrock','rule_based')",
+            "provider IN ('anthropic','openai','bedrock','qwen','rule_based')",
             name="ck_ai_turns_provider",
         ),
         CheckConstraint(

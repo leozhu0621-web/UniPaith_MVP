@@ -30,6 +30,7 @@ from unipaith.ai.providers.base import (
     ProviderUnavailableError,
 )
 from unipaith.ai.providers.openai_provider import OpenAIProvider
+from unipaith.ai.providers.qwen_provider import QwenProvider
 from unipaith.ai.providers.registry import (
     get_provider,
     get_provider_for_agent,
@@ -46,6 +47,7 @@ __all__ = [
     "ProviderUnavailableError",
     "AnthropicProvider",
     "OpenAIProvider",
+    "QwenProvider",
     "get_provider",
     "get_provider_for_agent",
     "list_failover_order",
