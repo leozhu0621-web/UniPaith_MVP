@@ -18,6 +18,7 @@ import pytest
 from sqlalchemy import func, select
 
 from unipaith.config import settings
+from unipaith.core.exceptions import NotFoundException
 from unipaith.models.application import Application
 from unipaith.models.attribution import AttributionEvent
 from unipaith.models.institution import CampaignSuppression, Institution, Program, UploadedContact
@@ -169,6 +170,36 @@ async def test_convert_links_forward_and_is_idempotent(db_session, mock_institut
         select(func.count()).select_from(Prospect).where(Prospect.institution_id == inst.id)
     )
     assert count == 1
+
+
+async def test_convert_rejects_cross_tenant_application(db_session, mock_institution_user):
+    """Tenant isolation: a prospect can only be linked to an application that
+    belongs to one of THIS institution's programs. A foreign application id must
+    be rejected (404), not silently stored as a dangling cross-tenant link."""
+    inst = await _seed_institution(db_session, mock_institution_user)
+    # A second, unrelated institution that owns the application.
+    other_user = User(
+        id=uuid.uuid4(),
+        email=f"inst-{uuid.uuid4().hex[:6]}@example.com",
+        cognito_sub=f"sub-{uuid.uuid4().hex[:8]}",
+        role=UserRole("institution_admin"),
+        is_active=True,
+    )
+    other_inst = await _seed_institution(db_session, other_user)
+    foreign_app = await _seed_application(db_session, other_inst)
+
+    svc = RecruitmentService(db_session)
+    prospect = await svc.create_prospect(
+        inst.id, CreateProspectRequest(name="Linus", email="linus@example.com", stage="engaged")
+    )
+    with pytest.raises(NotFoundException):
+        await svc.convert_prospect(
+            inst.id, prospect.id, ConvertProspectRequest(application_id=foreign_app.id)
+        )
+    # The prospect must not have been advanced or linked by the failed call.
+    refreshed = await svc.get_prospect(inst.id, prospect.id)
+    assert refreshed.converted_application_id is None
+    assert refreshed.stage == "engaged"
 
 
 # ── §9.3 fair capture: source tagging → attribution ───────────────────────────
