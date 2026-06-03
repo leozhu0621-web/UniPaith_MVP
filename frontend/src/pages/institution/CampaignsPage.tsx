@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import QueryError from '../../components/ui/QueryError'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -183,10 +184,7 @@ export default function CampaignsPage() {
       <Tabs tabs={TABS} activeTab={tab} onChange={setTab} />
 
       {campaignsQ.isError ? (
-        <div className="p-8 text-center">
-          <p className="mb-2 text-sm text-error">Couldn’t load campaigns.</p>
-          <button onClick={() => campaignsQ.refetch()} className="text-secondary hover:underline text-sm">Retry</button>
-        </div>
+        <QueryError detail="Couldn’t load campaigns." onRetry={() => campaignsQ.refetch()} />
       ) : campaignsQ.isLoading ? (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-44" />)}
