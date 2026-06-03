@@ -65,18 +65,28 @@ def upgrade() -> None:
             type_sql = col.type.compile(dialect=bind.dialect)
             default_clause = ""
             if col.server_default is not None:
-                # arg can be a TextClause; render via str() through the dialect
                 arg = col.server_default.arg
-                default_str = arg.text if hasattr(arg, "text") else str(arg)
-                # Quote string defaults; leave bools/numerics as-is
-                if (
-                    default_str.lower() in ("true", "false")
-                    or default_str.replace(".", "").replace("-", "").isdigit()
-                ):
-                    default_clause = f" DEFAULT {default_str}"
+                if isinstance(arg, str):
+                    # A plain Python string literal (e.g. "considering", "[]").
+                    # Needs SQL quoting, except bool/numeric tokens which are
+                    # emitted bare.
+                    if (
+                        arg.lower() in ("true", "false")
+                        or arg.replace(".", "").replace("-", "").isdigit()
+                    ):
+                        default_clause = f" DEFAULT {arg}"
+                    else:
+                        escaped = arg.replace("'", "''")
+                        default_clause = f" DEFAULT '{escaped}'"
                 else:
-                    escaped = default_str.replace("'", "''")
-                    default_clause = f" DEFAULT '{escaped}'"
+                    # A SQL expression: text("'[]'::jsonb"), func.now(), etc.
+                    # Render it verbatim through the dialect — re-quoting it as a
+                    # string literal would corrupt the SQL (e.g. JSONB defaults).
+                    compiled = arg.compile(
+                        dialect=bind.dialect,
+                        compile_kwargs={"literal_binds": True},
+                    )
+                    default_clause = f" DEFAULT {compiled}"
             stmt = (
                 f"ALTER TABLE {table.name} "
                 f'ADD COLUMN IF NOT EXISTS "{col.name}" '
