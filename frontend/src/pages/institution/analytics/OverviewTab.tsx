@@ -12,6 +12,7 @@ import {
   YAxis,
 } from 'recharts'
 import Card from '../../../components/ui/Card'
+import QueryError from '../../../components/ui/QueryError'
 import Skeleton from '../../../components/ui/Skeleton'
 import { getAnalyticsOverview } from '../../../api/institutions'
 import type { AnalyticsFilters, KpiMetric } from '../../../types'
@@ -75,14 +76,7 @@ export default function OverviewTab({ filters }: { filters: AnalyticsFilters }) 
   }
 
   if (q.isError || !q.data) {
-    return (
-      <Card className="p-8 text-center">
-        <p className="text-error mb-2">Failed to load analytics</p>
-        <button onClick={() => q.refetch()} className="text-secondary hover:underline text-sm">
-          Retry
-        </button>
-      </Card>
-    )
+    return <QueryError title="We couldn't load analytics." onRetry={() => q.refetch()} />
   }
 
   const d = q.data
