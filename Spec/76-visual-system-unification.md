@@ -1,6 +1,6 @@
-# 65 · Visual System Unification & Token Discipline — Build Spec
+# 76 · Visual System Unification & Token Discipline — Build Spec
 
-> The single biggest "finished" lever: collapse the two color vocabularies into one semantic token system, make dark mode survive every route, enforce the brand proportion + earned-gold rule mechanically, document the score-viz family and the one display-card, and add the component→source map. Operationalizes `01` (tokens) and `02` (design system) against the real `frontend/src/` tree. Companion to `64` (plan), `66` (motion), `69` (a11y).
+> The single biggest "finished" lever: collapse the two color vocabularies into one semantic token system, make dark mode survive every route, enforce the brand proportion + earned-gold rule mechanically, document the score-viz family and the one display-card, and add the component→source map. Operationalizes `01` (tokens) and `02` (design system) against the real `frontend/src/` tree. Companion to `75` (plan), `77` (motion), `80` (a11y).
 >
 > Status: **draft v2.0** · 2026-06-02 · v2 = first issue. Counts are from the 2026-06-02 audit of `frontend/src/`; re-grep before relying on exact numbers.
 
@@ -15,7 +15,7 @@
 | **Semantic (keep)** | `text-foreground` (154 files), `text-muted-foreground` (174), `bg-card`, `bg-primary`, `bg-secondary`, `border-border` | The source of truth. Dark-mode-safe. |
 | **Legacy aliases (retire)** | `tailwind.config.js` maps `student-*`, `school-*`, `gold-*`, `charcoal`, `slate`, `stone`, `cobalt`, `paper`, `cream`, `brand.slate/amber` to brand hexes | `text-cobalt`/`bg-cobalt` in 102 files; `student-*` in 48; `text-charcoal` 27; `text-slate` 20. Many are **dark-mode-unsafe** (fixed hex, no `.dark` swap). |
 
-The flagship Match surface is the worst offender (`pages/student/ExplorePage.tsx:148-150`, `pages/student/match/MatchCard.tsx` — `text-charcoal`/`text-slate`/`bg-cobalt`/`text-student-text` throughout) and so is the first-impression auth screen (`pages/auth/LoginPage.tsx:47,74,76`). This is the highest-ROI visual work in the entire refinement (`64` §1).
+The flagship Match surface is the worst offender (`pages/student/ExplorePage.tsx:148-150`, `pages/student/match/MatchCard.tsx` — `text-charcoal`/`text-slate`/`bg-cobalt`/`text-student-text` throughout) and so is the first-impression auth screen (`pages/auth/LoginPage.tsx:47,74,76`). This is the highest-ROI visual work in the entire refinement (`75` §1).
 
 **Build = a migration, not a redesign.** The hexes are already correct; we change *which class names* reference them so dark mode and any future re-theme work, and so the brand reads as one system.
 
@@ -54,13 +54,13 @@ The flagship Match surface is the worst offender (`pages/student/ExplorePage.tsx
 
 ### 2.3 Proportion rule (reconcile + enforce)
 
-`01` §2 specifies a fixed color budget; the Master Paper states `55/20/15/10` (paper/ink/cobalt/gold) while `01` §2 implements `60/25/10/5`. **Defer to `01` as the implemented source of truth** (recommend updating the paper, not the code — `64` §9). On any **light** surface, **gold + cobalt together ≤ 15% of visual area**; gold alone is the rarest mark. This is a design-review checklist item (`01` §9), not auto-lintable — but the earned-gold rule (§2.4) is partially enforceable.
+`01` §2 specifies a fixed color budget; the Master Paper states `55/20/15/10` (paper/ink/cobalt/gold) while `01` §2 implements `60/25/10/5`. **Defer to `01` as the implemented source of truth** (recommend updating the paper, not the code — `75` §9). On any **light** surface, **gold + cobalt together ≤ 15% of visual area**; gold alone is the rarest mark. This is a design-review checklist item (`01` §9), not auto-lintable — but the earned-gold rule (§2.4) is partially enforceable.
 
 ### 2.4 The earned-gold rule (mechanical where possible)
 
 Gold (`--primary`) is "brand punctuation, not a fill — must feel earned" (Brand Visual Guide). Concretely:
 - **At most one `bg-primary` / `elev-glow` element per visual region.** The single most important CTA, the confirmed-enrollment beat (`35`), a brand cap.
-- **Never two gold elements adjacent**; never gold on the institution side (cobalt only — `64` §2.5, institution = system-of-record, not delight).
+- **Never two gold elements adjacent**; never gold on the institution side (cobalt only — `75` §2.5, institution = system-of-record, not delight).
 - `Button` default is `secondary` (cobalt). `primary` (gold) is opt-in and rare. (Recurring code trap: the `Button` default has historically rendered gold — audit every `<Button>` with no `variant` and set `secondary` unless it is *the* beat.)
 
 ---
@@ -92,7 +92,7 @@ The dual-score model (Fitness + Confidence) is the product's signature different
 | `DualRing` | `components/ui/DualRing.tsx` | The canonical fitness+confidence ring. **The only** dual-score visual; used on cards + detail + compare. Fitness = cobalt arc, confidence = the dot/secondary ring; never recolor to gold. |
 | `ConfidenceDots` | `components/ui/ConfidenceDots.tsx` | Discrete confidence (low/med/high) where a ring is too heavy (list rows). |
 | `BandBadge` | `components/ui/BandBadge.tsx` | Reach/Target/Safer probability band; status-tone, not gold. |
-| `AIRationalePopover` | `components/ui/AIRationalePopover.tsx` | The "why this program" plain-language rationale (the trust surface, `64` §2.1). Consistent trigger + content shape everywhere a score appears. |
+| `AIRationalePopover` | `components/ui/AIRationalePopover.tsx` | The "why this program" plain-language rationale (the trust surface, `75` §2.1). Consistent trigger + content shape everywhere a score appears. |
 
 **Honesty rule (from the papers):** the confidence axis exists to avoid false precision — render scores as honest estimates with their rationale reachable in one interaction, never as bare authoritative numbers. **Migration debt:** `SchoolDetailPage` still reads the legacy `match_score` instead of `fitness_score`/`confidence_score` (`47` G-S2 / CLAUDE.md Phase-E) — wire it to `DualRing` here so the legacy column can be dropped.
 
@@ -129,14 +129,14 @@ Both `02` §18 and `47` flag that a mapping from each design-system component to
 |---|---|---|
 | Button (§2) | `components/ui/Button.tsx` | 6 variants; default → `secondary`. Orphaned `components/shadcn/button.tsx` to be deleted. |
 | Input/Textarea (§4) | `components/ui/Input.tsx`, `Textarea.tsx` | reserved error region |
-| Select (§4) | `components/ui/Select.tsx` | replaces 44 native `<select>` (`69`) |
+| Select (§4) | `components/ui/Select.tsx` | replaces 44 native `<select>` (`80`) |
 | Card (§5) | `components/ui/Card.tsx` + `program/ProgramCard.tsx` | §6 above |
 | Modal/Sheet (§6) | `components/ui/Modal.tsx`, `Sheet.tsx` | scrim token §3.4 |
-| Table (§8) | `components/ui/Table.tsx` | extended in `68` |
+| Table (§8) | `components/ui/Table.tsx` | extended in `79` |
 | Chips/Badges (§9) | `components/ui/Badge.tsx`, `BandBadge.tsx` | |
 | Toast/Alert (§11) | `components/ui/Toast.tsx`, `Alert.tsx` + `stores/toast-store.ts` | |
-| Empty state (§12) | `components/ui/EmptyState.tsx` | extended in `67` |
-| Loading (§13) | `components/ui/Skeleton.tsx` (+`SkeletonCard`/`SkeletonTable`) | standardized in `66`/`67` |
+| Empty state (§12) | `components/ui/EmptyState.tsx` | extended in `78` |
+| Loading (§13) | `components/ui/Skeleton.tsx` (+`SkeletonCard`/`SkeletonTable`) | standardized in `77`/`78` |
 | AI surfaces (§15) | `AIBadge.tsx`, `AIRationalePopover.tsx`, `FallbackNote.tsx` | the trust surface |
 | Score viz | `DualRing.tsx`, `ConfidenceDots.tsx` | §4 |
 
@@ -185,4 +185,4 @@ Make the mechanical rules un-regressable (`54` precedent: CI guards for FE conve
 - **Codemod vs hand-migration of the Match surface.** `MatchCard.tsx`/`ExplorePage.tsx` mix tokens with layout logic; a blind codemod risks visual regressions. Recommend codemod the safe 80%, hand-review the flagship surfaces.
 - **`text-white` allowlist.** Which components are legitimately fixed-fill (cobalt/gold buttons, status pills)? Enumerate before turning the lint rule to error.
 - **Card-radius reconciliation** (`02` §18): 12 (current shadcn default) vs 14 (`01` §4.3 "matches favicon tile"). Recommend 14.
-- **Proportion ratio** (`64` §9): `55/20/15/10` (paper) vs `60/25/10/5` (`01`). Pick one; recommend `01`.
+- **Proportion ratio** (`75` §9): `55/20/15/10` (paper) vs `60/25/10/5` (`01`). Pick one; recommend `01`.

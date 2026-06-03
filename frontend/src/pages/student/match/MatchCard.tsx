@@ -6,7 +6,7 @@
  * badge (§6), a "Why this match" trigger that opens the AI Rationale Popover
  * (§4 / Spec 02 §6), and expandable probability bands (§4A).
  *
- * Brand (§10 / Spec 65): gold appears ONLY on the DualRing fitness ring; the
+ * Brand (§10 / Spec 76): gold appears ONLY on the DualRing fitness ring; the
  * card body is cobalt + neutral, using semantic tokens (dark-mode safe).
  * Save / Add to compare / Open on every card (§7).
  */

@@ -1,6 +1,6 @@
-# 66 · Motion, Microinteractions & Feedback — Build Spec
+# 77 · Motion, Microinteractions & Feedback — Build Spec
 
-> Turn the existing ad-hoc animations into one named motion system: documented transition tokens, enter/exit + stagger choreography, a skeleton-shimmer spec, the earned-gold success beat, and Discover chat token-streaming — all honoring reduced-motion. Operationalizes the motion tokens in `01` §4.4 and the "no blank states / optimistic" bar in `53` §3. Companion to `64`, `65` (tokens), `67` (states), `69` (a11y).
+> Turn the existing ad-hoc animations into one named motion system: documented transition tokens, enter/exit + stagger choreography, a skeleton-shimmer spec, the earned-gold success beat, and Discover chat token-streaming — all honoring reduced-motion. Operationalizes the motion tokens in `01` §4.4 and the "no blank states / optimistic" bar in `53` §3. Companion to `75`, `76` (tokens), `78` (states), `80` (a11y).
 >
 > Status: **draft v2.0** · 2026-06-02 · v2 = first issue. Settles the app-vs-Landing curve seam left open in `02` §18 / `54`.
 
@@ -16,7 +16,7 @@ Gaps:
 - **No streaming.** Discover chat does a full request→response round-trip then renders the whole message — the flagship "AI counselor" surface feels less alive than ChatGPT/Element451 (`53` benches ChatGPT for chat streaming).
 - **The curve seam.** The app uses `--ease-out: cubic-bezier(0.2,0.7,0.2,1)` while the marketing `Landing_MVP` uses `cubic-bezier(0.22,1,0.36,1)`; `02` §18 and `54` both flag this as unresolved. This spec settles it.
 
-**Principle (from the papers):** motion serves *clarity and calm*, never spectacle — the product is "a calm friend," restraint signals craft (`64` §2.2). Motion confirms actions, orients the user across the 3-stage journey, and makes AI feel responsive. It is never decorative.
+**Principle (from the papers):** motion serves *clarity and calm*, never spectacle — the product is "a calm friend," restraint signals craft (`75` §2.2). Motion confirms actions, orients the user across the 3-stage journey, and makes AI feel responsive. It is never decorative.
 
 ---
 
@@ -35,7 +35,7 @@ Canonical, in `index.css` (`01` §4.4):
 
 **Curve-seam decision:** the **app keeps `cubic-bezier(0.2,0.7,0.2,1)`**; the Landing curve stays on the marketing site only. Rationale: the app curve is calmer (less overshoot) — correct for an anxiety-lowering product; the Landing curve's spring is marketing energy. Document this in `02` §18 and close the open question. No component imports the Landing curve.
 
-**Usage rule:** enter uses `--ease-out`; exit uses `--ease-in` and is faster (≈0.8×); move/resize uses `--ease-in-out`. Never animate `width`/`height`/`top`/`left` (layout thrash) — animate `transform`/`opacity` (`69` perf + `54` CWV `CLS < 0.1`).
+**Usage rule:** enter uses `--ease-out`; exit uses `--ease-in` and is faster (≈0.8×); move/resize uses `--ease-in-out`. Never animate `width`/`height`/`top`/`left` (layout thrash) — animate `transform`/`opacity` (`80` perf + `54` CWV `CLS < 0.1`).
 
 ---
 
@@ -61,7 +61,7 @@ Define the vocabulary once; every surface picks from it.
 
 Skeletons exist in 103 files but are inconsistent — some use the nice `Skeleton`/`up-skeleton` shimmer, others ad-hoc `bg-card animate-pulse` blocks (`ExplorePage.tsx:201`, `SchoolSubunitPage.tsx:139`, `PeersTab.tsx:24`). Standardize:
 - **One shimmer**: a single `--shimmer` keyframe (subtle, ink-tinted, ~1.4s, respects reduced-motion → falls back to a static muted block).
-- **Skeletons mirror final layout** (Airbnb rule, `64` §3.2): a `SkeletonCard` matches `ProgramCard`'s real dimensions so there's no layout shift when content arrives (`CLS < 0.1`). Build `SkeletonCard`/`SkeletonTable`/`SkeletonRing` variants that match their real counterparts.
+- **Skeletons mirror final layout** (Airbnb rule, `75` §3.2): a `SkeletonCard` matches `ProgramCard`'s real dimensions so there's no layout shift when content arrives (`CLS < 0.1`). Build `SkeletonCard`/`SkeletonTable`/`SkeletonRing` variants that match their real counterparts.
 - **Retire** all ad-hoc `animate-pulse` divs → `Skeleton`/`SkeletonCard`.
 
 ---
@@ -72,11 +72,11 @@ Skeletons exist in 103 files but are inconsistent — some use the nice `Skeleto
 |---|---|
 | **Hover** | `--dur-fast` lift (`translateY(-1px)` + `.elev-raised`) on cards; underline-grow on story links. Pointer-fine only (skip on touch). |
 | **Press** | `active:translate-y-px` + slight scale on buttons (exists). |
-| **Focus** | the gold focus ring (`--ring`) — see `69`; never removed, never replaced by motion. |
-| **Drag** | pipeline cards lift + `.elev-raised` + cursor; drop target gets a `--ring` outline. Keyboard equivalent in `69`. |
-| **Optimistic success (the earned beat)** | a save/confirm that succeeds gets a brief `.elev-glow` pulse on the affected element — gold, ~`--dur-base`, **once**. This is the one place motion uses gold (`65` §2.4). The student "Confirm enrollment" (`35`) is the canonical example. Never on the institution side. |
+| **Focus** | the gold focus ring (`--ring`) — see `80`; never removed, never replaced by motion. |
+| **Drag** | pipeline cards lift + `.elev-raised` + cursor; drop target gets a `--ring` outline. Keyboard equivalent in `80`. |
+| **Optimistic success (the earned beat)** | a save/confirm that succeeds gets a brief `.elev-glow` pulse on the affected element — gold, ~`--dur-base`, **once**. This is the one place motion uses gold (`76` §2.4). The student "Confirm enrollment" (`35`) is the canonical example. Never on the institution side. |
 | **Copy-to-clipboard** | inline "Copied" affordance (icon → check, `--dur-fast`), not a toast, for inline copies. |
-| **Undo** | destructive optimistic actions (delete a goal, remove from saved) show a toast with an **Undo** action for ~6s before commit, instead of an upfront confirm where reversible (pairs with `67`'s `ConfirmDialog` for the irreversible ones). |
+| **Undo** | destructive optimistic actions (delete a goal, remove from saved) show a toast with an **Undo** action for ~6s before commit, instead of an upfront confirm where reversible (pairs with `78`'s `ConfirmDialog` for the irreversible ones). |
 
 ---
 
@@ -85,17 +85,17 @@ Skeletons exist in 103 files but are inconsistent — some use the nice `Skeleto
 The Discovery chat (`19`, `pages/student/discover/ChatPanel.tsx`) is the product's signature "AI counselor" moment and currently round-trips then dumps the full reply. Stream it.
 
 - **Transport:** consume the SSE token stream from `57` §1 via `lib/realtime.ts` (`54` §9). The endpoint is `POST /me/discovery/sessions/{id}/messages` (Plan-2 orchestrator, already wired per CLAUDE.md).
-- **UX:** tokens append into the assistant bubble as they arrive (cobalt caret while streaming); the typing-dots indicator shows only during the pre-first-token latency, then yields to streamed text. The live **artifact rail** (GoalStack / NeedsMap / IdentitySignals) updates when the turn's `extracted_signals` land — a visible "the counselor understood you" beat (the emotional job, `64` §2).
+- **UX:** tokens append into the assistant bubble as they arrive (cobalt caret while streaming); the typing-dots indicator shows only during the pre-first-token latency, then yields to streamed text. The live **artifact rail** (GoalStack / NeedsMap / IdentitySignals) updates when the turn's `extracted_signals` land — a visible "the counselor understood you" beat (the emotional job, `75` §2).
 - **Fallbacks (`54` §7):** on AI failure the chat shows the rule-based fallback text (never an error bubble); on stream interruption it falls back to the buffered full response. `FallbackNote` if `source != "ai"`.
 - **Reduced-motion:** streaming still streams (it's information, not decoration) but the caret blink is disabled.
 
-This is the single highest perceived-intelligence upgrade in the refinement; it depends on `57` SSE being live end-to-end (`64` §9).
+This is the single highest perceived-intelligence upgrade in the refinement; it depends on `57` SSE being live end-to-end (`75` §9).
 
 ---
 
 ## 7. Reduced-motion matrix
 
-`prefers-reduced-motion` and `data-reduce-motion` already gate animations; make the policy explicit (`69` cross-ref):
+`prefers-reduced-motion` and `data-reduce-motion` already gate animations; make the policy explicit (`80` cross-ref):
 
 | Motion | Full | Reduced |
 |---|---|---|
@@ -123,7 +123,7 @@ Rule: reduced-motion **never** removes *information* (streaming, state changes, 
 - [ ] Build `SkeletonCard`/`SkeletonTable`/`SkeletonRing` mirroring real layouts; retire ad-hoc `animate-pulse` blocks.
 - [ ] Replace inline `animationDelay` staggers (`ChatPanel.tsx`, `MiniCounselorPanel.tsx`) with `stagger-list`.
 - [ ] Build the optimistic earned-gold success pulse helper; wire to Confirm-enrollment (`35`) and other earned beats.
-- [ ] Add inline copy-to-clipboard + the Undo-toast pattern; reserve `ConfirmDialog` (`67`) for irreversible actions.
+- [ ] Add inline copy-to-clipboard + the Undo-toast pattern; reserve `ConfirmDialog` (`78`) for irreversible actions.
 - [ ] Stream Discover chat via `57` SSE; live artifact-rail update on `extracted_signals`; fallback behavior per `54` §7.
 - [ ] Implement the reduced-motion matrix (§7) and verify every entry.
 
@@ -144,4 +144,4 @@ Rule: reduced-motion **never** removes *information* (streaming, state changes, 
 
 - **Streaming readiness.** Confirm `57` SSE token-streaming is live for `POST /me/discovery/.../messages` before scheduling §6; otherwise ship the artifact-rail-on-completion upgrade first and stream second.
 - **Motion library vs CSS.** Hand-rolled CSS keyframes (current) vs a small library (e.g. Framer Motion) for the stagger/exit choreography. Recommend staying CSS-first for bundle size (`54` CWV); adopt a library only if exit-animation orchestration proves painful.
-- **Undo vs confirm boundary.** Which destructive actions get Undo-toast (reversible) vs `ConfirmDialog` (irreversible)? Enumerate with `67`.
+- **Undo vs confirm boundary.** Which destructive actions get Undo-toast (reversible) vs `ConfirmDialog` (irreversible)? Enumerate with `78`.

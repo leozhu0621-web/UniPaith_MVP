@@ -1,6 +1,6 @@
-# 67 · State Catalog — Loading · Empty · Error · Edge — Build Spec
+# 78 · State Catalog — Loading · Empty · Error · Edge — Build Spec
 
-> Close the biggest "demo-ware" gap: every data surface must render all four states (loading → empty / error / success), with a shared error component, real edge-state coverage (offline / 403 / 404 / 500 / partial-failure), styled confirms instead of native dialogs, and exact copy in the brand voice. Operationalizes the "no blank states" principle (`53` §3) and the error/AI-fallback mechanism (`54` §7) into a per-surface catalog. Companion to `64`, `66` (skeletons), `02` §12-13 (empty/loading), `02` §16 (voice).
+> Close the biggest "demo-ware" gap: every data surface must render all four states (loading → empty / error / success), with a shared error component, real edge-state coverage (offline / 403 / 404 / 500 / partial-failure), styled confirms instead of native dialogs, and exact copy in the brand voice. Operationalizes the "no blank states" principle (`53` §3) and the error/AI-fallback mechanism (`54` §7) into a per-surface catalog. Companion to `75`, `77` (skeletons), `02` §12-13 (empty/loading), `02` §16 (voice).
 >
 > Status: **draft v2.0** · 2026-06-02 · v2 = first issue. Surface counts from the 2026-06-02 audit; re-grep before relying on them.
 
@@ -10,13 +10,13 @@
 
 Loading and empty are mostly handled; **error and edge are not**.
 
-- **Loading:** 138 files handle `isLoading`; skeletons in 103 (standardized in `66` §4). Good.
+- **Loading:** 138 files handle `isLoading`; skeletons in 103 (standardized in `77` §4). Good.
 - **Empty:** a real `components/ui/EmptyState.tsx` exists and is used. Some surfaces still read as thin/prototype ("Peers — coming soon" in `connect/PeersTab.tsx`; bare empties in `SchoolSubunitPage.tsx:127`).
 - **Error — the gap:** only **45 of 137** files using `useQuery` handle `isError`. The other ~92 **render nothing (or a perpetual empty state) on fetch failure** — the clearest "prototype" tell. Where errors *are* handled they're bare one-liners: `analytics/OverviewTab.tsx:80`, `FunnelTab.tsx:55`, `AttributionTab.tsx:31` each render `<p className="text-error">Failed to load X</p>` + a text "Retry". There is **no shared error component** (compare the polished `EmptyState`). A good pattern already exists in one place — `apply/.../TestGuidancePanel.tsx:141` has a reusable `ErrorNote` with retry — but it isn't promoted.
 - **Native dialogs:** 5 `window.confirm`/`confirm()` destructive gates (`discover/discoveryConstants.ts:22`, `profile/GoalsTab.tsx:285`, `profile/IdentityTab.tsx:274`, `profile/NeedsTab.tsx:297`, `connect/PeersTab.tsx:122-123` — block/report via OS dialog). A styled `ReleaseConfirmModal` already proves the pattern.
 - **Route crashes:** `pages/system/RouteErrorPage.tsx` + `components/system/AppErrorBoundary.tsx` exist (render crashes). The gap is **per-query network failure**, not render crashes.
 
-**Principle:** the product is honest and calm (`64` §2.4). An error never blames the user, always says what happened in plain language, and always offers the next step (retry / go back / contact). A failure that renders blank reads as broken; a failure that's handled gracefully reads as finished.
+**Principle:** the product is honest and calm (`75` §2.4). An error never blames the user, always says what happened in plain language, and always offers the next step (retry / go back / contact). A failure that renders blank reads as broken; a failure that's handled gracefully reads as finished.
 
 ---
 
@@ -25,7 +25,7 @@ Loading and empty are mostly handled; **error and edge are not**.
 Every region backed by a query renders exactly one of four states. This is the `53` §3 "no blank states" rule made mandatory and testable (`54` §11 already requires a test asserting all four).
 
 ```
-            ┌─ isLoading ──────────→ Skeleton (matches final layout, 66 §4)
+            ┌─ isLoading ──────────→ Skeleton (matches final layout, 77 §4)
 query ──────┼─ isError ────────────→ <QueryError> (§3)
             ├─ data && empty ──────→ <EmptyState> (§4)
             └─ data && present ────→ content
@@ -55,7 +55,7 @@ Promote the `TestGuidancePanel` `ErrorNote` + the analytics retry into one compo
 
 ## 4. Empty / zero states — empty-to-hero (per surface)
 
-`EmptyState` exists; the work is (a) covering every list and (b) upgrading thin ones to "here's what this becomes" (the Notion bar, `64` §3.2). No illustrations (brand rule) — a short heading + one line + one primary action. Copy in brand voice (sentence case, no exclamation marks):
+`EmptyState` exists; the work is (a) covering every list and (b) upgrading thin ones to "here's what this becomes" (the Notion bar, `75` §3.2). No illustrations (brand rule) — a short heading + one line + one primary action. Copy in brand voice (sentence case, no exclamation marks):
 
 | Surface (file) | Empty heading | Line | Action |
 |---|---|---|---|
@@ -105,19 +105,19 @@ Replace all 5 native `window.confirm` sites:
 | Site | New copy |
 |---|---|
 | `discover/discoveryConstants.ts:22` (switch track/layer) | "Switch tracks? Your current answers are saved — you can come back anytime." |
-| `profile/GoalsTab.tsx:285` (delete goal) | "Delete this goal? You can add it again later." (offer Undo-toast instead where reversible, `66` §5) |
+| `profile/GoalsTab.tsx:285` (delete goal) | "Delete this goal? You can add it again later." (offer Undo-toast instead where reversible, `77` §5) |
 | `profile/IdentityTab.tsx:274` / `NeedsTab.tsx:297` | same delete pattern |
 | `connect/PeersTab.tsx:122-123` (block / report) | a proper styled block/report flow — never an OS dialog on a social surface |
 
-Rule: **reversible** destructive actions prefer the Undo-toast (`66` §5); **irreversible** ones use `ConfirmDialog`. Zero `window.confirm`/`alert`/`window.prompt` remain.
+Rule: **reversible** destructive actions prefer the Undo-toast (`77` §5); **irreversible** ones use `ConfirmDialog`. Zero `window.confirm`/`alert`/`window.prompt` remain.
 
 ---
 
 ## 7. AI-fallback states (the trust surface)
 
-Per the papers, every AI output must read honestly (`64` §2.1). Standardize via existing `FallbackNote`/`AIBadge`:
+Per the papers, every AI output must read honestly (`75` §2.1). Standardize via existing `FallbackNote`/`AIBadge`:
 - When a response carries `source != "ai"` (rule-based fallback, `50` §6 / `54` §7), render the result + `FallbackNote` ("Showing a rule-based result") — never an error.
-- A chat turn never shows an error bubble on AI failure — it shows the fallback text (`66` §6).
+- A chat turn never shows an error bubble on AI failure — it shows the fallback text (`77` §6).
 - Low-confidence AI extractions surface a "we weren't sure about this — confirm?" affordance (the paper's "flag low-confidence items for clarification"), not a silent guess.
 
 ---
@@ -139,7 +139,7 @@ Voice = **Plain · Direct · Honest · Brief · Warm**; sentence case; periods o
 | `confirm.delete.generic` | "Delete this? You can't undo it." |
 | `loading.aria` | "Loading…" (`aria-live` polite) |
 
-Centralize in a `lib/copy.ts` (or i18n catalog, `70`/future) so strings are consistent and one edit changes them everywhere.
+Centralize in a `lib/copy.ts` (or i18n catalog, `81`/future) so strings are consistent and one edit changes them everywhere.
 
 ---
 
@@ -149,7 +149,7 @@ Centralize in a `lib/copy.ts` (or i18n catalog, `70`/future) so strings are cons
 - [ ] Adopt the four-state contract on all ~92 `useQuery` surfaces missing `isError`; delete the bare "Failed to load" one-liners.
 - [ ] Cover every list with `EmptyState`; upgrade thin/"coming soon" empties per §4 with brand-voice copy.
 - [ ] Build `NotFoundPage` (404) + `NoAccessPage` (403); add the offline banner at layout level; implement the partial-failure rule.
-- [ ] Build `components/ui/ConfirmDialog.tsx`; replace all 5 `window.confirm`; wire Undo-toast for reversible deletes (`66` §5).
+- [ ] Build `components/ui/ConfirmDialog.tsx`; replace all 5 `window.confirm`; wire Undo-toast for reversible deletes (`77` §5).
 - [ ] Standardize AI-fallback rendering via `FallbackNote`; add the low-confidence "confirm?" affordance.
 - [ ] Add `lib/copy.ts` with the §8 strings.
 - [ ] Add a CI test asserting no `pages/**` query surface can render blank on error (lint for `useQuery` without an `isError`/`QueryBoundary` path).

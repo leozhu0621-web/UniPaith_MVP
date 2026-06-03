@@ -48,7 +48,7 @@
     --error: 9 56% 41%;              /* #B5321F */
     --error-soft: 14 53% 89%;        /* #F2D7D0 */
 
-    --scrim: 221 67% 8%;             /* modal/sheet backdrop — always deep ink, both themes (Spec 65 §3.4) */
+    --scrim: 221 67% 8%;             /* modal/sheet backdrop — always deep ink, both themes (Spec 76 §3.4) */
   }
 
   /* Dark theme — Ink canvas, lifted gold + cobalt accents. */
