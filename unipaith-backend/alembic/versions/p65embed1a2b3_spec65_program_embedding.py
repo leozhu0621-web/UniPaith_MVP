@@ -9,7 +9,7 @@ structurally dead until now because no program ever had an embedding — fires.
 Guarded so it is a safe no-op against the conftest ``create_all`` test DB.
 
 Revision ID: p65embed1a2b3
-Revises: cs69inst1a2b3
+Revises: c46a1b2c3d4e
 Create Date: 2026-06-03
 
 """
@@ -23,7 +23,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "p65embed1a2b3"  # pragma: allowlist secret
-down_revision = "cs69inst1a2b3"  # pragma: allowlist secret
+down_revision = "c46a1b2c3d4e"  # pragma: allowlist secret
 branch_labels = None
 depends_on = None
 
