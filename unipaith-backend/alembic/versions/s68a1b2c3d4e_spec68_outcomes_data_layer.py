@@ -35,7 +35,11 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "s68a1b2c3d4e"  # pragma: allowlist secret
-down_revision = "s60a1b2c3d4e"  # pragma: allowlist secret
+# Re-pointed onto e62a1b2c3d4e (Spec 62 eval-harness head; chain s60→s63→e62) when
+# Spec 62/63 merged to main concurrently — s68's tables are independent of theirs,
+# so this is pure linearization to keep the graph single-headed
+# (test_alembic_has_single_head).
+down_revision = "e62a1b2c3d4e"  # pragma: allowlist secret
 branch_labels = None
 depends_on = None
 
