@@ -124,7 +124,7 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
         {school.description_text ? (
           <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{school.description_text}</p>
         ) : (
-          <p className="text-sm text-muted-foreground/70 italic">A profile for this school is coming soon. Explore its programs below.</p>
+          <p className="text-sm text-muted-foreground">A full profile for this school is on the way — explore its programs below in the meantime.</p>
         )}
       </Card>
 

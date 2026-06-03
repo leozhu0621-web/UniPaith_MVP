@@ -27,7 +27,7 @@ export default function PeersTab() {
   if (!status?.enabled) {
     return (
       <EmptyExplainer
-        title="Peers — coming soon"
+        title="Peers is almost ready"
         body="A space to connect with other applicants targeting overlapping programs. We'll open it once moderation tooling is ready."
       />
     )
