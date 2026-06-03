@@ -12,6 +12,7 @@ import type {
   FeatureCatalog,
   FrontendStandards,
   KnowledgeBuild,
+  MlCoreBuild,
   Production,
   RealtimeBuild,
   Roadmap,
@@ -87,5 +88,10 @@ export async function getChatbotEval(): Promise<ChatbotEval> {
 
 export async function getSecurity(): Promise<SecurityTrust> {
   const { data } = await apiClient.get<SecurityTrust>('/build/security')
+  return data
+}
+
+export async function getMlCoreBuild(): Promise<MlCoreBuild> {
+  const { data } = await apiClient.get<MlCoreBuild>('/build/ml-core')
   return data
 }
