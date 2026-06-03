@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { useAuthStore } from '../../stores/auth-store'
 import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
+import GoogleSignInButton from '../../components/auth/GoogleSignInButton'
 
 const schema = z.object({
   email: z.string().email('Invalid email'),
@@ -74,6 +75,8 @@ export default function LoginPage() {
           Log in
         </Button>
       </form>
+
+      <GoogleSignInButton />
 
       <p className="text-center text-sm text-muted-foreground">
         Don't have an account?{' '}

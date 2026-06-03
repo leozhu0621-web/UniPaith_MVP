@@ -273,6 +273,78 @@ class AuthService:
             },
         }
 
+    async def google_signin(self, id_token_str: str, role: str = "student") -> dict[str, Any]:
+        """Verify a Google ID token (GIS-direct) and find/create the student, then
+        issue the app session token. Demo/bypass path; requires
+        ``settings.google_client_id``. Prod federated sign-in stays on
+        ``google_callback`` (Cognito hosted UI)."""
+        if not settings.google_client_id:
+            raise BadRequestException("Google sign-in is not configured")
+
+        try:
+            # Parse the header first (no network) so a malformed token fails fast.
+            header = jwt.get_unverified_header(id_token_str)
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                certs = (await client.get("https://www.googleapis.com/oauth2/v3/certs")).json()
+            key = next(
+                (k for k in certs.get("keys", []) if k.get("kid") == header.get("kid")), None
+            )
+            if key is None:
+                raise BadRequestException("Unknown Google signing key")
+            claims = jwt.decode(
+                id_token_str,
+                key,
+                algorithms=["RS256"],
+                audience=settings.google_client_id,
+                options={"verify_at_hash": False},
+            )
+        except BadRequestException:
+            raise
+        except Exception as e:
+            raise BadRequestException(f"Invalid Google token: {e}") from e
+
+        if claims.get("iss") not in ("https://accounts.google.com", "accounts.google.com"):
+            raise BadRequestException("Invalid Google token issuer")
+        email = claims.get("email", "")
+        google_sub = claims.get("sub", "")
+        if not email:
+            raise BadRequestException("Google account has no email")
+
+        result = await self.db.execute(
+            select(User).where((User.cognito_sub == google_sub) | (User.email == email))
+        )
+        user = result.scalar_one_or_none()
+        if user is None:
+            user = User(email=email, cognito_sub=google_sub, role=UserRole(role))
+            self.db.add(user)
+            await self.db.flush()
+            await self.db.refresh(user)
+            if role == "student":
+                self.db.add(StudentProfile(user_id=user.id))
+                await self.db.flush()
+            logger.info("Created new user via Google sign-in: %s (%s)", email, role)
+        elif not user.cognito_sub:
+            user.cognito_sub = google_sub
+            await self.db.flush()
+
+        if settings.demo_mode and user.role.value == "student":
+            from unipaith.services.demo_service import reset_student_demo_data
+
+            await reset_student_demo_data(self.db, user.id)
+
+        return {
+            "access_token": f"dev:{user.id}:{user.role.value}",
+            "refresh_token": f"dev-refresh:{user.id}",
+            "expires_in": 3600,
+            "token_type": "Bearer",
+            "user": {
+                "user_id": user.id,
+                "email": user.email,
+                "role": user.role.value,
+                "created_at": user.created_at,
+            },
+        }
+
     async def get_or_create_user(self, claims: CognitoClaims) -> User:
         result = await self.db.execute(select(User).where(User.cognito_sub == claims.sub))
         user = result.scalar_one_or_none()

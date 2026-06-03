@@ -72,6 +72,9 @@ class Settings(BaseSettings):
     # Demo mode: reset a student's generated data on every login (keeps the
     # account + profile). Assumes cognito_bypass. Never enable in real prod.
     demo_mode: bool = False
+    # GIS-direct "Sign in with Google": the OAuth client id the ID token's
+    # `aud` is verified against. Empty = Google sign-in disabled.
+    google_client_id: str = ""
     cognito_redirect_uri: str = ""
 
     # S3

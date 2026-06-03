@@ -6,6 +6,7 @@ from unipaith.dependencies import get_current_user
 from unipaith.models.user import User
 from unipaith.schemas.auth import (
     GoogleCallbackRequest,
+    GoogleSignInRequest,
     LoginRequest,
     LoginResponse,
     RefreshRequest,
@@ -55,3 +56,11 @@ async def me(user: User = Depends(get_current_user)):
         role=user.role.value,
         created_at=user.created_at,
     )
+
+
+@router.post("/google", response_model=LoginResponse)
+async def google_signin(body: GoogleSignInRequest, db: AsyncSession = Depends(get_db)):
+    """GIS-direct Google sign-in (demo). Verifies the Google ID token and
+    returns the app session. Requires GOOGLE_CLIENT_ID configured."""
+    svc = AuthService(db)
+    return await svc.google_signin(body.id_token, body.role)
