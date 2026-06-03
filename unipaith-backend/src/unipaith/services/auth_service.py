@@ -77,6 +77,10 @@ class AuthService:
             user = user_result.scalar_one_or_none()
             if not user:
                 raise BadRequestException("Invalid credentials")
+            if settings.demo_mode and user.role.value == "student":
+                from unipaith.services.demo_service import reset_student_demo_data
+
+                await reset_student_demo_data(self.db, user.id)
             return {
                 "access_token": f"dev:{user.id}:{user.role.value}",
                 "refresh_token": f"dev-refresh:{user.id}",
