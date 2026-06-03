@@ -68,6 +68,45 @@ class LearningLoopService:
         await self.db.flush()
         return pair
 
+    async def record_outcome_for(
+        self,
+        *,
+        student_id: UUID,
+        program_id: UUID,
+        outcome_kind: str,
+        outcome: int = 1,
+    ) -> ConfidenceOutcomePair | None:
+        """Convenience hook for the application/enrollment paths: look up the
+        prediction (``MatchResult.confidence_score``) and the student's training
+        consent for this (student, program), then record the labeled pair.
+
+        No-op (returns None) when there is no prior match prediction to label or
+        the student hasn't consented to training (46 §9). Best-effort by design —
+        callers wrap it so a recording failure never breaks the user action.
+        """
+        from unipaith.models.matching import MatchResult
+        from unipaith.models.student import StudentDataConsent
+
+        mr = await self.db.scalar(
+            select(MatchResult).where(
+                MatchResult.student_id == student_id,
+                MatchResult.program_id == program_id,
+            )
+        )
+        if mr is None or mr.confidence_score is None:
+            return None
+        consent = await self.db.scalar(
+            select(StudentDataConsent).where(StudentDataConsent.student_id == student_id)
+        )
+        return await self.record_confidence_outcome(
+            student_id=student_id,
+            program_id=program_id,
+            predicted_confidence=float(mr.confidence_score),
+            outcome=outcome,
+            outcome_kind=outcome_kind,
+            training_consent=bool(consent and consent.consent_training),
+        )
+
     async def confidence_pair_count(self) -> int:
         res = await self.db.execute(select(func.count()).select_from(ConfidenceOutcomePair))
         return int(res.scalar_one())
