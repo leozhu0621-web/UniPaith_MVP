@@ -84,6 +84,7 @@ import RecruitmentPage from './pages/institution/RecruitmentPage'
 import DepartmentPortalPage from './pages/institution/graduate/DepartmentPortalPage'
 
 import RouteErrorPage from './pages/system/RouteErrorPage'
+import NotFoundPage from './pages/system/NotFoundPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -237,7 +238,7 @@ const router = createBrowserRouter([
   },
 
   // Catch-all → login
-  { path: '*', element: <Navigate to="/login" replace />, errorElement: <RouteErrorPage /> },
+  { path: '*', element: <NotFoundPage />, errorElement: <RouteErrorPage /> },
 ])
 
 export default function App() {
