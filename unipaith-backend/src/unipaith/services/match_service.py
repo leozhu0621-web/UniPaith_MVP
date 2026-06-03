@@ -504,6 +504,19 @@ class MatchService:
             cost_usd=result.cost_usd,
         )
 
+    async def can_match(self, student_id: UUID) -> bool:
+        """True only when matching can actually produce results: matching consent
+        is granted AND the student has a feature vector (Discovery complete).
+
+        Callers gate the catalog-embedding step on this so the documented
+        empty-state refresh path (no Discovery yet / consent denied) doesn't burn
+        embedding calls + catalog-sized latency for matches that won't be made;
+        ``compute_matches_for_student`` re-checks the same guards and returns []."""
+        allowed, _ = await self._matching_consent(student_id)
+        if not allowed:
+            return False
+        return await self._student_feature_record(student_id) is not None
+
     async def ensure_program_embeddings(self, programs: list[Any]) -> dict[Any, list[float]]:
         """Spec 65 §3 — compute + cache a dense embedding for each program so the
         matcher's cosine term can fire (it is 0 until BOTH the student and the

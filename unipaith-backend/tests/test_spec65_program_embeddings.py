@@ -119,3 +119,29 @@ async def test_cosine_fires_when_both_sides_embedded(db_session: AsyncSession) -
     # The whole point of Spec 65: cosine is now applied, not a dead 0.
     assert mr.fitness_breakdown.get("cosine_applied") is True
     assert "cosine" in mr.fitness_breakdown
+
+
+@pytest.mark.asyncio
+async def test_can_match_false_without_feature_vector(db_session: AsyncSession) -> None:
+    """A student who hasn't completed Discovery (no feature vector) is not
+    match-ready — callers gate the catalog embedding on this so the empty-state
+    refresh path doesn't burn embedding calls."""
+    user = User(
+        id=uuid4(),
+        email=f"nf{uuid4().hex[:6]}@e.co",
+        cognito_sub=f"nf{uuid4().hex[:8]}",
+        role=UserRole.student,
+        is_active=True,
+    )
+    db_session.add(user)
+    await db_session.flush()
+    profile = StudentProfile(user_id=user.id)
+    db_session.add(profile)
+    await db_session.commit()
+    assert await MatchService(db_session).can_match(profile.id) is False
+
+
+@pytest.mark.asyncio
+async def test_can_match_true_when_ready(db_session: AsyncSession) -> None:
+    profile, _ = await _seed(db_session)
+    assert await MatchService(db_session).can_match(profile.id) is True
