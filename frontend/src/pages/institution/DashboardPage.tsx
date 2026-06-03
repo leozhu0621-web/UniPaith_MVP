@@ -18,13 +18,9 @@ import {
   Zap,
   MessageSquare,
   Inbox,
-  Database,
-  Upload,
   ArrowRight,
 } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
-import { getInstitution, getInstitutionPrograms, getDashboardSummary, getIntelligenceDigest, getYieldRiskAlerts, getDatasets } from '../../api/institutions'
-import { getTeam } from '../../api/settings'
+import { getInstitution, getInstitutionPrograms, getDashboardSummary, getIntelligenceDigest, getYieldRiskAlerts } from '../../api/institutions'
 import { getReviewPriorityQueue, getIntegritySignals } from '../../api/reviews'
 import { getNotifications, getUnreadCount } from '../../api/notifications'
 import { admissionsUrl, applicantUrl, INQUIRIES_URL } from '../../utils/institution-routes'
@@ -91,18 +87,6 @@ export default function DashboardPage() {
     enabled: !!institutionQ.data,
     staleTime: 1000 * 60 * 15,
   })
-  // Spec 30 §4 — post-setup nudges for anything skipped during onboarding.
-  const datasetsQ = useQuery({
-    queryKey: ['institution-datasets'],
-    queryFn: getDatasets,
-    enabled: !!institutionQ.data,
-  })
-  const teamQ = useQuery({
-    queryKey: ['institution-team'],
-    queryFn: getTeam,
-    enabled: !!institutionQ.data,
-  })
-
   const institution = institutionQ.data
   const programs: Program[] = Array.isArray(programsQ.data) ? programsQ.data : []
   const summary: DashboardSummary | undefined = summaryQ.data
@@ -139,9 +123,9 @@ export default function DashboardPage() {
           <LayoutDashboard size={48} className="mx-auto text-muted-foreground mb-4" />
           <h2 className="text-xl font-semibold text-foreground mb-2">Welcome to UniPaith</h2>
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            Set up your institution profile and create your first program to start receiving applications.
+            Create your first program so students can discover and apply to it.
           </p>
-          <Button onClick={() => navigate('/i/setup')}>Get Started</Button>
+          <Button onClick={() => navigate('/i/programs')}>Create a program</Button>
         </Card>
       </div>
     )
@@ -228,41 +212,6 @@ export default function DashboardPage() {
     },
   ]
 
-  // Spec 30 §4 — gentle post-setup nudges for anything not yet done. Shown as a
-  // brand-compliant card (cobalt accents), never a blocker.
-  type SetupNudge = { icon: LucideIcon; label: string; desc: string; cta: string; onClick: () => void }
-  const publishedCount = summary?.published_program_count ?? programs.filter(p => p.is_published).length
-  const datasetCount = Array.isArray(datasetsQ.data) ? datasetsQ.data.length : 0
-  const teamInviteCount = (Array.isArray(teamQ.data) ? teamQ.data : []).filter(m => m.role !== 'admin').length
-  const setupNudges: SetupNudge[] = []
-  if (publishedCount === 0) {
-    setupNudges.push({
-      icon: BookOpen,
-      label: 'Publish your first program',
-      desc: 'Make a program live so students can discover and match with it.',
-      cta: 'Go to Programs',
-      onClick: () => navigate('/i/programs'),
-    })
-  }
-  if (datasetCount === 0) {
-    setupNudges.push({
-      icon: Database,
-      label: 'Upload your first dataset',
-      desc: 'Power analytics and matching with admissions history or a prospect list.',
-      cta: 'Upload data',
-      onClick: () => navigate('/i/data'),
-    })
-  }
-  if (teamInviteCount === 0) {
-    setupNudges.push({
-      icon: Users,
-      label: 'Invite your team',
-      desc: 'Add admissions, recruiting, marketing, or IT colleagues.',
-      cta: 'Invite',
-      onClick: () => navigate('/i/settings'),
-    })
-  }
-
   return (
     <div className="space-y-6 p-6">
       <div>
@@ -319,33 +268,6 @@ export default function DashboardPage() {
                   See all <ArrowRight size={13} />
                 </span>
               </button>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {/* Setup nudges — Spec 30 §4. Shown until the optional steps are done. */}
-      {setupNudges.length > 0 && (
-        <Card className="p-4 border-secondary/30 bg-secondary/5">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary/10 text-secondary">
-              <Upload size={15} />
-            </span>
-            <h3 className="text-sm font-semibold text-foreground">Finish setting up</h3>
-            <Badge variant="info">{setupNudges.length} to do</Badge>
-          </div>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            {setupNudges.map(n => (
-              <div key={n.label} className="flex flex-col gap-2 rounded-lg border border-border bg-background p-3">
-                <div className="flex items-center gap-2">
-                  <n.icon size={16} className="text-secondary" />
-                  <p className="text-sm font-medium text-foreground">{n.label}</p>
-                </div>
-                <p className="flex-1 text-xs text-muted-foreground">{n.desc}</p>
-                <Button size="sm" variant="secondary" onClick={n.onClick} className="inline-flex items-center gap-1 self-start">
-                  {n.cta} <ArrowRight size={13} />
-                </Button>
-              </div>
             ))}
           </div>
         </Card>
