@@ -225,6 +225,36 @@ const CHATBOT_EVAL_SUMMARY: ChatbotEvalSummary = {
   live_is_source_of_truth: true,
 }
 
+const EVAL_HARNESS_SUMMARY = {
+  consumer_count: 3,
+  consumers_live: 2,
+  consumers_planned: 1,
+  golden_case_total: 19,
+  dimension_total: 11,
+  hard_floor_dimension_count: 2,
+  deterministic_check_total: 7,
+  independent_judge_count: 1,
+  judge_target_agreement: 0.85,
+  suite_count: 2,
+  suites_in_runner: 2,
+  eval_mode_count: 4,
+  modes_live: 1,
+  new_table_count: 2,
+  new_tables_present: 2,
+  reused_table_count: 4,
+  phase_count: 4,
+  phases_live: 2,
+  acceptance_count: 7,
+  acceptance_live: 3,
+  slo_count: 4,
+  cost_control_count: 5,
+  open_question_count: 4,
+  backing_route_count: 26,
+  config_knob_count: 3,
+  provider: 'anthropic',
+  live_is_source_of_truth: true,
+}
+
 const ML_CORE_SUMMARY: MlCoreBuildSummary = {
   boundary_intact: true,
   human_facing_count: 22,
@@ -306,6 +336,7 @@ const OVERVIEW: BuildOverview = {
   knowledge: KNOWLEDGE_SUMMARY,
   realtime: REALTIME_SUMMARY,
   chatbot_eval: CHATBOT_EVAL_SUMMARY,
+  eval_harness: EVAL_HARNESS_SUMMARY,
   security: SECURITY_SUMMARY,
   ml_core: ML_CORE_SUMMARY,
   provider: 'anthropic',
@@ -323,6 +354,7 @@ const OVERVIEW: BuildOverview = {
     { key: 'knowledge', title: 'Knowledge engine', spec: '60', blurb: 'The world-side knowledge graph.', path: '/goal/knowledge', stat: 16, stat_label: 'allowlisted sources' },
     { key: 'realtime', title: 'Realtime & notifications', spec: '57', blurb: 'Live SSE + WebSocket.', path: '/goal/realtime', stat: 16, stat_label: 'notification events' },
     { key: 'chatbot-eval', title: 'Chatbot training & eval', spec: '61', blurb: 'How the chatbot is measured.', path: '/goal/chatbot-eval', stat: 44, stat_label: 'graded eval cases' },
+    { key: 'eval-harness', title: 'Evaluation harness', spec: '62', blurb: 'One shared eval harness.', path: '/goal/eval-harness', stat: 2, stat_label: 'consumers live' },
     { key: 'security', title: 'Security & trust', spec: '58', blurb: 'The security posture.', path: '/goal/security', stat: '7/13', stat_label: 'controls live' },
     { key: 'ml-core', title: 'ML core & knowledge processing', spec: '63', blurb: 'Qwen processes, Claude communicates.', path: '/goal/ml-core', stat: 22, stat_label: 'agents pinned to Claude' },
   ],
@@ -979,9 +1011,11 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     expect(screen.getByText('Chatbot training & eval')).toBeInTheDocument()
     // Spec 58 — the security & trust surface card appears.
     expect(screen.getByText('Security & trust')).toBeInTheDocument()
+    // Spec 62 — the evaluation harness surface card appears.
+    expect(screen.getByText('Evaluation harness')).toBeInTheDocument()
     // Spec 63 — the ML core & knowledge processing surface card appears.
     expect(screen.getByText('ML core & knowledge processing')).toBeInTheDocument()
-    expect(screen.getByText(/Fifteen ways to read the build/i)).toBeInTheDocument()
+    expect(screen.getByText(/Sixteen ways to read the build/i)).toBeInTheDocument()
     // Live route count from the overview appears (stat band + surface card).
     expect(screen.getAllByText('553').length).toBeGreaterThan(0)
     // The MVP-complete gold beat shows.

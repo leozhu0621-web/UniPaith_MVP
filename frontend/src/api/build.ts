@@ -20,6 +20,7 @@ import type {
   SecurityTrust,
   UxBenchmark,
 } from '../types/build'
+import type { EvalHarness } from '../types/buildEvalHarness'
 
 export async function getBuildOverview(): Promise<BuildOverview> {
   const { data } = await apiClient.get<BuildOverview>('/build/overview')
@@ -83,6 +84,11 @@ export async function getRealtimeBuild(): Promise<RealtimeBuild> {
 
 export async function getChatbotEval(): Promise<ChatbotEval> {
   const { data } = await apiClient.get<ChatbotEval>('/build/chatbot-eval')
+  return data
+}
+
+export async function getEvalHarness(): Promise<EvalHarness> {
+  const { data } = await apiClient.get<EvalHarness>('/build/eval-harness')
   return data
 }
 

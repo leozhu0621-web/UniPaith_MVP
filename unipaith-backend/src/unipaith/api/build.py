@@ -20,6 +20,7 @@ from unipaith.transparency.acceptance import build_acceptance
 from unipaith.transparency.api_contract import build_api_contract
 from unipaith.transparency.chatbot_eval import build_chatbot_eval
 from unipaith.transparency.data_model import build_data_model
+from unipaith.transparency.eval_harness import build_eval_harness
 from unipaith.transparency.features import build_features
 from unipaith.transparency.frontend_standards import build_frontend_standards
 from unipaith.transparency.knowledge import build_knowledge
@@ -63,6 +64,7 @@ def _assemble_overview(request: Request) -> dict:
     knowledge = build_knowledge(request.app.routes)["summary"]
     realtime = build_realtime(request.app.routes)["summary"]
     chatbot_eval = build_chatbot_eval(request.app.routes)["summary"]
+    eval_harness = build_eval_harness(request.app.routes)["summary"]
     security = build_security(request.app)["summary"]
     ml_core = build_ml_core(request.app.routes)["summary"]
     return {
@@ -77,6 +79,7 @@ def _assemble_overview(request: Request) -> dict:
         "knowledge": knowledge,
         "realtime": realtime,
         "chatbot_eval": chatbot_eval,
+        "eval_harness": eval_harness,
         "security": security,
         "ml_core": ml_core,
         "provider": settings.ai_provider_default,
@@ -204,6 +207,17 @@ def _assemble_overview(request: Request) -> dict:
                 "path": "/goal/chatbot-eval",
                 "stat": chatbot_eval["golden_case_total"],
                 "stat_label": "graded eval cases",
+            },
+            {
+                "key": "eval-harness",
+                "title": "Evaluation harness",
+                "spec": "62",
+                "blurb": "One shared eval harness — versioned golden sets, a calibrated "
+                "judge, CI gating, A/B and drift — that the chatbot and the crawler "
+                "extraction both plug into via thin adapters.",
+                "path": "/goal/eval-harness",
+                "stat": eval_harness["consumers_live"],
+                "stat_label": "consumers live",
             },
             {
                 "key": "security",
@@ -347,6 +361,23 @@ async def get_chatbot_eval(request: Request) -> dict:
     resolve from the registry and the flags off ``settings`` — so the page can't
     claim a standard the deployed agents aren't held to."""
     return build_chatbot_eval(request.app.routes)
+
+
+@router.get("/eval-harness", summary="The shared evaluation harness (spec 62)")
+async def get_eval_harness(request: Request) -> dict:
+    """Spec 62's shared evaluation harness: one service the chatbot (61) and the
+    crawler extraction (60 §13B) both run through via thin adapters — a versioned
+    golden set, a calibrated + independent LLM-judge, deterministic-first checks,
+    a CI gate, and the A/B / drift / production-sampling modes — each capability
+    honestly classified live·partial·planned. The consumers are read from the live
+    ``harness.CONSUMERS`` registry, each consumer's dimensions / deterministic
+    checks / golden-case counts from its adapter + ``case_store`` (off disk), the
+    two added tables (``eval_cases`` / ``eval_results``) and the four reused
+    ml_loop tables from the running SQLAlchemy metadata, the CI suites from the
+    live ``runner.SUITES`` map, the judge calibration from ``calibration.py``, and
+    the flags / tiers / backing routes from ``settings`` / the registry / the live
+    route table — so the page can't claim a harness the deployed app doesn't run."""
+    return build_eval_harness(request.app.routes)
 
 
 @router.get("/security", summary="The security, trust & compliance posture (spec 58)")

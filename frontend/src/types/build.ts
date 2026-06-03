@@ -1,6 +1,7 @@
 // Specs 48–53 — types for the public build-transparency surface.
 // Mirror unipaith-backend/src/unipaith/transparency/*.py and api/build.py
 // field-for-field.
+import type { EvalHarnessSummary } from './buildEvalHarness'
 
 // ── Roadmap (spec 48) ───────────────────────────────────────────────────────
 export type PhaseStatus = 'shipped' | 'deferred'
@@ -139,6 +140,7 @@ export interface BuildOverview {
   knowledge: KnowledgeBuildSummary
   realtime: RealtimeBuildSummary
   chatbot_eval: ChatbotEvalSummary
+  eval_harness: EvalHarnessSummary
   security: SecuritySummary
   ml_core: MlCoreBuildSummary
   provider: string

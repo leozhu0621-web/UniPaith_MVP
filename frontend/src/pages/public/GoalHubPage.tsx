@@ -7,6 +7,7 @@ import {
   CircleCheck,
   Cpu,
   Database,
+  FlaskConical,
   Gauge,
   Layers,
   ListChecks,
@@ -47,6 +48,7 @@ const SURFACE_ICONS: Record<string, typeof MapIcon> = {
   knowledge: Telescope,
   realtime: Bell,
   'chatbot-eval': Bot,
+  'eval-harness': FlaskConical,
   security: ShieldCheck,
   'ml-core': Cpu,
 }
@@ -113,7 +115,7 @@ export default function GoalHubPage() {
   return (
     <GoalShell>
       <Hero
-        eyebrow="Build transparency · Specs 45 · 48–58 · 60 · 61 · 63"
+        eyebrow="Build transparency · Specs 45 · 48–58 · 60 · 61 · 62 · 63"
         title="How UniPaith is built — in the open."
         lede="The roadmap, the feature coverage map, the API contract, the data model, the acceptance runbook, the experience standards, the frontend engineering spec, the AI agent fleet, the backend production posture, the discovery substrate, live realtime notifications, the security & trust controls, the world-side knowledge engine, how the chatbot is trained and evaluated, and the ML core boundary that keeps Qwen invisible and Claude human-facing — surfaced as live, self-verifying pages. Where a page shows a number, it's read straight from the running system, not asserted in a doc."
       >
@@ -163,7 +165,7 @@ export default function GoalHubPage() {
       <section id="surfaces" className="mt-16 scroll-mt-20">
         <SectionHeading
           icon={MapIcon}
-          title="Fifteen ways to read the build"
+          title="Sixteen ways to read the build"
           sub="Each surface is a public page backed by a live endpoint. Open one to see the detail."
         />
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
