@@ -12,6 +12,7 @@ from unipaith.services.matching import (
     DEFAULT_WEIGHTS,
     ProgramFeatures,
     StudentFeatures,
+    _renormalized_weights,
     cosine,
     needs_match,
     rank_programs,
@@ -72,9 +73,7 @@ def test_rule_pass_geo_must_intersection_required() -> None:
 
 
 def test_rule_pass_geo_avoid_eliminates_when_program_only_there() -> None:
-    student = StudentFeatures(
-        sparse={"education_level": "bachelors", "geo_avoid": ["US-CA"]}
-    )
+    student = StudentFeatures(sparse={"education_level": "bachelors", "geo_avoid": ["US-CA"]})
     # All program locations are on the avoid list.
     program = ProgramFeatures(
         program_id="p1",
@@ -87,9 +86,7 @@ def test_rule_pass_geo_avoid_eliminates_when_program_only_there() -> None:
 
 def test_rule_pass_geo_avoid_passes_when_program_has_other_locations() -> None:
     """Avoid only filters when ALL program locations are avoided."""
-    student = StudentFeatures(
-        sparse={"education_level": "bachelors", "geo_avoid": ["US-CA"]}
-    )
+    student = StudentFeatures(sparse={"education_level": "bachelors", "geo_avoid": ["US-CA"]})
     program = ProgramFeatures(
         program_id="p1",
         sparse={"target_education_level": "masters", "locations": ["US-CA", "US-NY"]},
@@ -241,9 +238,7 @@ def test_soft_align_partial_overlap() -> None:
 
 
 def test_needs_match_full_coverage() -> None:
-    s = StudentFeatures(
-        sparse={"needs_signals": {"low_income_aid": 1.0, "near_family": 0.8}}
-    )
+    s = StudentFeatures(sparse={"needs_signals": {"low_income_aid": 1.0, "near_family": 0.8}})
     p = ProgramFeatures(
         program_id="p1",
         sparse={"support_signals": {"low_income_aid": 1.0, "near_family": 1.0}},
@@ -252,9 +247,7 @@ def test_needs_match_full_coverage() -> None:
 
 
 def test_needs_match_zero_when_no_program_support() -> None:
-    s = StudentFeatures(
-        sparse={"needs_signals": {"low_income_aid": 1.0}}
-    )
+    s = StudentFeatures(sparse={"needs_signals": {"low_income_aid": 1.0}})
     p = ProgramFeatures(program_id="p1", sparse={"support_signals": {}})
     assert needs_match(s, p) == 0.0
 
@@ -262,9 +255,7 @@ def test_needs_match_zero_when_no_program_support() -> None:
 def test_needs_match_neutral_when_student_has_no_needs() -> None:
     """No expressed needs → don't punish the program (return 0.5)."""
     s = StudentFeatures(sparse={"needs_signals": {}})
-    p = ProgramFeatures(
-        program_id="p1", sparse={"support_signals": {"alumni_network": 1.0}}
-    )
+    p = ProgramFeatures(program_id="p1", sparse={"support_signals": {"alumni_network": 1.0}})
     assert needs_match(s, p) == 0.5
 
 
@@ -283,9 +274,7 @@ def test_needs_match_severity_weighted() -> None:
         program_id="p1", sparse={"support_signals": {"low_income_aid": 1.0}}
     )
     # Program covers ONLY the low-severity need → should score lower.
-    p_minor = ProgramFeatures(
-        program_id="p2", sparse={"support_signals": {"alumni_network": 1.0}}
-    )
+    p_minor = ProgramFeatures(program_id="p2", sparse={"support_signals": {"alumni_network": 1.0}})
     assert needs_match(s, p_critical) > needs_match(s, p_minor)
 
 
@@ -367,9 +356,7 @@ def test_confidence_geometric_mean_penalizes_low_term() -> None:
 
 def test_confidence_zero_completeness_returns_zero_confidence() -> None:
     """If we don't know the student at all, confidence collapses."""
-    student = StudentFeatures(
-        sparse={"education_level": "unknown"}, profile_completeness=0.0
-    )
+    student = StudentFeatures(sparse={"education_level": "unknown"}, profile_completeness=0.0)
     program = ProgramFeatures(program_id="p1", sparse={"target_education_level": None})
     s = score(student, program)
     assert s.confidence == Decimal("0.0000")
@@ -394,6 +381,91 @@ def test_score_fitness_in_unit_interval() -> None:
     s = score(student, program)
     assert Decimal("0") <= s.fitness <= Decimal("1")
     assert Decimal("0") <= s.confidence <= Decimal("1")
+
+
+# ── Missing-component weight redistribution ────────────────────────────────
+
+
+def test_renormalized_weights_drops_absent_component_and_sums_to_one() -> None:
+    eff = _renormalized_weights(DEFAULT_WEIGHTS, {"soft_align": 0.0, "needs_match": 0.0})
+    assert "cosine" not in eff
+    assert abs(sum(eff.values()) - 1.0) < 1e-9
+    # 0.35 / 0.55 and 0.20 / 0.55
+    assert abs(eff["soft_align"] - 0.35 / 0.55) < 1e-9
+    assert abs(eff["needs_match"] - 0.20 / 0.55) < 1e-9
+
+
+def test_renormalized_weights_all_present_is_noop() -> None:
+    eff = _renormalized_weights(
+        DEFAULT_WEIGHTS, {"cosine": 0.0, "soft_align": 0.0, "needs_match": 0.0}
+    )
+    assert eff == DEFAULT_WEIGHTS
+
+
+def _perfect_soft_needs_pair(*, with_embedding: bool):
+    """A pair that maxes out soft_align and needs_match (both → 1.0)."""
+    emb = [0.1] * 8 if with_embedding else None
+    student = StudentFeatures(
+        sparse={
+            "education_level": "bachelors",
+            "interest_themes": ["machine_learning"],
+            "career_arcs": ["ml_research"],
+            "values": ["intellectual_rigor"],
+            "social_prefs": {"small_cohort": 1.0},
+            "needs_signals": {"low_income_aid": 1.0},
+        },
+        embedding=emb,
+        profile_completeness=1.0,
+        extractor_quality=1.0,
+    )
+    program = ProgramFeatures(
+        program_id="p1",
+        sparse={
+            "target_education_level": "masters",
+            "interest_themes": ["machine_learning"],
+            "career_arcs": ["ml_research"],
+            "values": ["intellectual_rigor"],
+            "social_features": {"small_cohort": 1.0},
+            "support_signals": {"low_income_aid": 1.0},
+        },
+        embedding=emb,
+        data_completeness=1.0,
+    )
+    return student, program
+
+
+def test_score_perfect_soft_needs_without_embedding_is_not_capped() -> None:
+    """The core regression: with no embedding (the cold-start default), a
+    perfect tag + needs match must score ~1.0, not 0.55. Previously the dead
+    0.45 cosine weight capped it."""
+    student, program = _perfect_soft_needs_pair(with_embedding=False)
+    s = score(student, program)
+    assert float(s.fitness) > 0.99
+    bd = s.fitness_breakdown
+    assert bd["cosine_applied"] is False
+    assert "cosine" not in bd["weights"]
+    assert abs(sum(bd["weights"].values()) - 1.0) < 1e-9
+
+
+def test_score_with_embedding_keeps_full_default_weights() -> None:
+    """When both embeddings are present, the full 0.45/0.35/0.20 split
+    applies unchanged — redistribution must be a no-op."""
+    student, program = _perfect_soft_needs_pair(with_embedding=True)
+    s = score(student, program)
+    bd = s.fitness_breakdown
+    assert bd["cosine_applied"] is True
+    assert bd["weights"] == DEFAULT_WEIGHTS
+
+
+def test_score_mismatched_embedding_dims_falls_back_to_redistribution() -> None:
+    """A dimensionality mismatch is treated as 'no usable embedding' — the
+    cosine term can't be computed, so its weight is redistributed."""
+    student, program = _perfect_soft_needs_pair(with_embedding=False)
+    student.embedding = [0.1] * 8
+    program.embedding = [0.1] * 4  # different length → cosine undefined
+    s = score(student, program)
+    assert s.fitness_breakdown["cosine_applied"] is False
+    assert float(s.fitness) > 0.99
 
 
 # ── Ranking ────────────────────────────────────────────────────────────────
