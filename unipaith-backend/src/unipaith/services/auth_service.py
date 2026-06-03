@@ -264,6 +264,15 @@ class AuthService:
                 user.cognito_sub = cognito_sub
                 await self.db.flush()
 
+        # Demo: reset a returning student's generated data on every sign-in, so
+        # Google sign-in honors the same "memory resets each login" rule as the
+        # email path (login()). A brand-new account created just above has
+        # nothing to reset, so this is a safe no-op for first-time sign-ins.
+        if settings.demo_mode and user.role.value == "student":
+            from unipaith.services.demo_service import reset_student_demo_data
+
+            await reset_student_demo_data(self.db, user.id)
+
         return {
             "access_token": tokens.get("id_token", tokens["access_token"]),
             "refresh_token": tokens.get("refresh_token"),
