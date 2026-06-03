@@ -97,8 +97,25 @@ async def test_calibrator_not_ready_below_threshold(
         program_id=program.id,
         predicted_confidence=0.7,
         outcome=0,
-        outcome_kind="rejected",
+        outcome_kind="aged_out",  # window passed without the positive event
         training_consent=True,
     )
     # One real pair is far below the fit threshold — Confidence stays honest-uncalibrated.
     assert await svc.calibrator_ready() is False
+
+
+@pytest.mark.asyncio
+async def test_invalid_outcome_kind_rejected(
+    db_session: AsyncSession, mock_student_user, mock_institution_user
+):
+    profile, program = await _seed(db_session, mock_student_user, mock_institution_user)
+    svc = LearningLoopService(db_session)
+    with pytest.raises(ValueError):
+        await svc.record_confidence_outcome(
+            student_id=profile.id,
+            program_id=program.id,
+            predicted_confidence=0.5,
+            outcome=1,
+            outcome_kind="rejected",  # not in the allowed CHECK set
+            training_consent=True,
+        )

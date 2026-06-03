@@ -24,8 +24,11 @@ from unipaith.models.confidence_outcome import ConfidenceOutcomePair
 # real pairs (67 §6); below it, Confidence flows uncalibrated.
 MIN_PAIRS_FOR_CALIBRATION = 1000
 
-# Realized outcomes that count as a "positive" label (the prediction held up).
-POSITIVE_KINDS = frozenset({"applied", "admitted", "enrolled", "accepted_offer"})
+# Outcome kinds allowed by the confidence_outcome_pairs CHECK constraint.
+ALLOWED_OUTCOME_KINDS = frozenset({"applied", "accepted", "enrolled", "aged_out"})
+# Kinds that count as a "positive" label (the predicted match held up); aged_out
+# (window passed without the positive event) is the negative.
+POSITIVE_KINDS = frozenset({"applied", "accepted", "enrolled"})
 
 
 class LearningLoopService:
@@ -51,6 +54,8 @@ class LearningLoopService:
             return None
         if outcome not in (0, 1):
             raise ValueError("outcome must be 0 or 1")
+        if outcome_kind not in ALLOWED_OUTCOME_KINDS:
+            raise ValueError(f"outcome_kind must be one of {sorted(ALLOWED_OUTCOME_KINDS)}")
         pair = ConfidenceOutcomePair(
             student_id=student_id,
             program_id=program_id,
