@@ -89,6 +89,7 @@ export default function ProspectsTab() {
       {
         key: 'name',
         label: 'Prospect',
+        sortable: true,
         render: (p: Prospect) => (
           <div className="flex items-center gap-2">
             {p.priority_band && (
@@ -107,6 +108,8 @@ export default function ProspectsTab() {
       {
         key: 'location',
         label: 'Location',
+        sortable: true,
+        sortAccessor: (p: Prospect) => [p.city, p.region, p.country].filter(Boolean).join(', '),
         render: (p: Prospect) => (
           <span className="text-sm text-muted-foreground">
             {[p.city, p.region, p.country].filter(Boolean).join(', ') || '—'}
