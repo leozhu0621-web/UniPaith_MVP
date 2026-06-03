@@ -5,7 +5,7 @@
 - **Version:** v2.0 · 2026-05-30 (renumbered contiguous 00–49)
 - **Owner:** Leo Zhu — leozjc@unipaith.co
 - **Audience:** anyone building the MVP — human engineers, designers, or coding agents.
-- **Count:** 63 numbered specs (`00`–`63`) + `ASSETS.md` = 64 docs. Numbering runs `00`–`63` with `59` reserved (build/production ↔ AI/knowledge block boundary). (`50`–`52` build-integration from live code; `53`–`58` production-parity vs Handshake/LinkedIn; `60` crawler/knowledge engine; `61` chatbot training/eval; `62` shared eval harness; `63` ML core — Qwen backend + Claude agent.)
+- **Count:** 70 numbered specs (`00`–`70`) + `ASSETS.md` = 71 docs. Numbering runs `00`–`70` with `59` reserved (build/production ↔ AI/knowledge block boundary). (`50`–`52` build-integration from live code; `53`–`58` production-parity vs Handshake/LinkedIn; `60` crawler/knowledge engine; `61` chatbot training/eval; `62` shared eval harness; `63` ML core — Qwen backend + Claude agent; `64`–`70` frontend refinement → public-release polish.)
 
 ---
 
@@ -129,6 +129,15 @@ Naming convention: `NN-slug.md`. Two-digit prefix, **contiguous 00–49** (no ga
 - `62-eval-harness.md` — shared golden-set + LLM-judge + regression-gate + A/B + drift infra that both `61` and `60` §13B plug into via adapters; reuses `ml_loop` tables.
 - `63-ml-core-and-knowledge-processing.md` — **hard boundary: Qwen = self-hosted/tuned ML backend (embeddings, crawler extraction, normalization, ML scoring, synthesis of presented info), never interacts with a human; Claude = the chatbot + all human-facing advisory agents.** Qwen computes, Claude communicates.
 
+### Frontend refinement & public-release polish (64–70) — prototype → finished product, both sides
+- `64-frontend-refinement-public-release.md` — master plan: the prototype→product thesis grounded in the papers, benchmark synthesis (domain competitors + design-craft leaders), the cross-cutting gap→spec map, the public-release Definition of Done, and build sequencing for `65`–`70`.
+- `65-visual-system-unification.md` — collapse the two color vocabularies into one semantic token system; dark-mode parity (kill `bg-white`/hex); proportion + earned-gold enforcement; the score-viz family; one display-card schema; component→source map; lint/CI guards.
+- `66-motion-microinteractions.md` — one named motion system: transition tokens + choreography, skeleton shimmer, the earned-gold success beat, Discover chat token-streaming, reduced-motion matrix; settles the app-vs-Landing curve seam.
+- `67-state-catalog.md` — every surface renders loading/empty/error/edge; shared `QueryError` + `ConfirmDialog`; offline/403/404/500/partial-failure; empty-to-hero; exact copy in brand voice.
+- `68-data-tables-institution-workspace.md` — one reusable dense-table system (sort/paginate/virtualize/density/bulk/export/saved-views) + the institution "system-of-record" finish; keyboard Kanban.
+- `69-accessibility-conformance.md` — WCAG 2.1 AA on every route: focus system, ARIA live regions, accessible names for the score viz, token-pair contrast audit, axe-CI gate.
+- `70-onboarding-first-run-activation.md` — student cold-start (path-to-value ≤2), first impression (auth/first login), institution setup-wizard finish, forms-at-scale (autosave, multi-step, upload/OCR, inline-edit).
+
 ---
 
 ## 4. Build order (quick reference)
@@ -146,4 +155,4 @@ See `48-build-sequencing.md` for the full plan. TL;DR phase order:
 
 ## 5. Status
 
-All 53 numbered specs (`00`–`52`) + `ASSETS.md` are written and detailed — no stubs, no numbering gaps. The four Phase-2 docs (`38`–`41`) are full specs but explicitly sequenced after the MVP per the beachhead strategy (`07` §3, `49` §5). Docs `50`–`52` (API contract, data model, acceptance runbook) are build-integration references derived from the live `unipaith-backend`/`frontend` code so a builder can wire front and back to a single contract and verify "ready to use" end-to-end.
+All 70 numbered specs (`00`–`70`, with `59` reserved) + `ASSETS.md` are written and detailed — no stubs. The `64`–`70` block is the frontend-refinement → public-release series: cross-cutting design/UX systems (visual unification, motion, states, data tables, accessibility, onboarding) that extend `53`/`54` and carry the product from prototype-feel to finished on both sides; specs-only until scheduled for build (`64` §7). The four Phase-2 docs (`38`–`41`) are full specs but explicitly sequenced after the MVP per the beachhead strategy (`07` §3, `49` §5). Docs `50`–`52` (API contract, data model, acceptance runbook) are build-integration references derived from the live `unipaith-backend`/`frontend` code so a builder can wire front and back to a single contract and verify "ready to use" end-to-end.
