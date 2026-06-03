@@ -196,7 +196,7 @@ export default function ExploreFilters({ universities, filters, onChange }: Prop
     <div className="mb-4">
       {/* Row 1: dropdown filters */}
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-student-text/70 uppercase tracking-wider mr-1">
+        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-foreground/70 uppercase tracking-wider mr-1">
           <Filter size={11} />
           Filter
         </span>
@@ -284,7 +284,7 @@ export default function ExploreFilters({ universities, filters, onChange }: Prop
         {activeCount > 0 && (
           <button
             onClick={clearAll}
-            className="inline-flex items-center gap-1 text-[11px] text-student-text/70 hover:text-student-ink ml-auto"
+            className="inline-flex items-center gap-1 text-[11px] text-foreground/70 hover:text-foreground ml-auto"
           >
             <X size={12} /> Clear all
           </button>
@@ -354,8 +354,8 @@ function FilterDropdown({ label, active, options, selected, onToggle }: Dropdown
         onClick={() => setOpen(o => !o)}
         className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded-full border transition-colors ${
           hasActive
-            ? 'bg-cobalt text-white border-cobalt'
-            : 'bg-white text-student-ink border-divider hover:border-student hover:text-student'
+            ? 'bg-secondary text-secondary-foreground border-secondary'
+            : 'bg-card text-foreground border-border hover:border-primary hover:text-primary'
         }`}
       >
         {label}
@@ -368,9 +368,9 @@ function FilterDropdown({ label, active, options, selected, onToggle }: Dropdown
       </button>
 
       {open && (
-        <div className="absolute z-40 top-full left-0 mt-1 min-w-[200px] max-h-80 overflow-y-auto rounded-lg border border-divider bg-white shadow-lg">
+        <div className="absolute z-40 top-full left-0 mt-1 min-w-[200px] max-h-80 overflow-y-auto rounded-lg border border-border bg-card shadow-lg">
           {options.length === 0 ? (
-            <p className="text-[11px] text-student-text/60 italic px-3 py-2">No options available</p>
+            <p className="text-[11px] text-foreground/60 italic px-3 py-2">No options available</p>
           ) : (
             <ul className="py-1">
               {options.map(opt => {
@@ -382,12 +382,12 @@ function FilterDropdown({ label, active, options, selected, onToggle }: Dropdown
                       onClick={() => onToggle(opt.value)}
                       className={`w-full flex items-center gap-2 px-3 py-1.5 text-[12px] text-left transition-colors ${
                         isSelected
-                          ? 'bg-student-mist text-student'
-                          : 'hover:bg-muted text-student-ink'
+                          ? 'bg-muted text-primary'
+                          : 'hover:bg-muted text-foreground'
                       }`}
                     >
                       <span className={`w-3.5 h-3.5 rounded border flex-shrink-0 flex items-center justify-center ${
-                        isSelected ? 'bg-student border-student' : 'bg-card border-stone'
+                        isSelected ? 'bg-primary border-primary' : 'bg-card border-border'
                       }`}>
                         {isSelected && (
                           <svg width="9" height="9" viewBox="0 0 20 20" fill="white">
@@ -417,8 +417,8 @@ function TogglePill({ label, active, onClick }: { label: string; active: boolean
       onClick={onClick}
       className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded-full border transition-colors ${
         active
-          ? 'bg-cobalt text-white border-cobalt'
-          : 'bg-white text-student-ink border-divider hover:border-student hover:text-student'
+          ? 'bg-secondary text-secondary-foreground border-secondary'
+          : 'bg-card text-foreground border-border hover:border-primary hover:text-primary'
       }`}
     >
       {label}
@@ -430,12 +430,12 @@ function TogglePill({ label, active, onClick }: { label: string; active: boolean
 
 function ActiveChip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10.5px] rounded-full bg-student-mist text-student border border-student/15">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10.5px] rounded-full bg-muted text-primary border border-primary/15">
       {label}
       <button
         type="button"
         onClick={onRemove}
-        className="ml-0.5 text-student/70 hover:text-student"
+        className="ml-0.5 text-primary/70 hover:text-primary"
         aria-label={`Remove ${label} filter`}
       >
         <X size={10} />

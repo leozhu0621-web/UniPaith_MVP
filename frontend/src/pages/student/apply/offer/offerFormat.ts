@@ -23,7 +23,7 @@ export function deadlineTone(days?: number | null): DeadlineTone {
 }
 
 export const DEADLINE_TONE_CLASS: Record<DeadlineTone, string> = {
-  normal: 'text-student-text',
+  normal: 'text-foreground',
   warning: 'text-warning',
   error: 'text-destructive',
 }

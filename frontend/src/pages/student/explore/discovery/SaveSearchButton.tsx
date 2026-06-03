@@ -122,7 +122,7 @@ export default function SaveSearchButton({ query, chips, filters, sort }: Props)
                 type="checkbox"
                 checked={alertEnabled}
                 onChange={e => setAlertEnabled(e.target.checked)}
-                className="mt-0.5 rounded border-stone"
+                className="mt-0.5 rounded border-border"
               />
               <span className="flex items-center gap-1.5">
                 <Bell size={14} className="text-secondary" />

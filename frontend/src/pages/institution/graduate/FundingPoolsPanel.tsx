@@ -95,7 +95,7 @@ export default function FundingPoolsPanel({
     <Card className="p-5">
       <div className="mb-4 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-cobalt">
+          <span className="text-secondary">
             <Wallet size={16} />
           </span>
           <h3 className="text-sm font-semibold text-foreground">Funding pools</h3>
@@ -131,7 +131,7 @@ export default function FundingPoolsPanel({
                 key={p.id}
                 type="button"
                 onClick={() => openEdit(p)}
-                className="block w-full rounded-lg border border-border bg-background p-3 text-left transition-colors hover:border-cobalt/40"
+                className="block w-full rounded-lg border border-border bg-background p-3 text-left transition-colors hover:border-secondary/40"
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
@@ -146,7 +146,7 @@ export default function FundingPoolsPanel({
                 </div>
                 <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
                   <div
-                    className={`h-full rounded-full ${p.over ? 'bg-error' : 'bg-cobalt'}`}
+                    className={`h-full rounded-full ${p.over ? 'bg-error' : 'bg-secondary'}`}
                     style={{ width: `${pct}%` }}
                   />
                 </div>

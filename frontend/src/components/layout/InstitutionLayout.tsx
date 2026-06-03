@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import SkipLink from './SkipLink'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../stores/auth-store'
@@ -13,6 +14,7 @@ import {
 } from 'lucide-react'
 
 const TOP_NAV = [
+  { to: '/i/dashboard', label: 'Dashboard' },
   { to: '/i/recruitment', label: 'Recruitment' },
   { to: '/i/admissions', label: 'Admissions' },
   { to: '/i/outreach', label: 'Outreach' },
@@ -69,7 +71,7 @@ export default function InstitutionLayout() {
         <div className="mt-1 max-h-48 overflow-y-auto space-y-0.5">
           <button
             onClick={() => { setSelectedProgram(null); setShowProgramList(false) }}
-            className={`w-full text-left px-2 py-1 rounded text-xs transition-colors ${!selectedProgramId ? 'bg-cobalt/10 text-cobalt font-medium' : 'text-muted-foreground hover:bg-muted'}`}
+            className={`w-full text-left px-2 py-1 rounded text-xs transition-colors ${!selectedProgramId ? 'bg-secondary/10 text-secondary font-medium' : 'text-muted-foreground hover:bg-muted'}`}
           >
             All Programs
           </button>
@@ -77,7 +79,7 @@ export default function InstitutionLayout() {
             <button
               key={p.id}
               onClick={() => { setSelectedProgram(p.id, p.program_name); setShowProgramList(false) }}
-              className={`w-full text-left px-2 py-1 rounded text-xs flex items-center gap-1.5 transition-colors ${selectedProgramId === p.id ? 'bg-cobalt/10 text-cobalt font-medium' : 'text-muted-foreground hover:bg-muted'}`}
+              className={`w-full text-left px-2 py-1 rounded text-xs flex items-center gap-1.5 transition-colors ${selectedProgramId === p.id ? 'bg-secondary/10 text-secondary font-medium' : 'text-muted-foreground hover:bg-muted'}`}
             >
               <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${p.is_published ? 'bg-success' : 'bg-border'}`} />
               <span className="truncate">{p.program_name}</span>
@@ -89,16 +91,15 @@ export default function InstitutionLayout() {
   )
 
   const mobileLinks = [
-    { to: '/i/dashboard', label: 'Dashboard' },
     ...(showSetup ? [{ to: '/i/setup', label: 'Continue setup' }] : []),
     ...TOP_NAV,
-    { to: '/i/analytics', label: 'Analytics' },
     { to: '/i/audit-log', label: 'Audit log' },
     { to: '/i/settings', label: 'Settings' },
   ]
 
   return (
     <div className="flex flex-col h-screen bg-background">
+      <SkipLink />
       <header className="hidden lg:flex h-16 items-center justify-between px-8 bg-background border-b border-border flex-shrink-0 z-30">
         <NavLink to="/i/dashboard" className="leading-none" aria-label="Institution home">
           <Wordmark className="h-7 w-auto" />
@@ -132,7 +133,7 @@ export default function InstitutionLayout() {
           <Dropdown
             trigger={
               <button aria-label="Account menu" className="ui-btn p-1 rounded-lg hover:bg-muted transition-colors">
-                <div className="w-8 h-8 rounded-full bg-cobalt/10 flex items-center justify-center text-xs font-semibold text-cobalt">
+                <div className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center text-xs font-semibold text-secondary">
                   {user?.email?.charAt(0).toUpperCase()}
                 </div>
               </button>
@@ -181,7 +182,7 @@ export default function InstitutionLayout() {
                     dimmed
                       ? 'pointer-events-none opacity-40'
                       : isActive
-                        ? 'bg-cobalt/10 text-cobalt font-medium'
+                        ? 'bg-secondary/10 text-secondary font-medium'
                         : 'text-foreground hover:bg-muted'
                   }`
                 }
@@ -199,7 +200,7 @@ export default function InstitutionLayout() {
         </nav>
       </Sheet>
 
-      <main className="flex-1 overflow-y-auto">
+      <main id="main" tabIndex={-1} className="flex-1 overflow-y-auto outline-none">
         <Outlet />
       </main>
     </div>

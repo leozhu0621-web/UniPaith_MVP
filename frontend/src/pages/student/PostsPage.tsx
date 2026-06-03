@@ -39,12 +39,12 @@ export default function PostsPage() {
       <div className="max-w-2xl mx-auto px-6 py-6">
         {/* Header (Spec 20 §3) */}
         <header className="mb-4">
-          <h1 className="text-2xl font-semibold text-student-ink">Connect</h1>
-          <p className="text-sm text-student-text mt-0.5">From the institutions you follow</p>
+          <h1 className="text-2xl font-semibold text-foreground">Connect</h1>
+          <p className="text-sm text-foreground mt-0.5">From the institutions you follow</p>
         </header>
 
         {/* Tabs + Manage following */}
-        <div className="flex items-end justify-between border-b border-divider mb-5">
+        <div className="flex items-end justify-between border-b border-border mb-5">
           <div className="flex gap-1">
             {TABS.map(t => (
               <button
@@ -52,8 +52,8 @@ export default function PostsPage() {
                 onClick={() => setTab(t.key)}
                 className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
                   tab === t.key
-                    ? 'border-cobalt text-cobalt'
-                    : 'border-transparent text-student-text hover:text-student-ink'
+                    ? 'border-secondary text-secondary'
+                    : 'border-transparent text-foreground hover:text-foreground'
                 }`}
               >
                 <t.icon size={14} />
@@ -63,13 +63,13 @@ export default function PostsPage() {
           </div>
           <button
             onClick={() => setManaging(true)}
-            className="inline-flex sm:hidden items-center gap-1 px-3 py-1.5 mb-1 text-xs font-medium text-student-text hover:text-student-ink rounded-lg hover:bg-student-mist transition-colors"
+            className="inline-flex sm:hidden items-center gap-1 px-3 py-1.5 mb-1 text-xs font-medium text-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
             Following ({followCount}) <ChevronDown size={13} />
           </button>
           <button
             onClick={() => setManaging(true)}
-            className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 mb-1 text-xs font-medium text-student-text hover:text-student-ink rounded-lg hover:bg-student-mist transition-colors"
+            className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 mb-1 text-xs font-medium text-foreground hover:text-foreground rounded-lg hover:bg-muted transition-colors"
           >
             Manage following ({followCount}) <ChevronDown size={13} />
           </button>

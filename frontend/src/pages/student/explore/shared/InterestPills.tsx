@@ -27,8 +27,8 @@ export default function InterestPills({ active, onChange }: Props) {
           onClick={() => onChange(p.key)}
           className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors ${
             active === p.key
-              ? 'bg-cobalt text-white'
-              : 'bg-white border border-stone text-student-text hover:border-student hover:text-student-ink'
+              ? 'bg-secondary text-secondary-foreground'
+              : 'bg-card border border-border text-foreground hover:border-primary hover:text-foreground'
           }`}
         >
           <p.icon size={12} />

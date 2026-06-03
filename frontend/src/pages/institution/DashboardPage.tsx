@@ -135,8 +135,8 @@ export default function DashboardPage() {
   if (institutionQ.isError) {
     return (
       <div className="p-6">
-        <Card className="p-8 text-center border-dashed border-2 border-brand-slate-300 bg-brand-slate-50/30">
-          <LayoutDashboard size={48} className="mx-auto text-brand-slate-400 mb-4" />
+        <Card className="p-8 text-center border-dashed border-2 border-border bg-muted/30">
+          <LayoutDashboard size={48} className="mx-auto text-muted-foreground mb-4" />
           <h2 className="text-xl font-semibold text-foreground mb-2">Welcome to UniPaith</h2>
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
             Set up your institution profile and create your first program to start receiving applications.
@@ -157,19 +157,19 @@ export default function DashboardPage() {
       label: 'Total apps',
       value: summary?.total_applications ?? 0,
       icon: Users,
-      color: 'text-brand-slate-600 bg-brand-slate-100',
+      color: 'text-muted-foreground bg-muted',
     },
     {
       label: 'Accept rate',
       value: conversionVal != null ? formatPercent(conversionVal) : '—',
       icon: Target,
-      color: 'text-cobalt bg-cobalt/10',
+      color: 'text-secondary bg-secondary/10',
     },
     {
       label: 'Avg match',
       value: summary?.avg_match != null ? summary.avg_match : '—',
       icon: Brain,
-      color: 'text-brand-slate-600 bg-brand-slate-100',
+      color: 'text-muted-foreground bg-muted',
     },
     {
       label: 'Yield (proj)',
@@ -355,7 +355,7 @@ export default function DashboardPage() {
       {digestQ.data?.digest && (
         <Card className="p-4 border-border bg-card">
           <div className="flex items-center gap-2 mb-3">
-            <Brain size={18} className="text-brand-slate-600" />
+            <Brain size={18} className="text-muted-foreground" />
             <h3 className="text-sm font-semibold text-foreground">Intelligence Digest</h3>
             <Badge variant="info">Auto-generated</Badge>
           </div>

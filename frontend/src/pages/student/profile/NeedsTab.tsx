@@ -5,6 +5,7 @@
  * Discovery / inferred sources show provenance + confidence.
  */
 import { useState } from 'react'
+import { confirmDialog } from '../../../stores/confirm-store'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Pencil, Plus, Sparkles, Trash2 } from 'lucide-react'
 
@@ -293,8 +294,8 @@ export default function NeedsTab() {
                         <button
                           aria-label="Delete need"
                           className="p-1 text-error hover:opacity-80"
-                          onClick={() => {
-                            if (confirm('Remove this need?')) deleteMut.mutate(n.id)
+                          onClick={async () => {
+                            if (await confirmDialog({ title: 'Remove this need?', body: 'You can add it again later.', confirmLabel: 'Remove', destructive: true })) deleteMut.mutate(n.id)
                           }}
                         >
                           <Trash2 size={14} />

@@ -4,7 +4,7 @@
 import type { ReadinessBand } from '../../../../types/majorSpecific'
 
 export const BAND_META: Record<ReadinessBand, { label: string; ring: string; text: string }> = {
-  high: { label: 'Strong', ring: 'text-gold', text: 'text-gold' },
+  high: { label: 'Strong', ring: 'text-primary', text: 'text-primary' },
   medium: { label: 'Developing', ring: 'text-secondary', text: 'text-secondary' },
   low: { label: 'Getting started', ring: 'text-warning', text: 'text-warning' },
 }

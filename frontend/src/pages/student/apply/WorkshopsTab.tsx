@@ -49,22 +49,22 @@ export default function WorkshopsTab() {
   return (
     <div className="mx-auto max-w-4xl p-6">
       <header className="mb-4">
-        <h2 className="text-h3 text-student-ink">Workshops</h2>
-        <p className="mt-1 text-sm text-student-text">
+        <h2 className="text-h3 text-foreground">Workshops</h2>
+        <p className="mt-1 text-sm text-foreground">
           Coaching on essays, interviews, and test prep — <strong>feedback-only</strong>. I score,
           flag structural issues, and suggest questions; I won't write your essay or answers for you.
         </p>
       </header>
 
       {showDisclosure && (
-        <div className="mb-4 flex items-start gap-3 rounded-lg border border-cobalt/30 bg-cobalt/5 px-4 py-3">
-          <p className="flex-1 text-sm text-student-ink">
+        <div className="mb-4 flex items-start gap-3 rounded-lg border border-secondary/30 bg-secondary/5 px-4 py-3">
+          <p className="flex-1 text-sm text-foreground">
             Workshops give you feedback. We never write your essay for you.
           </p>
           <button
             type="button"
             onClick={dismissDisclosure}
-            className="shrink-0 rounded p-0.5 text-student-text transition-colors hover:text-student-ink"
+            className="shrink-0 rounded p-0.5 text-foreground transition-colors hover:text-foreground"
             aria-label="Dismiss"
           >
             <X size={16} />
@@ -72,7 +72,7 @@ export default function WorkshopsTab() {
         </div>
       )}
 
-      <div className="mb-4 flex gap-1 border-b border-divider">
+      <div className="mb-4 flex gap-1 border-b border-border">
         {SUB_TABS.map(t => (
           <button
             key={t.key}
@@ -80,8 +80,8 @@ export default function WorkshopsTab() {
             onClick={() => setSub(t.key)}
             className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
               sub === t.key
-                ? 'border-student text-student'
-                : 'border-transparent text-student-text hover:text-student-ink'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-foreground hover:text-foreground'
             }`}
           >
             <t.icon size={14} />
@@ -90,7 +90,7 @@ export default function WorkshopsTab() {
         ))}
       </div>
 
-      <Suspense fallback={<div className="py-6 text-sm text-student-text">Loading…</div>}>
+      <Suspense fallback={<div className="py-6 text-sm text-foreground">Loading…</div>}>
         {sub === 'essay' && <EssayFeedbackPanel />}
         {sub === 'interview' && <InterviewPracticePanel />}
         {sub === 'test' && <TestGuidancePanel />}

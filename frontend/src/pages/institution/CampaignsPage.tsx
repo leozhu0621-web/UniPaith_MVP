@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import QueryError from '../../components/ui/QueryError'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -183,10 +184,7 @@ export default function CampaignsPage() {
       <Tabs tabs={TABS} activeTab={tab} onChange={setTab} />
 
       {campaignsQ.isError ? (
-        <div className="p-8 text-center">
-          <p className="mb-2 text-sm text-error">Couldn’t load campaigns.</p>
-          <button onClick={() => campaignsQ.refetch()} className="text-secondary hover:underline text-sm">Retry</button>
-        </div>
+        <QueryError detail="Couldn’t load campaigns." onRetry={() => campaignsQ.refetch()} />
       ) : campaignsQ.isLoading ? (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-44" />)}
@@ -496,7 +494,7 @@ function MetricsView({ metrics, loading }: { metrics?: CampaignMetrics; loading:
   const sent = metrics.sent || 0
   const pct = (v: number) => (sent > 0 ? Math.round((v / sent) * 100) : 0)
   const bars = [
-    { label: 'Delivered', value: metrics.delivered, cls: 'bg-cobalt' },
+    { label: 'Delivered', value: metrics.delivered, cls: 'bg-secondary' },
     { label: 'Opens (email)', value: metrics.opens, cls: 'bg-success' },
     { label: 'Clicks', value: metrics.clicks, cls: 'bg-accent' },
   ]

@@ -38,7 +38,7 @@ import type {
   Rubric, ReviewPacket, ReviewSynthesis, InstitutionMatchRationale, IntegrityAction, Interview, InstitutionDecision,
 } from '../../types'
 
-const SEVERITY_DOT: Record<string, string> = { high: 'bg-error', medium: 'bg-warning', low: 'bg-cobalt' }
+const SEVERITY_DOT: Record<string, string> = { high: 'bg-error', medium: 'bg-warning', low: 'bg-secondary' }
 
 export default function StudentDetailPage() {
   const { appId, studentId } = useParams<{ appId?: string; studentId?: string }>()
@@ -274,7 +274,7 @@ export default function StudentDetailPage() {
         <div className="lg:col-span-1 space-y-4">
           <Card className="p-5">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-cobalt/10 rounded-full flex items-center justify-center shrink-0"><User size={22} className="text-cobalt" /></div>
+              <div className="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center shrink-0"><User size={22} className="text-secondary" /></div>
               <div className="min-w-0">
                 <p className="font-semibold text-foreground truncate">{packet.student.display_name}</p>
                 <p className="text-sm text-muted-foreground truncate">{packet.program.program_name}</p>
@@ -294,13 +294,13 @@ export default function StudentDetailPage() {
           </Card>
 
           <Card className="p-4 space-y-2">
-            <div className="flex items-center gap-2"><Globe size={15} className="text-cobalt" /><h3 className="text-sm font-semibold text-foreground">Context</h3></div>
+            <div className="flex items-center gap-2"><Globe size={15} className="text-secondary" /><h3 className="text-sm font-semibold text-foreground">Context</h3></div>
             {packet.holistic_context.standard.length === 0 ? (
               <p className="text-xs text-muted-foreground">No additional context flags.</p>
             ) : (
               <div className="flex flex-wrap gap-1.5">
                 {packet.holistic_context.standard.map(f => (
-                  <span key={f.key} className="inline-flex items-center rounded-full border border-cobalt/20 bg-cobalt/5 px-2 py-0.5 text-xs text-cobalt" title={`${f.label}: ${f.value}`}>{f.label}{f.value ? `: ${f.value}` : ''}</span>
+                  <span key={f.key} className="inline-flex items-center rounded-full border border-secondary/20 bg-secondary/5 px-2 py-0.5 text-xs text-secondary" title={`${f.label}: ${f.value}`}>{f.label}{f.value ? `: ${f.value}` : ''}</span>
                 ))}
               </div>
             )}
@@ -318,7 +318,7 @@ export default function StudentDetailPage() {
           </Card>
 
           <Card className="p-4 space-y-1.5">
-            <div className="flex items-center gap-2"><FileCheck size={15} className="text-cobalt" /><h3 className="text-sm font-semibold text-foreground">Test policy</h3><Badge variant="neutral">{packet.test_optional.policy.replace(/_/g, '-')}</Badge></div>
+            <div className="flex items-center gap-2"><FileCheck size={15} className="text-secondary" /><h3 className="text-sm font-semibold text-foreground">Test policy</h3><Badge variant="neutral">{packet.test_optional.policy.replace(/_/g, '-')}</Badge></div>
             <p className="text-xs text-foreground">{packet.test_optional.recommendation}</p>
             <p className="text-[11px] text-muted-foreground">{packet.test_optional.guardrail}</p>
           </Card>
@@ -420,7 +420,7 @@ export default function StudentDetailPage() {
                             href={iv.recording_url}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-sm text-cobalt hover:underline mt-2 inline-block"
+                            className="text-sm text-secondary hover:underline mt-2 inline-block"
                           >
                             View recording
                           </a>
@@ -553,9 +553,9 @@ function ScoreRing({ label, value }: { label: string; value: number }) {
       <div className="relative w-16 h-16 mx-auto">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
           <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" className="text-muted" strokeWidth="3" />
-          <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" className="text-cobalt" strokeWidth="3" strokeDasharray={`${pct}, 100`} strokeLinecap="round" />
+          <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" className="text-secondary" strokeWidth="3" strokeDasharray={`${pct}, 100`} strokeLinecap="round" />
         </svg>
-        <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-cobalt">{pct}</span>
+        <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-secondary">{pct}</span>
       </div>
       <p className="text-[10px] text-muted-foreground mt-1">{label}</p>
     </div>
@@ -578,7 +578,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   return <div><h4 className="text-sm font-medium text-muted-foreground mb-1">{title}</h4>{children}</div>
 }
 function CitationChips({ title, items, tone }: { title: string; items: string[]; tone: 'green' | 'slate' }) {
-  const cls = tone === 'green' ? 'border-success/30 bg-success-soft text-success' : 'border-cobalt/30 bg-cobalt/5 text-cobalt'
+  const cls = tone === 'green' ? 'border-success/30 bg-success-soft text-success' : 'border-secondary/30 bg-secondary/5 text-secondary'
   return (
     <div>
       <div className="text-xs font-medium text-muted-foreground mb-1.5">{title}</div>
@@ -652,14 +652,14 @@ function ScoresTab({ packet, synthesis, onSynthesize, synthLoading }: { packet: 
                       <span className="font-medium text-foreground">{row.criterion}</span>
                       {row.weight != null && <span className="text-muted-foreground"> · {Math.round(row.weight * 100)}%</span>}
                       {row.per_reviewer.some(p => p.note) && (
-                        <span className="ml-1 text-[10px] text-cobalt">{expandedCriterion === row.criterion ? '▼ notes' : '▶ notes'}</span>
+                        <span className="ml-1 text-[10px] text-secondary">{expandedCriterion === row.criterion ? '▼ notes' : '▶ notes'}</span>
                       )}
                     </button>
                   </td>
                   {reviewers.map(rv => {
                     const cell = row.per_reviewer.find(p => p.reviewer_id === rv.reviewer_id)
                     const isMax = cell && cell.score === row.max_score
-                    return <td key={rv.reviewer_id} className={`text-center px-3 py-2 font-semibold tabular-nums ${isMax ? 'text-gold-hover' : 'text-cobalt'}`}>{cell ? cell.score : '—'}</td>
+                    return <td key={rv.reviewer_id} className={`text-center px-3 py-2 font-semibold tabular-nums ${isMax ? 'text-primary' : 'text-secondary'}`}>{cell ? cell.score : '—'}</td>
                   })}
                   <td className="text-center px-3 py-2">
                     {row.divergent
@@ -757,7 +757,7 @@ function AISummaryTab({ packet, regen, regenPending, matchRationale, matchLoadin
         ) : (
           <div className="space-y-4">
             <div className="rounded-lg bg-muted/60 p-4"><p className="text-sm text-foreground whitespace-pre-wrap">{p.overall_summary}</p></div>
-            {p.recommended_score != null && <div className="flex items-center gap-2 text-sm"><span className="text-muted-foreground">Recommended score:</span><span className="text-lg font-bold text-cobalt">{p.recommended_score.toFixed(1)}</span><span className="text-muted-foreground">/ 10</span></div>}
+            {p.recommended_score != null && <div className="flex items-center gap-2 text-sm"><span className="text-muted-foreground">Recommended score:</span><span className="text-lg font-bold text-secondary">{p.recommended_score.toFixed(1)}</span><span className="text-muted-foreground">/ 10</span></div>}
             {p.strengths && p.strengths.length > 0 && (
               <div>
                 <h4 className="text-sm font-medium text-success mb-2">Signal strengths</h4>
@@ -804,7 +804,7 @@ function AISummaryTab({ packet, regen, regenPending, matchRationale, matchLoadin
       </Card>
 
       <Card className="p-5 space-y-3">
-        <div className="flex items-center gap-2"><Brain size={18} className="text-cobalt" /><h3 className="font-semibold text-foreground">Match rationale — full evidence view</h3><Badge variant="info"><Shield size={10} className="mr-1" />Reviewer-only</Badge></div>
+        <div className="flex items-center gap-2"><Brain size={18} className="text-secondary" /><h3 className="font-semibold text-foreground">Match rationale — full evidence view</h3><Badge variant="info"><Shield size={10} className="mr-1" />Reviewer-only</Badge></div>
         <p className="text-xs text-muted-foreground">The applicant sees a redacted version of this. Comparative and internal matching signals shown here are withheld from the student (Spec 06 §3).</p>
         {matchLoading ? <Skeleton className="h-24" /> : !matchRationale?.available ? (
           <p className="text-sm text-muted-foreground">No match rationale yet — the applicant hasn't completed Discovery / matching.</p>
@@ -812,8 +812,8 @@ function AISummaryTab({ packet, regen, regenPending, matchRationale, matchLoadin
           <div className="space-y-3">
             <p className="text-sm text-foreground whitespace-pre-wrap">{matchRationale.rationale_text}</p>
             <div className="flex flex-wrap gap-4 text-sm">
-              {matchRationale.fitness_score != null && <span className="text-muted-foreground">Fitness: <b className="text-cobalt">{pctScore(matchRationale.fitness_score)}</b></span>}
-              {matchRationale.confidence_score != null && <span className="text-muted-foreground">Confidence: <b className="text-cobalt">{pctScore(matchRationale.confidence_score)}</b></span>}
+              {matchRationale.fitness_score != null && <span className="text-muted-foreground">Fitness: <b className="text-secondary">{pctScore(matchRationale.fitness_score)}</b></span>}
+              {matchRationale.confidence_score != null && <span className="text-muted-foreground">Confidence: <b className="text-secondary">{pctScore(matchRationale.confidence_score)}</b></span>}
               {!matchRationale.grounded && <Badge variant="warning">Ungrounded — verify before relying</Badge>}
             </div>
             {matchRationale.cited_student_fields?.length > 0 && <CitationChips title="Cited student signals" items={matchRationale.cited_student_fields} tone="green" />}
@@ -872,10 +872,10 @@ function DocumentsTab({ packet }: { packet: ReviewPacket }) {
       {packet.documents.map(d => (
         <div key={d.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
           <div className="flex items-center gap-2 min-w-0">
-            <FileText size={16} className="text-cobalt shrink-0" />
+            <FileText size={16} className="text-secondary shrink-0" />
             <div className="min-w-0"><p className="text-sm text-foreground truncate">{d.file_name}</p><p className="text-xs text-muted-foreground">{d.document_type?.replace(/_/g, ' ')} · {d.uploaded_at ? formatDate(d.uploaded_at) : ''}</p></div>
           </div>
-          {d.file_url && <a href={d.file_url} target="_blank" rel="noreferrer" className="text-sm text-cobalt hover:underline shrink-0">Open</a>}
+          {d.file_url && <a href={d.file_url} target="_blank" rel="noreferrer" className="text-sm text-secondary hover:underline shrink-0">Open</a>}
         </div>
       ))}
     </Card>
@@ -913,7 +913,7 @@ function TimelineTab({ packet }: { packet: ReviewPacket }) {
           const Icon = ev.icon
           return (
             <li key={i} className="ml-5">
-              <span className="absolute -left-[9px] flex h-4 w-4 items-center justify-center rounded-full bg-cobalt"><Icon size={9} className="text-white" /></span>
+              <span className="absolute -left-[9px] flex h-4 w-4 items-center justify-center rounded-full bg-secondary"><Icon size={9} className="text-secondary-foreground" /></span>
               <p className="text-sm text-foreground">{ev.label}</p>
               <p className="text-xs text-muted-foreground">{ev.at ? new Date(ev.at).toLocaleString() : ''}</p>
             </li>

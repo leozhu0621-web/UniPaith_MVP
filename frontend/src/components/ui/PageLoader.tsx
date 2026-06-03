@@ -28,11 +28,11 @@ export default function PageLoader({ progress, className }: PageLoaderProps) {
     >
       {determinate ? (
         <div
-          className="h-full bg-[#FFD60A] dark:bg-[#F2C800] transition-[width] duration-200 ease-out"
+          className="h-full bg-primary transition-[width] duration-200 ease-out"
           style={{ width: `${clamped}%` }}
         />
       ) : (
-        <div className="h-full w-1/3 bg-[#FFD60A] dark:bg-[#F2C800] animate-page-loader-sweep" />
+        <div className="h-full w-1/3 bg-primary animate-page-loader-sweep" />
       )}
     </div>
   )

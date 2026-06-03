@@ -209,12 +209,12 @@ export default function ProposeInterviewModal({ isOpen, onClose, onProposed, pro
                     type="button"
                     onClick={() => toggle(a.application_id)}
                     className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
-                      on ? 'bg-cobalt/10' : 'hover:bg-muted'
+                      on ? 'bg-secondary/10' : 'hover:bg-muted'
                     }`}
                   >
                     <span
                       className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
-                        on ? 'bg-cobalt border-cobalt text-white' : 'border-border'
+                        on ? 'bg-secondary border-secondary text-secondary-foreground' : 'border-border'
                       }`}
                     >
                       {on && <span className="text-[10px] leading-none">✓</span>}
@@ -309,7 +309,7 @@ export default function ProposeInterviewModal({ isOpen, onClose, onProposed, pro
               size="sm"
               onClick={handleDraft}
               loading={drafting}
-              className="flex items-center gap-1 text-cobalt"
+              className="flex items-center gap-1 text-secondary"
             >
               <Sparkles size={14} /> AI draft
             </Button>

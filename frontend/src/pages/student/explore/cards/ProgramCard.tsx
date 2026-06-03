@@ -12,8 +12,8 @@ import { differenceInDays } from 'date-fns'
 // Band label from match tier — editorial duotone, no rainbow (Spec/02 §9).
 function fitStyle(tier: number) {
   if (tier >= 3) return { text: 'Strong fit', pill: 'bg-success-soft text-success border-success/30' }
-  if (tier >= 2) return { text: 'Good fit', pill: 'bg-cobalt/10 text-cobalt border-cobalt/30' }
-  return { text: 'Reach', pill: 'bg-white text-cobalt border-cobalt/50' }
+  if (tier >= 2) return { text: 'Good fit', pill: 'bg-secondary/10 text-secondary border-secondary/30' }
+  return { text: 'Reach', pill: 'bg-card text-secondary border-secondary/50' }
 }
 
 function degreeAbbrev(degree: string): string {
@@ -74,14 +74,14 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
   const gradPct = program.employment_rate != null ? Math.round(program.employment_rate * 100) : null
 
   return (
-    <div className="bg-white rounded-lg border border-stone hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ease-out overflow-hidden flex flex-col group/card">
+    <div className="bg-card rounded-lg border border-border hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ease-out overflow-hidden flex flex-col group/card">
       {/* ── Header — text-driven, white surface, hairline divider ── */}
-      <div onClick={onView} className="relative cursor-pointer px-4 pt-4 pb-3 border-b border-divider">
+      <div onClick={onView} className="relative cursor-pointer px-4 pt-4 pb-3 border-b border-border">
         {/* Save button */}
         <button
           onClick={e => { e.stopPropagation(); onSave() }}
           className={`absolute top-3 right-3 p-2 rounded-full transition-colors ${
-            saved ? 'text-cobalt bg-cobalt/10' : 'text-slate hover:bg-muted'
+            saved ? 'text-secondary bg-secondary/10' : 'text-muted-foreground hover:bg-muted'
           }`}
           aria-label={saved ? 'Remove from list' : 'Save to my list'}
         >
@@ -90,27 +90,27 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
 
         <div className="flex items-start gap-3 pr-9">
           {/* Degree monogram tile — muted surface, cobalt mark (no gradient). */}
-          <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-muted border border-stone/60 flex flex-col items-center justify-center">
-            <GraduationCap size={13} className="text-cobalt" />
-            <span className="text-[10px] font-bold tracking-wide text-cobalt leading-none mt-0.5">{abbrev}</span>
+          <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-muted border border-border/60 flex flex-col items-center justify-center">
+            <GraduationCap size={13} className="text-secondary" />
+            <span className="text-[10px] font-bold tracking-wide text-secondary leading-none mt-0.5">{abbrev}</span>
           </div>
 
           <div className="min-w-0 flex-1">
-            <h3 className="text-[15px] font-bold text-charcoal leading-tight line-clamp-2">
+            <h3 className="text-[15px] font-bold text-foreground leading-tight line-clamp-2">
               {program.program_name}
             </h3>
             {(program.department || program.institution_name) && (
-              <p className="text-[11.5px] text-slate mt-1 truncate flex items-center gap-1">
-                <Building size={10} className="flex-shrink-0 text-slate/70" />
+              <p className="text-[11.5px] text-muted-foreground mt-1 truncate flex items-center gap-1">
+                <Building size={10} className="flex-shrink-0 text-muted-foreground/70" />
                 {program.department || program.institution_name}
-                {program.institution_city && <span className="text-slate/70"> · {program.institution_city}</span>}
+                {program.institution_city && <span className="text-muted-foreground/70"> · {program.institution_city}</span>}
               </p>
             )}
           </div>
         </div>
 
         <div className="flex items-center gap-1.5 mt-3 flex-wrap">
-          <span className="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-md bg-muted text-charcoal border border-stone/60">
+          <span className="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-md bg-muted text-foreground border border-border/60">
             {degree}
           </span>
           {fit && (
@@ -121,7 +121,7 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
           {matchScore != null && (
             <span className="ml-auto inline-flex items-center gap-1.5">
               <MatchDot pct={matchScore} />
-              <span className="text-[11px] font-bold text-charcoal">{matchScore}<span className="text-slate font-normal">% fit</span></span>
+              <span className="text-[11px] font-bold text-foreground">{matchScore}<span className="text-muted-foreground font-normal">% fit</span></span>
             </span>
           )}
         </div>
@@ -129,14 +129,14 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
 
       {/* ── Meta pills row ── */}
       {(duration || format || (deadline && !deadline.closed)) && (
-        <div className="flex items-center gap-1.5 px-4 py-2 border-b border-divider bg-muted/40 overflow-x-auto">
+        <div className="flex items-center gap-1.5 px-4 py-2 border-b border-border bg-muted/40 overflow-x-auto">
           {duration && <MetaPill icon={Clock}>{duration}</MetaPill>}
           {format && <MetaPill icon={Building}>{format}</MetaPill>}
           {deadline && !deadline.closed && (
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] whitespace-nowrap ${
-              deadline.urgent ? 'bg-warning-soft border-warning/40 text-warning font-semibold' : 'bg-white border-stone/60 text-slate'
+              deadline.urgent ? 'bg-warning-soft border-warning/40 text-warning font-semibold' : 'bg-card border-border/60 text-muted-foreground'
             }`}>
-              <Calendar size={10} className={deadline.urgent ? 'text-warning' : 'text-slate/70'} />
+              <Calendar size={10} className={deadline.urgent ? 'text-warning' : 'text-muted-foreground/70'} />
               {deadline.urgent ? `Deadline ${deadline.text}` : deadline.text}
             </span>
           )}
@@ -146,11 +146,11 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
       {/* ── Description ── */}
       <div className="flex-1 px-4 pt-3 cursor-pointer" onClick={onView}>
         {program.description_text ? (
-          <p className="text-[12px] text-slate leading-relaxed line-clamp-3">
+          <p className="text-[12px] text-muted-foreground leading-relaxed line-clamp-3">
             {program.description_text.replace(/\s*\[Source:.*?\]\s*/g, '').trim()}
           </p>
         ) : (
-          <p className="text-[11px] text-slate/60 italic">No description available — open to view full details.</p>
+          <p className="text-[11px] text-muted-foreground/60 italic">No description available — open to view full details.</p>
         )}
       </div>
 
@@ -163,12 +163,12 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
       </div>
 
       {/* ── Actions ── */}
-      <div className="flex items-stretch border-t border-divider mt-auto">
+      <div className="flex items-stretch border-t border-border mt-auto">
         {onCompare && (
           <button
             onClick={e => { e.stopPropagation(); onCompare() }}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-medium transition-colors border-r border-divider ${
-              comparing ? 'text-cobalt bg-cobalt/10' : 'text-slate hover:bg-muted hover:text-charcoal'
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-medium transition-colors border-r border-border ${
+              comparing ? 'text-secondary bg-secondary/10' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`}
             title={comparing ? 'In compare tray' : 'Add to compare'}
           >
@@ -179,7 +179,7 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
         {onAskCounselor && (
           <button
             onClick={e => { e.stopPropagation(); onAskCounselor() }}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-medium text-cobalt hover:bg-cobalt/5 transition-colors border-r border-divider"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-medium text-secondary hover:bg-secondary/5 transition-colors border-r border-border"
             title="Ask your AI counselor about this program"
           >
             <Sparkles size={12} />
@@ -188,7 +188,7 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
         )}
         <button
           onClick={e => { e.stopPropagation(); onView() }}
-          className="flex-[1.5] flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-semibold text-white bg-cobalt hover:bg-cobalt-dark transition-colors group/view"
+          className="flex-[1.5] flex items-center justify-center gap-1.5 py-2.5 text-[11px] font-semibold text-secondary-foreground bg-secondary hover:brightness-95 transition-colors group/view"
         >
           View program
           <ArrowRight size={12} className="group-hover/view:translate-x-0.5 transition-transform" />
@@ -205,10 +205,10 @@ function MatchDot({ pct }: { pct: number }) {
   return (
     <span className="relative inline-flex w-5 h-5">
       <svg viewBox="0 0 24 24" className="w-5 h-5 -rotate-90">
-        <circle cx="12" cy="12" r={r} fill="none" className="stroke-stone/50" strokeWidth="3" />
+        <circle cx="12" cy="12" r={r} fill="none" className="stroke-border/50" strokeWidth="3" />
         <circle
           cx="12" cy="12" r={r} fill="none"
-          className="stroke-student" strokeWidth="3" strokeLinecap="round"
+          className="stroke-primary" strokeWidth="3" strokeLinecap="round"
           strokeDasharray={c} strokeDashoffset={c * (1 - pct / 100)}
         />
       </svg>
@@ -219,8 +219,8 @@ function MatchDot({ pct }: { pct: number }) {
 /* ── Meta pill ── */
 function MetaPill({ icon: Icon, children }: { icon: ComponentType<{ size?: number; className?: string }>; children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white border border-stone/60 text-[10px] text-slate whitespace-nowrap">
-      <Icon size={10} className="text-slate/70" />
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-card border border-border/60 text-[10px] text-muted-foreground whitespace-nowrap">
+      <Icon size={10} className="text-muted-foreground/70" />
       {children}
     </span>
   )
@@ -236,13 +236,13 @@ interface StatTileProps {
 function StatTile({ label, value, icon: Icon }: StatTileProps) {
   const isEmpty = value === '—'
   return (
-    <div className={`flex items-center gap-2 px-2.5 py-2 rounded-md border ${isEmpty ? 'bg-muted/40 border-stone/40' : 'bg-muted/60 border-stone/60'}`}>
-      <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 bg-white border border-stone/50">
-        <Icon size={11} className={isEmpty ? 'text-slate/40' : 'text-cobalt'} />
+    <div className={`flex items-center gap-2 px-2.5 py-2 rounded-md border ${isEmpty ? 'bg-muted/40 border-border/40' : 'bg-muted/60 border-border/60'}`}>
+      <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 bg-card border border-border/50">
+        <Icon size={11} className={isEmpty ? 'text-muted-foreground/40' : 'text-secondary'} />
       </div>
       <div className="min-w-0">
-        <p className={`text-[9px] uppercase tracking-wide leading-none ${isEmpty ? 'text-slate/40' : 'text-slate'}`}>{label}</p>
-        <p className={`text-[13px] font-bold leading-tight truncate mt-0.5 ${isEmpty ? 'text-slate/40' : 'text-charcoal'}`}>{value}</p>
+        <p className={`text-[9px] uppercase tracking-wide leading-none ${isEmpty ? 'text-muted-foreground/40' : 'text-muted-foreground'}`}>{label}</p>
+        <p className={`text-[13px] font-bold leading-tight truncate mt-0.5 ${isEmpty ? 'text-muted-foreground/40' : 'text-foreground'}`}>{value}</p>
       </div>
     </div>
   )

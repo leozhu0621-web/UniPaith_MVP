@@ -24,7 +24,7 @@ export default function Breadcrumbs({ items, className }: { items: Crumb[]; clas
                 {crumb.label}
               </span>
             )}
-            {!last && <span className="text-stone" aria-hidden="true">·</span>}
+            {!last && <span className="text-muted-foreground" aria-hidden="true">·</span>}
           </span>
         )
       })}

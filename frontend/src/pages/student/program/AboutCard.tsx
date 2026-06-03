@@ -76,34 +76,34 @@ export default function AboutCard({ description, institutionName, programName }:
   return (
     <Card className="p-5">
       <div className="flex items-center gap-2 mb-3">
-        <BookOpen size={14} className="text-student" />
-        <h3 className="font-semibold text-student-ink">About This Program</h3>
+        <BookOpen size={14} className="text-primary" />
+        <h3 className="font-semibold text-foreground">About This Program</h3>
       </div>
 
       {keywords.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-3">
           {keywords.map(k => (
-            <span key={k} className="px-2 py-0.5 text-[10px] rounded-md bg-muted text-charcoal border border-stone/60 font-medium">
+            <span key={k} className="px-2 py-0.5 text-[10px] rounded-md bg-muted text-foreground border border-border/60 font-medium">
               {k}
             </span>
           ))}
         </div>
       )}
 
-      <p className="text-[13px] text-student-text leading-relaxed whitespace-pre-line">{cleanText}</p>
+      <p className="text-[13px] text-foreground leading-relaxed whitespace-pre-line">{cleanText}</p>
 
       {sourceUrl && (
         <a
           href={sourceUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-muted border border-divider hover:border-student/30 hover:bg-muted/70 transition-colors group"
+          className="mt-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-muted border border-border hover:border-primary/30 hover:bg-muted/70 transition-colors group"
         >
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] text-student-text/60 uppercase tracking-wider font-medium leading-none">Source</p>
-            <p className="text-[11px] text-student-ink truncate mt-0.5 group-hover:text-student">{sourceDomain(sourceUrl)}</p>
+            <p className="text-[10px] text-foreground/60 uppercase tracking-wider font-medium leading-none">Source</p>
+            <p className="text-[11px] text-foreground truncate mt-0.5 group-hover:text-primary">{sourceDomain(sourceUrl)}</p>
           </div>
-          <ExternalLink size={12} className="text-student-text/50 group-hover:text-student flex-shrink-0" />
+          <ExternalLink size={12} className="text-foreground/50 group-hover:text-primary flex-shrink-0" />
         </a>
       )}
     </Card>

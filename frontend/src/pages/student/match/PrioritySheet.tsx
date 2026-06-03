@@ -95,17 +95,17 @@ export default function PrioritySheet({ isOpen, onClose, onSaved }: PriorityShee
         </>
       }
     >
-      <p className="text-sm text-student-text mb-5">
+      <p className="text-sm text-foreground mb-5">
         Tell me what matters most. I&apos;ll re-rank your matches to weigh these more heavily.
       </p>
       <div className="space-y-5">
         {SLIDERS.map(s => (
           <div key={s.key}>
             <div className="flex items-baseline justify-between mb-1">
-              <label htmlFor={s.key} className="text-sm font-medium text-student-ink">
+              <label htmlFor={s.key} className="text-sm font-medium text-foreground">
                 {s.label}
               </label>
-              <span className="text-xs font-bold text-cobalt tabular-nums">{weights[s.key]}</span>
+              <span className="text-xs font-bold text-secondary tabular-nums">{weights[s.key]}</span>
             </div>
             <input
               id={s.key}
@@ -115,9 +115,9 @@ export default function PrioritySheet({ isOpen, onClose, onSaved }: PriorityShee
               step={1}
               value={weights[s.key]}
               onChange={e => set(s.key, Number(e.target.value))}
-              className="w-full accent-cobalt cursor-pointer"
+              className="w-full accent-secondary cursor-pointer"
             />
-            <p className="text-[11px] text-student-text/70 mt-0.5">{s.hint}</p>
+            <p className="text-[11px] text-foreground/70 mt-0.5">{s.hint}</p>
           </div>
         ))}
       </div>

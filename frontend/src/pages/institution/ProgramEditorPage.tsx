@@ -672,7 +672,7 @@ export default function ProgramEditorPage() {
 
           {/* 07 · Media */}
           <SectionCard id="media" index={idx('media')} title="Media" open={isOpen('media')} onToggle={() => toggleSection('media')} invalid={invalidSections.has('media')}>
-            <div className="rounded-md border border-cobalt/30 bg-cobalt/5 p-3 text-sm text-foreground">
+            <div className="rounded-md border border-secondary/30 bg-secondary/5 p-3 text-sm text-foreground">
               <p className="font-semibold">Program logo is text-only.</p>
               <p className="text-muted-foreground">
                 Per brand, program pages are editorial — no decorative imagery, gradients, or marketing
@@ -723,7 +723,7 @@ export default function ProgramEditorPage() {
                 onClick={() => goToSection(s.id)}
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
               >
-                <span className="text-xs tabular-nums text-cobalt">{String(idx(s.id)).padStart(2, '0')}</span>
+                <span className="text-xs tabular-nums text-secondary">{String(idx(s.id)).padStart(2, '0')}</span>
                 {s.label}
                 {invalidSections.has(s.id) && <AlertTriangle size={13} className="text-error" />}
               </button>
@@ -749,11 +749,11 @@ export default function ProgramEditorPage() {
                   setValidation(null)
                   goToSection(f.section)
                 }}
-                className="flex w-full items-center gap-2 rounded-md border border-border px-3 py-2 text-left text-sm hover:border-cobalt hover:bg-cobalt/5"
+                className="flex w-full items-center gap-2 rounded-md border border-border px-3 py-2 text-left text-sm hover:border-secondary hover:bg-secondary/5"
               >
                 <AlertTriangle size={15} className="shrink-0 text-warning" />
                 <span className="text-foreground">{f.message}</span>
-                <span className="ml-auto text-xs text-cobalt">Go to {SECTIONS.find(s => s.id === f.section)?.label ?? f.section} →</span>
+                <span className="ml-auto text-xs text-secondary">Go to {SECTIONS.find(s => s.id === f.section)?.label ?? f.section} →</span>
               </button>
             </li>
           ))}

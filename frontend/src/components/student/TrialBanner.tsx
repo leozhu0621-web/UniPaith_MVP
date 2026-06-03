@@ -17,8 +17,8 @@ export default function TrialBanner() {
 
   const goManage = () => navigate('/s/settings')
 
-  let tone = 'bg-student-moss text-charcoal border-stone/60'
-  let icon = <Sparkles size={15} className="text-cobalt shrink-0" />
+  let tone = 'bg-muted text-foreground border-border/60'
+  let icon = <Sparkles size={15} className="text-secondary shrink-0" />
   let message: string
   let cta = 'Upgrade — $15/mo'
 
@@ -26,7 +26,7 @@ export default function TrialBanner() {
     const days = billing.trial_days_left ?? 0
     const urgent = days <= 2
     if (urgent) {
-      tone = 'bg-warning-soft text-charcoal border-warning/40'
+      tone = 'bg-warning-soft text-foreground border-warning/40'
       icon = <Clock size={15} className="text-warning shrink-0" />
     }
     message =
@@ -34,11 +34,11 @@ export default function TrialBanner() {
         ? 'Your free trial ends today.'
         : `${days} day${days === 1 ? '' : 's'} left in your free trial.`
   } else if (billing.status === 'canceled') {
-    tone = 'bg-warning-soft text-charcoal border-warning/40'
+    tone = 'bg-warning-soft text-foreground border-warning/40'
     message = 'Your plan is set to cancel.'
     cta = 'Resume plan'
   } else {
-    tone = 'bg-error-soft text-charcoal border-error/40'
+    tone = 'bg-error-soft text-foreground border-error/40'
     message = 'Your free trial has ended. Reactivate to keep full access.'
     cta = 'Reactivate — $15/mo'
   }
@@ -48,7 +48,7 @@ export default function TrialBanner() {
       {icon}
       <span className="flex-1 min-w-0 truncate">
         {message}{' '}
-        <span className="hidden sm:inline text-slate">Everyone’s private college counselor — for $15/mo.</span>
+        <span className="hidden sm:inline text-muted-foreground">Everyone’s private college counselor — for $15/mo.</span>
       </span>
       <button
         onClick={goManage}
@@ -59,7 +59,7 @@ export default function TrialBanner() {
       <button
         onClick={() => setDismissed(true)}
         aria-label="Dismiss"
-        className="ui-btn shrink-0 p-1 rounded-md text-slate hover:bg-black/5 transition"
+        className="ui-btn shrink-0 p-1 rounded-md text-muted-foreground hover:bg-black/5 transition"
       >
         <X size={14} />
       </button>

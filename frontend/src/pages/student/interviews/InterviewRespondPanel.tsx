@@ -117,30 +117,30 @@ export default function InterviewRespondPanel({ interview, compact = false, onUp
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex items-start gap-3 min-w-0">
           {!compact && (
-            <div className="w-10 h-10 rounded-full bg-student-mist flex items-center justify-center shrink-0">
-              <CalendarClock size={18} className="text-cobalt" />
+            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+              <CalendarClock size={18} className="text-secondary" />
             </div>
           )}
           <div className="min-w-0">
-            <p className="text-sm font-medium text-student-ink">
+            <p className="text-sm font-medium text-foreground">
               {INTERVIEW_TYPE_LABELS[interview.interview_type] ||
                 (interview.interview_type || 'Interview').replace(/_/g, ' ')}
             </p>
-            <p className="text-xs text-student-text mt-0.5">{scheduledLabel()}</p>
+            <p className="text-xs text-foreground mt-0.5">{scheduledLabel()}</p>
           </div>
         </div>
         {statusBadge()}
       </div>
 
       {interview.notes_to_student && (
-        <p className="text-sm text-student-text whitespace-pre-wrap">{interview.notes_to_student}</p>
+        <p className="text-sm text-foreground whitespace-pre-wrap">{interview.notes_to_student}</p>
       )}
 
       {(meetingLink || location) && (isConfirmed || interview.status === 'completed') && (
         <div className="text-sm space-y-1">
           {location && (
-            <p className="text-student-text">
-              <span className="font-medium text-student-ink">Location: </span>
+            <p className="text-foreground">
+              <span className="font-medium text-foreground">Location: </span>
               {location}
             </p>
           )}
@@ -149,7 +149,7 @@ export default function InterviewRespondPanel({ interview, compact = false, onUp
               href={meetingLink}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 text-cobalt hover:underline"
+              className="inline-flex items-center gap-1 text-secondary hover:underline"
             >
               <Video size={14} /> Join meeting <ExternalLink size={12} />
             </a>
@@ -177,7 +177,7 @@ export default function InterviewRespondPanel({ interview, compact = false, onUp
                     onClick={() => setSelectedSlot(slot)}
                     className={`rounded-pill border px-3 py-1.5 text-xs font-medium transition-colors ${
                       on
-                        ? 'border-cobalt bg-cobalt text-white'
+                        ? 'border-secondary bg-secondary text-secondary-foreground'
                         : 'border-border bg-card text-foreground hover:bg-muted'
                     }`}
                   >
@@ -222,9 +222,9 @@ export default function InterviewRespondPanel({ interview, compact = false, onUp
       )}
 
       {isConfirmed && !compact && (
-        <div className="rounded-lg bg-student-mist p-3">
-          <p className="text-xs font-medium text-student-ink mb-1">Prep checklist</p>
-          <ul className="text-xs text-student-text space-y-1">
+        <div className="rounded-lg bg-muted p-3">
+          <p className="text-xs font-medium text-foreground mb-1">Prep checklist</p>
+          <ul className="text-xs text-foreground space-y-1">
             <li>Research the program and recent news</li>
             <li>Prepare key talking points and questions</li>
             <li>

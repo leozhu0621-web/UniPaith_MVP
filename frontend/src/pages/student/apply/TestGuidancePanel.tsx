@@ -72,7 +72,7 @@ export default function TestGuidancePanel() {
         />
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-student-ink">Test</label>
+          <label className="mb-1 block text-sm font-medium text-foreground">Test</label>
           <div className="flex flex-wrap gap-1">
             {TESTS.map(t => (
               <button
@@ -81,8 +81,8 @@ export default function TestGuidancePanel() {
                 onClick={() => setTestType(t)}
                 className={`rounded-lg border px-3 py-1.5 text-xs transition-colors ${
                   testType === t
-                    ? 'border-student bg-student/5 text-student-ink'
-                    : 'border-divider text-student-text hover:border-student-text'
+                    ? 'border-primary bg-primary/5 text-foreground'
+                    : 'border-border text-foreground hover:border-foreground'
                 }`}
               >
                 {t}
@@ -93,10 +93,10 @@ export default function TestGuidancePanel() {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-sm font-medium text-student-ink">Current score</label>
+            <label className="mb-1 block text-sm font-medium text-foreground">Current score</label>
             <input
               type="number"
-              className="w-full rounded-md border border-divider px-3 py-2 text-sm"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm"
               value={current}
               onChange={e => setCurrent(e.target.value)}
               min={0}
@@ -105,10 +105,10 @@ export default function TestGuidancePanel() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-student-ink">Target score</label>
+            <label className="mb-1 block text-sm font-medium text-foreground">Target score</label>
             <input
               type="number"
-              className="w-full rounded-md border border-divider px-3 py-2 text-sm"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm"
               value={target}
               onChange={e => setTarget(e.target.value)}
               min={0}
@@ -118,7 +118,7 @@ export default function TestGuidancePanel() {
           </div>
         </div>
 
-        <div className="text-xs text-student-text">
+        <div className="text-xs text-foreground">
           You'll get a structured prep plan (small / medium / large gap). I won't generate practice
           questions — that's your prep service's job.
         </div>
@@ -149,16 +149,16 @@ export default function TestGuidancePanel() {
           {stats.length > 0 && (
             <Card>
               <div className="mb-2 flex items-center justify-between">
-                <div className="text-eyebrow uppercase text-student-text">Gap analysis</div>
+                <div className="text-eyebrow uppercase text-foreground">Gap analysis</div>
                 {run.is_stub && <StubNote />}
               </div>
               <div className="grid grid-cols-3 gap-3">
                 {stats.map(([k, v]) => (
                   <div key={k}>
-                    <div className="text-eyebrow uppercase text-student-text">
+                    <div className="text-eyebrow uppercase text-foreground">
                       {STAT_LABEL[k] ?? k.replace(/_/g, ' ')}
                     </div>
-                    <div className="text-2xl font-semibold text-student-ink">{Number(v)}</div>
+                    <div className="text-2xl font-semibold text-foreground">{Number(v)}</div>
                   </div>
                 ))}
               </div>
@@ -167,7 +167,7 @@ export default function TestGuidancePanel() {
 
           {run.structural_issues.length > 0 && (
             <Card>
-              <div className="mb-2 text-eyebrow uppercase text-student-text">
+              <div className="mb-2 text-eyebrow uppercase text-foreground">
                 Section diagnosis · {run.structural_issues.length}
               </div>
               <ul className="space-y-2">
@@ -177,9 +177,9 @@ export default function TestGuidancePanel() {
                       {iss.severity}
                     </Badge>
                     <div className="flex-1">
-                      <div className="text-student-ink">{iss.issue}</div>
+                      <div className="text-foreground">{iss.issue}</div>
                       {iss.location_ref && (
-                        <div className="mt-0.5 text-xs text-student-text">{iss.location_ref}</div>
+                        <div className="mt-0.5 text-xs text-foreground">{iss.location_ref}</div>
                       )}
                     </div>
                   </li>
@@ -190,7 +190,7 @@ export default function TestGuidancePanel() {
 
           {run.missing_elements.length > 0 && (
             <Card>
-              <div className="mb-2 text-eyebrow uppercase text-student-text">
+              <div className="mb-2 text-eyebrow uppercase text-foreground">
                 Prep recommendations · {run.missing_elements.length}
               </div>
               <ul className="space-y-2">
@@ -199,7 +199,7 @@ export default function TestGuidancePanel() {
                     <Badge variant={IMPORTANCE_VARIANT[m.importance]} size="sm">
                       {m.importance.replace(/_/g, ' ')}
                     </Badge>
-                    <span className="flex-1 text-student-ink">{m.element}</span>
+                    <span className="flex-1 text-foreground">{m.element}</span>
                   </li>
                 ))}
               </ul>
@@ -208,14 +208,14 @@ export default function TestGuidancePanel() {
 
           {run.suggested_questions.length > 0 && (
             <Card>
-              <div className="mb-2 text-eyebrow uppercase text-student-text">
+              <div className="mb-2 text-eyebrow uppercase text-foreground">
                 Suggested resources · {run.suggested_questions.length}
               </div>
               <ul className="space-y-2">
                 {run.suggested_questions.map((q, i) => (
                   <li key={i} className="text-sm">
-                    <div className="text-student-ink">{q.question}</div>
-                    {q.why && <div className="mt-0.5 text-xs italic text-student-text">{q.why}</div>}
+                    <div className="text-foreground">{q.question}</div>
+                    {q.why && <div className="mt-0.5 text-xs italic text-foreground">{q.why}</div>}
                   </li>
                 ))}
               </ul>

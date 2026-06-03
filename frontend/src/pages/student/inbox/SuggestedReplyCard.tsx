@@ -48,7 +48,7 @@ export default function SuggestedReplyCard({
                 onClick={() => pick(i)}
                 className={`rounded-pill px-2 py-0.5 text-[11px] font-medium capitalize transition-colors ${
                   activeIdx === i
-                    ? 'bg-cobalt text-white'
+                    ? 'bg-secondary text-secondary-foreground'
                     : 'bg-muted text-muted-foreground hover:brightness-95'
                 }`}
               >

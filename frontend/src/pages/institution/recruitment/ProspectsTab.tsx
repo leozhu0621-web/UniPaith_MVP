@@ -82,13 +82,14 @@ export default function ProspectsTab() {
             checked={selected.has(p.id)}
             onClick={e => e.stopPropagation()}
             onChange={() => toggleSelect(p.id)}
-            className="h-4 w-4 rounded border-border accent-cobalt"
+            className="h-4 w-4 rounded border-border accent-secondary"
           />
         ),
       },
       {
         key: 'name',
         label: 'Prospect',
+        sortable: true,
         render: (p: Prospect) => (
           <div className="flex items-center gap-2">
             {p.priority_band && (
@@ -107,6 +108,8 @@ export default function ProspectsTab() {
       {
         key: 'location',
         label: 'Location',
+        sortable: true,
+        sortAccessor: (p: Prospect) => [p.city, p.region, p.country].filter(Boolean).join(', '),
         render: (p: Prospect) => (
           <span className="text-sm text-muted-foreground">
             {[p.city, p.region, p.country].filter(Boolean).join(', ') || '—'}
@@ -137,6 +140,8 @@ export default function ProspectsTab() {
       {
         key: 'stage',
         label: 'Stage',
+        sortable: true,
+        sortAccessor: (p: Prospect) => STAGE_META[p.stage].label,
         render: (p: Prospect) => (
           <Badge variant={STAGE_META[p.stage].tone}>{STAGE_META[p.stage].label}</Badge>
         ),
@@ -150,6 +155,8 @@ export default function ProspectsTab() {
         key: 'priority',
         label: 'Priority',
         align: 'right' as const,
+        sortable: true,
+        sortAccessor: (p: Prospect) => p.apply_likelihood,
         render: (p: Prospect) =>
           p.apply_likelihood != null ? (
             <span className="text-sm font-medium tabular-nums text-foreground">
@@ -249,6 +256,8 @@ export default function ProspectsTab() {
         <Table
           columns={columns}
           data={items}
+          pageSize={25}
+          density="compact"
           isLoading={isLoading}
           onRowClick={(p: Prospect) => setActive(p)}
           emptyMessage="No prospects match these filters."

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import SkipLink from './SkipLink'
 import { Outlet, NavLink, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '../../stores/auth-store'
 import { useCounselorStore } from '../../stores/counselor-store'
@@ -44,6 +45,7 @@ export default function StudentLayout() {
 
   return (
     <div className="flex flex-col h-screen bg-background">
+      <SkipLink />
       {/* ─── Desktop top nav (lg+) — Spec/02 §7. 64px, --bg, --border hairline. ─── */}
       <header className="hidden lg:flex h-16 items-center justify-between px-8 bg-background border-b border-border flex-shrink-0 z-30">
         <NavLink to="/s" className="leading-none" aria-label="UniPaith home">
@@ -129,7 +131,9 @@ export default function StudentLayout() {
 
         {/* Main content — bottom padding on mobile to clear the tab bar. */}
         <main
-          className={`flex min-h-0 flex-1 flex-col transition-all duration-300 ease-in-out ${
+          id="main"
+          tabIndex={-1}
+          className={`flex min-h-0 flex-1 flex-col outline-none transition-all duration-300 ease-in-out ${
             location.pathname.startsWith('/s/manage') ? 'overflow-hidden' : 'overflow-y-auto'
           }`}
         >

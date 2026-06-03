@@ -27,8 +27,8 @@ interface Props {
 
 const TONE_STYLES = {
   urgent: 'bg-warning-soft hover:bg-warning-soft/70 border-warning/40 text-warning',
-  primary: 'bg-cobalt text-white hover:bg-cobalt-dark border-transparent',
-  info: 'bg-muted/60 hover:bg-muted border-stone/50 text-charcoal',
+  primary: 'bg-secondary text-secondary-foreground hover:brightness-95 border-transparent',
+  info: 'bg-muted/60 hover:bg-muted border-border/50 text-foreground',
 }
 
 export default function NextStepsCard({
@@ -104,8 +104,8 @@ export default function NextStepsCard({
   return (
     <Card className="p-5">
       <div className="flex items-center gap-2 mb-3">
-        <ChevronRight size={14} className="text-student" />
-        <h3 className="font-semibold text-student-ink">Next Steps</h3>
+        <ChevronRight size={14} className="text-primary" />
+        <h3 className="font-semibold text-foreground">Next Steps</h3>
       </div>
       <div className="space-y-2">
         {steps.map((step, i) => (
@@ -115,14 +115,14 @@ export default function NextStepsCard({
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-colors text-left ${TONE_STYLES[step.tone]}`}
           >
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-              step.tone === 'primary' ? 'bg-white/20' : 'bg-white'
+              step.tone === 'primary' ? 'bg-secondary-foreground/20' : 'bg-card'
             }`}>
               <step.icon size={14} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold leading-tight">{step.label}</p>
               {step.hint && <p className={`text-[10px] mt-0.5 truncate ${
-                step.tone === 'primary' ? 'text-white/80' : 'opacity-70'
+                step.tone === 'primary' ? 'text-secondary-foreground/80' : 'opacity-70'
               }`}>{step.hint}</p>}
             </div>
             <ChevronRight size={14} className="flex-shrink-0 opacity-60" />

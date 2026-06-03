@@ -34,7 +34,7 @@ export default function AttachmentPicker({
               onClick={() => onAdd({ id: doc.id, name, kind: 'document' })}
               className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs text-foreground hover:bg-card disabled:opacity-40"
             >
-              <FileText size={12} className="shrink-0 text-cobalt" />
+              <FileText size={12} className="shrink-0 text-secondary" />
               <span className="truncate">{name}</span>
               {added && <span className="ml-auto text-[10px] text-muted-foreground">Added</span>}
             </button>

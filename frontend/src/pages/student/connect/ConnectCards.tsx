@@ -52,7 +52,7 @@ export default function FeedItemCard(props: Props) {
 
 function CardShell({ children, accent }: { children: React.ReactNode; accent?: string }) {
   return (
-    <div className={`bg-white rounded-xl border ${accent || 'border-divider'} hover:shadow-sm transition-shadow`}>
+    <div className={`bg-card rounded-xl border ${accent || 'border-border'} hover:shadow-sm transition-shadow`}>
       {children}
     </div>
   )
@@ -61,13 +61,13 @@ function CardShell({ children, accent }: { children: React.ReactNode; accent?: s
 function InstitutionRow({ item }: { item: ConnectFeedItem }) {
   return (
     <div className="flex items-center gap-2 min-w-0">
-      <div className="w-7 h-7 rounded-md bg-cobalt/10 flex items-center justify-center flex-shrink-0">
-        <GraduationCap size={14} className="text-cobalt" />
+      <div className="w-7 h-7 rounded-md bg-secondary/10 flex items-center justify-center flex-shrink-0">
+        <GraduationCap size={14} className="text-secondary" />
       </div>
       <div className="min-w-0">
-        <p className="text-xs font-semibold text-student-ink truncate">{item.institution_name}</p>
+        <p className="text-xs font-semibold text-foreground truncate">{item.institution_name}</p>
         {item.program_name && (
-          <p className="text-[10px] text-student-text truncate">{item.program_name}</p>
+          <p className="text-[10px] text-foreground truncate">{item.program_name}</p>
         )}
       </div>
     </div>
@@ -88,7 +88,7 @@ function CtaRow({ item, onViewProgram, onAddToCalendar, onStartApplication, onRs
 
   if (ctas.length === 0) return null
 
-  const cobaltBtn = 'px-3 py-1.5 text-xs font-medium rounded-lg border border-cobalt text-cobalt hover:bg-cobalt/5 transition-colors'
+  const cobaltBtn = 'px-3 py-1.5 text-xs font-medium rounded-lg border border-secondary text-secondary hover:bg-secondary/5 transition-colors'
 
   return (
     <div className="flex flex-wrap items-center gap-2 mt-3">
@@ -135,14 +135,14 @@ function CtaRow({ item, onViewProgram, onAddToCalendar, onStartApplication, onRs
             <button
               key={key}
               onClick={() => { trackPost(item, 'click'); onAddToCalendar(item) }}
-              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg text-cobalt hover:bg-cobalt/5 transition-colors"
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg text-secondary hover:bg-secondary/5 transition-colors"
             >
               <CalendarPlus size={13} /> {cta.label}
             </button>
           )
         }
         return (
-          <span key={key} className="px-3 py-1.5 text-xs font-medium rounded-lg bg-student-mist text-student-text">
+          <span key={key} className="px-3 py-1.5 text-xs font-medium rounded-lg bg-muted text-foreground">
             {cta.label}
           </span>
         )
@@ -162,23 +162,23 @@ function PostCardLarge({ item, onViewProgram, onAddToCalendar, onStartApplicatio
   const isLong = body.length > 220
   const shown = expanded || !isLong ? body : body.slice(0, 220).trimEnd() + '…'
   return (
-    <CardShell accent={item.pinned ? 'border-gold' : undefined}>
+    <CardShell accent={item.pinned ? 'border-primary' : undefined}>
       <div className="p-4">
         <div className="flex items-start gap-2">
           <InstitutionRow item={item} />
           <div className="ml-auto flex items-center gap-2 flex-shrink-0">
             {item.pinned && (
               // Gold pin marker — one of the two earned gold accents (§10).
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-gold-hover">
-                <Pin size={11} className="fill-gold text-gold" /> Pinned
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary">
+                <Pin size={11} className="fill-primary text-primary" /> Pinned
               </span>
             )}
-            <span className="text-[10px] text-student-text">{relativeTime(item.date)}</span>
+            <span className="text-[10px] text-foreground">{relativeTime(item.date)}</span>
             {onMute && (
               <button
                 onClick={() => onMute(item.institution_id)}
                 title="Mute this institution"
-                className="text-student-text hover:text-student-ink p-0.5 rounded"
+                className="text-foreground hover:text-foreground p-0.5 rounded"
               >
                 <BellOff size={13} />
               </button>
@@ -187,15 +187,15 @@ function PostCardLarge({ item, onViewProgram, onAddToCalendar, onStartApplicatio
         </div>
 
         <div className="flex items-center gap-1.5 mt-3 mb-1">
-          <Megaphone size={12} className="text-cobalt" />
-          <span className="text-[10px] font-semibold text-cobalt uppercase tracking-wider">Update</span>
+          <Megaphone size={12} className="text-secondary" />
+          <span className="text-[10px] font-semibold text-secondary uppercase tracking-wider">Update</span>
         </div>
-        <h3 className="text-sm font-semibold text-student-ink">{item.title}</h3>
-        <p className="text-xs text-student-text leading-relaxed mt-1 whitespace-pre-line">{renderInlineMarkdown(shown)}</p>
+        <h3 className="text-sm font-semibold text-foreground">{item.title}</h3>
+        <p className="text-xs text-foreground leading-relaxed mt-1 whitespace-pre-line">{renderInlineMarkdown(shown)}</p>
         {isLong && (
           <button
             onClick={() => setExpanded(e => !e)}
-            className="inline-flex items-center gap-0.5 text-[11px] font-medium text-cobalt mt-1"
+            className="inline-flex items-center gap-0.5 text-[11px] font-medium text-secondary mt-1"
           >
             {expanded ? <>Show less <ChevronUp size={12} /></> : <>Read more <ChevronDown size={12} /></>}
           </button>
@@ -203,7 +203,7 @@ function PostCardLarge({ item, onViewProgram, onAddToCalendar, onStartApplicatio
         {item.media_urls && item.media_urls.length > 0 && (
           <div className="mt-2 flex gap-2 overflow-x-auto">
             {item.media_urls.slice(0, 3).map((m: string | { url?: string }, i: number) => (
-              <div key={i} className="w-28 h-20 rounded-lg bg-student-mist overflow-hidden flex-shrink-0">
+              <div key={i} className="w-28 h-20 rounded-lg bg-muted overflow-hidden flex-shrink-0">
                 <img
                   src={typeof m === 'string' ? m : m.url}
                   alt=""
@@ -235,17 +235,17 @@ function DeadlineCard({ item, onViewProgram, onAddToCalendar }: Props) {
       <div className="p-4">
         <div className="flex items-start gap-2">
           <InstitutionRow item={item} />
-          <span className="ml-auto text-[10px] text-student-text flex-shrink-0">
+          <span className="ml-auto text-[10px] text-foreground flex-shrink-0">
             {item.deadline ? new Date(item.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
           </span>
         </div>
         <div className="flex items-center gap-1.5 mt-3 mb-1">
-          <CalendarClock size={12} className={urgent ? 'text-error' : 'text-cobalt'} />
-          <span className={`text-[10px] font-semibold uppercase tracking-wider ${urgent ? 'text-error' : 'text-cobalt'}`}>
+          <CalendarClock size={12} className={urgent ? 'text-error' : 'text-secondary'} />
+          <span className={`text-[10px] font-semibold uppercase tracking-wider ${urgent ? 'text-error' : 'text-secondary'}`}>
             Application deadline
           </span>
         </div>
-        <h3 className="text-sm font-semibold text-student-ink">
+        <h3 className="text-sm font-semibold text-foreground">
           {item.program_name} — {days === 0 ? 'due today' : days < 0 ? 'closed' : `in ${days} day${days !== 1 ? 's' : ''}`}
         </h3>
         <CtaRow item={item} onViewProgram={onViewProgram} onAddToCalendar={onAddToCalendar} />
@@ -260,19 +260,19 @@ function ProgramChangeCard({ item, onViewProgram }: Props) {
       <div className="p-4">
         <div className="flex items-start gap-2">
           <InstitutionRow item={item} />
-          <span className="ml-auto text-[10px] text-student-text flex-shrink-0">{relativeTime(item.date)}</span>
+          <span className="ml-auto text-[10px] text-foreground flex-shrink-0">{relativeTime(item.date)}</span>
         </div>
         <div className="flex items-center gap-1.5 mt-3 mb-1">
           <AlertTriangle size={12} className="text-warning" />
           <span className="text-[10px] font-semibold text-warning uppercase tracking-wider">Program change</span>
-          {item.muted && <span className="text-[9px] text-student-text">(shown despite mute)</span>}
+          {item.muted && <span className="text-[9px] text-foreground">(shown despite mute)</span>}
         </div>
-        <h3 className="text-sm font-semibold text-student-ink">{item.change_summary || 'This program changed a requirement'}</h3>
-        <p className="text-xs text-student-text mt-0.5">{item.program_name}</p>
+        <h3 className="text-sm font-semibold text-foreground">{item.change_summary || 'This program changed a requirement'}</h3>
+        <p className="text-xs text-foreground mt-0.5">{item.program_name}</p>
         {item.program_id && (
           <button
             onClick={() => onViewProgram(item.program_id!)}
-            className="mt-3 px-3 py-1.5 text-xs font-medium rounded-lg border border-cobalt text-cobalt hover:bg-cobalt/5 transition-colors"
+            className="mt-3 px-3 py-1.5 text-xs font-medium rounded-lg border border-secondary text-secondary hover:bg-secondary/5 transition-colors"
           >
             Review changes
           </button>

@@ -42,20 +42,20 @@ type StatItem = {
 function StatCard({ icon: Icon, label, value, tone }: StatItem) {
   const toneClasses: Record<NonNullable<StatItem['tone']>, string> = {
     emerald: 'text-success',
-    blue: 'text-cobalt',
+    blue: 'text-secondary',
     amber: 'text-warning',
-    rose: 'text-cobalt',
+    rose: 'text-secondary',
   }
   const toneClass = tone ? toneClasses[tone] : undefined
 
   return (
-    <div className="flex items-center gap-2.5 px-3 py-2.5 bg-white border border-divider rounded-lg hover:border-cobalt/30 transition-colors">
+    <div className="flex items-center gap-2.5 px-3 py-2.5 bg-card border border-border rounded-lg hover:border-secondary/30 transition-colors">
       <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-        <Icon size={14} className={toneClass || 'text-student-text'} />
+        <Icon size={14} className={toneClass || 'text-foreground'} />
       </div>
       <div className="min-w-0">
-        <p className="text-[10px] text-student-text/70 leading-tight uppercase tracking-wide">{label}</p>
-        <p className="text-sm font-bold text-student-ink leading-tight truncate">{value}</p>
+        <p className="text-[10px] text-foreground/70 leading-tight uppercase tracking-wide">{label}</p>
+        <p className="text-sm font-bold text-foreground leading-tight truncate">{value}</p>
       </div>
     </div>
   )
@@ -77,8 +77,8 @@ function Category({ title, icon: Icon, stats }: { title: string; icon: any; stat
   return (
     <div className="mb-4 last:mb-0">
       <div className="flex items-center gap-1.5 mb-2">
-        <Icon size={12} className="text-student-text/70" />
-        <h4 className="text-[10px] font-semibold text-student-text/70 uppercase tracking-wider">{title}</h4>
+        <Icon size={12} className="text-foreground/70" />
+        <h4 className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider">{title}</h4>
       </div>
       <div className={`grid gap-2 ${gridClass}`}>
         {stats.map((s, i) => <StatCard key={i} {...s} />)}

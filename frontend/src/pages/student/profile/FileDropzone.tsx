@@ -71,7 +71,7 @@ export default function FileDropzone({
       }}
       className={clsx(
         'flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-8 text-center cursor-pointer transition-colors',
-        dragging ? 'border-secondary bg-muted' : 'border-border hover:border-charcoal/30',
+        dragging ? 'border-secondary bg-muted' : 'border-border hover:border-foreground/30',
       )}
     >
       <input

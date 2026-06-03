@@ -134,17 +134,17 @@ export default function CompareTray({ initialExpanded = false, syncUrl = false }
         </div>
       )}
 
-      <div className="bg-ink text-white elev-raised">
+      <div className="bg-foreground text-background elev-raised">
         <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center gap-3">
-          <ArrowRightLeft size={16} className="text-cream/60 flex-shrink-0" />
-          <span className="hidden sm:inline text-xs text-cream/60 flex-shrink-0">Compare</span>
+          <ArrowRightLeft size={16} className="text-background/60 flex-shrink-0" />
+          <span className="hidden sm:inline text-xs text-background/60 flex-shrink-0">Compare</span>
           <div className="flex items-center gap-2 flex-1 overflow-x-auto no-scrollbar">
             {items.map(item => (
-              <span key={item.program_id} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 rounded-full text-xs whitespace-nowrap flex-shrink-0">
-                <GraduationCap size={12} className="text-cream/60" />
+              <span key={item.program_id} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-background/10 rounded-full text-xs whitespace-nowrap flex-shrink-0">
+                <GraduationCap size={12} className="text-background/60" />
                 <span className="max-w-[140px] truncate">{item.program_name}</span>
                 {item.degree_type && <Badge variant="info" size="sm">{item.degree_type}</Badge>}
-                <button onClick={() => remove(item.program_id)} aria-label="Remove" className="text-cream/50 hover:text-white">
+                <button onClick={() => remove(item.program_id)} aria-label="Remove" className="text-background/50 hover:text-background">
                   <X size={12} />
                 </button>
               </span>
@@ -155,11 +155,11 @@ export default function CompareTray({ initialExpanded = false, syncUrl = false }
               Compare selected ({items.length}) →
             </Button>
             {comparisonResult && (
-              <button onClick={() => setExpanded(!expanded)} aria-label={expanded ? 'Collapse' : 'Expand'} className="p-1 text-cream/60 hover:text-white">
+              <button onClick={() => setExpanded(!expanded)} aria-label={expanded ? 'Collapse' : 'Expand'} className="p-1 text-background/60 hover:text-background">
                 {expanded ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
               </button>
             )}
-            <button onClick={clear} className="text-cream/60 hover:text-white text-xs">Clear</button>
+            <button onClick={clear} className="text-background/60 hover:text-background text-xs">Clear</button>
           </div>
         </div>
       </div>

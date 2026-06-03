@@ -47,17 +47,17 @@ export default function UniversityCard({ institution: inst, onClick }: Props) {
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-lg border border-stone hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ease-out overflow-hidden cursor-pointer flex flex-col group/card"
+      className="bg-card rounded-lg border border-border hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ease-out overflow-hidden cursor-pointer flex flex-col group/card"
     >
       {/* Header — text only (brand: no decorative imagery, no gradients). */}
-      <div className="px-5 pt-5 pb-3 border-b border-divider">
+      <div className="px-5 pt-5 pb-3 border-b border-border">
         {classification.code !== 'other' && (
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cobalt mb-1.5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-secondary mb-1.5">
             {classification.label}
           </p>
         )}
-        <h3 className="text-lg leading-tight font-bold text-charcoal line-clamp-2">{inst.name}</h3>
-        <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate">
+        <h3 className="text-lg leading-tight font-bold text-foreground line-clamp-2">{inst.name}</h3>
+        <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">
           <MapPin size={12} className="flex-shrink-0" />
           <span className="truncate">{locationStr}</span>
         </div>
@@ -73,16 +73,16 @@ export default function UniversityCard({ institution: inst, onClick }: Props) {
         </div>
 
         {inst.description_text && (
-          <p className="text-[13px] text-slate leading-relaxed line-clamp-2">
+          <p className="text-[13px] text-muted-foreground leading-relaxed line-clamp-2">
             {inst.description_text}
           </p>
         )}
       </div>
 
       {/* Footer action. */}
-      <div className="flex items-center border-t border-divider mt-auto px-5 py-2.5">
-        <span className="text-xs font-semibold text-cobalt flex-1">View university</span>
-        <ChevronRight size={16} className="text-cobalt group-hover/card:translate-x-0.5 transition-transform" />
+      <div className="flex items-center border-t border-border mt-auto px-5 py-2.5">
+        <span className="text-xs font-semibold text-secondary flex-1">View university</span>
+        <ChevronRight size={16} className="text-secondary group-hover/card:translate-x-0.5 transition-transform" />
       </div>
     </div>
   )
@@ -90,8 +90,8 @@ export default function UniversityCard({ institution: inst, onClick }: Props) {
 
 function FactPill({ icon: Icon, children }: { icon: ComponentType<{ size?: number; className?: string }>; children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] rounded-md bg-muted text-charcoal border border-stone/60">
-      <Icon size={11} className="text-slate" />
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] rounded-md bg-muted text-foreground border border-border/60">
+      <Icon size={11} className="text-muted-foreground" />
       {children}
     </span>
   )

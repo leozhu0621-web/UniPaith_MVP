@@ -240,7 +240,7 @@ export default function ChatPanel({
                     key={s}
                     type="button"
                     onClick={() => send(s)}
-                    className="text-xs px-2.5 py-1 rounded-full border border-cobalt/50 text-cobalt hover:bg-cobalt/5 transition-colors"
+                    className="text-xs px-2.5 py-1 rounded-full border border-secondary/50 text-secondary hover:bg-secondary/5 transition-colors"
                   >
                     {s}
                   </button>
@@ -342,7 +342,7 @@ function EmptyState({
             key={p}
             type="button"
             onClick={() => (showBasicChips ? onSend(p) : onPick(p))}
-            className="text-left rounded-md border border-cobalt/40 px-3 py-2 text-sm text-foreground hover:border-cobalt hover:bg-cobalt/5 transition-colors"
+            className="text-left rounded-md border border-secondary/40 px-3 py-2 text-sm text-foreground hover:border-secondary hover:bg-secondary/5 transition-colors"
           >
             {p}
           </button>

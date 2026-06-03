@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom'
+import SkipLink from './SkipLink'
 import Wordmark from '../ui/Wordmark'
 
 /** Public chrome — Spec/04 §7.3. Browse · Sign in · Get started (gold CTA). */
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <SkipLink />
       <header className="h-16 flex items-center justify-between px-4 sm:px-8 bg-background border-b border-border flex-shrink-0">
         <Link to="/browse" className="leading-none" aria-label="UniPaith home">
           <Wordmark className="h-7 w-auto" />
@@ -15,18 +17,6 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
             Browse
-          </Link>
-          <Link
-            to="/pricing"
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Pricing
-          </Link>
-          <Link
-            to="/about"
-            className="hidden sm:inline text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            About
           </Link>
           <Link
             to="/goal"
@@ -48,7 +38,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           </Link>
         </nav>
       </header>
-      <main className="flex-1">{children}</main>
+      <main id="main" tabIndex={-1} className="flex-1 outline-none">{children}</main>
       <footer className="border-t border-border px-4 sm:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-1 text-xs text-muted-foreground">
         <span>Apply once, go anywhere.</span>
         <span>Bias-avoidance is a practice, not a checkbox.</span>

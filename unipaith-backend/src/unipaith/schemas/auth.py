@@ -52,3 +52,10 @@ class GoogleCallbackRequest(BaseModel):
     code: str
     redirect_uri: str
     role: Literal["student", "institution_admin"] = "student"
+
+
+class GoogleSignInRequest(BaseModel):
+    """GIS-direct Google sign-in: the client sends the Google ID token."""
+
+    id_token: str
+    role: Literal["student", "institution_admin"] = "student"

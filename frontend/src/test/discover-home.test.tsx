@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
+import { useConfirmStore } from '../stores/confirm-store'
 
 vi.mock('../api/discovery', () => ({
   getCompletionMap: vi
@@ -100,12 +101,14 @@ describe('DiscoverHomePage (spec 19)', () => {
   })
 
   it('asks before switching track when the composer has a draft', () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    useConfirmStore.getState().settle(false) // clear any prior pending confirm
     renderHome()
     const textarea = screen.getByPlaceholderText(/tell me about your life/i)
     fireEvent.change(textarea, { target: { value: 'draft message' } })
     fireEvent.click(screen.getByRole('button', { name: /Goals.*SMART/i }))
-    expect(confirmSpy).toHaveBeenCalled()
-    confirmSpy.mockRestore()
+    // Switching tracks with a draft opens the styled confirm (Spec 78 §6),
+    // not a native window.confirm.
+    expect(useConfirmStore.getState().current?.title).toBe('Discard your message?')
+    useConfirmStore.getState().settle(false)
   })
 })

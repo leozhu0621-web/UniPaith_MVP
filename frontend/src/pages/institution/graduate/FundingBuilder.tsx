@@ -129,7 +129,7 @@ export default function FundingBuilder({
     <Card className="p-5">
       <div className="mb-4 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-cobalt">
+          <span className="text-secondary">
             <Wallet size={16} />
           </span>
           <h3 className="text-sm font-semibold text-foreground">Funding package</h3>
@@ -196,7 +196,7 @@ export default function FundingBuilder({
                   onClick={() => toggleYear(i, y)}
                   className={`h-6 w-6 rounded text-xs font-medium tabular-nums transition-colors ${
                     c.years.includes(y)
-                      ? 'bg-cobalt text-white'
+                      ? 'bg-secondary text-secondary-foreground'
                       : 'bg-muted text-muted-foreground hover:bg-muted/70'
                   }`}
                 >
@@ -229,7 +229,7 @@ export default function FundingBuilder({
                 </div>
                 <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
                   <div
-                    className={`h-full rounded-full ${p.over ? 'bg-error' : 'bg-cobalt'}`}
+                    className={`h-full rounded-full ${p.over ? 'bg-error' : 'bg-secondary'}`}
                     style={{ width: `${pct}%` }}
                   />
                 </div>

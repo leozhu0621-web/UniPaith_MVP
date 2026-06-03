@@ -12,11 +12,11 @@ export default function SavedSchoolCard({ school, onOpen, onUnfollow, unfollowin
   return (
     <div className="bg-card rounded-xl border border-border elev-subtle hover:elev-raised transition-shadow overflow-hidden flex flex-col">
       <button type="button" onClick={onOpen} className="flex-1 text-left p-4 flex gap-3 min-w-0">
-        <div className="w-11 h-11 rounded-lg bg-muted border border-stone/60 flex items-center justify-center flex-shrink-0">
+        <div className="w-11 h-11 rounded-lg bg-muted border border-border/60 flex items-center justify-center flex-shrink-0">
           <GraduationCap size={18} className="text-secondary" />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="text-[15px] font-bold text-charcoal leading-snug truncate">{school.name}</h3>
+          <h3 className="text-[15px] font-bold text-foreground leading-snug truncate">{school.name}</h3>
           <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
             <MapPin size={10} className="flex-shrink-0" />
             Saved school · updates in Connect

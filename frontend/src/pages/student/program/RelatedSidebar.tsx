@@ -47,14 +47,14 @@ export default function RelatedSidebar({
       {upcomingEvents.length > 0 && (
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-3">
-            <Calendar size={14} className="text-student" />
-            <h3 className="text-sm font-semibold text-student-ink">Upcoming Events</h3>
+            <Calendar size={14} className="text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Upcoming Events</h3>
           </div>
           <div className="space-y-2">
             {upcomingEvents.map((ev: any) => (
-              <div key={ev.id} className="px-3 py-2.5 rounded-lg border border-divider hover:border-student/30 transition-colors">
-                <p className="text-xs font-semibold text-student-ink line-clamp-2">{ev.title}</p>
-                <p className="text-[10px] text-student-text mt-0.5">
+              <div key={ev.id} className="px-3 py-2.5 rounded-lg border border-border hover:border-primary/30 transition-colors">
+                <p className="text-xs font-semibold text-foreground line-clamp-2">{ev.title}</p>
+                <p className="text-[10px] text-foreground mt-0.5">
                   {formatDate(ev.event_datetime || ev.starts_at)}
                 </p>
                 {onRsvp && (
@@ -63,7 +63,7 @@ export default function RelatedSidebar({
                     className={`mt-2 text-[11px] font-medium px-2 py-1 rounded-md transition-colors ${
                       rsvpedIds.has(ev.id)
                         ? 'bg-success-soft text-success'
-                        : 'bg-cobalt text-white hover:bg-cobalt-dark'
+                        : 'bg-secondary text-secondary-foreground hover:brightness-95'
                     }`}
                   >
                     {rsvpedIds.has(ev.id) ? '✓ Going' : 'RSVP'}
@@ -79,26 +79,26 @@ export default function RelatedSidebar({
       {sameSchoolPrograms.length > 0 && (
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-3">
-            <GraduationCap size={14} className="text-cobalt" />
-            <h3 className="text-sm font-semibold text-student-ink">Other at this school</h3>
+            <GraduationCap size={14} className="text-secondary" />
+            <h3 className="text-sm font-semibold text-foreground">Other at this school</h3>
           </div>
           <div className="space-y-1">
             {sameSchoolPrograms.slice(0, 5).map(p => (
               <Link
                 key={p.id}
                 to={`/s/programs/${p.id}`}
-                className="flex items-center justify-between gap-2 px-2.5 py-2 rounded-md hover:bg-student-mist group transition-colors"
+                className="flex items-center justify-between gap-2 px-2.5 py-2 rounded-md hover:bg-muted group transition-colors"
               >
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-student-ink truncate group-hover:text-student">{p.program_name}</p>
+                  <p className="text-xs font-medium text-foreground truncate group-hover:text-primary">{p.program_name}</p>
                   {(p.department || p.degree_type) && (
-                    <p className="text-[10px] text-student-text/70 truncate">
+                    <p className="text-[10px] text-foreground/70 truncate">
                       {p.degree_type ? (DEGREE_LABELS[p.degree_type] || p.degree_type) : ''}
                       {p.department ? ` · ${p.department}` : ''}
                     </p>
                   )}
                 </div>
-                <ChevronRight size={12} className="text-student-text/40 group-hover:text-student flex-shrink-0" />
+                <ChevronRight size={12} className="text-foreground/40 group-hover:text-primary flex-shrink-0" />
               </Link>
             ))}
           </div>
@@ -109,23 +109,23 @@ export default function RelatedSidebar({
       {similarPrograms.length > 0 && (
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-3">
-            <Sparkles size={14} className="text-cobalt" />
-            <h3 className="text-sm font-semibold text-student-ink">Similar programs</h3>
+            <Sparkles size={14} className="text-secondary" />
+            <h3 className="text-sm font-semibold text-foreground">Similar programs</h3>
           </div>
           <div className="space-y-1">
             {similarPrograms.slice(0, 5).map(p => (
               <Link
                 key={p.id}
                 to={`/s/programs/${p.id}`}
-                className="flex items-center justify-between gap-2 px-2.5 py-2 rounded-md hover:bg-student-mist group transition-colors"
+                className="flex items-center justify-between gap-2 px-2.5 py-2 rounded-md hover:bg-muted group transition-colors"
               >
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-student-ink truncate group-hover:text-student">{p.program_name}</p>
+                  <p className="text-xs font-medium text-foreground truncate group-hover:text-primary">{p.program_name}</p>
                   {p.degree_type && (
-                    <p className="text-[10px] text-student-text/70 truncate">{DEGREE_LABELS[p.degree_type] || p.degree_type}</p>
+                    <p className="text-[10px] text-foreground/70 truncate">{DEGREE_LABELS[p.degree_type] || p.degree_type}</p>
                   )}
                 </div>
-                <ChevronRight size={12} className="text-student-text/40 group-hover:text-student flex-shrink-0" />
+                <ChevronRight size={12} className="text-foreground/40 group-hover:text-primary flex-shrink-0" />
               </Link>
             ))}
           </div>
@@ -136,15 +136,15 @@ export default function RelatedSidebar({
       {discoveryBackHref && (
         <Link
           to={discoveryBackHref}
-          className="flex items-center justify-between gap-2 px-3 py-3 rounded-lg border border-divider hover:border-cobalt hover:bg-student-mist transition-colors group"
+          className="flex items-center justify-between gap-2 px-3 py-3 rounded-lg border border-border hover:border-secondary hover:bg-muted transition-colors group"
         >
           <div className="flex items-center gap-2 min-w-0">
-            <Compass size={14} className="text-cobalt flex-shrink-0" />
-            <span className="text-xs font-medium text-student-ink">
+            <Compass size={14} className="text-secondary flex-shrink-0" />
+            <span className="text-xs font-medium text-foreground">
               Find more like this in Discovery
             </span>
           </div>
-          <ChevronRight size={12} className="text-student-text/40 group-hover:text-cobalt flex-shrink-0" />
+          <ChevronRight size={12} className="text-foreground/40 group-hover:text-secondary flex-shrink-0" />
         </Link>
       )}
     </aside>

@@ -36,7 +36,7 @@ export default function ApplicantContextPanel({
           <div className="flex items-center justify-between gap-2">
             <dt className="text-muted-foreground">Checklist</dt>
             <dd className="inline-flex items-center gap-1 font-medium text-foreground">
-              <ListChecks size={12} className="text-cobalt" />
+              <ListChecks size={12} className="text-secondary" />
               {context.checklist_complete}/{context.checklist_total}
             </dd>
           </div>
@@ -61,13 +61,13 @@ export default function ApplicantContextPanel({
           <>
             <button
               onClick={() => onNavigate(`/i/admissions/applicant/${thread.application_id}`)}
-              className="inline-flex items-center gap-1 text-xs font-medium text-cobalt hover:underline"
+              className="inline-flex items-center gap-1 text-xs font-medium text-secondary hover:underline"
             >
               Open review workspace <ExternalLink size={11} />
             </button>
             <button
               onClick={() => onNavigate(`/i/admissions/applicant/${thread.application_id}?tab=documents`)}
-              className="inline-flex items-center gap-1 text-xs font-medium text-cobalt hover:underline"
+              className="inline-flex items-center gap-1 text-xs font-medium text-secondary hover:underline"
             >
               View documents <ExternalLink size={11} />
             </button>

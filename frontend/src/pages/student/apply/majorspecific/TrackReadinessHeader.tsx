@@ -89,7 +89,7 @@ export default function TrackReadinessHeader({ coach }: { coach: TrackCoach }) {
                 <div
                   className={clsx(
                     'h-full rounded-full transition-all duration-500',
-                    depth >= 70 ? 'bg-gold' : depth >= 40 ? 'bg-secondary' : 'bg-warning',
+                    depth >= 70 ? 'bg-primary' : depth >= 40 ? 'bg-secondary' : 'bg-warning',
                   )}
                   style={{ width: `${Math.max(2, depth)}%` }}
                 />
@@ -137,7 +137,7 @@ export default function TrackReadinessHeader({ coach }: { coach: TrackCoach }) {
 
       {coach.suggested_bridge_plan && (
         <div className="flex items-start gap-2 rounded-lg bg-muted px-3 py-2.5">
-          <Sparkles size={15} className="mt-0.5 shrink-0 text-gold" />
+          <Sparkles size={15} className="mt-0.5 shrink-0 text-primary" />
           <p className="text-sm text-foreground">{coach.suggested_bridge_plan}</p>
         </div>
       )}

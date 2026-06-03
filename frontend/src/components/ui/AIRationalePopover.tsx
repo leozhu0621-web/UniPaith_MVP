@@ -79,8 +79,8 @@ export function RationaleContent({
                 onClick={onSignalClick ? () => onSignalClick(s) : undefined}
                 disabled={!onSignalClick}
                 className={clsx(
-                  'rounded-pill border border-cobalt px-2 py-0.5 text-xs text-cobalt',
-                  onSignalClick && 'hover:bg-cobalt/10 transition-colors'
+                  'rounded-pill border border-secondary px-2 py-0.5 text-xs text-secondary',
+                  onSignalClick && 'hover:bg-secondary/10 transition-colors'
                 )}
               >
                 {s}

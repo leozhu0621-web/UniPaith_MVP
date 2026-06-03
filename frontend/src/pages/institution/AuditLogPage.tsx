@@ -57,13 +57,13 @@ const ENTITY_OPTIONS = [
 // contrast accessible).
 const ROLE_BADGE: Record<string, string> = {
   system: 'bg-muted text-muted-foreground',
-  student: 'bg-cobalt/10 text-cobalt',
+  student: 'bg-secondary/10 text-secondary',
   institution_admin: 'bg-muted text-foreground',
   ai_agent: 'bg-primary/15 text-foreground',
 }
 const ROLE_DOT: Record<string, string> = {
   system: 'bg-muted-foreground',
-  student: 'bg-cobalt',
+  student: 'bg-secondary',
   institution_admin: 'bg-foreground',
   ai_agent: 'bg-primary',
 }

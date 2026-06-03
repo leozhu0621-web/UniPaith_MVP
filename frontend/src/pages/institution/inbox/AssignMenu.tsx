@@ -47,7 +47,7 @@ export default function AssignMenu({
       align="right"
       trigger={
         <button className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 text-xs font-medium text-foreground hover:bg-muted">
-          <UserCheck size={13} className={thread.assigned_to ? 'text-cobalt' : 'text-muted-foreground'} />
+          <UserCheck size={13} className={thread.assigned_to ? 'text-secondary' : 'text-muted-foreground'} />
           {thread.assigned_to_name ? thread.assigned_to_name : 'Unassigned'}
           <ChevronDown size={12} className="text-muted-foreground" />
         </button>

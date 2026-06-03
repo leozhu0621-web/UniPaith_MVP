@@ -41,7 +41,7 @@ export function severityDotClass(severity: FairnessSeverity, sufficient: boolean
     case 'warning':
       return 'bg-warning'
     case 'override_active':
-      return 'bg-cobalt'
+      return 'bg-secondary'
     default:
       return 'bg-success'
   }

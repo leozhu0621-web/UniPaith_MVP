@@ -31,10 +31,10 @@ function Row({
   highlight?: (o: OfferComparisonItem) => boolean
 }) {
   return (
-    <tr className="border-t border-divider">
+    <tr className="border-t border-border">
       <th
         scope="row"
-        className="text-left align-top py-2.5 pr-4 text-xs font-semibold uppercase tracking-wider text-student-text whitespace-nowrap"
+        className="text-left align-top py-2.5 pr-4 text-xs font-semibold uppercase tracking-wider text-foreground whitespace-nowrap"
       >
         {label}
       </th>
@@ -42,7 +42,7 @@ function Row({
         <td
           key={o.offer_id}
           className={`py-2.5 px-3 text-sm align-top ${
-            highlight?.(o) ? 'text-student-ink font-semibold' : 'text-student-ink'
+            highlight?.(o) ? 'text-foreground font-semibold' : 'text-foreground'
           }`}
         >
           {render(o)}
@@ -78,13 +78,13 @@ export default function DecisionComparison({
       {isLoading ? (
         <Skeleton className="h-64" />
       ) : offers.length === 0 ? (
-        <p className="text-sm text-student-text py-6 text-center">
+        <p className="text-sm text-foreground py-6 text-center">
           No offers to compare yet. They'll appear here as decisions arrive.
         </p>
       ) : (
         <div className="space-y-4">
           {data?.advisor_summary && (
-            <p className="text-sm text-student-ink leading-relaxed rounded-lg bg-student-mist px-3 py-2.5">
+            <p className="text-sm text-foreground leading-relaxed rounded-lg bg-muted px-3 py-2.5">
               {data.advisor_summary}
             </p>
           )}
@@ -103,11 +103,11 @@ export default function DecisionComparison({
                         }}
                         className="text-left hover:opacity-80 transition-opacity"
                       >
-                        <p className="text-sm font-semibold text-student-ink leading-snug">
+                        <p className="text-sm font-semibold text-foreground leading-snug">
                           {o.program_name || 'Program'}
                         </p>
                         {o.institution_name && (
-                          <p className="text-xs text-student-text">{o.institution_name}</p>
+                          <p className="text-xs text-foreground">{o.institution_name}</p>
                         )}
                       </button>
                       <div className="flex flex-wrap gap-1 mt-1.5">
@@ -208,14 +208,14 @@ export default function DecisionComparison({
           </div>
 
           {data?.must_have_constraints && data.must_have_constraints.length > 0 && (
-            <div className="rounded-lg bg-student-mist p-3">
+            <div className="rounded-lg bg-muted p-3">
               <div className="flex items-center gap-1.5 mb-1.5">
-                <ShieldCheck size={14} className="text-cobalt" />
-                <p className="text-xs font-semibold uppercase tracking-wider text-student-text">
+                <ShieldCheck size={14} className="text-secondary" />
+                <p className="text-xs font-semibold uppercase tracking-wider text-foreground">
                   Your must-haves
                 </p>
               </div>
-              <ul className="text-sm text-student-ink space-y-0.5">
+              <ul className="text-sm text-foreground space-y-0.5">
                 {data.must_have_constraints.map((c, i) => (
                   <li key={i}>
                     <span className="font-medium">{c.need}</span>

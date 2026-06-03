@@ -134,7 +134,7 @@ export default function FairsTab() {
       </div>
 
       <Card className="overflow-hidden p-0">
-        <Table columns={columns} data={fairs ?? []} isLoading={isLoading} />
+        <Table columns={columns} data={fairs ?? []} pageSize={25} density="compact" isLoading={isLoading} />
       </Card>
 
       <FairModal open={showNew} onClose={() => setShowNew(false)} onDone={invalidate} />

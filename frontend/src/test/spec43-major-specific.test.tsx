@@ -9,7 +9,7 @@ import { BAND_META, RATING_LABELS, trackLabel } from '../pages/student/apply/maj
 
 describe('Spec 43 — major-specific constants', () => {
   it('band meta covers all three readiness bands, gold only at high', () => {
-    expect(BAND_META.high.text).toContain('gold')
+    expect(BAND_META.high.text).toContain('primary')
     expect(BAND_META.medium.text).toContain('secondary')
     expect(BAND_META.low.text).toContain('warning')
   })

@@ -5,7 +5,7 @@ import Card from '../../../components/ui/Card'
 import Badge from '../../../components/ui/Badge'
 
 function FitBar({ score }: { score: number }) {
-  const color = score >= 60 ? 'bg-cobalt' : score >= 30 ? 'bg-cobalt/60' : 'bg-muted-foreground/40'
+  const color = score >= 60 ? 'bg-secondary' : score >= 30 ? 'bg-secondary/60' : 'bg-muted-foreground/40'
   return (
     <div className="flex items-center gap-2">
       <div className="h-1.5 w-20 overflow-hidden rounded-full bg-muted">
@@ -22,7 +22,7 @@ function AdvisorRow({ a }: { a: StudentAdvisorFit }) {
   return (
     <div
       className={`rounded-lg border p-3 ${
-        a.mutual ? 'border-cobalt/40 bg-cobalt/5' : 'border-border bg-background'
+        a.mutual ? 'border-secondary/40 bg-secondary/5' : 'border-border bg-background'
       }`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -74,7 +74,7 @@ export default function StudentAdvisorFit({ applicationId }: { applicationId: st
   return (
     <Card className="mb-4 p-5">
       <div className="mb-1 flex items-center gap-2">
-        <span className="text-cobalt">
+        <span className="text-secondary">
           <UserCheck size={16} />
         </span>
         <h3 className="text-sm font-semibold text-foreground">Advisors who fit your research</h3>

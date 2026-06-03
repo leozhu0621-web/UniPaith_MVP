@@ -256,7 +256,7 @@ export default function ApplicationDetailPage() {
   usePageTitle(app?.program?.program_name || 'Application')
 
   if (isLoading) return <div className="p-6"><Skeleton className="h-64" /></div>
-  if (!app) return <div className="p-6 text-center text-student-text">Application not found.</div>
+  if (!app) return <div className="p-6 text-center text-foreground">Application not found.</div>
 
   const application: Application = app
   const currentStepIdx = STATUS_STEPS.indexOf(application.status)
@@ -304,15 +304,15 @@ export default function ApplicationDetailPage() {
         className="mb-4"
         items={[{ label: 'Apply', to: '/s/manage' }, { label: 'Applications', to: '/s/manage' }, { label: programName }]}
       />
-      <button onClick={() => navigate('/s/manage')} className="flex items-center gap-1 text-sm text-student-text hover:text-student-ink mb-4">
+      <button onClick={() => navigate('/s/manage')} className="flex items-center gap-1 text-sm text-foreground hover:text-foreground mb-4">
         <ArrowLeft size={16} /> Back to Apply
       </button>
 
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-xl font-bold text-student-ink mb-1">{programName}</h1>
+          <h1 className="text-xl font-bold text-foreground mb-1">{programName}</h1>
           {application.program?.institution_name && (
-            <p className="text-sm text-student-text flex items-center gap-1"><Building2 size={13} /> {application.program.institution_name}</p>
+            <p className="text-sm text-foreground flex items-center gap-1"><Building2 size={13} /> {application.program.institution_name}</p>
           )}
         </div>
       </div>
@@ -334,21 +334,21 @@ export default function ApplicationDetailPage() {
                 : 'text-warning'
           } />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-student-ink">
+            <p className="text-sm font-medium text-foreground">
               {DECISION_STATE_LABEL[application.decision_state || application.decision] ||
                 `Decision: ${application.decision}`}
             </p>
             {application.decision === 'admitted' && application.student_decision !== 'accepted_by_student' && (
-              <p className="text-xs text-student-text">Review your offer in the Offer tab.</p>
+              <p className="text-xs text-foreground">Review your offer in the Offer tab.</p>
             )}
             {application.student_decision === 'accepted_by_student' && (
-              <p className="text-xs text-student-text">You're in — enrollment steps are on your calendar.</p>
+              <p className="text-xs text-foreground">You're in — enrollment steps are on your calendar.</p>
             )}
           </div>
           {application.decision === 'admitted' && application.student_decision !== 'accepted_by_student' && (
             <button
               onClick={() => setTab('offer')}
-              className="text-xs text-cobalt font-medium shrink-0 hover:underline"
+              className="text-xs text-secondary font-medium shrink-0 hover:underline"
             >
               View offer →
             </button>
@@ -365,7 +365,7 @@ export default function ApplicationDetailPage() {
             return (
               <div key={step} className="flex items-center flex-1 last:flex-none">
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0 ${
-                  done ? 'bg-success text-white' : current ? 'bg-cobalt text-white' : 'bg-muted text-muted-foreground'
+                  done ? 'bg-success text-secondary-foreground' : current ? 'bg-secondary text-secondary-foreground' : 'bg-muted text-muted-foreground'
                 }`}>
                   {done ? <Check size={12} /> : <Circle size={12} />}
                 </div>
@@ -378,7 +378,7 @@ export default function ApplicationDetailPage() {
         </div>
         <div className="flex items-center justify-between mt-1.5">
           {STATUS_STEPS.map((step, i) => (
-            <span key={step} className={`text-[11px] ${i === currentStepIdx ? 'text-cobalt font-medium' : 'text-muted-foreground'}`}>
+            <span key={step} className={`text-[11px] ${i === currentStepIdx ? 'text-secondary font-medium' : 'text-muted-foreground'}`}>
               {STATUS_STEP_LABELS[step]}
             </span>
           ))}
@@ -389,7 +389,7 @@ export default function ApplicationDetailPage() {
         {/* Sidebar */}
         <div className="w-60 flex-shrink-0 space-y-4">
           <Card className="p-4">
-            <h3 className="font-medium text-sm text-student-ink mb-3">Checklist</h3>
+            <h3 className="font-medium text-sm text-foreground mb-3">Checklist</h3>
             <div className="space-y-2 mb-3">
               {checklistItems.map((item, i) => (
                 <div
@@ -407,12 +407,12 @@ export default function ApplicationDetailPage() {
                   ) : (
                     <Circle size={12} className="text-muted-foreground flex-shrink-0" />
                   )}
-                  <span className={item.status === 'completed' ? 'text-muted-foreground line-through' : 'text-student-ink'}>
+                  <span className={item.status === 'completed' ? 'text-muted-foreground line-through' : 'text-foreground'}>
                     {item.name}
                   </span>
                 </div>
               ))}
-              {checklistItems.length === 0 && <p className="text-xs text-student-text">Generating checklist…</p>}
+              {checklistItems.length === 0 && <p className="text-xs text-foreground">Generating checklist…</p>}
             </div>
             <ProgressBar value={completionPct} label="Readiness" />
 
@@ -482,22 +482,22 @@ export default function ApplicationDetailPage() {
           {/* Submission mode (§7) */}
           {application.status === 'draft' && (
             <Card className="p-4">
-              <h3 className="font-medium text-sm text-student-ink mb-2">How will you submit?</h3>
-              <div className="flex rounded-lg border border-divider overflow-hidden text-xs">
+              <h3 className="font-medium text-sm text-foreground mb-2">How will you submit?</h3>
+              <div className="flex rounded-lg border border-border overflow-hidden text-xs">
                 <button
                   onClick={() => !isExternal || modeMut.mutate('internal')}
-                  className={`flex-1 px-2 py-1.5 ${!isExternal ? 'bg-cobalt text-white' : 'text-student-text hover:bg-student-mist'}`}
+                  className={`flex-1 px-2 py-1.5 ${!isExternal ? 'bg-secondary text-secondary-foreground' : 'text-foreground hover:bg-muted'}`}
                 >
                   Through UniPaith
                 </button>
                 <button
                   onClick={() => isExternal || modeMut.mutate('external')}
-                  className={`flex-1 px-2 py-1.5 ${isExternal ? 'bg-cobalt text-white' : 'text-student-text hover:bg-student-mist'}`}
+                  className={`flex-1 px-2 py-1.5 ${isExternal ? 'bg-secondary text-secondary-foreground' : 'text-foreground hover:bg-muted'}`}
                 >
                   Their portal
                 </button>
               </div>
-              <p className="text-[11px] text-student-text mt-2">
+              <p className="text-[11px] text-foreground mt-2">
                 {isExternal
                   ? 'You\'ll submit on the institution\'s portal. Mark items complete here and attach confirmation evidence.'
                   : 'Submit directly through UniPaith once every required item is complete.'}
@@ -530,30 +530,30 @@ export default function ApplicationDetailPage() {
                   onDragOver={e => { e.preventDefault(); setDragOver(true) }}
                   onDragLeave={() => setDragOver(false)}
                   onDrop={handleDrop}
-                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${dragOver ? 'border-cobalt bg-student-mist' : 'border-divider hover:border-cobalt/40'}`}
+                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${dragOver ? 'border-secondary bg-muted' : 'border-border hover:border-secondary/40'}`}
                 >
-                  <Upload size={24} className="mx-auto text-student-text mb-2" />
-                  <p className="text-sm text-student-text mb-1">Drag & drop files here, or</p>
+                  <Upload size={24} className="mx-auto text-foreground mb-2" />
+                  <p className="text-sm text-foreground mb-1">Drag & drop files here, or</p>
                   <label className="inline-block">
                     <input type="file" multiple className="hidden" onChange={e => e.target.files && handleFileUpload(e.target.files)} />
-                    <span className="text-sm font-medium text-cobalt underline cursor-pointer">browse files</span>
+                    <span className="text-sm font-medium text-secondary underline cursor-pointer">browse files</span>
                   </label>
                   <p className="text-xs text-muted-foreground mt-1">PDF, DOC, DOCX up to 10MB</p>
                 </div>
 
                 {uploading && (
                   <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-student-text"><span>Uploading…</span><span>{uploadProgress}%</span></div>
+                    <div className="flex justify-between text-xs text-foreground"><span>Uploading…</span><span>{uploadProgress}%</span></div>
                     <ProgressBar value={uploadProgress} />
                   </div>
                 )}
 
                 {documentsList.length > 0 && (
                   <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-student-ink">Uploaded documents</h3>
+                    <h3 className="text-sm font-medium text-foreground">Uploaded documents</h3>
                     {documentsList.map((doc: any) => (
-                      <div key={doc.id} className="flex justify-between items-center p-3 rounded-lg border border-divider text-sm">
-                        <div className="flex items-center gap-2"><FileCheck size={16} className="text-success" /><span className="text-student-ink">{doc.file_name}</span></div>
+                      <div key={doc.id} className="flex justify-between items-center p-3 rounded-lg border border-border text-sm">
+                        <div className="flex items-center gap-2"><FileCheck size={16} className="text-success" /><span className="text-foreground">{doc.file_name}</span></div>
                         <Badge variant="neutral">{doc.document_type}</Badge>
                       </div>
                     ))}
@@ -561,8 +561,8 @@ export default function ApplicationDetailPage() {
                 )}
 
                 {/* Resume (a document) */}
-                <div className="flex items-center justify-between p-3 rounded-lg border border-divider">
-                  <div className="text-sm text-student-ink">
+                <div className="flex items-center justify-between p-3 rounded-lg border border-border">
+                  <div className="text-sm text-foreground">
                     Resume / CV {resumesList.length > 0 && <Badge variant="success">v{resumesList[0].resume_version}</Badge>}
                   </div>
                   {resumesList.length === 0 && (
@@ -571,7 +571,7 @@ export default function ApplicationDetailPage() {
                 </div>
 
                 {documentsList.length === 0 && !uploading && (
-                  <p className="text-sm text-student-text">Upload transcripts, recommendations, and other required documents above.</p>
+                  <p className="text-sm text-foreground">Upload transcripts, recommendations, and other required documents above.</p>
                 )}
               </div>
             )}
@@ -580,15 +580,15 @@ export default function ApplicationDetailPage() {
               <div className="space-y-4">
                 <Button size="sm" onClick={() => setShowEssayModal(true)}>+ New essay</Button>
                 {essaysList.length === 0 ? (
-                  <p className="text-sm text-student-text mt-2">No essays yet for this application.</p>
+                  <p className="text-sm text-foreground mt-2">No essays yet for this application.</p>
                 ) : (
                   essaysList.map((e: Essay) => (
                     <Card key={e.id} className="p-4">
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <p className="font-medium text-sm text-student-ink">{e.prompt_text || 'Essay'}</p>
+                          <p className="font-medium text-sm text-foreground">{e.prompt_text || 'Essay'}</p>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-student-text">{e.word_count ?? wordCount(e.content)} words</span>
+                            <span className="text-xs text-foreground">{e.word_count ?? wordCount(e.content)} words</span>
                             <Badge variant={(STATUS_COLORS[e.status] || 'neutral') as never}>{e.status}</Badge>
                           </div>
                         </div>
@@ -599,13 +599,13 @@ export default function ApplicationDetailPage() {
                           <Button size="sm" variant="ghost" onClick={() => { setEditingEssay(e); setEssayContent(e.content); setEssayPrompt(e.prompt_text || '') }}>Edit</Button>
                         </div>
                       </div>
-                      <p className="text-sm text-student-text line-clamp-3">{e.content}</p>
+                      <p className="text-sm text-foreground line-clamp-3">{e.content}</p>
                       {feedbackResults[e.id] && (
-                        <div className="mt-3 bg-student-mist rounded-lg p-3">
-                          <div className="flex items-center gap-2 mb-2"><Sparkles size={14} className="text-cobalt" /><span className="text-sm font-medium text-student-ink">Feedback</span></div>
-                          {feedbackResults[e.id].feedback && <p className="text-sm text-student-text whitespace-pre-wrap">{feedbackResults[e.id].feedback}</p>}
+                        <div className="mt-3 bg-muted rounded-lg p-3">
+                          <div className="flex items-center gap-2 mb-2"><Sparkles size={14} className="text-secondary" /><span className="text-sm font-medium text-foreground">Feedback</span></div>
+                          {feedbackResults[e.id].feedback && <p className="text-sm text-foreground whitespace-pre-wrap">{feedbackResults[e.id].feedback}</p>}
                           {feedbackResults[e.id].suggestions && (
-                            <ul className="text-sm text-student-text list-disc list-inside mt-2 space-y-1">
+                            <ul className="text-sm text-foreground list-disc list-inside mt-2 space-y-1">
                               {feedbackResults[e.id].suggestions.map((s: string, i: number) => <li key={i}>{s}</li>)}
                             </ul>
                           )}
@@ -638,7 +638,7 @@ export default function ApplicationDetailPage() {
                   ) : (
                     <Card className="p-6 text-center">
                       <Users size={32} className="text-muted-foreground mx-auto mb-3" />
-                      <p className="text-sm text-student-text">No interviews scheduled yet.</p>
+                      <p className="text-sm text-foreground">No interviews scheduled yet.</p>
                       <p className="text-xs text-muted-foreground mt-1">
                         You'll be notified when an interview is requested.
                       </p>
@@ -654,8 +654,8 @@ export default function ApplicationDetailPage() {
                   <div className="bg-warning-soft border border-warning/30 rounded-lg p-4 flex items-start gap-3">
                     <AlertTriangle size={18} className="text-warning flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-student-ink">Low-fit warning</p>
-                      <p className="text-xs text-student-text mt-0.5">
+                      <p className="text-sm font-medium text-foreground">Low-fit warning</p>
+                      <p className="text-xs text-foreground mt-0.5">
                         {fitnessPct != null ? `This program's fitness is ${fitnessPct}%.` : 'This program may be a low-fit option.'} Review your Match analysis before committing effort here.
                       </p>
                     </div>
@@ -663,7 +663,7 @@ export default function ApplicationDetailPage() {
                 )}
 
                 <Card className="p-4">
-                  <div className="flex items-center gap-2 mb-3"><ShieldCheck size={16} className="text-cobalt" /><h3 className="text-sm font-medium text-student-ink">Why are you applying?</h3></div>
+                  <div className="flex items-center gap-2 mb-3"><ShieldCheck size={16} className="text-secondary" /><h3 className="text-sm font-medium text-foreground">Why are you applying?</h3></div>
                   <div className="flex flex-wrap gap-2 mb-3">
                     {INTENT_OPTIONS.map(opt => (
                       <button
@@ -671,7 +671,7 @@ export default function ApplicationDetailPage() {
                         onClick={() => setIntentReason(opt.value)}
                         className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
                           (intentReason || application.intent_picker) === opt.value
-                            ? 'bg-ink text-white border-ink' : 'bg-white text-student-text border-divider hover:bg-student-mist'
+                            ? 'bg-foreground text-background border-foreground' : 'bg-card text-foreground border-border hover:bg-muted'
                         }`}
                       >
                         {opt.label}
@@ -686,7 +686,7 @@ export default function ApplicationDetailPage() {
                         onChange={e => setRationale(e.target.value)}
                         placeholder="Explain why this application is worth your effort…"
                       />
-                      <p className="text-[11px] text-student-text mt-1 text-right">{(rationale || application.intent_rationale || '').length}/80</p>
+                      <p className="text-[11px] text-foreground mt-1 text-right">{(rationale || application.intent_rationale || '').length}/80</p>
                     </div>
                   )}
                   <Button
@@ -706,30 +706,30 @@ export default function ApplicationDetailPage() {
 
                 <Card className="p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-medium text-student-ink">Guardrail scan</h3>
+                    <h3 className="text-sm font-medium text-foreground">Guardrail scan</h3>
                     <Button size="sm" onClick={runGuardrailScan} loading={scanning}>Run scan</Button>
                   </div>
-                  <p className="text-xs text-student-text mb-3">Checks fit and flags anything to reconsider before you apply.</p>
+                  <p className="text-xs text-foreground mb-3">Checks fit and flags anything to reconsider before you apply.</p>
                   {(guardrailResult || application.fit_band) && (
                     <div className={`rounded-lg p-3 ${
                       (guardrailResult?.fit_band || application.fit_band) === 'high' ? 'bg-success-soft'
-                        : (guardrailResult?.fit_band || application.fit_band) === 'low' ? 'bg-warning-soft' : 'bg-student-mist'
+                        : (guardrailResult?.fit_band || application.fit_band) === 'low' ? 'bg-warning-soft' : 'bg-muted'
                     }`}>
                       <div className="flex items-center gap-2 mb-1">
                         <Badge variant={(guardrailResult?.fit_band || application.fit_band) === 'high' ? 'success' : (guardrailResult?.fit_band || application.fit_band) === 'low' ? 'warning' : 'info'}>
                           {(guardrailResult?.fit_band || application.fit_band)} fit
                         </Badge>
-                        {guardrailResult?.recommended_action && <span className="text-xs text-student-text">Recommended: {guardrailResult.recommended_action}</span>}
+                        {guardrailResult?.recommended_action && <span className="text-xs text-foreground">Recommended: {guardrailResult.recommended_action}</span>}
                         {guardrailResult?.is_rule_based && <span className="text-[10px] text-muted-foreground">Showing rule-based result</span>}
                       </div>
                       {(guardrailResult?.blockers || application.guardrail_blockers || []).length > 0 ? (
                         <ul className="mt-2 space-y-1">
                           {(guardrailResult?.blockers || application.guardrail_blockers || []).map((b: string, i: number) => (
-                            <li key={i} className="text-xs text-student-text flex items-start gap-1"><AlertCircle size={11} className="mt-0.5 flex-shrink-0" /> {b}</li>
+                            <li key={i} className="text-xs text-foreground flex items-start gap-1"><AlertCircle size={11} className="mt-0.5 flex-shrink-0" /> {b}</li>
                           ))}
                         </ul>
                       ) : (
-                        <p className="text-xs text-student-text mt-1">No blockers — you're clear to proceed.</p>
+                        <p className="text-xs text-foreground mt-1">No blockers — you're clear to proceed.</p>
                       )}
                     </div>
                   )}
@@ -784,24 +784,24 @@ export default function ApplicationDetailPage() {
                 {readiness.is_ready ? <Check size={24} className="text-success" /> : <AlertCircle size={24} className="text-warning" />}
               </div>
               <div>
-                <p className="font-medium text-student-ink">{readiness.is_ready ? 'Ready to submit!' : 'Almost there'}</p>
-                <p className="text-sm text-student-text">{readiness.completion_percentage}% complete</p>
+                <p className="font-medium text-foreground">{readiness.is_ready ? 'Ready to submit!' : 'Almost there'}</p>
+                <p className="text-sm text-foreground">{readiness.completion_percentage}% complete</p>
               </div>
             </div>
             <ProgressBar value={readiness.completion_percentage} />
             {readiness.missing_items?.length > 0 && (
               <div>
-                <h4 className="text-sm font-medium text-student-ink mb-2">Missing items:</h4>
+                <h4 className="text-sm font-medium text-foreground mb-2">Missing items:</h4>
                 <ul className="space-y-1">
                   {readiness.missing_items.map((item: string, i: number) => (
-                    <li key={i} className="flex items-center gap-2 text-sm text-student-text"><Circle size={8} className="text-destructive flex-shrink-0" /> {item}</li>
+                    <li key={i} className="flex items-center gap-2 text-sm text-foreground"><Circle size={8} className="text-destructive flex-shrink-0" /> {item}</li>
                   ))}
                 </ul>
               </div>
             )}
             {readiness.warnings?.length > 0 && (
               <div>
-                <h4 className="text-sm font-medium text-student-ink mb-2">Warnings:</h4>
+                <h4 className="text-sm font-medium text-foreground mb-2">Warnings:</h4>
                 <ul className="space-y-1">
                   {readiness.warnings.map((w: string, i: number) => (
                     <li key={i} className="flex items-center gap-2 text-sm text-warning"><AlertCircle size={12} className="flex-shrink-0" /> {w}</li>
@@ -817,7 +817,7 @@ export default function ApplicationDetailPage() {
       <Modal isOpen={!!submitBlockers} onClose={() => setSubmitBlockers(null)} title="Submit blocked. Resolve these items first:">
         <ul className="space-y-2">
           {(submitBlockers || []).map((b, i) => (
-            <li key={i} className="flex items-center gap-2 text-sm text-student-ink"><AlertCircle size={14} className="text-warning flex-shrink-0" /> {b}</li>
+            <li key={i} className="flex items-center gap-2 text-sm text-foreground"><AlertCircle size={14} className="text-warning flex-shrink-0" /> {b}</li>
           ))}
         </ul>
         <Button className="w-full mt-4" variant="tertiary" onClick={() => setSubmitBlockers(null)}>Got it</Button>
@@ -837,7 +837,7 @@ export default function ApplicationDetailPage() {
       {/* Spec 39 §2.2 — fee-waiver request (equally prominent to paying) */}
       <Modal isOpen={waiverOpen} onClose={() => setWaiverOpen(false)} title="Request a fee waiver" size="sm">
         <div className="space-y-3">
-          <p className="text-sm text-student-text">
+          <p className="text-sm text-foreground">
             Choose a basis for your request. The school reviews it — there's no fee to ask.
           </p>
           <Select
@@ -911,10 +911,10 @@ function FeeCard({ fee, isDraft, payPending, onPay, onRequestWaiver, programName
   return (
     <Card className="p-4">
       <div className="flex items-center gap-2 mb-1">
-        <HandCoins size={15} className="text-cobalt" />
-        <h3 className="font-medium text-sm text-student-ink">Application fee</h3>
+        <HandCoins size={15} className="text-secondary" />
+        <h3 className="font-medium text-sm text-foreground">Application fee</h3>
       </div>
-      <p className="text-2xl font-bold text-student-ink tabular-nums mb-2">{money}</p>
+      <p className="text-2xl font-bold text-foreground tabular-nums mb-2">{money}</p>
 
       {(paid || refunded) && (
         <div className="space-y-2">
@@ -927,17 +927,17 @@ function FeeCard({ fee, isDraft, payPending, onPay, onRequestWaiver, programName
               </span>
             </div>
           ) : (
-            <div className="rounded-lg bg-student-mist px-3 py-2 text-xs text-student-text">
+            <div className="rounded-lg bg-muted px-3 py-2 text-xs text-foreground">
               Refunded {formatMoney(fee.refunded_amount || 0, fee.currency)} of {money}.
             </div>
           )}
-          <button onClick={receipt} className="text-xs text-cobalt hover:underline inline-flex items-center gap-1">
+          <button onClick={receipt} className="text-xs text-secondary hover:underline inline-flex items-center gap-1">
             <Download size={12} /> Download receipt
           </button>
         </div>
       )}
       {waived && <Badge variant="info">Fee waived</Badge>}
-      {processing && <p className="text-xs text-student-text">Confirming your payment…</p>}
+      {processing && <p className="text-xs text-foreground">Confirming your payment…</p>}
       {failed && (
         <p className="text-xs text-warning">That payment didn't go through. Try again or request a waiver.</p>
       )}
@@ -945,7 +945,7 @@ function FeeCard({ fee, isDraft, payPending, onPay, onRequestWaiver, programName
         <div className="space-y-1.5">
           <Badge variant="warning">Waiver requested — the school will review it</Badge>
           {fee.waiver_policy === 'allow_and_reconcile' && (
-            <p className="text-xs text-student-text">You can submit now; the school reconciles the fee.</p>
+            <p className="text-xs text-foreground">You can submit now; the school reconciles the fee.</p>
           )}
         </div>
       )}
@@ -967,7 +967,7 @@ function FeeCard({ fee, isDraft, payPending, onPay, onRequestWaiver, programName
         </div>
       )}
       {!isDraft && !paid && !waived && !refunded && (
-        <p className="text-xs text-student-text mt-1">Fee status: {fee.status.replace(/_/g, ' ')}.</p>
+        <p className="text-xs text-foreground mt-1">Fee status: {fee.status.replace(/_/g, ' ')}.</p>
       )}
     </Card>
   )
@@ -992,11 +992,11 @@ function ChecklistTab({ items, completionPct, isExternal, canToggle, onToggle }:
     <div className="space-y-4">
       <Card className="p-4">
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2"><ListChecks size={16} className="text-cobalt" /><span className="text-sm font-medium text-student-ink">Readiness: {completionPct}%</span></div>
+          <div className="flex items-center gap-2"><ListChecks size={16} className="text-secondary" /><span className="text-sm font-medium text-foreground">Readiness: {completionPct}%</span></div>
           {completionPct >= 100 && <Badge variant="success">Ready to submit</Badge>}
         </div>
         <ProgressBar value={completionPct} />
-        {isExternal && <p className="text-xs text-student-text mt-2">External submission — check items off as you complete them on the institution's portal.</p>}
+        {isExternal && <p className="text-xs text-foreground mt-2">External submission — check items off as you complete them on the institution's portal.</p>}
       </Card>
       {Object.entries(grouped).map(([cat, catItems]) => (
         <div key={cat}>
@@ -1010,10 +1010,10 @@ function ChecklistTab({ items, completionPct, isExternal, canToggle, onToggle }:
                     checked={item.status === 'completed'}
                     disabled={!canToggle || (!isExternal && item.owner === 'recommender')}
                     onChange={e => item.key && onToggle(item.key, e.target.checked)}
-                    className="rounded border-divider text-cobalt focus:ring-cobalt"
+                    className="rounded border-border text-secondary focus:ring-secondary"
                   />
                   <div className="min-w-0">
-                    <p className="text-sm text-student-ink">{item.name}</p>
+                    <p className="text-sm text-foreground">{item.name}</p>
                     {item.expected_format && <p className="text-xs text-muted-foreground">{item.expected_format}</p>}
                   </div>
                 </div>
@@ -1029,7 +1029,7 @@ function ChecklistTab({ items, completionPct, isExternal, canToggle, onToggle }:
         </div>
       ))}
       {items.length === 0 && (
-        <Card className="p-6 text-center"><ListChecks size={32} className="text-muted-foreground mx-auto mb-3" /><p className="text-sm text-student-text">No checklist items yet.</p></Card>
+        <Card className="p-6 text-center"><ListChecks size={32} className="text-muted-foreground mx-auto mb-3" /><p className="text-sm text-foreground">No checklist items yet.</p></Card>
       )}
     </div>
   )
@@ -1049,7 +1049,7 @@ function RecommendersTab({ recommenders, programId, onNudge }: {
     return (
       <Card className="p-6 text-center">
         <Users size={32} className="text-muted-foreground mx-auto mb-3" />
-        <p className="text-sm text-student-text">No recommenders yet.</p>
+        <p className="text-sm text-foreground">No recommenders yet.</p>
         <p className="text-xs text-muted-foreground mt-1">Add recommenders from your Profile to request letters for this program.</p>
       </Card>
     )
@@ -1058,8 +1058,8 @@ function RecommendersTab({ recommenders, programId, onNudge }: {
       {relevant.map(r => (
         <Card key={r.id} className="p-4 flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-student-ink">{r.recommender_name}</p>
-            <p className="text-xs text-student-text">{r.recommender_title || r.relationship || r.recommender_institution || 'Recommender'}</p>
+            <p className="text-sm font-medium text-foreground">{r.recommender_name}</p>
+            <p className="text-xs text-foreground">{r.recommender_title || r.relationship || r.recommender_institution || 'Recommender'}</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <Badge variant={REC_STATUS[r.status] || 'neutral'}>{(r.status || 'draft').replace(/_/g, ' ')}</Badge>

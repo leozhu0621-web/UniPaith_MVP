@@ -119,7 +119,7 @@ export default function ThreadView({
           <ChevronLeft size={18} />
         </button>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[11px] font-medium uppercase tracking-wide text-cobalt">
+          <p className="truncate text-[11px] font-medium uppercase tracking-wide text-secondary">
             {thread.application_id ? 'Application · ' : ''}
             {threadEyebrow(thread)}
           </p>
@@ -142,7 +142,7 @@ export default function ThreadView({
             {thread.application_id && (
               <button
                 onClick={() => onNavigate(`/s/applications/${thread.application_id}`)}
-                className="inline-flex items-center gap-1 text-[11px] text-cobalt hover:underline"
+                className="inline-flex items-center gap-1 text-[11px] text-secondary hover:underline"
               >
                 View application <ExternalLink size={9} />
               </button>
@@ -152,7 +152,7 @@ export default function ThreadView({
                 onClick={() =>
                   onNavigate(`/s/applications/${thread.application_id}?checklist=${thread.linked_checklist_item_category}`)
                 }
-                className="inline-flex items-center gap-1 text-[11px] text-cobalt hover:underline"
+                className="inline-flex items-center gap-1 text-[11px] text-secondary hover:underline"
               >
                 Checklist item <ExternalLink size={9} />
               </button>
@@ -160,7 +160,7 @@ export default function ThreadView({
             {thread.linked_calendar_item_id && (
               <button
                 onClick={() => onNavigate('/s/manage?tab=calendar')}
-                className="inline-flex items-center gap-1 text-[11px] text-cobalt hover:underline"
+                className="inline-flex items-center gap-1 text-[11px] text-secondary hover:underline"
               >
                 Calendar <ExternalLink size={9} />
               </button>
@@ -196,7 +196,7 @@ export default function ThreadView({
                 <div
                   className={`whitespace-pre-wrap rounded-2xl px-4 py-2 text-sm ${
                     own
-                      ? 'rounded-br-md bg-cobalt text-white'
+                      ? 'rounded-br-md bg-secondary text-secondary-foreground'
                       : 'rounded-bl-md bg-muted text-foreground'
                   }`}
                 >
