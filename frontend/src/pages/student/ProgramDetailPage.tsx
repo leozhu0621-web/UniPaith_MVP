@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import QueryError from '../../components/ui/QueryError'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -128,7 +129,7 @@ export default function ProgramDetailPage() {
   }, [searchParams, setSearchParams])
 
   // Data
-  const { data: program, isLoading } = useQuery({ queryKey: ['program', programId], queryFn: () => getProgram(programId!) })
+  const { data: program, isLoading, isError, refetch } = useQuery({ queryKey: ['program', programId], queryFn: () => getProgram(programId!) })
   const { data: matchResult } = useQuery({ queryKey: ['match', programId], queryFn: () => getMatchDetail(programId!), retry: false })
   const { data: netPrice } = useQuery({ queryKey: ['net-price', programId], queryFn: () => getNetPrice(programId!), enabled: !!programId, retry: false })
   const { data: events } = useQuery({ queryKey: ['events', { program_id: programId }], queryFn: () => listEvents({ program_id: programId, limit: 5 }) })
@@ -183,6 +184,14 @@ export default function ProgramDetailPage() {
   })
 
   if (isLoading) return <ProgramDetailSkeleton />
+
+  if (isError) {
+    return (
+      <div className="p-6 max-w-3xl mx-auto">
+        <QueryError detail="We couldn't load this program." onRetry={() => refetch()} />
+      </div>
+    )
+  }
 
   if (!program) {
     return (
