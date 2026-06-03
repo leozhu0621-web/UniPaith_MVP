@@ -1,0 +1,12 @@
+{
+  "consumer": "chatbot",
+  "judge_model": "haiku",
+  "judge_family": "claude",
+  "system_under_test": "orchestrator (Sonnet)",
+  "independent": false,
+  "agreement": null,
+  "target_agreement": 0.85,
+  "labeled_case_count": 0,
+  "status": "baseline",
+  "note": "The judge is a distinct model and ledger slot (Haiku, temperature 0, forced tool-use) from the Sonnet agent under test, and runs only after the deterministic floor. Live >=85% expert agreement is an expert-hours staffing item shared with specs 60/61 (62 §13)."
+}
