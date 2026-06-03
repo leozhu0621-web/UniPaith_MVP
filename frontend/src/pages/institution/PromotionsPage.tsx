@@ -155,7 +155,7 @@ export default function PromotionsPage() {
         title="Promotions"
         description="Spotlight programs with featured placements, targeting scopes, and time-boxed visibility."
         actions={(
-          <Button onClick={openCreate} className="flex items-center gap-2">
+          <Button variant="secondary" onClick={openCreate} className="flex items-center gap-2">
             <Plus size={16} /> New Promotion
           </Button>
         )}
@@ -184,7 +184,12 @@ export default function PromotionsPage() {
 
       <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
-      {promosQ.isLoading ? (
+      {promosQ.isError ? (
+        <div className="p-8 text-center">
+          <p className="mb-2 text-sm text-error">Couldn’t load promotions.</p>
+          <button onClick={() => promosQ.refetch()} className="text-secondary hover:underline text-sm">Retry</button>
+        </div>
+      ) : promosQ.isLoading ? (
         <div className="grid grid-cols-2 gap-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-40" />)}</div>
       ) : promos.length === 0 ? (
         <EmptyState
@@ -286,7 +291,7 @@ export default function PromotionsPage() {
 
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => { setShowModal(false); resetForm() }}>Cancel</Button>
-            <Button onClick={handleSubmit} disabled={createMut.isPending || updateMut.isPending}>
+            <Button variant="secondary" onClick={handleSubmit} disabled={createMut.isPending || updateMut.isPending}>
               {(createMut.isPending || updateMut.isPending) ? 'Saving...' : 'Save'}
             </Button>
           </div>

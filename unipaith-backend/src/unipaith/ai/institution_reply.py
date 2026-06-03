@@ -40,7 +40,16 @@ def _load_prompt(name: str) -> str:
     return (PROMPTS_DIR / name).read_text(encoding="utf-8").rstrip()
 
 
-_INSTITUTION_REPLY_PROMPT = _load_prompt("institution_reply.md")
+# Spec 61 §3 — append the faculty/institution behavior constitution. It is the
+# same versioned file the spec-62 judge uses as its rubric, so this agent is
+# steered by the standard it is graded against ("drafts never decides", no
+# protected-class proxies, grounded in applicant context). Net-additive — the
+# existing institution_reply.md rules are unchanged.
+_INSTITUTION_REPLY_PROMPT = (
+    _load_prompt("institution_reply.md")
+    + "\n\n---\n\n"
+    + _load_prompt("_shared/constitution_faculty.md")
+)
 
 
 # ── Data shapes ────────────────────────────────────────────────────────────

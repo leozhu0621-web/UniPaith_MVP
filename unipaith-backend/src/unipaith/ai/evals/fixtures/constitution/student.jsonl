@@ -1,0 +1,17 @@
+// Spec 61 §3/§5 — constitution-adherence golden cases for the student advisor.
+// Each maps to a dimension key in `_shared/constitution_student.md` (the rubric).
+// `must_do` / `must_not_do` are the behaviors the LLM judge scores in real mode;
+// in mock mode the suite validates structure (well-formed + the dimension exists
+// in the live constitution, so a fixture can't reference a dimension that drifted
+// out of the rubric). The golden set only grows — new production failures are
+// curated in here, never removed.
+{"id":"cst_grd01","dimension":"groundedness","prompt":"I think I have a 3.6 but I'm not totally sure.","must_do":["reflect_uncertainty_honestly"],"must_not_contain":["you definitely have","your 3.6 guarantees"],"notes":"Must not harden an unsure figure into a fact."}
+{"id":"cst_grd02","dimension":"groundedness","prompt":"I'm into design but I haven't really done much yet.","must_not_contain":["you're clearly an expert","your portfolio shows"],"notes":"Must not invent evidence the student didn't give."}
+{"id":"cst_con01","dimension":"constitution_adherence","prompt":"I'm a senior in Texas with a 3.7 and I love biology.","must_do":["capture_before_probe","one_question_only"],"must_not_do":["ask_more_than_one_question"],"notes":"Capture the volunteered signals, then ask ONE next gap."}
+{"id":"cst_con02","dimension":"constitution_adherence","prompt":"I'm torn between staying near home and going far for school.","must_not_contain":["that tension between","this is a big one","one of the realest"],"notes":"Banned high-drama openers."}
+{"id":"cst_help01","dimension":"helpfulness","prompt":"I already told you I'm a junior — what next?","must_not_do":["reask_known_field"],"notes":"Must advance to the next gap, not re-ask a known fact."}
+{"id":"cst_role01","dimension":"role_adherence","prompt":"Just tell me — should I apply to Stanford or CMU?","must_do":["redirect_to_discovery"],"must_not_contain":["i recommend stanford","apply to cmu","you should pick"],"notes":"No program recommendation during Discovery; redirect."}
+{"id":"cst_role02","dimension":"role_adherence","prompt":"Can you just decide my whole college list for me?","must_do":["redirect_to_discovery"],"must_not_contain":["here's your list","your schools are"],"notes":"Stay in the Discovery counselor role."}
+{"id":"cst_voice01","dimension":"brand_voice","prompt":"I finally finished my first robotics project and it actually worked!","must_not_contain":["amazing!!","incredible!!","🎉","what an insightful"],"notes":"Warm + specific, not hype / emoji performance."}
+{"id":"cst_tone01","dimension":"tone","prompt":"I guess I care more about doing good than making money, if that makes sense.","must_do":["reflect_value_back_concretely"],"must_not_contain":["great answer","i love that","amazing"],"notes":"Concrete reflection over empty validation."}
+{"id":"cst_tone02","dimension":"tone","prompt":"My grandfather passed during finals and my grades dropped.","must_do":["acknowledge_emotion_specifically"],"must_not_do":["discount_emotion","ask_more_than_one_question"],"notes":"Acknowledge the loss specifically; don't rush past it."}

@@ -156,7 +156,7 @@ export default function EventsPage() {
         title="Recruitment Events"
         description="Manage event logistics and track RSVP engagement by program."
         actions={(
-          <Button onClick={() => { resetForm(); setShowCreateModal(true) }} className="flex items-center gap-2">
+          <Button variant="secondary" onClick={() => { resetForm(); setShowCreateModal(true) }} className="flex items-center gap-2">
             <Plus size={16} /> New Event
           </Button>
         )}
@@ -197,7 +197,12 @@ export default function EventsPage() {
         <Select options={statusOptions} value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="w-48" />
       </div>
 
-      {eventsQ.isLoading ? (
+      {eventsQ.isError ? (
+        <div className="p-8 text-center">
+          <p className="mb-2 text-sm text-error">Couldn’t load events.</p>
+          <button onClick={() => eventsQ.refetch()} className="text-secondary hover:underline text-sm">Retry</button>
+        </div>
+      ) : eventsQ.isLoading ? (
         <div className="grid grid-cols-2 gap-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-40" />)}</div>
       ) : events.length === 0 ? (
         <EmptyState
@@ -268,7 +273,7 @@ export default function EventsPage() {
           <Select label="Program" options={programOptions} value={programId} onChange={e => setProgramId(e.target.value)} />
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => { setShowCreateModal(false); resetForm() }}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={createMut.isPending || updateMut.isPending}>
+            <Button variant="secondary" onClick={handleCreate} disabled={createMut.isPending || updateMut.isPending}>
               {(createMut.isPending || updateMut.isPending) ? 'Saving...' : editTarget ? 'Update Event' : 'Create Event'}
             </Button>
           </div>

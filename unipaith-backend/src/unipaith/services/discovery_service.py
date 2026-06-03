@@ -229,6 +229,16 @@ class DiscoveryService:
         then orchestrate. If anything raises, we still write a fallback
         assistant message so the conversation doesn't dead-end.
         """
+        # Spec 61 §4 — Safety & crisis floor, BEFORE anything else. If the
+        # student signals self-harm / abuse / acute distress, we never run the
+        # normal probe: we respond with empathy and escalate to a human / crisis
+        # resource. Deterministic + always-on (a safety floor is not flag-gated).
+        escalation = await self._maybe_escalate_for_crisis(
+            session=session, student_message=student_message
+        )
+        if escalation is not None:
+            return escalation
+
         # Local imports — keep the module load cheap when the flag is off.
         from unipaith.ai.artifacts import (
             persist_extraction,
@@ -367,6 +377,50 @@ class DiscoveryService:
         # exit conditions are met (basic→personality→identity). No-op for
         # goals/needs and for incomplete layers.
         await self._maybe_advance_profile_layer(session=session, verdict=verdict)
+        return assistant
+
+    async def _maybe_escalate_for_crisis(
+        self,
+        *,
+        session: DiscoverySession,
+        student_message: DiscoveryMessage,
+    ) -> DiscoveryMessage | None:
+        """Spec 61 §4 — deterministic crisis screen on the student's turn.
+
+        Returns an escalation assistant message (and the caller skips the normal
+        LLM turn) when a self-harm / abuse / acute-distress signal fires;
+        otherwise ``None`` and the caller proceeds to the usual pipeline. Always
+        on — the safety floor is never feature-flag-gated, and it runs the same
+        whether or not ``ai_discovery_v2_enabled`` is set.
+        """
+        from unipaith.ai.safety import screen
+
+        verdict = screen(student_message.content or "")
+        if not verdict.is_crisis:
+            return None
+
+        assistant = DiscoveryMessage(
+            session_id=session.id,
+            role="assistant",
+            content=verdict.response,
+            extracted_signals={
+                "_phase": "safety_escalation",
+                "_mode": "crisis_escalation",
+                "safety_category": verdict.category,
+                "safety_subtype": verdict.subtype,
+                # The matched span is intentionally NOT persisted verbatim — the
+                # subtype is enough for audit / metrics without re-storing a
+                # distressing phrase.
+            },
+        )
+        self.db.add(assistant)
+        await self.db.flush()
+        await self.db.refresh(assistant)
+        logger.warning(
+            "Discovery crisis signal (%s) for session=%s — escalation served, normal turn skipped",
+            verdict.subtype,
+            session.id,
+        )
         return assistant
 
     async def _maybe_advance_profile_layer(
@@ -554,6 +608,38 @@ class DiscoveryService:
         await self.db.flush()
         await self.db.refresh(student_msg)
         yield ("student_message", _msg_dict(student_msg))
+
+        # Spec 61 §4 — Safety & crisis floor (streaming path). Screen the
+        # student turn before the LLM pipeline; on a self-harm / abuse / acute-
+        # distress signal, stream the empathetic escalation reply and skip the
+        # orchestrator entirely. Always on — never feature-flag-gated.
+        from unipaith.ai.safety import screen as _safety_screen
+
+        _crisis = _safety_screen(student_msg.content or "")
+        if _crisis.is_crisis:
+            crisis_assistant = DiscoveryMessage(
+                session_id=session.id,
+                role="assistant",
+                content=_crisis.response,
+                extracted_signals={
+                    "_phase": "safety_escalation",
+                    "_mode": "crisis_escalation",
+                    "safety_category": _crisis.category,
+                    "safety_subtype": _crisis.subtype,
+                },
+            )
+            self.db.add(crisis_assistant)
+            await self.db.flush()
+            await self.db.refresh(crisis_assistant)
+            logger.warning(
+                "Discovery crisis signal (%s) for session=%s — escalation streamed, "
+                "orchestrator skipped",
+                _crisis.subtype,
+                session.id,
+            )
+            yield ("delta", {"text": _crisis.response})
+            yield ("assistant_message", _msg_dict(crisis_assistant))
+            return
 
         # Run the LLM pipeline up to but not including the orchestrator
         # (extract → persist artifacts → snapshot → validate). These are

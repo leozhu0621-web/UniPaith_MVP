@@ -35,6 +35,8 @@ interface Props {
   uploadedLists: UploadedList[]
   templates: CommunicationTemplate[]
   onSaved: () => void
+  /** Preselect this segment when creating a new campaign (Segments → "Use in campaign" deep link). */
+  initialSegmentId?: string
 }
 
 interface FormState {
@@ -123,6 +125,7 @@ export default function CampaignEditorModal({
   uploadedLists,
   templates,
   onSaved,
+  initialSegmentId,
 }: Props) {
   const [form, setForm] = useState<FormState>(EMPTY)
   const [altSubjects, setAltSubjects] = useState<string[]>([])
@@ -152,9 +155,9 @@ export default function CampaignEditorModal({
         scheduled_at: editTarget.scheduled_at ? editTarget.scheduled_at.slice(0, 16) : '',
       })
     } else {
-      setForm(EMPTY)
+      setForm(initialSegmentId ? { ...EMPTY, audience_segment_ids: [initialSegmentId] } : EMPTY)
     }
-  }, [isOpen, editTarget])
+  }, [isOpen, editTarget, initialSegmentId])
 
   const wantsExternal = form.channels.includes('external_email')
 

@@ -1,0 +1,15 @@
+{
+  "version": "1.0.0",
+  "spec": "61",
+  "description": "Versioned golden set for the conversational Claude agents (student advisor + faculty assistant). It grows from real production failures (thumbs-down turns, escalations, judge-fails curated via the chatbot adapter's materialize hook) and never shrinks — so nothing that broke once can re-break silently.",
+  "suites": {
+    "framework_adherence": {"dir": "golden_conversations", "kind": "conversation", "section": "61 §6"},
+    "constitution_adherence": {"dir": "constitution", "kind": "jsonl", "section": "61 §3/§5"},
+    "safety_crisis": {"dir": "crisis", "kind": "jsonl", "section": "61 §4", "hard_floor": true},
+    "redteam": {"dir": "redteam", "kind": "jsonl", "section": "61 §7", "hard_floor": true}
+  },
+  "calibration": {
+    "judge_expert_agreement": null,
+    "note": "Calibrating the LLM judge to >=85% expert agreement is spec 62 §4. Recorded here once an expert pass is run; until then the judge is used for relative no-regression gating, with the deterministic floor (ai/evals/deterministic.py + ai/safety.py) as the absolute gate."
+  }
+}
