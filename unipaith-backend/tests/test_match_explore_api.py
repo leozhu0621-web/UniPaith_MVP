@@ -218,6 +218,10 @@ async def test_refresh_applies_priority_weights(
     assert items[0]["band_label"] in {"reach", "target", "safer"}
 
     # The persisted match must have been scored with the mapped priority weights.
+    # The student/program carry no embedding here (the cold-start default), so
+    # the cosine term can't fire: the *nominal* weights record the priority
+    # mapping that reached the scorer, while the *effective* weights drop cosine
+    # and renormalize the remainder to a true convex combination.
     expected = weights_from_preferences(cost_heavy)
     row = (
         (await db_session.execute(select(MatchResult).where(MatchResult.student_id == profile.id)))
@@ -225,7 +229,11 @@ async def test_refresh_applies_priority_weights(
         .first()
     )
     assert row is not None
-    assert row.fitness_breakdown.get("weights") == expected
+    bd = row.fitness_breakdown
+    assert bd.get("nominal_weights") == expected
+    assert bd.get("cosine_applied") is False
+    assert "cosine" not in bd["weights"]
+    assert abs(sum(bd["weights"].values()) - 1.0) < 1e-9
 
 
 @pytest.mark.asyncio

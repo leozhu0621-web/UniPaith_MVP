@@ -17,6 +17,13 @@ Scoring layers (in order)
 4. **Needs match** — needs_signals overlap weighted by severity. 0.20
    weight.
 
+The three weights are a convex combination over the components we can
+actually evaluate for a given pair. When an embedding is missing on either
+side (the cold-start default until the embedding pipeline is wired), the
+cosine term is dropped and its weight is **redistributed** across soft
+alignment and needs match — fitness stays a true [0, 1] score instead of
+being silently capped at 0.55. See `_renormalized_weights`.
+
 Confidence math
 ---------------
 Confidence is **not** a recalibration of fitness — it answers "how well
@@ -199,9 +206,7 @@ def soft_align(student: StudentFeatures, program: ProgramFeatures) -> float:
 
     tag_score = 0.4 * interest_score + 0.4 * career_score + 0.2 * value_score
 
-    social_score = _vec_align(
-        s.get("social_prefs") or {}, p.get("social_features") or {}
-    )
+    social_score = _vec_align(s.get("social_prefs") or {}, p.get("social_features") or {})
 
     # 70/30 split: tag overlap dominates; social prefs polish the result.
     return 0.7 * tag_score + 0.3 * social_score
@@ -246,14 +251,37 @@ def _vec_align(a: dict[str, float], b: dict[str, float]) -> float:
     keys = set(a.keys()) | set(b.keys())
     if not keys:
         return 0.0
-    dot = sum(
-        max(0.0, min(1.0, a.get(k, 0.0))) * max(0.0, min(1.0, b.get(k, 0.0)))
-        for k in keys
-    )
+    dot = sum(max(0.0, min(1.0, a.get(k, 0.0))) * max(0.0, min(1.0, b.get(k, 0.0))) for k in keys)
     return min(1.0, dot / len(keys))
 
 
 # ── Top-level scoring ──────────────────────────────────────────────────────
+
+
+def _renormalized_weights(
+    weights: dict[str, float], available: dict[str, float]
+) -> dict[str, float]:
+    """Restrict ``weights`` to the components actually computable for a
+    given (student, program) pair and renormalize them to sum to 1.0.
+
+    A component the matcher can't evaluate — chiefly ``cosine`` when either
+    side has no embedding — must NOT silently contribute 0 to the weighted
+    fitness sum. Doing so penalizes every program by that component's whole
+    weight: with the default budget, an absent embedding alone caps
+    achievable fitness at 0.55 (0.35 soft + 0.20 needs), so even a perfect
+    tag/needs match reads as "55% fit". Redistributing the missing weight
+    across the present components keeps fitness a true [0, 1] convex
+    combination of what we can actually measure. When every component is
+    available (and the weights already sum to 1.0) this is a no-op.
+    """
+    active = {k: float(weights[k]) for k in available if k in weights}
+    total = sum(active.values())
+    if total <= 0 or abs(total - 1.0) < 1e-9:
+        # Already a convex combination over the present components — leave the
+        # values untouched so the common all-components-available path is an
+        # exact no-op (no float drift on the persisted breakdown weights).
+        return active
+    return {k: v / total for k, v in active.items()}
 
 
 def score(
@@ -278,11 +306,20 @@ def score(
     soft_score = soft_align(student, program)
     needs_score = needs_match(student, program)
 
-    fitness = (
-        weights["cosine"] * cos_score
-        + weights["soft_align"] * soft_score
-        + weights["needs_match"] * needs_score
+    # Only components we can actually evaluate contribute to fitness. cosine
+    # needs an embedding on BOTH sides (same dimensionality); absent that, its
+    # weight is redistributed across the present components rather than dragging
+    # every score down by a dead 0 (see `_renormalized_weights`). soft_align and
+    # needs_match always have a defined value via their neutral fallbacks.
+    cosine_applied = bool(
+        student.embedding and program.embedding and len(student.embedding) == len(program.embedding)
     )
+    components: dict[str, float] = {"soft_align": soft_score, "needs_match": needs_score}
+    if cosine_applied:
+        components["cosine"] = cos_score
+
+    eff_weights = _renormalized_weights(weights, components)
+    fitness = sum(eff_weights.get(k, 0.0) * v for k, v in components.items())
     fitness = max(0.0, min(1.0, fitness))
 
     # Confidence: geometric mean of four terms.
@@ -302,7 +339,12 @@ def score(
             "cosine": round(cos_score, 4),
             "soft_align": round(soft_score, 4),
             "needs_match": round(needs_score, 4),
-            "weights": weights,
+            # `cosine_applied=False` (no embedding on one side) means the cosine
+            # weight was redistributed across the present components — the
+            # `weights` below are the effective weights that produced `fitness`.
+            "cosine_applied": cosine_applied,
+            "weights": eff_weights,
+            "nominal_weights": weights,
         },
         confidence_breakdown={
             "profile_completeness": round(profile, 4),
