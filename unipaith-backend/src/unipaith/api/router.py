@@ -35,6 +35,7 @@ from unipaith.api.notifications import router as notifications_router
 from unipaith.api.payments import router as payments_router
 from unipaith.api.programs import router as programs_router
 from unipaith.api.prompt_library import router as prompt_library_router
+from unipaith.api.realtime import router as realtime_router
 from unipaith.api.recommendations import router as recommendations_router
 from unipaith.api.recruitment import router as recruitment_router
 from unipaith.api.reviews import router as reviews_router
@@ -122,6 +123,10 @@ api_router.include_router(events_router)
 api_router.include_router(reviews_router)
 api_router.include_router(interviews_router)
 api_router.include_router(notifications_router)
+# Spec 57 — realtime transport: SSE bell stream (/me/stream) + WS messaging
+# (/ws/messages). DB-light: the long-lived connections drain the in-process
+# broker (Redis-bridged across ECS tasks) and hold no pooled DB connection.
+api_router.include_router(realtime_router)
 api_router.include_router(recommendations_router)
 api_router.include_router(calendar_router)
 api_router.include_router(connect_router)

@@ -5,10 +5,11 @@ import { useCounselorStore } from '../../stores/counselor-store'
 import MiniCounselorPanel from '../student/MiniCounselorPanel'
 import {
   Compass, Target, FolderKanban, Newspaper,
-  Bell, LogOut, User, Bookmark, Settings, MessageSquare,
+  LogOut, User, Bookmark, Settings, MessageSquare,
 } from 'lucide-react'
 import Avatar from '../ui/Avatar'
 import Dropdown from '../ui/Dropdown'
+import NotificationBell from '../notifications/NotificationBell'
 import Wordmark from '../ui/Wordmark'
 import Sheet from '../ui/Sheet'
 import CompareTray from '../student/CompareTray'
@@ -74,13 +75,7 @@ export default function StudentLayout() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => navigate('/s/manage?tab=messages')}
-            aria-label="Notifications"
-            className="ui-btn relative p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Bell size={19} />
-          </button>
+          <NotificationBell />
           <Dropdown
             trigger={
               <button aria-label="Account menu" className="ui-btn p-1 rounded-lg hover:bg-muted transition-colors">
@@ -102,13 +97,7 @@ export default function StudentLayout() {
         <NavLink to="/s" aria-label="UniPaith home" className="leading-none">
           <img src="/favicon.svg" alt="UniPaith" className="h-9 w-9 rounded-md" />
         </NavLink>
-        <button
-          onClick={() => navigate('/s/manage?tab=messages')}
-          aria-label="Notifications"
-          className="ui-btn relative p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
-        >
-          <Bell size={20} />
-        </button>
+        <NotificationBell />
       </header>
 
       {/* Trial / plan nudge (Spec 05 §9, 07 §4.1) */}

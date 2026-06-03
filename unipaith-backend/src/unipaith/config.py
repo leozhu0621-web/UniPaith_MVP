@@ -112,6 +112,33 @@ class Settings(BaseSettings):
     saved_search_alert_cap_per_day: int = 5
     saved_search_max_per_user: int = 50
 
+    # Realtime & notification delivery (Spec 57). The SSE bell + WS messaging
+    # fan out through ``core/realtime.py``, which runs an in-process pub/sub
+    # broker by default (correct per-task) and transparently bridges across ECS
+    # tasks over Redis pub/sub when ``redis_url`` is set AND the ``redis`` package
+    # is importable — the same soft-dependency posture as the read cache (§55 §3).
+    # All flags are flipped on in production (see ``infra/ecs.tf``).
+    realtime_enabled: bool = True
+    # Seconds between SSE keepalive comments — keeps proxies from idling the
+    # connection out (well under the 60s typical ALB/Nginx idle timeout).
+    realtime_heartbeat_seconds: int = 25
+    # Max events buffered per connected subscriber before the broker drops the
+    # oldest (slow-consumer guard, so one stalled client can't grow unbounded).
+    realtime_queue_maxsize: int = 100
+    # Digest & batching (§6): low-urgency events (feed updates, non-urgent change
+    # events, saved-search hits) batch into one periodic email instead of per-
+    # event spam; urgent events (decision, interview, applied-program deadline)
+    # always fire immediately. Off by default, on in prod.
+    notification_digest_enabled: bool = False
+    notification_digest_interval_minutes: int = 1440  # daily
+    # Channel-send reliability (§4): each channel send runs through a retry/backoff
+    # wrapper; terminal failures land in an in-process dead-letter log with an
+    # alert. The queue/worker substrate (§55 §4) is the planned upgrade path.
+    notification_delivery_max_retries: int = 3
+    notification_delivery_backoff_seconds: float = 0.5
+    # Web push (VAPID) is the §4 fast-follow; Phase A ships in-app + email.
+    web_push_enabled: bool = False
+
     # Knowledge engine loop (legacy — replaced by pipeline, kept for backward compat)
     engine_loop_enabled: bool = True
     engine_loop_interval_minutes: int = 5

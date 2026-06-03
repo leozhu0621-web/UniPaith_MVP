@@ -17,6 +17,7 @@ from sqlalchemy import (
     String,
     Text,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -31,6 +32,17 @@ class Notification(Base):
     __table_args__ = (
         Index("ix_notifications_user_unread", "user_id", "is_read"),
         Index("ix_notifications_created", "created_at"),
+        # Spec 57 §3 — idempotency: a given source event writes at most one row,
+        # even if its hook fires twice. Partial so legacy rows (NULL event_id)
+        # don't collide.
+        Index(
+            "uq_notifications_event_id",
+            "event_id",
+            unique=True,
+            postgresql_where=text("event_id IS NOT NULL"),
+        ),
+        # Spec 57 §6 — the digest job scans pending digest-class rows by urgency.
+        Index("ix_notifications_user_urgency_emailed", "user_id", "urgency", "is_emailed"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -47,6 +59,17 @@ class Notification(Base):
     metadata_: Mapped[dict | None] = mapped_column("metadata", JSONB)
     is_read: Mapped[bool] = mapped_column(Boolean, default=False)
     is_emailed: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Spec 57 §3 — stable idempotency key for the source event (e.g.
+    # "decision_made:<application_id>"); NULL for ad-hoc notifications.
+    event_id: Mapped[str | None] = mapped_column(String(200))
+    # Spec 57 §6 — urgent (immediate) | digest (batched). Defaults urgent so any
+    # legacy/unclassified notification keeps firing right away.
+    urgency: Mapped[str] = mapped_column(
+        String(20), default="urgent", server_default="urgent", nullable=False
+    )
+    # Spec 57 §4 — per-channel delivery outcomes ({channel: sent|failed|skipped}),
+    # written by the delivery wrapper for observability + the DLQ.
+    delivery_status: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

@@ -136,6 +136,7 @@ export interface BuildOverview {
   acceptance: AcceptanceSummary
   production: ProductionSummary
   search: SearchBuildSummary
+  realtime: RealtimeBuildSummary
   chatbot_eval: ChatbotEvalSummary
   provider: string
   surfaces: OverviewSurface[]
@@ -647,6 +648,98 @@ export interface SearchBuild {
   config_knobs: SearchConfigKnob[]
   routes: SearchRoutes
   saved_searches_table_present: boolean
+  open_questions: OpenQuestion[]
+}
+
+// ── Realtime & notifications (spec 57) ──────────────────────────────────────
+export interface RealtimeCapability {
+  key: string
+  title: string
+  section: string // spec 57 section, e.g. "§2"
+  status: ReadinessStatus
+  blurb: string
+  built: string[]
+  planned: string[]
+}
+
+export interface RealtimeConfigKnob {
+  name: string
+  value: string | number | boolean
+  section: string
+}
+
+export interface RealtimeBuildTask {
+  section: string
+  status: ReadinessStatus
+  text: string
+  evidence: string
+}
+
+export interface RealtimeAcceptanceItem {
+  status: ReadinessStatus
+  text: string
+}
+
+export interface RealtimeTheBar {
+  statement: string
+  principle: string
+}
+
+export interface RealtimeRoutes {
+  sse: string[]
+  ws: string[]
+  notifications: string[]
+}
+
+export interface RealtimeCatalogEntry {
+  event_type: string
+  pref_key: string
+  urgency: 'urgent' | 'digest'
+  silenceable: boolean
+}
+
+export interface RealtimeBrokerInfo {
+  backend: string
+  distributed_ready: boolean
+  distributed_configured: boolean
+  heartbeat_seconds: number
+}
+
+export interface RealtimeBuildSummary {
+  capability_count: number
+  capabilities_live: number
+  capabilities_partial: number
+  capabilities_planned: number
+  build_task_count: number
+  tasks_live: number
+  tasks_partial: number
+  tasks_planned: number
+  acceptance_count: number
+  acceptance_live: number
+  sse_route_count: number
+  ws_route_count: number
+  notification_route_count: number
+  backing_route_count: number
+  event_type_count: number
+  broker_backend: string
+  distributed_ready: boolean
+  notifications_table_present: boolean
+  idempotency_wired: boolean
+  config_knob_count: number
+  open_question_count: number
+  live_is_source_of_truth: boolean
+}
+
+export interface RealtimeBuild {
+  the_bar: RealtimeTheBar
+  summary: RealtimeBuildSummary
+  capabilities: RealtimeCapability[]
+  build_tasks: RealtimeBuildTask[]
+  acceptance: RealtimeAcceptanceItem[]
+  config_knobs: RealtimeConfigKnob[]
+  routes: RealtimeRoutes
+  catalog: RealtimeCatalogEntry[]
+  broker: RealtimeBrokerInfo
   open_questions: OpenQuestion[]
 }
 
