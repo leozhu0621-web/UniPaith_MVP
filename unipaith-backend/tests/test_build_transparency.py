@@ -438,11 +438,13 @@ async def test_overview_endpoint(client: AsyncClient):
         "search",
         "realtime",
         "chatbot_eval",
+        "eval_harness",
         "security",
+        "ml_core",
         "surfaces",
     ):
         assert key in body
-    assert len(body["surfaces"]) == 14
+    assert len(body["surfaces"]) == 16
     assert {s["key"] for s in body["surfaces"]} == {
         "claude-api",
         "roadmap",
@@ -457,7 +459,9 @@ async def test_overview_endpoint(client: AsyncClient):
         "knowledge",
         "realtime",
         "chatbot-eval",
+        "eval-harness",
         "security",
+        "ml-core",
     }
     fe = next(s for s in body["surfaces"] if s["key"] == "frontend")
     assert fe["path"] == "/goal/frontend" and fe["spec"] == "54"
@@ -483,6 +487,11 @@ async def test_overview_endpoint(client: AsyncClient):
     assert chatbot["spec"] == "61"
     assert chatbot["path"] == "/goal/chatbot-eval"
     assert chatbot["stat"] == body["chatbot_eval"]["golden_case_total"]
+    # Spec 63 — the ml-core surface carries the human-facing pinned-to-Claude count.
+    ml_core = next(s for s in body["surfaces"] if s["key"] == "ml-core")
+    assert ml_core["spec"] == "63"
+    assert ml_core["path"] == "/goal/ml-core"
+    assert ml_core["stat"] == body["ml_core"]["human_facing_count"]
 
 
 @pytest.mark.asyncio

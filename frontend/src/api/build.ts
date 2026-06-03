@@ -12,6 +12,7 @@ import type {
   FeatureCatalog,
   FrontendStandards,
   KnowledgeBuild,
+  MlCoreBuild,
   Production,
   RealtimeBuild,
   Roadmap,
@@ -19,6 +20,7 @@ import type {
   SecurityTrust,
   UxBenchmark,
 } from '../types/build'
+import type { EvalHarness } from '../types/buildEvalHarness'
 
 export async function getBuildOverview(): Promise<BuildOverview> {
   const { data } = await apiClient.get<BuildOverview>('/build/overview')
@@ -85,7 +87,17 @@ export async function getChatbotEval(): Promise<ChatbotEval> {
   return data
 }
 
+export async function getEvalHarness(): Promise<EvalHarness> {
+  const { data } = await apiClient.get<EvalHarness>('/build/eval-harness')
+  return data
+}
+
 export async function getSecurity(): Promise<SecurityTrust> {
   const { data } = await apiClient.get<SecurityTrust>('/build/security')
+  return data
+}
+
+export async function getMlCoreBuild(): Promise<MlCoreBuild> {
+  const { data } = await apiClient.get<MlCoreBuild>('/build/ml-core')
   return data
 }

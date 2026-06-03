@@ -20,9 +20,11 @@ from unipaith.transparency.acceptance import build_acceptance
 from unipaith.transparency.api_contract import build_api_contract
 from unipaith.transparency.chatbot_eval import build_chatbot_eval
 from unipaith.transparency.data_model import build_data_model
+from unipaith.transparency.eval_harness import build_eval_harness
 from unipaith.transparency.features import build_features
 from unipaith.transparency.frontend_standards import build_frontend_standards
 from unipaith.transparency.knowledge import build_knowledge
+from unipaith.transparency.ml_core import build_ml_core
 from unipaith.transparency.production import build_production
 from unipaith.transparency.realtime import build_realtime
 from unipaith.transparency.roadmap import build_roadmap
@@ -62,7 +64,9 @@ def _assemble_overview(request: Request) -> dict:
     knowledge = build_knowledge(request.app.routes)["summary"]
     realtime = build_realtime(request.app.routes)["summary"]
     chatbot_eval = build_chatbot_eval(request.app.routes)["summary"]
+    eval_harness = build_eval_harness(request.app.routes)["summary"]
     security = build_security(request.app)["summary"]
+    ml_core = build_ml_core(request.app.routes)["summary"]
     return {
         "roadmap": roadmap,
         "features": features,
@@ -75,7 +79,9 @@ def _assemble_overview(request: Request) -> dict:
         "knowledge": knowledge,
         "realtime": realtime,
         "chatbot_eval": chatbot_eval,
+        "eval_harness": eval_harness,
         "security": security,
+        "ml_core": ml_core,
         "provider": settings.ai_provider_default,
         "surfaces": [
             {
@@ -203,6 +209,17 @@ def _assemble_overview(request: Request) -> dict:
                 "stat_label": "graded eval cases",
             },
             {
+                "key": "eval-harness",
+                "title": "Evaluation harness",
+                "spec": "62",
+                "blurb": "One shared eval harness — versioned golden sets, a calibrated "
+                "judge, CI gating, A/B and drift — that the chatbot and the crawler "
+                "extraction both plug into via thin adapters.",
+                "path": "/goal/eval-harness",
+                "stat": eval_harness["consumers_live"],
+                "stat_label": "consumers live",
+            },
+            {
                 "key": "security",
                 "title": "Security & trust",
                 "spec": "58",
@@ -211,6 +228,17 @@ def _assemble_overview(request: Request) -> dict:
                 "path": "/goal/security",
                 "stat": f"{security['controls_live']}/{security['control_count']}",
                 "stat_label": "controls live",
+            },
+            {
+                "key": "ml-core",
+                "title": "ML core & knowledge processing",
+                "spec": "63",
+                "blurb": "The model boundary — Qwen processes, Claude communicates. The "
+                "ML backend transport, the pipeline and the human-facing pin, read "
+                "live from the running routing layer.",
+                "path": "/goal/ml-core",
+                "stat": ml_core["human_facing_count"],
+                "stat_label": "agents pinned to Claude",
             },
         ],
     }
@@ -335,6 +363,23 @@ async def get_chatbot_eval(request: Request) -> dict:
     return build_chatbot_eval(request.app.routes)
 
 
+@router.get("/eval-harness", summary="The shared evaluation harness (spec 62)")
+async def get_eval_harness(request: Request) -> dict:
+    """Spec 62's shared evaluation harness: one service the chatbot (61) and the
+    crawler extraction (60 §13B) both run through via thin adapters — a versioned
+    golden set, a calibrated + independent LLM-judge, deterministic-first checks,
+    a CI gate, and the A/B / drift / production-sampling modes — each capability
+    honestly classified live·partial·planned. The consumers are read from the live
+    ``harness.CONSUMERS`` registry, each consumer's dimensions / deterministic
+    checks / golden-case counts from its adapter + ``case_store`` (off disk), the
+    two added tables (``eval_cases`` / ``eval_results``) and the four reused
+    ml_loop tables from the running SQLAlchemy metadata, the CI suites from the
+    live ``runner.SUITES`` map, the judge calibration from ``calibration.py``, and
+    the flags / tiers / backing routes from ``settings`` / the registry / the live
+    route table — so the page can't claim a harness the deployed app doesn't run."""
+    return build_eval_harness(request.app.routes)
+
+
 @router.get("/security", summary="The security, trust & compliance posture (spec 58)")
 async def get_security(request: Request) -> dict:
     """Spec 58's security posture: the controls (authN/Z · consent · redaction ·
@@ -347,3 +392,19 @@ async def get_security(request: Request) -> dict:
     ``core.middleware`` — so the page mirrors the deployed controls and can't claim
     what isn't wired."""
     return build_security(request.app)
+
+
+@router.get("/ml-core", summary="The ML core & knowledge-processing boundary (spec 63)")
+async def get_ml_core(request: Request) -> dict:
+    """Spec 63's hard model boundary — Qwen processes, Claude communicates. Each
+    capability is honestly classified live·partial·planned; the §1 rule, §4 model
+    roster, §5 pipeline, §11 phasing, §14 SLOs, §16 acceptance and §17 open
+    questions are authored from the spec. The boundary (which agents are
+    human-facing vs Qwen-eligible, and that the guard holds), the human-facing pin
+    (recomputed live via ``enforce_policy`` — ``0`` agents the Qwen backend may
+    serve), the provider routing + Qwen availability, the ``ai_turns.provider``
+    audit gate, the L3 weights and the embedding transport are all read live from
+    ``ai/boundary`` · the provider registry · the running model constraint ·
+    ``services/matching`` · ``settings`` — so the page can't claim a boundary the
+    deployed routing layer doesn't enforce."""
+    return build_ml_core(request.app.routes)

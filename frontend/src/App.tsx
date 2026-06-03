@@ -33,11 +33,13 @@ import AcceptancePage from './pages/public/AcceptancePage'
 import ExperienceStandardsPage from './pages/public/ExperienceStandardsPage'
 import FrontendStandardsPage from './pages/public/FrontendStandardsPage'
 import KnowledgeEnginePage from './pages/public/KnowledgeEnginePage'
+import MlCorePage from './pages/public/MlCorePage'
 import ProductionReadinessPage from './pages/public/ProductionReadinessPage'
 import SearchFeedRecsPage from './pages/public/SearchFeedRecsPage'
 import SecurityTrustPage from './pages/public/SecurityTrustPage'
 import RealtimeNotificationsPage from './pages/public/RealtimeNotificationsPage'
 import ChatbotEvalPage from './pages/public/ChatbotEvalPage'
+import EvalHarnessPage from './pages/public/EvalHarnessPage'
 
 // Student pages — 4 main + profile/saved/settings from avatar
 // Discover (Stage 1) is the new student home — replaces CounselorHomePage
@@ -143,8 +145,12 @@ const router = createBrowserRouter([
   { path: '/goal/knowledge', element: <PublicLayout><KnowledgeEnginePage /></PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 61 — chatbot training & evaluation loop (constitution / safety floor / eval suites read live).
   { path: '/goal/chatbot-eval', element: <PublicLayout><ChatbotEvalPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  // Spec 62 — shared evaluation harness (consumers / golden sets / judge / modes / tables read live).
+  { path: '/goal/eval-harness', element: <PublicLayout><EvalHarnessPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 58 — security, trust & compliance posture (controls / consent / PII / headers read live).
   { path: '/goal/security', element: <PublicLayout><SecurityTrustPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  // Spec 63 — ML core & knowledge processing (the Qwen↔Claude boundary, read live from the routing layer).
+  { path: '/goal/ml-core', element: <PublicLayout><MlCorePage /></PublicLayout>, errorElement: <RouteErrorPage /> },
 
   { path: '/login', element: <AuthLayout><LoginPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
   { path: '/signup', element: <AuthLayout><SignupPage /></AuthLayout>, errorElement: <RouteErrorPage /> },

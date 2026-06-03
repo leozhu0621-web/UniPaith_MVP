@@ -126,14 +126,80 @@ class SourceExtractionAgent:
     def _extract_llm(
         self, schema: DomainSchema, payload: dict, base_conf: float
     ) -> ExtractionResult | None:
-        """Qwen/Claude extraction (§13). Forced structured output, schema-validated.
-        Returns ``None`` to fall back to the deterministic path when no ML endpoint
-        is reachable — the codebase-wide "LLM augments, never gates" rule. The
-        returned fields still go through ``_enforce_grounding``, so even a
-        hallucinating model can't write an ungrounded field."""
-        # No live ML endpoint in this environment → deterministic fallback. The
-        # seam is here so 63's Qwen extractor drops in without touching callers.
-        return None
+        """Qwen extraction (spec 63 §5/§13). Forced JSON output, schema-scoped.
+
+        Returns ``None`` to fall back to the deterministic path when Qwen is not
+        configured or any transport/parse error occurs — the codebase-wide "LLM
+        augments, never gates" rule. The returned fields still go through
+        ``_enforce_grounding``, so even a hallucinating model can't write an
+        ungrounded field (§15 never-invents holds regardless of the model)."""
+        # Registered seam, inert until Qwen is wired per-env (spec 63 §11). Both
+        # the extraction flag (the caller's gate) AND a configured Qwen endpoint
+        # are required before any network call — so tests and the default prod
+        # config always take the deterministic path.
+        if not settings.qwen_enabled or not settings.qwen_base_url:
+            return None
+        try:
+            return self._extract_qwen(schema, payload, base_conf)
+        except Exception:  # pragma: no cover — network/SDK/parse edge
+            # Any failure degrades to the deterministic extractor (§10/§16: Qwen
+            # outage degrades processing gracefully, never breaks the caller).
+            return None
+
+    def _extract_qwen(
+        self, schema: DomainSchema, payload: dict, base_conf: float
+    ) -> ExtractionResult:
+        """One grounded, schema-scoped Qwen extraction over the vLLM / Bedrock
+        OpenAI-compatible ``/v1``. Synchronous on purpose — extraction is a batch
+        job (§10) and the crawler pipeline is sync."""
+        import json
+
+        from openai import OpenAI
+
+        fmt = payload.get("format", "structured")
+        source = payload.get("data") if fmt == "structured" else payload.get("text", "")
+        field_names = list(schema.fields)
+        system = (
+            "You extract structured facts from a source document for a knowledge "
+            "base. Return ONLY a JSON object mapping each requested field name to "
+            '{"value": <value>, "evidence": "<verbatim span copied from the '
+            'source>"}. Include a field ONLY when it is explicitly present in the '
+            "source — never infer, never estimate, never invent. Omit any field "
+            "not grounded in the source."
+        )
+        user = f"Fields to extract: {field_names}\nSource ({fmt}):\n{source}"
+        client = OpenAI(api_key=settings.qwen_api_key or "EMPTY", base_url=settings.qwen_base_url)
+        resp = client.chat.completions.create(
+            model=settings.qwen_model_workhorse,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": str(user)[: settings.crawler_max_html_chars]},
+            ],
+            temperature=0.0,
+            max_tokens=settings.crawler_extraction_max_tokens,
+            response_format={"type": "json_object"},
+        )
+        raw = json.loads(resp.choices[0].message.content or "{}")
+        if not isinstance(raw, dict):
+            raw = {}
+        res = ExtractionResult(domain=schema.domain, source_kind=fmt, used_llm=True)
+        conf = base_conf if fmt == "structured" else max(0.3, base_conf - _TEXT_CONFIDENCE_PENALTY)
+        for name in field_names:
+            item = raw.get(name)
+            if not isinstance(item, dict):
+                continue
+            value = item.get("value")
+            if value is None or (isinstance(value, str) and not value.strip()):
+                continue
+            if name in schema.numeric_fields:
+                value = _coerce_number(value)
+                if value is None:
+                    continue
+            evidence = str(item.get("evidence") or "")[:120]
+            res.fields[name] = ExtractedField(
+                value=value, confidence=conf, evidence=evidence or f"key:{name}"
+            )
+        return res
 
     def _enforce_grounding(self, result: ExtractionResult, payload: dict) -> None:
         """Drop any field whose value can't be traced back to the source — the
