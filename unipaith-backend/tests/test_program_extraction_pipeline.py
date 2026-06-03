@@ -8,6 +8,8 @@ linked to an institution. Everything here runs without a network or an LLM.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
+
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -247,3 +249,70 @@ async def test_tick_no_extraction_for_unlinked_source(db_session: AsyncSession):
     result = await engine.tick()
     assert result["processed"] == 1
     assert result["programs_added"] == 0
+
+
+# ── re-crawl on cadence (keeps the 30-min routine doing real work) ────────────
+
+
+def _linked_source(inst_id):
+    return CrawlSource(
+        name="grad.testu.edu",
+        slug="grad-testu-edu",
+        domain="grad.testu.edu",
+        publisher_kind="academic",
+        trust_tier=2,
+        allowlisted=True,
+        enabled=True,
+        institution_id=inst_id,
+    )
+
+
+@pytest.mark.asyncio
+async def test_tick_recrawls_completed_due_item(db_session: AsyncSession, mock_institution_user):
+    inst = await _institution(db_session, mock_institution_user)
+    db_session.add(_linked_source(inst.id))
+    # A completed item already past its re-crawl interval → re-crawled this tick.
+    db_session.add(
+        CrawlFrontier(
+            url="https://grad.testu.edu/programs",
+            domain="grad.testu.edu",
+            priority=85,
+            status="completed",
+            next_crawl_after=datetime.now(UTC) - timedelta(hours=1),
+            content_format_hint="web",
+        )
+    )
+    await db_session.flush()
+
+    engine = KnowledgeEngine(db_session)
+    engine.fetcher.fetch = _inject(TEXT_PAGE, "grad.testu.edu")
+
+    result = await engine.tick()
+    assert result["processed"] == 1  # the due completed item was re-crawled
+    assert result["programs_added"] == 5
+
+
+@pytest.mark.asyncio
+async def test_tick_skips_completed_not_due(db_session: AsyncSession, mock_institution_user):
+    inst = await _institution(db_session, mock_institution_user)
+    db_session.add(_linked_source(inst.id))
+    # A completed item NOT yet due (future) → must NOT re-crawl (polite cadence).
+    db_session.add(
+        CrawlFrontier(
+            url="https://grad.testu.edu/programs",
+            domain="grad.testu.edu",
+            priority=85,
+            status="completed",
+            next_crawl_after=datetime.now(UTC) + timedelta(hours=12),
+            content_format_hint="web",
+        )
+    )
+    await db_session.flush()
+
+    engine = KnowledgeEngine(db_session)
+    engine.fetcher.fetch = _inject(TEXT_PAGE, "grad.testu.edu")
+
+    result = await engine.tick()
+    assert result["processed"] == 0  # not due → untouched
+    assert result["programs_added"] == 0
+    assert await _programs(db_session, inst.id) == []

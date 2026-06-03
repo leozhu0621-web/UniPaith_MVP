@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { TrendingDown } from 'lucide-react'
 import Card from '../../../components/ui/Card'
+import QueryError from '../../../components/ui/QueryError'
 import Skeleton from '../../../components/ui/Skeleton'
 import { getAnalyticsFunnel } from '../../../api/institutions'
 import type { AnalyticsFilters, TopSource } from '../../../types'
@@ -50,14 +51,7 @@ export default function FunnelTab({ filters }: { filters: AnalyticsFilters }) {
   }
 
   if (q.isError || !q.data) {
-    return (
-      <Card className="p-8 text-center">
-        <p className="text-error mb-2">Failed to load funnel</p>
-        <button onClick={() => q.refetch()} className="text-secondary hover:underline text-sm">
-          Retry
-        </button>
-      </Card>
-    )
+    return <QueryError title="We couldn't load the funnel." onRetry={() => q.refetch()} />
   }
 
   const d = q.data

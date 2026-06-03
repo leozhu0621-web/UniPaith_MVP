@@ -549,6 +549,7 @@ class ApplicationService:
             app.completeness_status = "complete"
             await self.db.flush()
             await self._post_submit_integrity_scan(app)
+            await self._record_apply_outcome(app)
             await self.db.refresh(app)
             return app
 
@@ -573,6 +574,24 @@ class ApplicationService:
                 await ReviewPipelineService(self.db).scan_integrity(institution_id, app.id)
         except Exception as exc:  # noqa: BLE001 — submission must never fail on the scan
             logger.info("post-submit integrity scan skipped for app=%s: %s", app.id, exc)
+
+    async def _record_apply_outcome(self, app: Application) -> None:
+        """Spec 67 — when a student commits to a matched program, record an
+        ``applied`` outcome (a positive label for the confidence calibrator).
+        Best-effort + consent-gated (no-op without training consent or a prior
+        match prediction); a savepoint isolates failure so submission never
+        5xxes."""
+        try:
+            from unipaith.services.learning_loop import LearningLoopService
+
+            async with self.db.begin_nested():
+                await LearningLoopService(self.db).record_outcome_for(
+                    student_id=app.student_id,
+                    program_id=app.program_id,
+                    outcome_kind="applied",
+                )
+        except Exception as exc:  # noqa: BLE001 — submission must never fail on this
+            logger.info("apply-outcome recording skipped for app=%s: %s", app.id, exc)
 
     async def withdraw_application(self, student_id: UUID, application_id: UUID) -> None:
         app = await self._get_application_for_student(student_id, application_id)
@@ -1619,6 +1638,7 @@ class ApplicationService:
         self.db.add(submission)
         await self.db.flush()
         await self._post_submit_integrity_scan(app)
+        await self._record_apply_outcome(app)
         await self.db.refresh(app)
         return app
 

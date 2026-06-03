@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../stores/auth-store'
-import { roleDefaultPath } from '../../utils/auth-redirect'
+import NoAccessPage from '../../pages/system/NoAccessPage'
 
 interface Props {
   role: 'student' | 'institution_admin'
@@ -25,7 +25,9 @@ export default function RequireAuth({ role, children }: Props) {
   }
 
   if (user?.role !== role) {
-    return <Navigate to={roleDefaultPath(user?.role)} replace />
+    // Spec 78 §5 — explicit 403 instead of a silent redirect to the user's own
+    // home, so a wrong-role visit reads as "no access" rather than a confusing bounce.
+    return <NoAccessPage />
   }
 
   return <>{children}</>

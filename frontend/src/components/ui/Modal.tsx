@@ -79,11 +79,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md', f
       aria-modal="true"
       aria-label={title}
     >
-      <div
-        className="fixed inset-0"
-        style={{ background: 'rgba(10, 20, 40, 0.45)' }}
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 bg-scrim" onClick={onClose} />
       <div
         ref={panelRef}
         tabIndex={-1}

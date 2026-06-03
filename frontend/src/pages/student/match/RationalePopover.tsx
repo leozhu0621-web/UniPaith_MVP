@@ -65,8 +65,7 @@ export default function RationalePopover({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
-      style={{ background: 'rgba(10, 20, 40, 0.45)' }}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-scrim"
       onClick={onClose}
     >
       <div

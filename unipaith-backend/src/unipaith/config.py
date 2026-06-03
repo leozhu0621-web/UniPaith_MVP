@@ -613,6 +613,12 @@ class Settings(BaseSettings):
     crawler_allowlist_only: bool = True
     crawler_tick_interval_minutes: int = 60
     crawler_tick_batch_size: int = 25
+    # §3B volatility cadence — how long after a successful crawl a frontier item
+    # becomes due again. The scheduled tick re-queues completed items past this
+    # interval, so the routine keeps refreshing (change-detection + new programs),
+    # not just draining the frontier once. Polite default (weekly); prod tunes via
+    # CRAWLER_RECRAWL_INTERVAL_HOURS env.
+    crawler_recrawl_interval_hours: int = 168
     # §7/§8 confidence-gated auto-apply: a crawled field auto-applies only when
     # ≥ ``min_sources`` trusted sources corroborate it at ≥ ``min_confidence``;
     # otherwise it queues for review. Single low-trust never auto-applies.
