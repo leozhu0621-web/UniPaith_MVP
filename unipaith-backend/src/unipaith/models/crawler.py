@@ -106,6 +106,11 @@ class CrawlSource(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     license: Mapped[str | None] = mapped_column(String(120))
     enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Spec 69 §3 — when set, pages crawled from this source's domain have their
+    # programs extracted + ingested under this institution (source='crawled', so
+    # first-party data is never overwritten — only new programs are added). Soft
+    # ref to institutions.id; un-FK'd to match this module's create_all-safe pattern.
+    institution_id: Mapped[UUID | None] = mapped_column()
 
     __table_args__ = (
         CheckConstraint("trust_tier BETWEEN 1 AND 4", name="ck_crawl_sources_trust_tier"),
