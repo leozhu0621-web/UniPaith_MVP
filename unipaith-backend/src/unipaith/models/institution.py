@@ -245,6 +245,15 @@ class Program(Base):
     feature_version: Mapped[int] = mapped_column(
         Integer, nullable=False, default=1, server_default="1"
     )
+    # Spec 65 §3 — dense embedding of the program's text (name + degree +
+    # description), same model/dimension as the student embedding so the matcher's
+    # cosine term (0.45 of fitness) can actually fire. JSONB round-tripped as a
+    # list (mirrors StudentFeatureVector.embedding). Computed + cached lazily in
+    # the match-recompute path; `embedding_version` records the feature_version it
+    # was built from, so a published-program edit recomputes it. Until populated,
+    # the matcher drops cosine and reweights soft_align + needs_match.
+    embedding: Mapped[dict | None] = mapped_column(JSONB)
+    embedding_version: Mapped[int | None] = mapped_column(Integer)
     # Spec 46 §6 — fairness auto-halt state. The disparate-impact compute lives
     # in `services/fairness_service`; these columns are the single row the match
     # service reads to decide whether to keep scoring new applicants for this

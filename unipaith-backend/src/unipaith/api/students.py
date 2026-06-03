@@ -980,8 +980,15 @@ async def _recompute_catalog_matches(db: AsyncSession, student_id: UUID) -> None
     if not programs:
         return
     program_rows = [program_row_from_orm(p) for p in programs]
-    await MatchService(db).compute_matches_for_student(
-        student_id, program_rows=program_rows, weights=weights
+    svc = MatchService(db)
+    # Spec 65 §3 — ensure each program has a dense embedding so the matcher's
+    # cosine term fires (it is 0 until both sides carry an embedding).
+    program_embeddings = await svc.ensure_program_embeddings(programs)
+    await svc.compute_matches_for_student(
+        student_id,
+        program_rows=program_rows,
+        program_embeddings=program_embeddings,
+        weights=weights,
     )
 
 

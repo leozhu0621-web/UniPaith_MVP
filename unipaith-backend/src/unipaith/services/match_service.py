@@ -100,6 +100,18 @@ class MatchWithRationale:
 # ── Service ────────────────────────────────────────────────────────────────
 
 
+def _program_embedding_text(program: Any) -> str:
+    """Semantic text for a program's dense embedding (Spec 65 §3) — its name,
+    degree, and description, the same kind of free text the student applicant
+    summary is embedded from so cosine compares like with like."""
+    parts = [
+        getattr(program, "program_name", "") or "",
+        getattr(program, "degree_type", "") or "",
+        getattr(program, "description_text", "") or "",
+    ]
+    return " — ".join(p for p in parts if p).strip()
+
+
 class MatchService:
     """Stateless service — instantiate per-request with the AsyncSession.
 
@@ -491,6 +503,51 @@ class MatchService:
             grounded=result.grounded,
             cost_usd=result.cost_usd,
         )
+
+    async def ensure_program_embeddings(self, programs: list[Any]) -> dict[Any, list[float]]:
+        """Spec 65 §3 — compute + cache a dense embedding for each program so the
+        matcher's cosine term can fire (it is 0 until BOTH the student and the
+        program carry an embedding; no program ever did before this).
+
+        Lazy + cached: a program is (re)embedded only when its stored embedding is
+        missing or was built from an older ``feature_version``; the vector is
+        persisted on ``Program.embedding`` so it is a one-time cost per program
+        edit. Best-effort — an embed failure (consent/cost/provider) skips that
+        program and the matcher just drops cosine + reweights for it.
+
+        Returns ``{program.id: embedding}`` to hand straight to
+        ``compute_matches_for_student(program_embeddings=...)``.
+        """
+        from unipaith.ai.client import get_client
+
+        out: dict[Any, list[float]] = {}
+        client = get_client()
+        dirty = False
+        for p in programs:
+            stored = p.embedding
+            if (
+                isinstance(stored, list)
+                and stored
+                and getattr(p, "embedding_version", None) == getattr(p, "feature_version", None)
+            ):
+                out[p.id] = [float(x) for x in stored]
+                continue
+            text = _program_embedding_text(p)
+            if not text:
+                continue
+            try:
+                resp = await client.embed(text, db=self.db)
+            except Exception as exc:  # noqa: BLE001 — degrade: skip cosine for this program
+                logger.info("MatchService: program embed failed for %s: %s", p.id, exc)
+                continue
+            vec = [float(x) for x in resp.embedding]
+            p.embedding = vec
+            p.embedding_version = getattr(p, "feature_version", None)
+            out[p.id] = vec
+            dirty = True
+        if dirty:
+            await self.db.flush()
+        return out
 
     # ── Internals ─────────────────────────────────────────────────────
 
