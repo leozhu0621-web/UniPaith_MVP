@@ -140,6 +140,8 @@ export default function ProspectsTab() {
       {
         key: 'stage',
         label: 'Stage',
+        sortable: true,
+        sortAccessor: (p: Prospect) => STAGE_META[p.stage].label,
         render: (p: Prospect) => (
           <Badge variant={STAGE_META[p.stage].tone}>{STAGE_META[p.stage].label}</Badge>
         ),
@@ -153,6 +155,8 @@ export default function ProspectsTab() {
         key: 'priority',
         label: 'Priority',
         align: 'right' as const,
+        sortable: true,
+        sortAccessor: (p: Prospect) => p.apply_likelihood,
         render: (p: Prospect) =>
           p.apply_likelihood != null ? (
             <span className="text-sm font-medium tabular-nums text-foreground">
