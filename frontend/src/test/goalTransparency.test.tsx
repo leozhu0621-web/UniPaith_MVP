@@ -13,6 +13,7 @@ import ExperienceStandardsPage from '../pages/public/ExperienceStandardsPage'
 import ProductionReadinessPage from '../pages/public/ProductionReadinessPage'
 import SearchFeedRecsPage from '../pages/public/SearchFeedRecsPage'
 import KnowledgeEnginePage from '../pages/public/KnowledgeEnginePage'
+import SecurityTrustPage from '../pages/public/SecurityTrustPage'
 import * as buildApi from '../api/build'
 import type {
   Acceptance,
@@ -27,6 +28,8 @@ import type {
   Roadmap,
   SearchBuild,
   SearchBuildSummary,
+  SecuritySummary,
+  SecurityTrust,
   RealtimeBuildSummary,
   UxBenchmark,
 } from '../types/build'
@@ -135,6 +138,35 @@ const KNOWLEDGE_SUMMARY = {
   live_is_source_of_truth: true,
 }
 
+const SECURITY_SUMMARY: SecuritySummary = {
+  control_count: 13,
+  controls_live: 7,
+  controls_partial: 4,
+  controls_planned: 2,
+  build_task_count: 10,
+  tasks_live: 2,
+  tasks_partial: 5,
+  tasks_planned: 3,
+  acceptance_count: 6,
+  acceptance_live: 2,
+  consent_agent_count: 36,
+  consent_lever_count: 4,
+  consent_default_permissive: true,
+  redaction_map_size: 26,
+  pii_field_count: 18,
+  pii_class_count: 4,
+  pii_encryption_target_count: 9,
+  security_header_count: 5,
+  cors_allowlist_size: 2,
+  environment: 'development',
+  cognito_bypass: true,
+  auth_bypass_safe: true,
+  prod_bypass_guarded: true,
+  compliance_count: 8,
+  open_question_count: 3,
+  live_is_source_of_truth: true,
+}
+
 const REALTIME_SUMMARY: RealtimeBuildSummary = {
   capability_count: 9,
   capabilities_live: 6,
@@ -232,6 +264,7 @@ const OVERVIEW: BuildOverview = {
   knowledge: KNOWLEDGE_SUMMARY,
   realtime: REALTIME_SUMMARY,
   chatbot_eval: CHATBOT_EVAL_SUMMARY,
+  security: SECURITY_SUMMARY,
   provider: 'anthropic',
   surfaces: [
     { key: 'claude-api', title: 'AI agents', spec: '45', blurb: 'The live agent fleet.', path: '/goal/claude-api', stat: 40, stat_label: 'AI agents' },
@@ -247,6 +280,7 @@ const OVERVIEW: BuildOverview = {
     { key: 'knowledge', title: 'Knowledge engine', spec: '60', blurb: 'The world-side knowledge graph.', path: '/goal/knowledge', stat: 16, stat_label: 'allowlisted sources' },
     { key: 'realtime', title: 'Realtime & notifications', spec: '57', blurb: 'Live SSE + WebSocket.', path: '/goal/realtime', stat: 16, stat_label: 'notification events' },
     { key: 'chatbot-eval', title: 'Chatbot training & eval', spec: '61', blurb: 'How the chatbot is measured.', path: '/goal/chatbot-eval', stat: 44, stat_label: 'graded eval cases' },
+    { key: 'security', title: 'Security & trust', spec: '58', blurb: 'The security posture.', path: '/goal/security', stat: '7/13', stat_label: 'controls live' },
   ],
 }
 
@@ -621,6 +655,120 @@ const KNOWLEDGE_BUILD: KnowledgeBuild = {
   open_questions: [{ q: 'Auto-apply threshold', a: 'Review-all for low-trust.' }],
 }
 
+const SECURITY: SecurityTrust = {
+  the_bar: {
+    statement: 'Security is a property of the running system, not a policy doc.',
+    principle: 'Assistive, consent-gated, least-privilege — gaps surfaced, not hidden.',
+  },
+  summary: SECURITY_SUMMARY,
+  controls: [
+    {
+      key: 'authn',
+      title: 'Authentication',
+      section: '§2',
+      status: 'live',
+      module: 'core/security.py',
+      blurb: 'Cognito JWT verified against JWKS; the dev token only works under bypass.',
+      built: ['Cognito JWT validated against JWKS', 'Boot guard refuses the prod bypass'],
+      planned: ['MFA-state surfaced on sensitive actions'],
+    },
+    {
+      key: 'pii',
+      title: 'PII protection',
+      section: '§3',
+      status: 'partial',
+      module: 'core/pii.py',
+      blurb: 'Sensitive fields are classified and masked; column-encryption is next.',
+      built: ['Classification registry', 'mask() redacts PII in logs + AI context'],
+      planned: ['Column-level KMS-envelope encryption'],
+    },
+    {
+      key: 'moderation',
+      title: 'Trust & safety / moderation',
+      section: '§6',
+      status: 'planned',
+      module: '—',
+      blurb: 'Abuse rate-limits exist; the UGC moderation pass is the named gap.',
+      built: ['Abuse rate-limits', 'Minors ↔ adults peer-matching block'],
+      planned: ['UGC moderation pass', 'Crisis-signal escalation hard-floor'],
+    },
+  ],
+  consent: {
+    levers: ['matching', 'outreach', 'analytics', 'training'],
+    lever_counts: [
+      { lever: 'matching', agent_count: 8 },
+      { lever: 'outreach', agent_count: 1 },
+      { lever: 'analytics', agent_count: 2 },
+      { lever: 'training', agent_count: 0 },
+    ],
+    agent_count: 36,
+    default_permissive: true,
+    redaction_map_size: 26,
+    note: 'A denied lever short-circuits to the rule-based fallback, never a 5xx.',
+  },
+  pii: {
+    field_count: 18,
+    class_count: 4,
+    encryption_target_count: 9,
+    model_count: 6,
+    classes: [
+      { key: 'pii', label: 'Personal', description: 'Ordinary personal data.', count: 7, encryption_target: false },
+      { key: 'pii_sensitive', label: 'FERPA education record', description: 'Education records.', count: 2, encryption_target: false },
+      { key: 'policy_gated', label: 'Policy-gated identity', description: 'Gov-ID / eligibility.', count: 5, encryption_target: true },
+      { key: 'health_pii', label: 'Health / disability', description: 'Health data.', count: 4, encryption_target: true },
+    ],
+  },
+  headers: {
+    count: 5,
+    names: [
+      'X-Content-Type-Options',
+      'X-Frame-Options',
+      'X-XSS-Protection',
+      'Referrer-Policy',
+      'Content-Security-Policy',
+    ],
+    hsts_in_production: true,
+    note: 'Set on every response by core/middleware.py; HSTS is added in production.',
+  },
+  auth: {
+    environment: 'development',
+    cognito_bypass: true,
+    bypass_safe: true,
+    pool_configured: false,
+    note: 'The boot guard refuses to start with the bypass on in production/staging.',
+  },
+  config_knobs: [
+    { name: 'environment', value: 'development', section: '§2' },
+    { name: 'cognito_bypass', value: true, section: '§2' },
+    { name: 'rate_limit_enabled', value: true, section: '§5' },
+  ],
+  compliance: [
+    { regime: 'FERPA', control: 'Education-record access is logged', status: 'live', module: 'services/audit_service.py' },
+    { regime: 'GDPR/CCPA', control: 'Right to portability: data-export bundle', status: 'planned', module: 'services/data_export_service.py' },
+  ],
+  build_tasks: [
+    {
+      section: '§2',
+      status: 'live',
+      text: 'Startup assert: cognito_bypass=false in production (fail boot)',
+      evidence: 'assert_secure_auth_config() runs at the top of the lifespan.',
+    },
+    {
+      section: '§9',
+      status: 'planned',
+      text: 'infra/runbooks/incident.md',
+      evidence: 'Deferred to the incident-response control.',
+    },
+  ],
+  acceptance: [
+    { status: 'live', text: 'Prod refuses to boot with auth bypass on; every me-route role+owner guarded.' },
+    { status: 'partial', text: 'Uploads type/size-capped; AV scan + crawler SSRF guard are planned.' },
+  ],
+  open_questions: [
+    { q: 'Column-encryption approach', a: 'A KMS envelope on the highest-sensitivity fields.' },
+  ],
+}
+
 function renderPage(ui: React.ReactElement, route = '/goal') {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
@@ -635,7 +783,7 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     vi.restoreAllMocks()
   })
 
-  it('hub renders the live stats and links to all twelve surfaces', async () => {
+  it('hub renders the live stats and links to all thirteen surfaces', async () => {
     vi.spyOn(buildApi, 'getBuildOverview').mockResolvedValue(OVERVIEW)
     renderPage(<GoalHubPage />)
 
@@ -657,7 +805,9 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     expect(screen.getByText('Realtime & notifications')).toBeInTheDocument()
     // Spec 61 — the chatbot training & eval surface card appears.
     expect(screen.getByText('Chatbot training & eval')).toBeInTheDocument()
-    expect(screen.getByText(/Thirteen ways to read the build/i)).toBeInTheDocument()
+    // Spec 58 — the security & trust surface card appears.
+    expect(screen.getByText('Security & trust')).toBeInTheDocument()
+    expect(screen.getByText(/Fourteen ways to read the build/i)).toBeInTheDocument()
     // Live route count from the overview appears (stat band + surface card).
     expect(screen.getAllByText('553').length).toBeGreaterThan(0)
     // The MVP-complete gold beat shows.
@@ -826,5 +976,31 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Planned' }))
     await waitFor(() => expect(screen.queryByText('Reference projection')).not.toBeInTheDocument())
     expect(screen.getByText('RAG chatbot over the graph')).toBeInTheDocument()
+  })
+
+  it('security page renders controls, consent + PII and filters by status', async () => {
+    vi.spyOn(buildApi, 'getSecurity').mockResolvedValue(SECURITY)
+    renderPage(<SecurityTrustPage />, '/goal/security')
+
+    // Wait on a data-dependent control card (unique title — the auth card header
+    // 'Authentication' renders before data, so anchor on PII protection instead).
+    await waitFor(() => expect(screen.getByText('PII protection')).toBeInTheDocument())
+    expect(screen.getByText('Trust & safety / moderation')).toBeInTheDocument()
+    // The live, introspected signals show: a consent lever + its gated-agent count,
+    // and a PII class with its encryption-target badge.
+    expect(screen.getByText('matching')).toBeInTheDocument()
+    expect(screen.getByText('Policy-gated identity')).toBeInTheDocument()
+    // A compliance row + a live config knob render.
+    expect(screen.getByText(/Education-record access is logged/i)).toBeInTheDocument()
+    expect(screen.getByText('cognito_bypass')).toBeInTheDocument()
+    // The boot-guard hero beat (consent agents mapped) shows.
+    expect(screen.getByText(/Boot-guarded against the prod auth bypass/i)).toBeInTheDocument()
+
+    // Filter to Live → the partial PII + planned moderation controls drop out.
+    fireEvent.click(screen.getByRole('button', { name: 'Live' }))
+    await waitFor(() => expect(screen.queryByText('PII protection')).not.toBeInTheDocument())
+    expect(screen.queryByText('Trust & safety / moderation')).not.toBeInTheDocument()
+    // The live authn control remains (a built item unique to it).
+    expect(screen.getByText('Boot guard refuses the prod bypass')).toBeInTheDocument()
   })
 })

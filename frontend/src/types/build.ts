@@ -139,6 +139,7 @@ export interface BuildOverview {
   knowledge: KnowledgeBuildSummary
   realtime: RealtimeBuildSummary
   chatbot_eval: ChatbotEvalSummary
+  security: SecuritySummary
   provider: string
   surfaces: OverviewSurface[]
 }
@@ -758,6 +759,367 @@ export interface KnowledgeBuild {
   config_knobs: KnowledgeConfigKnob[]
   routes: KnowledgeRoutes
   reference_domains: string[]
+  open_questions: OpenQuestion[]
+}
+
+// ── Realtime & notifications (spec 57) ──────────────────────────────────────
+export interface RealtimeCapability {
+  key: string
+  title: string
+  section: string // spec 57 section, e.g. "§2"
+  status: ReadinessStatus
+  blurb: string
+  built: string[]
+  planned: string[]
+}
+
+export interface RealtimeConfigKnob {
+  name: string
+  value: string | number | boolean
+  section: string
+}
+
+export interface RealtimeBuildTask {
+  section: string
+  status: ReadinessStatus
+  text: string
+  evidence: string
+}
+
+export interface RealtimeAcceptanceItem {
+  status: ReadinessStatus
+  text: string
+}
+
+export interface RealtimeTheBar {
+  statement: string
+  principle: string
+}
+
+export interface RealtimeRoutes {
+  sse: string[]
+  ws: string[]
+  notifications: string[]
+}
+
+export interface RealtimeCatalogEntry {
+  event_type: string
+  pref_key: string
+  urgency: 'urgent' | 'digest'
+  silenceable: boolean
+}
+
+export interface RealtimeBrokerInfo {
+  backend: string
+  distributed_ready: boolean
+  distributed_configured: boolean
+  heartbeat_seconds: number
+}
+
+export interface RealtimeBuildSummary {
+  capability_count: number
+  capabilities_live: number
+  capabilities_partial: number
+  capabilities_planned: number
+  build_task_count: number
+  tasks_live: number
+  tasks_partial: number
+  tasks_planned: number
+  acceptance_count: number
+  acceptance_live: number
+  sse_route_count: number
+  ws_route_count: number
+  notification_route_count: number
+  backing_route_count: number
+  event_type_count: number
+  broker_backend: string
+  distributed_ready: boolean
+  notifications_table_present: boolean
+  idempotency_wired: boolean
+  config_knob_count: number
+  open_question_count: number
+  live_is_source_of_truth: boolean
+}
+
+export interface RealtimeBuild {
+  the_bar: RealtimeTheBar
+  summary: RealtimeBuildSummary
+  capabilities: RealtimeCapability[]
+  build_tasks: RealtimeBuildTask[]
+  acceptance: RealtimeAcceptanceItem[]
+  config_knobs: RealtimeConfigKnob[]
+  routes: RealtimeRoutes
+  catalog: RealtimeCatalogEntry[]
+  broker: RealtimeBrokerInfo
+  open_questions: OpenQuestion[]
+}
+
+// ── Chatbot training & evaluation (spec 61) ─────────────────────────────────
+export interface ChatbotEvalSummary {
+  agent_count: number
+  constitution_count: number
+  constitutions_present: boolean
+  constitution_version: string | null
+  dimension_count: number
+  hard_floor_count: number
+  suite_count: number
+  suites_live: number
+  hard_floor_suite_count: number
+  golden_case_total: number
+  deterministic_check_count: number
+  loop_stage_count: number
+  loop_stages_live: number
+  build_task_count: number
+  tasks_live: number
+  tasks_partial: number
+  tasks_planned: number
+  acceptance_count: number
+  acceptance_live: number
+  safety_crisis_subtype_count: number
+  safety_harmful_subtype_count: number
+  backing_route_count: number
+  config_knob_count: number
+  open_question_count: number
+  provider: string
+  all_agents_claude: boolean
+  live_is_source_of_truth: boolean
+}
+
+export interface ChatbotConstitutionDimension {
+  key: string
+  label: string
+  hard_floor: boolean
+  summary: string
+}
+
+export interface ChatbotConstitution {
+  agent: string
+  present: boolean
+  version?: string
+  dimension_count?: number
+  hard_floor_keys?: string[]
+  dimensions?: ChatbotConstitutionDimension[]
+}
+
+export interface ChatbotAgent {
+  key: string
+  title: string
+  spec: string
+  file: string
+  surface: string
+  agent_name: string
+  tier: string
+  provider: string
+  role: string
+  blurb: string
+}
+
+export interface ChatbotLoopStage {
+  n: number
+  key: string
+  title: string
+  blurb: string
+  status: ReadinessStatus
+}
+
+export interface ChatbotEvalSuite {
+  key: string
+  title: string
+  section: string
+  status: ReadinessStatus
+  hard_floor: boolean
+  blurb: string
+  case_count: number
+  in_runner: boolean
+}
+
+export interface ChatbotSafety {
+  always_on: boolean
+  status: ReadinessStatus
+  crisis_subtypes: string[]
+  harmful_subtypes: string[]
+  crisis_pattern_count: number
+  harmful_pattern_count: number
+  note: string
+}
+
+export interface ChatbotDeterministicCheck {
+  name: string
+  blurb: string
+}
+
+export interface ChatbotBuildTask {
+  section: string
+  status: ReadinessStatus
+  text: string
+  evidence: string
+}
+
+export interface ChatbotAcceptanceItem {
+  status: ReadinessStatus
+  text: string
+}
+
+export interface ChatbotConfigKnob {
+  name: string
+  value: string | number | boolean
+  section: string
+}
+
+export interface ChatbotEvalRoutes {
+  discovery: string[]
+  institution_reply: string[]
+}
+
+export interface ChatbotTheBar {
+  statement: string
+  principle: string
+}
+
+export interface ChatbotEval {
+  the_bar: ChatbotTheBar
+  summary: ChatbotEvalSummary
+  constitutions: ChatbotConstitution[]
+  agents: ChatbotAgent[]
+  loop_stages: ChatbotLoopStage[]
+  eval_suites: ChatbotEvalSuite[]
+  safety: ChatbotSafety
+  deterministic_checks: ChatbotDeterministicCheck[]
+  build_tasks: ChatbotBuildTask[]
+  acceptance: ChatbotAcceptanceItem[]
+  config_knobs: ChatbotConfigKnob[]
+  routes: ChatbotEvalRoutes
+  open_questions: OpenQuestion[]
+}
+
+// ── Security, trust & compliance (spec 58) ──────────────────────────
+export interface SecurityControl {
+  key: string
+  title: string
+  section: string // spec 58 section, e.g. "§2"
+  status: ReadinessStatus
+  module: string // the real file the control lives in
+  blurb: string
+  built: string[]
+  planned: string[]
+}
+
+export interface SecurityConfigKnob {
+  name: string
+  value: string | number | boolean
+  section: string
+}
+
+export interface SecurityBuildTask {
+  section: string
+  status: ReadinessStatus
+  text: string
+  evidence: string
+}
+
+export interface SecurityAcceptanceItem {
+  status: ReadinessStatus
+  text: string
+}
+
+export interface SecurityComplianceItem {
+  regime: string // FERPA | GDPR/CCPA | Retention
+  control: string
+  status: ReadinessStatus
+  module: string
+}
+
+export interface ConsentLeverCount {
+  lever: string
+  agent_count: number
+}
+
+export interface ConsentPosture {
+  levers: string[]
+  lever_counts: ConsentLeverCount[]
+  agent_count: number
+  default_permissive: boolean
+  redaction_map_size: number
+  note: string
+}
+
+export interface PiiClassRow {
+  key: string
+  label: string
+  description: string
+  count: number
+  encryption_target: boolean
+}
+
+export interface PiiPosture {
+  field_count: number
+  class_count: number
+  encryption_target_count: number
+  model_count: number
+  classes: PiiClassRow[]
+}
+
+export interface SecurityHeaders {
+  count: number
+  names: string[]
+  hsts_in_production: boolean
+  note: string
+}
+
+export interface AuthPosture {
+  environment: string
+  cognito_bypass: boolean
+  bypass_safe: boolean
+  pool_configured: boolean
+  note: string
+}
+
+export interface SecurityTheBar {
+  statement: string
+  principle: string
+}
+
+export interface SecuritySummary {
+  control_count: number
+  controls_live: number
+  controls_partial: number
+  controls_planned: number
+  build_task_count: number
+  tasks_live: number
+  tasks_partial: number
+  tasks_planned: number
+  acceptance_count: number
+  acceptance_live: number
+  consent_agent_count: number
+  consent_lever_count: number
+  consent_default_permissive: boolean
+  redaction_map_size: number
+  pii_field_count: number
+  pii_class_count: number
+  pii_encryption_target_count: number
+  security_header_count: number
+  cors_allowlist_size: number
+  environment: string
+  cognito_bypass: boolean
+  auth_bypass_safe: boolean
+  prod_bypass_guarded: boolean
+  compliance_count: number
+  open_question_count: number
+  live_is_source_of_truth: boolean
+}
+
+export interface SecurityTrust {
+  the_bar: SecurityTheBar
+  summary: SecuritySummary
+  controls: SecurityControl[]
+  consent: ConsentPosture
+  pii: PiiPosture
+  headers: SecurityHeaders
+  auth: AuthPosture
+  config_knobs: SecurityConfigKnob[]
+  compliance: SecurityComplianceItem[]
+  build_tasks: SecurityBuildTask[]
+  acceptance: SecurityAcceptanceItem[]
   open_questions: OpenQuestion[]
 }
 

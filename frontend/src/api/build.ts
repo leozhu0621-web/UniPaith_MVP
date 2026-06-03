@@ -16,6 +16,7 @@ import type {
   RealtimeBuild,
   Roadmap,
   SearchBuild,
+  SecurityTrust,
   UxBenchmark,
 } from '../types/build'
 
@@ -81,5 +82,10 @@ export async function getRealtimeBuild(): Promise<RealtimeBuild> {
 
 export async function getChatbotEval(): Promise<ChatbotEval> {
   const { data } = await apiClient.get<ChatbotEval>('/build/chatbot-eval')
+  return data
+}
+
+export async function getSecurity(): Promise<SecurityTrust> {
+  const { data } = await apiClient.get<SecurityTrust>('/build/security')
   return data
 }
