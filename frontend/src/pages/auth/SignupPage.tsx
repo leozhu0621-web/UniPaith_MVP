@@ -8,6 +8,7 @@ import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
 import clsx from 'clsx'
 import { GraduationCap, Building2 } from 'lucide-react'
+import GoogleSignInButton from '../../components/auth/GoogleSignInButton'
 
 const schema = z.object({
   email: z.string().email('Invalid email'),
@@ -105,6 +106,8 @@ export default function SignupPage() {
           Create Account
         </Button>
       </form>
+
+      {role === 'student' && <GoogleSignInButton label="Sign up with Google" />}
 
       {role === 'student' && (
         <p className="text-center text-xs text-muted-foreground">7 days free, then $15/mo. Cancel anytime.</p>
