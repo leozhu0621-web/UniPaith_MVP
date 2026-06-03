@@ -16,8 +16,10 @@ from unipaith.models.user import User
 from unipaith.services.catalog import (
     CatalogIngestService,
     catalog_authority,
+    curated_program_rows,
     normalize_degree_type,
     normalize_modality,
+    seed_catalog_for_institution,
 )
 
 
@@ -174,3 +176,26 @@ async def test_feature_version_bumps_only_on_change(
         source="first_party",
     )
     assert prog.feature_version == 2
+
+
+# ── Catalog at volume (§10 — many programs across fields/levels, deduped) ────
+
+
+@pytest.mark.asyncio
+async def test_curated_catalog_seeds_at_volume(db_session: AsyncSession, mock_institution_user):
+    inst = await _institution(db_session, mock_institution_user)
+    rows = curated_program_rows()
+    assert len(rows) == 36  # 12 CIP fields × 3 degree levels — real breadth to rank
+    summary = await seed_catalog_for_institution(db_session, inst.id)
+    assert summary["created"] == 36 and summary["skipped"] == 0
+
+    progs = await _programs(db_session, inst.id)
+    assert len(progs) == 36
+    assert {p.degree_type for p in progs} == {"bachelors", "masters", "doctoral"}
+    assert len({p.cip_code for p in progs}) == 12  # 12 distinct fields
+    assert all(p.slug and p.is_published for p in progs)
+
+    # Idempotent at volume: re-seed updates in place, never duplicates (§5).
+    summary2 = await seed_catalog_for_institution(db_session, inst.id)
+    assert summary2["created"] == 0 and summary2["updated"] == 36
+    assert len(await _programs(db_session, inst.id)) == 36

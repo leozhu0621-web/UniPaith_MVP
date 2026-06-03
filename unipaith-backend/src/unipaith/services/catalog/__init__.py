@@ -7,6 +7,10 @@ from unipaith.services.catalog.ingest_service import (
     normalize_degree_type,
     normalize_modality,
 )
+from unipaith.services.catalog.sample_catalog import (
+    curated_program_rows,
+    seed_catalog_for_institution,
+)
 
 __all__ = [
     "CatalogIngestService",
@@ -14,4 +18,6 @@ __all__ = [
     "catalog_authority",
     "normalize_degree_type",
     "normalize_modality",
+    "curated_program_rows",
+    "seed_catalog_for_institution",
 ]
