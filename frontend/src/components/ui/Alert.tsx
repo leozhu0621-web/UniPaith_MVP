@@ -19,7 +19,7 @@ const STYLE: Record<AlertVariant, { wrap: string; icon: React.ReactNode }> = {
   success: { wrap: 'bg-success-soft/60 border-success/40 text-foreground', icon: <CheckCircle size={18} className="text-success" /> },
   warning: { wrap: 'bg-warning-soft/60 border-warning/40 text-foreground', icon: <AlertTriangle size={18} className="text-warning" /> },
   error: { wrap: 'bg-error-soft/60 border-error/40 text-foreground', icon: <AlertCircle size={18} className="text-error" /> },
-  info: { wrap: 'bg-cobalt/10 border-cobalt/30 text-foreground', icon: <Info size={18} className="text-secondary" /> },
+  info: { wrap: 'bg-secondary/10 border-secondary/30 text-foreground', icon: <Info size={18} className="text-secondary" /> },
 }
 
 export default function Alert({ variant = 'info', title, children, dismissible, action, className }: AlertProps) {

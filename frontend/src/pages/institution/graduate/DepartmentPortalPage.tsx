@@ -38,7 +38,7 @@ function ApplicantRow({ a }: { a: ReviewApplicant }) {
   return (
     <Link
       to={`/i/admissions/applicant/${a.application_id}?tab=advisor-match`}
-      className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background p-3 transition-colors hover:border-cobalt/40"
+      className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background p-3 transition-colors hover:border-secondary/40"
     >
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
@@ -121,7 +121,7 @@ export default function DepartmentPortalPage() {
       <button
         type="button"
         onClick={() => navigate('/i/admissions?tab=graduate')}
-        className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-cobalt"
+        className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-secondary"
       >
         <ArrowLeft size={14} /> Graduate admissions
       </button>

@@ -40,7 +40,7 @@ const SIZE_CLASSES: Record<Size, string> = {
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = 'primary', size = 'md', loading, className, children, disabled, ...props }, ref) => {
+  ({ variant = 'secondary', size = 'md', loading, className, children, disabled, ...props }, ref) => {
     const isLink = variant === 'link'
     return (
       <button

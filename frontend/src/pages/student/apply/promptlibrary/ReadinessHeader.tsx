@@ -11,7 +11,7 @@ import type { PromptLibrarySummary } from '../../../../types/promptLibrary'
 import { COMPETENCY_LABELS, COMPETENCIES } from './constants'
 
 const BAND_META: Record<string, { label: string; ring: string; text: string }> = {
-  high: { label: 'Interview-ready', ring: 'text-gold', text: 'text-gold' },
+  high: { label: 'Interview-ready', ring: 'text-primary', text: 'text-primary' },
   medium: { label: 'Getting there', ring: 'text-secondary', text: 'text-secondary' },
   low: { label: 'Just starting', ring: 'text-warning', text: 'text-warning' },
 }
@@ -112,7 +112,7 @@ export default function ReadinessHeader({ summary }: { summary: PromptLibrarySum
 
       {summary.inference_enabled && summary.suggested_practice_plan && (
         <div className="flex items-start gap-2 rounded-lg bg-muted px-3 py-2.5">
-          <Sparkles size={15} className="mt-0.5 shrink-0 text-gold" />
+          <Sparkles size={15} className="mt-0.5 shrink-0 text-primary" />
           <p className="text-sm text-foreground">{summary.suggested_practice_plan}</p>
         </div>
       )}

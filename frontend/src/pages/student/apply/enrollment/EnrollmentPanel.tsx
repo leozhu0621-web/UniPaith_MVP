@@ -78,11 +78,11 @@ function ChecklistRow({ item, appId }: { item: EnrollmentChecklistItem; appId: s
     item.status === 'complete' ? (
       <Check size={16} className="text-success shrink-0" />
     ) : item.status === 'waived' ? (
-      <Check size={16} className="text-cobalt shrink-0" />
+      <Check size={16} className="text-secondary shrink-0" />
     ) : item.status === 'overdue' ? (
       <AlertTriangle size={16} className="text-error shrink-0" />
     ) : (
-      <Circle size={16} className="text-student-text/50 shrink-0" />
+      <Circle size={16} className="text-foreground/50 shrink-0" />
     )
   const done = item.status === 'complete' || item.status === 'waived'
 
@@ -103,7 +103,7 @@ function ChecklistRow({ item, appId }: { item: EnrollmentChecklistItem; appId: s
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
           <span
-            className={`text-sm ${done ? 'text-student-text line-through' : 'text-student-ink font-medium'}`}
+            className={`text-sm ${done ? 'text-foreground line-through' : 'text-foreground font-medium'}`}
           >
             {item.item}
           </span>
@@ -111,10 +111,10 @@ function ChecklistRow({ item, appId }: { item: EnrollmentChecklistItem; appId: s
           {item.status === 'waived' && <Badge variant="neutral">Waived</Badge>}
         </div>
         {item.consequence && !done && (
-          <p className="text-xs text-student-text mt-0.5">{item.consequence}</p>
+          <p className="text-xs text-foreground mt-0.5">{item.consequence}</p>
         )}
         {item.due && !done && (
-          <p className="text-xs text-student-text/80 mt-0.5">Due {formatTermDate(item.due)}</p>
+          <p className="text-xs text-foreground/80 mt-0.5">Due {formatTermDate(item.due)}</p>
         )}
       </div>
     </div>
@@ -197,8 +197,8 @@ export default function EnrollmentPanel({ application }: { application: Applicat
   if (!e.available) {
     return (
       <Card className="p-6 text-center">
-        <p className="text-sm text-student-ink font-medium mb-1">Accept your offer first</p>
-        <p className="text-sm text-student-text max-w-sm mx-auto">
+        <p className="text-sm text-foreground font-medium mb-1">Accept your offer first</p>
+        <p className="text-sm text-foreground max-w-sm mx-auto">
           Your enrollment window opens once you accept an offer. Head to the Offer tab to respond.
         </p>
       </Card>
@@ -225,8 +225,8 @@ export default function EnrollmentPanel({ application }: { application: Applicat
     return (
       <Card className="p-6">
         <Badge variant="neutral">Place released</Badge>
-        <h2 className="text-h3 font-bold text-student-ink mt-3 mb-1">You declined this place</h2>
-        <p className="text-sm text-student-text">
+        <h2 className="text-h3 font-bold text-foreground mt-3 mb-1">You declined this place</h2>
+        <p className="text-sm text-foreground">
           You let {institutionName} know you won't be enrolling. Your seat has been released.
           {e.decline_reason ? ` Reason: “${e.decline_reason}.”` : ''}
         </p>
@@ -239,17 +239,17 @@ export default function EnrollmentPanel({ application }: { application: Applicat
       {/* ── The celebratory beat (§2.2 / brand §15): gold glow, earned. ── */}
       {confirmed ? (
         <Card variant="card-accent" className="p-6 text-center">
-          <div className="mx-auto mb-3 w-14 h-14 rounded-full bg-gold-soft flex items-center justify-center">
+          <div className="mx-auto mb-3 w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
             {enrolled ? (
-              <GraduationCap size={28} className="text-student-ink" />
+              <GraduationCap size={28} className="text-foreground" />
             ) : (
-              <PartyPopper size={28} className="text-student-ink" />
+              <PartyPopper size={28} className="text-foreground" />
             )}
           </div>
-          <h2 className="text-2xl font-bold text-student-ink mb-1">
+          <h2 className="text-2xl font-bold text-foreground mb-1">
             {enrolled ? "You're enrolled!" : "You're in! Let's get you ready."}
           </h2>
-          <p className="text-sm text-student-text max-w-md mx-auto">
+          <p className="text-sm text-foreground max-w-md mx-auto">
             {enrolled
               ? `${institutionName} has finalized your enrollment. Welcome to your next chapter.`
               : `You've confirmed your intent to enroll at ${institutionName}. Work through your pre-arrival checklist below.`}
@@ -262,17 +262,17 @@ export default function EnrollmentPanel({ application }: { application: Applicat
       ) : (
         // ── Pre-confirm: the confirm CTA (gold, the rare earned accent). ──
         <Card className="p-6">
-          <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-cobalt mb-1">
+          <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-secondary mb-1">
             Enrollment · {institutionName}
           </p>
-          <h2 className="text-h3 font-bold text-student-ink mb-1">Confirm your enrollment</h2>
-          <p className="text-sm text-student-text mb-2">
+          <h2 className="text-h3 font-bold text-foreground mb-1">Confirm your enrollment</h2>
+          <p className="text-sm text-foreground mb-2">
             You've accepted your offer. Confirm your intent to enroll to lock in your place
             {e.start_term ? ` for ${e.start_term}` : ''}.
           </p>
           {e.response_deadline && (
-            <p className="text-sm text-student-text mb-4">
-              <CalendarClock size={13} className="inline -mt-0.5 mr-1 text-student-text" />
+            <p className="text-sm text-foreground mb-4">
+              <CalendarClock size={13} className="inline -mt-0.5 mr-1 text-foreground" />
               Confirm by {formatTermDate(e.response_deadline)}
               {respDays != null && respDays >= 0 && ` · ${respDays} day${respDays !== 1 ? 's' : ''} left`}
             </p>
@@ -290,7 +290,7 @@ export default function EnrollmentPanel({ application }: { application: Applicat
               </Button>
               <button
                 onClick={() => setShowDecline(s => !s)}
-                className="text-sm text-student-text hover:text-error ml-auto"
+                className="text-sm text-foreground hover:text-error ml-auto"
               >
                 Decline after accepting
               </button>
@@ -302,11 +302,11 @@ export default function EnrollmentPanel({ application }: { application: Applicat
       {/* ── Multi-offer prompt (§2.3) — never auto-declines. ── */}
       {!confirmed && (e.other_active_offers?.length ?? 0) > 0 && (
         <Card className="p-4 border-l-4 border-l-cobalt">
-          <p className="text-sm text-student-ink font-medium mb-1">
+          <p className="text-sm text-foreground font-medium mb-1">
             You have {e.other_active_offers!.length} other active offer
             {e.other_active_offers!.length !== 1 ? 's' : ''}. Decline them?
           </p>
-          <p className="text-xs text-student-text mb-2">
+          <p className="text-xs text-foreground mb-2">
             Confirming here doesn't decline anywhere else — the choice is yours.
           </p>
           <div className="space-y-1.5">
@@ -314,7 +314,7 @@ export default function EnrollmentPanel({ application }: { application: Applicat
               <button
                 key={o.application_id}
                 onClick={() => navigate(`/s/applications/${o.application_id}?tab=offer`)}
-                className="flex items-center gap-1.5 text-sm text-cobalt hover:underline"
+                className="flex items-center gap-1.5 text-sm text-secondary hover:underline"
               >
                 {o.program_name || 'Offer'}
                 {o.institution_name ? ` · ${o.institution_name}` : ''}
@@ -328,8 +328,8 @@ export default function EnrollmentPanel({ application }: { application: Applicat
       {/* ── Decline-after-accept (inline confirm) ── */}
       {showDecline && !confirmed && (
         <Card className="p-4">
-          <p className="text-sm text-student-ink font-medium mb-2">Decline after accepting</p>
-          <p className="text-xs text-student-text mb-2">
+          <p className="text-sm text-foreground font-medium mb-2">Decline after accepting</p>
+          <p className="text-xs text-foreground mb-2">
             This releases your seat at {institutionName}. This can't be undone here.
           </p>
           <Textarea
@@ -352,8 +352,8 @@ export default function EnrollmentPanel({ application }: { application: Applicat
       {/* ── Deferral request form ── */}
       {showDefer && !confirmed && !deferralPending && (
         <Card className="p-4">
-          <p className="text-sm text-student-ink font-medium mb-2">Request a deferral</p>
-          <p className="text-xs text-student-text mb-3">
+          <p className="text-sm text-foreground font-medium mb-2">Request a deferral</p>
+          <p className="text-xs text-foreground mb-3">
             Ask {institutionName} to move your start to a later term. Subject to their approval.
           </p>
           <div className="flex gap-2 items-end">
@@ -382,17 +382,17 @@ export default function EnrollmentPanel({ application }: { application: Applicat
       {/* ── Pre-arrival checklist (§2.1) ── */}
       <Card className="p-5">
         <div className="flex items-center justify-between mb-1">
-          <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-student-text">
+          <p className="text-eyebrow font-semibold uppercase tracking-[0.22em] text-foreground">
             Pre-arrival checklist
           </p>
-          <span className="text-xs text-student-text">
+          <span className="text-xs text-foreground">
             {completeCount}/{checklist.length} done
           </span>
         </div>
-        <p className="text-xs text-student-text mb-2">
+        <p className="text-xs text-foreground mb-2">
           What's next to get you ready for {e.start_term || 'your start'}.
         </p>
-        <div className="divide-y divide-divider">
+        <div className="divide-y divide-border">
           {checklist.map(item => (
             <ChecklistRow key={item.key} item={item} appId={appId} />
           ))}
@@ -406,8 +406,8 @@ export default function EnrollmentPanel({ application }: { application: Applicat
         return (
           <Card className="p-5">
             <div className="flex items-center gap-2 mb-2">
-              <Wallet size={16} className="text-student-text" />
-              <p className="text-sm font-medium text-student-ink">Enrollment deposit</p>
+              <Wallet size={16} className="text-foreground" />
+              <p className="text-sm font-medium text-foreground">Enrollment deposit</p>
             </div>
             {settled ? (
               <div className="space-y-2">
@@ -436,7 +436,7 @@ export default function EnrollmentPanel({ application }: { application: Applicat
                         reference: deposit.payment_id,
                       })
                     }
-                    className="text-xs text-cobalt hover:underline inline-flex items-center gap-1"
+                    className="text-xs text-secondary hover:underline inline-flex items-center gap-1"
                   >
                     <Download size={12} /> Download receipt
                   </button>
@@ -444,10 +444,10 @@ export default function EnrollmentPanel({ application }: { application: Applicat
               </div>
             ) : deposit?.required ? (
               <>
-                <p className="text-2xl font-bold text-student-ink tabular-nums mb-1">
+                <p className="text-2xl font-bold text-foreground tabular-nums mb-1">
                   {formatMoney(deposit.amount, deposit.currency)}
                 </p>
-                <p className="text-xs text-student-text mb-3">
+                <p className="text-xs text-foreground mb-3">
                   Pay your enrollment deposit to confirm your spot
                   {deposit.refundable ? '' : ' (non-refundable)'}.
                 </p>
@@ -460,9 +460,9 @@ export default function EnrollmentPanel({ application }: { application: Applicat
                 </Button>
               </>
             ) : (
-              <p className="text-sm text-student-text">
+              <p className="text-sm text-foreground">
                 Status:{' '}
-                <span className="font-semibold text-student-ink">
+                <span className="font-semibold text-foreground">
                   {DEPOSIT_LABEL[e.deposit_status || 'none']}
                 </span>
                 {e.deposit_amount ? ` · ${e.deposit_amount.toLocaleString()}` : ''}
@@ -480,7 +480,7 @@ export default function EnrollmentPanel({ application }: { application: Applicat
           ) : (
             <button
               onClick={() => setShowDecline(s => !s)}
-              className="text-sm text-student-text hover:text-error inline-flex items-center gap-1"
+              className="text-sm text-foreground hover:text-error inline-flex items-center gap-1"
             >
               <Clock size={13} /> Changed your mind? Decline your place
             </button>
@@ -489,7 +489,7 @@ export default function EnrollmentPanel({ application }: { application: Applicat
       )}
       {confirmed && !enrolled && showDecline && (
         <Card className="p-4">
-          <p className="text-sm text-student-ink font-medium mb-2">Decline after confirming</p>
+          <p className="text-sm text-foreground font-medium mb-2">Decline after confirming</p>
           <Textarea
             label="Reason (optional)"
             value={declineReason}

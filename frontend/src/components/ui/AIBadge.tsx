@@ -18,7 +18,7 @@ export default function AIBadge({ label = 'AI assist', fallback = false, classNa
         'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium',
         fallback
           ? 'border-warning/40 bg-warning-soft text-warning'
-          : 'border-cobalt/30 bg-cobalt/5 text-cobalt',
+          : 'border-secondary/30 bg-secondary/5 text-secondary',
         className,
       )}
     >

@@ -24,7 +24,7 @@ const SIZE_CLASSES: Record<FieldSize, string> = {
 }
 
 export const fieldBaseClasses =
-  'w-full rounded-md border bg-card text-foreground placeholder:text-slate/50 ' +
+  'w-full rounded-md border bg-card text-foreground placeholder:text-muted-foreground/50 ' +
   'transition-colors focus:outline-none focus-visible:outline-none ' +
   'focus:ring-2 focus:ring-ring focus:border-secondary ' +
   'disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed'
@@ -32,7 +32,7 @@ export const fieldBaseClasses =
 export function fieldStateClasses(error?: string, success?: string) {
   if (error) return 'border-error bg-error-soft/40 focus:border-error'
   if (success) return 'border-success focus:border-success'
-  return 'border-border hover:border-charcoal/30'
+  return 'border-border hover:border-foreground/30'
 }
 
 export function FieldLabel({ htmlFor, children, required }: { htmlFor?: string; children: React.ReactNode; required?: boolean }) {

@@ -82,7 +82,7 @@ export default function ProspectsTab() {
             checked={selected.has(p.id)}
             onClick={e => e.stopPropagation()}
             onChange={() => toggleSelect(p.id)}
-            className="h-4 w-4 rounded border-border accent-cobalt"
+            className="h-4 w-4 rounded border-border accent-secondary"
           />
         ),
       },

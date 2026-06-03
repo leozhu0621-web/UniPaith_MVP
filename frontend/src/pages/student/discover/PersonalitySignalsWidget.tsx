@@ -46,7 +46,7 @@ function ConfidenceDots({ confidence }: { confidence: number | null }) {
       {[0, 1, 2, 3].map(i => (
         <span
           key={i}
-          className={clsx('h-1.5 w-1.5 rounded-full', i < filled ? 'bg-student' : 'bg-divider')}
+          className={clsx('h-1.5 w-1.5 rounded-full', i < filled ? 'bg-primary' : 'bg-muted')}
         />
       ))}
     </span>
@@ -60,14 +60,14 @@ export default function PersonalitySignalsWidget() {
   })
 
   if (isLoading) {
-    return <Card className="text-sm text-student-text">Loading…</Card>
+    return <Card className="text-sm text-foreground">Loading…</Card>
   }
 
   if (signals.length === 0) {
     return (
-      <Card className="text-sm text-student-text space-y-2">
-        <div className="flex items-center gap-2 text-student-ink font-medium">
-          <UserRound size={14} className="text-cobalt" />
+      <Card className="text-sm text-foreground space-y-2">
+        <div className="flex items-center gap-2 text-foreground font-medium">
+          <UserRound size={14} className="text-secondary" />
           Personality signals
         </div>
         <p className="italic">
@@ -81,13 +81,13 @@ export default function PersonalitySignalsWidget() {
   return (
     <Card className="space-y-3">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-student-ink font-medium text-sm">
-          <UserRound size={14} className="text-cobalt" />
+        <div className="flex items-center gap-2 text-foreground font-medium text-sm">
+          <UserRound size={14} className="text-secondary" />
           Personality signals · {signals.length}
         </div>
         <Link
           to="/s/profile?tab=overview"
-          className="text-xs text-cobalt inline-flex items-center gap-1 hover:underline"
+          className="text-xs text-secondary inline-flex items-center gap-1 hover:underline"
         >
           Manage <ExternalLink size={11} />
         </Link>
@@ -97,16 +97,16 @@ export default function PersonalitySignalsWidget() {
         {signals.slice(0, 8).map((s, i) => (
           <li key={`${s.facet}-${i}`} className="space-y-0.5">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] uppercase tracking-wide text-student-text">
+              <span className="text-[10px] uppercase tracking-wide text-foreground">
                 {labelFor(s.facet)}
               </span>
               <ConfidenceDots confidence={s.confidence} />
             </div>
-            <div className="text-sm text-student-ink line-clamp-2">{s.value}</div>
+            <div className="text-sm text-foreground line-clamp-2">{s.value}</div>
           </li>
         ))}
         {signals.length > 8 && (
-          <li className="text-xs text-student-text">+{signals.length - 8} more</li>
+          <li className="text-xs text-foreground">+{signals.length - 8} more</li>
         )}
       </ul>
     </Card>

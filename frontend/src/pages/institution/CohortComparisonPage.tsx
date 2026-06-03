@@ -19,7 +19,7 @@ const DECISION_COLORS: Record<string, string> = {
   admitted: 'text-success bg-success-soft',
   rejected: 'text-error bg-error-soft',
   waitlisted: 'text-warning bg-warning-soft',
-  deferred: 'text-cobalt bg-cobalt/10',
+  deferred: 'text-secondary bg-secondary/10',
 }
 
 const applicantLabel = (a: { student_name?: string | null; student_id: string }) =>
@@ -124,7 +124,7 @@ export default function CohortComparisonPage({ embedded = false }: { embedded?: 
       {selectedProgram && calibration && (calibration.reviewer_drift.length > 0 || calibration.inter_rater.length > 0) && (
         <Card className="p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <Scale size={16} className="text-cobalt" />
+            <Scale size={16} className="text-secondary" />
             <h3 className="text-sm font-semibold text-foreground">Reader calibration</h3>
             <Badge variant="neutral">coaching only</Badge>
           </div>
@@ -195,8 +195,8 @@ export default function CohortComparisonPage({ embedded = false }: { embedded?: 
                   onClick={() => toggleApp(app.id)}
                   className={`px-3 py-1.5 rounded-lg border text-sm transition-all ${
                     selectedIds.includes(app.id)
-                      ? 'bg-cobalt/10 border-cobalt/40 text-cobalt font-medium'
-                      : 'bg-card border-border text-muted-foreground hover:border-cobalt/40'
+                      ? 'bg-secondary/10 border-secondary/40 text-secondary font-medium'
+                      : 'bg-card border-border text-muted-foreground hover:border-secondary/40'
                   }`}
                 >
                   {applicantLabel(app)} {app.match_score != null && `(${formatScore(app.match_score)})`}
@@ -261,8 +261,8 @@ export default function CohortComparisonPage({ embedded = false }: { embedded?: 
                 ))}
               </tr>
               {/* Avg Rubric Score */}
-              <tr className="border-b bg-cobalt/5 hover:bg-cobalt/10 cursor-pointer" onClick={() => toggleSort('avg_score')}>
-                <td className="px-3 py-2 font-semibold text-foreground sticky left-0 bg-cobalt/5 flex items-center gap-1">
+              <tr className="border-b bg-secondary/5 hover:bg-secondary/10 cursor-pointer" onClick={() => toggleSort('avg_score')}>
+                <td className="px-3 py-2 font-semibold text-foreground sticky left-0 bg-secondary/5 flex items-center gap-1">
                   Avg Rubric Score <SortIcon col="avg_score" />
                 </td>
                 {sorted.map(a => (

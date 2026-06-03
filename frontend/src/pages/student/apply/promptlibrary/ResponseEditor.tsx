@@ -186,7 +186,7 @@ export default function ResponseEditor({
                 className={`px-3 py-1.5 text-sm font-medium capitalize transition-colors ${
                   status === s
                     ? s === 'final'
-                      ? 'bg-gold text-ink'
+                      ? 'bg-primary text-primary-foreground'
                       : 'bg-secondary text-secondary-foreground'
                     : 'bg-background text-muted-foreground hover:bg-muted'
                 }`}

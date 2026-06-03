@@ -98,8 +98,8 @@ interface Pill {
 }
 
 const PILL_TONE = {
-  default: 'bg-white text-charcoal border-stone/60',
-  primary: 'bg-cobalt/10 text-cobalt border-cobalt/20',
+  default: 'bg-card text-foreground border-border/60',
+  primary: 'bg-secondary/10 text-secondary border-secondary/20',
   urgent: 'bg-warning-soft text-warning border-warning/40',
 }
 
@@ -189,12 +189,12 @@ export default function ProgramHeader({
   }
 
   return (
-    <div className="relative bg-white rounded-lg border border-divider overflow-hidden mb-5">
+    <div className="relative bg-card rounded-lg border border-border overflow-hidden mb-5">
       {/* Top bar: back + secondary actions */}
       <div className="flex items-center justify-between px-5 pt-4">
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 text-xs font-medium text-student-text hover:text-student-ink transition-colors"
+          className="flex items-center gap-1.5 text-xs font-medium text-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft size={14} />
           Back
@@ -205,8 +205,8 @@ export default function ProgramHeader({
             disabled={archived}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
               isSaved
-                ? 'bg-cobalt text-white border-cobalt'
-                : 'bg-white text-slate border-divider hover:border-cobalt hover:text-cobalt'
+                ? 'bg-secondary text-secondary-foreground border-secondary'
+                : 'bg-card text-muted-foreground border-border hover:border-secondary hover:text-secondary'
             }`}
             aria-label={isSaved ? 'Saved' : 'Save'}
           >
@@ -219,8 +219,8 @@ export default function ProgramHeader({
               disabled={archived}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                 isComparing
-                  ? 'bg-cobalt text-white border-cobalt'
-                  : 'bg-white text-slate border-divider hover:border-cobalt hover:text-cobalt'
+                  ? 'bg-secondary text-secondary-foreground border-secondary'
+                  : 'bg-card text-muted-foreground border-border hover:border-secondary hover:text-secondary'
               }`}
             >
               <ArrowRightLeft size={12} />
@@ -235,22 +235,22 @@ export default function ProgramHeader({
         <div className="flex items-start gap-4">
           {/* Title block */}
           <div className="flex-1 min-w-0">
-            <h1 className="text-[28px] font-bold text-student-ink leading-tight tracking-tight">{programName}</h1>
+            <h1 className="text-[28px] font-bold text-foreground leading-tight tracking-tight">{programName}</h1>
 
             {/* Breadcrumb */}
-            <div className="flex items-center gap-1 mt-1.5 text-[13px] text-student-text flex-wrap">
-              <Link to={`/s/institutions/${institutionId}`} className="text-cobalt hover:underline font-medium">
+            <div className="flex items-center gap-1 mt-1.5 text-[13px] text-foreground flex-wrap">
+              <Link to={`/s/institutions/${institutionId}`} className="text-secondary hover:underline font-medium">
                 {institutionName}
               </Link>
               {department && (
                 <>
-                  <ChevronRight size={11} className="text-student-text/40" />
+                  <ChevronRight size={11} className="text-foreground/40" />
                   <span>{department}</span>
                 </>
               )}
               {(institutionCity || institutionCountry) && (
                 <>
-                  <span className="text-student-text/40">·</span>
+                  <span className="text-foreground/40">·</span>
                   <span>{institutionCity ? `${institutionCity}, ` : ''}{institutionCountry}</span>
                 </>
               )}
@@ -260,7 +260,7 @@ export default function ProgramHeader({
                 basics: two-line info cards consistent across all programs. */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4">
               {matchSlot && (
-                <div className="flex-shrink-0 pr-4 mr-1 border-r border-divider">
+                <div className="flex-shrink-0 pr-4 mr-1 border-r border-border">
                   {matchSlot}
                 </div>
               )}
@@ -274,23 +274,23 @@ export default function ProgramHeader({
                     <p.icon
                       size={14}
                       className={
-                        p.tone === 'primary' ? 'text-cobalt' :
+                        p.tone === 'primary' ? 'text-secondary' :
                         p.tone === 'urgent' ? 'text-warning' :
-                        'text-slate/60'
+                        'text-muted-foreground/60'
                       }
                     />
                     <div className="leading-tight">
                       <p className={`text-[9px] uppercase tracking-wider font-semibold ${
-                        p.tone === 'primary' ? 'text-cobalt/70' :
+                        p.tone === 'primary' ? 'text-secondary/70' :
                         p.tone === 'urgent' ? 'text-warning/80' :
-                        'text-slate/60'
+                        'text-muted-foreground/60'
                       }`}>
                         {p.heading}
                       </p>
                       <p className={`text-[13px] font-semibold ${
-                        p.tone === 'primary' ? 'text-cobalt' :
+                        p.tone === 'primary' ? 'text-secondary' :
                         p.tone === 'urgent' ? 'text-warning' :
-                        'text-charcoal'
+                        'text-foreground'
                       }`}>
                         {p.value}
                       </p>
@@ -306,7 +306,7 @@ export default function ProgramHeader({
             {onAskCounselor && (
               <button
                 onClick={onAskCounselor}
-                className="flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-cobalt/5 text-cobalt border border-cobalt/30 hover:bg-cobalt/10 transition-colors"
+                className="flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-secondary/5 text-secondary border border-secondary/30 hover:bg-secondary/10 transition-colors"
               >
                 <Sparkles size={12} />
                 Ask counselor
@@ -315,7 +315,7 @@ export default function ProgramHeader({
             {hasApplication && onViewApplication ? (
               <button
                 onClick={onViewApplication}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-cobalt text-white hover:bg-cobalt-dark transition-colors shadow-sm"
+                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-secondary text-secondary-foreground hover:brightness-95 transition-colors shadow-sm"
               >
                 <FileText size={12} /> My application
               </button>
@@ -323,7 +323,7 @@ export default function ProgramHeader({
               <button
                 onClick={onApply}
                 disabled={archived}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-cobalt text-white hover:bg-cobalt-dark transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-cobalt"
+                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-secondary text-secondary-foreground hover:brightness-95 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-secondary"
               >
                 <Send size={12} /> Start application
               </button>

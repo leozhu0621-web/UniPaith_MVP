@@ -17,18 +17,6 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             Browse
           </Link>
           <Link
-            to="/pricing"
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Pricing
-          </Link>
-          <Link
-            to="/about"
-            className="hidden sm:inline text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            About
-          </Link>
-          <Link
             to="/goal"
             className="hidden md:inline text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >

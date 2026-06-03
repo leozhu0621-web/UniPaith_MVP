@@ -79,8 +79,8 @@ export default function EventsTab() {
             onClick={() => setScope(s.key)}
             className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
               scope === s.key
-                ? 'bg-cobalt text-white'
-                : 'bg-student-mist text-student-text hover:text-student-ink'
+                ? 'bg-secondary text-secondary-foreground'
+                : 'bg-muted text-foreground hover:text-foreground'
             }`}
           >
             {s.label}
@@ -90,11 +90,11 @@ export default function EventsTab() {
 
       {isLoading ? (
         <div className="space-y-3">
-          {[1, 2, 3].map(i => <div key={i} className="h-24 bg-white rounded-xl border border-divider animate-pulse" />)}
+          {[1, 2, 3].map(i => <div key={i} className="h-24 bg-card rounded-xl border border-border animate-pulse" />)}
         </div>
       ) : events.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-sm text-student-text">
+          <p className="text-sm text-foreground">
             {scope === 'mine' ? "You haven't RSVP'd to anything yet."
               : scope === 'past' ? 'No past events.'
               : 'No upcoming events from the institutions you follow.'}
@@ -128,7 +128,7 @@ export default function EventsTab() {
                 />
                 <button
                   onClick={() => addEventToCalendar(detail.id, detail.event_name)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-cobalt hover:bg-cobalt/5"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-secondary hover:bg-secondary/5"
                 >
                   <CalendarPlus size={13} /> Add to calendar
                 </button>
@@ -153,7 +153,7 @@ export default function EventsTab() {
 function TypeBadge({ type }: { type: string | null }) {
   if (!type) return null
   return (
-    <span className="px-2 py-0.5 text-[10px] rounded-full bg-cobalt/10 text-cobalt">
+    <span className="px-2 py-0.5 text-[10px] rounded-full bg-secondary/10 text-secondary">
       {EVENT_TYPE_LABELS[type] || type.replace(/_/g, ' ')}
     </span>
   )
@@ -161,36 +161,36 @@ function TypeBadge({ type }: { type: string | null }) {
 
 function RsvpButton({ event, onRsvp, busy }: { event: ConnectEvent; onRsvp: () => void; busy?: boolean }) {
   if (event.status === 'cancelled') {
-    return <span className="px-4 py-1.5 text-xs font-medium rounded-lg bg-student-mist text-student-text">Cancelled</span>
+    return <span className="px-4 py-1.5 text-xs font-medium rounded-lg bg-muted text-foreground">Cancelled</span>
   }
   const st = event.rsvp_state
   if (st === 'rsvp') {
     // Gold = the earned RSVP-confirmed state (Spec 20 §10).
     return (
-      <button onClick={onRsvp} disabled={busy} className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-gold text-charcoal border border-gold hover:bg-gold-hover transition-colors disabled:opacity-60">
+      <button onClick={onRsvp} disabled={busy} className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-primary text-primary-foreground border border-primary hover:brightness-95 transition-colors disabled:opacity-60">
         RSVP'd ✓
       </button>
     )
   }
   if (st === 'waitlist') {
     return (
-      <button onClick={onRsvp} disabled={busy} className="px-4 py-1.5 text-xs font-medium rounded-lg border border-cobalt text-cobalt hover:bg-cobalt/5 transition-colors disabled:opacity-60">
+      <button onClick={onRsvp} disabled={busy} className="px-4 py-1.5 text-xs font-medium rounded-lg border border-secondary text-secondary hover:bg-secondary/5 transition-colors disabled:opacity-60">
         On waitlist · Leave
       </button>
     )
   }
   if (st === 'attended') {
-    return <span className="px-4 py-1.5 text-xs font-medium rounded-lg bg-student-mist text-student-text">Attended</span>
+    return <span className="px-4 py-1.5 text-xs font-medium rounded-lg bg-muted text-foreground">Attended</span>
   }
   if (event.at_capacity) {
     return (
-      <button onClick={onRsvp} disabled={busy} className="px-4 py-1.5 text-xs font-medium rounded-lg border border-cobalt text-cobalt hover:bg-cobalt/5 transition-colors disabled:opacity-60">
+      <button onClick={onRsvp} disabled={busy} className="px-4 py-1.5 text-xs font-medium rounded-lg border border-secondary text-secondary hover:bg-secondary/5 transition-colors disabled:opacity-60">
         Join waitlist
       </button>
     )
   }
   return (
-    <button onClick={onRsvp} disabled={busy} className="px-4 py-1.5 text-xs font-medium rounded-lg bg-cobalt text-white hover:bg-cobalt-dark transition-colors disabled:opacity-60">
+    <button onClick={onRsvp} disabled={busy} className="px-4 py-1.5 text-xs font-medium rounded-lg bg-secondary text-secondary-foreground hover:brightness-95 transition-colors disabled:opacity-60">
       RSVP
     </button>
   )
@@ -207,7 +207,7 @@ interface CardProps {
 function EventListCard({ event, busy, onOpen, onRsvp, onAddCalendar }: CardProps) {
   const d = new Date(event.start_time)
   return (
-    <div className="bg-white rounded-xl border border-divider hover:shadow-sm transition-shadow">
+    <div className="bg-card rounded-xl border border-border hover:shadow-sm transition-shadow">
       <div className="flex items-center gap-2 px-4 pt-3">
         <TypeBadge type={event.event_type} />
         {event.status === 'cancelled' && (
@@ -216,21 +216,21 @@ function EventListCard({ event, busy, onOpen, onRsvp, onAddCalendar }: CardProps
           </span>
         )}
         {event.recommended && (
-          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-cobalt">
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-secondary">
             <Sparkles size={11} /> Recommended
           </span>
         )}
-        <span className="ml-auto text-[10px] text-student-text">{fmtDate(event.start_time)}</span>
+        <span className="ml-auto text-[10px] text-foreground">{fmtDate(event.start_time)}</span>
       </div>
       <div className="flex gap-4 px-4 py-3">
-        <div className="w-12 h-14 bg-student-mist border border-divider rounded-lg flex flex-col items-center justify-center flex-shrink-0">
-          <span className="text-[10px] font-semibold text-cobalt uppercase">{d.toLocaleString('en-US', { month: 'short' })}</span>
-          <span className="text-lg font-bold text-student-ink">{d.getDate()}</span>
+        <div className="w-12 h-14 bg-muted border border-border rounded-lg flex flex-col items-center justify-center flex-shrink-0">
+          <span className="text-[10px] font-semibold text-secondary uppercase">{d.toLocaleString('en-US', { month: 'short' })}</span>
+          <span className="text-lg font-bold text-foreground">{d.getDate()}</span>
         </div>
         <button onClick={onOpen} className="flex-1 min-w-0 text-left">
-          <h3 className="text-sm font-semibold text-student-ink truncate hover:text-cobalt transition-colors">{event.event_name}</h3>
-          <p className="text-xs text-student-text">{event.institution_name}</p>
-          <div className="flex items-center gap-3 text-[10px] text-student-text mt-1">
+          <h3 className="text-sm font-semibold text-foreground truncate hover:text-secondary transition-colors">{event.event_name}</h3>
+          <p className="text-xs text-foreground">{event.institution_name}</p>
+          <div className="flex items-center gap-3 text-[10px] text-foreground mt-1">
             <span className="flex items-center gap-0.5"><Clock size={9} /> {d.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
             <span className="flex items-center gap-0.5">
               {event.location ? <><MapPin size={9} /> {event.location}</> : <><Video size={9} /> Online</>}
@@ -242,7 +242,7 @@ function EventListCard({ event, busy, onOpen, onRsvp, onAddCalendar }: CardProps
         </button>
         <div className="flex flex-col items-end justify-center gap-1.5 flex-shrink-0">
           <RsvpButton event={event} onRsvp={onRsvp} busy={busy} />
-          <button onClick={onAddCalendar} className="inline-flex items-center gap-1 text-[10px] text-cobalt hover:underline">
+          <button onClick={onAddCalendar} className="inline-flex items-center gap-1 text-[10px] text-secondary hover:underline">
             <CalendarPlus size={11} /> Add to calendar
           </button>
         </div>
@@ -255,25 +255,25 @@ function EventDetailBody({ event }: { event: ConnectEvent }) {
   const rsvped = event.rsvp_state === 'rsvp' || event.rsvp_state === 'attended'
   return (
     <div className="space-y-3">
-      <p className="text-sm text-student-text">{event.institution_name}</p>
-      <div className="flex items-center gap-2 text-sm text-student-ink">
-        <Clock size={14} className="text-cobalt" /> {fmtDate(event.start_time)}
+      <p className="text-sm text-foreground">{event.institution_name}</p>
+      <div className="flex items-center gap-2 text-sm text-foreground">
+        <Clock size={14} className="text-secondary" /> {fmtDate(event.start_time)}
       </div>
-      <div className="flex items-center gap-2 text-sm text-student-ink">
-        {event.location ? <><MapPin size={14} className="text-cobalt" /> {event.location}</> : <><Video size={14} className="text-cobalt" /> Online event</>}
+      <div className="flex items-center gap-2 text-sm text-foreground">
+        {event.location ? <><MapPin size={14} className="text-secondary" /> {event.location}</> : <><Video size={14} className="text-secondary" /> Online event</>}
       </div>
-      <div className="flex items-center gap-2 text-sm text-student-text">
+      <div className="flex items-center gap-2 text-sm text-foreground">
         <Users size={14} /> Who else is going: {event.going_count}{event.capacity ? ` of ${event.capacity}` : ''}{event.waitlist_count > 0 ? ` · ${event.waitlist_count} waitlisted` : ''}
       </div>
-      {event.description && <p className="text-sm text-student-text leading-relaxed whitespace-pre-line">{event.description}</p>}
+      {event.description && <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">{event.description}</p>}
       {rsvped && event.meeting_link && (
         <a href={event.meeting_link} target="_blank" rel="noreferrer"
-           className="inline-flex items-center gap-1.5 text-sm font-medium text-cobalt hover:underline">
+           className="inline-flex items-center gap-1.5 text-sm font-medium text-secondary hover:underline">
           <ExternalLink size={14} /> Join meeting
         </a>
       )}
       {rsvped && !event.meeting_link && event.meeting_link_reveals_at && (
-        <p className="text-xs text-student-text">
+        <p className="text-xs text-foreground">
           The meeting link appears here closer to the start time.
         </p>
       )}
@@ -285,22 +285,22 @@ function EventDetailModal({ event, onClose, onRsvp, onAddCalendar }: {
   event: ConnectEvent; onClose: () => void; onRsvp: () => void; onAddCalendar: () => void
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/40" onClick={onClose}>
-      <div className="bg-white rounded-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto shadow-xl" onClick={e => e.stopPropagation()}>
-        <div className="flex items-start justify-between p-5 border-b border-divider">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-scrim" onClick={onClose}>
+      <div className="bg-card rounded-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto shadow-xl" onClick={e => e.stopPropagation()}>
+        <div className="flex items-start justify-between p-5 border-b border-border">
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-1"><TypeBadge type={event.event_type} /></div>
-            <h2 className="text-lg font-semibold text-student-ink">{event.event_name}</h2>
-            <p className="text-sm text-student-text">{event.institution_name}</p>
+            <h2 className="text-lg font-semibold text-foreground">{event.event_name}</h2>
+            <p className="text-sm text-foreground">{event.institution_name}</p>
           </div>
-          <button onClick={onClose} className="text-student-text hover:text-student-ink p-1"><X size={18} /></button>
+          <button onClick={onClose} className="text-foreground hover:text-foreground p-1"><X size={18} /></button>
         </div>
         <div className="p-5 space-y-3">
           <EventDetailBody event={event} />
         </div>
-        <div className="flex items-center gap-2 p-5 border-t border-divider">
+        <div className="flex items-center gap-2 p-5 border-t border-border">
           <RsvpButton event={event} onRsvp={onRsvp} />
-          <button onClick={onAddCalendar} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-cobalt hover:bg-cobalt/5">
+          <button onClick={onAddCalendar} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-secondary hover:bg-secondary/5">
             <CalendarPlus size={13} /> Add to calendar
           </button>
         </div>

@@ -85,15 +85,15 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
   // State 1 — no goals at all → push student back to Discover.
   if (!strategy && goals.length === 0) {
     return (
-      <Card className="bg-student/5 border-student/30">
+      <Card className="bg-primary/5 border-primary/30">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">
-            <Compass size={18} className="text-student mt-0.5 shrink-0" />
+            <Compass size={18} className="text-primary mt-0.5 shrink-0" />
             <div>
-              <div className="text-sm font-medium text-student-ink">
+              <div className="text-sm font-medium text-foreground">
                 Tell me about you first.
               </div>
-              <div className="text-xs text-student-text mt-1 max-w-2xl">
+              <div className="text-xs text-foreground mt-1 max-w-2xl">
                 Match works against the broad strategy you build in Discover. Talk through your
                 goals and I'll surface the strategy here once you have at least one active
                 academic goal.
@@ -111,15 +111,15 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
   // State 2 — goals exist but no active strategy → offer to generate.
   if (!strategy) {
     return (
-      <Card className="bg-student/5 border-student/30">
+      <Card className="bg-primary/5 border-primary/30">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">
-            <Sparkles size={18} className="text-gold mt-0.5 shrink-0" />
+            <Sparkles size={18} className="text-primary mt-0.5 shrink-0" />
             <div>
-              <div className="text-sm font-medium text-student-ink">
+              <div className="text-sm font-medium text-foreground">
                 Ready to plan your strategy.
               </div>
-              <div className="text-xs text-student-text mt-1">
+              <div className="text-xs text-foreground mt-1">
                 You have {goals.length} active goal{goals.length === 1 ? '' : 's'}. Generate a
                 draft strategy now and review/activate it from your profile.
               </div>
@@ -151,19 +151,19 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
           aria-expanded={!collapsed}
         >
           {collapsed ? (
-            <ChevronRight size={14} className="text-student-text" />
+            <ChevronRight size={14} className="text-foreground" />
           ) : (
-            <ChevronDown size={14} className="text-student-text" />
+            <ChevronDown size={14} className="text-foreground" />
           )}
-          <Target size={16} className="text-student" />
+          <Target size={16} className="text-primary" />
           <div>
-            <div className="text-xs uppercase tracking-wide text-student-text">
+            <div className="text-xs uppercase tracking-wide text-foreground">
               Active strategy · v{strategy.version}
             </div>
-            <div className="text-base font-semibold text-student-ink">
+            <div className="text-base font-semibold text-foreground">
               {strategy.career_target ?? 'Strategy'}
               {strategy.target_degree && (
-                <span className="text-sm text-student-text font-normal">
+                <span className="text-sm text-foreground font-normal">
                   {' '}
                   → {strategy.target_degree}
                 </span>
@@ -182,7 +182,7 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
       {/* Spec 09 §3 — on regenerate failure, preserve the existing strategy
           and surface an inline banner (never blank the card). */}
       {generateMut.isError && (
-        <div className="mt-3 flex items-start gap-2 rounded-lg border border-warning/30 bg-warning-soft px-3 py-2 text-xs text-student-ink">
+        <div className="mt-3 flex items-start gap-2 rounded-lg border border-warning/30 bg-warning-soft px-3 py-2 text-xs text-foreground">
           <AlertCircle size={13} className="mt-0.5 shrink-0 text-warning" />
           Couldn&apos;t regenerate your strategy. Showing your current one.
         </div>
@@ -216,7 +216,7 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
             </Link>
             <Link
               to="/s/profile?tab=strategy"
-              className="inline-flex items-center gap-1 text-xs font-semibold text-cobalt hover:underline ml-auto"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-secondary hover:underline ml-auto"
             >
               Open full strategy
               <ArrowRight size={12} />
@@ -232,10 +232,10 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
 function StrategyLine({ label, value }: { label: string; value: string | null }) {
   return (
     <div className="flex items-baseline gap-3">
-      <span className="w-24 shrink-0 text-[11px] uppercase tracking-wide text-student-text">
+      <span className="w-24 shrink-0 text-[11px] uppercase tracking-wide text-foreground">
         {label}
       </span>
-      <span className="text-sm text-student-ink min-w-0">{value?.trim() || '—'}</span>
+      <span className="text-sm text-foreground min-w-0">{value?.trim() || '—'}</span>
     </div>
   )
 }

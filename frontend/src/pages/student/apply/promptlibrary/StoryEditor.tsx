@@ -270,7 +270,7 @@ export default function StoryEditor({
             type="checkbox"
             checked={!!form.referenceable_contact_flag}
             onChange={e => set('referenceable_contact_flag', e.target.checked)}
-            className="h-4 w-4 rounded border-border text-secondary focus:ring-cobalt"
+            className="h-4 w-4 rounded border-border text-secondary focus:ring-secondary"
           />
           Someone can vouch for this story
         </label>

@@ -36,8 +36,8 @@ export default function NLAssistBar({ onApply }: Props) {
   })
 
   return (
-    <div className="rounded-lg border border-cobalt/30 bg-cobalt/5 p-4">
-      <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-cobalt">
+    <div className="rounded-lg border border-secondary/30 bg-secondary/5 p-4">
+      <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-secondary">
         <Sparkles size={15} /> Try AI assist: type what audience you want →
       </div>
       <div className="flex gap-2">
@@ -49,7 +49,7 @@ export default function NLAssistBar({ onApply }: Props) {
             if (e.key === 'Enter' && text.trim()) mut.mutate()
           }}
           placeholder="e.g. high-fit master's students who saved our programs but haven't applied"
-          className="flex-1 rounded-md border-border text-sm focus:border-cobalt focus:ring-cobalt"
+          className="flex-1 rounded-md border-border text-sm focus:border-secondary focus:ring-secondary"
         />
         <button
           type="button"

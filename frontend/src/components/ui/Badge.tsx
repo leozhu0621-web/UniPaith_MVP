@@ -15,7 +15,7 @@ const VARIANT_CLASSES: Record<BadgeVariant, string> = {
   warning: 'bg-warning-soft text-warning',
   danger: 'bg-error-soft text-error',
   error: 'bg-error-soft text-error',
-  info: 'bg-cobalt/10 text-cobalt',
+  info: 'bg-secondary/10 text-secondary',
   neutral: 'bg-muted text-muted-foreground',
 }
 

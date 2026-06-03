@@ -158,7 +158,7 @@ function TerritoryCard({
         </div>
         <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full bg-cobalt"
+            className="h-full bg-secondary"
             style={{ width: `${(territory.prospect_count / maxProspects) * 100}%` }}
           />
         </div>

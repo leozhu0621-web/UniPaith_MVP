@@ -84,7 +84,7 @@ function CohortCard({ cohort }: { cohort: YieldCohort }) {
             <span className="w-28 shrink-0 truncate text-muted-foreground">{g.group}</span>
             <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
               <div
-                className={`h-full rounded-full ${cohort.fairness_concern ? 'bg-warning' : 'bg-cobalt'}`}
+                className={`h-full rounded-full ${cohort.fairness_concern ? 'bg-warning' : 'bg-secondary'}`}
                 style={{ width: `${Math.round(g.yield_rate * 100)}%` }}
               />
             </div>
@@ -191,8 +191,8 @@ export default function YieldPage() {
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <Megaphone size={15} className="text-cobalt" />
-                <span className="text-xs font-semibold uppercase tracking-wide text-cobalt">
+                <Megaphone size={15} className="text-secondary" />
+                <span className="text-xs font-semibold uppercase tracking-wide text-secondary">
                   Next best action
                 </span>
                 <AIBadge label="AI assist" />
@@ -373,7 +373,7 @@ export default function YieldPage() {
                   </span>
                   <button
                     onClick={() => navigate(`/i/pipeline/${w.application_id}?tab=enrollment`)}
-                    className="text-foreground hover:text-cobalt hover:underline"
+                    className="text-foreground hover:text-secondary hover:underline"
                   >
                     {w.student_name || 'Applicant'}
                   </button>

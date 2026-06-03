@@ -124,10 +124,10 @@ export default function MatchesSection({ savedIds, onToggleSave }: MatchesSectio
   if (matches.length === 0) {
     return (
       <section className="mb-6">
-        <div className="rounded-xl border border-divider bg-card p-6 text-center">
-          <Compass size={28} className="mx-auto text-student-text/50 mb-3" />
-          <p className="text-sm font-semibold text-student-ink mb-1">No matches yet</p>
-          <p className="text-xs text-student-text max-w-md mx-auto mb-4">
+        <div className="rounded-xl border border-border bg-card p-6 text-center">
+          <Compass size={28} className="mx-auto text-foreground/50 mb-3" />
+          <p className="text-sm font-semibold text-foreground mb-1">No matches yet</p>
+          <p className="text-xs text-foreground max-w-md mx-auto mb-4">
             Add more to your profile to unlock matches. Talk through your goals on Discover, then
             refresh here.
           </p>
@@ -162,7 +162,7 @@ export default function MatchesSection({ savedIds, onToggleSave }: MatchesSectio
 
       {/* AI-down cached fallback banner (§8). */}
       {isError && (
-        <div className="mb-3 rounded-lg border border-warning/30 bg-warning-soft px-3 py-2 text-xs text-student-ink">
+        <div className="mb-3 rounded-lg border border-warning/30 bg-warning-soft px-3 py-2 text-xs text-foreground">
           We couldn&apos;t reach the matching service. Showing cached matches from{' '}
           {relativeTime(dataUpdatedAt ? new Date(dataUpdatedAt).toISOString() : null)}.
         </div>
@@ -174,8 +174,8 @@ export default function MatchesSection({ savedIds, onToggleSave }: MatchesSectio
             <div key={band}>
               <div className="flex items-center gap-2 mb-2.5">
                 <BandBadge band={band} />
-                <span className="text-xs text-student-text">{BAND_BLURB[band]}</span>
-                <span className="ml-auto text-[11px] text-student-text/60">{groups[band].length}</span>
+                <span className="text-xs text-foreground">{BAND_BLURB[band]}</span>
+                <span className="ml-auto text-[11px] text-foreground/60">{groups[band].length}</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {groups[band].map(renderCard)}
@@ -215,14 +215,14 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
-      <h2 className="text-base font-bold text-charcoal">
-        Your matches{count != null && <span className="text-slate font-normal"> · {count}</span>}
+      <h2 className="text-base font-bold text-foreground">
+        Your matches{count != null && <span className="text-muted-foreground font-normal"> · {count}</span>}
       </h2>
       <div className="flex items-center gap-1.5">
         {onRefinePriorities && (
           <button
             onClick={onRefinePriorities}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-cobalt hover:bg-cobalt/5 rounded-lg transition-colors"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-secondary hover:bg-secondary/5 rounded-lg transition-colors"
           >
             <SlidersHorizontal size={13} /> Refine priorities
           </button>
@@ -230,7 +230,7 @@ function SectionHeader({
         {onToggleGrouped && (
           <button
             onClick={onToggleGrouped}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate hover:bg-muted rounded-lg transition-colors"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted rounded-lg transition-colors"
             title={grouped ? 'Show as a flat ranked list' : 'Group by reach / target / safer'}
           >
             {grouped ? <ListFilter size={13} /> : <LayoutGrid size={13} />}
@@ -241,7 +241,7 @@ function SectionHeader({
           <button
             onClick={onRefresh}
             disabled={refreshing}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate hover:bg-muted rounded-lg transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted rounded-lg transition-colors disabled:opacity-50"
           >
             {refreshing ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
             Refresh

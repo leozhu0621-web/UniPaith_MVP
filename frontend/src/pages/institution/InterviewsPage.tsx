@@ -141,7 +141,7 @@ export default function InterviewsPage({ embedded = false }: { embedded?: boolea
     return (
       <div className="flex items-center justify-end gap-1">
         {scoreable ? (
-          <Button size="sm" variant="ghost" className="text-cobalt" onClick={() => setScoreTarget(iv)}>
+          <Button size="sm" variant="ghost" className="text-secondary" onClick={() => setScoreTarget(iv)}>
             Score
           </Button>
         ) : completable ? (

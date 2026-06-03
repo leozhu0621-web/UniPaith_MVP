@@ -56,7 +56,7 @@ export default function FairnessPanel() {
           size="sm"
           variant="link"
           onClick={() => navigate('/i/admissions?tab=fairness')}
-          className="flex items-center gap-1 text-cobalt"
+          className="flex items-center gap-1 text-secondary"
         >
           Open <ArrowRight size={13} />
         </Button>

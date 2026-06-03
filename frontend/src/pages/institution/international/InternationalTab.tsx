@@ -98,7 +98,7 @@ interface Draft {
 function SectionTitle({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2 mb-4">
-      <span className="text-cobalt">{icon}</span>
+      <span className="text-secondary">{icon}</span>
       <h3 className="text-sm font-semibold text-foreground">{children}</h3>
     </div>
   )
@@ -277,7 +277,7 @@ export default function InternationalTab({ applicationId }: { applicationId: str
             </div>
             <div className="text-sm text-foreground">
               <span className="text-muted-foreground">Normalized GPA: </span>
-              <span className="font-semibold tabular-nums text-cobalt">
+              <span className="font-semibold tabular-nums text-secondary">
                 {rec?.credential_eval.normalized_gpa ?? '—'}
               </span>
               {rec?.credential_eval.source_scale && (
@@ -310,7 +310,7 @@ export default function InternationalTab({ applicationId }: { applicationId: str
           {si.credential_report_url && (
             <p className="mt-1 text-xs text-muted-foreground">
               Student uploaded:{' '}
-              <a className="text-cobalt hover:underline" href={si.credential_report_url} target="_blank" rel="noreferrer">
+              <a className="text-secondary hover:underline" href={si.credential_report_url} target="_blank" rel="noreferrer">
                 view report
               </a>
             </p>
@@ -331,8 +331,8 @@ export default function InternationalTab({ applicationId }: { applicationId: str
       <Card className="p-5">
         <SectionTitle icon={<Languages size={16} />}>English proficiency</SectionTitle>
         {waiverSuggestion.eligible && !draft.english_waiver_eligible && (
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-cobalt/30 bg-cobalt/5 px-3 py-2">
-            <span className="text-sm text-cobalt">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-secondary/30 bg-secondary/5 px-3 py-2">
+            <span className="text-sm text-secondary">
               Waiver eligible — {waiverSuggestion.basis}. Confirm to apply.
             </span>
             <Button

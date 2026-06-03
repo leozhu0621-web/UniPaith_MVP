@@ -24,7 +24,7 @@ export default function RuleChip({ signal, rule, editable = false, onChange, onR
         title={rawRuleString(rule)}
         className={[
           'inline-flex items-center gap-1.5 rounded-full border bg-surface pl-3 pr-2 py-1 text-sm',
-          incomplete ? 'border-warning text-warning' : 'border-cobalt text-foreground',
+          incomplete ? 'border-warning text-warning' : 'border-secondary text-foreground',
         ].join(' ')}
       >
         {rule.ambiguous && (
@@ -108,7 +108,7 @@ function RuleEditor({
               className={[
                 'rounded-md border px-2 py-0.5 text-xs',
                 rule.operator === op
-                  ? 'border-cobalt bg-cobalt/10 text-cobalt'
+                  ? 'border-secondary bg-secondary/10 text-secondary'
                   : 'border-border text-muted-foreground',
               ].join(' ')}
             >
@@ -132,7 +132,7 @@ function RuleEditor({
                     type="checkbox"
                     checked={checked}
                     onChange={() => toggleMulti(o.value)}
-                    className="rounded border-border text-cobalt focus:ring-cobalt"
+                    className="rounded border-border text-secondary focus:ring-secondary"
                   />
                   <span>{o.label}</span>
                 </label>
@@ -157,7 +157,7 @@ function RuleEditor({
               })
             }
             placeholder="e.g. computer science, data"
-            className="w-full rounded-md border-border text-sm focus:border-cobalt focus:ring-cobalt"
+            className="w-full rounded-md border-border text-sm focus:border-secondary focus:ring-secondary"
           />
         )}
 
@@ -168,7 +168,7 @@ function RuleEditor({
             min={1}
             value={typeof rule.value === 'number' ? rule.value : 30}
             onChange={(e) => set({ value: Number(e.target.value) || 30 })}
-            className="w-24 rounded-md border-border text-sm focus:border-cobalt focus:ring-cobalt"
+            className="w-24 rounded-md border-border text-sm focus:border-secondary focus:ring-secondary"
           />
           <span className="text-muted-foreground">days</span>
         </div>
@@ -181,7 +181,7 @@ function RuleEditor({
           max={100}
           value={typeof rule.value === 'number' ? rule.value : 50}
           onChange={(e) => set({ value: Number(e.target.value) })}
-          className="w-24 rounded-md border-border text-sm focus:border-cobalt focus:ring-cobalt"
+          className="w-24 rounded-md border-border text-sm focus:border-secondary focus:ring-secondary"
         />
       )}
 
@@ -198,7 +198,7 @@ function RuleEditor({
                 ],
               })
             }
-            className="w-20 rounded-md border-border text-sm focus:border-cobalt focus:ring-cobalt"
+            className="w-20 rounded-md border-border text-sm focus:border-secondary focus:ring-secondary"
           />
           <span className="text-muted-foreground">to</span>
           <input
@@ -212,7 +212,7 @@ function RuleEditor({
                 ],
               })
             }
-            className="w-20 rounded-md border-border text-sm focus:border-cobalt focus:ring-cobalt"
+            className="w-20 rounded-md border-border text-sm focus:border-secondary focus:ring-secondary"
           />
         </div>
       )}

@@ -229,7 +229,7 @@ export default function SavedListPage() {
     if (items.length === 0) return null
     return (
       <section key={band} className="space-y-4">
-        <div className="flex items-center gap-2 border-b border-divider pb-2">
+        <div className="flex items-center gap-2 border-b border-border pb-2">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             {BAND_EYEBROW[band]}
           </span>
@@ -263,7 +263,7 @@ export default function SavedListPage() {
         </p>
       </header>
 
-      <div className="flex gap-1 border-b border-divider mb-5">
+      <div className="flex gap-1 border-b border-border mb-5">
         <button
           type="button"
           onClick={() => selectTab('programs')}
@@ -343,7 +343,7 @@ export default function SavedListPage() {
               <select
                 value={viewMode}
                 onChange={e => setViewMode(e.target.value as ViewMode)}
-                className="text-xs font-medium border border-divider rounded-md px-2 py-1 bg-card text-foreground"
+                className="text-xs font-medium border border-border rounded-md px-2 py-1 bg-card text-foreground"
               >
                 <option value="tier">Grouped by tier</option>
                 <option value="priority">Grouped by priority</option>
@@ -355,7 +355,7 @@ export default function SavedListPage() {
               <select
                 value={sortKey}
                 onChange={e => setSortKey(e.target.value as SortKey)}
-                className="text-xs font-medium border border-divider rounded-md px-2 py-1 bg-card text-foreground"
+                className="text-xs font-medium border border-border rounded-md px-2 py-1 bg-card text-foreground"
               >
                 <option value="match_score">Match score</option>
                 <option value="date_added">Date added</option>
@@ -367,7 +367,7 @@ export default function SavedListPage() {
               <select
                 value={filterKey}
                 onChange={e => setFilterKey(e.target.value as FilterKey)}
-                className="text-xs font-medium border border-divider rounded-md px-2 py-1 bg-card text-foreground"
+                className="text-xs font-medium border border-border rounded-md px-2 py-1 bg-card text-foreground"
               >
                 <option value="all">All ({priorityCounts.all})</option>
                 {PRIORITY_ORDER.map(p => (
@@ -383,7 +383,7 @@ export default function SavedListPage() {
                   type="checkbox"
                   checked={showDropped}
                   onChange={e => setShowDropped(e.target.checked)}
-                  className="rounded border-stone"
+                  className="rounded border-border"
                 />
                 Show dropped ({priorityCounts.dropped})
               </label>
@@ -399,7 +399,7 @@ export default function SavedListPage() {
               {BAND_ORDER.map(b => renderTierSection(b, tierGroups.groups[b]))}
               {tierGroups.unmatched.length > 0 && (
                 <section className="space-y-4">
-                  <div className="flex items-center gap-2 border-b border-divider pb-2">
+                  <div className="flex items-center gap-2 border-b border-border pb-2">
                     <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                       Unmatched
                     </span>
@@ -418,7 +418,7 @@ export default function SavedListPage() {
                 if (items.length === 0) return null
                 return (
                   <section key={p} className="space-y-4">
-                    <div className="flex items-center gap-2 border-b border-divider pb-2">
+                    <div className="flex items-center gap-2 border-b border-border pb-2">
                       <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                         {PRIORITY_CONFIG[p].label}
                       </span>

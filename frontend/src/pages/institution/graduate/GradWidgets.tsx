@@ -26,7 +26,7 @@ export function TagInput({
         {values.map((v, i) => (
           <span
             key={i}
-            className="inline-flex items-center gap-1 rounded bg-cobalt/10 px-2 py-0.5 text-xs text-cobalt"
+            className="inline-flex items-center gap-1 rounded bg-secondary/10 px-2 py-0.5 text-xs text-secondary"
           >
             {v}
             <button type="button" onClick={() => onChange(values.filter((_, x) => x !== i))}>

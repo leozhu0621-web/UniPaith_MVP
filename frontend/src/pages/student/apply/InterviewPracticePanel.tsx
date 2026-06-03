@@ -81,7 +81,7 @@ export default function InterviewPracticePanel() {
         />
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-student-ink">Type</label>
+          <label className="mb-1 block text-sm font-medium text-foreground">Type</label>
           <div className="flex gap-1">
             {TYPES.map(t => (
               <button
@@ -90,8 +90,8 @@ export default function InterviewPracticePanel() {
                 onClick={() => setInterviewType(t.key)}
                 className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
                   interviewType === t.key
-                    ? 'border-student bg-student/5 text-student-ink'
-                    : 'border-divider text-student-text hover:border-student-text'
+                    ? 'border-primary bg-primary/5 text-foreground'
+                    : 'border-border text-foreground hover:border-foreground'
                 }`}
               >
                 {t.label}
@@ -101,11 +101,11 @@ export default function InterviewPracticePanel() {
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-student-ink">
+          <label className="mb-1 block text-sm font-medium text-foreground">
             Focus area (optional)
           </label>
           <input
-            className="w-full rounded-md border border-divider px-3 py-2 text-sm"
+            className="w-full rounded-md border border-border px-3 py-2 text-sm"
             value={focus}
             onChange={e => setFocus(e.target.value)}
             maxLength={200}
@@ -114,14 +114,14 @@ export default function InterviewPracticePanel() {
         </div>
 
         <details className="text-sm">
-          <summary className="cursor-pointer text-student-text hover:text-student-ink">
+          <summary className="cursor-pointer text-foreground hover:text-foreground">
             Or — coach a response you've drafted
           </summary>
-          <div className="mt-3 space-y-3 border-t border-divider pt-3">
+          <div className="mt-3 space-y-3 border-t border-border pt-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-student-ink">Question</label>
+              <label className="mb-1 block text-xs font-medium text-foreground">Question</label>
               <input
-                className="w-full rounded-md border border-divider px-3 py-2 text-sm"
+                className="w-full rounded-md border border-border px-3 py-2 text-sm"
                 value={questionText}
                 onChange={e => setQuestionText(e.target.value)}
                 maxLength={4000}
@@ -129,9 +129,9 @@ export default function InterviewPracticePanel() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-student-ink">Your response</label>
+              <label className="mb-1 block text-xs font-medium text-foreground">Your response</label>
               <textarea
-                className="w-full rounded-md border border-divider px-3 py-2 font-mono text-sm"
+                className="w-full rounded-md border border-border px-3 py-2 font-mono text-sm"
                 rows={6}
                 maxLength={20000}
                 value={responseText}
@@ -142,7 +142,7 @@ export default function InterviewPracticePanel() {
           </div>
         </details>
 
-        <div className="text-xs text-student-text">
+        <div className="text-xs text-foreground">
           {hasResponse ? (
             <>
               I'll coach your response — <strong>no model answer</strong> in return.
@@ -183,7 +183,7 @@ export default function InterviewPracticePanel() {
           {scored && (
             <Card>
               <div className="mb-3 flex items-center justify-between">
-                <div className="text-eyebrow uppercase text-student-text">Rubric scores</div>
+                <div className="text-eyebrow uppercase text-foreground">Rubric scores</div>
                 {run.is_stub && <StubNote />}
               </div>
               <RubricScores scores={run.rubric_scores} />
@@ -192,7 +192,7 @@ export default function InterviewPracticePanel() {
 
           {run.structural_issues.length > 0 && (
             <Card>
-              <div className="mb-2 text-eyebrow uppercase text-student-text">
+              <div className="mb-2 text-eyebrow uppercase text-foreground">
                 Response issues · {run.structural_issues.length}
               </div>
               <ul className="space-y-2">
@@ -202,9 +202,9 @@ export default function InterviewPracticePanel() {
                       {iss.severity}
                     </Badge>
                     <div className="flex-1">
-                      <div className="text-student-ink">{iss.issue}</div>
+                      <div className="text-foreground">{iss.issue}</div>
                       {iss.location_ref && (
-                        <div className="mt-0.5 text-xs text-student-text">{iss.location_ref}</div>
+                        <div className="mt-0.5 text-xs text-foreground">{iss.location_ref}</div>
                       )}
                     </div>
                   </li>
@@ -215,7 +215,7 @@ export default function InterviewPracticePanel() {
 
           {run.missing_elements.length > 0 && (
             <Card>
-              <div className="mb-2 text-eyebrow uppercase text-student-text">
+              <div className="mb-2 text-eyebrow uppercase text-foreground">
                 Missing elements · {run.missing_elements.length}
               </div>
               <ul className="space-y-2">
@@ -224,7 +224,7 @@ export default function InterviewPracticePanel() {
                     <Badge variant={IMPORTANCE_VARIANT[m.importance]} size="sm">
                       {m.importance.replace(/_/g, ' ')}
                     </Badge>
-                    <span className="flex-1 text-student-ink">{m.element}</span>
+                    <span className="flex-1 text-foreground">{m.element}</span>
                   </li>
                 ))}
               </ul>
@@ -233,17 +233,17 @@ export default function InterviewPracticePanel() {
 
           {run.suggested_questions.length > 0 && (
             <Card>
-              <div className="mb-3 text-eyebrow uppercase text-student-text">
+              <div className="mb-3 text-eyebrow uppercase text-foreground">
                 {hasResponse ? 'Questions to practice next' : 'Practice questions'} ·{' '}
                 {run.suggested_questions.length}
               </div>
               <ol className="space-y-3">
                 {run.suggested_questions.map((q, i) => (
                   <li key={i} className="text-sm">
-                    <div className="font-medium text-student-ink">
+                    <div className="font-medium text-foreground">
                       {i + 1}. {q.question}
                     </div>
-                    {q.why && <div className="mt-0.5 text-xs italic text-student-text">{q.why}</div>}
+                    {q.why && <div className="mt-0.5 text-xs italic text-foreground">{q.why}</div>}
                   </li>
                 ))}
               </ol>

@@ -496,7 +496,7 @@ function MetricsView({ metrics, loading }: { metrics?: CampaignMetrics; loading:
   const sent = metrics.sent || 0
   const pct = (v: number) => (sent > 0 ? Math.round((v / sent) * 100) : 0)
   const bars = [
-    { label: 'Delivered', value: metrics.delivered, cls: 'bg-cobalt' },
+    { label: 'Delivered', value: metrics.delivered, cls: 'bg-secondary' },
     { label: 'Opens (email)', value: metrics.opens, cls: 'bg-success' },
     { label: 'Clicks', value: metrics.clicks, cls: 'bg-accent' },
   ]

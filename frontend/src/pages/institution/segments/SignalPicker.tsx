@@ -20,7 +20,7 @@ export default function SignalPicker({ dict, onPick, label = 'Add rule' }: Props
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1 rounded-full border border-dashed border-cobalt px-3 py-1 text-sm text-cobalt hover:bg-cobalt/5"
+        className="inline-flex items-center gap-1 rounded-full border border-dashed border-secondary px-3 py-1 text-sm text-secondary hover:bg-secondary/5"
       >
         <Plus size={14} /> {label}
       </button>

@@ -580,7 +580,7 @@ export default function DataUploadPage() {
             <span
               key={label}
               className={`text-xs px-2 py-1 rounded-pill ${
-                i === stepIndex ? 'bg-cobalt/10 text-cobalt font-semibold' : 'text-muted-foreground'
+                i === stepIndex ? 'bg-secondary/10 text-secondary font-semibold' : 'text-muted-foreground'
               }`}
             >
               {label}
@@ -592,7 +592,7 @@ export default function DataUploadPage() {
           <div className="mb-4">
             <div className="h-2 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-cobalt transition-all duration-300"
+                className="h-full bg-secondary transition-all duration-300"
                 style={{ width: `${uploadProgress}%` }}
               />
             </div>

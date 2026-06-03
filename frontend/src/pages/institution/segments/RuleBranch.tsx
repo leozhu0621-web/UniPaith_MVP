@@ -49,7 +49,7 @@ export default function RuleBranch({ title, hint, branch, group, signals, dict, 
                 className={[
                   'rounded-md border px-2 py-0.5 font-medium',
                   group.op === op
-                    ? 'border-cobalt bg-cobalt/10 text-cobalt'
+                    ? 'border-secondary bg-secondary/10 text-secondary'
                     : 'border-border text-muted-foreground',
                 ].join(' ')}
               >

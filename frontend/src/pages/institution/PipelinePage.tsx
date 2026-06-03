@@ -36,9 +36,9 @@ import Textarea from '../../components/ui/Textarea'
 import type { Application, BatchOperationResult, PrioritizedApplication, Program } from '../../types'
 
 const PIPELINE_COLUMNS = [
-  { id: 'submitted', label: 'Applied', color: 'bg-cobalt' },
+  { id: 'submitted', label: 'Applied', color: 'bg-secondary' },
   { id: 'under_review', label: 'Under Review', color: 'bg-warning' },
-  { id: 'interview', label: 'Interview', color: 'bg-cobalt-dark' },
+  { id: 'interview', label: 'Interview', color: 'bg-secondary' },
   { id: 'decision_made', label: 'Decision', color: 'bg-success' },
 ] as const
 
@@ -411,7 +411,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
             </Card>
             <Card className="p-3">
               <p className="text-xs text-muted-foreground">Interview Stage</p>
-              <p className="text-xl font-bold text-cobalt">{interviewStageCount}</p>
+              <p className="text-xl font-bold text-secondary">{interviewStageCount}</p>
             </Card>
           </div>
 

@@ -106,7 +106,7 @@ export default function RationalePopover({
                 {studentCitations.map(path => (
                   <span
                     key={path}
-                    className="inline-flex items-center gap-1 rounded-pill border border-student bg-student/10 px-2 py-0.5 text-xs text-student-ink"
+                    className="inline-flex items-center gap-1 rounded-pill border border-primary bg-primary/10 px-2 py-0.5 text-xs text-foreground"
                   >
                     {prettyField(path)}
                   </span>
@@ -169,10 +169,10 @@ function BreakdownBlock({ title, data }: { title: string; data: Record<string, u
         {entries.map(([k, v]) => (
           <span
             key={k}
-            className="inline-flex items-center gap-1 rounded-pill border border-cobalt px-2 py-0.5 text-xs text-cobalt"
+            className="inline-flex items-center gap-1 rounded-pill border border-secondary px-2 py-0.5 text-xs text-secondary"
           >
             <span className="font-semibold">{prettyField(k)}</span>
-            <span className="text-cobalt/60">·</span>
+            <span className="text-secondary/60">·</span>
             <span>{v}</span>
           </span>
         ))}

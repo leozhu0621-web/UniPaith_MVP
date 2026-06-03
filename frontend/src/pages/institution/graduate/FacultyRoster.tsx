@@ -65,7 +65,7 @@ function FacultyCard({ faculty }: { faculty: Faculty }) {
               value={openings}
               onChange={e => setOpenings(e.target.value)}
               onBlur={() => patch.mutate({ openings: Math.max(0, Number(openings) || 0) })}
-              className="w-14 rounded border border-border bg-background px-2 py-1 text-sm tabular-nums text-foreground outline-none focus:border-cobalt"
+              className="w-14 rounded border border-border bg-background px-2 py-1 text-sm tabular-nums text-foreground outline-none focus:border-secondary"
             />
           </div>
           <Toggle
@@ -147,7 +147,7 @@ export default function FacultyRoster({
     <Card className="p-5">
       <div className="mb-4 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-cobalt">
+          <span className="text-secondary">
             <Users size={16} />
           </span>
           <h3 className="text-sm font-semibold text-foreground">Faculty</h3>

@@ -117,7 +117,7 @@ export default function InternationalPage({ embedded = false }: { embedded?: boo
       )}
 
       <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 px-4 py-2.5">
-        <Globe size={16} className="mt-0.5 shrink-0 text-cobalt" />
+        <Globe size={16} className="mt-0.5 shrink-0 text-secondary" />
         <p className="text-xs text-muted-foreground">
           Visa &amp; immigration status is operational only — it informs feasibility and yield planning
           and is never a selection criterion.

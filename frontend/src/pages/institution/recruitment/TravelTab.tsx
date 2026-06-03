@@ -154,7 +154,7 @@ function TripCard({
           </div>
           <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
             <div
-              className={`h-full ${trip.over_budget ? 'bg-warning' : 'bg-cobalt'}`}
+              className={`h-full ${trip.over_budget ? 'bg-warning' : 'bg-secondary'}`}
               style={{ width: `${Math.min(100, (Number(trip.spend) / Number(trip.budget || 1)) * 100)}%` }}
             />
           </div>

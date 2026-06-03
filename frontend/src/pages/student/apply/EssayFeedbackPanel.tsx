@@ -64,9 +64,9 @@ export default function EssayFeedbackPanel() {
         />
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-student-ink">Prompt (optional)</label>
+          <label className="mb-1 block text-sm font-medium text-foreground">Prompt (optional)</label>
           <input
-            className="w-full rounded-md border border-divider px-3 py-2 text-sm"
+            className="w-full rounded-md border border-border px-3 py-2 text-sm"
             value={prompt}
             onChange={e => setPrompt(e.target.value)}
             maxLength={4000}
@@ -75,18 +75,18 @@ export default function EssayFeedbackPanel() {
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-student-ink">
+          <label className="mb-1 block text-sm font-medium text-foreground">
             Your essay <span className="text-error">*</span>
           </label>
           <textarea
-            className="w-full rounded-md border border-divider px-3 py-2 font-mono text-sm"
+            className="w-full rounded-md border border-border px-3 py-2 font-mono text-sm"
             rows={14}
             maxLength={20000}
             value={essay}
             onChange={e => setEssay(e.target.value)}
             placeholder="Paste your draft. Minimum 20 characters."
           />
-          <div className="mt-1 flex items-center justify-between text-xs text-student-text">
+          <div className="mt-1 flex items-center justify-between text-xs text-foreground">
             <span>{wordCount} words</span>
             <span>I'll critique structure and flag missing elements. I won't rewrite it.</span>
           </div>
@@ -118,7 +118,7 @@ export default function EssayFeedbackPanel() {
 
           <Card>
             <div className="mb-3 flex items-center justify-between">
-              <div className="text-eyebrow uppercase text-student-text">Rubric scores</div>
+              <div className="text-eyebrow uppercase text-foreground">Rubric scores</div>
               {run.is_stub && <StubNote />}
             </div>
             <RubricScores scores={run.rubric_scores} />
@@ -126,7 +126,7 @@ export default function EssayFeedbackPanel() {
 
           {run.structural_issues.length > 0 && (
             <Card>
-              <div className="mb-2 text-eyebrow uppercase text-student-text">
+              <div className="mb-2 text-eyebrow uppercase text-foreground">
                 Structural issues · {run.structural_issues.length}
               </div>
               <ul className="space-y-2">
@@ -136,9 +136,9 @@ export default function EssayFeedbackPanel() {
                       {iss.severity}
                     </Badge>
                     <div className="flex-1">
-                      <div className="text-student-ink">{iss.issue}</div>
+                      <div className="text-foreground">{iss.issue}</div>
                       {iss.location_ref && (
-                        <div className="mt-0.5 text-xs text-student-text">{iss.location_ref}</div>
+                        <div className="mt-0.5 text-xs text-foreground">{iss.location_ref}</div>
                       )}
                     </div>
                   </li>
@@ -149,7 +149,7 @@ export default function EssayFeedbackPanel() {
 
           {run.missing_elements.length > 0 && (
             <Card>
-              <div className="mb-2 text-eyebrow uppercase text-student-text">
+              <div className="mb-2 text-eyebrow uppercase text-foreground">
                 Missing elements · {run.missing_elements.length}
               </div>
               <ul className="space-y-2">
@@ -158,7 +158,7 @@ export default function EssayFeedbackPanel() {
                     <Badge variant={IMPORTANCE_VARIANT[m.importance]} size="sm">
                       {m.importance.replace(/_/g, ' ')}
                     </Badge>
-                    <span className="flex-1 text-student-ink">{m.element}</span>
+                    <span className="flex-1 text-foreground">{m.element}</span>
                   </li>
                 ))}
               </ul>

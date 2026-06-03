@@ -452,11 +452,11 @@ export default function ClaudeApiGoalPage() {
           <Link to="/signup">
             <Button size="lg">Get started</Button>
           </Link>
-          <Link to="/about">
+          <a href="https://unipaith.co" target="_blank" rel="noreferrer">
             <Button size="lg" variant="tertiary">
               How we use AI
             </Button>
-          </Link>
+          </a>
         </div>
       </section>
     </div>

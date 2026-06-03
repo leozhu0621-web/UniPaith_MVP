@@ -37,11 +37,11 @@ function DepartmentCard({ dept }: { dept: DepartmentSummary }) {
     <button
       type="button"
       onClick={() => navigate(`/i/departments/${dept.id}`)}
-      className="block w-full rounded-lg border border-border bg-background p-4 text-left transition-colors hover:border-cobalt/40"
+      className="block w-full rounded-lg border border-border bg-background p-4 text-left transition-colors hover:border-secondary/40"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-cobalt">
+          <span className="text-secondary">
             <Building2 size={16} />
           </span>
           <span className="font-medium text-foreground">{dept.name}</span>
@@ -70,7 +70,7 @@ function DepartmentCard({ dept }: { dept: DepartmentSummary }) {
             </span>
           </div>
           <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-            <div className="h-full rounded-full bg-cobalt" style={{ width: `${pct}%` }} />
+            <div className="h-full rounded-full bg-secondary" style={{ width: `${pct}%` }} />
           </div>
         </div>
       )}
@@ -111,7 +111,7 @@ export default function GraduatePage() {
     <div className="space-y-5">
       <header>
         <div className="flex items-center gap-2">
-          <span className="text-cobalt">
+          <span className="text-secondary">
             <GraduationCap size={20} />
           </span>
           <h2 className="text-lg font-semibold text-foreground">Graduate &amp; PhD admissions</h2>
@@ -143,7 +143,7 @@ export default function GraduatePage() {
       <Card className="p-5">
         <div className="mb-4 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="text-cobalt">
+            <span className="text-secondary">
               <Building2 size={16} />
             </span>
             <h3 className="text-sm font-semibold text-foreground">Departments</h3>

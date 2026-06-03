@@ -145,9 +145,9 @@ export default function ExplorePage() {
     <div className="p-6 max-w-6xl mx-auto">
       {/* Spec 09 §13 H1 + brand framing ("Fit, not fame", Spec 07 §2/§6). */}
       <div className="mb-5">
-        <p className="text-eyebrow uppercase text-cobalt font-semibold">Match</p>
-        <h1 className="text-2xl font-bold text-charcoal mt-1">Your strategy and your matches</h1>
-        <p className="text-sm text-slate mt-0.5">Ranked for fit, not fame — and every score explains itself.</p>
+        <p className="text-eyebrow uppercase text-secondary font-semibold">Match</p>
+        <h1 className="text-2xl font-bold text-foreground mt-1">Your strategy and your matches</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">Ranked for fit, not fame — and every score explains itself.</p>
       </div>
 
       {/* Spec 09 §2 — strategy lands first. */}
@@ -202,13 +202,13 @@ export default function ExplorePage() {
             </div>
           ) : uniList.length === 0 ? (
             <div className="text-center py-16 bg-card rounded-xl border border-border">
-              <Building2 size={32} className="mx-auto text-stone mb-3" />
+              <Building2 size={32} className="mx-auto text-muted-foreground mb-3" />
               <p className="text-sm text-foreground font-semibold mb-1">No universities yet</p>
               <p className="text-xs text-muted-foreground">Universities will appear here as they join the platform.</p>
             </div>
           ) : filteredUniList.length === 0 ? (
             <div className="text-center py-16 bg-card rounded-xl border border-border">
-              <Building2 size={32} className="mx-auto text-stone mb-3" />
+              <Building2 size={32} className="mx-auto text-muted-foreground mb-3" />
               <p className="text-sm text-foreground font-semibold mb-1">No universities match your filters</p>
               <p className="text-xs text-muted-foreground mb-4">Try removing a filter or broadening your search.</p>
               <button

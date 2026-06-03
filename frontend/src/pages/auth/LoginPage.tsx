@@ -44,7 +44,7 @@ export default function LoginPage() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-center text-charcoal mb-2">Welcome back</h2>
+      <h2 className="text-xl font-semibold text-center text-foreground mb-2">Welcome back</h2>
 
       {error && (
         <div className="bg-error-soft border border-error/30 text-error text-sm px-4 py-2 rounded-lg">
@@ -71,16 +71,10 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-slate">
+      <p className="text-center text-sm text-muted-foreground">
         Don't have an account?{' '}
-        <Link to="/signup" className="text-cobalt font-semibold hover:underline">
+        <Link to="/signup" className="text-secondary font-semibold hover:underline">
           Sign up
-        </Link>
-      </p>
-
-      <p className="text-center text-sm text-muted-foreground/70">
-        <Link to="/pricing" className="hover:underline">
-          View plans and pricing
         </Link>
       </p>
     </div>

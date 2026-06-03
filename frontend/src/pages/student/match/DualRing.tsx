@@ -26,8 +26,8 @@ export interface DualRingProps {
 
 // Duotone per Spec/11 §10: fitness ring = sunlit gold (--primary),
 // confidence ring = cobalt (--secondary). No status-color rainbow.
-const FITNESS_COLOR = (_v: number) => 'stroke-student'
-const CONFIDENCE_COLOR = (_v: number) => 'stroke-cobalt'
+const FITNESS_COLOR = (_v: number) => 'stroke-primary'
+const CONFIDENCE_COLOR = (_v: number) => 'stroke-secondary'
 
 export default function DualRing({
   fitness,
@@ -131,16 +131,16 @@ export default function DualRing({
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
-          <span className="text-base font-bold text-student-ink">{fitnessPct}</span>
-          <span className="text-[9px] uppercase tracking-wide text-student-text mt-0.5">
+          <span className="text-base font-bold text-foreground">{fitnessPct}</span>
+          <span className="text-[9px] uppercase tracking-wide text-foreground mt-0.5">
             fit
           </span>
         </div>
       </div>
       {!compact && (
         <div className="text-xs">
-          <div className="text-student-ink font-medium">Fitness · {fitnessPct}%</div>
-          <div className="text-student-text">
+          <div className="text-foreground font-medium">Fitness · {fitnessPct}%</div>
+          <div className="text-foreground">
             Confidence · {confidencePct}%
           </div>
         </div>

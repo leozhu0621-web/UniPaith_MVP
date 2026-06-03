@@ -50,7 +50,7 @@ function ThreadRow({
   return (
     <button
       onClick={() => onSelect(thread.id)}
-      className={`w-full border-b border-divider px-3 py-2.5 text-left transition-colors hover:bg-muted ${
+      className={`w-full border-b border-border px-3 py-2.5 text-left transition-colors hover:bg-muted ${
         selected ? 'bg-muted' : ''
       } ${overdue ? 'border-l-2 border-l-warning bg-warning-soft/30' : ''} ${
         muted && !selected ? 'opacity-75' : ''
@@ -59,7 +59,7 @@ function ThreadRow({
       <div className="flex items-center gap-2">
         {thread.unread_count > 0 && (
           <span
-            className="flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-cobalt px-1 text-[10px] font-semibold text-white"
+            className="flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-secondary px-1 text-[10px] font-semibold text-secondary-foreground"
             aria-label={`${thread.unread_count} unread`}
           >
             {thread.unread_count}
@@ -76,7 +76,7 @@ function ThreadRow({
           {formatRelative(thread.last_message_at)}
         </span>
       </div>
-      <p className="mt-0.5 truncate text-[11px] text-cobalt">
+      <p className="mt-0.5 truncate text-[11px] text-secondary">
         {thread.program_name || 'General inquiry'}
         {thread.application_id ? ' · Application' : ''}
       </p>

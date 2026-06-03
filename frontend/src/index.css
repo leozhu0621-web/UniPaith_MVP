@@ -47,6 +47,8 @@
     --warning-soft: 41 64% 88%;      /* #F5E6CC */
     --error: 9 56% 41%;              /* #B5321F */
     --error-soft: 14 53% 89%;        /* #F2D7D0 */
+
+    --scrim: 221 67% 8%;             /* modal/sheet backdrop — always deep ink, both themes (Spec 65 §3.4) */
   }
 
   /* Dark theme — Ink canvas, lifted gold + cobalt accents. */
@@ -162,6 +164,11 @@ html {
   .hover-lift:hover {
     @apply -translate-y-1;
     box-shadow: 0 8px 25px -5px hsl(var(--foreground) / 0.1);
+  }
+
+  /* Always-dark modal/sheet/popover backdrop — does not invert in dark mode. */
+  .bg-scrim {
+    background-color: hsl(var(--scrim) / 0.5);
   }
 
   /* ----------------------------------------------------------------

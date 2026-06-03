@@ -31,7 +31,7 @@ export default function ConstraintChip({ category, value, onRemove, onEdit, clas
         )}
       >
         <span className="text-muted-foreground">{category}</span>
-        <span className="text-stone" aria-hidden="true">·</span>
+        <span className="text-muted-foreground" aria-hidden="true">·</span>
         <span className="font-semibold">{value}</span>
       </button>
       {onRemove && (
@@ -39,7 +39,7 @@ export default function ConstraintChip({ category, value, onRemove, onEdit, clas
           type="button"
           onClick={onRemove}
           aria-label={`Remove ${category} ${value}`}
-          className="inline-flex items-center justify-center w-8 h-full text-muted-foreground hover:bg-muted hover:text-error transition-colors border-l border-cobalt/40"
+          className="inline-flex items-center justify-center w-8 h-full text-muted-foreground hover:bg-muted hover:text-error transition-colors border-l border-secondary/40"
         >
           <X size={14} />
         </button>

@@ -56,7 +56,7 @@ function Stars({ value }: { value: number | null }) {
         <Star
           key={i}
           size={12}
-          className={i < v ? 'text-cobalt fill-cobalt' : 'text-stone'}
+          className={i < v ? 'text-secondary fill-secondary' : 'text-muted-foreground'}
         />
       ))}
     </span>
@@ -67,11 +67,11 @@ function DimBar({ label, value }: { label: string; value: number | null }) {
   if (value == null) return null
   return (
     <div className="flex items-center gap-3">
-      <span className="text-xs text-student-text w-36 flex-shrink-0">{label}</span>
-      <div className="flex-1 h-2 bg-student-mist rounded-pill overflow-hidden">
-        <div className="h-full bg-cobalt rounded-pill" style={{ width: `${(value / 5) * 100}%` }} />
+      <span className="text-xs text-foreground w-36 flex-shrink-0">{label}</span>
+      <div className="flex-1 h-2 bg-muted rounded-pill overflow-hidden">
+        <div className="h-full bg-secondary rounded-pill" style={{ width: `${(value / 5) * 100}%` }} />
       </div>
-      <span className="text-xs font-semibold text-student-ink w-8 text-right tabular-nums">
+      <span className="text-xs font-semibold text-foreground w-8 text-right tabular-nums">
         {value.toFixed(1)}
       </span>
     </div>
@@ -200,14 +200,14 @@ export default function InsightsPanel({
           ]
             .filter(t => t.body)
             .map((t, i) => (
-              <div key={i} className="rounded-lg border border-divider bg-student-mist/50 p-3">
+              <div key={i} className="rounded-lg border border-border bg-muted/50 p-3">
                 <div className="flex items-center gap-1.5 mb-1.5">
-                  <t.icon size={13} className="text-cobalt" />
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-student-text">
+                  <t.icon size={13} className="text-secondary" />
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-foreground">
                     {t.title}
                   </p>
                 </div>
-                <p className="text-xs text-student-ink leading-relaxed">{t.body}</p>
+                <p className="text-xs text-foreground leading-relaxed">{t.body}</p>
               </div>
             ))}
         </div>
@@ -216,15 +216,15 @@ export default function InsightsPanel({
       {/* ══ Panel 1 — Student / alumni reviews ══ */}
       <Card className="p-5">
         <div className="flex items-center gap-2 mb-1">
-          <MessageSquareText size={15} className="text-cobalt" />
-          <h3 className="font-semibold text-student-ink">Student &amp; alumni reviews</h3>
+          <MessageSquareText size={15} className="text-secondary" />
+          <h3 className="font-semibold text-foreground">Student &amp; alumni reviews</h3>
           {totalReviews > 0 && reviews?.avg_overall != null && (
             <span className="ml-auto flex items-center gap-1.5">
               <Stars value={reviews.avg_overall} />
-              <span className="text-sm font-bold text-student-ink tabular-nums">
+              <span className="text-sm font-bold text-foreground tabular-nums">
                 {reviews.avg_overall.toFixed(1)}
               </span>
-              <span className="text-xs text-student-text">
+              <span className="text-xs text-foreground">
                 · {totalReviews} review{totalReviews !== 1 ? 's' : ''}
               </span>
             </span>
@@ -233,9 +233,9 @@ export default function InsightsPanel({
 
         {/* Guided prompts (§3.5) */}
         <div className="flex flex-wrap items-center gap-1.5 mb-4">
-          <span className="text-[11px] text-student-text/70">Reviews answer:</span>
+          <span className="text-[11px] text-foreground/70">Reviews answer:</span>
           {GUIDED_PROMPTS.map(p => (
-            <span key={p} className="text-[11px] px-2 py-0.5 rounded-pill bg-student-mist text-student-text">
+            <span key={p} className="text-[11px] px-2 py-0.5 rounded-pill bg-muted text-foreground">
               {p}
             </span>
           ))}
@@ -257,7 +257,7 @@ export default function InsightsPanel({
                   aria-label="Filter by reviewer type"
                   value={reviewerType}
                   onChange={e => onFilter('reviewer', e.target.value)}
-                  className="text-xs border border-stone rounded-md px-2 py-1.5 bg-white"
+                  className="text-xs border border-border rounded-md px-2 py-1.5 bg-card"
                 >
                   <option value="">All reviewers</option>
                   {reviewerTypes.map(t => <option key={t} value={t}>{titleCase(t)}</option>)}
@@ -268,7 +268,7 @@ export default function InsightsPanel({
                   aria-label="Filter by degree level"
                   value={degree}
                   onChange={e => onFilter('degree', e.target.value)}
-                  className="text-xs border border-stone rounded-md px-2 py-1.5 bg-white"
+                  className="text-xs border border-border rounded-md px-2 py-1.5 bg-card"
                 >
                   <option value="">All degrees</option>
                   {degrees.map(d => <option key={d} value={d}>{titleCase(d)}</option>)}
@@ -279,7 +279,7 @@ export default function InsightsPanel({
                   aria-label="Filter by cohort year"
                   value={cohort}
                   onChange={e => onFilter('cohort', e.target.value)}
-                  className="text-xs border border-stone rounded-md px-2 py-1.5 bg-white"
+                  className="text-xs border border-border rounded-md px-2 py-1.5 bg-card"
                 >
                   <option value="">All cohorts</option>
                   {cohorts.map(c => <option key={c} value={c}>{c}</option>)}
@@ -289,7 +289,7 @@ export default function InsightsPanel({
                 aria-label="Filter by minimum rating"
                 value={minRating}
                 onChange={e => onFilter('dim', e.target.value)}
-                className="text-xs border border-stone rounded-md px-2 py-1.5 bg-white"
+                className="text-xs border border-border rounded-md px-2 py-1.5 bg-card"
               >
                 <option value="">Any rating</option>
                 <option value="4">4+ stars</option>
@@ -297,7 +297,7 @@ export default function InsightsPanel({
                 <option value="2">2+ stars</option>
               </select>
               {filtersActive && (
-                <button onClick={onClear} className="text-xs text-cobalt hover:underline px-1">
+                <button onClick={onClear} className="text-xs text-secondary hover:underline px-1">
                   Clear
                 </button>
               )}
@@ -307,13 +307,13 @@ export default function InsightsPanel({
             {filteredReviews.length > 0 ? (
               <div className="space-y-3">
                 {filteredReviews.map(r => (
-                  <div key={r.id} className="rounded-lg border border-divider p-4">
+                  <div key={r.id} className="rounded-lg border border-border p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <Stars value={r.rating_overall} />
                         {r.is_verified && <Badge variant="success" size="sm">Verified</Badge>}
                       </div>
-                      <span className="text-[10px] text-student-text/60">{formatDate(r.created_at)}</span>
+                      <span className="text-[10px] text-foreground/60">{formatDate(r.created_at)}</span>
                     </div>
                     {r.reviewer_context && (
                       <div className="flex flex-wrap gap-1.5 mb-2">
@@ -322,18 +322,18 @@ export default function InsightsPanel({
                         ))}
                       </div>
                     )}
-                    {r.review_text && <p className="text-sm text-student-text mb-2">{r.review_text}</p>}
+                    {r.review_text && <p className="text-sm text-foreground mb-2">{r.review_text}</p>}
                     {r.who_thrives_here && (
-                      <div className="bg-student-mist rounded-lg p-3 mt-2">
+                      <div className="bg-muted rounded-lg p-3 mt-2">
                         <div className="flex items-center gap-1.5 mb-1">
-                          <Quote size={12} className="text-cobalt" />
-                          <span className="text-xs font-semibold text-cobalt">Who thrives here</span>
+                          <Quote size={12} className="text-secondary" />
+                          <span className="text-xs font-semibold text-secondary">Who thrives here</span>
                         </div>
-                        <p className="text-xs text-student-text">{r.who_thrives_here}</p>
+                        <p className="text-xs text-foreground">{r.who_thrives_here}</p>
                       </div>
                     )}
                     {(r.external_source as { source?: string } | null)?.source && (
-                      <p className="text-[10px] text-student-text/50 mt-2 italic">
+                      <p className="text-[10px] text-foreground/50 mt-2 italic">
                         Source: {String((r.external_source as { source?: string }).source)}
                       </p>
                     )}
@@ -341,41 +341,41 @@ export default function InsightsPanel({
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-student-text">No reviews match these filters.</p>
+              <p className="text-sm text-foreground">No reviews match these filters.</p>
             )}
           </>
         ) : (
           /* Empty state — canonical copy per §11 */
-          <div className="rounded-lg border border-divider p-5">
-            <p className="text-sm font-medium text-student-ink">{EMPTY_REVIEWS_COPY}</p>
-            <p className="text-xs text-student-text mt-1">
+          <div className="rounded-lg border border-border p-5">
+            <p className="text-sm font-medium text-foreground">{EMPTY_REVIEWS_COPY}</p>
+            <p className="text-xs text-foreground mt-1">
               Studied here? Share what it's like — reviews stay anonymous unless you opt in.
             </p>
             {onWriteReview && (
               <button
                 onClick={onWriteReview}
-                className="mt-3 px-3 py-1.5 text-xs font-semibold bg-cobalt text-white rounded-md hover:bg-cobalt-hover transition-colors"
+                className="mt-3 px-3 py-1.5 text-xs font-semibold bg-secondary text-secondary-foreground rounded-md hover:brightness-95 transition-colors"
               >
                 Write a review
               </button>
             )}
             {similarPrograms.length > 0 && onNavigateProgram && (
               <div className="mt-4">
-                <p className="text-[11px] text-student-text/70 mb-2">See reviews for similar programs:</p>
+                <p className="text-[11px] text-foreground/70 mb-2">See reviews for similar programs:</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {similarPrograms.slice(0, 4).map(sp => (
                     <button
                       key={sp.id}
                       onClick={() => onNavigateProgram(sp.id)}
-                      className="flex items-center justify-between gap-2 px-3 py-2 rounded-md border border-divider hover:border-cobalt hover:bg-student-mist transition-colors text-left"
+                      className="flex items-center justify-between gap-2 px-3 py-2 rounded-md border border-border hover:border-secondary hover:bg-muted transition-colors text-left"
                     >
                       <div className="min-w-0">
-                        <p className="text-xs font-medium text-student-ink truncate">{sp.program_name}</p>
+                        <p className="text-xs font-medium text-foreground truncate">{sp.program_name}</p>
                         {sp.institution_name && (
-                          <p className="text-[10px] text-student-text/70 truncate">{sp.institution_name}</p>
+                          <p className="text-[10px] text-foreground/70 truncate">{sp.institution_name}</p>
                         )}
                       </div>
-                      <Star size={12} className="text-student-text/40 flex-shrink-0" />
+                      <Star size={12} className="text-foreground/40 flex-shrink-0" />
                     </button>
                   ))}
                 </div>
@@ -388,10 +388,10 @@ export default function InsightsPanel({
       {/* ══ Panel 2 — Professional / employer feedback ══ */}
       <Card className="p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Briefcase size={15} className="text-cobalt" />
-          <h3 className="font-semibold text-student-ink">Employer feedback</h3>
+          <Briefcase size={15} className="text-secondary" />
+          <h3 className="font-semibold text-foreground">Employer feedback</h3>
           {totalFeedback > 0 && (
-            <span className="ml-auto text-xs text-student-text">
+            <span className="ml-auto text-xs text-foreground">
               {totalFeedback} employer{totalFeedback !== 1 ? 's' : ''}
             </span>
           )}
@@ -402,12 +402,12 @@ export default function InsightsPanel({
             {/* Job-readiness sentiment — single cobalt-intensity series (§8) */}
             {sentTotal > 0 && (
               <div className="mb-4">
-                <p className="text-xs text-student-text mb-2">Job-readiness sentiment</p>
-                <div className="flex h-3 rounded-pill overflow-hidden bg-student-mist">
+                <p className="text-xs text-foreground mb-2">Job-readiness sentiment</p>
+                <div className="flex h-3 rounded-pill overflow-hidden bg-muted">
                   {([
-                    ['positive', 'bg-cobalt'],
-                    ['neutral', 'bg-cobalt/40'],
-                    ['negative', 'bg-cobalt/15'],
+                    ['positive', 'bg-secondary'],
+                    ['neutral', 'bg-secondary/40'],
+                    ['negative', 'bg-secondary/15'],
                   ] as const).map(([key, cls]) => {
                     const c = Number(sentiments[key] ?? 0)
                     if (!c) return null
@@ -416,10 +416,10 @@ export default function InsightsPanel({
                 </div>
                 <div className="flex gap-4 mt-2">
                   {(['positive', 'neutral', 'negative'] as const).map(key => (
-                    <span key={key} className="flex items-center gap-1.5 text-[11px] text-student-text">
+                    <span key={key} className="flex items-center gap-1.5 text-[11px] text-foreground">
                       <span
                         className={`w-2 h-2 rounded-full ${
-                          key === 'positive' ? 'bg-cobalt' : key === 'neutral' ? 'bg-cobalt/40' : 'bg-cobalt/15'
+                          key === 'positive' ? 'bg-secondary' : key === 'neutral' ? 'bg-secondary/40' : 'bg-secondary/15'
                         }`}
                       />
                       {key} ({Number(sentiments[key] ?? 0)})
@@ -443,13 +443,13 @@ export default function InsightsPanel({
                   aria-label="Filter by industry"
                   value={industry}
                   onChange={e => onFilter('industry', e.target.value)}
-                  className="text-xs border border-stone rounded-md px-2 py-1.5 bg-white"
+                  className="text-xs border border-border rounded-md px-2 py-1.5 bg-card"
                 >
                   <option value="">All industries</option>
                   {industries.map(i => <option key={i} value={i}>{i}</option>)}
                 </select>
                 {industry && (
-                  <button onClick={() => onFilter('industry', '')} className="text-xs text-cobalt hover:underline">
+                  <button onClick={() => onFilter('industry', '')} className="text-xs text-secondary hover:underline">
                     Clear
                   </button>
                 )}
@@ -459,35 +459,35 @@ export default function InsightsPanel({
             {/* Feedback cards (incl. hiring behavior) */}
             <div className="space-y-3">
               {filteredFeedback.map(f => (
-                <div key={f.id} className="rounded-lg border border-divider p-4">
+                <div key={f.id} className="rounded-lg border border-border p-4">
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2">
-                      <Building2 size={13} className="text-student-text/50" />
-                      <p className="text-sm font-medium text-student-ink">{f.employer_name}</p>
+                      <Building2 size={13} className="text-foreground/50" />
+                      <p className="text-sm font-medium text-foreground">{f.employer_name}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       {f.industry && <Badge variant="info" size="sm">{f.industry}</Badge>}
                       {f.feedback_year && (
-                        <span className="text-[10px] text-student-text/60">{f.feedback_year}</span>
+                        <span className="text-[10px] text-foreground/60">{f.feedback_year}</span>
                       )}
                     </div>
                   </div>
-                  {f.feedback_text && <p className="text-sm text-student-text">{f.feedback_text}</p>}
+                  {f.feedback_text && <p className="text-sm text-foreground">{f.feedback_text}</p>}
                   {f.hiring_pattern && (
-                    <p className="text-[11px] text-student-text mt-2 flex items-center gap-1.5 bg-student-mist rounded-md px-2 py-1">
-                      <Briefcase size={11} className="text-cobalt" />
+                    <p className="text-[11px] text-foreground mt-2 flex items-center gap-1.5 bg-muted rounded-md px-2 py-1">
+                      <Briefcase size={11} className="text-secondary" />
                       {f.hiring_pattern}
                     </p>
                   )}
                 </div>
               ))}
               {filteredFeedback.length === 0 && (
-                <p className="text-sm text-student-text">No employer feedback matches this filter.</p>
+                <p className="text-sm text-foreground">No employer feedback matches this filter.</p>
               )}
             </div>
           </>
         ) : (
-          <p className="text-sm text-student-text">
+          <p className="text-sm text-foreground">
             Employer feedback isn't available for {programName} yet.
           </p>
         )}

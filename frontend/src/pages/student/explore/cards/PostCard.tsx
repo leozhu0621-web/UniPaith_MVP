@@ -11,12 +11,12 @@ function renderInlineMarkdown(text: string): ReactNode[] {
   const parts = text.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g)
   return parts.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={i} className="font-semibold text-charcoal">{part.slice(2, -2)}</strong>
+      return <strong key={i} className="font-semibold text-foreground">{part.slice(2, -2)}</strong>
     }
     const link = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
     if (link) {
       return (
-        <a key={i} href={link[2]} target="_blank" rel="noopener noreferrer" className="text-cobalt hover:underline">
+        <a key={i} href={link[2]} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline">
           {link[1]}
         </a>
       )
@@ -34,31 +34,31 @@ export default function PostCard({ post }: Props) {
 
   return (
     <div
-      className={`bg-white rounded-xl border hover:shadow-sm transition-shadow overflow-hidden ${
-        post.pinned ? 'border-gold' : 'border-stone'
+      className={`bg-card rounded-xl border hover:shadow-sm transition-shadow overflow-hidden ${
+        post.pinned ? 'border-primary' : 'border-border'
       }`}
     >
       <div className="flex items-center gap-2 px-4 pt-3 pb-1">
-        <Megaphone size={12} className="text-cobalt" />
-        <span className="text-[10px] font-semibold text-cobalt uppercase tracking-wider">Update</span>
+        <Megaphone size={12} className="text-secondary" />
+        <span className="text-[10px] font-semibold text-secondary uppercase tracking-wider">Update</span>
         {post.pinned && (
-          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-gold-hover ml-1">
-            <Pin size={11} className="fill-gold text-gold" /> Pinned
+          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary ml-1">
+            <Pin size={11} className="fill-primary text-primary" /> Pinned
           </span>
         )}
-        <span className="text-[10px] text-slate ml-auto">
+        <span className="text-[10px] text-muted-foreground ml-auto">
           {new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
         </span>
       </div>
       <div className="px-4 pb-4">
         <div className="flex items-center gap-2 mb-2">
-          <div className="w-8 h-8 rounded-md bg-cobalt/10 flex items-center justify-center">
-            <GraduationCap size={14} className="text-cobalt" />
+          <div className="w-8 h-8 rounded-md bg-secondary/10 flex items-center justify-center">
+            <GraduationCap size={14} className="text-secondary" />
           </div>
-          <span className="text-xs font-semibold text-charcoal">{(post as any).institution_name || 'School'}</span>
+          <span className="text-xs font-semibold text-foreground">{(post as any).institution_name || 'School'}</span>
         </div>
-        <h3 className="text-sm font-semibold text-charcoal mb-1">{post.title}</h3>
-        <p className="text-xs text-slate line-clamp-none leading-relaxed whitespace-pre-line">
+        <h3 className="text-sm font-semibold text-foreground mb-1">{post.title}</h3>
+        <p className="text-xs text-muted-foreground line-clamp-none leading-relaxed whitespace-pre-line">
           {renderInlineMarkdown(shown)}
         </p>
         {post.program_names && post.program_names.length > 0 && (
@@ -66,7 +66,7 @@ export default function PostCard({ post }: Props) {
             {post.program_names.map(name => (
               <span
                 key={name}
-                className="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full bg-cobalt/10 text-cobalt border border-cobalt/20"
+                className="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full bg-secondary/10 text-secondary border border-secondary/20"
               >
                 {name}
               </span>
@@ -77,7 +77,7 @@ export default function PostCard({ post }: Props) {
           <button
             type="button"
             onClick={() => setExpanded(e => !e)}
-            className="inline-flex items-center gap-0.5 text-[11px] font-medium text-cobalt mt-1"
+            className="inline-flex items-center gap-0.5 text-[11px] font-medium text-secondary mt-1"
           >
             {expanded ? <>Show less <ChevronUp size={12} /></> : <>Read more <ChevronDown size={12} /></>}
           </button>

@@ -51,7 +51,7 @@ export default function RubricSlider({
         style={{ background: trackBg }}
         className={clsx(
           'h-2 flex-1 cursor-pointer appearance-none rounded-full outline-none',
-          'focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-1',
+          'focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
           disabled && 'cursor-not-allowed opacity-50',
           // Webkit thumb
           '[&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4',
@@ -59,8 +59,8 @@ export default function RubricSlider({
           '[&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white',
           '[&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:transition-colors',
           isMax
-            ? '[&::-webkit-slider-thumb]:bg-gold [&::-moz-range-thumb]:bg-gold'
-            : '[&::-webkit-slider-thumb]:bg-cobalt [&::-moz-range-thumb]:bg-cobalt',
+            ? '[&::-webkit-slider-thumb]:bg-primary [&::-moz-range-thumb]:bg-primary'
+            : '[&::-webkit-slider-thumb]:bg-secondary [&::-moz-range-thumb]:bg-secondary',
           // Firefox thumb
           '[&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full',
           '[&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white',
@@ -70,7 +70,7 @@ export default function RubricSlider({
         <span
           className={clsx(
             'text-sm font-semibold tabular-nums',
-            value == null ? 'text-muted-foreground' : isMax ? 'text-gold-hover' : 'text-cobalt',
+            value == null ? 'text-muted-foreground' : isMax ? 'text-primary' : 'text-secondary',
           )}
         >
           {value ?? '–'}

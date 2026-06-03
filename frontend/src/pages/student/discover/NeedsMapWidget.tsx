@@ -29,14 +29,14 @@ export default function NeedsMapWidget() {
   })
 
   if (isLoading) {
-    return <Card className="text-sm text-student-text">Loading…</Card>
+    return <Card className="text-sm text-foreground">Loading…</Card>
   }
 
   if (needs.length === 0) {
     return (
-      <Card className="text-sm text-student-text space-y-2">
-        <div className="flex items-center gap-2 text-student-ink font-medium">
-          <Heart size={14} className="text-gold" />
+      <Card className="text-sm text-foreground space-y-2">
+        <div className="flex items-center gap-2 text-foreground font-medium">
+          <Heart size={14} className="text-primary" />
           Needs map
         </div>
         <p className="italic">
@@ -58,13 +58,13 @@ export default function NeedsMapWidget() {
   return (
     <Card className="space-y-2">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-student-ink font-medium text-sm">
-          <Heart size={14} className="text-gold" />
+        <div className="flex items-center gap-2 text-foreground font-medium text-sm">
+          <Heart size={14} className="text-primary" />
           Needs map · {needs.length}
         </div>
         <Link
           to="/s/profile?tab=needs"
-          className="text-xs text-student inline-flex items-center gap-1 hover:underline"
+          className="text-xs text-primary inline-flex items-center gap-1 hover:underline"
         >
           Manage <ExternalLink size={11} />
         </Link>
@@ -81,20 +81,20 @@ export default function NeedsMapWidget() {
               className={clsx(
                 'rounded border px-2.5 py-1.5 transition-colors',
                 isFilled
-                  ? 'border-student/30 bg-student/5'
-                  : 'border-divider bg-transparent',
+                  ? 'border-primary/30 bg-primary/5'
+                  : 'border-border bg-transparent',
               )}
             >
               <div className="flex items-center justify-between gap-2">
                 <span
                   className={clsx(
                     'text-xs font-medium',
-                    isFilled ? 'text-student-ink' : 'text-student-text',
+                    isFilled ? 'text-foreground' : 'text-foreground',
                   )}
                 >
                   {tier.label}
                 </span>
-                <span className="text-[10px] text-student-text">
+                <span className="text-[10px] text-foreground">
                   {items.length}
                   {mustHaves > 0 && (
                     <span className="ml-1.5 text-destructive">• {mustHaves} must-have</span>
@@ -102,7 +102,7 @@ export default function NeedsMapWidget() {
                 </span>
               </div>
               {items.length > 0 && (
-                <div className="mt-1 text-[11px] text-student-text line-clamp-1">
+                <div className="mt-1 text-[11px] text-foreground line-clamp-1">
                   {items
                     .slice(0, 2)
                     .map(n => n.need_type)

@@ -231,7 +231,7 @@ export default function SegmentsPage() {
           setMode('list')
           resetBuilder()
         }}
-        className="flex items-center gap-1 text-sm text-cobalt hover:underline"
+        className="flex items-center gap-1 text-sm text-secondary hover:underline"
       >
         <ArrowLeft size={15} /> Back to segments
       </button>
@@ -274,7 +274,7 @@ export default function SegmentsPage() {
                   setRawText(JSON.stringify(tree, null, 2))
                   setShowRaw((v) => !v)
                 }}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-cobalt"
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-secondary"
               >
                 <Code2 size={13} /> {showRaw ? 'Hide' : 'Raw rule editor'}
               </button>
@@ -328,7 +328,7 @@ export default function SegmentsPage() {
                 value={freqCap}
                 onChange={(e) => setFreqCap(e.target.value)}
                 placeholder="∞"
-                className="w-20 rounded-md border-border text-sm focus:border-cobalt focus:ring-cobalt"
+                className="w-20 rounded-md border-border text-sm focus:border-secondary focus:ring-secondary"
               />
             </div>
             <label className="flex cursor-pointer items-center gap-2 text-sm">
@@ -336,7 +336,7 @@ export default function SegmentsPage() {
                 type="checkbox"
                 checked={isActive}
                 onChange={(e) => setIsActive(e.target.checked)}
-                className="rounded border-border text-cobalt focus:ring-cobalt"
+                className="rounded border-border text-secondary focus:ring-secondary"
               />
               <span className="text-foreground">Active</span>
             </label>
@@ -365,7 +365,7 @@ export default function SegmentsPage() {
                 <Button
                   variant="ghost"
                   onClick={() => goToCampaign(editId)}
-                  className="flex items-center justify-center gap-1 text-cobalt"
+                  className="flex items-center justify-center gap-1 text-secondary"
                 >
                   Use in campaign <ArrowRight size={15} />
                 </Button>
@@ -417,7 +417,7 @@ function SegmentCard({
       {/* Audience count — cached preview, in --accent */}
       <div className="mb-3 text-sm">
         {seg.preview_audience_count != null ? (
-          <span className="font-semibold text-cobalt">
+          <span className="font-semibold text-secondary">
             ~{seg.preview_audience_count.toLocaleString()} students
           </span>
         ) : (
@@ -446,7 +446,7 @@ function SegmentCard({
           variant="ghost"
           size="sm"
           onClick={onUseInCampaign}
-          className="flex items-center gap-1 text-cobalt"
+          className="flex items-center gap-1 text-secondary"
         >
           Use in campaign <ArrowRight size={14} />
         </Button>

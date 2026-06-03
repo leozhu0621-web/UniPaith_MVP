@@ -21,8 +21,6 @@ import AuthCallbackPage from './pages/auth/AuthCallbackPage'
 import ProgramBrowsePage from './pages/public/ProgramBrowsePage'
 import InstitutionPage from './pages/public/InstitutionPage'
 import ProgramDetailPage from './pages/public/ProgramDetailPage'
-import PricingPage from './pages/public/PricingPage'
-import AboutPage from './pages/public/AboutPage'
 import ClaudeApiGoalPage from './pages/public/ClaudeApiGoalPage'
 import GoalHubPage from './pages/public/GoalHubPage'
 import BuildRoadmapPage from './pages/public/BuildRoadmapPage'
@@ -112,9 +110,6 @@ const router = createBrowserRouter([
   { path: '/school/:institutionId', element: <PublicLayout><InstitutionPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
   { path: '/school/:institutionId/schools/:schoolId', element: <PublicLayout><SchoolSubunitPage isAuthenticated={false} /></PublicLayout>, errorElement: <RouteErrorPage /> },
   { path: '/program/:programId', element: <PublicLayout><ProgramDetailPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
-  // Spec 07 — public monetization + positioning surfaces.
-  { path: '/pricing', element: <PublicLayout><PricingPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
-  { path: '/about', element: <PublicLayout><AboutPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
   // Specs 48/49/50 — public build-transparency hub + surfaces (live data).
   { path: '/goal', element: <PublicLayout><GoalHubPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 45 — public "Claude API" AI-agent transparency surface (live registry).

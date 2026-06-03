@@ -218,7 +218,7 @@ export default function FairnessPage() {
           </p>
           <div className="space-y-2">
             {overrides.map(o => (
-              <div key={o.id} className="text-sm border-l-2 border-cobalt/40 pl-3">
+              <div key={o.id} className="text-sm border-l-2 border-secondary/40 pl-3">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-medium text-foreground">{o.program_name ?? 'Program'}</span>
                   <Badge variant={o.active ? 'info' : 'neutral'}>{o.active ? 'Active' : 'Ended'}</Badge>
@@ -293,7 +293,7 @@ export default function FairnessPage() {
               type="checkbox"
               checked={ack}
               onChange={e => setAck(e.target.checked)}
-              className="mt-0.5 accent-cobalt"
+              className="mt-0.5 accent-secondary"
             />
             I acknowledge this override is recorded in the audit log and expires automatically.
           </label>

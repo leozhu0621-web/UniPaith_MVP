@@ -192,8 +192,8 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
   if (!inst) {
     return (
       <div className="p-6 max-w-3xl mx-auto text-center py-20">
-        <Building2 size={32} className="mx-auto text-stone mb-3" />
-        <p className="text-sm text-charcoal mb-4">Institution not found.</p>
+        <Building2 size={32} className="mx-auto text-muted-foreground mb-3" />
+        <p className="text-sm text-foreground mb-4">Institution not found.</p>
         <Button size="sm" variant="secondary" onClick={() => navigate(isAuthenticated ? '/s/explore' : '/browse')}>
           {isAuthenticated ? 'Back to Match' : 'Browse programs'}
         </Button>
@@ -220,38 +220,38 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
   return (
     <div className="p-6 max-w-5xl mx-auto">
       {/* Breadcrumb (Spec 12 §2, design system §7) */}
-      <nav className="flex items-center gap-1.5 text-[13px] text-slate mb-4 flex-wrap" aria-label="Breadcrumb">
+      <nav className="flex items-center gap-1.5 text-[13px] text-muted-foreground mb-4 flex-wrap" aria-label="Breadcrumb">
         {isAuthenticated ? (
           <>
-            <button onClick={() => navigate('/s/explore')} className="hover:text-cobalt transition-colors">Match</button>
-            <span className="text-stone">·</span>
-            <button onClick={() => navigate('/s/explore')} className="hover:text-cobalt transition-colors">Search</button>
+            <button onClick={() => navigate('/s/explore')} className="hover:text-secondary transition-colors">Match</button>
+            <span className="text-muted-foreground">·</span>
+            <button onClick={() => navigate('/s/explore')} className="hover:text-secondary transition-colors">Search</button>
           </>
         ) : (
           <>
-            <button onClick={() => navigate('/')} className="hover:text-cobalt transition-colors">Home</button>
-            <span className="text-stone">·</span>
-            <button onClick={() => navigate('/browse')} className="hover:text-cobalt transition-colors">Browse</button>
+            <button onClick={() => navigate('/')} className="hover:text-secondary transition-colors">Home</button>
+            <span className="text-muted-foreground">·</span>
+            <button onClick={() => navigate('/browse')} className="hover:text-secondary transition-colors">Browse</button>
           </>
         )}
-        <span className="text-stone">·</span>
-        <span className="text-charcoal font-medium truncate max-w-[40ch]" aria-current="page">{inst.name}</span>
+        <span className="text-muted-foreground">·</span>
+        <span className="text-foreground font-medium truncate max-w-[40ch]" aria-current="page">{inst.name}</span>
       </nav>
 
       {/* Header */}
-      <div className="bg-white rounded-xl border border-stone p-6 mb-5">
+      <div className="bg-card rounded-xl border border-border p-6 mb-5">
         <div className="flex items-start gap-4">
           {/* Text-only monogram tile — brand rule: no logo images (Spec 12 §9) */}
-          <div className="w-16 h-16 rounded-xl bg-muted border border-stone/60 flex items-center justify-center flex-shrink-0">
-            <span className="text-cobalt font-bold text-xl tracking-tight">{monogram(inst.name)}</span>
+          <div className="w-16 h-16 rounded-xl bg-muted border border-border/60 flex items-center justify-center flex-shrink-0">
+            <span className="text-secondary font-bold text-xl tracking-tight">{monogram(inst.name)}</span>
           </div>
 
           <div className="flex-1 min-w-0">
             {eyebrow && (
-              <p className="text-eyebrow uppercase text-cobalt mb-1">{eyebrow}</p>
+              <p className="text-eyebrow uppercase text-secondary mb-1">{eyebrow}</p>
             )}
-            <h1 className="text-2xl font-bold text-charcoal leading-tight">{inst.name}</h1>
-            <div className="flex items-center gap-x-3 gap-y-1 mt-1.5 text-[13px] text-slate flex-wrap">
+            <h1 className="text-2xl font-bold text-foreground leading-tight">{inst.name}</h1>
+            <div className="flex items-center gap-x-3 gap-y-1 mt-1.5 text-[13px] text-muted-foreground flex-wrap">
               {location && <span className="inline-flex items-center gap-1"><MapPin size={13} /> {location}</span>}
               {inst.founded_year != null && <span className="inline-flex items-center gap-1"><Calendar size={13} /> Founded {inst.founded_year}</span>}
               {inst.campus_setting && <span className="inline-flex items-center gap-1"><Building2 size={13} /> {SETTING_LABELS[inst.campus_setting] ?? inst.campus_setting}</span>}
@@ -262,17 +262,17 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
             {(inst.website_url || inst.contact_email || inst.contact_phone || hasSocialLinks(inst.social_links)) && (
               <div className="flex items-center gap-4 mt-2.5 text-[12px] flex-wrap">
                 {inst.website_url && (
-                  <a href={inst.website_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-cobalt hover:underline">
+                  <a href={inst.website_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-secondary hover:underline">
                     <Globe size={12} /> Website
                   </a>
                 )}
                 {inst.contact_email && (
-                  <a href={`mailto:${inst.contact_email}`} className="inline-flex items-center gap-1 text-cobalt hover:underline">
+                  <a href={`mailto:${inst.contact_email}`} className="inline-flex items-center gap-1 text-secondary hover:underline">
                     <Mail size={12} /> Contact
                   </a>
                 )}
                 {inst.contact_phone && (
-                  <a href={`tel:${inst.contact_phone.replace(/\s/g, '')}`} className="inline-flex items-center gap-1 text-cobalt hover:underline">
+                  <a href={`tel:${inst.contact_phone.replace(/\s/g, '')}`} className="inline-flex items-center gap-1 text-secondary hover:underline">
                     <Phone size={12} /> {inst.contact_phone}
                   </a>
                 )}
@@ -309,7 +309,7 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
           )}
         </div>
         {isAuthenticated && isSaved && (
-          <p className="text-[11.5px] text-slate/80 mt-2">Following — this school&rsquo;s updates and events show up in Connect.</p>
+          <p className="text-[11.5px] text-muted-foreground/80 mt-2">Following — this school&rsquo;s updates and events show up in Connect.</p>
         )}
       </div>
 
@@ -374,7 +374,7 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
         }
       >
         <div className="space-y-3">
-          <p className="text-[13px] text-slate">Ask {inst.name} about admissions, programs, financial aid, or anything else. They’ll reply to your account email.</p>
+          <p className="text-[13px] text-muted-foreground">Ask {inst.name} about admissions, programs, financial aid, or anything else. They’ll reply to your account email.</p>
           {inquiryTypes.length > 1 && (
             <Select
               label="Topic"
@@ -409,7 +409,7 @@ function SocialLinks({ links }: { links: Record<string, string> | null | undefin
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-cobalt hover:underline capitalize"
+          className="inline-flex items-center gap-1 text-secondary hover:underline capitalize"
         >
           <Link2 size={12} /> {platform}
         </a>
@@ -423,7 +423,7 @@ function SocialLinks({ links }: { links: Record<string, string> | null | undefin
    ────────────────────────────────────────────────────────────────────────── */
 function TabBar({ tabs, active, onChange }: { tabs: { id: TabId; label: string }[]; active: TabId; onChange: (t: TabId) => void }) {
   return (
-    <div className="flex items-center gap-1 border-b border-stone overflow-x-auto" role="tablist">
+    <div className="flex items-center gap-1 border-b border-border overflow-x-auto" role="tablist">
       {tabs.map(t => {
         const on = t.id === active
         return (
@@ -433,11 +433,11 @@ function TabBar({ tabs, active, onChange }: { tabs: { id: TabId; label: string }
             aria-selected={on}
             onClick={() => onChange(t.id)}
             className={`relative px-3.5 py-2.5 text-[13px] font-semibold whitespace-nowrap transition-colors ${
-              on ? 'text-charcoal' : 'text-slate hover:text-charcoal'
+              on ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             {t.label}
-            {on && <span className="absolute left-2 right-2 -bottom-px h-0.5 rounded-full bg-cobalt" />}
+            {on && <span className="absolute left-2 right-2 -bottom-px h-0.5 rounded-full bg-secondary" />}
           </button>
         )
       })}
@@ -459,12 +459,12 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
     <div className="space-y-5">
       {inst.description_text && (
         <Card className="p-5">
-          <p className="text-sm text-slate leading-relaxed">{trimSource(inst.description_text)}</p>
+          <p className="text-sm text-muted-foreground leading-relaxed">{trimSource(inst.description_text)}</p>
         </Card>
       )}
 
       <Card className="p-5">
-        <h2 className="font-semibold text-charcoal mb-3">Quick facts</h2>
+        <h2 className="font-semibold text-foreground mb-3">Quick facts</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           <Fact label="Type" value={ownershipLabel(rd.ownership_type) ?? titleCase(inst.type)} />
           {inst.campus_setting && <Fact label="Campus setting" value={SETTING_LABELS[inst.campus_setting] ?? titleCase(inst.campus_setting)} />}
@@ -475,14 +475,14 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
           <Fact label="Programs" value={String(programCount)} />
         </div>
         {rd.accreditor && (
-          <p className="text-[11.5px] text-slate/70 mt-3 italic">Accredited by {rd.accreditor}</p>
+          <p className="text-[11.5px] text-muted-foreground/70 mt-3 italic">Accredited by {rd.accreditor}</p>
         )}
       </Card>
 
       {(placement != null || gradRate != null || rd.median_earnings != null) && (
         <Card className="p-5">
-          <h2 className="font-semibold text-charcoal mb-1">Outcomes at a glance</h2>
-          <p className="text-[11.5px] text-slate/70 mb-3">Institution-wide signals — specific program outcomes appear on each program page.</p>
+          <h2 className="font-semibold text-foreground mb-1">Outcomes at a glance</h2>
+          <p className="text-[11.5px] text-muted-foreground/70 mb-3">Institution-wide signals — specific program outcomes appear on each program page.</p>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {placement != null && <Fact label="Placement" value={pct(placement)} hint="employed or continuing ed" />}
             {gradRate != null && <Fact label="Graduation rate" value={pct(gradRate)} />}
@@ -517,21 +517,21 @@ function AboutTab({ inst }: { inst: Institution }) {
     <div className="space-y-5">
       {(inst.campus_description || inst.description_text) && (
         <Card className="p-5">
-          <h2 className="font-semibold text-charcoal mb-2">Academic environment</h2>
-          <p className="text-sm text-slate leading-relaxed whitespace-pre-line">{trimSource(inst.campus_description || inst.description_text || '')}</p>
+          <h2 className="font-semibold text-foreground mb-2">Academic environment</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{trimSource(inst.campus_description || inst.description_text || '')}</p>
         </Card>
       )}
 
       {supportKeys.length > 0 && (
         <Card className="p-5">
-          <h2 className="font-semibold text-charcoal mb-3">Support services</h2>
+          <h2 className="font-semibold text-foreground mb-3">Support services</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {supportKeys.map(key => {
               const val: any = support[key]
               const name = (val && typeof val === 'object' && val.name) || titleCase(fmtKey(key))
               const url = val && typeof val === 'object' && val.url
               const inner = (
-                <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-muted/60 border border-stone/50 hover:border-cobalt transition-colors">
+                <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-muted/60 border border-border/50 hover:border-secondary transition-colors">
                   <span className="text-sm text-foreground truncate">{name}</span>
                   {url && <Globe size={12} className="text-muted-foreground flex-shrink-0" />}
                 </div>
@@ -546,13 +546,13 @@ function AboutTab({ inst }: { inst: Institution }) {
 
       {intlKeys.length > 0 && (
         <Card className="p-5">
-          <h2 className="font-semibold text-charcoal mb-3">International students</h2>
+          <h2 className="font-semibold text-foreground mb-3">International students</h2>
           <div className="space-y-2 text-sm">
             {intlKeys.map(key => {
               const val: any = intl[key]
               const text = typeof val === 'object' ? (val.summary || val.note || JSON.stringify(val)) : String(val)
               return (
-                <div key={key} className="px-3 py-2 rounded-lg bg-muted/60 border border-stone/50">
+                <div key={key} className="px-3 py-2 rounded-lg bg-muted/60 border border-border/50">
                   <p className="text-[12px] font-medium text-foreground capitalize">{fmtKey(key)}</p>
                   <p className="text-[12px] text-muted-foreground mt-0.5 leading-snug">{text}</p>
                 </div>
@@ -564,17 +564,17 @@ function AboutTab({ inst }: { inst: Institution }) {
 
       {policyKeys.length > 0 && (
         <Card className="p-5">
-          <h2 className="font-semibold text-charcoal mb-3">Policies</h2>
+          <h2 className="font-semibold text-foreground mb-3">Policies</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {policyKeys.map(key => {
               const val: any = policies[key]
               const summary = (val && typeof val === 'object' && val.summary) || (typeof val === 'string' ? val : null)
               const url = val && typeof val === 'object' && val.url
               return (
-                <div key={key} className="px-3 py-2 rounded-lg bg-muted/60 border border-stone/50">
+                <div key={key} className="px-3 py-2 rounded-lg bg-muted/60 border border-border/50">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-medium text-foreground capitalize">{fmtKey(key)}</p>
-                    {url && <a href={url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-cobalt hover:underline flex-shrink-0">View</a>}
+                    {url && <a href={url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-secondary hover:underline flex-shrink-0">View</a>}
                   </div>
                   {summary && <p className="text-[11.5px] text-muted-foreground leading-snug mt-0.5">{summary}</p>}
                 </div>
@@ -599,10 +599,10 @@ function SchoolsTab({ schoolList, institutionName, onOpen, onShowPrograms }: {
   return (
     <div>
       <div className="flex items-baseline justify-between mb-3">
-        <p className="text-[13px] text-slate">
-          <span className="font-semibold text-charcoal">{schoolList.length}</span> school{schoolList.length === 1 ? '' : 's'} at {institutionName}. Open one to see its programs.
+        <p className="text-[13px] text-muted-foreground">
+          <span className="font-semibold text-foreground">{schoolList.length}</span> school{schoolList.length === 1 ? '' : 's'} at {institutionName}. Open one to see its programs.
         </p>
-        <button onClick={onShowPrograms} className="text-[12px] text-cobalt hover:underline">Skip to all programs →</button>
+        <button onClick={onShowPrograms} className="text-[12px] text-secondary hover:underline">Skip to all programs →</button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {schoolList.map(school => (
@@ -665,14 +665,14 @@ function ProgramsTab({ programs, institutionName, savedIds, comparing, onSave, o
     <div className="space-y-4">
       {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate/70 uppercase tracking-wider mr-1"><Filter size={11} /> Filter</span>
+        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider mr-1"><Filter size={11} /> Filter</span>
         <div className="relative flex-1 min-w-[180px] max-w-xs">
-          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate/50" />
+          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
           <input
             value={f.q}
             onChange={e => setF(s => ({ ...s, q: e.target.value }))}
             placeholder="Search programs"
-            className="w-full pl-8 pr-2.5 py-1.5 text-[12px] rounded-full border border-stone bg-white text-charcoal placeholder:text-slate/50 focus:outline-none focus:border-cobalt focus:ring-1 focus:ring-cobalt/40"
+            className="w-full pl-8 pr-2.5 py-1.5 text-[12px] rounded-full border border-border bg-card text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary/40"
           />
         </div>
         {degreeOpts.length > 1 && (
@@ -694,24 +694,24 @@ function ProgramsTab({ programs, institutionName, savedIds, comparing, onSave, o
 
       {/* Constraint chips — locked scope chip first (Spec 12 §3.4) */}
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10.5px] rounded-full bg-cobalt/10 text-cobalt border border-cobalt/25 font-medium">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10.5px] rounded-full bg-secondary/10 text-secondary border border-secondary/25 font-medium">
           Institution · {institutionName}
         </span>
         {activeChips.map((c, i) => (
-          <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 text-[10.5px] rounded-full bg-white text-charcoal border border-cobalt/40">
+          <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 text-[10.5px] rounded-full bg-card text-foreground border border-secondary/40">
             {c.label}
-            <button onClick={c.clear} className="ml-0.5 text-slate hover:text-charcoal" aria-label={`Remove ${c.label}`}><X size={10} /></button>
+            <button onClick={c.clear} className="ml-0.5 text-muted-foreground hover:text-foreground" aria-label={`Remove ${c.label}`}><X size={10} /></button>
           </span>
         ))}
         {activeChips.length > 0 && (
-          <button onClick={() => setF(EMPTY_PROG_FILTER)} className="text-[11px] text-slate hover:text-charcoal ml-1">Clear all</button>
+          <button onClick={() => setF(EMPTY_PROG_FILTER)} className="text-[11px] text-muted-foreground hover:text-foreground ml-1">Clear all</button>
         )}
       </div>
 
       {programs.length === 0 ? (
         <EmptyBlock icon={BookOpen} title="No published programs yet" body="This school hasn't published any programs yet. Check back soon." />
       ) : filtered.length === 0 ? (
-        <p className="text-sm text-slate text-center py-10">No programs match these filters. <button onClick={() => setF(EMPTY_PROG_FILTER)} className="text-cobalt hover:underline">Clear filters</button></p>
+        <p className="text-sm text-muted-foreground text-center py-10">No programs match these filters. <button onClick={() => setF(EMPTY_PROG_FILTER)} className="text-secondary hover:underline">Clear filters</button></p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map(p => (
@@ -749,10 +749,10 @@ function EventsTab({ events, institutionName, isAuthenticated, rsvpSet, onRsvp, 
         return (
           <Card key={ev.id} className="p-4 flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <h3 className="font-semibold text-charcoal truncate">{ev.event_name}</h3>
-              <p className="text-[13px] text-slate mt-0.5">{when}{ev.location ? ` · ${ev.location}` : ''}</p>
-              {ev.event_type && <span className="inline-block mt-1.5 px-2 py-0.5 text-[10px] rounded-md bg-muted text-muted-foreground border border-stone/60 capitalize">{String(ev.event_type).replace(/_/g, ' ')}</span>}
-              {ev.capacity != null && <span className="ml-2 text-[11px] text-slate/70">{ev.rsvp_count}/{ev.capacity} spots</span>}
+              <h3 className="font-semibold text-foreground truncate">{ev.event_name}</h3>
+              <p className="text-[13px] text-muted-foreground mt-0.5">{when}{ev.location ? ` · ${ev.location}` : ''}</p>
+              {ev.event_type && <span className="inline-block mt-1.5 px-2 py-0.5 text-[10px] rounded-md bg-muted text-muted-foreground border border-border/60 capitalize">{String(ev.event_type).replace(/_/g, ' ')}</span>}
+              {ev.capacity != null && <span className="ml-2 text-[11px] text-muted-foreground/70">{ev.rsvp_count}/{ev.capacity} spots</span>}
             </div>
             <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
               <Button size="sm" variant={rsvped ? 'tertiary' : 'secondary'} onClick={() => onRsvp(ev.id)} disabled={rsvpPending}>
@@ -760,7 +760,7 @@ function EventsTab({ events, institutionName, isAuthenticated, rsvpSet, onRsvp, 
               </Button>
               <button
                 onClick={() => addEventToCalendar(ev.id, ev.event_name).catch(() => showToast('Couldn’t generate the calendar file.', 'error'))}
-                className="inline-flex items-center gap-1 text-[11px] text-cobalt hover:underline"
+                className="inline-flex items-center gap-1 text-[11px] text-secondary hover:underline"
               >
                 <CalendarPlus size={11} /> Add to calendar
               </button>
@@ -801,7 +801,7 @@ function Fact({ label, value, hint }: { label: string; value: string; hint?: str
   // Semantic foreground tokens (not fixed charcoal/slate) so the tile stays
   // legible when bg-muted flips to dark navy in dark mode.
   return (
-    <div className="px-3 py-2.5 rounded-lg bg-muted/60 border border-stone/50">
+    <div className="px-3 py-2.5 rounded-lg bg-muted/60 border border-border/50">
       <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">{label}</p>
       <p className="text-[15px] font-bold text-foreground tabular-nums mt-0.5 leading-tight">{value}</p>
       {hint && <p className="text-[10.5px] text-muted-foreground mt-0.5">{hint}</p>}
@@ -813,10 +813,10 @@ function EmptyBlock({ icon: Icon, title, body, action }: {
   icon: ComponentType<{ size?: number; className?: string }>; title: string; body: string; action?: { label: string; onClick: () => void }
 }) {
   return (
-    <div className="text-center py-16 bg-white rounded-xl border border-stone">
-      <Icon size={32} className="mx-auto text-stone mb-3" />
-      <p className="text-sm text-charcoal font-medium mb-1">{title}</p>
-      <p className="text-xs text-slate max-w-md mx-auto">{body}</p>
+    <div className="text-center py-16 bg-card rounded-xl border border-border">
+      <Icon size={32} className="mx-auto text-muted-foreground mb-3" />
+      <p className="text-sm text-foreground font-medium mb-1">{title}</p>
+      <p className="text-xs text-muted-foreground max-w-md mx-auto">{body}</p>
       {action && <Button size="sm" variant="secondary" className="mt-4" onClick={action.onClick}>{action.label}</Button>}
     </div>
   )
@@ -835,20 +835,20 @@ function SelectPill({ label, value, onChange, options, hideEmpty }: {
         onClick={() => setOpen(o => !o)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         className={`inline-flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-medium rounded-full border transition-colors ${
-          active ? 'bg-cobalt text-white border-cobalt' : 'bg-white text-charcoal border-stone hover:border-cobalt'
+          active ? 'bg-secondary text-secondary-foreground border-secondary' : 'bg-card text-foreground border-border hover:border-secondary'
         }`}
       >
         {hideEmpty && current ? current.label : label}{active ? `: ${current?.label}` : ''}
         <ChevronDown size={11} className={open ? 'rotate-180 transition-transform' : 'transition-transform'} />
       </button>
       {open && (
-        <div className="absolute z-40 top-full left-0 mt-1 min-w-[180px] rounded-lg border border-stone bg-white shadow-lg py-1">
+        <div className="absolute z-40 top-full left-0 mt-1 min-w-[180px] rounded-lg border border-border bg-card shadow-lg py-1">
           {!hideEmpty && (
-            <button onMouseDown={() => { onChange(''); setOpen(false) }} className="w-full text-left px-3 py-1.5 text-[12px] text-slate hover:bg-muted">Any {label.toLowerCase()}</button>
+            <button onMouseDown={() => { onChange(''); setOpen(false) }} className="w-full text-left px-3 py-1.5 text-[12px] text-muted-foreground hover:bg-muted">Any {label.toLowerCase()}</button>
           )}
           {options.map(o => (
             <button key={o.value} onMouseDown={() => { onChange(o.value); setOpen(false) }}
-              className={`w-full text-left px-3 py-1.5 text-[12px] hover:bg-muted ${o.value === value ? 'text-cobalt font-medium' : 'text-charcoal'}`}>
+              className={`w-full text-left px-3 py-1.5 text-[12px] hover:bg-muted ${o.value === value ? 'text-secondary font-medium' : 'text-foreground'}`}>
               {o.label}
             </button>
           ))}

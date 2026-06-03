@@ -41,7 +41,7 @@ function AddButton({ onClick, label }: { onClick: () => void; label: string }) {
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1 text-[13px] font-medium text-cobalt hover:underline"
+      className="inline-flex items-center gap-1 text-[13px] font-medium text-secondary hover:underline"
     >
       <Plus size={14} /> {label}
     </button>

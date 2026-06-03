@@ -14,7 +14,7 @@ export default function AudiencePreview({ preview, loading, hasRun }: Props) {
   if (loading) {
     return (
       <div className="flex items-center gap-3 rounded-lg border border-border bg-surface p-4">
-        <span className="h-4 w-4 animate-spin rounded-full border-2 border-cobalt border-t-transparent" />
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-secondary border-t-transparent" />
         <span className="text-sm text-muted-foreground">Calculating audience…</span>
       </div>
     )
@@ -42,8 +42,8 @@ export default function AudiencePreview({ preview, loading, hasRun }: Props) {
     <div className="space-y-3 rounded-lg border border-border bg-surface p-4">
       {/* Headline count — the key metric, in --accent (cobalt) */}
       <div className="flex items-baseline gap-2">
-        <Users size={18} className="text-cobalt" />
-        <span className="text-3xl font-bold text-cobalt tabular-nums">
+        <Users size={18} className="text-secondary" />
+        <span className="text-3xl font-bold text-secondary tabular-nums">
           {preview.audience_count.toLocaleString()}
         </span>
         <span className="text-sm text-muted-foreground">students match</span>
@@ -104,7 +104,7 @@ export default function AudiencePreview({ preview, loading, hasRun }: Props) {
                           s.fit_band === 'high'
                             ? 'bg-success-soft text-success'
                             : s.fit_band === 'medium'
-                              ? 'bg-cobalt/10 text-cobalt'
+                              ? 'bg-secondary/10 text-secondary'
                               : 'bg-muted text-muted-foreground',
                         ].join(' ')}
                       >

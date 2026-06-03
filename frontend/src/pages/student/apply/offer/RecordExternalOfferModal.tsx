@@ -97,7 +97,7 @@ export default function RecordExternalOfferModal({
       size="lg"
     >
       <div className="space-y-3">
-        <p className="text-sm text-student-text">
+        <p className="text-sm text-foreground">
           Applied somewhere off-platform? Add the offer here to compare it alongside the rest.
         </p>
         <Select
