@@ -119,6 +119,10 @@ class AuthService:
                         await self.db.flush()
                 except Exception:
                     pass  # Non-critical — login still succeeds
+            if settings.demo_mode and user.role.value == "student":
+                from unipaith.services.demo_service import reset_student_demo_data
+
+                await reset_student_demo_data(self.db, user.id)
             return {
                 "access_token": auth_result.get("IdToken", auth_result["AccessToken"]),
                 "refresh_token": auth_result.get("RefreshToken"),

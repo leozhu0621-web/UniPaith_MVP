@@ -175,6 +175,9 @@ resource "aws_ecs_task_definition" "backend" {
       { name = "COGNITO_APP_CLIENT_ID", value = aws_cognito_user_pool_client.web.id },
       { name = "COGNITO_DOMAIN", value = "${var.project}.auth.${var.aws_region}.amazoncognito.com" },
       { name = "COGNITO_BYPASS", value = "false" },
+      # Demo deployment: wipe a student's generated data on every login (keeps
+      # the account). Per product: app.unipaith.co is a live demo.
+      { name = "DEMO_MODE", value = "true" },
       { name = "AI_MOCK_MODE", value = "false" },
       # Plan 2 LLM stack — each surface falls back to its deterministic
       # stub on agent failure (see tests/test_plan2_integration.py), so
