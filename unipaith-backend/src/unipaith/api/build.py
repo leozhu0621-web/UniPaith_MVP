@@ -26,6 +26,7 @@ from unipaith.transparency.production import build_production
 from unipaith.transparency.realtime import build_realtime
 from unipaith.transparency.roadmap import build_roadmap
 from unipaith.transparency.search import build_search
+from unipaith.transparency.security import build_security
 from unipaith.transparency.ux_benchmark import build_ux_benchmark
 
 router = APIRouter(prefix="/build", tags=["build-transparency"])
@@ -59,6 +60,7 @@ def _assemble_overview(request: Request) -> dict:
     search = build_search(request.app.routes)["summary"]
     realtime = build_realtime(request.app.routes)["summary"]
     chatbot_eval = build_chatbot_eval(request.app.routes)["summary"]
+    security = build_security(request.app)["summary"]
     return {
         "roadmap": roadmap,
         "features": features,
@@ -70,6 +72,7 @@ def _assemble_overview(request: Request) -> dict:
         "search": search,
         "realtime": realtime,
         "chatbot_eval": chatbot_eval,
+        "security": security,
         "provider": settings.ai_provider_default,
         "surfaces": [
             {
@@ -185,6 +188,16 @@ def _assemble_overview(request: Request) -> dict:
                 "stat": chatbot_eval["golden_case_total"],
                 "stat_label": "graded eval cases",
             },
+            {
+                "key": "security",
+                "title": "Security & trust",
+                "spec": "58",
+                "blurb": "The security posture — authN/Z, consent gating, PII masking, "
+                "audit + compliance — each control read live from the running app.",
+                "path": "/goal/security",
+                "stat": f"{security['controls_live']}/{security['control_count']}",
+                "stat_label": "controls live",
+            },
         ],
     }
 
@@ -293,3 +306,17 @@ async def get_chatbot_eval(request: Request) -> dict:
     resolve from the registry and the flags off ``settings`` — so the page can't
     claim a standard the deployed agents aren't held to."""
     return build_chatbot_eval(request.app.routes)
+
+
+@router.get("/security", summary="The security, trust & compliance posture (spec 58)")
+async def get_security(request: Request) -> dict:
+    """Spec 58's security posture: the controls (authN/Z · consent · redaction ·
+    PII · input-safety · moderation · audit · rate-limit · headers · secrets ·
+    compliance · incident) honestly classified live·partial·planned. The auth
+    posture (``cognito_bypass`` / ``environment`` + the boot-guard invariant), the
+    four consent levers with their per-lever gated-agent counts, the redaction-map
+    size, the PII registry counts and the live security-header set are introspected
+    from ``settings`` / ``ai.consent`` / ``ai.rationale_redaction`` / ``core.pii`` /
+    ``core.middleware`` — so the page mirrors the deployed controls and can't claim
+    what isn't wired."""
+    return build_security(request.app)

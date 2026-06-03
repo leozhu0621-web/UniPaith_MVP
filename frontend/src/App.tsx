@@ -34,6 +34,7 @@ import ExperienceStandardsPage from './pages/public/ExperienceStandardsPage'
 import FrontendStandardsPage from './pages/public/FrontendStandardsPage'
 import ProductionReadinessPage from './pages/public/ProductionReadinessPage'
 import SearchFeedRecsPage from './pages/public/SearchFeedRecsPage'
+import SecurityTrustPage from './pages/public/SecurityTrustPage'
 import RealtimeNotificationsPage from './pages/public/RealtimeNotificationsPage'
 import ChatbotEvalPage from './pages/public/ChatbotEvalPage'
 
@@ -139,6 +140,8 @@ const router = createBrowserRouter([
   { path: '/goal/realtime', element: <PublicLayout><RealtimeNotificationsPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 61 — chatbot training & evaluation loop (constitution / safety floor / eval suites read live).
   { path: '/goal/chatbot-eval', element: <PublicLayout><ChatbotEvalPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  // Spec 58 — security, trust & compliance posture (controls / consent / PII / headers read live).
+  { path: '/goal/security', element: <PublicLayout><SecurityTrustPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
 
   { path: '/login', element: <AuthLayout><LoginPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
   { path: '/signup', element: <AuthLayout><SignupPage /></AuthLayout>, errorElement: <RouteErrorPage /> },

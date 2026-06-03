@@ -13,6 +13,36 @@ _jwks_cache: dict[str, Any] = {}
 _jwks_fetched_at: float = 0
 JWKS_CACHE_TTL = 86400  # 24 hours
 
+# Environments where the dev auth bypass must never be enabled (spec 58 §2).
+DEPLOYED_ENVIRONMENTS: frozenset[str] = frozenset({"production", "staging"})
+
+
+def auth_bypass_safe() -> bool:
+    """True unless the dev auth bypass is enabled in a deployed environment.
+
+    ``_verify_dev_token`` accepts ``dev:<uuid>:<role>`` tokens whenever
+    ``cognito_bypass`` is true — convenient in dev, catastrophic in prod. This
+    predicate is the invariant the ``/goal/security`` surface reports and the
+    boot guard enforces.
+    """
+    deployed = settings.environment.strip().lower() in DEPLOYED_ENVIRONMENTS
+    return not (deployed and settings.cognito_bypass)
+
+
+def assert_secure_auth_config() -> None:
+    """Spec 58 §2 — fail boot if the dev auth bypass ships to prod/staging.
+
+    Raises ``RuntimeError`` so the process refuses to serve rather than silently
+    accepting forged ``dev:`` tokens — the 52 §5 launch blocker, enforced in
+    code. Safe in dev/test, which run ``environment=development``.
+    """
+    if not auth_bypass_safe():
+        raise RuntimeError(
+            "SECURITY: cognito_bypass is enabled in a deployed environment "
+            f"(environment={settings.environment!r}). The dev auth bypass must "
+            "never ship to production/staging — refusing to boot."
+        )
+
 
 class CognitoClaims(BaseModel):
     sub: str

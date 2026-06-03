@@ -54,12 +54,32 @@ async def observability_middleware(request: Request, call_next):  # noqa: ANN001
         reset_request_id(token)
 
 
+# Spec 58 §8 — the security headers the app sets on every response. Declared as
+# data so the /goal/security transparency surface can introspect the live set
+# (it imports SECURITY_HEADERS and reports the names), and so the header policy
+# has a single source of truth. HSTS is added separately (production-only).
+SECURITY_HEADERS: dict[str, str] = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "X-XSS-Protection": "1; mode=block",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    # The API serves JSON, so a strict CSP is safe defence-in-depth against
+    # clickjacking / injection — `default-src 'none'` allows nothing to load.
+    "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+}
+
+# Swagger / Redoc / the OpenAPI JSON load CDN assets, so the strict CSP would
+# break them. They are debug-only routes; skip CSP (only) for them.
+_CSP_SKIP_PREFIXES = ("/docs", "/redoc", "/openapi.json")
+
+
 async def security_headers_middleware(request: Request, call_next):  # noqa: ANN001
     response: Response = await call_next(request)
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
-    response.headers["X-XSS-Protection"] = "1; mode=block"
-    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    skip_csp = request.url.path.startswith(_CSP_SKIP_PREFIXES)
+    for name, value in SECURITY_HEADERS.items():
+        if name == "Content-Security-Policy" and skip_csp:
+            continue
+        response.headers[name] = value
     if settings.environment == "production":
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return response
