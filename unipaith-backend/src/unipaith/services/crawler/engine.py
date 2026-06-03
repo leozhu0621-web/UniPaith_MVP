@@ -19,9 +19,10 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from unipaith.config import settings
 from unipaith.models.crawler import CrawlSource
 from unipaith.models.knowledge import CrawlFrontier, EngineLoopSnapshot, KnowledgeDocument
 from unipaith.services.crawler.change_detector import ChangeDetector
@@ -270,16 +271,26 @@ class KnowledgeEngine:
         return summary
 
     async def tick(self, *, limit: int | None = None) -> dict:
-        """One scheduled engine tick (§6 / §10). Pulls due frontier items, fetches
-        (gated), ingests, reschedules, and persists an ``EngineLoopSnapshot``.
-        With live fetch off, due items report ``fetch_disabled`` and the tick is a
-        cheap heartbeat that still records observability."""
+        """One scheduled engine tick (§6 / §10). Pulls due frontier items — pending,
+        plus completed items past their re-crawl interval so the routine keeps
+        refreshing rather than draining once — fetches (gated), ingests, reschedules,
+        and persists an ``EngineLoopSnapshot``. With live fetch off, due items report
+        ``fetch_disabled`` and the tick is a cheap heartbeat that still records
+        observability."""
         limit = limit or 25
         now = datetime.now(UTC)
         result = await self.db.execute(
             select(CrawlFrontier)
             .where(
-                CrawlFrontier.status == "pending",
+                or_(
+                    CrawlFrontier.status == "pending",
+                    # Re-crawl: a completed item whose interval has elapsed (§3B).
+                    and_(
+                        CrawlFrontier.status == "completed",
+                        CrawlFrontier.next_crawl_after.is_not(None),
+                        CrawlFrontier.next_crawl_after <= now,
+                    ),
+                )
             )
             .order_by(CrawlFrontier.priority.desc())
             .limit(limit)
@@ -322,7 +333,7 @@ class KnowledgeEngine:
             item.last_crawled_at = now
             item.crawl_count = (item.crawl_count or 0) + 1
             item.status = "completed"
-            item.next_crawl_after = now + timedelta(hours=168)
+            item.next_crawl_after = now + timedelta(hours=settings.crawler_recrawl_interval_hours)
             processed += 1
 
         await self._write_snapshot(

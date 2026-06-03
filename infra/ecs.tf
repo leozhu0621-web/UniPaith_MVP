@@ -293,10 +293,13 @@ resource "aws_ecs_task_definition" "backend" {
       # governed scheduled tick (allowlisted, public-non-personal reference
       # enrichment + change detection), and CRAWLER_LIVE_FETCH_ENABLED is the hard
       # gate on real network fetches. Deterministic extraction (no LLM); allowlist-
-      # only frontier keeps it to vetted sources. Tick cadence = 60 min (config).
+      # only frontier keeps it to vetted sources. The routine runs every 30 min and
+      # re-crawls each page every 6 h (politely catching changes + new programs).
       { name = "SCHEDULER_ENABLED", value = "true" },
       { name = "CRAWLER_ENGINE_ENABLED", value = "true" },
       { name = "CRAWLER_LIVE_FETCH_ENABLED", value = "true" },
+      { name = "CRAWLER_TICK_INTERVAL_MINUTES", value = "30" },
+      { name = "CRAWLER_RECRAWL_INTERVAL_HOURS", value = "6" },
     ]
 
     secrets = [
