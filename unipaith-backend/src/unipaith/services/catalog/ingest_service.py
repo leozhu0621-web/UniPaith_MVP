@@ -45,6 +45,14 @@ _DEGREE_MAP = {
     "m.s.": "masters",
     "meng": "masters",
     "mba": "masters",
+    "sm": "masters",  # MIT "Master of Science"
+    "scm": "masters",
+    "march": "masters",  # Master of Architecture
+    "mcp": "masters",  # Master in City Planning
+    "mpp": "masters",  # Master of Public Policy
+    "mpa": "masters",
+    "med": "masters",  # Master of Education
+    "llm": "masters",
     "master": "masters",
     "master's": "masters",
     "masters": "masters",
@@ -56,6 +64,8 @@ _DEGREE_MAP = {
     "bachelors": "bachelors",
     "phd": "doctoral",
     "ph.d.": "doctoral",
+    "scd": "doctoral",  # Doctor of Science
+    "edd": "doctoral",
     "doctoral": "doctoral",
     "doctorate": "doctoral",
     "certificate": "certificate",
