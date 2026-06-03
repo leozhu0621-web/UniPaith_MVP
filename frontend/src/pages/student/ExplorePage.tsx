@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import QueryError from '../../components/ui/QueryError'
 import { searchInstitutions, getFeaturedPromotions, recordPromotionClick } from '../../api/institutions'
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
 import UniversityCard from './explore/cards/UniversityCard'
@@ -102,7 +103,7 @@ export default function ExplorePage() {
     setSearchParams(filtersToURL(searchParams, next), { replace: true })
   }
 
-  const { data: universities, isLoading: uniLoading } = useQuery({
+  const { data: universities, isLoading: uniLoading, isError: uniError, refetch: refetchUni } = useQuery({
     queryKey: ['explore-universities'],
     queryFn: () => searchInstitutions({ page_size: 50 }),
     staleTime: 5 * 60 * 1000,
@@ -196,7 +197,9 @@ export default function ExplorePage() {
             <ExploreFilters universities={uniList} filters={filters} onChange={setFilters} />
           )}
 
-          {uniLoading ? (
+          {uniError ? (
+            <QueryError detail="We couldn't load universities." onRetry={() => refetchUni()} />
+          ) : uniLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map(i => <div key={i} className="h-80 bg-card rounded-xl border border-border animate-pulse" />)}
             </div>

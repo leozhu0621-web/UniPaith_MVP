@@ -13,6 +13,7 @@ import { getMyFollows, unfollowInstitution } from '../../api/events'
 import SavedSearchesPanel from './saved/SavedSearchesPanel'
 import Button from '../../components/ui/Button'
 import EmptyState from '../../components/ui/EmptyState'
+import QueryError from '../../components/ui/QueryError'
 import BandBadge from '../../components/ui/BandBadge'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
@@ -58,7 +59,7 @@ export default function SavedListPage() {
   const [showDropped, setShowDropped] = useState(false)
   const [bulkBusy, setBulkBusy] = useState(false)
 
-  const { data: saved, isLoading, isError } = useQuery({
+  const { data: saved, isLoading, isError, refetch } = useQuery({
     queryKey: ['saved'],
     queryFn: listSaved,
     retry: 1,
@@ -247,6 +248,14 @@ export default function SavedListPage() {
         {Array.from({ length: 3 }).map((_, i) => (
           <SkeletonCard key={i} />
         ))}
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="p-6 max-w-5xl mx-auto">
+        <QueryError detail="We couldn't load your saved list." onRetry={() => refetch()} />
       </div>
     )
   }
