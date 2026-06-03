@@ -1197,6 +1197,54 @@ async def get_program_net_price(
     return NetPriceEstimateResponse(program_id=program_id, **data)
 
 
+class ScholarshipMatchItem(BaseModel):
+    """Spec 70 §3 — one scholarship the student may qualify for."""
+
+    scholarship_id: str
+    name: str
+    award_estimate: int
+    reasons: list[str]
+    scholarship_type: str
+
+
+@router.get("/me/scholarships/match", response_model=list[ScholarshipMatchItem])
+async def match_my_scholarships(
+    user: User = Depends(require_student),
+    db: AsyncSession = Depends(get_db),
+    limit: int = Query(20, ge=1, le=100),
+):
+    """Spec 70 §3 — scholarships this student may qualify for, ranked by award.
+
+    Best-effort: a thin profile still surfaces broadly-eligible awards — an
+    unknown student field doesn't eliminate an award, only a verified mismatch
+    does (see `financial_fit.scholarship_eligibility`). Deterministic; no LLM.
+    """
+    from unipaith.services.financial_fit import FinancialFitService
+
+    svc = _svc(db)
+    profile = await svc._get_student_profile(user.id)
+    records = await svc.list_academic_records(profile.id)
+    ctx: dict = {}
+    gpas = [float(r.gpa) for r in records if r.gpa is not None]
+    if gpas:
+        ctx["gpa"] = max(gpas)
+    if profile.country_of_residence:
+        ctx["country"] = profile.country_of_residence
+    if records and records[-1].degree_type:
+        ctx["degree_level"] = records[-1].degree_type
+    matches = await FinancialFitService(db).find_scholarships(ctx, limit=limit)
+    return [
+        ScholarshipMatchItem(
+            scholarship_id=str(m.scholarship_id),
+            name=m.name,
+            award_estimate=m.award_estimate,
+            reasons=m.reasons,
+            scholarship_type=m.scholarship_type,
+        )
+        for m in matches
+    ]
+
+
 class ProbabilityBandsResponse(BaseModel):
     """Spec 09 §4A — admit / scholarship / waitlist ranges + drivers for one
     program. `probability_bands` is null when there isn't enough signal; `reason`
