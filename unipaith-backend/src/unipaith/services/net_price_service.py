@@ -88,8 +88,15 @@ def _years_for(duration_months: Any, degree_type: str | None) -> float:
     )
 
 
-def _annual_coa(program: dict, ranking: dict) -> tuple[float | None, dict]:
-    """Annual cost of attendance + its components. None if tuition is unknown."""
+def _annual_coa(
+    program: dict, ranking: dict, geo_living_annual: float | None = None
+) -> tuple[float | None, dict]:
+    """Annual cost of attendance + its components. None if tuition is unknown.
+
+    ``geo_living_annual`` is the Spec 60 §5.2 reference cost-of-living input (from
+    ``ref_geo_cost``): when neither the program nor the ranking publishes a living
+    cost, the sourced reference figure is used in preference to the hardcoded
+    default — the crawled reference data feeding the net-price OUTPUT feature."""
     cd = program.get("cost_data") or {}
     if not isinstance(cd, dict):
         cd = {}
@@ -109,8 +116,19 @@ def _annual_coa(program: dict, ranking: dict) -> tuple[float | None, dict]:
         fees = sum((_num(v) or 0.0) for v in fees_map.values())
 
     living = (
-        _num(cd.get("estimated_living_cost")) or _num(ranking.get("room_board")) or _DEFAULT_LIVING
+        _num(cd.get("estimated_living_cost"))
+        or _num(ranking.get("room_board"))
+        or _num(geo_living_annual)
+        or _DEFAULT_LIVING
     )
+    if _num(cd.get("estimated_living_cost")):
+        living_source = "program"
+    elif _num(ranking.get("room_board")):
+        living_source = "ranking"
+    elif _num(geo_living_annual):
+        living_source = "reference"  # Spec 60 ref_geo_cost
+    else:
+        living_source = "default"
     books = _num(cd.get("book_supplies")) or _num(ranking.get("books_supply")) or _DEFAULT_BOOKS
     intl = _num(cd.get("international_premium")) or 0.0
 
@@ -119,6 +137,7 @@ def _annual_coa(program: dict, ranking: dict) -> tuple[float | None, dict]:
         "tuition": tuition,
         "fees": fees,
         "living": living,
+        "living_source": living_source,
         "books": books,
         "international_premium": intl,
     }
@@ -249,16 +268,18 @@ def compute_net_price_estimate(
     student_percentile: float | None = None,
     student_budget_annual: float | None = None,
     funding_requirement: str | None = None,
+    geo_living_annual: float | None = None,
 ) -> dict:
     """Pure net-price estimate. See module docstring for guarantees.
 
     `program` keys read: tuition, cost_data, acceptance_rate, duration_months,
     degree_type. `ranking_data` is the institution's ranking_data dict (optional).
+    `geo_living_annual` is the Spec 60 reference cost-of-living input (optional).
     """
     ranking = ranking_data or {}
     budget = _num(student_budget_annual)
 
-    coa, components = _annual_coa(program, ranking)
+    coa, components = _annual_coa(program, ranking, geo_living_annual)
     if coa is None or coa <= 0:
         return _unavailable(budget, "no_cost_data")
 
@@ -303,6 +324,7 @@ def compute_net_price_estimate(
         "reason": None,
         "currency": "USD",
         "cost_of_attendance_annual": _round100(coa),
+        "living_cost_source": components.get("living_source", "default"),
         "net_cost_scenario_range": {"min": lo_r, "expected": expected_r, "max": hi_r},
         "net_cost_scenario_range_total": {
             "min": _round100(lo_r * years),
@@ -351,6 +373,11 @@ class NetPriceService:
         )
         if inst is not None and isinstance(inst.ranking_data, dict):
             ranking = inst.ranking_data
+
+        # Spec 60 §5.2 — feed the crawled cost-of-living reference into net-price.
+        # Best-effort: a sourced living figure for the institution's locale, used
+        # only when the program/ranking publishes none (the OUTPUT-feature wire).
+        geo_living_annual = await self._reference_living_annual(inst)
 
         gpa = percentile = budget = None
         funding = None
@@ -401,4 +428,32 @@ class NetPriceService:
             student_percentile=percentile,
             student_budget_annual=budget,
             funding_requirement=funding,
+            geo_living_annual=geo_living_annual,
         )
+
+    async def _reference_living_annual(self, inst) -> float | None:
+        """Spec 60 §5.2 — annual cost-of-living for an institution's locale from the
+        ``ref_geo_cost`` reference projection (monthly_estimate × 12). Best-effort:
+        returns ``None`` (so net-price falls back to its default) when there's no
+        location, no matching reference row, or any lookup error — the wire never
+        regresses an estimate, it only sources a better living figure when available."""
+        if inst is None:
+            return None
+        try:
+            from unipaith.models.reference import RefGeoCost
+
+            locale = getattr(inst, "city", None)
+            country = getattr(inst, "country", None)
+            if not locale and not country:
+                return None
+            stmt = select(RefGeoCost).where(RefGeoCost.status.in_(("live", "provisional")))
+            if locale:
+                stmt = stmt.where(RefGeoCost.locale.ilike(f"%{locale}%"))
+            if country:
+                stmt = stmt.where(RefGeoCost.country.ilike(f"%{country}%"))
+            row = await self.db.scalar(stmt.limit(1))
+            if row is None or row.monthly_estimate is None:
+                return None
+            return float(row.monthly_estimate) * 12.0
+        except Exception:  # noqa: BLE001 — reference enrichment is best-effort
+            return None
