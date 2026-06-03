@@ -256,6 +256,12 @@ resource "aws_ecs_task_definition" "backend" {
       # saved searches and notifies on new matches; consent-gated (consent_outreach)
       # and per-user-per-day capped. Deterministic (no LLM), so no agent flag.
       { name = "SAVED_SEARCH_ALERTS_ENABLED", value = "true" },
+      # Spec 57 — realtime & notifications. SSE bell + WS messaging fan out through
+      # the in-process broker (Redis bridge activates automatically once REDIS_URL is
+      # set). The digest job batches low-urgency notifications into one periodic email;
+      # urgent events stay immediate. Both pinned on for prod auditability.
+      { name = "REALTIME_ENABLED", value = "true" },
+      { name = "NOTIFICATION_DIGEST_ENABLED", value = "true" },
       # Pin Claude model IDs — config.py defaults match, but pinning here
       # makes the prod surface auditable (and trivial to roll a single
       # agent class to a different model without a code deploy).

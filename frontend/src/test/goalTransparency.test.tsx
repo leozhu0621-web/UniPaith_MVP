@@ -28,6 +28,7 @@ import type {
   SearchBuildSummary,
   SecuritySummary,
   SecurityTrust,
+  RealtimeBuildSummary,
   UxBenchmark,
 } from '../types/build'
 
@@ -142,6 +143,31 @@ const SECURITY_SUMMARY: SecuritySummary = {
   live_is_source_of_truth: true,
 }
 
+const REALTIME_SUMMARY: RealtimeBuildSummary = {
+  capability_count: 9,
+  capabilities_live: 6,
+  capabilities_partial: 3,
+  capabilities_planned: 0,
+  build_task_count: 9,
+  tasks_live: 6,
+  tasks_partial: 3,
+  tasks_planned: 0,
+  acceptance_count: 6,
+  acceptance_live: 6,
+  sse_route_count: 1,
+  ws_route_count: 1,
+  notification_route_count: 6,
+  backing_route_count: 8,
+  event_type_count: 16,
+  broker_backend: 'memory',
+  distributed_ready: false,
+  notifications_table_present: true,
+  idempotency_wired: true,
+  config_knob_count: 6,
+  open_question_count: 3,
+  live_is_source_of_truth: true,
+}
+
 const CHATBOT_EVAL_SUMMARY: ChatbotEvalSummary = {
   agent_count: 2,
   constitution_count: 2,
@@ -211,6 +237,7 @@ const OVERVIEW: BuildOverview = {
   acceptance: ACCEPTANCE_SUMMARY,
   production: PRODUCTION_SUMMARY,
   search: SEARCH_SUMMARY,
+  realtime: REALTIME_SUMMARY,
   chatbot_eval: CHATBOT_EVAL_SUMMARY,
   security: SECURITY_SUMMARY,
   provider: 'anthropic',
@@ -225,6 +252,7 @@ const OVERVIEW: BuildOverview = {
     { key: 'frontend', title: 'Frontend engineering', spec: '54', blurb: 'The React build spec.', path: '/goal/frontend', stat: '6/10', stat_label: 'build tasks complete' },
     { key: 'backend', title: 'Production readiness', spec: '55', blurb: 'The backend hardening posture.', path: '/goal/backend', stat: 7, stat_label: 'readiness pillars' },
     { key: 'search', title: 'Search, feed & recs', spec: '56', blurb: 'The discovery substrate.', path: '/goal/search', stat: '4/8', stat_label: 'capabilities live' },
+    { key: 'realtime', title: 'Realtime & notifications', spec: '57', blurb: 'Live SSE + WebSocket.', path: '/goal/realtime', stat: 16, stat_label: 'notification events' },
     { key: 'chatbot-eval', title: 'Chatbot training & eval', spec: '61', blurb: 'How the chatbot is measured.', path: '/goal/chatbot-eval', stat: 44, stat_label: 'graded eval cases' },
     { key: 'security', title: 'Security & trust', spec: '58', blurb: 'The security posture.', path: '/goal/security', stat: '7/13', stat_label: 'controls live' },
   ],
@@ -668,7 +696,7 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     vi.restoreAllMocks()
   })
 
-  it('hub renders the live stats and links to all twelve surfaces', async () => {
+  it('hub renders the live stats and links to all thirteen surfaces', async () => {
     vi.spyOn(buildApi, 'getBuildOverview').mockResolvedValue(OVERVIEW)
     renderPage(<GoalHubPage />)
 
@@ -684,11 +712,13 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     expect(screen.getByText('Production readiness')).toBeInTheDocument()
     // Spec 56 — the search/feed/recs surface card appears.
     expect(screen.getByText('Search, feed & recs')).toBeInTheDocument()
+    // Spec 57 — the realtime & notifications surface card appears.
+    expect(screen.getByText('Realtime & notifications')).toBeInTheDocument()
     // Spec 61 — the chatbot training & eval surface card appears.
     expect(screen.getByText('Chatbot training & eval')).toBeInTheDocument()
     // Spec 58 — the security & trust surface card appears.
     expect(screen.getByText('Security & trust')).toBeInTheDocument()
-    expect(screen.getByText(/Twelve ways to read the build/i)).toBeInTheDocument()
+    expect(screen.getByText(/Thirteen ways to read the build/i)).toBeInTheDocument()
     // Live route count from the overview appears (stat band + surface card).
     expect(screen.getAllByText('553').length).toBeGreaterThan(0)
     // The MVP-complete gold beat shows.

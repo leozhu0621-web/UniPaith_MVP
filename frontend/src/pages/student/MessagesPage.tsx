@@ -10,6 +10,7 @@ import {
 } from '../../api/inbox'
 import Skeleton from '../../components/ui/Skeleton'
 import type { InboxAttachment, InboxThreadSummary } from '../../types'
+import { useMessageStream } from '../../hooks/useMessageStream'
 import InboxList, { type InboxFilters } from './inbox/InboxList'
 import ThreadView from './inbox/ThreadView'
 import { AI_REPLY_LABELS } from './inbox/actionLabels'
@@ -45,6 +46,10 @@ export default function MessagesPage({ initialThreadId }: { initialThreadId?: st
   const qc = useQueryClient()
   const [selectedId, setSelectedId] = useState<string | null>(initialThreadId || null)
   const [filters, setFilters] = useState<InboxFilters>(DEFAULT_FILTERS)
+
+  // Spec 57 §2 — live WebSocket delivery: a new message patches the thread + list
+  // instantly (no poll).
+  useMessageStream({ activeThreadId: selectedId })
 
   const apiFilters = useMemo(
     () => ({

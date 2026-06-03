@@ -1175,8 +1175,12 @@ export interface Notification {
   body: string
   notification_type: string
   is_read: boolean
-  reference_type: string | null
-  reference_id: string | null
+  // Deep-link into the app (e.g. /applications/123) — the real API field.
+  action_url?: string | null
+  // Spec 57 — urgent | digest classification.
+  urgency?: string
+  reference_type?: string | null
+  reference_id?: string | null
   created_at: string
 }
 
