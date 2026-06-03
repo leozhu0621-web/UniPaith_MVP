@@ -238,7 +238,7 @@ export default function EnrollmentPanel({ application }: { application: Applicat
     <div className="space-y-4">
       {/* ── The celebratory beat (§2.2 / brand §15): gold glow, earned. ── */}
       {confirmed ? (
-        <Card variant="card-accent" className="p-6 text-center">
+        <Card variant="card-accent" className="p-6 text-center animate-beat">
           <div className="mx-auto mb-3 w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
             {enrolled ? (
               <GraduationCap size={28} className="text-foreground" />
