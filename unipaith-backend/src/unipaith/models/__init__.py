@@ -47,6 +47,7 @@ from unipaith.models.engagement import (
     StudentResume,
 )
 from unipaith.models.fairness import FairnessOverride, FairnessSignal
+from unipaith.models.feedback import Feedback
 from unipaith.models.follow import InstitutionFollow
 from unipaith.models.goals import StudentGoal
 from unipaith.models.graduate import (
@@ -365,4 +366,5 @@ __all__ = [
     "FundingPackage",
     "FundingPackageComponent",
     "DepartmentReview",
+    "Feedback",
 ]

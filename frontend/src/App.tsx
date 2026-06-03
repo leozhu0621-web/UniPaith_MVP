@@ -5,6 +5,7 @@ import { useAuthStore } from './stores/auth-store'
 import ToastContainer from './components/ui/Toast'
 import ConfirmHost from './components/ui/ConfirmDialog'
 import DemoNotice from './components/system/DemoNotice'
+import FeedbackWidget from './components/system/FeedbackWidget'
 import AppErrorBoundary from './components/system/AppErrorBoundary'
 
 // Layouts
@@ -270,6 +271,7 @@ export default function App() {
         <ToastContainer />
         <ConfirmHost />
         <DemoNotice />
+        <FeedbackWidget />
       </AppErrorBoundary>
     </QueryClientProvider>
   )
