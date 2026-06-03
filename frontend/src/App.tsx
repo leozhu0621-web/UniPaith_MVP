@@ -103,6 +103,16 @@ function LegacyMessageRedirect() {
   return <Navigate to={`/s/manage?tab=messages&thread=${convId}`} replace />
 }
 
+// /pricing + /about moved to the marketing site (unipaith.co). Preserve the
+// previously-public app URLs by redirecting there rather than dropping them
+// to a 404 (PR #265 review).
+function ExternalRedirect({ to }: { to: string }) {
+  useEffect(() => {
+    window.location.replace(to)
+  }, [to])
+  return null
+}
+
 const router = createBrowserRouter([
   // Root → login (marketing site is at unipaith.co; this is the app at app.unipaith.co)
   { path: '/', element: <Navigate to="/login" replace />, errorElement: <RouteErrorPage /> },
@@ -112,6 +122,10 @@ const router = createBrowserRouter([
   { path: '/school/:institutionId', element: <PublicLayout><InstitutionPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
   { path: '/school/:institutionId/schools/:schoolId', element: <PublicLayout><SchoolSubunitPage isAuthenticated={false} /></PublicLayout>, errorElement: <RouteErrorPage /> },
   { path: '/program/:programId', element: <PublicLayout><ProgramDetailPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  // Spec 07 pricing/about now live on the marketing site (unipaith.co); preserve
+  // the public app URLs by redirecting there rather than 404ing (PR #265 review).
+  { path: '/pricing', element: <ExternalRedirect to="https://unipaith.co/pricing" />, errorElement: <RouteErrorPage /> },
+  { path: '/about', element: <ExternalRedirect to="https://unipaith.co/about" />, errorElement: <RouteErrorPage /> },
   // Specs 48/49/50 — public build-transparency hub + surfaces (live data).
   { path: '/goal', element: <PublicLayout><GoalHubPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 45 — public "Claude API" AI-agent transparency surface (live registry).
