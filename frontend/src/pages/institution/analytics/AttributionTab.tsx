@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import Badge from '../../../components/ui/Badge'
 import Card from '../../../components/ui/Card'
+import QueryError from '../../../components/ui/QueryError'
 import Skeleton from '../../../components/ui/Skeleton'
 import { getAnalyticsAttribution } from '../../../api/institutions'
 import { formatPercent } from '../../../utils/format'
@@ -26,14 +27,7 @@ export default function AttributionTab({ filters }: { filters: AnalyticsFilters 
   }
 
   if (q.isError || !q.data) {
-    return (
-      <Card className="p-8 text-center">
-        <p className="text-error mb-2">Failed to load attribution</p>
-        <button onClick={() => q.refetch()} className="text-secondary hover:underline text-sm">
-          Retry
-        </button>
-      </Card>
-    )
+    return <QueryError title="We couldn't load attribution." onRetry={() => q.refetch()} />
   }
 
   const d = q.data
