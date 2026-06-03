@@ -16,7 +16,7 @@ This migration:
 Guarded so it is a safe no-op against the conftest `create_all` test DB.
 
 Revision ID: c46a1b2c3d4e
-Revises: fdbk0a1b2c3d
+Revises: cs69inst1a2b3
 Create Date: 2026-06-03
 
 """
@@ -29,7 +29,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "c46a1b2c3d4e"  # pragma: allowlist secret
-down_revision = "fdbk0a1b2c3d"  # pragma: allowlist secret
+down_revision = "cs69inst1a2b3"  # pragma: allowlist secret
 branch_labels = None
 depends_on = None
 
