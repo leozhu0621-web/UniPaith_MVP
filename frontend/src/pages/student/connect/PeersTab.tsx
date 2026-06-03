@@ -2,6 +2,7 @@
 // opt-in explainer is the entire tab body until the student opts in. Peer cards
 // never show scores or rings (§6.2 / §10). Behind connect_peers_enabled.
 import { useState } from 'react'
+import { confirmDialog } from '../../../stores/confirm-store'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Ban, Check, Flag, MapPin, ShieldCheck, UserPlus, Users } from 'lucide-react'
 import {
@@ -119,8 +120,8 @@ function PeersDiscovery() {
               busy={requestMut.isPending || respondMut.isPending}
               onRequest={() => requestMut.mutate(p.peer_id)}
               onAccept={() => respondMut.mutate({ id: p.peer_id, accept: true })}
-              onBlock={() => { if (confirm('Block this peer? They won\'t be able to reach you.')) blockMut.mutate(p.peer_id) }}
-              onReport={() => { if (confirm('Report this peer to moderation?')) reportMut.mutate(p.peer_id) }}
+              onBlock={async () => { if (await confirmDialog({ title: 'Block this peer?', body: "They won't be able to reach you.", confirmLabel: 'Block', destructive: true })) blockMut.mutate(p.peer_id) }}
+              onReport={async () => { if (await confirmDialog({ title: 'Report this peer?', body: 'Our moderation team will review them.', confirmLabel: 'Report', destructive: true })) reportMut.mutate(p.peer_id) }}
             />
           ))}
         </div>

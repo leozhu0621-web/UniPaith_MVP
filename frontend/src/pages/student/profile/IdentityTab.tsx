@@ -10,6 +10,7 @@
  * localStorage so we don't surface it on every visit.
  */
 import { useState } from 'react'
+import { confirmDialog } from '../../../stores/confirm-store'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Pencil, Plus, ShieldCheck, Sparkles, Trash2 } from 'lucide-react'
@@ -269,9 +270,9 @@ export default function IdentityTab() {
     }
   }
 
-  const removeItem = (kind: ItemKind, index: number) => {
+  const removeItem = async (kind: ItemKind, index: number) => {
     if (!identity) return
-    if (!confirm('Remove this entry?')) return
+    if (!(await confirmDialog({ title: 'Remove this entry?', confirmLabel: 'Remove', destructive: true }))) return
     if (kind === 'core_values') {
       const list = (identity.core_values ?? []).filter((_, i) => i !== index)
       upsertMut.mutate({ core_values: list })

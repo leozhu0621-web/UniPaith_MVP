@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useAuthStore } from './stores/auth-store'
 import ToastContainer from './components/ui/Toast'
+import ConfirmHost from './components/ui/ConfirmDialog'
 import AppErrorBoundary from './components/system/AppErrorBoundary'
 
 // Layouts
@@ -251,6 +252,7 @@ export default function App() {
       <AppErrorBoundary>
         <RouterProvider router={router} />
         <ToastContainer />
+        <ConfirmHost />
       </AppErrorBoundary>
     </QueryClientProvider>
   )

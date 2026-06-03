@@ -6,6 +6,7 @@
  * provenance badge with confidence.
  */
 import { useState } from 'react'
+import { confirmDialog } from '../../../stores/confirm-store'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Pencil, Plus, Sparkles, Trash2 } from 'lucide-react'
 
@@ -281,8 +282,8 @@ export default function GoalsTab() {
                         <button
                           aria-label="Delete goal"
                           className="p-1 text-error hover:opacity-80"
-                          onClick={() => {
-                            if (confirm('Remove this goal?')) deleteMut.mutate(g.id)
+                          onClick={async () => {
+                            if (await confirmDialog({ title: 'Remove this goal?', body: 'You can add it again later.', confirmLabel: 'Remove', destructive: true })) deleteMut.mutate(g.id)
                           }}
                         >
                           <Trash2 size={14} />

@@ -1,4 +1,5 @@
 import type { DiscoveryLayer, DiscoveryTrack } from '../../../types'
+import { confirmDialog } from '../../../stores/confirm-store'
 
 export const DISCOVERY_TRACKS: DiscoveryTrack[] = ['profile', 'goals', 'needs']
 
@@ -17,9 +18,14 @@ export const PROFILE_BASIC_CHIP_PROMPTS = [
   'Word puzzles I guess',
 ] as const
 
-export function confirmDiscardDraft(draft: string, action = 'leave this view'): boolean {
+export async function confirmDiscardDraft(draft: string, action = 'leave this view'): Promise<boolean> {
   if (!draft.trim()) return true
-  return window.confirm(`Discard your message and ${action}?`)
+  return confirmDialog({
+    title: 'Discard your message?',
+    body: `Your draft will be cleared so you can ${action}.`,
+    confirmLabel: 'Discard',
+    destructive: true,
+  })
 }
 
 export function layerDotIndex(layer: DiscoveryLayer): number {
