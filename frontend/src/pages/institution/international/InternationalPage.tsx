@@ -128,6 +128,7 @@ export default function InternationalPage({ embedded = false }: { embedded?: boo
         columns={columns}
         data={rows}
         pageSize={25}
+        density="compact"
         isLoading={isLoading}
         onRowClick={(r: IntlApplicantRow) => navigate(applicantUrl(r.application_id, 'international'))}
         emptyMessage="No international applicants in the pipeline yet."

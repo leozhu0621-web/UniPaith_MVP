@@ -26,6 +26,8 @@ interface TableProps {
   emptyMessage?: string
   /** Opt-in client-side pagination (Spec 79). Renders a pager when total > pageSize. */
   pageSize?: number
+  /** Row density (Spec 79). compact = tighter padding for dense admin tables. */
+  density?: 'comfortable' | 'compact'
   // Optional per-row class (e.g. tint override events). Applied last so it
   // can override the alternating-row background.
   rowClassName?: (row: any) => string | undefined
@@ -33,9 +35,10 @@ interface TableProps {
 
 type SortState = { key: string; dir: 'asc' | 'desc' } | null
 
-export default function Table({ columns, data, onRowClick, isLoading, emptyMessage = 'No records match', pageSize, rowClassName }: TableProps) {
+export default function Table({ columns, data, onRowClick, isLoading, emptyMessage = 'No records match', pageSize, density = 'comfortable', rowClassName }: TableProps) {
   const [sort, setSort] = useState<SortState>(null)
   const [page, setPage] = useState(0)
+  const cellPad = density === 'compact' ? 'px-3 py-1.5' : 'px-4 py-3'
 
   if (isLoading) {
     return (
@@ -94,7 +97,8 @@ export default function Table({ columns, data, onRowClick, isLoading, emptyMessa
                     key={col.key}
                     aria-sort={isSorted ? (sort!.dir === 'asc' ? 'ascending' : 'descending') : undefined}
                     className={clsx(
-                      'px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground',
+                      cellPad,
+                      'text-[11px] font-semibold uppercase tracking-wider text-muted-foreground',
                       alignRight ? 'text-right' : 'text-left',
                     )}
                   >
@@ -139,7 +143,8 @@ export default function Table({ columns, data, onRowClick, isLoading, emptyMessa
                   <td
                     key={col.key}
                     className={clsx(
-                      'px-4 py-3 text-foreground',
+                      cellPad,
+                      'text-foreground',
                       (col.align === 'right' || col.numeric) && 'text-right tabular-nums',
                     )}
                   >

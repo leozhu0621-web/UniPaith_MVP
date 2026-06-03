@@ -257,6 +257,7 @@ export default function ProspectsTab() {
           columns={columns}
           data={items}
           pageSize={25}
+          density="compact"
           isLoading={isLoading}
           onRowClick={(p: Prospect) => setActive(p)}
           emptyMessage="No prospects match these filters."
