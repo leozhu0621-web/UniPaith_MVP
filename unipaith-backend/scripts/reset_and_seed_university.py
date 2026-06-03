@@ -28,6 +28,7 @@ from unipaith.models.base import Base
 from unipaith.models.institution import Institution, School
 from unipaith.models.user import User, UserRole
 from unipaith.services.catalog import CatalogIngestService
+from unipaith.services.crawler.seed import seed_all
 from unipaith.services.outcomes_service import OutcomesService
 
 logging.basicConfig(level=logging.INFO)
@@ -363,6 +364,72 @@ async def seed_university(uni: dict) -> dict:
         return {"institution": inst.name, "schools": len(schools), "programs": created_total}
 
 
+# University program-page frontier — what the continuous crawler fetches.
+_FRONTIER = [
+    "https://gradadmissions.mit.edu/programs",
+    "https://www.mit.edu/education/",
+    "https://grad.stanford.edu/programs/",
+    "https://gsas.harvard.edu/programs-of-study",
+    "https://www.cmu.edu/graduate/",
+    "https://grad.berkeley.edu/programs/",
+    "https://www.gradschool.cornell.edu/academics/fields-of-study/",
+    "https://admission.gatech.edu/graduate",
+    "https://grad.illinois.edu/admissions/programs",
+    "https://www.gradschool.wisc.edu/academics/programs/",
+]
+
+
+async def seed_crawler() -> dict:
+    """Seed the crawler so the continuous routine has fuel after the wipe: Tier-1
+    reference data + allowlisted sources + a frontier. The scheduled engine tick
+    (enabled in prod via CRAWLER_ENGINE_ENABLED) crawls these continuously."""
+    from urllib.parse import urlparse
+
+    from unipaith.models.crawler import CrawlSource
+    from unipaith.models.knowledge import CrawlFrontier
+
+    async with async_session() as db:
+        ref = await seed_all(db, commit=True)
+
+    added_sources = added_frontier = 0
+    async with async_session() as db:
+        have_src = {d for (d,) in (await db.execute(select(CrawlSource.domain))).all()}
+        have_url = {u for (u,) in (await db.execute(select(CrawlFrontier.url))).all()}
+        for url in _FRONTIER:
+            domain = urlparse(url).netloc
+            if domain not in have_src:
+                db.add(
+                    CrawlSource(
+                        name=domain,
+                        slug=domain.replace(".", "-"),
+                        domain=domain,
+                        publisher_kind="academic",
+                        trust_tier=2,
+                        allowlisted=True,
+                        enabled=True,
+                    )
+                )
+                have_src.add(domain)
+                added_sources += 1
+            if url not in have_url:
+                db.add(
+                    CrawlFrontier(
+                        url=url,
+                        domain=domain,
+                        priority=85,
+                        status="pending",
+                        content_format_hint="web",
+                    )
+                )
+                added_frontier += 1
+        await db.commit()
+    return {
+        "reference_domains": len(ref.get("reference", {})),
+        "sources_added": added_sources,
+        "frontier_added": added_frontier,
+    }
+
+
 async def main() -> None:
     # Ensure schema exists (no-op in prod where migrations ran on deploy).
     async with engine.begin() as conn:
@@ -373,9 +440,13 @@ async def main() -> None:
     uni_key = os.environ.get("UNIVERSITY", "mit").lower()
     uni = {"mit": MIT}.get(uni_key, MIT)
     result = await seed_university(uni)
+    crawler = await seed_crawler()
 
-    logger.info("WIPED %d tables; seeded %s", wiped, result)
-    print(f"\n=== RESET + SEED complete ===\n  wiped: {wiped} tables\n  seeded: {result}")
+    logger.info("WIPED %d tables; seeded %s; crawler %s", wiped, result, crawler)
+    print(
+        f"\n=== RESET + SEED complete ===\n  wiped: {wiped} tables\n"
+        f"  seeded: {result}\n  crawler (continuous routine fuel): {crawler}"
+    )
 
 
 if __name__ == "__main__":
