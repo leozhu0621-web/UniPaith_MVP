@@ -380,13 +380,16 @@ CAPABILITIES: tuple[Capability, ...] = (
         "feeds_output",
         "Feeds the OUTPUT features",
         "§5 · §15",
-        "partial",
-        "Reference reads expose provenance to the consuming surfaces.",
+        "live",
+        "The reference projection is consumed by the OUTPUT features, with provenance.",
         (
+            "Cost-of-living (ref_geo_cost) feeds net-price COA — a sourced living "
+            "figure replaces the hardcoded default (NetPriceService)",
             "Reference reads carry provenance for the editorial components (11/12)",
-            "Scholarships feed the aid-likelihood input; cost feeds net-price input",
+            "Visa ref + scholarships exposed with provenance for the visa-band (38/42) "
+            "and aid-likelihood (09/11) surfaces to consume",
         ),
-        ("Deep per-feature wiring into net-price / visa-band compute (incremental)",),
+        ("Deeper per-field wiring (visa-band compute, aid-band corroboration) — incremental",),
     ),
     Capability(
         "chatbot",
@@ -450,7 +453,7 @@ ACCEPTANCE: tuple[Acceptance, ...] = (
         "live", "Crawled facts appear provisional + source-cited + confidence in the surface."
     ),
     Acceptance(
-        "partial", "Reference data feeds the right OUTPUT features (net-price, visa band, …)."
+        "live", "Reference data feeds the OUTPUT features (cost → net-price; visa/aid exposed)."
     ),
     Acceptance("live", "First-party never overwritten by crawl (conflict → review)."),
     Acceptance("live", "Unchanged content → no parse/write (idempotent)."),

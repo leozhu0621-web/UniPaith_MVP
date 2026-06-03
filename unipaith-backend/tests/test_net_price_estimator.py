@@ -45,6 +45,28 @@ def _basic_program(**over) -> dict:
     return base
 
 
+# ── Spec 60 §5.2 — reference cost-of-living feeds net-price ──────────────────
+
+
+def test_reference_cost_of_living_feeds_net_price_when_unpublished():
+    """When neither program nor ranking publishes a living cost, the Spec 60
+    ref_geo_cost figure is used (sourced) instead of the hardcoded default."""
+    prog = {"tuition": 30_000, "cost_data": {}, "duration_months": 24, "degree_type": "masters"}
+    default_est = compute_net_price_estimate(program=prog)
+    geo_est = compute_net_price_estimate(program=prog, geo_living_annual=24_000)
+    assert default_est["living_cost_source"] == "default"
+    assert geo_est["living_cost_source"] == "reference"
+    # The sourced living figure (24k > default) raises the cost of attendance.
+    assert geo_est["cost_of_attendance_annual"] > default_est["cost_of_attendance_annual"]
+
+
+def test_published_living_cost_overrides_reference():
+    """A published living cost always wins over the reference figure — the wire is
+    a fallback only and never regresses a program that publishes its own costs."""
+    est = compute_net_price_estimate(program=_basic_program(), geo_living_annual=99_999)
+    assert est["living_cost_source"] == "program"
+
+
 # ── Pure-function contracts ─────────────────────────────────────────────────
 
 

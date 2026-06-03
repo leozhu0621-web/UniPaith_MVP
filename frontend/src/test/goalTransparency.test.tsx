@@ -118,12 +118,12 @@ const SEARCH_SUMMARY: SearchBuildSummary = {
 
 const KNOWLEDGE_SUMMARY = {
   capability_count: 11,
-  capabilities_live: 8,
-  capabilities_partial: 2,
+  capabilities_live: 9,
+  capabilities_partial: 1,
   capabilities_planned: 1,
   acceptance_count: 9,
-  acceptance_live: 8,
-  acceptance_partial: 1,
+  acceptance_live: 9,
+  acceptance_partial: 0,
   reference_domain_count: 8,
   registered_source_count: 16,
   reference_tables_present: 9,
