@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.core.exceptions import BadRequestException, NotFoundException
 from unipaith.models.application import Application, EnrollmentRecord, OfferLetter
-from unipaith.models.institution import IntakeRound, Program
+from unipaith.models.institution import Institution, IntakeRound, Program
 from unipaith.models.student import StudentProfile
 from unipaith.services.application_service import ApplicationService
 
@@ -394,7 +394,7 @@ class EnrollmentService:
         """Other offers the student has accepted but not yet enrolled into — the
         §2.3 multi-offer prompt ("you have N other active offers")."""
         rows = await self.db.execute(
-            select(Application, OfferLetter)
+            select(Application)
             .join(OfferLetter, OfferLetter.application_id == Application.id)
             .where(
                 Application.student_id == student_id,
@@ -402,20 +402,45 @@ class EnrollmentService:
                 Application.student_decision == "accepted_by_student",
             )
         )
+        apps = list(rows.scalars().all())
+        if not apps:
+            return []
+
+        # `Application.program` is lazy="noload", so resolve program + institution
+        # names with two batched column queries rather than the relationship.
+        # (Column selects bypass the identity map, so names stay correct even
+        # when these apps are already attached to the session — previously this
+        # rendered blank names in the §2.3 multi-offer prompt.)
+        program_ids = {a.program_id for a in apps if a.program_id}
+        prog_by_id: dict = {}
+        if program_ids:
+            prog_rows = (
+                await self.db.execute(
+                    select(Program.id, Program.program_name, Program.institution_id).where(
+                        Program.id.in_(program_ids)
+                    )
+                )
+            ).all()
+            prog_by_id = {pid: (name, inst_id) for pid, name, inst_id in prog_rows}
+
+        inst_ids = {inst_id for _, inst_id in prog_by_id.values() if inst_id}
+        inst_name_by_id: dict = {}
+        if inst_ids:
+            inst_rows = (
+                await self.db.execute(
+                    select(Institution.id, Institution.name).where(Institution.id.in_(inst_ids))
+                )
+            ).all()
+            inst_name_by_id = {iid: name for iid, name in inst_rows}
+
         out: list[dict] = []
-        apps = []
-        for app, _offer in rows.all():
-            apps.append(app)
-        if apps:
-            await self._apps._attach_institution_names(apps)
         for app in apps:
+            program_name, inst_id = prog_by_id.get(app.program_id, (None, None))
             out.append(
                 {
                     "application_id": str(app.id),
-                    "program_name": app.program.program_name if app.program else None,
-                    "institution_name": getattr(app.program, "institution_name", None)
-                    if app.program
-                    else None,
+                    "program_name": program_name,
+                    "institution_name": inst_name_by_id.get(inst_id),
                 }
             )
         return out

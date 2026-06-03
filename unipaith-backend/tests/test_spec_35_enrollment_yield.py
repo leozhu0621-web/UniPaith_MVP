@@ -132,6 +132,50 @@ async def test_accept_offer_surfaces_enrollment_with_checklist(db_session, mock_
     assert {"confirm_intent", "deposit", "final_transcript", "orientation"} <= keys
 
 
+@pytest.mark.asyncio
+async def test_other_active_offers_include_program_and_institution_names(
+    db_session, mock_institution_user
+):
+    """Regression (§2.3 multi-offer prompt): every "other active offer" entry must
+    carry its program + institution names. `_other_active_accepted` previously
+    omitted `selectinload(Application.program)`; since `Application.program` is
+    lazy="noload", `app.program` was None and every entry rendered blank names.
+    """
+    inst, program, pairs = await _seed(db_session, mock_institution_user)
+    profile, app1 = pairs[0]
+    await _admit_and_accept(db_session, inst, profile, app1)
+
+    # A second program + a second accepted offer for the SAME student, so app1's
+    # enrollment view lists app2 as an "other active offer".
+    program2 = Program(
+        institution_id=inst.id,
+        program_name="MS Data Science",
+        degree_type="masters",
+        description_text="Another program.",
+        tuition=50000,
+        is_published=True,
+    )
+    db_session.add(program2)
+    await db_session.flush()
+    app2 = Application(
+        student_id=profile.id,
+        program_id=program2.id,
+        status="submitted",
+        submitted_at=datetime.now(UTC),
+    )
+    db_session.add(app2)
+    await db_session.flush()
+    await _admit_and_accept(db_session, inst, profile, app2)
+
+    view = await EnrollmentService(db_session).get_student_enrollment(profile.id, app1.id)
+    others = view["other_active_offers"]
+    assert len(others) == 1
+    assert others[0]["application_id"] == str(app2.id)
+    # Both names must be populated (the bug rendered them None).
+    assert others[0]["program_name"] == "MS Data Science"
+    assert others[0]["institution_name"] == "Foo U"
+
+
 # --------------------------------------------------------------------------
 # §10.2 — confirm enrollment → intent_confirmed; institution yield increments
 # --------------------------------------------------------------------------

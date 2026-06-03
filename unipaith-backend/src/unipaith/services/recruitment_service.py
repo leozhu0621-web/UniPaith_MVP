@@ -30,6 +30,7 @@ from unipaith.models.application import Application
 from unipaith.models.institution import (
     CampaignSuppression,
     Institution,
+    Program,
     UploadedContact,
     UploadedList,
 )
@@ -336,9 +337,16 @@ class RecruitmentService:
         prospect = await self.get_prospect(institution_id, prospect_id)
 
         if data.application_id is not None:
-            # Verify the application belongs to a program owned by this institution.
+            # Verify the application belongs to a program owned by this institution
+            # (tenant isolation): join Program and assert ownership so a prospect
+            # can never be linked to another institution's application.
             app = await self.db.execute(
-                select(Application).where(Application.id == data.application_id)
+                select(Application)
+                .join(Program, Program.id == Application.program_id)
+                .where(
+                    Application.id == data.application_id,
+                    Program.institution_id == institution_id,
+                )
             )
             application = app.scalar_one_or_none()
             if not application:
