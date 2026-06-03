@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { useAuthStore } from './stores/auth-store'
 import ToastContainer from './components/ui/Toast'
 import ConfirmHost from './components/ui/ConfirmDialog'
+import DemoNotice from './components/system/DemoNotice'
 import AppErrorBoundary from './components/system/AppErrorBoundary'
 
 // Layouts
@@ -268,6 +269,7 @@ export default function App() {
         <RouterProvider router={router} />
         <ToastContainer />
         <ConfirmHost />
+        <DemoNotice />
       </AppErrorBoundary>
     </QueryClientProvider>
   )

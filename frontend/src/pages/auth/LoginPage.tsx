@@ -46,6 +46,10 @@ export default function LoginPage() {
     <div className="space-y-4">
       <h2 className="text-xl font-semibold text-center text-foreground mb-2">Welcome back</h2>
 
+      <div className="rounded-lg border border-secondary/30 bg-secondary/5 px-4 py-2.5 text-center text-xs text-muted-foreground">
+        You're viewing a live demo. Your data resets each time you sign in.
+      </div>
+
       {error && (
         <div className="bg-error-soft border border-error/30 text-error text-sm px-4 py-2 rounded-lg">
           {error}
