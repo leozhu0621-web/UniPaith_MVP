@@ -678,10 +678,18 @@ class StudentDataConsent(Base):
         nullable=False,
     )
     consent_matching: Mapped[bool] = mapped_column(Boolean, default=True)
-    consent_outreach: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Spec 46 §2 — `outreach` defaults to FALSE (opt-in): institutions cannot
+    # send the student campaign messages until they explicitly consent. Matches
+    # the consent_training / consent_peer_connect opt-in pattern below.
+    consent_outreach: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false", nullable=False
+    )
     # `consent_research` is the analytics lever (spec 46 §2 `analytics`):
     # de-identified aggregate insights + the extractor/validator agents.
-    consent_research: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Spec 46 §2 — defaults to FALSE (opt-in).
+    consent_research: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false", nullable=False
+    )
     # Spec 46 §2 4th lever — `training`: inclusion in any future UniPaith
     # fine-tuning corpus. Opt-in (default false). No inference-time agent
     # gates on this; it governs the offline training-corpus extractor only.

@@ -11,11 +11,61 @@ hash) means unchanged content is skipped before any parse/write (§15 idempotenc
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import json
+import socket
 from dataclasses import dataclass
+from urllib.parse import urljoin
 
 from unipaith.config import settings
-from unipaith.services.crawler.sources import domain_of
+from unipaith.services.crawler.sources import (
+    ALLOWLISTED_DOMAINS,
+    PERSONAL_DOMAIN_DENYLIST,
+    domain_of,
+)
+
+# SSRF guard (Spec 58 §5). The crawler must never be coaxed into fetching an
+# internal address — directly or via a redirect from an allowlisted page.
+_MAX_REDIRECTS = 5
+
+
+def _host_resolves_to_public(host: str) -> bool:
+    """True only if EVERY IP ``host`` resolves to is globally routable.
+
+    Blocks loopback / private / link-local (incl. the 169.254.169.254 cloud
+    metadata endpoint) / reserved / multicast / unspecified ranges. Fails
+    closed: any resolution error or any non-global address → False.
+    """
+    if not host:
+        return False
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except OSError:
+        return False
+    addrs = {info[4][0] for info in infos}
+    if not addrs:
+        return False
+    for addr in addrs:
+        try:
+            ip = ipaddress.ip_address(addr.split("%", 1)[0])  # strip IPv6 zone id
+        except ValueError:
+            return False
+        if not ip.is_global or ip.is_multicast:
+            return False
+    return True
+
+
+def _host_allowlisted(host: str) -> bool:
+    """Sync allowlist check (the async ``Sources.is_url_allowed`` mirrors this).
+
+    Used to re-validate redirect targets so an allowlisted page can't bounce the
+    fetcher to an off-allowlist host.
+    """
+    if not host:
+        return False
+    if any(host == bad or host.endswith("." + bad) for bad in PERSONAL_DOMAIN_DENYLIST):
+        return False
+    return any(host == ok or host.endswith("." + ok) for ok in ALLOWLISTED_DOMAINS)
 
 
 def content_hash(payload: object) -> str:
@@ -72,25 +122,55 @@ class Fetcher:
             return FetchResult(
                 url=url, status="denied", source_domain=host, reason="robots.txt disallow"
             )
+        # SSRF guard (Spec 58 §5): the initial host must resolve to a public IP.
+        if not _host_resolves_to_public(host):
+            return FetchResult(
+                url=url,
+                status="denied",
+                source_domain=host,
+                reason="ssrf_blocked: host does not resolve to a public address",
+            )
         try:  # pragma: no cover - network path, never hit in tests/default deploy
             import httpx
 
             headers = {"User-Agent": settings.crawler_user_agent}
-            resp = httpx.get(
-                url,
-                headers=headers,
-                timeout=settings.crawler_request_timeout,
-                follow_redirects=True,
-            )
+            # Follow redirects MANUALLY so every hop is re-validated against the
+            # allowlist + the public-IP guard. follow_redirects=True would let an
+            # allowlisted page 302 us to 169.254.169.254 or an internal host.
+            current = url
+            resp = None
+            for _hop in range(_MAX_REDIRECTS + 1):
+                resp = httpx.get(
+                    current,
+                    headers=headers,
+                    timeout=settings.crawler_request_timeout,
+                    follow_redirects=False,
+                )
+                if not resp.is_redirect or not resp.headers.get("location"):
+                    break
+                nxt = urljoin(current, resp.headers["location"])
+                nxt_host = domain_of(nxt)
+                if not (_host_allowlisted(nxt_host) and _host_resolves_to_public(nxt_host)):
+                    return FetchResult(
+                        url=url,
+                        status="denied",
+                        source_domain=host,
+                        reason=f"ssrf_blocked: unsafe redirect to {nxt_host}",
+                    )
+                current = nxt
+            else:
+                return FetchResult(
+                    url=url, status="error", source_domain=host, reason="too_many_redirects"
+                )
             resp.raise_for_status()
             body = resp.text
             return FetchResult(
-                url=url,
+                url=current,
                 status="ok",
                 content=body,
                 content_format="text",
                 content_hash=content_hash(body),
-                source_domain=host,
+                source_domain=domain_of(current),
             )
         except Exception as exc:  # noqa: BLE001
             return FetchResult(url=url, status="error", source_domain=host, reason=str(exc))
