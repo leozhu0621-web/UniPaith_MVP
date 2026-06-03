@@ -364,8 +364,13 @@ async def seed_university(uni: dict) -> dict:
         return {"institution": inst.name, "schools": len(schools), "programs": created_total}
 
 
-# University program-page frontier — what the continuous crawler fetches.
+# University program-page frontier — what the continuous crawler fetches. The
+# MIT department pages first are prose listings the deterministic extractor pulls
+# programs from today (Spec 69 §3); the JS-rendered index pages below yield to the
+# Qwen extractor upgrade. All *.mit.edu sources auto-link to the seeded MIT.
 _FRONTIER = [
+    "https://oge.mit.edu/programs/",
+    "https://meche.mit.edu/education/graduate",
     "https://gradadmissions.mit.edu/programs",
     "https://www.mit.edu/education/",
     "https://grad.stanford.edu/programs/",
@@ -391,12 +396,22 @@ async def seed_crawler() -> dict:
     async with async_session() as db:
         ref = await seed_all(db, commit=True)
 
-    added_sources = added_frontier = 0
+    added_sources = added_frontier = linked = 0
     async with async_session() as db:
+        # Link the seeded institution's own domains → its id, so the crawler
+        # ingests programs it extracts from those pages under the right
+        # institution (Spec 69 §3). MIT's domains are *.mit.edu.
+        mit_id = (
+            await db.execute(select(Institution.id).where(Institution.name == MIT["name"]))
+        ).scalar_one_or_none()
+
         have_src = {d for (d,) in (await db.execute(select(CrawlSource.domain))).all()}
         have_url = {u for (u,) in (await db.execute(select(CrawlFrontier.url))).all()}
         for url in _FRONTIER:
             domain = urlparse(url).netloc
+            # A source whose domain belongs to a seeded institution feeds that
+            # institution's program catalog when crawled.
+            inst_id = mit_id if domain.endswith("mit.edu") else None
             if domain not in have_src:
                 db.add(
                     CrawlSource(
@@ -407,10 +422,13 @@ async def seed_crawler() -> dict:
                         trust_tier=2,
                         allowlisted=True,
                         enabled=True,
+                        institution_id=inst_id,
                     )
                 )
                 have_src.add(domain)
                 added_sources += 1
+                if inst_id is not None:
+                    linked += 1
             if url not in have_url:
                 db.add(
                     CrawlFrontier(
@@ -427,6 +445,7 @@ async def seed_crawler() -> dict:
         "reference_domains": len(ref.get("reference", {})),
         "sources_added": added_sources,
         "frontier_added": added_frontier,
+        "sources_linked_to_institution": linked,
     }
 
 

@@ -1,5 +1,6 @@
 """Spec 69 — program catalog ingestion (the pipeline that makes the catalog real)."""
 
+from unipaith.services.catalog.crawl_program_ingest import ingest_programs_from_page
 from unipaith.services.catalog.ingest_service import (
     CATALOG_SOURCE_AUTHORITY,
     CatalogIngestService,
@@ -7,6 +8,7 @@ from unipaith.services.catalog.ingest_service import (
     normalize_degree_type,
     normalize_modality,
 )
+from unipaith.services.catalog.program_extractor import extract_programs, to_ingest_rows
 from unipaith.services.catalog.sample_catalog import (
     curated_program_rows,
     seed_catalog_for_institution,
@@ -20,4 +22,7 @@ __all__ = [
     "normalize_modality",
     "curated_program_rows",
     "seed_catalog_for_institution",
+    "extract_programs",
+    "to_ingest_rows",
+    "ingest_programs_from_page",
 ]

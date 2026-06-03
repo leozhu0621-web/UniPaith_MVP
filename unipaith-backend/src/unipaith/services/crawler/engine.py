@@ -289,7 +289,9 @@ class KnowledgeEngine:
             for it in result.scalars().all()
             if it.next_crawl_after is None or it.next_crawl_after <= now
         ]
-        processed = errors = skipped = 0
+        # Spec 69 §3 — sources linked to an institution get program extraction.
+        inst_by_domain = await self._institution_domains()
+        processed = errors = skipped = programs_added = 0
         for item in items:
             decision = await self.registry.is_url_allowed(item.url)
             if not decision.allowed:
@@ -308,6 +310,15 @@ class KnowledgeEngine:
                 item.next_crawl_after = now + timedelta(hours=item.domain_crawl_delay_seconds or 6)
                 skipped += 1
                 continue
+            # Spec 69 §3 — if this source is linked to an institution, extract +
+            # ingest programs from the fetched page. Grounded (nothing on a junk
+            # page) and first-party-safe (source='crawled' never overwrites
+            # verified data). Wrapped so a parse error never fails the tick.
+            institution_id = inst_by_domain.get(item.domain) or inst_by_domain.get(
+                domain_of(item.url)
+            )
+            if institution_id is not None:
+                programs_added += await self._ingest_programs(item, fetched.content, institution_id)
             item.last_crawled_at = now
             item.crawl_count = (item.crawl_count or 0) + 1
             item.status = "completed"
@@ -320,7 +331,39 @@ class KnowledgeEngine:
             skipped=skipped,
             pending_before=len(items),
         )
-        return {"processed": processed, "errors": errors, "skipped": skipped, "due": len(items)}
+        return {
+            "processed": processed,
+            "errors": errors,
+            "skipped": skipped,
+            "due": len(items),
+            "programs_added": programs_added,
+        }
+
+    async def _institution_domains(self) -> dict[str, UUID]:
+        """§69 §3 — map domain → institution_id for sources linked to an
+        institution (the ones whose crawled pages feed the program catalog)."""
+        res = await self.db.execute(
+            select(CrawlSource.domain, CrawlSource.institution_id).where(
+                CrawlSource.institution_id.is_not(None),
+                CrawlSource.enabled.is_(True),
+            )
+        )
+        return {d: iid for d, iid in res.all() if d}
+
+    async def _ingest_programs(self, item, content: object, institution_id: UUID) -> int:
+        """Extract + ingest programs from one fetched page; return # created.
+        Never raises — a parse/ingest error is recorded on the item, not surfaced."""
+        # Lazy import to avoid any crawler↔catalog import cycle at module load.
+        from unipaith.services.catalog.crawl_program_ingest import ingest_programs_from_page
+
+        try:
+            res = await ingest_programs_from_page(
+                self.db, institution_id=institution_id, url=item.url, content=content
+            )
+            return res.get("created", 0)
+        except Exception as exc:  # noqa: BLE001 — extraction never fails the tick
+            item.last_error = f"program_ingest_error: {exc}"
+            return 0
 
     async def _write_snapshot(
         self, *, processed: int, errors: int, skipped: int, pending_before: int
