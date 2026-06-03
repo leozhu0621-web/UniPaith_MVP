@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import QueryError from '../../components/ui/QueryError'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, MoreVertical, Edit2, Eye, EyeOff, Trash2, BookOpen } from 'lucide-react'
@@ -135,12 +136,7 @@ export default function ProgramsPage() {
 
       <Card>
         {programsQ.isError ? (
-          <div className="p-8 text-center">
-            <p className="mb-2 text-sm text-error">Couldn’t load programs.</p>
-            <button onClick={() => programsQ.refetch()} className="text-secondary hover:underline text-sm">
-              Retry
-            </button>
-          </div>
+          <QueryError detail="Couldn’t load programs." onRetry={() => programsQ.refetch()} />
         ) : programs.length === 0 && !programsQ.isLoading ? (
           <EmptyState
             icon={<BookOpen size={40} />}

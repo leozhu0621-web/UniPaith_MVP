@@ -118,6 +118,14 @@
   h1 { letter-spacing: -0.015em; line-height: 1.08; }
   h2 { letter-spacing: 0; line-height: 1.20; }
   h3 { letter-spacing: 0; line-height: 1.30; }
+
+  /* Visible keyboard focus on every interactive element (Spec 80 / WCAG 2.4.7).
+     The floor for raw <button>/<a>/[tabindex]; components that set their own
+     ring (focus:outline-none focus:ring-*) win by utility-layer specificity. */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
 }
 
 /* ----------------------------------------------------------------

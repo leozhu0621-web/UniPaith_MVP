@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import QueryError from '../../components/ui/QueryError'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { CalendarDays, Plus, Users, MapPin, Clock, Edit2, XCircle, Video, UserCheck, UserX } from 'lucide-react'
 import { getInstitutionEvents, createEvent, updateEvent, cancelEvent, getEventAttendees, markAttendance } from '../../api/events-admin'
@@ -198,10 +199,7 @@ export default function EventsPage() {
       </div>
 
       {eventsQ.isError ? (
-        <div className="p-8 text-center">
-          <p className="mb-2 text-sm text-error">Couldn’t load events.</p>
-          <button onClick={() => eventsQ.refetch()} className="text-secondary hover:underline text-sm">Retry</button>
-        </div>
+        <QueryError detail="Couldn’t load events." onRetry={() => eventsQ.refetch()} />
       ) : eventsQ.isLoading ? (
         <div className="grid grid-cols-2 gap-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-40" />)}</div>
       ) : events.length === 0 ? (

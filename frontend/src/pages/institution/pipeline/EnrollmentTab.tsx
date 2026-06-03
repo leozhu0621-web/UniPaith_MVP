@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import QueryError from '../../../components/ui/QueryError'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -86,10 +87,7 @@ export default function EnrollmentTab({ applicationId }: { applicationId: string
   if (isLoading) return <Skeleton className="h-64" />
   if (isError)
     return (
-      <Card className="p-6 text-center">
-        <p className="mb-2 text-sm text-error">Couldn’t load enrollment.</p>
-        <button onClick={() => refetch()} className="text-secondary hover:underline text-sm">Retry</button>
-      </Card>
+      <QueryError detail="Couldn’t load enrollment." onRetry={() => refetch()} />
     )
   if (!enr) return null
   const e = enr as Enrollment
