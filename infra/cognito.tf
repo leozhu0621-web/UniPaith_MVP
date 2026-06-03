@@ -85,7 +85,11 @@ resource "aws_cognito_user_pool_client" "web" {
     "ALLOW_USER_PASSWORD_AUTH",
   ]
 
-  supported_identity_providers = ["COGNITO"]
+  # "Google" is a federated IdP configured in the Cognito console (its OAuth
+  # client_id/secret live there, not in TF, so the secret never touches the repo).
+  # Listing it here lets the hosted UI offer Google sign-in; the IdP must exist
+  # in the pool at apply time (it does).
+  supported_identity_providers = ["COGNITO", "Google"]
 
   callback_urls = [
     "https://app.${var.domain_name}/auth/callback",
