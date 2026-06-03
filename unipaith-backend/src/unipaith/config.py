@@ -283,6 +283,13 @@ class Settings(BaseSettings):
     # rule-based _build_structured_brief — the offer flow never 5xxes.
     ai_outcome_brief_v2_enabled: bool = False
 
+    # Spec 68 §5 — review theme-summarisation ("what students/employers
+    # consistently say" + common tradeoffs, Business Methodology:191). When True,
+    # ReviewThemeService routes through the Qwen display-synth seam (63 §2.5); on
+    # any failure / flag off it falls back to the deterministic dimension+tag
+    # rule-based summary — the card never 5xxes. Default off; rule-based ships.
+    ai_review_themes_v2_enabled: bool = False
+
     # Spec 17 §7 / 45 §13 — Inbox AI-suggested replies. When True,
     # InboxService.suggested_reply routes a needs_reply / clarification thread
     # through the InboxReplyDrafter agent (Sonnet, forced tool-use, gated on

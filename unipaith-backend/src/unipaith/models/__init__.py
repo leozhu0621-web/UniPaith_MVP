@@ -128,6 +128,14 @@ from unipaith.models.ml_loop import (
     TrainingRun,
 )
 from unipaith.models.needs import StudentNeed
+from unipaith.models.outcomes import (
+    ProgramAdmissionsHistory,
+    ProgramOutcome,
+    ProgramTopEmployer,
+    ReviewThemeSummary,
+    SchoolAdmissionsHistory,
+    SchoolOutcome,
+)
 from unipaith.models.payment import Payment
 from unipaith.models.peer import PeerConnection, PeerProfile, PeerReport
 from unipaith.models.pipeline import (
@@ -365,4 +373,11 @@ __all__ = [
     "FundingPackage",
     "FundingPackageComponent",
     "DepartmentReview",
+    # Outcomes & admissions-history data layer (Spec 68)
+    "ProgramOutcome",
+    "ProgramTopEmployer",
+    "ProgramAdmissionsHistory",
+    "SchoolOutcome",
+    "SchoolAdmissionsHistory",
+    "ReviewThemeSummary",
 ]
