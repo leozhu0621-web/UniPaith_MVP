@@ -12,14 +12,14 @@ from unipaith.models.student import StudentProfile
 from unipaith.models.user import User, UserRole
 
 
-async def get_current_user(
-    authorization: str = Header(...),
-    db: AsyncSession = Depends(get_db),
-) -> User:
-    scheme, _, token = authorization.partition(" ")
-    if scheme.lower() != "bearer" or not token:
-        raise ForbiddenException("Invalid authorization header")
+async def authenticate_token(token: str, db: AsyncSession) -> User:
+    """Resolve a raw bearer token to a ``User``, applying dev-bypass + auto-provision.
 
+    Extracted from ``get_current_user`` so the SSE / WebSocket endpoints (Spec 57)
+    can authenticate from a ``?access_token=`` query param — EventSource and the
+    browser WebSocket can't set an ``Authorization`` header. Raises
+    ``ForbiddenException`` on an unknown user, exactly like the HTTP path.
+    """
     claims: CognitoClaims = await verify_token(token)
 
     # In dev bypass mode, the sub is the user_id (UUID), so look up by id first
@@ -67,6 +67,16 @@ async def get_current_user(
         raise ForbiddenException("User not found")
 
     return user
+
+
+async def get_current_user(
+    authorization: str = Header(...),
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not token:
+        raise ForbiddenException("Invalid authorization header")
+    return await authenticate_token(token, db)
 
 
 async def require_student(user: User = Depends(get_current_user)) -> User:

@@ -436,11 +436,12 @@ async def test_overview_endpoint(client: AsyncClient):
         "acceptance",
         "production",
         "search",
+        "realtime",
         "chatbot_eval",
         "surfaces",
     ):
         assert key in body
-    assert len(body["surfaces"]) == 12
+    assert len(body["surfaces"]) == 13
     assert {s["key"] for s in body["surfaces"]} == {
         "claude-api",
         "roadmap",
@@ -453,6 +454,7 @@ async def test_overview_endpoint(client: AsyncClient):
         "backend",
         "search",
         "knowledge",
+        "realtime",
         "chatbot-eval",
     }
     fe = next(s for s in body["surfaces"] if s["key"] == "frontend")

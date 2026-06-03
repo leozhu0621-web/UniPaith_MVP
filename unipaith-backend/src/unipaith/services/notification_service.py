@@ -7,7 +7,7 @@ messages, interviews, decisions, and other platform events.
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import func, select, update
@@ -15,8 +15,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.config import settings
 from unipaith.core.exceptions import NotFoundException
+from unipaith.core.realtime import broker
+from unipaith.core.realtime import event as rt_event
 from unipaith.models.user import User
 from unipaith.models.workflow import Notification, NotificationPreference
+from unipaith.services import notification_catalog as catalog
+from unipaith.services.notification_delivery import deliver_with_retry
 
 logger = logging.getLogger(__name__)
 
@@ -99,18 +103,45 @@ class NotificationService:
         body: str,
         action_url: str | None = None,
         metadata: dict | None = None,
+        event_id: str | None = None,
+        urgency: str | None = None,
     ) -> Notification:
         """
-        Create an in-app notification and optionally send an email.
+        Create an in-app notification, fan out to channels, and push it live.
+
+        Spec 57 §3/§4: the central write path — idempotent on ``event_id`` (a
+        repeated hook writes one row), catalog-resolved urgency + per-type/channel
+        preferences, transactional email via the retry/DLQ wrapper (with §6 digest
+        deferral for low-urgency events), and a Redis-bridged live push to the
+        recipient's open SSE/WS stream so the bell updates without a refetch.
 
         Args:
             user_id: Recipient user ID
-            notification_type: Category (e.g. application_submitted, decision_made)
+            notification_type: Concrete event type (e.g. decision_made), resolved
+                against ``notification_catalog`` for urgency / preference category.
             title: Short title for the notification
             body: Full notification text
             action_url: Deep link into the app (e.g. /applications/123)
-            metadata: Extra context (application_id, event_id, etc.)
+            metadata: Extra context (application_id, etc.)
+            event_id: Optional idempotency key — a second call with the same key
+                returns the existing row instead of writing a duplicate.
+            urgency: Override the catalog urgency (urgent | digest).
         """
+        entry = catalog.get_entry(notification_type)
+        urgency = urgency or entry.urgency
+
+        # ── Idempotency (§3): one row per source event ──────────────────────
+        if event_id:
+            existing = await self.db.execute(
+                select(Notification).where(
+                    Notification.user_id == user_id,
+                    Notification.event_id == event_id,
+                )
+            )
+            found = existing.scalar_one_or_none()
+            if found is not None:
+                return found
+
         notification = Notification(
             user_id=user_id,
             notification_type=notification_type,
@@ -118,29 +149,192 @@ class NotificationService:
             body=body,
             action_url=action_url,
             metadata_=metadata,
+            event_id=event_id,
+            urgency=urgency,
         )
         self.db.add(notification)
         await self.db.flush()
 
-        # Optionally send email
-        if settings.notifications_enabled:
-            prefs = await self.get_preferences(user_id)
-            raw = (prefs.preferences or {}).get(notification_type)
-            if isinstance(raw, dict):
-                type_email = bool(raw.get("email", True))
-            elif isinstance(raw, bool):  # legacy flat {type: bool}
-                type_email = raw
-            else:
-                type_email = True
-            should_email = prefs.email_enabled and type_email and prefs.email_frequency != "none"
+        delivery: dict[str, str] = {}
 
-            if should_email:
-                email_sent = await self._send_email(user_id, title, body)
-                if email_sent:
-                    notification.is_emailed = True
-                    await self.db.flush()
+        # ── In-app channel (§4): always written; pushed live to open streams ─
+        delivery["in_app"] = "sent"
+        await self._publish_created(notification)
 
+        # ── Email channel (§4) with §6 digest deferral ──────────────────────
+        delivery["email"] = await self._maybe_email(
+            user_id=user_id,
+            notification_type=notification_type,
+            pref_key=entry.pref_key,
+            essential=entry.essential,
+            urgency=urgency,
+            title=title,
+            body=body,
+            notification=notification,
+        )
+
+        # Web push (§4) is the planned fast-follow; recorded as skipped for now.
+        if not settings.web_push_enabled:
+            delivery["push"] = "planned"
+
+        notification.delivery_status = delivery
+        await self.db.flush()
         return notification
+
+    async def emit(
+        self,
+        *,
+        event_type: str,
+        user_id: UUID,
+        context: dict | None = None,
+        event_id: str | None = None,
+        title: str | None = None,
+        body: str | None = None,
+        action_url: str | None = None,
+        metadata: dict | None = None,
+    ) -> Notification:
+        """Catalog-driven, idempotent emit (Spec 57 §3).
+
+        Renders copy + deep-link from the catalog templates (overridable per call)
+        and delegates to :meth:`notify`. The convenience entry point hooks should
+        prefer — it guarantees catalog-consistent urgency, copy and deep-links.
+        """
+        r_title, r_body, r_link = catalog.render(event_type, context)
+        # The context may carry UUIDs/datetimes; coerce non-JSON-native values to
+        # strings so it stores cleanly in the JSONB metadata column.
+        meta = metadata
+        if meta is None and context:
+            meta = {
+                str(k): (v if isinstance(v, str | int | float | bool | type(None)) else str(v))
+                for k, v in context.items()
+            }
+        return await self.notify(
+            user_id=user_id,
+            notification_type=event_type,
+            title=title or r_title or event_type.replace("_", " ").title(),
+            body=body or r_body or "",
+            action_url=action_url if action_url is not None else r_link,
+            metadata=meta,
+            event_id=event_id,
+        )
+
+    async def _maybe_email(
+        self,
+        *,
+        user_id: UUID,
+        notification_type: str,
+        pref_key: str,
+        essential: bool,
+        urgency: str,
+        title: str,
+        body: str,
+        notification: Notification,
+    ) -> str:
+        """Decide + perform the email send. Returns the per-channel status string."""
+        if not settings.notifications_enabled:
+            return "skipped"
+
+        prefs = await self.get_preferences(user_id)
+        channels = _coerce_channels((prefs.preferences or {}).get(pref_key), essential)
+        if not (prefs.email_enabled and channels["email"]) or prefs.email_frequency == "none":
+            return "skipped"
+
+        # §6 — low-urgency events batch into the digest instead of emailing now.
+        if urgency == catalog.DIGEST and settings.notification_digest_enabled:
+            return "deferred_digest"
+
+        ok = await deliver_with_retry(
+            "email",
+            lambda: self._send_email(user_id, title, body),
+            user_id=user_id,
+            event_type=notification_type,
+        )
+        if ok:
+            notification.is_emailed = True
+        return "sent" if ok else "failed"
+
+    async def _publish_created(self, notification: Notification) -> None:
+        """Push a new notification to the recipient's live stream + a fresh count."""
+        payload = {
+            "id": str(notification.id),
+            "notification_type": notification.notification_type,
+            "title": notification.title,
+            "body": notification.body,
+            "action_url": notification.action_url,
+            "urgency": notification.urgency,
+            "is_read": False,
+            "created_at": datetime.now(UTC).isoformat(),
+        }
+        await broker.publish(notification.user_id, rt_event("notification.created", payload))
+        await self._publish_unread(notification.user_id)
+
+    async def _publish_unread(self, user_id: UUID) -> None:
+        count = (await self.unread_count(user_id))["count"]
+        await broker.publish(user_id, rt_event("notification.unread_count", {"count": count}))
+
+    # ========================================================================
+    # DIGEST & BATCHING (Spec 57 §6)
+    # ========================================================================
+
+    async def run_digest(self, lookback_hours: int = 168) -> int:
+        """Batch un-emailed digest-class notifications into one email per user.
+
+        Urgent notifications are emailed immediately by :meth:`notify`; this only
+        sweeps the ``digest`` class (feed updates, non-urgent change events,
+        saved-search hits). Once a notification is folded into a digest it's marked
+        ``is_emailed=True`` so the next run skips it — idempotent across runs.
+        Returns the number of digest emails sent. Caller commits.
+        """
+        since = datetime.now(UTC) - timedelta(hours=max(1, lookback_hours))
+        rows = (
+            (
+                await self.db.execute(
+                    select(Notification)
+                    .where(
+                        Notification.urgency == catalog.DIGEST,
+                        Notification.is_emailed.is_(False),
+                        Notification.created_at >= since,
+                    )
+                    .order_by(Notification.user_id, Notification.created_at.desc())
+                )
+            )
+            .scalars()
+            .all()
+        )
+        if not rows:
+            return 0
+
+        by_user: dict[UUID, list[Notification]] = {}
+        for n in rows:
+            by_user.setdefault(n.user_id, []).append(n)
+
+        sent = 0
+        for user_id, items in by_user.items():
+            prefs = await self.get_preferences(user_id)
+            email_allowed = (
+                settings.notifications_enabled
+                and prefs.email_enabled
+                and prefs.email_frequency != "none"
+            )
+            if not email_allowed:
+                continue
+            plural = "s" if len(items) != 1 else ""
+            subject = f"Your UniPaith digest — {len(items)} new update{plural}"
+            body = "Here's what's new on UniPaith:\n\n" + "\n".join(
+                f"• {n.title}: {n.body}" for n in items[:25]
+            )
+            ok = await deliver_with_retry(
+                "email",
+                lambda uid=user_id, subj=subject, bdy=body: self._send_email(uid, subj, bdy),
+                user_id=user_id,
+                event_type="digest",
+            )
+            if ok:
+                for n in items:
+                    n.is_emailed = True
+                sent += 1
+        await self.db.flush()
+        return sent
 
     # ========================================================================
     # READ & MANAGE
@@ -188,6 +382,10 @@ class NotificationService:
         notification.is_read = True
         notification.read_at = datetime.now(UTC)
         await self.db.flush()
+        # Spec 57 §5 — read-state syncs across tabs/devices: echo to the user's
+        # other open streams so their bell count + row update without a refetch.
+        await broker.publish(user_id, rt_event("notification.read", {"id": str(notification_id)}))
+        await self._publish_unread(user_id)
         return notification
 
     async def mark_all_read(self, user_id: UUID) -> int:
@@ -201,6 +399,8 @@ class NotificationService:
             .values(is_read=True, read_at=datetime.now(UTC))
         )
         await self.db.flush()
+        await broker.publish(user_id, rt_event("notification.read_all", {}))
+        await self._publish_unread(user_id)
         return result.rowcount  # type: ignore[return-value]
 
     # ========================================================================

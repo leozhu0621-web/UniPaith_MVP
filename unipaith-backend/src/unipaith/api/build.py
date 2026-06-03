@@ -24,6 +24,7 @@ from unipaith.transparency.features import build_features
 from unipaith.transparency.frontend_standards import build_frontend_standards
 from unipaith.transparency.knowledge import build_knowledge
 from unipaith.transparency.production import build_production
+from unipaith.transparency.realtime import build_realtime
 from unipaith.transparency.roadmap import build_roadmap
 from unipaith.transparency.search import build_search
 from unipaith.transparency.ux_benchmark import build_ux_benchmark
@@ -58,6 +59,7 @@ def _assemble_overview(request: Request) -> dict:
     production = build_production(request.app)["summary"]
     search = build_search(request.app.routes)["summary"]
     knowledge = build_knowledge(request.app.routes)["summary"]
+    realtime = build_realtime(request.app.routes)["summary"]
     chatbot_eval = build_chatbot_eval(request.app.routes)["summary"]
     return {
         "roadmap": roadmap,
@@ -69,6 +71,7 @@ def _assemble_overview(request: Request) -> dict:
         "production": production,
         "search": search,
         "knowledge": knowledge,
+        "realtime": realtime,
         "chatbot_eval": chatbot_eval,
         "provider": settings.ai_provider_default,
         "surfaces": [
@@ -164,6 +167,16 @@ def _assemble_overview(request: Request) -> dict:
                 "path": "/goal/search",
                 "stat": f"{search['capabilities_live']}/{search['capability_count']}",
                 "stat_label": "capabilities live",
+            },
+            {
+                "key": "realtime",
+                "title": "Realtime & notifications",
+                "spec": "57",
+                "blurb": "Live SSE bell + WebSocket messaging, a typed event catalog, "
+                "multi-channel fan-out and digest batching.",
+                "path": "/goal/realtime",
+                "stat": realtime["event_type_count"],
+                "stat_label": "notification events",
             },
             {
                 "key": "knowledge",
@@ -277,6 +290,19 @@ async def get_search(request: Request) -> dict:
     flags plus the saved-search alert caps are read straight off ``settings`` — so
     the page can't claim a surface the deployed app doesn't serve."""
     return build_search(request.app.routes)
+
+
+@router.get("/realtime", summary="The realtime & notifications system (spec 57)")
+async def get_realtime(request: Request) -> dict:
+    """Spec 57's realtime system: the SSE bell stream + WebSocket messaging, the
+    pub/sub broker, the typed event catalog, multi-channel delivery, the
+    notification center and digest batching — each capability honestly classified
+    live·partial·planned. The transport-route presence is resolved from the live
+    route table, the catalog event-type count from the running registry, the broker
+    backend from the running broker, and the realtime / digest / delivery / web-push
+    knobs straight off ``settings`` — so the page can't claim a transport the
+    deployed app doesn't serve."""
+    return build_realtime(request.app.routes)
 
 
 @router.get("/chatbot-eval", summary="The chatbot training & evaluation loop (spec 61)")

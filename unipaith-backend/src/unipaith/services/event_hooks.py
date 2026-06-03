@@ -66,10 +66,12 @@ async def on_application_submitted(
 
             review_svc = ReviewPipelineService(db)
             await review_svc.get_or_generate_packet_summary(
-                institution_id, application_id,
+                institution_id,
+                application_id,
             )
             await review_svc.scan_integrity(
-                institution_id, application_id,
+                institution_id,
+                application_id,
             )
             logger.info(
                 "Auto-generated AI packet + integrity scan for %s",
@@ -357,6 +359,19 @@ async def on_message_received(
                 "conversation_id": str(conversation_id),
                 "sender_name": sender_name,
             },
+        )
+        # Spec 57 §2 — instant delivery: push the new message onto the recipient's
+        # open WS so the thread updates without a poll (the bell is covered by the
+        # notification.created event above).
+        from unipaith.core.realtime import broker
+        from unipaith.core.realtime import event as rt_event
+
+        await broker.publish(
+            recipient_user_id,
+            rt_event(
+                "messaging.message",
+                {"conversation_id": str(conversation_id), "sender_name": sender_name},
+            ),
         )
     except Exception:
         logger.exception("Hook on_message_received failed for conversation %s", conversation_id)

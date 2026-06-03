@@ -110,6 +110,20 @@ def setup_scheduler() -> None:
             **_job_defaults(),
         )
 
+    # Notification digest loop (Spec 57 §6) — batch un-emailed digest-class
+    # notifications (feed updates, non-urgent change events, saved-search hits)
+    # into one periodic email per user. Urgent events are emailed immediately by
+    # NotificationService; this only sweeps the digest class.
+    if settings.notification_digest_enabled:
+        scheduler.add_job(
+            _run_notification_digest,
+            "interval",
+            minutes=settings.notification_digest_interval_minutes,
+            id="notification_digest",
+            name="Notification Digest Loop",
+            **_job_defaults(),
+        )
+
     # Knowledge engine tick: now handled by ContinuousPipeline Stages 1+2.
     if not settings.pipeline_enabled and settings.engine_loop_enabled:
         scheduler.add_job(
@@ -202,3 +216,22 @@ async def _run_crawler_engine_tick() -> None:
         logger.info("Knowledge engine tick: %s", result)
     except Exception as exc:  # noqa: BLE001 — never let a tick break the scheduler
         logger.warning("Knowledge engine tick failed: %s", exc)
+
+
+async def _run_notification_digest() -> None:
+    """Batch un-emailed digest-class notifications into one email per user (Spec 57 §6).
+
+    Opens its own session; a failed tick logs and is retried next interval — a
+    scheduled job must never crash the loop.
+    """
+    from unipaith.database import async_session
+    from unipaith.services.notification_service import NotificationService
+
+    try:
+        async with async_session() as session:
+            sent = await NotificationService(session).run_digest()
+            await session.commit()
+        if sent:
+            logger.info("Notification digest loop sent %d digest email(s)", sent)
+    except Exception as exc:  # noqa: BLE001 — never let a tick break the scheduler
+        logger.warning("Notification digest loop failed: %s", exc)

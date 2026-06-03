@@ -13,6 +13,7 @@ import type {
   FrontendStandards,
   KnowledgeBuild,
   Production,
+  RealtimeBuild,
   Roadmap,
   SearchBuild,
   UxBenchmark,
@@ -70,6 +71,11 @@ export async function getSearchBuild(): Promise<SearchBuild> {
 
 export async function getKnowledgeBuild(): Promise<KnowledgeBuild> {
   const { data } = await apiClient.get<KnowledgeBuild>('/build/knowledge')
+  return data
+}
+
+export async function getRealtimeBuild(): Promise<RealtimeBuild> {
+  const { data } = await apiClient.get<RealtimeBuild>('/build/realtime')
   return data
 }
 

@@ -35,6 +35,7 @@ import FrontendStandardsPage from './pages/public/FrontendStandardsPage'
 import KnowledgeEnginePage from './pages/public/KnowledgeEnginePage'
 import ProductionReadinessPage from './pages/public/ProductionReadinessPage'
 import SearchFeedRecsPage from './pages/public/SearchFeedRecsPage'
+import RealtimeNotificationsPage from './pages/public/RealtimeNotificationsPage'
 import ChatbotEvalPage from './pages/public/ChatbotEvalPage'
 
 // Student pages — 4 main + profile/saved/settings from avatar
@@ -135,6 +136,8 @@ const router = createBrowserRouter([
   { path: '/goal/backend', element: <PublicLayout><ProductionReadinessPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 56 — search / feed / recommendations substrate (routes / flags / table read live).
   { path: '/goal/search', element: <PublicLayout><SearchFeedRecsPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  // Spec 57 — realtime & notifications (SSE/WS routes, event catalog, broker read live).
+  { path: '/goal/realtime', element: <PublicLayout><RealtimeNotificationsPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 60 — data crawler & knowledge engine (sources / reference tables / routes read live).
   { path: '/goal/knowledge', element: <PublicLayout><KnowledgeEnginePage /></PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 61 — chatbot training & evaluation loop (constitution / safety floor / eval suites read live).

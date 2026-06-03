@@ -30,9 +30,11 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "s60a1b2c3d4e"  # pragma: allowlist secret
-# s56a1b2c3d4e (Spec 56 saved-searches) is the single head at branch time; chain
-# off it to keep the graph single-headed (test_alembic_has_single_head).
-down_revision = "s56a1b2c3d4e"  # pragma: allowlist secret
+# Re-pointed onto s57a1b2c3d4e (Spec 57 realtime/notifications, which also chained
+# off s56) when it merged concurrently — chain after it to keep the graph
+# single-headed (test_alembic_has_single_head). s60's tables are independent of
+# s57's, so the order is purely about a linear history.
+down_revision = "s57a1b2c3d4e"  # pragma: allowlist secret
 branch_labels = None
 depends_on = None
 

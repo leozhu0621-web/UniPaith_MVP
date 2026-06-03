@@ -40,6 +40,7 @@ export const qk = {
   buildAcceptance: () => ['build-acceptance'] as const,
   buildUxBenchmark: () => ['build-ux-benchmark'] as const,
   buildFrontendStandards: () => ['build-frontend-standards'] as const,
+  buildRealtime: () => ['build-realtime'] as const,
   aiAgents: () => ['ai-agents'] as const,
 
   // ── Student · profile + discovery ─────────────────────────────────────────
@@ -83,6 +84,7 @@ export const qk = {
   calendar: () => ['calendar'] as const,
   peersDiscover: () => ['peers-discover'] as const,
   notifications: () => ['notifications'] as const,
+  notificationsUnread: () => ['notifications', 'unread-count'] as const,
 
   // ── Institution ───────────────────────────────────────────────────────────
   institutionPrograms: () => ['institution-programs'] as const,
