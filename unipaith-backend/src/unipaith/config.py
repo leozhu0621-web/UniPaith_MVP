@@ -306,6 +306,26 @@ class Settings(BaseSettings):
     # rule-based _build_structured_brief — the offer flow never 5xxes.
     ai_outcome_brief_v2_enabled: bool = False
 
+    # Spec 68 §5 — review theme-summarisation ("what students/employers
+    # consistently say" + common tradeoffs, Business Methodology:191). When True,
+    # ReviewThemeService routes through the Qwen display-synth seam (63 §2.5); on
+    # any failure / flag off it falls back to the deterministic dimension+tag
+    # rule-based summary — the card never 5xxes. Default off; rule-based ships.
+    ai_review_themes_v2_enabled: bool = False
+
+    # Spec 65 §2 — the matching engine's LLM/ML path (program/student embeddings
+    # into the cosine term + learned weights/reranker from 67). When True the
+    # matcher uses embeddings + learned weights where available; off / any failure
+    # → the deterministic rule-based scorer (featurizer soft features + rule layer).
+    # The score never 5xxes. Default off until an embedding provider + eval win.
+    ai_matching_v2_enabled: bool = False
+
+    # Spec 69 §3 — catalog ingestion LLM extraction (crawl → program fields) +
+    # embedding dedup. When True the crawl path uses the grounded LLM extractor
+    # (62-gated); off → deterministic template ingestion. The rule-based ingest
+    # spine (services/catalog) is always the floor. Default off.
+    ai_catalog_ingestion_v2_enabled: bool = False
+
     # Spec 17 §7 / 45 §13 — Inbox AI-suggested replies. When True,
     # InboxService.suggested_reply routes a needs_reply / clarification thread
     # through the InboxReplyDrafter agent (Sonnet, forced tool-use, gated on

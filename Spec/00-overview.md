@@ -5,7 +5,7 @@
 - **Version:** v2.0 · 2026-05-30 (renumbered contiguous 00–49)
 - **Owner:** Leo Zhu — leozjc@unipaith.co
 - **Audience:** anyone building the MVP — human engineers, designers, or coding agents.
-- **Count:** 63 numbered specs (`00`–`63`) + `ASSETS.md` = 64 docs. Numbering runs `00`–`63` with `59` reserved (build/production ↔ AI/knowledge block boundary). (`50`–`52` build-integration from live code; `53`–`58` production-parity vs Handshake/LinkedIn; `60` crawler/knowledge engine; `61` chatbot training/eval; `62` shared eval harness; `63` ML core — Qwen backend + Claude agent.)
+- **Count:** 74 numbered specs (`00`–`74`) + `ASSETS.md` = 75 docs. Numbering runs `00`–`74` with `59` reserved (build/production ↔ AI/knowledge block boundary). (`50`–`52` build-integration from live code; `53`–`58` production-parity vs Handshake/LinkedIn; `60`–`63` AI/knowledge engine; **`64`–`74` public-release readiness — the prototype→product backend block, indexed by `64`**.)
 
 ---
 
@@ -129,6 +129,20 @@ Naming convention: `NN-slug.md`. Two-digit prefix, **contiguous 00–49** (no ga
 - `62-eval-harness.md` — shared golden-set + LLM-judge + regression-gate + A/B + drift infra that both `61` and `60` §13B plug into via adapters; reuses `ml_loop` tables.
 - `63-ml-core-and-knowledge-processing.md` — **hard boundary: Qwen = self-hosted/tuned ML backend (embeddings, crawler extraction, normalization, ML scoring, synthesis of presented info), never interacts with a human; Claude = the chatbot + all human-facing advisory agents.** Qwen computes, Claude communicates.
 
+### Public-release readiness — prototype→product backend (64–74)
+> The MVP is feature-complete on the surface but stubbed at the core — the matching engine is a dead heuristic (the embedding term never fires; program features read a column that doesn't exist), `63`'s ML core is docs-only, outcomes data is untyped JSONB, "historical partner data" is ~14 fabricated rows, the catalog is 9 hand-coded programs. `64` is the master roadmap; `65`–`74` are the buildable workstreams that close the gap, sequenced into four release blocks (matching rigor · data realism · product completeness · production hardening), aligned to the founding papers and the four market benchmarks (Niche/Studyportals · Common App/Liaison · LinkedIn/Handshake/Unibuddy · Coursera/Duolingo).
+- `64-public-release-readiness-roadmap.md` — master index + the prototype-gap thesis (code-audited) + sequencing + the public-release acceptance gate.
+- `65-matching-engine-for-real.md` — wire embeddings (kill the dead cosine) + program feature vectors + collaborative filtering + real Fitness/Confidence + the NDCG eval gate that `matching.py` only promised.
+- `66-institution-taste-ideal-student-model.md` — reverse-project admit history into student-profile space; virtual student + conversational faculty tuning; bias-avoidance.
+- `67-learning-loop-model-lifecycle.md` — consent-tiered tuning-data pipeline; activate the dormant `ml_loop`; eval-gated promotion; fit the calibrator/reranker.
+- `68-outcomes-admissions-data-layer.md` — typed outcomes/admit schema replacing the JSONB blobs + review theme-summarization.
+- `69-program-catalog-ingestion.md` — ingestion at scale (institution-direct + crawl + editorial) from 9 hand-coded programs to a real library.
+- `70-financial-fit-direct-admission.md` — scholarship-finder + net-price/EFC + proactive reverse-admissions/direct-admit offers + probability bands.
+- `71-connection-graph-social-activation.md` — peer↔ambassador tag-matching + live chat + community spaces + a bounded institution RAG agent (the follow/peer graph already shipped).
+- `72-verification-integrity-intelligence.md` — transcript OCR/GPA-norm/prereq + tamper-evident verification + fraud/trust ML + third-party auto-profiling.
+- `73-launch-hardening-scale.md` — execute `55`: Redis cache/rate-limit/queue/idempotency/breakers/metrics + the deadline-surge load gate.
+- `74-interoperability-i18n-compliance.md` — wrap-around-Slate CRM interop + multilingual i18n + SOC 2/FERPA/GDPR compliance-ops.
+
 ---
 
 ## 4. Build order (quick reference)
@@ -141,6 +155,7 @@ See `48-build-sequencing.md` for the full plan. TL;DR phase order:
 4. **Cross-cutting** — Prompt Library + Adaptive Intake + AI agents + Data rights (`42`–`46`).
 5. **Polish** — Calendar, Inbox, Connect, Workshops, Decisions, Settings, Analytics.
 6. **Phase-2** (post-MVP, up-market) — International, Fees/Payments, Recruitment CRM, Graduate (`38`–`41`).
+7. **Public-release readiness** (prototype→product backend) — data first (`68`/`69`), then the real engine (`65`→`66`→`67`), activation (`70`/`71`/`72`), then launch hardening (`73`/`74`); sequenced in `64`.
 
 ---
 

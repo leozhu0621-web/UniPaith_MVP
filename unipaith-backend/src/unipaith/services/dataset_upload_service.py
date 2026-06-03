@@ -29,24 +29,37 @@ REQUIRED_FIELDS: dict[str, list[str]] = {
     "prospect_list": ["email"],
     "admissions_history": ["student_email", "program_name", "decision"],
     "outcomes_summary": ["program_name", "graduation_year"],
+    # Spec 69 §2 — bulk program rows for an institution with many programs (the
+    # direct path to "many programs" for a partner that won't hand-enter each
+    # in the program editor). Ingested → catalog by the 69 §3 pipeline.
+    "program_catalog": ["program_name", "degree_type"],
 }
 
 PRIMARY_KEY_FIELDS: dict[str, list[str]] = {
     "prospect_list": ["email"],
     "admissions_history": ["student_email", "program_name", "application_date"],
     "outcomes_summary": ["program_name", "graduation_year"],
+    "program_catalog": ["program_name"],
 }
 
 DATE_FIELDS = frozenset(
     {"application_date", "program_start_date", "graduation_year", "coverage_start", "coverage_end"}
 )
 
+# Spec 69 §2 — usage scope → consumers. `training` is a STRICT, explicit opt-in
+# (deliberately NOT included in `all`): the customer-data / model-improvement
+# separation (67 §3) means an ops dataset (marketing/admissions/analytics) is
+# never silently used to train a model.
 USAGE_CONSUMERS: dict[str, list[str]] = {
     "marketing": ["campaigns"],
     "admissions": ["matching", "pipeline"],
     "analytics": ["analytics"],
     "all": ["matching", "campaigns", "analytics"],
+    "training": ["model_improvement"],
 }
+
+# The consumer that marks a dataset eligible for model training (69 §2 / 67 §3).
+TRAINING_CONSUMER = "model_improvement"
 
 
 def _read_dataset_content(s3_key: str) -> str:
@@ -572,3 +585,21 @@ def dataset_used_by(usage_scope: str | None) -> list[str]:
     if not usage_scope:
         return []
     return USAGE_CONSUMERS.get(usage_scope, [])
+
+
+def dataset_eligible_for_training(usage_scope: str | None, data_governance: dict | None) -> bool:
+    """Spec 69 §2 / 67 §3 — the single gate `66`/`67` call to decide whether a
+    dataset may train a model. True iff the dataset's usage scope admits training
+    AND the institution is not on the no-training tier (46 §9 hard gate).
+
+    Customer-data / model-improvement separation: an ops-scoped dataset
+    (marketing / admissions / analytics / all) returns False — it is never
+    silently used for model improvement. Student-row-level `consent.training` is
+    enforced downstream at training-set assembly (67 §3); this is the
+    dataset-level gate, the only one `66`/`67` read (they never touch raw rows).
+    """
+    if TRAINING_CONSUMER not in dataset_used_by(usage_scope):
+        return False
+    if (data_governance or {}).get("no_training_tier", False):
+        return False
+    return True

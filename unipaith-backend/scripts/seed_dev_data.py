@@ -16,10 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.database import async_session, engine
 from unipaith.models import Base
-from unipaith.models.application import (
-    Application,
-    HistoricalOutcome,
-)
+from unipaith.models.application import Application
 from unipaith.models.engagement import Conversation, Message, StudentCalendar
 from unipaith.services.checklist_service import ChecklistService
 from unipaith.models.institution import (
@@ -470,27 +467,21 @@ async def seed(db: AsyncSession) -> None:
     db.add_all(reviewers)
     await db.flush()
 
-    # ---- Historical Outcomes ----
-    outcomes = []
-    for prog_idx, prog in enumerate(programs[:6]):
-        for year in [2024, 2025]:
-            outcomes.append(HistoricalOutcome(
-                program_id=prog.id, year=year, outcome="admitted", enrolled=True,
-                applicant_profile_summary={"gpa": 3.8, "gre": 330, "research": True}))
-            outcomes.append(HistoricalOutcome(
-                program_id=prog.id, year=year, outcome="admitted", enrolled=False,
-                applicant_profile_summary={"gpa": 3.7, "gre": 325, "research": True}))
-            outcomes.append(HistoricalOutcome(
-                program_id=prog.id, year=year, outcome="rejected",
-                applicant_profile_summary={"gpa": 3.0, "gre": 300, "research": False}))
-            if prog_idx % 2 == 0:
-                outcomes.append(HistoricalOutcome(
-                    program_id=prog.id, year=year, outcome="waitlisted",
-                    applicant_profile_summary={"gpa": 3.4, "gre": 315, "research": True}))
+    # ---- Outcomes & admissions history (Spec 68 — typed, not fabricated) ----
+    # Replaces the old fabricated per-applicant HistoricalOutcome rows (round-number
+    # gpa/gre, the §6 fabrication smell) with the typed program_outcomes +
+    # program_admissions_history tables, loaded through the real ingestion seam
+    # (services/outcomes_loader). A real IPEDS/Scorecard adapter feeds the same seam.
+    from unipaith.services.outcomes_loader import OutcomesLoader, curated_program_records
 
-    db.add_all(outcomes)
+    loader = OutcomesLoader(db)
+    n_out = n_adm = 0
+    for idx, prog in enumerate(programs):
+        outs, adms = curated_program_records(prog.degree_type, index=idx)
+        n_out += await loader.load_program_outcomes(prog.id, outs)
+        n_adm += await loader.load_program_admissions(prog.id, adms)
     await db.flush()
-    print(f"  Created {len(outcomes)} historical outcomes")
+    print(f"  Created {n_out} typed program outcomes + {n_adm} admissions-history rows (Spec 68)")
 
     # ── Inbox (Spec 17) — application-threaded conversations + system notices ──
     demo = profiles[0]  # Maria Santos
