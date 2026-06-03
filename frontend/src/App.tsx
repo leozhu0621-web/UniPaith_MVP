@@ -33,6 +33,7 @@ import AcceptancePage from './pages/public/AcceptancePage'
 import ExperienceStandardsPage from './pages/public/ExperienceStandardsPage'
 import FrontendStandardsPage from './pages/public/FrontendStandardsPage'
 import KnowledgeEnginePage from './pages/public/KnowledgeEnginePage'
+import MlCorePage from './pages/public/MlCorePage'
 import ProductionReadinessPage from './pages/public/ProductionReadinessPage'
 import SearchFeedRecsPage from './pages/public/SearchFeedRecsPage'
 import SecurityTrustPage from './pages/public/SecurityTrustPage'
@@ -148,6 +149,8 @@ const router = createBrowserRouter([
   { path: '/goal/eval-harness', element: <PublicLayout><EvalHarnessPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
   // Spec 58 — security, trust & compliance posture (controls / consent / PII / headers read live).
   { path: '/goal/security', element: <PublicLayout><SecurityTrustPage /></PublicLayout>, errorElement: <RouteErrorPage /> },
+  // Spec 63 — ML core & knowledge processing (the Qwen↔Claude boundary, read live from the routing layer).
+  { path: '/goal/ml-core', element: <PublicLayout><MlCorePage /></PublicLayout>, errorElement: <RouteErrorPage /> },
 
   { path: '/login', element: <AuthLayout><LoginPage /></AuthLayout>, errorElement: <RouteErrorPage /> },
   { path: '/signup', element: <AuthLayout><SignupPage /></AuthLayout>, errorElement: <RouteErrorPage /> },

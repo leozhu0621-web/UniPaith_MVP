@@ -12,7 +12,7 @@ a dev/test DB built from the models via ``create_all`` (the conftest path), and
 runs incrementally in production from the prior head.
 
 Revision ID: e62a1b2c3d4e
-Revises: s60a1b2c3d4e
+Revises: s63a1b2c3d4e
 Create Date: 2026-06-02
 
 """
@@ -26,7 +26,11 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "e62a1b2c3d4e"  # pragma: allowlist secret
-down_revision = "s60a1b2c3d4e"  # pragma: allowlist secret
+# Re-pointed onto s63a1b2c3d4e (Spec 63 ML core, which also chained off s60) when
+# it merged concurrently — chain after it to keep the graph single-headed
+# (test_alembic_has_single_head). e62's tables are independent of s63's, so the
+# order is purely about a linear history.
+down_revision = "s63a1b2c3d4e"  # pragma: allowlist secret
 branch_labels = None
 depends_on = None
 

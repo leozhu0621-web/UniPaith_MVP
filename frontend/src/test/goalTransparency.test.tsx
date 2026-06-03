@@ -14,6 +14,7 @@ import ProductionReadinessPage from '../pages/public/ProductionReadinessPage'
 import SearchFeedRecsPage from '../pages/public/SearchFeedRecsPage'
 import KnowledgeEnginePage from '../pages/public/KnowledgeEnginePage'
 import SecurityTrustPage from '../pages/public/SecurityTrustPage'
+import MlCorePage from '../pages/public/MlCorePage'
 import * as buildApi from '../api/build'
 import type {
   Acceptance,
@@ -23,6 +24,8 @@ import type {
   DataModel,
   FeatureCatalog,
   KnowledgeBuild,
+  MlCoreBuild,
+  MlCoreBuildSummary,
   Production,
   ProductionSummary,
   Roadmap,
@@ -252,6 +255,45 @@ const EVAL_HARNESS_SUMMARY = {
   live_is_source_of_truth: true,
 }
 
+const ML_CORE_SUMMARY: MlCoreBuildSummary = {
+  boundary_intact: true,
+  human_facing_count: 22,
+  qwen_eligible_count: 19,
+  qwen_first_batch_count: 6,
+  human_facing_served_by_qwen: 0,
+  human_facing_pinned: 22,
+  qwen_eligible_routable: 19,
+  qwen_registered: true,
+  qwen_enabled: false,
+  qwen_available: false,
+  ai_turns_accepts_qwen: true,
+  default_provider: 'anthropic',
+  agents_routed_to_qwen_count: 0,
+  roster_row_count: 9,
+  roster_qwen_rows: 6,
+  roster_claude_rows: 3,
+  roster_boundary_ok: true,
+  capability_count: 10,
+  capabilities_live: 3,
+  capabilities_partial: 5,
+  capabilities_planned: 2,
+  acceptance_count: 9,
+  acceptance_live: 3,
+  acceptance_partial: 4,
+  acceptance_planned: 2,
+  pipeline_stage_count: 7,
+  phase_count: 3,
+  slo_count: 7,
+  embedding_dimension: 1024,
+  embedding_provider: 'voyage',
+  l3_weight_sum: 1.0,
+  ai_route_count: 8,
+  backing_route_count: 8,
+  config_knob_count: 8,
+  open_question_count: 7,
+  live_is_source_of_truth: true,
+}
+
 // Specs 48/49/50 — the public /goal transparency surfaces. Each renders live
 // build data from the /build/* endpoints and lets the visitor filter it.
 
@@ -296,6 +338,7 @@ const OVERVIEW: BuildOverview = {
   chatbot_eval: CHATBOT_EVAL_SUMMARY,
   eval_harness: EVAL_HARNESS_SUMMARY,
   security: SECURITY_SUMMARY,
+  ml_core: ML_CORE_SUMMARY,
   provider: 'anthropic',
   surfaces: [
     { key: 'claude-api', title: 'AI agents', spec: '45', blurb: 'The live agent fleet.', path: '/goal/claude-api', stat: 40, stat_label: 'AI agents' },
@@ -313,6 +356,7 @@ const OVERVIEW: BuildOverview = {
     { key: 'chatbot-eval', title: 'Chatbot training & eval', spec: '61', blurb: 'How the chatbot is measured.', path: '/goal/chatbot-eval', stat: 44, stat_label: 'graded eval cases' },
     { key: 'eval-harness', title: 'Evaluation harness', spec: '62', blurb: 'One shared eval harness.', path: '/goal/eval-harness', stat: 2, stat_label: 'consumers live' },
     { key: 'security', title: 'Security & trust', spec: '58', blurb: 'The security posture.', path: '/goal/security', stat: '7/13', stat_label: 'controls live' },
+    { key: 'ml-core', title: 'ML core & knowledge processing', spec: '63', blurb: 'Qwen processes, Claude communicates.', path: '/goal/ml-core', stat: 22, stat_label: 'agents pinned to Claude' },
   ],
 }
 
@@ -687,6 +731,134 @@ const KNOWLEDGE_BUILD: KnowledgeBuild = {
   open_questions: [{ q: 'Auto-apply threshold', a: 'Review-all for low-trust.' }],
 }
 
+const ML_CORE_BUILD: MlCoreBuild = {
+  the_rule: {
+    headline: 'Qwen processes. Claude communicates.',
+    statement: 'Two models with a hard boundary. Qwen is the invisible ML backend; Claude is the human-facing agent.',
+    seam: 'Qwen computes; Claude communicates. A match card = Qwen numbers + Claude rationale.',
+    why_hard: 'The conversation is the brand + trust surface; it stays Claude as a product decision.',
+  },
+  summary: ML_CORE_SUMMARY,
+  boundary_columns: [
+    {
+      side: 'qwen',
+      title: 'Qwen — ML backend (invisible)',
+      role: 'processes, scores, ranks, embeds, synthesizes displayed info',
+      human: 'none — batch / inline services',
+      why: 'open, self-hosted, tuned, cheap at volume, PII in-VPC',
+      where: 'GPU / Bedrock worker fleet (55)',
+    },
+    {
+      side: 'claude',
+      title: 'Claude — the agent (human-facing)',
+      role: 'talks to people; personalized advice',
+      human: 'direct — chat, advisory prose',
+      why: 'premium reasoning, brand voice, trust, safety (61)',
+      where: 'Anthropic API / Bedrock via 04',
+    },
+  ],
+  boundary: {
+    human_facing: ['orchestrator', 'rationale'],
+    qwen_eligible: ['extractor', 'embedding'],
+    qwen_first_batch: ['extractor', 'validator'],
+    leaked_agents: [],
+    ml_backend_providers: ['qwen'],
+    claude_provider: 'anthropic',
+  },
+  model_roster: [
+    { task: 'Embeddings', model: 'Qwen3-Embedding (Matryoshka → 1536)', provider: 'qwen', faces_human: false },
+    { task: 'Advisor chatbot (61)', model: 'Claude Sonnet / Haiku', provider: 'anthropic', faces_human: true },
+  ],
+  provider_routing: {
+    default_provider: 'anthropic',
+    failover_order: ['anthropic', 'openai'],
+    per_agent_override_count: 0,
+    agents_routed_to_qwen: [],
+    qwen_registered: true,
+    qwen_enabled: false,
+    qwen_available: false,
+    qwen_base_url: 'http://localhost:8001/v1',
+    qwen_models: {
+      flagship: 'qwen3-32b-instruct',
+      workhorse: 'qwen3-14b-instruct',
+      batch: 'qwen3-7b-instruct',
+      embedding: 'qwen3-embedding-8b',
+    },
+  },
+  pipeline: [
+    { n: 1, name: 'Extract', detail: 'Qwen, schema-strict, grounded.' },
+    { n: 4, name: 'Embed', detail: 'Qwen3-Embedding → pgvector.' },
+    { n: 7, name: 'Serve', detail: 'Frontend + RAG index for the Claude advisor.' },
+  ],
+  embeddings: {
+    provider: 'voyage',
+    live_model: 'voyage-3-large',
+    live_dimension: 1024,
+    qwen_model: 'qwen3-embedding-8b',
+    matryoshka_target: 1536,
+    qwen_active: false,
+  },
+  l3_scoring: {
+    weights: { cosine: 0.45, soft_align: 0.35, needs_match: 0.2 },
+    weight_sum: 1.0,
+    fairness_gated: true,
+    fairness_max_disparity: 0.15,
+  },
+  capabilities: [
+    {
+      key: 'boundary',
+      title: 'Hard model boundary (enforced in code)',
+      section: '§1',
+      status: 'live',
+      blurb: 'No human-facing output is ever served by Qwen — pinned to Claude.',
+      built: ['enforce_policy applied on every provider resolution'],
+      planned: [],
+    },
+    {
+      key: 'embeddings',
+      title: 'Qwen3-Embedding serving + A/B',
+      section: '§8',
+      status: 'partial',
+      blurb: 'Qwen3-Embedding wired as an embedding transport; Voyage stays default.',
+      built: ['embed() embedding-provider seam'],
+      planned: ['A/B retrieval vs Voyage via 62'],
+    },
+    {
+      key: 'synthesis',
+      title: 'Display synthesis (factual, eval-gated)',
+      section: '§5',
+      status: 'planned',
+      blurb: 'Qwen drafts the factual content presented on a page — never a conversation.',
+      built: [],
+      planned: ['Qwen synthesis gated by 62 brand-voice + groundedness'],
+    },
+  ],
+  phases: [
+    { key: 'A', title: 'Embeddings', status: 'partial', detail: 'Self-host the embedder; A/B via 62.' },
+    { key: 'C', title: 'Normalization + synthesis', status: 'planned', detail: 'No Phase D — the human layer is permanently Claude.' },
+  ],
+  acceptance: [
+    { status: 'live', text: 'Hard boundary enforced: no human-facing output served by Qwen.' },
+    { status: 'partial', text: 'Qwen3-Embedding serving; retrieval A/B via 62.' },
+    { status: 'planned', text: 'Every tuned checkpoint: LoRA/QLoRA, eval + fairness gated.' },
+  ],
+  slos: [
+    {
+      metric: 'Tokens + cost by provider',
+      target: 'split anthropic / openai / qwen',
+      tracked_via: 'ai_turns.provider cost ledger',
+    },
+  ],
+  config_knobs: [
+    { name: 'qwen_enabled', value: false, section: '§10' },
+    { name: 'embedding_provider', value: 'voyage', section: '§8' },
+  ],
+  routes: { ai: ['/api/v1/ai/agents'] },
+  open_questions: [
+    { q: 'Embedding dimension — 1024 vs 1536', a: 'Matryoshka emits the configured dim, so it slots in with no migration.' },
+  ],
+}
+
 const SECURITY: SecurityTrust = {
   the_bar: {
     statement: 'Security is a property of the running system, not a policy doc.',
@@ -815,7 +987,7 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     vi.restoreAllMocks()
   })
 
-  it('hub renders the live stats and links to all thirteen surfaces', async () => {
+  it('hub renders the live stats and links to all fifteen surfaces', async () => {
     vi.spyOn(buildApi, 'getBuildOverview').mockResolvedValue(OVERVIEW)
     renderPage(<GoalHubPage />)
 
@@ -839,7 +1011,11 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     expect(screen.getByText('Chatbot training & eval')).toBeInTheDocument()
     // Spec 58 — the security & trust surface card appears.
     expect(screen.getByText('Security & trust')).toBeInTheDocument()
-    expect(screen.getByText(/Fifteen ways to read the build/i)).toBeInTheDocument()
+    // Spec 62 — the evaluation harness surface card appears.
+    expect(screen.getByText('Evaluation harness')).toBeInTheDocument()
+    // Spec 63 — the ML core & knowledge processing surface card appears.
+    expect(screen.getByText('ML core & knowledge processing')).toBeInTheDocument()
+    expect(screen.getByText(/Sixteen ways to read the build/i)).toBeInTheDocument()
     // Live route count from the overview appears (stat band + surface card).
     expect(screen.getAllByText('553').length).toBeGreaterThan(0)
     // The MVP-complete gold beat shows.
@@ -1008,6 +1184,34 @@ describe('Spec 48/49/50 — build-transparency /goal surfaces', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Planned' }))
     await waitFor(() => expect(screen.queryByText('Reference projection')).not.toBeInTheDocument())
     expect(screen.getByText('RAG chatbot over the graph')).toBeInTheDocument()
+  })
+
+  it('ml-core page renders the boundary, roster, routing and filters by status', async () => {
+    vi.spyOn(buildApi, 'getMlCoreBuild').mockResolvedValue(ML_CORE_BUILD)
+    renderPage(<MlCorePage />, '/goal/ml-core')
+
+    // Wait for the data-dependent boundary columns to resolve.
+    await waitFor(() =>
+      expect(screen.getByText('Qwen — ML backend (invisible)')).toBeInTheDocument()
+    )
+    expect(screen.getByText('Claude — the agent (human-facing)')).toBeInTheDocument()
+    // The model roster shows both sides of the boundary.
+    expect(screen.getByText('Advisor chatbot (61)')).toBeInTheDocument()
+    // The hero beat shows the headline safety number (0 human-facing on Qwen).
+    expect(screen.getByText(/0 human-facing agents served by Qwen/i)).toBeInTheDocument()
+    // A live config knob (read off settings) renders.
+    expect(screen.getByText('qwen_enabled')).toBeInTheDocument()
+    // The L3 weight read live renders.
+    expect(screen.getByText('cosine')).toBeInTheDocument()
+
+    // Filter to Planned → the live boundary capability drops, synthesis stays.
+    fireEvent.click(screen.getByRole('button', { name: 'Planned' }))
+    await waitFor(() =>
+      expect(
+        screen.queryByText('Hard model boundary (enforced in code)')
+      ).not.toBeInTheDocument()
+    )
+    expect(screen.getByText('Display synthesis (factual, eval-gated)')).toBeInTheDocument()
   })
 
   it('security page renders controls, consent + PII and filters by status', async () => {

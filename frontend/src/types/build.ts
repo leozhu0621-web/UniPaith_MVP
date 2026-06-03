@@ -142,6 +142,7 @@ export interface BuildOverview {
   chatbot_eval: ChatbotEvalSummary
   eval_harness: EvalHarnessSummary
   security: SecuritySummary
+  ml_core: MlCoreBuildSummary
   provider: string
   surfaces: OverviewSurface[]
 }
@@ -761,6 +762,172 @@ export interface KnowledgeBuild {
   config_knobs: KnowledgeConfigKnob[]
   routes: KnowledgeRoutes
   reference_domains: string[]
+  open_questions: OpenQuestion[]
+}
+
+// ── ML core & knowledge processing (spec 63) ────────────────────────────────
+export interface MlCoreRule {
+  headline: string
+  statement: string
+  seam: string
+  why_hard: string
+}
+
+export interface MlCoreBoundaryColumn {
+  side: string
+  title: string
+  role: string
+  human: string
+  why: string
+  where: string
+}
+
+export interface MlCoreRosterRow {
+  task: string
+  model: string
+  provider: string
+  faces_human: boolean
+}
+
+export interface MlCoreStage {
+  n: number
+  name: string
+  detail: string
+}
+
+export interface MlCoreCapability {
+  key: string
+  title: string
+  section: string
+  status: ReadinessStatus
+  blurb: string
+  built: string[]
+  planned: string[]
+}
+
+export interface MlCorePhase {
+  key: string
+  title: string
+  status: ReadinessStatus
+  detail: string
+}
+
+export interface MlCoreAcceptanceItem {
+  status: ReadinessStatus
+  text: string
+}
+
+export interface MlCoreSlo {
+  metric: string
+  target: string
+  tracked_via: string
+}
+
+export interface MlCoreConfigKnob {
+  name: string
+  value: string | number | boolean
+  section: string
+}
+
+export interface MlCoreQwenModels {
+  flagship: string
+  workhorse: string
+  batch: string
+  embedding: string
+}
+
+export interface MlCoreProviderRouting {
+  default_provider: string
+  failover_order: string[]
+  per_agent_override_count: number
+  agents_routed_to_qwen: string[]
+  qwen_registered: boolean
+  qwen_enabled: boolean
+  qwen_available: boolean
+  qwen_base_url: string
+  qwen_models: MlCoreQwenModels
+}
+
+export interface MlCoreEmbeddings {
+  provider: string
+  live_model: string
+  live_dimension: number
+  qwen_model: string
+  matryoshka_target: number
+  qwen_active: boolean
+}
+
+export interface MlCoreL3Scoring {
+  weights: Record<string, number>
+  weight_sum: number
+  fairness_gated: boolean
+  fairness_max_disparity: number
+}
+
+export interface MlCoreBoundary {
+  human_facing: string[]
+  qwen_eligible: string[]
+  qwen_first_batch: string[]
+  leaked_agents: string[]
+  ml_backend_providers: string[]
+  claude_provider: string
+}
+
+export interface MlCoreBuildSummary {
+  boundary_intact: boolean
+  human_facing_count: number
+  qwen_eligible_count: number
+  qwen_first_batch_count: number
+  human_facing_served_by_qwen: number
+  human_facing_pinned: number
+  qwen_eligible_routable: number
+  qwen_registered: boolean
+  qwen_enabled: boolean
+  qwen_available: boolean
+  ai_turns_accepts_qwen: boolean
+  default_provider: string
+  agents_routed_to_qwen_count: number
+  roster_row_count: number
+  roster_qwen_rows: number
+  roster_claude_rows: number
+  roster_boundary_ok: boolean
+  capability_count: number
+  capabilities_live: number
+  capabilities_partial: number
+  capabilities_planned: number
+  acceptance_count: number
+  acceptance_live: number
+  acceptance_partial: number
+  acceptance_planned: number
+  pipeline_stage_count: number
+  phase_count: number
+  slo_count: number
+  embedding_dimension: number
+  embedding_provider: string
+  l3_weight_sum: number
+  ai_route_count: number
+  backing_route_count: number
+  config_knob_count: number
+  open_question_count: number
+  live_is_source_of_truth: boolean
+}
+
+export interface MlCoreBuild {
+  the_rule: MlCoreRule
+  summary: MlCoreBuildSummary
+  boundary_columns: MlCoreBoundaryColumn[]
+  boundary: MlCoreBoundary
+  model_roster: MlCoreRosterRow[]
+  provider_routing: MlCoreProviderRouting
+  pipeline: MlCoreStage[]
+  embeddings: MlCoreEmbeddings
+  l3_scoring: MlCoreL3Scoring
+  capabilities: MlCoreCapability[]
+  phases: MlCorePhase[]
+  acceptance: MlCoreAcceptanceItem[]
+  slos: MlCoreSlo[]
+  config_knobs: MlCoreConfigKnob[]
+  routes: { ai: string[] }
   open_questions: OpenQuestion[]
 }
 

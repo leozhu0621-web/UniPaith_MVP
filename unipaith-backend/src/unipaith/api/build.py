@@ -24,6 +24,7 @@ from unipaith.transparency.eval_harness import build_eval_harness
 from unipaith.transparency.features import build_features
 from unipaith.transparency.frontend_standards import build_frontend_standards
 from unipaith.transparency.knowledge import build_knowledge
+from unipaith.transparency.ml_core import build_ml_core
 from unipaith.transparency.production import build_production
 from unipaith.transparency.realtime import build_realtime
 from unipaith.transparency.roadmap import build_roadmap
@@ -65,6 +66,7 @@ def _assemble_overview(request: Request) -> dict:
     chatbot_eval = build_chatbot_eval(request.app.routes)["summary"]
     eval_harness = build_eval_harness(request.app.routes)["summary"]
     security = build_security(request.app)["summary"]
+    ml_core = build_ml_core(request.app.routes)["summary"]
     return {
         "roadmap": roadmap,
         "features": features,
@@ -79,6 +81,7 @@ def _assemble_overview(request: Request) -> dict:
         "chatbot_eval": chatbot_eval,
         "eval_harness": eval_harness,
         "security": security,
+        "ml_core": ml_core,
         "provider": settings.ai_provider_default,
         "surfaces": [
             {
@@ -225,6 +228,17 @@ def _assemble_overview(request: Request) -> dict:
                 "path": "/goal/security",
                 "stat": f"{security['controls_live']}/{security['control_count']}",
                 "stat_label": "controls live",
+            },
+            {
+                "key": "ml-core",
+                "title": "ML core & knowledge processing",
+                "spec": "63",
+                "blurb": "The model boundary — Qwen processes, Claude communicates. The "
+                "ML backend transport, the pipeline and the human-facing pin, read "
+                "live from the running routing layer.",
+                "path": "/goal/ml-core",
+                "stat": ml_core["human_facing_count"],
+                "stat_label": "agents pinned to Claude",
             },
         ],
     }
@@ -378,3 +392,19 @@ async def get_security(request: Request) -> dict:
     ``core.middleware`` — so the page mirrors the deployed controls and can't claim
     what isn't wired."""
     return build_security(request.app)
+
+
+@router.get("/ml-core", summary="The ML core & knowledge-processing boundary (spec 63)")
+async def get_ml_core(request: Request) -> dict:
+    """Spec 63's hard model boundary — Qwen processes, Claude communicates. Each
+    capability is honestly classified live·partial·planned; the §1 rule, §4 model
+    roster, §5 pipeline, §11 phasing, §14 SLOs, §16 acceptance and §17 open
+    questions are authored from the spec. The boundary (which agents are
+    human-facing vs Qwen-eligible, and that the guard holds), the human-facing pin
+    (recomputed live via ``enforce_policy`` — ``0`` agents the Qwen backend may
+    serve), the provider routing + Qwen availability, the ``ai_turns.provider``
+    audit gate, the L3 weights and the embedding transport are all read live from
+    ``ai/boundary`` · the provider registry · the running model constraint ·
+    ``services/matching`` · ``settings`` — so the page can't claim a boundary the
+    deployed routing layer doesn't enforce."""
+    return build_ml_core(request.app.routes)
