@@ -24,9 +24,11 @@ from __future__ import annotations
 import json
 import logging
 
+from unipaith.ai.boundary import enforce_policy
 from unipaith.ai.providers.anthropic_provider import AnthropicProvider
 from unipaith.ai.providers.base import AIProvider
 from unipaith.ai.providers.openai_provider import OpenAIProvider
+from unipaith.ai.providers.qwen_provider import QwenProvider
 from unipaith.config import settings
 
 logger = logging.getLogger(__name__)
@@ -42,6 +44,10 @@ def _build_provider(name: str) -> AIProvider:
         return AnthropicProvider()
     if name == "openai":
         return OpenAIProvider()
+    if name == "qwen":
+        # Spec 63 — the Qwen ML backend transport. Registered + lazily built;
+        # inert until `qwen_enabled` (see QwenProvider.is_available).
+        return QwenProvider()
     if name == "rule_based":
         # Sentinel — never actually instantiated. The AIClient short-
         # circuits to the per-agent rule-based path before reaching the
@@ -85,9 +91,15 @@ def _load_per_agent_overrides() -> dict[str, str]:
 
 def get_provider_for_agent(agent: str) -> AIProvider:
     """Return the configured provider for an agent. Falls back to
-    `ai_provider_default` when no override is set."""
+    `ai_provider_default` when no override is set.
+
+    Spec 63 — the hard boundary is applied here on every resolution:
+    ``enforce_policy`` forces a human-facing agent back to Claude even if
+    ``ai_provider_per_agent_json`` (or the default) tries to route it to the Qwen
+    ML backend. The pin cannot be configured away."""
     overrides = _load_per_agent_overrides()
     name = overrides.get(agent, settings.ai_provider_default)
+    name = enforce_policy(agent, name)
     return get_provider(name)
 
 
@@ -100,19 +112,25 @@ def list_failover_order(agent: str) -> list[AIProvider]:
     agent's preferred provider — overrides take precedence over the
     failover list's lead element.
     """
-    preferred = get_provider_for_agent(agent)
+    preferred = get_provider_for_agent(agent)  # already policy-pinned
     failover_names = [n.strip() for n in settings.ai_provider_failover_csv.split(",") if n.strip()]
     ordered: list[AIProvider] = [preferred]
+    seen: set[str] = {preferred.name}
     for name in failover_names:
         if name == "rule_based":
             continue  # not a real provider
-        if name == preferred.name:
-            continue  # already first
+        # Spec 63 — the boundary also filters the failover chain: a human-facing
+        # agent is never failed over to the Qwen ML backend. (Maps qwen → Claude,
+        # which then dedups against the already-present preferred.)
+        name = enforce_policy(agent, name)
+        if name in seen:
+            continue  # already in the chain (incl. the policy-pinned preferred)
         try:
             p = get_provider(name)
         except ValueError:
             continue  # unknown provider; skip
         ordered.append(p)
+        seen.add(name)
     # Filter unavailable providers so we don't log a failure attempt on
     # a known no-op. Keep the preferred regardless so the caller sees
     # the same error shape as before (config bug vs. runtime).

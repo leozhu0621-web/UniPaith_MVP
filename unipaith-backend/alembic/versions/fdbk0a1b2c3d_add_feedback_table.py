@@ -5,7 +5,7 @@ is a safe no-op against the conftest ``create_all`` test DB and runs
 incrementally in production from the prior head.
 
 Revision ID: fdbk0a1b2c3d
-Revises: s60a1b2c3d4e
+Revises: s69a1b2c3d4e
 Create Date: 2026-06-03
 
 """
@@ -19,7 +19,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "fdbk0a1b2c3d"  # pragma: allowlist secret
-down_revision = "s60a1b2c3d4e"  # pragma: allowlist secret
+down_revision = "s69a1b2c3d4e"  # pragma: allowlist secret
 branch_labels = None
 depends_on = None
 

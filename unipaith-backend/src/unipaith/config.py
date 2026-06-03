@@ -216,6 +216,24 @@ class Settings(BaseSettings):
     ai_provider_failover_csv: str = "anthropic,openai"
     ai_provider_failover_timeout_ms: int = 30000
 
+    # ── Spec 63 — Qwen ML backend (the invisible processing transport) ──
+    # Qwen is registered as a provider transport (OpenAI-compatible /v1 via vLLM
+    # or Bedrock). It is the ML backend for processing agents only; the hard
+    # boundary in `ai/boundary.py` forbids it from ever serving a human-facing
+    # agent, regardless of `ai_provider_per_agent_json`. Default OFF — Qwen is
+    # available + registered but not default-routed until `62` eval promotes it
+    # (spec 63 §11 phased migration; §17 Bedrock-managed first). To route a
+    # processing agent to Qwen, set `qwen_enabled=true`, point `qwen_base_url` at
+    # the served endpoint, and add the agent to `ai_provider_per_agent_json`.
+    qwen_enabled: bool = False
+    qwen_base_url: str = "http://localhost:8001/v1"  # vLLM OpenAI-compatible
+    qwen_api_key: str = ""  # vLLM accepts any non-empty token; Bedrock uses IAM
+    qwen_model_flagship: str = "qwen3-32b-instruct"
+    qwen_model_workhorse: str = "qwen3-14b-instruct"
+    qwen_model_batch: str = "qwen3-7b-instruct"
+    qwen_embedding_model: str = "qwen3-embedding-8b"  # Matryoshka → embedding_dimension
+    qwen_request_timeout_ms: int = 30000
+
     # Embedding (Voyage 3-large, paired with Anthropic for the LLM stack.
     # Note: the existing `student_features` table uses 1536-dim OpenAI vectors
     # for legacy matching; the new `student_feature_vectors` table uses 1024-dim
@@ -223,6 +241,11 @@ class Settings(BaseSettings):
     embedding_base_url: str = "https://api.voyageai.com/v1"
     embedding_model: str = "voyage-3-large"
     embedding_dimension: int = 1024
+    # Spec 63 §8 — embedding transport. "voyage" (default, live, 1024-d) or
+    # "qwen" (Qwen3-Embedding, Matryoshka-truncated to `embedding_dimension` so
+    # it slots into the live store with no migration / no re-embed). The Qwen
+    # path falls back to Voyage on any failure, so flipping this is safe.
+    embedding_provider: str = "voyage"
 
     # Matching
     matching_candidate_count: int = 100
@@ -288,6 +311,26 @@ class Settings(BaseSettings):
     # On any failure (parse / API error / mock mode) it falls back to the
     # rule-based _build_structured_brief — the offer flow never 5xxes.
     ai_outcome_brief_v2_enabled: bool = False
+
+    # Spec 68 §5 — review theme-summarisation ("what students/employers
+    # consistently say" + common tradeoffs, Business Methodology:191). When True,
+    # ReviewThemeService routes through the Qwen display-synth seam (63 §2.5); on
+    # any failure / flag off it falls back to the deterministic dimension+tag
+    # rule-based summary — the card never 5xxes. Default off; rule-based ships.
+    ai_review_themes_v2_enabled: bool = False
+
+    # Spec 65 §2 — the matching engine's LLM/ML path (program/student embeddings
+    # into the cosine term + learned weights/reranker from 67). When True the
+    # matcher uses embeddings + learned weights where available; off / any failure
+    # → the deterministic rule-based scorer (featurizer soft features + rule layer).
+    # The score never 5xxes. Default off until an embedding provider + eval win.
+    ai_matching_v2_enabled: bool = False
+
+    # Spec 69 §3 — catalog ingestion LLM extraction (crawl → program fields) +
+    # embedding dedup. When True the crawl path uses the grounded LLM extractor
+    # (62-gated); off → deterministic template ingestion. The rule-based ingest
+    # spine (services/catalog) is always the floor. Default off.
+    ai_catalog_ingestion_v2_enabled: bool = False
 
     # Spec 17 §7 / 45 §13 — Inbox AI-suggested replies. When True,
     # InboxService.suggested_reply routes a needs_reply / clarification thread

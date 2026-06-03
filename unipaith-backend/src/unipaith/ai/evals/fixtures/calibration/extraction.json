@@ -1,0 +1,12 @@
+{
+  "consumer": "extraction",
+  "judge_model": "claude (sonnet)",
+  "judge_family": "claude",
+  "system_under_test": "Qwen / deterministic extractor",
+  "independent": true,
+  "agreement": null,
+  "target_agreement": 0.85,
+  "labeled_case_count": 0,
+  "status": "baseline",
+  "note": "Independent by construction: Claude judges the Qwen extraction (62 §4), resolving 61's self-grading question. The core dimensions are deterministic (P/R/F1, no-fabrication, schema-validity) and need no judge at all, so this consumer gates with no API key."
+}

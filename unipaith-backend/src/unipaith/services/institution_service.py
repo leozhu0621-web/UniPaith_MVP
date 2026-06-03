@@ -8,7 +8,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import func, or_, select, update
+from sqlalchemy import case, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from unipaith.core.exceptions import (
@@ -44,6 +44,7 @@ from unipaith.models.institution import (
     TargetSegment,
 )
 from unipaith.models.matching import MatchResult
+from unipaith.models.outcomes import ProgramOutcome
 from unipaith.models.settings import InstitutionTeamInvite
 from unipaith.models.student import StudentProfile
 from unipaith.models.workflow import Notification
@@ -140,6 +141,38 @@ def _outcomes_float(prog: Program, key: str) -> float | None:
         return float(val)
     except (ValueError, TypeError):
         return None
+
+
+# Spec 68 §6/§7 — the Featured filters/sorts read the typed `program_outcomes`
+# table (authority-resolved) instead of the JSONB blob, with a legacy fallback
+# during cutover. Legacy keys map onto the typed metric enum:
+#   median_salary / earnings_*_median → salary_median
+#   employment_rate                   → employment_rate
+#   payback_months                    → payback_period_months
+def _resolved_metric_subq(metric: str):
+    """Authority-resolved typed ``value_numeric`` for one (program, metric),
+    correlated to the outer ``Program`` row (Spec 68 §7: reported > licensed >
+    crawled, then newest window)."""
+    auth = case(
+        (ProgramOutcome.source == "reported", 3),
+        (ProgramOutcome.source == "licensed", 2),
+        else_=1,
+    )
+    return (
+        select(ProgramOutcome.value_numeric)
+        .where(
+            ProgramOutcome.program_id == Program.id,
+            ProgramOutcome.metric == metric,
+        )
+        .order_by(
+            auth.desc(),
+            ProgramOutcome.reference_period.desc(),
+            ProgramOutcome.updated_at.desc(),
+        )
+        .limit(1)
+        .correlate(Program)
+        .scalar_subquery()
+    )
 
 
 class InstitutionService:
@@ -2170,21 +2203,28 @@ class InstitutionService:
         # Spec 10 §5 — outcome filters over program-level outcomes_data. Programs
         # missing the metric are excluded (NULL JSON access → NULL → fails the
         # comparison), so these only ever narrow the set when applied.
+        # Spec 68 §6 — typed `program_outcomes` first (authority-resolved §7),
+        # legacy outcomes_data JSONB as the cutover fallback (dual-read).
         if min_median_salary is not None:
             salary_expr = func.coalesce(
+                _resolved_metric_subq("salary_median"),
                 Program.outcomes_data["median_salary"].as_integer(),
                 Program.outcomes_data["earnings_4yr_median"].as_integer(),
                 Program.outcomes_data["earnings_1yr_median"].as_integer(),
             )
             stmt = stmt.where(salary_expr >= min_median_salary)
         if min_employment_rate is not None:
-            stmt = stmt.where(
-                Program.outcomes_data["employment_rate"].as_float() >= min_employment_rate
+            employment_expr = func.coalesce(
+                _resolved_metric_subq("employment_rate"),
+                Program.outcomes_data["employment_rate"].as_float(),
             )
+            stmt = stmt.where(employment_expr >= min_employment_rate)
         if max_payback_months is not None:
-            stmt = stmt.where(
-                Program.outcomes_data["payback_months"].as_integer() <= max_payback_months
+            payback_expr = func.coalesce(
+                _resolved_metric_subq("payback_period_months"),
+                Program.outcomes_data["payback_months"].as_integer(),
             )
+            stmt = stmt.where(payback_expr <= max_payback_months)
 
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total = (await self.db.execute(count_stmt)).scalar_one()
@@ -2199,15 +2239,30 @@ class InstitutionService:
             )
         elif sort_by == "salary_desc":
             stmt = stmt.order_by(
-                Program.outcomes_data["median_salary"].as_integer().desc().nulls_last(),
+                func.coalesce(
+                    _resolved_metric_subq("salary_median"),
+                    Program.outcomes_data["median_salary"].as_integer(),
+                )
+                .desc()
+                .nulls_last(),
             )
         elif sort_by == "employment_desc":
             stmt = stmt.order_by(
-                Program.outcomes_data["employment_rate"].as_float().desc().nulls_last(),
+                func.coalesce(
+                    _resolved_metric_subq("employment_rate"),
+                    Program.outcomes_data["employment_rate"].as_float(),
+                )
+                .desc()
+                .nulls_last(),
             )
         elif sort_by == "payback_asc":
             stmt = stmt.order_by(
-                Program.outcomes_data["payback_months"].as_integer().asc().nulls_last(),
+                func.coalesce(
+                    _resolved_metric_subq("payback_period_months"),
+                    Program.outcomes_data["payback_months"].as_integer(),
+                )
+                .asc()
+                .nulls_last(),
             )
         elif sort_by == "acceptance_asc":
             stmt = stmt.order_by(Program.acceptance_rate.asc().nulls_last())
@@ -2221,6 +2276,15 @@ class InstitutionService:
         offset = (page - 1) * page_size
         results = await self.db.execute(stmt.offset(offset).limit(page_size))
         rows = results.all()
+
+        # Spec 68 §6 — resolve typed outcomes for this page in one query; the
+        # response prefers them, falling back to legacy JSONB during cutover.
+        from unipaith.services.outcomes_service import OutcomesService
+
+        _resolved = await OutcomesService(self.db).resolve_program_metrics_bulk(
+            [prog.id for prog, _inst in rows],
+            ["salary_median", "employment_rate", "payback_period_months"],
+        )
 
         items = [
             ProgramSummaryResponse(
@@ -2250,12 +2314,21 @@ class InstitutionService:
                 # 82509 institution 10yr median shown uniformly for every program
                 # without Scorecard-by-CIP coverage).
                 median_salary=(
-                    _outcomes_int(prog, "median_salary")
+                    int(_resolved[(prog.id, "salary_median")])
+                    if (prog.id, "salary_median") in _resolved
+                    else _outcomes_int(prog, "median_salary")
                     or _outcomes_int(prog, "earnings_4yr_median")
                     or _outcomes_int(prog, "earnings_1yr_median")
                 ),
-                employment_rate=_outcomes_float(prog, "employment_rate"),
-                payback_months=_outcomes_int(prog, "payback_months"),
+                employment_rate=_resolved.get(
+                    (prog.id, "employment_rate"),
+                    _outcomes_float(prog, "employment_rate"),
+                ),
+                payback_months=(
+                    int(_resolved[(prog.id, "payback_period_months")])
+                    if (prog.id, "payback_period_months") in _resolved
+                    else _outcomes_int(prog, "payback_months")
+                ),
                 description_text=prog.description_text,
                 media_urls=prog.media_urls,
                 highlights=prog.highlights,

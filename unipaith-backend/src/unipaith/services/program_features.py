@@ -39,6 +39,7 @@ from typing import Any
 from uuid import UUID
 
 from unipaith.services.matching import ProgramFeatures
+from unipaith.services.program_featurizer import featurize_program, soft_feature_completeness
 
 logger = logging.getLogger(__name__)
 
@@ -174,6 +175,29 @@ def program_row_from_orm(program: Any) -> ProgramRow:
     naturally penalizes).
     """
     sparse: dict[str, Any] = dict(getattr(program, "feature_vector_sparse", None) or {})
+
+    # Spec 65 §3 — if the program has no stored soft features (the common case:
+    # feature_vector_sparse was never populated), derive them deterministically
+    # from the program's real CIP / field / degree / description so the matcher's
+    # soft_align + needs_match are not dead weight. A populated feature_vector_sparse
+    # (LLM featurizer / stored vector, a later increment) takes precedence.
+    if not sparse.get("interest_themes") and not sparse.get("career_arcs"):
+        _derived = featurize_program(
+            cip_code=getattr(program, "cip_code", None),
+            degree_type=getattr(program, "degree_type", None),
+            name=getattr(program, "program_name", "") or "",
+            description=getattr(program, "description_text", "") or "",
+        )
+        # Only override when we actually derived something — a truly dataless
+        # program keeps the existing neutral default (backward-compatible).
+        if (
+            _derived.get("interest_themes")
+            or _derived.get("career_arcs")
+            or _derived.get("support_signals")
+        ):
+            for _k, _v in _derived.items():
+                sparse.setdefault(_k, _v)
+            sparse.setdefault("data_completeness", soft_feature_completeness(_derived))
 
     locations = list(sparse.get("locations") or [])
     if not locations:

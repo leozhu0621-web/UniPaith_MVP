@@ -144,6 +144,9 @@ class School(Base):
     __table_args__ = (
         Index("ix_schools_institution", "institution_id"),
         UniqueConstraint("institution_id", "name", name="uq_schools_institution_name"),
+        # Spec 69 — catalog ingestion: stable identity + SEO slug.
+        Index("ix_schools_slug", "slug", unique=True),
+        Index("ix_schools_external_id", "external_id"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -157,6 +160,14 @@ class School(Base):
     media_urls: Mapped[dict | None] = mapped_column(JSONB)
     logo_url: Mapped[str | None] = mapped_column(String(1000))
     sort_order: Mapped[int | None] = mapped_column(Integer)
+    # Spec 69 — school-level catalog ingestion provenance/freshness (school grain,
+    # distinct from program grain). Nullable; ingested schools carry source + slug.
+    catalog_source: Mapped[str | None] = mapped_column(String(24))
+    source_url: Mapped[str | None] = mapped_column(Text)
+    external_id: Mapped[str | None] = mapped_column(String(160))
+    slug: Mapped[str | None] = mapped_column(String(200))
+    last_ingested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    field_provenance: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -170,7 +181,12 @@ class School(Base):
 
 class Program(Base):
     __tablename__ = "programs"
-    __table_args__ = (Index("ix_programs_institution_published", "institution_id", "is_published"),)
+    __table_args__ = (
+        Index("ix_programs_institution_published", "institution_id", "is_published"),
+        # Spec 69 — catalog ingestion: stable identity for idempotent re-crawl + SEO.
+        Index("ix_programs_slug", "slug", unique=True),
+        Index("ix_programs_external_id", "external_id"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     institution_id: Mapped[uuid.UUID] = mapped_column(
@@ -245,6 +261,20 @@ class Program(Base):
     fairness_threshold: Mapped[Decimal] = mapped_column(
         Numeric(3, 2), nullable=False, server_default="0.20", default=Decimal("0.20")
     )
+    # Spec 69 — program catalog ingestion provenance/freshness. Nullable: a
+    # hand-created or institution-self-served program leaves these null; an
+    # ingested row carries source + per-field provenance + freshness so a catalog
+    # fact can answer "sourced from <domain>, updated N days ago" (60 §4).
+    # external_id + slug give a stable identity for idempotent re-crawl + SEO
+    # (69 §5/§8); cip_code is the CIP join key to ref_majors + the 66 vocabulary.
+    catalog_source: Mapped[str | None] = mapped_column(String(24))
+    source_url: Mapped[str | None] = mapped_column(Text)
+    external_id: Mapped[str | None] = mapped_column(String(160))
+    slug: Mapped[str | None] = mapped_column(String(200))
+    cip_code: Mapped[str | None] = mapped_column(String(12))
+    last_ingested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Per-field provenance: {field: {source, source_url, confidence, fetched_at}}.
+    field_provenance: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

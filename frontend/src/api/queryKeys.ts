@@ -41,6 +41,7 @@ export const qk = {
   buildUxBenchmark: () => ['build-ux-benchmark'] as const,
   buildFrontendStandards: () => ['build-frontend-standards'] as const,
   buildRealtime: () => ['build-realtime'] as const,
+  buildEvalHarness: () => ['build-eval-harness'] as const,
   aiAgents: () => ['ai-agents'] as const,
 
   // ── Student · profile + discovery ─────────────────────────────────────────

@@ -46,6 +46,7 @@ from unipaith.models.engagement import (
     StudentEssay,
     StudentResume,
 )
+from unipaith.models.eval_harness import EvalCase, EvalResult
 from unipaith.models.fairness import FairnessOverride, FairnessSignal
 from unipaith.models.feedback import Feedback
 from unipaith.models.follow import InstitutionFollow
@@ -129,6 +130,14 @@ from unipaith.models.ml_loop import (
     TrainingRun,
 )
 from unipaith.models.needs import StudentNeed
+from unipaith.models.outcomes import (
+    ProgramAdmissionsHistory,
+    ProgramOutcome,
+    ProgramTopEmployer,
+    ReviewThemeSummary,
+    SchoolAdmissionsHistory,
+    SchoolOutcome,
+)
 from unipaith.models.payment import Payment
 from unipaith.models.peer import PeerConnection, PeerProfile, PeerReport
 from unipaith.models.pipeline import (
@@ -314,6 +323,9 @@ __all__ = [
     "ABTestAssignment",
     "DriftSnapshot",
     "FairnessReport",
+    # Eval harness (Spec 62 §8 — shared golden-set + results)
+    "EvalCase",
+    "EvalResult",
     "AdminAuditEvent",
     "AdmissionsAuditLog",
     # Fairness governance (Spec 46 §6 — disparate-impact auto-halt)
@@ -366,5 +378,13 @@ __all__ = [
     "FundingPackage",
     "FundingPackageComponent",
     "DepartmentReview",
+    # Outcomes & admissions-history data layer (Spec 68)
+    "ProgramOutcome",
+    "ProgramTopEmployer",
+    "ProgramAdmissionsHistory",
+    "SchoolOutcome",
+    "SchoolAdmissionsHistory",
+    "ReviewThemeSummary",
+    # Demo feedback survey
     "Feedback",
 ]
