@@ -8,9 +8,10 @@ interface Props {
 
 export default function EventCard({ event, isRsvped, onRsvp }: Props) {
   const d = new Date(event.start_time)
-  const month = d.toLocaleString('en-US', { month: 'short' })
-  const day = d.getDate()
-  const time = d.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+  const validDate = !Number.isNaN(d.getTime())
+  const month = validDate ? d.toLocaleString('en-US', { month: 'short' }) : '—'
+  const day = validDate ? String(d.getDate()) : '—'
+  const time = validDate ? d.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : null
   const spotsLeft = event.capacity ? Math.max(0, event.capacity - (event.rsvp_count || 0)) : null
 
   return (
@@ -33,7 +34,7 @@ export default function EventCard({ event, isRsvped, onRsvp }: Props) {
           <h3 className="text-sm font-semibold text-foreground mb-0.5">{event.event_name || event.title}</h3>
           <p className="text-xs text-foreground mb-1">{event.institution_name || 'School Event'}</p>
           <div className="flex items-center gap-3 text-[10px] text-foreground">
-            <span className="flex items-center gap-0.5"><Clock size={9} /> {time}</span>
+            {time && <span className="flex items-center gap-0.5"><Clock size={9} /> {time}</span>}
             {event.location && <span className="flex items-center gap-0.5 truncate"><MapPin size={9} /> {event.location}</span>}
             {spotsLeft !== null && <span className="flex items-center gap-0.5"><Users size={9} /> {spotsLeft > 0 ? `${spotsLeft} spots` : 'Full'}</span>}
           </div>

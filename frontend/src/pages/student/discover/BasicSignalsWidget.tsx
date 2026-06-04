@@ -14,6 +14,7 @@ import { ExternalLink, GraduationCap } from 'lucide-react'
 
 import { getProfile, listAcademics } from '../../../api/students'
 import Card from '../../../components/ui/Card'
+import QueryError from '../../../components/ui/QueryError'
 
 interface Row {
   label: string
@@ -21,14 +22,39 @@ interface Row {
 }
 
 export default function BasicSignalsWidget() {
-  const { data: profile } = useQuery<any>({
+  const profileQ = useQuery<any>({
     queryKey: ['profile'],
     queryFn: () => getProfile(),
   })
-  const { data: academics } = useQuery<any[]>({
+  const academicsQ = useQuery<any[]>({
     queryKey: ['academics'],
     queryFn: () => listAcademics(),
   })
+  const profile = profileQ.data
+  const academics = academicsQ.data
+
+  if (profileQ.isLoading || academicsQ.isLoading) {
+    return <Card className="text-sm text-foreground">Loading…</Card>
+  }
+
+  if (profileQ.isError || academicsQ.isError) {
+    return (
+      <Card className="space-y-2">
+        <div className="flex items-center gap-2 text-foreground font-medium text-sm">
+          <GraduationCap size={14} className="text-secondary" />
+          Basic signals
+        </div>
+        <QueryError
+          variant="inline"
+          detail="Couldn't load your basic signals."
+          onRetry={() => {
+            profileQ.refetch()
+            academicsQ.refetch()
+          }}
+        />
+      </Card>
+    )
+  }
 
   const current = (academics ?? []).find((a) => a.is_current) ?? academics?.[0]
 

@@ -2,6 +2,7 @@ import { Fragment, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { useCompareStore } from '../../stores/compare-store'
+import { showToast } from '../../stores/toast-store'
 import { comparePrograms } from '../../api/saved-lists'
 import Badge from '../ui/Badge'
 import Button from '../ui/Button'
@@ -32,6 +33,8 @@ export default function CompareTray({ initialExpanded = false, syncUrl = false }
       setComparisonResult(data)
       setExpanded(true)
     },
+    onError: (e: unknown) =>
+      showToast((e as Error).message ?? 'Could not build the comparison.', 'error'),
   })
 
   useEffect(() => {

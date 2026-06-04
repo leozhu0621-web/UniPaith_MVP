@@ -30,6 +30,7 @@ import {
 import { generateStrategy } from "../../../api/strategy";
 import Button from "../../../components/ui/Button";
 import Card from "../../../components/ui/Card";
+import QueryError from "../../../components/ui/QueryError";
 import Skeleton from "../../../components/ui/Skeleton";
 import { showToast } from "../../../stores/toast-store";
 
@@ -265,6 +266,21 @@ export default function ReadinessRail() {
         <Skeleton className="h-5 w-40" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-3/4" />
+      </Card>
+    );
+  }
+
+  if (matchReady.isError || completeness.isError) {
+    return (
+      <Card className="p-4">
+        <QueryError
+          variant="inline"
+          detail="Couldn't load your readiness."
+          onRetry={() => {
+            matchReady.refetch();
+            completeness.refetch();
+          }}
+        />
       </Card>
     );
   }

@@ -59,7 +59,7 @@ export default function TrialBanner() {
       <button
         onClick={() => setDismissed(true)}
         aria-label="Dismiss"
-        className="ui-btn shrink-0 p-1 rounded-md text-muted-foreground hover:bg-black/5 transition"
+        className="ui-btn shrink-0 p-1 rounded-md text-muted-foreground hover:bg-foreground/5 transition"
       >
         <X size={14} />
       </button>

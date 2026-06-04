@@ -10,6 +10,7 @@ import { ExternalLink, Target } from 'lucide-react'
 
 import { listGoals } from '../../../api/goals'
 import Card from '../../../components/ui/Card'
+import QueryError from '../../../components/ui/QueryError'
 import type { GoalCategory, StudentGoal } from '../../../types'
 
 const CATEGORIES: { key: GoalCategory; label: string }[] = [
@@ -19,13 +20,29 @@ const CATEGORIES: { key: GoalCategory; label: string }[] = [
 ]
 
 export default function GoalStackWidget() {
-  const { data: goals = [], isLoading } = useQuery<StudentGoal[]>({
+  const { data: goals = [], isLoading, isError, refetch } = useQuery<StudentGoal[]>({
     queryKey: ['goals'],
     queryFn: () => listGoals('active'),
   })
 
   if (isLoading) {
     return <Card className="text-sm text-foreground">Loading…</Card>
+  }
+
+  if (isError) {
+    return (
+      <Card className="space-y-2">
+        <div className="flex items-center gap-2 text-foreground font-medium text-sm">
+          <Target size={14} className="text-primary" />
+          Goal stack
+        </div>
+        <QueryError
+          variant="inline"
+          detail="Couldn't load your goals."
+          onRetry={() => refetch()}
+        />
+      </Card>
+    )
   }
 
   if (goals.length === 0) {

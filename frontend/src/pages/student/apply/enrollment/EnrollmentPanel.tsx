@@ -301,7 +301,7 @@ export default function EnrollmentPanel({ application }: { application: Applicat
 
       {/* ── Multi-offer prompt (§2.3) — never auto-declines. ── */}
       {!confirmed && (e.other_active_offers?.length ?? 0) > 0 && (
-        <Card className="p-4 border-l-4 border-l-cobalt">
+        <Card className="p-4 border-l-4 border-l-secondary">
           <p className="text-sm text-foreground font-medium mb-1">
             You have {e.other_active_offers!.length} other active offer
             {e.other_active_offers!.length !== 1 ? 's' : ''}. Decline them?
