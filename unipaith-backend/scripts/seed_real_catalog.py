@@ -163,15 +163,12 @@ async def seed() -> dict:
                 f"{uni.get('city')}, {uni.get('state')}."
             )
             # Correct per-university image (Wikimedia/Wikipedia lead image).
+            # media_gallery is consumed as a LIST ([0] = hero/image_url) by the
+            # explore + service endpoints, so keep it a list of URL strings.
             if uni.get("logo_url"):
                 inst.logo_url = uni["logo_url"]
             if uni.get("image_url"):
-                inst.media_gallery = {
-                    "hero_image": uni["image_url"],
-                    "images": [uni["image_url"]],
-                    "source": "Wikimedia Commons / Wikipedia",
-                    "source_url": uni.get("image_source_url"),
-                }
+                inst.media_gallery = [uni["image_url"]]
             if enr:
                 inst.founded_year = enr.get("founded_year")
                 inst.campus_setting = enr.get("campus_setting")
