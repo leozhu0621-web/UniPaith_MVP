@@ -11,16 +11,33 @@ import { ExternalLink, Sparkles } from 'lucide-react'
 
 import { getIdentity } from '../../../api/identity'
 import Card from '../../../components/ui/Card'
+import QueryError from '../../../components/ui/QueryError'
 import type { StudentIdentity } from '../../../types'
 
 export default function IdentitySignalsWidget() {
-  const { data: identity, isLoading } = useQuery<StudentIdentity>({
+  const { data: identity, isLoading, isError, refetch } = useQuery<StudentIdentity>({
     queryKey: ['identity'],
     queryFn: () => getIdentity(),
   })
 
   if (isLoading) {
     return <Card className="text-sm text-foreground">Loading…</Card>
+  }
+
+  if (isError) {
+    return (
+      <Card className="space-y-2">
+        <div className="flex items-center gap-2 text-foreground font-medium text-sm">
+          <Sparkles size={14} className="text-primary" />
+          Identity signals
+        </div>
+        <QueryError
+          variant="inline"
+          detail="Couldn't load your identity signals."
+          onRetry={() => refetch()}
+        />
+      </Card>
+    )
   }
 
   const values = identity?.core_values ?? []

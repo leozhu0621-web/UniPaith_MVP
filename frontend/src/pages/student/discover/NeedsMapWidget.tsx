@@ -12,6 +12,7 @@ import clsx from 'clsx'
 
 import { listNeeds } from '../../../api/needs'
 import Card from '../../../components/ui/Card'
+import QueryError from '../../../components/ui/QueryError'
 import type { MaslowLevel, StudentNeed } from '../../../types'
 
 const TIERS: { key: MaslowLevel; label: string }[] = [
@@ -23,13 +24,29 @@ const TIERS: { key: MaslowLevel; label: string }[] = [
 ]
 
 export default function NeedsMapWidget() {
-  const { data: needs = [], isLoading } = useQuery<StudentNeed[]>({
+  const { data: needs = [], isLoading, isError, refetch } = useQuery<StudentNeed[]>({
     queryKey: ['needs'],
     queryFn: () => listNeeds(),
   })
 
   if (isLoading) {
     return <Card className="text-sm text-foreground">Loading…</Card>
+  }
+
+  if (isError) {
+    return (
+      <Card className="space-y-2">
+        <div className="flex items-center gap-2 text-foreground font-medium text-sm">
+          <Heart size={14} className="text-primary" />
+          Needs map
+        </div>
+        <QueryError
+          variant="inline"
+          detail="Couldn't load your needs map."
+          onRetry={() => refetch()}
+        />
+      </Card>
+    )
   }
 
   if (needs.length === 0) {

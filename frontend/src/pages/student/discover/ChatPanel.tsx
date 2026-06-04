@@ -284,6 +284,7 @@ export default function ChatPanel({
               handleSubmit(e)
             }
           }}
+          aria-label="Your reply to the counselor"
           placeholder={`Tell me about your ${track === 'profile' ? 'life' : track}…`}
           className="flex-1 resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-accent"
           disabled={turnMut.isPending}

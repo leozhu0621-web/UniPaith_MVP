@@ -14,16 +14,24 @@ const TIER_COLORS: Record<number, { ring: string; text: string; label: string; b
 }
 
 export default function MatchRing({ score, tier, size = 72 }: Props) {
-  const pct = Math.round(score * 100)
+  // Guard a non-finite score so pct / dashOffset can never render NaN.
+  const safeScore = Number.isFinite(score) ? Math.max(0, Math.min(1, score)) : 0
+  const pct = Math.round(safeScore * 100)
   const color = TIER_COLORS[tier] ?? TIER_COLORS[0]
   const radius = (size - 10) / 2
   const circumference = 2 * Math.PI * radius
-  const dashOffset = circumference * (1 - score)
+  const dashOffset = circumference * (1 - safeScore)
 
   return (
     <div className={`flex items-center gap-3 px-3 py-2 rounded-xl ${color.bg} border border-border`}>
       <div className="relative" style={{ width: size, height: size }}>
-        <svg width={size} height={size} className="-rotate-90">
+        <svg
+          width={size}
+          height={size}
+          className="-rotate-90"
+          role="img"
+          aria-label={`Your match — ${pct}%, ${color.label}.`}
+        >
           <circle
             cx={size / 2}
             cy={size / 2}

@@ -64,7 +64,10 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
   const degree = DEGREE_LABELS[program.degree_type] || program.degree_type
   const abbrev = degreeAbbrev(program.degree_type)
   const fit = match ? fitStyle(match.match_tier) : null
-  const matchScore = match?.match_score != null ? Math.round(match.match_score * 100) : null
+  // Dual-score migration: prefer fitness_score, fall back to legacy match_score
+  // (Phase E keeps match_score dual-written for one release — see CLAUDE.md).
+  const rawScore = (match as { fitness_score?: number | null } | undefined)?.fitness_score ?? match?.match_score
+  const matchScore = rawScore != null ? Math.round(rawScore * 100) : null
 
   const duration = formatDuration(program.duration_months)
   const format = formatFormat(program.delivery_format)

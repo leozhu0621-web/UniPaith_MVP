@@ -150,11 +150,13 @@ export default function MiniCounselorPanel() {
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
             placeholder="Ask anything..."
+            aria-label="Ask your counselor a question"
             className="flex-1 text-[11px] border border-border rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary bg-background"
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || sendMut.isPending}
+            aria-label="Send message"
             className="p-1.5 bg-primary text-primary-foreground rounded-lg hover:brightness-95 disabled:opacity-30 transition-all"
           >
             <ArrowUp size={12} />

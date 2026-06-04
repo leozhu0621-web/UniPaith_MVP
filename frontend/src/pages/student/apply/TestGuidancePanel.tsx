@@ -165,7 +165,7 @@ export default function TestGuidancePanel() {
             </Card>
           )}
 
-          {run.structural_issues.length > 0 && (
+          {(run.structural_issues?.length ?? 0) > 0 && (
             <Card>
               <div className="mb-2 text-eyebrow uppercase text-foreground">
                 Section diagnosis · {run.structural_issues.length}
@@ -188,7 +188,7 @@ export default function TestGuidancePanel() {
             </Card>
           )}
 
-          {run.missing_elements.length > 0 && (
+          {(run.missing_elements?.length ?? 0) > 0 && (
             <Card>
               <div className="mb-2 text-eyebrow uppercase text-foreground">
                 Prep recommendations · {run.missing_elements.length}
@@ -206,7 +206,7 @@ export default function TestGuidancePanel() {
             </Card>
           )}
 
-          {run.suggested_questions.length > 0 && (
+          {(run.suggested_questions?.length ?? 0) > 0 && (
             <Card>
               <div className="mb-2 text-eyebrow uppercase text-foreground">
                 Suggested resources · {run.suggested_questions.length}

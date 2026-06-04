@@ -440,7 +440,12 @@ export interface MatchResult {
   id: string
   student_id: string
   program_id: string
+  // Phase A dual-score split (see CLAUDE.md). `match_score` is legacy (Phase E
+  // drop); consumers read `fitness_score ?? match_score`. Typed so card widgets
+  // (ProgramCard / MatchCard) read the dual score without casts.
   match_score: number
+  fitness_score?: number | null
+  confidence_score?: number | null
   match_tier: number
   score_breakdown: Record<string, number> | null
   reasoning_text: string | null

@@ -14,6 +14,7 @@ import clsx from 'clsx'
 
 import { getPersonalitySignals } from '../../../api/discovery'
 import Card from '../../../components/ui/Card'
+import QueryError from '../../../components/ui/QueryError'
 import type { PersonalitySignal } from '../../../types'
 
 // Map the extractor's facet keys to friendly labels. Unknown facets fall
@@ -54,13 +55,29 @@ function ConfidenceDots({ confidence }: { confidence: number | null }) {
 }
 
 export default function PersonalitySignalsWidget() {
-  const { data: signals = [], isLoading } = useQuery<PersonalitySignal[]>({
+  const { data: signals = [], isLoading, isError, refetch } = useQuery<PersonalitySignal[]>({
     queryKey: ['personality-signals'],
     queryFn: () => getPersonalitySignals(),
   })
 
   if (isLoading) {
     return <Card className="text-sm text-foreground">Loading…</Card>
+  }
+
+  if (isError) {
+    return (
+      <Card className="space-y-2">
+        <div className="flex items-center gap-2 text-foreground font-medium text-sm">
+          <UserRound size={14} className="text-secondary" />
+          Personality signals
+        </div>
+        <QueryError
+          variant="inline"
+          detail="Couldn't load your personality signals."
+          onRetry={() => refetch()}
+        />
+      </Card>
+    )
   }
 
   if (signals.length === 0) {
