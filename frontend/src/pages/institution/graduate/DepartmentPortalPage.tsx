@@ -12,6 +12,7 @@ import Badge from '../../../components/ui/Badge'
 import Tabs from '../../../components/ui/Tabs'
 import Skeleton from '../../../components/ui/Skeleton'
 import EmptyState from '../../../components/ui/EmptyState'
+import QueryError from '../../../components/ui/QueryError'
 import { CENTRAL_STATUS_LABEL, DECISION_LABELS, fmtMoney } from './constants'
 import FacultyRoster from './FacultyRoster'
 import FundingPoolsPanel from './FundingPoolsPanel'
@@ -155,6 +156,12 @@ export default function DepartmentPortalPage() {
         <Card className="p-5">
           {reviewQ.isLoading ? (
             <Skeleton className="h-40" />
+          ) : reviewQ.isError ? (
+            <QueryError
+              variant="inline"
+              detail="Couldn’t load applicants."
+              onRetry={() => reviewQ.refetch()}
+            />
           ) : !reviewQ.data || reviewQ.data.applicants.length === 0 ? (
             <EmptyState
               icon={<Users size={28} />}

@@ -159,6 +159,7 @@ export default function EnrollmentTab({ applicationId }: { applicationId: string
             <Input
               label="Amount (optional)"
               type="number"
+              min={0}
               value={depositAmount}
               onChange={ev => setDepositAmount(ev.target.value)}
               placeholder="e.g. 500"

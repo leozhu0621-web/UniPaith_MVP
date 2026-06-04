@@ -13,7 +13,9 @@ import { Bell, CheckCheck, Inbox } from 'lucide-react'
 import { getNotifications, getUnreadCount, markAllRead, markRead } from '../../api/notifications'
 import { qk } from '../../api/queryKeys'
 import { useNotificationStream } from '../../hooks/useNotificationStream'
+import { showToast } from '../../stores/toast-store'
 import { formatRelative } from '../../utils/format'
+import QueryError from '../ui/QueryError'
 import type { Notification } from '../../types'
 
 export default function NotificationBell() {
@@ -32,7 +34,7 @@ export default function NotificationBell() {
   })
   const count: number = unread?.count ?? 0
 
-  const { data: items, isLoading } = useQuery<Notification[]>({
+  const { data: items, isLoading, isError, refetch } = useQuery<Notification[]>({
     queryKey: qk.notifications(),
     queryFn: () => getNotifications({ limit: 20 }),
     enabled: open, // only fetch the history when the panel is opened
@@ -45,6 +47,7 @@ export default function NotificationBell() {
       qc.setQueryData<Notification[] | undefined>(qk.notifications(), (old) =>
         Array.isArray(old) ? old.map((n) => (n.id === id ? { ...n, is_read: true } : n)) : old,
       ),
+    onError: () => showToast("Couldn't mark as read. Try again.", 'error'),
   })
 
   const markAll = useMutation({
@@ -55,6 +58,7 @@ export default function NotificationBell() {
       )
       qc.setQueryData(qk.notificationsUnread(), { count: 0 })
     },
+    onError: () => showToast("Couldn't mark all as read. Try again.", 'error'),
   })
 
   useEffect(() => {
@@ -126,6 +130,14 @@ export default function NotificationBell() {
                   <div className="mt-2 h-3 w-full animate-pulse rounded bg-muted" />
                 </div>
               ))
+            ) : isError ? (
+              <div className="px-4 py-8">
+                <QueryError
+                  variant="inline"
+                  detail="Couldn't load notifications."
+                  onRetry={() => refetch()}
+                />
+              </div>
             ) : list.length === 0 ? (
               <div className="px-4 py-10 text-center">
                 <Inbox size={24} className="mx-auto text-muted-foreground" />

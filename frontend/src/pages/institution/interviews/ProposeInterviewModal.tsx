@@ -10,6 +10,7 @@ import Input from '../../../components/ui/Input'
 import Select from '../../../components/ui/Select'
 import Textarea from '../../../components/ui/Textarea'
 import Skeleton from '../../../components/ui/Skeleton'
+import QueryError from '../../../components/ui/QueryError'
 import { showToast } from '../../../stores/toast-store'
 import { INTERVIEW_TYPES, ASYNC_INTERVIEW_TYPES } from '../../../utils/constants'
 
@@ -186,6 +187,7 @@ export default function ProposeInterviewModal({ isOpen, onClose, onProposed, pro
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search applicants…"
+              aria-label="Search applicants"
               className="w-full pl-8 pr-3 py-2 text-sm rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
@@ -196,6 +198,12 @@ export default function ProposeInterviewModal({ isOpen, onClose, onProposed, pro
                   <Skeleton key={i} className="h-9" />
                 ))}
               </div>
+            ) : applicantsQ.isError ? (
+              <QueryError
+                variant="inline"
+                detail="We couldn't load applicants."
+                onRetry={() => applicantsQ.refetch()}
+              />
             ) : applicants.length === 0 ? (
               <p className="p-3 text-sm text-muted-foreground">
                 No applicants found. Applicants appear here once they've applied to a program.

@@ -8,6 +8,7 @@ import Textarea from '../../../components/ui/Textarea'
 import Toggle from '../../../components/ui/Toggle'
 import Badge from '../../../components/ui/Badge'
 import Skeleton from '../../../components/ui/Skeleton'
+import QueryError from '../../../components/ui/QueryError'
 import {
   getUploadedLists,
   createUploadedList,
@@ -20,6 +21,7 @@ import {
 } from '../../../api/institutions'
 import type { UploadedList, CampaignSuppression, Institution } from '../../../types'
 import { showToast } from '../../../stores/toast-store'
+import { confirmDialog } from '../../../stores/confirm-store'
 import { parseContactsText } from './constants'
 
 export default function AudienceManagerSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
@@ -62,7 +64,18 @@ export default function AudienceManagerSheet({ isOpen, onClose }: { isOpen: bool
       qc.invalidateQueries({ queryKey: ['uploaded-lists'] })
       showToast('List deleted', 'success')
     },
+    onError: () => showToast('Could not delete list', 'error'),
   })
+
+  const removeList = async (id: string, name: string) => {
+    const ok = await confirmDialog({
+      title: 'Delete contact list?',
+      body: `“${name}” and its contacts will be removed from your audiences. This can't be undone.`,
+      confirmLabel: 'Delete list',
+      destructive: true,
+    })
+    if (ok) delListMut.mutate(id)
+  }
 
   const addSupMut = useMutation({
     mutationFn: () => addSuppression(supEmail.trim()),
@@ -78,9 +91,20 @@ export default function AudienceManagerSheet({ isOpen, onClose }: { isOpen: bool
     mutationFn: deleteSuppression,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['suppressions'] })
-      showToast('Removed', 'success')
+      showToast('Removed from suppression list', 'success')
     },
+    onError: () => showToast('Could not remove from suppression list', 'error'),
   })
+
+  const removeSuppression = async (id: string, addr: string) => {
+    const ok = await confirmDialog({
+      title: 'Remove from suppression list?',
+      body: `${addr} may receive external campaign emails again. Only remove a suppression if you're certain it was added in error.`,
+      confirmLabel: 'Remove suppression',
+      destructive: true,
+    })
+    if (ok) delSupMut.mutate(id)
+  }
 
   const approvalMut = useMutation({
     mutationFn: (v: boolean) => updateInstitution({ require_campaign_approval: v }),
@@ -148,6 +172,8 @@ export default function AudienceManagerSheet({ isOpen, onClose }: { isOpen: bool
 
           {listsQ.isLoading ? (
             <Skeleton className="h-16" />
+          ) : listsQ.isError ? (
+            <QueryError variant="inline" detail="We couldn't load your uploaded lists." onRetry={() => listsQ.refetch()} />
           ) : lists.length === 0 ? (
             <p className="text-xs text-muted-foreground">No uploaded lists yet.</p>
           ) : (
@@ -165,7 +191,13 @@ export default function AudienceManagerSheet({ isOpen, onClose }: { isOpen: bool
                       )}
                     </p>
                   </div>
-                  <Button variant="ghost" size="sm" className="text-destructive" onClick={() => delListMut.mutate(l.id)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive"
+                    aria-label={`Delete list ${l.name}`}
+                    onClick={() => removeList(l.id, l.name)}
+                  >
                     <Trash2 size={14} />
                   </Button>
                 </div>
@@ -198,6 +230,12 @@ export default function AudienceManagerSheet({ isOpen, onClose }: { isOpen: bool
           </div>
           {supsQ.isLoading ? (
             <Skeleton className="h-12" />
+          ) : supsQ.isError ? (
+            <QueryError
+              variant="inline"
+              detail="We couldn't load your suppression list — this is not an empty list."
+              onRetry={() => supsQ.refetch()}
+            />
           ) : sups.length === 0 ? (
             <p className="text-xs text-muted-foreground">No suppressed emails.</p>
           ) : (
@@ -207,7 +245,13 @@ export default function AudienceManagerSheet({ isOpen, onClose }: { isOpen: bool
                   <span className="text-[13px] text-foreground truncate">{s.email}</span>
                   <div className="flex items-center gap-2">
                     {s.reason && <Badge variant="neutral">{s.reason}</Badge>}
-                    <Button variant="ghost" size="sm" className="text-destructive" onClick={() => delSupMut.mutate(s.id)}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive"
+                      aria-label={`Remove ${s.email} from suppression list`}
+                      onClick={() => removeSuppression(s.id, s.email)}
+                    >
                       <Trash2 size={14} />
                     </Button>
                   </div>

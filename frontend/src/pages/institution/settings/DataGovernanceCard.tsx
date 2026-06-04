@@ -12,6 +12,7 @@ import Button from '../../../components/ui/Button'
 import Select from '../../../components/ui/Select'
 import Toggle from '../../../components/ui/Toggle'
 import { SkeletonCard } from '../../../components/ui/Skeleton'
+import QueryError from '../../../components/ui/QueryError'
 import SettingsSection, { SettingRow } from '../../student/settings/SettingsSection'
 import { getDataGovernance, updateDataGovernance } from '../../../api/dataGovernance'
 import type { DataGovernanceSettings } from '../../../types/dataGovernance'
@@ -38,7 +39,7 @@ const ALL_ATTRS = [
 
 export default function DataGovernanceCard() {
   const qc = useQueryClient()
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['data-governance'],
     queryFn: getDataGovernance,
     retry: false,
@@ -53,6 +54,15 @@ export default function DataGovernanceCard() {
     onError: (e: unknown) =>
       showToast((e as { message?: string })?.message || 'Save failed', 'error'),
   })
+
+  if (isError && !data) {
+    return (
+      <QueryError
+        detail="We couldn't load your data & privacy settings."
+        onRetry={() => refetch()}
+      />
+    )
+  }
 
   if (isLoading || !data) {
     return (

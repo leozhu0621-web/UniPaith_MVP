@@ -6,8 +6,10 @@ import Input from '../../../components/ui/Input'
 import Select from '../../../components/ui/Select'
 import Badge from '../../../components/ui/Badge'
 import SettingsSection from '../../student/settings/SettingsSection'
+import QueryError from '../../../components/ui/QueryError'
 import { getTeam, inviteTeamMember, revokeTeamInvite } from '../../../api/settings'
 import { showToast } from '../../../stores/toast-store'
+import { confirmDialog } from '../../../stores/confirm-store'
 
 const ROLES = [
   { value: 'admissions', label: 'Admissions' },
@@ -42,6 +44,16 @@ export default function TeamCard() {
     },
     onError: () => showToast('Could not revoke invite', 'error'),
   })
+
+  const revoke = async (id: string, memberEmail: string) => {
+    const ok = await confirmDialog({
+      title: 'Revoke invite?',
+      body: `${memberEmail} will no longer be able to join your team with this invitation.`,
+      confirmLabel: 'Revoke invite',
+      destructive: true,
+    })
+    if (ok) revokeMut.mutate(id)
+  }
 
   const members = teamQ.data ?? []
 
@@ -79,6 +91,13 @@ export default function TeamCard() {
       </div>
 
       {/* Member list */}
+      {teamQ.isError ? (
+        <QueryError
+          variant="inline"
+          detail="We couldn't load your team."
+          onRetry={() => teamQ.refetch()}
+        />
+      ) : (
       <ul className="divide-y divide-border border-t border-border">
         {members.map(m => (
           <li key={m.id} className="flex items-center justify-between gap-3 py-3">
@@ -92,7 +111,7 @@ export default function TeamCard() {
               </Badge>
               {m.status === 'pending' && (
                 <button
-                  onClick={() => revokeMut.mutate(m.id)}
+                  onClick={() => revoke(m.id, m.email)}
                   disabled={revokeMut.isPending}
                   aria-label={`Revoke invite for ${m.email}`}
                   className="ui-btn p-1.5 rounded-md text-muted-foreground hover:bg-error-soft hover:text-error transition-colors"
@@ -104,6 +123,7 @@ export default function TeamCard() {
           </li>
         ))}
       </ul>
+      )}
     </SettingsSection>
   )
 }

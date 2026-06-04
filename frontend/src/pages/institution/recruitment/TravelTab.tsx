@@ -16,6 +16,7 @@ import Input from '../../../components/ui/Input'
 import Select from '../../../components/ui/Select'
 import Skeleton from '../../../components/ui/Skeleton'
 import EmptyState from '../../../components/ui/EmptyState'
+import QueryError from '../../../components/ui/QueryError'
 import { showToast } from '../../../stores/toast-store'
 import { formatDate, formatCurrency } from '../../../utils/format'
 
@@ -30,7 +31,7 @@ export default function TravelTab() {
   const [showNew, setShowNew] = useState(false)
   const [visitFor, setVisitFor] = useState<RecruitmentTrip | null>(null)
 
-  const { data: trips, isLoading } = useQuery({
+  const { data: trips, isLoading, isError, refetch } = useQuery({
     queryKey: ['recruitment-trips'],
     queryFn: listTrips,
   })
@@ -38,6 +39,14 @@ export default function TravelTab() {
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ['recruitment-trips'] })
     qc.invalidateQueries({ queryKey: ['recruitment-summary'] })
+  }
+
+  if (isError) {
+    return (
+      <Card className="p-0">
+        <QueryError detail="Couldn’t load travel plans." onRetry={() => refetch()} />
+      </Card>
+    )
   }
 
   if (isLoading) {
@@ -104,6 +113,7 @@ function TripCard({
       qc.invalidateQueries({ queryKey: ['recruitment-trips'] })
       onDone()
     },
+    onError: () => showToast('Could not update visit', 'error'),
   })
 
   const cycle = (v: TripVisit) => {
@@ -270,8 +280,8 @@ function TripModal({
         </div>
         <Input label="Recruiter" value={form.recruiter_name} onChange={e => set('recruiter_name', e.target.value)} />
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Budget" type="number" value={form.budget} onChange={e => set('budget', e.target.value)} placeholder="0" />
-          <Input label="Spend" type="number" value={form.spend} onChange={e => set('spend', e.target.value)} placeholder="0" />
+          <Input label="Budget" type="number" min={0} value={form.budget} onChange={e => set('budget', e.target.value)} placeholder="0" />
+          <Input label="Spend" type="number" min={0} value={form.spend} onChange={e => set('spend', e.target.value)} placeholder="0" />
         </div>
       </div>
     </Modal>

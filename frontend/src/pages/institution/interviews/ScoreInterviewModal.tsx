@@ -8,6 +8,7 @@ import Button from '../../../components/ui/Button'
 import Select from '../../../components/ui/Select'
 import Textarea from '../../../components/ui/Textarea'
 import Skeleton from '../../../components/ui/Skeleton'
+import QueryError from '../../../components/ui/QueryError'
 import { showToast } from '../../../stores/toast-store'
 
 interface Props {
@@ -173,6 +174,12 @@ export default function ScoreInterviewModal({ isOpen, onClose, onScored, intervi
                 <Skeleton key={i} className="h-12" />
               ))}
             </div>
+          ) : rubricsQ.isError ? (
+            <QueryError
+              variant="inline"
+              detail="We couldn't load the scoring rubric."
+              onRetry={() => rubricsQ.refetch()}
+            />
           ) : (
             <div className="space-y-3">
               {(rubric?.criteria || []).map(c => (
