@@ -78,7 +78,8 @@
    ],
    "year": 2020,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.98
  },
  {
   "unit_id": 166027,
@@ -295,7 +296,8 @@
    ],
    "year": 2022,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.97
  },
  {
   "unit_id": 166683,
@@ -558,7 +560,8 @@
    ],
    "year": 2022,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.99
  },
  {
   "unit_id": 243744,
@@ -775,7 +778,8 @@
    ],
    "year": 2022,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.99
  },
  {
   "unit_id": 110635,
@@ -992,7 +996,8 @@
    ],
    "year": 2020,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.97
  },
  {
   "unit_id": 144050,
@@ -1209,7 +1214,8 @@
    ],
    "year": 2022,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.99
  },
  {
   "unit_id": 190150,
@@ -1426,7 +1432,8 @@
    ],
    "year": 2022,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.99
  },
  {
   "unit_id": 211440,
@@ -1643,7 +1650,8 @@
    ],
    "year": 2022,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.97
  },
  {
   "unit_id": 130794,
@@ -1860,7 +1868,8 @@
    ],
    "year": 2022,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.99
  },
  {
   "unit_id": 162928,
@@ -2077,7 +2086,8 @@
    ],
    "year": 2022,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.97
  },
  {
   "unit_id": 186131,
@@ -2294,7 +2304,8 @@
    ],
    "year": 2022,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.98
  },
  {
   "unit_id": 215062,
@@ -2511,7 +2522,8 @@
    ],
    "year": 2022,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.98
  },
  {
   "unit_id": 139755,
@@ -2728,7 +2740,8 @@
    ],
    "year": 2022,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.97
  },
  {
   "unit_id": 147767,
@@ -2945,7 +2958,8 @@
    ],
    "year": 2022,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.98
  },
  {
   "unit_id": 170976,
@@ -3162,7 +3176,8 @@
    ],
    "year": 2022,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.97
  },
  {
   "unit_id": 198419,
@@ -3379,7 +3394,8 @@
    ],
    "year": 2022,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.98
  },
  {
   "unit_id": 110662,
@@ -3580,7 +3596,8 @@
    "lat": 34.0722,
    "lng": -118.4427,
    "source": "Wikipedia / Wikidata"
-  }
+  },
+  "retention_rate_first_year": 0.97
  },
  {
   "unit_id": 110680,
@@ -3797,7 +3814,8 @@
    ],
    "year": 2020,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.93
  },
  {
   "unit_id": 190415,
@@ -4014,7 +4032,8 @@
    ],
    "year": 2022,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.97
  },
  {
   "unit_id": 193900,
@@ -4231,7 +4250,8 @@
    ],
    "year": 2022,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.94
  },
  {
   "unit_id": 123961,
@@ -4448,7 +4468,8 @@
    ],
    "year": 2022,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.96
  },
  {
   "unit_id": 164988,
@@ -4665,7 +4686,8 @@
    ],
    "year": 2022,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.94
  },
  {
   "unit_id": 228778,
@@ -5099,7 +5121,8 @@
    ],
    "year": 2022,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.95
  },
  {
   "unit_id": 145637,
@@ -5316,7 +5339,8 @@
    ],
    "year": 2022,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.93
  },
  {
   "unit_id": 227757,
@@ -5533,7 +5557,8 @@
    ],
    "year": 2022,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.98
  },
  {
   "unit_id": 236948,
@@ -5750,7 +5775,8 @@
    ],
    "year": 2020,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.95
  },
  {
   "unit_id": 243780,
@@ -5967,6 +5993,7 @@
    ],
    "year": 2022,
    "source": "IPEDS via Urban Institute Education Data API"
-  }
+  },
+  "retention_rate_first_year": 0.91
  }
 ]
