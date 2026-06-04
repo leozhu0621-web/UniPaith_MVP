@@ -22,7 +22,10 @@ interface CounselorState {
 
 export const useCounselorStore = create<CounselorState>((set) => ({
   messages: [],
-  isMinimized: false,
+  // Inner tabs (Match/Apply/Connect/Profile) start with the counselor collapsed
+  // so the page gets full width; the "Chat" tab re-docks it, and in-page CTAs
+  // (askQuestion) force it open. Discover is unaffected — it IS the chat.
+  isMinimized: true,
   pendingPrompt: null,
   addMessage: (msg) => set(state => ({ messages: [...state.messages, msg] })),
   setMinimized: (v) => set({ isMinimized: v }),

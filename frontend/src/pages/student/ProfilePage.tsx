@@ -80,7 +80,10 @@ export default function ProfilePage() {
       </div>
 
       {/* Tab strip */}
-      <div className="flex gap-1 border-b border-border overflow-x-auto no-scrollbar mb-8 -mx-1 px-1" role="tablist">
+      <div
+        className="flex gap-1 border-b border-border overflow-x-auto no-scrollbar mb-8 -mx-1 px-1 [mask-image:linear-gradient(to_right,#000_92%,transparent)] [-webkit-mask-image:linear-gradient(to_right,#000_92%,transparent)]"
+        role="tablist"
+      >
         {TABS.map(tab => {
           const isActive = activeTab === tab.key
           return (
