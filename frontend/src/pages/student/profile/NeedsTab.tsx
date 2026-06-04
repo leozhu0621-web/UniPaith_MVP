@@ -115,8 +115,9 @@ function NeedForm({ initial, onCancel, onSubmit, submitting, isEdit }: NeedFormP
     <form onSubmit={handle} className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1">Maslow tier</label>
+          <label htmlFor="need-maslow-level" className="block text-sm font-medium text-foreground mb-1">Maslow tier</label>
           <select
+            id="need-maslow-level"
             className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
             value={form.maslow_level}
             onChange={e => setForm(f => ({ ...f, maslow_level: e.target.value as MaslowLevel }))}
@@ -129,8 +130,9 @@ function NeedForm({ initial, onCancel, onSubmit, submitting, isEdit }: NeedFormP
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1">Severity</label>
+          <label htmlFor="need-severity" className="block text-sm font-medium text-foreground mb-1">Severity</label>
           <select
+            id="need-severity"
             className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
             value={form.severity}
             onChange={e => setForm(f => ({ ...f, severity: e.target.value as NeedSeverity }))}
@@ -143,10 +145,11 @@ function NeedForm({ initial, onCancel, onSubmit, submitting, isEdit }: NeedFormP
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-1">
+        <label htmlFor="need-type" className="block text-sm font-medium text-foreground mb-1">
           Need type <span className="text-error">*</span>
         </label>
         <input
+          id="need-type"
           className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
           maxLength={120}
           value={form.need_type}
@@ -157,10 +160,11 @@ function NeedForm({ initial, onCancel, onSubmit, submitting, isEdit }: NeedFormP
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-1">
+        <label htmlFor="need-signal" className="block text-sm font-medium text-foreground mb-1">
           Signal <span className="text-error">*</span>
         </label>
         <textarea
+          id="need-signal"
           className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
           rows={2}
           maxLength={4000}
@@ -172,8 +176,9 @@ function NeedForm({ initial, onCancel, onSubmit, submitting, isEdit }: NeedFormP
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-1">Source quote</label>
+        <label htmlFor="need-source-quote" className="block text-sm font-medium text-foreground mb-1">Source quote</label>
         <input
+          id="need-source-quote"
           className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
           value={form.source_quote}
           onChange={e => setForm(f => ({ ...f, source_quote: e.target.value }))}
@@ -239,7 +244,7 @@ export default function NeedsTab() {
     self_esteem: [],
     self_actualization: [],
   }
-  for (const n of needs) grouped[n.maslow_level].push(n)
+  for (const n of needs) if (grouped[n.maslow_level]) grouped[n.maslow_level].push(n)
 
   return (
     <div className="space-y-6">

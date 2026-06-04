@@ -121,7 +121,7 @@ export default function DataModelPage() {
         </span>
       </Hero>
 
-      <StatBand>
+      <StatBand isError={isError}>
         {isLoading || !data ? (
           [0, 1, 2, 3].map(i => <StatSkeleton key={i} />)
         ) : (
@@ -174,7 +174,7 @@ export default function DataModelPage() {
                   </Card>
                 )
               })
-            : [0, 1, 2, 3, 4, 5].map(i => <CardSkeleton key={i} />)}
+            : !isError && [0, 1, 2, 3, 4, 5].map(i => <CardSkeleton key={i} />)}
         </div>
       </section>
 
@@ -232,7 +232,7 @@ export default function DataModelPage() {
                 <p className="mt-1 text-[13px] text-muted-foreground">{b.note}</p>
               </li>
             ))}
-            {!data && [0, 1, 2, 3].map(i => <CardSkeleton key={i} className="h-16" />)}
+            {!data && !isError && [0, 1, 2, 3].map(i => <CardSkeleton key={i} className="h-16" />)}
           </ul>
         </div>
 
@@ -272,7 +272,7 @@ export default function DataModelPage() {
                 )}
               </li>
             ))}
-            {!data && [0, 1, 2, 3].map(i => <CardSkeleton key={i} className="h-16" />)}
+            {!data && !isError && [0, 1, 2, 3].map(i => <CardSkeleton key={i} className="h-16" />)}
           </ul>
         </div>
       </section>

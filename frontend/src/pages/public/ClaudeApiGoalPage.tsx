@@ -134,14 +134,14 @@ function TierCard({ tier }: { tier: AgentTier }) {
   return (
     <Card variant={isFlagship ? 'card-accent' : 'card'} className="flex flex-col gap-2 p-5">
       <div className="flex items-center justify-between">
-        <span className="inline-flex items-center gap-2 text-h3 text-foreground">
+        <h3 className="inline-flex items-center gap-2 text-h3 text-foreground">
           {isFlagship ? (
             <Sparkles size={18} className="text-primary" />
           ) : (
             <Cpu size={18} className="text-secondary" />
           )}
           {tier.label}
-        </span>
+        </h3>
         <Chip tone={tierTone(tier.tier)}>{tier.agent_count} agents</Chip>
       </div>
       {tier.model_id && (

@@ -103,7 +103,7 @@ export default function ApiContractPage() {
         </span>
       </Hero>
 
-      <StatBand>
+      <StatBand isError={isError}>
         {isLoading || !data ? (
           [0, 1, 2, 3].map(i => <StatSkeleton key={i} />)
         ) : (
@@ -154,7 +154,7 @@ export default function ApiContractPage() {
                   </Card>
                 )
               })
-            : [0, 1, 2, 3].map(i => <CardSkeleton key={i} />)}
+            : !isError && [0, 1, 2, 3].map(i => <CardSkeleton key={i} />)}
         </div>
       </section>
 
@@ -205,7 +205,7 @@ export default function ApiContractPage() {
                 {p}
               </li>
             ))}
-            {!data && [0, 1, 2, 3].map(i => <CardSkeleton key={i} className="h-10" />)}
+            {!data && !isError && [0, 1, 2, 3].map(i => <CardSkeleton key={i} className="h-10" />)}
           </ul>
         </div>
 

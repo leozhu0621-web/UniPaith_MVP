@@ -15,8 +15,10 @@ import { getAnalytics, getDataRights, getPeerComparison, getTimeline } from '../
 import { SectionHeader, CompletionRing } from './shared'
 import { useCompletion } from './useCompletion'
 
-const COBALT = '#2A6BD4'
-const GOLD = '#FFD60A'
+// Read chart colors from the live CSS custom properties so they track the
+// active theme (light / dark) instead of being frozen to a hardcoded hex.
+const cssVar = (name: string): string =>
+  `hsl(${getComputedStyle(document.documentElement).getPropertyValue(name).trim()})`
 
 function CategoryBars({ stats }: { stats: ReturnType<typeof useCompletion>['stats'] }) {
   return (
@@ -43,7 +45,22 @@ export default function AnalyticsTab() {
   const { data: dataRights } = useQuery({ queryKey: ['data-rights'], queryFn: getDataRights, retry: false })
   const { data: peer } = useQuery({ queryKey: ['peer-comparison'], queryFn: getPeerComparison, retry: false })
 
-  const analyticsConsent = dataRights ? Boolean(dataRights.consent_research) : true
+  // Default to false until the data-rights query resolves, so we never flash
+  // gated peer-comparison content the student hasn't consented to.
+  const analyticsConsent = dataRights ? Boolean(dataRights.consent_research) : false
+
+  // Theme-aware chart palette + tooltip surface, read from CSS vars at render.
+  const COBALT = cssVar('--secondary')
+  const GOLD = cssVar('--primary')
+  const tooltipStyle = {
+    background: cssVar('--card'),
+    border: `1px solid ${cssVar('--border')}`,
+    borderRadius: 8,
+    color: cssVar('--foreground'),
+    fontSize: 12,
+  } as const
+  const tooltipLabelStyle = { color: cssVar('--foreground') }
+  const tooltipItemStyle = { color: cssVar('--muted-foreground') }
 
   const densityData = useMemo(() => {
     const counts: Record<string, number> = analytics?.profile?.section_counts ?? {}
@@ -111,7 +128,7 @@ export default function AnalyticsTab() {
                 <CartesianGrid stroke="hsl(var(--border))" strokeOpacity={0.5} vertical={false} />
                 <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} allowDecimals={false} />
-                <Tooltip />
+                <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ stroke: 'hsl(var(--border))' }} />
                 <Area type="monotone" dataKey="signals" stroke={COBALT} strokeWidth={2} fill="url(#signalFill)" />
               </AreaChart>
             </ResponsiveContainer>
@@ -127,7 +144,7 @@ export default function AnalyticsTab() {
                 <CartesianGrid stroke="hsl(var(--border))" strokeOpacity={0.5} vertical={false} />
                 <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} interval={0} angle={-20} textAnchor="end" height={50} />
                 <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} allowDecimals={false} />
-                <Tooltip />
+                <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ fill: 'hsl(var(--muted))' }} />
                 <Bar dataKey="value" fill={COBALT} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>

@@ -31,6 +31,7 @@ import {
   updatePortfolioItem,
   updateWorkExperience,
 } from '../../../api/students'
+import { confirmDialog } from '../../../stores/confirm-store'
 import { showToast } from '../../../stores/toast-store'
 import { formatDate } from '../../../utils/format'
 import { ACTIVITY_TYPES, PLATFORM_TYPES, PORTFOLIO_ITEM_TYPES } from '../../../utils/constants'
@@ -42,6 +43,25 @@ import {
   WorkExperienceForm,
 } from '../components/ProfileForms'
 import { SectionHeader } from './shared'
+
+/**
+ * Normalize a user-supplied URL to a safe http(s) href, or null if it can't be
+ * trusted. Guards against `javascript:`, `data:`, and other script-bearing
+ * schemes that would otherwise execute when rendered in an anchor's href.
+ */
+function safeUrl(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null
+  const trimmed = raw.trim()
+  if (!trimmed) return null
+  // Bare domains (no scheme) — assume https.
+  const candidate = /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(trimmed) ? trimmed : `https://${trimmed}`
+  try {
+    const parsed = new URL(candidate)
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.href : null
+  } catch {
+    return null
+  }
+}
 
 function RowActions({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
   return (
@@ -78,21 +98,33 @@ export default function ExperienceTab() {
   }
   const onErr = () => showToast("Something didn't work. Try again.", 'error')
 
+  // Gate every destructive delete behind a confirm dialog (mirrors IdentityTab).
+  const confirmDelete = async (thing: string, run: () => void) => {
+    const okToDelete = await confirmDialog({
+      title: `Delete ${thing}?`,
+      body: "This can't be undone.",
+      confirmLabel: 'Delete',
+      destructive: true,
+    })
+    if (!okToDelete) return
+    run()
+  }
+
   const actCreate = useMutation({ mutationFn: createActivity, onSuccess: () => ok('Activity added'), onError: onErr })
   const actUpdate = useMutation({ mutationFn: ({ id, data }: any) => updateActivity(id, data), onSuccess: () => ok('Activity updated'), onError: onErr })
-  const actDelete = useMutation({ mutationFn: deleteActivity, onSuccess: () => { invProfile(); showToast('Activity removed', 'success') } })
+  const actDelete = useMutation({ mutationFn: deleteActivity, onSuccess: () => { invProfile(); showToast('Activity removed', 'success') }, onError: onErr })
   const weCreate = useMutation({ mutationFn: createWorkExperience, onSuccess: () => ok('Experience added', 'work-experiences'), onError: onErr })
   const weUpdate = useMutation({ mutationFn: ({ id, data }: any) => updateWorkExperience(id, data), onSuccess: () => ok('Experience updated', 'work-experiences'), onError: onErr })
-  const weDelete = useMutation({ mutationFn: deleteWorkExperience, onSuccess: () => { qc.invalidateQueries({ queryKey: ['work-experiences'] }); showToast('Experience removed', 'success') } })
+  const weDelete = useMutation({ mutationFn: deleteWorkExperience, onSuccess: () => { qc.invalidateQueries({ queryKey: ['work-experiences'] }); showToast('Experience removed', 'success') }, onError: onErr })
   const compCreate = useMutation({ mutationFn: createCompetition, onSuccess: () => ok('Competition added', 'competitions'), onError: onErr })
   const compUpdate = useMutation({ mutationFn: ({ id, data }: any) => updateCompetition(id, data), onSuccess: () => ok('Competition updated', 'competitions'), onError: onErr })
-  const compDelete = useMutation({ mutationFn: deleteCompetition, onSuccess: () => { qc.invalidateQueries({ queryKey: ['competitions'] }); showToast('Competition removed', 'success') } })
+  const compDelete = useMutation({ mutationFn: deleteCompetition, onSuccess: () => { qc.invalidateQueries({ queryKey: ['competitions'] }); showToast('Competition removed', 'success') }, onError: onErr })
   const pfCreate = useMutation({ mutationFn: createPortfolioItem, onSuccess: () => ok('Item added'), onError: onErr })
   const pfUpdate = useMutation({ mutationFn: ({ id, data }: any) => updatePortfolioItem(id, data), onSuccess: () => ok('Item updated'), onError: onErr })
-  const pfDelete = useMutation({ mutationFn: deletePortfolioItem, onSuccess: () => { invProfile(); showToast('Item removed', 'success') } })
+  const pfDelete = useMutation({ mutationFn: deletePortfolioItem, onSuccess: () => { invProfile(); showToast('Item removed', 'success') }, onError: onErr })
   const opCreate = useMutation({ mutationFn: createOnlinePresence, onSuccess: () => ok('Link added'), onError: onErr })
   const opUpdate = useMutation({ mutationFn: ({ id, data }: any) => updateOnlinePresence(id, data), onSuccess: () => ok('Link updated'), onError: onErr })
-  const opDelete = useMutation({ mutationFn: deleteOnlinePresence, onSuccess: () => { invProfile(); showToast('Link removed', 'success') } })
+  const opDelete = useMutation({ mutationFn: deleteOnlinePresence, onSuccess: () => { invProfile(); showToast('Link removed', 'success') }, onError: onErr })
 
   if (isLoading || !profile) return <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
 
@@ -122,7 +154,7 @@ export default function ExperienceTab() {
                     {act.hours_per_week ? ` · ${act.hours_per_week} hrs/wk` : ''}
                   </p>
                 </div>
-                <RowActions onEdit={() => open('activity', act)} onDelete={() => actDelete.mutate(act.id)} />
+                <RowActions onEdit={() => open('activity', act)} onDelete={() => confirmDelete('activity', () => actDelete.mutate(act.id))} />
               </Card>
             ))}
           </div>
@@ -148,7 +180,7 @@ export default function ExperienceTab() {
                     {w.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{w.description}</p>}
                   </div>
                 </div>
-                <RowActions onEdit={() => open('work', w)} onDelete={() => weDelete.mutate(w.id)} />
+                <RowActions onEdit={() => open('work', w)} onDelete={() => confirmDelete('experience', () => weDelete.mutate(w.id))} />
               </Card>
             ))}
           </div>
@@ -173,7 +205,7 @@ export default function ExperienceTab() {
                     </p>
                   </div>
                 </div>
-                <RowActions onEdit={() => open('competition', c)} onDelete={() => compDelete.mutate(c.id)} />
+                <RowActions onEdit={() => open('competition', c)} onDelete={() => confirmDelete('competition', () => compDelete.mutate(c.id))} />
               </Card>
             ))}
           </div>
@@ -194,10 +226,10 @@ export default function ExperienceTab() {
                   <div className="min-w-0">
                     <p className="font-medium text-foreground">{item.title}</p>
                     <p className="text-xs text-muted-foreground">{PORTFOLIO_ITEM_TYPES.find(t => t.value === item.item_type)?.label || item.item_type}</p>
-                    {item.url && <a href={item.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold text-secondary hover:underline mt-0.5"><ExternalLink size={11} /> View</a>}
+                    {safeUrl(item.url) && <a href={safeUrl(item.url)!} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold text-secondary hover:underline mt-0.5"><ExternalLink size={11} /> View</a>}
                   </div>
                 </div>
-                <RowActions onEdit={() => open('portfolio', item)} onDelete={() => pfDelete.mutate(item.id)} />
+                <RowActions onEdit={() => open('portfolio', item)} onDelete={() => confirmDelete('portfolio piece', () => pfDelete.mutate(item.id))} />
               </Card>
             ))}
           </div>
@@ -217,10 +249,14 @@ export default function ExperienceTab() {
                   <ExternalLink size={16} className="text-muted-foreground mt-0.5" />
                   <div className="min-w-0">
                     <p className="font-medium text-foreground">{PLATFORM_TYPES.find(t => t.value === op.platform_type)?.label || op.platform_type}</p>
-                    <a href={op.url} target="_blank" rel="noopener noreferrer" className="text-sm text-secondary hover:underline truncate block max-w-xs">{op.display_name || op.url}</a>
+                    {safeUrl(op.url) ? (
+                      <a href={safeUrl(op.url)!} target="_blank" rel="noopener noreferrer" className="text-sm text-secondary hover:underline truncate block max-w-xs">{op.display_name || op.url}</a>
+                    ) : (
+                      <span className="text-sm text-muted-foreground truncate block max-w-xs">{op.display_name || op.url}</span>
+                    )}
                   </div>
                 </div>
-                <RowActions onEdit={() => open('online', op)} onDelete={() => opDelete.mutate(op.id)} />
+                <RowActions onEdit={() => open('online', op)} onDelete={() => confirmDelete('link', () => opDelete.mutate(op.id))} />
               </Card>
             ))}
           </div>

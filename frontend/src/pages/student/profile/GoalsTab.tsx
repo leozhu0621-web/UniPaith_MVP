@@ -23,6 +23,7 @@ import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
 import Modal from '../../../components/ui/Modal'
 import { showToast } from '../../../stores/toast-store'
+import { formatDate } from '../../../utils/format'
 import { ConfidenceDots } from './shared'
 import type { GoalCategory, GoalStatus, StudentGoal } from '../../../types'
 
@@ -90,8 +91,9 @@ function GoalForm({ initial, onCancel, onSubmit, submitting, isEdit }: GoalFormP
   return (
     <form onSubmit={handle} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-foreground mb-1">Category</label>
+        <label htmlFor="goal-category" className="block text-sm font-medium text-foreground mb-1">Category</label>
         <select
+          id="goal-category"
           className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
           value={form.category}
           onChange={e => setForm(f => ({ ...f, category: e.target.value as GoalCategory }))}
@@ -105,10 +107,11 @@ function GoalForm({ initial, onCancel, onSubmit, submitting, isEdit }: GoalFormP
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-1">
+        <label htmlFor="goal-specific" className="block text-sm font-medium text-foreground mb-1">
           Specific <span className="text-error">*</span>
         </label>
         <textarea
+          id="goal-specific"
           className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
           rows={2}
           maxLength={2000}
@@ -120,8 +123,9 @@ function GoalForm({ initial, onCancel, onSubmit, submitting, isEdit }: GoalFormP
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-1">Measurable</label>
+        <label htmlFor="goal-measurable" className="block text-sm font-medium text-foreground mb-1">Measurable</label>
         <input
+          id="goal-measurable"
           className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
           maxLength={2000}
           value={form.measurable}
@@ -131,8 +135,9 @@ function GoalForm({ initial, onCancel, onSubmit, submitting, isEdit }: GoalFormP
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-1">Achievable notes</label>
+        <label htmlFor="goal-achievable" className="block text-sm font-medium text-foreground mb-1">Achievable notes</label>
         <input
+          id="goal-achievable"
           className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
           value={form.achievable_notes}
           onChange={e => setForm(f => ({ ...f, achievable_notes: e.target.value }))}
@@ -141,8 +146,9 @@ function GoalForm({ initial, onCancel, onSubmit, submitting, isEdit }: GoalFormP
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-1">Relevance</label>
+        <label htmlFor="goal-relevant" className="block text-sm font-medium text-foreground mb-1">Relevance</label>
         <input
+          id="goal-relevant"
           className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
           value={form.relevant_notes}
           onChange={e => setForm(f => ({ ...f, relevant_notes: e.target.value }))}
@@ -152,8 +158,9 @@ function GoalForm({ initial, onCancel, onSubmit, submitting, isEdit }: GoalFormP
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1">Target date</label>
+          <label htmlFor="goal-time-bound" className="block text-sm font-medium text-foreground mb-1">Target date</label>
           <input
+            id="goal-time-bound"
             type="date"
             className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
             value={form.time_bound}
@@ -162,8 +169,9 @@ function GoalForm({ initial, onCancel, onSubmit, submitting, isEdit }: GoalFormP
         </div>
         {isEdit && (
           <div>
-            <label className="block text-sm font-medium text-foreground mb-1">Status</label>
+            <label htmlFor="goal-status" className="block text-sm font-medium text-foreground mb-1">Status</label>
             <select
+              id="goal-status"
               className="w-full rounded border border-border bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary px-3 py-2 text-sm"
               value={form.status}
               onChange={e => setForm(f => ({ ...f, status: e.target.value as GoalStatus }))}
@@ -235,7 +243,7 @@ export default function GoalsTab() {
     social: [],
     personal: [],
   }
-  for (const g of goals) grouped[g.category].push(g)
+  for (const g of goals) if (grouped[g.category]) grouped[g.category].push(g)
 
   return (
     <div className="space-y-6">
@@ -309,7 +317,7 @@ export default function GoalsTab() {
                       </Badge>
                       {g.time_bound && (
                         <Badge variant="neutral" size="sm">
-                          by {g.time_bound}
+                          by {formatDate(g.time_bound)}
                         </Badge>
                       )}
                       {g.source === 'discovery' && (
