@@ -2,10 +2,11 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
-  Search, GraduationCap, Compass, Target, FolderKanban, Newspaper,
+  Search, GraduationCap, Building2, Compass, Target, FolderKanban, Newspaper,
   User, Bookmark, Settings, CornerDownLeft, ArrowRight,
 } from 'lucide-react'
 import { searchPrograms } from '../../api/programs'
+import { searchInstitutions } from '../../api/institutions'
 import { useCommandPalette } from '../../stores/command-palette-store'
 import { getRecentPrograms, type RecentProgram } from '../../lib/recentPrograms'
 
@@ -20,6 +21,14 @@ interface ProgramResult {
   degree_type?: string | null
   institution_name?: string | null
   institution_city?: string | null
+}
+
+interface SchoolResult {
+  id: string
+  name: string
+  city?: string | null
+  country?: string | null
+  program_count?: number | null
 }
 
 const DEGREE_LABEL: Record<string, string> = {
@@ -60,6 +69,24 @@ function ProgramRow({ p }: { p: ProgramResult }) {
         <span className="block truncate text-xs text-muted-foreground">
           {[p.institution_name, p.institution_city].filter(Boolean).join(' · ')}
           {p.degree_type ? ` · ${DEGREE_LABEL[p.degree_type] ?? p.degree_type}` : ''}
+        </span>
+      </span>
+    </>
+  )
+}
+
+/** One school row — shared by institution search results. */
+function SchoolRow({ s }: { s: SchoolResult }) {
+  return (
+    <>
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-secondary">
+        <Building2 size={16} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-medium text-foreground">{s.name}</span>
+        <span className="block truncate text-xs text-muted-foreground">
+          {[s.city, s.country].filter(Boolean).join(' · ')}
+          {s.program_count ? ` · ${s.program_count} program${s.program_count === 1 ? '' : 's'}` : ''}
         </span>
       </span>
     </>
@@ -121,12 +148,19 @@ export function CommandPalette() {
     return () => window.removeEventListener('keydown', onKey)
   }, [toggle])
 
-  const { data, isFetching } = useQuery({
+  const { data, isFetching: progFetching } = useQuery({
     queryKey: ['global-search', debounced],
     queryFn: () => searchPrograms({ q: debounced, page_size: 6 }),
     enabled: open && searching,
     staleTime: 60_000,
   })
+  const { data: instData, isFetching: instFetching } = useQuery({
+    queryKey: ['global-search-schools', debounced],
+    queryFn: () => searchInstitutions({ q: debounced, page_size: 4 }),
+    enabled: open && searching,
+    staleTime: 60_000,
+  })
+  const isFetching = progFetching || instFetching
   // Flatten everything into one keyboard-navigable command list.
   type Cmd = { key: string; section?: string; run: () => void; render: React.ReactNode }
   const commands = useMemo<Cmd[]>(() => {
@@ -157,8 +191,15 @@ export function CommandPalette() {
       }))
       return [...recentCmds, ...navCmds]
     }
+    const schoolCmds: Cmd[] = ((instData?.items ?? []) as SchoolResult[]).slice(0, 3).map((s) => ({
+      key: `school-${s.id}`,
+      section: 'Schools',
+      run: go(`/s/institutions/${s.id}`),
+      render: <SchoolRow s={s} />,
+    }))
     const progCmds: Cmd[] = items.map((p) => ({
       key: `prog-${p.id}`,
+      section: 'Programs',
       run: go(`/s/programs/${p.id}`),
       render: <ProgramRow p={p} />,
     }))
@@ -177,8 +218,8 @@ export function CommandPalette() {
         </>
       ),
     })
-    return progCmds
-  }, [searching, data, debounced, navigate, setOpen, recents])
+    return [...schoolCmds, ...progCmds]
+  }, [searching, data, instData, debounced, navigate, setOpen, recents])
 
   // Reset on open; lock scroll; restore focus on close.
   useEffect(() => {
@@ -267,7 +308,7 @@ export function CommandPalette() {
           })}
           {searching && !isFetching && commands.length === 1 && (
             <li className="px-3 py-6 text-center text-sm text-muted-foreground">
-              No programs match “{debounced}”. Press Enter to search all.
+              No programs or schools match “{debounced}”. Press Enter to search all.
             </li>
           )}
         </ul>
