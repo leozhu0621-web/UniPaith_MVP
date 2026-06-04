@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
 import Input from '../../../components/ui/Input'
+import QueryError from '../../../components/ui/QueryError'
 import Select from '../../../components/ui/Select'
 import { SkeletonCard } from '../../../components/ui/Skeleton'
 import { getPreferences, upsertPreferences } from '../../../api/students'
@@ -54,11 +55,18 @@ function WeightSlider({ label, value, onChange }: { label: string; value: number
   )
 }
 
-const splitCsv = (s: string): string[] => s.split(',').map(x => x.trim()).filter(Boolean)
+// Cap parsed CSV lists so a pasted blob can't balloon the payload: at most
+// 25 entries, each trimmed to 80 chars.
+const splitCsv = (s: string): string[] =>
+  s
+    .split(',')
+    .map(x => x.trim().slice(0, 80))
+    .filter(Boolean)
+    .slice(0, 25)
 
 export default function PreferencesTab() {
   const qc = useQueryClient()
-  const { data: prefs, isLoading } = useQuery({ queryKey: ['preferences'], queryFn: getPreferences, retry: false })
+  const { data: prefs, isLoading, isError, refetch } = useQuery({ queryKey: ['preferences'], queryFn: getPreferences, retry: false })
   const [form, setForm] = useState<any>(null)
 
   useEffect(() => {
@@ -95,6 +103,7 @@ export default function PreferencesTab() {
     onError: () => showToast("Something didn't work. Try again.", 'error'),
   })
 
+  if (isError) return <QueryError onRetry={() => refetch()} />
   if (isLoading || !form) return <div className="space-y-3">{Array.from({ length: 2 }).map((_, i) => <SkeletonCard key={i} />)}</div>
 
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }))

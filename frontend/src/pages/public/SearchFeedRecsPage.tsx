@@ -32,6 +32,7 @@ import Card from '../../components/ui/Card'
 import usePageTitle from '../../hooks/usePageTitle'
 import {
   CardSkeleton,
+  CardTitle,
   Chip,
   ErrorState,
   FilterRow,
@@ -92,10 +93,9 @@ function CapabilityCard({ capability }: { capability: SearchCapability }) {
   return (
     <Card className="flex h-full flex-col gap-3 p-5">
       <div className="flex items-start justify-between gap-3">
-        <span className="inline-flex items-center gap-2 text-h3 leading-snug text-foreground">
-          <Icon size={18} className="shrink-0 text-secondary" />
+        <CardTitle icon={Icon} className="leading-snug">
           {capability.title}
-        </span>
+        </CardTitle>
         <StatusChip status={capability.status} />
       </div>
 
@@ -260,7 +260,7 @@ export default function SearchFeedRecsPage() {
       </Hero>
 
       {/* Headline stats — read live from the running backend */}
-      <StatBand>
+      <StatBand isError={isError}>
         {isLoading || !data ? (
           [0, 1, 2, 3].map(i => <StatSkeleton key={i} />)
         ) : (

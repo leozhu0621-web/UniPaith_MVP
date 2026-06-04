@@ -325,12 +325,22 @@ export function SectionHeader({
 export type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
 export function SaveStatus({ state }: { state: SaveState }) {
+  // Capture the wall-clock time at the moment we transition INTO 'saved', not
+  // on every render — otherwise "Saved at HH:MM" drifts forward each re-render.
+  const [savedAt, setSavedAt] = useState<string | null>(null)
+  useEffect(() => {
+    if (state === 'saved') {
+      setSavedAt(
+        new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      )
+    }
+  }, [state])
+
   if (state === 'idle') return null
   if (state === 'saving') return <span className="text-xs text-muted-foreground">Saving…</span>
   if (state === 'error')
     return <span className="text-xs text-error">Couldn't save. Try again.</span>
-  const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
-  return <span className="text-xs text-success">Saved at {time}</span>
+  return <span className="text-xs text-success">Saved at {savedAt ?? '—'}</span>
 }
 
 /**

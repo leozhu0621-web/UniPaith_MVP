@@ -27,7 +27,16 @@ import type { OverviewSurface } from '../../types/build'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
 import usePageTitle from '../../hooks/usePageTitle'
-import { GoalShell, Hero, SectionHeading, Stat, StatBand, StatSkeleton } from './goalUi'
+import {
+  CardTitle,
+  ErrorState,
+  GoalShell,
+  Hero,
+  SectionHeading,
+  Stat,
+  StatBand,
+  StatSkeleton,
+} from './goalUi'
 
 // Specs 48–53 — the /goal transparency hub. One landing that links the public
 // build surfaces (AI agents · roadmap · feature coverage · API contract · data
@@ -77,10 +86,10 @@ function SurfaceCard({ surface }: { surface: OverviewSurface }) {
     <Link to={surface.path} className="group block h-full">
       <Card interactive className="flex h-full flex-col gap-3 p-6">
         <div className="flex items-start justify-between gap-3">
-          <span className="inline-flex items-center gap-2 text-h3 text-foreground">
+          <CardTitle>
             <Icon size={20} className="text-secondary" />
             {surface.title}
-          </span>
+          </CardTitle>
           <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             Spec {surface.spec}
           </span>
@@ -104,7 +113,7 @@ function SurfaceCard({ surface }: { surface: OverviewSurface }) {
 
 export default function GoalHubPage() {
   usePageTitle('How UniPaith is built')
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: qk.buildOverview(),
     queryFn: getBuildOverview,
     staleTime: 5 * 60_000,
@@ -134,7 +143,7 @@ export default function GoalHubPage() {
       </Hero>
 
       {/* Live headline stats */}
-      <StatBand>
+      <StatBand isError={isError}>
         {isLoading || !data ? (
           [0, 1, 2, 3].map(i => <StatSkeleton key={i} />)
         ) : (
@@ -161,6 +170,10 @@ export default function GoalHubPage() {
         )}
       </StatBand>
 
+      {isError && (
+        <ErrorState onRetry={() => refetch()} label="We couldn't load the build overview just now." />
+      )}
+
       {/* Surface cards */}
       <section id="surfaces" className="mt-16 scroll-mt-20">
         <SectionHeading
@@ -171,7 +184,8 @@ export default function GoalHubPage() {
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data
             ? data.surfaces.map(s => <SurfaceCard key={s.key} surface={s} />)
-            : [0, 1, 2, 3, 4, 5].map(i => (
+            : !isError &&
+              [0, 1, 2, 3, 4, 5].map(i => (
                 <div key={i} className="h-48 rounded-lg border border-border bg-card animate-pulse" />
               ))}
         </div>

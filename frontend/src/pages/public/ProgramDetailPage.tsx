@@ -18,7 +18,9 @@ import Textarea from '../../components/ui/Textarea'
 import Tabs from '../../components/ui/Tabs'
 import Skeleton from '../../components/ui/Skeleton'
 import EmptyState from '../../components/ui/EmptyState'
+import QueryError from '../../components/ui/QueryError'
 import { showToast } from '../../stores/toast-store'
+import { useAuthStore } from '../../stores/auth-store'
 import { formatCurrency, formatDate, formatPercent } from '../../utils/format'
 import { DEGREE_LABELS, DELIVERY_FORMAT_LABELS, CAMPUS_SETTING_LABELS } from '../../utils/constants'
 import {
@@ -39,6 +41,10 @@ import type { Program, Institution, EventItem } from '../../types'
 export default function ProgramDetailPage() {
   const { programId } = useParams<{ programId: string }>()
   const [searchParams] = useSearchParams()
+  // When a logged-in student lands on this public page, point Apply/Save at the
+  // real in-app program page (where the actual save/apply actions live) rather
+  // than the signup/login CTAs meant for anonymous visitors.
+  const isStudent = useAuthStore(s => s.isAuthenticated && s.user?.role === 'student')
   const [tab, setTab] = useState('overview')
   const [showInquiryModal, setShowInquiryModal] = useState(false)
   const [inquirySubject, setInquirySubject] = useState('')
@@ -111,6 +117,19 @@ export default function ProgramDetailPage() {
         <Skeleton className="h-10 w-96" />
         <Skeleton className="h-6 w-64" />
         <div className="grid grid-cols-3 gap-4">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>
+      </div>
+    )
+  }
+
+  // A failed fetch (network / 5xx) is distinct from a genuine 404 — offer a retry
+  // instead of telling the visitor the program doesn't exist.
+  if (programQ.isError) {
+    return (
+      <div className="max-w-5xl mx-auto px-6 py-16">
+        <QueryError detail="We couldn't load this program." onRetry={() => programQ.refetch()} />
+        <div className="text-center mt-4">
+          <Link to="/browse" className="text-secondary hover:underline">Browse programs</Link>
+        </div>
       </div>
     )
   }
@@ -192,18 +211,18 @@ export default function ProgramDetailPage() {
               )}
 
               <Link
-                to="/login"
+                to={isStudent ? `/s/programs/${p.id}` : '/login'}
                 className="inline-flex items-center gap-2 mt-4 px-3 py-2 rounded-lg border border-secondary/30 bg-secondary/5 text-secondary text-sm font-semibold hover:bg-secondary/10 transition-colors"
               >
-                <Sparkles size={14} /> Sign in to see your match
+                <Sparkles size={14} /> {isStudent ? 'See your match' : 'Sign in to see your match'}
               </Link>
             </div>
 
             <div className="flex flex-col gap-2 shrink-0">
-              <Link to="/signup?role=student">
+              <Link to={isStudent ? `/s/programs/${p.id}` : '/signup?role=student'}>
                 <Button className="w-full">Apply Now</Button>
               </Link>
-              <Link to="/login">
+              <Link to={isStudent ? `/s/programs/${p.id}` : '/login'}>
                 <Button variant="secondary" className="w-full">Save Program</Button>
               </Link>
               <Button variant="secondary" onClick={() => setShowInquiryModal(true)} className="w-full flex items-center gap-2">
@@ -277,12 +296,11 @@ export default function ProgramDetailPage() {
                     {faculty.map((f, i) => (
                       <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                         <div className="w-9 h-9 rounded-full bg-secondary/10 flex items-center justify-center text-sm font-medium text-secondary">
-                          {(f.name || '?')[0].toUpperCase()}
+                          {String(f.name ?? '?').trim()[0]?.toUpperCase() ?? '?'}
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{f.name}</p>
                           {f.role && <p className="text-xs text-foreground/70">{f.role}</p>}
-                          {f.email && <p className="text-xs text-foreground/50">{f.email}</p>}
                         </div>
                       </div>
                     ))}
@@ -579,8 +597,8 @@ export default function ProgramDetailPage() {
 
       <Modal isOpen={showInquiryModal} onClose={() => setShowInquiryModal(false)} title={`Request Info — ${p?.program_name ?? ''}`}>
         <div className="space-y-4">
-          <Input label="Subject" value={inquirySubject} onChange={e => setInquirySubject(e.target.value)} placeholder="What would you like to know about this program?" />
-          <Textarea label="Message" value={inquiryMessage} onChange={e => setInquiryMessage(e.target.value)} rows={4} placeholder="Tell us about your interests, questions about admissions, curriculum, financial aid..." />
+          <Input label="Subject" value={inquirySubject} onChange={e => setInquirySubject(e.target.value)} maxLength={200} placeholder="What would you like to know about this program?" />
+          <Textarea label="Message" value={inquiryMessage} onChange={e => setInquiryMessage(e.target.value)} rows={4} maxLength={2000} showCount placeholder="Tell us about your interests, questions about admissions, curriculum, financial aid..." />
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setShowInquiryModal(false)}>Cancel</Button>
             <Button

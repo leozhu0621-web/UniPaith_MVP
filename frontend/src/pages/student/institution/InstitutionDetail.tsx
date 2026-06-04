@@ -22,6 +22,7 @@ import Modal from '../../../components/ui/Modal'
 import Input from '../../../components/ui/Input'
 import Select from '../../../components/ui/Select'
 import Textarea from '../../../components/ui/Textarea'
+import QueryError from '../../../components/ui/QueryError'
 import {
   Bookmark, BookmarkCheck, MapPin, Globe, Users, Building2, BookOpen,
   Mail, Phone, CalendarPlus, Check, ChevronDown, X, Search, GraduationCap,
@@ -50,35 +51,39 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
   const compareStore = useCompareStore()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const { data: institution, isLoading } = useQuery({
+  const { data: institution, isLoading, isError: instError, refetch: refetchInst } = useQuery({
     queryKey: ['institution', institutionId],
     queryFn: () => getPublicInstitution(institutionId),
     enabled: !!institutionId,
   })
 
-  const { data: schools } = useQuery({
+  const schoolsQ = useQuery({
     queryKey: ['institution-schools', institutionId],
     queryFn: () => getInstitutionSchools(institutionId),
     enabled: !!institutionId,
   })
+  const schools = schoolsQ.data
 
-  const { data: programsResp } = useQuery({
+  const programsQ = useQuery({
     queryKey: ['institution-programs', institutionId],
     queryFn: () => searchPrograms({ institution_id: institutionId, page_size: 100 }),
     enabled: !!institutionId,
   })
+  const programsResp = programsQ.data
 
-  const { data: events } = useQuery({
+  const eventsQ = useQuery({
     queryKey: ['institution-events', institutionId],
     queryFn: () => listEvents({ institution_id: institutionId, limit: 30 }),
     enabled: !!institutionId,
   })
+  const events = eventsQ.data
 
-  const { data: posts } = useQuery({
+  const postsQ = useQuery({
     queryKey: ['institution-posts', institutionId],
     queryFn: () => getPublicPosts(institutionId),
     enabled: !!institutionId,
   })
+  const posts = postsQ.data
 
   // Authenticated-only: RSVP set, saved programs, followed schools.
   const { data: rsvps } = useQuery({ queryKey: ['my-rsvps'], queryFn: getMyRsvps, enabled: isAuthenticated, retry: false })
@@ -139,13 +144,29 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
     rsvpMut.mutate(eventId)
   }
 
-  const toggleSaveProgram = async (programId: string) => {
-    if (!isAuthenticated) { navigate('/login'); return }
-    try {
+  // Save/unsave a program. Guarded against double-clicks: a per-id in-flight set
+  // drops repeat taps while a toggle is still resolving (ProgramCard's button has
+  // no disabled state of its own).
+  const saveProgramMut = useMutation({
+    mutationFn: async (programId: string) => {
       if (savedIds.has(programId)) await unsaveProgram(programId)
       else await saveProgram(programId)
-      queryClient.invalidateQueries({ queryKey: ['saved-programs'] })
-    } catch { showToast('Couldn’t save that program. Try again.', 'error') }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['saved-programs'] }),
+    onError: () => showToast('Couldn’t save that program. Try again.', 'error'),
+  })
+  const [savingIds, setSavingIds] = useState<Set<string>>(new Set())
+  const toggleSaveProgram = (programId: string) => {
+    if (!isAuthenticated) { navigate('/login'); return }
+    if (savingIds.has(programId)) return
+    setSavingIds(prev => new Set(prev).add(programId))
+    saveProgramMut.mutate(programId, {
+      onSettled: () => setSavingIds(prev => {
+        const next = new Set(prev)
+        next.delete(programId)
+        return next
+      }),
+    })
   }
 
   // ── Request info (Spec 22 §7) — opens an inquiry routed per inquiry_routing ─
@@ -185,6 +206,16 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
         <Skeleton className="h-40" />
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-64" />
+      </div>
+    )
+  }
+
+  // A failed institution fetch (network / 5xx) is retryable — distinct from a
+  // genuine "not found" where the load succeeded but returned nothing.
+  if (instError) {
+    return (
+      <div className="p-6 max-w-3xl mx-auto py-20">
+        <QueryError detail="We couldn't load this school." onRetry={() => refetchInst()} />
       </div>
     )
   }
@@ -320,28 +351,39 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
         {tab === 'overview' && <OverviewTab inst={inst} schoolCount={schoolList.length} programCount={programList.length} />}
         {tab === 'about' && <AboutTab inst={inst} />}
         {tab === 'schools' && (
-          <SchoolsTab
-            schoolList={schoolList}
-            institutionName={inst.name}
-            onOpen={sid => navigate(schoolHref(sid))}
-            onShowPrograms={() => setTab('programs')}
-          />
+          schoolsQ.isError ? (
+            <QueryError variant="inline" detail="We couldn't load this school's schools." onRetry={() => schoolsQ.refetch()} />
+          ) : (
+            <SchoolsTab
+              schoolList={schoolList}
+              institutionName={inst.name}
+              onOpen={sid => navigate(schoolHref(sid))}
+              onShowPrograms={() => setTab('programs')}
+            />
+          )
         )}
         {tab === 'programs' && (
-          <ProgramsTab
-            programs={programList}
-            institutionName={inst.name}
-            savedIds={savedIds}
-            comparing={(id: string) => compareStore.has(id)}
-            onSave={toggleSaveProgram}
-            onCompare={(p) => compareStore.has(p.id)
-              ? compareStore.remove(p.id)
-              : compareStore.add({ program_id: p.id, program_name: p.program_name, institution_name: p.institution_name ?? inst.name, degree_type: p.degree_type })}
-            onView={(id) => navigate(programHref(id))}
-            onAsk={isAuthenticated ? (p) => navigate(`/s?prefill=${encodeURIComponent(`Tell me about ${p.program_name} at ${inst.name}. Is it a good fit?`)}`) : undefined}
-          />
+          programsQ.isError ? (
+            <QueryError variant="inline" detail="We couldn't load this school's programs." onRetry={() => programsQ.refetch()} />
+          ) : (
+            <ProgramsTab
+              programs={programList}
+              institutionName={inst.name}
+              savedIds={savedIds}
+              comparing={(id: string) => compareStore.has(id)}
+              onSave={toggleSaveProgram}
+              onCompare={(p) => compareStore.has(p.id)
+                ? compareStore.remove(p.id)
+                : compareStore.add({ program_id: p.id, program_name: p.program_name, institution_name: p.institution_name ?? inst.name, degree_type: p.degree_type })}
+              onView={(id) => navigate(programHref(id))}
+              onAsk={isAuthenticated ? (p) => navigate(`/s?prefill=${encodeURIComponent(`Tell me about ${p.program_name} at ${inst.name}. Is it a good fit?`)}`) : undefined}
+            />
+          )
         )}
         {tab === 'events' && (
+          eventsQ.isError ? (
+            <QueryError variant="inline" detail="We couldn't load this school's events." onRetry={() => eventsQ.refetch()} />
+          ) : (
           <EventsTab
             events={eventList}
             institutionName={inst.name}
@@ -350,8 +392,15 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
             onRsvp={onRsvp}
             rsvpPending={rsvpMut.isPending}
           />
+          )
         )}
-        {tab === 'updates' && <UpdatesTab posts={postList} institutionName={inst.name} />}
+        {tab === 'updates' && (
+          postsQ.isError ? (
+            <QueryError variant="inline" detail="We couldn't load this school's updates." onRetry={() => postsQ.refetch()} />
+          ) : (
+            <UpdatesTab posts={postList} institutionName={inst.name} />
+          )
+        )}
       </div>
 
       {/* Request info (Spec 22 §7 / §15) — authenticated only; public surfaces
@@ -631,8 +680,9 @@ function AboutTab({ inst }: { inst: Institution }) {
           <h2 className="font-semibold text-foreground mb-3">International students</h2>
           <div className="space-y-2 text-sm">
             {intlKeys.map(key => {
-              const val: any = intl[key]
-              const text = typeof val === 'object' ? (val.summary || val.note || JSON.stringify(val)) : String(val)
+              const text = humanizeValue(intl[key])
+              // Omit entries with no human-readable summary rather than leaking raw JSON.
+              if (!text) return null
               return (
                 <div key={key} className="px-3 py-2 rounded-lg bg-muted/60 border border-border/50">
                   <p className="text-[12px] font-medium text-foreground capitalize">{fmtKey(key)}</p>
@@ -715,7 +765,7 @@ function ProgramsTab({ programs, institutionName, savedIds, comparing, onSave, o
 
   const degreeOpts = useMemo(() => uniqueSorted(programs.map(p => p.degree_type)), [programs])
   const deliveryOpts = useMemo(() => uniqueSorted(programs.map(p => p.delivery_format)), [programs])
-  const hasScores = programs.some(p => (p as any).match_score != null)
+  const hasScores = programs.some(p => programScore(p) != null)
 
   const filtered = useMemo(() => {
     let xs = programs.filter(p => {
@@ -732,7 +782,7 @@ function ProgramsTab({ programs, institutionName, savedIds, comparing, onSave, o
         case 'name': return a.program_name.localeCompare(b.program_name)
         case 'tuition': return (a.tuition ?? Infinity) - (b.tuition ?? Infinity)
         case 'deadline': return (dl(a) ?? Infinity) - (dl(b) ?? Infinity)
-        default: return ((b as any).match_score ?? 0) - ((a as any).match_score ?? 0)
+        default: return (programScore(b) ?? 0) - (programScore(a) ?? 0)
       }
     })
     return xs
@@ -1000,6 +1050,25 @@ function trimSource(s: string): string {
   return s.replace(/\s*\[Source:.*?\]\s*/g, '').trim()
 }
 
+// Render a JSONB value as human-readable text. Scalars/arrays stringify cleanly;
+// objects surface only their summary/note. Returns null (caller omits the row)
+// rather than ever leaking raw `{...}` JSON to the user.
+function humanizeValue(val: unknown): string | null {
+  if (val == null) return null
+  if (typeof val === 'string') return val.trim() || null
+  if (typeof val === 'number' || typeof val === 'boolean') return String(val)
+  if (Array.isArray(val)) {
+    const parts = val.map(v => humanizeValue(v)).filter((v): v is string => !!v)
+    return parts.length ? parts.join(', ') : null
+  }
+  if (typeof val === 'object') {
+    const o = val as Record<string, unknown>
+    const s = o.summary ?? o.note ?? o.description ?? o.label ?? o.name
+    return typeof s === 'string' && s.trim() ? s.trim() : null
+  }
+  return null
+}
+
 function uniqueSorted(xs: (string | null | undefined)[]): string[] {
   return Array.from(new Set(xs.filter((x): x is string => !!x))).sort()
 }
@@ -1009,6 +1078,13 @@ function dl(p: ProgramSummary): number | null {
   if (!d) return null
   const t = new Date(d).getTime()
   return Number.isNaN(t) ? null : t
+}
+
+// Dual-score migration: prefer fitness_score, fall back to legacy match_score
+// (Phase E keeps match_score dual-written for one release).
+function programScore(p: ProgramSummary): number | null {
+  const s = (p as any).fitness_score ?? (p as any).match_score
+  return typeof s === 'number' ? s : null
 }
 
 function formatEventTime(iso: string): string {

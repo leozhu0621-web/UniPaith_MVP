@@ -32,10 +32,13 @@ import {
 // GET /api/v1/build/acceptance, which reads the running system (routes, agents,
 // schema, feature coverage); the launch-blocker statuses are evidence-backed.
 
+// No danger token is available on the hub palette, so `red` is kept on the
+// warning hue but made visually distinct from `amber` with an emphasized ring
+// (and a bold status word in the card) — red must never read as merely amber.
 const LEVEL_DOT: Record<string, string> = {
   green: 'bg-success dark:bg-success-dark',
   amber: 'bg-warning dark:bg-warning-dark',
-  red: 'bg-warning dark:bg-warning-dark',
+  red: 'bg-warning dark:bg-warning-dark ring-2 ring-foreground ring-offset-1 ring-offset-card',
 }
 
 const JOURNEY_ICON: Record<string, typeof GraduationCap> = {
@@ -44,13 +47,18 @@ const JOURNEY_ICON: Record<string, typeof GraduationCap> = {
 }
 
 function LevelCard({ level }: { level: AcceptanceLevel }) {
+  const isRed = level.status === 'red'
   return (
     <Card className="flex flex-col gap-2 p-5">
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           Level {level.order}
         </span>
-        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <span
+          className={`inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider ${
+            isRed ? 'font-bold text-foreground' : 'text-muted-foreground'
+          }`}
+        >
           <span className={`h-2 w-2 rounded-full ${LEVEL_DOT[level.status] ?? 'bg-muted'}`} aria-hidden />
           {level.status}
         </span>
@@ -121,9 +129,9 @@ function BlockerRow({ blocker }: { blocker: LaunchBlocker }) {
 function SignoffCell({ ok, klass }: { ok: boolean; klass: string }) {
   if (klass !== 'core') return <span className="text-muted-foreground">—</span>
   return ok ? (
-    <CircleCheck size={16} className="text-success dark:text-success-dark" aria-label="green" />
+    <CircleCheck size={16} className="text-success dark:text-success-dark" aria-label="signed off" />
   ) : (
-    <Clock size={16} className="text-warning dark:text-warning-dark" aria-label="not yet" />
+    <Clock size={16} className="text-warning dark:text-warning-dark" aria-label="not yet signed off" />
   )
 }
 
@@ -199,7 +207,7 @@ export default function AcceptancePage() {
         )}
       </Hero>
 
-      <StatBand>
+      <StatBand isError={isError}>
         {isLoading || !data ? (
           [0, 1, 2, 3].map(i => <StatSkeleton key={i} />)
         ) : (
@@ -226,12 +234,14 @@ export default function AcceptancePage() {
         )}
       </StatBand>
 
-      {isError && (
+      {/* On error, stop before the sections so they don't render as perpetual
+          skeletons / empty arrays — show one retry affordance instead. */}
+      {isError ? (
         <ErrorState onRetry={() => refetch()} label="We couldn't load the acceptance runbook just now." />
-      )}
-
-      {/* §1 — the three readiness levels */}
-      <section className="mt-16">
+      ) : (
+        <>
+          {/* §1 — the three readiness levels */}
+          <section className="mt-16">
         <SectionHeading
           icon={Rocket}
           title="What 'ready to use' means"
@@ -350,6 +360,8 @@ export default function AcceptancePage() {
             ))}
           </div>
         </section>
+      )}
+        </>
       )}
     </GoalShell>
   )

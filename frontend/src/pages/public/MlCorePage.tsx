@@ -36,6 +36,7 @@ import Card from '../../components/ui/Card'
 import usePageTitle from '../../hooks/usePageTitle'
 import {
   CardSkeleton,
+  CardTitle,
   Chip,
   ErrorState,
   FilterRow,
@@ -88,10 +89,9 @@ function CapabilityCard({ capability }: { capability: MlCoreCapability }) {
   return (
     <Card className="flex h-full flex-col gap-3 p-5">
       <div className="flex items-start justify-between gap-3">
-        <span className="inline-flex items-center gap-2 text-h3 leading-snug text-foreground">
-          <Icon size={18} className="shrink-0 text-secondary" />
+        <CardTitle icon={Icon} className="leading-snug">
           {capability.title}
-        </span>
+        </CardTitle>
         <StatusChip status={capability.status} />
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
@@ -169,12 +169,12 @@ function PhaseCard({ phase }: { phase: MlCorePhase }) {
   return (
     <Card className="flex h-full flex-col gap-2 p-5">
       <div className="flex items-center justify-between gap-3">
-        <span className="inline-flex items-center gap-2 text-h3 text-foreground">
+        <CardTitle>
           <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-secondary/40 font-mono text-[12px] text-secondary">
             {phase.key}
           </span>
           {phase.title}
-        </span>
+        </CardTitle>
         <StatusChip status={phase.status} />
       </div>
       <p className="text-sm text-muted-foreground">{phase.detail}</p>
@@ -232,7 +232,7 @@ export default function MlCorePage() {
       </Hero>
 
       {/* Headline stats — read live from the running routing layer */}
-      <StatBand>
+      <StatBand isError={isError}>
         {isLoading || !data ? (
           [0, 1, 2, 3].map(i => <StatSkeleton key={i} />)
         ) : (
@@ -284,10 +284,10 @@ export default function MlCorePage() {
             const Icon = SIDE_ICON[col.side] ?? Cpu
             return (
               <Card key={col.side} className="flex h-full flex-col gap-3 p-6">
-                <span className="inline-flex items-center gap-2 text-h3 text-foreground">
+                <CardTitle>
                   <Icon size={20} className="text-secondary" />
                   {col.title}
-                </span>
+                </CardTitle>
                 <dl className="space-y-2 text-sm">
                   <div className="flex gap-2">
                     <dt className="w-20 shrink-0 text-muted-foreground">Role</dt>

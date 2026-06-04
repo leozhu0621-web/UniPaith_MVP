@@ -60,8 +60,9 @@ function NarrativeEditor({ initial, onCancel, onSubmit, submitting }: NarrativeE
       className="space-y-4"
     >
       <div>
-        <label className="block text-sm font-medium text-foreground mb-1">Career target</label>
+        <label htmlFor="strategy-career-target" className="block text-sm font-medium text-foreground mb-1">Career target</label>
         <input
+          id="strategy-career-target"
           className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary"
           maxLength={500}
           value={career}
@@ -70,8 +71,9 @@ function NarrativeEditor({ initial, onCancel, onSubmit, submitting }: NarrativeE
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-foreground mb-1">Target degree</label>
+        <label htmlFor="strategy-target-degree" className="block text-sm font-medium text-foreground mb-1">Target degree</label>
         <input
+          id="strategy-target-degree"
           className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary"
           maxLength={120}
           value={degree}
@@ -80,8 +82,9 @@ function NarrativeEditor({ initial, onCancel, onSubmit, submitting }: NarrativeE
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-foreground mb-1">Narrative</label>
+        <label htmlFor="strategy-narrative" className="block text-sm font-medium text-foreground mb-1">Narrative</label>
         <textarea
+          id="strategy-narrative"
           className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary"
           rows={10}
           maxLength={20000}
@@ -307,15 +310,21 @@ export default function StrategyTab() {
       {/* Spec 03 §7 — on regenerate failure, preserve the existing active
           strategy and surface an inline brand-aligned banner. The toast
           (kept for accessibility) tells the user *something* changed; this
-          banner tells them WHAT to expect on the page below it. */}
-      {generateMut.isError && active && (
+          banner tells them WHAT to expect on the page below it. Surfaces
+          even when there is no active strategy yet, so a first-time
+          generation failure isn't swallowed. */}
+      {generateMut.isError && (
         <div
           role="status"
           className="flex items-start gap-2 rounded-lg border border-border border-l-2 border-l-primary bg-muted px-3 py-2.5 text-sm text-foreground"
         >
           <AlertTriangle size={16} className="mt-0.5 shrink-0 text-warning" aria-hidden="true" />
           <div>
-            <div className="font-medium">We couldn't reach the AI service. Showing your last strategy.</div>
+            <div className="font-medium">
+              {active
+                ? "We couldn't reach the AI service. Showing your last strategy."
+                : "We couldn't reach the AI service. No draft was created."}
+            </div>
             <div className="text-muted-foreground">Try again in a few moments.</div>
           </div>
         </div>

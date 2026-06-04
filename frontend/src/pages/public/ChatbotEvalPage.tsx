@@ -35,6 +35,7 @@ import Card from '../../components/ui/Card'
 import usePageTitle from '../../hooks/usePageTitle'
 import {
   CardSkeleton,
+  CardTitle,
   Chip,
   ErrorState,
   FilterRow,
@@ -107,10 +108,9 @@ function AgentCard({ agent }: { agent: ChatbotAgent }) {
   return (
     <Card className="flex h-full flex-col gap-3 p-5">
       <div className="flex items-start justify-between gap-3">
-        <span className="inline-flex items-center gap-2 text-h3 leading-snug text-foreground">
-          <Icon size={18} className="shrink-0 text-secondary" />
+        <CardTitle icon={Icon} className="leading-snug">
           {agent.title}
-        </span>
+        </CardTitle>
         <Chip tone={isClaude ? 'success' : 'warning'}>{isClaude ? 'Claude' : agent.provider}</Chip>
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
@@ -129,10 +129,9 @@ function DimensionCard({ dimension }: { dimension: ChatbotConstitutionDimension 
   return (
     <Card className="flex h-full flex-col gap-2 p-5">
       <div className="flex items-start justify-between gap-3">
-        <span className="inline-flex items-center gap-2 text-h3 leading-snug text-foreground">
-          <Icon size={18} className="shrink-0 text-secondary" />
+        <CardTitle icon={Icon} className="leading-snug">
           {dimension.label}
-        </span>
+        </CardTitle>
         {dimension.hard_floor && <HardFloorChip />}
       </div>
       <p className="font-mono text-[11px] text-muted-foreground">{dimension.key}</p>
@@ -250,7 +249,7 @@ export default function ChatbotEvalPage() {
       </Hero>
 
       {/* Headline stats — read live from the running backend */}
-      <StatBand>
+      <StatBand isError={isError}>
         {isLoading || !data ? (
           [0, 1, 2, 3].map(i => <StatSkeleton key={i} />)
         ) : (

@@ -45,6 +45,7 @@ import {
   updateTestScore,
 } from '../../../api/students'
 import { deleteDocument, listDocuments } from '../../../api/documents'
+import { confirmDialog } from '../../../stores/confirm-store'
 import { showToast } from '../../../stores/toast-store'
 import { formatDate, formatFileSize } from '../../../utils/format'
 import {
@@ -101,6 +102,7 @@ function CoursesPanel({ recordId }: { recordId: string }) {
       invalidate()
       showToast('Course removed', 'success')
     },
+    onError: () => showToast("We couldn't remove the course. Please try again.", 'error'),
   })
 
   const list: any[] = Array.isArray(courses) ? courses : []
@@ -190,7 +192,20 @@ function CoursesPanel({ recordId }: { recordId: string }) {
                           >
                             <Pencil size={12} />
                           </Button>
-                          <Button size="sm" variant="ghost" onClick={() => deleteMut.mutate(c.id)}>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={async () => {
+                              const ok = await confirmDialog({
+                                title: 'Delete course?',
+                                body: "This can't be undone.",
+                                confirmLabel: 'Delete',
+                                destructive: true,
+                              })
+                              if (!ok) return
+                              deleteMut.mutate(c.id)
+                            }}
+                          >
                             <Trash2 size={12} />
                           </Button>
                         </div>
@@ -253,19 +268,20 @@ export default function AcademicsTab() {
 
   const acadCreate = useMutation({ mutationFn: createAcademic, onSuccess: () => onSaved('Record added'), onError: onErr })
   const acadUpdate = useMutation({ mutationFn: ({ id, data }: any) => updateAcademic(id, data), onSuccess: () => onSaved('Record updated'), onError: onErr })
-  const acadDelete = useMutation({ mutationFn: deleteAcademic, onSuccess: () => { inv(); showToast('Record deleted', 'success') } })
+  const acadDelete = useMutation({ mutationFn: deleteAcademic, onSuccess: () => { inv(); showToast('Record deleted', 'success') }, onError: onErr })
   const testCreate = useMutation({ mutationFn: createTestScore, onSuccess: () => onSaved('Score added'), onError: onErr })
   const testUpdate = useMutation({ mutationFn: ({ id, data }: any) => updateTestScore(id, data), onSuccess: () => onSaved('Score updated'), onError: onErr })
-  const testDelete = useMutation({ mutationFn: deleteTestScore, onSuccess: () => { inv(); showToast('Score deleted', 'success') } })
+  const testDelete = useMutation({ mutationFn: deleteTestScore, onSuccess: () => { inv(); showToast('Score deleted', 'success') }, onError: onErr })
   const langCreate = useMutation({ mutationFn: createLanguage, onSuccess: () => onSaved('Language added'), onError: onErr })
   const langUpdate = useMutation({ mutationFn: ({ id, data }: any) => updateLanguage(id, data), onSuccess: () => onSaved('Language updated'), onError: onErr })
-  const langDelete = useMutation({ mutationFn: deleteLanguage, onSuccess: () => { inv(); showToast('Language removed', 'success') } })
+  const langDelete = useMutation({ mutationFn: deleteLanguage, onSuccess: () => { inv(); showToast('Language removed', 'success') }, onError: onErr })
   const rsCreate = useMutation({ mutationFn: createResearch, onSuccess: () => onSaved('Research added'), onError: onErr })
   const rsUpdate = useMutation({ mutationFn: ({ id, data }: any) => updateResearch(id, data), onSuccess: () => onSaved('Research updated'), onError: onErr })
-  const rsDelete = useMutation({ mutationFn: deleteResearch, onSuccess: () => { inv(); showToast('Research removed', 'success') } })
+  const rsDelete = useMutation({ mutationFn: deleteResearch, onSuccess: () => { inv(); showToast('Research removed', 'success') }, onError: onErr })
   const docDelete = useMutation({
     mutationFn: deleteDocument,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['documents'] }); showToast('Document removed', 'success') },
+    onError: onErr,
   })
 
   if (isLoading || !profile) return <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
@@ -317,7 +333,20 @@ export default function AcademicsTab() {
                     <Button size="sm" variant="ghost" onClick={() => open('academic', rec)}>
                       <Pencil size={14} />
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => acadDelete.mutate(rec.id)}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={async () => {
+                        const ok = await confirmDialog({
+                          title: 'Delete academic record?',
+                          body: "This can't be undone.",
+                          confirmLabel: 'Delete',
+                          destructive: true,
+                        })
+                        if (!ok) return
+                        acadDelete.mutate(rec.id)
+                      }}
+                    >
                       <Trash2 size={14} />
                     </Button>
                   </div>
@@ -350,7 +379,20 @@ export default function AcademicsTab() {
                     <Badge variant={d.verification_status === 'verified' ? 'success' : 'neutral'}>
                       {d.verification_status || 'uploaded'}
                     </Badge>
-                    <Button size="sm" variant="ghost" onClick={() => docDelete.mutate(d.id)}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={async () => {
+                        const ok = await confirmDialog({
+                          title: 'Delete document?',
+                          body: "This can't be undone.",
+                          confirmLabel: 'Delete',
+                          destructive: true,
+                        })
+                        if (!ok) return
+                        docDelete.mutate(d.id)
+                      }}
+                    >
                       <Trash2 size={14} />
                     </Button>
                   </div>
@@ -395,7 +437,20 @@ export default function AcademicsTab() {
                       <Button size="sm" variant="ghost" onClick={() => open('test', ts)}>
                         <Pencil size={12} />
                       </Button>
-                      <Button size="sm" variant="ghost" onClick={() => testDelete.mutate(ts.id)}>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={async () => {
+                          const ok = await confirmDialog({
+                            title: 'Delete test score?',
+                            body: "This can't be undone.",
+                            confirmLabel: 'Delete',
+                            destructive: true,
+                          })
+                          if (!ok) return
+                          testDelete.mutate(ts.id)
+                        }}
+                      >
                         <Trash2 size={12} />
                       </Button>
                     </div>
@@ -446,7 +501,20 @@ export default function AcademicsTab() {
                   <Button size="sm" variant="ghost" onClick={() => open('language', lang)}>
                     <Pencil size={12} />
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => langDelete.mutate(lang.id)}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={async () => {
+                      const ok = await confirmDialog({
+                        title: 'Delete language?',
+                        body: "This can't be undone.",
+                        confirmLabel: 'Delete',
+                        destructive: true,
+                      })
+                      if (!ok) return
+                      langDelete.mutate(lang.id)
+                    }}
+                  >
                     <Trash2 size={12} />
                   </Button>
                 </div>
@@ -489,7 +557,20 @@ export default function AcademicsTab() {
                     <Button size="sm" variant="ghost" onClick={() => open('research', r)}>
                       <Pencil size={12} />
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => rsDelete.mutate(r.id)}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={async () => {
+                        const ok = await confirmDialog({
+                          title: 'Delete research?',
+                          body: "This can't be undone.",
+                          confirmLabel: 'Delete',
+                          destructive: true,
+                        })
+                        if (!ok) return
+                        rsDelete.mutate(r.id)
+                      }}
+                    >
                       <Trash2 size={12} />
                     </Button>
                   </div>
