@@ -140,6 +140,7 @@ async def seed() -> dict:
     only_real = os.getenv("ONLY_REAL", "1") == "1"
     catalog = json.loads(DATA.read_text())
     seeded_inst_ids: list[uuid.UUID] = []
+    seeded_program_ids: list[uuid.UUID] = []
     n_inst = n_prog = 0
 
     async with async_session() as db:
@@ -161,6 +162,16 @@ async def seed() -> dict:
                 f"{uni['name']} is a {kind} research university in "
                 f"{uni.get('city')}, {uni.get('state')}."
             )
+            # Correct per-university image (Wikimedia/Wikipedia lead image).
+            if uni.get("logo_url"):
+                inst.logo_url = uni["logo_url"]
+            if uni.get("image_url"):
+                inst.media_gallery = {
+                    "hero_image": uni["image_url"],
+                    "images": [uni["image_url"]],
+                    "source": "Wikimedia Commons / Wikipedia",
+                    "source_url": uni.get("image_source_url"),
+                }
             if enr:
                 inst.founded_year = enr.get("founded_year")
                 inst.campus_setting = enr.get("campus_setting")
@@ -224,13 +235,18 @@ async def seed() -> dict:
                 ).scalar_one_or_none()
                 if prog is None:
                     continue
+                seeded_program_ids.append(prog.id)
                 prog.is_published = True
                 prog.cost_data = cost
-                prog.catalog_source = "scorecard"
+                # Keep the high authority CatalogIngestService assigned from
+                # source="institution_verified" — a later crawl (source=crawled,
+                # authority 1) must NOT overwrite these sourced rows. The Scorecard
+                # provenance lives in source_url + field_provenance below.
+                prog.catalog_source = "institution_verified"
                 prog.source_url = sc_url
                 prog.field_provenance = {
-                    "tuition": {"source_url": sc_url},
-                    "outcomes_data": {"source_url": sc_url},
+                    "tuition": {"source_url": sc_url, "source": "college_scorecard"},
+                    "outcomes_data": {"source_url": sc_url, "source": "college_scorecard"},
                     "cost_data": {"source_url": cost.get("source_url", sc_url)},
                 }
                 if is_ug and uni.get("admit_rate") is not None:
@@ -298,10 +314,15 @@ async def seed() -> dict:
 
         unpublished = 0
         if only_real:
+            # Unpublish every published program that is NOT in the real catalog we
+            # just upserted — keyed on program id, not institution, so a *stale
+            # same-institution* row from an earlier seed (different external_id, e.g.
+            # the old reset_and_seed MIT) is unpublished too, not just other
+            # institutions' synthetic rows. Leaves ONLY real data live.
             res = await db.execute(
                 update(Program)
                 .where(
-                    Program.institution_id.notin_(seeded_inst_ids),
+                    Program.id.notin_(seeded_program_ids),
                     Program.is_published.is_(True),
                 )
                 .values(is_published=False)
