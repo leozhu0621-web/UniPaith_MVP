@@ -1279,6 +1279,18 @@ export default function ProgramDetailPage() {
         </div>
       </div>
 
+      {/* ── Data sources (attribute public + proprietary data, per product decision) ── */}
+      <footer className="mt-8 pt-4 border-t border-border">
+        <p className="text-[11px] leading-relaxed text-muted-foreground">
+          <span className="font-semibold text-foreground/70">Data sources:</span>{' '}
+          U.S. Department of Education College Scorecard (admissions, cost &amp; earnings);
+          institution-published admissions requirements, deadlines &amp; cost of attendance
+          {(odn.outcomes_source || (reviewsData?.total_reviews ?? 0) > 0 || employerData) ?
+            '; and — where shown — career-services outcomes and aggregated third-party review data' : ''}.
+          {' '}Figures reflect the latest available data; verify deadlines and costs on the official program page.
+        </p>
+      </footer>
+
       {/* ── Redacted "why this match" popover (Spec 06 §3/§5.5) ── */}
       {hasMatch && rationaleOpen && programId && (
         <RationalePopover
