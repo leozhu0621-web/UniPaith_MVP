@@ -165,7 +165,7 @@ export default function GoalHubPage() {
       <section id="surfaces" className="mt-16 scroll-mt-20">
         <SectionHeading
           icon={MapIcon}
-          title="Sixteen ways to read the build"
+          title="Fifteen ways to read the build"
           sub="Each surface is a public page backed by a live endpoint. Open one to see the detail."
         />
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

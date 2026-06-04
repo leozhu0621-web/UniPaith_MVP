@@ -1,20 +1,13 @@
-"""Spec 60 — the governed knowledge-engine service layer (§12).
+"""Shared deterministic extraction + normalization helpers.
 
-Pipeline modules: ``sources`` (allowlist registry) · ``fetcher`` · ``extractor``
-(SourceExtractionAgent) · ``normalizer`` · ``resolver`` · ``enrichment``
-(write-path + authority) · ``change_detector`` · ``engine`` (orchestrator) ·
-``seed`` (allowlist + reference seed) · ``reference_service`` (read API).
+The Spec 60 crawler / info-gathering automation (source registry, fetcher,
+orchestrator, seeders, enrichment write-path, change detector) was removed.
+What remains are the network-free, deterministic helpers still used elsewhere:
+
+- ``extractor`` — ``SourceExtractionAgent`` (grounded field extraction), consumed
+  by the ML eval harness (``ai/evals/extraction_adapter``).
+- ``schemas`` — ``DomainSchema`` / ``schema_for`` (the extraction field schemas).
+- ``normalizer`` — ``normalize_cip`` etc., used by catalog ingestion.
+
+Consumers import these submodules directly; nothing is re-exported here.
 """
-
-from unipaith.services.crawler.engine import KnowledgeEngine
-from unipaith.services.crawler.enrichment import EnrichmentWriter
-from unipaith.services.crawler.reference_service import ReferenceService
-from unipaith.services.crawler.sources import SOURCE_ALLOWLIST, SourceRegistry
-
-__all__ = [
-    "KnowledgeEngine",
-    "EnrichmentWriter",
-    "ReferenceService",
-    "SourceRegistry",
-    "SOURCE_ALLOWLIST",
-]

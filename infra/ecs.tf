@@ -288,18 +288,10 @@ resource "aws_ecs_task_definition" "backend" {
       { name = "CORS_ORIGINS", value = "[\"https://app.${var.domain_name}\"]" },
       { name = "SES_SENDER_EMAIL", value = "noreply@${var.domain_name}" },
       { name = "NOTIFICATIONS_ENABLED", value = "true" },
-      # Spec 60 — knowledge crawler as a continuous background routine. The
-      # scheduler auto-enables in prod (non-test); CRAWLER_ENGINE_ENABLED arms the
-      # governed scheduled tick (allowlisted, public-non-personal reference
-      # enrichment + change detection), and CRAWLER_LIVE_FETCH_ENABLED is the hard
-      # gate on real network fetches. Deterministic extraction (no LLM); allowlist-
-      # only frontier keeps it to vetted sources. The routine runs every 30 min and
-      # re-crawls each page every 6 h (politely catching changes + new programs).
+      # In-process scheduler (notification digests + saved-search alerts). The
+      # Spec 60 crawler / info-gathering automation was removed; its CRAWLER_* env
+      # is intentionally gone so the engine stays off (the flags default to off).
       { name = "SCHEDULER_ENABLED", value = "true" },
-      { name = "CRAWLER_ENGINE_ENABLED", value = "true" },
-      { name = "CRAWLER_LIVE_FETCH_ENABLED", value = "true" },
-      { name = "CRAWLER_TICK_INTERVAL_MINUTES", value = "30" },
-      { name = "CRAWLER_RECRAWL_INTERVAL_HOURS", value = "6" },
     ]
 
     secrets = [
