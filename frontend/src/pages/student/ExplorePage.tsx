@@ -6,7 +6,7 @@ import { searchInstitutions, getFeaturedPromotions, recordPromotionClick } from 
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
 import UniversityCard from './explore/cards/UniversityCard'
 import ExploreFilters, { EMPTY_FILTERS, applyFilters, countActiveFilters, type FilterState } from './explore/shared/ExploreFilters'
-import { Building2 } from 'lucide-react'
+import { Building2, MapPin } from 'lucide-react'
 import StrategyView from './match/StrategyView'
 import MatchesSection from './match/MatchesSection'
 import PromoCard from './explore/cards/PromoCard'
@@ -142,6 +142,48 @@ export default function ExplorePage() {
   const filteredUniList = useMemo(() => applyFilters(uniList, filters), [uniList, filters])
   const hasActiveFilters = countActiveFilters(filters) > 0
 
+  // "Near me" — sort universities by distance to the student's location (geo
+  // feature: choose schools near me). Browser geolocation; no data leaves the page.
+  const [nearMe, setNearMe] = useState<{ lat: number; lng: number } | null>(null)
+  const [geoBusy, setGeoBusy] = useState(false)
+  const requestNearMe = () => {
+    if (nearMe) {
+      setNearMe(null)
+      return
+    }
+    if (!navigator.geolocation) return
+    setGeoBusy(true)
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        setNearMe({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        setGeoBusy(false)
+      },
+      () => setGeoBusy(false),
+      { timeout: 10000 },
+    )
+  }
+  const displayUniList = useMemo(() => {
+    if (!nearMe) return filteredUniList
+    const hav = (la1: number, lo1: number, la2: number, lo2: number) => {
+      const R = 6371
+      const d = (x: number) => (x * Math.PI) / 180
+      const a =
+        Math.sin(d(la2 - la1) / 2) ** 2 +
+        Math.cos(d(la1)) * Math.cos(d(la2)) * Math.sin(d(lo2 - lo1) / 2) ** 2
+      return 2 * R * Math.asin(Math.sqrt(a))
+    }
+    return [...filteredUniList]
+      .map((u: any) => ({
+        u,
+        dist:
+          u.latitude != null && u.longitude != null
+            ? hav(nearMe.lat, nearMe.lng, u.latitude, u.longitude)
+            : Infinity,
+      }))
+      .sort((a, b) => a.dist - b.dist)
+      .map(x => ({ ...x.u, _distance_km: Number.isFinite(x.dist) ? Math.round(x.dist) : null }))
+  }, [filteredUniList, nearMe])
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
       {/* Spec 09 §13 H1 + brand framing ("Fit, not fame", Spec 07 §2/§6). */}
@@ -191,7 +233,21 @@ export default function ExplorePage() {
       {/* Browse universities — secondary, idle-only (no entity-mixing with the program results). */}
       {!searchActive && (
         <div>
-          <h2 className="text-eyebrow uppercase text-muted-foreground font-semibold mb-3">Browse universities</h2>
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h2 className="text-eyebrow uppercase text-muted-foreground font-semibold">Browse universities</h2>
+            <button
+              onClick={requestNearMe}
+              aria-pressed={!!nearMe}
+              className={`inline-flex items-center gap-1.5 text-xs font-semibold rounded-md px-2.5 py-1.5 border transition-colors ${
+                nearMe
+                  ? 'bg-secondary text-secondary-foreground border-secondary'
+                  : 'text-secondary border-border hover:bg-muted'
+              }`}
+            >
+              <MapPin size={13} />
+              {nearMe ? 'Near me · on' : geoBusy ? 'Locating…' : 'Near me'}
+            </button>
+          </div>
 
           {uniList.length > 0 && (
             <ExploreFilters universities={uniList} filters={filters} onChange={setFilters} />
@@ -229,7 +285,7 @@ export default function ExplorePage() {
                 </p>
               )}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredUniList.map((inst: UniversityRow) => (
+                {displayUniList.map((inst: UniversityRow) => (
                   <UniversityCard
                     key={inst.id}
                     institution={inst}

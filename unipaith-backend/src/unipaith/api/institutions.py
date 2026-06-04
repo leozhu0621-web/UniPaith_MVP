@@ -1443,6 +1443,9 @@ async def search_institutions(
                 "type": inst.type,
                 "campus_setting": inst.campus_setting,
                 "student_body_size": inst.student_body_size,
+                # Geo for the "near me" distance sort (from school_outcomes.location).
+                "latitude": ((inst.school_outcomes or {}).get("location") or {}).get("lat"),
+                "longitude": ((inst.school_outcomes or {}).get("location") or {}).get("lng"),
                 "logo_url": inst.logo_url,
                 "image_url": ((inst.media_gallery or [None])[0] if inst.media_gallery else None),
                 "program_count": pc_map.get(inst.id, 0),
