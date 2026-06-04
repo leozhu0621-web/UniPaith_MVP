@@ -46,6 +46,34 @@ GRAD = "https://oge.mit.edu/admissions/"
 SFS = "https://sfs.mit.edu/undergraduate-students/the-cost-of-attendance/"
 CDO = "https://cdo.mit.edu/about/data/"
 
+# MIT institution-level US-News/Niche-grade depth — REAL values from the U.S. Dept.
+# of Education College Scorecard (IPEDS unit 166683) + Wikipedia/Wikidata geo.
+# Hardcoded (the API is heavily rate-limited on the shared DEMO_KEY); these are the
+# exact figures the Scorecard API returned. Powers the profile's depth cards + map.
+MIT_INST_DEPTH = {
+    "test_scores": {
+        "sat_reading_25_75": [740, 780],
+        "sat_math_25_75": [780, 800],
+        "act_25_75": [34, 36],
+    },
+    "retention_rate_first_year": 0.9908,
+    "financial_aid": {
+        "pell_grant_rate": 0.1932,
+        "federal_loan_rate": 0.0669,
+        "median_debt_completers": 14768,
+    },
+    "demographics": {
+        "white": 0.2126,
+        "black": 0.077,
+        "hispanic": 0.1409,
+        "asian": 0.3517,
+        "women": 0.4816,
+    },
+    "location": {"lat": 42.3597, "lng": -71.0919, "source": "Wikipedia / Wikidata"},
+    "source": "U.S. Dept. of Education College Scorecard",
+    "source_url": "https://collegescorecard.ed.gov/school/?166683",
+}
+
 # ── Admissions (canonical application_requirements shape) ───────────────────
 UG_REQUIREMENTS = {
     "materials": [
@@ -487,6 +515,10 @@ async def seed() -> dict:
         if inst is None:
             logger.error("MIT institution not found — run seed_real_catalog first.")
             return {"error": "mit_not_found"}
+
+        # Institution-level US-News/Niche depth + campus setting (Spec 12 / 11).
+        inst.campus_setting = "urban"
+        inst.school_outcomes = {**(inst.school_outcomes or {}), **MIT_INST_DEPTH}
 
         progs = list(
             (await db.execute(select(Program).where(Program.institution_id == inst.id)))
