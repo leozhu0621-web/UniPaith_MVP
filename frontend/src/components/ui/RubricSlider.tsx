@@ -29,10 +29,13 @@ export default function RubricSlider({
   const isMax = value === max && value != null
   const pct = max > 0 && value != null ? (v / max) * 100 : 0
   // Cobalt fill; gold once the reviewer marks the top of the scale (§10).
+  // Fill keeps the brand gold/cobalt hex (computed into an inline gradient);
+  // the unfilled track uses the --muted token so it tracks the dark theme.
   const fillColor = isMax ? '#FFD60A' : '#2A6BD4'
+  const mutedTrack = 'hsl(var(--muted))'
   const trackBg = value == null
-    ? 'var(--track-muted, #E8EDF5)'
-    : `linear-gradient(to right, ${fillColor} 0%, ${fillColor} ${pct}%, var(--track-muted, #E8EDF5) ${pct}%, var(--track-muted, #E8EDF5) 100%)`
+    ? mutedTrack
+    : `linear-gradient(to right, ${fillColor} 0%, ${fillColor} ${pct}%, ${mutedTrack} ${pct}%, ${mutedTrack} 100%)`
   const qualitative = value == null ? QUALITATIVE[0] : (QUALITATIVE[Math.round(v)] ?? '')
 
   return (
@@ -56,14 +59,14 @@ export default function RubricSlider({
           // Webkit thumb
           '[&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4',
           '[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full',
-          '[&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white',
+          '[&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-card',
           '[&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:transition-colors',
           isMax
             ? '[&::-webkit-slider-thumb]:bg-primary [&::-moz-range-thumb]:bg-primary'
             : '[&::-webkit-slider-thumb]:bg-secondary [&::-moz-range-thumb]:bg-secondary',
           // Firefox thumb
           '[&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full',
-          '[&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white',
+          '[&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-card',
         )}
       />
       <div className="flex w-24 shrink-0 items-baseline gap-1">
