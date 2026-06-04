@@ -512,7 +512,11 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
       )}
 
       {/* Admissions & test scores (US News / Niche depth). */}
-      {(admitRate != null || rng(ts.sat_math_25_75) || rng(ts.act_25_75)) && (
+      {(admitRate != null ||
+        rng(ts.sat_reading_25_75) ||
+        rng(ts.sat_math_25_75) ||
+        rng(ts.act_25_75) ||
+        retention != null) && (
         <Card className="p-5">
           <h2 className="font-semibold text-foreground mb-3">Admissions</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
