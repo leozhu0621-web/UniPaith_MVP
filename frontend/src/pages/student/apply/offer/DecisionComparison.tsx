@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Modal from '../../../../components/ui/Modal'
 import Badge from '../../../../components/ui/Badge'
 import Skeleton from '../../../../components/ui/Skeleton'
+import QueryError from '../../../../components/ui/QueryError'
 import { getOffersComparison } from '../../../../api/offers'
 import type { OfferComparisonItem } from '../../../../types'
 import {
@@ -60,7 +61,7 @@ export default function DecisionComparison({
   onClose: () => void
 }) {
   const navigate = useNavigate()
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['offers-comparison'],
     queryFn: getOffersComparison,
     enabled: isOpen,
@@ -77,6 +78,12 @@ export default function DecisionComparison({
     <Modal isOpen={isOpen} onClose={onClose} title="Compare your offers" size="lg">
       {isLoading ? (
         <Skeleton className="h-64" />
+      ) : isError ? (
+        <QueryError
+          title="We couldn't load your offers."
+          detail="Your comparison didn't load just now."
+          onRetry={() => refetch()}
+        />
       ) : offers.length === 0 ? (
         <p className="text-sm text-foreground py-6 text-center">
           No offers to compare yet. They'll appear here as decisions arrive.

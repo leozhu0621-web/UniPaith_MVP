@@ -7,6 +7,7 @@ import { BookOpen, Plus } from 'lucide-react'
 import { deleteStory } from '../../../../api/prompt-library'
 import Button from '../../../../components/ui/Button'
 import Card from '../../../../components/ui/Card'
+import { confirmDialog } from '../../../../stores/confirm-store'
 import { showToast } from '../../../../stores/toast-store'
 import type { Story } from '../../../../types/promptLibrary'
 
@@ -34,6 +35,15 @@ export default function StoryBankPanel({ stories }: { stories: Story[] }) {
   const openEdit = (s: Story) => {
     setEditing(s)
     setOpen(true)
+  }
+  const confirmDelete = async (s: Story) => {
+    const ok = await confirmDialog({
+      title: 'Remove this story?',
+      body: `Delete “${s.title}” from your story bank? Any prompts drawing from it will lose the link. This can't be undone.`,
+      confirmLabel: 'Remove story',
+      destructive: true,
+    })
+    if (ok) del.mutate(s)
   }
 
   return (
@@ -66,7 +76,7 @@ export default function StoryBankPanel({ stories }: { stories: Story[] }) {
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {stories.map(s => (
-            <StoryCard key={s.id} story={s} onEdit={openEdit} onDelete={del.mutate} />
+            <StoryCard key={s.id} story={s} onEdit={openEdit} onDelete={confirmDelete} />
           ))}
         </div>
       )}

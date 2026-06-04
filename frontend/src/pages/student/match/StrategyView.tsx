@@ -29,6 +29,7 @@ import { activateStrategy, generateStrategy, getActiveStrategy } from '../../../
 import Badge from '../../../components/ui/Badge'
 import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
+import QueryError from '../../../components/ui/QueryError'
 import { showToast } from '../../../stores/toast-store'
 import type { StudentGoal, StudentStrategy } from '../../../types'
 
@@ -45,16 +46,22 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
     if (forceExpanded) setCollapsed(false)
   }, [forceExpanded])
 
-  const { data: strategy, isLoading: strategyLoading } = useQuery<StudentStrategy | null>({
+  const {
+    data: strategy,
+    isLoading: strategyLoading,
+    isError: strategyError,
+    refetch: refetchStrategy,
+  } = useQuery<StudentStrategy | null>({
     queryKey: ['strategy', 'active'],
     queryFn: () => getActiveStrategy(),
   })
   // Only fetch goals when there's no active strategy — saves a roundtrip
-  // on the happy path.
+  // on the happy path. Skip while the strategy fetch is errored so we don't
+  // fall through to a misleading "no goals" empty state on a transient failure.
   const { data: goals = [] } = useQuery<StudentGoal[]>({
     queryKey: ['goals', 'active'],
     queryFn: () => listGoals('active'),
-    enabled: !strategy,
+    enabled: !strategy && !strategyError,
   })
 
   // Spec 09 §3 / §12 — "Generate" (no active yet) and "Regenerate" (refresh the
@@ -81,6 +88,20 @@ export default function StrategyView({ forceExpanded = false }: { forceExpanded?
   }
 
   if (strategyLoading) return null
+
+  // Fetch failed → show a retry instead of falling through to a misleading
+  // "no strategy / no goals" empty state (Spec 78 §3).
+  if (strategyError) {
+    return (
+      <Card>
+        <QueryError
+          variant="inline"
+          title="We couldn't load your strategy."
+          onRetry={() => refetchStrategy()}
+        />
+      </Card>
+    )
+  }
 
   // State 1 — no goals at all → push student back to Discover.
   if (!strategy && goals.length === 0) {

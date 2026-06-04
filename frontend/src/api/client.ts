@@ -1,5 +1,19 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 
+/**
+ * Error thrown for a failed API response. Carries the HTTP `status` so callers
+ * can branch on it (e.g. 404 vs 5xx) instead of string-matching the message.
+ * Extends Error, so existing `err.message` consumers keep working unchanged.
+ */
+export class ApiError extends Error {
+  status?: number
+  constructor(message: string, status?: number) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+  }
+}
+
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1',
   headers: { 'Content-Type': 'application/json' },
@@ -105,13 +119,14 @@ apiClient.interceptors.response.use(
     const status = error.response?.status
     if (status === 502 || status === 503 || status === 504) {
       return Promise.reject(
-        new Error(
+        new ApiError(
           'The API is temporarily unreachable (bad gateway). This is usually a deployment or connection issue — try again in a minute. If it persists, confirm the backend service is healthy.',
+          status,
         ),
       )
     }
     const message = (error.response?.data as any)?.detail || error.message
-    return Promise.reject(new Error(message))
+    return Promise.reject(new ApiError(message, status))
   }
 )
 

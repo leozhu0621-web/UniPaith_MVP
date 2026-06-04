@@ -14,6 +14,7 @@ import { Compass } from 'lucide-react'
 
 import { getCatalog, getSummary, getTracks, upsertTrack } from '../../../../api/major-specific'
 import Card from '../../../../components/ui/Card'
+import { showToast } from '../../../../stores/toast-store'
 import type { TrackSignals } from '../../../../types/majorSpecific'
 
 import TrackForm from './TrackForm'
@@ -47,6 +48,8 @@ export default function MajorSpecificPanel() {
       qc.invalidateQueries({ queryKey: ['major-specific', 'tracks'] })
       qc.invalidateQueries({ queryKey: ['major-specific', 'summary'] })
     },
+    onError: (e: unknown) =>
+      showToast((e as Error)?.message ?? 'Could not save your readiness.', 'error'),
   })
 
   if (catalog.isLoading || tracks.isLoading) return <LoadingSkeleton />

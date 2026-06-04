@@ -124,7 +124,7 @@ export default function EssayFeedbackPanel() {
             <RubricScores scores={run.rubric_scores} />
           </Card>
 
-          {run.structural_issues.length > 0 && (
+          {(run.structural_issues?.length ?? 0) > 0 && (
             <Card>
               <div className="mb-2 text-eyebrow uppercase text-foreground">
                 Structural issues · {run.structural_issues.length}
@@ -147,7 +147,7 @@ export default function EssayFeedbackPanel() {
             </Card>
           )}
 
-          {run.missing_elements.length > 0 && (
+          {(run.missing_elements?.length ?? 0) > 0 && (
             <Card>
               <div className="mb-2 text-eyebrow uppercase text-foreground">
                 Missing elements · {run.missing_elements.length}
