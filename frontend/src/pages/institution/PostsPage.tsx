@@ -257,7 +257,7 @@ export default function PostsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     {post.pinned && (
-                      <Pin size={14} className="text-[hsl(var(--primary))] flex-shrink-0" />
+                      <Pin size={14} className="text-secondary flex-shrink-0" />
                     )}
                     <h3 className="text-sm font-semibold text-foreground truncate">{post.title}</h3>
                     <Badge variant={STATUS_BADGE[post.status] ?? 'neutral'}>{post.status}</Badge>
@@ -324,7 +324,7 @@ export default function PostsPage() {
                     className="p-1.5 rounded hover:bg-muted"
                     title={post.pinned ? 'Unpin' : 'Pin'}
                   >
-                    {post.pinned ? <PinOff size={16} className="text-[hsl(var(--primary))]" /> : <Pin size={16} className="text-muted-foreground/70" />}
+                    {post.pinned ? <PinOff size={16} className="text-secondary" /> : <Pin size={16} className="text-muted-foreground/70" />}
                   </button>
                   {post.status === 'published' && (
                     <button

@@ -227,7 +227,7 @@ export default function EventsPage() {
                     <Users size={14} />
                     RSVP&rsquo;d: {ev.confirmed_count ?? ev.rsvp_count}{ev.capacity ? ` / ${ev.capacity}` : ''}
                     {(ev.waitlist_count ?? 0) > 0 && (
-                      <span className="text-[hsl(var(--primary))] font-medium">· {ev.waitlist_count} waitlisted</span>
+                      <span className="text-secondary font-medium">· {ev.waitlist_count} waitlisted</span>
                     )}
                   </div>
                   {ev.meeting_link && <div className="flex items-center gap-2"><Video size={14} /> Online event</div>}
