@@ -49,17 +49,34 @@ export default function UniversityCard({ institution: inst, onClick }: Props) {
       onClick={onClick}
       className="bg-card rounded-lg border border-border hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ease-out overflow-hidden cursor-pointer flex flex-col group/card"
     >
-      {/* Header — text only (brand: no decorative imagery, no gradients). */}
+      {/* Header — school crest/logo + name (identity, not decorative imagery). */}
       <div className="px-5 pt-5 pb-3 border-b border-border">
-        {classification.code !== 'other' && (
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-secondary mb-1.5">
-            {classification.label}
-          </p>
-        )}
-        <h3 className="text-lg leading-tight font-bold text-foreground line-clamp-2">{inst.name}</h3>
-        <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">
-          <MapPin size={12} className="flex-shrink-0" />
-          <span className="truncate">{locationStr}</span>
+        <div className="flex items-start gap-3">
+          {inst.logo_url && (
+            <img
+              src={inst.logo_url}
+              alt={`${inst.name} logo`}
+              loading="lazy"
+              className="w-10 h-10 object-contain flex-shrink-0"
+              onError={e => {
+                ;(e.currentTarget as HTMLImageElement).style.display = 'none'
+              }}
+            />
+          )}
+          <div className="min-w-0 flex-1">
+            {classification.code !== 'other' && (
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-secondary mb-1.5">
+                {classification.label}
+              </p>
+            )}
+            <h3 className="text-lg leading-tight font-bold text-foreground line-clamp-2">
+              {inst.name}
+            </h3>
+            <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">
+              <MapPin size={12} className="flex-shrink-0" />
+              <span className="truncate">{locationStr}</span>
+            </div>
+          </div>
         </div>
       </div>
 

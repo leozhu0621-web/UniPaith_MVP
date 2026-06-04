@@ -1,0 +1,5400 @@
+[
+ {
+  "unit_id": 110404,
+  "name": "California Institute of Technology",
+  "city": "Pasadena",
+  "state": "CA",
+  "url": "https://www.caltech.edu",
+  "type": "private",
+  "size": 987,
+  "admit_rate": 0.0257,
+  "coa": 86886,
+  "tuition": 65898,
+  "net_price": 16075,
+  "completion_4yr": 0.9437,
+  "earn_10yr": 128566,
+  "programs": [
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.07",
+    "earn_1yr": 173344,
+    "earn_4yr": 200511,
+    "awards": 67
+   },
+   {
+    "name": "Mechanical Engineering",
+    "degree": "BS",
+    "cip": "14.19",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 36
+   },
+   {
+    "name": "Physics",
+    "degree": "BS",
+    "cip": "40.08",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 26
+   },
+   {
+    "name": "Biomedical/Medical Engineering",
+    "degree": "BS",
+    "cip": "14.05",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 18
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "BS",
+    "cip": "14.10",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 16
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/en/thumb/a/a4/Seal_of_the_California_Institute_of_Technology.svg/330px-Seal_of_the_California_Institute_of_Technology.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/a/a4/Seal_of_the_California_Institute_of_Technology.svg/250px-Seal_of_the_California_Institute_of_Technology.svg.png",
+  "image_source_url": "https://en.wikipedia.org/wiki/California_Institute_of_Technology"
+ },
+ {
+  "unit_id": 166027,
+  "name": "Harvard University",
+  "city": "Cambridge",
+  "state": "MA",
+  "url": "https://www.harvard.edu",
+  "type": "private",
+  "size": 7601,
+  "admit_rate": 0.0365,
+  "coa": 85540,
+  "tuition": 61676,
+  "net_price": 19066,
+  "completion_4yr": 0.9758,
+  "earn_10yr": 101817,
+  "programs": [
+   {
+    "name": "Business Administration, Management and Operations",
+    "degree": "MS",
+    "cip": "52.02",
+    "earn_1yr": 103400,
+    "earn_4yr": 113503,
+    "awards": 877
+   },
+   {
+    "name": "Public Health",
+    "degree": "MS",
+    "cip": "51.22",
+    "earn_1yr": 108479,
+    "earn_4yr": 153029,
+    "awards": 400
+   },
+   {
+    "name": "Public Administration",
+    "degree": "MS",
+    "cip": "44.04",
+    "earn_1yr": 133307,
+    "earn_4yr": 177149,
+    "awards": 374
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 103993,
+    "earn_4yr": 155592,
+    "awards": 258
+   },
+   {
+    "name": "Public Policy Analysis",
+    "degree": "MS",
+    "cip": "44.05",
+    "earn_1yr": 87444,
+    "earn_4yr": 129978,
+    "awards": 232
+   },
+   {
+    "name": "Social Sciences, General",
+    "degree": "BS",
+    "cip": "45.01",
+    "earn_1yr": 56540,
+    "earn_4yr": 78996,
+    "awards": 189
+   },
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.07",
+    "earn_1yr": 152251,
+    "earn_4yr": 203169,
+    "awards": 183
+   },
+   {
+    "name": "Political Science and Government",
+    "degree": "BS",
+    "cip": "45.10",
+    "earn_1yr": 61543,
+    "earn_4yr": 95838,
+    "awards": 164
+   },
+   {
+    "name": "History",
+    "degree": "BS",
+    "cip": "54.01",
+    "earn_1yr": 53468,
+    "earn_4yr": 70679,
+    "awards": 161
+   },
+   {
+    "name": "Natural Resources Conservation and Research",
+    "degree": "MS",
+    "cip": "03.01",
+    "earn_1yr": 72276,
+    "earn_4yr": 84831,
+    "awards": 149
+   },
+   {
+    "name": "Theological and Ministerial Studies",
+    "degree": "MS",
+    "cip": "39.06",
+    "earn_1yr": 37385,
+    "earn_4yr": 61789,
+    "awards": 147
+   },
+   {
+    "name": "Architectural Sciences and Technology",
+    "degree": "MS",
+    "cip": "04.09",
+    "earn_1yr": 70798,
+    "earn_4yr": 85062,
+    "awards": 141
+   },
+   {
+    "name": "Educational/Instructional Media Design",
+    "degree": "MS",
+    "cip": "13.05",
+    "earn_1yr": 90736,
+    "earn_4yr": 127546,
+    "awards": 140
+   },
+   {
+    "name": "Ecology, Evolution, Systematics, and Population Biology",
+    "degree": "MS",
+    "cip": "26.13",
+    "earn_1yr": 142377,
+    "earn_4yr": 168833,
+    "awards": 127
+   },
+   {
+    "name": "Applied Mathematics",
+    "degree": "BS",
+    "cip": "27.03",
+    "earn_1yr": 114279,
+    "earn_4yr": 170689,
+    "awards": 120
+   },
+   {
+    "name": "Finance and Financial Management Services",
+    "degree": "MS",
+    "cip": "52.08",
+    "earn_1yr": 111894,
+    "earn_4yr": 153797,
+    "awards": 107
+   },
+   {
+    "name": "Research and Experimental Psychology",
+    "degree": "BS",
+    "cip": "42.27",
+    "earn_1yr": 41501,
+    "earn_4yr": 70167,
+    "awards": 101
+   },
+   {
+    "name": "Neurobiology and Neurosciences",
+    "degree": "BS",
+    "cip": "26.15",
+    "earn_1yr": 46993,
+    "earn_4yr": null,
+    "awards": 100
+   },
+   {
+    "name": "Computer Engineering",
+    "degree": "MS",
+    "cip": "14.09",
+    "earn_1yr": 177890,
+    "earn_4yr": 228519,
+    "awards": 94
+   },
+   {
+    "name": "Chemistry",
+    "degree": "BS",
+    "cip": "40.05",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 76
+   },
+   {
+    "name": "Cell/Cellular Biology and Anatomical Sciences",
+    "degree": "BS",
+    "cip": "26.04",
+    "earn_1yr": 51569,
+    "earn_4yr": 117816,
+    "awards": 75
+   },
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "MS",
+    "cip": "11.01",
+    "earn_1yr": 158673,
+    "earn_4yr": 189806,
+    "awards": 62
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Harvard_University_coat_of_arms.svg/960px-Harvard_University_coat_of_arms.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Harvard_University_coat_of_arms.svg",
+  "image_source_url": "https://en.wikipedia.org/wiki/Harvard_University"
+ },
+ {
+  "unit_id": 166683,
+  "name": "Massachusetts Institute of Technology",
+  "city": "Cambridge",
+  "state": "MA",
+  "url": "https://web.mit.edu",
+  "type": "private",
+  "size": 4535,
+  "admit_rate": 0.0455,
+  "coa": 82730,
+  "tuition": 62396,
+  "net_price": 20111,
+  "completion_4yr": 0.9641,
+  "earn_10yr": 143372,
+  "programs": [
+   {
+    "name": "Management Sciences and Quantitative Methods",
+    "degree": "MS",
+    "cip": "52.13",
+    "earn_1yr": 204731,
+    "earn_4yr": null,
+    "awards": 782
+   },
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.07",
+    "earn_1yr": 154492,
+    "earn_4yr": 225141,
+    "awards": 389
+   },
+   {
+    "name": "Systems Engineering",
+    "degree": "MS",
+    "cip": "14.27",
+    "earn_1yr": 151271,
+    "earn_4yr": 227052,
+    "awards": 178
+   },
+   {
+    "name": "Mechanical Engineering",
+    "degree": "MS",
+    "cip": "14.19",
+    "earn_1yr": 155889,
+    "earn_4yr": 200732,
+    "awards": 149
+   },
+   {
+    "name": "Mechanical Engineering",
+    "degree": "BS",
+    "cip": "14.19",
+    "earn_1yr": 83957,
+    "earn_4yr": 131967,
+    "awards": 141
+   },
+   {
+    "name": "Mathematics",
+    "degree": "BS",
+    "cip": "27.01",
+    "earn_1yr": 109288,
+    "earn_4yr": 174951,
+    "awards": 139
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "BS",
+    "cip": "14.10",
+    "earn_1yr": 117345,
+    "earn_4yr": 161118,
+    "awards": 87
+   },
+   {
+    "name": "Physics",
+    "degree": "BS",
+    "cip": "40.08",
+    "earn_1yr": 54773,
+    "earn_4yr": 131025,
+    "awards": 79
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "MS",
+    "cip": "14.10",
+    "earn_1yr": 149936,
+    "earn_4yr": 199245,
+    "awards": 78
+   },
+   {
+    "name": "Cognitive Science",
+    "degree": "BS",
+    "cip": "30.25",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 61
+   },
+   {
+    "name": "Aerospace, Aeronautical, and Astronautical/Space Engineering",
+    "degree": "BS",
+    "cip": "14.02",
+    "earn_1yr": null,
+    "earn_4yr": 114620,
+    "awards": 57
+   },
+   {
+    "name": "Architectural Sciences and Technology",
+    "degree": "MS",
+    "cip": "04.09",
+    "earn_1yr": 66501,
+    "earn_4yr": 87003,
+    "awards": 56
+   },
+   {
+    "name": "Biomedical/Medical Engineering",
+    "degree": "BS",
+    "cip": "14.05",
+    "earn_1yr": 70696,
+    "earn_4yr": 111738,
+    "awards": 54
+   },
+   {
+    "name": "Management Sciences and Quantitative Methods",
+    "degree": "BS",
+    "cip": "52.13",
+    "earn_1yr": 99843,
+    "earn_4yr": null,
+    "awards": 49
+   },
+   {
+    "name": "Economics and Computer Science",
+    "degree": "BS",
+    "cip": "30.39",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 47
+   },
+   {
+    "name": "City/Urban, Community, and Regional Planning",
+    "degree": "MS",
+    "cip": "04.03",
+    "earn_1yr": 81382,
+    "earn_4yr": 100130,
+    "awards": 43
+   },
+   {
+    "name": "Chemical Engineering",
+    "degree": "BS",
+    "cip": "14.07",
+    "earn_1yr": 80139,
+    "earn_4yr": 122093,
+    "awards": 39
+   },
+   {
+    "name": "Real Estate Development",
+    "degree": "MS",
+    "cip": "04.10",
+    "earn_1yr": 142235,
+    "earn_4yr": null,
+    "awards": 37
+   },
+   {
+    "name": "Mathematics and Computer Science",
+    "degree": "BS",
+    "cip": "30.08",
+    "earn_1yr": 126153,
+    "earn_4yr": null,
+    "awards": 30
+   },
+   {
+    "name": "Civil Engineering",
+    "degree": "MS",
+    "cip": "14.08",
+    "earn_1yr": 88805,
+    "earn_4yr": null,
+    "awards": 29
+   },
+   {
+    "name": "Chemistry",
+    "degree": "BS",
+    "cip": "40.05",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 28
+   },
+   {
+    "name": "Biology, General",
+    "degree": "BS",
+    "cip": "26.01",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 25
+   }
+  ],
+  "enrichment": {
+   "founded_year": 1861,
+   "campus_setting": "urban",
+   "campus_description": "168-acre campus along the Charles River in Cambridge, Massachusetts.",
+   "schools": [
+    "School of Engineering",
+    "School of Science",
+    "MIT Sloan School of Management",
+    "School of Architecture and Planning",
+    "School of Humanities, Arts, and Social Sciences",
+    "MIT Schwarzman College of Computing"
+   ],
+   "extras": {
+    "nobel_laureates": 106,
+    "macarthur_fellows": 85,
+    "qs_world_rank_2025": 1,
+    "enrollment_total": 11816,
+    "admissions_cycle": "Class of 2029",
+    "applicants": 29281,
+    "admits": 1334
+   },
+   "cost_breakdown": {
+    "tuition_annual": 64310,
+    "student_life_fee": 420,
+    "housing_food": 21264,
+    "books_personal": 3346,
+    "total": 89340
+   },
+   "ug_deadlines": [
+    {
+     "round": "Early Action",
+     "deadline": "2025-11-01",
+     "decision": "2025-12-15"
+    },
+    {
+     "round": "Regular Action",
+     "deadline": "2026-01-05",
+     "decision": "2026-03-15"
+    }
+   ],
+   "testing": "SAT or ACT required (self-reported; verified on enrollment)",
+   "source_urls": [
+    "https://facts.mit.edu/",
+    "https://mitadmissions.org/apply/firstyear/deadlines-requirements/"
+   ]
+  },
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/MIT_2023_red_logo.svg/960px-MIT_2023_red_logo.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/b/b8/MIT_2023_red_logo.svg",
+  "image_source_url": "https://en.wikipedia.org/wiki/Massachusetts_Institute_of_Technology"
+ },
+ {
+  "unit_id": 243744,
+  "name": "Stanford University",
+  "city": "Stanford",
+  "state": "CA",
+  "url": "https://www.stanford.edu",
+  "type": "private",
+  "size": 7554,
+  "admit_rate": 0.0361,
+  "coa": 87833,
+  "tuition": 65910,
+  "net_price": 13807,
+  "completion_4yr": 0.9192,
+  "earn_10yr": 124080,
+  "programs": [
+   {
+    "name": "Computer Science",
+    "degree": "MS",
+    "cip": "11.07",
+    "earn_1yr": 199761,
+    "earn_4yr": 255667,
+    "awards": 383
+   },
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.07",
+    "earn_1yr": 138613,
+    "earn_4yr": 214907,
+    "awards": 293
+   },
+   {
+    "name": "Civil Engineering",
+    "degree": "MS",
+    "cip": "14.08",
+    "earn_1yr": 83740,
+    "earn_4yr": 112118,
+    "awards": 212
+   },
+   {
+    "name": "Mechanical Engineering",
+    "degree": "MS",
+    "cip": "14.19",
+    "earn_1yr": 121408,
+    "earn_4yr": 167632,
+    "awards": 148
+   },
+   {
+    "name": "Human Biology",
+    "degree": "BS",
+    "cip": "30.27",
+    "earn_1yr": 50179,
+    "earn_4yr": 81529,
+    "awards": 140
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "MS",
+    "cip": "14.10",
+    "earn_1yr": 159472,
+    "earn_4yr": 181705,
+    "awards": 138
+   },
+   {
+    "name": "Education, General",
+    "degree": "MS",
+    "cip": "13.01",
+    "earn_1yr": 71967,
+    "earn_4yr": 88065,
+    "awards": 120
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 98104,
+    "earn_4yr": 112700,
+    "awards": 112
+   },
+   {
+    "name": "Engineering-Related Fields",
+    "degree": "MS",
+    "cip": "15.15",
+    "earn_1yr": 133371,
+    "earn_4yr": 206093,
+    "awards": 110
+   },
+   {
+    "name": "Engineering, Other",
+    "degree": "BS",
+    "cip": "14.99",
+    "earn_1yr": 49741,
+    "earn_4yr": 115206,
+    "awards": 89
+   },
+   {
+    "name": "Cognitive Science",
+    "degree": "BS",
+    "cip": "30.25",
+    "earn_1yr": 105695,
+    "earn_4yr": 131650,
+    "awards": 83
+   },
+   {
+    "name": "Political Science and Government",
+    "degree": "BS",
+    "cip": "45.10",
+    "earn_1yr": 59297,
+    "earn_4yr": null,
+    "awards": 72
+   },
+   {
+    "name": "Mathematics",
+    "degree": "BS",
+    "cip": "27.01",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 65
+   },
+   {
+    "name": "International Relations and National Security Studies",
+    "degree": "BS",
+    "cip": "45.09",
+    "earn_1yr": 76166,
+    "earn_4yr": 91075,
+    "awards": 61
+   },
+   {
+    "name": "Aerospace, Aeronautical, and Astronautical/Space Engineering",
+    "degree": "MS",
+    "cip": "14.02",
+    "earn_1yr": 111760,
+    "earn_4yr": 147375,
+    "awards": 58
+   },
+   {
+    "name": "Research and Experimental Psychology",
+    "degree": "BS",
+    "cip": "42.27",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 57
+   },
+   {
+    "name": "Mechanical Engineering",
+    "degree": "BS",
+    "cip": "14.19",
+    "earn_1yr": null,
+    "earn_4yr": 117072,
+    "awards": 56
+   },
+   {
+    "name": "Biology, General",
+    "degree": "BS",
+    "cip": "26.01",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 56
+   },
+   {
+    "name": "Engineering-Related Fields",
+    "degree": "BS",
+    "cip": "15.15",
+    "earn_1yr": 100788,
+    "earn_4yr": null,
+    "awards": 52
+   },
+   {
+    "name": "English Language and Literature, General",
+    "degree": "BS",
+    "cip": "23.01",
+    "earn_1yr": 30544,
+    "earn_4yr": 82036,
+    "awards": 52
+   },
+   {
+    "name": "Biomedical/Medical Engineering",
+    "degree": "BS",
+    "cip": "14.05",
+    "earn_1yr": 50487,
+    "earn_4yr": null,
+    "awards": 41
+   },
+   {
+    "name": "Physics",
+    "degree": "BS",
+    "cip": "40.08",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 33
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Seal_of_Leland_Stanford_Junior_University.svg/960px-Seal_of_Leland_Stanford_Junior_University.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/b/b5/Seal_of_Leland_Stanford_Junior_University.svg",
+  "image_source_url": "https://en.wikipedia.org/wiki/Stanford_University"
+ },
+ {
+  "unit_id": 110635,
+  "name": "University of California-Berkeley",
+  "city": "Berkeley",
+  "state": "CA",
+  "url": "https://www.berkeley.edu",
+  "type": "public",
+  "size": 33068,
+  "admit_rate": 0.1098,
+  "coa": 45619,
+  "tuition": 50547,
+  "net_price": 13481,
+  "completion_4yr": 0.9284,
+  "earn_10yr": 92446,
+  "programs": [
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.07",
+    "earn_1yr": 149866,
+    "earn_4yr": 204379,
+    "awards": 994
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 80446,
+    "earn_4yr": 135050,
+    "awards": 909
+   },
+   {
+    "name": "Cell/Cellular Biology and Anatomical Sciences",
+    "degree": "BS",
+    "cip": "26.04",
+    "earn_1yr": 43270,
+    "earn_4yr": 66577,
+    "awards": 761
+   },
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "BS",
+    "cip": "11.01",
+    "earn_1yr": 88030,
+    "earn_4yr": null,
+    "awards": 737
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "BS",
+    "cip": "14.10",
+    "earn_1yr": 137295,
+    "earn_4yr": 200543,
+    "awards": 480
+   },
+   {
+    "name": "Natural Resources Conservation and Research",
+    "degree": "BS",
+    "cip": "03.01",
+    "earn_1yr": 47338,
+    "earn_4yr": 78624,
+    "awards": 464
+   },
+   {
+    "name": "Business Administration, Management and Operations",
+    "degree": "BS",
+    "cip": "52.02",
+    "earn_1yr": 90008,
+    "earn_4yr": 144599,
+    "awards": 428
+   },
+   {
+    "name": "Political Science and Government",
+    "degree": "BS",
+    "cip": "45.10",
+    "earn_1yr": 45418,
+    "earn_4yr": 75128,
+    "awards": 418
+   },
+   {
+    "name": "Research and Experimental Psychology",
+    "degree": "BS",
+    "cip": "42.27",
+    "earn_1yr": 34450,
+    "earn_4yr": 64904,
+    "awards": 390
+   },
+   {
+    "name": "Sociology",
+    "degree": "BS",
+    "cip": "45.11",
+    "earn_1yr": 40774,
+    "earn_4yr": 71363,
+    "awards": 294
+   },
+   {
+    "name": "Communication and Media Studies",
+    "degree": "BS",
+    "cip": "09.01",
+    "earn_1yr": 43696,
+    "earn_4yr": 75612,
+    "awards": 265
+   },
+   {
+    "name": "Applied Mathematics",
+    "degree": "BS",
+    "cip": "27.03",
+    "earn_1yr": 71814,
+    "earn_4yr": 118414,
+    "awards": 264
+   },
+   {
+    "name": "Cognitive Science",
+    "degree": "BS",
+    "cip": "30.25",
+    "earn_1yr": 64559,
+    "earn_4yr": 120193,
+    "awards": 257
+   },
+   {
+    "name": "English Language and Literature, General",
+    "degree": "BS",
+    "cip": "23.01",
+    "earn_1yr": 27462,
+    "earn_4yr": 60187,
+    "awards": 240
+   },
+   {
+    "name": "Non-Professional Legal Studies",
+    "degree": "BS",
+    "cip": "22.00",
+    "earn_1yr": 43886,
+    "earn_4yr": 70636,
+    "awards": 234
+   },
+   {
+    "name": "Public Health",
+    "degree": "BS",
+    "cip": "51.22",
+    "earn_1yr": 48351,
+    "earn_4yr": 76572,
+    "awards": 202
+   },
+   {
+    "name": "Social Sciences, Other",
+    "degree": "BS",
+    "cip": "45.99",
+    "earn_1yr": 61109,
+    "earn_4yr": 101138,
+    "awards": 193
+   },
+   {
+    "name": "Mechanical Engineering",
+    "degree": "BS",
+    "cip": "14.19",
+    "earn_1yr": 88497,
+    "earn_4yr": 119371,
+    "awards": 188
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "MS",
+    "cip": "14.10",
+    "earn_1yr": 197300,
+    "earn_4yr": null,
+    "awards": 184
+   },
+   {
+    "name": "Biology, General",
+    "degree": "BS",
+    "cip": "26.01",
+    "earn_1yr": 36642,
+    "earn_4yr": 79163,
+    "awards": 168
+   },
+   {
+    "name": "Chemical Engineering",
+    "degree": "BS",
+    "cip": "14.07",
+    "earn_1yr": 81553,
+    "earn_4yr": 121027,
+    "awards": 149
+   },
+   {
+    "name": "Chemistry",
+    "degree": "BS",
+    "cip": "40.05",
+    "earn_1yr": 59576,
+    "earn_4yr": 82386,
+    "awards": 129
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Seal_of_University_of_California%2C_Berkeley.svg/960px-Seal_of_University_of_California%2C_Berkeley.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/a/a1/Seal_of_University_of_California%2C_Berkeley.svg",
+  "image_source_url": "https://en.wikipedia.org/wiki/University_of_California%2C_Berkeley"
+ },
+ {
+  "unit_id": 144050,
+  "name": "University of Chicago",
+  "city": "Chicago",
+  "state": "IL",
+  "url": "https://www.uchicago.edu",
+  "type": "private",
+  "size": 7569,
+  "admit_rate": 0.0448,
+  "coa": 90360,
+  "tuition": 70662,
+  "net_price": 14860,
+  "completion_4yr": 0.9585,
+  "earn_10yr": 91885,
+  "programs": [
+   {
+    "name": "Management Sciences and Quantitative Methods",
+    "degree": "MS",
+    "cip": "52.13",
+    "earn_1yr": 190915,
+    "earn_4yr": null,
+    "awards": 1236
+   },
+   {
+    "name": "Social Sciences, General",
+    "degree": "MS",
+    "cip": "45.01",
+    "earn_1yr": 53788,
+    "earn_4yr": 74690,
+    "awards": 706
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 92075,
+    "earn_4yr": 159578,
+    "awards": 622
+   },
+   {
+    "name": "Computer Science",
+    "degree": "MS",
+    "cip": "11.07",
+    "earn_1yr": 135918,
+    "earn_4yr": 169765,
+    "awards": 217
+   },
+   {
+    "name": "Social Work",
+    "degree": "MS",
+    "cip": "44.07",
+    "earn_1yr": 52551,
+    "earn_4yr": 71980,
+    "awards": 187
+   },
+   {
+    "name": "Mathematics",
+    "degree": "BS",
+    "cip": "27.01",
+    "earn_1yr": 100421,
+    "earn_4yr": 172826,
+    "awards": 181
+   },
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.07",
+    "earn_1yr": 117578,
+    "earn_4yr": 178068,
+    "awards": 156
+   },
+   {
+    "name": "Liberal Arts and Sciences, General Studies and Humanities",
+    "degree": "MS",
+    "cip": "24.01",
+    "earn_1yr": 26094,
+    "earn_4yr": 60106,
+    "awards": 137
+   },
+   {
+    "name": "Biology, General",
+    "degree": "BS",
+    "cip": "26.01",
+    "earn_1yr": 35275,
+    "earn_4yr": 59794,
+    "awards": 127
+   },
+   {
+    "name": "Political Science and Government",
+    "degree": "BS",
+    "cip": "45.10",
+    "earn_1yr": 56022,
+    "earn_4yr": 87869,
+    "awards": 111
+   },
+   {
+    "name": "Research and Experimental Psychology",
+    "degree": "BS",
+    "cip": "42.27",
+    "earn_1yr": 31986,
+    "earn_4yr": 73483,
+    "awards": 99
+   },
+   {
+    "name": "Public Policy Analysis",
+    "degree": "BS",
+    "cip": "44.05",
+    "earn_1yr": 60057,
+    "earn_4yr": 94237,
+    "awards": 90
+   },
+   {
+    "name": "Chemistry",
+    "degree": "BS",
+    "cip": "40.05",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 87
+   },
+   {
+    "name": "Computer Programming",
+    "degree": "MS",
+    "cip": "11.02",
+    "earn_1yr": 105265,
+    "earn_4yr": 179964,
+    "awards": 80
+   },
+   {
+    "name": "International Relations and National Security Studies",
+    "degree": "MS",
+    "cip": "45.09",
+    "earn_1yr": 66182,
+    "earn_4yr": 83492,
+    "awards": 75
+   },
+   {
+    "name": "Statistics",
+    "degree": "MS",
+    "cip": "27.05",
+    "earn_1yr": 115925,
+    "earn_4yr": 161842,
+    "awards": 70
+   },
+   {
+    "name": "History",
+    "degree": "BS",
+    "cip": "54.01",
+    "earn_1yr": 46616,
+    "earn_4yr": 64330,
+    "awards": 70
+   },
+   {
+    "name": "Philosophy",
+    "degree": "BS",
+    "cip": "38.01",
+    "earn_1yr": null,
+    "earn_4yr": 71709,
+    "awards": 61
+   },
+   {
+    "name": "Neurobiology and Neurosciences",
+    "degree": "BS",
+    "cip": "26.15",
+    "earn_1yr": 37246,
+    "earn_4yr": null,
+    "awards": 59
+   },
+   {
+    "name": "English Language and Literature, General",
+    "degree": "BS",
+    "cip": "23.01",
+    "earn_1yr": 44397,
+    "earn_4yr": 78169,
+    "awards": 53
+   },
+   {
+    "name": "Natural Resources Conservation and Research",
+    "degree": "BS",
+    "cip": "03.01",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 50
+   },
+   {
+    "name": "Statistics",
+    "degree": "BS",
+    "cip": "27.05",
+    "earn_1yr": 82681,
+    "earn_4yr": 130189,
+    "awards": 48
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/en/thumb/7/79/University_of_Chicago_shield.svg/330px-University_of_Chicago_shield.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/7/79/University_of_Chicago_shield.svg/250px-University_of_Chicago_shield.svg.png",
+  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Chicago"
+ },
+ {
+  "unit_id": 190150,
+  "name": "Columbia University in the City of New York",
+  "city": "New York",
+  "state": "NY",
+  "url": "https://www.columbia.edu",
+  "type": "private",
+  "size": 8973,
+  "admit_rate": 0.0399,
+  "coa": 89472,
+  "tuition": 71845,
+  "net_price": 21590,
+  "completion_4yr": 0.961,
+  "earn_10yr": 102491,
+  "programs": [
+   {
+    "name": "Management Sciences and Quantitative Methods",
+    "degree": "MS",
+    "cip": "52.13",
+    "earn_1yr": 197821,
+    "earn_4yr": 116859,
+    "awards": 1746
+   },
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "MS",
+    "cip": "11.01",
+    "earn_1yr": 129227,
+    "earn_4yr": 150951,
+    "awards": 717
+   },
+   {
+    "name": "Computer Science",
+    "degree": "MS",
+    "cip": "11.07",
+    "earn_1yr": 161851,
+    "earn_4yr": null,
+    "awards": 595
+   },
+   {
+    "name": "Social Work",
+    "degree": "MS",
+    "cip": "44.07",
+    "earn_1yr": 59891,
+    "earn_4yr": 75980,
+    "awards": 594
+   },
+   {
+    "name": "Statistics",
+    "degree": "MS",
+    "cip": "27.05",
+    "earn_1yr": 122051,
+    "earn_4yr": 167848,
+    "awards": 493
+   },
+   {
+    "name": "Public Health",
+    "degree": "MS",
+    "cip": "51.22",
+    "earn_1yr": 71704,
+    "earn_4yr": 98728,
+    "awards": 429
+   },
+   {
+    "name": "Public Administration",
+    "degree": "MS",
+    "cip": "44.04",
+    "earn_1yr": 89478,
+    "earn_4yr": 115874,
+    "awards": 409
+   },
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.07",
+    "earn_1yr": 118636,
+    "earn_4yr": 188265,
+    "awards": 391
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 83135,
+    "earn_4yr": 137710,
+    "awards": 360
+   },
+   {
+    "name": "Legal Research and Advanced Professional Studies",
+    "degree": "MS",
+    "cip": "22.02",
+    "earn_1yr": 130948,
+    "earn_4yr": null,
+    "awards": 323
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "MS",
+    "cip": "14.10",
+    "earn_1yr": 124969,
+    "earn_4yr": 152001,
+    "awards": 317
+   },
+   {
+    "name": "Registered Nursing, Nursing Administration, Nursing Research and Clinical Nursing",
+    "degree": "MS",
+    "cip": "51.38",
+    "earn_1yr": 132715,
+    "earn_4yr": 142412,
+    "awards": 302
+   },
+   {
+    "name": "Sustainability Studies",
+    "degree": "MS",
+    "cip": "30.33",
+    "earn_1yr": 86469,
+    "earn_4yr": 123641,
+    "awards": 271
+   },
+   {
+    "name": "Architectural Sciences and Technology",
+    "degree": "MS",
+    "cip": "04.09",
+    "earn_1yr": 58580,
+    "earn_4yr": 83355,
+    "awards": 249
+   },
+   {
+    "name": "International Relations and National Security Studies",
+    "degree": "MS",
+    "cip": "45.09",
+    "earn_1yr": 80448,
+    "earn_4yr": 107574,
+    "awards": 245
+   },
+   {
+    "name": "Journalism",
+    "degree": "MS",
+    "cip": "09.04",
+    "earn_1yr": 54170,
+    "earn_4yr": 78880,
+    "awards": 240
+   },
+   {
+    "name": "Political Science and Government",
+    "degree": "BS",
+    "cip": "45.10",
+    "earn_1yr": 61077,
+    "earn_4yr": 100245,
+    "awards": 232
+   },
+   {
+    "name": "Ecology, Evolution, Systematics, and Population Biology",
+    "degree": "MS",
+    "cip": "26.13",
+    "earn_1yr": 78660,
+    "earn_4yr": 108698,
+    "awards": 206
+   },
+   {
+    "name": "Biomathematics, Bioinformatics, and Computational Biology",
+    "degree": "MS",
+    "cip": "26.11",
+    "earn_1yr": 100512,
+    "earn_4yr": 166264,
+    "awards": 190
+   },
+   {
+    "name": "Research and Experimental Psychology",
+    "degree": "BS",
+    "cip": "42.27",
+    "earn_1yr": 53156,
+    "earn_4yr": 86946,
+    "awards": 166
+   },
+   {
+    "name": "Mechanical Engineering",
+    "degree": "MS",
+    "cip": "14.19",
+    "earn_1yr": 104503,
+    "earn_4yr": 137970,
+    "awards": 154
+   },
+   {
+    "name": "History",
+    "degree": "BS",
+    "cip": "54.01",
+    "earn_1yr": 53828,
+    "earn_4yr": 98079,
+    "awards": 152
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Coat_of_Arms_of_Columbia_University.svg/960px-Coat_of_Arms_of_Columbia_University.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/3/33/Coat_of_Arms_of_Columbia_University.svg",
+  "image_source_url": "https://en.wikipedia.org/wiki/Columbia_University"
+ },
+ {
+  "unit_id": 211440,
+  "name": "Carnegie Mellon University",
+  "city": "Pittsburgh",
+  "state": "PA",
+  "url": "https://www.cmu.edu",
+  "type": "private",
+  "size": 7304,
+  "admit_rate": 0.1166,
+  "coa": 83654,
+  "tuition": 66246,
+  "net_price": 31944,
+  "completion_4yr": 0.9413,
+  "earn_10yr": 114862,
+  "programs": [
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "MS",
+    "cip": "11.01",
+    "earn_1yr": 138781,
+    "earn_4yr": 193154,
+    "awards": 1085
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "MS",
+    "cip": "14.10",
+    "earn_1yr": 160336,
+    "earn_4yr": 209847,
+    "awards": 446
+   },
+   {
+    "name": "Management Sciences and Quantitative Methods",
+    "degree": "MS",
+    "cip": "52.13",
+    "earn_1yr": 169421,
+    "earn_4yr": null,
+    "awards": 343
+   },
+   {
+    "name": "Computer/Information Technology Administration and Management",
+    "degree": "MS",
+    "cip": "11.10",
+    "earn_1yr": 103148,
+    "earn_4yr": 146578,
+    "awards": 276
+   },
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.07",
+    "earn_1yr": 171264,
+    "earn_4yr": 268121,
+    "awards": 270
+   },
+   {
+    "name": "Mechanical Engineering",
+    "degree": "MS",
+    "cip": "14.19",
+    "earn_1yr": 93617,
+    "earn_4yr": 127603,
+    "awards": 203
+   },
+   {
+    "name": "Statistics",
+    "degree": "BS",
+    "cip": "27.05",
+    "earn_1yr": 93111,
+    "earn_4yr": 156743,
+    "awards": 172
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "BS",
+    "cip": "14.10",
+    "earn_1yr": 139337,
+    "earn_4yr": 250168,
+    "awards": 157
+   },
+   {
+    "name": "Business Administration, Management and Operations",
+    "degree": "BS",
+    "cip": "52.02",
+    "earn_1yr": 95891,
+    "earn_4yr": 160783,
+    "awards": 151
+   },
+   {
+    "name": "Systems Science and Theory",
+    "degree": "BS",
+    "cip": "30.06",
+    "earn_1yr": 95598,
+    "earn_4yr": 146929,
+    "awards": 118
+   },
+   {
+    "name": "Public Policy Analysis",
+    "degree": "MS",
+    "cip": "44.05",
+    "earn_1yr": 68342,
+    "earn_4yr": 103268,
+    "awards": 117
+   },
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "BS",
+    "cip": "11.01",
+    "earn_1yr": null,
+    "earn_4yr": 187437,
+    "awards": 111
+   },
+   {
+    "name": "Mechanical Engineering",
+    "degree": "BS",
+    "cip": "14.19",
+    "earn_1yr": 76523,
+    "earn_4yr": 105623,
+    "awards": 107
+   },
+   {
+    "name": "Computer Software and Media Applications",
+    "degree": "MS",
+    "cip": "11.08",
+    "earn_1yr": 70280,
+    "earn_4yr": 113586,
+    "awards": 91
+   },
+   {
+    "name": "Biomedical/Medical Engineering",
+    "degree": "MS",
+    "cip": "14.05",
+    "earn_1yr": 75083,
+    "earn_4yr": null,
+    "awards": 84
+   },
+   {
+    "name": "Arts, Entertainment, and Media Management",
+    "degree": "MS",
+    "cip": "50.10",
+    "earn_1yr": 47740,
+    "earn_4yr": 59727,
+    "awards": 71
+   },
+   {
+    "name": "Drama/Theatre Arts and Stagecraft",
+    "degree": "BS",
+    "cip": "50.05",
+    "earn_1yr": 32967,
+    "earn_4yr": 40073,
+    "awards": 64
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 86284,
+    "earn_4yr": 144886,
+    "awards": 55
+   },
+   {
+    "name": "Music",
+    "degree": "MS",
+    "cip": "50.09",
+    "earn_1yr": 23278,
+    "earn_4yr": 39953,
+    "awards": 44
+   },
+   {
+    "name": "Design and Applied Arts",
+    "degree": "BS",
+    "cip": "50.04",
+    "earn_1yr": 66274,
+    "earn_4yr": 138588,
+    "awards": 42
+   },
+   {
+    "name": "Chemical Engineering",
+    "degree": "BS",
+    "cip": "14.07",
+    "earn_1yr": null,
+    "earn_4yr": 110378,
+    "awards": 41
+   },
+   {
+    "name": "Biomedical/Medical Engineering",
+    "degree": "BS",
+    "cip": "14.05",
+    "earn_1yr": null,
+    "earn_4yr": 109648,
+    "awards": 36
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/en/thumb/b/bb/Carnegie_Mellon_University_seal.svg/330px-Carnegie_Mellon_University_seal.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/b/bb/Carnegie_Mellon_University_seal.svg/330px-Carnegie_Mellon_University_seal.svg.png",
+  "image_source_url": "https://en.wikipedia.org/wiki/Carnegie_Mellon_University"
+ },
+ {
+  "unit_id": 130794,
+  "name": "Yale University",
+  "city": "New Haven",
+  "state": "CT",
+  "url": "https://https://www.yale.edu",
+  "type": "private",
+  "size": 6758,
+  "admit_rate": 0.0387,
+  "coa": 88300,
+  "tuition": 67250,
+  "net_price": 23777,
+  "completion_4yr": 0.9574,
+  "earn_10yr": 100533,
+  "programs": [
+   {
+    "name": "Business Administration, Management and Operations",
+    "degree": "MS",
+    "cip": "52.02",
+    "earn_1yr": 192686,
+    "earn_4yr": 234034,
+    "awards": 555
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 82617,
+    "earn_4yr": 142936,
+    "awards": 182
+   },
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "BS",
+    "cip": "11.01",
+    "earn_1yr": 133293,
+    "earn_4yr": 188157,
+    "awards": 164
+   },
+   {
+    "name": "Natural Resources Conservation and Research",
+    "degree": "MS",
+    "cip": "03.01",
+    "earn_1yr": 75985,
+    "earn_4yr": 100347,
+    "awards": 157
+   },
+   {
+    "name": "Public Health",
+    "degree": "MS",
+    "cip": "51.22",
+    "earn_1yr": 72627,
+    "earn_4yr": 105402,
+    "awards": 151
+   },
+   {
+    "name": "Music",
+    "degree": "MS",
+    "cip": "50.09",
+    "earn_1yr": 21250,
+    "earn_4yr": 29895,
+    "awards": 125
+   },
+   {
+    "name": "Allied Health Diagnostic, Intervention, and Treatment Professions",
+    "degree": "MS",
+    "cip": "51.09",
+    "earn_1yr": 124979,
+    "earn_4yr": 147204,
+    "awards": 113
+   },
+   {
+    "name": "Political Science and Government",
+    "degree": "BS",
+    "cip": "45.10",
+    "earn_1yr": 57466,
+    "earn_4yr": 90764,
+    "awards": 107
+   },
+   {
+    "name": "Theological and Ministerial Studies",
+    "degree": "MS",
+    "cip": "39.06",
+    "earn_1yr": 45451,
+    "earn_4yr": 70736,
+    "awards": 102
+   },
+   {
+    "name": "Registered Nursing, Nursing Administration, Nursing Research and Clinical Nursing",
+    "degree": "MS",
+    "cip": "51.38",
+    "earn_1yr": 113472,
+    "earn_4yr": 131639,
+    "awards": 101
+   },
+   {
+    "name": "Ecology, Evolution, Systematics, and Population Biology",
+    "degree": "MS",
+    "cip": "26.13",
+    "earn_1yr": 58008,
+    "earn_4yr": 93163,
+    "awards": 97
+   },
+   {
+    "name": "Architectural Sciences and Technology",
+    "degree": "MS",
+    "cip": "04.09",
+    "earn_1yr": 65244,
+    "earn_4yr": 88967,
+    "awards": 96
+   },
+   {
+    "name": "History",
+    "degree": "BS",
+    "cip": "54.01",
+    "earn_1yr": 54700,
+    "earn_4yr": 109947,
+    "awards": 96
+   },
+   {
+    "name": "Cell/Cellular Biology and Anatomical Sciences",
+    "degree": "BS",
+    "cip": "26.04",
+    "earn_1yr": 40299,
+    "earn_4yr": 92646,
+    "awards": 86
+   },
+   {
+    "name": "Multi/Interdisciplinary Studies, Other",
+    "degree": "BS",
+    "cip": "30.99",
+    "earn_1yr": 45769,
+    "earn_4yr": null,
+    "awards": 78
+   },
+   {
+    "name": "Research and Experimental Psychology",
+    "degree": "BS",
+    "cip": "42.27",
+    "earn_1yr": 47874,
+    "earn_4yr": 65752,
+    "awards": 72
+   },
+   {
+    "name": "International Relations and National Security Studies",
+    "degree": "BS",
+    "cip": "45.09",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 66
+   },
+   {
+    "name": "English Language and Literature, General",
+    "degree": "BS",
+    "cip": "23.01",
+    "earn_1yr": 41045,
+    "earn_4yr": 62440,
+    "awards": 61
+   },
+   {
+    "name": "Statistics",
+    "degree": "BS",
+    "cip": "27.05",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 58
+   },
+   {
+    "name": "Fine and Studio Arts",
+    "degree": "MS",
+    "cip": "50.07",
+    "earn_1yr": 24521,
+    "earn_4yr": 44265,
+    "awards": 58
+   },
+   {
+    "name": "Mathematics",
+    "degree": "BS",
+    "cip": "27.01",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 53
+   },
+   {
+    "name": "Health and Medical Administrative Services",
+    "degree": "MS",
+    "cip": "51.07",
+    "earn_1yr": 102040,
+    "earn_4yr": 113304,
+    "awards": 52
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Yale_University_Shield_1.svg/960px-Yale_University_Shield_1.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/07/Yale_University_Shield_1.svg",
+  "image_source_url": "https://en.wikipedia.org/wiki/Yale_University"
+ },
+ {
+  "unit_id": 162928,
+  "name": "Johns Hopkins University",
+  "city": "Baltimore",
+  "state": "MD",
+  "url": "https://www.jhu.edu",
+  "type": "private",
+  "size": 5693,
+  "admit_rate": 0.0644,
+  "coa": 85947,
+  "tuition": 65230,
+  "net_price": 18809,
+  "completion_4yr": 0.9378,
+  "earn_10yr": 87555,
+  "programs": [
+   {
+    "name": "International Relations and National Security Studies",
+    "degree": "MS",
+    "cip": "45.09",
+    "earn_1yr": 76550,
+    "earn_4yr": 114716,
+    "awards": 749
+   },
+   {
+    "name": "Education, General",
+    "degree": "MS",
+    "cip": "13.01",
+    "earn_1yr": 63838,
+    "earn_4yr": 73350,
+    "awards": 573
+   },
+   {
+    "name": "Public Health",
+    "degree": "MS",
+    "cip": "51.22",
+    "earn_1yr": 70790,
+    "earn_4yr": 99605,
+    "awards": 477
+   },
+   {
+    "name": "Biotechnology",
+    "degree": "MS",
+    "cip": "26.12",
+    "earn_1yr": 86279,
+    "earn_4yr": 123994,
+    "awards": 466
+   },
+   {
+    "name": "Economics",
+    "degree": "MS",
+    "cip": "45.06",
+    "earn_1yr": 100054,
+    "earn_4yr": 138425,
+    "awards": 393
+   },
+   {
+    "name": "Biology, General",
+    "degree": "MS",
+    "cip": "26.01",
+    "earn_1yr": 153622,
+    "earn_4yr": 243863,
+    "awards": 353
+   },
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "MS",
+    "cip": "11.01",
+    "earn_1yr": 139520,
+    "earn_4yr": 176945,
+    "awards": 329
+   },
+   {
+    "name": "Registered Nursing, Nursing Administration, Nursing Research and Clinical Nursing",
+    "degree": "MS",
+    "cip": "51.38",
+    "earn_1yr": 84697,
+    "earn_4yr": 111325,
+    "awards": 326
+   },
+   {
+    "name": "Health and Medical Administrative Services",
+    "degree": "MS",
+    "cip": "51.07",
+    "earn_1yr": 95780,
+    "earn_4yr": 118011,
+    "awards": 269
+   },
+   {
+    "name": "Biomedical/Medical Engineering",
+    "degree": "MS",
+    "cip": "14.05",
+    "earn_1yr": 90929,
+    "earn_4yr": 115950,
+    "awards": 267
+   },
+   {
+    "name": "Communication and Media Studies",
+    "degree": "MS",
+    "cip": "09.01",
+    "earn_1yr": 82754,
+    "earn_4yr": 107409,
+    "awards": 244
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "MS",
+    "cip": "14.10",
+    "earn_1yr": 126664,
+    "earn_4yr": 148887,
+    "awards": 208
+   },
+   {
+    "name": "Systems Engineering",
+    "degree": "MS",
+    "cip": "14.27",
+    "earn_1yr": 135107,
+    "earn_4yr": 154775,
+    "awards": 192
+   },
+   {
+    "name": "Cell/Cellular Biology and Anatomical Sciences",
+    "degree": "BS",
+    "cip": "26.04",
+    "earn_1yr": 24352,
+    "earn_4yr": 56543,
+    "awards": 185
+   },
+   {
+    "name": "Public Health",
+    "degree": "BS",
+    "cip": "51.22",
+    "earn_1yr": 36540,
+    "earn_4yr": 79113,
+    "awards": 177
+   },
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "BS",
+    "cip": "11.01",
+    "earn_1yr": 109514,
+    "earn_4yr": 196467,
+    "awards": 171
+   },
+   {
+    "name": "Applied Mathematics",
+    "degree": "MS",
+    "cip": "27.03",
+    "earn_1yr": 121262,
+    "earn_4yr": 144429,
+    "awards": 158
+   },
+   {
+    "name": "Business/Commerce, General",
+    "degree": "MS",
+    "cip": "52.01",
+    "earn_1yr": 128210,
+    "earn_4yr": 158699,
+    "awards": 151
+   },
+   {
+    "name": "Mechanical Engineering",
+    "degree": "MS",
+    "cip": "14.19",
+    "earn_1yr": 114588,
+    "earn_4yr": 132861,
+    "awards": 144
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 78181,
+    "earn_4yr": 128882,
+    "awards": 140
+   },
+   {
+    "name": "Engineering-Related Fields",
+    "degree": "MS",
+    "cip": "15.15",
+    "earn_1yr": 109380,
+    "earn_4yr": 143984,
+    "awards": 136
+   },
+   {
+    "name": "Neurobiology and Neurosciences",
+    "degree": "BS",
+    "cip": "26.15",
+    "earn_1yr": 28108,
+    "earn_4yr": 56324,
+    "awards": 126
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/en/thumb/0/09/Johns_Hopkins_University%27s_Academic_Seal.svg/330px-Johns_Hopkins_University%27s_Academic_Seal.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/0/09/Johns_Hopkins_University%27s_Academic_Seal.svg/250px-Johns_Hopkins_University%27s_Academic_Seal.svg.png",
+  "image_source_url": "https://en.wikipedia.org/wiki/Johns_Hopkins_University"
+ },
+ {
+  "unit_id": 186131,
+  "name": "Princeton University",
+  "city": "Princeton",
+  "state": "NJ",
+  "url": "https://www.princeton.edu",
+  "type": "private",
+  "size": 5709,
+  "admit_rate": 0.0462,
+  "coa": 84040,
+  "tuition": 62688,
+  "net_price": 6128,
+  "completion_4yr": 0.9761,
+  "earn_10yr": 110066,
+  "programs": [
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.07",
+    "earn_1yr": 146624,
+    "earn_4yr": 217973,
+    "awards": 201
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 103041,
+    "earn_4yr": 160763,
+    "awards": 132
+   },
+   {
+    "name": "Public Policy Analysis",
+    "degree": "BS",
+    "cip": "44.05",
+    "earn_1yr": 73630,
+    "earn_4yr": 107792,
+    "awards": 114
+   },
+   {
+    "name": "Public Policy Analysis",
+    "degree": "MS",
+    "cip": "44.05",
+    "earn_1yr": 85111,
+    "earn_4yr": 120163,
+    "awards": 100
+   },
+   {
+    "name": "Operations Research",
+    "degree": "BS",
+    "cip": "14.37",
+    "earn_1yr": 100354,
+    "earn_4yr": null,
+    "awards": 77
+   },
+   {
+    "name": "History",
+    "degree": "BS",
+    "cip": "54.01",
+    "earn_1yr": 45363,
+    "earn_4yr": 80347,
+    "awards": 72
+   },
+   {
+    "name": "Political Science and Government",
+    "degree": "BS",
+    "cip": "45.10",
+    "earn_1yr": 63317,
+    "earn_4yr": 88576,
+    "awards": 57
+   },
+   {
+    "name": "Biochemistry, Biophysics and Molecular Biology",
+    "degree": "BS",
+    "cip": "26.02",
+    "earn_1yr": 41848,
+    "earn_4yr": null,
+    "awards": 52
+   },
+   {
+    "name": "Research and Experimental Psychology",
+    "degree": "BS",
+    "cip": "42.27",
+    "earn_1yr": 47050,
+    "earn_4yr": 63216,
+    "awards": 50
+   },
+   {
+    "name": "Mechanical Engineering",
+    "degree": "BS",
+    "cip": "14.19",
+    "earn_1yr": 85328,
+    "earn_4yr": 115927,
+    "awards": 45
+   },
+   {
+    "name": "Mathematics",
+    "degree": "BS",
+    "cip": "27.01",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 38
+   },
+   {
+    "name": "Ecology, Evolution, Systematics, and Population Biology",
+    "degree": "BS",
+    "cip": "26.13",
+    "earn_1yr": 53038,
+    "earn_4yr": 62344,
+    "awards": 37
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "BS",
+    "cip": "14.10",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 36
+   },
+   {
+    "name": "Physics",
+    "degree": "BS",
+    "cip": "40.08",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 34
+   },
+   {
+    "name": "Sociology",
+    "degree": "BS",
+    "cip": "45.11",
+    "earn_1yr": 32914,
+    "earn_4yr": null,
+    "awards": 34
+   },
+   {
+    "name": "English Language and Literature, General",
+    "degree": "BS",
+    "cip": "23.01",
+    "earn_1yr": 35178,
+    "earn_4yr": 61323,
+    "awards": 31
+   },
+   {
+    "name": "Civil Engineering",
+    "degree": "BS",
+    "cip": "14.08",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 30
+   },
+   {
+    "name": "Anthropology",
+    "degree": "BS",
+    "cip": "45.02",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 30
+   },
+   {
+    "name": "Chemistry",
+    "degree": "BS",
+    "cip": "40.05",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 28
+   },
+   {
+    "name": "Neurobiology and Neurosciences",
+    "degree": "BS",
+    "cip": "26.15",
+    "earn_1yr": 32647,
+    "earn_4yr": null,
+    "awards": 26
+   },
+   {
+    "name": "Chemical Engineering",
+    "degree": "BS",
+    "cip": "14.07",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 23
+   },
+   {
+    "name": "Philosophy",
+    "degree": "BS",
+    "cip": "38.01",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 23
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Princeton_seal.svg/960px-Princeton_seal.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/d/d0/Princeton_seal.svg",
+  "image_source_url": "https://en.wikipedia.org/wiki/Princeton_University"
+ },
+ {
+  "unit_id": 215062,
+  "name": "University of Pennsylvania",
+  "city": "Philadelphia",
+  "state": "PA",
+  "url": "https://www.upenn.edu",
+  "type": "private",
+  "size": 10650,
+  "admit_rate": 0.054,
+  "coa": 89028,
+  "tuition": 68686,
+  "net_price": 28699,
+  "completion_4yr": 0.9654,
+  "earn_10yr": 111371,
+  "programs": [
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "MS",
+    "cip": "11.01",
+    "earn_1yr": 125122,
+    "earn_4yr": 222544,
+    "awards": 694
+   },
+   {
+    "name": "Business Administration, Management and Operations",
+    "degree": "MS",
+    "cip": "52.02",
+    "earn_1yr": 210400,
+    "earn_4yr": 272321,
+    "awards": 581
+   },
+   {
+    "name": "Management Sciences and Quantitative Methods",
+    "degree": "MS",
+    "cip": "52.13",
+    "earn_1yr": 88419,
+    "earn_4yr": 106399,
+    "awards": 348
+   },
+   {
+    "name": "Entrepreneurial and Small Business Operations",
+    "degree": "MS",
+    "cip": "52.07",
+    "earn_1yr": 220116,
+    "earn_4yr": 252729,
+    "awards": 330
+   },
+   {
+    "name": "Data Analytics",
+    "degree": "BS",
+    "cip": "30.71",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 261
+   },
+   {
+    "name": "Registered Nursing, Nursing Administration, Nursing Research and Clinical Nursing",
+    "degree": "MS",
+    "cip": "51.38",
+    "earn_1yr": 115382,
+    "earn_4yr": 124042,
+    "awards": 241
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 89097,
+    "earn_4yr": 129985,
+    "awards": 238
+   },
+   {
+    "name": "Social Work",
+    "degree": "MS",
+    "cip": "44.07",
+    "earn_1yr": 54533,
+    "earn_4yr": 68695,
+    "awards": 225
+   },
+   {
+    "name": "Management Sciences and Quantitative Methods",
+    "degree": "BS",
+    "cip": "52.13",
+    "earn_1yr": 104502,
+    "earn_4yr": 153279,
+    "awards": 200
+   },
+   {
+    "name": "Architectural Sciences and Technology",
+    "degree": "MS",
+    "cip": "04.09",
+    "earn_1yr": 63662,
+    "earn_4yr": 78883,
+    "awards": 196
+   },
+   {
+    "name": "Computer Science",
+    "degree": "MS",
+    "cip": "11.07",
+    "earn_1yr": 120693,
+    "earn_4yr": 147612,
+    "awards": 194
+   },
+   {
+    "name": "Registered Nursing, Nursing Administration, Nursing Research and Clinical Nursing",
+    "degree": "BS",
+    "cip": "51.38",
+    "earn_1yr": 80943,
+    "earn_4yr": 98475,
+    "awards": 183
+   },
+   {
+    "name": "Philosophy",
+    "degree": "BS",
+    "cip": "38.01",
+    "earn_1yr": 73053,
+    "earn_4yr": 107454,
+    "awards": 180
+   },
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "BS",
+    "cip": "11.01",
+    "earn_1yr": 146204,
+    "earn_4yr": 241380,
+    "awards": 177
+   },
+   {
+    "name": "Biology, General",
+    "degree": "BS",
+    "cip": "26.01",
+    "earn_1yr": 31055,
+    "earn_4yr": 68435,
+    "awards": 171
+   },
+   {
+    "name": "Public Administration",
+    "degree": "MS",
+    "cip": "44.04",
+    "earn_1yr": 83208,
+    "earn_4yr": 104073,
+    "awards": 168
+   },
+   {
+    "name": "Education, General",
+    "degree": "MS",
+    "cip": "13.01",
+    "earn_1yr": 77285,
+    "earn_4yr": 87086,
+    "awards": 159
+   },
+   {
+    "name": "Natural Resources Conservation and Research",
+    "degree": "MS",
+    "cip": "03.01",
+    "earn_1yr": 64831,
+    "earn_4yr": 83058,
+    "awards": 141
+   },
+   {
+    "name": "Educational Administration and Supervision",
+    "degree": "MS",
+    "cip": "13.04",
+    "earn_1yr": 65568,
+    "earn_4yr": 85500,
+    "awards": 134
+   },
+   {
+    "name": "Health and Medical Administrative Services",
+    "degree": "MS",
+    "cip": "51.07",
+    "earn_1yr": 161843,
+    "earn_4yr": 233999,
+    "awards": 122
+   },
+   {
+    "name": "Behavioral Sciences",
+    "degree": "MS",
+    "cip": "30.17",
+    "earn_1yr": 82577,
+    "earn_4yr": null,
+    "awards": 121
+   },
+   {
+    "name": "Political Science and Government",
+    "degree": "BS",
+    "cip": "45.10",
+    "earn_1yr": 65473,
+    "earn_4yr": 93033,
+    "awards": 112
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/UPenn_shield_with_banner.svg/960px-UPenn_shield_with_banner.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/9/92/UPenn_shield_with_banner.svg",
+  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Pennsylvania"
+ },
+ {
+  "unit_id": 139755,
+  "name": "Georgia Institute of Technology-Main Campus",
+  "city": "Atlanta",
+  "state": "GA",
+  "url": "https://www.gatech.edu",
+  "type": "public",
+  "size": 18785,
+  "admit_rate": 0.1407,
+  "coa": 28167,
+  "tuition": 34484,
+  "net_price": 12116,
+  "completion_4yr": 0.9402,
+  "earn_10yr": 102772,
+  "programs": [
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "MS",
+    "cip": "11.01",
+    "earn_1yr": 150671,
+    "earn_4yr": 195622,
+    "awards": 2731
+   },
+   {
+    "name": "Management Sciences and Quantitative Methods",
+    "degree": "MS",
+    "cip": "52.13",
+    "earn_1yr": 121795,
+    "earn_4yr": 180530,
+    "awards": 1456
+   },
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "BS",
+    "cip": "11.01",
+    "earn_1yr": 105137,
+    "earn_4yr": 150628,
+    "awards": 1070
+   },
+   {
+    "name": "Mechanical Engineering",
+    "degree": "BS",
+    "cip": "14.19",
+    "earn_1yr": 78862,
+    "earn_4yr": 99955,
+    "awards": 437
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "MS",
+    "cip": "14.10",
+    "earn_1yr": 107745,
+    "earn_4yr": 143627,
+    "awards": 357
+   },
+   {
+    "name": "Business Administration, Management and Operations",
+    "degree": "BS",
+    "cip": "52.02",
+    "earn_1yr": 73557,
+    "earn_4yr": 106155,
+    "awards": 351
+   },
+   {
+    "name": "Industrial Engineering",
+    "degree": "BS",
+    "cip": "14.35",
+    "earn_1yr": 87826,
+    "earn_4yr": 128003,
+    "awards": 346
+   },
+   {
+    "name": "Biomedical/Medical Engineering",
+    "degree": "BS",
+    "cip": "14.05",
+    "earn_1yr": 74562,
+    "earn_4yr": 102755,
+    "awards": 266
+   },
+   {
+    "name": "Mechanical Engineering",
+    "degree": "MS",
+    "cip": "14.19",
+    "earn_1yr": 97999,
+    "earn_4yr": 123205,
+    "awards": 232
+   },
+   {
+    "name": "Aerospace, Aeronautical, and Astronautical/Space Engineering",
+    "degree": "BS",
+    "cip": "14.02",
+    "earn_1yr": 79300,
+    "earn_4yr": 102415,
+    "awards": 224
+   },
+   {
+    "name": "Aerospace, Aeronautical, and Astronautical/Space Engineering",
+    "degree": "MS",
+    "cip": "14.02",
+    "earn_1yr": 103878,
+    "earn_4yr": 126979,
+    "awards": 213
+   },
+   {
+    "name": "Computer Science",
+    "degree": "MS",
+    "cip": "11.07",
+    "earn_1yr": 112762,
+    "earn_4yr": 169689,
+    "awards": 190
+   },
+   {
+    "name": "Chemical Engineering",
+    "degree": "BS",
+    "cip": "14.07",
+    "earn_1yr": 85847,
+    "earn_4yr": 104104,
+    "awards": 170
+   },
+   {
+    "name": "Computer Engineering",
+    "degree": "BS",
+    "cip": "14.09",
+    "earn_1yr": 93629,
+    "earn_4yr": 128497,
+    "awards": 157
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "BS",
+    "cip": "14.10",
+    "earn_1yr": 86865,
+    "earn_4yr": 111655,
+    "awards": 145
+   },
+   {
+    "name": "Biology, General",
+    "degree": "BS",
+    "cip": "26.01",
+    "earn_1yr": 19167,
+    "earn_4yr": null,
+    "awards": 121
+   },
+   {
+    "name": "Architectural Sciences and Technology",
+    "degree": "MS",
+    "cip": "04.09",
+    "earn_1yr": 67863,
+    "earn_4yr": 85081,
+    "awards": 107
+   },
+   {
+    "name": "Civil Engineering",
+    "degree": "BS",
+    "cip": "14.08",
+    "earn_1yr": 75688,
+    "earn_4yr": 85133,
+    "awards": 101
+   },
+   {
+    "name": "Biomedical/Medical Engineering",
+    "degree": "MS",
+    "cip": "14.05",
+    "earn_1yr": 92940,
+    "earn_4yr": 123746,
+    "awards": 97
+   },
+   {
+    "name": "Mathematics",
+    "degree": "BS",
+    "cip": "27.01",
+    "earn_1yr": null,
+    "earn_4yr": 122099,
+    "awards": 91
+   },
+   {
+    "name": "Neurobiology and Neurosciences",
+    "degree": "BS",
+    "cip": "26.15",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 90
+   },
+   {
+    "name": "Civil Engineering",
+    "degree": "MS",
+    "cip": "14.08",
+    "earn_1yr": 80401,
+    "earn_4yr": 99226,
+    "awards": 80
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Georgia_Tech_seal.svg/960px-Georgia_Tech_seal.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/6/6c/Georgia_Tech_seal.svg",
+  "image_source_url": "https://en.wikipedia.org/wiki/Georgia_Institute_of_Technology"
+ },
+ {
+  "unit_id": 147767,
+  "name": "Northwestern University",
+  "city": "Evanston",
+  "state": "IL",
+  "url": "https://www.northwestern.edu",
+  "type": "private",
+  "size": 9201,
+  "admit_rate": 0.0769,
+  "coa": 91250,
+  "tuition": 68322,
+  "net_price": 29167,
+  "completion_4yr": 0.9513,
+  "earn_10yr": 89363,
+  "programs": [
+   {
+    "name": "Management Sciences and Quantitative Methods",
+    "degree": "MS",
+    "cip": "52.13",
+    "earn_1yr": 140444,
+    "earn_4yr": 180186,
+    "awards": 2055
+   },
+   {
+    "name": "Radio, Television, and Digital Communication",
+    "degree": "MS",
+    "cip": "09.07",
+    "earn_1yr": 89054,
+    "earn_4yr": 116019,
+    "awards": 414
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 84932,
+    "earn_4yr": 126006,
+    "awards": 373
+   },
+   {
+    "name": "Clinical, Counseling and Applied Psychology",
+    "degree": "MS",
+    "cip": "42.28",
+    "earn_1yr": 43591,
+    "earn_4yr": 60758,
+    "awards": 372
+   },
+   {
+    "name": "Radio, Television, and Digital Communication",
+    "degree": "BS",
+    "cip": "09.07",
+    "earn_1yr": 24611,
+    "earn_4yr": 51471,
+    "awards": 247
+   },
+   {
+    "name": "Psychology, General",
+    "degree": "BS",
+    "cip": "42.01",
+    "earn_1yr": 44088,
+    "earn_4yr": 73646,
+    "awards": 211
+   },
+   {
+    "name": "Business Administration, Management and Operations",
+    "degree": "MS",
+    "cip": "52.02",
+    "earn_1yr": 224402,
+    "earn_4yr": 244399,
+    "awards": 173
+   },
+   {
+    "name": "Biology, General",
+    "degree": "BS",
+    "cip": "26.01",
+    "earn_1yr": null,
+    "earn_4yr": 71181,
+    "awards": 135
+   },
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.07",
+    "earn_1yr": 99981,
+    "earn_4yr": 155106,
+    "awards": 127
+   },
+   {
+    "name": "Neurobiology and Neurosciences",
+    "degree": "BS",
+    "cip": "26.15",
+    "earn_1yr": 35334,
+    "earn_4yr": 54279,
+    "awards": 113
+   },
+   {
+    "name": "Legal Professions and Studies, Other",
+    "degree": "MS",
+    "cip": "22.99",
+    "earn_1yr": 69797,
+    "earn_4yr": 102193,
+    "awards": 107
+   },
+   {
+    "name": "Political Science and Government",
+    "degree": "BS",
+    "cip": "45.10",
+    "earn_1yr": 54737,
+    "earn_4yr": 73231,
+    "awards": 106
+   },
+   {
+    "name": "Business/Commerce, General",
+    "degree": "MS",
+    "cip": "52.01",
+    "earn_1yr": 188890,
+    "earn_4yr": 240637,
+    "awards": 101
+   },
+   {
+    "name": "Engineering, Other",
+    "degree": "MS",
+    "cip": "14.99",
+    "earn_1yr": 162147,
+    "earn_4yr": 211469,
+    "awards": 97
+   },
+   {
+    "name": "Public Administration",
+    "degree": "MS",
+    "cip": "44.04",
+    "earn_1yr": 73260,
+    "earn_4yr": 98798,
+    "awards": 97
+   },
+   {
+    "name": "Drama/Theatre Arts and Stagecraft",
+    "degree": "BS",
+    "cip": "50.05",
+    "earn_1yr": 19245,
+    "earn_4yr": 49316,
+    "awards": 89
+   },
+   {
+    "name": "Information Science/Studies",
+    "degree": "BS",
+    "cip": "11.04",
+    "earn_1yr": 102998,
+    "earn_4yr": 163740,
+    "awards": 88
+   },
+   {
+    "name": "Communication and Media Studies",
+    "degree": "BS",
+    "cip": "09.01",
+    "earn_1yr": 52210,
+    "earn_4yr": 93541,
+    "awards": 82
+   },
+   {
+    "name": "Arts, Entertainment, and Media Management",
+    "degree": "MS",
+    "cip": "50.10",
+    "earn_1yr": 47523,
+    "earn_4yr": 69411,
+    "awards": 81
+   },
+   {
+    "name": "Community Organization and Advocacy",
+    "degree": "BS",
+    "cip": "44.02",
+    "earn_1yr": 61009,
+    "earn_4yr": 84712,
+    "awards": 80
+   },
+   {
+    "name": "Music",
+    "degree": "BS",
+    "cip": "50.09",
+    "earn_1yr": 34823,
+    "earn_4yr": 53875,
+    "awards": 77
+   },
+   {
+    "name": "Music",
+    "degree": "MS",
+    "cip": "50.09",
+    "earn_1yr": 21290,
+    "earn_4yr": 34062,
+    "awards": 73
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Northwestern_University_seal.svg/960px-Northwestern_University_seal.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/5/56/Northwestern_University_seal.svg",
+  "image_source_url": "https://en.wikipedia.org/wiki/Northwestern_University"
+ },
+ {
+  "unit_id": 170976,
+  "name": "University of Michigan-Ann Arbor",
+  "city": "Ann Arbor",
+  "state": "MI",
+  "url": "https://https://umich.edu",
+  "type": "public",
+  "size": 34177,
+  "admit_rate": 0.1564,
+  "coa": 34654,
+  "tuition": 60946,
+  "net_price": 13138,
+  "completion_4yr": 0.932,
+  "earn_10yr": 83648,
+  "programs": [
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "BS",
+    "cip": "11.01",
+    "earn_1yr": 113634,
+    "earn_4yr": 172904,
+    "awards": 1215
+   },
+   {
+    "name": "Business Administration, Management and Operations",
+    "degree": "MS",
+    "cip": "52.02",
+    "earn_1yr": 160286,
+    "earn_4yr": 206293,
+    "awards": 815
+   },
+   {
+    "name": "Research and Experimental Psychology",
+    "degree": "BS",
+    "cip": "42.27",
+    "earn_1yr": 31568,
+    "earn_4yr": 67537,
+    "awards": 761
+   },
+   {
+    "name": "Business Administration, Management and Operations",
+    "degree": "BS",
+    "cip": "52.02",
+    "earn_1yr": 93674,
+    "earn_4yr": 144654,
+    "awards": 613
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 68416,
+    "earn_4yr": 110552,
+    "awards": 608
+   },
+   {
+    "name": "Social Work",
+    "degree": "MS",
+    "cip": "44.07",
+    "earn_1yr": 53431,
+    "earn_4yr": 64788,
+    "awards": 383
+   },
+   {
+    "name": "Biochemistry, Biophysics and Molecular Biology",
+    "degree": "BS",
+    "cip": "26.02",
+    "earn_1yr": 26151,
+    "earn_4yr": 67925,
+    "awards": 284
+   },
+   {
+    "name": "Information Science/Studies",
+    "degree": "MS",
+    "cip": "11.04",
+    "earn_1yr": 73887,
+    "earn_4yr": 105088,
+    "awards": 279
+   },
+   {
+    "name": "Sports, Kinesiology, and Physical Education/Fitness",
+    "degree": "BS",
+    "cip": "31.05",
+    "earn_1yr": 43506,
+    "earn_4yr": 79411,
+    "awards": 279
+   },
+   {
+    "name": "Biology, General",
+    "degree": "BS",
+    "cip": "26.01",
+    "earn_1yr": 26888,
+    "earn_4yr": 61127,
+    "awards": 258
+   },
+   {
+    "name": "Natural Resources Conservation and Research",
+    "degree": "MS",
+    "cip": "03.01",
+    "earn_1yr": 59248,
+    "earn_4yr": 87988,
+    "awards": 250
+   },
+   {
+    "name": "Political Science and Government",
+    "degree": "BS",
+    "cip": "45.10",
+    "earn_1yr": 39702,
+    "earn_4yr": 77480,
+    "awards": 247
+   },
+   {
+    "name": "Mechanical Engineering",
+    "degree": "BS",
+    "cip": "14.19",
+    "earn_1yr": 82823,
+    "earn_4yr": 105888,
+    "awards": 239
+   },
+   {
+    "name": "Mathematics",
+    "degree": "BS",
+    "cip": "27.01",
+    "earn_1yr": 80676,
+    "earn_4yr": 109146,
+    "awards": 211
+   },
+   {
+    "name": "Communication and Media Studies",
+    "degree": "BS",
+    "cip": "09.01",
+    "earn_1yr": 50556,
+    "earn_4yr": 79648,
+    "awards": 209
+   },
+   {
+    "name": "Neurobiology and Neurosciences",
+    "degree": "BS",
+    "cip": "26.15",
+    "earn_1yr": 23468,
+    "earn_4yr": 55436,
+    "awards": 189
+   },
+   {
+    "name": "Registered Nursing, Nursing Administration, Nursing Research and Clinical Nursing",
+    "degree": "BS",
+    "cip": "51.38",
+    "earn_1yr": 75458,
+    "earn_4yr": 82265,
+    "awards": 173
+   },
+   {
+    "name": "Information Science/Studies",
+    "degree": "BS",
+    "cip": "11.04",
+    "earn_1yr": 88515,
+    "earn_4yr": 130798,
+    "awards": 172
+   },
+   {
+    "name": "Fine and Studio Arts",
+    "degree": "BS",
+    "cip": "50.07",
+    "earn_1yr": 31367,
+    "earn_4yr": 66846,
+    "awards": 172
+   },
+   {
+    "name": "International/Globalization Studies",
+    "degree": "BS",
+    "cip": "30.20",
+    "earn_1yr": 44446,
+    "earn_4yr": 72545,
+    "awards": 154
+   },
+   {
+    "name": "Aerospace, Aeronautical, and Astronautical/Space Engineering",
+    "degree": "MS",
+    "cip": "14.02",
+    "earn_1yr": 108023,
+    "earn_4yr": 125870,
+    "awards": 153
+   },
+   {
+    "name": "Architectural Sciences and Technology",
+    "degree": "MS",
+    "cip": "04.09",
+    "earn_1yr": 56856,
+    "earn_4yr": 78083,
+    "awards": 147
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Seal_of_the_University_of_Michigan.svg/960px-Seal_of_the_University_of_Michigan.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/9/93/Seal_of_the_University_of_Michigan.svg",
+  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Michigan"
+ },
+ {
+  "unit_id": 198419,
+  "name": "Duke University",
+  "city": "Durham",
+  "state": "NC",
+  "url": "https://www.duke.edu",
+  "type": "private",
+  "size": 6442,
+  "admit_rate": 0.0571,
+  "coa": 87072,
+  "tuition": 68758,
+  "net_price": 29612,
+  "completion_4yr": 0.9678,
+  "earn_10yr": 97800,
+  "programs": [
+   {
+    "name": "Management Sciences and Quantitative Methods",
+    "degree": "MS",
+    "cip": "52.13",
+    "earn_1yr": 104689,
+    "earn_4yr": 152389,
+    "awards": 999
+   },
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.07",
+    "earn_1yr": 133356,
+    "earn_4yr": 195809,
+    "awards": 410
+   },
+   {
+    "name": "Multi/Interdisciplinary Studies, Other",
+    "degree": "BS",
+    "cip": "30.99",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 281
+   },
+   {
+    "name": "Engineering-Related Fields",
+    "degree": "MS",
+    "cip": "15.15",
+    "earn_1yr": 110977,
+    "earn_4yr": 144681,
+    "awards": 266
+   },
+   {
+    "name": "Business Administration, Management and Operations",
+    "degree": "MS",
+    "cip": "52.02",
+    "earn_1yr": 171948,
+    "earn_4yr": 222160,
+    "awards": 229
+   },
+   {
+    "name": "Registered Nursing, Nursing Administration, Nursing Research and Clinical Nursing",
+    "degree": "BS",
+    "cip": "51.38",
+    "earn_1yr": 77288,
+    "earn_4yr": 87763,
+    "awards": 224
+   },
+   {
+    "name": "Registered Nursing, Nursing Administration, Nursing Research and Clinical Nursing",
+    "degree": "MS",
+    "cip": "51.38",
+    "earn_1yr": 109702,
+    "earn_4yr": 122410,
+    "awards": 208
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 98649,
+    "earn_4yr": 161149,
+    "awards": 199
+   },
+   {
+    "name": "Natural Resources Conservation and Research",
+    "degree": "MS",
+    "cip": "03.01",
+    "earn_1yr": 67458,
+    "earn_4yr": 96411,
+    "awards": 188
+   },
+   {
+    "name": "Biology, General",
+    "degree": "BS",
+    "cip": "26.01",
+    "earn_1yr": 30939,
+    "earn_4yr": 83192,
+    "awards": 169
+   },
+   {
+    "name": "Public Policy Analysis",
+    "degree": "BS",
+    "cip": "44.05",
+    "earn_1yr": 60501,
+    "earn_4yr": 103071,
+    "awards": 144
+   },
+   {
+    "name": "Public Policy Analysis",
+    "degree": "MS",
+    "cip": "44.05",
+    "earn_1yr": 85125,
+    "earn_4yr": 109274,
+    "awards": 143
+   },
+   {
+    "name": "Theological and Ministerial Studies",
+    "degree": "MS",
+    "cip": "39.06",
+    "earn_1yr": 44015,
+    "earn_4yr": 58405,
+    "awards": 136
+   },
+   {
+    "name": "Research and Experimental Psychology",
+    "degree": "BS",
+    "cip": "42.27",
+    "earn_1yr": 39359,
+    "earn_4yr": null,
+    "awards": 133
+   },
+   {
+    "name": "Political Science and Government",
+    "degree": "BS",
+    "cip": "45.10",
+    "earn_1yr": 54970,
+    "earn_4yr": 88459,
+    "awards": 111
+   },
+   {
+    "name": "Computer Engineering",
+    "degree": "BS",
+    "cip": "14.09",
+    "earn_1yr": 111145,
+    "earn_4yr": 174522,
+    "awards": 110
+   },
+   {
+    "name": "Legal Research and Advanced Professional Studies",
+    "degree": "MS",
+    "cip": "22.02",
+    "earn_1yr": 213539,
+    "earn_4yr": null,
+    "awards": 107
+   },
+   {
+    "name": "Biomedical/Medical Engineering",
+    "degree": "MS",
+    "cip": "14.05",
+    "earn_1yr": 89528,
+    "earn_4yr": 112081,
+    "awards": 106
+   },
+   {
+    "name": "Biomedical/Medical Engineering",
+    "degree": "BS",
+    "cip": "14.05",
+    "earn_1yr": 69873,
+    "earn_4yr": 105921,
+    "awards": 102
+   },
+   {
+    "name": "Neurobiology and Neurosciences",
+    "degree": "BS",
+    "cip": "26.15",
+    "earn_1yr": 37208,
+    "earn_4yr": 73140,
+    "awards": 95
+   },
+   {
+    "name": "Allied Health Diagnostic, Intervention, and Treatment Professions",
+    "degree": "MS",
+    "cip": "51.09",
+    "earn_1yr": 115890,
+    "earn_4yr": 132468,
+    "awards": 90
+   },
+   {
+    "name": "Mathematics",
+    "degree": "BS",
+    "cip": "27.01",
+    "earn_1yr": 121088,
+    "earn_4yr": 297029,
+    "awards": 83
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Duke_University_logo.svg/960px-Duke_University_logo.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/e/e6/Duke_University_logo.svg",
+  "image_source_url": "https://en.wikipedia.org/wiki/Duke_University"
+ },
+ {
+  "unit_id": 110662,
+  "name": "University of California-Los Angeles",
+  "city": "Los Angeles",
+  "state": "CA",
+  "url": "https://www.ucla.edu",
+  "type": "public",
+  "size": 33475,
+  "admit_rate": 0.0897,
+  "coa": 38614,
+  "tuition": 49403,
+  "net_price": 12548,
+  "completion_4yr": 0.9262,
+  "earn_10yr": 82511,
+  "programs": [
+   {
+    "name": "Management Sciences and Quantitative Methods",
+    "degree": "MS",
+    "cip": "52.13",
+    "earn_1yr": 169099,
+    "earn_4yr": null,
+    "awards": 1054
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 62091,
+    "earn_4yr": 95440,
+    "awards": 830
+   },
+   {
+    "name": "Psychology, General",
+    "degree": "BS",
+    "cip": "42.01",
+    "earn_1yr": 30614,
+    "earn_4yr": 61050,
+    "awards": 685
+   },
+   {
+    "name": "Sociology",
+    "degree": "BS",
+    "cip": "45.11",
+    "earn_1yr": 34121,
+    "earn_4yr": 64692,
+    "awards": 669
+   },
+   {
+    "name": "Political Science and Government",
+    "degree": "BS",
+    "cip": "45.10",
+    "earn_1yr": 34392,
+    "earn_4yr": 74202,
+    "awards": 653
+   },
+   {
+    "name": "Research and Experimental Psychology",
+    "degree": "BS",
+    "cip": "42.27",
+    "earn_1yr": 27748,
+    "earn_4yr": 61134,
+    "awards": 412
+   },
+   {
+    "name": "Applied Mathematics",
+    "degree": "BS",
+    "cip": "27.03",
+    "earn_1yr": 61188,
+    "earn_4yr": 103887,
+    "awards": 369
+   },
+   {
+    "name": "Biology, General",
+    "degree": "BS",
+    "cip": "26.01",
+    "earn_1yr": 28242,
+    "earn_4yr": 61804,
+    "awards": 359
+   },
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.07",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 340
+   },
+   {
+    "name": "Cell/Cellular Biology and Anatomical Sciences",
+    "degree": "BS",
+    "cip": "26.04",
+    "earn_1yr": 36945,
+    "earn_4yr": 72443,
+    "awards": 264
+   },
+   {
+    "name": "History",
+    "degree": "BS",
+    "cip": "54.01",
+    "earn_1yr": 28116,
+    "earn_4yr": 59555,
+    "awards": 240
+   },
+   {
+    "name": "Education, General",
+    "degree": "MS",
+    "cip": "13.01",
+    "earn_1yr": 61708,
+    "earn_4yr": 80698,
+    "awards": 237
+   },
+   {
+    "name": "Cognitive Science",
+    "degree": "BS",
+    "cip": "30.25",
+    "earn_1yr": 53962,
+    "earn_4yr": 102066,
+    "awards": 237
+   },
+   {
+    "name": "Communication and Media Studies",
+    "degree": "BS",
+    "cip": "09.01",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 232
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "MS",
+    "cip": "14.10",
+    "earn_1yr": 119390,
+    "earn_4yr": 174798,
+    "awards": 227
+   },
+   {
+    "name": "Statistics",
+    "degree": "BS",
+    "cip": "27.05",
+    "earn_1yr": 59718,
+    "earn_4yr": 109017,
+    "awards": 227
+   },
+   {
+    "name": "Legal Research and Advanced Professional Studies",
+    "degree": "MS",
+    "cip": "22.02",
+    "earn_1yr": 91677,
+    "earn_4yr": 112923,
+    "awards": 226
+   },
+   {
+    "name": "English Language and Literature, General",
+    "degree": "BS",
+    "cip": "23.01",
+    "earn_1yr": 27889,
+    "earn_4yr": 55346,
+    "awards": 221
+   },
+   {
+    "name": "Physiology, Pathology and Related Sciences",
+    "degree": "BS",
+    "cip": "26.09",
+    "earn_1yr": 23151,
+    "earn_4yr": 57139,
+    "awards": 216
+   },
+   {
+    "name": "Human Biology",
+    "degree": "BS",
+    "cip": "30.27",
+    "earn_1yr": 33628,
+    "earn_4yr": 66496,
+    "awards": 207
+   },
+   {
+    "name": "Mathematics",
+    "degree": "BS",
+    "cip": "27.01",
+    "earn_1yr": 38449,
+    "earn_4yr": 99269,
+    "awards": 198
+   },
+   {
+    "name": "Ethnic, Cultural Minority, Gender, and Group Studies",
+    "degree": "BS",
+    "cip": "05.02",
+    "earn_1yr": 29914,
+    "earn_4yr": 55088,
+    "awards": 189
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/The_University_of_California_UCLA.svg/960px-The_University_of_California_UCLA.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/0d/The_University_of_California_UCLA.svg",
+  "image_source_url": "https://en.wikipedia.org/wiki/University_of_California%2C_Los_Angeles"
+ },
+ {
+  "unit_id": 110680,
+  "name": "University of California-San Diego",
+  "city": "La Jolla",
+  "state": "CA",
+  "url": "https://www.ucsd.edu",
+  "type": "public",
+  "size": 34948,
+  "admit_rate": 0.2671,
+  "coa": 38701,
+  "tuition": 50958,
+  "net_price": 12470,
+  "completion_4yr": 0.8605,
+  "earn_10yr": 84943,
+  "programs": [
+   {
+    "name": "Cell/Cellular Biology and Anatomical Sciences",
+    "degree": "BS",
+    "cip": "26.04",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 749
+   },
+   {
+    "name": "Cognitive Science",
+    "degree": "BS",
+    "cip": "30.25",
+    "earn_1yr": 39839,
+    "earn_4yr": 81160,
+    "awards": 722
+   },
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.07",
+    "earn_1yr": 112006,
+    "earn_4yr": 159487,
+    "awards": 518
+   },
+   {
+    "name": "International/Globalization Studies",
+    "degree": "BS",
+    "cip": "30.20",
+    "earn_1yr": 45168,
+    "earn_4yr": 81174,
+    "awards": 511
+   },
+   {
+    "name": "Computer Science",
+    "degree": "MS",
+    "cip": "11.07",
+    "earn_1yr": 148262,
+    "earn_4yr": 231397,
+    "awards": 499
+   },
+   {
+    "name": "Political Science and Government",
+    "degree": "BS",
+    "cip": "45.10",
+    "earn_1yr": 33345,
+    "earn_4yr": 67713,
+    "awards": 383
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 51192,
+    "earn_4yr": 87307,
+    "awards": 364
+   },
+   {
+    "name": "Psychology, General",
+    "degree": "BS",
+    "cip": "42.01",
+    "earn_1yr": 29144,
+    "earn_4yr": 51679,
+    "awards": 350
+   },
+   {
+    "name": "Public Health",
+    "degree": "BS",
+    "cip": "51.22",
+    "earn_1yr": 39144,
+    "earn_4yr": 66110,
+    "awards": 338
+   },
+   {
+    "name": "Biology, General",
+    "degree": "BS",
+    "cip": "26.01",
+    "earn_1yr": 34504,
+    "earn_4yr": 64437,
+    "awards": 316
+   },
+   {
+    "name": "Mathematics and Computer Science",
+    "degree": "BS",
+    "cip": "30.08",
+    "earn_1yr": 89651,
+    "earn_4yr": 137218,
+    "awards": 299
+   },
+   {
+    "name": "Management Sciences and Quantitative Methods",
+    "degree": "BS",
+    "cip": "52.13",
+    "earn_1yr": 60973,
+    "earn_4yr": 89451,
+    "awards": 273
+   },
+   {
+    "name": "Communication and Media Studies",
+    "degree": "BS",
+    "cip": "09.01",
+    "earn_1yr": 33046,
+    "earn_4yr": 67302,
+    "awards": 244
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "MS",
+    "cip": "14.10",
+    "earn_1yr": 111009,
+    "earn_4yr": 169987,
+    "awards": 239
+   },
+   {
+    "name": "Mathematics",
+    "degree": "BS",
+    "cip": "27.01",
+    "earn_1yr": 52339,
+    "earn_4yr": 79015,
+    "awards": 227
+   },
+   {
+    "name": "Chemistry",
+    "degree": "BS",
+    "cip": "40.05",
+    "earn_1yr": 45310,
+    "earn_4yr": 77249,
+    "awards": 227
+   },
+   {
+    "name": "Clinical, Counseling and Applied Psychology",
+    "degree": "BS",
+    "cip": "42.28",
+    "earn_1yr": 26953,
+    "earn_4yr": 56000,
+    "awards": 218
+   },
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "BS",
+    "cip": "11.01",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 207
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "BS",
+    "cip": "14.10",
+    "earn_1yr": 80687,
+    "earn_4yr": 118150,
+    "awards": 189
+   },
+   {
+    "name": "Neurobiology and Neurosciences",
+    "degree": "BS",
+    "cip": "26.15",
+    "earn_1yr": 32081,
+    "earn_4yr": 61799,
+    "awards": 177
+   },
+   {
+    "name": "Biomedical/Medical Engineering",
+    "degree": "MS",
+    "cip": "14.05",
+    "earn_1yr": 100166,
+    "earn_4yr": 127935,
+    "awards": 175
+   },
+   {
+    "name": "Computer Engineering",
+    "degree": "BS",
+    "cip": "14.09",
+    "earn_1yr": 96256,
+    "earn_4yr": 149139,
+    "awards": 174
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Seal_of_the_University_of_California%2C_San_Diego.svg/960px-Seal_of_the_University_of_California%2C_San_Diego.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/c/c1/Seal_of_the_University_of_California%2C_San_Diego.svg",
+  "image_source_url": "https://en.wikipedia.org/wiki/University_of_California%2C_San_Diego"
+ },
+ {
+  "unit_id": 190415,
+  "name": "Cornell University",
+  "city": "Ithaca",
+  "state": "NY",
+  "url": "https://www.cornell.edu",
+  "type": "private",
+  "size": 15995,
+  "admit_rate": 0.0876,
+  "coa": 88140,
+  "tuition": 69314,
+  "net_price": 28690,
+  "completion_4yr": 0.9538,
+  "earn_10yr": 104043,
+  "programs": [
+   {
+    "name": "Business Administration, Management and Operations",
+    "degree": "MS",
+    "cip": "52.02",
+    "earn_1yr": 179274,
+    "earn_4yr": 226632,
+    "awards": 574
+   },
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.07",
+    "earn_1yr": 152656,
+    "earn_4yr": 223309,
+    "awards": 507
+   },
+   {
+    "name": "Computer Science",
+    "degree": "MS",
+    "cip": "11.07",
+    "earn_1yr": 153588,
+    "earn_4yr": 235762,
+    "awards": 290
+   },
+   {
+    "name": "Hospitality Administration/Management",
+    "degree": "BS",
+    "cip": "52.09",
+    "earn_1yr": 77803,
+    "earn_4yr": 112289,
+    "awards": 290
+   },
+   {
+    "name": "Human Resources Management and Services",
+    "degree": "BS",
+    "cip": "52.10",
+    "earn_1yr": 73436,
+    "earn_4yr": 112713,
+    "awards": 273
+   },
+   {
+    "name": "Agricultural Business and Management",
+    "degree": "BS",
+    "cip": "01.01",
+    "earn_1yr": 92163,
+    "earn_4yr": 145218,
+    "awards": 254
+   },
+   {
+    "name": "Biology, General",
+    "degree": "BS",
+    "cip": "26.01",
+    "earn_1yr": 34500,
+    "earn_4yr": 69083,
+    "awards": 254
+   },
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "BS",
+    "cip": "11.01",
+    "earn_1yr": 103650,
+    "earn_4yr": 144389,
+    "awards": 206
+   },
+   {
+    "name": "Biological and Biomedical Sciences, Other",
+    "degree": "BS",
+    "cip": "26.99",
+    "earn_1yr": 38841,
+    "earn_4yr": 85883,
+    "awards": 176
+   },
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "MS",
+    "cip": "11.01",
+    "earn_1yr": 123586,
+    "earn_4yr": 196882,
+    "awards": 175
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "MS",
+    "cip": "14.10",
+    "earn_1yr": 123494,
+    "earn_4yr": 156103,
+    "awards": 164
+   },
+   {
+    "name": "Operations Research",
+    "degree": "MS",
+    "cip": "14.37",
+    "earn_1yr": 125810,
+    "earn_4yr": 203340,
+    "awards": 163
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 84967,
+    "earn_4yr": 137935,
+    "awards": 157
+   },
+   {
+    "name": "Mechanical Engineering",
+    "degree": "BS",
+    "cip": "14.19",
+    "earn_1yr": 85440,
+    "earn_4yr": 112212,
+    "awards": 132
+   },
+   {
+    "name": "Public Administration",
+    "degree": "MS",
+    "cip": "44.04",
+    "earn_1yr": 61190,
+    "earn_4yr": 100325,
+    "awards": 130
+   },
+   {
+    "name": "Systems Engineering",
+    "degree": "MS",
+    "cip": "14.27",
+    "earn_1yr": 117455,
+    "earn_4yr": 142846,
+    "awards": 124
+   },
+   {
+    "name": "Political Science and Government",
+    "degree": "BS",
+    "cip": "45.10",
+    "earn_1yr": 60292,
+    "earn_4yr": 95391,
+    "awards": 116
+   },
+   {
+    "name": "Engineering-Related Fields",
+    "degree": "MS",
+    "cip": "15.15",
+    "earn_1yr": 83323,
+    "earn_4yr": null,
+    "awards": 109
+   },
+   {
+    "name": "Mathematics",
+    "degree": "BS",
+    "cip": "27.01",
+    "earn_1yr": 87251,
+    "earn_4yr": 134455,
+    "awards": 103
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "BS",
+    "cip": "14.10",
+    "earn_1yr": 100516,
+    "earn_4yr": 147241,
+    "awards": 100
+   },
+   {
+    "name": "Human Resources Management and Services",
+    "degree": "MS",
+    "cip": "52.10",
+    "earn_1yr": 112291,
+    "earn_4yr": 155909,
+    "awards": 95
+   },
+   {
+    "name": "Human Development, Family Studies, and Related Services",
+    "degree": "BS",
+    "cip": "19.07",
+    "earn_1yr": 38401,
+    "earn_4yr": 73066,
+    "awards": 90
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Cornell_University_seal.svg/960px-Cornell_University_seal.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/4/47/Cornell_University_seal.svg",
+  "image_source_url": "https://en.wikipedia.org/wiki/Cornell_University"
+ },
+ {
+  "unit_id": 193900,
+  "name": "New York University",
+  "city": "New York",
+  "state": "NY",
+  "url": "https://https://www.nyu.edu",
+  "type": "private",
+  "size": 28663,
+  "admit_rate": 0.0923,
+  "coa": 84374,
+  "tuition": 62796,
+  "net_price": 37050,
+  "completion_4yr": 0.8757,
+  "earn_10yr": 82509,
+  "programs": [
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "MS",
+    "cip": "11.01",
+    "earn_1yr": 107240,
+    "earn_4yr": 173716,
+    "awards": 1174
+   },
+   {
+    "name": "Management Sciences and Quantitative Methods",
+    "degree": "MS",
+    "cip": "52.13",
+    "earn_1yr": 178835,
+    "earn_4yr": 188168,
+    "awards": 967
+   },
+   {
+    "name": "Computer/Information Technology Administration and Management",
+    "degree": "MS",
+    "cip": "11.10",
+    "earn_1yr": 113704,
+    "earn_4yr": 152422,
+    "awards": 636
+   },
+   {
+    "name": "General Sales, Merchandising and Related Marketing Operations",
+    "degree": "MS",
+    "cip": "52.18",
+    "earn_1yr": 80996,
+    "earn_4yr": 120018,
+    "awards": 593
+   },
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "BS",
+    "cip": "11.01",
+    "earn_1yr": 87608,
+    "earn_4yr": 142495,
+    "awards": 573
+   },
+   {
+    "name": "Research and Experimental Psychology",
+    "degree": "MS",
+    "cip": "42.27",
+    "earn_1yr": 48960,
+    "earn_4yr": 82490,
+    "awards": 565
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 68495,
+    "earn_4yr": 116510,
+    "awards": 540
+   },
+   {
+    "name": "Liberal Arts and Sciences, General Studies and Humanities",
+    "degree": "BS",
+    "cip": "24.01",
+    "earn_1yr": 38447,
+    "earn_4yr": 66502,
+    "awards": 538
+   },
+   {
+    "name": "Social Work",
+    "degree": "MS",
+    "cip": "44.07",
+    "earn_1yr": 57712,
+    "earn_4yr": 72690,
+    "awards": 532
+   },
+   {
+    "name": "Research and Experimental Psychology",
+    "degree": "BS",
+    "cip": "42.27",
+    "earn_1yr": 37512,
+    "earn_4yr": 63315,
+    "awards": 499
+   },
+   {
+    "name": "Biology, General",
+    "degree": "MS",
+    "cip": "26.01",
+    "earn_1yr": 69912,
+    "earn_4yr": 90999,
+    "awards": 473
+   },
+   {
+    "name": "Film/Video and Photographic Arts",
+    "degree": "BS",
+    "cip": "50.06",
+    "earn_1yr": 23869,
+    "earn_4yr": 58720,
+    "awards": 446
+   },
+   {
+    "name": "Radio, Television, and Digital Communication",
+    "degree": "BS",
+    "cip": "09.07",
+    "earn_1yr": 47666,
+    "earn_4yr": 77109,
+    "awards": 438
+   },
+   {
+    "name": "Registered Nursing, Nursing Administration, Nursing Research and Clinical Nursing",
+    "degree": "BS",
+    "cip": "51.38",
+    "earn_1yr": 111360,
+    "earn_4yr": 118433,
+    "awards": 437
+   },
+   {
+    "name": "Drama/Theatre Arts and Stagecraft",
+    "degree": "BS",
+    "cip": "50.05",
+    "earn_1yr": 20916,
+    "earn_4yr": 42348,
+    "awards": 421
+   },
+   {
+    "name": "Business/Commerce, General",
+    "degree": "BS",
+    "cip": "52.01",
+    "earn_1yr": 77828,
+    "earn_4yr": 137804,
+    "awards": 414
+   },
+   {
+    "name": "Engineering-Related Fields",
+    "degree": "MS",
+    "cip": "15.15",
+    "earn_1yr": 114850,
+    "earn_4yr": 127277,
+    "awards": 345
+   },
+   {
+    "name": "Real Estate",
+    "degree": "MS",
+    "cip": "52.15",
+    "earn_1yr": 128898,
+    "earn_4yr": 156252,
+    "awards": 267
+   },
+   {
+    "name": "Communication Disorders Sciences and Services",
+    "degree": "MS",
+    "cip": "51.02",
+    "earn_1yr": 64527,
+    "earn_4yr": 75912,
+    "awards": 257
+   },
+   {
+    "name": "Management Sciences and Quantitative Methods",
+    "degree": "BS",
+    "cip": "52.13",
+    "earn_1yr": 102572,
+    "earn_4yr": 158559,
+    "awards": 245
+   },
+   {
+    "name": "Public Administration",
+    "degree": "MS",
+    "cip": "44.04",
+    "earn_1yr": 82887,
+    "earn_4yr": 109946,
+    "awards": 244
+   },
+   {
+    "name": "Radio, Television, and Digital Communication",
+    "degree": "MS",
+    "cip": "09.07",
+    "earn_1yr": 56147,
+    "earn_4yr": 77975,
+    "awards": 203
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/New_York_University_Seal.svg/960px-New_York_University_Seal.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/16/New_York_University_Seal.svg",
+  "image_source_url": "https://en.wikipedia.org/wiki/New_York_University"
+ },
+ {
+  "unit_id": 123961,
+  "name": "University of Southern California",
+  "city": "Los Angeles",
+  "state": "CA",
+  "url": "https://www.usc.edu",
+  "type": "private",
+  "size": 20443,
+  "admit_rate": 0.0981,
+  "coa": 90300,
+  "tuition": 72097,
+  "net_price": 32740,
+  "completion_4yr": 0.9183,
+  "earn_10yr": 92498,
+  "programs": [
+   {
+    "name": "Management Sciences and Quantitative Methods",
+    "degree": "MS",
+    "cip": "52.13",
+    "earn_1yr": 120846,
+    "earn_4yr": 158632,
+    "awards": 1272
+   },
+   {
+    "name": "Management Sciences and Quantitative Methods",
+    "degree": "BS",
+    "cip": "52.13",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 1221
+   },
+   {
+    "name": "Computer Science",
+    "degree": "MS",
+    "cip": "11.07",
+    "earn_1yr": 134544,
+    "earn_4yr": 188871,
+    "awards": 1185
+   },
+   {
+    "name": "Social Work",
+    "degree": "MS",
+    "cip": "44.07",
+    "earn_1yr": 61298,
+    "earn_4yr": 73829,
+    "awards": 649
+   },
+   {
+    "name": "Business Administration, Management and Operations",
+    "degree": "MS",
+    "cip": "52.02",
+    "earn_1yr": 132668,
+    "earn_4yr": 181250,
+    "awards": 525
+   },
+   {
+    "name": "Legal Research and Advanced Professional Studies",
+    "degree": "MS",
+    "cip": "22.02",
+    "earn_1yr": 68058,
+    "earn_4yr": 84932,
+    "awards": 522
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "MS",
+    "cip": "14.10",
+    "earn_1yr": 126936,
+    "earn_4yr": 180468,
+    "awards": 409
+   },
+   {
+    "name": "Communication and Media Studies",
+    "degree": "MS",
+    "cip": "09.01",
+    "earn_1yr": 68587,
+    "earn_4yr": 91873,
+    "awards": 315
+   },
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.07",
+    "earn_1yr": 137284,
+    "earn_4yr": 192897,
+    "awards": 305
+   },
+   {
+    "name": "Communication and Media Studies",
+    "degree": "BS",
+    "cip": "09.01",
+    "earn_1yr": 47651,
+    "earn_4yr": 75864,
+    "awards": 269
+   },
+   {
+    "name": "Public Health",
+    "degree": "MS",
+    "cip": "51.22",
+    "earn_1yr": 58611,
+    "earn_4yr": 95642,
+    "awards": 262
+   },
+   {
+    "name": "Teacher Education and Professional Development, Specific Subject Areas",
+    "degree": "MS",
+    "cip": "13.13",
+    "earn_1yr": 57494,
+    "earn_4yr": 69534,
+    "awards": 252
+   },
+   {
+    "name": "Human Biology",
+    "degree": "BS",
+    "cip": "30.27",
+    "earn_1yr": 23405,
+    "earn_4yr": 69751,
+    "awards": 241
+   },
+   {
+    "name": "Human Resources Management and Services",
+    "degree": "MS",
+    "cip": "52.10",
+    "earn_1yr": 94625,
+    "earn_4yr": 116471,
+    "awards": 234
+   },
+   {
+    "name": "Engineering, Other",
+    "degree": "MS",
+    "cip": "14.99",
+    "earn_1yr": 101781,
+    "earn_4yr": 150717,
+    "awards": 216
+   },
+   {
+    "name": "Public Administration",
+    "degree": "MS",
+    "cip": "44.04",
+    "earn_1yr": 78453,
+    "earn_4yr": 103721,
+    "awards": 209
+   },
+   {
+    "name": "Student Counseling and Personnel Services",
+    "degree": "MS",
+    "cip": "13.11",
+    "earn_1yr": 52999,
+    "earn_4yr": 77125,
+    "awards": 204
+   },
+   {
+    "name": "Public Relations, Advertising, and Applied Communication",
+    "degree": "MS",
+    "cip": "09.09",
+    "earn_1yr": 50634,
+    "earn_4yr": 89760,
+    "awards": 195
+   },
+   {
+    "name": "Psychology, General",
+    "degree": "BS",
+    "cip": "42.01",
+    "earn_1yr": 34139,
+    "earn_4yr": 70461,
+    "awards": 189
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 57060,
+    "earn_4yr": 94435,
+    "awards": 178
+   },
+   {
+    "name": "Film/Video and Photographic Arts",
+    "degree": "BS",
+    "cip": "50.06",
+    "earn_1yr": 34187,
+    "earn_4yr": 58623,
+    "awards": 178
+   },
+   {
+    "name": "Rehabilitation and Therapeutic Professions",
+    "degree": "MS",
+    "cip": "51.23",
+    "earn_1yr": 74934,
+    "earn_4yr": 87543,
+    "awards": 175
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/University_of_Southern_California_%28USC%29_seal.svg/960px-University_of_Southern_California_%28USC%29_seal.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/5/5c/University_of_Southern_California_%28USC%29_seal.svg",
+  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Southern_California"
+ },
+ {
+  "unit_id": 164988,
+  "name": "Boston University",
+  "city": "Boston",
+  "state": "MA",
+  "url": "https://www.bu.edu",
+  "type": "private",
+  "size": 18248,
+  "admit_rate": 0.1111,
+  "coa": 86285,
+  "tuition": 68102,
+  "net_price": 24402,
+  "completion_4yr": 0.8866,
+  "earn_10yr": 83238,
+  "programs": [
+   {
+    "name": "Business Administration, Management and Operations",
+    "degree": "MS",
+    "cip": "52.02",
+    "earn_1yr": 110558,
+    "earn_4yr": 147178,
+    "awards": 1198
+   },
+   {
+    "name": "Business Administration, Management and Operations",
+    "degree": "BS",
+    "cip": "52.02",
+    "earn_1yr": 71545,
+    "earn_4yr": 108412,
+    "awards": 672
+   },
+   {
+    "name": "Public Health",
+    "degree": "MS",
+    "cip": "51.22",
+    "earn_1yr": 68423,
+    "earn_4yr": 88820,
+    "awards": 375
+   },
+   {
+    "name": "Management Sciences and Quantitative Methods",
+    "degree": "MS",
+    "cip": "52.13",
+    "earn_1yr": 89942,
+    "earn_4yr": 118168,
+    "awards": 370
+   },
+   {
+    "name": "Social Work",
+    "degree": "MS",
+    "cip": "44.07",
+    "earn_1yr": 57991,
+    "earn_4yr": 72136,
+    "awards": 321
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 55733,
+    "earn_4yr": 96723,
+    "awards": 307
+   },
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.07",
+    "earn_1yr": 90050,
+    "earn_4yr": 136667,
+    "awards": 305
+   },
+   {
+    "name": "Psychology, General",
+    "degree": "BS",
+    "cip": "42.01",
+    "earn_1yr": 39175,
+    "earn_4yr": 63838,
+    "awards": 305
+   },
+   {
+    "name": "Public Relations, Advertising, and Applied Communication",
+    "degree": "BS",
+    "cip": "09.09",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 297
+   },
+   {
+    "name": "Finance and Financial Management Services",
+    "degree": "MS",
+    "cip": "52.08",
+    "earn_1yr": 93057,
+    "earn_4yr": 117293,
+    "awards": 277
+   },
+   {
+    "name": "Information Science/Studies",
+    "degree": "MS",
+    "cip": "11.04",
+    "earn_1yr": 104702,
+    "earn_4yr": 136425,
+    "awards": 257
+   },
+   {
+    "name": "Computer Science",
+    "degree": "MS",
+    "cip": "11.07",
+    "earn_1yr": 144484,
+    "earn_4yr": 153937,
+    "awards": 227
+   },
+   {
+    "name": "Ecology, Evolution, Systematics, and Population Biology",
+    "degree": "MS",
+    "cip": "26.13",
+    "earn_1yr": 70479,
+    "earn_4yr": 96565,
+    "awards": 221
+   },
+   {
+    "name": "Legal Research and Advanced Professional Studies",
+    "degree": "MS",
+    "cip": "22.02",
+    "earn_1yr": 113679,
+    "earn_4yr": 156087,
+    "awards": 214
+   },
+   {
+    "name": "Radio, Television, and Digital Communication",
+    "degree": "BS",
+    "cip": "09.07",
+    "earn_1yr": 37225,
+    "earn_4yr": 55804,
+    "awards": 195
+   },
+   {
+    "name": "Biological and Biomedical Sciences, Other",
+    "degree": "MS",
+    "cip": "26.99",
+    "earn_1yr": 38610,
+    "earn_4yr": 87544,
+    "awards": 191
+   },
+   {
+    "name": "International Relations and National Security Studies",
+    "degree": "BS",
+    "cip": "45.09",
+    "earn_1yr": 45870,
+    "earn_4yr": 66661,
+    "awards": 189
+   },
+   {
+    "name": "Marketing",
+    "degree": "MS",
+    "cip": "52.14",
+    "earn_1yr": 61136,
+    "earn_4yr": 103316,
+    "awards": 169
+   },
+   {
+    "name": "Political Science and Government",
+    "degree": "BS",
+    "cip": "45.10",
+    "earn_1yr": 45021,
+    "earn_4yr": 66373,
+    "awards": 162
+   },
+   {
+    "name": "Health Services/Allied Health/Health Sciences, General",
+    "degree": "BS",
+    "cip": "51.00",
+    "earn_1yr": 42894,
+    "earn_4yr": 78431,
+    "awards": 155
+   },
+   {
+    "name": "Biology, General",
+    "degree": "BS",
+    "cip": "26.01",
+    "earn_1yr": 40165,
+    "earn_4yr": 61610,
+    "awards": 153
+   },
+   {
+    "name": "Teacher Education and Professional Development, Specific Subject Areas",
+    "degree": "MS",
+    "cip": "13.13",
+    "earn_1yr": 59382,
+    "earn_4yr": 68388,
+    "awards": 147
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Boston_University_seal.svg/960px-Boston_University_seal.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/f/f5/Boston_University_seal.svg",
+  "image_source_url": "https://en.wikipedia.org/wiki/Boston_University"
+ },
+ {
+  "unit_id": 228778,
+  "name": "The University of Texas at Austin",
+  "city": "Austin",
+  "state": "TX",
+  "url": "https://https://www.utexas.edu",
+  "type": "public",
+  "size": 42855,
+  "admit_rate": 0.2664,
+  "coa": 31247,
+  "tuition": 44908,
+  "net_price": 19857,
+  "completion_4yr": 0.889,
+  "earn_10yr": 75121,
+  "programs": [
+   {
+    "name": "Biology, General",
+    "degree": "BS",
+    "cip": "26.01",
+    "earn_1yr": 31832,
+    "earn_4yr": 66264,
+    "awards": 590
+   },
+   {
+    "name": "Business Administration, Management and Operations",
+    "degree": "MS",
+    "cip": "52.02",
+    "earn_1yr": 159326,
+    "earn_4yr": 197707,
+    "awards": 535
+   },
+   {
+    "name": "Psychology, General",
+    "degree": "BS",
+    "cip": "42.01",
+    "earn_1yr": 33556,
+    "earn_4yr": 56821,
+    "awards": 514
+   },
+   {
+    "name": "Public Relations, Advertising, and Applied Communication",
+    "degree": "BS",
+    "cip": "09.09",
+    "earn_1yr": 47972,
+    "earn_4yr": 80221,
+    "awards": 487
+   },
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "BS",
+    "cip": "11.01",
+    "earn_1yr": 111587,
+    "earn_4yr": 155168,
+    "awards": 470
+   },
+   {
+    "name": "Finance and Financial Management Services",
+    "degree": "BS",
+    "cip": "52.08",
+    "earn_1yr": 81844,
+    "earn_4yr": 132075,
+    "awards": 434
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "BS",
+    "cip": "14.10",
+    "earn_1yr": 96997,
+    "earn_4yr": 146003,
+    "awards": 342
+   },
+   {
+    "name": "Political Science and Government",
+    "degree": "BS",
+    "cip": "45.10",
+    "earn_1yr": 43281,
+    "earn_4yr": 75988,
+    "awards": 340
+   },
+   {
+    "name": "Public Health",
+    "degree": "BS",
+    "cip": "51.22",
+    "earn_1yr": 35761,
+    "earn_4yr": 61390,
+    "awards": 313
+   },
+   {
+    "name": "Mathematics",
+    "degree": "BS",
+    "cip": "27.01",
+    "earn_1yr": 60011,
+    "earn_4yr": 88434,
+    "awards": 308
+   },
+   {
+    "name": "Biochemistry, Biophysics and Molecular Biology",
+    "degree": "BS",
+    "cip": "26.02",
+    "earn_1yr": 33846,
+    "earn_4yr": 64145,
+    "awards": 303
+   },
+   {
+    "name": "Liberal Arts and Sciences, General Studies and Humanities",
+    "degree": "BS",
+    "cip": "24.01",
+    "earn_1yr": 45243,
+    "earn_4yr": 73089,
+    "awards": 294
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 58717,
+    "earn_4yr": 89354,
+    "awards": 294
+   },
+   {
+    "name": "Mechanical Engineering",
+    "degree": "BS",
+    "cip": "14.19",
+    "earn_1yr": 82227,
+    "earn_4yr": 104523,
+    "awards": 275
+   },
+   {
+    "name": "Sports, Kinesiology, and Physical Education/Fitness",
+    "degree": "BS",
+    "cip": "31.05",
+    "earn_1yr": 35583,
+    "earn_4yr": 66580,
+    "awards": 272
+   },
+   {
+    "name": "Radio, Television, and Digital Communication",
+    "degree": "BS",
+    "cip": "09.07",
+    "earn_1yr": 28892,
+    "earn_4yr": 52860,
+    "awards": 262
+   },
+   {
+    "name": "Neurobiology and Neurosciences",
+    "degree": "BS",
+    "cip": "26.15",
+    "earn_1yr": 34820,
+    "earn_4yr": 65124,
+    "awards": 262
+   },
+   {
+    "name": "Business Administration, Management and Operations",
+    "degree": "BS",
+    "cip": "52.02",
+    "earn_1yr": 66289,
+    "earn_4yr": 94458,
+    "awards": 250
+   },
+   {
+    "name": "Accounting and Related Services",
+    "degree": "MS",
+    "cip": "52.03",
+    "earn_1yr": 71694,
+    "earn_4yr": 117656,
+    "awards": 240
+   },
+   {
+    "name": "Communication and Media Studies",
+    "degree": "BS",
+    "cip": "09.01",
+    "earn_1yr": 43848,
+    "earn_4yr": 72210,
+    "awards": 203
+   },
+   {
+    "name": "Management Sciences and Quantitative Methods",
+    "degree": "MS",
+    "cip": "52.13",
+    "earn_1yr": 96749,
+    "earn_4yr": 128909,
+    "awards": 193
+   },
+   {
+    "name": "Information Science/Studies",
+    "degree": "MS",
+    "cip": "11.04",
+    "earn_1yr": 54007,
+    "earn_4yr": 68652,
+    "awards": 192
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/en/thumb/e/e1/University_of_Texas_at_Austin_seal.svg/960px-University_of_Texas_at_Austin_seal.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/en/e/e1/University_of_Texas_at_Austin_seal.svg",
+  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Texas_at_Austin"
+ },
+ {
+  "unit_id": 240444,
+  "name": "University of Wisconsin-Madison",
+  "city": "Madison",
+  "state": "WI",
+  "url": "https://www.wisc.edu",
+  "type": "public",
+  "size": 36902,
+  "admit_rate": 0.452,
+  "coa": 28679,
+  "tuition": 42103,
+  "net_price": 17354,
+  "completion_4yr": 0.8955,
+  "earn_10yr": 73792,
+  "programs": [
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "BS",
+    "cip": "11.01",
+    "earn_1yr": 80566,
+    "earn_4yr": 119655,
+    "awards": 864
+   },
+   {
+    "name": "Psychology, General",
+    "degree": "BS",
+    "cip": "42.01",
+    "earn_1yr": 31985,
+    "earn_4yr": 58901,
+    "awards": 589
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 54495,
+    "earn_4yr": 85366,
+    "awards": 587
+   },
+   {
+    "name": "Finance and Financial Management Services",
+    "degree": "BS",
+    "cip": "52.08",
+    "earn_1yr": 68681,
+    "earn_4yr": 107207,
+    "awards": 521
+   },
+   {
+    "name": "Biology, General",
+    "degree": "BS",
+    "cip": "26.01",
+    "earn_1yr": 35798,
+    "earn_4yr": 69005,
+    "awards": 440
+   },
+   {
+    "name": "Political Science and Government",
+    "degree": "BS",
+    "cip": "45.10",
+    "earn_1yr": 42063,
+    "earn_4yr": 66148,
+    "awards": 384
+   },
+   {
+    "name": "Data Science",
+    "degree": "BS",
+    "cip": "30.70",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 323
+   },
+   {
+    "name": "Communication and Media Studies",
+    "degree": "BS",
+    "cip": "09.01",
+    "earn_1yr": 37286,
+    "earn_4yr": 61270,
+    "awards": 304
+   },
+   {
+    "name": "Neurobiology and Neurosciences",
+    "degree": "BS",
+    "cip": "26.15",
+    "earn_1yr": 31687,
+    "earn_4yr": 58824,
+    "awards": 288
+   },
+   {
+    "name": "Marketing",
+    "degree": "BS",
+    "cip": "52.14",
+    "earn_1yr": 65224,
+    "earn_4yr": 96148,
+    "awards": 252
+   },
+   {
+    "name": "Mathematics",
+    "degree": "BS",
+    "cip": "27.01",
+    "earn_1yr": 67744,
+    "earn_4yr": 101438,
+    "awards": 237
+   },
+   {
+    "name": "General Sales, Merchandising and Related Marketing Operations",
+    "degree": "BS",
+    "cip": "52.18",
+    "earn_1yr": 57760,
+    "earn_4yr": 82081,
+    "awards": 232
+   },
+   {
+    "name": "Business Administration, Management and Operations",
+    "degree": "BS",
+    "cip": "52.02",
+    "earn_1yr": 67699,
+    "earn_4yr": 100005,
+    "awards": 231
+   },
+   {
+    "name": "Journalism",
+    "degree": "BS",
+    "cip": "09.04",
+    "earn_1yr": 40942,
+    "earn_4yr": 75967,
+    "awards": 221
+   },
+   {
+    "name": "Mechanical Engineering",
+    "degree": "BS",
+    "cip": "14.19",
+    "earn_1yr": 74611,
+    "earn_4yr": 95114,
+    "awards": 218
+   },
+   {
+    "name": "Registered Nursing, Nursing Administration, Nursing Research and Clinical Nursing",
+    "degree": "BS",
+    "cip": "51.38",
+    "earn_1yr": 75513,
+    "earn_4yr": 85579,
+    "awards": 218
+   },
+   {
+    "name": "Biochemistry, Biophysics and Molecular Biology",
+    "degree": "BS",
+    "cip": "26.02",
+    "earn_1yr": 44074,
+    "earn_4yr": 72988,
+    "awards": 183
+   },
+   {
+    "name": "Sports, Kinesiology, and Physical Education/Fitness",
+    "degree": "BS",
+    "cip": "31.05",
+    "earn_1yr": 29866,
+    "earn_4yr": 74963,
+    "awards": 183
+   },
+   {
+    "name": "Natural Resources Conservation and Research",
+    "degree": "BS",
+    "cip": "03.01",
+    "earn_1yr": 28824,
+    "earn_4yr": 52631,
+    "awards": 173
+   },
+   {
+    "name": "Real Estate",
+    "degree": "BS",
+    "cip": "52.15",
+    "earn_1yr": 73239,
+    "earn_4yr": 120483,
+    "awards": 169
+   },
+   {
+    "name": "Human Development, Family Studies, and Related Services",
+    "degree": "BS",
+    "cip": "19.07",
+    "earn_1yr": 34149,
+    "earn_4yr": 59044,
+    "awards": 158
+   },
+   {
+    "name": "Romance Languages, Literatures, and Linguistics",
+    "degree": "BS",
+    "cip": "16.09",
+    "earn_1yr": 35720,
+    "earn_4yr": 58565,
+    "awards": 157
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Seal_of_the_University_of_Wisconsin.svg/960px-Seal_of_the_University_of_Wisconsin.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/4/45/Seal_of_the_University_of_Wisconsin.svg",
+  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Wisconsin%E2%80%93Madison"
+ },
+ {
+  "unit_id": 145637,
+  "name": "University of Illinois Urbana-Champaign",
+  "city": "Champaign",
+  "state": "IL",
+  "url": "https://www.illinois.edu",
+  "type": "public",
+  "size": 36258,
+  "admit_rate": 0.4237,
+  "coa": 33642,
+  "tuition": 35124,
+  "net_price": 14355,
+  "completion_4yr": 0.8513,
+  "earn_10yr": 81054,
+  "programs": [
+   {
+    "name": "Business Administration, Management and Operations",
+    "degree": "MS",
+    "cip": "52.02",
+    "earn_1yr": 118799,
+    "earn_4yr": 151907,
+    "awards": 1735
+   },
+   {
+    "name": "Management Sciences and Quantitative Methods",
+    "degree": "MS",
+    "cip": "52.13",
+    "earn_1yr": 72105,
+    "earn_4yr": 106780,
+    "awards": 1070
+   },
+   {
+    "name": "Computer Science",
+    "degree": "MS",
+    "cip": "11.07",
+    "earn_1yr": 146670,
+    "earn_4yr": 179395,
+    "awards": 840
+   },
+   {
+    "name": "Information Science/Studies",
+    "degree": "MS",
+    "cip": "11.04",
+    "earn_1yr": 44923,
+    "earn_4yr": null,
+    "awards": 601
+   },
+   {
+    "name": "Research and Experimental Psychology",
+    "degree": "BS",
+    "cip": "42.27",
+    "earn_1yr": 33384,
+    "earn_4yr": 60168,
+    "awards": 573
+   },
+   {
+    "name": "Computer Engineering",
+    "degree": "BS",
+    "cip": "14.09",
+    "earn_1yr": 103123,
+    "earn_4yr": 159855,
+    "awards": 396
+   },
+   {
+    "name": "Accounting and Related Services",
+    "degree": "BS",
+    "cip": "52.03",
+    "earn_1yr": 74731,
+    "earn_4yr": 101098,
+    "awards": 352
+   },
+   {
+    "name": "Statistics",
+    "degree": "BS",
+    "cip": "27.05",
+    "earn_1yr": 68636,
+    "earn_4yr": 105978,
+    "awards": 330
+   },
+   {
+    "name": "Finance and Financial Management Services",
+    "degree": "BS",
+    "cip": "52.08",
+    "earn_1yr": 75381,
+    "earn_4yr": 119978,
+    "awards": 323
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 58921,
+    "earn_4yr": 86860,
+    "awards": 315
+   },
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.07",
+    "earn_1yr": 124530,
+    "earn_4yr": 181981,
+    "awards": 311
+   },
+   {
+    "name": "Communication and Media Studies",
+    "degree": "BS",
+    "cip": "09.01",
+    "earn_1yr": 37808,
+    "earn_4yr": 66439,
+    "awards": 294
+   },
+   {
+    "name": "Cell/Cellular Biology and Anatomical Sciences",
+    "degree": "BS",
+    "cip": "26.04",
+    "earn_1yr": 29777,
+    "earn_4yr": 70213,
+    "awards": 290
+   },
+   {
+    "name": "Agricultural Business and Management",
+    "degree": "BS",
+    "cip": "01.01",
+    "earn_1yr": 55934,
+    "earn_4yr": 86646,
+    "awards": 255
+   },
+   {
+    "name": "Political Science and Government",
+    "degree": "BS",
+    "cip": "45.10",
+    "earn_1yr": 35172,
+    "earn_4yr": 69515,
+    "awards": 252
+   },
+   {
+    "name": "Mechanical Engineering",
+    "degree": "BS",
+    "cip": "14.19",
+    "earn_1yr": 80187,
+    "earn_4yr": 95329,
+    "awards": 228
+   },
+   {
+    "name": "Management Information Systems and Services",
+    "degree": "BS",
+    "cip": "52.12",
+    "earn_1yr": 77572,
+    "earn_4yr": 116339,
+    "awards": 203
+   },
+   {
+    "name": "Social Work",
+    "degree": "MS",
+    "cip": "44.07",
+    "earn_1yr": 50602,
+    "earn_4yr": 64120,
+    "awards": 197
+   },
+   {
+    "name": "Education, General",
+    "degree": "MS",
+    "cip": "13.01",
+    "earn_1yr": 62620,
+    "earn_4yr": 71889,
+    "awards": 193
+   },
+   {
+    "name": "Public Relations, Advertising, and Applied Communication",
+    "degree": "BS",
+    "cip": "09.09",
+    "earn_1yr": 48063,
+    "earn_4yr": 83451,
+    "awards": 191
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "BS",
+    "cip": "14.10",
+    "earn_1yr": 86483,
+    "earn_4yr": 111783,
+    "awards": 184
+   },
+   {
+    "name": "Civil Engineering",
+    "degree": "BS",
+    "cip": "14.08",
+    "earn_1yr": 73397,
+    "earn_4yr": 91650,
+    "awards": 180
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/University_of_Illinois_seal.svg/960px-University_of_Illinois_seal.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/a/af/University_of_Illinois_seal.svg",
+  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Illinois_Urbana-Champaign"
+ },
+ {
+  "unit_id": 227757,
+  "name": "Rice University",
+  "city": "Houston",
+  "state": "TX",
+  "url": "https://www.rice.edu",
+  "type": "private",
+  "size": 4776,
+  "admit_rate": 0.08,
+  "coa": 79788,
+  "tuition": 64144,
+  "net_price": 13370,
+  "completion_4yr": 0.9464,
+  "earn_10yr": 89718,
+  "programs": [
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "BS",
+    "cip": "11.01",
+    "earn_1yr": 131154,
+    "earn_4yr": 182443,
+    "awards": 164
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 78814,
+    "earn_4yr": 129575,
+    "awards": 88
+   },
+   {
+    "name": "Biology, General",
+    "degree": "BS",
+    "cip": "26.01",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 70
+   },
+   {
+    "name": "Psychology, General",
+    "degree": "BS",
+    "cip": "42.01",
+    "earn_1yr": 41299,
+    "earn_4yr": null,
+    "awards": 66
+   },
+   {
+    "name": "Mechanical Engineering",
+    "degree": "BS",
+    "cip": "14.19",
+    "earn_1yr": 82899,
+    "earn_4yr": 108970,
+    "awards": 65
+   },
+   {
+    "name": "Physiology, Pathology and Related Sciences",
+    "degree": "BS",
+    "cip": "26.09",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 57
+   },
+   {
+    "name": "Music",
+    "degree": "MS",
+    "cip": "50.09",
+    "earn_1yr": 30454,
+    "earn_4yr": 50777,
+    "awards": 55
+   },
+   {
+    "name": "Sports, Kinesiology, and Physical Education/Fitness",
+    "degree": "BS",
+    "cip": "31.05",
+    "earn_1yr": 51110,
+    "earn_4yr": 87404,
+    "awards": 53
+   },
+   {
+    "name": "Mathematics",
+    "degree": "BS",
+    "cip": "27.01",
+    "earn_1yr": 50286,
+    "earn_4yr": null,
+    "awards": 47
+   },
+   {
+    "name": "Neurobiology and Neurosciences",
+    "degree": "BS",
+    "cip": "26.15",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 45
+   },
+   {
+    "name": "Statistics",
+    "degree": "BS",
+    "cip": "27.05",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 45
+   },
+   {
+    "name": "Cognitive Science",
+    "degree": "BS",
+    "cip": "30.25",
+    "earn_1yr": 47459,
+    "earn_4yr": 66913,
+    "awards": 44
+   },
+   {
+    "name": "Public Policy Analysis",
+    "degree": "BS",
+    "cip": "44.05",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 31
+   },
+   {
+    "name": "English Language and Literature, General",
+    "degree": "BS",
+    "cip": "23.01",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 30
+   },
+   {
+    "name": "Biomedical/Medical Engineering",
+    "degree": "BS",
+    "cip": "14.05",
+    "earn_1yr": 88307,
+    "earn_4yr": 121099,
+    "awards": 29
+   },
+   {
+    "name": "Chemical Engineering",
+    "degree": "BS",
+    "cip": "14.07",
+    "earn_1yr": 87830,
+    "earn_4yr": 113605,
+    "awards": 29
+   },
+   {
+    "name": "Political Science and Government",
+    "degree": "BS",
+    "cip": "45.10",
+    "earn_1yr": 54728,
+    "earn_4yr": 87804,
+    "awards": 28
+   },
+   {
+    "name": "Electrical and Computer Engineering",
+    "degree": "BS",
+    "cip": "14.47",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 22
+   },
+   {
+    "name": "Music",
+    "degree": "BS",
+    "cip": "50.09",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 22
+   },
+   {
+    "name": "Visual and Performing Arts, General",
+    "degree": "BS",
+    "cip": "50.01",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 19
+   },
+   {
+    "name": "Architecture",
+    "degree": "BS",
+    "cip": "04.02",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 18
+   },
+   {
+    "name": "Biochemistry, Biophysics and Molecular Biology",
+    "degree": "BS",
+    "cip": "26.02",
+    "earn_1yr": null,
+    "earn_4yr": null,
+    "awards": 18
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/en/thumb/c/c7/Rice_University_seal.svg/330px-Rice_University_seal.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/c/c7/Rice_University_seal.svg/250px-Rice_University_seal.svg.png",
+  "image_source_url": "https://en.wikipedia.org/wiki/Rice_University"
+ },
+ {
+  "unit_id": 236948,
+  "name": "University of Washington-Seattle Campus",
+  "city": "Seattle",
+  "state": "WA",
+  "url": "https://https://www.washington.edu",
+  "type": "public",
+  "size": 31942,
+  "admit_rate": 0.3915,
+  "coa": 32446,
+  "tuition": 43209,
+  "net_price": 14091,
+  "completion_4yr": 0.8518,
+  "earn_10yr": 78466,
+  "programs": [
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "BS",
+    "cip": "11.01",
+    "earn_1yr": 73385,
+    "earn_4yr": 114798,
+    "awards": 622
+   },
+   {
+    "name": "Research and Experimental Psychology",
+    "degree": "BS",
+    "cip": "42.27",
+    "earn_1yr": 34715,
+    "earn_4yr": 57718,
+    "awards": 496
+   },
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.07",
+    "earn_1yr": 128887,
+    "earn_4yr": 175616,
+    "awards": 495
+   },
+   {
+    "name": "Political Science and Government",
+    "degree": "BS",
+    "cip": "45.10",
+    "earn_1yr": 41246,
+    "earn_4yr": 72487,
+    "awards": 389
+   },
+   {
+    "name": "Business Administration, Management and Operations",
+    "degree": "MS",
+    "cip": "52.02",
+    "earn_1yr": 149800,
+    "earn_4yr": 194296,
+    "awards": 385
+   },
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "MS",
+    "cip": "11.01",
+    "earn_1yr": 123084,
+    "earn_4yr": 170194,
+    "awards": 325
+   },
+   {
+    "name": "Finance and Financial Management Services",
+    "degree": "BS",
+    "cip": "52.08",
+    "earn_1yr": 63500,
+    "earn_4yr": 97452,
+    "awards": 304
+   },
+   {
+    "name": "Public Health",
+    "degree": "BS",
+    "cip": "51.22",
+    "earn_1yr": 46016,
+    "earn_4yr": 63666,
+    "awards": 297
+   },
+   {
+    "name": "Economics",
+    "degree": "BS",
+    "cip": "45.06",
+    "earn_1yr": 53934,
+    "earn_4yr": 87239,
+    "awards": 287
+   },
+   {
+    "name": "Communication and Media Studies",
+    "degree": "BS",
+    "cip": "09.01",
+    "earn_1yr": 44638,
+    "earn_4yr": 64153,
+    "awards": 281
+   },
+   {
+    "name": "Biochemistry, Biophysics and Molecular Biology",
+    "degree": "BS",
+    "cip": "26.02",
+    "earn_1yr": 38985,
+    "earn_4yr": 58818,
+    "awards": 280
+   },
+   {
+    "name": "Information Science/Studies",
+    "degree": "MS",
+    "cip": "11.04",
+    "earn_1yr": 114662,
+    "earn_4yr": 142909,
+    "awards": 272
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "BS",
+    "cip": "14.10",
+    "earn_1yr": 81989,
+    "earn_4yr": 116010,
+    "awards": 227
+   },
+   {
+    "name": "Marketing",
+    "degree": "BS",
+    "cip": "52.14",
+    "earn_1yr": 51530,
+    "earn_4yr": 88114,
+    "awards": 224
+   },
+   {
+    "name": "Natural Resources Conservation and Research",
+    "degree": "BS",
+    "cip": "03.01",
+    "earn_1yr": 35867,
+    "earn_4yr": 58229,
+    "awards": 220
+   },
+   {
+    "name": "Sociology",
+    "degree": "BS",
+    "cip": "45.11",
+    "earn_1yr": 40062,
+    "earn_4yr": 60292,
+    "awards": 219
+   },
+   {
+    "name": "Management Sciences and Quantitative Methods",
+    "degree": "MS",
+    "cip": "52.13",
+    "earn_1yr": 95189,
+    "earn_4yr": null,
+    "awards": 212
+   },
+   {
+    "name": "Mathematics",
+    "degree": "BS",
+    "cip": "27.01",
+    "earn_1yr": 46585,
+    "earn_4yr": 100127,
+    "awards": 209
+   },
+   {
+    "name": "Public Administration",
+    "degree": "MS",
+    "cip": "44.04",
+    "earn_1yr": 70392,
+    "earn_4yr": 91499,
+    "awards": 206
+   },
+   {
+    "name": "Biology, General",
+    "degree": "BS",
+    "cip": "26.01",
+    "earn_1yr": 38716,
+    "earn_4yr": 59443,
+    "awards": 198
+   },
+   {
+    "name": "Public Health",
+    "degree": "MS",
+    "cip": "51.22",
+    "earn_1yr": 70125,
+    "earn_4yr": 92611,
+    "awards": 186
+   },
+   {
+    "name": "Management Sciences and Quantitative Methods",
+    "degree": "BS",
+    "cip": "52.13",
+    "earn_1yr": 62069,
+    "earn_4yr": 95193,
+    "awards": 183
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/en/thumb/5/58/University_of_Washington_seal.svg/330px-University_of_Washington_seal.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/5/58/University_of_Washington_seal.svg/250px-University_of_Washington_seal.svg.png",
+  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Washington"
+ },
+ {
+  "unit_id": 243780,
+  "name": "Purdue University-Main Campus",
+  "city": "West Lafayette",
+  "state": "IN",
+  "url": "https://https://www.purdue.edu",
+  "type": "public",
+  "size": 44503,
+  "admit_rate": 0.4987,
+  "coa": 24591,
+  "tuition": 28794,
+  "net_price": 14600,
+  "completion_4yr": 0.831,
+  "earn_10yr": 72424,
+  "programs": [
+   {
+    "name": "Computer Science",
+    "degree": "BS",
+    "cip": "11.07",
+    "earn_1yr": 94786,
+    "earn_4yr": 146685,
+    "awards": 560
+   },
+   {
+    "name": "Mechanical Engineering",
+    "degree": "BS",
+    "cip": "14.19",
+    "earn_1yr": 80374,
+    "earn_4yr": 102572,
+    "awards": 478
+   },
+   {
+    "name": "Computer Engineering",
+    "degree": "BS",
+    "cip": "14.09",
+    "earn_1yr": 89965,
+    "earn_4yr": 121462,
+    "awards": 319
+   },
+   {
+    "name": "Research and Experimental Psychology",
+    "degree": "BS",
+    "cip": "42.27",
+    "earn_1yr": 31172,
+    "earn_4yr": 52170,
+    "awards": 318
+   },
+   {
+    "name": "Aerospace, Aeronautical, and Astronautical/Space Engineering",
+    "degree": "BS",
+    "cip": "14.02",
+    "earn_1yr": 71989,
+    "earn_4yr": 97332,
+    "awards": 314
+   },
+   {
+    "name": "Biology, General",
+    "degree": "BS",
+    "cip": "26.01",
+    "earn_1yr": 40145,
+    "earn_4yr": 58225,
+    "awards": 290
+   },
+   {
+    "name": "Industrial Engineering",
+    "degree": "BS",
+    "cip": "14.35",
+    "earn_1yr": 81379,
+    "earn_4yr": 107031,
+    "awards": 269
+   },
+   {
+    "name": "Mechanical Engineering Related Technologies/Technicians",
+    "degree": "BS",
+    "cip": "15.08",
+    "earn_1yr": 67093,
+    "earn_4yr": 86891,
+    "awards": 265
+   },
+   {
+    "name": "Finance and Financial Management Services",
+    "degree": "BS",
+    "cip": "52.08",
+    "earn_1yr": 59938,
+    "earn_4yr": 85924,
+    "awards": 224
+   },
+   {
+    "name": "Mechanical Engineering",
+    "degree": "MS",
+    "cip": "14.19",
+    "earn_1yr": 105764,
+    "earn_4yr": 133021,
+    "awards": 219
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "MS",
+    "cip": "14.10",
+    "earn_1yr": 104331,
+    "earn_4yr": 137523,
+    "awards": 211
+   },
+   {
+    "name": "Statistics",
+    "degree": "BS",
+    "cip": "27.05",
+    "earn_1yr": 72579,
+    "earn_4yr": 104047,
+    "awards": 205
+   },
+   {
+    "name": "Curriculum and Instruction",
+    "degree": "MS",
+    "cip": "13.03",
+    "earn_1yr": 57521,
+    "earn_4yr": null,
+    "awards": 196
+   },
+   {
+    "name": "Business Administration, Management and Operations",
+    "degree": "MS",
+    "cip": "52.02",
+    "earn_1yr": 103280,
+    "earn_4yr": 132747,
+    "awards": 189
+   },
+   {
+    "name": "Communication and Media Studies",
+    "degree": "MS",
+    "cip": "09.01",
+    "earn_1yr": 70112,
+    "earn_4yr": 84920,
+    "awards": 186
+   },
+   {
+    "name": "Computer Software and Media Applications",
+    "degree": "BS",
+    "cip": "11.08",
+    "earn_1yr": 38234,
+    "earn_4yr": 59766,
+    "awards": 181
+   },
+   {
+    "name": "Civil Engineering",
+    "degree": "BS",
+    "cip": "14.08",
+    "earn_1yr": 74369,
+    "earn_4yr": 90873,
+    "awards": 180
+   },
+   {
+    "name": "Aerospace, Aeronautical, and Astronautical/Space Engineering",
+    "degree": "MS",
+    "cip": "14.02",
+    "earn_1yr": 104329,
+    "earn_4yr": 131275,
+    "awards": 174
+   },
+   {
+    "name": "Electrical, Electronics, and Communications Engineering",
+    "degree": "BS",
+    "cip": "14.10",
+    "earn_1yr": 84300,
+    "earn_4yr": 105396,
+    "awards": 174
+   },
+   {
+    "name": "Management Sciences and Quantitative Methods",
+    "degree": "BS",
+    "cip": "52.13",
+    "earn_1yr": 70903,
+    "earn_4yr": 93976,
+    "awards": 170
+   },
+   {
+    "name": "Registered Nursing, Nursing Administration, Nursing Research and Clinical Nursing",
+    "degree": "BS",
+    "cip": "51.38",
+    "earn_1yr": 71759,
+    "earn_4yr": 80403,
+    "awards": 162
+   },
+   {
+    "name": "Computer and Information Sciences, General",
+    "degree": "BS",
+    "cip": "11.01",
+    "earn_1yr": 72132,
+    "earn_4yr": 99896,
+    "awards": 148
+   }
+  ],
+  "logo_url": "https://upload.wikimedia.org/wikipedia/en/thumb/6/61/Purdue_University_seal.svg/330px-Purdue_University_seal.svg.png",
+  "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/6/61/Purdue_University_seal.svg/120px-Purdue_University_seal.svg.png",
+  "image_source_url": "https://en.wikipedia.org/wiki/Purdue_University"
+ }
+]
