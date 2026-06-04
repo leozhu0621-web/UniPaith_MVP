@@ -331,32 +331,38 @@ export default function ApplicationsPage() {
 
       {/* Filters + sort */}
       <div className="flex flex-wrap items-center gap-2 mb-4">
-        <Select
-          aria-label="Filter by status"
-          value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value as 'all' | Bucket)}
-          options={[{ value: 'all', label: 'All statuses' }, ...BUCKET_ORDER.map(b => ({ value: b, label: BUCKET_LABELS[b] }))]}
-        />
-        {institutions.length > 0 && (
+        <div className="w-full sm:w-40">
           <Select
-            aria-label="Filter by institution"
-            value={institution}
-            onChange={e => setInstitution(e.target.value)}
-            options={[{ value: 'all', label: 'All institutions' }, ...institutions.map(i => ({ value: i, label: i }))]}
+            aria-label="Filter by status"
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value as 'all' | Bucket)}
+            options={[{ value: 'all', label: 'All statuses' }, ...BUCKET_ORDER.map(b => ({ value: b, label: BUCKET_LABELS[b] }))]}
           />
+        </div>
+        {institutions.length > 0 && (
+          <div className="w-full sm:w-52">
+            <Select
+              aria-label="Filter by institution"
+              value={institution}
+              onChange={e => setInstitution(e.target.value)}
+              options={[{ value: 'all', label: 'All institutions' }, ...institutions.map(i => ({ value: i, label: i }))]}
+            />
+          </div>
         )}
-        <Select
-          aria-label="Filter by deadline"
-          value={deadlineWindow}
-          onChange={e => setDeadlineWindow(e.target.value)}
-          options={[
-            { value: 'all', label: 'Any deadline' },
-            { value: '7', label: 'Due in 7 days' },
-            { value: '30', label: 'Due in 30 days' },
-            { value: 'overdue', label: 'Overdue' },
-          ]}
-        />
-        <div className="ml-auto">
+        <div className="w-full sm:w-40">
+          <Select
+            aria-label="Filter by deadline"
+            value={deadlineWindow}
+            onChange={e => setDeadlineWindow(e.target.value)}
+            options={[
+              { value: 'all', label: 'Any deadline' },
+              { value: '7', label: 'Due in 7 days' },
+              { value: '30', label: 'Due in 30 days' },
+              { value: 'overdue', label: 'Overdue' },
+            ]}
+          />
+        </div>
+        <div className="w-full sm:w-44">
           <Select
             aria-label="Sort"
             value={sort}
