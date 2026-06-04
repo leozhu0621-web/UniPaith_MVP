@@ -241,6 +241,74 @@ FIELD_OUTCOMES = {
 }
 
 
+# Field → Overview content (concentrations are real MIT course/lab areas; public).
+FIELD_CONTENT = {
+    "eng": {
+        "blurb": "rigorous engineering fundamentals — mechanics, thermodynamics, design, "
+        "and computation — paired with hands-on labs and team design projects",
+        "who": "Students who want to design and build real systems, are comfortable with "
+        "heavy math and physics, and thrive in a hands-on, problem-set-driven environment.",
+        "concentrations": [
+            "Robotics & Controls",
+            "Energy & Sustainability",
+            "Design & Manufacturing",
+            "Mechanics & Materials",
+            "Computation & Simulation",
+        ],
+        "format": "On-campus; lectures + labs + team design projects, with undergraduate "
+        "research (UROP) strongly encouraged.",
+    },
+    "cs": {
+        "blurb": "deep computer-science fundamentals — algorithms, systems, theory, and AI — "
+        "with extensive hands-on programming and research",
+        "who": "Students who love problem-solving and abstraction, want strong theory plus "
+        "systems building, and aim for software, research, or quantitative careers.",
+        "concentrations": [
+            "Artificial Intelligence & Machine Learning",
+            "Systems & Networking",
+            "Theory of Computation",
+            "Human-Computer Interaction",
+            "Computational Biology",
+        ],
+        "format": "On-campus; lectures + heavy programming problem sets + research (UROP).",
+    },
+    "sci": {
+        "blurb": "a research-intensive science education grounded in fundamentals and "
+        "laboratory work, with early access to MIT's research labs",
+        "who": "Students drawn to discovery and research, comfortable in the lab, and "
+        "considering graduate study, medicine, or industry R&D.",
+        "concentrations": [
+            "Research track",
+            "Pre-health / pre-med",
+            "Computational science",
+            "Interdisciplinary minors",
+        ],
+        "format": "On-campus; lectures + laboratory + independent research (UROP).",
+    },
+    "biz": {
+        "blurb": "analytical, data-driven management education at the intersection of "
+        "technology and business, taught in MIT Sloan's action-learning style",
+        "who": "Students who want quantitative, tech-forward business training and careers "
+        "in consulting, finance, product, or entrepreneurship.",
+        "concentrations": [
+            "Finance",
+            "Analytics & Operations",
+            "Entrepreneurship & Innovation",
+            "Strategy & Management",
+        ],
+        "format": "On-campus; case method + action-learning projects with industry partners.",
+    },
+    "default": {
+        "blurb": "an interdisciplinary MIT education combining rigorous fundamentals with "
+        "hands-on research and project work",
+        "who": "Curious, self-driven students who want depth, rigor, and access to MIT's "
+        "research ecosystem.",
+        "concentrations": ["Interdisciplinary tracks", "Research (UROP)", "Minors across MIT"],
+        "format": "On-campus; lectures + project/research work.",
+    },
+}
+
+
 def _field_key(cip: str | None, name: str) -> str:
     c = (cip or "").replace(".", "")
     n = name.lower()
@@ -270,6 +338,32 @@ def _outcomes(prog: Program) -> dict:
     od["outcomes_source"] = "MIT Career Advising & Professional Development + College Scorecard"
     od["source_url"] = CDO
     return od
+
+
+def _overview(prog: Program) -> dict:
+    """Overview-tab fields (Spec 11 §3.1): rich description, who-it's-for,
+    tracks/concentrations, learning format, duration."""
+    fk = _field_key(prog.cip_code, prog.program_name)
+    c = FIELD_CONTENT[fk]
+    is_ug = (prog.degree_type or "").upper() in ("BS", "BA", "BACHELORS")
+    level = "undergraduate" if is_ug else "graduate"
+    desc = (
+        f"{prog.program_name} at MIT offers {c['blurb']}. As a {level} program it embodies "
+        f"MIT's 'mens et manus' (mind and hand) ethos — pairing theory with building — with "
+        f"early access to undergraduate research (UROP) and MIT's world-class labs."
+    )
+    tracks = {
+        "concentrations": c["concentrations"],
+        "learning_format": c["format"],
+        "note": "Representative concentrations; exact options vary by department "
+        "(see the MIT course catalog).",
+    }
+    return {
+        "description_text": desc,
+        "who_its_for": c["who"],
+        "tracks": tracks,
+        "duration_months": 48 if is_ug else 24,
+    }
 
 
 # ── Insights: representative aggregate reviews (attributed) ──────────────────
@@ -379,6 +473,13 @@ async def seed() -> dict:
         n_reqs = n_out = n_rev = n_emp = 0
         for prog in progs:
             is_ug = (prog.degree_type or "").upper() in ("BS", "BA", "BACHELORS")
+            # Overview (Spec 11 §3.1): rich description, who-it's-for, tracks, duration.
+            ov = _overview(prog)
+            prog.description_text = ov["description_text"]
+            prog.who_its_for = ov["who_its_for"]
+            prog.tracks = ov["tracks"]
+            prog.duration_months = ov["duration_months"]
+            # Admissions (§3.2) + Costs (§3.3) + Outcomes (§3.4).
             prog.application_requirements = UG_REQUIREMENTS if is_ug else GRAD_REQUIREMENTS
             prog.intake_rounds = UG_INTAKE if is_ug else GRAD_INTAKE
             if is_ug and not prog.application_deadline:
