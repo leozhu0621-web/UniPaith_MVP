@@ -111,7 +111,10 @@ def _cost_data(uni: dict, enr: dict | None) -> dict:
             "fees": {"student_life_fee": cb.get("student_life_fee", 0)},
             "estimated_living_cost": cb.get("housing_food"),
             "book_supplies": cb.get("books_personal"),
+            # both keys: backend net-price ignores it; frontend normalizeCostData
+            # reads `total_cost_attendance` to render the COA band.
             "total_cost_of_attendance": cb.get("total"),
+            "total_cost_attendance": cb.get("total"),
             "avg_net_price": uni.get("net_price"),
             "currency": "USD",
             "source_url": (enr.get("source_urls") or [None])[0],
@@ -125,6 +128,7 @@ def _cost_data(uni: dict, enr: dict | None) -> dict:
         "estimated_living_cost": living,  # COA minus tuition (real, derived)
         "book_supplies": 0,
         "total_cost_of_attendance": coa,
+        "total_cost_attendance": coa,  # key the frontend normalizer reads
         "avg_net_price": uni.get("net_price"),
         "currency": "USD",
         "source_url": _sc_url(uni["unit_id"]),
