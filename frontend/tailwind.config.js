@@ -18,9 +18,13 @@ export default {
         // gold-*/offwhite/charcoal/slate/stone/divider aliases were migrated
         // 1:1 via codemod (140 files) and deleted so they can't be reintroduced.
         // ── Status colors (Spec/01-brand-tokens.md §2.3 / §8) ──
-        success: { DEFAULT: '#1F6B2E', soft: '#DCE8DA', dark: '#6FCB95', 'dark-soft': '#1E3A2A' },
-        warning: { DEFAULT: '#B8741D', soft: '#F5E6CC', dark: '#F0B964', 'dark-soft': '#3D2E18' },
-        error:   { DEFAULT: '#B5321F', soft: '#F2D7D0', dark: '#FF8470', 'dark-soft': '#3D1E1A' },
+        // DEFAULT + soft consume the CSS vars (defined in index.css :root AND .dark)
+        // so bg-*-soft / text-* auto-flip in dark mode — fixes the status-tint
+        // dark-mode leak app-wide. The static dark / dark-soft keys are kept for
+        // backward-compat with any explicit `dark:*-dark` usages (now redundant).
+        success: { DEFAULT: 'hsl(var(--success))', soft: 'hsl(var(--success-soft))', dark: '#6FCB95', 'dark-soft': '#1E3A2A' },
+        warning: { DEFAULT: 'hsl(var(--warning))', soft: 'hsl(var(--warning-soft))', dark: '#F0B964', 'dark-soft': '#3D2E18' },
+        error:   { DEFAULT: 'hsl(var(--error))', soft: 'hsl(var(--error-soft))', dark: '#FF8470', 'dark-soft': '#3D1E1A' },
         // ── shadcn semantic (CSS variable based) ──
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

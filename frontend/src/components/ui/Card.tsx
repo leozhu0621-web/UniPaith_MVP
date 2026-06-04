@@ -29,9 +29,23 @@ export default function Card({ children, className, variant = 'card', onClick, i
         VARIANT_CLASSES[variant],
         clickable &&
           'cursor-pointer transition duration-200 ease-out hover:-translate-y-0.5 hover:border-secondary/40 hover:elev-raised focus-within:-translate-y-0.5 focus-within:border-secondary/40 focus-within:elev-raised',
+        onClick &&
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
         className
       )}
       onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onClick()
+              }
+            }
+          : undefined
+      }
     >
       {children}
     </div>

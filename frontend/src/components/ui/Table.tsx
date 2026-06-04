@@ -2,6 +2,7 @@ import { useState } from 'react'
 import clsx from 'clsx'
 import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react'
 import Skeleton from './Skeleton'
+import QueryError from './QueryError'
 
 // Table — Spec/02-design-system.md §8 + Spec 79. Muted sticky header with eyebrow
 // labels; alternating rows; muted hover; 12y/16x cell padding. Columns can opt in
@@ -23,6 +24,10 @@ interface TableProps {
   data: any[]
   onRowClick?: (row: any) => void
   isLoading?: boolean
+  /** Render the canonical error state instead of the table when a fetch fails (Spec 78). */
+  isError?: boolean
+  /** Wire to query.refetch() — shown as the error's Try-again control. */
+  onRetry?: () => void
   emptyMessage?: string
   /** Opt-in client-side pagination (Spec 79). Renders a pager when total > pageSize. */
   pageSize?: number
@@ -35,7 +40,7 @@ interface TableProps {
 
 type SortState = { key: string; dir: 'asc' | 'desc' } | null
 
-export default function Table({ columns, data, onRowClick, isLoading, emptyMessage = 'No records match', pageSize, density = 'comfortable', rowClassName }: TableProps) {
+export default function Table({ columns, data, onRowClick, isLoading, isError, onRetry, emptyMessage = 'No records match', pageSize, density = 'comfortable', rowClassName }: TableProps) {
   const [sort, setSort] = useState<SortState>(null)
   const [page, setPage] = useState(0)
   const cellPad = density === 'compact' ? 'px-3 py-1.5' : 'px-4 py-3'
@@ -48,6 +53,10 @@ export default function Table({ columns, data, onRowClick, isLoading, emptyMessa
         ))}
       </div>
     )
+  }
+
+  if (isError) {
+    return <QueryError detail="We couldn't load this list." onRetry={onRetry} />
   }
 
   if (data.length === 0) {
@@ -132,10 +141,23 @@ export default function Table({ columns, data, onRowClick, isLoading, emptyMessa
               <tr
                 key={row.id || i}
                 onClick={() => onRowClick?.(row)}
+                tabIndex={onRowClick ? 0 : undefined}
+                role={onRowClick ? 'button' : undefined}
+                onKeyDown={
+                  onRowClick
+                    ? e => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          onRowClick(row)
+                        }
+                      }
+                    : undefined
+                }
                 className={clsx(
                   'border-t border-border',
                   i % 2 === 1 && 'bg-muted/30',
-                  onRowClick && 'cursor-pointer hover:bg-muted transition-colors',
+                  onRowClick &&
+                    'cursor-pointer hover:bg-muted transition-colors focus-visible:outline-none focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
                   rowClassName?.(row),
                 )}
               >

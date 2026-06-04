@@ -15,16 +15,17 @@ export default function RouteErrorPage() {
       <div className="mx-auto max-w-xl rounded-2xl border border-border bg-card p-6 shadow-sm">
         <h1 className="text-lg font-semibold text-foreground">Page unavailable right now</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          We hit an unexpected issue loading this page. You can safely return to dashboard and continue.
+          We hit an unexpected issue loading this page. You can safely head back and continue.
         </p>
-        <p className="mt-2 text-xs text-muted-foreground">{message}</p>
+        {/* Raw error text is for developers only — never leak internals to end users. */}
+        {import.meta.env.DEV && <p className="mt-2 text-xs text-muted-foreground">{message}</p>}
         <div className="mt-4 flex gap-2">
           <button
             type="button"
-            onClick={() => navigate('/s/dashboard')}
+            onClick={() => navigate('/')}
             className="inline-flex rounded-lg bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary/90"
           >
-            Go to dashboard
+            Go home
           </button>
           <button
             type="button"
