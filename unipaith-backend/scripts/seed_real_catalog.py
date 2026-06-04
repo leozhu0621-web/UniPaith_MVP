@@ -91,6 +91,13 @@ def _institution_outcomes(uni: dict) -> dict:
         "completion_rate_4yr_150pct": uni.get("completion_4yr"),
         "median_earnings_10yr": uni.get("earn_10yr"),
         "avg_net_price": uni.get("net_price"),
+        # Geo (lat/lng) powers the "near me" sort + the Google Map on the profile.
+        "location": uni.get("location"),
+        # US-News/Niche-grade depth (College Scorecard), present when enriched.
+        "test_scores": uni.get("test_scores"),
+        "retention_rate_first_year": uni.get("retention_rate_first_year"),
+        "financial_aid": uni.get("financial_aid"),
+        "demographics": uni.get("demographics"),
         "source": "U.S. Dept. of Education College Scorecard",
         "source_url": _sc_url(uni["unit_id"]),
     }
@@ -157,6 +164,8 @@ async def seed() -> dict:
             inst.is_verified = True
             inst.setup_complete = True
             inst.school_outcomes = _institution_outcomes(uni)
+            if uni.get("campus_setting"):
+                inst.campus_setting = uni["campus_setting"]  # urban/suburban/town/rural (locale)
             kind = "public" if uni.get("type") == "public" else "private"
             inst.description_text = (
                 f"{uni['name']} is a {kind} research university in "

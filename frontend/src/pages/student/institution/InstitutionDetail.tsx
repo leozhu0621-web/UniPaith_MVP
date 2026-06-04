@@ -454,6 +454,18 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
   const placement = outcomes.employed_or_continuing_ed ?? outcomes.first_destination_placement_rate
   const gradRate = outcomes.graduation_rate_6yr ?? rd.graduation_rate
   const sizeBand = sizeBandLabel(inst.student_body_size)
+  // Geo + US-News/Niche-grade depth (College Scorecard), surfaced from school_outcomes.
+  const loc: any = outcomes.location || {}
+  const ts: any = outcomes.test_scores || {}
+  const aid: any = outcomes.financial_aid || {}
+  const demo: any = outcomes.demographics || {}
+  const admitRate = outcomes.admit_rate ?? rd.acceptance_rate
+  const grad4 = outcomes.completion_rate_4yr_150pct ?? gradRate
+  const earn10 = outcomes.median_earnings_10yr ?? rd.median_earnings
+  const netPrice = outcomes.avg_net_price
+  const retention = outcomes.retention_rate_first_year ?? rd.retention_rate
+  const rng = (a: any): string | null =>
+    Array.isArray(a) && a[0] != null && a[1] != null ? `${a[0]}–${a[1]}` : null
 
   return (
     <div className="space-y-5">
@@ -479,18 +491,88 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
         )}
       </Card>
 
-      {(placement != null || gradRate != null || rd.median_earnings != null) && (
+      {/* Location — small Google Map showing where the campus is. */}
+      {loc.lat != null && loc.lng != null && (
+        <Card className="p-0 overflow-hidden">
+          <div className="px-5 pt-5 pb-2 flex items-center gap-2">
+            <MapPin size={14} className="text-secondary" />
+            <h2 className="font-semibold text-foreground">Location</h2>
+            <span className="ml-auto text-xs text-muted-foreground">
+              {[inst.city, inst.region].filter(Boolean).join(', ')}
+            </span>
+          </div>
+          <iframe
+            title={`${inst.name} location map`}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            src={`https://maps.google.com/maps?q=${loc.lat},${loc.lng}&z=14&output=embed`}
+            className="w-full h-64 border-0"
+          />
+        </Card>
+      )}
+
+      {/* Admissions & test scores (US News / Niche depth). */}
+      {(admitRate != null ||
+        rng(ts.sat_reading_25_75) ||
+        rng(ts.sat_math_25_75) ||
+        rng(ts.act_25_75) ||
+        retention != null) && (
         <Card className="p-5">
-          <h2 className="font-semibold text-foreground mb-1">Outcomes at a glance</h2>
-          <p className="text-[11.5px] text-muted-foreground/70 mb-3">Institution-wide signals — specific program outcomes appear on each program page.</p>
+          <h2 className="font-semibold text-foreground mb-3">Admissions</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {placement != null && <Fact label="Placement" value={pct(placement)} hint="employed or continuing ed" />}
-            {gradRate != null && <Fact label="Graduation rate" value={pct(gradRate)} />}
-            {rd.median_earnings != null && <Fact label="Median earnings (10yr)" value={money(rd.median_earnings)} />}
-            {rd.retention_rate != null && <Fact label="Retention" value={pct(rd.retention_rate)} />}
+            {admitRate != null && <Fact label="Acceptance rate" value={pct(admitRate)} />}
+            {rng(ts.sat_reading_25_75) && <Fact label="SAT EBRW (25–75th)" value={rng(ts.sat_reading_25_75)!} />}
+            {rng(ts.sat_math_25_75) && <Fact label="SAT Math (25–75th)" value={rng(ts.sat_math_25_75)!} />}
+            {rng(ts.act_25_75) && <Fact label="ACT (25–75th)" value={rng(ts.act_25_75)!} />}
+            {retention != null && <Fact label="First-year retention" value={pct(retention)} />}
           </div>
         </Card>
       )}
+
+      {(placement != null || grad4 != null || earn10 != null || netPrice != null) && (
+        <Card className="p-5">
+          <h2 className="font-semibold text-foreground mb-1">Outcomes &amp; cost at a glance</h2>
+          <p className="text-[11.5px] text-muted-foreground/70 mb-3">Institution-wide signals — specific program outcomes appear on each program page.</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {placement != null && <Fact label="Placement" value={pct(placement)} hint="employed or continuing ed" />}
+            {grad4 != null && <Fact label="Graduation rate" value={pct(grad4)} />}
+            {earn10 != null && <Fact label="Median earnings (10yr)" value={money(earn10)} />}
+            {netPrice != null && <Fact label="Avg net price / yr" value={money(netPrice)} hint="after aid" />}
+          </div>
+        </Card>
+      )}
+
+      {/* Financial aid (Scorecard). */}
+      {(aid.pell_grant_rate != null || aid.median_debt_completers != null || aid.federal_loan_rate != null) && (
+        <Card className="p-5">
+          <h2 className="font-semibold text-foreground mb-3">Financial aid</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {aid.pell_grant_rate != null && <Fact label="Pell grant recipients" value={pct(aid.pell_grant_rate)} />}
+            {aid.federal_loan_rate != null && <Fact label="Federal loan recipients" value={pct(aid.federal_loan_rate)} />}
+            {aid.median_debt_completers != null && <Fact label="Median debt at graduation" value={money(aid.median_debt_completers)} />}
+          </div>
+        </Card>
+      )}
+
+      {/* Student body / diversity (Scorecard). */}
+      {(demo.women != null || demo.white != null || demo.asian != null) && (
+        <Card className="p-5">
+          <h2 className="font-semibold text-foreground mb-3">Student body</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {demo.women != null && <Fact label="Women" value={pct(demo.women)} />}
+            {demo.asian != null && <Fact label="Asian" value={pct(demo.asian)} />}
+            {demo.hispanic != null && <Fact label="Hispanic" value={pct(demo.hispanic)} />}
+            {demo.black != null && <Fact label="Black" value={pct(demo.black)} />}
+            {demo.white != null && <Fact label="White" value={pct(demo.white)} />}
+          </div>
+        </Card>
+      )}
+
+      <p className="text-[11px] leading-relaxed text-muted-foreground pt-1">
+        <span className="font-semibold text-foreground/70">Data sources:</span>{' '}
+        U.S. Department of Education College Scorecard; institution-published facts; map ©{' '}
+        Google. Latest available data.
+      </p>
     </div>
   )
 }

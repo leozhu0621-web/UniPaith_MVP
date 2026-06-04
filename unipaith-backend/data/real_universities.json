@@ -57,7 +57,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/en/thumb/a/a4/Seal_of_the_California_Institute_of_Technology.svg/330px-Seal_of_the_California_Institute_of_Technology.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/a/a4/Seal_of_the_California_Institute_of_Technology.svg/250px-Seal_of_the_California_Institute_of_Technology.svg.png",
-  "image_source_url": "https://en.wikipedia.org/wiki/California_Institute_of_Technology"
+  "image_source_url": "https://en.wikipedia.org/wiki/California_Institute_of_Technology",
+  "location": {
+   "lat": 34.1375,
+   "lng": -118.125,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 166027,
@@ -253,7 +258,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Harvard_University_coat_of_arms.svg/960px-Harvard_University_coat_of_arms.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Harvard_University_coat_of_arms.svg",
-  "image_source_url": "https://en.wikipedia.org/wiki/Harvard_University"
+  "image_source_url": "https://en.wikipedia.org/wiki/Harvard_University",
+  "location": {
+   "lat": 42.377,
+   "lng": -71.1167,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 166683,
@@ -495,7 +505,12 @@
   },
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/MIT_2023_red_logo.svg/960px-MIT_2023_red_logo.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/commons/b/b8/MIT_2023_red_logo.svg",
-  "image_source_url": "https://en.wikipedia.org/wiki/Massachusetts_Institute_of_Technology"
+  "image_source_url": "https://en.wikipedia.org/wiki/Massachusetts_Institute_of_Technology",
+  "location": {
+   "lat": 42.3597,
+   "lng": -71.0919,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 243744,
@@ -691,7 +706,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Seal_of_Leland_Stanford_Junior_University.svg/960px-Seal_of_Leland_Stanford_Junior_University.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/commons/b/b5/Seal_of_Leland_Stanford_Junior_University.svg",
-  "image_source_url": "https://en.wikipedia.org/wiki/Stanford_University"
+  "image_source_url": "https://en.wikipedia.org/wiki/Stanford_University",
+  "location": {
+   "lat": 37.4275,
+   "lng": -122.17,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 110635,
@@ -887,7 +907,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Seal_of_University_of_California%2C_Berkeley.svg/960px-Seal_of_University_of_California%2C_Berkeley.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/commons/a/a1/Seal_of_University_of_California%2C_Berkeley.svg",
-  "image_source_url": "https://en.wikipedia.org/wiki/University_of_California%2C_Berkeley"
+  "image_source_url": "https://en.wikipedia.org/wiki/University_of_California%2C_Berkeley",
+  "location": {
+   "lat": 37.8719,
+   "lng": -122.2583,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 144050,
@@ -1083,7 +1108,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/en/thumb/7/79/University_of_Chicago_shield.svg/330px-University_of_Chicago_shield.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/7/79/University_of_Chicago_shield.svg/250px-University_of_Chicago_shield.svg.png",
-  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Chicago"
+  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Chicago",
+  "location": {
+   "lat": 41.78972,
+   "lng": -87.59972,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 190150,
@@ -1279,7 +1309,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Coat_of_Arms_of_Columbia_University.svg/960px-Coat_of_Arms_of_Columbia_University.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/commons/3/33/Coat_of_Arms_of_Columbia_University.svg",
-  "image_source_url": "https://en.wikipedia.org/wiki/Columbia_University"
+  "image_source_url": "https://en.wikipedia.org/wiki/Columbia_University",
+  "location": {
+   "lat": 40.8075,
+   "lng": -73.96194,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 211440,
@@ -1475,7 +1510,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/en/thumb/b/bb/Carnegie_Mellon_University_seal.svg/330px-Carnegie_Mellon_University_seal.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/b/bb/Carnegie_Mellon_University_seal.svg/330px-Carnegie_Mellon_University_seal.svg.png",
-  "image_source_url": "https://en.wikipedia.org/wiki/Carnegie_Mellon_University"
+  "image_source_url": "https://en.wikipedia.org/wiki/Carnegie_Mellon_University",
+  "location": {
+   "lat": 40.4433,
+   "lng": -79.9436,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 130794,
@@ -1671,7 +1711,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Yale_University_Shield_1.svg/960px-Yale_University_Shield_1.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/07/Yale_University_Shield_1.svg",
-  "image_source_url": "https://en.wikipedia.org/wiki/Yale_University"
+  "image_source_url": "https://en.wikipedia.org/wiki/Yale_University",
+  "location": {
+   "lat": 41.31639,
+   "lng": -72.92222,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 162928,
@@ -1867,7 +1912,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/en/thumb/0/09/Johns_Hopkins_University%27s_Academic_Seal.svg/330px-Johns_Hopkins_University%27s_Academic_Seal.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/0/09/Johns_Hopkins_University%27s_Academic_Seal.svg/250px-Johns_Hopkins_University%27s_Academic_Seal.svg.png",
-  "image_source_url": "https://en.wikipedia.org/wiki/Johns_Hopkins_University"
+  "image_source_url": "https://en.wikipedia.org/wiki/Johns_Hopkins_University",
+  "location": {
+   "lat": 39.32889,
+   "lng": -76.62028,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 186131,
@@ -2063,7 +2113,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Princeton_seal.svg/960px-Princeton_seal.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/commons/d/d0/Princeton_seal.svg",
-  "image_source_url": "https://en.wikipedia.org/wiki/Princeton_University"
+  "image_source_url": "https://en.wikipedia.org/wiki/Princeton_University",
+  "location": {
+   "lat": 40.34528,
+   "lng": -74.65611,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 215062,
@@ -2259,7 +2314,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/UPenn_shield_with_banner.svg/960px-UPenn_shield_with_banner.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/commons/9/92/UPenn_shield_with_banner.svg",
-  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Pennsylvania"
+  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Pennsylvania",
+  "location": {
+   "lat": 39.95028,
+   "lng": -75.19472,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 139755,
@@ -2455,7 +2515,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Georgia_Tech_seal.svg/960px-Georgia_Tech_seal.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/commons/6/6c/Georgia_Tech_seal.svg",
-  "image_source_url": "https://en.wikipedia.org/wiki/Georgia_Institute_of_Technology"
+  "image_source_url": "https://en.wikipedia.org/wiki/Georgia_Institute_of_Technology",
+  "location": {
+   "lat": 33.7756,
+   "lng": -84.3963,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 147767,
@@ -2651,7 +2716,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Northwestern_University_seal.svg/960px-Northwestern_University_seal.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/commons/5/56/Northwestern_University_seal.svg",
-  "image_source_url": "https://en.wikipedia.org/wiki/Northwestern_University"
+  "image_source_url": "https://en.wikipedia.org/wiki/Northwestern_University",
+  "location": {
+   "lat": 42.05583,
+   "lng": -87.67472,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 170976,
@@ -2847,7 +2917,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Seal_of_the_University_of_Michigan.svg/960px-Seal_of_the_University_of_Michigan.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/commons/9/93/Seal_of_the_University_of_Michigan.svg",
-  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Michigan"
+  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Michigan",
+  "location": {
+   "lat": 42.27694,
+   "lng": -83.73806,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 198419,
@@ -3043,7 +3118,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Duke_University_logo.svg/960px-Duke_University_logo.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/commons/e/e6/Duke_University_logo.svg",
-  "image_source_url": "https://en.wikipedia.org/wiki/Duke_University"
+  "image_source_url": "https://en.wikipedia.org/wiki/Duke_University",
+  "location": {
+   "lat": 36.00139,
+   "lng": -78.93833,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 110662,
@@ -3239,7 +3319,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/The_University_of_California_UCLA.svg/960px-The_University_of_California_UCLA.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/commons/0/0d/The_University_of_California_UCLA.svg",
-  "image_source_url": "https://en.wikipedia.org/wiki/University_of_California%2C_Los_Angeles"
+  "image_source_url": "https://en.wikipedia.org/wiki/University_of_California%2C_Los_Angeles",
+  "location": {
+   "lat": 34.0722,
+   "lng": -118.4427,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 110680,
@@ -3435,7 +3520,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Seal_of_the_University_of_California%2C_San_Diego.svg/960px-Seal_of_the_University_of_California%2C_San_Diego.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/commons/c/c1/Seal_of_the_University_of_California%2C_San_Diego.svg",
-  "image_source_url": "https://en.wikipedia.org/wiki/University_of_California%2C_San_Diego"
+  "image_source_url": "https://en.wikipedia.org/wiki/University_of_California%2C_San_Diego",
+  "location": {
+   "lat": 32.8801,
+   "lng": -117.234,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 190415,
@@ -3631,7 +3721,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Cornell_University_seal.svg/960px-Cornell_University_seal.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/commons/4/47/Cornell_University_seal.svg",
-  "image_source_url": "https://en.wikipedia.org/wiki/Cornell_University"
+  "image_source_url": "https://en.wikipedia.org/wiki/Cornell_University",
+  "location": {
+   "lat": 42.4492,
+   "lng": -76.4839,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 193900,
@@ -3827,7 +3922,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/New_York_University_Seal.svg/960px-New_York_University_Seal.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/commons/1/16/New_York_University_Seal.svg",
-  "image_source_url": "https://en.wikipedia.org/wiki/New_York_University"
+  "image_source_url": "https://en.wikipedia.org/wiki/New_York_University",
+  "location": {
+   "lat": 40.73,
+   "lng": -73.995,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 123961,
@@ -4023,7 +4123,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/University_of_Southern_California_%28USC%29_seal.svg/960px-University_of_Southern_California_%28USC%29_seal.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/commons/5/5c/University_of_Southern_California_%28USC%29_seal.svg",
-  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Southern_California"
+  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Southern_California",
+  "location": {
+   "lat": 34.0206,
+   "lng": -118.2848,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 164988,
@@ -4219,7 +4324,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Boston_University_seal.svg/960px-Boston_University_seal.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/commons/f/f5/Boston_University_seal.svg",
-  "image_source_url": "https://en.wikipedia.org/wiki/Boston_University"
+  "image_source_url": "https://en.wikipedia.org/wiki/Boston_University",
+  "location": {
+   "lat": 42.34889,
+   "lng": -71.10028,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 228778,
@@ -4415,7 +4525,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/en/thumb/e/e1/University_of_Texas_at_Austin_seal.svg/960px-University_of_Texas_at_Austin_seal.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/en/e/e1/University_of_Texas_at_Austin_seal.svg",
-  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Texas_at_Austin"
+  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Texas_at_Austin",
+  "location": {
+   "lat": 30.285,
+   "lng": -97.735,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 240444,
@@ -4611,7 +4726,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Seal_of_the_University_of_Wisconsin.svg/960px-Seal_of_the_University_of_Wisconsin.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/commons/4/45/Seal_of_the_University_of_Wisconsin.svg",
-  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Wisconsin%E2%80%93Madison"
+  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Wisconsin%E2%80%93Madison",
+  "location": {
+   "lat": 43.0766,
+   "lng": -89.4125,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 145637,
@@ -4807,7 +4927,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/University_of_Illinois_seal.svg/960px-University_of_Illinois_seal.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/commons/a/af/University_of_Illinois_seal.svg",
-  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Illinois_Urbana-Champaign"
+  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Illinois_Urbana-Champaign",
+  "location": {
+   "lat": 40.11056,
+   "lng": -88.22833,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 227757,
@@ -5003,7 +5128,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/en/thumb/c/c7/Rice_University_seal.svg/330px-Rice_University_seal.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/c/c7/Rice_University_seal.svg/250px-Rice_University_seal.svg.png",
-  "image_source_url": "https://en.wikipedia.org/wiki/Rice_University"
+  "image_source_url": "https://en.wikipedia.org/wiki/Rice_University",
+  "location": {
+   "lat": 29.71694,
+   "lng": -95.40278,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 236948,
@@ -5199,7 +5329,12 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/en/thumb/5/58/University_of_Washington_seal.svg/330px-University_of_Washington_seal.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/5/58/University_of_Washington_seal.svg/250px-University_of_Washington_seal.svg.png",
-  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Washington"
+  "image_source_url": "https://en.wikipedia.org/wiki/University_of_Washington",
+  "location": {
+   "lat": 47.6542,
+   "lng": -122.3081,
+   "source": "Wikipedia / Wikidata"
+  }
  },
  {
   "unit_id": 243780,
@@ -5395,6 +5530,11 @@
   ],
   "logo_url": "https://upload.wikimedia.org/wikipedia/en/thumb/6/61/Purdue_University_seal.svg/330px-Purdue_University_seal.svg.png",
   "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/6/61/Purdue_University_seal.svg/120px-Purdue_University_seal.svg.png",
-  "image_source_url": "https://en.wikipedia.org/wiki/Purdue_University"
+  "image_source_url": "https://en.wikipedia.org/wiki/Purdue_University",
+  "location": {
+   "lat": 40.425,
+   "lng": -86.92306,
+   "source": "Wikipedia / Wikidata"
+  }
  }
 ]
