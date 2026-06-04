@@ -15,7 +15,9 @@ import Input from '../../../components/ui/Input'
 import Select from '../../../components/ui/Select'
 import Textarea from '../../../components/ui/Textarea'
 import Skeleton from '../../../components/ui/Skeleton'
+import QueryError from '../../../components/ui/QueryError'
 import { showToast } from '../../../stores/toast-store'
+import { confirmDialog } from '../../../stores/confirm-store'
 import { formatDate } from '../../../utils/format'
 import type { Application, InstitutionDecision, OfferType, ReleaseOfferTerms } from '../../../types'
 import ReleaseConfirmModal from './ReleaseConfirmModal'
@@ -186,6 +188,12 @@ export default function DecisionPanel({
 
         {statusQ.isLoading ? (
           <Skeleton className="h-16" />
+        ) : statusQ.isError ? (
+          <QueryError
+            variant="inline"
+            detail="Couldn’t load the current offer status."
+            onRetry={() => statusQ.refetch()}
+          />
         ) : status && status.has_offer ? (
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
@@ -232,7 +240,17 @@ export default function DecisionPanel({
                     variant="destructive"
                     size="sm"
                     disabled={rescindMut.isPending}
-                    onClick={() => rescindMut.mutate()}
+                    onClick={async () => {
+                      if (
+                        await confirmDialog({
+                          title: 'Rescind this offer?',
+                          body: 'The applicant’s offer will be revoked. This cannot be undone.',
+                          confirmLabel: 'Rescind offer',
+                          destructive: true,
+                        })
+                      )
+                        rescindMut.mutate()
+                    }}
                     className="flex items-center gap-1"
                   >
                     <XCircle size={14} /> {rescindMut.isPending ? 'Rescinding…' : 'Rescind offer'}
@@ -292,9 +310,9 @@ export default function DecisionPanel({
                   />
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <Input label="Scholarship ($)" type="number" value={scholarship} onChange={e => setScholarship(e.target.value)} />
-                  <Input label="Tuition estimate ($)" type="number" value={tuitionEst} onChange={e => setTuitionEst(e.target.value)} />
-                  <Input label="Total cost estimate ($)" type="number" value={totalCost} onChange={e => setTotalCost(e.target.value)} />
+                  <Input label="Scholarship ($)" type="number" min={0} value={scholarship} onChange={e => setScholarship(e.target.value)} />
+                  <Input label="Tuition estimate ($)" type="number" min={0} value={tuitionEst} onChange={e => setTuitionEst(e.target.value)} />
+                  <Input label="Total cost estimate ($)" type="number" min={0} value={totalCost} onChange={e => setTotalCost(e.target.value)} />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <Input label="Response deadline" type="date" value={deadline} onChange={e => setDeadline(e.target.value)} />
@@ -309,7 +327,7 @@ export default function DecisionPanel({
                     value={season}
                     onChange={e => setSeason(e.target.value)}
                   />
-                  <Input label="Start year" type="number" placeholder="2027" value={year} onChange={e => setYear(e.target.value)} />
+                  <Input label="Start year" type="number" min={0} placeholder="2027" value={year} onChange={e => setYear(e.target.value)} />
                 </div>
                 {decision === 'conditional_admission' && (
                   <Textarea

@@ -12,6 +12,7 @@ import Select from '../../../components/ui/Select'
 import Textarea from '../../../components/ui/Textarea'
 import Toggle from '../../../components/ui/Toggle'
 import EmptyState from '../../../components/ui/EmptyState'
+import QueryError from '../../../components/ui/QueryError'
 import { showToast } from '../../../stores/toast-store'
 
 export default function FairsTab() {
@@ -19,7 +20,7 @@ export default function FairsTab() {
   const [showNew, setShowNew] = useState(false)
   const [capture, setCapture] = useState<RecruitmentFair | null>(null)
 
-  const { data: fairs, isLoading } = useQuery({
+  const { data: fairs, isLoading, isError, refetch } = useQuery({
     queryKey: ['recruitment-fairs'],
     queryFn: listFairs,
   })
@@ -33,6 +34,7 @@ export default function FairsTab() {
   const statusMut = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) => updateFair(id, { status }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['recruitment-fairs'] }),
+    onError: () => showToast('Could not update status', 'error'),
   })
 
   const columns = [
@@ -107,6 +109,14 @@ export default function FairsTab() {
       ),
     },
   ]
+
+  if (isError) {
+    return (
+      <Card className="p-0">
+        <QueryError detail="Couldn’t load schools and fairs." onRetry={() => refetch()} />
+      </Card>
+    )
+  }
 
   if (!isLoading && (!fairs || fairs.length === 0)) {
     return (
@@ -214,6 +224,7 @@ function FairModal({
           <Input
             label="Prior-year yield"
             type="number"
+            min={0}
             value={form.prior_year_yield}
             onChange={e => set('prior_year_yield', e.target.value)}
             placeholder="Enrolled last year"

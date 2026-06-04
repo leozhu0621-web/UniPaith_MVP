@@ -14,6 +14,7 @@ import Input from '../../../components/ui/Input'
 import Select from '../../../components/ui/Select'
 import Modal from '../../../components/ui/Modal'
 import Skeleton from '../../../components/ui/Skeleton'
+import QueryError from '../../../components/ui/QueryError'
 import { Toggle } from '../program-editor/widgets'
 import { showToast } from '../../../stores/toast-store'
 import { TagInput } from './GradWidgets'
@@ -62,6 +63,8 @@ function FacultyCard({ faculty }: { faculty: Faculty }) {
             <span className="text-xs text-muted-foreground">Openings</span>
             <input
               type="number"
+              min={0}
+              aria-label={`Openings for ${faculty.name}`}
               value={openings}
               onChange={e => setOpenings(e.target.value)}
               onBlur={() => patch.mutate({ openings: Math.max(0, Number(openings) || 0) })}
@@ -159,6 +162,12 @@ export default function FacultyRoster({
 
       {facultyQ.isLoading ? (
         <Skeleton className="h-40" />
+      ) : facultyQ.isError ? (
+        <QueryError
+          variant="inline"
+          detail="Couldn’t load faculty."
+          onRetry={() => facultyQ.refetch()}
+        />
       ) : (facultyQ.data ?? []).length === 0 ? (
         <p className="text-sm italic text-muted-foreground">
           No faculty yet. Add advisors so research-fit matching can rank them for applicants.
@@ -229,6 +238,7 @@ export default function FacultyRoster({
             <Input
               label="Openings"
               type="number"
+              min={0}
               value={form.openings}
               onChange={e => setForm({ ...form, openings: e.target.value })}
             />

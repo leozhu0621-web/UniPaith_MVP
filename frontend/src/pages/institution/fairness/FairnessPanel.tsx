@@ -4,6 +4,7 @@ import { ShieldCheck, ShieldAlert, AlertTriangle, ArrowRight } from 'lucide-reac
 import Card from '../../../components/ui/Card'
 import Badge from '../../../components/ui/Badge'
 import Button from '../../../components/ui/Button'
+import QueryError from '../../../components/ui/QueryError'
 import { getFairnessOverview, type FairnessStatus } from '../../../api/fairness'
 import { attributeLabel, severityBadge } from './fairnessUi'
 
@@ -30,11 +31,28 @@ const STATUS_META: Record<
  *  a link to the full Fairness page. */
 export default function FairnessPanel() {
   const navigate = useNavigate()
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['fairness-overview'],
     queryFn: getFairnessOverview,
   })
 
+  // Compliance surface: never silently disappear on a failed load — an admin
+  // glancing at the dashboard must not read "no card" as "all clear".
+  if (isError) {
+    return (
+      <Card className="p-4">
+        <div className="flex items-center gap-2 mb-1">
+          <ShieldAlert size={16} className="text-warning" />
+          <h3 className="text-sm font-semibold text-foreground">Fairness</h3>
+        </div>
+        <QueryError
+          variant="inline"
+          detail="We couldn't load fairness status — this is not an all-clear."
+          onRetry={() => refetch()}
+        />
+      </Card>
+    )
+  }
   if (isLoading || !data) return null
   const meta = STATUS_META[data.status] ?? STATUS_META.green
   const { Icon } = meta

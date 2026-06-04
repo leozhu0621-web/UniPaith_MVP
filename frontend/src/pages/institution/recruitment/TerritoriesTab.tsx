@@ -15,6 +15,7 @@ import Modal from '../../../components/ui/Modal'
 import Input from '../../../components/ui/Input'
 import Skeleton from '../../../components/ui/Skeleton'
 import EmptyState from '../../../components/ui/EmptyState'
+import QueryError from '../../../components/ui/QueryError'
 import AIBadge from '../../../components/ui/AIBadge'
 import FallbackNote from '../../../components/ui/FallbackNote'
 import { showToast } from '../../../stores/toast-store'
@@ -33,7 +34,7 @@ export default function TerritoriesTab() {
   const qc = useQueryClient()
   const [showNew, setShowNew] = useState(false)
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['recruitment-territories'],
     queryFn: getTerritoryDashboard,
   })
@@ -41,6 +42,14 @@ export default function TerritoriesTab() {
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ['recruitment-territories'] })
     qc.invalidateQueries({ queryKey: ['recruitment-summary'] })
+  }
+
+  if (isError) {
+    return (
+      <Card className="p-0">
+        <QueryError detail="Couldn’t load territories." onRetry={() => refetch()} />
+      </Card>
+    )
   }
 
   if (isLoading) {
@@ -119,6 +128,7 @@ function TerritoryCard({
       qc.invalidateQueries({ queryKey: ['recruitment-territories'] })
       onDone()
     },
+    onError: () => showToast('Could not assign owner', 'error'),
   })
 
   const optimizeMut = useMutation({

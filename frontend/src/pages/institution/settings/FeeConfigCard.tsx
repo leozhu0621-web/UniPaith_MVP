@@ -8,6 +8,7 @@ import Button from '../../../components/ui/Button'
 import Select from '../../../components/ui/Select'
 import Badge from '../../../components/ui/Badge'
 import Skeleton from '../../../components/ui/Skeleton'
+import QueryError from '../../../components/ui/QueryError'
 import { showToast } from '../../../stores/toast-store'
 import { getFeeConfig, updateFeeConfig, type FeeConfig } from '../../../api/payments'
 
@@ -26,7 +27,7 @@ const CURRENCIES = ['USD', 'GBP', 'EUR', 'CAD', 'AUD'].map(c => ({ value: c, lab
 
 export default function FeeConfigCard() {
   const qc = useQueryClient()
-  const { data, isLoading } = useQuery({ queryKey: ['fee-config'], queryFn: getFeeConfig })
+  const { data, isLoading, isError, refetch } = useQuery({ queryKey: ['fee-config'], queryFn: getFeeConfig })
   const [cfg, setCfg] = useState<FeeConfig | null>(null)
   useEffect(() => {
     if (data) setCfg(data)
@@ -45,6 +46,14 @@ export default function FeeConfigCard() {
     },
     onError: (e: unknown) => showToast(e instanceof Error ? e.message : 'Could not save', 'error'),
   })
+
+  if (isError && !cfg) {
+    return (
+      <Card className="p-6">
+        <QueryError detail="We couldn't load your fee settings." onRetry={() => refetch()} />
+      </Card>
+    )
+  }
 
   if (isLoading || !cfg) {
     return (

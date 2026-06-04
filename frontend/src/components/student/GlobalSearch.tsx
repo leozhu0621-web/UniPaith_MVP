@@ -121,7 +121,7 @@ export function CommandPalette() {
     return () => window.removeEventListener('keydown', onKey)
   }, [toggle])
 
-  const { data, isFetching } = useQuery({
+  const { data, isFetching, isError, refetch } = useQuery({
     queryKey: ['global-search', debounced],
     queryFn: () => searchPrograms({ q: debounced, page_size: 6 }),
     enabled: open && searching,
@@ -265,7 +265,19 @@ export function CommandPalette() {
               </Fragment>
             )
           })}
-          {searching && !isFetching && commands.length === 1 && (
+          {searching && isError && (
+            <li className="px-3 py-6 text-center text-sm">
+              <span className="text-muted-foreground">Couldn&apos;t search right now. </span>
+              <button
+                type="button"
+                onClick={() => refetch()}
+                className="font-medium text-secondary hover:underline"
+              >
+                Try again
+              </button>
+            </li>
+          )}
+          {searching && !isError && !isFetching && commands.length === 1 && (
             <li className="px-3 py-6 text-center text-sm text-muted-foreground">
               No programs match “{debounced}”. Press Enter to search all.
             </li>

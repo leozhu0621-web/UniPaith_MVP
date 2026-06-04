@@ -188,7 +188,7 @@ export default function BatchReleaseModal({
               <div className="rounded-lg border border-border p-3 space-y-3">
                 <p className="text-xs font-medium text-muted-foreground">Standard offer — {admitCount} admit{admitCount === 1 ? '' : 's'}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Input label="Scholarship ($)" type="number" value={scholarship} onChange={e => setScholarship(e.target.value)} />
+                  <Input label="Scholarship ($)" type="number" min={0} value={scholarship} onChange={e => setScholarship(e.target.value)} />
                   <Input label="Response deadline" type="date" value={deadline} onChange={e => setDeadline(e.target.value)} />
                 </div>
                 <Select
