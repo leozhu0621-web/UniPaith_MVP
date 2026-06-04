@@ -636,7 +636,12 @@ export interface Application {
   student_name?: string | null
   program_id: string
   status: 'draft' | 'submitted' | 'under_review' | 'interview' | 'decision_made'
+  // Phase A dual-score split (see CLAUDE.md). `match_score` is legacy (Phase E
+  // drop) — consumers read `fitness_score ?? match_score`. Typed here so the
+  // dual-score reads in ApplicationsPage / ApplicationDetailPage are type-safe.
   match_score: number | null
+  fitness_score?: number | null
+  confidence_score?: number | null
   match_reasoning_text: string | null
   submitted_at: string | null
   decision: 'admitted' | 'accepted' | 'conditional_admission' | 'rejected' | 'waitlisted' | 'deferred' | null
