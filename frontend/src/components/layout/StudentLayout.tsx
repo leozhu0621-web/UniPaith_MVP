@@ -17,6 +17,7 @@ import CompareTray from '../student/CompareTray'
 import TrialBanner from '../student/TrialBanner'
 import Paywall from '../student/Paywall'
 import { SearchTrigger, CommandPalette } from '../student/GlobalSearch'
+import MessagesNavButton from '../student/MessagesNavButton'
 
 // Stage-ordered navigation (Spec/02 §7): Discover · Match · Apply · Connect.
 const NAV_ITEMS = [
@@ -81,6 +82,7 @@ export default function StudentLayout() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <MessagesNavButton />
           <NotificationBell />
           <Dropdown
             trigger={
@@ -105,6 +107,7 @@ export default function StudentLayout() {
         </NavLink>
         <div className="flex items-center gap-1">
           <SearchTrigger variant="icon" />
+          <MessagesNavButton />
           <NotificationBell />
         </div>
       </header>
