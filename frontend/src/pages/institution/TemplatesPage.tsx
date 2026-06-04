@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { FileStack, Plus, Edit2, Trash2, Star, Eye } from 'lucide-react'
+import QueryError from '../../components/ui/QueryError'
 import {
   getTemplates, createTemplate, updateTemplate, deleteTemplate,
   previewTemplate, getInstitutionPrograms,
@@ -48,6 +49,7 @@ export default function TemplatesPage() {
   const [deleteTarget, setDeleteTarget] = useState<CommunicationTemplate | null>(null)
   const [previewTarget, setPreviewTarget] = useState<string | null>(null)
   const [previewData, setPreviewData] = useState<{ rendered_subject: string; rendered_body: string } | null>(null)
+  const [previewError, setPreviewError] = useState(false)
 
   // Form
   const [name, setName] = useState('')
@@ -89,22 +91,27 @@ export default function TemplatesPage() {
   const createMut = useMutation({
     mutationFn: createTemplate,
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['templates'] }); setShowModal(false); resetForm(); showToast('Template created', 'success') },
+    onError: () => showToast("We couldn't create the template. Please try again.", 'error'),
   })
   const updateMut = useMutation({
     mutationFn: (p: { id: string; payload: Parameters<typeof updateTemplate>[1] }) => updateTemplate(p.id, p.payload),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['templates'] }); setShowModal(false); resetForm(); showToast('Template updated', 'success') },
+    onError: () => showToast("We couldn't update the template. Please try again.", 'error'),
   })
   const deleteMut = useMutation({
     mutationFn: deleteTemplate,
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['templates'] }); setDeleteTarget(null); showToast('Template deleted', 'success') },
+    onError: () => showToast("We couldn't delete the template. Please try again.", 'error'),
   })
 
   const handlePreview = async (templateId: string) => {
     setPreviewTarget(templateId)
+    setPreviewData(null)
+    setPreviewError(false)
     try {
       const data = await previewTemplate(templateId)
       setPreviewData(data)
-    } catch { setPreviewData(null) }
+    } catch { setPreviewError(true) }
   }
 
   const insertVariable = (variable: string, target: 'subject' | 'body') => {
@@ -135,6 +142,8 @@ export default function TemplatesPage() {
 
       {templatesQ.isLoading ? (
         <div className="grid grid-cols-2 gap-4">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-40" />)}</div>
+      ) : templatesQ.isError ? (
+        <QueryError variant="inline" detail="We couldn't load templates." onRetry={() => templatesQ.refetch()} />
       ) : templates.length === 0 ? (
         <EmptyState icon={<FileStack size={40} />} title="No templates" description="Create templates for missing items, interview invites, decisions, and more." action={{ label: 'New Template', onClick: openCreate }} />
       ) : (
@@ -161,7 +170,7 @@ export default function TemplatesPage() {
               <div className="flex gap-2">
                 <Button variant="ghost" size="sm" onClick={() => openEdit(t)} className="flex items-center gap-1"><Edit2 size={14} /> Edit</Button>
                 <Button variant="ghost" size="sm" onClick={() => handlePreview(t.id)} className="flex items-center gap-1"><Eye size={14} /> Preview</Button>
-                <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(t)} className="flex items-center gap-1 text-destructive"><Trash2 size={14} /></Button>
+                <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(t)} aria-label="Delete template" className="flex items-center gap-1 text-destructive"><Trash2 size={14} /></Button>
               </div>
             </Card>
           ))}
@@ -217,7 +226,7 @@ export default function TemplatesPage() {
       </Modal>
 
       {/* Preview Modal */}
-      <Modal isOpen={!!previewTarget} onClose={() => { setPreviewTarget(null); setPreviewData(null) }} title="Template Preview">
+      <Modal isOpen={!!previewTarget} onClose={() => { setPreviewTarget(null); setPreviewData(null); setPreviewError(false) }} title="Template Preview">
         {previewData ? (
           <div className="space-y-3">
             <div>
@@ -229,6 +238,8 @@ export default function TemplatesPage() {
               <div className="text-sm text-foreground bg-muted rounded px-3 py-3 whitespace-pre-wrap">{previewData.rendered_body}</div>
             </div>
           </div>
+        ) : previewError ? (
+          <QueryError variant="inline" detail="We couldn't load the preview." onRetry={() => previewTarget && handlePreview(previewTarget)} />
         ) : (
           <p className="text-sm text-muted-foreground text-center py-4">Loading preview...</p>
         )}

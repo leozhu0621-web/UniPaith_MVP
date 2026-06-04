@@ -11,6 +11,7 @@ import { getCompletionMap, getHandoffVerdict, listSessions } from '../../api/dis
 import { generateStrategy } from '../../api/strategy'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
+import QueryError from '../../components/ui/QueryError'
 import { showToast } from '../../stores/toast-store'
 import type {
   CompletionMap,
@@ -168,7 +169,11 @@ export default function DiscoverHomePage() {
   const [draft, setDraft] = useState('')
   const [handoffBanner, setHandoffBanner] = useState(false)
 
-  const { data: completion } = useQuery<CompletionMap>({
+  const {
+    data: completion,
+    isError: completionError,
+    refetch: refetchCompletion,
+  } = useQuery<CompletionMap>({
     queryKey: ['discovery', 'completion'],
     queryFn: () => getCompletionMap(),
   })
@@ -260,6 +265,14 @@ export default function DiscoverHomePage() {
         <div className="rounded-lg border border-accent/30 bg-accent/5 px-3 py-2 text-xs text-foreground">
           Your discovery progress looks strong. Generate a strategy when all three tracks reach 50%.
         </div>
+      )}
+
+      {completionError && (
+        <QueryError
+          variant="inline"
+          detail="We couldn't load your discovery progress."
+          onRetry={() => refetchCompletion()}
+        />
       )}
 
       <TrackSelector

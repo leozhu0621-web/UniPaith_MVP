@@ -62,7 +62,12 @@ export default function MessagesPage({ initialThreadId }: { initialThreadId?: st
     [filters],
   )
 
-  const { data: threadsData, isLoading: threadsLoading } = useQuery({
+  const {
+    data: threadsData,
+    isLoading: threadsLoading,
+    isError: threadsError,
+    refetch: refetchThreads,
+  } = useQuery({
     queryKey: ['inbox-threads', apiFilters],
     queryFn: () => getThreads(apiFilters),
     refetchInterval: 30000,
@@ -106,7 +111,8 @@ export default function MessagesPage({ initialThreadId }: { initialThreadId?: st
     const seen = new Map<string, string>()
     for (const t of all) {
       if (t.application_id) {
-        const label = t.application.program_name || t.application.institution_name || 'Application'
+        const label =
+          t.application?.program_name || t.application?.institution_name || 'Application'
         seen.set(t.application_id, label)
       }
     }
@@ -159,15 +165,26 @@ export default function MessagesPage({ initialThreadId }: { initialThreadId?: st
       <div
         className={`${selectedId ? 'hidden lg:flex' : 'flex'} w-full flex-col border-r border-border bg-card lg:w-80`}
       >
-        <InboxList
-          threads={threads}
-          loading={threadsLoading}
-          selectedId={selectedId}
-          onSelect={openThread}
-          filters={filters}
-          onFilters={setFilters}
-          appOptions={appOptions}
-        />
+        {threadsError && threads.length === 0 ? (
+          // A failed fetch must not read as "No conversations yet" (empty state).
+          <div className="flex flex-1 flex-col items-center justify-center px-4">
+            <QueryError
+              variant="inline"
+              detail="We couldn't load your conversations."
+              onRetry={() => refetchThreads()}
+            />
+          </div>
+        ) : (
+          <InboxList
+            threads={threads}
+            loading={threadsLoading}
+            selectedId={selectedId}
+            onSelect={openThread}
+            filters={filters}
+            onFilters={setFilters}
+            appOptions={appOptions}
+          />
+        )}
       </div>
 
       {/* Right: thread view. Mobile: full screen when a thread is selected. */}

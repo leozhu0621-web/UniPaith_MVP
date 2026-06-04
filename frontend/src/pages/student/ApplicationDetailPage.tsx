@@ -18,6 +18,7 @@ import Textarea from '../../components/ui/Textarea'
 import Select from '../../components/ui/Select'
 import ProgressBar from '../../components/ui/ProgressBar'
 import Skeleton from '../../components/ui/Skeleton'
+import QueryError from '../../components/ui/QueryError'
 import { showToast } from '../../stores/toast-store'
 import type { Interview } from '../../types'
 import { STATUS_COLORS } from '../../utils/constants'
@@ -61,6 +62,17 @@ const INTENT_OPTIONS: { value: string; label: string }[] = [
   { value: 'other', label: 'Other' },
 ]
 const RATIONALE_REQUIRED = ['back_up', 'other']
+
+// The checklist GET 404s when one hasn't been generated yet — that's the only
+// case we silently fall back to POST /checklist. A transient 5xx/network error
+// must surface (so the tab shows QueryError), not masquerade as "generate".
+// client.ts collapses the AxiosError into Error(message) (status on 404 →
+// "...status code 404"; on a backend detail → the detail text), so we sniff
+// the message rather than err.response.status.
+function isMissingChecklist(err: unknown): boolean {
+  const msg = (err instanceof Error ? err.message : String(err)).toLowerCase()
+  return msg.includes('404') || msg.includes('not found') || msg.includes('no checklist')
+}
 
 export default function ApplicationDetailPage() {
   const { appId } = useParams<{ appId: string }>()
@@ -108,14 +120,23 @@ export default function ApplicationDetailPage() {
     if (qTab) setTab(qTab)
   }, [searchParams])
 
-  const { data: app, isLoading } = useQuery({ queryKey: ['application', appId], queryFn: () => getMyApplication(appId!) })
-  const { data: checklist } = useQuery({ queryKey: ['checklist', appId], queryFn: () => getChecklist(appId!).catch(() => generateChecklist(appId!)) })
-  const { data: essays } = useQuery({ queryKey: ['essays', app?.program_id], queryFn: () => listEssays(app?.program_id), enabled: !!app?.program_id && (tab === 'essays' || tab === 'documents') })
+  const { data: app, isLoading, isError: appError, refetch: refetchApp } = useQuery({ queryKey: ['application', appId], queryFn: () => getMyApplication(appId!) })
+  const { data: checklist, isError: checklistError, refetch: refetchChecklist } = useQuery({
+    queryKey: ['checklist', appId],
+    queryFn: () =>
+      getChecklist(appId!).catch(err => {
+        // Only auto-generate when there genuinely isn't one yet; let a transient
+        // 5xx/network error propagate so we render an error, not a stale generate.
+        if (isMissingChecklist(err)) return generateChecklist(appId!)
+        throw err
+      }),
+  })
+  const { data: essays, isError: essaysError, refetch: refetchEssays } = useQuery({ queryKey: ['essays', app?.program_id], queryFn: () => listEssays(app?.program_id), enabled: !!app?.program_id && (tab === 'essays' || tab === 'documents') })
   const { data: resumes } = useQuery({ queryKey: ['resumes', app?.program_id], queryFn: () => listResumes(app?.program_id), enabled: !!app?.program_id && tab === 'documents' })
-  const { data: documents } = useQuery({ queryKey: ['documents'], queryFn: listDocuments, enabled: tab === 'documents' })
-  const { data: interviews } = useQuery({ queryKey: ['interviews'], queryFn: getMyInterviews, enabled: tab === 'interviews' })
-  const { data: recommenders } = useQuery({ queryKey: ['recommendations'], queryFn: listRecommendations, enabled: tab === 'recommenders' })
-  const { data: cost } = useQuery({ queryKey: ['payment', appId], queryFn: () => getCostTracker(appId!), enabled: !!appId })
+  const { data: documents, isError: documentsError, refetch: refetchDocuments } = useQuery({ queryKey: ['documents'], queryFn: listDocuments, enabled: tab === 'documents' })
+  const { data: interviews, isError: interviewsError, refetch: refetchInterviews } = useQuery({ queryKey: ['interviews'], queryFn: getMyInterviews, enabled: tab === 'interviews' })
+  const { data: recommenders, isError: recommendersError, refetch: refetchRecommenders } = useQuery({ queryKey: ['recommendations'], queryFn: listRecommendations, enabled: tab === 'recommenders' })
+  const { data: cost, isError: costError, refetch: refetchCost } = useQuery({ queryKey: ['payment', appId], queryFn: () => getCostTracker(appId!), enabled: !!appId })
 
   // Spec 39 — after a Stripe redirect-return (?paid=fee|deposit), refresh state.
   useEffect(() => {
@@ -256,6 +277,13 @@ export default function ApplicationDetailPage() {
   usePageTitle(app?.program?.program_name || 'Application')
 
   if (isLoading) return <div className="p-6"><Skeleton className="h-64" /></div>
+  // A failed fetch is retryable — don't conflate it with a genuine 404.
+  if (appError)
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <QueryError detail="We couldn't load this application." onRetry={() => refetchApp()} />
+      </div>
+    )
   if (!app) return <div className="p-6 text-center text-foreground">Application not found.</div>
 
   const application: Application = app
@@ -267,8 +295,11 @@ export default function ApplicationDetailPage() {
   const resumesList: Resume[] = Array.isArray(resumes) ? resumes : []
   const recommendersList: any[] = Array.isArray(recommenders) ? recommenders : []
   const isExternal = application.submission_mode === 'external'
-  // Fitness on a 0-100 scale (match_score stored 0-1). Spec 15 §6.5 low-fit ≤ 30.
-  const fitnessPct = application.match_score != null ? Math.round(Number(application.match_score) * 100) : null
+  // Fitness on a 0-100 scale (score stored 0-1). Spec 15 §6.5 low-fit ≤ 30.
+  // Read dual-score fitness first; fall back to legacy match_score (dropped in
+  // Phase E) so this doesn't zero out. `app` is the untyped query payload.
+  const rawFitness = app.fitness_score ?? application.match_score
+  const fitnessPct = rawFitness != null ? Math.round(Number(rawFitness) * 100) : null
   const isLowFit = application.fit_band === 'low' || guardrailResult?.fit_band === 'low' || (fitnessPct != null && fitnessPct <= 30)
 
   const requiredItems = checklistItems.filter(i => i.required !== false)
@@ -412,7 +443,17 @@ export default function ApplicationDetailPage() {
                   </span>
                 </div>
               ))}
-              {checklistItems.length === 0 && <p className="text-xs text-foreground">Generating checklist…</p>}
+              {checklistItems.length === 0 && (
+                checklistError ? (
+                  <QueryError
+                    variant="inline"
+                    detail="We couldn't load your checklist."
+                    onRetry={() => refetchChecklist()}
+                  />
+                ) : (
+                  <p className="text-xs text-foreground">Generating checklist…</p>
+                )
+              )}
             </div>
             <ProgressBar value={completionPct} label="Readiness" />
 
@@ -478,6 +519,17 @@ export default function ApplicationDetailPage() {
               institutionName={application.program?.institution_name ?? undefined}
             />
           )}
+          {/* Fee info is money-critical — surface a load failure rather than
+              silently hiding a fee the student may owe. */}
+          {costError && (
+            <Card className="p-4">
+              <QueryError
+                variant="inline"
+                detail="We couldn't load fee details."
+                onRetry={() => refetchCost()}
+              />
+            </Card>
+          )}
 
           {/* Submission mode (§7) */}
           {application.status === 'draft' && (
@@ -514,13 +566,21 @@ export default function ApplicationDetailPage() {
               <>
                 <GraduateIntentCard applicationId={appId!} />
                 <StudentAdvisorFit applicationId={appId!} />
-                <ChecklistTab
-                  items={checklistItems}
-                  completionPct={completionPct}
-                  isExternal={isExternal}
-                  canToggle={application.status === 'draft'}
-                  onToggle={(key, completed) => toggleMut.mutate({ key, completed })}
-                />
+                {checklistError && checklistItems.length === 0 ? (
+                  <QueryError
+                    variant="inline"
+                    detail="We couldn't load your checklist."
+                    onRetry={() => refetchChecklist()}
+                  />
+                ) : (
+                  <ChecklistTab
+                    items={checklistItems}
+                    completionPct={completionPct}
+                    isExternal={isExternal}
+                    canToggle={application.status === 'draft'}
+                    onToggle={(key, completed) => toggleMut.mutate({ key, completed })}
+                  />
+                )}
               </>
             )}
 
@@ -546,6 +606,14 @@ export default function ApplicationDetailPage() {
                     <div className="flex justify-between text-xs text-foreground"><span>Uploading…</span><span>{uploadProgress}%</span></div>
                     <ProgressBar value={uploadProgress} />
                   </div>
+                )}
+
+                {documentsError && (
+                  <QueryError
+                    variant="inline"
+                    detail="We couldn't load your uploaded documents."
+                    onRetry={() => refetchDocuments()}
+                  />
                 )}
 
                 {documentsList.length > 0 && (
@@ -579,7 +647,13 @@ export default function ApplicationDetailPage() {
             {tab === 'essays' && (
               <div className="space-y-4">
                 <Button size="sm" onClick={() => setShowEssayModal(true)}>+ New essay</Button>
-                {essaysList.length === 0 ? (
+                {essaysError && essaysList.length === 0 ? (
+                  <QueryError
+                    variant="inline"
+                    detail="We couldn't load your essays."
+                    onRetry={() => refetchEssays()}
+                  />
+                ) : essaysList.length === 0 ? (
                   <p className="text-sm text-foreground mt-2">No essays yet for this application.</p>
                 ) : (
                   essaysList.map((e: Essay) => (
@@ -618,11 +692,19 @@ export default function ApplicationDetailPage() {
             )}
 
             {tab === 'recommenders' && (
-              <RecommendersTab
-                recommenders={recommendersList}
-                programId={application.program_id}
-                onNudge={async (id) => { await sendRecommendationRequest(id); queryClient.invalidateQueries({ queryKey: ['recommendations'] }); showToast('Reminder sent', 'success') }}
-              />
+              recommendersError && recommendersList.length === 0 ? (
+                <QueryError
+                  variant="inline"
+                  detail="We couldn't load your recommenders."
+                  onRetry={() => refetchRecommenders()}
+                />
+              ) : (
+                <RecommendersTab
+                  recommenders={recommendersList}
+                  programId={application.program_id}
+                  onNudge={async (id) => { await sendRecommendationRequest(id); queryClient.invalidateQueries({ queryKey: ['recommendations'] }); showToast('Reminder sent', 'success') }}
+                />
+              )
             )}
 
             {tab === 'interviews' && (() => {
@@ -635,6 +717,14 @@ export default function ApplicationDetailPage() {
                     interviewList.map((iv: Interview) => (
                       <InterviewRespondPanel key={iv.id} interview={iv} />
                     ))
+                  ) : interviewsError ? (
+                    <Card className="p-6">
+                      <QueryError
+                        variant="inline"
+                        detail="We couldn't load your interviews."
+                        onRetry={() => refetchInterviews()}
+                      />
+                    </Card>
                   ) : (
                     <Card className="p-6 text-center">
                       <Users size={32} className="text-muted-foreground mx-auto mb-3" />
@@ -1007,6 +1097,7 @@ function ChecklistTab({ items, completionPct, isExternal, canToggle, onToggle }:
                 <div className="flex items-center gap-3 min-w-0">
                   <input
                     type="checkbox"
+                    aria-label={item.name}
                     checked={item.status === 'completed'}
                     disabled={!canToggle || (!isExternal && item.owner === 'recommender')}
                     onChange={e => item.key && onToggle(item.key, e.target.checked)}

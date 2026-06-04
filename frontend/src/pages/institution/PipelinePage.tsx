@@ -258,14 +258,17 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
   const batchAssignMut = useMutation({
     mutationFn: () => batchAssignReviewers(Array.from(selectedIds)),
     onSuccess: handleBatchResult,
+    onError: () => showToast("We couldn't assign reviewers. Please try again.", 'error'),
   })
   const batchItemsMut = useMutation({
     mutationFn: () => batchRequestMissingItems(Array.from(selectedIds), batchItems.split(',').map(s => s.trim()).filter(Boolean)),
     onSuccess: handleBatchResult,
+    onError: () => showToast("We couldn't request missing items. Please try again.", 'error'),
   })
   const batchStatusMut = useMutation({
     mutationFn: () => batchUpdateStatus(Array.from(selectedIds), batchStatus),
     onSuccess: handleBatchResult,
+    onError: () => showToast("We couldn't update status. Please try again.", 'error'),
   })
   const batchInterviewMut = useMutation({
     mutationFn: () =>
@@ -278,6 +281,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
         batchIvLocation || undefined,
       ),
     onSuccess: handleBatchResult,
+    onError: () => showToast("We couldn't schedule interviews. Please try again.", 'error'),
   })
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -454,7 +458,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
               {filteredReviewableApps.length === 0 ? (
                 <EmptyState title="No pending reviews" description="All applications in this program are currently reviewed." />
               ) : (
-                <Table columns={reviewColumns} data={filteredReviewableApps} onRowClick={(row) => goApplicant(row.id)} />
+                <Table columns={reviewColumns} data={filteredReviewableApps} onRowClick={(row) => goApplicant(row.id)} pageSize={50} />
               )}
             </Card>
           )}
@@ -471,7 +475,7 @@ export default function PipelinePage({ embedded = false }: { embedded?: boolean 
               {filteredAllApps.length === 0 ? (
                 <EmptyState title="No applications found" description="Try clearing search or checking another program." />
               ) : (
-                <Table columns={reviewColumns} data={filteredAllApps} onRowClick={(row) => goApplicant(row.id)} />
+                <Table columns={reviewColumns} data={filteredAllApps} onRowClick={(row) => goApplicant(row.id)} pageSize={50} />
               )}
             </Card>
           )}

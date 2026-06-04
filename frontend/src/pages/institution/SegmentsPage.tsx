@@ -20,7 +20,9 @@ import Select from '../../components/ui/Select'
 import Textarea from '../../components/ui/Textarea'
 import EmptyState from '../../components/ui/EmptyState'
 import Skeleton from '../../components/ui/Skeleton'
+import QueryError from '../../components/ui/QueryError'
 import { showToast } from '../../stores/toast-store'
+import { confirmDialog } from '../../stores/confirm-store'
 import type { NLBridgeResult, Program, Segment, SegmentPreview, SegmentRuleTree } from '../../types'
 import RuleBranch from './segments/RuleBranch'
 import RuleChip from './segments/RuleChip'
@@ -142,6 +144,17 @@ export default function SegmentsPage() {
     onError: () => showToast('Failed to delete segment', 'error'),
   })
 
+  const handleDelete = async (seg: Segment) => {
+    const ok = await confirmDialog({
+      title: 'Delete segment?',
+      body: `“${seg.segment_name}” will be removed. Campaigns and events using it will lose this audience.`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    })
+    if (!ok) return
+    deleteMut.mutate(seg.id)
+  }
+
   const applyNl = (res: NLBridgeResult) => {
     const incoming = rulesToTree(res.rules)
     // merge into the current tree (append, don't clobber existing rules)
@@ -190,12 +203,23 @@ export default function SegmentsPage() {
           }
         />
 
+        {dictQ.isError && (
+          <p className="text-xs text-muted-foreground">
+            We couldn't load the signal dictionary, so rule labels may be incomplete.{' '}
+            <button onClick={() => dictQ.refetch()} className="font-medium text-secondary hover:underline">
+              Try again
+            </button>
+          </p>
+        )}
+
         {segmentsQ.isLoading ? (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-40" />
             ))}
           </div>
+        ) : segmentsQ.isError ? (
+          <QueryError detail="We couldn't load your segments." onRetry={() => segmentsQ.refetch()} />
         ) : segments.length === 0 ? (
           <EmptyState
             icon={<Layers size={40} />}
@@ -212,7 +236,7 @@ export default function SegmentsPage() {
                 programName={programs.find((p) => p.id === seg.program_id)?.program_name}
                 signals={signals}
                 onEdit={() => openEdit(seg)}
-                onDelete={() => deleteMut.mutate(seg.id)}
+                onDelete={() => handleDelete(seg)}
                 onUseInCampaign={() => goToCampaign(seg.id)}
               />
             ))}

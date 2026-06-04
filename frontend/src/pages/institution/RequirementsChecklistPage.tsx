@@ -23,6 +23,7 @@ import Select from '../../components/ui/Select'
 import Textarea from '../../components/ui/Textarea'
 import EmptyState from '../../components/ui/EmptyState'
 import Skeleton from '../../components/ui/Skeleton'
+import QueryError from '../../components/ui/QueryError'
 import InstitutionPageHeader from '../../components/institution/InstitutionPageHeader'
 import { showToast } from '../../stores/toast-store'
 import type { ProgramChecklistItem, Program } from '../../types'
@@ -162,14 +163,17 @@ export default function RequirementsChecklistPage() {
   const createMut = useMutation({
     mutationFn: (p: Parameters<typeof createChecklistItem>[1]) => createChecklistItem(selectedProgram, p),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['program-checklist'] }); setShowModal(false); resetForm(); showToast('Item added', 'success') },
+    onError: () => showToast("We couldn't add the item. Please try again.", 'error'),
   })
   const updateMut = useMutation({
     mutationFn: (p: { id: string; payload: Parameters<typeof updateChecklistItem>[2] }) => updateChecklistItem(selectedProgram, p.id, p.payload),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['program-checklist'] }); setShowModal(false); resetForm(); showToast('Item updated', 'success') },
+    onError: () => showToast("We couldn't update the item. Please try again.", 'error'),
   })
   const deleteMut = useMutation({
     mutationFn: (id: string) => deleteChecklistItem(selectedProgram, id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['program-checklist'] }); setDeleteTarget(null); showToast('Item removed', 'success') },
+    onError: () => showToast("We couldn't remove the item. Please try again.", 'error'),
   })
 
   // Reorder mutation — optimistic so drag feels instant.
@@ -259,6 +263,8 @@ export default function RequirementsChecklistPage() {
         <EmptyState icon={<ClipboardList size={40} />} title="Select a program" description="Choose a program to configure its application requirements checklist." />
       ) : checklistQ.isLoading ? (
         <Skeleton className="h-60" />
+      ) : checklistQ.isError ? (
+        <QueryError detail="We couldn't load this program's checklist." onRetry={() => checklistQ.refetch()} />
       ) : orderedItems.length === 0 ? (
         <EmptyState icon={<ClipboardList size={40} />} title="No checklist items" description="Add required and optional items applicants need to submit." action={{ label: 'Add Item', onClick: openCreate }} />
       ) : (

@@ -21,6 +21,7 @@ import Select from '../../components/ui/Select'
 import Textarea from '../../components/ui/Textarea'
 import Tabs from '../../components/ui/Tabs'
 import Skeleton from '../../components/ui/Skeleton'
+import QueryError from '../../components/ui/QueryError'
 import { showToast } from '../../stores/toast-store'
 import { useAuthStore } from '../../stores/auth-store'
 import { INSTITUTION_TYPES } from '../../utils/constants'
@@ -248,6 +249,20 @@ export default function SettingsPage() {
   const inst = instQ.data as any
   const seedKey = inst?.updated_at ?? 'init'
 
+  // Per-user settings power most tabs; if that fetch fails they'd otherwise sit
+  // on a permanent skeleton. Surface a retry instead of a dead skeleton.
+  if (settingsQ.isError) {
+    return (
+      <div className="px-4 sm:px-6 py-6 space-y-5 max-w-3xl mx-auto w-full">
+        <header className="flex items-center gap-2">
+          <Settings size={22} className="text-secondary" />
+          <h1 className="text-2xl font-bold text-foreground">Settings</h1>
+        </header>
+        <QueryError onRetry={() => refetchSettings()} />
+      </div>
+    )
+  }
+
   return (
     <div className="px-4 sm:px-6 py-6 space-y-5 max-w-3xl mx-auto w-full">
       <header className="flex items-center gap-2">
@@ -268,7 +283,9 @@ export default function SettingsPage() {
       {/* Public profile (Spec 22 guided editor) */}
       {activeTab === 'profile' && (
         <Card className="p-5 sm:p-6">
-          {instQ.isLoading || !inst ? (
+          {instQ.isError ? (
+            <QueryError variant="inline" detail="We couldn't load your public profile." onRetry={() => instQ.refetch()} />
+          ) : instQ.isLoading || !inst ? (
             <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10" />)}</div>
           ) : (
             <form onSubmit={onSaveProfile} className="space-y-6">

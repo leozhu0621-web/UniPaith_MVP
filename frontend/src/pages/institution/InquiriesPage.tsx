@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Inbox, MessageSquare, CheckCircle2, Clock, User, UserPlus } from 'lucide-react'
+import QueryError from '../../components/ui/QueryError'
 import { getInquiries, updateInquiry, getTemplates } from '../../api/institutions'
 import { getTeam } from '../../api/settings'
 import Card from '../../components/ui/Card'
@@ -61,6 +62,7 @@ export default function InquiriesPage({ embedded = false }: { embedded?: boolean
       setSelected(null)
       setResponseText('')
     },
+    onError: () => showToast("We couldn't send the response. Please try again.", 'error'),
   })
 
   const statusMut = useMutation({
@@ -70,12 +72,14 @@ export default function InquiriesPage({ embedded = false }: { embedded?: boolean
       queryClient.invalidateQueries({ queryKey: ['inquiries'] })
       showToast('Status updated', 'success')
     },
+    onError: () => showToast("We couldn't update the status. Please try again.", 'error'),
   })
 
   // Spec 31 §7 — response templates (Spec 25) + assign-to-staff.
-  const templatesQ = useQuery({ queryKey: ['inquiry-templates'], queryFn: () => getTemplates() })
+  // Only fetched when a detail modal is open (their only consumer).
+  const templatesQ = useQuery({ queryKey: ['inquiry-templates'], queryFn: () => getTemplates(), enabled: !!selected })
   const templates = Array.isArray(templatesQ.data) ? templatesQ.data : []
-  const teamQ = useQuery({ queryKey: ['institution-team'], queryFn: getTeam })
+  const teamQ = useQuery({ queryKey: ['institution-team'], queryFn: getTeam, enabled: !!selected })
   // Only active members are real users assignable to an inquiry (pending invites are not).
   const assignableStaff = (Array.isArray(teamQ.data) ? teamQ.data : []).filter(m => m.status === 'active')
   const staffEmail = (id: string | null) =>
@@ -138,6 +142,8 @@ export default function InquiriesPage({ embedded = false }: { embedded?: boolean
 
       {inquiriesQ.isLoading ? (
         <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>
+      ) : inquiriesQ.isError ? (
+        <QueryError variant="inline" detail="We couldn't load inquiries." onRetry={() => inquiriesQ.refetch()} />
       ) : inquiries.length === 0 ? (
         <EmptyState
           icon={<Inbox size={40} />}

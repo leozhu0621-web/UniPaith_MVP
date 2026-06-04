@@ -11,6 +11,7 @@ import {
 import type { InstitutionSetupState, SetupStepPatch } from '../../types'
 import Wordmark from '../../components/ui/Wordmark'
 import Skeleton from '../../components/ui/Skeleton'
+import QueryError from '../../components/ui/QueryError'
 import { showToast } from '../../stores/toast-store'
 import ProgressRail from './setup/ProgressRail'
 import ProfileStep from './setup/ProfileStep'
@@ -46,6 +47,7 @@ export default function SetupPage() {
   const patchStep = useMutation({
     mutationFn: (patch: SetupStepPatch) => patchSetupStep(patch),
     onSuccess: (state) => queryClient.setQueryData(['institution-setup'], state),
+    onError: () => showToast("We couldn't save your progress. Please try again.", 'error'),
   })
 
   const finish = useMutation({
@@ -53,7 +55,7 @@ export default function SetupPage() {
     onSuccess: (state) => {
       queryClient.setQueryData(['institution-setup'], state)
       queryClient.invalidateQueries({ queryKey: ['institution'] })
-      showToast('Setup complete — welcome aboard 🎉', 'success')
+      showToast('Setup complete — welcome aboard.', 'success')
       navigate('/i/dashboard')
     },
     onError: () =>
@@ -81,6 +83,16 @@ export default function SetupPage() {
     return (
       <div className="mx-auto max-w-2xl p-6">
         <CompleteSummary institution={institution} setupState={setupState} />
+      </div>
+    )
+  }
+
+  // Without setup state the cast below would crash on `state.steps_complete`.
+  // Surface a retry instead of a blank/exploded wizard.
+  if (setupQ.isError || (!setupQ.isLoading && !setupState)) {
+    return (
+      <div className="mx-auto max-w-2xl p-6">
+        <QueryError onRetry={() => setupQ.refetch()} />
       </div>
     )
   }
