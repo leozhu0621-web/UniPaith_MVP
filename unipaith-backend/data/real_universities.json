@@ -981,22 +981,7 @@
    "lng": -122.2583,
    "source": "Wikipedia / Wikidata"
   },
-  "test_scores": {
-   "sat_reading_25_75": [
-    650,
-    740
-   ],
-   "sat_math_25_75": [
-    660,
-    790
-   ],
-   "act_25_75": [
-    30,
-    35
-   ],
-   "year": 2020,
-   "source": "IPEDS via Urban Institute Education Data API"
-  },
+  "test_scores": null,
   "retention_rate_first_year": 0.97
  },
  {
@@ -3799,22 +3784,7 @@
    "lng": -117.234,
    "source": "Wikipedia / Wikidata"
   },
-  "test_scores": {
-   "sat_reading_25_75": [
-    620,
-    710
-   ],
-   "sat_math_25_75": [
-    650,
-    770
-   ],
-   "act_25_75": [
-    28,
-    34
-   ],
-   "year": 2020,
-   "source": "IPEDS via Urban Institute Education Data API"
-  },
+  "test_scores": null,
   "retention_rate_first_year": 0.93
  },
  {
