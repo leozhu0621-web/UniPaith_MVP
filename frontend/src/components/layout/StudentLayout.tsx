@@ -16,6 +16,7 @@ import Sheet from '../ui/Sheet'
 import CompareTray from '../student/CompareTray'
 import TrialBanner from '../student/TrialBanner'
 import Paywall from '../student/Paywall'
+import { SearchTrigger, CommandPalette } from '../student/GlobalSearch'
 
 // Stage-ordered navigation (Spec/02 §7): Discover · Match · Apply · Connect.
 const NAV_ITEMS = [
@@ -48,9 +49,12 @@ export default function StudentLayout() {
       <SkipLink />
       {/* ─── Desktop top nav (lg+) — Spec/02 §7. 64px, --bg, --border hairline. ─── */}
       <header className="hidden lg:flex h-16 items-center justify-between px-8 bg-background border-b border-border flex-shrink-0 z-30">
-        <NavLink to="/s" className="leading-none" aria-label="UniPaith home">
-          <Wordmark className="h-7 w-auto" />
-        </NavLink>
+        <div className="flex items-center gap-4">
+          <NavLink to="/s" className="leading-none" aria-label="UniPaith home">
+            <Wordmark className="h-7 w-auto" />
+          </NavLink>
+          <SearchTrigger variant="bar" />
+        </div>
 
         <nav className="flex items-center gap-1" aria-label="Primary">
           {NAV_ITEMS.map((item, i) => (
@@ -99,7 +103,10 @@ export default function StudentLayout() {
         <NavLink to="/s" aria-label="UniPaith home" className="leading-none">
           <img src="/favicon.svg" alt="UniPaith" className="h-9 w-9 rounded-md" />
         </NavLink>
-        <NotificationBell />
+        <div className="flex items-center gap-1">
+          <SearchTrigger variant="icon" />
+          <NotificationBell />
+        </div>
       </header>
 
       {/* Trial / plan nudge (Spec 05 §9, 07 §4.1) */}
@@ -208,6 +215,9 @@ export default function StudentLayout() {
         initialExpanded={location.pathname === '/s/explore' && searchParams.get('compare') === 'open'}
         syncUrl={location.pathname === '/s/explore'}
       />
+
+      {/* Global ⌘K command palette — search programs/schools + jump to any surface. */}
+      <CommandPalette />
 
       {/* Trial→paywall gate (Spec 05 §9) — only blocks when enforced + lapsed. */}
       <Paywall />
