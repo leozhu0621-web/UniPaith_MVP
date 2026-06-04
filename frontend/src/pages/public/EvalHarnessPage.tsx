@@ -37,6 +37,7 @@ import Card from '../../components/ui/Card'
 import usePageTitle from '../../hooks/usePageTitle'
 import {
   CardSkeleton,
+  CardTitle,
   Chip,
   ErrorState,
   FilterRow,
@@ -97,10 +98,9 @@ function ConsumerCard({ consumer }: { consumer: EvalHarnessConsumer }) {
   return (
     <Card className="flex h-full flex-col gap-3 p-5">
       <div className="flex items-start justify-between gap-3">
-        <span className="inline-flex items-center gap-2 text-h3 leading-snug text-foreground">
-          <Icon size={18} className="shrink-0 text-secondary" />
+        <CardTitle icon={Icon} className="leading-snug">
           {consumer.title}
-        </span>
+        </CardTitle>
         <StatusChip status={consumer.status} />
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
@@ -280,7 +280,7 @@ export default function EvalHarnessPage() {
       </Hero>
 
       {/* Headline stats — read live from the running backend */}
-      <StatBand>
+      <StatBand isError={isError}>
         {isLoading || !data ? (
           [0, 1, 2, 3].map(i => <StatSkeleton key={i} />)
         ) : (
@@ -372,10 +372,7 @@ export default function EvalHarnessPage() {
           {judges.map(c => (
             <Card key={c.key} className="flex flex-col gap-2 p-5">
               <div className="flex items-start justify-between gap-3">
-                <span className="inline-flex items-center gap-2 text-h3 text-foreground">
-                  <Scale size={18} className="text-secondary" />
-                  {c.title}
-                </span>
+                <CardTitle icon={Scale}>{c.title}</CardTitle>
                 {c.judge?.independent ? (
                   <Chip tone="success">Independent</Chip>
                 ) : (

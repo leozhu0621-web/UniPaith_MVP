@@ -6,6 +6,7 @@ import { getFeaturedPromotions } from '../../api/institutions'
 import { Search, Star } from 'lucide-react'
 import Badge from '../../components/ui/Badge'
 import Skeleton from '../../components/ui/Skeleton'
+import QueryError from '../../components/ui/QueryError'
 import { formatCurrency, formatDate } from '../../utils/format'
 import { DEGREE_LABELS } from '../../utils/constants'
 import type { ProgramSummary, PaginatedResponse, Promotion } from '../../types'
@@ -19,7 +20,7 @@ export default function ProgramBrowsePage() {
   const [degreeType, setDegreeType] = useState('')
   const [page, setPage] = useState(1)
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['programs', { q, country, degree_type: degreeType, page }],
     queryFn: () => searchPrograms({ q: q || undefined, country: country || undefined, degree_type: degreeType || undefined, page, page_size: 20 }),
   })
@@ -49,6 +50,7 @@ export default function ProgramBrowsePage() {
               value={q}
               onChange={e => { setQ(e.target.value); setPage(1) }}
               placeholder="Search programs..."
+              aria-label="Search programs"
               className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
@@ -57,6 +59,7 @@ export default function ProgramBrowsePage() {
             value={country}
             onChange={e => { setCountry(e.target.value); setPage(1) }}
             placeholder="Country"
+            aria-label="Filter by country"
             className="w-40 px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
           />
           <select
@@ -81,6 +84,8 @@ export default function ProgramBrowsePage() {
               </div>
             ))}
           </div>
+        ) : isError ? (
+          <QueryError detail="We couldn't load programs." onRetry={() => refetch()} />
         ) : programs.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground">No programs found</div>
         ) : (
@@ -123,18 +128,52 @@ export default function ProgramBrowsePage() {
         )}
 
         {totalPages > 1 && (
-          <div className="flex justify-center gap-2 mt-8">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-              <button
-                key={p}
-                onClick={() => setPage(p)}
-                className={`px-3 py-1 text-sm rounded ${p === page ? 'bg-foreground text-background' : 'bg-card border border-border hover:bg-muted'}`}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
+          <nav className="flex justify-center items-center gap-2 mt-8" aria-label="Pagination">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              className="px-3 py-1 text-sm rounded bg-card border border-border hover:bg-muted disabled:opacity-40 disabled:pointer-events-none"
+            >
+              Prev
+            </button>
+            {pageWindow(page, totalPages).map((p, i) =>
+              p === 'gap' ? (
+                <span key={`gap-${i}`} className="px-2 text-sm text-muted-foreground/60" aria-hidden="true">…</span>
+              ) : (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  aria-current={p === page ? 'page' : undefined}
+                  className={`px-3 py-1 text-sm rounded ${p === page ? 'bg-foreground text-background' : 'bg-card border border-border hover:bg-muted'}`}
+                >
+                  {p}
+                </button>
+              )
+            )}
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              className="px-3 py-1 text-sm rounded bg-card border border-border hover:bg-muted disabled:opacity-40 disabled:pointer-events-none"
+            >
+              Next
+            </button>
+          </nav>
         )}
     </div>
   )
+}
+
+// Windowed page list: first · current±2 · last, with 'gap' markers where pages
+// are elided. Keeps the control bounded no matter how many total pages exist.
+function pageWindow(current: number, total: number): (number | 'gap')[] {
+  const pages = new Set<number>([1, total, current - 2, current - 1, current, current + 1, current + 2])
+  const visible = Array.from(pages).filter(p => p >= 1 && p <= total).sort((a, b) => a - b)
+  const out: (number | 'gap')[] = []
+  let prev = 0
+  for (const p of visible) {
+    if (prev && p - prev > 1) out.push('gap')
+    out.push(p)
+    prev = p
+  }
+  return out
 }

@@ -12,8 +12,10 @@ import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
 import Modal from '../../../components/ui/Modal'
 import Select from '../../../components/ui/Select'
+import Skeleton from '../../../components/ui/Skeleton'
 import { getAccommodations, getScheduling, upsertAccommodations, upsertScheduling } from '../../../api/students'
 import { deleteDocument, listDocuments } from '../../../api/documents'
+import { confirmDialog } from '../../../stores/confirm-store'
 import { showToast } from '../../../stores/toast-store'
 import { formatFileSize } from '../../../utils/format'
 import { DOCUMENT_TYPES } from '../../../utils/constants'
@@ -27,7 +29,7 @@ export default function PreparationTab() {
   const qc = useQueryClient()
   const [searchParams] = useSearchParams()
   const recommendersRef = useRef<HTMLDivElement>(null)
-  const { data: documents } = useQuery({ queryKey: ['documents'], queryFn: listDocuments })
+  const { data: documents, isLoading: documentsLoading } = useQuery({ queryKey: ['documents'], queryFn: listDocuments })
   const { data: accommodations } = useQuery({ queryKey: ['accommodations'], queryFn: getAccommodations, retry: false })
   const { data: scheduling } = useQuery({ queryKey: ['scheduling'], queryFn: getScheduling, retry: false })
   const [modal, setModal] = useState<null | 'accommodations' | 'scheduling'>(null)
@@ -42,6 +44,7 @@ export default function PreparationTab() {
   const docDelete = useMutation({
     mutationFn: deleteDocument,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['documents'] }); showToast('Document removed', 'success') },
+    onError: () => showToast("We couldn't remove the document. Please try again.", 'error'),
   })
   const accommMut = useMutation({
     mutationFn: upsertAccommodations,
@@ -76,7 +79,21 @@ export default function PreparationTab() {
           }
         />
         <FileDropzone documentType={docType} label={`Upload a ${DOCUMENT_TYPES.find(d => d.value === docType)?.label.toLowerCase() ?? 'document'}`} onUploaded={() => qc.invalidateQueries({ queryKey: ['documents'] })} />
-        {documentsList.length > 0 && (
+        {documentsLoading ? (
+          <div className="mt-3 space-y-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2">
+                <div className="min-w-0 space-y-1.5">
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
+                <Skeleton className="h-5 w-16" />
+              </div>
+            ))}
+          </div>
+        ) : documentsList.length === 0 ? (
+          <p className="mt-3 text-sm text-muted-foreground">No documents uploaded yet.</p>
+        ) : (
           <div className="mt-3 space-y-2">
             {documentsList.map((doc: any) => (
               <div key={doc.id} className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2">
@@ -87,7 +104,22 @@ export default function PreparationTab() {
                 <div className="flex items-center gap-2">
                   <Badge variant="neutral">{doc.document_type}</Badge>
                   {doc.verification_status === 'verified' && <Badge variant="success">verified</Badge>}
-                  <Button size="sm" variant="ghost" onClick={() => docDelete.mutate(doc.id)}><Trash2 size={14} /></Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={async () => {
+                      const ok = await confirmDialog({
+                        title: 'Delete document?',
+                        body: "This can't be undone.",
+                        confirmLabel: 'Delete',
+                        destructive: true,
+                      })
+                      if (!ok) return
+                      docDelete.mutate(doc.id)
+                    }}
+                  >
+                    <Trash2 size={14} />
+                  </Button>
                 </div>
               </div>
             ))}

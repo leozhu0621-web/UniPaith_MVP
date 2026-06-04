@@ -77,10 +77,16 @@ export function Stat({ value, label }: { value: ReactNode; label: string }) {
   )
 }
 
-export function StatBand({ children }: { children: ReactNode }) {
+export function StatBand({ children, isError }: { children: ReactNode; isError?: boolean }) {
   return (
     <section className="mt-10 grid grid-cols-2 gap-6 rounded-xl border border-border bg-card p-6 sm:grid-cols-4 sm:p-8">
-      {children}
+      {isError ? (
+        <p className="col-span-2 text-sm text-muted-foreground sm:col-span-4">
+          The live headline numbers couldn&rsquo;t be loaded just now.
+        </p>
+      ) : (
+        children
+      )}
     </section>
   )
 }
@@ -110,6 +116,27 @@ export function SectionHeading({
       </div>
       {sub && <p className="mt-2 max-w-2xl text-muted-foreground">{sub}</p>}
     </div>
+  )
+}
+
+// Card heading — a real <h3> so screen-reader heading navigation reaches the
+// card's core content (previously these were rendered as a styled <span>, which
+// silently dropped them from the heading outline). Inline-flex keeps an optional
+// leading icon (or a caller-supplied badge passed as children) on the same line.
+export function CardTitle({
+  children,
+  icon: Icon,
+  className = '',
+}: {
+  children: ReactNode
+  icon?: typeof ArrowRight
+  className?: string
+}) {
+  return (
+    <h3 className={`inline-flex items-center gap-2 text-h3 text-foreground ${className}`}>
+      {Icon && <Icon size={18} className="shrink-0 text-secondary" />}
+      {children}
+    </h3>
   )
 }
 
@@ -146,6 +173,7 @@ export function FilterRow({
             aria-pressed={active}
             className={
               'rounded-pill px-3 py-1 text-[13px] font-semibold transition-colors ' +
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary ' +
               (active
                 ? 'bg-secondary text-secondary-foreground'
                 : 'border border-border bg-card text-muted-foreground hover:bg-muted')

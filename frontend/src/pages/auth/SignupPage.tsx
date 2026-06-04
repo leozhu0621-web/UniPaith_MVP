@@ -42,7 +42,13 @@ export default function SignupPage() {
       const dest = user?.role === 'student' ? '/onboarding' : '/i/dashboard'
       navigate(dest)
     } catch (err: any) {
-      setError(err.message || 'Signup failed')
+      const raw = String(err?.message || '')
+      const isDuplicate = /already exists|already registered|duplicate|409/i.test(raw)
+      setError(
+        isDuplicate
+          ? 'An account with this email already exists. Try logging in.'
+          : 'Something went wrong. Please try again.'
+      )
     } finally {
       setLoading(false)
     }

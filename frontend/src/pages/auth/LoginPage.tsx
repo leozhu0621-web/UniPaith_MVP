@@ -37,7 +37,13 @@ export default function LoginPage() {
       const user = useAuthStore.getState().user
       navigate(postLoginDestination(user?.role, searchParams))
     } catch (err: any) {
-      setError(err.message || 'Login failed')
+      const raw = String(err?.message || '')
+      const isAuthError = /401|credentials|invalid/i.test(raw)
+      setError(
+        isAuthError
+          ? 'Incorrect email or password.'
+          : 'Something went wrong. Please try again.'
+      )
     } finally {
       setLoading(false)
     }

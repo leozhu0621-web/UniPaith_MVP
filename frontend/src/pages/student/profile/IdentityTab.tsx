@@ -79,10 +79,11 @@ function ItemForm({ state, onCancel, onSave, setState, submitting }: ItemFormPro
         className="space-y-3"
       >
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1">
+          <label htmlFor="identity-value" className="block text-sm font-medium text-foreground mb-1">
             Value <span className="text-error">*</span>
           </label>
           <input
+            id="identity-value"
             className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary"
             maxLength={200}
             value={draft.value}
@@ -91,10 +92,11 @@ function ItemForm({ state, onCancel, onSave, setState, submitting }: ItemFormPro
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1">
+          <label htmlFor="identity-evidence" className="block text-sm font-medium text-foreground mb-1">
             Evidence <span className="text-error">*</span>
           </label>
           <textarea
+            id="identity-evidence"
             className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary"
             rows={3}
             maxLength={4000}
@@ -125,10 +127,11 @@ function ItemForm({ state, onCancel, onSave, setState, submitting }: ItemFormPro
         className="space-y-3"
       >
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1">
+          <label htmlFor="identity-belief" className="block text-sm font-medium text-foreground mb-1">
             Belief <span className="text-error">*</span>
           </label>
           <input
+            id="identity-belief"
             className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary"
             maxLength={400}
             value={draft.belief}
@@ -137,10 +140,11 @@ function ItemForm({ state, onCancel, onSave, setState, submitting }: ItemFormPro
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1">
+          <label htmlFor="identity-context" className="block text-sm font-medium text-foreground mb-1">
             Context <span className="text-error">*</span>
           </label>
           <textarea
+            id="identity-context"
             className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary"
             rows={3}
             maxLength={4000}
@@ -171,10 +175,11 @@ function ItemForm({ state, onCancel, onSave, setState, submitting }: ItemFormPro
       className="space-y-3"
     >
       <div>
-        <label className="block text-sm font-medium text-foreground mb-1">
+        <label htmlFor="identity-insight" className="block text-sm font-medium text-foreground mb-1">
           Insight <span className="text-error">*</span>
         </label>
         <input
+          id="identity-insight"
           className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary"
           maxLength={400}
           value={draft.insight}
@@ -183,8 +188,9 @@ function ItemForm({ state, onCancel, onSave, setState, submitting }: ItemFormPro
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-foreground mb-1">Trigger event</label>
+        <label htmlFor="identity-trigger" className="block text-sm font-medium text-foreground mb-1">Trigger event</label>
         <textarea
+          id="identity-trigger"
           className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-secondary"
           rows={3}
           maxLength={4000}
