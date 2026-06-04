@@ -354,6 +354,8 @@ export default function AuditLogPage() {
         columns={columns}
         data={entries}
         isLoading={auditQ.isLoading}
+        isError={auditQ.isError}
+        onRetry={() => auditQ.refetch()}
         emptyMessage="No events match your filters."
         onRowClick={(r: AuditLogEntry) => setSelectedId(r.id)}
         rowClassName={(r: AuditLogEntry) =>

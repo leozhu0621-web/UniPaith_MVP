@@ -4,6 +4,7 @@ import { HandCoins, Receipt, RotateCcw, Check, X, Info } from 'lucide-react'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
+import QueryError from '../../components/ui/QueryError'
 import Modal from '../../components/ui/Modal'
 import Input from '../../components/ui/Input'
 import Textarea from '../../components/ui/Textarea'
@@ -98,6 +99,8 @@ export default function WaiverQueuePage() {
 
         {waiversQ.isLoading ? (
           <Skeleton className="h-24 w-full rounded-xl" />
+        ) : waiversQ.isError ? (
+          <QueryError variant="inline" detail="We couldn't load fee-waiver requests." onRetry={() => waiversQ.refetch()} />
         ) : waivers.length === 0 ? (
           <Card className="p-6 text-center text-sm text-muted-foreground">
             No pending fee-waiver requests. Auto-approved bases never reach this queue.
@@ -167,6 +170,8 @@ export default function WaiverQueuePage() {
 
         {paymentsQ.isLoading ? (
           <Skeleton className="h-24 w-full rounded-xl" />
+        ) : paymentsQ.isError ? (
+          <QueryError variant="inline" detail="We couldn't load payments." onRetry={() => paymentsQ.refetch()} />
         ) : payments.length === 0 ? (
           <Card className="p-6 text-center text-sm text-muted-foreground">No payments yet.</Card>
         ) : (
