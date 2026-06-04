@@ -6,6 +6,7 @@ import {
   getProgram, getProgramReviews, getEmployerFeedback, getNetPrice,
   searchPrograms, semanticSearch,
 } from '../../api/programs'
+import { pushRecentProgram } from '../../lib/recentPrograms'
 import { getMatchDetail, logEngagement } from '../../api/matching'
 import { listEvents, rsvpEvent, getMyRsvps } from '../../api/events'
 import { listMyApplications, createApplication } from '../../api/applications'
@@ -130,6 +131,8 @@ export default function ProgramDetailPage() {
 
   // Data
   const { data: program, isLoading, isError, refetch } = useQuery({ queryKey: ['program', programId], queryFn: () => getProgram(programId!) })
+  // Track the visit for the global command palette's "Recently viewed".
+  useEffect(() => { if (program) pushRecentProgram(program) }, [program])
   const { data: matchResult } = useQuery({ queryKey: ['match', programId], queryFn: () => getMatchDetail(programId!), retry: false })
   const { data: netPrice } = useQuery({ queryKey: ['net-price', programId], queryFn: () => getNetPrice(programId!), enabled: !!programId, retry: false })
   const { data: events } = useQuery({ queryKey: ['events', { program_id: programId }], queryFn: () => listEvents({ program_id: programId, limit: 5 }) })
