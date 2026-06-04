@@ -181,8 +181,7 @@ export default function ApplicationsPage() {
     const sorted = [...list]
     // Read dual-score fitness first; fall back to legacy match_score (Phase E
     // drop) so the Fit sort doesn't zero out when fitness_score is the only field.
-    const fitOf = (a: Application) =>
-      Number((a as { fitness_score?: number | null }).fitness_score ?? a.match_score ?? 0)
+    const fitOf = (a: Application) => Number(a.fitness_score ?? a.match_score ?? 0)
     sorted.sort((a, b) => {
       if (sort === 'readiness') return (b.readiness_pct ?? 0) - (a.readiness_pct ?? 0)
       if (sort === 'fit') return fitOf(b) - fitOf(a)
