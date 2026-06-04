@@ -182,6 +182,29 @@ COST = {
     "source_url": SFS,
 }
 
+# Graduate cost & funding differ from undergrad — separate blob (no undergrad-only
+# need-blind/no-loan signals; grad funding is assistantships/fellowships).
+GRAD_COST = {
+    "tuition_amount": 62396,
+    "tuition_annual": 62396,
+    "fees": [{"name": "Student life fee", "amount": 426}],
+    "estimated_living_cost": 24000,  # grad off-campus housing + living (OGE)
+    "book_supplies": 1000,
+    "total_cost_attendance": 89000,
+    "estimated_total_cost_band": {"min": 0, "max": 89000},
+    "funding_signals": {
+        "research_assistantships": True,
+        "teaching_assistantships": True,
+        "fellowships": True,
+        "funded_doctoral_typical": True,
+    },
+    "net_price_note": "Most MIT doctoral students and many master's students are funded "
+    "through research/teaching assistantships or fellowships that cover tuition plus a "
+    "stipend; master's funding varies by program.",
+    "currency": "USD",
+    "source_url": "https://oge.mit.edu/finances/",
+}
+
 # Field → (employers, industries/roles) from MIT CDO Graduating Student Survey themes.
 FIELD_OUTCOMES = {
     "eng": (
@@ -484,7 +507,7 @@ async def seed() -> dict:
             prog.intake_rounds = UG_INTAKE if is_ug else GRAD_INTAKE
             if is_ug and not prog.application_deadline:
                 prog.application_deadline = _dt.date(2026, 1, 5)
-            prog.cost_data = {**(prog.cost_data or {}), **COST}
+            prog.cost_data = {**(prog.cost_data or {}), **(COST if is_ug else GRAD_COST)}
             prog.outcomes_data = _outcomes(prog)
             n_reqs += 1
             n_out += 1
@@ -496,7 +519,6 @@ async def seed() -> dict:
                     StudentProgramReview.external_source.isnot(None),
                 )
             )
-            await db.execute(delete(EmployerFeedback).where(EmployerFeedback.program_id == prog.id))
             for r in _reviews(prog.program_name):
                 db.add(
                     StudentProgramReview(
@@ -508,7 +530,18 @@ async def seed() -> dict:
                     )
                 )
                 n_rev += 1
-            for f in _employer_feedback(_field_key(prog.cip_code, prog.program_name)):
+            fb_rows = _employer_feedback(_field_key(prog.cip_code, prog.program_name))
+            # Scope the delete to THIS seed's rows (same employer + year) so curated or
+            # employer-provided feedback for other employers/years is preserved — an
+            # idempotent upsert by (program, employer, year), not a blanket wipe.
+            await db.execute(
+                delete(EmployerFeedback).where(
+                    EmployerFeedback.program_id == prog.id,
+                    EmployerFeedback.employer_name.in_([f["employer_name"] for f in fb_rows]),
+                    EmployerFeedback.feedback_year == 2025,
+                )
+            )
+            for f in fb_rows:
                 db.add(
                     EmployerFeedback(id=uuid.uuid4(), program_id=prog.id, is_published=True, **f)
                 )
