@@ -19,6 +19,7 @@ import Modal from '../../../components/ui/Modal'
 import Textarea from '../../../components/ui/Textarea'
 import Skeleton from '../../../components/ui/Skeleton'
 import EmptyState from '../../../components/ui/EmptyState'
+import QueryError from '../../../components/ui/QueryError'
 import { showToast } from '../../../stores/toast-store'
 import { AXIS_TICK, CHART, GRID_STROKE, TOOLTIP_STYLE } from '../analytics/constants'
 import {
@@ -146,6 +147,21 @@ export default function FairnessPage() {
 
   if (overviewQ.isLoading || cohortsQ.isLoading) {
     return <Skeleton className="h-96 w-full rounded-xl" />
+  }
+
+  // A failed load must not read as "No fairness readings yet" (false all-clear
+  // on a compliance surface). Surface the error with a retry instead.
+  if (overviewQ.isError || cohortsQ.isError) {
+    return (
+      <QueryError
+        title="We couldn't load fairness status."
+        detail="This is not an all-clear — the readings failed to load. Try again."
+        onRetry={() => {
+          overviewQ.refetch()
+          cohortsQ.refetch()
+        }}
+      />
+    )
   }
 
   return (

@@ -1,15 +1,22 @@
 // Spec 28 §11 / 02-design-system §14 — chart palette + shared formatters.
 // Series order: cobalt → gold → success → warning → muted. Never >5 colors.
-
+//
+// Colors are CSS-var-backed so Recharts re-themes in dark mode: SVG `fill` /
+// `stop-color` resolve `var()` against the live theme at paint time. cobalt and
+// gold track --secondary / --primary (which shift in `.dark`); green/amber are
+// semantic decision colors that intentionally read the same across themes; muted
+// follows --muted-foreground so the catch-all stays legible on dark surfaces.
 export const CHART = {
-  cobalt: '#2A6BD4',
-  gold: '#FFD60A',
+  cobalt: 'hsl(var(--secondary))',
+  gold: 'hsl(var(--primary))',
   green: '#1F6B2E',
   amber: '#B8741D',
-  muted: '#4A4640',
+  muted: 'hsl(var(--muted-foreground))',
 } as const
 
-export const SERIES = [CHART.cobalt, CHART.gold, CHART.green, CHART.amber, CHART.muted]
+// Institution categorical series — cobalt lead, no gold (matches the recruitment
+// palette + its brand test). Gold stays reserved for earned student-side beats.
+export const SERIES = [CHART.cobalt, CHART.green, CHART.amber, CHART.muted]
 
 // §14 — tooltip uses popover styling (theme-aware via CSS vars).
 export const TOOLTIP_STYLE = {

@@ -24,6 +24,7 @@ import Input from '../../../components/ui/Input'
 import Textarea from '../../../components/ui/Textarea'
 import Toggle from '../../../components/ui/Toggle'
 import EmptyState from '../../../components/ui/EmptyState'
+import QueryError from '../../../components/ui/QueryError'
 import AIBadge from '../../../components/ui/AIBadge'
 import FallbackNote from '../../../components/ui/FallbackNote'
 import { showToast } from '../../../stores/toast-store'
@@ -48,7 +49,7 @@ export default function ProspectsTab() {
   const [showSegment, setShowSegment] = useState(false)
   const [active, setActive] = useState<Prospect | null>(null)
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['recruitment-prospects', filters],
     queryFn: () => listProspects(filters),
   })
@@ -169,6 +170,14 @@ export default function ProspectsTab() {
     ],
     [selected],
   )
+
+  if (isError) {
+    return (
+      <Card className="p-0">
+        <QueryError detail="Couldn’t load prospects." onRetry={() => refetch()} />
+      </Card>
+    )
+  }
 
   if (data && data.total === 0 && !hasAnyFilter) {
     return (
@@ -542,6 +551,7 @@ function ProspectDrawer({
       qc.invalidateQueries({ queryKey: ['recruitment-prospects'] })
       onDone()
     },
+    onError: () => showToast('Could not update stage', 'error'),
   })
   const consentMut = useMutation({
     mutationFn: (on: boolean) => updateProspect(prospect!.id, { consent_outreach: on }),
@@ -549,6 +559,7 @@ function ProspectDrawer({
       qc.invalidateQueries({ queryKey: ['recruitment-prospects'] })
       onDone()
     },
+    onError: () => showToast('Could not update consent', 'error'),
   })
   const convertMut = useMutation({
     mutationFn: () => convertProspect(prospect!.id),
@@ -559,6 +570,7 @@ function ProspectDrawer({
       onClose()
       onConverted(p.converted_application_id)
     },
+    onError: () => showToast('Could not convert prospect', 'error'),
   })
 
   if (!prospect) return null

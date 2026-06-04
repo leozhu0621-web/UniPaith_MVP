@@ -242,6 +242,7 @@ export default function ReplyComposer({
               }
             }}
             placeholder="Attachment name (e.g. Offer letter.pdf)"
+            aria-label="Attachment name"
             className="h-7 flex-1 rounded-md border border-border bg-card px-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <Button variant="tertiary" size="sm" onClick={addAttachment} disabled={!attachName.trim()}>
@@ -283,10 +284,11 @@ export default function ReplyComposer({
           }}
           rows={1}
           placeholder="Write a reply…"
+          aria-label="Reply message"
           className="max-h-32 min-h-[40px] flex-1 resize-none rounded-lg border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         {/* Send is cobalt — no gold (§10): gold celebration belongs to the student. */}
-        <Button variant="secondary" size="md" loading={sending} disabled={!canSend} onClick={send}>
+        <Button variant="secondary" size="md" loading={sending} disabled={!canSend} onClick={send} aria-label="Send reply">
           <Send size={15} />
         </Button>
       </div>

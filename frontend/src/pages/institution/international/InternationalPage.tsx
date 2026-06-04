@@ -7,6 +7,7 @@ import type { IntlApplicantRow, IntlFeasibilityBand } from '../../../types'
 import Card from '../../../components/ui/Card'
 import Badge from '../../../components/ui/Badge'
 import Table from '../../../components/ui/Table'
+import QueryError from '../../../components/ui/QueryError'
 import InstitutionPageHeader from '../../../components/institution/InstitutionPageHeader'
 import { applicantUrl } from '../../../utils/institution-routes'
 
@@ -39,7 +40,7 @@ export default function InternationalPage({ embedded = false }: { embedded?: boo
   const navigate = useNavigate()
   const [showPacks, setShowPacks] = useState(false)
 
-  const { data: rows = [], isLoading } = useQuery({
+  const { data: rows = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['international-applicants'],
     queryFn: listInternationalApplicants,
   })
@@ -124,15 +125,21 @@ export default function InternationalPage({ embedded = false }: { embedded?: boo
         </p>
       </div>
 
-      <Table
-        columns={columns}
-        data={rows}
-        pageSize={25}
-        density="compact"
-        isLoading={isLoading}
-        onRowClick={(r: IntlApplicantRow) => navigate(applicantUrl(r.application_id, 'international'))}
-        emptyMessage="No international applicants in the pipeline yet."
-      />
+      {isError ? (
+        <Card className="p-2">
+          <QueryError detail="We couldn't load your international applicants." onRetry={() => refetch()} />
+        </Card>
+      ) : (
+        <Table
+          columns={columns}
+          data={rows}
+          pageSize={25}
+          density="compact"
+          isLoading={isLoading}
+          onRowClick={(r: IntlApplicantRow) => navigate(applicantUrl(r.application_id, 'international'))}
+          emptyMessage="No international applicants in the pipeline yet."
+        />
+      )}
 
       {/* Country-requirement packs reference (§2.3) */}
       <Card className="p-0 overflow-hidden">

@@ -28,6 +28,7 @@ import Input from '../../../components/ui/Input'
 import Select from '../../../components/ui/Select'
 import Textarea from '../../../components/ui/Textarea'
 import Skeleton from '../../../components/ui/Skeleton'
+import QueryError from '../../../components/ui/QueryError'
 import AIBadge from '../../../components/ui/AIBadge'
 import FallbackNote from '../../../components/ui/FallbackNote'
 import { Toggle } from '../program-editor/widgets'
@@ -106,7 +107,7 @@ function SectionTitle({ icon, children }: { icon: React.ReactNode; children: Rea
 
 export default function InternationalTab({ applicationId }: { applicationId: string }) {
   const qc = useQueryClient()
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['international', applicationId],
     queryFn: () => getInternational(applicationId),
   })
@@ -181,6 +182,13 @@ export default function InternationalTab({ applicationId }: { applicationId: str
     },
   })
 
+  if (isError && !data) {
+    return (
+      <Card className="p-2">
+        <QueryError detail="We couldn't load this applicant's international processing." onRetry={() => refetch()} />
+      </Card>
+    )
+  }
   if (isLoading || !data || !draft) return <Skeleton className="h-96" />
 
   if (!data.is_international) {
@@ -369,6 +377,7 @@ export default function InternationalTab({ applicationId }: { applicationId: str
           <Input
             label="Verified score"
             type="number"
+            min={0}
             value={draft.english_score}
             onChange={e => setDraft({ ...draft, english_score: e.target.value })}
             placeholder="e.g. 100"

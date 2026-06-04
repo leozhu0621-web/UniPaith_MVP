@@ -15,6 +15,7 @@ import Button from '../../../components/ui/Button'
 import Input from '../../../components/ui/Input'
 import Select from '../../../components/ui/Select'
 import Skeleton from '../../../components/ui/Skeleton'
+import QueryError from '../../../components/ui/QueryError'
 import AIBadge from '../../../components/ui/AIBadge'
 import { showToast } from '../../../stores/toast-store'
 import { COMPONENT_KIND_OPTIONS, fmtMoney } from './constants'
@@ -78,6 +79,7 @@ export default function FundingBuilder({
 
   const total = draft.reduce((s, c) => s + (Number(c.amount) || 0), 0)
   const multiYear = draft.some(c => c.years.some(y => y > 1))
+  const hasNegative = draft.some(c => Number(c.amount) < 0)
 
   const saveMut = useMutation({
     mutationFn: (status: FundingPackageStatus) =>
@@ -109,6 +111,20 @@ export default function FundingBuilder({
   })
 
   if (poolsQ.isLoading || budgetQ.isLoading || packageQ.isLoading) return <Skeleton className="h-72" />
+  if (poolsQ.isError || budgetQ.isError || packageQ.isError)
+    return (
+      <Card className="p-5">
+        <QueryError
+          variant="inline"
+          detail="Couldn’t load the funding package."
+          onRetry={() => {
+            poolsQ.refetch()
+            budgetQ.refetch()
+            packageQ.refetch()
+          }}
+        />
+      </Card>
+    )
 
   const pkg = packageQ.data
   const analysis = pkg?.analysis
@@ -165,9 +181,11 @@ export default function FundingBuilder({
                 <Input
                   label="Amount"
                   type="number"
+                  min={0}
                   value={c.amount}
                   onChange={e => patchRow(i, { amount: e.target.value })}
                   placeholder="0"
+                  error={Number(c.amount) < 0 ? 'Must be ≥ 0' : undefined}
                 />
               </div>
               <div className="w-52">
@@ -260,9 +278,13 @@ export default function FundingBuilder({
 
       {/* Save actions */}
       <div className="mt-5 flex flex-wrap items-center justify-end gap-2">
+        {hasNegative && (
+          <span className="mr-auto text-xs text-error">Funding amounts can’t be negative.</span>
+        )}
         <Button
           variant="ghost"
           size="sm"
+          disabled={hasNegative}
           loading={saveMut.isPending && saveMut.variables === 'draft'}
           onClick={() => saveMut.mutate('draft')}
         >
@@ -271,6 +293,7 @@ export default function FundingBuilder({
         <Button
           variant="tertiary"
           size="sm"
+          disabled={hasNegative}
           loading={saveMut.isPending && saveMut.variables === 'proposed'}
           onClick={() => saveMut.mutate('proposed')}
         >
@@ -279,6 +302,7 @@ export default function FundingBuilder({
         <Button
           variant="secondary"
           size="sm"
+          disabled={hasNegative}
           loading={saveMut.isPending && saveMut.variables === 'finalized'}
           onClick={() => saveMut.mutate('finalized')}
         >

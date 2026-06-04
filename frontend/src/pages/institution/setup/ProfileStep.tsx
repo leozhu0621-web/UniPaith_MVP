@@ -149,7 +149,9 @@ export default function ProfileStep({
 
         <div>
           <div className="mb-1.5 flex items-center justify-between">
-            <span className="block text-[13px] font-semibold text-muted-foreground">Short description</span>
+            <label htmlFor="institution-description" className="block text-[13px] font-semibold text-muted-foreground">
+              Short description
+            </label>
             <button
               type="button"
               onClick={draftDescription}
@@ -160,6 +162,7 @@ export default function ProfileStep({
             </button>
           </div>
           <Textarea
+            id="institution-description"
             rows={3}
             placeholder="What makes your institution distinctive — in a couple of plain sentences."
             {...form.register('description_text')}

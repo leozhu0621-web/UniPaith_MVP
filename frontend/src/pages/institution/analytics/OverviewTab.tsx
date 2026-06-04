@@ -18,11 +18,13 @@ import { getAnalyticsOverview } from '../../../api/institutions'
 import type { AnalyticsFilters, KpiMetric } from '../../../types'
 import { AXIS_TICK, CHART, formatDelta, formatKpi, GRID_STROKE, TOOLTIP_STYLE, titleCase } from './constants'
 
+// Institution surfaces stay on the cobalt/neutral palette (no gold). Decisions
+// read by semantic intent: admit=green, reject=amber, waitlist=neutral, defer=cobalt.
 const DECISION_COLORS: Record<string, string> = {
   admitted: CHART.green,
   rejected: CHART.amber,
   denied: CHART.amber,
-  waitlisted: CHART.gold,
+  waitlisted: CHART.muted,
   deferred: CHART.cobalt,
 }
 

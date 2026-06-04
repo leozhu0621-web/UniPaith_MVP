@@ -137,7 +137,7 @@ export default function InboxThreadView({
                   {m.body}
                   {m.attachments?.length > 0 && (
                     <div
-                      className={`mt-1.5 space-y-1 border-t pt-1.5 ${own ? 'border-white/20' : 'border-border'}`}
+                      className={`mt-1.5 space-y-1 border-t pt-1.5 ${own ? 'border-secondary-foreground/20' : 'border-border'}`}
                     >
                       {m.attachments.map((a, i) => (
                         <div key={i} className="flex items-center gap-1 text-[11px] opacity-90">

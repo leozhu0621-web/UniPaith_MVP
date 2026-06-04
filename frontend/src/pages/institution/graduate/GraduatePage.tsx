@@ -15,6 +15,7 @@ import Textarea from '../../../components/ui/Textarea'
 import Modal from '../../../components/ui/Modal'
 import Skeleton from '../../../components/ui/Skeleton'
 import EmptyState from '../../../components/ui/EmptyState'
+import QueryError from '../../../components/ui/QueryError'
 import { showToast } from '../../../stores/toast-store'
 import { fmtMoney } from './constants'
 import FundingPoolsPanel from './FundingPoolsPanel'
@@ -154,6 +155,12 @@ export default function GraduatePage() {
         </div>
         {deptsQ.isLoading ? (
           <Skeleton className="h-32" />
+        ) : deptsQ.isError ? (
+          <QueryError
+            variant="inline"
+            detail="Couldn’t load departments."
+            onRetry={() => deptsQ.refetch()}
+          />
         ) : departments.length === 0 ? (
           <EmptyState
             icon={<Building2 size={28} />}

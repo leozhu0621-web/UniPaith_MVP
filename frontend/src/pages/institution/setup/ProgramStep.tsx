@@ -122,6 +122,7 @@ export default function ProgramStep({
         <Input
           label="Tuition (USD / year)"
           type="number"
+          min={0}
           {...form.register('tuition')}
           error={form.formState.errors.tuition?.message}
         />

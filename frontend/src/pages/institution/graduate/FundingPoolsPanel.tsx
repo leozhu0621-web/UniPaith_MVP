@@ -14,6 +14,7 @@ import Input from '../../../components/ui/Input'
 import Select from '../../../components/ui/Select'
 import Modal from '../../../components/ui/Modal'
 import Skeleton from '../../../components/ui/Skeleton'
+import QueryError from '../../../components/ui/QueryError'
 import { showToast } from '../../../stores/toast-store'
 import { POOL_KIND_LABELS, POOL_KIND_OPTIONS, fmtMoney } from './constants'
 
@@ -117,6 +118,12 @@ export default function FundingPoolsPanel({
 
       {budgetQ.isLoading ? (
         <Skeleton className="h-32" />
+      ) : budgetQ.isError ? (
+        <QueryError
+          variant="inline"
+          detail="Couldn’t load funding pools."
+          onRetry={() => budgetQ.refetch()}
+        />
       ) : !budget || budget.pools.length === 0 ? (
         <p className="text-sm italic text-muted-foreground">
           No funding pools yet. Add a department, grant, or fellowship pool to budget packages
@@ -176,7 +183,7 @@ export default function FundingPoolsPanel({
               variant="secondary"
               size="sm"
               loading={saveMut.isPending}
-              disabled={!form?.name.trim()}
+              disabled={!form?.name.trim() || Number(form?.total_budget) < 0}
               onClick={() => form && saveMut.mutate(form)}
             >
               Save pool
@@ -202,9 +209,11 @@ export default function FundingPoolsPanel({
               <Input
                 label="Total budget"
                 type="number"
+                min={0}
                 value={form.total_budget}
                 onChange={e => setForm({ ...form, total_budget: e.target.value })}
                 placeholder="0"
+                error={Number(form.total_budget) < 0 ? 'Must be ≥ 0' : undefined}
               />
             </div>
             <Select

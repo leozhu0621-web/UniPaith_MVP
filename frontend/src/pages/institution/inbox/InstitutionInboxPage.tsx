@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Users } from 'lucide-react'
 import Button from '../../../components/ui/Button'
 import Skeleton from '../../../components/ui/Skeleton'
+import QueryError from '../../../components/ui/QueryError'
+import { showToast } from '../../../stores/toast-store'
 import { getInstitutionPrograms, getSegments, getTemplates } from '../../../api/institutions'
 import {
   assignThread,
@@ -67,7 +69,12 @@ export default function InstitutionInboxPage() {
     [filters],
   )
 
-  const { data: threadsData, isLoading: threadsLoading } = useQuery({
+  const {
+    data: threadsData,
+    isLoading: threadsLoading,
+    isError: threadsError,
+    refetch: refetchThreads,
+  } = useQuery({
     queryKey: ['inst-inbox-threads', apiFilters],
     queryFn: () => getInstThreads(apiFilters),
     refetchInterval: 20000,
@@ -77,7 +84,12 @@ export default function InstitutionInboxPage() {
     [threadsData],
   )
 
-  const { data: thread, isLoading: threadLoading } = useQuery({
+  const {
+    data: thread,
+    isLoading: threadLoading,
+    isError: threadError,
+    refetch: refetchThread,
+  } = useQuery({
     queryKey: ['inst-inbox-thread', selectedId],
     queryFn: () => getInstThread(selectedId!),
     enabled: !!selectedId,
@@ -130,6 +142,7 @@ export default function InstitutionInboxPage() {
       qc.invalidateQueries({ queryKey: ['inst-inbox-thread', selectedId] })
       qc.invalidateQueries({ queryKey: ['inst-inbox-threads'] })
     },
+    onError: () => showToast("Couldn't send your reply. Please try again.", 'error'),
   })
 
   const assignMut = useMutation({
@@ -138,6 +151,7 @@ export default function InstitutionInboxPage() {
       qc.invalidateQueries({ queryKey: ['inst-inbox-thread', selectedId] })
       qc.invalidateQueries({ queryKey: ['inst-inbox-threads'] })
     },
+    onError: () => showToast("Couldn't update the assignment. Please try again.", 'error'),
   })
 
   const closeMut = useMutation({
@@ -146,6 +160,7 @@ export default function InstitutionInboxPage() {
       qc.invalidateQueries({ queryKey: ['inst-inbox-thread', selectedId] })
       qc.invalidateQueries({ queryKey: ['inst-inbox-threads'] })
     },
+    onError: () => showToast("Couldn't close this conversation. Please try again.", 'error'),
   })
 
   const requestAiDraft = useCallback(async () => {
@@ -177,15 +192,23 @@ export default function InstitutionInboxPage() {
           </Button>
         </div>
         <div className="min-h-0 flex-1">
-          <InboxThreadList
-            threads={threads}
-            loading={threadsLoading}
-            selectedId={selectedId}
-            onSelect={openThread}
-            filters={filters}
-            onFilters={setFilters}
-            programOptions={programOptions}
-          />
+          {threadsError ? (
+            <QueryError
+              variant="inline"
+              detail="We couldn't load your conversations."
+              onRetry={() => refetchThreads()}
+            />
+          ) : (
+            <InboxThreadList
+              threads={threads}
+              loading={threadsLoading}
+              selectedId={selectedId}
+              onSelect={openThread}
+              filters={filters}
+              onFilters={setFilters}
+              programOptions={programOptions}
+            />
+          )}
         </div>
       </div>
 
@@ -194,6 +217,13 @@ export default function InstitutionInboxPage() {
         {!selectedId ? (
           <div className="flex flex-1 items-center justify-center px-6 text-center text-sm text-muted-foreground">
             Pick a conversation to see it here.
+          </div>
+        ) : threadError ? (
+          <div className="flex flex-1 items-center justify-center px-6">
+            <QueryError
+              detail="We couldn't load this conversation."
+              onRetry={() => refetchThread()}
+            />
           </div>
         ) : threadLoading || !thread ? (
           <ThreadSkeleton />

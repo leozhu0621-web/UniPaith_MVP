@@ -49,6 +49,7 @@ export default function NLAssistBar({ onApply }: Props) {
             if (e.key === 'Enter' && text.trim()) mut.mutate()
           }}
           placeholder="e.g. high-fit master's students who saved our programs but haven't applied"
+          aria-label="Describe the audience you want"
           className="flex-1 rounded-md border-border text-sm focus:border-secondary focus:ring-secondary"
         />
         <button
