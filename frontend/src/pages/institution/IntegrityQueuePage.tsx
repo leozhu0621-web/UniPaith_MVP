@@ -6,6 +6,7 @@ import { getIntegritySignals, resolveIntegritySignal } from '../../api/reviews'
 import Card from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
+import QueryError from '../../components/ui/QueryError'
 import Modal from '../../components/ui/Modal'
 import Textarea from '../../components/ui/Textarea'
 import Tabs from '../../components/ui/Tabs'
@@ -129,6 +130,11 @@ export default function IntegrityQueuePage({ embedded = false }: { embedded?: bo
 
       {signalsQ.isLoading ? (
         <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-28" />)}</div>
+      ) : signalsQ.isError ? (
+        <QueryError
+          detail="We couldn't load integrity signals — don't treat this as all-clear. Try again."
+          onRetry={() => signalsQ.refetch()}
+        />
       ) : signals.length === 0 ? (
         <EmptyState
           icon={<Shield size={40} />}
