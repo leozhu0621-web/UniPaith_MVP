@@ -62,6 +62,22 @@
    "lat": 34.1375,
    "lng": -118.125,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    740,
+    780
+   ],
+   "sat_math_25_75": [
+    790,
+    800
+   ],
+   "act_25_75": [
+    35,
+    36
+   ],
+   "year": 2020,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -263,6 +279,22 @@
    "lat": 42.377,
    "lng": -71.1167,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    730,
+    780
+   ],
+   "sat_math_25_75": [
+    760,
+    800
+   ],
+   "act_25_75": [
+    34,
+    36
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -510,6 +542,22 @@
    "lat": 42.3597,
    "lng": -71.0919,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    740,
+    780
+   ],
+   "sat_math_25_75": [
+    790,
+    800
+   ],
+   "act_25_75": [
+    35,
+    36
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -711,6 +759,22 @@
    "lat": 37.4275,
    "lng": -122.17,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    730,
+    780
+   ],
+   "sat_math_25_75": [
+    770,
+    800
+   ],
+   "act_25_75": [
+    33,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -912,6 +976,22 @@
    "lat": 37.8719,
    "lng": -122.2583,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    650,
+    740
+   ],
+   "sat_math_25_75": [
+    660,
+    790
+   ],
+   "act_25_75": [
+    30,
+    35
+   ],
+   "year": 2020,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -1113,6 +1193,22 @@
    "lat": 41.78972,
    "lng": -87.59972,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    740,
+    780
+   ],
+   "sat_math_25_75": [
+    760,
+    800
+   ],
+   "act_25_75": [
+    34,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -1314,6 +1410,22 @@
    "lat": 40.8075,
    "lng": -73.96194,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    730,
+    780
+   ],
+   "sat_math_25_75": [
+    760,
+    800
+   ],
+   "act_25_75": [
+    34,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -1515,6 +1627,22 @@
    "lat": 40.4433,
    "lng": -79.9436,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    720,
+    770
+   ],
+   "sat_math_25_75": [
+    770,
+    800
+   ],
+   "act_25_75": [
+    34,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -1716,6 +1844,22 @@
    "lat": 41.31639,
    "lng": -72.92222,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    740,
+    780
+   ],
+   "sat_math_25_75": [
+    760,
+    800
+   ],
+   "act_25_75": [
+    33,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -1917,6 +2061,22 @@
    "lat": 39.32889,
    "lng": -76.62028,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    740,
+    770
+   ],
+   "sat_math_25_75": [
+    780,
+    800
+   ],
+   "act_25_75": [
+    34,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -2118,6 +2278,22 @@
    "lat": 40.34528,
    "lng": -74.65611,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    730,
+    780
+   ],
+   "sat_math_25_75": [
+    760,
+    800
+   ],
+   "act_25_75": [
+    33,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -2319,6 +2495,22 @@
    "lat": 39.95028,
    "lng": -75.19472,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    730,
+    770
+   ],
+   "sat_math_25_75": [
+    770,
+    800
+   ],
+   "act_25_75": [
+    34,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -2520,6 +2712,22 @@
    "lat": 33.7756,
    "lng": -84.3963,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    670,
+    760
+   ],
+   "sat_math_25_75": [
+    700,
+    790
+   ],
+   "act_25_75": [
+    31,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -2721,6 +2929,22 @@
    "lat": 42.05583,
    "lng": -87.67472,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    730,
+    770
+   ],
+   "sat_math_25_75": [
+    760,
+    800
+   ],
+   "act_25_75": [
+    33,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -2922,6 +3146,22 @@
    "lat": 42.27694,
    "lng": -83.73806,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    670,
+    750
+   ],
+   "sat_math_25_75": [
+    680,
+    780
+   ],
+   "act_25_75": [
+    31,
+    34
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -3123,6 +3363,22 @@
    "lat": 36.00139,
    "lng": -78.93833,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    730,
+    770
+   ],
+   "sat_math_25_75": [
+    760,
+    800
+   ],
+   "act_25_75": [
+    34,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -3525,6 +3781,22 @@
    "lat": 32.8801,
    "lng": -117.234,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    620,
+    710
+   ],
+   "sat_math_25_75": [
+    650,
+    770
+   ],
+   "act_25_75": [
+    28,
+    34
+   ],
+   "year": 2020,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -3726,6 +3998,22 @@
    "lat": 42.4492,
    "lng": -76.4839,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    710,
+    770
+   ],
+   "sat_math_25_75": [
+    760,
+    800
+   ],
+   "act_25_75": [
+    33,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -3927,6 +4215,22 @@
    "lat": 40.73,
    "lng": -73.995,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    720,
+    770
+   ],
+   "sat_math_25_75": [
+    750,
+    800
+   ],
+   "act_25_75": [
+    33,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -4128,6 +4432,22 @@
    "lat": 34.0206,
    "lng": -118.2848,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    710,
+    760
+   ],
+   "sat_math_25_75": [
+    740,
+    790
+   ],
+   "act_25_75": [
+    32,
+    35
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -4329,6 +4649,22 @@
    "lat": 42.34889,
    "lng": -71.10028,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    660,
+    730
+   ],
+   "sat_math_25_75": [
+    690,
+    770
+   ],
+   "act_25_75": [
+    31,
+    34
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -4530,6 +4866,22 @@
    "lat": 30.285,
    "lng": -97.735,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    620,
+    730
+   ],
+   "sat_math_25_75": [
+    610,
+    770
+   ],
+   "act_25_75": [
+    26,
+    33
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -4731,6 +5083,22 @@
    "lat": 43.0766,
    "lng": -89.4125,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    650,
+    730
+   ],
+   "sat_math_25_75": [
+    690,
+    780
+   ],
+   "act_25_75": [
+    26,
+    32
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -4932,6 +5300,22 @@
    "lat": 40.11056,
    "lng": -88.22833,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    650,
+    730
+   ],
+   "sat_math_25_75": [
+    670,
+    780
+   ],
+   "act_25_75": [
+    29,
+    34
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -5133,6 +5517,22 @@
    "lat": 29.71694,
    "lng": -95.40278,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    730,
+    770
+   ],
+   "sat_math_25_75": [
+    760,
+    800
+   ],
+   "act_25_75": [
+    34,
+    36
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -5334,6 +5734,22 @@
    "lat": 47.6542,
    "lng": -122.3081,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    590,
+    700
+   ],
+   "sat_math_25_75": [
+    610,
+    753
+   ],
+   "act_25_75": [
+    27,
+    33
+   ],
+   "year": 2020,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  },
  {
@@ -5535,6 +5951,22 @@
    "lat": 40.425,
    "lng": -86.92306,
    "source": "Wikipedia / Wikidata"
+  },
+  "test_scores": {
+   "sat_reading_25_75": [
+    600,
+    710
+   ],
+   "sat_math_25_75": [
+    600,
+    760
+   ],
+   "act_25_75": [
+    27,
+    34
+   ],
+   "year": 2022,
+   "source": "IPEDS via Urban Institute Education Data API"
   }
  }
 ]
