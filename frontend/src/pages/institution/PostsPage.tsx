@@ -130,6 +130,7 @@ export default function PostsPage() {
       queryClient.invalidateQueries({ queryKey: ['post-templates'] })
       setShowCreateModal(false); showToast('Post created', 'success')
     },
+    onError: () => showToast("We couldn't create the post. Please try again.", 'error'),
   })
   const updateM = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Parameters<typeof updatePost>[1] }) => updatePost(id, data),
@@ -138,6 +139,7 @@ export default function PostsPage() {
       queryClient.invalidateQueries({ queryKey: ['post-templates'] })
       setShowCreateModal(false); showToast('Post updated', 'success')
     },
+    onError: () => showToast("We couldn't update the post. Please try again.", 'error'),
   })
   const deleteM = useMutation({
     mutationFn: (id: string) => deletePost(id),
@@ -145,6 +147,7 @@ export default function PostsPage() {
       queryClient.invalidateQueries({ queryKey: ['posts'] })
       setDeleteTarget(null); showToast('Post deleted', 'success')
     },
+    onError: () => showToast("We couldn't delete the post. Please try again.", 'error'),
   })
   const publishM = useMutation({
     mutationFn: (id: string) => publishPost(id),
@@ -152,12 +155,14 @@ export default function PostsPage() {
       queryClient.invalidateQueries({ queryKey: ['posts'] })
       showToast('Post published', 'success')
     },
+    onError: () => showToast("We couldn't publish the post. Please try again.", 'error'),
   })
   const pinM = useMutation({
     mutationFn: (id: string) => pinPost(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] })
     },
+    onError: () => showToast("We couldn't update the post. Please try again.", 'error'),
   })
   const archiveM = useMutation({
     mutationFn: (id: string) => updatePost(id, { status: 'archived' }),
@@ -165,6 +170,7 @@ export default function PostsPage() {
       queryClient.invalidateQueries({ queryKey: ['posts'] })
       showToast('Post archived', 'success')
     },
+    onError: () => showToast("We couldn't archive the post. Please try again.", 'error'),
   })
 
   const handleMediaUpload = async (file: File) => {

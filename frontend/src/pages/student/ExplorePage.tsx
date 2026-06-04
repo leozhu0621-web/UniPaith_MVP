@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import QueryError from '../../components/ui/QueryError'
 import { searchInstitutions, getFeaturedPromotions, recordPromotionClick } from '../../api/institutions'
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
+import { showToast } from '../../stores/toast-store'
 import UniversityCard from './explore/cards/UniversityCard'
 import ExploreFilters, { EMPTY_FILTERS, applyFilters, countActiveFilters, type FilterState } from './explore/shared/ExploreFilters'
 import { Building2, MapPin } from 'lucide-react'
@@ -111,7 +112,7 @@ export default function ExplorePage() {
   })
 
   // Saved programs — for the MatchesSection cards.
-  const { data: savedData } = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved, retry: false })
+  const { data: savedData, refetch: refetchSaved } = useQuery({ queryKey: ['saved-programs'], queryFn: listSaved, retry: false })
 
   const { data: featuredPromos } = useQuery({
     queryKey: ['featured-promotions', 'explore'],
@@ -126,16 +127,24 @@ export default function ExplorePage() {
   }, [savedData])
 
   const toggleSave = async (programId: string) => {
+    const wasSaved = savedIds.has(programId)
+    // Optimistic flip for snappy UI; reconcile on failure.
+    setSavedIds(prev => {
+      const n = new Set(prev)
+      if (wasSaved) n.delete(programId)
+      else n.add(programId)
+      return n
+    })
     try {
-      if (savedIds.has(programId)) {
-        await unsaveProgram(programId)
-        setSavedIds(prev => { const n = new Set(prev); n.delete(programId); return n })
-      } else {
-        await saveProgram(programId)
-        setSavedIds(prev => new Set(prev).add(programId))
-      }
+      if (wasSaved) await unsaveProgram(programId)
+      else await saveProgram(programId)
       queryClient.invalidateQueries({ queryKey: ['saved-programs'] })
-    } catch { /* non-blocking */ }
+    } catch {
+      showToast(`We couldn't ${wasSaved ? 'remove' : 'save'} this program. Please try again.`, 'error')
+      // Re-sync from the server so the toggle reflects true state, not the failed flip.
+      queryClient.invalidateQueries({ queryKey: ['saved-programs'] })
+      refetchSaved()
+    }
   }
 
   const uniList: UniversityRow[] = universities?.items ?? []

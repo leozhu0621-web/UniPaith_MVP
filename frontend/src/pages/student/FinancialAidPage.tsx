@@ -5,6 +5,7 @@ import { listSaved } from '../../api/saved-lists'
 import { listMyApplications } from '../../api/applications'
 import Card from '../../components/ui/Card'
 import EmptyState from '../../components/ui/EmptyState'
+import QueryError from '../../components/ui/QueryError'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { formatCurrency } from '../../utils/format'
 import { DollarSign, TrendingDown, TrendingUp, ArrowUpDown } from 'lucide-react'
@@ -40,10 +41,12 @@ export default function FinancialAidPage() {
   const [expectedAid, setExpectedAid] = useState<Record<string, string>>({})
   const [sortBy, setSortBy] = useState<'net' | 'tuition'>('net')
 
-  const { data: saved, isLoading: savedLoading } = useQuery({ queryKey: ['saved'], queryFn: listSaved })
-  const { data: applications, isLoading: appsLoading } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
+  const { data: saved, isLoading: savedLoading, isError: savedError, refetch: refetchSaved } = useQuery({ queryKey: ['saved'], queryFn: listSaved })
+  const { data: applications, isLoading: appsLoading, isError: appsError, refetch: refetchApps } = useQuery({ queryKey: ['my-applications'], queryFn: listMyApplications })
 
   const isLoading = savedLoading || appsLoading
+  const isError = savedError || appsError
+  const refetchAll = () => { refetchSaved(); refetchApps() }
 
   // Combine saved + applied programs (deduplicate by program_id)
   const allPrograms = useMemo(() => {
@@ -115,7 +118,10 @@ export default function FinancialAidPage() {
 
   return (
     <div>
-      {allPrograms.length === 0 ? (
+      {isError ? (
+        // A failed fetch must not read as "No programs to compare" (empty state).
+        <QueryError detail="We couldn't load your programs to compare." onRetry={refetchAll} />
+      ) : allPrograms.length === 0 ? (
         <EmptyState
           icon={<DollarSign size={48} />}
           title="No programs to compare"
@@ -125,7 +131,7 @@ export default function FinancialAidPage() {
       ) : (
         <>
           {/* Summary Cards */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <Card className="p-4 text-center">
               <TrendingDown size={20} className="mx-auto text-success mb-1" />
               <p className="text-xs text-muted-foreground">Lowest net cost</p>
@@ -197,8 +203,14 @@ export default function FinancialAidPage() {
                       <span className="text-muted-foreground">$</span>
                       <input
                         type="number"
+                        min={0}
                         value={expectedAid[pc.id] || ''}
-                        onChange={e => setExpectedAid(prev => ({ ...prev, [pc.id]: e.target.value }))}
+                        onChange={e => {
+                          // Clamp negatives — aid can't reduce net cost below tuition+living.
+                          const raw = e.target.value
+                          const next = raw !== '' && Number(raw) < 0 ? '0' : raw
+                          setExpectedAid(prev => ({ ...prev, [pc.id]: next }))
+                        }}
                         placeholder="0"
                         className="w-24 text-sm bg-transparent border-b border-border focus:border-secondary focus:outline-none py-0.5"
                       />

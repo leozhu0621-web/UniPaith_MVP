@@ -10,6 +10,7 @@ import Select from '../../components/ui/Select'
 import Skeleton from '../../components/ui/Skeleton'
 import EmptyState from '../../components/ui/EmptyState'
 import Button from '../../components/ui/Button'
+import QueryError from '../../components/ui/QueryError'
 import InstitutionPageHeader from '../../components/institution/InstitutionPageHeader'
 import { formatScore } from '../../utils/format'
 import type { Application, CohortApplicant, Program } from '../../types'
@@ -178,6 +179,8 @@ export default function CohortComparisonPage({ embedded = false }: { embedded?: 
           <p className="text-sm font-medium text-foreground mb-2">Select 2+ applicants to compare:</p>
           {appsQ.isLoading ? (
             <Skeleton className="h-20" />
+          ) : appsQ.isError ? (
+            <QueryError variant="inline" detail="We couldn't load this program's applicants." onRetry={() => appsQ.refetch()} />
           ) : allApps.length === 0 ? (
             <p className="text-sm text-muted-foreground">No applications for this program.</p>
           ) : (
@@ -213,6 +216,8 @@ export default function CohortComparisonPage({ embedded = false }: { embedded?: 
         <EmptyState icon={<Users size={40} />} title="Select applicants" description="Pick 2 or more applicants from the same program to see their side-by-side comparison." />
       ) : cohortQ.isLoading ? (
         <Skeleton className="h-80" />
+      ) : cohortQ.isError ? (
+        <QueryError detail="We couldn't load the comparison for these applicants." onRetry={() => cohortQ.refetch()} />
       ) : sorted.length === 0 ? (
         <EmptyState icon={<BarChart3 size={40} />} title="No data" description="No comparison data available for the selected applicants." />
       ) : (

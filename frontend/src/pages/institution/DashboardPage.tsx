@@ -30,6 +30,7 @@ import Button from '../../components/ui/Button'
 import Skeleton from '../../components/ui/Skeleton'
 import EmptyState from '../../components/ui/EmptyState'
 import Table from '../../components/ui/Table'
+import QueryError from '../../components/ui/QueryError'
 import FairnessPanel from './fairness/FairnessPanel'
 import { formatDate, formatRelative, formatCurrency, formatPercent } from '../../utils/format'
 import { DEGREE_LABELS } from '../../utils/constants'
@@ -225,6 +226,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Executive KPI row — Spec 31 §2 (Total apps · Conversion · Avg match · Yield proj). */}
+      {summaryQ.isError && (
+        <QueryError variant="inline" detail="We couldn't load your dashboard metrics — the figures below may be incomplete." onRetry={() => summaryQ.refetch()} />
+      )}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
         {executiveKpis.map(kpi => (
           <Card key={kpi.label} className="p-5">
@@ -256,10 +260,7 @@ export default function DashboardPage() {
                 className="flex w-full items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 text-left transition-colors hover:bg-muted"
               >
                 <span className="flex items-center gap-2 text-sm text-foreground">
-                  <span
-                    className="inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded px-1.5 text-xs font-bold"
-                    style={{ backgroundColor: 'hsl(var(--warning-soft))', color: 'hsl(var(--warning))' }}
-                  >
+                  <span className="inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded px-1.5 text-xs font-bold bg-warning-soft text-warning">
                     {item.count}
                   </span>
                   {item.category}
@@ -274,6 +275,15 @@ export default function DashboardPage() {
       )}
 
       {/* Intelligence Digest — Spec 31 §2 */}
+      {digestQ.isError && (
+        <Card className="p-4 border-border bg-card">
+          <div className="flex items-center gap-2 mb-1">
+            <Brain size={18} className="text-muted-foreground" />
+            <h3 className="text-sm font-semibold text-foreground">Intelligence Digest</h3>
+          </div>
+          <QueryError variant="inline" detail="We couldn't load the intelligence digest." onRetry={() => digestQ.refetch()} />
+        </Card>
+      )}
       {digestQ.data?.digest && (
         <Card className="p-4 border-border bg-card">
           <div className="flex items-center gap-2 mb-3">
@@ -289,6 +299,15 @@ export default function DashboardPage() {
       )}
 
       {/* Yield-Risk Alerts — Spec 31 §2 */}
+      {yieldRiskQ.isError && (
+        <Card className="p-4 border-warning/30 bg-warning-soft/20">
+          <div className="flex items-center gap-2 mb-1">
+            <TrendingUp size={16} className="text-warning" />
+            <h3 className="text-sm font-semibold text-foreground">Yield-Risk Alerts</h3>
+          </div>
+          <QueryError variant="inline" detail="We couldn't load yield-risk alerts." onRetry={() => yieldRiskQ.refetch()} />
+        </Card>
+      )}
       {(yieldRiskQ.data?.alerts?.length ?? 0) > 0 && (
         <Card className="p-4 border-warning/30 bg-warning-soft/20">
           <div className="flex items-center gap-2 mb-3">
@@ -327,12 +346,14 @@ export default function DashboardPage() {
 
       {/* Integrity Signals + New Inquiries — Spec 31 §2 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <Card className={`p-4 ${openAlerts.length > 0 ? 'border-warning/40' : ''}`}>
+        <Card className={`p-4 ${openAlerts.length > 0 || integrityQ.isError ? 'border-warning/40' : ''}`}>
           <div className="flex items-center gap-2 mb-2">
-            <Shield size={18} className={openAlerts.length > 0 ? 'text-warning' : 'text-success'} />
+            <Shield size={18} className={openAlerts.length > 0 || integrityQ.isError ? 'text-warning' : 'text-success'} />
             <h3 className="text-sm font-semibold text-foreground">Integrity Signals</h3>
           </div>
-          {integrityBreakdown.length > 0 ? (
+          {integrityQ.isError ? (
+            <QueryError variant="inline" detail="We couldn't load integrity signals — this is not an all-clear." onRetry={() => integrityQ.refetch()} />
+          ) : integrityBreakdown.length > 0 ? (
             <ul className="space-y-1.5 mb-3">
               {integrityBreakdown.map(row => (
                 <li key={row.type} className="flex items-center gap-2 text-sm text-foreground">
@@ -344,7 +365,7 @@ export default function DashboardPage() {
           ) : (
             <p className="text-sm text-success mb-2">All clear — no integrity issues</p>
           )}
-          {(summary?.integrity_signals_count ?? openAlerts.length) > 0 && (
+          {!integrityQ.isError && (summary?.integrity_signals_count ?? openAlerts.length) > 0 && (
             <Button size="sm" variant="secondary" onClick={() => navigate(admissionsUrl('integrity'))} className="flex items-center gap-1">
               <Shield size={12} /> Review queue
             </Button>
@@ -374,6 +395,15 @@ export default function DashboardPage() {
       <FairnessPanel />
 
       {/* AI Priority Queue Preview */}
+      {priorityQ.isError && (
+        <Card className="p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <Zap size={16} className="text-warning" />
+            <h3 className="text-sm font-semibold text-foreground">Priority Review Queue</h3>
+          </div>
+          <QueryError variant="inline" detail="We couldn't load the priority review queue." onRetry={() => priorityQ.refetch()} />
+        </Card>
+      )}
       {topPriority.length > 0 && (
         <Card className="p-4">
           <div className="flex items-center justify-between mb-3">
@@ -387,7 +417,7 @@ export default function DashboardPage() {
           <div className="space-y-1.5">
             {topPriority.map((p, i) => (
               <div key={p.application_id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted cursor-pointer" onClick={() => navigate(applicantUrl(p.application_id))}>
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 ${
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-primary-foreground shrink-0 ${
                   p.priority_score >= 70 ? 'bg-error' : p.priority_score >= 40 ? 'bg-warning' : 'bg-success'
                 }`}>
                   {Math.round(p.priority_score)}

@@ -5,9 +5,11 @@ import {
 } from '../../api/institutions'
 import { listSaved, saveProgram, unsaveProgram } from '../../api/saved-lists'
 import { useCompareStore } from '../../stores/compare-store'
+import { showToast } from '../../stores/toast-store'
 import ProgramCard from './explore/cards/ProgramCard'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
+import QueryError from '../../components/ui/QueryError'
 import Skeleton from '../../components/ui/Skeleton'
 import { ArrowLeft, BookOpen, ChevronRight, GraduationCap } from 'lucide-react'
 import type { SchoolSummary, ProgramSummary } from '../../types'
@@ -35,13 +37,13 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
     enabled: !!institutionId,
   })
 
-  const { data: schools, isLoading: schoolsLoading } = useQuery({
+  const { data: schools, isLoading: schoolsLoading, isError: schoolsError, refetch: refetchSchools } = useQuery({
     queryKey: ['institution-schools', institutionId],
     queryFn: () => getInstitutionSchools(institutionId!),
     enabled: !!institutionId,
   })
 
-  const { data: programs, isLoading: programsLoading } = useQuery({
+  const { data: programs, isLoading: programsLoading, isError: programsError, refetch: refetchPrograms } = useQuery({
     queryKey: ['school-programs', institutionId, schoolId],
     queryFn: () => getSchoolPrograms(institutionId!, schoolId!),
     enabled: !!institutionId && !!schoolId,
@@ -52,11 +54,14 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
 
   const toggleSave = async (programId: string) => {
     if (!isAuthenticated) { navigate('/login'); return }
+    const wasSaved = savedIds.has(programId)
     try {
-      if (savedIds.has(programId)) await unsaveProgram(programId)
+      if (wasSaved) await unsaveProgram(programId)
       else await saveProgram(programId)
       queryClient.invalidateQueries({ queryKey: ['saved-programs'] })
-    } catch { /* */ }
+    } catch {
+      showToast(`We couldn't ${wasSaved ? 'remove' : 'save'} this program. Please try again.`, 'error')
+    }
   }
 
   const schoolList: SchoolSummary[] = Array.isArray(schools) ? schools : []
@@ -69,6 +74,15 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-32" />
         <Skeleton className="h-96" />
+      </div>
+    )
+  }
+
+  // A failed schools fetch is retryable — don't show it as "School not found".
+  if (schoolsError && !school) {
+    return (
+      <div className="p-6 max-w-3xl mx-auto">
+        <QueryError detail="We couldn't load this school." onRetry={() => refetchSchools()} />
       </div>
     )
   }
@@ -137,6 +151,11 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
       {programsLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3].map(i => <div key={i} className="h-64 bg-card rounded-xl border border-border animate-pulse" />)}
+        </div>
+      ) : programsError ? (
+        // Distinguish a failed fetch from a school that simply has no programs.
+        <div className="bg-card rounded-xl border border-border">
+          <QueryError detail="We couldn't load this school's programs." onRetry={() => refetchPrograms()} />
         </div>
       ) : programList.length === 0 ? (
         <div className="text-center py-16 bg-card rounded-xl border border-border">

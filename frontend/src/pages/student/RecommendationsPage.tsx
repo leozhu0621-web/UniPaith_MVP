@@ -11,6 +11,7 @@ import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { showToast } from '../../stores/toast-store'
+import { confirmDialog } from '../../stores/confirm-store'
 import { formatDate } from '../../utils/format'
 import { UserCheck, Plus, Pencil, Trash2, Send, Mail } from 'lucide-react'
 import type { RecommendationRequest } from '../../types'
@@ -40,21 +41,25 @@ export default function RecommendationsPage() {
   const createMut = useMutation({
     mutationFn: createRecommendation,
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['recommendations'] }); setShowModal(false); showToast('Recommendation request created', 'success') },
+    onError: () => showToast("We couldn't create the request. Please try again.", 'error'),
   })
 
   const updateMut = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => updateRecommendation(id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['recommendations'] }); setShowModal(false); setEditItem(null); showToast('Updated', 'success') },
+    onError: () => showToast("We couldn't save your changes. Please try again.", 'error'),
   })
 
   const deleteMut = useMutation({
     mutationFn: deleteRecommendation,
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['recommendations'] }); showToast('Deleted', 'success') },
+    onError: () => showToast("We couldn't delete the request. Please try again.", 'error'),
   })
 
   const sendMut = useMutation({
     mutationFn: sendRecommendationRequest,
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['recommendations'] }); showToast('Request sent', 'success') },
+    onError: () => showToast("We couldn't send the request. Please try again.", 'error'),
   })
 
   if (isLoading) return <div className="space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
@@ -157,8 +162,24 @@ export default function RecommendationsPage() {
                         <Send size={12} className="mr-1" /> Send
                       </Button>
                     )}
-                    <Button size="sm" variant="ghost" onClick={() => { setEditItem(rec); setShowModal(true) }}><Pencil size={12} /></Button>
-                    <Button size="sm" variant="ghost" onClick={() => deleteMut.mutate(rec.id)}><Trash2 size={12} /></Button>
+                    <Button size="sm" variant="ghost" aria-label={`Edit request for ${rec.recommender_name}`} onClick={() => { setEditItem(rec); setShowModal(true) }}><Pencil size={12} /></Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      aria-label={`Delete request for ${rec.recommender_name}`}
+                      onClick={async () => {
+                        const ok = await confirmDialog({
+                          title: 'Delete this request?',
+                          body: `Remove the recommendation request for ${rec.recommender_name}? This can't be undone.`,
+                          confirmLabel: 'Delete',
+                          destructive: true,
+                        })
+                        if (!ok) return
+                        deleteMut.mutate(rec.id)
+                      }}
+                    >
+                      <Trash2 size={12} />
+                    </Button>
                   </div>
                 </div>
               </Card>

@@ -13,6 +13,7 @@ import Input from '../../components/ui/Input'
 import Select from '../../components/ui/Select'
 import EmptyState from '../../components/ui/EmptyState'
 import Skeleton from '../../components/ui/Skeleton'
+import QueryError from '../../components/ui/QueryError'
 import InstitutionPageHeader from '../../components/institution/InstitutionPageHeader'
 import { showToast } from '../../stores/toast-store'
 import { formatDate } from '../../utils/format'
@@ -69,22 +70,36 @@ export default function IntakeRoundsPage() {
   const createMut = useMutation({
     mutationFn: (p: Parameters<typeof createIntakeRound>[1]) => createIntakeRound(selectedProgram, p),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['intake-rounds'] }); setShowModal(false); resetForm(); showToast('Intake round created', 'success') },
+    onError: () => showToast("We couldn't create the intake round. Please try again.", 'error'),
   })
   const updateMut = useMutation({
     mutationFn: (p: { id: string; payload: Parameters<typeof updateIntakeRound>[2] }) => updateIntakeRound(selectedProgram, p.id, p.payload),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['intake-rounds'] }); setShowModal(false); resetForm(); showToast('Intake round updated', 'success') },
+    onError: () => showToast("We couldn't update the intake round. Please try again.", 'error'),
   })
   const deleteMut = useMutation({
     mutationFn: (id: string) => deleteIntakeRound(selectedProgram, id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['intake-rounds'] }); setDeleteTarget(null); showToast('Intake round deleted', 'success') },
+    onError: () => showToast("We couldn't delete the intake round. Please try again.", 'error'),
   })
   const statusMut = useMutation({
     mutationFn: (p: { id: string; status: string }) => updateIntakeRound(selectedProgram, p.id, { status: p.status }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['intake-rounds'] }); showToast('Status updated', 'success') },
+    onError: () => showToast("We couldn't update the status. Please try again.", 'error'),
   })
 
   const handleSubmit = () => {
     if (!roundName.trim()) { showToast('Round name is required', 'warning'); return }
+    // ISO date strings (YYYY-MM-DD) compare lexically as chronologically.
+    if (appOpen && appDeadline && appOpen > appDeadline) {
+      showToast('Application open date must be on or before the deadline.', 'warning'); return
+    }
+    if (appDeadline && decisionDate && appDeadline > decisionDate) {
+      showToast('Application deadline must be on or before the decision date.', 'warning'); return
+    }
+    if (capacity && parseInt(capacity) < 0) {
+      showToast('Capacity cannot be negative.', 'warning'); return
+    }
     const payload = {
       round_name: roundName,
       intake_term: intakeTerm || undefined,
@@ -115,6 +130,8 @@ export default function IntakeRoundsPage() {
         <EmptyState icon={<CalendarRange size={40} />} title="Select a program" description="Choose a program to manage its intake rounds." />
       ) : intakesQ.isLoading ? (
         <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-32" />)}</div>
+      ) : intakesQ.isError ? (
+        <QueryError detail="We couldn't load this program's intake rounds." onRetry={() => intakesQ.refetch()} />
       ) : intakes.length === 0 ? (
         <EmptyState icon={<CalendarRange size={40} />} title="No intake rounds" description="Create intake rounds with deadlines, capacity limits, and requirement sets." action={{ label: 'New Round', onClick: openCreate }} />
       ) : (

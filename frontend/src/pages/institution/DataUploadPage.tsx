@@ -89,6 +89,22 @@ function uploadFileToUrl(url: string, file: File) {
   return putFileToPresignedUrl(url, file, file.type || 'text/csv')
 }
 
+const ALLOWED_FILE_EXTS = ['.csv', '.tsv', '.txt', '.xlsx']
+const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024 // ~25MB
+
+// Validate the chosen file before any presigned upload starts. Returns a
+// plain-language reason when the file is rejected, or null when it's fine.
+function fileRejectionReason(file: File): string | null {
+  const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase()
+  if (!ALLOWED_FILE_EXTS.includes(ext)) {
+    return `Unsupported file type. Upload a ${ALLOWED_FILE_EXTS.join(', ')} file.`
+  }
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    return 'File is too large. The limit is 25MB.'
+  }
+  return null
+}
+
 async function parseLocalCsvColumns(file: File): Promise<string[]> {
   const slice = file.slice(0, 8192)
   const text = await slice.text()
@@ -375,6 +391,11 @@ export default function DataUploadPage() {
   const handleFileStepNext = async () => {
     if (!selectedFile) {
       showToast('Choose a CSV, TSV, or spreadsheet export', 'warning')
+      return
+    }
+    const rejection = fileRejectionReason(selectedFile)
+    if (rejection) {
+      showToast(rejection, 'error')
       return
     }
     if (wizardMode === 'create') {
@@ -741,6 +762,8 @@ export default function DataUploadPage() {
       <Modal isOpen={!!previewTarget} onClose={() => setPreviewTarget(null)} title="Dataset preview">
         {previewQ.isLoading ? (
           <div className="space-y-2">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-8" />)}</div>
+        ) : previewQ.isError ? (
+          <QueryError variant="inline" detail="We couldn't load the preview." onRetry={() => previewQ.refetch()} />
         ) : !preview ? (
           <p className="text-sm text-muted-foreground text-center py-4">No preview available yet.</p>
         ) : (
@@ -846,6 +869,8 @@ export default function DataUploadPage() {
       <Modal isOpen={!!versionsTarget} onClose={() => setVersionsTarget(null)} title="Version history">
         {versionsQ.isLoading ? (
           <Skeleton className="h-32" />
+        ) : versionsQ.isError ? (
+          <QueryError variant="inline" detail="We couldn't load version history." onRetry={() => versionsQ.refetch()} />
         ) : (versionsQ.data ?? []).length === 0 ? (
           <p className="text-sm text-muted-foreground">No versions recorded yet.</p>
         ) : (

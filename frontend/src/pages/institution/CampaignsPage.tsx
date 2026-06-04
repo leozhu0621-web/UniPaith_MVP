@@ -99,7 +99,7 @@ export default function CampaignsPage() {
     onError: (e: any) => showToast(e?.response?.data?.detail || 'Could not delete', 'error'),
   })
   const rejectMut = useMutation({
-    mutationFn: () => rejectCampaign(rejectTarget!.id, rejectComment.trim()),
+    mutationFn: (id: string) => rejectCampaign(id, rejectComment.trim()),
     onSuccess: () => { refresh(); showToast('Campaign rejected', 'success'); setRejectTarget(null); setRejectComment('') },
     onError: () => showToast('Could not reject', 'error'),
   })
@@ -123,13 +123,19 @@ export default function CampaignsPage() {
   const createLinkMut = useMutation({
     mutationFn: (p: { id: string; payload: any }) => createCampaignLink(p.id, p.payload),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['campaign-links'] }); showToast('Link created', 'success'); setNewLinkLabel(''); setNewLinkDestId(''); setNewLinkUrl('') },
+    onError: () => showToast("We couldn't create the link. Please try again.", 'error'),
   })
   const delLinkMut = useMutation({
     mutationFn: (p: { id: string; linkId: string }) => deleteCampaignLink(p.id, p.linkId),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['campaign-links'] }); showToast('Link removed', 'success') },
+    onError: () => showToast("We couldn't remove the link. Please try again.", 'error'),
   })
 
-  const copy = (t: string) => { navigator.clipboard.writeText(t); showToast('Copied', 'success') }
+  const copy = (t: string) => {
+    navigator.clipboard.writeText(t)
+      .then(() => showToast('Copied', 'success'))
+      .catch(() => showToast("We couldn't copy to your clipboard.", 'error'))
+  }
   const openEdit = (c: Campaign) => { setEditTarget(c); setShowEditor(true) }
   const openNew = () => { setEditTarget(null); setSeedSegmentId(undefined); setShowEditor(true) }
 
@@ -293,7 +299,7 @@ export default function CampaignsPage() {
           <Textarea label="Reason" value={rejectComment} onChange={(e) => setRejectComment(e.target.value)} rows={3} placeholder="What needs to change before this can be sent?" />
           <div className="flex justify-end gap-2">
             <Button variant="tertiary" onClick={() => setRejectTarget(null)}>Cancel</Button>
-            <Button variant="destructive" disabled={!rejectComment.trim() || rejectMut.isPending} loading={rejectMut.isPending} onClick={() => rejectMut.mutate()}>Reject</Button>
+            <Button variant="destructive" disabled={!rejectComment.trim() || rejectMut.isPending} loading={rejectMut.isPending} onClick={() => rejectTarget && rejectMut.mutate(rejectTarget.id)}>Reject</Button>
           </div>
         </div>
       </Modal>

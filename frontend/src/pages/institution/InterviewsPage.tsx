@@ -16,8 +16,10 @@ import Select from '../../components/ui/Select'
 import EmptyState from '../../components/ui/EmptyState'
 import Skeleton from '../../components/ui/Skeleton'
 import Dropdown from '../../components/ui/Dropdown'
+import QueryError from '../../components/ui/QueryError'
 import InstitutionPageHeader from '../../components/institution/InstitutionPageHeader'
 import { showToast } from '../../stores/toast-store'
+import { confirmDialog } from '../../stores/confirm-store'
 import { formatDateTime } from '../../utils/format'
 import { STATUS_COLORS, INTERVIEW_TYPES, INTERVIEW_TYPE_LABELS } from '../../utils/constants'
 import type { Interview, Program } from '../../types'
@@ -132,11 +134,32 @@ export default function InterviewsPage({ embedded = false }: { embedded?: boolea
     const cancellable = !['completed', 'cancelled'].includes(iv.status)
     const noshowable = ['proposed', 'confirmed'].includes(iv.status) || iv.async_expired
 
+    const confirmNoShow = async () => {
+      const ok = await confirmDialog({
+        title: 'Mark as no-show?',
+        body: 'This records that the applicant did not attend and closes out the interview.',
+        confirmLabel: 'Mark no-show',
+        destructive: true,
+      })
+      if (!ok) return
+      noShowMut.mutate(iv.id)
+    }
+    const confirmCancel = async () => {
+      const ok = await confirmDialog({
+        title: 'Cancel interview?',
+        body: 'This cancels the interview for the applicant and cannot be undone.',
+        confirmLabel: 'Cancel interview',
+        destructive: true,
+      })
+      if (!ok) return
+      cancelMut.mutate(iv.id)
+    }
+
     const menu: { label: string; onClick: () => void; variant?: 'default' | 'danger' }[] = []
     if (completable && scoreable) menu.push({ label: 'Mark complete', onClick: () => completeMut.mutate(iv.id) })
     if (cancellable) menu.push({ label: 'Reschedule', onClick: () => setRescheduleTarget(iv) })
-    if (noshowable) menu.push({ label: 'Mark no-show', onClick: () => noShowMut.mutate(iv.id) })
-    if (cancellable) menu.push({ label: 'Cancel interview', onClick: () => cancelMut.mutate(iv.id), variant: 'danger' })
+    if (noshowable) menu.push({ label: 'Mark no-show', onClick: confirmNoShow })
+    if (cancellable) menu.push({ label: 'Cancel interview', onClick: confirmCancel, variant: 'danger' })
 
     return (
       <div className="flex items-center justify-end gap-1">
@@ -230,6 +253,8 @@ export default function InterviewsPage({ embedded = false }: { embedded?: boolea
               <Skeleton key={i} className="h-12" />
             ))}
           </div>
+        ) : interviewsQ.isError ? (
+          <QueryError variant="inline" detail="We couldn't load your interviews." onRetry={() => interviewsQ.refetch()} />
         ) : filtered.length === 0 ? (
           <EmptyState
             icon={<Calendar size={40} />}

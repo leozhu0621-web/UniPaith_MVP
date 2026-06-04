@@ -25,6 +25,7 @@ import Modal from '../../components/ui/Modal'
 import Input from '../../components/ui/Input'
 import Select from '../../components/ui/Select'
 import EmptyState from '../../components/ui/EmptyState'
+import QueryError from '../../components/ui/QueryError'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 
 type ViewMode = 'month' | 'week' | 'agenda'
@@ -121,11 +122,20 @@ export default function CalendarPage() {
     return { from: from.toISOString(), to: to.toISOString() }
   }, [])
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['calendar', range.from, range.to],
     queryFn: () => getCalendar(range),
   })
-  const items: CalendarItem[] = useMemo(() => data ?? [], [data])
+  // Drop items we can't safely render: an unknown type (no TYPE_META entry) or a
+  // missing/invalid start_at would throw deep in the grid. Skip them rather than
+  // crash the whole timeline.
+  const items: CalendarItem[] = useMemo(
+    () =>
+      (data ?? []).filter(
+        i => !!TYPE_META[i.type] && !!i.start_at && !isNaN(parseISO(i.start_at).getTime()),
+      ),
+    [data],
+  )
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['calendar'] })
 
@@ -164,7 +174,7 @@ export default function CalendarPage() {
 
   const filtered = useMemo(() => items.filter(i => {
     if (appFilter !== 'all' && i.application_id !== appFilter) return false
-    if (typeFilter !== 'all' && TYPE_META[i.type].bucket !== typeFilter) return false
+    if (typeFilter !== 'all' && TYPE_META[i.type]?.bucket !== typeFilter) return false
     return true
   }), [items, appFilter, typeFilter])
 
@@ -177,6 +187,15 @@ export default function CalendarPage() {
     return (
       <div className="p-6 max-w-6xl mx-auto space-y-4">
         {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
+      </div>
+    )
+  }
+
+  // ── Error ── distinguish a failed fetch from an empty (but successful) timeline.
+  if (isError) {
+    return (
+      <div className="p-6 max-w-6xl mx-auto">
+        <QueryError detail="We couldn't load your timeline." onRetry={() => refetch()} />
       </div>
     )
   }

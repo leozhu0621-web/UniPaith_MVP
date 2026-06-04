@@ -146,7 +146,7 @@ export default function ProgramsPage() {
           />
         ) : (
           <div className="overflow-x-auto">
-            <Table columns={columns} data={programs} isLoading={programsQ.isLoading} />
+            <Table columns={columns} data={programs} isLoading={programsQ.isLoading} pageSize={25} isError={programsQ.isError} onRetry={() => programsQ.refetch()} />
           </div>
         )}
       </Card>

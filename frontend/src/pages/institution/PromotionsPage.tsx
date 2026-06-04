@@ -105,21 +105,25 @@ export default function PromotionsPage() {
   const createMut = useMutation({
     mutationFn: createPromotion,
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['promotions'] }); setShowModal(false); resetForm(); showToast('Promotion created', 'success') },
+    onError: () => showToast("We couldn't create the promotion. Please try again.", 'error'),
   })
 
   const updateMut = useMutation({
     mutationFn: (p: { id: string; payload: Parameters<typeof updatePromotion>[1] }) => updatePromotion(p.id, p.payload),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['promotions'] }); setShowModal(false); resetForm(); showToast('Promotion updated', 'success') },
+    onError: () => showToast("We couldn't update the promotion. Please try again.", 'error'),
   })
 
   const deleteMut = useMutation({
     mutationFn: deletePromotion,
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['promotions'] }); setDeleteTarget(null); showToast('Promotion deleted', 'success') },
+    onError: () => showToast("We couldn't delete the promotion. Please try again.", 'error'),
   })
 
   const statusMut = useMutation({
     mutationFn: (p: { id: string; status: string }) => updatePromotion(p.id, { status: p.status }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['promotions'] }); showToast('Status updated', 'success') },
+    onError: () => showToast("We couldn't update the status. Please try again.", 'error'),
   })
 
   const buildTargeting = () => {
@@ -132,6 +136,12 @@ export default function PromotionsPage() {
 
   const handleSubmit = () => {
     if (!title.trim()) { showToast('Title is required', 'warning'); return }
+    if (targetKind === 'landing' && !targetUrl.trim()) {
+      showToast('A landing URL is required for this target.', 'warning'); return
+    }
+    if (startsAt && endsAt && new Date(endsAt).getTime() <= new Date(startsAt).getTime()) {
+      showToast('End date must be after the start date.', 'warning'); return
+    }
     const payload = {
       title,
       description: description || undefined,
@@ -248,6 +258,7 @@ export default function PromotionsPage() {
                   </Button>
                 )}
                 <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(p)}
+                  aria-label="Delete promotion"
                   className="flex items-center gap-1 text-destructive">
                   <Trash2 size={14} />
                 </Button>

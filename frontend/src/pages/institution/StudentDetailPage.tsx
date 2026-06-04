@@ -27,6 +27,7 @@ import Input from '../../components/ui/Input'
 import Textarea from '../../components/ui/Textarea'
 import Select from '../../components/ui/Select'
 import Skeleton from '../../components/ui/Skeleton'
+import QueryError from '../../components/ui/QueryError'
 import AIBadge from '../../components/ui/AIBadge'
 import FallbackNote from '../../components/ui/FallbackNote'
 import RubricSlider from '../../components/ui/RubricSlider'
@@ -207,6 +208,9 @@ export default function StudentDetailPage() {
 
   if (packetQ.isLoading) {
     return <div className="p-6 space-y-4"><Skeleton className="h-12 w-80" /><Skeleton className="h-64" /></div>
+  }
+  if (packetQ.isError) {
+    return <div className="p-6"><QueryError onRetry={() => packetQ.refetch()} /></div>
   }
   if (!packet) {
     return <div className="p-6"><p className="text-muted-foreground">Application not found.</p></div>
