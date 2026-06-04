@@ -148,19 +148,20 @@ export function CommandPalette() {
     return () => window.removeEventListener('keydown', onKey)
   }, [toggle])
 
-  const { data, isFetching: progFetching } = useQuery({
+  const { data, isFetching: progFetching, isError: progError, refetch: refetchProg } = useQuery({
     queryKey: ['global-search', debounced],
     queryFn: () => searchPrograms({ q: debounced, page_size: 6 }),
     enabled: open && searching,
     staleTime: 60_000,
   })
-  const { data: instData, isFetching: instFetching } = useQuery({
+  const { data: instData, isFetching: instFetching, isError: instError, refetch: refetchInst } = useQuery({
     queryKey: ['global-search-schools', debounced],
     queryFn: () => searchInstitutions({ q: debounced, page_size: 4 }),
     enabled: open && searching,
     staleTime: 60_000,
   })
   const isFetching = progFetching || instFetching
+  const isError = progError || instError
   // Flatten everything into one keyboard-navigable command list.
   type Cmd = { key: string; section?: string; run: () => void; render: React.ReactNode }
   const commands = useMemo<Cmd[]>(() => {
@@ -306,7 +307,19 @@ export function CommandPalette() {
               </Fragment>
             )
           })}
-          {searching && !isFetching && commands.length === 1 && (
+          {searching && isError && (
+            <li className="px-3 py-6 text-center text-sm">
+              <span className="text-muted-foreground">Couldn&apos;t search right now. </span>
+              <button
+                type="button"
+                onClick={() => { refetchProg(); refetchInst() }}
+                className="font-medium text-secondary hover:underline"
+              >
+                Try again
+              </button>
+            </li>
+          )}
+          {searching && !isError && !isFetching && commands.length === 1 && (
             <li className="px-3 py-6 text-center text-sm text-muted-foreground">
               No programs or schools match “{debounced}”. Press Enter to search all.
             </li>
