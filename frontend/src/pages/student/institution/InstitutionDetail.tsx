@@ -106,9 +106,10 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
   const isSaved = !!institutionId && followedIds.has(String(institutionId))
 
   // Default tab: Schools when the institution has sub-schools, else Overview
-  // (Spec 12 §3.3 — Schools is the headline tab). A ?tab= param wins.
+  // Overview is the headline tab — it now carries the rich, Niche-style context
+  // (report card · rankings · distinction · facts). A ?tab= param still wins.
   const paramTab = searchParams.get('tab') as TabId | null
-  const defaultTab: TabId = schoolList.length > 0 ? 'schools' : 'overview'
+  const defaultTab: TabId = 'overview'
   const tab: TabId = paramTab ?? defaultTab
   const setTab = (next: TabId) => {
     const sp = new URLSearchParams(searchParams)
