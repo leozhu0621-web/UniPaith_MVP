@@ -17,6 +17,7 @@ import CompareTray from '../student/CompareTray'
 import TrialBanner from '../student/TrialBanner'
 import Paywall from '../student/Paywall'
 import { SearchTrigger, CommandPalette } from '../student/GlobalSearch'
+import ScrollReset from './ScrollReset'
 import MessagesNavButton from '../student/MessagesNavButton'
 
 // Stage-ordered navigation (Spec/02 §7): Discover · Match · Apply · Connect.
@@ -218,6 +219,9 @@ export default function StudentLayout() {
         initialExpanded={location.pathname === '/s/explore' && searchParams.get('compare') === 'open'}
         syncUrl={location.pathname === '/s/explore'}
       />
+
+      {/* Reset scroll to top on route change (the <main> scroll container persists). */}
+      <ScrollReset />
 
       {/* Global ⌘K command palette — search programs/schools + jump to any surface. */}
       <CommandPalette />
