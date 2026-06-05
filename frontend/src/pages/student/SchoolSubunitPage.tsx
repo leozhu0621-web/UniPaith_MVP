@@ -83,7 +83,7 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
 
   if (schoolsLoading) {
     return (
-      <div className="p-6 max-w-6xl mx-auto space-y-4">
+      <div className="p-6 max-w-5xl mx-auto space-y-4">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-32" />
         <Skeleton className="h-96" />
@@ -111,7 +111,7 @@ export default function SchoolSubunitPage({ isAuthenticated = true }: Props) {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-6 max-w-5xl mx-auto">
       {/* Breadcrumb */}
       <nav className="text-sm text-muted-foreground mb-4" aria-label="Breadcrumb">
         <button onClick={() => navigate(instHref)} className="hover:text-foreground transition-colors">{institution?.name || 'University'}</button>

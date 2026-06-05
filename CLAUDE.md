@@ -14,6 +14,7 @@ Before starting new feature work, always verify the environment is healthy first
 ## UI/Design Preferences
 
 - School / college / program **detail pages** use a campus-photo hero that fades into the cream page background (`--background`), with NO logo and NO geo/location line; followed by rich, Niche-modeled content grounded in REAL data (rankings · report-card key stats · distinction · admissions funnel · outcomes/cost · quick facts · sourced citation). The hero falls back to a clean gradient when a school has no photo. (Updated 2026-06-04 by explicit user direction — supersedes the earlier "no decorative images/gradients on detail pages" rule.)
+- **Detail-page content width is standardized to `max-w-5xl mx-auto`** — the MIT institution page is the "example for all", so institution, college (school-subunit), and BOTH program pages (public + student) use the SAME `max-w-5xl` content container. The width must never change between tabs or across page types. (Set 2026-06-05 — college + student-program were `max-w-6xl`; unified.)
 - **Explore cards** and other dense list surfaces stay text-driven — no hero images there.
 - Aesthetic is editorial + content-rich (Niche-modeled), program-specific, never generic marketing
 - Always confirm WHICH component is being changed (explore card vs detail page) before editing
