@@ -352,7 +352,7 @@ export default function ProgramDetailPage() {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-6 max-w-5xl w-full mx-auto">
       {/* ── Archived banner (§6) ── */}
       {isArchived && (
         <div className="mb-4 flex items-center gap-2 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3">
@@ -1438,7 +1438,7 @@ export default function ProgramDetailPage() {
 /* ── Loading skeleton — header + tab placeholders (§6) ── */
 function ProgramDetailSkeleton() {
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-5">
+    <div className="p-6 max-w-5xl w-full mx-auto space-y-5">
       <Skeleton className="h-40 rounded-lg" />
       <Skeleton className="h-20 rounded-lg" />
       <Skeleton className="h-24 rounded-lg" />

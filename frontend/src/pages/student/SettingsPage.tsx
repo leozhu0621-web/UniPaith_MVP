@@ -49,7 +49,7 @@ export default function SettingsPage() {
   const refetch = () => queryClient.invalidateQueries({ queryKey: ['settings'] })
 
   return (
-    <div className="px-4 sm:px-6 py-6 max-w-5xl mx-auto w-full">
+    <div className="px-4 sm:px-6 py-6 max-w-5xl w-full mx-auto w-full">
       <header className="mb-6">
         <p className="up-eyebrow text-secondary">Settings</p>
         <h1 className="text-2xl font-bold text-foreground mt-1">Your account</h1>

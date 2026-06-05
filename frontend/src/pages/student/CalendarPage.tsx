@@ -185,7 +185,7 @@ export default function CalendarPage() {
   // ── Loading ──
   if (isLoading) {
     return (
-      <div className="p-6 max-w-5xl mx-auto space-y-4">
+      <div className="p-6 max-w-5xl w-full mx-auto space-y-4">
         {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
       </div>
     )
@@ -194,7 +194,7 @@ export default function CalendarPage() {
   // ── Error ── distinguish a failed fetch from an empty (but successful) timeline.
   if (isError) {
     return (
-      <div className="p-6 max-w-5xl mx-auto">
+      <div className="p-6 max-w-5xl w-full mx-auto">
         <QueryError detail="We couldn't load your timeline." onRetry={() => refetch()} />
       </div>
     )
@@ -214,7 +214,7 @@ export default function CalendarPage() {
   const itemsOn = (day: Date) => filtered.filter(i => isSameDay(parseISO(i.start_at), day))
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-6 max-w-5xl w-full mx-auto">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
         <div>

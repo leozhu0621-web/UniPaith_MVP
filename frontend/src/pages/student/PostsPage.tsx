@@ -36,7 +36,7 @@ export default function PostsPage() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="max-w-5xl mx-auto px-6 py-6">
+      <div className="max-w-5xl w-full mx-auto px-6 py-6">
         {/* Header (Spec 20 §3) */}
         <header className="mb-4">
           <h1 className="text-2xl font-semibold text-foreground">Connect</h1>

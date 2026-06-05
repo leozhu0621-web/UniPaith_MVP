@@ -68,7 +68,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
+    <div className="max-w-5xl w-full mx-auto p-4 sm:p-6 lg:p-8">
       {/* Header — eyebrow + H1 + completion ring */}
       <div className="flex items-center gap-4 mb-6">
         <CompletionRing value={isLoading ? 0 : overall} size={64} />

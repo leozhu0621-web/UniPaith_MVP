@@ -280,7 +280,7 @@ export default function ApplicationDetailPage() {
   // A failed fetch is retryable — don't conflate it with a genuine 404.
   if (appError)
     return (
-      <div className="p-6 max-w-5xl mx-auto">
+      <div className="p-6 max-w-5xl w-full mx-auto">
         <QueryError detail="We couldn't load this application." onRetry={() => refetchApp()} />
       </div>
     )
@@ -330,7 +330,7 @@ export default function ApplicationDetailPage() {
   const programName = application.program?.program_name || 'Application'
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-6 max-w-5xl w-full mx-auto">
       <Breadcrumbs
         className="mb-4"
         items={[{ label: 'Apply', to: '/s/manage' }, { label: 'Applications', to: '/s/manage' }, { label: programName }]}
