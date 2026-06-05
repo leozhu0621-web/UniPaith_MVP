@@ -7,6 +7,10 @@ Two-sided AI matching platform for higher education admissions. Students find pr
 - At the start of any session that resumes prior work, ASK the user for context/rules from the previous session before exploring
 - Do not spend more than 2-3 tool calls exploring before confirming the task scope
 
+## Ship to Production Every Time (standing rule)
+
+Every change goes online — never leave finished work sitting local. The moment a change is verified (tsc 0 · build 0 · tests green), it must be **committed → merged to `main` → auto-deployed → verified live** in the same turn. "Done" means deployed and confirmed in production (app.unipaith.co / api.unipaith.co), not merely written on disk. End each unit of work by confirming the working tree is clean, `main` is at the new commit, and the deploy succeeded. (Set 2026-06-05 by explicit user direction: "make sure u push it online everytime.")
+
 ## Pre-Work Checklist
 
 Before starting new feature work, always verify the environment is healthy first: DB connections active, Docker/Postgres running, zero build errors, all existing tests passing. Do NOT proceed to feature building until confirmed.
