@@ -197,11 +197,11 @@ export default function ApplicationsPage() {
   }, [apps, statusFilter, institution, deadlineWindow, sort])
 
   if (isLoading)
-    return <div className="p-6 space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
+    return <div className="p-6 max-w-5xl mx-auto space-y-4">{Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}</div>
 
   if (apps.length === 0)
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <div className="p-6 max-w-5xl mx-auto">
         <h1 className="text-2xl font-semibold text-foreground mb-1">Your portfolio</h1>
         <p className="text-sm text-foreground mb-6">Turn saved targets into application projects.</p>
         <EmptyState
@@ -214,7 +214,7 @@ export default function ApplicationsPage() {
     )
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
+    <div className="p-6 max-w-5xl mx-auto">
       <h1 className="text-2xl font-semibold text-foreground mb-1">Your portfolio</h1>
       <p className="text-sm text-foreground mb-5">
         {apps.length} application{apps.length !== 1 ? 's' : ''} across your journey.
