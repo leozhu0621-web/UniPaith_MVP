@@ -13,8 +13,9 @@ Before starting new feature work, always verify the environment is healthy first
 
 ## UI/Design Preferences
 
-- NO decorative images, gradients, or color accents on program detail pages
-- Aesthetic is editorial and program-specific, not generic marketing
+- School / college / program **detail pages** use a campus-photo hero that fades into the cream page background (`--background`), with NO logo and NO geo/location line; followed by rich, Niche-modeled content grounded in REAL data (rankings · report-card key stats · distinction · admissions funnel · outcomes/cost · quick facts · sourced citation). The hero falls back to a clean gradient when a school has no photo. (Updated 2026-06-04 by explicit user direction — supersedes the earlier "no decorative images/gradients on detail pages" rule.)
+- **Explore cards** and other dense list surfaces stay text-driven — no hero images there.
+- Aesthetic is editorial + content-rich (Niche-modeled), program-specific, never generic marketing
 - Always confirm WHICH component is being changed (explore card vs detail page) before editing
 
 ## Project Overview
