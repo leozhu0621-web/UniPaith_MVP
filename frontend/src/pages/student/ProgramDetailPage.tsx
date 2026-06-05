@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import QueryError from '../../components/ui/QueryError'
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getProgram, getProgramReviews, getEmployerFeedback, getNetPrice,
   searchPrograms, semanticSearch,
 } from '../../api/programs'
+import { getPublicInstitution } from '../../api/institutions'
 import { pushRecentProgram } from '../../lib/recentPrograms'
 import { getMatchDetail, logEngagement } from '../../api/matching'
 import { listEvents, rsvpEvent, getMyRsvps } from '../../api/events'
@@ -23,7 +24,9 @@ import { differenceInDays } from 'date-fns'
 import {
   BookOpen, GraduationCap, DollarSign, TrendingUp, MessageSquare,
   Briefcase, Building2, Users, Clock, Sparkles, Mail, Archive,
+  Bookmark, BookmarkCheck, FileText, Send, ArrowRightLeft, ChevronRight,
 } from 'lucide-react'
+import { DEGREE_LABELS } from '../../utils/constants'
 import type { EventItem } from '../../types'
 import {
   normalizeCostData,
@@ -44,7 +47,6 @@ import DualRing from './match/DualRing'
 import RationalePopover from './match/RationalePopover'
 import ProbabilityBands from './match/ProbabilityBands'
 import BandBadge from '../../components/ui/BandBadge'
-import ProgramHeader from './program/ProgramHeader'
 import KeyMetrics from './program/KeyMetrics'
 import StatGroup from './program/StatGroup'
 import AboutCard from './program/AboutCard'
@@ -134,6 +136,14 @@ export default function ProgramDetailPage() {
   // Track the visit for the global command palette's "Recently viewed".
   useEffect(() => { if (program) pushRecentProgram(program) }, [program])
   const { data: matchResult } = useQuery({ queryKey: ['match', programId], queryFn: () => getMatchDetail(programId!), retry: false })
+  // Parent institution — a program has no photo of its own, so the hero inherits
+  // the institution's campus photo (gradient fallback). Mirrors the school pages.
+  const { data: institution } = useQuery({
+    queryKey: ['institution', (program as any)?.institution_id],
+    queryFn: () => getPublicInstitution((program as any).institution_id),
+    enabled: !!(program as any)?.institution_id,
+    retry: false,
+  })
   const { data: netPrice } = useQuery({ queryKey: ['net-price', programId], queryFn: () => getNetPrice(programId!), enabled: !!programId, retry: false })
   const { data: events } = useQuery({ queryKey: ['events', { program_id: programId }], queryFn: () => listEvents({ program_id: programId, limit: 5 }) })
   const { data: rsvps } = useQuery({ queryKey: ['my-rsvps'], queryFn: getMyRsvps, retry: false })
@@ -306,6 +316,41 @@ export default function ProgramDetailPage() {
     ...(p.program_name ? { q: p.program_name } : {}),
   }).toString()}`
 
+  /* ── Hero (campus-photo, no logo/geo) — mirrors the institution/school pages.
+     The program owns no photo; inherit the parent institution's campus photo
+     (first raster image in its gallery; logos are SVG → skipped). Fall back to a
+     clean gradient when the school has no photo. ── */
+  const inst: any = institution ?? null
+  const heroPhoto: string | null =
+    (inst?.media_gallery ?? []).find((u: string) => /\.(jpe?g|png|webp|avif)(\?|$)/i.test(u)) ?? null
+  const degreeLabel = DEGREE_LABELS[p.degree_type] || p.degree_type || ''
+  // Eyebrow = degree label when we have one, else the institution name.
+  const heroEyebrow = degreeLabel || instName || null
+
+  // Stat strip — real fields only, NO location. Omit anything absent.
+  const heroStats: { value: string; label: string }[] = []
+  if (hasMatch) {
+    const fit = toUnit(match.fitness_score ?? match.match_score)
+    if (fit > 0) heroStats.push({ value: `${Math.round(fit * 100)}%`, label: 'fitness' })
+  }
+  const heroAcceptance = p.acceptance_rate ?? rd.acceptance_rate
+  if (heroAcceptance != null && Number.isFinite(Number(heroAcceptance))) {
+    const ar = Number(heroAcceptance)
+    heroStats.push({ value: `${(ar * 100).toFixed(ar < 0.1 ? 1 : 0)}%`, label: 'acceptance' })
+  }
+  if (effectiveTuition != null && Number.isFinite(Number(effectiveTuition)) && Number(effectiveTuition) > 0) {
+    heroStats.push({ value: formatCurrency(Number(effectiveTuition)), label: 'tuition / yr' })
+  }
+  const heroEarnings =
+    odn.median_salary != null && Number.isFinite(Number(odn.median_salary))
+      ? Number(odn.median_salary)
+      : (rd.earnings_10yr_median != null && Number.isFinite(Number(rd.earnings_10yr_median))
+        ? Number(rd.earnings_10yr_median)
+        : null)
+  if (heroEarnings != null && heroEarnings > 0) {
+    heroStats.push({ value: formatCurrency(heroEarnings), label: 'median earnings' })
+  }
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
       {/* ── Archived banner (§6) ── */}
@@ -316,71 +361,153 @@ export default function ProgramDetailPage() {
         </div>
       )}
 
-      {/* ── Compact image-less header ── */}
-      <ProgramHeader
-        programName={p.program_name}
-        degreeType={p.degree_type}
-        institutionId={p.institution_id}
-        institutionName={instName}
-        institutionCity={p.institution_city}
-        institutionCountry={p.institution_country}
-        department={p.department}
-        durationMonths={p.duration_months}
-        deliveryFormat={p.delivery_format}
-        highlights={p.highlights}
-        tracks={p.tracks}
-        description={p.description_text}
-        isSaved={isSaved}
-        isComparing={compareStore.has(p.id)}
-        hasApplication={!!existingApp}
-        archived={isArchived}
-        onBack={() => navigate('/s/explore')}
-        onSave={() => saveMut.mutate()}
-        onCompare={handleCompare}
-        onAskCounselor={() => askCounselor(
-          `Is ${p.program_name} at ${instName} a good fit for me? Why or why not?`
-        )}
-        onApply={() => applyMut.mutate()}
-        onViewApplication={existingApp ? () => navigate(`/s/applications/${existingApp.id}`) : undefined}
-        matchSlot={
-          hasMatch ? (
-            <div
-              className="flex items-center gap-2.5"
-              title="Fitness is how well this program matches your strategy; confidence is how sure we are given your profile depth."
-            >
-              <DualRing
-                fitness={toUnit(match.fitness_score ?? match.match_score)}
-                confidence={toUnit(match.confidence_score ?? match.match_score)}
-                size={64}
-                onClick={() => setRationaleOpen(true)}
-              />
-              <div className="flex flex-col items-start gap-1">
-                {match.band_label && <BandBadge band={match.band_label} />}
-                <button
-                  onClick={() => setRationaleOpen(true)}
-                  className="inline-flex items-center gap-1 text-[11px] font-medium text-secondary hover:underline"
-                >
-                  <Sparkles size={11} /> Why this match?
-                </button>
-              </div>
-            </div>
+      {/* ── Breadcrumb (mirrors the school pages) ── */}
+      <nav className="flex items-center gap-1.5 text-[13px] text-muted-foreground mb-4 flex-wrap" aria-label="Breadcrumb">
+        <button onClick={() => navigate('/s/explore')} className="hover:text-secondary transition-colors">Match</button>
+        <span className="text-muted-foreground" aria-hidden="true">·</span>
+        <Link to={`/s/institutions/${p.institution_id}`} className="hover:text-secondary transition-colors truncate max-w-[28ch]">
+          {instName || 'School'}
+        </Link>
+        <span className="text-muted-foreground" aria-hidden="true">·</span>
+        <span className="text-foreground font-medium truncate max-w-[40ch]" aria-current="page">{p.program_name}</span>
+      </nav>
+
+      {/* ── Hero — campus photo (inherited from the parent institution) fading
+            into the cream page background. No logo, no geo. ── */}
+      <div className="relative rounded-xl overflow-hidden border border-border mb-5 bg-background">
+        {/* Photo banner (raster image) or gradient fallback */}
+        <div className="relative h-52 sm:h-64 md:h-72">
+          {heroPhoto ? (
+            <img src={heroPhoto} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
           ) : (
-            <button
-              onClick={() => navigate('/s/explore')}
-              className="flex items-center gap-2 text-left"
-              title="We haven't computed your match for this program yet."
+            <div className="absolute inset-0 bg-gradient-to-br from-secondary/15 via-muted to-background" />
+          )}
+          {/* Fade to the cream page background at the bottom; soft top scrim for glare. */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                'linear-gradient(to bottom, rgba(10,18,36,0.30) 0%, rgba(10,18,36,0.04) 24%, rgba(10,18,36,0) 44%, hsl(var(--background)) 97%)',
+            }}
+          />
+        </div>
+
+        {/* Identity — overlaps onto the cream gradient base; dark text reads cleanly. */}
+        <div className="relative -mt-20 px-5 sm:px-7 pb-6">
+          {heroEyebrow && <p className="text-eyebrow uppercase text-secondary mb-1.5">{heroEyebrow}</p>}
+
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="min-w-0">
+              <h1 className="text-2xl sm:text-3xl md:text-[2.5rem] font-bold text-foreground leading-[1.08] tracking-tight max-w-[24ch]">
+                {p.program_name}
+              </h1>
+
+              {/* Institution + department line (links to the school; NO geo). */}
+              <div className="flex items-center gap-1.5 mt-2 text-[13px] text-muted-foreground flex-wrap">
+                <Link to={`/s/institutions/${p.institution_id}`} className="text-secondary hover:underline font-medium">
+                  {instName || 'School'}
+                </Link>
+                {p.department && (
+                  <>
+                    <ChevronRight size={12} className="text-muted-foreground/50" aria-hidden="true" />
+                    <span>{p.department}</span>
+                  </>
+                )}
+              </div>
+
+              {/* Headline stats — real fields only, NO location. */}
+              {heroStats.length > 0 && (
+                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-2.5 text-[13px] text-muted-foreground">
+                  {heroStats.map((s, i) => (
+                    <Fragment key={s.label}>
+                      {i > 0 && <span className="text-border" aria-hidden="true">·</span>}
+                      <span><span className="font-semibold text-foreground">{s.value}</span> {s.label}</span>
+                    </Fragment>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Match ring — integrated beside the title (the sole gold accent, §2). */}
+            {hasMatch ? (
+              <div
+                className="flex items-center gap-2.5 flex-shrink-0"
+                title="Fitness is how well this program matches your strategy; confidence is how sure we are given your profile depth."
+              >
+                <DualRing
+                  fitness={toUnit(match.fitness_score ?? match.match_score)}
+                  confidence={toUnit(match.confidence_score ?? match.match_score)}
+                  size={64}
+                  onClick={() => setRationaleOpen(true)}
+                />
+                <div className="flex flex-col items-start gap-1">
+                  {match.band_label && <BandBadge band={match.band_label} />}
+                  <button
+                    onClick={() => setRationaleOpen(true)}
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-secondary hover:underline"
+                  >
+                    <Sparkles size={11} /> Why this match?
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => navigate('/s/explore')}
+                className="flex items-center gap-2 text-left flex-shrink-0"
+                title="We haven't computed your match for this program yet."
+              >
+                <div className="w-11 h-11 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                  <Sparkles size={16} className="text-secondary" />
+                </div>
+                <div className="leading-tight">
+                  <p className="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground/60">Your match</p>
+                  <p className="text-[12px] font-medium text-secondary hover:underline">See my matches</p>
+                </div>
+              </button>
+            )}
+          </div>
+
+          {/* Actions — primary application CTA + Save + Ask counselor + Compare. */}
+          <div className="flex flex-wrap items-center gap-2 mt-5">
+            {existingApp ? (
+              <Button size="sm" variant="secondary" onClick={() => navigate(`/s/applications/${existingApp.id}`)}>
+                <FileText size={14} className="mr-1.5" /> My application
+              </Button>
+            ) : (
+              <Button size="sm" variant="secondary" onClick={() => applyMut.mutate()} disabled={isArchived || applyMut.isPending}>
+                <Send size={14} className="mr-1.5" /> Start application
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant={isSaved ? 'secondary' : 'tertiary'}
+              onClick={() => saveMut.mutate()}
+              disabled={isArchived || saveMut.isPending}
+              aria-pressed={isSaved}
             >
-              <div className="w-11 h-11 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                <Sparkles size={16} className="text-secondary" />
-              </div>
-              <div className="leading-tight">
-                <p className="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground/60">Your match</p>
-                <p className="text-[12px] font-medium text-secondary hover:underline">See my matches</p>
-              </div>
-            </button>
-          )
-        }
-      />
+              {isSaved ? <BookmarkCheck size={14} className="mr-1.5" /> : <Bookmark size={14} className="mr-1.5" />}
+              {isSaved ? 'Saved' : 'Save'}
+            </Button>
+            <Button
+              size="sm"
+              variant="tertiary"
+              onClick={() => askCounselor(`Is ${p.program_name} at ${instName} a good fit for me? Why or why not?`)}
+            >
+              <Sparkles size={14} className="mr-1.5" /> Ask counselor
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleCompare}
+              disabled={isArchived}
+              aria-pressed={compareStore.has(p.id)}
+            >
+              <ArrowRightLeft size={14} className="mr-1.5" />
+              {compareStore.has(p.id) ? 'Comparing' : 'Compare'}
+            </Button>
+          </div>
+        </div>
+      </div>
 
       {/* ── KPI strip — adaptive: picks the 4 most distinctive numbers per program ── */}
       <KeyMetrics

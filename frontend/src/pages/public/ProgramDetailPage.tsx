@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { useParams, Link, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import {
-  GraduationCap, MapPin, Clock, DollarSign, CalendarDays,
-  Users, Globe, ExternalLink, BookOpen, CheckCircle2, ArrowLeft, MessageSquare, Sparkles,
-  Briefcase, TrendingUp,
+  GraduationCap, DollarSign, CalendarDays,
+  Globe, ExternalLink, BookOpen, CheckCircle2, Sparkles,
+  Briefcase, TrendingUp, Trophy, Bookmark, Send,
 } from 'lucide-react'
 import { getProgram } from '../../api/programs'
 import { getPublicInstitution, submitInquiry } from '../../api/institutions'
@@ -162,79 +162,145 @@ export default function ProgramDetailPage() {
     (odn.top_industries?.length ?? 0) > 0 ||
     salaryBands.length > 0
 
+  // ── Hero (mirrors InstitutionDetail / SchoolSubunitPage) ──────────────────
+  // A program has no photo of its own — inherit the parent institution's campus
+  // photo (first raster image in the gallery; logos are SVG → skipped). Falls
+  // back to a clean gradient. No logo, no geo.
+  const heroPhoto = (inst?.media_gallery ?? []).find(u => /\.(jpe?g|png|webp|avif)(\?|$)/i.test(u)) ?? null
+  // Eyebrow: a full degree label ("Master's program"), else the institution name.
+  const degreeEyebrow = DEGREE_EYEBROW[p.degree_type] ?? (inst?.name ? inst.name : null)
+  // Median earnings: prefer a 10-yr earnings figure if the program published one,
+  // else fall back to the normalized median (starting) salary.
+  const rawOutcomes = (p.outcomes_data && typeof p.outcomes_data === 'object' ? p.outcomes_data : {}) as Record<string, any>
+  const medianEarnings =
+    num(rawOutcomes.median_earnings_10yr) ??
+    num(rawOutcomes.median_earnings) ??
+    (odn.median_salary != null ? Number(odn.median_salary) : null)
+  // A single program ranking, if one is published in cost/outcomes blobs.
+  const programRanking = extractRanking(rawOutcomes) ?? extractRanking(cd)
+  // The source string the institution attached to its outcomes blob (cited, never invented).
+  const outcomesSource: string | null =
+    typeof rawOutcomes.source === 'string' && rawOutcomes.source.trim()
+      ? rawOutcomes.source.trim()
+      : typeof rawOutcomes.data_source === 'string' && rawOutcomes.data_source.trim()
+        ? rawOutcomes.data_source.trim()
+        : null
+
+  // Headline stat strip — REAL fields only, no geo. The institution name is a
+  // separate clickable link rendered after the strip.
+  const heroStats: { value: string; label: string }[] = []
+  if (p.acceptance_rate != null) heroStats.push({ value: formatPercent(p.acceptance_rate, p.acceptance_rate < 0.1 ? 1 : 0), label: 'acceptance' })
+  if (effectiveTuition != null) heroStats.push({ value: formatCurrency(effectiveTuition), label: 'tuition' })
+  if (medianEarnings != null) heroStats.push({ value: formatCurrency(medianEarnings), label: 'median earnings' })
+  if (p.duration_months != null) heroStats.push({ value: `${p.duration_months} mo`, label: 'duration' })
+
+  // Report-card "at a glance" row for the Overview tab — same shape as InstitutionDetail.
+  const keyStats: { value: string; label: string; hint?: string }[] = []
+  if (p.acceptance_rate != null) keyStats.push({ value: formatPercent(p.acceptance_rate, p.acceptance_rate < 0.1 ? 1 : 0), label: 'Acceptance rate' })
+  if (effectiveTuition != null) keyStats.push({ value: formatCurrency(effectiveTuition), label: 'Tuition', hint: 'per year' })
+  if (medianEarnings != null) keyStats.push({ value: formatCurrency(medianEarnings), label: 'Median earnings', hint: rawOutcomes.median_earnings_10yr != null ? '10 yrs after entry' : 'starting salary' })
+  if (odn.employment_rate != null) keyStats.push({ value: formatPercent(Number(odn.employment_rate), 0), label: 'Employment rate' })
+
+  // Primary/secondary action targets — students go to the real in-app program page.
+  const primaryHref = isStudent ? `/s/programs/${p.id}` : '/signup?role=student'
+  const saveHref = isStudent ? `/s/programs/${p.id}` : '/login'
+
   return (
     <>
       <div className="max-w-5xl mx-auto px-6 py-8">
-        {inst && (
-          <Link to={`/school/${p.institution_id}`} className="inline-flex items-center gap-1 text-sm text-foreground/70 hover:text-foreground mb-4">
-            <ArrowLeft size={14} /> {inst.name}
-          </Link>
-        )}
+        {/* Breadcrumb — text-driven, no back-arrow (mirrors the school pages). */}
+        <nav className="flex items-center gap-1.5 text-[13px] text-muted-foreground mb-4 flex-wrap" aria-label="Breadcrumb">
+          <Link to="/" className="hover:text-secondary transition-colors">Home</Link>
+          <span className="text-border" aria-hidden="true">·</span>
+          <Link to="/browse" className="hover:text-secondary transition-colors">Browse</Link>
+          {inst && (
+            <>
+              <span className="text-border" aria-hidden="true">·</span>
+              <Link to={`/school/${p.institution_id}`} className="hover:text-secondary transition-colors truncate max-w-[24ch]">{inst.name}</Link>
+            </>
+          )}
+          <span className="text-border" aria-hidden="true">·</span>
+          <span className="text-foreground font-medium truncate max-w-[32ch]" aria-current="page">{p.program_name}</span>
+        </nav>
 
-        <div className="bg-card rounded-lg border border-border p-6 mb-6">
-          <div className="flex items-start justify-between gap-6">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-2xl font-bold text-foreground">{p.program_name}</h1>
-                <Badge variant="info">{DEGREE_LABELS[p.degree_type] || p.degree_type}</Badge>
+        {/* Hero — parent campus photo fading into the cream page background. No logo, no geo. */}
+        <div className="relative rounded-xl overflow-hidden border border-border mb-5 bg-background">
+          {/* Photo banner */}
+          <div className="relative h-44 sm:h-56 md:h-64">
+            {heroPhoto ? (
+              <img src={heroPhoto} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-secondary/15 via-muted to-background" />
+            )}
+            {/* Fade to the cream page background at the bottom; soft top scrim for glare. */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  'linear-gradient(to bottom, rgba(10,18,36,0.30) 0%, rgba(10,18,36,0.04) 24%, rgba(10,18,36,0) 44%, hsl(var(--background)) 97%)',
+              }}
+            />
+          </div>
+
+          {/* Identity — overlaps onto the cream gradient base; dark text reads cleanly. */}
+          <div className="relative -mt-16 px-5 sm:px-7 pb-6">
+            {degreeEyebrow && <p className="text-eyebrow uppercase text-secondary mb-1.5">{degreeEyebrow}</p>}
+            <h1 className="text-2xl sm:text-3xl md:text-[2.5rem] font-bold text-foreground leading-[1.08] tracking-tight max-w-[24ch]">
+              {p.program_name}
+            </h1>
+            {p.department && <p className="text-[13px] text-muted-foreground mt-1">{p.department}</p>}
+
+            {/* Headline stats — no location, per the page spec. */}
+            {heroStats.length > 0 && (
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-2.5 text-[13px] text-muted-foreground">
+                {heroStats.map((s, i) => (
+                  <Fragment key={s.label}>
+                    {i > 0 && <span className="text-border" aria-hidden="true">·</span>}
+                    <span><span className="font-semibold text-foreground">{s.value}</span> {s.label}</span>
+                  </Fragment>
+                ))}
               </div>
-              {p.department && <p className="text-foreground/70 mb-1">{p.department}</p>}
-              {inst && (
-                <Link to={`/school/${p.institution_id}`} className="text-sm text-secondary hover:underline">
-                  {inst.name}
-                </Link>
-              )}
+            )}
 
-              <div className="flex flex-wrap gap-4 mt-4 text-sm text-foreground">
-                {effectiveTuition != null && (
-                  <span className="flex items-center gap-1.5"><DollarSign size={14} /> {formatCurrency(effectiveTuition)}</span>
+            {/* Parent institution link + website (Spec 22 §3). */}
+            {(inst || effectiveDeadline) && (
+              <div className="flex items-center gap-4 mt-2.5 text-[12px] flex-wrap">
+                {inst && (
+                  <Link to={`/school/${p.institution_id}`} className="inline-flex items-center gap-1 text-secondary hover:underline">
+                    <GraduationCap size={12} /> {inst.name}
+                  </Link>
                 )}
-                {p.duration_months != null && (
-                  <span className="flex items-center gap-1.5"><Clock size={14} /> {p.duration_months} months</span>
+                {inst?.website_url && (
+                  <a href={inst.website_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-secondary hover:underline">
+                    <Globe size={12} /> Website <ExternalLink size={11} />
+                  </a>
                 )}
-                {p.acceptance_rate != null && (
-                  <span className="flex items-center gap-1.5"><Users size={14} /> {formatPercent(p.acceptance_rate, 1)} acceptance</span>
-                )}
-                {p.delivery_format && (
-                  <span className="flex items-center gap-1.5"><Globe size={14} /> {DELIVERY_FORMAT_LABELS[p.delivery_format] ?? p.delivery_format}</span>
-                )}
-                {p.campus_setting && (
-                  <span className="flex items-center gap-1.5"><MapPin size={14} /> {CAMPUS_SETTING_LABELS[p.campus_setting] ?? p.campus_setting}</span>
+                {effectiveDeadline && (
+                  <span className="inline-flex items-center gap-1 text-warning font-medium">
+                    <CalendarDays size={12} /> Deadline {formatDate(effectiveDeadline)}
+                  </span>
                 )}
               </div>
+            )}
 
-              {effectiveDeadline && (
-                <div className="flex items-center gap-2 mt-3 text-sm">
-                  <CalendarDays size={14} className="text-warning" />
-                  <span className="text-warning font-medium">Application deadline: {formatDate(effectiveDeadline)}</span>
-                </div>
-              )}
-
-              <Link
-                to={isStudent ? `/s/programs/${p.id}` : '/login'}
-                className="inline-flex items-center gap-2 mt-4 px-3 py-2 rounded-lg border border-secondary/30 bg-secondary/5 text-secondary text-sm font-semibold hover:bg-secondary/10 transition-colors"
-              >
-                <Sparkles size={14} /> {isStudent ? 'See your match' : 'Sign in to see your match'}
+            {/* Actions — primary Apply, then Save / Request info / See-your-match. */}
+            <div className="flex flex-wrap items-center gap-2 mt-4">
+              <Link to={primaryHref}>
+                <Button size="sm">{isStudent ? 'Apply now' : 'Apply now'}</Button>
               </Link>
-            </div>
-
-            <div className="flex flex-col gap-2 shrink-0">
-              <Link to={isStudent ? `/s/programs/${p.id}` : '/signup?role=student'}>
-                <Button className="w-full">Apply Now</Button>
+              <Link to={saveHref}>
+                <Button size="sm" variant="tertiary">
+                  <Bookmark size={14} className="mr-1.5" /> {isStudent ? 'Save program' : 'Sign in to save'}
+                </Button>
               </Link>
-              <Link to={isStudent ? `/s/programs/${p.id}` : '/login'}>
-                <Button variant="secondary" className="w-full">Save Program</Button>
-              </Link>
-              <Button variant="secondary" onClick={() => setShowInquiryModal(true)} className="w-full flex items-center gap-2">
-                <MessageSquare size={14} /> Request Info
+              <Button size="sm" variant="tertiary" onClick={() => setShowInquiryModal(true)}>
+                <Send size={14} className="mr-1.5" /> Request info
               </Button>
-              {inst?.website_url && (
-                <a href={inst.website_url} target="_blank" rel="noopener noreferrer">
-                  <Button variant="ghost" className="w-full flex items-center gap-2">
-                    <Globe size={14} /> Website <ExternalLink size={12} />
-                  </Button>
-                </a>
-              )}
+              <Link to={isStudent ? `/s/programs/${p.id}` : '/login'}>
+                <Button size="sm" variant="ghost">
+                  <Sparkles size={14} className="mr-1.5" /> {isStudent ? 'See your match' : 'Sign in to see your match'}
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -244,23 +310,46 @@ export default function ProgramDetailPage() {
         <div className="mt-6">
           {tab === 'overview' && (
             <div className="space-y-6">
+              {/* Report card — the Niche-style "at a glance" stats, real data only. */}
+              {keyStats.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {keyStats.map(s => (
+                    <Card key={s.label} className="p-4">
+                      <p className="text-[1.9rem] leading-none font-bold text-foreground tracking-tight tabular-nums">{s.value}</p>
+                      <p className="text-[12px] font-medium text-foreground/80 mt-2">{s.label}</p>
+                      {s.hint && <p className="text-[10.5px] text-muted-foreground/70 mt-0.5">{s.hint}</p>}
+                    </Card>
+                  ))}
+                </div>
+              )}
+
+              {programRanking && (
+                <Card className="p-5">
+                  <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Trophy size={15} className="text-secondary" /> Ranking</h2>
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-2xl font-bold text-foreground tabular-nums leading-none">#{programRanking.rank}</span>
+                    <span className="text-sm text-muted-foreground">{programRanking.label}{programRanking.year ? ` · ${programRanking.year}` : ''}</span>
+                  </div>
+                </Card>
+              )}
+
               {p.description_text && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-foreground mb-2">About this program</h3>
-                  <p className="text-sm text-foreground whitespace-pre-wrap">{p.description_text}</p>
+                  <h2 className="font-semibold text-foreground mb-2">About this program</h2>
+                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{p.description_text}</p>
                 </Card>
               )}
 
               {p.who_its_for && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-foreground mb-2">Who it&apos;s for</h3>
+                  <h2 className="font-semibold text-foreground mb-2">Who it&apos;s for</h2>
                   <p className="text-sm text-foreground whitespace-pre-wrap">{p.who_its_for}</p>
                 </Card>
               )}
 
               {(tracksMeta.concentrations.length > 0 || tracksMeta.note || tracksMeta.learning_format) && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-foreground mb-3">Tracks & Structure</h3>
+                  <h2 className="font-semibold text-foreground mb-3">Tracks & Structure</h2>
                   {tracksMeta.concentrations.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-3">
                       {tracksMeta.concentrations.map((t, i) => (
@@ -277,7 +366,7 @@ export default function ProgramDetailPage() {
 
               {highlights.length > 0 && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-foreground mb-3">Highlights</h3>
+                  <h2 className="font-semibold text-foreground mb-3">Highlights</h2>
                   <ul className="space-y-2">
                     {highlights.map((h, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm text-foreground">
@@ -291,7 +380,7 @@ export default function ProgramDetailPage() {
 
               {faculty.length > 0 && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-foreground mb-3">Faculty Contacts</h3>
+                  <h2 className="font-semibold text-foreground mb-3">Faculty Contacts</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {faculty.map((f, i) => (
                       <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
@@ -309,7 +398,7 @@ export default function ProgramDetailPage() {
               )}
 
               <Card className="p-5">
-                <h3 className="text-sm font-semibold text-foreground mb-3">Quick Facts</h3>
+                <h2 className="font-semibold text-foreground mb-3">Quick Facts</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                   <div><span className="text-foreground/70">Degree:</span> <span className="font-medium">{DEGREE_LABELS[p.degree_type] || p.degree_type}</span></div>
                   {p.duration_months && <div><span className="text-foreground/70">Duration:</span> <span className="font-medium">{p.duration_months} months</span></div>}
@@ -326,7 +415,7 @@ export default function ProgramDetailPage() {
             <div className="space-y-6">
               {(effectiveDeadline || p.program_start_date) && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-foreground mb-3">Key Dates</h3>
+                  <h2 className="font-semibold text-foreground mb-3">Key Dates</h2>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     {effectiveDeadline && (
                       <div className="flex items-center gap-2">
@@ -346,7 +435,7 @@ export default function ProgramDetailPage() {
 
               {appMaterials.length > 0 && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-foreground mb-3">Application Materials</h3>
+                  <h2 className="font-semibold text-foreground mb-3">Application Materials</h2>
                   <ul className="space-y-2">
                     {appMaterials.map((req, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm">
@@ -364,7 +453,7 @@ export default function ProgramDetailPage() {
 
               {prerequisites.length > 0 && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-foreground mb-3">Prerequisites</h3>
+                  <h2 className="font-semibold text-foreground mb-3">Prerequisites</h2>
                   <ul className="space-y-2 text-sm">
                     {prerequisites.map((pr, i) => (
                       <li key={i} className="rounded-lg border border-border px-3 py-2">
@@ -384,7 +473,7 @@ export default function ProgramDetailPage() {
               {testPolicy && (
                 <Card className="p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <h3 className="text-sm font-semibold text-foreground">Test Policy</h3>
+                    <h2 className="font-semibold text-foreground">Test Policy</h2>
                     {testPolicy.stance_label && <Badge variant="info" size="sm">{testPolicy.stance_label}</Badge>}
                   </div>
                   <div className="space-y-2 text-sm">
@@ -409,7 +498,7 @@ export default function ProgramDetailPage() {
 
               {recommendations && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-foreground mb-2">Recommendations</h3>
+                  <h2 className="font-semibold text-foreground mb-2">Recommendations</h2>
                   <p className="text-sm text-foreground">
                     {recommendations.required_count > 0
                       ? `${recommendations.required_count} letter${recommendations.required_count === 1 ? '' : 's'} required`
@@ -421,7 +510,7 @@ export default function ProgramDetailPage() {
 
               {admissionTimeline && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-foreground mb-3">Intake Rounds — {admissionTimeline.term}</h3>
+                  <h2 className="font-semibold text-foreground mb-3">Intake Rounds — {admissionTimeline.term}</h2>
                   <div className="space-y-2">
                     {admissionTimeline.rounds.map((round: any, i: number) => (
                       <div key={i} className="p-3 rounded-lg bg-muted/50 border border-border text-sm">
@@ -438,7 +527,7 @@ export default function ProgramDetailPage() {
 
               {p.requirements && Object.keys(p.requirements).length > 0 && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-foreground mb-3">Other Requirements</h3>
+                  <h2 className="font-semibold text-foreground mb-3">Other Requirements</h2>
                   <dl className="space-y-2 text-sm">
                     {Object.entries(p.requirements).map(([k, v]) => (
                       <div key={k} className="flex justify-between border-b border-border pb-2">
@@ -459,7 +548,7 @@ export default function ProgramDetailPage() {
           {tab === 'costs' && (
             <div className="space-y-6">
               <Card className="p-5">
-                <h3 className="text-sm font-semibold text-foreground mb-3">Tuition & Fees</h3>
+                <h2 className="font-semibold text-foreground mb-3">Tuition & Fees</h2>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-foreground/70">Tuition</span>
@@ -476,7 +565,7 @@ export default function ProgramDetailPage() {
 
               {(costBandMin != null || costBandMax != null) && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-foreground mb-2">Estimated Total Cost</h3>
+                  <h2 className="font-semibold text-foreground mb-2">Estimated Total Cost</h2>
                   <p className="text-lg font-semibold text-foreground">
                     {costBandMin != null && costBandMax != null
                       ? `${formatCurrency(costBandMin)} – ${formatCurrency(costBandMax)}`
@@ -487,7 +576,7 @@ export default function ProgramDetailPage() {
 
               {fundingSignals && (
                 <Card className="p-5">
-                  <h3 className="text-sm font-semibold text-foreground mb-3">Funding & Aid Signals</h3>
+                  <h2 className="font-semibold text-foreground mb-3">Funding & Aid Signals</h2>
                   <ul className="space-y-1.5 text-sm text-foreground">
                     {fundingSignals.ta_funded && <li>TA funding available</li>}
                     {fundingSignals.ra_funded && <li>RA funding available</li>}
@@ -518,7 +607,7 @@ export default function ProgramDetailPage() {
                     <Card className="p-5">
                       <div className="flex items-center gap-2 mb-3">
                         <DollarSign size={14} className="text-secondary" />
-                        <h3 className="text-sm font-semibold text-foreground">Salary</h3>
+                        <h2 className="font-semibold text-foreground">Salary</h2>
                       </div>
                       {salaryBands.length > 0 ? (
                         <div className="space-y-2">
@@ -539,7 +628,7 @@ export default function ProgramDetailPage() {
                     <Card className="p-5">
                       <div className="flex items-center gap-2 mb-3">
                         <Briefcase size={14} className="text-secondary" />
-                        <h3 className="text-sm font-semibold text-foreground">Employment & Placement</h3>
+                        <h2 className="font-semibold text-foreground">Employment & Placement</h2>
                       </div>
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         {odn.employment_rate != null && (
@@ -561,11 +650,20 @@ export default function ProgramDetailPage() {
 
                   {(odn.top_employers?.length ?? 0) > 0 && (
                     <Card className="p-5">
-                      <h3 className="text-sm font-semibold text-foreground mb-3">Top Employers</h3>
+                      <h2 className="font-semibold text-foreground mb-3">Top employers</h2>
                       <div className="flex flex-wrap gap-2">
                         {odn.top_employers.map((e: string) => <Badge key={e} variant="neutral" size="sm">{e}</Badge>)}
                       </div>
                     </Card>
+                  )}
+
+                  {/* Cite the source the institution attached — never invented. */}
+                  {(outcomesSource || odn.employment_timeframe) && (
+                    <p className="text-[11px] leading-relaxed text-muted-foreground pt-1">
+                      <span className="font-semibold text-foreground/70">Source:</span>{' '}
+                      {outcomesSource ?? 'Institution-reported outcomes'}
+                      {odn.employment_timeframe ? ` · reported within ${odn.employment_timeframe}` : ''}.
+                    </p>
                   )}
                 </>
               )}
@@ -618,4 +716,47 @@ export default function ProgramDetailPage() {
       </Modal>
     </>
   )
+}
+
+/* ── helpers ─────────────────────────────────────────────────────────────── */
+
+// Full degree label for the hero eyebrow (the constants map gives short forms
+// like "M.S."; the eyebrow wants "Master's program").
+const DEGREE_EYEBROW: Record<string, string> = {
+  bachelors: "Bachelor's program",
+  masters: "Master's program",
+  phd: 'Doctoral program',
+  doctorate: 'Doctoral program',
+  certificate: 'Certificate program',
+  diploma: 'Diploma program',
+  associate: 'Associate program',
+}
+
+function num(v: unknown): number | null {
+  if (v == null || v === '') return null
+  const n = Number(v)
+  return Number.isNaN(n) ? null : n
+}
+
+// Pull a single {rank,label,year} from a JSONB blob, if a real ranking is
+// present. Supports either a top-level `rank`/`ranking` number or a nested
+// `{ <provider>: { rank, year } }` shape. Returns null when nothing is published
+// (never fabricates a ranking).
+function extractRanking(blob: Record<string, any> | null | undefined): { rank: number; label: string; year?: number } | null {
+  if (!blob || typeof blob !== 'object') return null
+  const topRank = num(blob.rank ?? blob.ranking)
+  if (topRank != null) {
+    const label = typeof blob.ranking_label === 'string' ? blob.ranking_label : typeof blob.ranking_source === 'string' ? blob.ranking_source : 'Program ranking'
+    return { rank: topRank, label, year: num(blob.ranking_year ?? blob.year) ?? undefined }
+  }
+  for (const [key, v] of Object.entries(blob)) {
+    if (v && typeof v === 'object' && typeof (v as any).rank === 'number') {
+      return {
+        rank: (v as any).rank,
+        label: key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+        year: num((v as any).year) ?? undefined,
+      }
+    }
+  }
+  return null
 }

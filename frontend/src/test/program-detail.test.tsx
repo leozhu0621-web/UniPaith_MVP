@@ -277,7 +277,7 @@ describe('Spec 11 §10 — ProgramDetailPage integration', () => {
 
   it('renders the program and shows the DualRing match for an authenticated student', async () => {
     renderPage('/s/programs/prog-1?tab=overview')
-    expect(await screen.findByText('Computer Science, M.S.')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Computer Science, M.S.' })).toBeInTheDocument()
     await waitFor(() => expect(screen.getByText(/Fitness · 82%/)).toBeInTheDocument())
   })
 

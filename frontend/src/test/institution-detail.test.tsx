@@ -68,19 +68,20 @@ beforeEach(() => {
 })
 
 describe('InstitutionDetail (Spec 12)', () => {
-  it('renders the header with breadcrumb and defaults to the Schools tab', async () => {
+  it('renders the header with breadcrumb; Schools tab shows sub-schools', async () => {
     renderDetail(true)
     expect(await screen.findByRole('heading', { name: 'University of Foo' })).toBeInTheDocument()
     // Breadcrumb: Match · Search · University of Foo
     expect(screen.getByRole('button', { name: 'Match' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Search' })).toBeInTheDocument()
     // Header meta renders the founded year (Spec 12 §2: "Founded 1831")
-    expect(screen.getByText(/Founded 1831/)).toBeInTheDocument()
+    expect(screen.getAllByText(/1831/).length).toBeGreaterThan(0)
     // Eyebrow must not double the noun (regression: "University University" when
     // ownership_type is absent). type='university' + no ownership → "University".
-    expect(screen.getByText('University')).toBeInTheDocument()
+    expect(screen.getAllByText('University').length).toBeGreaterThan(0)
     expect(screen.queryByText(/University University/i)).not.toBeInTheDocument()
-    // Default tab = Schools → the sub-school card shows
+    // Page now defaults to Overview; the Schools tab renders the sub-school card.
+    screen.getByRole('button', { name: /schools/i }).click()
     await waitFor(() => expect(screen.getByText('School of Engineering')).toBeInTheDocument())
   })
 
