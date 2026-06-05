@@ -724,7 +724,12 @@ function AboutTab({ inst }: { inst: Institution }) {
   const supportKeys = Object.keys(support).filter(k => !isInternal(k))
   const policyKeys = Object.keys(policies).filter(k => !isInternal(k))
   const intlKeys = Object.keys(intl).filter(k => !isInternal(k))
-  const nothing = !inst.campus_description && !inst.description_text && !supportKeys.length && !policyKeys.length && !intlKeys.length
+  const facts = [
+    inst.type ? { label: 'Type', value: titleCase(inst.type) } : null,
+    inst.founded_year != null ? { label: 'Founded', value: String(inst.founded_year) } : null,
+    inst.campus_setting ? { label: 'Campus setting', value: titleCase(inst.campus_setting) } : null,
+  ].filter(Boolean) as { label: string; value: string }[]
+  const nothing = !inst.campus_description && !inst.description_text && !supportKeys.length && !policyKeys.length && !intlKeys.length && !facts.length
 
   if (nothing) {
     return <EmptyBlock icon={BookOpen} title="More about this school is coming" body="Institution details haven't been published yet. Explore the schools and programs in the meantime." />
@@ -732,10 +737,29 @@ function AboutTab({ inst }: { inst: Institution }) {
 
   return (
     <div className="space-y-5">
-      {(inst.campus_description || inst.description_text) && (
+      {inst.description_text && (
         <Card className="p-5">
-          <h2 className="font-semibold text-foreground mb-2">Academic environment</h2>
-          <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{trimSource(inst.campus_description || inst.description_text || '')}</p>
+          <h2 className="font-semibold text-foreground mb-2">About {inst.name}</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{trimSource(inst.description_text)}</p>
+        </Card>
+      )}
+
+      {(facts.length > 0 || inst.campus_description) && (
+        <Card className="p-5">
+          <h2 className="font-semibold text-foreground mb-3">Campus &amp; basics</h2>
+          {facts.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+              {facts.map(f => (
+                <div key={f.label} className="px-3 py-2 rounded-lg bg-muted/60 border border-border/50">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{f.label}</p>
+                  <p className="text-sm font-medium text-foreground mt-0.5">{f.value}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {inst.campus_description && (
+            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{trimSource(inst.campus_description)}</p>
+          )}
         </Card>
       )}
 
