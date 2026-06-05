@@ -194,7 +194,7 @@ export default function ExplorePage() {
   }, [filteredUniList, nearMe])
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-6 max-w-5xl mx-auto">
       {/* Spec 09 §13 H1 + brand framing ("Fit, not fame", Spec 07 §2/§6). */}
       <div className="mb-5">
         <p className="text-eyebrow uppercase text-secondary font-semibold">Match</p>
