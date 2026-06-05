@@ -1,11 +1,11 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Search, GraduationCap, Building2, Compass, Target, FolderKanban, Newspaper,
   User, Bookmark, Settings, CornerDownLeft, ArrowRight,
 } from 'lucide-react'
-import { searchPrograms } from '../../api/programs'
+import { searchPrograms, getProgram } from '../../api/programs'
 import { searchInstitutions } from '../../api/institutions'
 import { useCommandPalette } from '../../stores/command-palette-store'
 import { getRecentPrograms, type RecentProgram } from '../../lib/recentPrograms'
@@ -128,6 +128,7 @@ export function SearchTrigger({ variant = 'bar' }: { variant?: 'bar' | 'icon' })
 export function CommandPalette() {
   const { open, setOpen, toggle } = useCommandPalette()
   const navigate = useNavigate()
+  const qc = useQueryClient()
   const inputRef = useRef<HTMLInputElement>(null)
   const previouslyFocused = useRef<HTMLElement | null>(null)
   const [query, setQuery] = useState('')
@@ -163,15 +164,19 @@ export function CommandPalette() {
   const isFetching = progFetching || instFetching
   const isError = progError || instError
   // Flatten everything into one keyboard-navigable command list.
-  type Cmd = { key: string; section?: string; run: () => void; render: React.ReactNode }
+  type Cmd = { key: string; section?: string; run: () => void; render: React.ReactNode; prefetch?: () => void }
   const commands = useMemo<Cmd[]>(() => {
     const items: ProgramResult[] = data?.items ?? []
     const go = (to: string) => () => { setOpen(false); navigate(to) }
+    // Warm the program-detail cache on hover/arrow so opening is instant.
+    const prefetchProgram = (id: string) => () =>
+      qc.prefetchQuery({ queryKey: ['program', id], queryFn: () => getProgram(id), staleTime: 60_000 })
     if (!searching) {
       const recentCmds: Cmd[] = recents.map((p) => ({
         key: `recent-${p.id}`,
         section: 'Recently viewed',
         run: go(`/s/programs/${p.id}`),
+        prefetch: prefetchProgram(p.id),
         render: <ProgramRow p={p} />,
       }))
       const navCmds: Cmd[] = QUICK_NAV.map((q) => ({
@@ -202,6 +207,7 @@ export function CommandPalette() {
       key: `prog-${p.id}`,
       section: 'Programs',
       run: go(`/s/programs/${p.id}`),
+      prefetch: prefetchProgram(p.id),
       render: <ProgramRow p={p} />,
     }))
     // Escape hatch — always offer a full search on Match.
@@ -220,7 +226,7 @@ export function CommandPalette() {
       ),
     })
     return [...schoolCmds, ...progCmds]
-  }, [searching, data, instData, debounced, navigate, setOpen, recents])
+  }, [searching, data, instData, debounced, navigate, setOpen, recents, qc])
 
   // Reset on open; lock scroll; restore focus on close.
   useEffect(() => {
@@ -239,6 +245,9 @@ export function CommandPalette() {
   }, [open])
 
   useEffect(() => { setActive(0) }, [debounced, searching])
+
+  // Prefetch the active result's detail (hover or arrow) so opening feels instant.
+  useEffect(() => { commands[active]?.prefetch?.() }, [active, commands])
 
   if (!open) return null
 
