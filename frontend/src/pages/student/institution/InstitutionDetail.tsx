@@ -1,4 +1,4 @@
-import { useMemo, useState, type ComponentType } from 'react'
+import { Fragment, useMemo, useState, type ComponentType } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -24,9 +24,9 @@ import Select from '../../../components/ui/Select'
 import Textarea from '../../../components/ui/Textarea'
 import QueryError from '../../../components/ui/QueryError'
 import {
-  Bookmark, BookmarkCheck, MapPin, Globe, Users, Building2, BookOpen,
+  Bookmark, BookmarkCheck, MapPin, Globe, Building2, BookOpen,
   Mail, Phone, CalendarPlus, Check, ChevronDown, X, Search, GraduationCap,
-  Filter, ArrowRight, Calendar, Send, Link2,
+  Filter, ArrowRight, Send, Link2, Award, Trophy,
 } from 'lucide-react'
 import type { Institution, ProgramSummary, InstitutionPost, SchoolSummary } from '../../../types'
 
@@ -232,8 +232,19 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
     )
   }
 
-  const location = [inst.city, inst.region, inst.country].filter(Boolean).join(', ')
   const eyebrow = classifyType(inst)
+  // Hero campus photo — first raster image in the gallery (logos are SVG → skipped).
+  const heroPhoto = (inst.media_gallery ?? []).find(u => /\.(jpe?g|png|webp|avif)(\?|$)/i.test(u)) ?? null
+  const heroOut = (inst.school_outcomes || {}) as Record<string, any>
+  const heroFlag = (heroOut.flagship || {}) as Record<string, any>
+  const heroRd = (inst.ranking_data || {}) as Record<string, any>
+  const heroQs = heroRd.qs_world_university_rankings as { rank?: number; year?: number } | undefined
+  const heroStats: { value: string; label: string }[] = []
+  if (heroQs?.rank != null) heroStats.push({ value: `#${heroQs.rank}`, label: `QS World${heroQs.year ? ` ${heroQs.year}` : ''}` })
+  if (heroOut.admit_rate != null) heroStats.push({ value: `${(heroOut.admit_rate * 100).toFixed(heroOut.admit_rate < 0.1 ? 1 : 0)}%`, label: 'acceptance' })
+  if (inst.founded_year != null) heroStats.push({ value: String(inst.founded_year), label: 'founded' })
+  const heroStudents = heroFlag.enrollment_total ?? inst.student_body_size
+  if (heroStudents != null) heroStats.push({ value: Number(heroStudents).toLocaleString(), label: 'students' })
 
   const TABS: { id: TabId; label: string }[] = [
     { id: 'overview', label: 'Overview' },
@@ -269,79 +280,96 @@ export default function InstitutionDetail({ institutionId, isAuthenticated }: Pr
         <span className="text-foreground font-medium truncate max-w-[40ch]" aria-current="page">{inst.name}</span>
       </nav>
 
-      {/* Header */}
-      <div className="bg-card rounded-xl border border-border p-6 mb-5">
-        <div className="flex items-start gap-4">
-          {/* Text-only monogram tile — brand rule: no logo images (Spec 12 §9) */}
-          <div className="w-16 h-16 rounded-xl bg-muted border border-border/60 flex items-center justify-center flex-shrink-0">
-            <span className="text-secondary font-bold text-xl tracking-tight">{monogram(inst.name)}</span>
-          </div>
-
-          <div className="flex-1 min-w-0">
-            {eyebrow && (
-              <p className="text-eyebrow uppercase text-secondary mb-1">{eyebrow}</p>
-            )}
-            <h1 className="text-2xl font-bold text-foreground leading-tight">{inst.name}</h1>
-            <div className="flex items-center gap-x-3 gap-y-1 mt-1.5 text-[13px] text-muted-foreground flex-wrap">
-              {location && <span className="inline-flex items-center gap-1"><MapPin size={13} /> {location}</span>}
-              {inst.founded_year != null && <span className="inline-flex items-center gap-1"><Calendar size={13} /> Founded {inst.founded_year}</span>}
-              {inst.campus_setting && <span className="inline-flex items-center gap-1"><Building2 size={13} /> {SETTING_LABELS[inst.campus_setting] ?? inst.campus_setting}</span>}
-              {inst.student_body_size != null && <span className="inline-flex items-center gap-1"><Users size={13} /> {inst.student_body_size.toLocaleString()} students</span>}
-            </div>
-
-            {/* Secondary links (Spec 22 §3 — Web presence) */}
-            {(inst.website_url || inst.contact_email || inst.contact_phone || hasSocialLinks(inst.social_links)) && (
-              <div className="flex items-center gap-4 mt-2.5 text-[12px] flex-wrap">
-                {inst.website_url && (
-                  <a href={inst.website_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-secondary hover:underline">
-                    <Globe size={12} /> Website
-                  </a>
-                )}
-                {inst.contact_email && (
-                  <a href={`mailto:${inst.contact_email}`} className="inline-flex items-center gap-1 text-secondary hover:underline">
-                    <Mail size={12} /> Contact
-                  </a>
-                )}
-                {inst.contact_phone && (
-                  <a href={`tel:${inst.contact_phone.replace(/\s/g, '')}`} className="inline-flex items-center gap-1 text-secondary hover:underline">
-                    <Phone size={12} /> {inst.contact_phone}
-                  </a>
-                )}
-                <SocialLinks links={inst.social_links} />
-              </div>
-            )}
-          </div>
+      {/* Hero — campus photo fading into the page background. No logo, no geo. */}
+      <div className="relative rounded-xl overflow-hidden border border-border mb-5 bg-background">
+        {/* Photo banner */}
+        <div className="relative h-52 sm:h-64 md:h-72">
+          {heroPhoto ? (
+            <img src={heroPhoto} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-secondary/15 via-muted to-background" />
+          )}
+          {/* Fade to the cream page background at the bottom; soft top scrim for glare. */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                'linear-gradient(to bottom, rgba(10,18,36,0.30) 0%, rgba(10,18,36,0.04) 24%, rgba(10,18,36,0) 44%, hsl(var(--background)) 97%)',
+            }}
+          />
         </div>
 
-        {/* Actions (Spec 12 §2) */}
-        <div className="flex flex-wrap items-center gap-2 mt-5">
-          <Button
-            size="sm"
-            variant={isSaved ? 'secondary' : 'tertiary'}
-            onClick={onSaveSchool}
-            disabled={followMut.isPending}
-            aria-pressed={isSaved}
-          >
-            {isSaved ? <BookmarkCheck size={14} className="mr-1.5" /> : <Bookmark size={14} className="mr-1.5" />}
-            {isAuthenticated ? (isSaved ? 'Saved' : 'Save school') : 'Sign in to save'}
-          </Button>
-          <Button size="sm" variant="tertiary" onClick={onRequestInfo}>
-            <Send size={14} className="mr-1.5" />
-            Request info
-          </Button>
-          {schoolList.length > 0 ? (
-            <Button size="sm" variant="ghost" onClick={() => setTab('schools')}>
-              View all schools <ArrowRight size={14} className="ml-1" />
+        {/* Identity — overlaps onto the cream gradient base; dark text reads cleanly. */}
+        <div className="relative -mt-20 px-5 sm:px-7 pb-6">
+          {eyebrow && <p className="text-eyebrow uppercase text-secondary mb-1.5">{eyebrow}</p>}
+          <h1 className="text-2xl sm:text-3xl md:text-[2.5rem] font-bold text-foreground leading-[1.08] tracking-tight max-w-[22ch]">
+            {inst.name}
+          </h1>
+
+          {/* Headline stats — no location, per the page spec. */}
+          {heroStats.length > 0 && (
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-2.5 text-[13px] text-muted-foreground">
+              {heroStats.map((s, i) => (
+                <Fragment key={s.label}>
+                  {i > 0 && <span className="text-border" aria-hidden="true">·</span>}
+                  <span><span className="font-semibold text-foreground">{s.value}</span> {s.label}</span>
+                </Fragment>
+              ))}
+            </div>
+          )}
+
+          {/* Web presence (Spec 22 §3) */}
+          {(inst.website_url || inst.contact_email || inst.contact_phone || hasSocialLinks(inst.social_links)) && (
+            <div className="flex items-center gap-4 mt-2.5 text-[12px] flex-wrap">
+              {inst.website_url && (
+                <a href={inst.website_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-secondary hover:underline">
+                  <Globe size={12} /> Website
+                </a>
+              )}
+              {inst.contact_email && (
+                <a href={`mailto:${inst.contact_email}`} className="inline-flex items-center gap-1 text-secondary hover:underline">
+                  <Mail size={12} /> Contact
+                </a>
+              )}
+              {inst.contact_phone && (
+                <a href={`tel:${inst.contact_phone.replace(/\s/g, '')}`} className="inline-flex items-center gap-1 text-secondary hover:underline">
+                  <Phone size={12} /> {inst.contact_phone}
+                </a>
+              )}
+              <SocialLinks links={inst.social_links} />
+            </div>
+          )}
+
+          {/* Actions (Spec 12 §2) */}
+          <div className="flex flex-wrap items-center gap-2 mt-4">
+            <Button
+              size="sm"
+              variant={isSaved ? 'secondary' : 'tertiary'}
+              onClick={onSaveSchool}
+              disabled={followMut.isPending}
+              aria-pressed={isSaved}
+            >
+              {isSaved ? <BookmarkCheck size={14} className="mr-1.5" /> : <Bookmark size={14} className="mr-1.5" />}
+              {isAuthenticated ? (isSaved ? 'Saved' : 'Save school') : 'Sign in to save'}
             </Button>
-          ) : (
-            <Button size="sm" variant="ghost" onClick={() => setTab('programs')}>
-              View all programs at this school <ArrowRight size={14} className="ml-1" />
+            <Button size="sm" variant="tertiary" onClick={onRequestInfo}>
+              <Send size={14} className="mr-1.5" />
+              Request info
             </Button>
+            {schoolList.length > 0 ? (
+              <Button size="sm" variant="ghost" onClick={() => setTab('schools')}>
+                View all schools <ArrowRight size={14} className="ml-1" />
+              </Button>
+            ) : (
+              <Button size="sm" variant="ghost" onClick={() => setTab('programs')}>
+                View all programs at this school <ArrowRight size={14} className="ml-1" />
+              </Button>
+            )}
+          </div>
+          {isAuthenticated && isSaved && (
+            <p className="text-[11.5px] text-muted-foreground/80 mt-2">Following — this school&rsquo;s updates and events show up in Connect.</p>
           )}
         </div>
-        {isAuthenticated && isSaved && (
-          <p className="text-[11.5px] text-muted-foreground/80 mt-2">Following — this school&rsquo;s updates and events show up in Connect.</p>
-        )}
       </div>
 
       {/* Tabs — underline in --accent (cobalt), Spec 12 §9 */}
@@ -516,8 +544,70 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
   const rng = (a: any): string | null =>
     Array.isArray(a) && a[0] != null && a[1] != null ? `${a[0]}–${a[1]}` : null
 
+  // ── Niche-style headline blocks (all grounded in real fields) ─────────────
+  const flag: any = outcomes.flagship || {}
+  const keyStats: { value: string; label: string; hint?: string }[] = []
+  if (admitRate != null) keyStats.push({ value: `${(admitRate * 100).toFixed(admitRate < 0.1 ? 1 : 0)}%`, label: 'Acceptance rate' })
+  if (netPrice != null) keyStats.push({ value: money(netPrice), label: 'Avg net price', hint: 'per year, after aid' })
+  if (earn10 != null) keyStats.push({ value: money(earn10), label: 'Median earnings', hint: '10 yrs after entry' })
+  if (grad4 != null) keyStats.push({ value: pct(grad4), label: 'Graduation rate' })
+  const rankings: { label: string; rank: number; year?: number }[] = []
+  for (const [k, v] of Object.entries(rd)) {
+    if (v && typeof v === 'object' && typeof (v as any).rank === 'number') {
+      rankings.push({ label: rankingLabel(k), rank: (v as any).rank, year: (v as any).year })
+    }
+  }
+  const distinction: { value: string; label: string }[] = []
+  if (flag.nobel_laureates != null) distinction.push({ value: String(flag.nobel_laureates), label: 'Nobel laureates' })
+  if (flag.macarthur_fellows != null) distinction.push({ value: String(flag.macarthur_fellows), label: 'MacArthur fellows' })
+  const enrollTotal = flag.enrollment_total ?? inst.student_body_size
+  if (enrollTotal != null) distinction.push({ value: Number(enrollTotal).toLocaleString(), label: 'Total enrollment' })
+
   return (
     <div className="space-y-5">
+      {/* Key stats — the Niche-style "at a glance" report card. */}
+      {keyStats.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {keyStats.map(s => (
+            <Card key={s.label} className="p-4">
+              <p className="text-[1.9rem] leading-none font-bold text-foreground tracking-tight tabular-nums">{s.value}</p>
+              <p className="text-[12px] font-medium text-foreground/80 mt-2">{s.label}</p>
+              {s.hint && <p className="text-[10.5px] text-muted-foreground/70 mt-0.5">{s.hint}</p>}
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Rankings */}
+      {rankings.length > 0 && (
+        <Card className="p-5">
+          <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Trophy size={15} className="text-secondary" /> Rankings</h2>
+          <div className="space-y-2.5">
+            {rankings.map(r => (
+              <div key={r.label} className="flex items-baseline gap-3">
+                <span className="text-2xl font-bold text-foreground tabular-nums leading-none">#{r.rank}</span>
+                <span className="text-sm text-muted-foreground">{r.label}{r.year ? ` · ${r.year}` : ''}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Distinction (flagship facts) */}
+      {distinction.length > 0 && (
+        <Card className="p-5">
+          <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Award size={15} className="text-secondary" /> Distinction</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {distinction.map(d => <Fact key={d.label} label={d.label} value={d.value} />)}
+          </div>
+          {flag.admissions_cycle && flag.applicants != null && flag.admits != null && (
+            <p className="text-[12px] text-muted-foreground mt-3">
+              {flag.admissions_cycle}: <span className="font-semibold text-foreground">{Number(flag.applicants).toLocaleString()}</span> applied,{' '}
+              <span className="font-semibold text-foreground">{Number(flag.admits).toLocaleString()}</span> admitted.
+            </p>
+          )}
+        </Card>
+      )}
       {inst.description_text && (
         <Card className="p-5">
           <p className="text-sm text-muted-foreground leading-relaxed">{trimSource(inst.description_text)}</p>
@@ -561,8 +651,7 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
       )}
 
       {/* Admissions & test scores (US News / Niche depth). */}
-      {(admitRate != null ||
-        rng(ts.sat_reading_25_75) ||
+      {(rng(ts.sat_reading_25_75) ||
         rng(ts.sat_math_25_75) ||
         rng(ts.act_25_75) ||
         retention != null) && (
@@ -578,15 +667,11 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
         </Card>
       )}
 
-      {(placement != null || grad4 != null || earn10 != null || netPrice != null) && (
+      {placement != null && (
         <Card className="p-5">
-          <h2 className="font-semibold text-foreground mb-1">Outcomes &amp; cost at a glance</h2>
-          <p className="text-[11.5px] text-muted-foreground/70 mb-3">Institution-wide signals — specific program outcomes appear on each program page.</p>
+          <h2 className="font-semibold text-foreground mb-3">First destination</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {placement != null && <Fact label="Placement" value={pct(placement)} hint="employed or continuing ed" />}
-            {grad4 != null && <Fact label="Graduation rate" value={pct(grad4)} />}
-            {earn10 != null && <Fact label="Median earnings (10yr)" value={money(earn10)} />}
-            {netPrice != null && <Fact label="Avg net price / yr" value={money(netPrice)} hint="after aid" />}
+            <Fact label="Placement" value={pct(placement)} hint="employed or continuing ed" />
           </div>
         </Card>
       )}
@@ -997,13 +1082,6 @@ const DEGREE_LABELS: Record<string, string> = {
   masters: "Master's", master: "Master's", doctorate: 'Doctorate', phd: 'PhD', professional: 'Professional',
 }
 
-function monogram(name: string): string {
-  const stop = new Set(['of', 'the', 'and', 'at', 'for', 'de', 'la'])
-  const words = name.split(/\s+/).filter(w => w && !stop.has(w.toLowerCase()))
-  if (words.length === 0) return name.slice(0, 2).toUpperCase()
-  if (words.length === 1) return words[0].slice(0, 2).toUpperCase()
-  return (words[0][0] + words[1][0]).toUpperCase()
-}
 
 function classifyType(inst: Institution): string | null {
   const rd: any = inst.ranking_data || {}
@@ -1033,6 +1111,16 @@ function sizeBandLabel(n?: number | null): string | null {
 function titleCase(s?: string | null): string {
   if (!s) return ''
   return s.split(/[\s_]+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+}
+
+function rankingLabel(key: string): string {
+  const map: Record<string, string> = {
+    qs_world_university_rankings: 'QS World University Rankings',
+    times_higher_education: 'Times Higher Education',
+    us_news_national: 'U.S. News — National Universities',
+    arwu: 'Academic Ranking of World Universities',
+  }
+  return map[key] ?? key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
 
 function pct(v: any): string {
