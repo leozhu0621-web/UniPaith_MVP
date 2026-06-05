@@ -89,7 +89,7 @@ function renderPublic(path = '/program/prog-1') {
 describe('Spec 23 — public program detail (/program/:id)', () => {
   it('renders canonical editor output on Overview', async () => {
     renderPublic()
-    expect(await screen.findByText('Computer Science, M.S.')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Computer Science, M.S.' })).toBeInTheDocument()
     expect(screen.getByText('Tracks & Structure')).toBeInTheDocument()
     expect(screen.getByText('AI')).toBeInTheDocument()
     expect(screen.getByText(/Cohort-based/)).toBeInTheDocument()
@@ -97,7 +97,7 @@ describe('Spec 23 — public program detail (/program/:id)', () => {
 
   it('renders structured admissions on Admissions tab', async () => {
     renderPublic()
-    await screen.findByText('Computer Science, M.S.')
+    await screen.findByRole('heading', { name: 'Computer Science, M.S.' })
     screen.getByText('Admissions').click()
     expect(await screen.findByText('Test Policy')).toBeInTheDocument()
     expect(screen.getByText('Test-optional')).toBeInTheDocument()
@@ -108,7 +108,7 @@ describe('Spec 23 — public program detail (/program/:id)', () => {
 
   it('renders cost band and funding on Costs & Aid tab', async () => {
     renderPublic()
-    await screen.findByText('Computer Science, M.S.')
+    await screen.findByRole('heading', { name: 'Computer Science, M.S.' })
     screen.getByText('Costs & Aid').click()
     expect(await screen.findByText('Funding & Aid Signals')).toBeInTheDocument()
     expect(screen.getByText('TA funding available')).toBeInTheDocument()
@@ -117,7 +117,7 @@ describe('Spec 23 — public program detail (/program/:id)', () => {
 
   it('renders salary bands on Outcomes tab', async () => {
     renderPublic()
-    await screen.findByText('Computer Science, M.S.')
+    await screen.findByRole('heading', { name: 'Computer Science, M.S.' })
     screen.getByText('Outcomes').click()
     expect(await screen.findByText('$80k–$100k')).toBeInTheDocument()
     expect(screen.getByText('Google')).toBeInTheDocument()
