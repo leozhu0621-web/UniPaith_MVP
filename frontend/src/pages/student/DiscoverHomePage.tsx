@@ -240,7 +240,7 @@ export default function DiscoverHomePage() {
   }, [completion, refreshHandoff])
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-4">
+    <div className="p-6 max-w-5xl w-full mx-auto space-y-4">
       <header className="flex items-start justify-between gap-4">
         <div>
           <p className="text-eyebrow text-accent mb-1">Discover</p>
