@@ -3,7 +3,7 @@
  * counselor). No tracks, layers, progress %, or rails: just the conversation.
  * One unified session feeds goals/needs/identity behind the scenes.
  */
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import clsx from 'clsx'
 import { ArrowUp } from 'lucide-react'
@@ -14,6 +14,8 @@ import {
   listSessions,
   startUnifiedSession,
 } from '../../../api/discovery'
+import { getLivingProfile } from '../../../api/livingProfile'
+import type { LivingProfile } from '../../../api/livingProfile'
 import Button from '../../../components/ui/Button'
 import { useAuthStore } from '../../../stores/auth-store'
 import { showToast } from '../../../stores/toast-store'
@@ -23,6 +25,10 @@ import type {
   DiscoverySession,
   DiscoverySessionDetail,
 } from '../../../types'
+import MatchHandoffCard from './MatchHandoffCard'
+import NoticedCard from './NoticedCard'
+import { attachRefs, noticedItemsFromSignals } from './noticed'
+import ProfileDrawer from './ProfileDrawer'
 
 // Counselor-style ways-in for a stuck student — gentle fallbacks, not the
 // primary interaction (Uni leads the conversation).
@@ -55,13 +61,23 @@ function UniBubble({ message }: { message: DiscoveryMessage }) {
   )
 }
 
-export default function UniConversation() {
+export default function UniConversation({
+  profileOpen = false,
+  onProfileOpenChange,
+}: {
+  /** Living-profile drawer open state (the trigger lives in DiscoverHomePage). */
+  profileOpen?: boolean
+  onProfileOpenChange?: (open: boolean) => void
+} = {}) {
   const qc = useQueryClient()
   const user = useAuthStore(s => s.user)
   const firstName = user?.email?.split('@')[0]
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const [draft, setDraft] = useState('')
   const [sessionId, setSessionId] = useState<string | null>(null)
+  // The student can wave off Uni's handoff offer; it re-surfaces after the next
+  // turn (reset in the mutation's onSuccess).
+  const [handoffDismissed, setHandoffDismissed] = useState(false)
 
   // Resolve the active unified (discovery) session, if any.
   const { data: sessions = [], isPending: sessionsLoading } = useQuery<DiscoverySession[]>({
@@ -88,6 +104,14 @@ export default function UniConversation() {
   const messages = useMemo(() => detail?.messages ?? [], [detail?.messages])
   const isEmpty = messages.length === 0
 
+  // The living profile gives the in-thread "Noticed" chips their editable refs
+  // (label → saved goal/need id) and backs the drawer.
+  const { data: livingProfile } = useQuery<LivingProfile>({
+    queryKey: ['discovery', 'livingProfile'],
+    queryFn: getLivingProfile,
+    enabled: !isEmpty,
+  })
+
   const turnMut = useMutation({
     mutationFn: async (content: string) => {
       // Reuse the session already loaded from listSessions before creating a new
@@ -104,9 +128,12 @@ export default function UniConversation() {
     },
     onSuccess: (data: AppendMessageResponse) => {
       setDraft('')
+      setHandoffDismissed(false)
       const sid = data.student_message.session_id
       qc.invalidateQueries({ queryKey: ['discovery', 'session', sid] })
       qc.invalidateQueries({ queryKey: ['discovery', 'completion'] })
+      qc.invalidateQueries({ queryKey: ['discovery', 'handoff'] })
+      qc.invalidateQueries({ queryKey: ['discovery', 'livingProfile'] })
       qc.invalidateQueries({ queryKey: ['goals'] })
       qc.invalidateQueries({ queryKey: ['needs'] })
       qc.invalidateQueries({ queryKey: ['identity'] })
@@ -152,7 +179,20 @@ export default function UniConversation() {
             </div>
           </div>
         ) : (
-          messages.map(m => <UniBubble key={m.id} message={m} />)
+          messages.map(m => {
+            const noticed = attachRefs(
+              noticedItemsFromSignals(m.extracted_signals),
+              livingProfile,
+            )
+            return (
+              <Fragment key={m.id}>
+                <UniBubble message={m} />
+                {noticed.length > 0 && (
+                  <NoticedCard items={noticed} onAdjust={() => onProfileOpenChange?.(true)} />
+                )}
+              </Fragment>
+            )
+          })
         )}
         {turnMut.isPending && (
           <div className="flex justify-start gap-2.5">
@@ -173,6 +213,10 @@ export default function UniConversation() {
               </span>
             </div>
           </div>
+        )}
+
+        {!isEmpty && !handoffDismissed && (
+          <MatchHandoffCard variant="auto" onKeepTalking={() => setHandoffDismissed(true)} />
         )}
       </div>
 
@@ -224,6 +268,15 @@ export default function UniConversation() {
           <ArrowUp size={16} />
         </Button>
       </form>
+
+      <ProfileDrawer
+        isOpen={profileOpen}
+        onClose={() => onProfileOpenChange?.(false)}
+        onAsk={prompt => {
+          onProfileOpenChange?.(false)
+          send(prompt)
+        }}
+      />
     </div>
   )
 }

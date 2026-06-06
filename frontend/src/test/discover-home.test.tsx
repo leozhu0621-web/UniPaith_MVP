@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 
@@ -13,6 +13,22 @@ vi.mock('../api/discovery', () => ({
     student_message: { id: 'm1', session_id: 's1', role: 'student', content: 'hi', created_at: '' },
     assistant_message: null,
   }),
+  getHandoffVerdict: vi.fn().mockResolvedValue({
+    should_handoff: false,
+    handoff_target: null,
+    reason: '',
+    completion: {},
+  }),
+}))
+vi.mock('../api/livingProfile', () => ({
+  getLivingProfile: vi.fn().mockResolvedValue({
+    narrative: 'You light up around hands-on problems.',
+    lightsUp: ['curiosity'],
+    goals: [],
+    needs: [],
+    gaps: [],
+  }),
+  updateSignal: vi.fn(),
 }))
 vi.mock('../stores/auth-store', () => ({
   useAuthStore: (sel: (s: { user: { email: string } }) => unknown) =>
@@ -52,5 +68,13 @@ describe('DiscoverHomePage — Uni redesign', () => {
     renderHome()
     expect(screen.getByText("I'm not sure where to start")).toBeInTheDocument()
     expect(screen.getByText('Could you give an example?')).toBeInTheDocument()
+  })
+
+  it('opens the living-profile drawer from the trigger', async () => {
+    renderHome()
+    await screen.findByText(/I'm Uni/)
+    fireEvent.click(screen.getByText('Your profile'))
+    expect(await screen.findByText('What lights you up')).toBeInTheDocument()
+    expect(screen.getByText(/You light up around hands-on problems/)).toBeInTheDocument()
   })
 })
