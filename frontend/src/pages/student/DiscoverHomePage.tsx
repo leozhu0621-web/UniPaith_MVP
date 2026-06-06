@@ -241,7 +241,7 @@ export default function DiscoverHomePage() {
   }, [completion, refreshHandoff])
 
   return (
-    <div className="p-6 max-w-5xl w-full mx-auto space-y-4">
+    <div className="p-4 max-w-5xl w-full mx-auto space-y-4">
       <PageHeader
         eyebrow="Discover"
         title="Let's figure out what you're looking for"
