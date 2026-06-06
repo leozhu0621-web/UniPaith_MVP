@@ -12,12 +12,32 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Check, Pencil, X } from 'lucide-react'
 
 import { updateSignal } from '../../../api/livingProfile'
+import type { LivingProfile } from '../../../api/livingProfile'
 import { showToast } from '../../../stores/toast-store'
 
 export interface NoticedItem {
   label: string
   /** Present when the signal was saved as an editable goal / need row. */
   ref?: { kind: 'goal' | 'need'; id: string }
+}
+
+/**
+ * Attach editable refs to noticed items by matching their label to a saved goal
+ * or need in the living profile. Unmatched items stay ref-less (read-only chip +
+ * "Adjust in your profile →"). Used to wire the thread's Noticed cards.
+ */
+export function attachRefs(items: NoticedItem[], profile?: LivingProfile | null): NoticedItem[] {
+  if (!profile) return items
+  const norm = (s: string) => s.toLowerCase().trim()
+  const find = (label: string): NoticedItem['ref'] => {
+    const n = norm(label)
+    const g = profile.goals.find(x => norm(x.label) === n)
+    if (g) return { kind: 'goal', id: g.id }
+    const nd = profile.needs.find(x => norm(x.label) === n)
+    if (nd) return { kind: 'need', id: nd.id }
+    return undefined
+  }
+  return items.map(i => (i.ref ? i : { ...i, ref: find(i.label) }))
 }
 
 /** Pull a readable label out of one extracted-signal entry (string or object). */

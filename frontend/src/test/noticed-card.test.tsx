@@ -2,8 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
-import NoticedCard, { noticedItemsFromSignals } from '../pages/student/discover/NoticedCard'
+import NoticedCard, { noticedItemsFromSignals, attachRefs } from '../pages/student/discover/NoticedCard'
 import * as livingProfile from '../api/livingProfile'
+import type { LivingProfile } from '../api/livingProfile'
 
 function renderCard(ui: React.ReactNode) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -27,6 +28,31 @@ describe('noticedItemsFromSignals', () => {
 
   it('returns nothing for null signals', () => {
     expect(noticedItemsFromSignals(null)).toEqual([])
+  })
+})
+
+describe('attachRefs', () => {
+  const profile: LivingProfile = {
+    narrative: null,
+    lightsUp: [],
+    goals: [{ kind: 'goal', id: 'g1', label: 'study marine biology' }],
+    needs: [{ kind: 'need', id: 'n1', label: 'strong financial aid' }],
+    gaps: [],
+  }
+
+  it('matches labels to saved goal/need ids (case-insensitive)', () => {
+    const out = attachRefs(
+      [{ label: 'Study Marine Biology' }, { label: 'strong financial aid' }, { label: 'unmatched' }],
+      profile,
+    )
+    expect(out[0].ref).toEqual({ kind: 'goal', id: 'g1' })
+    expect(out[1].ref).toEqual({ kind: 'need', id: 'n1' })
+    expect(out[2].ref).toBeUndefined()
+  })
+
+  it('is a no-op without a profile', () => {
+    const items = [{ label: 'x' }]
+    expect(attachRefs(items, null)).toEqual(items)
   })
 })
 
