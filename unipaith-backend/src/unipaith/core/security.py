@@ -7,7 +7,7 @@ from jose import JWTError, jwk, jwt
 from pydantic import BaseModel
 
 from unipaith.config import settings
-from unipaith.core.exceptions import BadRequestException
+from unipaith.core.exceptions import UnauthorizedException
 
 _jwks_cache: dict[str, Any] = {}
 _jwks_fetched_at: float = 0
@@ -72,11 +72,11 @@ def _verify_dev_token(token: str) -> CognitoClaims:
     """Parse dev bypass token format: dev:<user_id>:<role>"""
     parts = token.split(":")
     if len(parts) != 3 or parts[0] != "dev":
-        raise BadRequestException("Invalid dev token format. Expected dev:<user_id>:<role>")
+        raise UnauthorizedException("Invalid dev token format. Expected dev:<user_id>:<role>")
     try:
         uuid.UUID(parts[1])
     except ValueError:
-        raise BadRequestException("Invalid user_id in dev token")  # noqa: B904
+        raise UnauthorizedException("Invalid user_id in dev token")  # noqa: B904
     return CognitoClaims(sub=parts[1], email=f"dev-{parts[1][:8]}@dev.local", role=parts[2])
 
 
@@ -94,7 +94,7 @@ async def verify_token(token: str) -> CognitoClaims:
                 key = jwk.construct(k)
                 break
         if key is None:
-            raise BadRequestException("Token key not found in JWKS")
+            raise UnauthorizedException("Token key not found in JWKS")
 
         issuer = (
             f"https://cognito-idp.{settings.aws_region}.amazonaws.com"
@@ -113,4 +113,7 @@ async def verify_token(token: str) -> CognitoClaims:
             role=payload.get("custom:role", "student"),
         )
     except JWTError as e:
-        raise BadRequestException(f"Invalid token: {e}") from e
+        # Expired / bad-signature / wrong-audience → 401 (NOT 400) so the web
+        # client's interceptor refreshes the token and retries instead of
+        # failing every call until manual re-login. See core/exceptions.py.
+        raise UnauthorizedException(f"Invalid token: {e}") from e
