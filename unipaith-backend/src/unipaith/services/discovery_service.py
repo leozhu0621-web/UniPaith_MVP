@@ -994,6 +994,15 @@ class DiscoveryService:
         }
         for track, layer, max_pct in rows:
             value = max_pct or Decimal("0")
+            if track == "discovery":
+                # Unified Uni conversation covers self/goals/needs in one
+                # session; its completion_pct is the coverage across all three,
+                # so it must feed every legacy track for the progress bars and
+                # the handoff gate (otherwise unified-only students show 0%).
+                for key in ("profile", "goals", "needs"):
+                    if value > out[key]:
+                        out[key] = value
+                continue
             if track in out and value > out[track]:
                 out[track] = value
             if track == "profile" and layer == "identity" and value > out["identity"]:

@@ -15,7 +15,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-DiscoveryTrack = Literal["profile", "goals", "needs"]
+DiscoveryTrack = Literal["profile", "goals", "needs", "discovery"]
 DiscoveryLayer = Literal["basic", "personality", "identity"]
 DiscoveryStatus = Literal["active", "completed", "abandoned"]
 DiscoveryRole = Literal["student", "assistant", "system"]
