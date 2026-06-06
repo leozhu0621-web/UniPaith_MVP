@@ -612,7 +612,10 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
     # unreferenced, otherwise unpublish so the catalog is clean without breaking
     # any application/match rows that point at them.
     for p in session.scalars(select(Program).where(Program.institution_id == inst.id)):
-        if (p.slug or "") in canonical:
+        # Only reconcile programs that carry a slug not in the canonical set.
+        # Slug-less programs were never part of the canonical catalog and may be
+        # valid published rows, so leave them untouched.
+        if not p.slug or p.slug in canonical:
             continue
         if _program_has_dependents(session, p.id):
             p.is_published = False
