@@ -110,6 +110,42 @@ export async function streamDiscoveryMessage(
   let buffer = ''
   let gotStudentEcho = false
 
+  const handleFrame = (frame: string) => {
+    let event = 'message'
+    const dataLines: string[] = []
+    for (const line of frame.split('\n')) {
+      if (line.startsWith('event:')) event = line.slice(6).trim()
+      else if (line.startsWith('data:')) dataLines.push(line.slice(5).replace(/^ /, ''))
+    }
+    let data: Record<string, unknown> = {}
+    const raw = dataLines.join('\n')
+    if (raw) {
+      try {
+        data = JSON.parse(raw)
+      } catch {
+        data = {}
+      }
+    }
+    switch (event) {
+      case 'student_message':
+        gotStudentEcho = true
+        handlers.onStudentMessage?.(data as unknown as DiscoveryMessage)
+        break
+      case 'delta':
+        if (typeof data.text === 'string') handlers.onDelta?.(data.text)
+        break
+      case 'assistant_message':
+        handlers.onAssistantMessage?.(data as unknown as DiscoveryMessage)
+        break
+      case 'error':
+        handlers.onError?.(typeof data.message === 'string' ? data.message : 'stream error')
+        break
+      case 'done':
+        handlers.onDone?.()
+        break
+    }
+  }
+
   // SSE frames are separated by a blank line; each frame has `event:`/`data:`.
   for (;;) {
     const { done, value } = await reader.read()
@@ -119,41 +155,15 @@ export async function streamDiscoveryMessage(
     while ((sep = buffer.indexOf('\n\n')) !== -1) {
       const frame = buffer.slice(0, sep)
       buffer = buffer.slice(sep + 2)
-      let event = 'message'
-      const dataLines: string[] = []
-      for (const line of frame.split('\n')) {
-        if (line.startsWith('event:')) event = line.slice(6).trim()
-        else if (line.startsWith('data:')) dataLines.push(line.slice(5).replace(/^ /, ''))
-      }
-      let data: Record<string, unknown> = {}
-      const raw = dataLines.join('\n')
-      if (raw) {
-        try {
-          data = JSON.parse(raw)
-        } catch {
-          data = {}
-        }
-      }
-      switch (event) {
-        case 'student_message':
-          gotStudentEcho = true
-          handlers.onStudentMessage?.(data as unknown as DiscoveryMessage)
-          break
-        case 'delta':
-          if (typeof data.text === 'string') handlers.onDelta?.(data.text)
-          break
-        case 'assistant_message':
-          handlers.onAssistantMessage?.(data as unknown as DiscoveryMessage)
-          break
-        case 'error':
-          handlers.onError?.(typeof data.message === 'string' ? data.message : 'stream error')
-          break
-        case 'done':
-          handlers.onDone?.()
-          break
-      }
+      handleFrame(frame)
     }
   }
+
+  // Flush any final frame that arrived without a trailing blank line — SSE
+  // servers commonly send the last `done`/`assistant_message` event right
+  // before closing the connection, so it must still run its handler.
+  buffer += decoder.decode()
+  if (buffer.trim()) handleFrame(buffer)
   return { gotStudentEcho }
 }
 

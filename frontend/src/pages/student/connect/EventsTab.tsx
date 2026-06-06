@@ -1,7 +1,7 @@
 // Connect → Events (Spec 20 §5). Upcoming | Past | My RSVPs; RSVP / waitlist;
 // add-to-calendar; detail sheet with meeting-link reveal near start.
 // Brand: cobalt CTAs; GOLD reserved for the RSVP-confirmed state (§10).
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   CalendarPlus, Clock, ExternalLink, MapPin, Sparkles, Users, Video,
@@ -35,8 +35,22 @@ function fmtDate(iso: string) {
   })
 }
 
+function useIsMobile() {
+  const [mobile, setMobile] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches,
+  )
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639px)')
+    const onChange = () => setMobile(mq.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+  return mobile
+}
+
 export default function EventsTab() {
   const qc = useQueryClient()
+  const isMobile = useIsMobile()
   const [scope, setScope] = useState<Scope>('upcoming')
   const [detail, setDetail] = useState<ConnectEvent | null>(null)
 
@@ -108,7 +122,7 @@ export default function EventsTab() {
           isOpen
           onClose={() => setDetail(null)}
           title={detail.event_name}
-          side="right"
+          side={isMobile ? 'bottom' : 'right'}
           footer={
             <div className="flex items-center gap-2">
               <RsvpButton

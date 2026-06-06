@@ -63,6 +63,31 @@ function daysUntil(deadline?: string | null): number | null {
   return Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000)
 }
 
+/**
+ * Reach / target / safer admission band for an application — mirrors the backend
+ * `match_banding.classify_band` (Spec 09 §6). Banding is about admission
+ * difficulty (program selectivity vs the student's tolerance), NOT the
+ * fitness-guardrail `fit_band` (low/medium/high). Applications don't carry the
+ * student's selectivity tolerance, so we use the neutral 0.5 default and fall
+ * back to fitness-only thresholds when the program has no acceptance-rate signal.
+ */
+function admissionBand(app: Application): 'reach' | 'target' | 'safer' | null {
+  const rawFitness = app.fitness_score ?? app.match_score
+  if (rawFitness == null) return null
+  const fitness = Math.max(0, Math.min(1, Number(rawFitness)))
+  const acceptance = app.program?.acceptance_rate
+  if (acceptance == null) {
+    if (fitness >= 0.75) return 'safer'
+    if (fitness >= 0.65) return 'target'
+    return 'reach'
+  }
+  const selectivity = Math.max(0, Math.min(1, 1 - Number(acceptance)))
+  const gap = selectivity - 0.5 // tolerance default (no weight_ranking on apps)
+  if (gap > 0.12) return 'reach'
+  if (gap < -0.12) return 'safer'
+  return 'target'
+}
+
 /** Human "Next: <action>" string for a row (spec 15 §2). */
 function nextAction(app: Application): string {
   const b = bucketOf(app)
@@ -171,10 +196,7 @@ export default function ApplicationsPage() {
     if (statusFilter !== 'all') list = list.filter(a => bucketOf(a) === statusFilter)
     if (institution !== 'all') list = list.filter(a => a.program?.institution_name === institution)
     if (priorityFilter !== 'all') {
-      // Map reach/target/safer to fit_band values (low/medium/high).
-      const bandMap: Record<string, string> = { reach: 'low', target: 'medium', safer: 'high' }
-      const band = bandMap[priorityFilter]
-      list = list.filter(a => a.fit_band === band)
+      list = list.filter(a => admissionBand(a) === priorityFilter)
     }
     if (deadlineWindow !== 'all') {
       list = list.filter(a => {

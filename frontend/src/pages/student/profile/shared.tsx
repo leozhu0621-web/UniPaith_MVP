@@ -252,16 +252,20 @@ export function CompletionRing({
   size = 64,
   stroke = 6,
   label = 'Complete',
+  loading = false,
 }: {
   value: number
   size?: number
   stroke?: number
   label?: string
+  loading?: boolean
 }) {
   const v = Math.max(0, Math.min(100, value))
   const r = (size - stroke) / 2
   const c = 2 * Math.PI * r
-  const offset = c - (v / 100) * c
+  // While the profile is still loading, `value` is a placeholder 0 — keep the
+  // arc empty and show a dash instead of a misleading "0%".
+  const offset = loading ? c : c - (v / 100) * c
   return (
     <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90" viewBox={`0 0 ${size} ${size}`}>
@@ -281,7 +285,7 @@ export function CompletionRing({
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
         <span className="font-bold text-foreground" style={{ fontSize: size * 0.26 }}>
-          {Math.round(v)}%
+          {loading ? '—' : `${Math.round(v)}%`}
         </span>
         {label && size >= 72 && (
           <span className="text-[10px] text-muted-foreground mt-0.5">{label}</span>

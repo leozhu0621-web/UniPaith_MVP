@@ -92,7 +92,7 @@ export default function ProfilePage() {
       <div className="flex items-center gap-4 mb-6">
         {/* Finding 3: don't show 0% during load — render the ring dimmed */}
         <div className={isLoading ? 'opacity-30' : undefined}>
-          <CompletionRing value={isLoading ? overall : overall} size={64} />
+          <CompletionRing value={overall} size={64} loading={isLoading} />
         </div>
         <div>
           <p className="up-eyebrow">Profile</p>
