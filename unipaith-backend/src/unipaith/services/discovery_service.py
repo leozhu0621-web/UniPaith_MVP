@@ -103,6 +103,27 @@ class DiscoveryService:
         await self.db.refresh(session)
         return session
 
+    async def start_unified_session(self, user_id: UUID) -> DiscoverySession:
+        """Start (or resume) the unified, track-less Uni conversation. There is
+        only ever one active unified session per student, so reuse an existing
+        active `discovery` session when present; otherwise create one. The
+        extractor is content-based, so a single conversation populates
+        goals / needs / identity by what the student says — no track to pick."""
+        student_id = await self._profile_id_for_user(user_id)
+        existing = await self.db.execute(
+            select(DiscoverySession)
+            .where(
+                DiscoverySession.student_id == student_id,
+                DiscoverySession.track == "discovery",
+                DiscoverySession.status == "active",
+            )
+            .order_by(DiscoverySession.started_at.desc())
+        )
+        session = existing.scalars().first()
+        if session is not None:
+            return session
+        return await self.start_session(user_id, track="discovery", layer=None)
+
     async def list_sessions(
         self,
         user_id: UUID,
@@ -304,6 +325,36 @@ class DiscoveryService:
                     snapshot=snapshot,
                 )
                 session.completion_pct = verdict.completion_pct
+            elif session.track == "discovery":
+                # Unified conversation — the extractor already populated all
+                # signal types by content; combine the three validators so
+                # completion reflects coverage across self/goals/needs and Uni
+                # is steered toward the least-covered area next.
+                from unipaith.ai.state import LayerVerdict
+
+                parts = [
+                    default_validator.validate(layer="basic", snapshot=snapshot),
+                    default_validator.validate_track(track="goals", snapshot=snapshot),
+                    default_validator.validate_track(track="needs", snapshot=snapshot),
+                ]
+                avg = sum((p.completion_pct for p in parts), Decimal("0")) / Decimal(len(parts))
+                weakest = min(parts, key=lambda p: p.completion_pct)
+                verdict = LayerVerdict(
+                    layer_complete=all(p.layer_complete for p in parts),
+                    completion_pct=avg,
+                    missing_signals=[s for p in parts for s in p.missing_signals],
+                    next_probe_hint=weakest.next_probe_hint,
+                )
+                session.completion_pct = avg
+                # Persist the per-track split so the handoff gate sees real
+                # per-track gaps instead of the masking average. parts order is
+                # [basic→profile, goals, needs]. Floats: asyncpg's JSON codec
+                # doesn't handle Decimal.
+                session.completion_breakdown = {
+                    "profile": float(parts[0].completion_pct),
+                    "goals": float(parts[1].completion_pct),
+                    "needs": float(parts[2].completion_pct),
+                }
 
             # 4b. Phase B1 — fire the feature emitter on completion.
             # Best-effort: errors here never fail the turn. The matcher
@@ -692,6 +743,30 @@ class DiscoveryService:
                     snapshot=snapshot,
                 )
                 session.completion_pct = verdict.completion_pct
+            elif session.track == "discovery":
+                from unipaith.ai.state import LayerVerdict
+
+                parts = [
+                    default_validator.validate(layer="basic", snapshot=snapshot),
+                    default_validator.validate_track(track="goals", snapshot=snapshot),
+                    default_validator.validate_track(track="needs", snapshot=snapshot),
+                ]
+                avg = sum((p.completion_pct for p in parts), Decimal("0")) / Decimal(len(parts))
+                weakest = min(parts, key=lambda p: p.completion_pct)
+                verdict = LayerVerdict(
+                    layer_complete=all(p.layer_complete for p in parts),
+                    completion_pct=avg,
+                    missing_signals=[s for p in parts for s in p.missing_signals],
+                    next_probe_hint=weakest.next_probe_hint,
+                )
+                session.completion_pct = avg
+                # See append_message: persist the per-track split for the
+                # handoff gate (parts order is [basic→profile, goals, needs]).
+                session.completion_breakdown = {
+                    "profile": float(parts[0].completion_pct),
+                    "goals": float(parts[1].completion_pct),
+                    "needs": float(parts[2].completion_pct),
+                }
 
             history_msgs = await self._load_message_history(session.id)
             cross_track = await self._cross_track_summary(
@@ -932,13 +1007,12 @@ class DiscoveryService:
             select(
                 DiscoverySession.track,
                 DiscoverySession.layer,
-                func.max(DiscoverySession.completion_pct).label("max_pct"),
-            )
-            .where(
+                DiscoverySession.completion_pct,
+                DiscoverySession.completion_breakdown,
+            ).where(
                 DiscoverySession.student_id == student_id,
                 DiscoverySession.status != "abandoned",
             )
-            .group_by(DiscoverySession.track, DiscoverySession.layer)
         )
         rows = result.all()
 
@@ -948,8 +1022,21 @@ class DiscoveryService:
             "needs": Decimal("0"),
             "identity": Decimal("0"),
         }
-        for track, layer, max_pct in rows:
-            value = max_pct or Decimal("0")
+        for track, layer, pct, breakdown in rows:
+            value = pct or Decimal("0")
+            if track == "discovery":
+                # Unified Uni conversation covers self/goals/needs in one
+                # session. completion_pct is the masking average, so feed each
+                # legacy track its own value from completion_breakdown — the
+                # handoff gate must see a weak track, not just the mean. Legacy
+                # rows without a breakdown fall back to the average.
+                bd = breakdown or {}
+                for key in ("profile", "goals", "needs"):
+                    sub = bd.get(key)
+                    sub_val = Decimal(str(sub)) if sub is not None else value
+                    if sub_val > out[key]:
+                        out[key] = sub_val
+                continue
             if track in out and value > out[track]:
                 out[track] = value
             if track == "profile" and layer == "identity" and value > out["identity"]:
@@ -992,6 +1079,10 @@ _RULE_BASED_OPENERS: dict[tuple[str, str | None], str] = {
     ("profile", "identity"): "What's a value of yours that's been tested recently?",
     ("goals", None): "What does success look like a year after you finish?",
     ("needs", None): "What's one thing you can't do without in a school environment?",
+    (
+        "discovery",
+        None,
+    ): "Thinking back over this past year, when was a moment you felt really absorbed?",
 }
 
 

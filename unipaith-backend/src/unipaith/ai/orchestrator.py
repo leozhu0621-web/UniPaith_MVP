@@ -62,18 +62,24 @@ _DISCOVERY_PROMPT_TEXT = _load_prompt("orchestrator_discovery.md")
 # agent is steered by the exact standard it is graded against — one source of
 # truth, no drift.
 _CONSTITUTION_TEXT = _load_prompt("_shared/constitution_student.md")
+# The Uni persona + counselor playbook. Loaded first so it frames the whole
+# system prompt — the agent IS Uni, a real college counselor, before any
+# track/framework detail.
+_UNI_TEXT = _load_prompt("_shared/uni_counselor.md")
 
 
 def _build_discovery_system_prompt() -> str:
-    """Concatenate the discovery prompt, the shared frameworks, and the
-    behavior constitution.
+    """Concatenate the Uni persona/playbook, the discovery prompt, the shared
+    frameworks, and the behavior constitution.
 
-    Frameworks live where the prompt references them; the constitution (spec
-    61 §3) is appended last. All three sit inside the single cached system
-    block — no extra cache breakpoint — so the 1h cache keeps hitting and the
-    agent reads the same versioned rubric the judge grades it on.
+    Uni leads (the agent is a real college counselor first). Frameworks live
+    where the prompt references them; the constitution (spec 61 §3) is appended
+    last. All sit inside the single cached system block — no extra cache
+    breakpoint — so the 1h cache keeps hitting and the agent reads the same
+    versioned rubric the judge grades it on.
     """
     return (
+        f"{_UNI_TEXT}\n\n---\n\n"
         f"{_DISCOVERY_PROMPT_TEXT}\n\n---\n\n"
         f"# Frameworks reference\n\n{_FRAMEWORKS_TEXT}\n\n---\n\n"
         f"{_CONSTITUTION_TEXT}"
@@ -260,6 +266,21 @@ class Orchestrator:
         )
         missing = ", ".join(verdict.missing_signals) if verdict and verdict.missing_signals else "—"
         cross_track = ctx.cross_track_summary or "(no other tracks started yet)"
+        if ctx.track == "discovery":
+            # Unified Uni conversation — never push a track menu at the model.
+            return (
+                "## Current state\n\n"
+                "You are in one open discovery conversation with this student. "
+                "There are no tracks to pick — explore whatever they open up, and over "
+                "time naturally cover who they are, what they want, and what they need.\n"
+                f"- Completion so far: {ctx.completion_pct:.0%}\n"
+                f"- Still useful to learn: {missing}\n"
+                f"- A possible next probe: {next_probe}\n\n"
+                "## What we already know about this student\n\n"
+                f"{ctx.known_profile_summary or '(nothing yet)'}\n\n"
+                "## Recently captured signals (this session)\n\n"
+                f"{ctx.recent_signals_summary or '(none yet)'}"
+            )
         return (
             f"## Current state\n\n"
             f"- Track: {ctx.track}\n"
