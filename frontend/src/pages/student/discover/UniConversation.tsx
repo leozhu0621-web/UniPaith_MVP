@@ -149,9 +149,20 @@ export default function UniConversation({
 
   const send = (content: string) => {
     const text = content.trim()
+    if (!text) return
     // Wait for the sessions query to settle so we don't spawn a duplicate
-    // session while an existing one is still loading.
-    if (!text || turnMut.isPending || sessionsLoading) return
+    // session while an existing one is still loading. Surface a toast instead of
+    // dropping the message silently (e.g. a profile-drawer gap invitation tapped
+    // while Uni is still replying), so it never looks accepted-but-ignored.
+    if (turnMut.isPending || sessionsLoading) {
+      showToast(
+        turnMut.isPending
+          ? 'Uni is still replying — try again in a moment.'
+          : 'One moment — still getting set up…',
+        'info',
+      )
+      return
+    }
     turnMut.mutate(text)
   }
 

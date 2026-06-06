@@ -95,6 +95,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           }
         })()
 
+    // Drop any cached inline "Noticed" edits from a prior account on this SPA
+    // session so the new user can't inherit stale signal→row links.
+    clearSignalEdits()
     set({
       accessToken: data.access_token,
       refreshToken: data.refresh_token ?? null,
@@ -126,6 +129,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
       : null
 
+    clearSignalEdits()
     set({
       accessToken: data.access_token,
       refreshToken: data.refresh_token ?? null,
@@ -148,6 +152,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
       : null
 
+    clearSignalEdits()
     set({
       accessToken: data.access_token,
       refreshToken: data.refresh_token ?? null,
