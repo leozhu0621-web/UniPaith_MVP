@@ -944,6 +944,16 @@ def _apply_programs(session: Session, inst: Institution, school_by_name: dict[st
         p.is_published = True
         p.catalog_source = "curated"
         p.delivery_format = spec.get("delivery_format", "in_person")
+        # Tuition: undergrads pay MIT's single published rate; PhDs are funded (0).
+        # Master's / certificates vary too much to assert per program → leave null.
+        if spec.get("tuition") is not None:
+            p.tuition = spec["tuition"]
+        elif spec["degree_type"] == "bachelors":
+            p.tuition = 64730
+        elif spec["degree_type"] == "phd":
+            p.tuition = 0
+        else:
+            p.tuition = None
     session.flush()
     # Reconcile legacy MIT programs (slug not in the canonical set): delete when
     # unreferenced, otherwise unpublish so the catalog is clean without breaking

@@ -158,13 +158,24 @@ export default function ProgramCard({ program, saved, match, comparing, onSave, 
         )}
       </div>
 
-      {/* ── Stats grid (2×2, neutral editorial tiles) ── */}
-      <div className="px-4 pt-3 pb-3 grid grid-cols-2 gap-1.5">
-        <StatTile label="Acceptance" value={acceptPct != null ? `${acceptPct}%` : '—'} icon={Percent} />
-        <StatTile label="Tuition / yr" value={program.tuition != null ? formatCurrency(program.tuition) : '—'} icon={DollarSign} />
-        <StatTile label="Avg salary" value={program.median_salary != null ? formatCurrency(program.median_salary) : '—'} icon={TrendingUp} />
-        <StatTile label="Grad rate" value={gradPct != null ? `${gradPct}%` : '—'} icon={GraduationCap} />
-      </div>
+      {/* ── Stats grid — only tiles with real data (no empty "—" placeholders) ── */}
+      {(() => {
+        const tiles: { label: string; value: string; icon: typeof Percent }[] = []
+        if (acceptPct != null) tiles.push({ label: 'Acceptance', value: `${acceptPct}%`, icon: Percent })
+        if (program.tuition != null)
+          tiles.push({ label: 'Tuition / yr', value: program.tuition === 0 ? 'Funded' : formatCurrency(program.tuition), icon: DollarSign })
+        if (program.median_salary != null)
+          tiles.push({ label: 'Avg salary', value: formatCurrency(program.median_salary), icon: TrendingUp })
+        if (gradPct != null) tiles.push({ label: 'Grad rate', value: `${gradPct}%`, icon: GraduationCap })
+        if (!tiles.length) return null
+        return (
+          <div className="px-4 pt-3 pb-3 grid grid-cols-2 gap-1.5">
+            {tiles.map(t => (
+              <StatTile key={t.label} label={t.label} value={t.value} icon={t.icon} />
+            ))}
+          </div>
+        )
+      })()}
 
       {/* ── Actions ── */}
       <div className="flex items-stretch border-t border-border mt-auto">
