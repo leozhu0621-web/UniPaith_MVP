@@ -560,6 +560,8 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
   const recognition: { value: string; label: string }[] = []
   if (flag.nobel_laureates != null) recognition.push({ value: String(flag.nobel_laureates), label: 'Nobel laureates' })
   if (flag.macarthur_fellows != null) recognition.push({ value: String(flag.macarthur_fellows), label: 'MacArthur Fellows' })
+  if (flag.national_medal_science != null) recognition.push({ value: String(flag.national_medal_science), label: 'National Medal of Science' })
+  if (flag.national_medal_tech != null) recognition.push({ value: String(flag.national_medal_tech), label: 'National Medal of Technology' })
   const enrollTotal = flag.enrollment_total ?? inst.student_body_size
   const gradCount =
     enrollTotal != null && inst.student_body_size != null && enrollTotal > inst.student_body_size
@@ -582,6 +584,14 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
         (s: any) => typeof s?.source === 'string' && s.source.toLowerCase().includes('scorecard'),
       )
     : undefined
+  const scale: any = outcomes.scale || {}
+  const scaleStats: { value: string; label: string }[] = []
+  if (scale.faculty_count != null) scaleStats.push({ value: Number(scale.faculty_count).toLocaleString(), label: 'Faculty' })
+  if (scale.student_faculty_ratio) scaleStats.push({ value: String(scale.student_faculty_ratio), label: 'Student–faculty ratio' })
+  if (scale.research_centers != null) scaleStats.push({ value: `${scale.research_centers}+`, label: 'Research centers & labs' })
+  if (scale.endowment_usd != null) scaleStats.push({ value: `$${(scale.endowment_usd / 1e9).toFixed(1)}B`, label: 'Endowment' })
+  if (scale.campus_acres != null) scaleStats.push({ value: `${Number(scale.campus_acres).toLocaleString()} acres`, label: 'Campus' })
+  if (scale.undergrad_majors != null) scaleStats.push({ value: String(scale.undergrad_majors), label: 'Undergraduate majors' })
 
   return (
     <div className="space-y-5">
@@ -654,6 +664,9 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
                 <div>
                   <p className="text-2xl font-bold text-foreground tabular-nums leading-none">{money(netPrice)}</p>
                   <p className="text-[12px] text-muted-foreground mt-1">Average net price — what families actually pay per year after aid.</p>
+                  {aid.cost_of_attendance != null && (
+                    <p className="text-[11.5px] text-muted-foreground/70 mt-1">Sticker cost of attendance {money(aid.cost_of_attendance)}/yr before aid.</p>
+                  )}
                 </div>
               )}
               {aid.median_debt_completers != null && (
@@ -665,6 +678,13 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
               {aid.federal_loan_rate != null && <StatBar label="Federal loan recipients" pct={aid.federal_loan_rate} />}
             </div>
           </div>
+          {(aid.tuition_free_rate != null || aid.no_loan_debt_rate != null || aid.median_scholarship != null) && (
+            <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-3 border-t border-border/60 pt-4">
+              {aid.tuition_free_rate != null && <Fact label="Attend tuition-free" value={pct(aid.tuition_free_rate)} />}
+              {aid.no_loan_debt_rate != null && <Fact label="Graduate debt-free" value={pct(aid.no_loan_debt_rate)} />}
+              {aid.median_scholarship != null && <Fact label="Median MIT scholarship" value={money(aid.median_scholarship)} />}
+            </div>
+          )}
           {costSource && (
             <p className="text-[11px] text-muted-foreground/70 mt-3">
               Source:{' '}
@@ -730,6 +750,16 @@ function OverviewTab({ inst, schoolCount, programCount }: { inst: Institution; s
           <p className="text-[12px] text-muted-foreground mb-3">Among faculty &amp; alumni</p>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {recognition.map(d => <Fact key={d.label} label={d.label} value={d.value} />)}
+          </div>
+        </Card>
+      )}
+
+      {/* By the numbers — institutional scale (MIT Facts) */}
+      {scaleStats.length > 0 && (
+        <Card className="p-5">
+          <h2 className="font-semibold text-foreground mb-3 flex items-center gap-2"><Building2 size={15} className="text-secondary" /> By the numbers</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {scaleStats.map(s => <Fact key={s.label} label={s.label} value={s.value} />)}
           </div>
         </Card>
       )}

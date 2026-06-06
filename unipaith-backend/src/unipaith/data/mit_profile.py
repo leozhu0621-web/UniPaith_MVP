@@ -43,7 +43,7 @@ RANKING_DATA: dict = {
 # school_outcomes is shallow-merged into the existing JSONB; each sub-object
 # below is complete, so a shallow merge is correct. Sources back the figures.
 SCHOOL_OUTCOMES: dict = {
-    "admit_rate": 0.0455,
+    "admit_rate": 0.0456,
     "avg_net_price": 20111,
     "median_earnings_10yr": 143372,
     "completion_rate_4yr_150pct": 0.9641,
@@ -57,6 +57,11 @@ SCHOOL_OUTCOMES: dict = {
         "pell_grant_rate": 0.1932,
         "federal_loan_rate": 0.0669,
         "median_debt_completers": 14768,
+        "cost_of_attendance": 89340,
+        "tuition_free_rate": 0.39,
+        "scholarship_rate": 0.57,
+        "no_loan_debt_rate": 0.88,
+        "median_scholarship": 69777,
     },
     "demographics": {
         "white": 0.2126,
@@ -69,9 +74,21 @@ SCHOOL_OUTCOMES: dict = {
     "employed_or_continuing_ed": 0.94,
     "graduation_rate_6yr": 0.96,
     "top_employer_industries": ["Technology", "Finance", "Consulting", "Research"],
+    "scale": {
+        "faculty_count": 1466,
+        "student_faculty_ratio": "3:1",
+        "research_centers": 70,
+        "endowment_usd": 24600000000,
+        "campus_acres": 168,
+        "residence_halls": 20,
+        "undergrad_majors": 56,
+        "undergrad_minors": 62,
+    },
     "flagship": {
         "nobel_laureates": 106,
         "macarthur_fellows": 85,
+        "national_medal_science": 64,
+        "national_medal_tech": 35,
         "enrollment_total": 11816,
         "admissions_cycle": "Class of 2029",
         "applicants": 29281,
@@ -103,10 +120,16 @@ SCHOOL_OUTCOMES: dict = {
             "url": "https://www.usnews.com/best-colleges/massachusetts-institute-of-technology-2178",
         },
         {
-            "label": "Schools, distinction, enrollment",
+            "label": "Schools, scale, distinction, enrollment, aid",
             "source": "MIT Facts",
             "year": 2025,
-            "url": "https://web.mit.edu/facts/",
+            "url": "https://facts.mit.edu/",
+        },
+        {
+            "label": "Endowment & financials",
+            "source": "MIT News — FY2024 financials",
+            "year": 2024,
+            "url": "https://news.mit.edu/2024/mit-releases-financials-and-endowment-figures-1011",
         },
     ],
 }
@@ -114,7 +137,7 @@ SCHOOL_OUTCOMES: dict = {
 # student_body_size is the undergraduate count (the page labels it
 # "Undergraduates"); the total (11,816) lives in flagship.enrollment_total
 # and renders as "Total enrollment".
-UNDERGRAD_COUNT = 4535
+UNDERGRAD_COUNT = 4561
 
 DESCRIPTION = (
     "Founded in 1861 in Cambridge, Massachusetts, the Massachusetts Institute "
@@ -149,55 +172,62 @@ SCHOOLS: list[dict] = [
         "name": "School of Engineering",
         "sort_order": 1,
         "description": (
-            "MIT's largest school, home to roughly half of all undergraduates. "
-            "Its departments span electrical engineering & computer science, "
-            "mechanical, aeronautics & astronautics, chemical, materials "
-            "science, biological, civil & environmental, and nuclear engineering."
+            "MIT's largest school — home to roughly half of all undergraduates — "
+            "tackling climate and energy, health and life sciences, AI, and "
+            "advanced manufacturing across eight departments plus the Institute "
+            "for Data, Systems & Society (IDSS) and the Institute for Medical "
+            "Engineering & Science (IMES)."
         ),
     },
     {
         "name": "School of Science",
         "sort_order": 2,
         "description": (
-            "Home to physics, mathematics, biology, chemistry, brain & "
-            "cognitive sciences, and earth, atmospheric & planetary sciences — "
-            "a hub of fundamental research and Nobel-winning discovery."
+            "Turns curiosity into discovery across physics, mathematics, biology, "
+            "chemistry, brain & cognitive sciences, and earth, atmospheric & "
+            "planetary sciences — the home of work like LIGO's gravitational-wave "
+            "detection and decades of Nobel-winning research."
         ),
     },
     {
         "name": "School of Humanities, Arts, and Social Sciences",
         "sort_order": 3,
         "description": (
-            "Economics, linguistics & philosophy, political science, comparative "
-            "media studies & writing, and more — ensuring every MIT education is "
-            "grounded in the humanities and social sciences."
+            "Grounds every MIT education in the humanities and social sciences — "
+            "economics, linguistics & philosophy, political science, history, "
+            "literature, music & theater arts, and more — developing the values, "
+            "vision, and ethical compass of tomorrow's leaders."
         ),
     },
     {
         "name": "MIT Sloan School of Management",
         "sort_order": 4,
         "description": (
-            "One of the world's leading business schools, which pioneered modern "
-            "management science. Offers the MBA, Master of Finance, and Master of "
-            "Business Analytics alongside undergraduate management."
+            "One of the world's leading business schools, dedicated to developing "
+            "principled, innovative leaders and advancing management practice — "
+            "offering the MBA, Master of Finance, Master of Business Analytics, "
+            "PhD, and executive programs at the intersection of management and "
+            "technology."
         ),
     },
     {
         "name": "School of Architecture and Planning",
         "sort_order": 5,
         "description": (
-            "Home to the oldest architecture program in the United States "
-            "(founded 1865), urban studies & planning, real estate, and the "
-            "MIT Media Lab."
+            "Integrates design, planning, and technology across the Department of "
+            "Architecture (the oldest in the U.S., founded 1865), Urban Studies & "
+            "Planning, the MIT Media Lab (Media Arts & Sciences), the Center for "
+            "Real Estate, and the Morningside Academy for Design."
         ),
     },
     {
         "name": "MIT Stephen A. Schwarzman College of Computing",
         "sort_order": 6,
         "description": (
-            "Opened in 2019 to connect computer science and artificial "
-            "intelligence across all of MIT, offering joint and interdisciplinary "
-            "computing degrees."
+            "Opened in 2019 to advance computer science and AI and weave "
+            "computing through every MIT discipline — home to the Common Ground "
+            "for Computing Education and the Social and Ethical Responsibilities "
+            "of Computing (SERC) initiative."
         ),
     },
 ]

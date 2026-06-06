@@ -58,7 +58,10 @@ async def test_apply_enriches_institution(db_session):
     assert inst.school_outcomes["test_scores"]["act_25_75"] == [34, 36]
     assert inst.school_outcomes["flagship"]["nobel_laureates"] == 106
     assert any(s["source"].startswith("U.S. Dept") for s in inst.school_outcomes["sources"])
-    assert inst.student_body_size == 4535
+    assert inst.student_body_size == 4561
+    assert inst.school_outcomes["scale"]["faculty_count"] == 1466
+    assert inst.school_outcomes["financial_aid"]["no_loan_debt_rate"] == 0.88
+    assert inst.school_outcomes["flagship"]["national_medal_science"] == 64
     assert "Mens et Manus" in inst.description_text
 
 
