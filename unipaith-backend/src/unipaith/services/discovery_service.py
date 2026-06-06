@@ -331,6 +331,15 @@ class DiscoveryService:
                     next_probe_hint=weakest.next_probe_hint,
                 )
                 session.completion_pct = avg
+                # Persist the per-track split so the handoff gate sees real
+                # per-track gaps instead of the masking average. parts order is
+                # [basic→profile, goals, needs]. Floats: asyncpg's JSON codec
+                # doesn't handle Decimal.
+                session.completion_breakdown = {
+                    "profile": float(parts[0].completion_pct),
+                    "goals": float(parts[1].completion_pct),
+                    "needs": float(parts[2].completion_pct),
+                }
 
             # 4b. Phase B1 — fire the feature emitter on completion.
             # Best-effort: errors here never fail the turn. The matcher
@@ -736,6 +745,13 @@ class DiscoveryService:
                     next_probe_hint=weakest.next_probe_hint,
                 )
                 session.completion_pct = avg
+                # See append_message: persist the per-track split for the
+                # handoff gate (parts order is [basic→profile, goals, needs]).
+                session.completion_breakdown = {
+                    "profile": float(parts[0].completion_pct),
+                    "goals": float(parts[1].completion_pct),
+                    "needs": float(parts[2].completion_pct),
+                }
 
             history_msgs = await self._load_message_history(session.id)
             cross_track = await self._cross_track_summary(
@@ -976,13 +992,12 @@ class DiscoveryService:
             select(
                 DiscoverySession.track,
                 DiscoverySession.layer,
-                func.max(DiscoverySession.completion_pct).label("max_pct"),
-            )
-            .where(
+                DiscoverySession.completion_pct,
+                DiscoverySession.completion_breakdown,
+            ).where(
                 DiscoverySession.student_id == student_id,
                 DiscoverySession.status != "abandoned",
             )
-            .group_by(DiscoverySession.track, DiscoverySession.layer)
         )
         rows = result.all()
 
@@ -992,16 +1007,20 @@ class DiscoveryService:
             "needs": Decimal("0"),
             "identity": Decimal("0"),
         }
-        for track, layer, max_pct in rows:
-            value = max_pct or Decimal("0")
+        for track, layer, pct, breakdown in rows:
+            value = pct or Decimal("0")
             if track == "discovery":
                 # Unified Uni conversation covers self/goals/needs in one
-                # session; its completion_pct is the coverage across all three,
-                # so it must feed every legacy track for the progress bars and
-                # the handoff gate (otherwise unified-only students show 0%).
+                # session. completion_pct is the masking average, so feed each
+                # legacy track its own value from completion_breakdown — the
+                # handoff gate must see a weak track, not just the mean. Legacy
+                # rows without a breakdown fall back to the average.
+                bd = breakdown or {}
                 for key in ("profile", "goals", "needs"):
-                    if value > out[key]:
-                        out[key] = value
+                    sub = bd.get(key)
+                    sub_val = Decimal(str(sub)) if sub is not None else value
+                    if sub_val > out[key]:
+                        out[key] = sub_val
                 continue
             if track in out and value > out[track]:
                 out[track] = value
