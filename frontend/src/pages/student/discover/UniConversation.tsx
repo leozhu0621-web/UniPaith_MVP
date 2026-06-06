@@ -64,17 +64,21 @@ export default function UniConversation() {
   const [sessionId, setSessionId] = useState<string | null>(null)
 
   // Resolve the active unified (discovery) session, if any.
-  const { data: sessions = [] } = useQuery<DiscoverySession[]>({
+  const { data: sessions = [], isPending: sessionsLoading } = useQuery<DiscoverySession[]>({
     queryKey: ['discovery', 'sessions', 'unified'],
     queryFn: () => listSessions({ status: 'active' }),
   })
+  const resolvedSessionId = useMemo(
+    () =>
+      sessions
+        .filter(s => (s.track as string) === 'discovery')
+        .sort((a, b) => b.started_at.localeCompare(a.started_at))[0]?.id ?? null,
+    [sessions],
+  )
   useEffect(() => {
     if (sessionId) return
-    const unified = sessions
-      .filter(s => (s.track as string) === 'discovery')
-      .sort((a, b) => b.started_at.localeCompare(a.started_at))[0]
-    if (unified) setSessionId(unified.id)
-  }, [sessions, sessionId])
+    if (resolvedSessionId) setSessionId(resolvedSessionId)
+  }, [resolvedSessionId, sessionId])
 
   const { data: detail } = useQuery<DiscoverySessionDetail | null>({
     queryKey: ['discovery', 'session', sessionId],
@@ -86,13 +90,16 @@ export default function UniConversation() {
 
   const turnMut = useMutation({
     mutationFn: async (content: string) => {
-      let sid = sessionId
+      // Reuse the session already loaded from listSessions before creating a new
+      // one — relying solely on `sessionId` state can race the effect that binds
+      // it, splitting the conversation across two sessions.
+      let sid = sessionId ?? resolvedSessionId
       if (!sid) {
         const created = await startUnifiedSession()
         sid = created.id
-        setSessionId(created.id)
         qc.invalidateQueries({ queryKey: ['discovery', 'sessions', 'unified'] })
       }
+      if (sid !== sessionId) setSessionId(sid)
       return appendMessage(sid, { role: 'student', content })
     },
     onSuccess: (data: AppendMessageResponse) => {
@@ -115,7 +122,9 @@ export default function UniConversation() {
 
   const send = (content: string) => {
     const text = content.trim()
-    if (!text || turnMut.isPending) return
+    // Wait for the sessions query to settle so we don't spawn a duplicate
+    // session while an existing one is still loading.
+    if (!text || turnMut.isPending || sessionsLoading) return
     turnMut.mutate(text)
   }
 
