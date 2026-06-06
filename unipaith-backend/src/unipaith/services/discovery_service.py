@@ -104,9 +104,24 @@ class DiscoveryService:
         return session
 
     async def start_unified_session(self, user_id: UUID) -> DiscoverySession:
-        """Start the unified, track-less Uni conversation (one session). The
+        """Start (or resume) the unified, track-less Uni conversation. There is
+        only ever one active unified session per student, so reuse an existing
+        active `discovery` session when present; otherwise create one. The
         extractor is content-based, so a single conversation populates
         goals / needs / identity by what the student says — no track to pick."""
+        student_id = await self._profile_id_for_user(user_id)
+        existing = await self.db.execute(
+            select(DiscoverySession)
+            .where(
+                DiscoverySession.student_id == student_id,
+                DiscoverySession.track == "discovery",
+                DiscoverySession.status == "active",
+            )
+            .order_by(DiscoverySession.started_at.desc())
+        )
+        session = existing.scalars().first()
+        if session is not None:
+            return session
         return await self.start_session(user_id, track="discovery", layer=None)
 
     async def list_sessions(
