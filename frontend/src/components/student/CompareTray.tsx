@@ -6,6 +6,7 @@ import { showToast } from '../../stores/toast-store'
 import { comparePrograms } from '../../api/saved-lists'
 import Badge from '../ui/Badge'
 import Button from '../ui/Button'
+import Coachmark from '../ui/Coachmark'
 import { X, ArrowRightLeft, ChevronUp, ChevronDown, GraduationCap } from 'lucide-react'
 import { COMPARE_DIMENSIONS, type CompareProgram } from './compareDimensions'
 
@@ -170,9 +171,16 @@ export default function CompareTray({ initialExpanded = false, syncUrl = false }
             ))}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Button size="sm" variant="secondary" onClick={() => compareMut.mutate()} disabled={items.length < 2 || compareMut.isPending} loading={compareMut.isPending}>
-              Compare selected ({items.length}) →
-            </Button>
+            <Coachmark
+              id="compare"
+              title="Compare side by side"
+              body="Add 2+ programs, then compare structure, cost, access, and outcomes in one view."
+              placement="top"
+            >
+              <Button size="sm" variant="secondary" onClick={() => compareMut.mutate()} disabled={items.length < 2 || compareMut.isPending} loading={compareMut.isPending}>
+                Compare selected ({items.length}) →
+              </Button>
+            </Coachmark>
             {comparisonResult && (
               <button onClick={() => setExpanded(!expanded)} aria-label={expanded ? 'Collapse' : 'Expand'} className="p-1 text-background/60 hover:text-background">
                 {expanded ? <ChevronDown size={16} /> : <ChevronUp size={16} />}

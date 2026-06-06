@@ -14,6 +14,7 @@ import { Compass, LayoutGrid, ListFilter, Loader2, RefreshCw, SlidersHorizontal 
 import { getMatches, refreshMatches } from '../../../api/matching'
 import BandBadge from '../../../components/ui/BandBadge'
 import Button from '../../../components/ui/Button'
+import Coachmark from '../../../components/ui/Coachmark'
 import QueryError from '../../../components/ui/QueryError'
 import { useCompareStore } from '../../../stores/compare-store'
 import { showToast } from '../../../stores/toast-store'
@@ -86,26 +87,43 @@ export default function MatchesSection({ savedIds, onToggleSave }: MatchesSectio
     return by
   }, [matches])
 
-  const renderCard = (m: MatchResultDual) => (
-    <MatchCard
-      key={m.program_id}
-      match={m}
-      saved={savedIds.has(m.program_id)}
-      comparing={compareStore.has(m.program_id)}
-      onSave={() => onToggleSave(m.program_id)}
-      onCompare={() =>
-        compareStore.has(m.program_id)
-          ? compareStore.remove(m.program_id)
-          : compareStore.add({
-              program_id: m.program_id,
-              program_name: m.program_name ?? 'Program',
-              institution_name: m.institution_name ?? '',
-              degree_type: m.degree_type ?? '',
-            })
-      }
-      onView={() => navigate(`/s/programs/${m.program_id}`)}
-    />
-  )
+  const firstId = matches[0]?.program_id
+  const renderCard = (m: MatchResultDual) => {
+    const card = (
+      <MatchCard
+        match={m}
+        saved={savedIds.has(m.program_id)}
+        comparing={compareStore.has(m.program_id)}
+        onSave={() => onToggleSave(m.program_id)}
+        onCompare={() =>
+          compareStore.has(m.program_id)
+            ? compareStore.remove(m.program_id)
+            : compareStore.add({
+                program_id: m.program_id,
+                program_name: m.program_name ?? 'Program',
+                institution_name: m.institution_name ?? '',
+                degree_type: m.degree_type ?? '',
+              })
+        }
+        onView={() => navigate(`/s/programs/${m.program_id}`)}
+      />
+    )
+    // First-run coachmark on the top match's dual ring (Spec 81 §3.3).
+    if (m.program_id === firstId) {
+      return (
+        <Coachmark
+          key={m.program_id}
+          id="dualring"
+          title="Two scores, not one"
+          body="The outer ring is your fitness; the inner ring is how confident we are. Open “Why this match” for the reasoning."
+          placement="bottom"
+        >
+          {card}
+        </Coachmark>
+      )
+    }
+    return <div key={m.program_id}>{card}</div>
+  }
 
   // ── Loading ──
   if (isLoading) {
@@ -141,7 +159,7 @@ export default function MatchesSection({ savedIds, onToggleSave }: MatchesSectio
         <div className="rounded-xl border border-border bg-card p-6 text-center">
           <Compass size={28} className="mx-auto text-foreground/50 mb-3" />
           <p className="text-sm font-semibold text-foreground mb-1">No matches yet</p>
-          <p className="text-xs text-foreground max-w-md mx-auto mb-4">
+          <p className="text-xs text-muted-foreground max-w-md mx-auto mb-4">
             Add more to your profile to unlock matches. Talk through your goals on Discover.
           </p>
           <div className="flex items-center justify-center gap-2">
@@ -187,8 +205,8 @@ export default function MatchesSection({ savedIds, onToggleSave }: MatchesSectio
             <div key={band}>
               <div className="flex items-center gap-2 mb-2.5">
                 <BandBadge band={band} />
-                <span className="text-xs text-foreground">{BAND_BLURB[band]}</span>
-                <span className="ml-auto text-[11px] text-foreground/60">{groups[band].length}</span>
+                <span className="text-xs text-muted-foreground">{BAND_BLURB[band]}</span>
+                <span className="ml-auto text-[11px] text-muted-foreground">{groups[band].length}</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {groups[band].map(renderCard)}
